@@ -1,11 +1,13 @@
 package com.orientechnologies.website;
 
+import com.orientechnologies.website.interceptor.OrientDBFactoryInterceptor;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.context.web.SpringBootServletInitializer;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -16,7 +18,7 @@ import com.orientechnologies.website.model.schema.OSiteSchema;
 @Configuration
 @EnableAutoConfiguration
 @ComponentScan
-public class Application extends SpringBootServletInitializer {
+public class Application extends WebMvcConfigurerAdapter {
 
   public static void main(final String[] args) throws Exception {
 
@@ -25,8 +27,16 @@ public class Application extends SpringBootServletInitializer {
 
     server.startup(Thread.currentThread().getContextClassLoader().getResourceAsStream("orientdb-server-config.xml"));
     server.activate();
-    ODatabaseDocumentTx tx = Orient.instance().getDatabaseFactory().createDatabase("graph", "plocal:databases/todo");
+    ODatabaseDocumentTx tx = Orient.instance().getDatabaseFactory().createDatabase("graph", "plocal:databases/odbsite");
 
     OSiteSchema.createSchema(tx);
+
+  }
+
+  @Override
+  public void addInterceptors(InterceptorRegistry registry) {
+    super.addInterceptors(registry);
+
+    registry.addInterceptor(new OrientDBFactoryInterceptor());
   }
 }
