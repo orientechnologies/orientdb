@@ -778,7 +778,11 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
   public OrientBaseGraph acquire() {
     init();
-    final OrientBaseGraph g = factory.get();
+    final OrientBaseGraph g;
+    if (transactional)
+      g = factory.getTx();
+    else
+      g = factory.getNoTx();
 
     if (conflictStrategy != null) {
       final OStorage stg = g.getRawGraph().getStorage().getUnderlying();
@@ -897,7 +901,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     if (factory == null) {
       synchronized (this) {
         if (factory == null)
-          factory = new OrientGraphFactory(url, userName, userPassword).setTransactional(transactional).setupPool(1, maxPoolSize);
+          factory = new OrientGraphFactory(url, userName, userPassword).setupPool(1, maxPoolSize);
       }
     }
   }
