@@ -85,7 +85,7 @@
         <blueprints.version>2.5.0</blueprints.version>
         <javac.src.version>1.6</javac.src.version>
         <javac.target.version>1.6</javac.target.version>
-        <orientdb.version>2.0-M1</orientdb.version>
+        <orientdb.version>2.0-SNAPSHOT</orientdb.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
