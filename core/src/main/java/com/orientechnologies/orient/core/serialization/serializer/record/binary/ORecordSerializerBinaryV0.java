@@ -51,8 +51,8 @@ import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
@@ -122,7 +122,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       } else
         document.field(field, (Object) null);
     }
-    ODocumentInternal.clearSource(document);
+    ORecordInternal.clearSource(document);
     if (last > bytes.offset)
       bytes.offset = last;
   }
