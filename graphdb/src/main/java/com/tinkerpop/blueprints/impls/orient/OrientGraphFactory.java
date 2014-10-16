@@ -245,7 +245,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
       public OrientBaseGraph createNewResource(final String iKey, final Object... iAdditionalArgs) {
         final OrientBaseGraph g;
         if (transactional)
-          g = new OrientGraph(getDatabase(), user, password) {
+          g = new OrientGraph(getDatabase(), user, password, settings) {
             @Override
             public void shutdown() {
               if (pool != null) {
@@ -254,9 +254,9 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
               } else
                 super.shutdown();
             }
-          }.configure(settings);
+          };
         else
-          g = new OrientGraphNoTx(getDatabase(), user, password) {
+          g = new OrientGraphNoTx(getDatabase(), user, password, settings) {
             @Override
             public void shutdown() {
               if (pool != null) {
@@ -266,7 +266,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
               } else
                 super.shutdown();
             }
-          }.configure(settings);
+          };
 
         initGraph(g);
         return g;
