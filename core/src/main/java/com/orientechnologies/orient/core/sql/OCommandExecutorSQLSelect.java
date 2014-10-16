@@ -1707,7 +1707,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           }
 
           if (fieldValue != null) {
-            if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray() || fieldValue instanceof Iterator<?>
+            if(fieldValue instanceof ODocument) {
+              ArrayList<ODocument> partial = new ArrayList<ODocument>();
+              partial.add((ODocument) fieldValue);
+              finalResult.add(partial);
+            } else if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray() || fieldValue instanceof Iterator<?>
                 || fieldValue instanceof OIdentifiable || fieldValue instanceof ORidBag) {
               finalResult.add(fieldValue);
             } else if (fieldValue instanceof Map<?, ?>) {
