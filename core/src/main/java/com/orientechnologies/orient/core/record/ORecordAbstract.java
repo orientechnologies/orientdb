@@ -480,4 +480,9 @@ public abstract class ORecordAbstract implements ORecord {
   protected void setContentChanged(boolean contentChanged) {
     _contentChanged = contentChanged;
   }
+  
+  protected void clearSource() {
+    this._source = null;
+  }
+  
 }

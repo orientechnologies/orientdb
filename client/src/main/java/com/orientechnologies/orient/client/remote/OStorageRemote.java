@@ -48,6 +48,7 @@ import com.orientechnologies.common.concur.lock.OModificationOperationProhibited
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.serialization.types.ODoubleSerializer;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThreadLocal.OStorageRemoteSession;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
@@ -76,6 +77,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
@@ -1079,6 +1081,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             while (!tmpEntries.isEmpty()) {
               iTx.clearRecordEntries();
               for (ORecordOperation txEntry : tmpEntries) {
+                ORecordInternal.clearSource(txEntry.getRecord());
                 commitEntry(network, txEntry);
               }
               tmpEntries.clear();

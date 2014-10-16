@@ -2035,10 +2035,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     return iFieldName;
   }
 
-  protected void clearSource() {
-    this._source = null;
-  }
-
   protected void setClass(final OClass iClass) {
     if (iClass != null && iClass.isAbstract())
       throw new OSchemaException("Cannot create a document of the abstract class '" + iClass + "'");
