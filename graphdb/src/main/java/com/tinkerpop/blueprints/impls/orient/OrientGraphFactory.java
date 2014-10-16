@@ -20,6 +20,8 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.common.log.OLogManager;
@@ -33,8 +35,6 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A factory to create instances of {@link OrientGraph}. OrientGraph is a Blueprints implementation of the graph database OrientDB
@@ -248,9 +248,10 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
           g = new OrientGraph(getDatabase(), user, password) {
             @Override
             public void shutdown() {
-              if (pool != null)
+              if (pool != null) {
+                getRawGraph().getLocalCache().clear();
                 pool.returnResource(this);
-              else
+              } else
                 super.shutdown();
             }
           }.configure(settings);
@@ -259,6 +260,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
             @Override
             public void shutdown() {
               if (pool != null) {
+                getRawGraph().getLocalCache().clear();
                 pool.returnResource(this);
                 ODatabaseRecordThreadLocal.INSTANCE.remove();
               } else
