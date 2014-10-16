@@ -16,7 +16,6 @@
  */
 package com.orientechnologies.orient.core.fetch.json;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
@@ -30,7 +29,6 @@ import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON.FormatSettings;
-import com.orientechnologies.orient.core.version.ODistributedVersion;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -203,13 +201,6 @@ public class OJSONFetchContext implements OFetchContext {
           .getRecordVersion().getCounter());
       if (settings.attribSameRow)
         firstAttribute = false;
-      if (OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean()) {
-        final ODistributedVersion ver = (ODistributedVersion) record.getRecordVersion();
-        json.writeAttribute(firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_VERSION_TIMESTAMP,
-            ver.getTimestamp());
-        json.writeAttribute(firstAttribute ? settings.indentLevel : 1, firstAttribute,
-            ODocumentHelper.ATTRIBUTE_VERSION_MACADDRESS, ver.getMacAddress());
-      }
     }
     if (settings.includeClazz && record instanceof ODocument && ((ODocument) record).getClassName() != null) {
       json.writeAttribute(firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_CLASS,

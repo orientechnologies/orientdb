@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -54,7 +53,6 @@ import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.util.ODateHelper;
-import com.orientechnologies.orient.core.version.ODistributedVersion;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -234,18 +232,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           if (fieldName.equals(ODocumentHelper.ATTRIBUTE_RID))
             ORecordInternal.setIdentity(iRecord, new ORecordId(fieldValueAsString));
           else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_VERSION))
-            if (OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean())
-              recordVersion = Integer.parseInt(fieldValue);
-            else
-              iRecord.getRecordVersion().setCounter(Integer.parseInt(fieldValue));
-          else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_VERSION_TIMESTAMP)) {
-            if (OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean())
-              timestamp = Long.parseLong(fieldValue);
-          } else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_VERSION_MACADDRESS)) {
-            if (OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean())
-              macAddress = Long.parseLong(fieldValue);
-
-          } else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_TYPE)) {
+            iRecord.getRecordVersion().setCounter(Integer.parseInt(fieldValue));
+          else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_TYPE)) {
             continue;
           } else if (fieldName.equals(ATTRIBUTE_FIELD_TYPES) && iRecord instanceof ODocument) {
             continue;
@@ -317,10 +305,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           }
 
         }
-        if (timestamp != 0 && OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean()) {
-          ((ODistributedVersion) iRecord.getRecordVersion()).update(recordVersion, timestamp, macAddress);
-        }
-
       } catch (Exception e) {
         if (iRecord.getIdentity().isValid())
           throw new OSerializationException("Error on unmarshalling JSON content for record " + iRecord.getIdentity(), e);
