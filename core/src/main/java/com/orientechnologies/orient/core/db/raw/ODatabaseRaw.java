@@ -58,7 +58,9 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
@@ -612,11 +614,17 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       throw new IllegalArgumentException("Database type property is not supported");
 
     case DATEFORMAT:
+      // CHECK FORMAT
+      new SimpleDateFormat(stringValue).format(new Date());
+
       storage.getConfiguration().dateFormat = stringValue;
       storage.getConfiguration().update();
       break;
 
     case DATETIMEFORMAT:
+      // CHECK FORMAT
+      new SimpleDateFormat(stringValue).format(new Date());
+
       storage.getConfiguration().dateTimeFormat = stringValue;
       storage.getConfiguration().update();
       break;
