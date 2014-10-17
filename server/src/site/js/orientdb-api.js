@@ -177,7 +177,7 @@ function ODatabase(databasePath) {
       					return xhr.setRequestHeader('Authorization', 'BASIC ' + btoa(userName+':'+userPass));
     			},
 			type : type,
-			url : this.urlPrefix + 'connect/' + this.encodedDatabaseName
+			url : this.urlPrefix + 'database/' + this.encodedDatabaseName
 					+ this.urlSuffix,
 			context : this,
 			username : userName,
