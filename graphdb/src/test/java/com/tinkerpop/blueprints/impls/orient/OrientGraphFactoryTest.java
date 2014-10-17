@@ -1,7 +1,6 @@
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxPooled;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -51,7 +50,7 @@ public class OrientGraphFactoryTest  {
     OrientGraphFactory factory = new OrientGraphFactory("memory:testPool").setupPool(1, 10);
     for (int i = 0; i < 100; ++i) {
       OrientGraph g = factory.getTx();
-      assertEquals(g.getRawGraph().getClass(), ODatabaseDocumentTxPooled.class);
+      assertEquals(g.getRawGraph().getClass(), ODatabaseDocumentTx.class);
       g.shutdown();
     }
   }
