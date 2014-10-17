@@ -6,6 +6,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.ClusterMetadataTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.DBMethodsTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.AlterDatabaseTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.ConnectDatabaseTest"/>
         </classes>
     </test>
     <test name="Schema">
