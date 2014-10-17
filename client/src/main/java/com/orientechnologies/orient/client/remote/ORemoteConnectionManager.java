@@ -179,7 +179,7 @@ public class ORemoteConnectionManager implements OChannelListener {
     if (pool == null)
       return 0;
 
-    return pool.getCreatedInstancesInPool();
+    return pool.getCreatedInstances();
   }
 
   public void closePool(final String url) {

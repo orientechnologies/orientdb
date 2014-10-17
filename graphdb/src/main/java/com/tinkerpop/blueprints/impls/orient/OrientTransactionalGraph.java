@@ -161,7 +161,8 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   }
 
   public void begin() {
-    if (!database.getTransaction().isActive()) {
+    final boolean txBegun = database.getTransaction().isActive();
+    if (!txBegun) {
       database.begin();
       database.getTransaction().setUsingLog(useLog);
     }

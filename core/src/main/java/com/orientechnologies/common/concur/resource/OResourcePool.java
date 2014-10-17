@@ -139,7 +139,7 @@ public class OResourcePool<K, V> {
     }
   }
 
-  public int getCreatedInstancesInPool() {
+  public int getCreatedInstances() {
     return created;
   }
 }

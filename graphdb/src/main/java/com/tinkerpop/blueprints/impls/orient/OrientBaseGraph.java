@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.tinkerpop.blueprints.impls.orient;
 
@@ -76,12 +76,11 @@ import java.util.Set;
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public abstract class OrientBaseGraph extends OrientConfigurableGraph implements OrientExtendedGraph {
-  public static final String          CONNECTION_OUT  = "out";
-  public static final String          CONNECTION_IN   = "in";
-  public static final String          CLASS_PREFIX    = "class:";
-  public static final String          CLUSTER_PREFIX  = "cluster:";
-  public static final String          ADMIN           = "admin";
-  private static final Object         manualIndexLock = new Object();
+  public static final String          CONNECTION_OUT = "out";
+  public static final String          CONNECTION_IN  = "in";
+  public static final String          CLASS_PREFIX   = "class:";
+  public static final String          CLUSTER_PREFIX = "cluster:";
+  public static final String          ADMIN          = "admin";
   private final ODatabaseDocumentPool pool;
   protected ODatabaseDocumentTx       database;
   private String                      url;
@@ -325,19 +324,18 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       final Parameter... indexParameters) {
     return executeOutsideTx(new OCallable<Index<T>, OrientBaseGraph>() {
       public Index<T> call(final OrientBaseGraph g) {
-        synchronized (manualIndexLock) {
-          final OIndexManager indexManager = database.getMetadata().getIndexManager();
 
-          if (indexManager.getIndex(indexName) != null)
-            throw ExceptionFactory.indexAlreadyExists(indexName);
+        final OIndexManager indexManager = database.getMetadata().getIndexManager();
 
-          final OrientIndex<? extends OrientElement> index = new OrientIndex<OrientElement>(g, indexName, indexClass, null);
+        if (indexManager.getIndex(indexName) != null)
+          throw ExceptionFactory.indexAlreadyExists(indexName);
 
-          // SAVE THE CONFIGURATION INTO THE GLOBAL CONFIG
-          saveIndexConfiguration();
+        final OrientIndex<? extends OrientElement> index = new OrientIndex<OrientElement>(g, indexName, indexClass, null);
 
-          return (Index<T>) index;
-        }
+        // SAVE THE CONFIGURATION INTO THE GLOBAL CONFIG
+        saveIndexConfiguration();
+
+        return (Index<T>) index;
       }
     }, "create index '", indexName, "'");
   }
@@ -387,19 +385,16 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       @Override
       public Object call(OrientBaseGraph g) {
         try {
-          synchronized (manualIndexLock) {
-            final OIndexManager indexManager = getRawGraph().getMetadata().getIndexManager();
-            final OIndex index = indexManager.getIndex(indexName);
-            final String recordMapIndexName = index.getConfiguration().field(OrientIndex.CONFIG_RECORD_MAP_NAME);
+          final OIndexManager indexManager = getRawGraph().getMetadata().getIndexManager();
+          final OIndex index = indexManager.getIndex(indexName);
+          final String recordMapIndexName = index.getConfiguration().field(OrientIndex.CONFIG_RECORD_MAP_NAME);
 
-            indexManager.dropIndex(indexName);
-            if (recordMapIndexName != null)
-              getRawGraph().getMetadata().getIndexManager().dropIndex(recordMapIndexName);
+          indexManager.dropIndex(indexName);
+          if (recordMapIndexName != null)
+            getRawGraph().getMetadata().getIndexManager().dropIndex(recordMapIndexName);
 
-            saveIndexConfiguration();
-            return null;
-          }
-
+          saveIndexConfiguration();
+          return null;
         } catch (Exception e) {
           g.rollback();
           throw new RuntimeException(e.getMessage(), e);
@@ -1561,8 +1556,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       else if (c.name.equals("useVertexFieldsForEdgeLabels"))
         setUseVertexFieldsForEdgeLabels(Boolean.parseBoolean(c.value));
     }
-
-    loadManualIndexes();
   }
 
   private void openOrCreate() {
