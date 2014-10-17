@@ -53,31 +53,34 @@ public class OSiteSchema {
   public static void createSchema(ODatabaseDocumentTx db) {
 
     if (!db.exists()) {
-
       db.create();
-      OSchema schema = db.getMetadata().getSchema();
-
-      OClass v = schema.getClass("V");
-      OClass e = schema.getClass("E");
-
-      for (Class<?> clazz : schemas.keySet()) {
-        OClass cls = schema.createClass(clazz);
-        if (vertices.contains(clazz)) {
-          cls.setSuperClass(v);
-        } else {
-          cls.setSuperClass(e);
-        }
-        if (OTypeHolder.class.isAssignableFrom(clazz)) {
-          for (Enum<?> anEnum : schemas.get(clazz)) {
-            OType t = ((OTypeHolder) anEnum).getType();
-            cls.createProperty(anEnum.toString(), t);
-          }
-        }
-      }
-
-      OSiteSchemaPopupator.populateData(db);
+      fillSchema(db);
     }
 
+  }
+
+  public static void fillSchema(ODatabaseDocumentTx db) {
+    OSchema schema = db.getMetadata().getSchema();
+
+    OClass v = schema.getClass("V");
+    OClass e = schema.getClass("E");
+
+    for (Class<?> clazz : schemas.keySet()) {
+      OClass cls = schema.createClass(clazz);
+      if (vertices.contains(clazz)) {
+        cls.setSuperClass(v);
+      } else {
+        cls.setSuperClass(e);
+      }
+      if (OTypeHolder.class.isAssignableFrom(clazz)) {
+        for (Enum<?> anEnum : schemas.get(clazz)) {
+          OType t = ((OTypeHolder) anEnum).getType();
+          cls.createProperty(anEnum.toString(), t);
+        }
+      }
+    }
+
+    OSiteSchemaPopupator.populateData(db);
   }
 
   // Vertices

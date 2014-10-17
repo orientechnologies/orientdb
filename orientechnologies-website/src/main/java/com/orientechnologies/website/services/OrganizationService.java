@@ -1,8 +1,8 @@
 package com.orientechnologies.website.services;
 
-import org.springframework.stereotype.Service;
+import com.orientechnologies.website.exception.ServiceException;
 
-@Service
-public class OrganizationService {
+public interface OrganizationService {
 
+  public void addMember(String org, String username) throws ServiceException;
 }

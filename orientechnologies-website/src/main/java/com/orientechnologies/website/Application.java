@@ -1,6 +1,6 @@
 package com.orientechnologies.website;
 
-import com.orientechnologies.website.interceptor.OrientDBFactoryInterceptor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.ApplicationContext;
@@ -13,12 +13,16 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.website.interceptor.OrientDBFactoryInterceptor;
 import com.orientechnologies.website.model.schema.OSiteSchema;
 
 @Configuration
 @EnableAutoConfiguration
 @ComponentScan
 public class Application extends WebMvcConfigurerAdapter {
+
+  @Autowired
+  private OrientDBFactoryInterceptor interceptor;
 
   public static void main(final String[] args) throws Exception {
 
@@ -36,7 +40,6 @@ public class Application extends WebMvcConfigurerAdapter {
   @Override
   public void addInterceptors(InterceptorRegistry registry) {
     super.addInterceptors(registry);
-
-    registry.addInterceptor(new OrientDBFactoryInterceptor());
+    registry.addInterceptor(interceptor);
   }
 }

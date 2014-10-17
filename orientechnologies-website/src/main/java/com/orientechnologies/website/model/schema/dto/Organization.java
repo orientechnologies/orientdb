@@ -5,6 +5,7 @@ package com.orientechnologies.website.model.schema.dto;
  */
 public class Organization {
 
+  private String id;
   private String name;
   private String codename;
 
@@ -22,5 +23,13 @@ public class Organization {
 
   public void setCodename(String codename) {
     this.codename = codename;
+  }
+
+  public String getId() {
+    return id;
+  }
+
+  public void setId(String id) {
+    this.id = id;
   }
 }

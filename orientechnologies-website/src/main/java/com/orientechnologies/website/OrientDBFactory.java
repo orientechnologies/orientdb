@@ -1,22 +1,35 @@
 package com.orientechnologies.website;
 
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 
+import javax.annotation.PostConstruct;
+
 @Component
 public class OrientDBFactory {
 
-  private OrientGraphFactory factory;
+  private OrientGraphFactory         factory;
 
-  ThreadLocal<OrientGraph>   graphThreadLocal = new ThreadLocal<OrientGraph>();
+  @Autowired
+  private OrientDBConnectionSettings settings;
+
+  ThreadLocal<OrientGraph>           graphThreadLocal = new ThreadLocal<OrientGraph>();
 
   public OrientDBFactory() {
-    factory = new OrientGraphFactory("plocal:databases/odbsite", "admin", "admin");
+
   }
 
-  public OrientGraph getDb() {
+  @PostConstruct
+  public void initFactory() {
+    factory = new OrientGraphFactory(settings.getUrl(), settings.getUsr(), settings.getPwd());
+  }
+
+  public OrientGraph getGraph() {
 
     OrientGraph graph = graphThreadLocal.get();
     if (graph == null) {
@@ -26,7 +39,12 @@ public class OrientDBFactory {
     return graph;
   }
 
+  public OrientGraphNoTx getGraphtNoTx() {
+    return factory.getNoTx();
+  }
+
   public void unsetDb() {
     graphThreadLocal.set(null);
   }
+
 }
