@@ -49,3 +49,7 @@
         display: none;
     }
 }
+
+table.table-schema tbody > tr > td input {
+    width: auto;
+}
