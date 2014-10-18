@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.config;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -55,6 +55,8 @@ import java.util.TimeZone;
  * <li>8 = introduced cluster selection strategy as string</li>
  * <li>9 = introduced minimumclusters as string</li>
  * <li>12 = introduced record conflict strategy as string in both storage and paginated clusters</li>
+ * <li>13 = introduced cluster status to manage cluster as "offline" with the new command "alter cluster status offline". Removed
+ * data segments</li>
  * </ul>
  * 
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
@@ -67,10 +69,8 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public static final String                         DEFAULT_CHARSET               = "UTF-8";
   private String                                     charset                       = DEFAULT_CHARSET;
-  public static final int                            CURRENT_VERSION               = 12;
+  public static final int                            CURRENT_VERSION               = 13;
   public static final int                            CURRENT_BINARY_FORMAT_VERSION = 12;
-  public final List<OStorageDataConfiguration>       dataSegments                  = Collections
-                                                                                       .synchronizedList(new ArrayList<OStorageDataConfiguration>());
   public final List<OStorageEntryConfiguration>      properties                    = Collections
                                                                                        .synchronizedList(new ArrayList<OStorageEntryConfiguration>());
   protected final transient OStorage                 storage;
@@ -86,7 +86,6 @@ public class OStorageConfiguration implements OSerializableStream {
   public volatile OStorageSegmentConfiguration       fileTemplate;
   public volatile List<OStorageClusterConfiguration> clusters                      = Collections
                                                                                        .synchronizedList(new ArrayList<OStorageClusterConfiguration>());
-  public volatile OStorageTxConfiguration            txSegment                     = new OStorageTxConfiguration();
   private volatile String                            localeLanguage                = Locale.getDefault().getLanguage();
   private volatile String                            localeCountry                 = Locale.getDefault().getCountry();
   private volatile TimeZone                          timeZone                      = TimeZone.getDefault();
@@ -237,24 +236,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
       final OStorageClusterConfiguration currentCluster;
 
-      if (clusterType.equals("p")) {
-        // PHYSICAL CLUSTER
-        final OStoragePhysicalClusterConfigurationLocal phyClusterLocal = new OStoragePhysicalClusterConfigurationLocal(this,
-            clusterId, targetDataSegmentId);
-        phyClusterLocal.name = clusterName;
-        index = phySegmentFromStream(values, index, phyClusterLocal);
-
-        final String holeFlag;
-        if (version > 4) {
-          holeFlag = read(values[index++]);
-        } else {
-          holeFlag = "f";
-        }
-        if (holeFlag.equals("f"))
-          phyClusterLocal.setHoleFile(new OStorageClusterHoleConfiguration(phyClusterLocal, read(values[index++]),
-              read(values[index++]), read(values[index++])));
-        currentCluster = phyClusterLocal;
-      } else if (clusterType.equals("d")) {
+      if (clusterType.equals("d")) {
         final boolean cc = Boolean.valueOf(read(values[index++]));
         final float bb = Float.valueOf(read(values[index++]));
         final float aa = Float.valueOf(read(values[index++]));
@@ -272,9 +254,17 @@ public class OStorageConfiguration implements OSerializableStream {
           // INHERIT THE STRATEGY IN STORAGE
           clusterConflictStrategy = null;
 
+        OStorageClusterConfiguration.STATUS status = OStorageClusterConfiguration.STATUS.ONLINE;
+        if (version >= 13)
+          status = OStorageClusterConfiguration.STATUS.valueOf(read(values[index++]));
+
         currentCluster = new OStoragePaginatedClusterConfiguration(this, clusterId, clusterName, null, cc, bb, aa,
-            clusterCompression, clusterConflictStrategy);
-      } else
+            clusterCompression, clusterConflictStrategy, status);
+
+      } else if (clusterType.equals("p"))
+        // PHYSICAL CLUSTER
+        throw new IllegalArgumentException("Cluster of storage 'local' are not supported since 2.0");
+      else
         throw new IllegalArgumentException("Unsupported cluster type: " + clusterType);
 
       // MAKE ROOMS, EVENTUALLY FILLING EMPTIES ENTRIES
@@ -284,29 +274,27 @@ public class OStorageConfiguration implements OSerializableStream {
       clusters.set(clusterId, currentCluster);
     }
 
-    // PREPARE THE LIST OF DATA SEGS
-    size = Integer.parseInt(read(values[index++]));
-    dataSegments.clear();
-    for (int i = 0; i < size; ++i)
-      dataSegments.add(null);
+    if (version < 13) {
+      // OLD: READ DATA-SEGMENTS
+      size = Integer.parseInt(read(values[index++]));
 
-    int dataId;
-    String dataName;
-    OStorageDataConfiguration data;
-    for (int i = 0; i < size; ++i) {
-      dataId = Integer.parseInt(read(values[index++]));
-      if (dataId == -1)
-        continue;
-      dataName = read(values[index++]);
+      for (int i = 0; i < size; ++i) {
+        int dataId = Integer.parseInt(read(values[index++]));
+        if (dataId == -1)
+          continue;
+        read(values[index++]);
+        read(values[index++]);
+        read(values[index++]);
+        read(values[index++]);
+      }
 
-      data = new OStorageDataConfiguration(this, dataName, dataId);
-      index = phySegmentFromStream(values, index, data);
-      data.holeFile = new OStorageDataHoleConfiguration(data, read(values[index++]), read(values[index++]), read(values[index++]));
-      dataSegments.set(dataId, data);
+      // READ TX_SEGMENT STUFF
+      read(values[index++]);
+      read(values[index++]);
+      read(values[index++]);
+      read(values[index++]);
+      read(values[index++]);
     }
-
-    txSegment = new OStorageTxConfiguration(read(values[index++]), read(values[index++]), read(values[index++]),
-        read(values[index++]), read(values[index++]));
 
     size = Integer.parseInt(read(values[index++]));
     properties.clear();
@@ -390,21 +378,7 @@ public class OStorageConfiguration implements OSerializableStream {
       write(buffer, c.getName());
       write(buffer, c.getDataSegmentId());
 
-      if (c instanceof OStoragePhysicalClusterConfigurationLocal) {
-        // PHYSICAL
-        write(buffer, "p");
-        phySegmentToStream(buffer, (OStoragePhysicalClusterConfigurationLocal) c);
-
-        OStorageFileConfiguration holeFile = ((OStoragePhysicalClusterConfigurationLocal) c).getHoleFile();
-        if (holeFile == null)
-          write(buffer, "e");
-        else
-          write(buffer, "f");
-
-        if (holeFile != null)
-          fileToStream(buffer, holeFile);
-
-      } else if (c instanceof OStoragePaginatedClusterConfiguration) {
+      if (c instanceof OStoragePaginatedClusterConfiguration) {
         write(buffer, "d");
 
         final OStoragePaginatedClusterConfiguration paginatedClusterConfiguration = (OStoragePaginatedClusterConfiguration) c;
@@ -414,26 +388,9 @@ public class OStorageConfiguration implements OSerializableStream {
         write(buffer, paginatedClusterConfiguration.recordGrowFactor);
         write(buffer, paginatedClusterConfiguration.compression);
         write(buffer, paginatedClusterConfiguration.conflictStrategy);
+        write(buffer, paginatedClusterConfiguration.getStatus().name().toString());
       }
     }
-
-    write(buffer, dataSegments.size());
-    for (OStorageDataConfiguration d : dataSegments) {
-      if (d == null) {
-        write(buffer, -1);
-        continue;
-      }
-
-      write(buffer, d.id);
-      write(buffer, d.name);
-
-      phySegmentToStream(buffer, d);
-      fileToStream(buffer, d.holeFile);
-    }
-
-    fileToStream(buffer, txSegment);
-    write(buffer, txSegment.isSynchRecord());
-    write(buffer, txSegment.isSynchTx());
 
     write(buffer, properties.size());
     for (OStorageEntryConfiguration e : properties)
@@ -492,11 +449,11 @@ public class OStorageConfiguration implements OSerializableStream {
     }
   }
 
-  public void dropDataSegment(final int iId) {
-    if (iId < dataSegments.size()) {
-      dataSegments.set(iId, null);
-      update();
-    }
+  public void setClusterStatus(final int clusterId, final OStorageClusterConfiguration.STATUS iStatus) {
+    final OStorageClusterConfiguration clusterCfg = clusters.get(clusterId);
+    if (clusterCfg != null)
+      clusterCfg.setStatus(iStatus);
+    update();
   }
 
   public TimeZone getTimeZone() {
