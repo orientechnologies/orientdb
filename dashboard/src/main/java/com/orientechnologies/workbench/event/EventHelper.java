@@ -153,7 +153,7 @@ public class EventHelper {
 
   public static ODocument findOrCreateMailUserConfiguration(ODatabaseDocumentTx database) {
     String sql = "select from UserConfiguration where user.name = 'admin'";
-    OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(sql);
+    OSQLQuery<ORecordSchemaAware> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware>(sql);
     final List<ODocument> response = database.query(osqlQuery);
     ODocument configuration = null;
     ODocument userconfiguration = null;
@@ -176,7 +176,7 @@ public class EventHelper {
       configuration.field("@type", "d");
 
       sql = "select from OUser where name = 'admin'";
-      osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(sql);
+      osqlQuery = new OSQLSynchQuery<ORecordSchemaAware>(sql);
       final List<ODocument> users = database.query(osqlQuery);
       if (users.size() == 1) {
         userconfiguration = new ODocument("UserConfiguration");

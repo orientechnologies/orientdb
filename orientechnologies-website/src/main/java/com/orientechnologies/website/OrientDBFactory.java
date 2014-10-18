@@ -1,14 +1,13 @@
 package com.orientechnologies.website;
 
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import javax.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-
-import javax.annotation.PostConstruct;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
 @Component
 public class OrientDBFactory {

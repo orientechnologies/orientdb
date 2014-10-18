@@ -51,7 +51,7 @@ public class OServerCommandGetLoggedUserInfo extends OServerCommandAuthenticated
       if (iRequest.httpMethod.equals("GET")) {
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("user", session.getUserName());
-        final List<OIdentifiable> response = db.query(new OSQLSynchQuery<ORecordSchemaAware<?>>(
+        final List<OIdentifiable> response = db.query(new OSQLSynchQuery<ORecordSchemaAware>(
             "select from UserConfiguration where user.name = :user"), params);
         iResponse.writeRecords(response, "*:1");
       } else {
@@ -59,7 +59,7 @@ public class OServerCommandGetLoggedUserInfo extends OServerCommandAuthenticated
         ODocument doc = new ODocument().fromJSON(iRequest.content);
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("name", session.getUserName());
-        List<ODocument> users = db.query(new OSQLSynchQuery<ORecordSchemaAware<?>>("select from OUser where name = :name"), params);
+        List<ODocument> users = db.query(new OSQLSynchQuery<ORecordSchemaAware>("select from OUser where name = :name"), params);
         ODocument user = users.iterator().next();
         doc.field("user", user);
         doc.save();

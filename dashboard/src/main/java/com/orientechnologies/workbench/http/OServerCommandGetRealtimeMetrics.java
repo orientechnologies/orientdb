@@ -222,7 +222,7 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
     String licenseInvalid = OWorkbenchPlugin.STATUS.LICENSE_INVALID.toString();
     String licenseExpired = OWorkbenchPlugin.STATUS.LICENSE_EXPIRED.toString();
     if (!licenseInvalid.equals(status) && !licenseExpired.equals(status)) {
-      docs = db.query(new OSQLSynchQuery<ORecordSchemaAware<?>>(query), params);
+      docs = db.query(new OSQLSynchQuery<ORecordSchemaAware>(query), params);
     }
     Map<String, String> aggregation = buildAssociation(server, metricNames, dbs, nodes);
 

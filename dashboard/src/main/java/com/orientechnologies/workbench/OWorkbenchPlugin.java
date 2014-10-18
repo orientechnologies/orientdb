@@ -133,8 +133,6 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
   @Override
   public void startup() {
     setDb(new ODatabaseDocumentTx(dbName));
-    OGlobalConfiguration.CACHE_LEVEL1_ENABLED.setValue(false);
-    OGlobalConfiguration.CACHE_LEVEL2_ENABLED.setValue(false);
     if (getDb().exists())
       loadConfiguration();
     else

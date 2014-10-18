@@ -42,7 +42,7 @@ public final class OWorkbenchPurgeMetricLogHelper {
 			String osql = "select from Metric where snapshot.dateFrom <= :dateFrom order by snapshot.dateFrom";
 			final Map<String, Object> params = new HashMap<String, Object>();
 
-			OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(osql);
+			OSQLQuery<ORecordSchemaAware> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware>(osql);
 
 			Calendar calendar = Calendar.getInstance();
 			calendar.add(Calendar.HOUR, -hour);
@@ -67,7 +67,7 @@ public final class OWorkbenchPurgeMetricLogHelper {
 			String osql = "select from Log where date <= :dateFrom";
 			final Map<String, Object> params = new HashMap<String, Object>();
 
-			OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(osql);
+			OSQLQuery<ORecordSchemaAware> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware>(osql);
 
 			Calendar calendar = Calendar.getInstance();
 			calendar.add(Calendar.HOUR, -hour);
@@ -103,7 +103,7 @@ public final class OWorkbenchPurgeMetricLogHelper {
 			params.put("server", server);
 		}
 		osql+= " order by snapshot.dateFrom";
-		OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(osql);
+		OSQLQuery<ORecordSchemaAware> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware>(osql);
 
 		List<ODocument> metrics = db.query(osqlQuery, params);
 
@@ -136,7 +136,7 @@ public final class OWorkbenchPurgeMetricLogHelper {
 			osql += " where server = :server";
 		}
 		params.put("server", server);
-		OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(osql);
+		OSQLQuery<ORecordSchemaAware> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware>(osql);
 
 		List<ODocument> logs = db.query(osqlQuery, params);
 
@@ -151,14 +151,14 @@ public final class OWorkbenchPurgeMetricLogHelper {
 			osql += " where server = :server";
 		}
 		params.put("server", server);
-		OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(osql);
+		OSQLQuery<ORecordSchemaAware> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware>(osql);
 		List<ODocument> logs = db.query(osqlQuery, params);
 
 		for (ODocument oDocument : new ArrayList<ODocument>(logs)) {
 			osql = "select from UserConfiguration where metrics contains(:metric)";
 			params.clear();
 			params.put("metric", oDocument);
-			osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(osql);
+			osqlQuery = new OSQLSynchQuery<ORecordSchemaAware>(osql);
 			List<ODocument> usr = db.query(osqlQuery, params);
 			for (ODocument oDocument2 : usr) {
 				List<ODocument> metrics = oDocument2.field("metrics");

@@ -26,14 +26,7 @@ public class Application extends WebMvcConfigurerAdapter {
 
   public static void main(final String[] args) throws Exception {
 
-    ApplicationContext context = SpringApplication.run(Application.class, args);
-    OServer server = OServerMain.create();
-
-    server.startup(Thread.currentThread().getContextClassLoader().getResourceAsStream("orientdb-server-config.xml"));
-    server.activate();
-    ODatabaseDocumentTx tx = Orient.instance().getDatabaseFactory().createDatabase("graph", "plocal:databases/odbsite");
-
-    OSiteSchema.createSchema(tx);
+    SpringApplication.run(Application.class, args);
 
   }
 

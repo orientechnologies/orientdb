@@ -42,7 +42,7 @@ public final class OWorkbenchPurgeTask extends TimerTask {
 
 			String osql = "select from UserConfiguration where user.name = 'admin' ";
 
-			OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(
+			OSQLQuery<ORecordSchemaAware> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware>(
 					osql);
 
 			final List<ODocument> response = this.handler.getDb().query(

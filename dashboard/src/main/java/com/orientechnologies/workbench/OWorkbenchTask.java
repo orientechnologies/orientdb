@@ -218,7 +218,7 @@ public final class OWorkbenchTask extends TimerTask {
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("name", key);
         String query = "Select * from Dictionary where name = :name";
-        List<ODocument> docs = handler.getDb().query(new OSQLSynchQuery<ORecordSchemaAware<?>>(query), params);
+        List<ODocument> docs = handler.getDb().query(new OSQLSynchQuery<ORecordSchemaAware>(query), params);
         ODocument doc = null;
         if (docs.size() > 0) {
           doc = docs.iterator().next();

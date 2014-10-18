@@ -32,7 +32,7 @@ public class OWorkbenchMessageTask extends TimerTask {
 
     String osql = "select from UserConfiguration where user.name = 'admin' ";
 
-    OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(osql);
+    OSQLQuery<ORecordSchemaAware> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware>(osql);
 
     int cId = -1;
     int i = 0;
@@ -114,7 +114,7 @@ public class OWorkbenchMessageTask extends TimerTask {
             params.put("message", text);
             params.put("date", date);
             List<ODocument> resultSet = handler.getDb().query(
-                new OSQLSynchQuery<ORecordSchemaAware<?>>("select from Message where message = :message and date = :date"), params);
+                new OSQLSynchQuery<ORecordSchemaAware>("select from Message where message = :message and date = :date"), params);
             if (resultSet.isEmpty()) {
               ODocument saved = new ODocument("Message");
               saved.field("message", text);

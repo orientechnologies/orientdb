@@ -23,7 +23,7 @@ public class OWorkbenchHazelcastTask extends TimerTask {
   public void run() {
     OLogManager.instance().info(this, "WORKBENCH looking for hazelcast cluster...");
     String osql = "select from Cluster ";
-    OSQLQuery<ORecordSchemaAware<?>> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware<?>>(osql);
+    OSQLQuery<ORecordSchemaAware> osqlQuery = new OSQLSynchQuery<ORecordSchemaAware>(osql);
     final List<ODocument> response = this.handler.getDb().query(osqlQuery);
     for (ODocument cluster : response) {
       String clusterName = cluster.field("name");
