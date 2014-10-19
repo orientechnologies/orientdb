@@ -30,7 +30,7 @@ import java.io.IOException;
 public interface OCluster {
 
   public static enum ATTRIBUTES {
-    NAME, USE_WAL, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, COMPRESSION, CONFLICTSTRATEGY
+    NAME, USE_WAL, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, COMPRESSION, CONFLICTSTRATEGY, STATUS
   }
 
   public void configure(OStorage iStorage, int iId, String iClusterName, Object... iParameters) throws IOException;
@@ -49,7 +49,7 @@ public interface OCluster {
 
   public OModificationLock getExternalModificationLock();
 
-  public void set(ATTRIBUTES iAttribute, Object iValue) throws IOException;
+  public Object set(ATTRIBUTES iAttribute, Object iValue) throws IOException;
 
   public void convertToTombstone(OClusterPosition iPosition) throws IOException;
 

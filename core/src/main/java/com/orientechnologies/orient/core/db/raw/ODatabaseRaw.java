@@ -53,6 +53,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 import java.io.IOException;
@@ -287,6 +288,8 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     try {
       return storage.readRecord(iRid, iFetchPlan, iIgnoreCache, null, loadTombstones, iLockingStrategy);
 
+    } catch (OOfflineClusterException t) {
+      throw t;
     } catch (Throwable t) {
       if (iRid.isTemporary())
         throw new ODatabaseException("Error on retrieving record using temporary RecordId: " + iRid, t);

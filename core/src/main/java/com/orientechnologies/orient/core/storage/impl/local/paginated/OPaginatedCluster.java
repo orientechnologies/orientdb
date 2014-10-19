@@ -108,7 +108,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
-  public void configure(OStorage storage, int id, String clusterName, Object... parameters) throws IOException {
+  public void configure(final OStorage storage, final int id, final String clusterName, final Object... parameters) throws IOException {
     externalModificationLock.requestModificationLock();
     try {
       acquireExclusiveLock();
@@ -116,7 +116,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         final OContextConfiguration ctxCfg = storage.getConfiguration().getContextConfiguration();
         final String cfgCompression = ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD);
 
-        config = new OStoragePaginatedClusterConfiguration(storage.getConfiguration(), id, clusterName, null, true, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, cfgCompression, null);
+        config = new OStoragePaginatedClusterConfiguration(storage.getConfiguration(), id, clusterName, null, true, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, OStoragePaginatedClusterConfiguration.DEFAULT_GROW_FACTOR, cfgCompression, null, OStorageClusterConfiguration.STATUS.ONLINE);
         config.name = clusterName;
 
         init((OAbstractPaginatedStorage) storage, config);
@@ -242,7 +242,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
-  public void set(OCluster.ATTRIBUTES attribute, Object value) throws IOException {
+  public Object set(OCluster.ATTRIBUTES attribute, Object value) throws IOException {
     if (attribute == null)
       throw new IllegalArgumentException("attribute is null");
 
@@ -275,6 +275,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
         case CONFLICTSTRATEGY:
           setRecordConflictStrategy(stringValue);
           break;
+        case STATUS: {
+          return storageLocal.setClusterStatus(id, OStorageClusterConfiguration.STATUS.valueOf(stringValue.toUpperCase()));
+        }
         default:
           throw new IllegalArgumentException("Runtime change of attribute '" + attribute + " is not supported");
         }
@@ -285,6 +288,8 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     } finally {
       externalModificationLock.releaseModificationLock();
     }
+
+    return null;
   }
 
   @Override

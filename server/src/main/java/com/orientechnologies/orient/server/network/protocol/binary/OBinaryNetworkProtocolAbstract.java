@@ -19,51 +19,52 @@
     */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
-import java.io.IOException;
- import java.net.Socket;
- import java.util.logging.Level;
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabase.STATUS;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
+import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OSerializationException;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
+import com.orientechnologies.orient.enterprise.channel.OChannel;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
+import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.network.OServerNetworkListener;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
- import com.orientechnologies.common.exception.OException;
- import com.orientechnologies.common.log.OLogManager;
- import com.orientechnologies.orient.core.Orient;
- import com.orientechnologies.orient.core.config.OContextConfiguration;
- import com.orientechnologies.orient.core.config.OGlobalConfiguration;
- import com.orientechnologies.orient.core.db.ODatabase.STATUS;
- import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
- import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
- import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
- import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
- import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
- import com.orientechnologies.orient.core.db.record.OIdentifiable;
- import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
- import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
- import com.orientechnologies.orient.core.exception.ODatabaseException;
- import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
- import com.orientechnologies.orient.core.exception.OSerializationException;
- import com.orientechnologies.orient.core.id.ORID;
- import com.orientechnologies.orient.core.id.ORecordId;
- import com.orientechnologies.orient.core.metadata.security.ORole;
- import com.orientechnologies.orient.core.metadata.security.OUser;
- import com.orientechnologies.orient.core.record.ORecord;
- import com.orientechnologies.orient.core.record.ORecordInternal;
- import com.orientechnologies.orient.core.record.impl.ODocument;
- import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
- import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
- import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
- import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
- import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
- import com.orientechnologies.orient.core.storage.OStorage;
- import com.orientechnologies.orient.core.storage.OStorageProxy;
- import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
- import com.orientechnologies.orient.core.version.ORecordVersion;
- import com.orientechnologies.orient.core.version.OVersionFactory;
- import com.orientechnologies.orient.enterprise.channel.OChannel;
- import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
- import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
- import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
- import com.orientechnologies.orient.server.OServer;
- import com.orientechnologies.orient.server.network.OServerNetworkListener;
- import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
+import java.io.IOException;
+import java.net.Socket;
+import java.util.logging.Level;
 
 /**
   * Abstract base class for binary network implementations.
@@ -279,6 +280,8 @@ import java.io.IOException;
 
        iDatabase.delete(rid, version);
        return 1;
+     } catch (OOfflineClusterException e) {
+       throw e;
      } catch (Exception e) {
        return 0;
      }
