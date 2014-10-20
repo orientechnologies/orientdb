@@ -225,6 +225,24 @@ public class OSiteSchema {
       public OType getType() {
         return OType.STRING;
       }
+    },
+    USERNAME("username") {
+      @Override
+      public OType getType() {
+        return OType.STRING;
+      }
+    },
+    TOKEN("token") {
+      @Override
+      public OType getType() {
+        return OType.STRING;
+      }
+    },
+    EMAIL("email") {
+      @Override
+      public OType getType() {
+        return OType.STRING;
+      }
     };
     private final String description;
 
