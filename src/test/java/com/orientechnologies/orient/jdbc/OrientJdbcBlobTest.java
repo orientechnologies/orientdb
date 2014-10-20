@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class OrientJdbcBlobTest extends OrientJdbcBaseTest {
+  private static final String TEST_WORKING_DIR = "./target/working/";
 
   @Test
   public void shouldLoadBlob() throws SQLException, FileNotFoundException, IOException, NoSuchAlgorithmException {
@@ -84,6 +85,27 @@ public class OrientJdbcBlobTest extends OrientJdbcBaseTest {
 
   }
 
+  protected void createWorkingDirIfRequired() {
+    new File(TEST_WORKING_DIR).mkdirs();
+  }
+
+  protected File getOutFile() {
+    File binaryFile = new File("./target/working/output_blob.pdf");
+
+    createWorkingDirIfRequired();
+    File outFile = new File(TEST_WORKING_DIR + "output_blob.pdf");
+    deleteFileIfItExists(outFile);
+    return outFile;
+  }
+
+  protected void deleteFileIfItExists(File file) {
+    if (file.exists()) {
+      do {
+        file.delete();
+      } while (file.exists());
+    }
+  }
+
   private void verifyMD5checksum(File fileToBeChecked, String digest) {
     try {
       assertEquals("The MD5 checksum of the file '" + fileToBeChecked.getAbsolutePath() + "' does not match the given one.",
@@ -111,16 +133,5 @@ public class OrientJdbcBlobTest extends OrientJdbcBaseTest {
       }
     }
     return new BigInteger(1, md.digest()).toString(16);
-  }
-
-  protected File getOutFile() {
-    File binaryFile = new File("./target/working/output_blob.pdf");
-    if (binaryFile.exists()) {
-      do {
-        binaryFile.delete();
-      } while (binaryFile.exists());
-    } else
-      binaryFile.getParentFile().mkdirs();
-    return binaryFile;
   }
 }
