@@ -684,7 +684,7 @@ public class OStorageMemory extends OStorageEmbedded {
     try {
       // This should be a tree set to guaranty the order.
       for (ORecordOperation txEntry : iTx.getCurrentRecordEntries()) {
-        DirtyFinder.findDirties(txEntry.getRecord(), allToLock);
+        allToLock.add(txEntry.getRecord());
       }
       for (ORecord<?> oRecord : allToLock) {
         if (!oRecord.getIdentity().isNew())

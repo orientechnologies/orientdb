@@ -1069,7 +1069,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     try {
       // This should be a tree set to guaranty the order.
       for (ORecordOperation txEntry : clientTx.getCurrentRecordEntries()) {
-        DirtyFinder.findDirties(txEntry.getRecord(), allToLock);
+        allToLock.add(txEntry.getRecord());
       }
       for (ORecord<?> oRecord : allToLock) {
         if (!oRecord.getIdentity().isNew())
