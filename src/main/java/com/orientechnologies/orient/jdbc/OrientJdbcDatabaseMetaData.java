@@ -17,18 +17,6 @@
  */
 package com.orientechnologies.orient.jdbc;
 
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
-import java.sql.RowIdLifetime;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -40,6 +28,18 @@ import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
+import java.sql.RowIdLifetime;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Roberto Franchini (CELI srl - franchini--at--celi.it)
@@ -619,8 +619,8 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       String type;
       if (SYSTEM_TABLES.contains(cls.getName()))
         type = "SYSTEM TABLE";
-      else if ("memory".equals(database.getClusterType(database.getClusterNameById(cls.getDefaultClusterId()))))
-        type = "VIEW";
+//      else if ("memory".equals(database.getClusterType(database.getClusterNameById(cls.getDefaultClusterId()))))
+//        type = "VIEW";
       else
         type = "TABLE";
 

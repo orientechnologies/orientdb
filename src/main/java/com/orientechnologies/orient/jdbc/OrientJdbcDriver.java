@@ -26,8 +26,8 @@ import java.util.logging.Logger;
 
 public class OrientJdbcDriver implements java.sql.Driver {
 
-  public static final int MAJOR_VERSION = 1;
-  public static final int MINOR_VERSION = 7;
+  public static final int MAJOR_VERSION = 2;
+  public static final int MINOR_VERSION = 0;
 
   static {
     try {

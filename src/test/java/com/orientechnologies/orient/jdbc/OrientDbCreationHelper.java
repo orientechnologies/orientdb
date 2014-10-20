@@ -1,5 +1,16 @@
 package com.orientechnologies.orient.jdbc;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -9,17 +20,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 public class OrientDbCreationHelper {
 
@@ -150,14 +150,14 @@ public class OrientDbCreationHelper {
 		return article;
 	}
 
-	private static ORecordBytes loadFile(ODatabaseRecord database, String filePath) throws IOException {
+	private static ORecordBytes loadFile(ODatabaseRecordInternal database, String filePath) throws IOException {
 		BufferedInputStream inputStream = new BufferedInputStream(new FileInputStream(new File(filePath)));
 		ORecordBytes record = new ORecordBytes(database);
 		record.fromInputStream(inputStream);
 		return record;
 	}
 
-	private static List<ORID> loadFile(ODatabaseRecord database, String filePath, int bufferSize) throws IOException {
+	private static List<ORID> loadFile(ODatabaseRecordInternal database, String filePath, int bufferSize) throws IOException {
 		File binaryFile = new File(filePath);
 		long binaryFileLength = binaryFile.length();
 		int numberOfRecords = (int) (binaryFileLength / bufferSize);
