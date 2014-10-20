@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
+import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -324,14 +325,14 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
     ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
     if (hasNewItems()) {
       if (super.size() == 0)
-        return new OLazyRecordIterator(new HashSet<OIdentifiable>(newEntries.keySet()), iAutoConvertToRecord);
+        return new OLazyRecordIterator(new HashSet<OIdentifiable>(newEntries.keySet()), iAutoConvertToRecord && getOwner().getInternalStatus() != STATUS.MARSHALLING);
 
       // MIX PERSISTENT AND NEW TOGETHER
       return new OLazyRecordMultiIterator(null, new Object[] { keySet(), new HashSet<OIdentifiable>(newEntries.keySet()) },
           iAutoConvertToRecord);
     }
 
-    return new OLazyRecordIterator(keySet().iterator(), iAutoConvertToRecord);
+    return new OLazyRecordIterator(keySet().iterator(), iAutoConvertToRecord && getOwner().getInternalStatus() != STATUS.MARSHALLING);
   }
 
   @Override
