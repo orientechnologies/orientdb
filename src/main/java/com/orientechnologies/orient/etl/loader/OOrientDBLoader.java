@@ -256,7 +256,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         factory.drop();
       }
 
-      final OrientBaseGraph graphDatabase = factory.setTransactional(tx).get();
+      final OrientBaseGraph graphDatabase = tx ? factory.getTx() : factory.getNoTx();
       graphDatabase.shutdown();
       break;
     }
@@ -268,7 +268,6 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       OGlobalConfiguration.USE_WAL.setValue(wal);
 
     ODatabaseDocumentTx documentDatabase = init();
-    final OrientBaseGraph graphDatabase;
 
     if (documentDatabase == null) {
       switch (dbType) {
@@ -279,7 +278,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
 
       case GRAPH:
         final OrientGraphFactory factory = new OrientGraphFactory(dbURL);
-        graphDatabase = factory.setTransactional(false).get();
+        final OrientBaseGraph graphDatabase = tx ? factory.getTx() : factory.getNoTx();
         documentDatabase = graphDatabase.getRawGraph();
 
         pipeline.setGraphDatabase(graphDatabase);
