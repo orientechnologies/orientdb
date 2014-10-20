@@ -113,6 +113,16 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     readDatabaseConfiguration();
   }
 
+	public OrientBaseGraph(final ODatabaseDocumentPool pool, final Settings iConfiguration) {
+		this.pool = pool;
+
+		database = pool.acquire();
+		this.username = database.getUser() != null ? database.getUser().getName() : null;
+
+		readDatabaseConfiguration();
+		configure(iConfiguration);
+	}
+
   public OrientBaseGraph(final String url) {
     this(url, ADMIN, ADMIN);
   }

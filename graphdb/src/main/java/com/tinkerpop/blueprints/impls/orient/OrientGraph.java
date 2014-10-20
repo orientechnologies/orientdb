@@ -124,6 +124,10 @@ public class OrientGraph extends OrientTransactionalGraph {
     super(pool);
   }
 
+	public OrientGraph(final ODatabaseDocumentPool pool, final Settings configuration) {
+		super(pool, configuration);
+	}
+
   /**
    * Builds a OrientGraph instance passing a configuration. Supported configuration settings are:
    * <table>

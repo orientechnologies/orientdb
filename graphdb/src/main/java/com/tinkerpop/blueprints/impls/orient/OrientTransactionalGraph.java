@@ -74,6 +74,13 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     begin();
   }
 
+	protected OrientTransactionalGraph(final ODatabaseDocumentPool pool, final Settings configuration) {
+		super(pool, configuration);
+		setCurrentGraphInThreadLocal();
+
+		begin();
+	}
+
   protected OrientTransactionalGraph(final String url) {
     this(url, true);
   }
