@@ -18,16 +18,7 @@ package com.orientechnologies.orient.client.remote;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -40,7 +31,6 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 
-import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -64,7 +54,6 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
@@ -1521,9 +1510,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return OSBTreeCollectionManagerRemote.class;
   }
 
+  public OEngineRemote getEngine() {
+    return engine;
+  }
+
   /**
    * Handles exceptions. In case of IO errors retries to reconnect until the configured retry times has reached.
-   * 
+   *
    * @param message
    *          the detail message
    * @param exception
@@ -1723,23 +1716,27 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
    * Parse the URLs. Multiple URLs must be separated by semicolon (;)
    */
   protected void parseServerURLs() {
+    String lastHost = null;
     int dbPos = url.indexOf('/');
     if (dbPos == -1) {
       // SHORT FORM
       addHost(url);
+      lastHost = url;
       name = url;
     } else {
       name = url.substring(url.lastIndexOf("/") + 1);
-      for (String host : url.substring(0, dbPos).split(ADDRESS_SEPARATOR))
+      for (String host : url.substring(0, dbPos).split(ADDRESS_SEPARATOR)) {
+        lastHost = host;
         addHost(host);
+      }
     }
 
     if (serverURLs.size() == 1 && OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_ENABLED.getValueAsBoolean()) {
       // LOOK FOR LOAD BALANCING DNS TXT RECORD
-      final String primaryServer = serverURLs.get(0);
+      final String primaryServer = lastHost;
 
       OLogManager.instance().debug(this, "Retrieving URLs from DNS '%s' (timeout=%d)...", primaryServer,
-                                    OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT.getValueAsInteger());
+          OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT.getValueAsInteger());
 
       try {
         final Hashtable<String, String> env = new Hashtable<String, String>();
@@ -1752,15 +1749,17 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         final Attributes attrs = ictx.getAttributes(hostName, new String[] { "TXT" });
         final Attribute attr = attrs.get("TXT");
         if (attr != null) {
-          String configuration = (String) attr.get();
-          if (configuration.startsWith(""))
-            configuration = configuration.substring(1, configuration.length() - 1);
-          if (configuration != null) {
-            serverURLs.clear();
-            final String[] parts = configuration.split(" ");
-            for (String part : parts) {
-              if (part.startsWith("s=")) {
-                addHost(part.substring("s=".length()));
+          for (int i = 0; i < attr.size(); ++i) {
+            String configuration = (String) attr.get(i);
+            if (configuration.startsWith("\""))
+              configuration = configuration.substring(1, configuration.length() - 1);
+            if (configuration != null) {
+              serverURLs.clear();
+              final String[] parts = configuration.split(" ");
+              for (String part : parts) {
+                if (part.startsWith("s=")) {
+                  addHost(part.substring("s=".length()));
+                }
               }
             }
           }
@@ -1802,7 +1801,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   /**
    * Acquire a network channel from the pool. Don't lock the write stream since the connection usage is exclusive.
-   * 
+   *
    * @param iCommand
    *          id. Ids described at {@link OChannelBinaryProtocol}
    * @return connection to server
@@ -2085,10 +2084,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       }
     }
     return false;
-  }
-
-  public OEngineRemote getEngine() {
-    return engine;
   }
 
 }
