@@ -142,8 +142,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
   private final OPaginatedStorageDirtyFlag      dirtyFlag;
 
-  private ScheduledExecutorService              fuzzyCheckpointExecutor;
-  private ExecutorService                       checkpointExecutor;
+  private volatile ExecutorService              checkpointExecutor;
 
   private volatile boolean                      wereDataRestoredAfterOpen            = false;
 
@@ -316,7 +315,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       dirtyFlag.makeDirty();
       if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE.getValueAsBoolean())
-        makeFullCheckpoint();
+        scheduleFullCheckpoint();
 
     } catch (OStorageException e) {
       close();
@@ -1341,31 +1340,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     modificationLock.allowModifications();
   }
 
-  public void makeFuzzyCheckpoint() {
-    // if (writeAheadLog == null)
-    // return;
-    //
-    // try {
-    // lock.acquireExclusiveLock();
-    // try {
-    // writeAheadLog.flush();
-    //
-    // writeAheadLog.logFuzzyCheckPointStart();
-    //
-    // diskCache.forceSyncStoredChanges();
-    // diskCache.logDirtyPagesTable();
-    //
-    // writeAheadLog.logFuzzyCheckPointEnd();
-    //
-    // writeAheadLog.flush();
-    // } finally {
-    // lock.releaseExclusiveLock();
-    // }
-    // } catch (IOException ioe) {
-    // throw new OStorageException("Error during fuzzy checkpoint creation for storage " + name, ioe);
-    // }
-  }
-
   public void makeFullCheckpoint() {
     if (writeAheadLog == null)
       return;
@@ -1399,8 +1373,10 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
   }
 
   public void scheduleFullCheckpoint() {
-    if (checkpointExecutor != null)
-      checkpointExecutor.execute(new Runnable() {
+    final ExecutorService executor = checkpointExecutor;
+
+    if (executor != null)
+      executor.execute(new Runnable() {
         @Override
         public void run() {
           try {
@@ -1551,15 +1527,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
   private void initWal() throws IOException {
     if (OGlobalConfiguration.USE_WAL.getValueAsBoolean()) {
-      fuzzyCheckpointExecutor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
-        @Override
-        public Thread newThread(Runnable r) {
-          Thread thread = new Thread(r);
-          thread.setDaemon(true);
-          return thread;
-        }
-      });
-
       checkpointExecutor = Executors.newSingleThreadExecutor(new ThreadFactory() {
         @Override
         public Thread newThread(Runnable r) {
@@ -1570,19 +1537,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       });
 
       writeAheadLog = new OWriteAheadLog(this);
-
-      final int fuzzyCheckpointDelay = OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger();
-      fuzzyCheckpointExecutor.scheduleWithFixedDelay(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            makeFuzzyCheckpoint();
-          } catch (Throwable e) {
-            OLogManager.instance().error(this, "Error during background FUZZY checkpoint creation for storage " + name, e);
-          }
-
-        }
-      }, fuzzyCheckpointDelay, fuzzyCheckpointDelay, TimeUnit.SECONDS);
     } else
       writeAheadLog = null;
 
@@ -1975,11 +1929,6 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
         makeFullCheckpoint();
 
       if (writeAheadLog != null) {
-        fuzzyCheckpointExecutor.shutdown();
-        if (!fuzzyCheckpointExecutor.awaitTermination(
-            OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_SHUTDOWN_TIMEOUT.getValueAsInteger(), TimeUnit.SECONDS))
-          throw new OStorageException("Can not terminate fuzzy checkpoint task");
-
         checkpointExecutor.shutdown();
         if (!checkpointExecutor.awaitTermination(OGlobalConfiguration.WAL_FULL_CHECKPOINT_SHUTDOWN_TIMEOUT.getValueAsInteger(),
             TimeUnit.SECONDS))
@@ -2070,7 +2019,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       if (!cluster.exists()) {
         cluster.create(-1);
         if (makeFullCheckPointAfterClusterCreate && fullCheckPoint)
-          makeFullCheckpoint();
+          scheduleFullCheckpoint();
       } else {
         cluster.open();
       }
