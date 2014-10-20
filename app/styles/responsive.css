@@ -2,6 +2,10 @@
     .hide-user {
         display: none;
     }
+
+    .ologin .btn-group a:first-child i:after {
+        content: " New DB";
+    }
 }
 
 @media (max-width: 798px) {
@@ -11,6 +15,10 @@
 
     .hide-settings {
         display: none;
+    }
+
+    .ologin .form-group:first-child div.col-md-5 {
+        padding-bottom: 10px;
     }
 
 }
@@ -38,8 +46,6 @@
         display: none;
     }
 }
-
-
 
 @media (min-width: 768px) and (max-width: 959px) {
     .navbar-user .username {

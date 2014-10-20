@@ -41,7 +41,13 @@ body {
     background-size: cover;
 }
 
+.ologin .btn-group a {
+    margin-left: 5px !important;
+}
 .ologin {
+
+    padding-left: 25px;
+    padding-right: 25px;
     margin-top: 100px;
     border-color: #c5c5c5 #c5c5c5 #c5c5c5;
     box-shadow: 0px 0px 1px 1px #929292;
@@ -232,7 +238,6 @@ body div.container-studio {
     color: white;
 }
 
-
 .oaside {
     background-color: #30333a;
     /*background-color: #222326;*/
@@ -249,10 +254,12 @@ body div.container-studio {
     transform: translateX(-100%);
     -ms-transform: translateX(-100%);
 }
+
 .oaside-fullscreen {
     z-index: 1053;
     padding-top: 0px;
 }
+
 .oaside .close {
     color: white;
     opacity: .8;

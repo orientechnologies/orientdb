@@ -1,55 +1,54 @@
 <div class="row">
-    <div class="col-md-5">
+    <div class="col-md-7 col-sm-7 col-lg-6">
         <div class="jumbotron ologin">
             <form id="signin" name="loginForm" ng-submit="connect()" class="form-horizontal" novalidate>
                 <fieldset>
                     <div class="form-group">
-                        <label class="control-label col-md-2 col-xs-2">Database</label>
+                        <label class="control-label col-md-2 col-sm-2">Database</label>
 
-                        <div class="col-md-6 col-xs-6">
+                        <div class="col-md-5 col-sm-5">
                             <select ng-model="database" class="form-control" required
                                     ng-options="i for i in databases">
                             </select>
                         </div>
-                        <div class="col-md-2 col-xs-2">
-                            <a class="btn btn-warning btn-sm" ng-click="createNew()"
-                               data-title="{{ 'login.newDb' | translate }}"
-                               data-animation="am-fade-and-scale" data-container="body"
-                               bs-tooltip> New DB
-                            </a>
+                        <div class="col-md-5 col-sm-5">
+                            <div class="btn-group pull-right">
+                                <a class="btn btn-warning btn-sm btn" ng-click="createNew()"
+                                   data-title="{{ 'login.newDb' | translate }}"
+                                   data-animation="am-fade-and-scale" data-container="body"
+                                   bs-tooltip>
+                                    <i class="fa fa-plus-circle"></i>
 
-                        </div>
-                        <div class="col-md-1 col-xs-1">
-                            <a class="btn btn-warning btn-sm" ng-click="importPublic()"
-                               data-title="{{ 'login.importDb' | translate }}"
-                               data-animation="am-fade-and-scale" data-container="body"
-                               bs-tooltip> <i
-                                    class="fa fa-cloud-download"></i>
-                            </a>
-                        </div>
-                        <div class="col-md-1 col-xs-1">
-                            <a class="btn btn-danger btn-sm" ng-click="deleteDb()"
-                               data-title="{{ 'login.deleteDb' | translate }}"
-                               data-animation="am-fade-and-scale" data-container="body"
-                               bs-tooltip>
-                                <i class="fa fa-trash-o">
+                                </a>
 
-                                </i>
-                            </a>
+                                <a class="btn btn-warning btn-sm" ng-click="importPublic()"
+                                   data-title="{{ 'login.importDb' | translate }}"
+                                   data-animation="am-fade-and-scale" data-container="body"
+                                   bs-tooltip> <i
+                                        class="fa fa-cloud-download"></i>
+                                </a>
+                                <a class="btn btn-danger btn-sm" ng-click="deleteDb()"
+                                   data-title="{{ 'login.deleteDb' | translate }}"
+                                   data-animation="am-fade-and-scale" data-container="body"
+                                   bs-tooltip>
+                                    <i class="fa fa-trash-o">
+                                    </i>
+                                </a>
+                            </div>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="control-label col-md-2 col-xs-2">User</label>
+                        <label class="control-label col-md-2 col-sm-2">User</label>
 
-                        <div class="col-md-10 col-xs-10">
+                        <div class="col-md-10 col-sm-10">
                             <input id="user" type="text" class="form-control" required ng-model="username"
                                    autofill="autofill" value=""/>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label class="control-label col-md-2 col-xs-2">Password</label>
+                        <label class="control-label col-md-2 col-sm-2">Password</label>
 
-                        <div class="controls col-md-10 col-xs-10">
+                        <div class="controls col-md-10 col-sm-10">
                             <input id="password" type="password" required class="form-control"
                                    ng-model="password"
                                    autofill="autofill"
@@ -57,10 +56,10 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <div class="col-md-2 col-xs-2">
+                        <div class="col-md-2 col-sm-2">
 
                         </div>
-                        <div class="col-md-2 col-xs-2">
+                        <div class="col-md-2 col-sm-2">
                             <a class="btn btn-trasparent" tabindex="1"
                                data-trigger="focus" data-placement="bottom"
                                data-container="body"
@@ -68,9 +67,9 @@
                                 <i class="fa fa-question-circle"></i>
                             </a>
                         </div>
-                        <div class="col-md-offset-6 col-md-2 col-xs-2 col-xs-offset-6">
+                        <div class=" col-md-8 col-sm-8 ">
                             <button type="submit"
-                                    class="btn btn-sm btn-warning"
+                                    class="btn btn-sm btn-warning pull-right"
                                     rel="tooltip" data-placement="right"
                                     data-title="{{ 'login.connectDb' | translate }}"
                                     data-animation="am-fade-and-scale" data-container="body"
@@ -88,5 +87,5 @@
             </div>
         </div>
     </div>
-    <div class="col-md-7"></div>
+    <div class="col-md-6"></div>
 </div>
