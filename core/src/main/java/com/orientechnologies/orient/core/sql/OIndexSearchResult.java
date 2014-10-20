@@ -64,11 +64,17 @@ public class OIndexSearchResult {
    * @return New instance that presents merged query.
    */
   public OIndexSearchResult merge(final OIndexSearchResult searchResult) {
+//    if (searchResult.lastOperator instanceof OQueryOperatorEquals) {
     if (searchResult.lastOperator instanceof OQueryOperatorEquals) {
       return mergeFields(this, searchResult);
-    } else {
+    }
+    if(lastOperator instanceof OQueryOperatorEquals){
       return mergeFields(searchResult, this);
     }
+    if (isIndexEqualityOperator(searchResult.lastOperator)) {
+      return mergeFields(this, searchResult);
+    }
+    return mergeFields(searchResult, this);
   }
 
   private OIndexSearchResult mergeFields(OIndexSearchResult mainSearchResult, OIndexSearchResult searchResult) {
