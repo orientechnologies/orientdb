@@ -1,9 +1,14 @@
 package com.orientechnologies.website.model.schema.dto;
 
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Collection;
+
 /**
  * Created by Enrico Risa on 20/10/14.
  */
-public class Developer {
+public class Developer implements UserDetails {
 
   private String id;
   private String login;
@@ -49,5 +54,40 @@ public class Developer {
 
   public void setId(String id) {
     this.id = id;
+  }
+
+  @Override
+  public Collection<? extends GrantedAuthority> getAuthorities() {
+    return null;
+  }
+
+  @Override
+  public String getPassword() {
+    return null;
+  }
+
+  @Override
+  public String getUsername() {
+    return getLogin();
+  }
+
+  @Override
+  public boolean isAccountNonExpired() {
+    return false;
+  }
+
+  @Override
+  public boolean isAccountNonLocked() {
+    return false;
+  }
+
+  @Override
+  public boolean isCredentialsNonExpired() {
+    return false;
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return false;
   }
 }

@@ -1,19 +1,30 @@
 package com.orientechnologies.website.services.impl;
 
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.website.OrientDBFactory;
-import com.orientechnologies.website.model.schema.OSiteSchema;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import java.io.IOException;
+
+import com.orientechnologies.website.model.schema.dto.Repository;
+import com.orientechnologies.website.services.RepositoryService;
+import org.kohsuke.github.GHOrganization;
+import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GitHub;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.exception.ServiceException;
+import com.orientechnologies.website.model.schema.OSiteSchema;
 import com.orientechnologies.website.model.schema.dto.Developer;
 import com.orientechnologies.website.model.schema.dto.Organization;
 import com.orientechnologies.website.repository.DeveloperRepository;
 import com.orientechnologies.website.repository.OrganizationRepository;
+import com.orientechnologies.website.security.DeveloperAuthentication;
 import com.orientechnologies.website.services.OrganizationService;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 /**
  * Created by Enrico Risa on 17/10/14.
@@ -30,6 +41,9 @@ public class OrganizationServiceImpl implements OrganizationService {
   @Autowired
   private DeveloperRepository    developerRepository;
 
+  @Autowired
+  private RepositoryService      repositoryService;
+
   @Override
   public void addMember(String org, String username) throws ServiceException {
 
@@ -44,6 +58,71 @@ public class OrganizationServiceImpl implements OrganizationService {
 
   }
 
+  @Override
+  public void registerOrganization(String name) throws ServiceException {
+
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    DeveloperAuthentication developerAuthentication = (DeveloperAuthentication) auth;
+
+    String token = developerAuthentication.getGithubToken();
+
+    if (token == null) {
+      throw ServiceException.create(HttpStatus.FORBIDDEN.value());
+    }
+
+    // TODO Check if the username is the owner of the repo. there is no clean way to do that now
+    // TODO see http://stackoverflow.com/questions/20144295/github-api-v3-determine-if-user-is-an-owner-of-an-organization
+
+    try {
+      GitHub github = GitHub.connectUsingOAuth(token);
+      GHOrganization organization = github.getOrganization(name);
+      Organization org = createOrganization(organization.getLogin(), organization.getName());
+      createMembership(org, developerAuthentication.getDeveloper());
+
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+  }
+
+  @Override
+  public Repository registerRepository(String org, String repo) {
+
+    Organization organization = organizationRepository.findOneByName(org);
+    if (organization != null) {
+
+      Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+      DeveloperAuthentication developerAuthentication = (DeveloperAuthentication) auth;
+      String token = developerAuthentication.getGithubToken();
+
+      try {
+        GitHub github = GitHub.connectUsingOAuth(token);
+        GHRepository repository = github.getRepository(org + '/' + repo);
+        Repository r = repositoryService.createRepo(repository.getName(), repository.getDescription());
+
+        createHasRepoRelationship(organization, r);
+        return r;
+      } catch (IOException e) {
+        e.printStackTrace();
+      } finally {
+
+      }
+
+      return null;
+    } else {
+      throw ServiceException.create(HttpStatus.NOT_FOUND.value()).withMessage("Organization not Found");
+    }
+  }
+
+  @Override
+  public Organization createOrganization(String name, String description) {
+
+    Organization org = new Organization();
+    org.setCodename(name);
+    org.setName(description);
+    return organizationRepository.save(org);
+  }
+
   private void createMembership(Organization organization, Developer developer) {
     OrientGraph graph = dbFactory.getGraph();
 
@@ -52,7 +131,14 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     orgVertex.addEdge(OSiteSchema.HasMember.class.getSimpleName(), devVertex);
 
-    graph.commit();
+  }
 
+  private void createHasRepoRelationship(Organization organization, Repository repository) {
+
+    OrientGraph graph = dbFactory.getGraph();
+
+    OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(organization.getId()));
+    OrientVertex devVertex = new OrientVertex(graph, new ORecordId(repository.getId()));
+    orgVertex.addEdge(OSiteSchema.HasRepo.class.getSimpleName(), devVertex);
   }
 }

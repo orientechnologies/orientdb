@@ -40,9 +40,10 @@ public class DeveloperServiceImpl implements DeveloperService {
       }
       developerRepository.save(developer);
 
-      for (Organization organization : self.organizations().iterate()) {
-        organizationService.addMember(organization.login(), self.login());
-      }
+      // do not subscribe directly to all organizations
+      // for (Organization organization : self.organizations().iterate()) {
+      // organizationService.addMember(organization.login(), self.login());
+      // }
 
     } catch (Exception e) {
 

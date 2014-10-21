@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import com.orientechnologies.website.configuration.ApiVersion;
 import com.orientechnologies.website.services.DeveloperService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -24,6 +25,8 @@ import com.orientechnologies.website.configuration.GitHubConfiguration;
  */
 @RestController
 @EnableAutoConfiguration
+@RequestMapping("github")
+@ApiVersion(1)
 public class GithubLoginController {
 
   @Autowired
@@ -32,7 +35,7 @@ public class GithubLoginController {
   @Autowired
   private DeveloperService    developerService;
 
-  @RequestMapping(value = "/github/login", method = RequestMethod.GET)
+  @RequestMapping(value = "/login", method = RequestMethod.GET)
   public RedirectView login() {
 
     String baseUrl = gitHubConfiguration.getLoginUrl() + "/authorize?";
@@ -43,7 +46,7 @@ public class GithubLoginController {
     return view;
   }
 
-  @RequestMapping(value = "/github/authorize", method = RequestMethod.GET, params = { "code" })
+  @RequestMapping(value = "/authorize", method = RequestMethod.GET, params = { "code" })
   public RedirectView authorize(@RequestParam("code") String code) {
 
     String locationUrl = gitHubConfiguration.getLoginUrl() + "/access_token?client_id=" + gitHubConfiguration.getClientId()
@@ -72,17 +75,7 @@ public class GithubLoginController {
     }
 
     RedirectView view = new RedirectView();
-    view.setUrl(locationUrl);
-    return view;
-  }
-
-  @RequestMapping(value = "/github/access_token", method = RequestMethod.GET, params = { "code" })
-  public RedirectView access(@RequestParam("code") String code) {
-
-    String locationUrl = gitHubConfiguration.getLoginUrl() + "?client_id=" + gitHubConfiguration.getClientId();
-    // httpServletResponse.setHeader("Location", locationUrl);
-    RedirectView view = new RedirectView();
-    view.setUrl(locationUrl);
+    view.setUrl("/");
     return view;
   }
 

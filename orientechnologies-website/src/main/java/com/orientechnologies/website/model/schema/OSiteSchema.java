@@ -160,6 +160,18 @@ public class OSiteSchema {
       public OType getType() {
         return OType.STRING;
       }
+    },
+    CODENAME("codename") {
+      @Override
+      public OType getType() {
+        return OType.STRING;
+      }
+    },
+    DESCRIPTION("description") {
+      @Override
+      public OType getType() {
+        return OType.STRING;
+      }
     };
     private final String description;
 

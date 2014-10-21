@@ -39,6 +39,20 @@ public class DeveloperRepositoryImpl extends OrientBaseRepository<Developer> imp
   }
 
   @Override
+  public Developer findByGithubToken(String token) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format("select from %s where token = '%s'", getEntityClass().getSimpleName(), token);
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+    try {
+      ODocument doc = vertices.iterator().next().getRecord();
+
+      return fromDoc(doc);
+    } catch (NoSuchElementException e) {
+      return null;
+    }
+  }
+
+  @Override
   public Class<Developer> getEntityClass() {
     return Developer.class;
   }

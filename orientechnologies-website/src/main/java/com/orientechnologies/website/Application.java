@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
@@ -18,7 +19,8 @@ import com.orientechnologies.website.model.schema.OSiteSchema;
 
 @Configuration
 @EnableAutoConfiguration
-@ComponentScan
+@ComponentScan(basePackages = "com.orientechnologies.website")
+@EnableWebMvc
 public class Application extends WebMvcConfigurerAdapter {
 
   @Autowired
@@ -32,7 +34,6 @@ public class Application extends WebMvcConfigurerAdapter {
 
   @Override
   public void addInterceptors(InterceptorRegistry registry) {
-    super.addInterceptors(registry);
     registry.addInterceptor(interceptor);
   }
 }

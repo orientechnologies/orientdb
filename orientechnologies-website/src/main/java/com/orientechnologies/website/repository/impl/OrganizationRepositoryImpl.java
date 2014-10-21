@@ -42,8 +42,8 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   public Organization save(Organization entity) {
 
     OrientGraph db = dbFactory.getGraph();
-    db.getRawGraph().save(toDoc(entity));
-    return entity;
+    ODocument doc = db.getRawGraph().save(toDoc(entity));
+    return fromDoc(doc);
   }
 
   @Override

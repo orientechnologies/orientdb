@@ -9,4 +9,5 @@ public interface DeveloperRepository extends BaseRepository<Developer> {
 
   public Developer findUserByLogin(String login);
 
+  public Developer findByGithubToken(String token);
 }

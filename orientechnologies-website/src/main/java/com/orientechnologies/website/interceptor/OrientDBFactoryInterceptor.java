@@ -21,6 +21,8 @@ public class OrientDBFactoryInterceptor extends HandlerInterceptorAdapter {
   @Override
   public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
     OrientGraph graph = factory.getGraph();
+
+    graph.begin();
     ODatabaseRecordThreadLocal.INSTANCE.set(graph.getRawGraph());
     return super.preHandle(request, response, handler);
   }
@@ -29,6 +31,8 @@ public class OrientDBFactoryInterceptor extends HandlerInterceptorAdapter {
   public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView)
       throws Exception {
 
+    OrientGraph graph = factory.getGraph();
+    graph.commit();
     factory.unsetDb();
     ODatabaseRecordThreadLocal.INSTANCE.set(null);
     super.postHandle(request, response, handler, modelAndView);
