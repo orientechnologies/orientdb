@@ -251,7 +251,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
 
     case GRAPH:
       final OrientGraphFactory factory = new OrientGraphFactory(dbURL);
-      if (factory.exists() && dbAutoDropIfExists) {
+      if (dbAutoDropIfExists && factory.exists()) {
         log(OETLProcessor.LOG_LEVELS.INFO, "Dropping existent database '%s'...", dbURL);
         factory.drop();
       }
