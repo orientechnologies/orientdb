@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.sql;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import java.util.List;
@@ -64,6 +65,18 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("insert into bar (name, foo) values ('m', 3)")).execute();
     db.command(new OCommandSQL("insert into bar (name, foo) values ('n', 4)")).execute();
     db.command(new OCommandSQL("insert into bar (name, foo) values ('o', 5)")).execute();
+
+    db.command(new OCommandSQL("CREATE class ridsorttest")).execute();
+    db.command(new OCommandSQL("CREATE property ridsorttest.name INTEGER")).execute();
+    db.command(new OCommandSQL("CREATE index ridsorttest_name on ridsorttest (name) NOTUNIQUE")).execute();
+
+    db.command(new OCommandSQL("insert into ridsorttest (name) values (1)")).execute();
+    db.command(new OCommandSQL("insert into ridsorttest (name) values (5)")).execute();
+    db.command(new OCommandSQL("insert into ridsorttest (name) values (3)")).execute();
+    db.command(new OCommandSQL("insert into ridsorttest (name) values (4)")).execute();
+    db.command(new OCommandSQL("insert into ridsorttest (name) values (1)")).execute();
+    db.command(new OCommandSQL("insert into ridsorttest (name) values (8)")).execute();
+    db.command(new OCommandSQL("insert into ridsorttest (name) values (6)")).execute();
 
   }
 
@@ -267,6 +280,38 @@ public class OCommandExecutorSQLSelectTest {
 
     assertEquals(qResult.size(), 1);
     assertEquals(qResult.get(0).field("city"), "NY");
+  }
+
+
+  @Test
+  public void testOrderByRid() {
+    List<ODocument> qResult = db.command(new OCommandSQL("select from ridsorttest order by @rid ASC")).execute();
+    assertTrue(qResult.size()>0);
+
+    ODocument prev = qResult.get(0);
+    for(int i=1;i<qResult.size();i++){
+      assertTrue(prev.getIdentity().compareTo(qResult.get(i).getIdentity()) <= 0);
+      prev = qResult.get(i);
+    }
+
+
+    qResult = db.command(new OCommandSQL("select from ridsorttest order by @rid DESC")).execute();
+    assertTrue(qResult.size()>0);
+
+    prev = qResult.get(0);
+    for(int i=1;i<qResult.size();i++){
+      assertTrue(prev.getIdentity().compareTo(qResult.get(i).getIdentity()) >= 0);
+      prev = qResult.get(i);
+    }
+
+    qResult = db.command(new OCommandSQL("select from ridsorttest where name > 3 order by @rid DESC")).execute();
+    assertTrue(qResult.size()>0);
+
+    prev = qResult.get(0);
+    for(int i=1;i<qResult.size();i++){
+      assertTrue(prev.getIdentity().compareTo(qResult.get(i).getIdentity()) >= 0);
+      prev = qResult.get(i);
+    }
   }
 
   private long indexUsages(ODatabaseDocumentTx db) {

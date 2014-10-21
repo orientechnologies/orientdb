@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -1644,8 +1645,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
   }
 
+  private boolean isRidOnlySort(){
+    if (parsedTarget.getTargetClasses() != null && this.orderedFields.size() == 1 && this.orderedFields.get(0).getKey().toLowerCase().equals("@rid")){
+      if(this.target != null && target instanceof ORecordIteratorClass){
+        return true;
+      }
+    }
+    return false;
+  }
+
   private void applyOrderBy() {
-    if (orderedFields.isEmpty() || fullySortedByIndex) {
+    if (orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) {
       return;
     }
 
