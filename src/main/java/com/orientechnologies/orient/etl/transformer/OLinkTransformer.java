@@ -73,9 +73,18 @@ public class OLinkTransformer extends OAbstractLookupTransformer {
 
   @Override
   public Object executeTransform(final Object input) {
+    ODocument doc;
+
+    if (!(input instanceof OIdentifiable)) {
+      log(OETLProcessor.LOG_LEVELS.DEBUG, "skip because input value is not a record");
+      return null;
+    }
+
+    doc = ((OIdentifiable) input).getRecord();
+
     Object joinRuntimeValue = null;
     if (joinFieldName != null)
-      joinRuntimeValue = ((ODocument) input).field(joinFieldName);
+      joinRuntimeValue = doc.field(joinFieldName);
     else if (joinValue != null)
       joinRuntimeValue = resolve(joinValue);
 
@@ -150,7 +159,7 @@ public class OLinkTransformer extends OAbstractLookupTransformer {
     }
 
     // SET THE TRANSFORMED FIELD BACK
-    ((ODocument) ((OIdentifiable) input).getRecord()).field(linkFieldName, result);
+    doc.field(linkFieldName, result);
 
     log(OETLProcessor.LOG_LEVELS.DEBUG, "set %s=%s in document=%s", linkFieldName, result, input);
 
