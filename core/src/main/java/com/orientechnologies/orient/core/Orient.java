@@ -254,6 +254,8 @@ public class Orient extends OListenerManger<OOrientListener> {
     if (iURL.endsWith("/"))
       iURL = iURL.substring(0, iURL.length() - 1);
 
+    iURL = iURL.replace("//", "/");
+
     // SEARCH FOR ENGINE
     int pos = iURL.indexOf(':');
     if (pos <= 0)
