@@ -1651,7 +1651,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   @Override
   public ODocument save(boolean forceCreate) {
-    if (_clazz != null)
+    if (_clazz != null && getIdentity().isNew())
       return save(getDatabase().getClusterNameById(_clazz.getClusterForNewInstance()), forceCreate);
 
     convertAllMultiValuesToTrackedVersions();

@@ -102,7 +102,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
     }
 
     private ODocument createRecord(ODatabaseDocumentTx database, int i) {
-      final int uniqueId = count * threadId + i;
+      final String uniqueId = serverId + "-" + threadId + "-" + i;
 
       ODocument person = new ODocument("Person").fields("id", UUID.randomUUID().toString(), "name", "Billy" + uniqueId, "surname",
           "Mayes" + uniqueId, "birthday", new Date(), "children", uniqueId);
@@ -134,7 +134,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
     }
 
     private ODocument loadRecord(ODatabaseDocumentTx database, int i) {
-      final int uniqueId = count * threadId + i;
+      final String uniqueId = serverId + "-" + threadId + "-" + i;
 
       List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Person where name = 'Billy" + uniqueId
           + "'"));
@@ -271,7 +271,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
     personClass.createProperty("id", OType.STRING);
     personClass.createProperty("name", OType.STRING);
     personClass.createProperty("birthday", OType.DATE);
-    personClass.createProperty("children", OType.INTEGER);
+    personClass.createProperty("children", OType.STRING);
 
     final OSchema schema = db.getRawGraph().getMetadata().getSchema();
     OClass person = schema.getClass("Person");
