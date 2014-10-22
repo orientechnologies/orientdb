@@ -141,38 +141,37 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
   public DB acquire(final String iURL, final String iUserName, final String iUserPassword, final Map<String, Object> iOptionalParams)
       throws OLockException {
     final String dbPooledName = OIOUtils.getUnixFileName(iUserName + "@" + iURL);
-
+    OReentrantResourcePool<String, DB> pool;
     lock();
     try {
-
-      OReentrantResourcePool<String, DB> pool = pools.get(dbPooledName);
+      pool = pools.get(dbPooledName);
       if (pool == null)
         // CREATE A NEW ONE
         pool = new OReentrantResourcePool<String, DB>(maxSize, this);
 
-      final DB db = pool.getResource(iURL, timeout, iUserName, iUserPassword, iOptionalParams);
-
       // PUT IN THE POOL MAP ONLY IF AUTHENTICATION SUCCEED
       pools.put(dbPooledName, pool);
-      return db;
 
     } finally {
       unlock();
     }
+    final DB db = pool.getResource(iURL, timeout, iUserName, iUserPassword, iOptionalParams);
+    return db;
   }
 
   public int getMaxConnections(final String url, final String userName) {
     final String dbPooledName = OIOUtils.getUnixFileName(userName + "@" + url);
+    final OReentrantResourcePool<String, DB> pool;
     lock();
     try {
-      final OReentrantResourcePool<String, DB> pool = pools.get(dbPooledName);
-      if (pool == null)
-        return maxSize;
-
-      return pool.getMaxResources();
+      pool = pools.get(dbPooledName);
     } finally {
       unlock();
     }
+    if (pool == null)
+      return maxSize;
+
+    return pool.getMaxResources();
   }
 
   public int getCreatedInstances(String url, String userName) {
@@ -191,49 +190,51 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
 
   public int getAvailableConnections(final String url, final String userName) {
     final String dbPooledName = OIOUtils.getUnixFileName(userName + "@" + url);
+    final OReentrantResourcePool<String, DB> pool;
     lock();
     try {
-      final OReentrantResourcePool<String, DB> pool = pools.get(dbPooledName);
-      if (pool == null)
-        return 0;
-
-      return pool.getAvailableResources();
+      pool = pools.get(dbPooledName);
     } finally {
       unlock();
     }
+    if (pool == null)
+      return 0;
+
+    return pool.getAvailableResources();
   }
 
   public int getConnectionsInCurrentThread(final String url, final String userName) {
     final String dbPooledName = OIOUtils.getUnixFileName(userName + "@" + url);
+    final OReentrantResourcePool<String, DB> pool;
     lock();
     try {
-      final OReentrantResourcePool<String, DB> pool = pools.get(dbPooledName);
-      if (pool == null)
-        return 0;
-
-      return pool.getConnectionsInCurrentThread(url);
+      pool = pools.get(dbPooledName);
     } finally {
       unlock();
     }
+    if (pool == null)
+      return 0;
+
+    return pool.getConnectionsInCurrentThread(url);
   }
 
   public void release(final DB iDatabase) {
     final String dbPooledName = iDatabase instanceof ODatabaseComplex ? ((ODatabaseComplex<?>) iDatabase).getUser().getName() + "@"
         + iDatabase.getURL() : iDatabase.getURL();
-
+    final OReentrantResourcePool<String, DB> pool;
     lock();
     try {
 
-      final OReentrantResourcePool<String, DB> pool = pools.get(dbPooledName);
-      if (pool == null)
-        throw new OLockException("Cannot release a database URL not acquired before. URL: " + iDatabase.getName());
-
-      if (pool.returnResource(iDatabase))
-        this.notifyEvictor(dbPooledName, iDatabase);
+      pool = pools.get(dbPooledName);
 
     } finally {
       unlock();
     }
+    if (pool == null)
+      throw new OLockException("Cannot release a database URL not acquired before. URL: " + iDatabase.getName());
+
+    if (pool.returnResource(iDatabase))
+      this.notifyEvictor(dbPooledName, iDatabase);
   }
 
   public DB reuseResource(final String iKey, final DB iValue) {
@@ -288,7 +289,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
     lock();
     try {
 
-      final OReentrantResourcePool<String, DB> pool = pools.get(iPoolName);
+      final OReentrantResourcePool<String, DB> pool = pools.remove(iPoolName);
 
       if (pool != null) {
         for (DB db : pool.getResources()) {
@@ -304,7 +305,6 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
 
         }
         pool.close();
-        pools.remove(iPoolName);
       }
 
     } finally {
