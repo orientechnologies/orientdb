@@ -15,25 +15,26 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://www.orientechnologies.com
- *
+ *  
  */
+package com.orientechnologies.orient.test.database.auto;
 
-package com.orientechnologies.orient.core.record.impl;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.record.ORecordElement;
+import java.io.IOException;
 
-public class ODocumentInternal {
-
-  public static void convertAllMultiValuesToTrackedVersions(ODocument document) {
-    document.convertAllMultiValuesToTrackedVersions();
+@Test
+public class AlterDatabaseTest extends DocumentDBBaseTest {
+  @Parameters(value = "url")
+  public AlterDatabaseTest(@Optional String url) {
+    super(url);
   }
 
-  public static void addOwner(ODocument oDocument, ORecordElement iOwner) {
-    oDocument.addOwner(iOwner);
+  public void alterDateFormatOk() throws IOException {
+    database.command(new OCommandSQL("alter database dateformat yyyy-MM-dd;")).execute();
+    database.command(new OCommandSQL("alter database dateformat yyyy-MM-dd")).execute();
   }
-
-  public static void removeOwner(ODocument oDocument, ORecordElement iOwner) {
-    oDocument.removeOwner(iOwner);
-  }
-
 }

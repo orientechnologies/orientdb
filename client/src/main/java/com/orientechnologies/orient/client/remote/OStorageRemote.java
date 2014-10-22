@@ -19,32 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
-
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-
-import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -69,7 +43,6 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.OClusterPosition;
@@ -97,6 +70,21 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
+
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 
 /**
  * This object is bound to each remote ODatabase instances.
@@ -279,9 +267,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         setSessionId(null, -1);
       } finally {
         endRequest(network);
+        engine.getConnectionManager().release(network);
       }
-
-      engine.getConnectionManager().remove(network);
 
       if (!checkForClose(iForce))
         return;
@@ -1062,6 +1049,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
 
           if (iTx.getCurrentRecordEntries().iterator().hasNext()) {
+            for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
+              committedEntries.add(txEntry);
             while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
               for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
                 tmpEntries.add(txEntry);
@@ -1071,14 +1060,22 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               if (tmpEntries.size() > 0) {
                 for (ORecordOperation txEntry : tmpEntries) {
                   commitEntry(network, txEntry);
-                  committedEntries.add(txEntry);
                 }
                 tmpEntries.clear();
               }
             }
           } else if (committedEntries.size() > 0) {
-            for (ORecordOperation txEntry : committedEntries)
-              commitEntry(network, txEntry);
+            tmpEntries.addAll(committedEntries);
+            while (!tmpEntries.isEmpty()) {
+              iTx.clearRecordEntries();
+              for (ORecordOperation txEntry : tmpEntries) {
+                ORecordInternal.clearSource(txEntry.getRecord());
+                commitEntry(network, txEntry);
+              }
+              tmpEntries.clear();
+              for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
+                tmpEntries.add(txEntry);
+            }
           }
 
           // END OF RECORD ENTRIES
@@ -1112,8 +1109,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               rop.getRecord().getRecordVersion().copyFrom(network.readVersion());
           }
 
-          committedEntries.clear();
-
           if (network.getSrvProtocolVersion() >= 20)
             readCollectionChanges(network, ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager());
 
@@ -1121,6 +1116,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           endResponse(network);
         }
 
+        committedEntries.clear();
         // SET ALL THE RECORDS AS UNDIRTY
         for (ORecordOperation txEntry : iTx.getAllRecordEntries())
           ORecordInternal.unsetDirty(txEntry.getRecord());
@@ -1435,6 +1431,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return OSBTreeCollectionManagerRemote.class;
   }
 
+  public OEngineRemote getEngine() {
+    return engine;
+  }
+
   /**
    * Handles exceptions. In case of IO errors retries to reconnect until the configured retry times has reached.
    * 
@@ -1639,20 +1639,24 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
    * Parse the URLs. Multiple URLs must be separated by semicolon (;)
    */
   protected void parseServerURLs() {
+    String lastHost = null;
     int dbPos = url.indexOf('/');
     if (dbPos == -1) {
       // SHORT FORM
       addHost(url);
+      lastHost = url;
       name = url;
     } else {
       name = url.substring(url.lastIndexOf("/") + 1);
-      for (String host : url.substring(0, dbPos).split(ADDRESS_SEPARATOR))
+      for (String host : url.substring(0, dbPos).split(ADDRESS_SEPARATOR)) {
+        lastHost = host;
         addHost(host);
+      }
     }
 
     if (serverURLs.size() == 1 && OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_ENABLED.getValueAsBoolean()) {
       // LOOK FOR LOAD BALANCING DNS TXT RECORD
-      final String primaryServer = serverURLs.get(0);
+      final String primaryServer = lastHost;
 
       OLogManager.instance().debug(this, "Retrieving URLs from DNS '%s' (timeout=%d)...", primaryServer,
           OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT.getValueAsInteger());
@@ -1668,15 +1672,17 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         final Attributes attrs = ictx.getAttributes(hostName, new String[] { "TXT" });
         final Attribute attr = attrs.get("TXT");
         if (attr != null) {
-          String configuration = (String) attr.get();
-          if (configuration.startsWith(""))
-            configuration = configuration.substring(1, configuration.length() - 1);
-          if (configuration != null) {
-            serverURLs.clear();
-            final String[] parts = configuration.split(" ");
-            for (String part : parts) {
-              if (part.startsWith("s=")) {
-                addHost(part.substring("s=".length()));
+          for (int i = 0; i < attr.size(); ++i) {
+            String configuration = (String) attr.get(i);
+            if (configuration.startsWith("\""))
+              configuration = configuration.substring(1, configuration.length() - 1);
+            if (configuration != null) {
+              serverURLs.clear();
+              final String[] parts = configuration.split(" ");
+              for (String part : parts) {
+                if (part.startsWith("s=")) {
+                  addHost(part.substring("s=".length()));
+                }
               }
             }
           }
@@ -2004,10 +2010,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       }
     }
     return false;
-  }
-
-  public OEngineRemote getEngine() {
-    return engine;
   }
 
 }

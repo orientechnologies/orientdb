@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -988,7 +989,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             final OUser user = getDatabase().getUser();
 
             if (parsedTarget.getTargetClasses() != null
-                && user.checkIfAllowed(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_READ) == null) {
+                && user != null && user.checkIfAllowed(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_READ) == null) {
               for (OClass cls : parsedTarget.getTargetClasses().keySet()) {
                 if (cls.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME)) {
                   restrictedClasses = true;
@@ -1664,8 +1665,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
   }
 
+  private boolean isRidOnlySort(){
+    if (parsedTarget.getTargetClasses() != null && this.orderedFields.size() == 1 && this.orderedFields.get(0).getKey().toLowerCase().equals("@rid")){
+      if(this.target != null && target instanceof ORecordIteratorClass){
+        return true;
+      }
+    }
+    return false;
+  }
+
   private void applyOrderBy() {
-    if (orderedFields.isEmpty() || fullySortedByIndex) {
+    if (orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) {
       return;
     }
 
@@ -1727,7 +1737,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           }
 
           if (fieldValue != null) {
-            if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray() || fieldValue instanceof Iterator<?>
+            if(fieldValue instanceof ODocument) {
+              ArrayList<ODocument> partial = new ArrayList<ODocument>();
+              partial.add((ODocument) fieldValue);
+              finalResult.add(partial);
+            } else if (fieldValue instanceof Collection<?> || fieldValue.getClass().isArray() || fieldValue instanceof Iterator<?>
                 || fieldValue instanceof OIdentifiable || fieldValue instanceof ORidBag) {
               finalResult.add(fieldValue);
             } else if (fieldValue instanceof Map<?, ?>) {

@@ -123,7 +123,8 @@ public class OClusterRemote implements OCluster {
   public void delete() throws IOException {
   }
 
-  public void set(ATTRIBUTES iAttribute, Object iValue) throws IOException {
+  public Object set(ATTRIBUTES iAttribute, Object iValue) throws IOException {
+    return null;
   }
 
   public void truncate() throws IOException {
