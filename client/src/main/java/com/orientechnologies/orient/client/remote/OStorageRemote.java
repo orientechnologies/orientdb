@@ -18,7 +18,16 @@ package com.orientechnologies.orient.client.remote;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -260,9 +269,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         setSessionId(null, -1);
       } finally {
         endRequest(network);
+        engine.getConnectionManager().release(network);
       }
-
-      engine.getConnectionManager().remove(network);
 
       if (!checkForClose(iForce))
         return;
