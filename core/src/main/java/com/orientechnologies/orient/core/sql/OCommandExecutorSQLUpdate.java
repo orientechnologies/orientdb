@@ -496,7 +496,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
               throw new OCommandExecutionException("field " + entry.getKey() + " defined of type LINKMAP accept only link values");
             }
           }
-          if (OType.LINKMAP.equals(record.fieldType(entry.getKey())) && !(value instanceof OIdentifiable)) {
+          if (OType.LINKMAP.equals(OType.getTypeByValue(fieldValue)) && !(value instanceof OIdentifiable)) {
             map = new OTrackedMap(record, map, Object.class);
             record.field(entry.getKey(), map, OType.EMBEDDEDMAP);
           }
