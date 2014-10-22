@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
@@ -55,11 +56,15 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
 import com.orientechnologies.orient.core.sql.operator.*;
+import com.orientechnologies.orient.core.sql.parser.OrientSql;
+import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Future;
@@ -179,11 +184,26 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return doc;
   }
 
+  private void testNewParser(OCommandRequest iRequest){
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
+    String text = textRequest.getText();
+    InputStream is = new ByteArrayInputStream(text.getBytes());
+    OrientSql osql = new OrientSql(is);
+    try {
+      osql.OrientGrammar();
+    } catch (ParseException e) {
+      System.out.println("NEW PARSER FAILED: "+text);
+      throwParsingException(e.getMessage());
+//      throw new RuntimeException(e);
+    }
+  }
+
   /**
    * Compile the filter conditions only the first time.
    */
   public OCommandExecutorSQLSelect parse(final OCommandRequest iRequest) {
     super.parse(iRequest);
+    testNewParser(iRequest);
 
     initContext();
 

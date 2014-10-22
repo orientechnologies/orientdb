@@ -1,36 +1,39 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import org.testng.annotations.Test;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-import static org.testng.Assert.fail;
+import org.testng.annotations.Test;
 
 @Test
 public class OSelectStatementTest {
 
-  protected void checkRightSyntax(String query) {
-    checkSyntax(query, true);
+  protected SimpleNode checkRightSyntax(String query) {
+    return checkSyntax(query, true);
   }
 
-  protected void checkWrongSyntax(String query) {
-    checkSyntax(query, false);
+  protected SimpleNode checkWrongSyntax(String query) {
+    return checkSyntax(query, false);
   }
 
-  protected void checkSyntax(String query, boolean isCorrect) {
+  protected SimpleNode checkSyntax(String query, boolean isCorrect) {
     OrientSql osql = getParserFor(query);
     try {
-      osql.OrientGrammar();
+      SimpleNode result = osql.OrientGrammar();
       if (!isCorrect) {
         fail();
       }
+      return result;
     } catch (Exception e) {
       if (isCorrect) {
         e.printStackTrace();
         fail();
       }
     }
+    return null;
   }
 
   public void testSimpleSelect() {
@@ -44,13 +47,11 @@ public class OSelectStatementTest {
 
   }
 
-
   public void testSubSelect() {
     checkRightSyntax("select from (select from Foo)");
 
     checkWrongSyntax("select from select from foo");
   }
-
 
   public void testSimpleSelectWhere() {
     checkRightSyntax("select from Foo where name = 'foo'");
@@ -66,6 +67,63 @@ public class OSelectStatementTest {
     checkWrongSyntax("select * Foo where name = 'foo'");
 
   }
+
+  public void testIn() {
+    SimpleNode result = checkRightSyntax("select count(*) from OFunction where name in [\"a\"]");
+    // result.dump("    ");
+    assertTrue(result.children[0] instanceof OStatement);
+    OStatement stm = (OStatement) result.children[0];
+    assertTrue(stm.children[0] instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) stm.children[0];
+  }
+
+  public void testNotIn() {
+    SimpleNode result = checkRightSyntax("select count(*) from OFunction where name not in [\"a\"]");
+    // result.dump("    ");
+    assertTrue(result.children[0] instanceof OStatement);
+    OStatement stm = (OStatement) result.children[0];
+    assertTrue(stm.children[0] instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) stm.children[0];
+  }
+
+  public void testNamedParam() {
+    SimpleNode result = checkRightSyntax("select from JavaComplexTestClass where enumField = :enumItem");
+    // result.dump("    ");
+    assertTrue(result.children[0] instanceof OStatement);
+    OStatement stm = (OStatement) result.children[0];
+    assertTrue(stm.children[0] instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) stm.children[0];
+  }
+
+  public void testDottedAtField() {
+    SimpleNode result = checkRightSyntax("select from City where country.@class = 'Country'");
+    // result.dump("    ");
+    assertTrue(result.children[0] instanceof OStatement);
+    OStatement stm = (OStatement) result.children[0];
+    assertTrue(stm.children[0] instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) stm.children[0];
+  }
+
+  public void testLongDotted() {
+    SimpleNode result = checkRightSyntax("select from Profile where location.city.country.name = 'Spain'");
+    // result.dump("    ");
+    assertTrue(result.children[0] instanceof OStatement);
+    OStatement stm = (OStatement) result.children[0];
+    assertTrue(stm.children[0] instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) stm.children[0];
+  }
+
+  public void testInIsNotAReservedWord() {
+    SimpleNode result = checkRightSyntax(
+"select count(*) from TRVertex where in.type() not in [\"LINKSET\"] ");
+    // result.dump("    ");
+    assertTrue(result.children[0] instanceof OStatement);
+    OStatement stm = (OStatement) result.children[0];
+    assertTrue(stm.children[0] instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) stm.children[0];
+  }
+
+
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);

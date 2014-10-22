@@ -107,7 +107,7 @@ TOKEN:
 	|
 	< LIMIT: ( "l" | "L" ) ( "i" | "I" ) ( "m" | "M" ) ( "i" | "I" ) ( "t" | "T" ) >
 	|
-	< SKIP: ( "s" | "S" ) ( "k" | "K" ) ( "i" | "I" ) ( "p" | "P" ) >
+	< SKIP2: ( "s" | "S" ) ( "k" | "K" ) ( "i" | "I" ) ( "p" | "P" ) >
 	|
 	< ASC: ( "a" | "A" ) ( "s" | "S" ) ( "c" | "C" ) >
 	|
@@ -270,9 +270,9 @@ TOKEN :
 | < RUNSIGNEDSHIFTASSIGN: ">>>=" >
 | < ELLIPSIS: "..." >
 | < NOT: ( "N" | "n") ( "O" | "o") ( "T" | "t")  >
+| < IN: ( "I" | "i") ( "N" | "n") >
 | < LIKE: ( "L" | "l") ( "I" | "i") ( "K" | "k") ( "E" | "e") >
 | < IS: "is" | "IS" | "Is" | "iS" >
-| < IN: "in" | "IN" | "In" | "iN" >
 | < BETWEEN: ( "B" | "b") ( "E" | "e") ( "T" | "t") ( "W" | "w") ( "E" | "e") ( "E" | "e") ( "N" | "n")>
 | < CONTAINS: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) >
 | < CONTAINSALL: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) ( "A" | "a" ) ( "L" | "l" ) ( "L" | "l" ) >
@@ -286,7 +286,7 @@ TOKEN :
 
 TOKEN :
 {
-  < IDENTIFIER: <LETTER> (<PART_LETTER>)* >
+  < IDENTIFIER: ( <LETTER> (<PART_LETTER>)* ) >
 |
   < #LETTER:
       [  "A"-"Z",
@@ -303,7 +303,6 @@ TOKEN :
       ]
   >
 }
-
 
 void Rid():
 {}
@@ -322,6 +321,13 @@ SimpleNode OrientGrammar() :
   Statement() <EOF>
   { return jjtThis; }
 }
+
+void Identifier():
+{}
+{
+    <IDENTIFIER> | <IN>
+}
+
 
 void Statement():
 {}
@@ -370,7 +376,7 @@ void DeleteStatement():
 {
 	<DELETE>
 	<FROM>
-	<IDENTIFIER>
+	Identifier()
 	[ <WHERE> WhereClause() ]
 }
 
@@ -379,7 +385,7 @@ void UpdateStatement():
 {
 	<UPDATE>
 	(
-		<IDENTIFIER>
+		Identifier()
 		|
 		Cluster()
 		|
@@ -394,7 +400,7 @@ void UpdateStatement():
 void UpdateItem():
 {}
 {
-	<IDENTIFIER> <EQ>
+	Identifier() <EQ>
 	(
 		<NULL>
 		|
@@ -418,7 +424,7 @@ void UpdateItem():
 void UpdateAddItem():
 {}
 {
-	<IDENTIFIER> <EQ>
+	Identifier() <EQ>
 	(
 		<STRING_LITERAL>
 		|
@@ -443,8 +449,8 @@ void InsertStatement():
 {
 	<INSERT>
 	<INTO>
-	( <IDENTIFIER> | Cluster() )
-	<LPAREN> <IDENTIFIER> ("," <IDENTIFIER>) <RPAREN>
+	( Identifier() | Cluster() )
+	<LPAREN> Identifier() ("," Identifier()) <RPAREN>
 	<VALUES>
 	<LPAREN> InsertExpression() ("," InsertExpression()) <RPAREN>
 }
@@ -472,7 +478,21 @@ void InsertExpression():
 void InputParameter():
 {}
 {
-	"?"
+	PositionalParameter()
+	|
+	NamedParameter()
+}
+
+void PositionalParameter():
+{}
+{
+	<HOOK>
+}
+
+void NamedParameter():
+{}
+{
+	<COLON> Identifier()
 }
 
 void Projection():
@@ -499,16 +519,10 @@ void ProjectionItem():
 			|
 			<CHARACTER_LITERAL>
 			|
-			LOOKAHEAD( FunctionCall() )
-			FunctionCall()
-			|
-			DottedIdentifier()
-			|
-			RecordAttribute()
-			|
-			ThisOperation()
-			|
+			LOOKAHEAD( InputParameter() )
 			InputParameter()
+			|
+			OperationChain()
 		)
 		[<AS> Alias() ]
 	)
@@ -531,22 +545,17 @@ void FilterItem():
 	|
 	<CHARACTER_LITERAL>
 	|
-	LOOKAHEAD( FunctionCall() )
-	FunctionCall()
-	|
-	DottedIdentifier()
-	|
-	RecordAttribute()
-	|
-	ThisOperation()
-	|
-	InputParameter()
+	LOOKAHEAD( InputParameter() )
+    InputParameter()
+    |
+    LOOKAHEAD( OperationChain() )
+	OperationChain()
 }
 
 void Alias():
 {}
 {
-	<IDENTIFIER>
+	Identifier()
 }
 
 void Any():
@@ -570,13 +579,13 @@ void RecordAttribute():
 void ThisOperation():
 {}
 {
-	<THIS> ( FieldOperator() )*
+	<THIS> ( MethodCall() )*
 }
 
 void FunctionCall():
 {}
 {
-	<IDENTIFIER>
+	Identifier()
 	<LPAREN>
 
 	(
@@ -587,28 +596,65 @@ void FunctionCall():
 			( "," FilterItem() )*
 		)
 	)
-	<RPAREN> ( FieldOperator() )*
+	<RPAREN>
 }
 
-void FieldOperator():
+void MethodCall():
 {}
 {
-	( <DOT> <IDENTIFIER> <LPAREN> [ FilterItem() ( "," FilterItem() )* ] <RPAREN> )
-	|
-	( "[" <STRING_LITERAL> "]" )
+	( <DOT> Identifier() <LPAREN> [ FilterItem() ( "," FilterItem() )* ] <RPAREN> )
 }
 
-void DottedIdentifier():
+void LevelZeroIdentifier():
 {}
 {
-	LOOKAHEAD(4)
-	<IDENTIFIER> ( "[" WhereClause() "]" )+
-	|
-	LOOKAHEAD(4)
-	<IDENTIFIER> ( FieldOperator() )+
-	|
-   	<IDENTIFIER> [ <DOT> DottedIdentifier() ]
+    LOOKAHEAD(2)
+    FunctionCall()
+    |
+    <THIS>
 }
+
+void SuffixIdentifier():
+{}
+{
+    Identifier()
+    |
+    RecordAttribute()
+}
+
+
+void BaseIdentifier():
+{}
+{
+    LOOKAHEAD( LevelZeroIdentifier() )
+    LevelZeroIdentifier()
+    |
+    LOOKAHEAD( SuffixIdentifier() )
+    SuffixIdentifier()
+}
+
+void Modifier():
+{}
+{
+
+    (
+        "[" OrBlock() "]"
+   	    |
+   	    LOOKAHEAD(3)
+   	    MethodCall()
+   	    |
+   	    LOOKAHEAD(3)
+        <DOT> SuffixIdentifier()
+    )
+    [ Modifier() ]
+}
+
+void OperationChain():
+{}
+{
+	BaseIdentifier() [ Modifier() ]
+}
+
 
 void FromClause():
 {}
@@ -627,7 +673,7 @@ void FromItem():
 	|
 	IndexIdentifier()
 	|
-	<IDENTIFIER>
+	Identifier()
 	|
 	<LPAREN> SelectStatement() <RPAREN>
 }
@@ -635,13 +681,13 @@ void FromItem():
 void Cluster():
 {}
 {
-	"cluster:" <IDENTIFIER>
+	"cluster:" Identifier()
 }
 
 void IndexIdentifier():
 {}
 {
-	"index:" <IDENTIFIER>
+	"index:" Identifier()
 }
 
 void WhereClause():
@@ -683,6 +729,12 @@ void ConditionBlock():
 	LOOKAHEAD( IsNullCondition() )
 	IsNullCondition()
 	|
+	LOOKAHEAD( InCondition() )
+    InCondition()
+    |
+    LOOKAHEAD( NotInCondition() )
+    NotInCondition()
+	|
 	LOOKAHEAD( BinaryCondition() )
 	BinaryCondition()
 	|
@@ -709,8 +761,6 @@ void CompareOperator():
       | NeqOperator()
       | GeOperator()
       | LeOperator()
-      | InOperator()
-      | NotInOperator()
       | LikeOperator()
       | ContainsKeyOperator()
       | ContainsValueOperator()
@@ -751,18 +801,6 @@ void LeOperator():
 {}
 {
 	<LE>
-}
-
-void InOperator():
-{}
-{
-	<IN>
-}
-
-void NotInOperator():
-{}
-{
-	<NOT> <IN>
 }
 
 void LikeOperator():
@@ -819,6 +857,34 @@ void ContainsCondition():
 	FilterItem() <CONTAINS> <LPAREN> OrBlock() <RPAREN>
 }
 
+void InOperator():
+{}
+{
+    <IN>
+}
+
+void InCondition():
+{}
+{
+	FilterItem() InOperator()
+	(
+	    <LBRACKET> FilterItem() (<COMMA> FilterItem())* <RBRACKET>
+	    |
+	    <LPAREN> SelectStatement() <RPAREN>
+	)
+}
+
+void NotInCondition():
+{}
+{
+	FilterItem() <NOT> InOperator()
+	(
+	    <LBRACKET> FilterItem() (<COMMA> FilterItem())* <RBRACKET>
+        |
+        <LPAREN> SelectStatement() <RPAREN>
+	)
+}
+
 void ContainsAllCondition():
 {}
 {
@@ -828,7 +894,7 @@ void ContainsAllCondition():
 void ContainsTextCondition():
 {}
 {
-	FilterItem() <CONTAINSTEXT> ( <STRING_LITERAL> | DottedIdentifier() )
+	FilterItem() <CONTAINSTEXT> ( <STRING_LITERAL> | OperationChain() )
 }
 
 void MatchesCondition():
@@ -840,13 +906,13 @@ void MatchesCondition():
 void OrderBy():
 {}
 {
-	<ORDER> <BY> <IDENTIFIER> ( "," <IDENTIFIER> )* [ <DESC> | <ASC> ]
+	<ORDER> <BY> Identifier() ( "," Identifier() )* [ <DESC> | <ASC> ]
 }
 
 void GroupBy():
 {}
 {
-	<GROUP> <BY> <IDENTIFIER> ( "," <IDENTIFIER> )* ]
+	<GROUP> <BY> Identifier() ( "," Identifier() )*
 }
 
 void Limit():
@@ -858,7 +924,7 @@ void Limit():
 void Skip():
 {}
 {
-	<SKIP> <INTEGER_LITERAL>
+	<SKIP2> <INTEGER_LITERAL>
 }
 
 
