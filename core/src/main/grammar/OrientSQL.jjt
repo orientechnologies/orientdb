@@ -121,7 +121,7 @@ TOKEN:
 	|
 	< THIS: "@this" >
 	|
-	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> >
+	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> >
 	|
 	< #RID_ATTR: "@" ( ( "r" | "R" ) ( "i" | "I" ) ( "d" | "D" )) >
 	|
@@ -132,6 +132,8 @@ TOKEN:
 	< #SIZE_ATTR: "@size" >
 	|
 	< #TYPE_ATTR: "@type" >
+    |
+	< #RAW_ATTR: "@raw" >
 }
 
 
@@ -285,6 +287,7 @@ TOKEN :
 | < CONTAINSTEXT: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "X" | "x" ) ( "T" | "t" ) >
 | < MATCHES: ( "M" | "m") ( "A" | "a") ( "T" | "t") ( "C" | "c") ( "H" | "h") ( "E" | "e") ( "S" | "s") >
 | < KEY: ( "K" | "k") ( "E" | "e") ( "Y" | "y") >
+| < INSTANCEOF: "instanceof" >
 }
 
 
@@ -302,6 +305,8 @@ TOKEN :
   < INDEXVALUESDESC_IDENTIFIER: "indexvaluesdesc:" <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
 |
   < CLUSTER_IDENTIFIER: "cluster:" <IDENTIFIER>  >
+|
+  < METADATA_IDENTIFIER: "metadata:" <IDENTIFIER>  >
 |
   < #LETTER:
       [  "A"-"Z",
@@ -343,12 +348,20 @@ void Identifier():
     <IDENTIFIER> | <IN> | <SET> | <ORDER> | <KEY> | <OFFSET> | <GROUP>
 }
 
+void Integer():
+{}
+{
+    [ <MINUS> ] <INTEGER_LITERAL>
+}
 
 void Statement():
 {}
 {
 	(
+	    LOOKAHEAD( SelectStatement() )
 		SelectStatement()
+		|
+		SelectWithoutTargetStatement()
 		|
 		TraverseStatement()
         |
@@ -360,26 +373,30 @@ void Statement():
 	)
 }
 
+void SelectWithoutTargetStatement():
+{}
+{
+	<SELECT> ValueItem() [<AS> Alias() ] ( <COMMA> ValueItem() [<AS> Alias() ] )*
+}
 
 void SelectStatement():
 {}
 {
 	<SELECT>
-	[ Projection() ]
-	[
-        <FROM>
-        FromClause()
-        [ <WHERE> WhereClause() ]
-        [ OrderBy() ]
-        [ GroupBy() ]
-        (
-            [
-                Skip() [ Limit() ]
-                |
-                Limit()  [ Skip() ]
-            ]
-        )
-	]
+    [ Projection() ]
+    <FROM>
+    FromClause()
+    [ <WHERE> WhereClause() ]
+    [ OrderBy() ]
+    [ GroupBy() ]
+    (
+        [
+            Skip() [ Limit() ]
+            |
+            Limit()  [ Skip() ]
+        ]
+    )
+
 }
 
 void TraverseStatement():
@@ -431,8 +448,8 @@ void UpdateItem():
 		LOOKAHEAD(Rid())
 		Rid()
 		|
-		LOOKAHEAD(2)
-		<INTEGER_LITERAL>
+		LOOKAHEAD(3)
+		Integer()
 		|
 		<FLOATING_POINT_LITERAL>
 		|
@@ -453,8 +470,8 @@ void UpdateAddItem():
 		LOOKAHEAD(Rid())
 		Rid()
 		|
-		LOOKAHEAD(2)
-		<INTEGER_LITERAL>
+		LOOKAHEAD(3)
+		Integer()
 		|
 		<FLOATING_POINT_LITERAL>
 		|
@@ -484,8 +501,8 @@ void InsertExpression():
 	|
 	<STRING_LITERAL>
 	|
-	LOOKAHEAD(2)
-	<INTEGER_LITERAL>
+	LOOKAHEAD(3)
+	Integer()
 	|
 	<FLOATING_POINT_LITERAL>
 	|
@@ -530,11 +547,11 @@ void ProjectionItem():
 	|
 	(
 		(
-
 			<NULL>
 			|
-			<INTEGER_LITERAL>
+			Integer()
 			|
+			LOOKAHEAD(2)
 			<STRING_LITERAL>
 			|
 			<FLOATING_POINT_LITERAL>
@@ -544,10 +561,37 @@ void ProjectionItem():
 			LOOKAHEAD( InputParameter() )
 			InputParameter()
 			|
+			LOOKAHEAD( OperationChain() )
 			OperationChain()
 		)
 		[<AS> Alias() ]
 	)
+}
+
+void ValueItem():
+{}
+{
+    (
+        <NULL>
+        |
+        <FLOATING_POINT_LITERAL>
+        |
+        <CHARACTER_LITERAL>
+        |
+        Integer()
+        |
+        (
+            LOOKAHEAD(2)
+            <STRING_LITERAL>
+            |
+            LOOKAHEAD( InputParameter() )
+            InputParameter()
+            |
+            LOOKAHEAD( FunctionCall() )
+            FunctionCall()
+        )
+        [ Modifier() ]
+    )
 }
 
 void FilterItem():
@@ -555,12 +599,8 @@ void FilterItem():
 {
 	<NULL>
 	|
-	Any()
-	|
-	All()
-	|
-	LOOKAHEAD(2)
-	<INTEGER_LITERAL>
+	LOOKAHEAD(3)
+	Integer()
 	|
 	<STRING_LITERAL>
 	|
@@ -580,8 +620,8 @@ void FilterItem():
 void ArraySelector():
 {}
 {
-	LOOKAHEAD(2)
-	<INTEGER_LITERAL>
+	LOOKAHEAD(3)
+	Integer()
 	|
 	<STRING_LITERAL>
 	|
@@ -598,22 +638,42 @@ void ArraySelector():
 	OperationChain()
 }
 
+void ArraySingleValuesSelector():
+{}
+{
+    ( ArraySelector() ( <COMMA> ArraySelector() )* )
+}
+
+void ArrayRangeSelector():
+{}
+{
+    (
+        LOOKAHEAD(3)
+        Integer()
+        |
+        LOOKAHEAD( InputParameter() )
+        InputParameter()
+        |
+        LOOKAHEAD( OperationChain() )
+	    OperationChain()
+    )
+    <MINUS>
+    (
+        LOOKAHEAD(3)
+        Integer()
+        |
+        LOOKAHEAD( InputParameter() )
+        InputParameter()
+        |
+        LOOKAHEAD( OperationChain() )
+	    OperationChain()
+    )
+}
+
 void Alias():
 {}
 {
 	Identifier()
-}
-
-void Any():
-{}
-{
-	"any()"
-}
-
-void All():
-{}
-{
-	"all()"
 }
 
 void RecordAttribute():
@@ -633,13 +693,13 @@ void FunctionCall():
 {
 	Identifier()
 	<LPAREN>
-
 	(
-		"*"
+		<STAR>
 		|
 		(
-			[ FilterItem()
-			( <COMMA> FilterItem() )* ]
+			[
+			FilterItem() ( <COMMA> FilterItem() )*
+			]
 		)
 	)
 	<RPAREN>
@@ -658,6 +718,8 @@ void LevelZeroIdentifier():
     FunctionCall()
     |
     <THIS>
+    |
+    ItemsCollection()
 }
 
 void SuffixIdentifier():
@@ -690,7 +752,11 @@ void Modifier():
                 LOOKAHEAD( OrBlock() )
                 OrBlock()
                 |
-                ArraySelector()
+                LOOKAHEAD( ArraySingleValuesSelector() )
+                ArraySingleValuesSelector()
+                |
+                LOOKAHEAD( ArrayRangeSelector() )
+                ArrayRangeSelector()
             )
         "]"
    	    |
@@ -727,6 +793,8 @@ void FromItem():
 	|
 	IndexIdentifier()
 	|
+    MetadataIdentifier()
+	|
 	Identifier()
 	|
 	<LPAREN> ( SelectStatement() | TraverseStatement() ) <RPAREN>
@@ -736,6 +804,13 @@ void Cluster():
 {}
 {
 	<CLUSTER_IDENTIFIER>
+}
+
+void MetadataIdentifier():
+{}
+{
+	<METADATA_IDENTIFIER>
+
 }
 
 void IndexIdentifier():
@@ -824,6 +899,10 @@ void ConditionBlock():
 	|
 	LOOKAHEAD( IndexMatchCondition() )
 	IndexMatchCondition()
+	|
+    LOOKAHEAD( InstanceofCondition() )
+    InstanceofCondition()
+
 }
 
 void CompareOperator():
@@ -916,6 +995,12 @@ void ContainsValueCondition():
         |
         FilterItem()
     )
+}
+
+void InstanceofCondition():
+{}
+{
+    FilterItem() <INSTANCEOF> Identifier()
 }
 
 void IndexMatchCondition():
@@ -1036,15 +1121,21 @@ void GroupBy():
 void Limit():
 {}
 {
-	<LIMIT> <INTEGER_LITERAL>
+	<LIMIT> Integer()
 }
 
 void Skip():
 {}
 {
-	<SKIP2> <INTEGER_LITERAL>
+	<SKIP2> Integer()
 	|
-	<OFFSET> <INTEGER_LITERAL>
+	<OFFSET> Integer()
+}
+
+void ItemsCollection():
+{}
+{
+    <LBRACKET> ValueItem() ( <COMMA> ValueItem() )* <RBRACKET>
 }
 
 

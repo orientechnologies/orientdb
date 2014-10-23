@@ -43,177 +43,199 @@ public interface OrientSqlConstants {
   /** RegularExpression Id. */
   int NULL = 20;
   /** RegularExpression Id. */
-  int ORDER = 21;
+  int DEFINED = 21;
   /** RegularExpression Id. */
-  int GROUP = 22;
+  int ORDER = 22;
   /** RegularExpression Id. */
-  int BY = 23;
+  int GROUP = 23;
   /** RegularExpression Id. */
-  int LIMIT = 24;
+  int BY = 24;
   /** RegularExpression Id. */
-  int SKIP2 = 25;
+  int LIMIT = 25;
   /** RegularExpression Id. */
-  int ASC = 26;
+  int SKIP2 = 26;
   /** RegularExpression Id. */
-  int AS = 27;
+  int OFFSET = 27;
   /** RegularExpression Id. */
-  int DESC = 28;
+  int ASC = 28;
   /** RegularExpression Id. */
-  int THIS = 29;
+  int AS = 29;
   /** RegularExpression Id. */
-  int RECORD_ATTRIBUTE = 30;
+  int DESC = 30;
   /** RegularExpression Id. */
-  int RID_ATTR = 31;
+  int THIS = 31;
   /** RegularExpression Id. */
-  int CLASS_ATTR = 32;
+  int RECORD_ATTRIBUTE = 32;
   /** RegularExpression Id. */
-  int VERSION_ATTR = 33;
+  int RID_ATTR = 33;
   /** RegularExpression Id. */
-  int SIZE_ATTR = 34;
+  int CLASS_ATTR = 34;
   /** RegularExpression Id. */
-  int TYPE_ATTR = 35;
+  int VERSION_ATTR = 35;
   /** RegularExpression Id. */
-  int INTEGER_LITERAL = 36;
+  int SIZE_ATTR = 36;
   /** RegularExpression Id. */
-  int DECIMAL_LITERAL = 37;
+  int TYPE_ATTR = 37;
   /** RegularExpression Id. */
-  int HEX_LITERAL = 38;
+  int RAW_ATTR = 38;
   /** RegularExpression Id. */
-  int OCTAL_LITERAL = 39;
+  int INTEGER_LITERAL = 39;
   /** RegularExpression Id. */
-  int FLOATING_POINT_LITERAL = 40;
+  int DECIMAL_LITERAL = 40;
   /** RegularExpression Id. */
-  int DECIMAL_FLOATING_POINT_LITERAL = 41;
+  int HEX_LITERAL = 41;
   /** RegularExpression Id. */
-  int DECIMAL_EXPONENT = 42;
+  int OCTAL_LITERAL = 42;
   /** RegularExpression Id. */
-  int HEXADECIMAL_FLOATING_POINT_LITERAL = 43;
+  int FLOATING_POINT_LITERAL = 43;
   /** RegularExpression Id. */
-  int HEXADECIMAL_EXPONENT = 44;
+  int DECIMAL_FLOATING_POINT_LITERAL = 44;
   /** RegularExpression Id. */
-  int CHARACTER_LITERAL = 45;
+  int DECIMAL_EXPONENT = 45;
   /** RegularExpression Id. */
-  int STRING_LITERAL = 46;
+  int HEXADECIMAL_FLOATING_POINT_LITERAL = 46;
   /** RegularExpression Id. */
-  int LPAREN = 47;
+  int HEXADECIMAL_EXPONENT = 47;
   /** RegularExpression Id. */
-  int RPAREN = 48;
+  int CHARACTER_LITERAL = 48;
   /** RegularExpression Id. */
-  int LBRACE = 49;
+  int STRING_LITERAL = 49;
   /** RegularExpression Id. */
-  int RBRACE = 50;
+  int LPAREN = 50;
   /** RegularExpression Id. */
-  int LBRACKET = 51;
+  int RPAREN = 51;
   /** RegularExpression Id. */
-  int RBRACKET = 52;
+  int LBRACE = 52;
   /** RegularExpression Id. */
-  int SEMICOLON = 53;
+  int RBRACE = 53;
   /** RegularExpression Id. */
-  int COMMA = 54;
+  int LBRACKET = 54;
   /** RegularExpression Id. */
-  int DOT = 55;
+  int RBRACKET = 55;
   /** RegularExpression Id. */
-  int AT = 56;
+  int SEMICOLON = 56;
   /** RegularExpression Id. */
-  int EQ = 57;
+  int COMMA = 57;
   /** RegularExpression Id. */
-  int LT = 58;
+  int DOT = 58;
   /** RegularExpression Id. */
-  int GT = 59;
+  int AT = 59;
   /** RegularExpression Id. */
-  int BANG = 60;
+  int EQ = 60;
   /** RegularExpression Id. */
-  int TILDE = 61;
+  int LT = 61;
   /** RegularExpression Id. */
-  int HOOK = 62;
+  int GT = 62;
   /** RegularExpression Id. */
-  int COLON = 63;
+  int BANG = 63;
   /** RegularExpression Id. */
-  int LE = 64;
+  int TILDE = 64;
   /** RegularExpression Id. */
-  int GE = 65;
+  int HOOK = 65;
   /** RegularExpression Id. */
-  int NE = 66;
+  int COLON = 66;
   /** RegularExpression Id. */
-  int NEQ = 67;
+  int LE = 67;
   /** RegularExpression Id. */
-  int SC_OR = 68;
+  int GE = 68;
   /** RegularExpression Id. */
-  int SC_AND = 69;
+  int NE = 69;
   /** RegularExpression Id. */
-  int INCR = 70;
+  int NEQ = 70;
   /** RegularExpression Id. */
-  int DECR = 71;
+  int SC_OR = 71;
   /** RegularExpression Id. */
-  int PLUS = 72;
+  int SC_AND = 72;
   /** RegularExpression Id. */
-  int MINUS = 73;
+  int INCR = 73;
   /** RegularExpression Id. */
-  int STAR = 74;
+  int DECR = 74;
   /** RegularExpression Id. */
-  int SLASH = 75;
+  int PLUS = 75;
   /** RegularExpression Id. */
-  int BIT_AND = 76;
+  int MINUS = 76;
   /** RegularExpression Id. */
-  int BIT_OR = 77;
+  int STAR = 77;
   /** RegularExpression Id. */
-  int XOR = 78;
+  int SLASH = 78;
   /** RegularExpression Id. */
-  int REM = 79;
+  int BIT_AND = 79;
   /** RegularExpression Id. */
-  int LSHIFT = 80;
+  int BIT_OR = 80;
   /** RegularExpression Id. */
-  int PLUSASSIGN = 81;
+  int XOR = 81;
   /** RegularExpression Id. */
-  int MINUSASSIGN = 82;
+  int REM = 82;
   /** RegularExpression Id. */
-  int STARASSIGN = 83;
+  int LSHIFT = 83;
   /** RegularExpression Id. */
-  int SLASHASSIGN = 84;
+  int PLUSASSIGN = 84;
   /** RegularExpression Id. */
-  int ANDASSIGN = 85;
+  int MINUSASSIGN = 85;
   /** RegularExpression Id. */
-  int ORASSIGN = 86;
+  int STARASSIGN = 86;
   /** RegularExpression Id. */
-  int XORASSIGN = 87;
+  int SLASHASSIGN = 87;
   /** RegularExpression Id. */
-  int REMASSIGN = 88;
+  int ANDASSIGN = 88;
   /** RegularExpression Id. */
-  int LSHIFTASSIGN = 89;
+  int ORASSIGN = 89;
   /** RegularExpression Id. */
-  int RSIGNEDSHIFTASSIGN = 90;
+  int XORASSIGN = 90;
   /** RegularExpression Id. */
-  int RUNSIGNEDSHIFTASSIGN = 91;
+  int REMASSIGN = 91;
   /** RegularExpression Id. */
-  int ELLIPSIS = 92;
+  int LSHIFTASSIGN = 92;
   /** RegularExpression Id. */
-  int NOT = 93;
+  int RSIGNEDSHIFTASSIGN = 93;
   /** RegularExpression Id. */
-  int IN = 94;
+  int RUNSIGNEDSHIFTASSIGN = 94;
   /** RegularExpression Id. */
-  int LIKE = 95;
+  int ELLIPSIS = 95;
   /** RegularExpression Id. */
-  int IS = 96;
+  int NOT = 96;
   /** RegularExpression Id. */
-  int BETWEEN = 97;
+  int IN = 97;
   /** RegularExpression Id. */
-  int CONTAINS = 98;
+  int LIKE = 98;
   /** RegularExpression Id. */
-  int CONTAINSALL = 99;
+  int IS = 99;
   /** RegularExpression Id. */
-  int CONTAINSKEY = 100;
+  int BETWEEN = 100;
   /** RegularExpression Id. */
-  int CONTAINSVALUE = 101;
+  int CONTAINS = 101;
   /** RegularExpression Id. */
-  int CONTAINSTEXT = 102;
+  int CONTAINSALL = 102;
   /** RegularExpression Id. */
-  int MATCHES = 103;
+  int CONTAINSKEY = 103;
   /** RegularExpression Id. */
-  int IDENTIFIER = 104;
+  int CONTAINSVALUE = 104;
   /** RegularExpression Id. */
-  int LETTER = 105;
+  int CONTAINSTEXT = 105;
   /** RegularExpression Id. */
-  int PART_LETTER = 106;
+  int MATCHES = 106;
+  /** RegularExpression Id. */
+  int KEY = 107;
+  /** RegularExpression Id. */
+  int INSTANCEOF = 108;
+  /** RegularExpression Id. */
+  int IDENTIFIER = 109;
+  /** RegularExpression Id. */
+  int INDEX_IDENTIFIER = 110;
+  /** RegularExpression Id. */
+  int INDEXVALUES_IDENTIFIER = 111;
+  /** RegularExpression Id. */
+  int INDEXVALUESASC_IDENTIFIER = 112;
+  /** RegularExpression Id. */
+  int INDEXVALUESDESC_IDENTIFIER = 113;
+  /** RegularExpression Id. */
+  int CLUSTER_IDENTIFIER = 114;
+  /** RegularExpression Id. */
+  int METADATA_IDENTIFIER = 115;
+  /** RegularExpression Id. */
+  int LETTER = 116;
+  /** RegularExpression Id. */
+  int PART_LETTER = 117;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -241,21 +263,24 @@ public interface OrientSqlConstants {
     "<AND>",
     "<OR>",
     "<NULL>",
+    "<DEFINED>",
     "<ORDER>",
     "<GROUP>",
     "<BY>",
     "<LIMIT>",
     "<SKIP2>",
+    "<OFFSET>",
     "<ASC>",
     "<AS>",
     "<DESC>",
     "\"@this\"",
     "<RECORD_ATTRIBUTE>",
-    "\"@rid\"",
+    "<RID_ATTR>",
     "\"@class\"",
     "\"@version\"",
     "\"@size\"",
     "\"@type\"",
+    "\"@raw\"",
     "<INTEGER_LITERAL>",
     "<DECIMAL_LITERAL>",
     "<HEX_LITERAL>",
@@ -324,14 +349,18 @@ public interface OrientSqlConstants {
     "<CONTAINSVALUE>",
     "<CONTAINSTEXT>",
     "<MATCHES>",
+    "<KEY>",
+    "\"instanceof\"",
     "<IDENTIFIER>",
+    "<INDEX_IDENTIFIER>",
+    "<INDEXVALUES_IDENTIFIER>",
+    "<INDEXVALUESASC_IDENTIFIER>",
+    "<INDEXVALUESDESC_IDENTIFIER>",
+    "<CLUSTER_IDENTIFIER>",
+    "<METADATA_IDENTIFIER>",
     "<LETTER>",
     "<PART_LETTER>",
     "\"#\"",
-    "\"any()\"",
-    "\"all()\"",
-    "\"cluster:\"",
-    "\"index:\"",
   };
 
 }

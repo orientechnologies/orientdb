@@ -6,6 +6,7 @@ import static org.testng.Assert.fail;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.testng.annotations.Test;
 
 @Test
@@ -124,6 +125,15 @@ public class OSelectStatementTest {
   }
 
 
+
+  public void testSelectFunction() {
+    SimpleNode result = checkRightSyntax(
+        "select max(1,2,7,0,-2,3), 'pluto'");
+    // result.dump("    ");
+    assertTrue(result.children[0] instanceof OStatement);
+    OStatement stm = (OStatement) result.children[0];
+    assertTrue(stm.children[0] instanceof OSelectWithoutTargetStatement);
+  }
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);

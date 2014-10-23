@@ -7,7 +7,9 @@ public interface OrientSqlVisitor
   public Object visit(ORid node, Object data);
   public Object visit(OOrientGrammar node, Object data);
   public Object visit(OIdentifier node, Object data);
+  public Object visit(OInteger node, Object data);
   public Object visit(OStatement node, Object data);
+  public Object visit(OSelectWithoutTargetStatement node, Object data);
   public Object visit(OSelectStatement node, Object data);
   public Object visit(OTraverseStatement node, Object data);
   public Object visit(ODeleteStatement node, Object data);
@@ -21,10 +23,12 @@ public interface OrientSqlVisitor
   public Object visit(ONamedParameter node, Object data);
   public Object visit(OProjection node, Object data);
   public Object visit(OProjectionItem node, Object data);
+  public Object visit(OValueItem node, Object data);
   public Object visit(OFilterItem node, Object data);
+  public Object visit(OArraySelector node, Object data);
+  public Object visit(OArraySingleValuesSelector node, Object data);
+  public Object visit(OArrayRangeSelector node, Object data);
   public Object visit(OAlias node, Object data);
-  public Object visit(OAny node, Object data);
-  public Object visit(OAll node, Object data);
   public Object visit(ORecordAttribute node, Object data);
   public Object visit(OThisOperation node, Object data);
   public Object visit(OFunctionCall node, Object data);
@@ -37,6 +41,7 @@ public interface OrientSqlVisitor
   public Object visit(OFromClause node, Object data);
   public Object visit(OFromItem node, Object data);
   public Object visit(OCluster node, Object data);
+  public Object visit(OMetadataIdentifier node, Object data);
   public Object visit(OIndexIdentifier node, Object data);
   public Object visit(OWhereClause node, Object data);
   public Object visit(OOrBlock node, Object data);
@@ -56,9 +61,14 @@ public interface OrientSqlVisitor
   public Object visit(OContainsValueOperator node, Object data);
   public Object visit(OEqualsCompareOperator node, Object data);
   public Object visit(OBinaryCondition node, Object data);
+  public Object visit(OContainsValueCondition node, Object data);
+  public Object visit(OInstanceofCondition node, Object data);
+  public Object visit(OIndexMatchCondition node, Object data);
   public Object visit(OBetweenCondition node, Object data);
   public Object visit(OIsNullCondition node, Object data);
   public Object visit(OIsNotNullCondition node, Object data);
+  public Object visit(OIsDefinedCondition node, Object data);
+  public Object visit(OIsNotDefinedCondition node, Object data);
   public Object visit(OContainsCondition node, Object data);
   public Object visit(OInOperator node, Object data);
   public Object visit(OInCondition node, Object data);
@@ -70,5 +80,6 @@ public interface OrientSqlVisitor
   public Object visit(OGroupBy node, Object data);
   public Object visit(OLimit node, Object data);
   public Object visit(OSkip node, Object data);
+  public Object visit(OItemsCollection node, Object data);
 }
-/* JavaCC - OriginalChecksum=8fcac45fe3d3cfd7f247f0947ede5dc3 (do not edit this line) */
+/* JavaCC - OriginalChecksum=e2f9d1bcf3918bcf9c72fbcf31aad8ae (do not edit this line) */
