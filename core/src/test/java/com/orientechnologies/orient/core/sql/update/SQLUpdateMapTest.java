@@ -1,13 +1,17 @@
 package com.orientechnologies.orient.core.sql.update;
 
 import static org.testng.AssertJUnit.assertEquals;
+
 import java.util.Map;
 
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 public class SQLUpdateMapTest {
@@ -15,6 +19,7 @@ public class SQLUpdateMapTest {
   @Test
   public void testMapPut() {
     ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + SQLUpdateMapTest.class.getSimpleName());
+    ((ODatabaseDocumentTx) db).setSerializer(new ORecordSerializerBinary());
     db.create();
     db.command(new OCommandSQL("create class vRecord")).execute();
     ODocument ret = db.command(new OCommandSQL("insert into vRecord (title) values('first record')")).execute();
