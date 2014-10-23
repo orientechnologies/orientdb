@@ -19,19 +19,18 @@
   */
 package com.orientechnologies.orient.server.config;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
-
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class OServerConfigurationLoaderXml {
   private Class<? extends OServerConfiguration> rootClass;
@@ -71,7 +70,7 @@ public class OServerConfigurationLoaderXml {
         if (file.exists())
           obj = rootClass.cast(unmarshaller.unmarshal(file));
         else {
-          OLogManager.instance().error(this, "File not found: %s", file);
+          OLogManager.instance().error(this, "Server configuration file not found: %s", file);
           return rootClass.getConstructor(OServerConfigurationLoaderXml.class).newInstance(this);
         }
         obj.location = file.getAbsolutePath();

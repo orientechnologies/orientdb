@@ -24,6 +24,7 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OService;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
@@ -197,6 +198,10 @@ public class OServerPluginManager implements OService {
       pluginWWW = iPluginData.getName();
 
     final OServerNetworkListener httpListener = server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+
+    if (httpListener == null)
+      throw new OConfigurationException("HTTP listener not registered while installing Static Content command");
+
     final OServerCommandGetStaticContent command = (OServerCommandGetStaticContent) httpListener
         .getCommand(OServerCommandGetStaticContent.class);
 
