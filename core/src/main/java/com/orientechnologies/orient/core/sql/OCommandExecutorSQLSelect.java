@@ -73,6 +73,8 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -1279,9 +1281,19 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
   }
 
+  private boolean isRidOnlySort(){
+    if (parsedTarget.getTargetClasses() != null && this.orderedFields.size() == 1 && this.orderedFields.get(0).getKey().toLowerCase().equals("@rid")){
+      if(this.target != null && (target instanceof ORecordIteratorClass || target instanceof ORecordIteratorCluster)){
+        return true;
+      }
+    }
+    return false;
+  }
+
   private void applyOrderBy() {
-    if (orderedFields.isEmpty() || fullySortedByIndex)
+    if (orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) {
       return;
+    }
 
     final long startOrderBy = System.currentTimeMillis();
     try {
