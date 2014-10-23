@@ -342,7 +342,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           if (database.getStorageVersions().classesAreDetectedByClusterId() && iRecord instanceof ODocument) {
             final ODocument recordSchemaAware = (ODocument) iRecord;
             final OClass recordClass = recordSchemaAware.getImmutableSchemaClass();
-            final OClass clusterIdClass = database.getMetadata().getImmutableSchema().getClassByClusterId(rid.clusterId);
+            final OClass clusterIdClass = database.getMetadata().getImmutableSchemaSnapshot().getClassByClusterId(rid.clusterId);
             if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
                 || (recordClass != null && !recordClass.equals(clusterIdClass)))
               throw new OSchemaException("Record saved into cluster " + iClusterName + " should be saved with class "

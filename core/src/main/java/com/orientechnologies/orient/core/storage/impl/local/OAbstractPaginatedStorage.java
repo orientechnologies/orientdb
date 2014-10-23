@@ -1073,8 +1073,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
     final ODatabaseRecordInternal databaseRecord = ODatabaseRecordThreadLocal.INSTANCE.get();
     OImmutableSchema immutableSchema = null;
     if (databaseRecord != null) {
-      OSchemaProxy schemaProxy = (OSchemaProxy) databaseRecord.getMetadata().getSchema();
-      immutableSchema = schemaProxy.updateSchemaCache();
+      immutableSchema = databaseRecord.getMetadata().getImmutableSchemaSnapshot();
     }
 
     modificationLock.requestModificationLock();
@@ -1817,7 +1816,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
 
     ORecordSerializationContext.pushContext(immutableSchema);
     try {
-      if (rid.clusterId == ORID.CLUSTER_ID_INVALID && rec instanceof ODocument && ((ODocument) rec).getImmutableSchemaClass() != null) {
+      if (rid.clusterId == ORID.CLUSTER_ID_INVALID && rec instanceof ODocument
+          && ((ODocument) rec).getImmutableSchemaClass() != null) {
         // TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
         rid.clusterId = ((ODocument) rec).getImmutableSchemaClass().getDefaultClusterId();
       }

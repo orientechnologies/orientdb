@@ -91,7 +91,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         ODatabaseRecord db = document.getDatabase();
         if (db == null || db.isClosed())
           throw new ODatabaseException("Impossible deserialize the document no database present");
-        prop = db.getMetadata().getImmutableSchema().getGlobalPropertyById((len * -1) - 1);
+        prop = db.getMetadata().getImmutableSchemaSnapshot().getGlobalPropertyById((len * -1) - 1);
         field = prop.getName();
       }
 

@@ -20,6 +20,7 @@ import java.io.IOException;
 
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
@@ -37,7 +38,7 @@ public interface OMetadata {
 
   public OSchema getSchema();
 
-	public OSchema getImmutableSchema();
+	public OImmutableSchema getImmutableSchemaSnapshot();
 
   public OSecurity getSecurity();
 

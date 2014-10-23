@@ -209,7 +209,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       if (iValue.length() > 1) {
         int pos = iValue.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
         if (pos > -1)
-          ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getImmutableSchema().getClass(iValue.substring(1, pos));
+          ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getImmutableSchemaSnapshot().getClass(iValue.substring(1, pos));
         else
           pos = 0;
 

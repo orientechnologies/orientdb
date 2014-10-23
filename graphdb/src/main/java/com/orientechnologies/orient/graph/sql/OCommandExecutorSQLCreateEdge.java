@@ -105,7 +105,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
       className = "E";
 
     // GET/CHECK CLASS NAME
-    clazz = database.getMetadata().getImmutableSchema().getClass(className);
+    clazz = database.getMetadata().getImmutableSchemaSnapshot().getClass(className);
     if (clazz == null)
       throw new OCommandSQLParsingException("Class " + className + " was not found");
 

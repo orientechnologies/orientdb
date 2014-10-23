@@ -151,7 +151,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     final ODatabaseRecordInternal database = getDatabaseInternal();
     if (_recordId.clusterId > -1 && database.getStorageVersions().classesAreDetectedByClusterId()) {
-      final OSchema schema = database.getMetadata().getImmutableSchema();
+      final OSchema schema = database.getMetadata().getImmutableSchemaSnapshot();
       final OClass cls = schema.getClassByClusterId(_recordId.clusterId);
       if (cls != null && !cls.getName().equals(iClassName))
         throw new IllegalArgumentException("Cluster id does not correspond class name should be " + iClassName + " but found "
@@ -1835,7 +1835,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       return null;
     }
 
-    final OSchema immutableSchema = getDatabase().getMetadata().getImmutableSchema();
+    final OSchema immutableSchema = getDatabase().getMetadata().getImmutableSchemaSnapshot();
     if (_immutableClazz == null) {
       _immutableSchemaVersion = immutableSchema.getVersion();
       _immutableClazz = immutableSchema.getClass(docClass.getName());

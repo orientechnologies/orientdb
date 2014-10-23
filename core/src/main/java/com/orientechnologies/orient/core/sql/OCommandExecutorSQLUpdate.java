@@ -165,7 +165,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
         || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LET) || additionalStatement.equals(KEYWORD_LOCK)) {
       query = new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + additionalStatement + " "
           + parserText.substring(parserGetCurrentPosition()), this);
-      isUpsertAllowed = (getDatabase().getMetadata().getImmutableSchema().getClass(subjectName) != null);
+      isUpsertAllowed = (getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(subjectName) != null);
     } else if (!additionalStatement.isEmpty())
       throwSyntaxErrorException("Invalid keyword " + additionalStatement);
     else

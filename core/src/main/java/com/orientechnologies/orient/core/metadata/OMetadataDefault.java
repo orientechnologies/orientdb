@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.metadata;
 
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfilerMBean;
@@ -50,19 +51,21 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 
 public class OMetadataDefault implements OMetadata {
-  public static final String            CLUSTER_INTERNAL_NAME     = "internal";
-  public static final String            CLUSTER_INDEX_NAME        = "index";
-  public static final String            CLUSTER_MANUAL_INDEX_NAME = "manindex";
-  public static final String            DATASEGMENT_INDEX_NAME    = "index";
+  public static final String                      CLUSTER_INTERNAL_NAME     = "internal";
+  public static final String                      CLUSTER_INDEX_NAME        = "index";
+  public static final String                      CLUSTER_MANUAL_INDEX_NAME = "manindex";
+  public static final String                      DATASEGMENT_INDEX_NAME    = "index";
 
-  protected int                         schemaClusterId;
+  protected int                                   schemaClusterId;
 
-  protected OSchemaProxy                schema;
-  protected OSecurity                   security;
-  protected OIndexManagerProxy          indexManager;
-  protected OFunctionLibraryProxy       functionLibrary;
-  protected OSchedulerListenerProxy     scheduler;
-  protected static final OProfilerMBean PROFILER                  = Orient.instance().getProfiler();
+  protected OSchemaProxy                          schema;
+  protected OSecurity                             security;
+  protected OIndexManagerProxy                    indexManager;
+  protected OFunctionLibraryProxy                 functionLibrary;
+  protected OSchedulerListenerProxy               scheduler;
+  protected static final OProfilerMBean           PROFILER                  = Orient.instance().getProfiler();
+
+  private final AtomicReference<OImmutableSchema> schemaCache               = new AtomicReference<OImmutableSchema>();
 
   public OMetadataDefault() {
   }
@@ -98,12 +101,26 @@ public class OMetadataDefault implements OMetadata {
   }
 
   @Override
-  public OSchema getImmutableSchema() {
+  public OImmutableSchema getImmutableSchemaSnapshot() {
     OImmutableSchema immutableSchema = ORecordSerializationContext.getActiveSchemaVersion();
     if (immutableSchema != null)
       return immutableSchema;
 
-    return schema;
+    if (schema == null)
+      return null;
+
+    OImmutableSchema newSchema;
+    do {
+      immutableSchema = schemaCache.get();
+      if (immutableSchema != null && immutableSchema.getVersion() == schema.getVersion()) {
+        newSchema = immutableSchema;
+        break;
+      }
+
+      newSchema = schema.makeSnapshot();
+    } while (!schemaCache.compareAndSet(immutableSchema, newSchema));
+
+    return newSchema;
   }
 
   public OSecurity getSecurity() {

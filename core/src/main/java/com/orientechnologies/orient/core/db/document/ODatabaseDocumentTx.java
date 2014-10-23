@@ -217,7 +217,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * {@inheritDoc}
    */
   public ORecordIteratorClass<ODocument> browseClass(final String iClassName, final boolean iPolymorphic) {
-    if (getMetadata().getImmutableSchema().getClass(iClassName) == null)
+    if (getMetadata().getImmutableSchemaSnapshot().getClass(iClassName) == null)
       throw new IllegalArgumentException("Class '" + iClassName + "' not found in current database");
 
     checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, iClassName);
@@ -507,7 +507,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
   public long countClass(final String iClassName, final boolean iPolymorphic) {
     ODatabaseRecordThreadLocal.INSTANCE.set(this);
 
-    final OClass cls = getMetadata().getImmutableSchema().getClass(iClassName);
+    final OClass cls = getMetadata().getImmutableSchemaSnapshot().getClass(iClassName);
 
     if (cls == null)
       throw new IllegalArgumentException("Class '" + iClassName + "' not found in database");

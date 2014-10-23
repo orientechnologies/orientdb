@@ -21,6 +21,7 @@ import java.io.IOException;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.schedule.OSchedulerListener;
@@ -45,8 +46,8 @@ public class OMetadataObject implements OMetadata {
   }
 
   @Override
-  public OSchema getImmutableSchema() {
-    return schema;
+  public OImmutableSchema getImmutableSchemaSnapshot() {
+    return underlying.getImmutableSchemaSnapshot();
   }
 
   @Override

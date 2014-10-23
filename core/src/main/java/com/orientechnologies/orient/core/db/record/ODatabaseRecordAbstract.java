@@ -877,8 +877,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       final boolean iIgnoreCache, final boolean loadTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     checkOpeness();
 
-    OSchemaProxy schemaProxy = getMetadata().getSchema();
-    ORecordSerializationContext.pushContext(schemaProxy == null ? null : schemaProxy.updateSchemaCache());
+    ORecordSerializationContext.pushContext(getMetadata().getImmutableSchemaSnapshot());
     try {
       checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(rid.getClusterId()));
 
@@ -981,8 +980,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       byte[] stream;
       final OStorageOperationResult<ORecordVersion> operationResult;
 
-      OSchemaProxy schemaProxy = getMetadata().getSchema();
-      ORecordSerializationContext.pushContext(schemaProxy.updateSchemaCache());
+			ORecordSerializationContext.pushContext(getMetadata().getImmutableSchemaSnapshot());
       try {
         // STREAM.LENGTH == 0 -> RECORD IN STACK: WILL BE SAVED AFTER
         stream = record.toStream();
@@ -1096,8 +1094,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     final Set<OIndex<?>> lockedIndexes = new HashSet<OIndex<?>>();
     setCurrentDatabaseinThreadLocal();
 
-    OSchemaProxy schemaProxy = getMetadata().getSchema();
-    ORecordSerializationContext.pushContext(schemaProxy.updateSchemaCache());
+		ORecordSerializationContext.pushContext(getMetadata().getImmutableSchemaSnapshot());
     try {
       if (record instanceof ODocument)
         acquireIndexModificationLock((ODocument) record, lockedIndexes);
@@ -1164,8 +1161,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.clusterId));
 
     setCurrentDatabaseinThreadLocal();
-    OSchemaProxy schemaProxy = getMetadata().getSchema();
-    ORecordSerializationContext.pushContext(schemaProxy.updateSchemaCache());
+		ORecordSerializationContext.pushContext(getMetadata().getImmutableSchemaSnapshot());
     try {
 
       final OStorageOperationResult<Boolean> operationResult;
@@ -1476,7 +1472,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     if (rid.clusterId > -1 && getStorageVersions().classesAreDetectedByClusterId() && isNew && record instanceof ODocument) {
       final ODocument recordSchemaAware = (ODocument) record;
       final OClass recordClass = recordSchemaAware.getImmutableSchemaClass();
-      final OClass clusterIdClass = metadata.getImmutableSchema().getClassByClusterId(rid.clusterId);
+      final OClass clusterIdClass = metadata.getImmutableSchemaSnapshot().getClassByClusterId(rid.clusterId);
       if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
           || (recordClass != null && !recordClass.equals(clusterIdClass)))
         throw new OSchemaException("Record saved into cluster '" + iClusterName + "' should be saved with class '" + clusterIdClass
@@ -1490,8 +1486,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     record.setDirty();
     ORecordSerializationContext.pullContext();
 
-    OSchemaProxy schemaProxy = getMetadata().getSchema();
-    ORecordSerializationContext.pushContext(schemaProxy.updateSchemaCache());
+		ORecordSerializationContext.pushContext(getMetadata().getImmutableSchemaSnapshot());
 
     stream = record.toStream();
     return stream;

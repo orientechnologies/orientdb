@@ -49,7 +49,12 @@ public class OImmutableSchema implements OSchema {
       properties.add(globalProperty);
   }
 
-  @Override
+	@Override
+	public OImmutableSchema makeSnapshot() {
+		return this;
+	}
+
+	@Override
   public int countClasses() {
     return classes.size();
   }

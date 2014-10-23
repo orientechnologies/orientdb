@@ -45,8 +45,9 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
     super(iDelegate, iDatabase);
   }
 
-  public OImmutableSchema updateSchemaCache() {
-    return delegate.updateSchemaCache();
+  @Override
+  public OImmutableSchema makeSnapshot() {
+    return delegate.makeSnapshot();
   }
 
   public void create() {

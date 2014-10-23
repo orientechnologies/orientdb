@@ -74,30 +74,28 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @SuppressWarnings("unchecked")
 public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, OCloseable {
-  public static final int                         CURRENT_VERSION_NUMBER  = 5;
-  public static final int                         VERSION_NUMBER_V4       = 4;
-  private static final long                       serialVersionUID        = 1L;
+  public static final int                       CURRENT_VERSION_NUMBER  = 5;
+  public static final int                       VERSION_NUMBER_V4       = 4;
+  private static final long                     serialVersionUID        = 1L;
 
-  private final boolean                           clustersCanNotBeSharedAmongClasses;
+  private final boolean                         clustersCanNotBeSharedAmongClasses;
 
-  private final OReadersWriterSpinLock            rwSpinLock              = new OReadersWriterSpinLock();
+  private final OReadersWriterSpinLock          rwSpinLock              = new OReadersWriterSpinLock();
 
-  private final Map<String, OClass>               classes                 = new HashMap<String, OClass>();
-  private final Map<Integer, OClass>              clustersToClasses       = new HashMap<Integer, OClass>();
+  private final Map<String, OClass>             classes                 = new HashMap<String, OClass>();
+  private final Map<Integer, OClass>            clustersToClasses       = new HashMap<Integer, OClass>();
 
-  private final OClusterSelectionFactory          clusterSelectionFactory = new OClusterSelectionFactory();
+  private final OClusterSelectionFactory        clusterSelectionFactory = new OClusterSelectionFactory();
 
-  private final ThreadLocal<OModifiableInteger>   modificationCounter     = new ThreadLocal<OModifiableInteger>() {
-                                                                            @Override
-                                                                            protected OModifiableInteger initialValue() {
-                                                                              return new OModifiableInteger(0);
-                                                                            }
-                                                                          };
-  private final List<OGlobalProperty>             properties              = new ArrayList<OGlobalProperty>();
-  private final Map<String, OGlobalProperty>      propertiesByNameType    = new HashMap<String, OGlobalProperty>();
-  private volatile int                            version                 = 0;
-
-  private final AtomicReference<OImmutableSchema> schemaCache             = new AtomicReference<OImmutableSchema>();
+  private final ThreadLocal<OModifiableInteger> modificationCounter     = new ThreadLocal<OModifiableInteger>() {
+                                                                          @Override
+                                                                          protected OModifiableInteger initialValue() {
+                                                                            return new OModifiableInteger(0);
+                                                                          }
+                                                                        };
+  private final List<OGlobalProperty>           properties              = new ArrayList<OGlobalProperty>();
+  private final Map<String, OGlobalProperty>    propertiesByNameType    = new HashMap<String, OGlobalProperty>();
+  private volatile int                          version                 = 0;
 
   private static final class ClusterIdsAreEmptyException extends Exception {
   }
@@ -107,23 +105,14 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     this.clustersCanNotBeSharedAmongClasses = clustersCanNotBeSharedAmongClasses;
   }
 
-  public OImmutableSchema updateSchemaCache() {
+  @Override
+  public OImmutableSchema makeSnapshot() {
     acquireSchemaReadLock();
     try {
-      OImmutableSchema immutableSchema;
-      OImmutableSchema newSchema;
-      do {
-        immutableSchema = schemaCache.get();
-        if (immutableSchema != null && immutableSchema.getVersion() == version)
-          break;
-
-        newSchema = new OImmutableSchema(this);
-      } while (!schemaCache.compareAndSet(immutableSchema, newSchema));
+      return new OImmutableSchema(this);
     } finally {
       releaseSchemaReadLock();
     }
-
-    return schemaCache.get();
   }
 
   public boolean isClustersCanNotBeSharedAmongClasses() {
@@ -545,7 +534,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   }
 
   public void releaseSchemaWriteLock() {
-    version++;
     try {
       if (modificationCounter.get().intValue() == 1) {
         // if it is embedded storage modification of schema is done by internal methods otherwise it is done by
@@ -555,6 +543,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
           saveInternal();
         else
           reload();
+
+        version++;
       }
     } finally {
       rwSpinLock.releaseWriteLock();

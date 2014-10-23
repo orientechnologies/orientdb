@@ -91,7 +91,7 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
 
         className = temp.substring("CLASS:".length());
 
-        if (!database.getMetadata().getImmutableSchema().existsClass(className))
+        if (!database.getMetadata().getImmutableSchemaSnapshot().existsClass(className))
           throw new OCommandSQLParsingException("Class " + className + " was not found");
 
       } else if (temp.equals(KEYWORD_SET)) {

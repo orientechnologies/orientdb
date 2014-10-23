@@ -186,8 +186,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
   }
 
   private void compareSchama() {
-    OSchema schema1 = databaseDocumentTxOne.getMetadata().getImmutableSchema();
-    OSchema schema2 = databaseDocumentTxTwo.getMetadata().getImmutableSchema();
+    OSchema schema1 = databaseDocumentTxOne.getMetadata().getImmutableSchemaSnapshot();
+    OSchema schema2 = databaseDocumentTxTwo.getMetadata().getImmutableSchemaSnapshot();
     boolean ok = true;
     for (OClass clazz : schema1.getClasses()) {
       OClass clazz2 = schema2.getClass(clazz.getName());

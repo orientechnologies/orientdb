@@ -125,6 +125,8 @@ public interface OClass extends Comparable<OClass> {
 
   public long getSize();
 
+	public float getClassOverSize();
+
   /**
    * Returns the oversize factor. Oversize is used to extend the record size by a factor to avoid defragmentation upon updates. 0 or
    * 1.0 means no oversize.

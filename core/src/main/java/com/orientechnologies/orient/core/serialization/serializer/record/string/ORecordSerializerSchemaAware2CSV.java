@@ -554,7 +554,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
     if (iDatabase == null || iDatabase.isClosed() || iFieldClassName == null)
       return null;
 
-    OClass linkedClass = iDatabase.getMetadata().getImmutableSchema().getClass(iFieldClassName);
+    OClass linkedClass = iDatabase.getMetadata().getImmutableSchemaSnapshot().getClass(iFieldClassName);
 
     if (iDatabase.getDatabaseOwner() instanceof ODatabaseObject) {
       ODatabaseObject dbo = (ODatabaseObject) iDatabase.getDatabaseOwner();

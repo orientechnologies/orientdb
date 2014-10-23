@@ -49,11 +49,11 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
   public RESULT onRecordBeforeCreate(final ODocument iDocument) {
     final OClass cls = iDocument.getImmutableSchemaClass();
     if (cls != null && cls.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME)) {
-      String fieldNames = ((OClassImpl) cls).getCustom(OSecurityShared.ONCREATE_FIELD);
+      String fieldNames = cls.getCustom(OSecurityShared.ONCREATE_FIELD);
       if (fieldNames == null)
         fieldNames = OSecurityShared.ALLOW_ALL_FIELD;
       final String[] fields = fieldNames.split(",");
-      String identityType = ((OClassImpl) cls).getCustom(OSecurityShared.ONCREATE_IDENTITY_TYPE);
+      String identityType = cls.getCustom(OSecurityShared.ONCREATE_IDENTITY_TYPE);
       if (identityType == null)
         identityType = "user";
 

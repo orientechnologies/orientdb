@@ -24,7 +24,6 @@ import com.orientechnologies.common.concur.resource.OSharedContainerImpl;
 import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.cache.OCacheLevelTwoLocator;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -179,7 +178,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
     // CHECK FOR ORESTRICTED
     OMetadata metaData = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata();
     if (metaData != null) {
-      final Set<OClass> classes = metaData.getImmutableSchema().getClassesRelyOnCluster(iClusterName);
+      final Set<OClass> classes = metaData.getImmutableSchemaSnapshot().getClassesRelyOnCluster(iClusterName);
       for (OClass c : classes) {
         if (c.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME))
           throw new OSecurityException("Class " + c.getName()

@@ -399,4 +399,9 @@ public abstract class OClassAbstractDelegate implements OClass {
   public int compareTo(final OClass o) {
     return delegate.compareTo(o);
   }
+
+	@Override
+	public float getClassOverSize() {
+		return delegate.getClassOverSize();
+	}
 }

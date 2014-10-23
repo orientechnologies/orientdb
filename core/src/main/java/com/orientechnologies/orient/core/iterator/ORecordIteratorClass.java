@@ -66,7 +66,7 @@ public class ORecordIteratorClass<REC extends ORecord> extends ORecordIteratorCl
       final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
 
-    targetClass = database.getMetadata().getImmutableSchema().getClass(iClassName);
+    targetClass = database.getMetadata().getImmutableSchemaSnapshot().getClass(iClassName);
     if (targetClass == null)
       throw new IllegalArgumentException("Class '" + iClassName + "' was not found in database schema");
 

@@ -399,7 +399,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
       System.out.println("\nReader " + name + " sql count: " + result.get(0) + " counting class: " + database.countClass("Person")
           + " counting cluster: " + database.countClusterElements("Person"));
 
-      if (database.getMetadata().getImmutableSchema().existsClass("ODistributedConflict"))
+      if (database.getMetadata().getImmutableSchemaSnapshot().existsClass("ODistributedConflict"))
         try {
           List<ODocument> conflicts = database
               .query(new OSQLSynchQuery<OIdentifiable>("select count(*) from ODistributedConflict"));

@@ -997,7 +997,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return this;
   }
 
-  public float getOverSizeInternal() {
+	@Override
+  public float getClassOverSize() {
     acquireSchemaReadLock();
     try {
       return overSize;

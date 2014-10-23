@@ -92,7 +92,7 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
 
     final String className = iTargetClasses.get(0);
 
-    final OProperty prop = iDatabase.getMetadata().getImmutableSchema().getClass(className).getProperty(fieldName);
+    final OProperty prop = iDatabase.getMetadata().getImmutableSchemaSnapshot().getClass(className).getProperty(fieldName);
     if (prop == null)
       // NO PROPERTY DEFINED
       return null;

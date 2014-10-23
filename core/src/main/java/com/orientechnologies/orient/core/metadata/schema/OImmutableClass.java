@@ -30,6 +30,8 @@ public class OImmutableClass implements OClass {
   private final int[]                     polymorphicClusterIds;
   private final Collection<String>        baseClasses;
   private final float                     overSize;
+  private final float                     classOverSize;
+
   private final String                    shortName;
   private final Map<String, String>       customFields;
   private final OImmutableSchema          schema;
@@ -56,13 +58,14 @@ public class OImmutableClass implements OClass {
       baseClasses.add(baseClass.getName());
 
     overSize = oClass.getOverSize();
+    classOverSize = oClass.getClassOverSize();
     shortName = oClass.getShortName();
     javaClass = oClass.getJavaClass();
 
     properties = new HashMap<String, OProperty>();
     Map<String, OProperty> propertyMap = oClass.propertiesMap();
     for (Map.Entry<String, OProperty> propertyEntry : propertyMap.entrySet())
-      properties.put(propertyEntry.getKey(), new OImmutableProperty(propertyEntry.getValue()));
+      properties.put(propertyEntry.getKey().toLowerCase(), new OImmutableProperty(propertyEntry.getValue()));
 
     customFields = new HashMap<String, String>();
     for (String key : oClass.getCustomKeys())
@@ -257,7 +260,7 @@ public class OImmutableClass implements OClass {
 
   @Override
   public OClusterSelectionStrategy getClusterSelection() {
-    throw new UnsupportedOperationException();
+    return clusterSelection;
   }
 
   @Override
@@ -317,6 +320,11 @@ public class OImmutableClass implements OClass {
   @Override
   public float getOverSize() {
     return overSize;
+  }
+
+  @Override
+  public float getClassOverSize() {
+    return classOverSize;
   }
 
   @Override
