@@ -21,7 +21,7 @@
 
 options {
 	TRACK_TOKENS = true;
-  	JDK_VERSION = "1.5";
+  	JDK_VERSION = "1.6";
   	MULTI=true;
   	VISITOR=true;
   	STATIC=false;
@@ -99,7 +99,9 @@ TOKEN:
 	|
 	< NULL: ( "N" | "n" ) ( "U" | "u" ) ( "L" | "l" ) ( "L" | "l" ) >
 	|
-	< ORDER: ( "o" | "O" ) ( "r" | "R" ) ( "d" | "D" ) ( "e" | "E" ) ( "r" | "R" ) >
+	< DEFINED: ( "D" | "d" ) ( "E" | "e" ) ( "F" | "f" ) ( "I" | "i" ) ( "N" | "n" ) ( "E" | "e" ) ( "D" | "d" ) >
+    |
+    < ORDER: ( "o" | "O" ) ( "r" | "R" ) ( "d" | "D" ) ( "e" | "E" ) ( "r" | "R" ) >
 	|
 	< GROUP: ( "g" | "G" ) ( "r" | "R" ) ( "o" | "O" ) ( "u" | "U" ) ( "p" | "P" ) >
 	|
@@ -108,6 +110,8 @@ TOKEN:
 	< LIMIT: ( "l" | "L" ) ( "i" | "I" ) ( "m" | "M" ) ( "i" | "I" ) ( "t" | "T" ) >
 	|
 	< SKIP2: ( "s" | "S" ) ( "k" | "K" ) ( "i" | "I" ) ( "p" | "P" ) >
+	|
+	< OFFSET: ( "o" | "O" ) ( "f" | "F" ) ( "f" | "F" ) ( "s" | "S" ) ( "e" | "E" ) ( "t" | "T" ) >
 	|
 	< ASC: ( "a" | "A" ) ( "s" | "S" ) ( "c" | "C" ) >
 	|
@@ -119,7 +123,7 @@ TOKEN:
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> >
 	|
-	< #RID_ATTR: "@rid" >
+	< #RID_ATTR: "@" ( ( "r" | "R" ) ( "i" | "I" ) ( "d" | "D" )) >
 	|
 	< #CLASS_ATTR: "@class" >
 	|
@@ -280,6 +284,7 @@ TOKEN :
 | < CONTAINSVALUE: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) ( "V" | "v" ) ( "A" | "a" ) ( "L" | "l" ) ( "U" | "u" ) ( "E" | "e" ) >
 | < CONTAINSTEXT: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "X" | "x" ) ( "T" | "t" ) >
 | < MATCHES: ( "M" | "m") ( "A" | "a") ( "T" | "t") ( "C" | "c") ( "H" | "h") ( "E" | "e") ( "S" | "s") >
+| < KEY: ( "K" | "k") ( "E" | "e") ( "Y" | "y") >
 }
 
 
@@ -287,6 +292,16 @@ TOKEN :
 TOKEN :
 {
   < IDENTIFIER: ( <LETTER> (<PART_LETTER>)* ) >
+|
+  < INDEX_IDENTIFIER: "index:" <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
+|
+  < INDEXVALUES_IDENTIFIER: "indexvalues:" <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
+|
+  < INDEXVALUESASC_IDENTIFIER: "indexvaluesasc:" <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
+|
+  < INDEXVALUESDESC_IDENTIFIER: "indexvaluesdesc:" <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
+|
+  < CLUSTER_IDENTIFIER: "cluster:" <IDENTIFIER>  >
 |
   < #LETTER:
       [  "A"-"Z",
@@ -325,7 +340,7 @@ SimpleNode OrientGrammar() :
 void Identifier():
 {}
 {
-    <IDENTIFIER> | <IN>
+    <IDENTIFIER> | <IN> | <SET> | <ORDER> | <KEY> | <OFFSET> | <GROUP>
 }
 
 
@@ -351,13 +366,20 @@ void SelectStatement():
 {
 	<SELECT>
 	[ Projection() ]
-	<FROM>
-	FromClause()
-	[ <WHERE> WhereClause() ]
-	[ OrderBy() ]
-	[ GroupBy() ]
-	[ Skip() ]
-	[ Limit() ]
+	[
+        <FROM>
+        FromClause()
+        [ <WHERE> WhereClause() ]
+        [ OrderBy() ]
+        [ GroupBy() ]
+        (
+            [
+                Skip() [ Limit() ]
+                |
+                Limit()  [ Skip() ]
+            ]
+        )
+	]
 }
 
 void TraverseStatement():
@@ -537,6 +559,7 @@ void FilterItem():
 	|
 	All()
 	|
+	LOOKAHEAD(2)
 	<INTEGER_LITERAL>
 	|
 	<STRING_LITERAL>
@@ -544,6 +567,29 @@ void FilterItem():
 	<FLOATING_POINT_LITERAL>
 	|
 	<CHARACTER_LITERAL>
+	|
+	Rid()
+	|
+	LOOKAHEAD( InputParameter() )
+    InputParameter()
+    |
+    LOOKAHEAD( OperationChain() )
+	OperationChain()
+}
+
+void ArraySelector():
+{}
+{
+	LOOKAHEAD(2)
+	<INTEGER_LITERAL>
+	|
+	<STRING_LITERAL>
+	|
+	<FLOATING_POINT_LITERAL>
+	|
+	<CHARACTER_LITERAL>
+	|
+	Rid()
 	|
 	LOOKAHEAD( InputParameter() )
     InputParameter()
@@ -592,8 +638,8 @@ void FunctionCall():
 		"*"
 		|
 		(
-			FilterItem()
-			( "," FilterItem() )*
+			[ FilterItem()
+			( <COMMA> FilterItem() )* ]
 		)
 	)
 	<RPAREN>
@@ -602,7 +648,7 @@ void FunctionCall():
 void MethodCall():
 {}
 {
-	( <DOT> Identifier() <LPAREN> [ FilterItem() ( "," FilterItem() )* ] <RPAREN> )
+	( <DOT> Identifier() <LPAREN> [ FilterItem() ( <COMMA> FilterItem() )* ] <RPAREN> )
 }
 
 void LevelZeroIdentifier():
@@ -638,7 +684,15 @@ void Modifier():
 {
 
     (
-        "[" OrBlock() "]"
+
+        "["
+            (
+                LOOKAHEAD( OrBlock() )
+                OrBlock()
+                |
+                ArraySelector()
+            )
+        "]"
    	    |
    	    LOOKAHEAD(3)
    	    MethodCall()
@@ -675,19 +729,25 @@ void FromItem():
 	|
 	Identifier()
 	|
-	<LPAREN> SelectStatement() <RPAREN>
+	<LPAREN> ( SelectStatement() | TraverseStatement() ) <RPAREN>
 }
 
 void Cluster():
 {}
 {
-	"cluster:" Identifier()
+	<CLUSTER_IDENTIFIER>
 }
 
 void IndexIdentifier():
 {}
 {
-	"index:" Identifier()
+	<INDEX_IDENTIFIER>
+	|
+	<INDEXVALUES_IDENTIFIER>
+	|
+	<INDEXVALUESASC_IDENTIFIER>
+	|
+	<INDEXVALUESDESC_IDENTIFIER>
 }
 
 void WhereClause():
@@ -729,6 +789,12 @@ void ConditionBlock():
 	LOOKAHEAD( IsNullCondition() )
 	IsNullCondition()
 	|
+	LOOKAHEAD( IsNotDefinedCondition() )
+	IsNotDefinedCondition()
+	|
+	LOOKAHEAD( IsDefinedCondition() )
+	IsDefinedCondition()
+	|
 	LOOKAHEAD( InCondition() )
     InCondition()
     |
@@ -744,11 +810,20 @@ void ConditionBlock():
 	LOOKAHEAD( ContainsCondition() )
 	ContainsCondition()
 	|
-	LOOKAHEAD( ContainsTextCondition() )
+	LOOKAHEAD( ContainsValueCondition() )
+	ContainsValueCondition()
+	|
+	LOOKAHEAD( ContainsAllCondition() )
+    ContainsAllCondition()
+    |
+    LOOKAHEAD( ContainsTextCondition() )
 	ContainsTextCondition()
 	|
 	LOOKAHEAD( MatchesCondition() )
 	MatchesCondition()
+	|
+	LOOKAHEAD( IndexMatchCondition() )
+	IndexMatchCondition()
 }
 
 void CompareOperator():
@@ -763,7 +838,6 @@ void CompareOperator():
       | LeOperator()
       | LikeOperator()
       | ContainsKeyOperator()
-      | ContainsValueOperator()
 }
 
 
@@ -830,7 +904,29 @@ void EqualsCompareOperator():
 void BinaryCondition():
 {}
 {
- 	FilterItem() CompareOperator() ( LOOKAHEAD(Rid()) Rid() | LOOKAHEAD(FilterItem())  FilterItem())
+ 	FilterItem() CompareOperator() FilterItem()
+}
+
+void ContainsValueCondition():
+{}
+{
+    FilterItem() ContainsValueOperator()
+    (
+        <LPAREN> OrBlock() <RPAREN>
+        |
+        FilterItem()
+    )
+}
+
+void IndexMatchCondition():
+{}
+{
+ 	<KEY>
+ 	(
+ 	    CompareOperator() <LBRACKET> [ FilterItem() ( <COMMA> FilterItem() )* ] <RBRACKET>
+ 	    |
+ 	    <BETWEEN> <LBRACKET> [ FilterItem() ( <COMMA> FilterItem() )* ] <RBRACKET> <AND> <LBRACKET> [ FilterItem() ( <COMMA> FilterItem() )* ] <RBRACKET>
+ 	)
 }
 
 void BetweenCondition():
@@ -851,10 +947,29 @@ void IsNotNullCondition():
 	FilterItem() <IS> <NOT> <NULL>
 }
 
+void IsDefinedCondition():
+{}
+{
+	FilterItem() <IS> <DEFINED>
+}
+
+void IsNotDefinedCondition():
+{}
+{
+	FilterItem() <IS> <NOT> <DEFINED>
+}
+
 void ContainsCondition():
 {}
 {
-	FilterItem() <CONTAINS> <LPAREN> OrBlock() <RPAREN>
+	FilterItem() <CONTAINS>
+
+	(
+	    <LPAREN> OrBlock() <RPAREN>
+	    |
+	    FilterItem()
+	)
+
 }
 
 void InOperator():
@@ -871,6 +986,8 @@ void InCondition():
 	    <LBRACKET> FilterItem() (<COMMA> FilterItem())* <RBRACKET>
 	    |
 	    <LPAREN> SelectStatement() <RPAREN>
+	    |
+	    InputParameter()
 	)
 }
 
@@ -906,7 +1023,8 @@ void MatchesCondition():
 void OrderBy():
 {}
 {
-	<ORDER> <BY> Identifier() ( "," Identifier() )* [ <DESC> | <ASC> ]
+	<ORDER> <BY> ( Identifier() | Rid() | <RECORD_ATTRIBUTE> ) [ <DESC> | <ASC> ]
+	( "," ( Identifier() | Rid() | <RECORD_ATTRIBUTE> )  [ <DESC> | <ASC> ] )*
 }
 
 void GroupBy():
@@ -925,6 +1043,8 @@ void Skip():
 {}
 {
 	<SKIP2> <INTEGER_LITERAL>
+	|
+	<OFFSET> <INTEGER_LITERAL>
 }
 
 
