@@ -1881,17 +1881,18 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     checkForLoading();
     checkForFields();
 
-    if (_clazz != null) {
-      if (_clazz.isStrictMode()) {
+		final OClass immutableSchemaClass = getImmutableSchemaClass();
+		if (immutableSchemaClass != null) {
+      if (immutableSchemaClass.isStrictMode()) {
         // CHECK IF ALL FIELDS ARE DEFINED
         for (String f : fieldNames()) {
-          if (_clazz.getProperty(f) == null)
+          if (immutableSchemaClass.getProperty(f) == null)
             throw new OValidationException("Found additional field '" + f + "'. It cannot be added because the schema class '"
-                + _clazz.getName() + "' is defined as STRICT");
+                + immutableSchemaClass.getName() + "' is defined as STRICT");
         }
       }
 
-      for (OProperty p : _clazz.properties()) {
+      for (OProperty p : immutableSchemaClass.properties()) {
         validateField(this, p);
       }
     }

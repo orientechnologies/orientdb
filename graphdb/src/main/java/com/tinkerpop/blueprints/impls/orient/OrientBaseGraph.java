@@ -113,15 +113,15 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     readDatabaseConfiguration();
   }
 
-	public OrientBaseGraph(final ODatabaseDocumentPool pool, final Settings iConfiguration) {
-		this.pool = pool;
+  public OrientBaseGraph(final ODatabaseDocumentPool pool, final Settings iConfiguration) {
+    this.pool = pool;
 
-		database = pool.acquire();
-		this.username = database.getUser() != null ? database.getUser().getName() : null;
+    database = pool.acquire();
+    this.username = database.getUser() != null ? database.getUser().getName() : null;
 
-		readDatabaseConfiguration();
-		configure(iConfiguration);
-	}
+    readDatabaseConfiguration();
+    configure(iConfiguration);
+  }
 
   public OrientBaseGraph(final String url) {
     this(url, ADMIN, ADMIN);
@@ -710,7 +710,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       final String className = iKey.substring(0, pos);
       key = iKey.substring(iKey.indexOf('.') + 1);
 
-      final OClass clazz = database.getMetadata().getSchema().getClass(className);
+      final OClass clazz = database.getMetadata().getImmutableSchemaSnapshot().getClass(className);
 
       final Collection<? extends OIndex<?>> indexes = clazz.getIndexes();
       for (OIndex<?> index : indexes) {
@@ -787,7 +787,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    */
   public Iterable<Vertex> getVertices(final String label, final String[] iKey, Object[] iValue) {
 
-    final OClass clazz = database.getMetadata().getSchema().getClass(label);
+    final OClass clazz = database.getMetadata().getImmutableSchemaSnapshot().getClass(label);
     Set<OIndex<?>> indexes = clazz.getInvolvedIndexes(Arrays.asList(iKey));
     if (indexes.iterator().hasNext()) {
       final OIndex<?> idx = indexes.iterator().next();
@@ -1376,7 +1376,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (elementClass == null)
       throw ExceptionFactory.classForElementCannotBeNull();
 
-    final OSchema schema = getRawGraph().getMetadata().getSchema();
+    final OSchema schema = getRawGraph().getMetadata().getImmutableSchemaSnapshot();
     final String elementOClassName = getClassName(elementClass);
 
     Set<String> result = new HashSet<String>();
