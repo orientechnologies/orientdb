@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core.command.script;
 
 import java.lang.reflect.Method;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Script utility class
@@ -40,16 +40,57 @@ public class OCommandExecutorUtility {
    *          Result to transform
    * @return
    */
-  public static Object transformResult(final Object result) {
+  public static Object transformResult(Object result) {
     // PATCH BY MAT ABOUT NASHORN RETURNING VALUE FOR ARRAYS. TEST IF 0 IS PRESENT AS KEY. IN THIS CASE RETURNS THE VALUES NOT THE
     // OBJECT AS MAP
-    if (result instanceof Map)
+    if (result instanceof Map) {
       try {
-        if (((Map) result).containsKey("0"))
-          return ((Map) result).values();
+        if (isActuallyAnArray(result)) {
+          List<?> partial = new ArrayList(((Map) result).values());
+          List<Object> finalResult = new ArrayList<Object>();
+          for (Object o : partial) {
+            if (o instanceof Map) {
+              Map<Object, Object> innerMap = (Map) o;
+              Set<Object> keys = innerMap.keySet();
+              Map<Object, Object> newMap = new LinkedHashMap<Object, Object>();
+              for (Object key : keys) {
+                newMap.put(key, transformResult(innerMap.get(key)));
+              }
+              finalResult.add(newMap.values());
+            } else {
+              finalResult.add(o);
+            }
+          }
+
+          return finalResult;
+        }else{
+          Map<Object, Object> mapResult = (Map) result;
+          List<Object> keys = new ArrayList<Object>(mapResult.keySet());
+          for (Object key : keys) {
+            mapResult.put(key, transformResult(mapResult.get(key)));
+          }
+          return mapResult;
+        }
       } catch (Exception e) {
       }
+    }
 
     return result;
+  }
+
+  private static boolean isActuallyAnArray(Object result) {
+    for(Object key:((Map) result).keySet()){
+      if(key instanceof Integer){
+        continue;
+      }
+      if(key instanceof String){
+        try{
+          Integer.parseInt(""+key);
+        }catch (NumberFormatException e){
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }
