@@ -71,10 +71,9 @@ import com.orientechnologies.orient.core.Orient;
        // OVERWRITE RID TO BE TEMPORARY
        ORecordInternal.setIdentity(record, rid.getClusterId(), ORID.CLUSTER_POS_INVALID);
 
-     if (rid.getClusterId() != -1) {
+     if (rid.getClusterId() != -1)
        record.save(database.getClusterNameById(rid.getClusterId()), true);
-       record.getRecordVersion().decrement();
-     } else
+     else
        record.save();
 
      rid = (ORecordId) record.getIdentity();

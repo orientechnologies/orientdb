@@ -332,7 +332,7 @@ public class ODistributedResponseManager {
           if (entry.getValue() != NO_RESPONSE)
             payloads.put(entry.getKey(), ((ODistributedResponse) entry.getValue()).getPayload());
 
-        final ODistributedResponse response = (ODistributedResponse) responses.values().iterator().next();
+        final ODistributedResponse response = (ODistributedResponse) getReceivedResponses().iterator().next();
         response.setExecutorNodeName(responses.keySet().toString());
         response.setPayload(payloads);
         return response;

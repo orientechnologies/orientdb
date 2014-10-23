@@ -793,7 +793,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         Orient.instance().unregisterStorageByName(databaseName);
 
         // MOVE DIRECTORY TO ../backup/databases/<db-name>
-        final String backupPath = BACKUP_DIR + "/" + databaseName;
+        final String backupPath = serverInstance.getDatabaseDirectory() + "/" + BACKUP_DIR + "/" + databaseName;
         final File f = new File(BACKUP_DIR);
         if (f.exists())
           OFileUtils.deleteRecursively(new File(backupPath));

@@ -181,6 +181,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
             ODistributedServerLog.DIRECTION.NONE, "Shutdown asynchronous queue worker completed");
       }
     };
+    asynchWorker.setName("OrientDB Distributed asynch ops node=" + getNodeId() + " db=" + getName());
     asynchWorker.start();
   }
 
@@ -825,7 +826,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       if (executionModeSynch == null)
         executionModeSynch = Boolean.TRUE;
 
-      //if (executionModeSynch && !iTx.hasRecordCreation()) {
+      // if (executionModeSynch && !iTx.hasRecordCreation()) {
       if (executionModeSynch) {
         // SYNCHRONOUS CALL: REPLICATE IT
         final Object result = dManager.sendRequest(getName(), involvedClusters, nodes, txTask, EXECUTION_MODE.RESPONSE);
@@ -1146,7 +1147,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   @Override
   public String getNodeId() {
-    return dManager.getLocalNodeName();
+    return dManager != null ? dManager.getLocalNodeName() : "?";
   }
 
   public void shutdownAsynchronousWorker() {

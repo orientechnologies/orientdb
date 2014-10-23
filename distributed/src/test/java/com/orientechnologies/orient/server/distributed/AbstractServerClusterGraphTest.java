@@ -41,10 +41,12 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
 
   class TxWriter implements Callable<Void> {
     private final String databaseUrl;
-    private int          serverId;
+    private final int    serverId;
+    private final int    threadId;
 
-    public TxWriter(final int iServerId, final String db) {
+    public TxWriter(final int iServerId, final int iThreadId, final String db) {
       serverId = iServerId;
+      threadId = iThreadId;
       databaseUrl = db;
     }
 
@@ -59,7 +61,7 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
             System.out.println("\nWriter " + databaseUrl + " managed " + (i + 1) + "/" + count + " vertices so far");
 
           try {
-            OrientVertex person = createVertex(graph, serverId, i);
+            OrientVertex person = createVertex(graph, serverId, threadId, i);
             updateVertex(graph, person);
             checkVertex(graph, person);
             // checkIndex(database, (String) person.field("name"), person.getIdentity());
@@ -106,7 +108,7 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
     personClass.createProperty("id", OType.STRING);
     personClass.createProperty("name", OType.STRING);
     personClass.createProperty("birthday", OType.DATE);
-    personClass.createProperty("children", OType.INTEGER);
+    personClass.createProperty("children", OType.STRING);
 
     OrientVertexType person = graph.getVertexType("Person");
     idx = person.createIndex("Person.name", OClass.INDEX_TYPE.UNIQUE, "name");
@@ -121,12 +123,13 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
     factory.setStandardElementConstraints(false);
   }
 
-  protected Callable createWriter(int i, String databaseURL) {
-    return new TxWriter(i, databaseURL);
+  @Override
+  protected Callable<Void> createWriter(final int serverId, final int threadId, String databaseURL) {
+    return new TxWriter(serverId, threadId, databaseURL);
   }
 
-  protected OrientVertex createVertex(OrientGraph graph, int serverId, int i) {
-    final int uniqueId = count * serverId + i;
+  protected OrientVertex createVertex(OrientGraph graph, int serverId, int threadId, int i) {
+    final String uniqueId = serverId + "-" + threadId + "-" + i;
 
     return graph.addVertex("class:Person", "id", UUID.randomUUID().toString(), "name", "Billy" + uniqueId, "surname", "Mayes"
         + uniqueId, "birthday", new Date(), "children", uniqueId);
