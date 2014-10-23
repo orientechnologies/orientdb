@@ -1244,7 +1244,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     final ODocument doc = rec.getRecord();
     if (doc != null) {
-      final OClass schemaClass = doc.getSchemaClass();
+      final OClass schemaClass = doc.getImmutableSchemaClass();
       if (schemaClass != null && schemaClass.isSubClassOf(OrientEdgeType.CLASS_NAME))
         return new OrientEdge(this, doc);
       else

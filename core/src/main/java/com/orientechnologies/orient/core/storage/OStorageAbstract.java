@@ -179,7 +179,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
     // CHECK FOR ORESTRICTED
     OMetadata metaData = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata();
     if (metaData != null) {
-      final Set<OClass> classes = metaData.getSchema().getClassesRelyOnCluster(iClusterName);
+      final Set<OClass> classes = metaData.getImmutableSchema().getClassesRelyOnCluster(iClusterName);
       for (OClass c : classes) {
         if (c.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME))
           throw new OSecurityException("Class " + c.getName()

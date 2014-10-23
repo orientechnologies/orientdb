@@ -66,7 +66,7 @@ public class ORecordIteratorClass<REC extends ORecord> extends ORecordIteratorCl
       final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
 
-    targetClass = database.getMetadata().getSchema().getClass(iClassName);
+    targetClass = database.getMetadata().getImmutableSchema().getClass(iClassName);
     if (targetClass == null)
       throw new IllegalArgumentException("Class '" + iClassName + "' was not found in database schema");
 
@@ -100,7 +100,7 @@ public class ORecordIteratorClass<REC extends ORecord> extends ORecordIteratorCl
 
   @Override
   protected boolean include(final ORecord record) {
-    return record instanceof ODocument && targetClass.isSuperClassOf(((ODocument) record).getSchemaClass());
+    return record instanceof ODocument && targetClass.isSuperClassOf(((ODocument) record).getImmutableSchemaClass());
   }
 
   public boolean isPolymorphic() {

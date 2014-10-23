@@ -164,7 +164,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
         || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LET) || additionalStatement.equals(KEYWORD_LOCK)) {
       query = new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + additionalStatement + " "
           + parserText.substring(parserGetCurrentPosition()), this);
-      isUpsertAllowed = (getDatabase().getMetadata().getSchema().getClass(subjectName) != null);
+      isUpsertAllowed = (getDatabase().getMetadata().getImmutableSchema().getClass(subjectName) != null);
     } else if (!additionalStatement.isEmpty())
       throwSyntaxErrorException("Invalid keyword " + additionalStatement);
     else
@@ -408,8 +408,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       ORidBag bag = null;
       if (!record.containsField(entry.getKey())) {
         // GET THE TYPE IF ANY
-        if (record.getSchemaClass() != null) {
-          OProperty prop = record.getSchemaClass().getProperty(entry.getKey());
+        if (record.getImmutableSchemaClass() != null) {
+          OProperty prop = record.getImmutableSchemaClass().getProperty(entry.getKey());
           if (prop != null && prop.getType() == OType.LINKSET)
             // SET TYPE
             coll = new HashSet<Object>();
@@ -469,8 +469,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
         Object fieldValue = record.field(entry.getKey());
 
         if (fieldValue == null) {
-          if (record.getSchemaClass() != null) {
-            final OProperty property = record.getSchemaClass().getProperty(entry.getKey());
+          if (record.getImmutableSchemaClass() != null) {
+            final OProperty property = record.getImmutableSchemaClass().getProperty(entry.getKey());
             if (property != null
                 && (property.getType() != null && (!property.getType().equals(OType.EMBEDDEDMAP) && !property.getType().equals(
                     OType.LINKMAP)))) {

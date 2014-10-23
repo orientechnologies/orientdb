@@ -107,7 +107,7 @@ public class OFindReferenceHelper {
 
   private static void browseClass(final ODatabaseRecord db, Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map,
       final String iClassName) {
-    final OClass clazz = db.getMetadata().getSchema().getClass(iClassName);
+    final OClass clazz = db.getMetadata().getImmutableSchema().getClass(iClassName);
 
     if (clazz == null)
       throw new OCommandExecutionException("Class '" + iClassName + "' was not found");

@@ -1264,7 +1264,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         record.setDirty();
         ORecordInternal.setIdentity(record, new ORecordId());
 
-        if (!preserveRids && record instanceof ODocument && ((ODocument) record).getSchemaClass() != null)
+        if (!preserveRids && record instanceof ODocument && ((ODocument) record).getImmutableSchemaClass() != null)
           record.save();
         else
           record.save(database.getClusterNameById(clusterId));

@@ -76,7 +76,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
       Object value;
       int length;
       byte[] buffer;
-      for (OProperty p : record.getSchemaClass().properties()) {
+      for (OProperty p : record.getImmutableSchemaClass().properties()) {
         value = null;
 
         switch (p.getType()) {
@@ -169,7 +169,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
       // MARSHALL ALL THE PROPERTIES
       Object value;
       byte[] buffer;
-      for (OProperty p : record.getSchemaClass().properties()) {
+      for (OProperty p : record.getImmutableSchemaClass().properties()) {
         value = record.field(p.getName());
 
         switch (p.getType()) {

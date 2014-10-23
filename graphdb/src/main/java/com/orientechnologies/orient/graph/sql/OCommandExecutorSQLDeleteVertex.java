@@ -88,7 +88,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
       } else if (word.equals(KEYWORD_WHERE)) {
         if (clazz == null)
           // ASSIGN DEFAULT CLASS
-          clazz = database.getMetadata().getSchema().getClass(OrientVertexType.CLASS_NAME);
+          clazz = database.getMetadata().getImmutableSchema().getClass(OrientVertexType.CLASS_NAME);
 
         where = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetPreviousPosition()) : "";
         query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + where, this));
@@ -96,7 +96,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
 
       } else if (word.length() > 0) {
         // GET/CHECK CLASS NAME
-        clazz = database.getMetadata().getSchema().getClass(word);
+        clazz = database.getMetadata().getImmutableSchema().getClass(word);
         if (clazz == null)
           throw new OCommandSQLParsingException("Class '" + word + " was not found");
       }

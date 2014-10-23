@@ -34,11 +34,7 @@ import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordListener;
@@ -67,26 +63,30 @@ import java.util.Map.Entry;
 public class ODocument extends ORecordAbstract implements Iterable<Entry<String, Object>>, ORecordSchemaAware, ODetachable,
     Externalizable {
 
-  public static final byte                                               RECORD_TYPE         = 'd';
-  protected static final String[]                                        EMPTY_STRINGS       = new String[] {};
-  private static final long                                              serialVersionUID    = 1L;
-  private final ThreadLocal<OModifiableInteger>                          TO_STRING_DEPTH     = new ThreadLocal<OModifiableInteger>() {
-                                                                                               @Override
-                                                                                               protected OModifiableInteger initialValue() {
-                                                                                                 return new OModifiableInteger();
-                                                                                               }
-                                                                                             };
+  public static final byte                                               RECORD_TYPE             = 'd';
+  protected static final String[]                                        EMPTY_STRINGS           = new String[] {};
+  private static final long                                              serialVersionUID        = 1L;
+  private final ThreadLocal<OModifiableInteger>                          TO_STRING_DEPTH         = new ThreadLocal<OModifiableInteger>() {
+                                                                                                   @Override
+                                                                                                   protected OModifiableInteger initialValue() {
+                                                                                                     return new OModifiableInteger();
+                                                                                                   }
+                                                                                                 };
   protected OClass                                                       _clazz;
+
+  private OClass                                                         _immutableClazz;
+  private int                                                            _immutableSchemaVersion = 1;
+
   protected Map<String, Object>                                          _fieldValues;
   protected Map<String, Object>                                          _fieldOriginalValues;
   protected Map<String, OType>                                           _fieldTypes;
   protected Map<String, OSimpleMultiValueChangeListener<Object, Object>> _fieldChangeListeners;
   protected Map<String, OMultiValueChangeTimeLine<Object, Object>>       _fieldCollectionChangeTimeLines;
-  protected boolean                                                      _trackingChanges    = true;
-  protected boolean                                                      _ordered            = true;
-  protected boolean                                                      _lazyLoad           = true;
-  protected boolean                                                      _allowChainedAccess = true;
-  protected transient List<WeakReference<ORecordElement>>                _owners             = null;
+  protected boolean                                                      _trackingChanges        = true;
+  protected boolean                                                      _ordered                = true;
+  protected boolean                                                      _lazyLoad               = true;
+  protected boolean                                                      _allowChainedAccess     = true;
+  protected transient List<WeakReference<ORecordElement>>                _owners                 = null;
 
   /**
    * Internal constructor used on unmarshalling.
@@ -151,7 +151,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     final ODatabaseRecordInternal database = getDatabaseInternal();
     if (_recordId.clusterId > -1 && database.getStorageVersions().classesAreDetectedByClusterId()) {
-      final OSchema schema = database.getMetadata().getSchema();
+      final OSchema schema = database.getMetadata().getImmutableSchema();
       final OClass cls = schema.getClassByClusterId(_recordId.clusterId);
       if (cls != null && !cls.getName().equals(iClassName))
         throw new IllegalArgumentException("Cluster id does not correspond class name should be " + iClassName + " but found "
@@ -184,6 +184,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   public ODocument(final OClass iClass) {
     setup();
     _clazz = iClass;
+    _immutableClazz = null;
+    _immutableSchemaVersion = -1;
   }
 
   /**
@@ -446,10 +448,10 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       final ODocument doc = (ODocument) linkedRecord;
 
       // AT THIS POINT CHECK THE CLASS ONLY IF != NULL BECAUSE IN CASE OF GRAPHS THE RECORD COULD BE PARTIAL
-      if (doc.getSchemaClass() != null && !p.getLinkedClass().isSuperClassOf(doc.getSchemaClass()))
+      if (doc.getImmutableSchemaClass() != null && !p.getLinkedClass().isSuperClassOf(doc.getImmutableSchemaClass()))
         throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType() + " of type '"
             + p.getLinkedClass().getName() + "' but the value is the document " + linkedRecord.getIdentity() + " of class '"
-            + doc.getSchemaClass() + "'");
+            + doc.getImmutableSchemaClass() + "'");
     }
   }
 
@@ -470,13 +472,13 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
               + " with linked class '" + embeddedClass + "' but the record was not a document");
 
         final ODocument doc = (ODocument) rec;
-        if (doc.getSchemaClass() == null)
+        if (doc.getImmutableSchemaClass() == null)
           throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
               + " with linked class '" + embeddedClass + "' but the record has no class");
 
-        if (!(doc.getSchemaClass().isSubClassOf(embeddedClass)))
+        if (!(doc.getImmutableSchemaClass().isSubClassOf(embeddedClass)))
           throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
-              + " with linked class '" + embeddedClass + "' but the record is of class '" + doc.getSchemaClass().getName()
+              + " with linked class '" + embeddedClass + "' but the record is of class '" + doc.getImmutableSchemaClass().getName()
               + "' that is not a subclass of that");
       }
 
@@ -1501,6 +1503,9 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     super.reset();
     _clazz = null;
+    _immutableClazz = null;
+    _immutableSchemaVersion = -1;
+
     internalReset();
 
     if (_fieldOriginalValues != null)
@@ -1789,6 +1794,9 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   public void setClassNameIfExists(final String iClassName) {
     if (iClassName == null) {
       _clazz = null;
+      _immutableClazz = null;
+      _immutableSchemaVersion = -1;
+
       return;
     }
 
@@ -1818,6 +1826,29 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     return _clazz;
   }
 
+  public OClass getImmutableSchemaClass() {
+    final OClass docClass = getSchemaClass();
+
+    if (docClass == null) {
+      _immutableClazz = null;
+      _immutableSchemaVersion = -1;
+      return null;
+    }
+
+    final OSchema immutableSchema = getDatabase().getMetadata().getImmutableSchema();
+    if (_immutableClazz == null) {
+      _immutableSchemaVersion = immutableSchema.getVersion();
+      _immutableClazz = immutableSchema.getClass(docClass.getName());
+    } else {
+      if (_immutableSchemaVersion < immutableSchema.getVersion()) {
+        _immutableSchemaVersion = immutableSchema.getVersion();
+        _immutableClazz = immutableSchema.getClass(docClass.getName());
+      }
+    }
+
+    return _immutableClazz;
+  }
+
   public String getClassName() {
     if (_clazz == null)
       getSchemaClass();
@@ -1827,6 +1858,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   public void setClassName(final String iClassName) {
     if (iClassName == null) {
       _clazz = null;
+      _immutableClazz = null;
+      _immutableSchemaVersion = -1;
       return;
     }
 
@@ -2040,6 +2073,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       throw new OSchemaException("Cannot create a document of the abstract class '" + iClass + "'");
 
     _clazz = iClass;
+    _immutableClazz = null;
+    _immutableSchemaVersion = -1;
   }
 
   private void saveOldFieldValue(String iFieldName, Object oldValue) {

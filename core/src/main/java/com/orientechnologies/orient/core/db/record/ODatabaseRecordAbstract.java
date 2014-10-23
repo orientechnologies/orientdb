@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.db.record;
 
 import java.util.Arrays;
@@ -76,6 +76,7 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORestrictedAccessHook;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -876,6 +877,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       final boolean iIgnoreCache, final boolean loadTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     checkOpeness();
 
+    OSchemaProxy schemaProxy = getMetadata().getSchema();
+    ORecordSerializationContext.pushContext(schemaProxy == null ? null : schemaProxy.updateSchemaCache());
     try {
       checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(rid.getClusterId()));
 
@@ -943,6 +946,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     } catch (Exception e) {
       // WRAP IT AS ODATABASE EXCEPTION
       throw new ODatabaseException("Error on retrieving record " + rid, e);
+    } finally {
+      ORecordSerializationContext.pullContext();
     }
   }
 
@@ -976,7 +981,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       byte[] stream;
       final OStorageOperationResult<ORecordVersion> operationResult;
 
-      ORecordSerializationContext.pushContext();
+      OSchemaProxy schemaProxy = getMetadata().getSchema();
+      ORecordSerializationContext.pushContext(schemaProxy.updateSchemaCache());
       try {
         // STREAM.LENGTH == 0 -> RECORD IN STACK: WILL BE SAVED AFTER
         stream = record.toStream();
@@ -1023,9 +1029,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
         try {
           // SAVE IT
-          operationResult = underlying.save(rid, ORecordInternal.isContentChanged(record),
-              stream == null ? new byte[0] : stream, realVersion, ORecordInternal.getRecordType(record), iMode.ordinal(),
-              iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
+          operationResult = underlying.save(rid, ORecordInternal.isContentChanged(record), stream == null ? new byte[0] : stream,
+              realVersion, ORecordInternal.getRecordType(record), iMode.ordinal(), iForceCreate, iRecordCreatedCallback,
+              iRecordUpdatedCallback);
 
           final ORecordVersion version = operationResult.getResult();
 
@@ -1089,7 +1095,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     final Set<OIndex<?>> lockedIndexes = new HashSet<OIndex<?>>();
     setCurrentDatabaseinThreadLocal();
-    ORecordSerializationContext.pushContext();
+
+    OSchemaProxy schemaProxy = getMetadata().getSchema();
+    ORecordSerializationContext.pushContext(schemaProxy.updateSchemaCache());
     try {
       if (record instanceof ODocument)
         acquireIndexModificationLock((ODocument) record, lockedIndexes);
@@ -1156,7 +1164,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.clusterId));
 
     setCurrentDatabaseinThreadLocal();
-    ORecordSerializationContext.pushContext();
+    OSchemaProxy schemaProxy = getMetadata().getSchema();
+    ORecordSerializationContext.pushContext(schemaProxy.updateSchemaCache());
     try {
 
       final OStorageOperationResult<Boolean> operationResult;
@@ -1466,8 +1475,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   private void checkRecordClass(ORecord record, String iClusterName, ORecordId rid, boolean isNew) {
     if (rid.clusterId > -1 && getStorageVersions().classesAreDetectedByClusterId() && isNew && record instanceof ODocument) {
       final ODocument recordSchemaAware = (ODocument) record;
-      final OClass recordClass = recordSchemaAware.getSchemaClass();
-      final OClass clusterIdClass = metadata.getSchema().getClassByClusterId(rid.clusterId);
+      final OClass recordClass = recordSchemaAware.getImmutableSchemaClass();
+      final OClass clusterIdClass = metadata.getImmutableSchema().getClassByClusterId(rid.clusterId);
       if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
           || (recordClass != null && !recordClass.equals(clusterIdClass)))
         throw new OSchemaException("Record saved into cluster '" + iClusterName + "' should be saved with class '" + clusterIdClass
@@ -1480,9 +1489,11 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     ORecordInternal.unsetDirty(record);
     record.setDirty();
     ORecordSerializationContext.pullContext();
-    ORecordSerializationContext.pushContext();
 
-    stream =  record.toStream();
+    OSchemaProxy schemaProxy = getMetadata().getSchema();
+    ORecordSerializationContext.pushContext(schemaProxy.updateSchemaCache());
+
+    stream = record.toStream();
     return stream;
   }
 
@@ -1502,7 +1513,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
   private void acquireIndexModificationLock(ODocument doc, Set<OIndex<?>> lockedIndexes) {
     if (getStorage().getUnderlying() instanceof OStorageEmbedded) {
-      final OClass cls = doc.getSchemaClass();
+      final OClass cls = doc.getImmutableSchemaClass();
       if (cls != null) {
         final Collection<OIndex<?>> indexes = cls.getIndexes();
         if (indexes != null) {

@@ -217,7 +217,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
       return null;
 
     if (key.equals("_class"))
-      return (T) getRecord().getSchemaClass().getName();
+      return (T) getRecord().getImmutableSchemaClass().getName();
     else if (key.equals("_version"))
       return (T) new Integer(getRecord().getVersion());
     else if (key.equals("_rid"))
@@ -497,7 +497,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     final ODocument doc = getRecord();
     doc.deserializeFields();
 
-    final OClass cls = doc.getSchemaClass();
+    final OClass cls = doc.getImmutableSchemaClass();
 
     if (cls == null || !cls.isSubClassOf(getBaseClassName()))
       throw new IllegalArgumentException("The document received is not a " + getElementType() + ". Found class '" + cls + "'");

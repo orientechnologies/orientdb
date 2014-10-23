@@ -165,7 +165,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
        json.writeAttribute("javaVersion", System.getProperty("java.vm.version"));
        json.endObject();
 
-       if (db.getMetadata().getSchema().getClasses() != null) {
+       if (db.getMetadata().getImmutableSchema().getClasses() != null) {
          json.beginCollection("classes");
          List<String> classNames = new ArrayList<String>();
 

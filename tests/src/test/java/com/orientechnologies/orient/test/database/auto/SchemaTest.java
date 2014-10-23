@@ -576,6 +576,8 @@ public class SchemaTest extends DocumentDBBaseTest {
     databaseDocumentTx.command(new OCommandSQL("DROP CLUSTER TestRenameClusterOriginal")).execute();
     databaseDocumentTx.command(new OCommandSQL("ALTER CLUSTER TestRenameClusterNew name TestRenameClusterOriginal")).execute();
 
+		databaseDocumentTx.getLocalCache().clear();
+
     List<ODocument> result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select * from TestRenameClusterOriginal"));
     Assert.assertEquals(result.size(), 1);
 

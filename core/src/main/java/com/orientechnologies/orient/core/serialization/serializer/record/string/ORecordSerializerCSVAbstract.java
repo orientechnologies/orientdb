@@ -120,7 +120,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       if ((rid.isNew() && !rid.isTemporary()) || iLinkedRecord.isDirty()) {
         final ODatabaseRecordInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
         if (iLinkedRecord instanceof ODocument) {
-          final OClass schemaClass = ((ODocument) iLinkedRecord).getSchemaClass();
+          final OClass schemaClass = ((ODocument) iLinkedRecord).getImmutableSchemaClass();
           database.save(iLinkedRecord, schemaClass != null ? database.getClusterNameById(schemaClass.getClusterForNewInstance())
               : null);
         } else
@@ -209,7 +209,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       if (iValue.length() > 1) {
         int pos = iValue.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
         if (pos > -1)
-          ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getClass(iValue.substring(1, pos));
+          ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getImmutableSchema().getClass(iValue.substring(1, pos));
         else
           pos = 0;
 
@@ -772,7 +772,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
           if (id.getIdentity().isTemporary())
             doc.save();
 
-          linkedClass = doc.getSchemaClass();
+          linkedClass = doc.getImmutableSchemaClass();
         } else
           linkedClass = null;
       }

@@ -1105,7 +1105,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       return;
     }
 
-    final OClass cls = currentDatabase.getMetadata().getSchema().getClass(iClassName);
+    final OClass cls = currentDatabase.getMetadata().getImmutableSchema().getClass(iClassName);
 
     if (cls == null) {
       message("\n! Class '" + iClassName + "' does not exist in the database '" + currentDatabaseName + "'");
@@ -1281,7 +1281,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       long totalElements = 0;
       long count;
 
-      final List<OClass> classes = new ArrayList<OClass>(currentDatabase.getMetadata().getSchema().getClasses());
+      final List<OClass> classes = new ArrayList<OClass>(currentDatabase.getMetadata().getImmutableSchema().getClasses());
       Collections.sort(classes, new Comparator<OClass>() {
         public int compare(OClass o1, OClass o2) {
           return o1.getName().compareToIgnoreCase(o2.getName());

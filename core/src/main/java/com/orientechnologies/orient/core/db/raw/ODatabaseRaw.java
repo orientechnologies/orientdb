@@ -556,7 +556,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     case TYPE:
       final ODatabaseRecord db = getDatabaseOwner();
 
-      return db.getMetadata().getSchema().existsClass("V") ? "graph" : "document";
+      return db.getMetadata().getImmutableSchema().existsClass("V") ? "graph" : "document";
     case DATEFORMAT:
       return storage.getConfiguration().dateFormat;
 

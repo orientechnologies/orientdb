@@ -64,6 +64,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Shared schema class. It's shared by all the database instances that point to the same storage.
@@ -73,40 +74,60 @@ import java.util.Set;
  */
 @SuppressWarnings("unchecked")
 public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, OCloseable {
-  public static final int                       CURRENT_VERSION_NUMBER  = 5;
-  public static final int                       VERSION_NUMBER_V4       = 4;
-  private static final long                     serialVersionUID        = 1L;
+  public static final int                         CURRENT_VERSION_NUMBER  = 5;
+  public static final int                         VERSION_NUMBER_V4       = 4;
+  private static final long                       serialVersionUID        = 1L;
 
-  private final boolean                         clustersCanNotBeSharedAmongClasses;
+  private final boolean                           clustersCanNotBeSharedAmongClasses;
 
-  private final OReadersWriterSpinLock          rwSpinLock              = new OReadersWriterSpinLock();
+  private final OReadersWriterSpinLock            rwSpinLock              = new OReadersWriterSpinLock();
 
-  private final Map<String, OClass>             classes                 = new HashMap<String, OClass>();
-  private final Map<Integer, OClass>            clustersToClasses       = new HashMap<Integer, OClass>();
+  private final Map<String, OClass>               classes                 = new HashMap<String, OClass>();
+  private final Map<Integer, OClass>              clustersToClasses       = new HashMap<Integer, OClass>();
 
-  private final OClusterSelectionFactory        clusterSelectionFactory = new OClusterSelectionFactory();
+  private final OClusterSelectionFactory          clusterSelectionFactory = new OClusterSelectionFactory();
 
-  private final ThreadLocal<OModifiableInteger> modificationCounter     = new ThreadLocal<OModifiableInteger>() {
-                                                                          @Override
-                                                                          protected OModifiableInteger initialValue() {
-                                                                            return new OModifiableInteger(0);
-                                                                          }
-                                                                        };
-  private final List<OGlobalProperty>           properties              = new ArrayList<OGlobalProperty>();
-  private final Map<String, OGlobalProperty>    propertiesByNameType    = new HashMap<String, OGlobalProperty>();
-  private volatile int                          version                 = 0;
+  private final ThreadLocal<OModifiableInteger>   modificationCounter     = new ThreadLocal<OModifiableInteger>() {
+                                                                            @Override
+                                                                            protected OModifiableInteger initialValue() {
+                                                                              return new OModifiableInteger(0);
+                                                                            }
+                                                                          };
+  private final List<OGlobalProperty>             properties              = new ArrayList<OGlobalProperty>();
+  private final Map<String, OGlobalProperty>      propertiesByNameType    = new HashMap<String, OGlobalProperty>();
+  private volatile int                            version                 = 0;
+
+  private final AtomicReference<OImmutableSchema> schemaCache             = new AtomicReference<OImmutableSchema>();
 
   private static final class ClusterIdsAreEmptyException extends Exception {
-  }
-
-  public static class OSchemaData {
-    protected Map<String, OClass> classes;
-    protected volatile int        version = -1;
   }
 
   public OSchemaShared(boolean clustersCanNotBeSharedAmongClasses) {
     super(new ODocument());
     this.clustersCanNotBeSharedAmongClasses = clustersCanNotBeSharedAmongClasses;
+  }
+
+  public OImmutableSchema updateSchemaCache() {
+    acquireSchemaReadLock();
+    try {
+      OImmutableSchema immutableSchema;
+      OImmutableSchema newSchema;
+      do {
+        immutableSchema = schemaCache.get();
+        if (immutableSchema != null && immutableSchema.getVersion() == version)
+          break;
+
+        newSchema = new OImmutableSchema(this);
+      } while (!schemaCache.compareAndSet(immutableSchema, newSchema));
+    } finally {
+      releaseSchemaReadLock();
+    }
+
+    return schemaCache.get();
+  }
+
+  public boolean isClustersCanNotBeSharedAmongClasses() {
+    return clustersCanNotBeSharedAmongClasses;
   }
 
   public static Character checkNameIfValid(String iName) {
@@ -504,28 +525,10 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
     acquireSchemaReadLock();
     try {
-      OClass cls = classes.get(iClassName.toLowerCase());
-      if (cls != null)
-        return cls;
+      return classes.get(iClassName.toLowerCase());
     } finally {
       releaseSchemaReadLock();
     }
-
-    OClass cls = null;
-    if (getDatabase().getDatabaseOwner() instanceof ODatabaseObject) {
-      // CHECK IF CAN AUTO-CREATE IT
-      final ODatabase ownerDb = getDatabase().getDatabaseOwner();
-      if (ownerDb instanceof ODatabaseObject) {
-        final Class<?> javaClass = ((ODatabaseObject) ownerDb).getEntityManager().getEntityClass(iClassName);
-
-        if (javaClass != null) {
-          // AUTO REGISTER THE CLASS AT FIRST USE
-          cls = cascadeCreate(javaClass);
-        }
-      }
-    }
-
-    return cls;
   }
 
   public void acquireSchemaReadLock() {
@@ -836,19 +839,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   public List<OGlobalProperty> getGlobalProperties() {
     return Collections.unmodifiableList(properties);
-  }
-
-  public OSchemaData reloadDataIfChanged(final OSchemaData data) {
-    if (version > data.version) {
-      acquireSchemaReadLock();
-      try {
-        data.classes = new HashMap<String, OClass>(classes);
-        data.version = version;
-      } finally {
-        releaseSchemaReadLock();
-      }
-    }
-    return data;
   }
 
   protected OGlobalProperty findOrCreateGlobalProperty(String name, OType type) {

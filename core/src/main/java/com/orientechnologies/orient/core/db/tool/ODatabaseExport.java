@@ -450,7 +450,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     listener.onMessage("\nExporting schema...");
 
     writer.beginObject(1, true, "schema");
-    OSchemaProxy s = (OSchemaProxy) database.getMetadata().getSchema();
+    OSchemaProxy s = (OSchemaProxy) database.getMetadata().getImmutableSchema();
     writer.writeAttribute(2, true, "version", s.getVersion());
 
     if (!s.getClasses().isEmpty()) {

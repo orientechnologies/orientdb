@@ -40,10 +40,13 @@ import java.util.Set;
  */
 @SuppressWarnings("unchecked")
 public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSchema {
-  private final OSchemaShared.OSchemaData data = new OSchemaShared.OSchemaData();
 
   public OSchemaProxy(final OSchemaShared iDelegate, final ODatabaseRecordInternal iDatabase) {
     super(iDelegate, iDatabase);
+  }
+
+  public OImmutableSchema updateSchemaCache() {
+    return delegate.updateSchemaCache();
   }
 
   public void create() {
@@ -52,7 +55,7 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   }
 
   public int countClasses() {
-    return getData().classes.size();
+    return delegate.countClasses();
   }
 
   public OClass createClass(final Class<?> iClass) {
@@ -78,7 +81,7 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
     if (iClassName == null)
       return null;
 
-    OClass cls = getData().classes.get(iClassName.toLowerCase());
+    OClass cls = delegate.getClass(iClassName.toLowerCase());
     if (cls != null)
       return cls;
 
@@ -135,25 +138,25 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
     if (iClassName == null)
       return false;
 
-    return getData().classes.containsKey(iClassName.toLowerCase());
+    return delegate.existsClass(iClassName.toLowerCase());
   }
 
   public OClass getClass(final Class<?> iClass) {
     if (iClass == null)
       return null;
 
-    return getData().classes.get(iClass.getSimpleName().toLowerCase());
+    return delegate.getClass(iClass);
   }
 
   public OClass getClass(final String iClassName) {
     if (iClassName == null)
       return null;
 
-    return getData().classes.get(iClassName.toLowerCase());
+    return delegate.getClass(iClassName);
   }
 
   public Collection<OClass> getClasses() {
-    return new ArrayList<OClass>(getData().classes.values());
+    return delegate.getClasses();
   }
 
   public void load() {
@@ -219,9 +222,5 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   @Override
   public OClusterSelectionFactory getClusterSelectionFactory() {
     return delegate.getClusterSelectionFactory();
-  }
-
-  private OSchemaShared.OSchemaData getData() {
-    return delegate.reloadDataIfChanged(data);
   }
 }

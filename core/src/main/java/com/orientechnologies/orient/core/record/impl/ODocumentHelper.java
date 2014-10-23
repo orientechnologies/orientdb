@@ -790,8 +790,8 @@ public class ODocumentHelper {
         iCloned._fieldValues.put(iEntry.getKey(), new LinkedHashMap<String, Object>((Map<String, Object>) fieldValue));
       } else
         iCloned._fieldValues.put(iEntry.getKey(), fieldValue);
-    } else if (iCloned.getSchemaClass() != null) {
-      final OProperty prop = iCloned.getSchemaClass().getProperty(iEntry.getKey());
+    } else if (iCloned.getImmutableSchemaClass() != null) {
+      final OProperty prop = iCloned.getImmutableSchemaClass().getProperty(iEntry.getKey());
       if (prop != null && prop.isMandatory())
         iCloned._fieldValues.put(iEntry.getKey(), fieldValue);
     }

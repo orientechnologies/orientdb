@@ -88,7 +88,7 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
       className = "V";
 
     // GET/CHECK CLASS NAME
-    clazz = database.getMetadata().getSchema().getClass(className);
+    clazz = database.getMetadata().getImmutableSchema().getClass(className);
     if (clazz == null)
       throw new OCommandSQLParsingException("Class " + className + " was not found");
 

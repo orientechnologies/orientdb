@@ -415,7 +415,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecordI
     if (iClusterId == -1)
       return;
 
-    for (OClass clazz : getMetadata().getSchema().getClasses()) {
+    for (OClass clazz : getMetadata().getImmutableSchema().getClasses()) {
       if (clazz.getDefaultClusterId() == iClusterId)
         throw new OSchemaException("Cannot drop the cluster '" + getClusterNameById(iClusterId) + "' because the classes ['"
             + clazz.getName() + "'] are bound to it. Drop these classes before dropping the cluster");

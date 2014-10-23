@@ -45,6 +45,11 @@ public class OMetadataObject implements OMetadata {
   }
 
   @Override
+  public OSchema getImmutableSchema() {
+    return schema;
+  }
+
+  @Override
   public void load() {
     underlying.load();
   }

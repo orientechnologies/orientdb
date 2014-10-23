@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.orient.core.db.document;
 
@@ -217,7 +217,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * {@inheritDoc}
    */
   public ORecordIteratorClass<ODocument> browseClass(final String iClassName, final boolean iPolymorphic) {
-    if (getMetadata().getSchema().getClass(iClassName) == null)
+    if (getMetadata().getImmutableSchema().getClass(iClassName) == null)
       throw new IllegalArgumentException("Class '" + iClassName + "' not found in current database");
 
     checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, iClassName);
@@ -319,11 +319,11 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
         if (doc.getClassName() != null)
           checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, doc.getClassName());
 
-        final OClass schemaClass = doc.getSchemaClass();
+        final OClass schemaClass = doc.getImmutableSchemaClass();
 
         if (schemaClass != null && doc.getIdentity().getClusterId() < 0) {
           // CLASS FOUND: FORCE THE STORING IN THE CLUSTER CONFIGURED
-          final String clusterName = getClusterNameById(doc.getSchemaClass().getClusterForNewInstance());
+          final String clusterName = getClusterNameById(doc.getImmutableSchemaClass().getClusterForNewInstance());
 
           return (RET) super.save(doc, clusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
         }
@@ -419,7 +419,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
       if (doc.getClassName() != null)
         checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, doc.getClassName());
 
-      final OClass schemaClass = doc.getSchemaClass();
+      final OClass schemaClass = doc.getImmutableSchemaClass();
 
       if (iClusterName == null && schemaClass != null)
         // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
@@ -507,7 +507,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
   public long countClass(final String iClassName, final boolean iPolymorphic) {
     ODatabaseRecordThreadLocal.INSTANCE.set(this);
 
-    final OClass cls = getMetadata().getSchema().getClass(iClassName);
+    final OClass cls = getMetadata().getImmutableSchema().getClass(iClassName);
 
     if (cls == null)
       throw new IllegalArgumentException("Class '" + iClassName + "' not found in database");

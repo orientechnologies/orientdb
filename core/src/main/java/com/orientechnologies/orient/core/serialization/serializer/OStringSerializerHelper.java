@@ -786,7 +786,7 @@ public abstract class OStringSerializerHelper {
       final String className = iValue.substring(0, classSeparatorPos);
       final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
       if (className != null && database != null)
-        iLinkedClass = database.getMetadata().getSchema().getClass(className);
+        iLinkedClass = database.getMetadata().getImmutableSchema().getClass(className);
     }
     return iLinkedClass;
   }

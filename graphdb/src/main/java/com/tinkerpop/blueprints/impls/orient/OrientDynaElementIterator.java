@@ -64,7 +64,7 @@ class OrientDynaElementIterator implements Iterator<Object> {
       if (currentDocument.getInternalStatus() == ODocument.STATUS.NOT_LOADED)
         currentDocument.load();
 
-      final OClass schemaClass = currentDocument.getSchemaClass();
+      final OClass schemaClass = currentDocument.getImmutableSchemaClass();
       if (schemaClass != null && schemaClass.isSubClassOf(graph.getEdgeBaseType()))
         currentElement = new OrientEdge(graph, currentDocument);
       else

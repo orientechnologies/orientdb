@@ -91,7 +91,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         ODatabaseRecord db = document.getDatabase();
         if (db == null || db.isClosed())
           throw new ODatabaseException("Impossible deserialize the document no database present");
-        prop = db.getMetadata().getSchema().getGlobalPropertyById((len * -1) - 1);
+        prop = db.getMetadata().getImmutableSchema().getGlobalPropertyById((len * -1) - 1);
         field = prop.getName();
       }
 
@@ -132,7 +132,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   public void serialize(final ODocument document, final BytesContainer bytes) {
 
     final Map<String, OProperty> props;
-    final OClass clazz = document.getSchemaClass();
+    final OClass clazz = document.getImmutableSchemaClass();
     if (clazz != null) {
       writeString(bytes, clazz.getName());
       props = clazz.propertiesMap();
@@ -381,7 +381,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   private OType getLinkedType(ODocument document, OType type, String key) {
     if (type != OType.EMBEDDEDLIST && type != OType.EMBEDDEDSET && type != OType.EMBEDDEDMAP)
       return null;
-    OClass clazz = document.getSchemaClass();
+    OClass clazz = document.getImmutableSchemaClass();
     if (clazz != null) {
       OProperty prop = clazz.getProperty(key);
       if (prop != null) {
