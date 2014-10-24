@@ -41,9 +41,8 @@ public class OCommandExecutorUtility {
    * @return
    */
   public static Object transformResult(Object result) {
-    // PATCH BY MAT ABOUT NASHORN RETURNING VALUE FOR ARRAYS. TEST IF 0 IS PRESENT AS KEY. IN THIS CASE RETURNS THE VALUES NOT THE
-    // OBJECT AS MAP
-    if (result instanceof Map) {
+    // PATCH BY MAT ABOUT NASHORN RETURNING VALUE FOR ARRAYS.
+    if (result!=null && result.getClass().getName().contains("nashorn") && result instanceof Map) {
       try {
         if (isActuallyAnArray(result)) {
           List<?> partial = new ArrayList(((Map) result).values());
@@ -78,19 +77,11 @@ public class OCommandExecutorUtility {
     return result;
   }
 
-  private static boolean isActuallyAnArray(Object result) {
-    for(Object key:((Map) result).keySet()){
-      if(key instanceof Integer){
-        continue;
-      }
-      if(key instanceof String){
-        try{
-          Integer.parseInt(""+key);
-        }catch (NumberFormatException e){
-          return false;
-        }
-      }
+  private static boolean isActuallyAnArray(Object iObject) {
+    try {
+      return Boolean.TRUE.equals(Class.forName("jdk.nashorn.api.scripting.JSObject").getDeclaredMethod("isArray", null).invoke(iObject));
+    }  catch(Exception e) {
+      return false;
     }
-    return true;
   }
 }
