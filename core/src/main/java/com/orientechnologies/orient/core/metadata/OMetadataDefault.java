@@ -67,6 +67,8 @@ public class OMetadataDefault implements OMetadata {
 
   private final AtomicReference<OImmutableSchema> schemaCache               = new AtomicReference<OImmutableSchema>();
 
+	private final ThreadLocal<ThreadLocalSchemaSnapshot> threadLocalSchemaSnapshot = new ThreadLocal<ThreadLocalSchemaSnapshot>();
+
   public OMetadataDefault() {
   }
 
@@ -100,9 +102,42 @@ public class OMetadataDefault implements OMetadata {
     return schema;
   }
 
-  @Override
+	@Override
+	public void makeThreadLocalSchemaSnapshot() {
+		ThreadLocalSchemaSnapshot schemaSnapshot = threadLocalSchemaSnapshot.get();
+
+		if (schemaSnapshot == null) {
+			final OImmutableSchema immutableSchema = getImmutableSchemaSnapshot();
+			schemaSnapshot = new ThreadLocalSchemaSnapshot(immutableSchema);
+
+			threadLocalSchemaSnapshot.set(schemaSnapshot);
+			return;
+		}
+
+		schemaSnapshot.snapshotCounter++;
+	}
+
+	@Override
+	public void clearThreadLocalSchemaSnapshot() {
+		ThreadLocalSchemaSnapshot schemaSnapshot = threadLocalSchemaSnapshot.get();
+
+		if (schemaSnapshot.snapshotCounter <= 0)
+			throw new IllegalStateException("Thread local schema snapshot is cleared more times than it is done");
+
+		schemaSnapshot.snapshotCounter--;
+
+		if (schemaSnapshot.snapshotCounter == 0)
+			threadLocalSchemaSnapshot.set(null);
+	}
+
+	@Override
   public OImmutableSchema getImmutableSchemaSnapshot() {
-    OImmutableSchema immutableSchema = ORecordSerializationContext.getActiveSchemaVersion();
+    final ThreadLocalSchemaSnapshot schemaSnapshot  = threadLocalSchemaSnapshot.get();
+
+		OImmutableSchema immutableSchema = null;
+		if(schemaSnapshot != null)
+			immutableSchema = schemaSnapshot.schema;
+
     if (immutableSchema != null)
       return immutableSchema;
 
@@ -242,4 +277,13 @@ public class OMetadataDefault implements OMetadata {
   public OSchedulerListener getSchedulerListener() {
     return scheduler;
   }
+
+	private final class ThreadLocalSchemaSnapshot {
+		private final OImmutableSchema schema;
+		private int snapshotCounter = 1;
+
+		private ThreadLocalSchemaSnapshot(OImmutableSchema schema) {
+			this.schema = schema;
+		}
+	}
 }

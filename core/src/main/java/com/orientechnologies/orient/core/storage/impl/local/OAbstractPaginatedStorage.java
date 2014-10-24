@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfigur
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
@@ -52,8 +51,6 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OPageDataVerificationError;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -1071,10 +1068,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
     checkLowDiskSpace();
 
     final ODatabaseRecordInternal databaseRecord = ODatabaseRecordThreadLocal.INSTANCE.get();
-    OImmutableSchema immutableSchema = null;
-    if (databaseRecord != null) {
-      immutableSchema = databaseRecord.getMetadata().getImmutableSchemaSnapshot();
-    }
+    if (databaseRecord != null)
+      databaseRecord.getMetadata().makeThreadLocalSchemaSnapshot();
 
     modificationLock.requestModificationLock();
     List<Lock> locks = new ArrayList<Lock>();
@@ -1107,7 +1102,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
 
             for (ORecordOperation txEntry : tmpEntries)
               // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
-              commitEntry(clientTx, txEntry, immutableSchema);
+              commitEntry(clientTx, txEntry);
           }
 
           if (callback != null)
@@ -1134,6 +1129,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
         modificationLock.releaseModificationLock();
       }
     } finally {
+      if (databaseRecord != null)
+        databaseRecord.getMetadata().clearThreadLocalSchemaSnapshot();
+
       for (Lock lock : locks) {
         try {
           lock.unlock();
@@ -1805,8 +1803,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
     return null;
   }
 
-  private void commitEntry(final OTransaction clientTx, final ORecordOperation txEntry, OImmutableSchema immutableSchema)
-      throws IOException {
+  private void commitEntry(final OTransaction clientTx, final ORecordOperation txEntry) throws IOException {
 
     final ORecord rec = txEntry.getRecord();
     if (txEntry.type != ORecordOperation.DELETED && !rec.isDirty())
@@ -1814,7 +1811,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
 
     final ORecordId rid = (ORecordId) rec.getIdentity();
 
-    ORecordSerializationContext.pushContext(immutableSchema);
+    ORecordSerializationContext.pushContext();
     try {
       if (rid.clusterId == ORID.CLUSTER_ID_INVALID && rec instanceof ODocument
           && ((ODocument) rec).getImmutableSchemaClass() != null) {

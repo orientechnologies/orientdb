@@ -38,7 +38,11 @@ public interface OMetadata {
 
   public OSchema getSchema();
 
-	public OImmutableSchema getImmutableSchemaSnapshot();
+  public OImmutableSchema getImmutableSchemaSnapshot();
+
+  public void makeThreadLocalSchemaSnapshot();
+
+  public void clearThreadLocalSchemaSnapshot();
 
   public OSecurity getSecurity();
 
