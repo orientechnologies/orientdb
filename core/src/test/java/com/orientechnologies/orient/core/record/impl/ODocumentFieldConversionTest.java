@@ -9,8 +9,10 @@ import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
@@ -31,11 +33,11 @@ public class ODocumentFieldConversionTest {
     clazz.createProperty("float", OType.FLOAT);
     clazz.createProperty("double", OType.DOUBLE);
     clazz.createProperty("decimal", OType.DECIMAL);
-
   }
 
   @Test
   public void testLiteralToSchemaConvertionInteger() {
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
     ODocument doc = new ODocument(clazz);
     doc.field("integer", 2L);
     assertTrue(doc.field("integer") instanceof Integer);
@@ -60,11 +62,13 @@ public class ODocumentFieldConversionTest {
     // doc.field("integer", true);
     // assertTrue(doc.field("integer") instanceof Integer);
     // assertEquals(1, doc.field("integer"));
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
 
   }
 
   @Test
   public void testLiteralToSchemaConvertionString() {
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
     ODocument doc = new ODocument(clazz);
 
     doc.field("string", 1);
@@ -90,11 +94,13 @@ public class ODocumentFieldConversionTest {
     doc.field("string", true);
     assertTrue(doc.field("string") instanceof String);
     assertEquals("true", doc.field("string"));
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
 
   }
 
   @Test
   public void testLiteralToSchemaConvertionFloat() {
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
     ODocument doc = new ODocument(clazz);
 
     doc.field("float", 1);
@@ -120,10 +126,12 @@ public class ODocumentFieldConversionTest {
     // doc.field("float", true);
     // assertTrue(doc.field("float") instanceof Float);
     // assertEquals(1f, doc.field("float"));
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
   }
 
   @Test
   public void testLiteralToSchemaConvertionDouble() {
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
     ODocument doc = new ODocument(clazz);
 
     doc.field("double", 1);
@@ -149,10 +157,12 @@ public class ODocumentFieldConversionTest {
     // doc.field("double", true);
     // assertTrue(doc.field("double") instanceof Double);
     // assertEquals(1d, doc.field("double"));
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
   }
 
   @Test
   public void testLiteralToSchemaConvertionLong() {
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
     ODocument doc = new ODocument(clazz);
 
     doc.field("long", 1);
@@ -178,10 +188,12 @@ public class ODocumentFieldConversionTest {
     // doc.field("long", true);
     // assertTrue(doc.field("long") instanceof Long);
     // assertEquals(1, doc.field("long"));
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
   }
 
   @Test
   public void testLiteralToSchemaConvertionBoolean() {
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
     ODocument doc = new ODocument(clazz);
 
     doc.field("boolean", 0);
@@ -207,11 +219,12 @@ public class ODocumentFieldConversionTest {
     doc.field("boolean", new BigDecimal("6"));
     assertTrue(doc.field("boolean") instanceof Boolean);
     assertEquals(true, doc.field("boolean"));
-
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
   }
 
   @Test
   public void testLiteralToSchemaConvertionDecimal() {
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
     ODocument doc = new ODocument(clazz);
 
     doc.field("decimal", 0);
@@ -237,10 +250,12 @@ public class ODocumentFieldConversionTest {
     doc.field("boolean", new BigDecimal("6"));
     assertTrue(doc.field("boolean") instanceof Boolean);
     assertEquals(true, doc.field("boolean"));
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
   }
 
   @Test
   public void testConversionAlsoWithWrongType() {
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
     ODocument doc = new ODocument(clazz);
 
     doc.field("float", 2, OType.INTEGER);
@@ -258,17 +273,40 @@ public class ODocumentFieldConversionTest {
     doc.field("long", 1d, OType.DOUBLE);
     assertTrue(doc.field("long") instanceof Long);
     assertEquals(1L, doc.field("long"));
-
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
   }
 
-  // @Test
-  public void testLiteralSetSchemaAfter() {
+  @Test
+  public void testLiteralConversionAfterSchemaSet() {
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
     ODocument doc = new ODocument();
 
     doc.field("float", 1);
-    doc.setClassName(clazz.getName());
+    doc.field("integer", 3f);
+    doc.field("double", 2L);
+    doc.field("long", 2D);
+    doc.field("string", 25);
+    doc.field("boolean", "true");
+    doc.field("decimal", -1);
+    doc.setClass(clazz);
     assertTrue(doc.field("float") instanceof Float);
-    assertEquals(2, doc.field("float"));
+    assertEquals(1f, doc.field("float"));
+
+    assertTrue(doc.field("integer") instanceof Integer);
+    assertEquals(3, doc.field("integer"));
+
+    assertTrue(doc.field("long") instanceof Long);
+    assertEquals(2L, doc.field("long"));
+
+    assertTrue(doc.field("string") instanceof String);
+    assertEquals("25", doc.field("string"));
+
+    assertTrue(doc.field("boolean") instanceof Boolean);
+    assertEquals(true, doc.field("boolean"));
+
+    assertTrue(doc.field("decimal") instanceof BigDecimal);
+    assertEquals(new BigDecimal(-1), doc.field("decimal"));
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
   }
 
   @AfterTest

@@ -19,31 +19,6 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
-import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.types.OModifiableInteger;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.*;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.exception.OValidationException;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
-import com.orientechnologies.orient.core.metadata.schema.*;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordAbstract;
-import com.orientechnologies.orient.core.record.ORecordListener;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.storage.OStorage;
-
 import java.io.ByteArrayOutputStream;
 import java.io.Externalizable;
 import java.io.IOException;
@@ -52,8 +27,61 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.ref.WeakReference;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.types.OModifiableInteger;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.db.record.ODetachable;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordAbstract;
+import com.orientechnologies.orient.core.record.ORecordListener;
+import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -973,13 +1001,16 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   /**
    * Writes the field value forcing the type. This method sets the current document as dirty.
    * 
-   * 
+   * if there's a schema definition for the specified field, the value will be converted to respect the schema definition if needed.
+   * if the type defined in the schema support less precision than the iPropertyValue provided, the iPropertyValue will be converted
+   * following the java casting rules with possible precision loss.
    * 
    * @param iFieldName
    *          field name. If contains dots (.) the change is applied to the nested documents in chain. To disable this feature call
    *          {@link #setAllowChainedAccess(boolean)} to false.
    * @param iPropertyValue
-   *          field value
+   *          field value.
+   * 
    * @param iFieldType
    *          Forced type (not auto-determined)
    * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain. If the updated
@@ -1817,8 +1848,10 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
 
     final OClass _clazz = getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(iClassName);
-    if (_clazz != null)
+    if (_clazz != null) {
       _className = _clazz.getName();
+      convertFieldsToClass(_clazz);
+    }
   }
 
   public OClass getSchemaClass() {
@@ -1903,6 +1936,22 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     _clazz = getDatabase().getMetadata().getSchema().getOrCreateClass(iClassName);
     _className = _clazz.getName();
+    convertFieldsToClass(_clazz);
+
+  }
+
+  /**
+   * Check and convert the field of the document matching the types specified by the class.
+   * 
+   * @param _clazz
+   */
+  private void convertFieldsToClass(OClass _clazz) {
+    for (OProperty prop : _clazz.properties()) {
+      OType type = fieldType(prop.getName());
+      if ((type == null && containsField(prop.getName())) || (type != null && type != prop.getType())) {
+        field(prop.getName(), field(prop.getName()), prop.getType());
+      }
+    }
   }
 
   /**
@@ -2121,6 +2170,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     _immutableClazz = null;
     _immutableSchemaVersion = -1;
+    convertFieldsToClass(iClass);
   }
 
   private void saveOldFieldValue(String iFieldName, Object oldValue) {
