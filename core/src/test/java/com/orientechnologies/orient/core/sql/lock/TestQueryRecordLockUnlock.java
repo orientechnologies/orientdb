@@ -54,7 +54,6 @@ public class TestQueryRecordLockUnlock {
               db.close();
             }
           }
-          System.out.println(Thread.currentThread().getName() + " done.");
         }
       });
     }
@@ -112,7 +111,6 @@ public class TestQueryRecordLockUnlock {
               db.close();
             }
           }
-          System.out.println(Thread.currentThread().getName() + " done.");
         }
       });
     }
@@ -171,7 +169,6 @@ public class TestQueryRecordLockUnlock {
               }
             }
           }
-          System.out.println(Thread.currentThread().getName() + " done.");
         }
       });
     }
