@@ -147,7 +147,7 @@ public class OMetadataDefault implements OMetadata {
     OImmutableSchema newSchema;
     do {
       immutableSchema = schemaCache.get();
-      if (immutableSchema != null && immutableSchema.getVersion() == schema.getVersion()) {
+      if (immutableSchema != null && immutableSchema.version == schema.getVersion()) {
         newSchema = immutableSchema;
         break;
       }
