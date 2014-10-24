@@ -2,6 +2,7 @@ package com.orientechnologies.website.repository.impl;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.OrientDBFactory;
+import com.orientechnologies.website.model.schema.OSiteSchema;
 import com.orientechnologies.website.repository.BaseRepository;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +17,13 @@ public abstract class OrientBaseRepository<T> implements BaseRepository<T> {
   @Autowired
   protected OrientDBFactory dbFactory;
 
-  public abstract ODocument toDoc(T entity);
+  public ODocument toDoc(T entity) {
+    return getHolder().toDoc(entity, dbFactory.getGraph());
+  }
 
-  public abstract T fromDoc(ODocument doc);
+  public T fromDoc(ODocument doc) {
+    return getHolder().fromDoc(doc);
+  }
 
   @Override
   public T save(T entity) {
@@ -33,4 +38,5 @@ public abstract class OrientBaseRepository<T> implements BaseRepository<T> {
 
   }
 
+  public abstract OSiteSchema.OTypeHolder<T> getHolder();
 }

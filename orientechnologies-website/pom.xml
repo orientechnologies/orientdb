@@ -12,6 +12,7 @@
     <properties>
         <orientdb.version>2.0-SNAPSHOT</orientdb.version>
         <spring-boot.version>1.1.8.RELEASE</spring-boot.version>
+        <reactor.version>1.1.5.RELEASE</reactor.version>
     </properties>
     <build>
         <sourceDirectory>src/main/java</sourceDirectory>
@@ -61,6 +62,7 @@
             <artifactId>spring-boot-starter-security</artifactId>
             <version>${spring-boot.version}</version>
         </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -84,7 +86,17 @@
             <version>${orientdb.version}</version>
         </dependency>
 
-
+        <!-- Reactor -->
+        <dependency>
+            <groupId>org.projectreactor</groupId>
+            <artifactId>reactor-core</artifactId>
+            <version>${reactor.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectreactor</groupId>
+            <artifactId>reactor-spring</artifactId>
+            <version>1.0.1.RELEASE</version>
+        </dependency>
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-graphdb</artifactId>
@@ -109,4 +121,13 @@
 
     </dependencies>
 
+    <pluginRepositories>
+        <pluginRepository>
+            <id>spring-snapshots</id>
+            <url>http://repo.spring.io/libs-milestone</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
 </project>

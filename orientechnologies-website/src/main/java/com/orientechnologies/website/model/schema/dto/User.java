@@ -8,20 +8,20 @@ import java.util.Collection;
 /**
  * Created by Enrico Risa on 20/10/14.
  */
-public class Developer implements UserDetails {
+public class User implements UserDetails {
 
   private String id;
   private String login;
   private String token;
   private String email;
 
-  public Developer(String login, String token, String email) {
+  public User(String login, String token, String email) {
     this.login = login;
     this.token = token;
     this.email = email;
   }
 
-  public Developer() {
+  public User() {
   }
 
   public String getLogin() {

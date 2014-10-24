@@ -6,7 +6,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 import com.orientechnologies.website.configuration.ApiVersion;
-import com.orientechnologies.website.services.DeveloperService;
+import com.orientechnologies.website.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,9 +15,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.view.RedirectView;
 
-import com.jcabi.github.Github;
-import com.jcabi.github.RtGithub;
-import com.jcabi.github.User;
 import com.orientechnologies.website.configuration.GitHubConfiguration;
 
 /**
@@ -33,7 +30,7 @@ public class GithubLoginController {
   private GitHubConfiguration gitHubConfiguration;
 
   @Autowired
-  private DeveloperService    developerService;
+  private UserService userService;
 
   @RequestMapping(value = "/login", method = RequestMethod.GET)
   public RedirectView login() {
@@ -69,7 +66,7 @@ public class GithubLoginController {
       }
       String response = sb.toString();
       String authKey = response.split("&")[0].split("=")[1];
-      developerService.initUser(authKey);
+      userService.initUser(authKey);
     } catch (java.io.IOException e) {
       e.printStackTrace();
     }

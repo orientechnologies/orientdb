@@ -1,7 +1,7 @@
 package com.orientechnologies.website.services.impl;
 
-import com.orientechnologies.website.model.schema.dto.Developer;
-import com.orientechnologies.website.repository.DeveloperRepository;
+import com.orientechnologies.website.model.schema.dto.User;
+import com.orientechnologies.website.repository.UserRepository;
 import com.orientechnologies.website.security.DeveloperAuthentication;
 import com.orientechnologies.website.services.TokenAuthenticationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,13 +19,13 @@ public class TokenAuthenticationServiceImpl implements TokenAuthenticationServic
   private static final String AUTH_HEADER_NAME = "X-AUTH-TOKEN";
 
   @Autowired
-  private DeveloperRepository developerRepository;
+  private UserRepository userRepository;
 
   @Override
   public Authentication getAuthentication(HttpServletRequest request) {
     final String token = request.getHeader(AUTH_HEADER_NAME);
     if (token != null) {
-      final Developer user = developerRepository.findByGithubToken(token);
+      final User user = userRepository.findByGithubToken(token);
       if (user != null) {
         return new DeveloperAuthentication(user);
       }

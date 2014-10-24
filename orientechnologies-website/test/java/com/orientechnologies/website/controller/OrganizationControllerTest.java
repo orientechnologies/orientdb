@@ -4,9 +4,9 @@ import static com.jayway.restassured.RestAssured.when;
 
 import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.model.schema.OSiteSchema;
+import com.orientechnologies.website.model.schema.dto.Organization;
 import org.hamcrest.Matchers;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,7 +21,6 @@ import org.springframework.test.context.web.WebAppConfiguration;
 
 import com.jayway.restassured.RestAssured;
 import com.orientechnologies.website.Application;
-import com.orientechnologies.website.model.schema.dto.Organization;
 import com.orientechnologies.website.repository.OrganizationRepository;
 
 /**
@@ -43,7 +42,7 @@ public class OrganizationControllerTest {
   @Value("${local.server.port}")
   int                    port;
 
-  Organization           test;
+  Organization test;
 
   @Before
   public void setUp() {

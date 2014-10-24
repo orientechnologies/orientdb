@@ -1,25 +1,23 @@
 package com.orientechnologies.website.services.impl;
 
+import com.orientechnologies.website.model.schema.dto.User;
+import com.orientechnologies.website.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.jcabi.github.Github;
-import com.jcabi.github.Organization;
 import com.jcabi.github.RtGithub;
-import com.jcabi.github.User;
-import com.orientechnologies.website.model.schema.dto.Developer;
-import com.orientechnologies.website.repository.DeveloperRepository;
-import com.orientechnologies.website.services.DeveloperService;
+import com.orientechnologies.website.repository.UserRepository;
 import com.orientechnologies.website.services.OrganizationService;
 
 /**
  * Created by Enrico Risa on 20/10/14.
  */
 @Service
-public class DeveloperServiceImpl implements DeveloperService {
+public class UserServiceImpl implements UserService {
 
   @Autowired
-  private DeveloperRepository developerRepository;
+  private UserRepository userRepository;
 
   @Autowired
   private OrganizationService organizationService;
@@ -29,16 +27,16 @@ public class DeveloperServiceImpl implements DeveloperService {
 
     try {
       Github github = new RtGithub(token);
-      User self = github.users().self();
-      Developer developer = developerRepository.findUserByLogin(self.login());
+      com.jcabi.github.User self = github.users().self();
+      User user = userRepository.findUserByLogin(self.login());
       String email = self.emails().iterate().iterator().next();
-      if (developer == null) {
-        developer = new Developer(self.login(), token, email);
+      if (user == null) {
+        user = new User(self.login(), token, email);
       } else {
-        developer.setToken(token);
-        developer.setEmail(email);
+        user.setToken(token);
+        user.setEmail(email);
       }
-      developerRepository.save(developer);
+      userRepository.save(user);
 
       // do not subscribe directly to all organizations
       // for (Organization organization : self.organizations().iterate()) {

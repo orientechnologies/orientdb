@@ -1,7 +1,7 @@
 package com.orientechnologies.website.security;
 
-import com.orientechnologies.website.model.schema.dto.Developer;
-import com.orientechnologies.website.model.schema.dto.DeveloperAuthority;
+import com.orientechnologies.website.model.schema.dto.User;
+import com.orientechnologies.website.model.schema.dto.UserAuthority;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 
@@ -13,18 +13,18 @@ import java.util.HashSet;
  */
 public class DeveloperAuthentication implements Authentication {
 
-  private final Developer developer;
+  private final User user;
   private boolean         authenticated = true;
 
-  public DeveloperAuthentication(Developer developer) {
-    this.developer = developer;
+  public DeveloperAuthentication(User user) {
+    this.user = user;
   }
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
     return new HashSet<GrantedAuthority>() {
       {
-        add(DeveloperAuthority.baseDevelAuthority());
+        add(UserAuthority.baseDevelAuthority());
       }
     };
   }
@@ -55,15 +55,15 @@ public class DeveloperAuthentication implements Authentication {
   }
 
   public String getGithubToken() {
-    return developer.getToken();
+    return user.getToken();
   }
 
   @Override
   public String getName() {
-    return developer.getLogin();
+    return user.getLogin();
   }
 
-  public Developer getDeveloper() {
-    return developer;
+  public User getUser() {
+    return user;
   }
 }

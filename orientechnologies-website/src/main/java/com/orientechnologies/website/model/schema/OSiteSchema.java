@@ -1,12 +1,14 @@
 package com.orientechnologies.website.model.schema;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.website.model.schema.dto.*;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.*;
 
 public class OSiteSchema {
@@ -20,9 +22,8 @@ public class OSiteSchema {
     addVertexClass(Comment.class);
     addVertexClass(Issue.class);
     addVertexClass(Client.class);
-    addVertexClass(Member.class);
     addVertexClass(Repository.class);
-    addVertexClass(Developer.class);
+    addVertexClass(User.class);
     addVertexClass(Organization.class);
 
     addEdgeClass(HasComment.class);
@@ -84,7 +85,7 @@ public class OSiteSchema {
   }
 
   // Vertices
-  public enum Comment implements OTypeHolder {
+  public enum Comment implements OTypeHolder<CommentDTO> {
     TEXT("text") {
       @Override
       public OType getType() {
@@ -98,12 +99,22 @@ public class OSiteSchema {
     }
 
     @Override
+    public ODocument toDoc(CommentDTO doc, OrientBaseGraph graph) {
+      return null;
+    }
+
+    @Override
+    public CommentDTO fromDoc(ODocument doc) {
+      return null;
+    }
+
+    @Override
     public String toString() {
       return name;
     }
   }
 
-  public enum Issue implements OTypeHolder {
+  public enum Issue implements OTypeHolder<com.orientechnologies.website.model.schema.dto.Issue> {
     DESCRIPTION("description") {
       @Override
       public OType getType() {
@@ -123,12 +134,22 @@ public class OSiteSchema {
     }
 
     @Override
+    public ODocument toDoc(com.orientechnologies.website.model.schema.dto.Issue doc, OrientBaseGraph graph) {
+      return null;
+    }
+
+    @Override
+    public com.orientechnologies.website.model.schema.dto.Issue fromDoc(ODocument doc) {
+      return null;
+    }
+
+    @Override
     public String toString() {
       return name;
     }
   }
 
-  public enum Organization implements OTypeHolder {
+  public enum Organization implements OTypeHolder<com.orientechnologies.website.model.schema.dto.Organization> {
     NAME("name") {
       @Override
       public OType getType() {
@@ -149,12 +170,29 @@ public class OSiteSchema {
     }
 
     @Override
+    public ODocument toDoc(com.orientechnologies.website.model.schema.dto.Organization entity, OrientBaseGraph graph) {
+      ODocument doc = new ODocument(entity.getClass().getSimpleName());
+      doc.field(NAME.toString(), entity.getName());
+      doc.field(CODENAME.toString(), entity.getCodename());
+      return doc;
+    }
+
+    @Override
+    public com.orientechnologies.website.model.schema.dto.Organization fromDoc(ODocument doc) {
+      com.orientechnologies.website.model.schema.dto.Organization organization = new com.orientechnologies.website.model.schema.dto.Organization();
+      organization.setId(doc.getIdentity().toString());
+      organization.setName((String) doc.field(OSiteSchema.Organization.NAME.toString()));
+      organization.setCodename((String) doc.field(OSiteSchema.Organization.CODENAME.toString()));
+      return organization;
+    }
+
+    @Override
     public String toString() {
       return name;
     }
   }
 
-  public enum Repository implements OTypeHolder {
+  public enum Repository implements OTypeHolder<com.orientechnologies.website.model.schema.dto.Repository> {
     NAME("name") {
       @Override
       public OType getType() {
@@ -180,29 +218,26 @@ public class OSiteSchema {
     }
 
     @Override
-    public String toString() {
-      return description;
+    public ODocument toDoc(com.orientechnologies.website.model.schema.dto.Repository entity, OrientBaseGraph graph) {
+      ODocument doc = null;
+      if (entity.getId() == null) {
+        doc = new ODocument(Repository.class.getSimpleName());
+      } else {
+        doc = graph.getRawGraph().load(new ORecordId(entity.getId()));
+      }
+      doc.field(OSiteSchema.Repository.CODENAME.toString(), entity.getCodename());
+      doc.field(OSiteSchema.Repository.NAME.toString(), entity.getName());
+      doc.field(OSiteSchema.Repository.DESCRIPTION.toString(), entity.getDescription());
+      return doc;
     }
-  }
 
-  public enum Member implements OTypeHolder {
-    NAME("name") {
-      @Override
-      public OType getType() {
-        return OType.STRING;
-      }
-    },
-    CODENAME("codename") {
-      @Override
-      public OType getType() {
-        return OType.STRING;
-      }
-    };
-
-    private final String description;
-
-    Member(String description) {
-      this.description = description;
+    @Override
+    public com.orientechnologies.website.model.schema.dto.Repository fromDoc(ODocument doc) {
+      com.orientechnologies.website.model.schema.dto.Repository repo = new com.orientechnologies.website.model.schema.dto.Repository();
+      repo.setCodename((String) doc.field(OSiteSchema.Repository.CODENAME.toString()));
+      repo.setDescription((String) doc.field(OSiteSchema.Repository.DESCRIPTION.toString()));
+      repo.setId(doc.getIdentity().toString());
+      return repo;
     }
 
     @Override
@@ -211,7 +246,7 @@ public class OSiteSchema {
     }
   }
 
-  public enum Client implements OTypeHolder {
+  public enum Client implements OTypeHolder<ClientDTO> {
     NAME("name") {
       @Override
       public OType getType() {
@@ -226,12 +261,22 @@ public class OSiteSchema {
     }
 
     @Override
+    public ODocument toDoc(ClientDTO doc, OrientBaseGraph graph) {
+      return null;
+    }
+
+    @Override
+    public ClientDTO fromDoc(ODocument doc) {
+      return null;
+    }
+
+    @Override
     public String toString() {
       return description;
     }
   }
 
-  public enum Developer implements OTypeHolder {
+  public enum User implements OTypeHolder<com.orientechnologies.website.model.schema.dto.User> {
     NAME("name") {
       @Override
       public OType getType() {
@@ -256,9 +301,34 @@ public class OSiteSchema {
         return OType.STRING;
       }
     };
+
+    @Override
+    public com.orientechnologies.website.model.schema.dto.User fromDoc(ODocument doc) {
+      com.orientechnologies.website.model.schema.dto.User user = new com.orientechnologies.website.model.schema.dto.User();
+      user.setEmail((String) doc.field(OSiteSchema.User.EMAIL.toString()));
+      user.setId(doc.getIdentity().toString());
+      user.setLogin((String) doc.field(OSiteSchema.User.USERNAME.toString()));
+      user.setToken((String) doc.field(OSiteSchema.User.TOKEN.toString()));
+      return user;
+    }
+
+    @Override
+    public ODocument toDoc(com.orientechnologies.website.model.schema.dto.User entity, OrientBaseGraph graph) {
+      ODocument doc = null;
+      if (entity.getId() == null) {
+        doc = new ODocument(User.class.getSimpleName());
+      } else {
+        doc = graph.getRawGraph().load(new ORecordId(entity.getId()));
+      }
+      doc.field(OSiteSchema.User.USERNAME.toString(), entity.getLogin());
+      doc.field(OSiteSchema.User.TOKEN.toString(), entity.getToken());
+      doc.field(OSiteSchema.User.EMAIL.toString(), entity.getEmail());
+      return doc;
+    }
+
     private final String description;
 
-    Developer(String description) {
+    User(String description) {
       this.description = description;
     }
 
@@ -354,7 +424,11 @@ public class OSiteSchema {
     }
   }
 
-  public interface OTypeHolder {
+  public interface OTypeHolder<T> {
     public OType getType();
+
+    public T fromDoc(ODocument doc);
+
+    public ODocument toDoc(T doc, OrientBaseGraph graph);
   }
 }

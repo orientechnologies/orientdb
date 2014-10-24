@@ -3,6 +3,7 @@ package com.orientechnologies.website.repository.impl;
 import java.util.Collection;
 import java.util.NoSuchElementException;
 
+import com.orientechnologies.website.model.schema.dto.Organization;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -10,7 +11,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.model.schema.OSiteSchema;
-import com.orientechnologies.website.model.schema.dto.Organization;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -52,28 +52,13 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   }
 
   @Override
+  public OSiteSchema.OTypeHolder<Organization> getHolder() {
+    return OSiteSchema.Organization.NAME;
+  }
+
+  @Override
   public Class<Organization> getEntityClass() {
     return Organization.class;
   }
 
-  @Override
-  public ODocument toDoc(Organization entity) {
-
-    ODocument doc = new ODocument(entity.getClass().getSimpleName());
-    doc.field(OSiteSchema.Organization.NAME.toString(), entity.getName());
-    doc.field(OSiteSchema.Organization.CODENAME.toString(), entity.getCodename());
-    return doc;
-  }
-
-  @Override
-  public Organization fromDoc(ODocument doc) {
-
-    Organization organization = new Organization();
-
-    organization.setId(doc.getIdentity().toString());
-    organization.setName((String) doc.field(OSiteSchema.Organization.NAME.toString()));
-    organization.setCodename((String) doc.field(OSiteSchema.Organization.CODENAME.toString()));
-
-    return organization;
-  }
 }

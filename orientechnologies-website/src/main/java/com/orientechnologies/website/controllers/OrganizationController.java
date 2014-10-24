@@ -1,6 +1,7 @@
 package com.orientechnologies.website.controllers;
 
 import com.orientechnologies.website.configuration.ApiVersion;
+import com.orientechnologies.website.model.schema.dto.Organization;
 import com.orientechnologies.website.model.schema.dto.Repository;
 import com.orientechnologies.website.services.OrganizationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.orientechnologies.website.model.schema.dto.Organization;
 import com.orientechnologies.website.repository.OrganizationRepository;
 
 @RestController
@@ -35,9 +35,9 @@ public class OrganizationController {
     }
   }
 
-  @RequestMapping(value = "{name}/members/{username}", method = RequestMethod.PUT)
+  @RequestMapping(value = "{name}/members/{username}", method = RequestMethod.POST)
   @ResponseStatus(HttpStatus.OK)
-  public void addMemberToOrg(@PathVariable("name") String name, @PathVariable("name") String username) {
+  public void addMemberToOrg(@PathVariable("name") String name, @PathVariable("username") String username) {
 
     organizationService.addMember(name, username);
   }

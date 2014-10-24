@@ -5,11 +5,11 @@ import org.springframework.security.core.GrantedAuthority;
 /**
  * Created by Enrico Risa on 21/10/14.
  */
-public class DeveloperAuthority implements GrantedAuthority {
+public class UserAuthority implements GrantedAuthority {
 
   private String authority;
 
-  public DeveloperAuthority(String authority) {
+  public UserAuthority(String authority) {
     this.authority = authority;
   }
 
@@ -18,7 +18,7 @@ public class DeveloperAuthority implements GrantedAuthority {
     return authority;
   }
 
-  public static DeveloperAuthority baseDevelAuthority() {
-    return new DeveloperAuthority("DEVELOPER");
+  public static UserAuthority baseDevelAuthority() {
+    return new UserAuthority("DEVELOPER");
   }
 }

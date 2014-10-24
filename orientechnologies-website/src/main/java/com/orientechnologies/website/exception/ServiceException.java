@@ -19,8 +19,14 @@ public class ServiceException extends RuntimeException {
     this(code, null);
   }
 
-  public ServiceException withMessage(String msg) {
-    this.msg = new MessageError(msg);
+  public ServiceException withMessage(String msg, Object... params) {
+
+    if (params != null) {
+      this.msg = new MessageError(String.format(msg, params));
+    } else {
+      this.msg = new MessageError(msg);
+    }
+
     return this;
   }
 
