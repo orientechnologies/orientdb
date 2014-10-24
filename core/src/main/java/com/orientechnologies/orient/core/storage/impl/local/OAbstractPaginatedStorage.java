@@ -1079,8 +1079,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
       for (ORecordOperation txEntry : clientTx.getCurrentRecordEntries()) {
         allToLock.add(txEntry.getRecord());
       }
+
       for (ORecord oRecord : allToLock) {
-        locks.add(lockManager.acquireExclusiveLock(oRecord.getIdentity()));
+        if (!oRecord.getIdentity().isNew())
+          locks.add(lockManager.acquireExclusiveLock(oRecord.getIdentity()));
       }
 
       try {
