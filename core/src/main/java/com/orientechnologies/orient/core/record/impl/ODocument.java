@@ -2145,7 +2145,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       fieldType = null;
 
     OClass _clazz = getImmutableSchemaClass();
-    if (fieldType == null && _clazz != null) {
+    if (_clazz != null) {
       // SCHEMAFULL?
       final OProperty prop = _clazz.getProperty(iFieldName);
       if (prop != null) {
