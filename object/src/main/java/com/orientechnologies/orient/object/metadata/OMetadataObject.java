@@ -46,6 +46,16 @@ public class OMetadataObject implements OMetadata {
   }
 
   @Override
+  public void makeThreadLocalSchemaSnapshot() {
+    underlying.makeThreadLocalSchemaSnapshot();
+  }
+
+  @Override
+  public void clearThreadLocalSchemaSnapshot() {
+    underlying.clearThreadLocalSchemaSnapshot();
+  }
+
+  @Override
   public OImmutableSchema getImmutableSchemaSnapshot() {
     return underlying.getImmutableSchemaSnapshot();
   }

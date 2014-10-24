@@ -76,7 +76,6 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORestrictedAccessHook;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -862,7 +861,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       final boolean iIgnoreCache, final boolean loadTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     checkOpeness();
 
-    ORecordSerializationContext.pushContext(getMetadata().getImmutableSchemaSnapshot());
+    getMetadata().makeThreadLocalSchemaSnapshot();
+    ORecordSerializationContext.pushContext();
     try {
       checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(rid.getClusterId()));
 
@@ -932,6 +932,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       throw new ODatabaseException("Error on retrieving record " + rid, e);
     } finally {
       ORecordSerializationContext.pullContext();
+      getMetadata().clearThreadLocalSchemaSnapshot();
     }
   }
 
@@ -965,7 +966,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       byte[] stream;
       final OStorageOperationResult<ORecordVersion> operationResult;
 
-      ORecordSerializationContext.pushContext(getMetadata().getImmutableSchemaSnapshot());
+      getMetadata().makeThreadLocalSchemaSnapshot();
+      ORecordSerializationContext.pushContext();
       try {
         // STREAM.LENGTH == 0 -> RECORD IN STACK: WILL BE SAVED AFTER
         stream = record.toStream();
@@ -1038,6 +1040,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         }
       } finally {
         ORecordSerializationContext.pullContext();
+        getMetadata().clearThreadLocalSchemaSnapshot();
       }
 
       if (stream != null && stream.length > 0 && !operationResult.isMoved())
@@ -1079,7 +1082,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     final Set<OIndex<?>> lockedIndexes = new HashSet<OIndex<?>>();
     setCurrentDatabaseinThreadLocal();
 
-    ORecordSerializationContext.pushContext(getMetadata().getImmutableSchemaSnapshot());
+    ORecordSerializationContext.pushContext();
+    getMetadata().makeThreadLocalSchemaSnapshot();
     try {
       if (record instanceof ODocument)
         acquireIndexModificationLock((ODocument) record, lockedIndexes);
@@ -1129,6 +1133,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     } finally {
       releaseIndexModificationLock(lockedIndexes);
       ORecordSerializationContext.pullContext();
+      getMetadata().clearThreadLocalSchemaSnapshot();
     }
   }
 
@@ -1146,7 +1151,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.clusterId));
 
     setCurrentDatabaseinThreadLocal();
-    ORecordSerializationContext.pushContext(getMetadata().getImmutableSchemaSnapshot());
+    getMetadata().makeThreadLocalSchemaSnapshot();
+    ORecordSerializationContext.pushContext();
     try {
 
       final OStorageOperationResult<Boolean> operationResult;
@@ -1159,6 +1165,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       return operationResult.getResult();
     } finally {
       ORecordSerializationContext.pullContext();
+      getMetadata().clearThreadLocalSchemaSnapshot();
     }
   }
 
@@ -1470,8 +1477,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     ORecordInternal.unsetDirty(record);
     record.setDirty();
     ORecordSerializationContext.pullContext();
-
-    ORecordSerializationContext.pushContext(getMetadata().getImmutableSchemaSnapshot());
+    ORecordSerializationContext.pushContext();
 
     stream = record.toStream();
     return stream;

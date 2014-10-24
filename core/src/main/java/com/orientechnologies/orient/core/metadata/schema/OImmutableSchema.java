@@ -21,7 +21,7 @@ public class OImmutableSchema implements OSchema {
   private final Map<Integer, OClass>     clustersToClasses;
   private final Map<String, OClass>      classes;
 
-  private final int                      version;
+  public final int                       version;
   private final ORID                     identity;
   private final boolean                  clustersCanNotBeSharedAmongClasses;
   private final List<OGlobalProperty>    properties;
@@ -49,12 +49,12 @@ public class OImmutableSchema implements OSchema {
       properties.add(globalProperty);
   }
 
-	@Override
-	public OImmutableSchema makeSnapshot() {
-		return this;
-	}
+  @Override
+  public OImmutableSchema makeSnapshot() {
+    return this;
+  }
 
-	@Override
+  @Override
   public int countClasses() {
     return classes.size();
   }
@@ -134,8 +134,8 @@ public class OImmutableSchema implements OSchema {
 
   @Override
   public OClass getClass(String iClassName) {
-		if (iClassName == null)
-			return null;
+    if (iClassName == null)
+      return null;
 
     OClass cls = classes.get(iClassName.toLowerCase());
     if (cls != null)

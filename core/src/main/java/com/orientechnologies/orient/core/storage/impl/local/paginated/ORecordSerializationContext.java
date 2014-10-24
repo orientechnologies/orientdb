@@ -31,7 +31,6 @@ import java.util.Deque;
  * @since 11/26/13
  */
 public class ORecordSerializationContext {
-  private static final ThreadLocal<OImmutableSchema>                   currentSchema               = new ThreadLocal<OImmutableSchema>();
 
   private static final ThreadLocal<Deque<ORecordSerializationContext>> SERIALIZATION_CONTEXT_STACK = new ThreadLocal<Deque<ORecordSerializationContext>>() {
                                                                                                      @Override
@@ -44,10 +43,8 @@ public class ORecordSerializationContext {
     return ORecordSerializationContext.SERIALIZATION_CONTEXT_STACK.get().size();
   }
 
-  public static ORecordSerializationContext pushContext(OImmutableSchema schema) {
+  public static ORecordSerializationContext pushContext() {
     final Deque<ORecordSerializationContext> stack = SERIALIZATION_CONTEXT_STACK.get();
-    if (stack.size() == 0)
-      currentSchema.set(schema);
 
     final ORecordSerializationContext context = new ORecordSerializationContext();
     stack.push(context);
@@ -67,16 +64,7 @@ public class ORecordSerializationContext {
     if (stack.isEmpty())
       throw new IllegalStateException("Can not find current serialization context");
 
-    final ORecordSerializationContext result = stack.poll();
-
-    if (stack.isEmpty())
-      currentSchema.set(null);
-
-    return result;
-  }
-
-  public static OImmutableSchema getActiveSchemaVersion() {
-    return currentSchema.get();
+    return stack.poll();
   }
 
   private final Deque<ORecordSerializationOperation> operations = new ArrayDeque<ORecordSerializationOperation>();
