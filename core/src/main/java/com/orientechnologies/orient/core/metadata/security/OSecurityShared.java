@@ -224,25 +224,8 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public ORole getRole(final String roleName, final boolean allowRepair) {
-    List<ODocument> result;
-
-    try {
-      result = getDatabase().<OCommandRequest> command(
-          new OSQLSynchQuery<ODocument>("select from ORole where name = '" + roleName + "' limit 1")).execute();
-
-      if (roleName.equalsIgnoreCase("admin") && result.isEmpty()) {
-        if (allowRepair)
-          repair();
-        result = getDatabase().<OCommandRequest> command(
-            new OSQLSynchQuery<ODocument>("select from ORole where name = '" + roleName + "' limit 1")).execute();
-      }
-    } catch (Exception e) {
-      if (allowRepair)
-        repair();
-      result = getDatabase().<OCommandRequest> command(
-          new OSQLSynchQuery<ODocument>("select from ORole where name = '" + roleName + "' limit 1").setFetchPlan("roles:1"))
-          .execute();
-    }
+    List<ODocument> result = getDatabase().<OCommandRequest> command(
+        new OSQLSynchQuery<ODocument>("select from ORole where name = '" + roleName + "' limit 1")).execute();
 
     if (result != null && !result.isEmpty())
       return new ORole(result.get(0));
@@ -268,12 +251,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public List<ODocument> getAllUsers() {
-    try {
-      return getDatabase().<OCommandRequest> command(new OSQLSynchQuery<ODocument>("select from OUser")).execute();
-    } catch (Exception e) {
-      repair();
-      return getDatabase().<OCommandRequest> command(new OSQLSynchQuery<ODocument>("select from OUser")).execute();
-    }
+    return getDatabase().<OCommandRequest> command(new OSQLSynchQuery<ODocument>("select from OUser")).execute();
   }
 
   public List<ODocument> getAllRoles() {
@@ -323,19 +301,6 @@ public class OSecurityShared implements OSecurity, OCloseable {
    * 
    * @return
    */
-  public OUser repair() {
-    OLogManager.instance().warn(this, "Repairing security structures...");
-
-    try {
-      getDatabase().getMetadata().getIndexManager().dropIndex("OUser.name");
-      getDatabase().getMetadata().getIndexManager().dropIndex("ORole.name");
-
-      return createMetadata();
-
-    } finally {
-      OLogManager.instance().warn(this, "Repair completed");
-    }
-  }
 
   public OUser createMetadata() {
     final ODatabaseRecord database = getDatabase();
@@ -470,28 +435,9 @@ public class OSecurityShared implements OSecurity, OCloseable {
     if (iUserName == null)
       return null;
 
-    List<ODocument> result;
-    try {
-      result = getDatabase().<OCommandRequest> command(
-          new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("roles:1"))
-          .execute();
-
-      if (iUserName.equalsIgnoreCase("admin") && result.isEmpty()) {
-        if (iAllowRepair)
-          repair();
-        result = getDatabase().<OCommandRequest> command(
-            new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("roles:1"))
-            .execute();
-      }
-    } catch (OSecurityException e) {
-      throw e;
-    } catch (Exception e) {
-      if (iAllowRepair)
-        repair();
-      result = getDatabase().<OCommandRequest> command(
-          new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("roles:1"))
-          .execute();
-    }
+    List<ODocument> result = getDatabase().<OCommandRequest> command(
+        new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("roles:1"))
+        .execute();
 
     if (result != null && !result.isEmpty())
       return new OUser(result.get(0));

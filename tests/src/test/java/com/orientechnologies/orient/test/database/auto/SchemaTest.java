@@ -413,6 +413,8 @@ public class SchemaTest extends DocumentDBBaseTest {
 
     oClass.set(OClass.ATTRIBUTES.NAME, "RenameClassTest2");
 
+		databaseDocumentTx.getLocalCache().clear();
+
     result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select from RenameClassTest2"));
     Assert.assertEquals(result.size(), 2);
   }

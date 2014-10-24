@@ -127,10 +127,6 @@ public class OSecurityProxy extends OProxedResource<OSecurity> implements OSecur
     return delegate.toString();
   }
 
-  public OUser repair() {
-    return delegate.repair();
-  }
-
   public boolean dropUser(final String iUserName) {
     return delegate.dropUser(iUserName);
   }

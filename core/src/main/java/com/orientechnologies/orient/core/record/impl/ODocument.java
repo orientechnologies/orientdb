@@ -72,7 +72,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
                                                                                                      return new OModifiableInteger();
                                                                                                    }
                                                                                                  };
-  protected OClass                                                       _clazz;
+
+  private String                                                         _className;
 
   private OClass                                                         _immutableClazz;
   private int                                                            _immutableSchemaVersion = 1;
@@ -183,7 +184,12 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    */
   public ODocument(final OClass iClass) {
     setup();
-    _clazz = iClass;
+
+    if (iClass == null)
+      _className = null;
+    else
+      _className = iClass.getName();
+
     _immutableClazz = null;
     _immutableSchemaVersion = -1;
   }
@@ -508,7 +514,11 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     super.copyTo(iDestination);
 
     destination._ordered = _ordered;
-    destination._clazz = _clazz;
+
+    destination._className = _className;
+    destination._immutableSchemaVersion = -1;
+    destination._immutableClazz = null;
+
     destination._trackingChanges = _trackingChanges;
     if (_owners != null)
       destination._owners = new ArrayList<WeakReference<ORecordElement>>(_owners);
@@ -695,6 +705,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         final StringBuilder buffer = new StringBuilder(128);
 
         checkForFields();
+
+        final OClass _clazz = getImmutableSchemaClass();
         if (_clazz != null)
           buffer.append(_clazz.getStreamableName());
 
@@ -1143,8 +1155,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     iOther.checkForLoading();
     iOther.checkForFields();
 
-    if (_clazz == null && iOther.getSchemaClass() != null)
-      _clazz = iOther.getSchemaClass();
+    if (_className == null && iOther.getImmutableSchemaClass() != null)
+      _className = iOther.getImmutableSchemaClass().getName();
 
     return merge(iOther._fieldValues, iUpdateOnlyMode, iMergeSingleItemsOfMultiValueFields);
   }
@@ -1502,7 +1514,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       throw new IllegalStateException("Cannot reset documents during a transaction. Create a new one each time");
 
     super.reset();
-    _clazz = null;
+
+    _className = null;
     _immutableClazz = null;
     _immutableSchemaVersion = -1;
 
@@ -1656,8 +1669,11 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   @Override
   public ODocument save(boolean forceCreate) {
-    if (_clazz != null && getIdentity().isNew())
-      return save(getDatabase().getClusterNameById(_clazz.getClusterForNewInstance()), forceCreate);
+    if (_className != null && getIdentity().isNew()) {
+      OClass _clazz = getImmutableSchemaClass();
+      if (_clazz != null)
+        return save(getDatabase().getClusterNameById(_clazz.getClusterForNewInstance()), forceCreate);
+    }
 
     convertAllMultiValuesToTrackedVersions();
     validate();
@@ -1792,57 +1808,73 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   public void setClassNameIfExists(final String iClassName) {
-    if (iClassName == null) {
-      _clazz = null;
-      _immutableClazz = null;
-      _immutableSchemaVersion = -1;
+    _immutableClazz = null;
+    _immutableSchemaVersion = -1;
 
+    if (iClassName == null) {
+      _className = null;
       return;
     }
 
-    setClass(getDatabase().getMetadata().getSchema().getClass(iClassName));
+    final OClass _clazz = getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(iClassName);
+    if (_clazz != null)
+      _className = _clazz.getName();
   }
 
   public OClass getSchemaClass() {
-    if (_clazz == null) {
-      final ODatabaseRecordInternal database = getDatabaseIfDefinedInternal();
-      if (database != null && database.getStorageVersions() != null
-          && database.getStorageVersions().classesAreDetectedByClusterId()) {
-        if (_recordId.clusterId < 0) {
-          checkForLoading();
-          checkForFields("@class");
-        } else {
-          final OSchema schema = database.getMetadata().getSchema();
-          if (schema != null)
-            _clazz = schema.getClassByClusterId(_recordId.clusterId);
-        }
-      } else {
-        // CLASS NOT FOUND: CHECK IF NEED LOADING AND UNMARSHALLING
+    if (_className == null)
+      fetchClassName();
+
+    if (_className == null)
+      return null;
+
+    final ODatabaseRecord databaseRecord = getDatabaseIfDefined();
+    if (databaseRecord != null)
+      return databaseRecord.getMetadata().getSchema().getClass(_className);
+
+    return null;
+  }
+
+  private void fetchClassName() {
+    final ODatabaseRecordInternal database = getDatabaseIfDefinedInternal();
+    if (database != null && database.getStorageVersions() != null && database.getStorageVersions().classesAreDetectedByClusterId()) {
+      if (_recordId.clusterId < 0) {
         checkForLoading();
         checkForFields("@class");
+      } else {
+        final OSchema schema = database.getMetadata().getImmutableSchemaSnapshot();
+        if (schema != null) {
+          OClass _clazz = schema.getClassByClusterId(_recordId.clusterId);
+          if (_clazz != null)
+            _className = _clazz.getName();
+        }
       }
+    } else {
+      // CLASS NOT FOUND: CHECK IF NEED LOADING AND UNMARSHALLING
+      checkForLoading();
+      checkForFields("@class");
     }
-
-    return _clazz;
   }
 
   public OClass getImmutableSchemaClass() {
-    final OClass docClass = getSchemaClass();
+    if (_className == null)
+      fetchClassName();
 
-    if (docClass == null) {
-      _immutableClazz = null;
-      _immutableSchemaVersion = -1;
-      return null;
-    }
+    final ODatabaseRecord databaseRecord = getDatabaseIfDefined();
 
-    final OSchema immutableSchema = getDatabase().getMetadata().getImmutableSchemaSnapshot();
-    if (_immutableClazz == null) {
-      _immutableSchemaVersion = immutableSchema.getVersion();
-      _immutableClazz = immutableSchema.getClass(docClass.getName());
-    } else {
-      if (_immutableSchemaVersion < immutableSchema.getVersion()) {
+    if (databaseRecord != null) {
+      final OSchema immutableSchema = databaseRecord.getMetadata().getImmutableSchemaSnapshot();
+      if (immutableSchema == null)
+        return null;
+
+      if (_immutableClazz == null) {
         _immutableSchemaVersion = immutableSchema.getVersion();
-        _immutableClazz = immutableSchema.getClass(docClass.getName());
+        _immutableClazz = immutableSchema.getClass(_className);
+      } else {
+        if (_immutableSchemaVersion < immutableSchema.getVersion()) {
+          _immutableSchemaVersion = immutableSchema.getVersion();
+          _immutableClazz = immutableSchema.getClass(_className);
+        }
       }
     }
 
@@ -1850,20 +1882,27 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   public String getClassName() {
-    if (_clazz == null)
-      getSchemaClass();
-    return _clazz != null ? _clazz.getName() : null;
+    if (_className == null)
+      getImmutableSchemaClass();
+
+    return _className;
   }
 
   public void setClassName(final String iClassName) {
+    _immutableClazz = null;
+    _immutableSchemaVersion = -1;
+
     if (iClassName == null) {
-      _clazz = null;
-      _immutableClazz = null;
-      _immutableSchemaVersion = -1;
+      _className = null;
       return;
     }
 
-    setClass(getDatabase().getMetadata().getSchema().getOrCreateClass(iClassName));
+    OClass _clazz = getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(_className);
+    if (_clazz != null)
+      _className = _clazz.getName();
+
+    _clazz = getDatabase().getMetadata().getSchema().getOrCreateClass(iClassName);
+    _className = _clazz.getName();
   }
 
   /**
@@ -1881,8 +1920,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     checkForLoading();
     checkForFields();
 
-		final OClass immutableSchemaClass = getImmutableSchemaClass();
-		if (immutableSchemaClass != null) {
+    final OClass immutableSchemaClass = getImmutableSchemaClass();
+    if (immutableSchemaClass != null) {
       if (immutableSchemaClass.isStrictMode()) {
         // CHECK IF ALL FIELDS ARE DEFINED
         for (String f : fieldNames()) {
@@ -1990,6 +2029,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       }
 
       OType fieldType = fieldType(fieldEntry.getKey());
+      OClass _clazz = getImmutableSchemaClass();
+
       if (fieldType == null && _clazz != null) {
         final OProperty prop = _clazz.getProperty(fieldEntry.getKey());
         fieldType = prop != null ? prop.getType() : null;
@@ -2073,7 +2114,11 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     if (iClass != null && iClass.isAbstract())
       throw new OSchemaException("Cannot create a document of the abstract class '" + iClass + "'");
 
-    _clazz = iClass;
+    if (iClass == null)
+      _className = null;
+    else
+      _className = iClass.getName();
+
     _immutableClazz = null;
     _immutableSchemaVersion = -1;
   }
@@ -2099,6 +2144,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     } else
       fieldType = null;
 
+    OClass _clazz = getImmutableSchemaClass();
     if (fieldType == null && _clazz != null) {
       // SCHEMAFULL?
       final OProperty prop = _clazz.getProperty(iFieldName);

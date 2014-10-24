@@ -74,8 +74,6 @@ public interface OSecurity {
 
   public List<ODocument> getAllRoles();
 
-  public OUser repair();
-
   public void close(boolean onDelete);
 
   public void createClassTrigger();
