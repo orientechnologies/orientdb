@@ -1076,14 +1076,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
     try {
       // This should be a tree set to guaranty the order.
       Set<ORecord> allToLock = new TreeSet<ORecord>();
+
       for (ORecordOperation txEntry : clientTx.getCurrentRecordEntries()) {
-        allToLock.add(txEntry.getRecord());
+        if (!txEntry.getRecord().getIdentity().isNew())
+          allToLock.add(txEntry.getRecord());
       }
 
-      for (ORecord oRecord : allToLock) {
-        if (!oRecord.getIdentity().isNew())
-          locks.add(lockManager.acquireExclusiveLock(oRecord.getIdentity()));
-      }
+      for (ORecord oRecord : allToLock)
+        locks.add(lockManager.acquireExclusiveLock(oRecord.getIdentity()));
 
       try {
         lock.acquireExclusiveLock();
