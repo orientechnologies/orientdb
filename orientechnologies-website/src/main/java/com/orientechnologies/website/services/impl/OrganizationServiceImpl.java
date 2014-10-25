@@ -132,6 +132,7 @@ public class OrganizationServiceImpl implements OrganizationService {
 
         createHasRepoRelationship(organization, r);
         dbFactory.getGraph().commit();
+
         GitHubIssueImporter.GitHubIssueMessage gitHubIssueMessage = new GitHubIssueImporter.GitHubIssueMessage(repository);
         reactor.notify(ReactorMSG.ISSUE_IMPORT, Event.wrap(gitHubIssueMessage));
         return r;

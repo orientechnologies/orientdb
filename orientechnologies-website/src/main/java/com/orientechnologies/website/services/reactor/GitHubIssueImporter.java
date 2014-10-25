@@ -45,35 +45,44 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
     GitHubIssueMessage message = event.getData();
 
     try {
-      List<GHIssue> issues = message.repository.getIssues(GHIssueState.CLOSED);
+
+      dbFactory.getGraph().begin();
 
       Repository repoDtp = repoRepository.findByOrgAndName(message.org, message.repo);
-      for (GHIssue issue : issues) {
+      importIssue(message, repoDtp, GHIssueState.CLOSED);
+      importIssue(message, repoDtp, GHIssueState.OPEN);
 
-        Issue issueDto = new Issue();
-
-        issueDto.setNumber(issue.getNumber());
-        issueDto.setDescription(issue.getBody());
-        issueDto.setTitle(issue.getTitle());
-
-        for (GHIssue.Label label : issue.getLabels()) {
-          issueDto.addLabel(label.getName());
-        }
-
-        issueDto.setCreatedAt(issue.getCreatedAt());
-        issueDto.setClosedAt(issue.getClosedAt());
-        String login = issue.getAssignee().getLogin();
-        if (login != null) {
-          issueDto.setAssegnee(userRepo.findUserByLogin(login));
-        }
-
-        issueDto = issueRepo.save(issueDto);
-
-        repositoryService.createIssue(repoDtp, issueDto);
-
-      }
+      dbFactory.getGraph().commit();
     } catch (IOException e) {
       e.printStackTrace();
+    }
+  }
+
+  private void importIssue(GitHubIssueMessage message, Repository repoDtp, GHIssueState state) throws IOException {
+    List<GHIssue> issues = message.repository.getIssues(state);
+    for (GHIssue issue : issues) {
+
+      Issue issueDto = new Issue();
+
+      issueDto.setNumber(issue.getNumber());
+      issueDto.setDescription(issue.getBody());
+      issueDto.setTitle(issue.getTitle());
+      issueDto.setState(issue.getState().name());
+      for (GHIssue.Label label : issue.getLabels()) {
+        issueDto.addLabel(label.getName());
+      }
+
+      issueDto.setCreatedAt(issue.getCreatedAt());
+      issueDto.setClosedAt(issue.getClosedAt());
+      String login = issue.getAssignee().getLogin();
+      if (login != null) {
+        issueDto.setAssignee(userRepo.findUserByLogin(login));
+      }
+
+      issueDto = issueRepo.save(issueDto);
+
+      repositoryService.createIssue(repoDtp, issueDto);
+
     }
   }
 

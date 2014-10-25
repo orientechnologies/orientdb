@@ -1,7 +1,6 @@
 package com.orientechnologies.website.model.schema.dto;
 
-import com.jcabi.immutable.Array;
-
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -16,12 +15,12 @@ public class Issue {
   private String             title;
   private String             description;
   private String             state;
-  private Collection<String> labels = new Array<String>();
+  private Collection<String> labels = new ArrayList<String>();
 
   private Date               createdAt;
   private Date               closedAt;
 
-  private User               assegnee;
+  private User               assignee;
 
   public String getId() {
     return id;
@@ -87,12 +86,12 @@ public class Issue {
     this.closedAt = closedAt;
   }
 
-  public User getAssegnee() {
-    return assegnee;
+  public User getAssignee() {
+    return assignee;
   }
 
-  public void setAssegnee(User assegnee) {
-    this.assegnee = assegnee;
+  public void setAssignee(User assignee) {
+    this.assignee = assignee;
   }
 
   public void addLabel(String name) {

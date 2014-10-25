@@ -115,13 +115,49 @@ public class OSiteSchema {
   }
 
   public enum Issue implements OTypeHolder<com.orientechnologies.website.model.schema.dto.Issue> {
+    TITLE("title") {
+      @Override
+      public OType getType() {
+        return OType.STRING;
+      }
+    },
     DESCRIPTION("description") {
       @Override
       public OType getType() {
         return OType.STRING;
       }
     },
+    NUMBER("number") {
+      @Override
+      public OType getType() {
+        return OType.INTEGER;
+      }
+    },
+    STATE("state") {
+      @Override
+      public OType getType() {
+        return OType.STRING;
+      }
+    },
+    LABELS("labels") {
+      @Override
+      public OType getType() {
+        return OType.EMBEDDEDSET;
+      }
+    },
+    ASSIGNEE("assignee") {
+      @Override
+      public OType getType() {
+        return OType.LINK;
+      }
+    },
     CREATED_AT("createdAt") {
+      @Override
+      public OType getType() {
+        return OType.DATETIME;
+      }
+    },
+    CLOSED_AT("closedAt") {
       @Override
       public OType getType() {
         return OType.DATETIME;
@@ -134,13 +170,38 @@ public class OSiteSchema {
     }
 
     @Override
-    public ODocument toDoc(com.orientechnologies.website.model.schema.dto.Issue doc, OrientBaseGraph graph) {
-      return null;
+    public ODocument toDoc(com.orientechnologies.website.model.schema.dto.Issue entity, OrientBaseGraph graph) {
+
+      ODocument doc;
+      if (entity.getId() == null) {
+        doc = new ODocument(entity.getClass().getSimpleName());
+      } else {
+        doc = graph.getRawGraph().load(new ORecordId(entity.getId()));
+      }
+      doc.field(DESCRIPTION.toString(), entity.getDescription());
+      doc.field(CREATED_AT.toString(), entity.getCreatedAt());
+      doc.field(CLOSED_AT.toString(), entity.getClosedAt());
+      doc.field(TITLE.toString(), entity.getTitle());
+      doc.field(LABELS.toString(), entity.getLabels());
+      doc.field(NUMBER.toString(), entity.getNumber());
+      doc.field(STATE.toString(), entity.getState());
+      doc.field(ASSIGNEE.toString(), (entity.getAssignee() != null ? new ORecordId(entity.getAssignee().getId()) : null));
+      return doc;
     }
 
     @Override
     public com.orientechnologies.website.model.schema.dto.Issue fromDoc(ODocument doc) {
-      return null;
+      com.orientechnologies.website.model.schema.dto.Issue issue = new com.orientechnologies.website.model.schema.dto.Issue();
+      issue.setId(doc.getIdentity().toString());
+      issue.setTitle((String) doc.field(TITLE.toString()));
+      issue.setDescription((String) doc.field(DESCRIPTION.toString()));
+      issue.setState((String) doc.field(STATE.toString()));
+      issue.setClosedAt((Date) doc.field(CLOSED_AT.toString()));
+      issue.setCreatedAt((Date) doc.field(CREATED_AT.toString()));
+      issue.setLabels(new ArrayList<String>((Collection<? extends String>) doc.field(LABELS.toString())));
+      issue.setNumber((Integer) doc.field(NUMBER.toString()));
+      issue.setAssignee(User.NAME.fromDoc((ODocument) doc.field(ASSIGNEE.toString())));
+      return issue;
     }
 
     @Override
@@ -171,7 +232,12 @@ public class OSiteSchema {
 
     @Override
     public ODocument toDoc(com.orientechnologies.website.model.schema.dto.Organization entity, OrientBaseGraph graph) {
-      ODocument doc = new ODocument(entity.getClass().getSimpleName());
+      ODocument doc;
+      if (entity.getId() == null) {
+        doc = new ODocument(entity.getClass().getSimpleName());
+      } else {
+        doc = graph.getRawGraph().load(new ORecordId(entity.getId()));
+      }
       doc.field(NAME.toString(), entity.getName());
       doc.field(CODENAME.toString(), entity.getCodename());
       return doc;
@@ -225,9 +291,9 @@ public class OSiteSchema {
       } else {
         doc = graph.getRawGraph().load(new ORecordId(entity.getId()));
       }
-      doc.field(OSiteSchema.Repository.CODENAME.toString(), entity.getCodename());
-      doc.field(OSiteSchema.Repository.NAME.toString(), entity.getName());
-      doc.field(OSiteSchema.Repository.DESCRIPTION.toString(), entity.getDescription());
+      doc.field(CODENAME.toString(), entity.getCodename());
+      doc.field(NAME.toString(), entity.getName());
+      doc.field(DESCRIPTION.toString(), entity.getDescription());
       return doc;
     }
 
