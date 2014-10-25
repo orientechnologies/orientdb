@@ -252,7 +252,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal> imp
   }
 
   public boolean declareIntent(final OIntent iIntent) {
-    checkOpeness();
     return underlying.declareIntent(iIntent);
   }
 
