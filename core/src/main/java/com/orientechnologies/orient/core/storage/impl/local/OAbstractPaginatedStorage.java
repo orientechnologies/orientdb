@@ -107,6 +107,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
       OIndexRIDContainer.INDEX_FILE_EXTENSION, OSBTreeCollectionManagerShared.DEFAULT_EXTENSION,
       OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION                                  };
 
+  private static final int                       TX_RECORD_LOCK_TIMEOUT               = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT
+                                                                                          .getValueAsInteger();
+
   private final ConcurrentMap<String, OCluster>  clusterMap                           = new ConcurrentHashMap<String, OCluster>();
   private final ThreadLocal<OStorageTransaction> transaction                          = new ThreadLocal<OStorageTransaction>();
   private final OModificationLock                modificationLock                     = new OModificationLock();
@@ -1082,8 +1085,33 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
           allToLock.add(txEntry.getRecord());
       }
 
-      for (ORecord oRecord : allToLock)
-        locks.add(lockManager.acquireExclusiveLock(oRecord.getIdentity()));
+      boolean allLocked = false;
+
+      lockLoop: while (!allLocked) {
+        try {
+          for (ORecord oRecord : allToLock) {
+            final Lock lock = lockManager.tryAcquireExclusiveLock(oRecord.getIdentity(), TX_RECORD_LOCK_TIMEOUT);
+
+            if (lock == null) {
+              for (Lock rlock : locks)
+                rlock.unlock();
+
+              locks.clear();
+
+              continue lockLoop;
+            } else
+              locks.add(lock);
+          }
+
+          allLocked = true;
+        } catch (InterruptedException e) {
+          for (Lock lock : locks)
+            lock.unlock();
+
+          locks.clear();
+          throw new OStorageException("tx commit was interrupted", e);
+        }
+      }
 
       try {
         lock.acquireExclusiveLock();
