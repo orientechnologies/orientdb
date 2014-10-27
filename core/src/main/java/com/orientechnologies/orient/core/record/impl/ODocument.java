@@ -2084,6 +2084,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         final OProperty prop = _clazz.getProperty(fieldEntry.getKey());
         fieldType = prop != null ? prop.getType() : null;
       }
+      if (fieldType == null)
+        fieldType = OType.getTypeByValue(fieldEntry.getValue());
 
       if (fieldType == null
           || !(OType.EMBEDDEDLIST.equals(fieldType) || OType.EMBEDDEDMAP.equals(fieldType) || OType.EMBEDDEDSET.equals(fieldType)

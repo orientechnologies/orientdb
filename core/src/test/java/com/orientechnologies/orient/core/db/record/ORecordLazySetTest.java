@@ -110,4 +110,14 @@ public class ORecordLazySetTest {
     set.add(doc);
     assertFalse(doc.isEmbedded());
   }
+
+  @Test()
+  public void testSetAddRemove() {
+    ORecordLazySet set = new ORecordLazySet(new ODocument());
+    ODocument doc = new ODocument();
+    set.add(doc);
+    set.remove(doc);
+    assertTrue(set.isEmpty());
+  }
+
 }
