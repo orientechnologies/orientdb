@@ -53,6 +53,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -333,7 +334,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
         if (!rid.isValid()) {
-          iRecord.onBeforeIdentityChanged(iRecord);
+          ORecordInternal.onBeforeIdentityChanged(iRecord);
 
           // ASSIGN A UNIQUE SERIAL TEMPORARY ID
           if (rid.clusterId == ORID.CLUSTER_ID_INVALID)
@@ -351,7 +352,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
           rid.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(newObjectCounter--);
 
-          iRecord.onAfterIdentityChanged(iRecord);
+          ORecordInternal.onAfterIdentityChanged(iRecord);
         } else
           // REMOVE FROM THE DB'S CACHE
           database.getLocalCache().freeRecord(rid);
