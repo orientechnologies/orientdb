@@ -2,6 +2,7 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxPooled;
+import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -54,5 +55,19 @@ public class OrientGraphFactoryTest  {
       assertEquals(g.getRawGraph().getClass(), ODatabaseDocumentTxPooled.class);
       g.shutdown();
     }
+  }
+
+  @Test
+  public void textReqTx() {
+    final OrientGraphFactory gfactory = new OrientGraphFactory("memory:testPool");
+    gfactory.setRequireTransaction(false);
+    gfactory.declareIntent(new OIntentMassiveInsert());
+
+    OrientGraph g = gfactory.getTx();
+    OrientVertex v1 = g.addVertex(null);
+    OrientVertex v2 = g.addVertex(null);
+    v1.addEdge("E", v2);
+
+    g.shutdown();
   }
 }
