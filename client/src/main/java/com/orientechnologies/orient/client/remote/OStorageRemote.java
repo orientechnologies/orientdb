@@ -1365,7 +1365,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       if (members != null) {
         serverURLs.clear();
 
-        parseServerURLs();
+//        parseServerURLs();
 
         for (ODocument m : members)
           if (m != null && !serverURLs.contains((String) m.field("name"))) {
@@ -1443,9 +1443,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
    * @param exception
    *          cause of the error
    */
-  protected void handleException(final OChannelBinaryAsynchClient iNetwork, final String message, final Exception exception) {
+  protected void handleException(final OChannelBinaryAsynchClient iNetwork, final String message, Exception exception) {
 
-    if (exception instanceof OException) {
+    if (exception instanceof OIOException) {
+      // BYPASS IT TO HANDLE RE-CONNECT
+      exception = (Exception) exception.getCause();
+    } else if (exception instanceof OException) {
       // Release on concurrent modification exception created some issue. to double check
       if (iNetwork != null)
         engine.getConnectionManager().release(iNetwork);
@@ -1462,27 +1465,29 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       // STORAGE CLOSED: DON'T HANDLE RECONNECTION
       return;
 
-    OLogManager.instance().warn(this, "Caught I/O errors from %s (local socket=%s), trying to reconnect (error: %s)", iNetwork,
-        iNetwork.getLocalSocketAddress(), exception);
-    try {
-      engine.getConnectionManager().remove(iNetwork);
-    } catch (Exception e) {
-      // IGNORE ANY EXCEPTION
-    }
+    if (iNetwork != null) {
+      OLogManager.instance().warn(this, "Caught I/O errors from %s (local socket=%s), trying to reconnect (error: %s)", iNetwork,
+          iNetwork.getLocalSocketAddress(), exception);
+
+      try {
+        engine.getConnectionManager().remove(iNetwork);
+      } catch (Exception e) {
+        // IGNORE ANY EXCEPTION
+      }
+    } else
+      OLogManager.instance().warn(this, "Caught I/O errors, trying to reconnect (error: %s)", exception);
 
     final long lostConnectionTime = System.currentTimeMillis();
 
     final int currentMaxRetry;
     final int currentRetryDelay;
-    synchronized (clusterConfiguration) {
-      if (!clusterConfiguration.isEmpty()) {
-        // IN CLUSTER: NO RETRY AND 0 SLEEP TIME BETWEEN NODES
-        currentMaxRetry = 1;
-        currentRetryDelay = 0;
-      } else {
-        currentMaxRetry = connectionRetry;
-        currentRetryDelay = connectionRetryDelay;
-      }
+    if (serverURLs.size() > 1) {
+      // IN CLUSTER: NO RETRY AND 0 SLEEP TIME BETWEEN NODES
+      currentMaxRetry = 1;
+      currentRetryDelay = 0;
+    } else {
+      currentMaxRetry = connectionRetry;
+      currentRetryDelay = connectionRetryDelay;
     }
 
     for (int retry = 0; retry < currentMaxRetry; ++retry) {
@@ -1581,12 +1586,17 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           } finally {
             endResponse(network);
           }
+        } catch (OIOException e) {
+          if (network != null) {
+            // REMOVE THE NETWORK CONNECTION IF ANY
+            engine.getConnectionManager().remove(network);
+            network = null;
+          }
         } catch (OException e) {
-          // PROPAGATE THE EXCEPTION
+          // PROPAGATE ANY OTHER ORIENTDB EXCEPTION
           throw e;
 
         } catch (Exception e) {
-
           if (network != null) {
             // REMOVE THE NETWORK CONNECTION IF ANY
             engine.getConnectionManager().remove(network);
