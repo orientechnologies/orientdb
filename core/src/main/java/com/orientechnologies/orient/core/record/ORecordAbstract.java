@@ -1,23 +1,31 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.record;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
+import java.util.WeakHashMap;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -38,31 +46,25 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineCl
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
-import java.util.WeakHashMap;
-
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordAbstract implements ORecord {
-  protected ORecordId                            _recordId;
-  protected ORecordVersion                       _recordVersion          = OVersionFactory.instance().createVersion();
+  protected ORecordId                               _recordId;
+  protected ORecordVersion                          _recordVersion             = OVersionFactory.instance().createVersion();
 
-  protected byte[]                               _source;
-  protected int                                  _size;
+  protected byte[]                                  _source;
+  protected int                                     _size;
 
-  protected transient ORecordSerializer          _recordFormat;
-  protected boolean                              _dirty                  = true;
-  protected boolean                              _contentChanged         = true;
-  protected ORecordElement.STATUS                _status                 = ORecordElement.STATUS.LOADED;
-  protected transient Set<ORecordListener>       _listeners              = null;
+  protected transient ORecordSerializer             _recordFormat;
+  protected boolean                                 _dirty                     = true;
+  protected boolean                                 _contentChanged            = true;
+  protected ORecordElement.STATUS                   _status                    = ORecordElement.STATUS.LOADED;
+  protected transient Set<ORecordListener>          _listeners                 = null;
 
-  private ORID                                   prevRid                 = null;
-  private transient Set<OIdentityChangeListener> identityChangeListeners = Collections
-                                                                             .newSetFromMap(new WeakHashMap<OIdentityChangeListener, Boolean>());
+  private ORID                                      prevRid                    = null;
+  private transient Set<OIdentityChangeListener>    identityChangeListeners    = Collections
+                                                                                   .newSetFromMap(new WeakHashMap<OIdentityChangeListener, Boolean>());
+  private transient Set<OIdentityChangeListenerNew> newIdentityChangeListeners = Collections
+                                                                                   .newSetFromMap(new WeakHashMap<OIdentityChangeListenerNew, Boolean>());
 
   public ORecordAbstract() {
   }
@@ -193,10 +195,15 @@ public abstract class ORecordAbstract implements ORecord {
 
   public void onBeforeIdentityChanged(final ORecord iRecord) {
     prevRid = _recordId.copy();
+    for (OIdentityChangeListenerNew changeListener : newIdentityChangeListeners)
+      changeListener.onBeforeIdentityChange(this);
   }
 
   public void onAfterIdentityChanged(final ORecord iRecord) {
     invokeListenerEvent(ORecordListener.EVENT.IDENTITY_CHANGED);
+
+    for (OIdentityChangeListenerNew changeListener : newIdentityChangeListeners)
+      changeListener.onAfterIdentityChange(this);
 
     if (prevRid != null && !prevRid.equals(this._recordId)) {
       for (OIdentityChangeListener changeListener : identityChangeListeners)
@@ -459,6 +466,14 @@ public abstract class ORecordAbstract implements ORecord {
     identityChangeListeners.remove(identityChangeListener);
   }
 
+  protected void addIdentityChangeListener(OIdentityChangeListenerNew identityChangeListener) {
+    newIdentityChangeListeners.add(identityChangeListener);
+  }
+
+  protected void removeIdentityChangeListener(OIdentityChangeListenerNew identityChangeListener) {
+    newIdentityChangeListeners.remove(identityChangeListener);
+  }
+
   protected void setup() {
     if (_recordId == null)
       _recordId = new ORecordId();
@@ -483,9 +498,9 @@ public abstract class ORecordAbstract implements ORecord {
   protected void setContentChanged(boolean contentChanged) {
     _contentChanged = contentChanged;
   }
-  
+
   protected void clearSource() {
     this._source = null;
   }
-  
+
 }

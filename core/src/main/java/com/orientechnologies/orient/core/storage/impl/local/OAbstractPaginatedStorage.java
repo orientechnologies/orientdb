@@ -1811,7 +1811,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
     if (txEntry.type != ORecordOperation.DELETED && !rec.isDirty())
       return;
 
-    final ORecordId rid = (ORecordId) rec.getIdentity();
+    ORecordId rid = (ORecordId) rec.getIdentity();
 
     ORecordSerializationContext.pushContext();
     try {
@@ -1843,10 +1843,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
           OLogManager.instance().warn(this, "Null serialization on committing new record %s in transaction", rid);
           break;
         }
-
         final ORecordId oldRID = rid.isNew() ? rid.copy() : rid;
 
         if (rid.isNew()) {
+          rid = rid.copy();
           rid.clusterId = cluster.getId();
           final OPhysicalPosition ppos;
           ppos = createRecord(rid, stream, rec.getRecordVersion(), ORecordInternal.getRecordType(rec), -1, null).getResult();

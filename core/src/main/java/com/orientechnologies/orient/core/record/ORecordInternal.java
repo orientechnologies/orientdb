@@ -23,7 +23,6 @@ package com.orientechnologies.orient.core.record;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 public class ORecordInternal {
@@ -100,6 +99,14 @@ public class ORecordInternal {
   public static void clearSource(ORecord record) {
     ORecordAbstract rec = (ORecordAbstract) record;
     rec.clearSource();
+  }
+
+  public static void addIdentityChangeListener(ORecord record, OIdentityChangeListenerNew identityChangeListener) {
+    ((ORecordAbstract) record).addIdentityChangeListener(identityChangeListener);
+  }
+
+  public static void removeIdentityChangeListener(ORecord record, OIdentityChangeListenerNew identityChangeListener) {
+    ((ORecordAbstract) record).removeIdentityChangeListener(identityChangeListener);
   }
 
 }
