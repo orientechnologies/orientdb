@@ -21,7 +21,9 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientDynaElementIterable;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -35,12 +37,11 @@ import java.util.concurrent.atomic.AtomicLong;
 @Test
 public class ConcurrentSQLBatchUpdateSuperNodeTest extends DocumentDBBaseTest {
 
-  private final static int OPTIMISTIC_CYCLES  = 100;
-  private final static int PESSIMISTIC_CYCLES = 100;
-  private final static int THREADS            = 10;
+  private final static int OPTIMISTIC_CYCLES  = 30;
+  private final static int PESSIMISTIC_CYCLES = 30;
+  private final static int THREADS            = 256;
   private final static int MAX_RETRIES        = 100;
   private final AtomicLong counter            = new AtomicLong();
-  private boolean          localCacheEnabled;
   private boolean          mvccEnabled;
   private long             startedOn;
   private AtomicLong       totalRetries       = new AtomicLong();
@@ -52,14 +53,14 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest extends DocumentDBBaseTest {
 
   class OptimisticThread implements Runnable {
 
-    final OrientBaseGraph graph;
-    final OrientVertex    superNode;
-    final int             threadId;
-    final String          threadName;
+    final String       url;
+    final OrientVertex superNode;
+    final int          threadId;
+    final String       threadName;
 
-    public OptimisticThread(OrientBaseGraph iGraph, OrientVertex iSuperNode, int iThreadId, String iThreadName) {
+    public OptimisticThread(final String iURL, OrientVertex iSuperNode, int iThreadId, String iThreadName) {
       super();
-      graph = iGraph;
+      url = iURL;
       superNode = iSuperNode;
       threadId = iThreadId;
       threadName = iThreadName;
@@ -67,6 +68,7 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest extends DocumentDBBaseTest {
 
     @Override
     public void run() {
+      final OrientGraphNoTx graph = new OrientGraphNoTx(url);
       try {
         String cmd = "";
         for (int i = 0; i < OPTIMISTIC_CYCLES; ++i) {
@@ -77,12 +79,24 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest extends DocumentDBBaseTest {
           cmd += "return $transactionRetries;";
 
           final OCommandRequest command = graph.command(new OCommandScript("sql", cmd));
-          int retries = (Integer) command.execute();
+          final Object res = command.execute();
+          if (res instanceof Integer) {
+            int retries = (Integer) res;
 
-          counter.incrementAndGet();
+            counter.incrementAndGet();
 
-          totalRetries.addAndGet(retries);
+            totalRetries.addAndGet(retries);
+          } else if (res instanceof OrientDynaElementIterable) {
+            System.out.println("RETURNED ITER");
+            OrientDynaElementIterable it = (OrientDynaElementIterable) res;
+            for (Object o : it)
+              System.out.println("RETURNED: " + o);
+          }
         }
+
+        System.out.println("Thread " + threadId + " completed");
+
+        graph.shutdown();
       } catch (Throwable e) {
         e.printStackTrace();
         Assert.assertTrue(false);
@@ -92,14 +106,14 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest extends DocumentDBBaseTest {
 
   class PessimisticThread implements Runnable {
 
-    final OrientBaseGraph graph;
-    final OrientVertex    superNode;
-    final int             threadId;
-    final String          threadName;
+    final String       url;
+    final OrientVertex superNode;
+    final int          threadId;
+    final String       threadName;
 
-    public PessimisticThread(OrientBaseGraph iGraph, OrientVertex iSuperNode, int iThreadId, String iThreadName) {
+    public PessimisticThread(final String iURL, OrientVertex iSuperNode, int iThreadId, String iThreadName) {
       super();
-      graph = iGraph;
+      url = iURL;
       superNode = iSuperNode;
       threadId = iThreadId;
       threadName = iThreadName;
@@ -107,6 +121,7 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest extends DocumentDBBaseTest {
 
     @Override
     public void run() {
+      final OrientGraphNoTx graph = new OrientGraphNoTx(url);
       try {
         String cmd = "";
         for (int i = 0; i < PESSIMISTIC_CYCLES; ++i) {
@@ -120,6 +135,8 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest extends DocumentDBBaseTest {
 
           counter.incrementAndGet();
         }
+        graph.shutdown();
+
       } catch (Throwable e) {
         e.printStackTrace();
         Assert.assertTrue(false);
@@ -129,18 +146,14 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest extends DocumentDBBaseTest {
 
   @BeforeClass
   public void init() {
-    localCacheEnabled = OGlobalConfiguration.CACHE_LOCAL_ENABLED.getValueAsBoolean();
     mvccEnabled = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
 
-    if (localCacheEnabled)
-      OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
     if (!mvccEnabled)
       OGlobalConfiguration.DB_MVCC.setValue(true);
   }
 
   @AfterClass
   public void deinit() {
-    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(localCacheEnabled);
     OGlobalConfiguration.DB_MVCC.setValue(mvccEnabled);
   }
 
@@ -151,27 +164,28 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest extends DocumentDBBaseTest {
     counter.set(0);
     startedOn = System.currentTimeMillis();
 
-    OrientBaseGraph[] graphPool = new OrientGraph[THREADS];
-    for (int i = 0; i < THREADS; ++i)
-      graphPool[i] = new OrientGraph(url);
+    OrientBaseGraph graphPool = new OrientGraph(url);
 
-    graphPool[0].setThreadMode(OrientBaseGraph.THREAD_MODE.ALWAYS_AUTOSET);
-    OrientVertex superNode = graphPool[0].addVertex(null, "optimisticSuperNode", true);
-    graphPool[0].commit();
+    OrientVertex superNode = graphPool.addVertex(null, "optimisticSuperNode", true);
+    graphPool.commit();
 
     OptimisticThread[] ops = new OptimisticThread[THREADS];
     for (int i = 0; i < THREADS; ++i)
-      ops[i] = new OptimisticThread(graphPool[i], superNode, i, "thread" + i);
+      ops[i] = new OptimisticThread(url, superNode, i, "thread" + i);
 
     Thread[] threads = new Thread[THREADS];
     for (int i = 0; i < THREADS; ++i)
       threads[i] = new Thread(ops[i], "ConcurrentSQLBatchUpdateSuperNodeTest-optimistic" + i);
 
+    System.out.println("Starting " + THREADS + " threads, " + OPTIMISTIC_CYCLES + " operations each");
+
     for (int i = 0; i < THREADS; ++i)
       threads[i].start();
 
-    for (int i = 0; i < THREADS; ++i)
+    for (int i = 0; i < THREADS; ++i) {
       threads[i].join();
+      System.out.println("Thread " + i + " completed");
+    }
 
     System.out.println("ConcurrentSQLBatchUpdateSuperNodeTest Optimistic Done! Total updates executed in parallel: "
         + counter.get() + " total retries: " + totalRetries.get() + " average retries: "
@@ -179,59 +193,59 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(counter.get(), OPTIMISTIC_CYCLES * THREADS);
 
-    OrientVertex loadedSuperNode = graphPool[0].getVertex(superNode.getIdentity());
+    OrientVertex loadedSuperNode = graphPool.getVertex(superNode.getIdentity());
 
     for (int i = 0; i < THREADS; ++i)
-      Assert.assertEquals(loadedSuperNode.countEdges(Direction.IN), PESSIMISTIC_CYCLES * THREADS);
+      Assert.assertEquals(loadedSuperNode.countEdges(Direction.IN), OPTIMISTIC_CYCLES * THREADS);
 
-    for (int i = 0; i < THREADS; ++i)
-      graphPool[i].shutdown();
+    graphPool.shutdown();
 
     System.out.println("ConcurrentSQLBatchUpdateSuperNodeTest Optimistic Test completed in "
         + (System.currentTimeMillis() - startedOn));
   }
 
-  @Test
+  @Test(enabled = false)
   public void concurrentPessimisticUpdates() throws Exception {
     System.out.println("Started Test PESSIMISTIC Batch Update against SuperNode");
 
     counter.set(0);
     startedOn = System.currentTimeMillis();
 
-    OrientBaseGraph[] graphPool = new OrientGraph[THREADS];
-    for (int i = 0; i < THREADS; ++i)
-      graphPool[i] = new OrientGraph(url);
+    OrientBaseGraph graphPool = new OrientGraph(url);
 
-    graphPool[0].setThreadMode(OrientBaseGraph.THREAD_MODE.ALWAYS_AUTOSET);
-    OrientVertex superNode = graphPool[0].addVertex(null, "pessimisticSuperNode", true);
-    graphPool[0].commit();
+    graphPool.setThreadMode(OrientBaseGraph.THREAD_MODE.ALWAYS_AUTOSET);
+    OrientVertex superNode = graphPool.addVertex(null, "pessimisticSuperNode", true);
+    graphPool.commit();
 
     PessimisticThread[] ops = new PessimisticThread[THREADS];
     for (int i = 0; i < THREADS; ++i)
-      ops[i] = new PessimisticThread(graphPool[i], superNode, i, "thread" + i);
+      ops[i] = new PessimisticThread(url, superNode, i, "thread" + i);
 
     Thread[] threads = new Thread[THREADS];
     for (int i = 0; i < THREADS; ++i)
       threads[i] = new Thread(ops[i], "ConcurrentSQLBatchUpdateSuperNodeTest-pessimistic" + i);
 
+    System.out.println("Starting " + THREADS + " threads, " + PESSIMISTIC_CYCLES + " operations each");
+
     for (int i = 0; i < THREADS; ++i)
       threads[i].start();
 
-    for (int i = 0; i < THREADS; ++i)
+    for (int i = 0; i < THREADS; ++i) {
       threads[i].join();
+      System.out.println("Thread " + i + " completed");
+    }
 
     System.out.println("ConcurrentSQLBatchUpdateSuperNodeTest Pessimistic Done! Total updates executed in parallel: "
         + counter.get() + " average retries: " + ((float) totalRetries.get() / (float) counter.get()));
 
     Assert.assertEquals(counter.get(), PESSIMISTIC_CYCLES * THREADS);
 
-    OrientVertex loadedSuperNode = graphPool[0].getVertex(superNode.getIdentity());
+    OrientVertex loadedSuperNode = graphPool.getVertex(superNode.getIdentity());
 
     for (int i = 0; i < THREADS; ++i)
       Assert.assertEquals(loadedSuperNode.countEdges(Direction.IN), PESSIMISTIC_CYCLES * THREADS);
 
-    for (int i = 0; i < THREADS; ++i)
-      graphPool[i].shutdown();
+    graphPool.shutdown();
 
     System.out.println("ConcurrentSQLBatchUpdateSuperNodeTest Pessimistic Test completed in "
         + (System.currentTimeMillis() - startedOn));

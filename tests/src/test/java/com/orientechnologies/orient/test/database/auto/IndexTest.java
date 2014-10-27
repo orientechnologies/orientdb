@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
@@ -995,7 +997,7 @@ public class IndexTest extends ObjectDBBaseTest {
         firstProfile.field("nick"));
 
     Assert.assertNotNull(result);
-    Assert.assertEquals(result.get(0).field("rid", OType.LINK), firstProfile.getIdentity());
+    Assert.assertEquals(result.get(0).field("rid"), firstProfile.getIdentity());
 
     firstProfile.delete();
 
@@ -1337,13 +1339,14 @@ public class IndexTest extends ObjectDBBaseTest {
     int lastKey = -1;
     ORID lastRid = null;
     for (ODocument document : result) {
+      document.setLazyLoad(false);
       if (lastKey > -1)
         Assert.assertTrue(lastKey <= (Integer) document.<OCompositeKey> field("key").getKeys().get(0));
 
       lastKey = (Integer) document.<OCompositeKey> field("key").getKeys().get(0);
-      lastRid = document.field("rid", OType.LINK);
+      lastRid = document.field("rid");
 
-      Assert.assertTrue(rids.remove(document.<ORID> field("rid")));
+      Assert.assertTrue(rids.remove(document.<OIdentifiable> field("rid").getIdentity()));
     }
 
     while (true) {
@@ -1355,6 +1358,7 @@ public class IndexTest extends ObjectDBBaseTest {
       Assert.assertEquals(result.size(), 5);
 
       for (ODocument document : result) {
+        document.setLazyLoad(false);
         if (lastKey > -1)
           Assert.assertTrue(lastKey <= (Integer) document.<OCompositeKey> field("key").getKeys().get(0));
 
@@ -1394,11 +1398,12 @@ public class IndexTest extends ObjectDBBaseTest {
     int lastKey = -1;
     ORID lastRid = null;
     for (ODocument document : result) {
+      document.setLazyLoad(false);
       if (lastKey > -1)
         Assert.assertTrue(lastKey >= (Integer) document.<OCompositeKey> field("key").getKeys().get(0));
 
       lastKey = (Integer) document.<OCompositeKey> field("key").getKeys().get(0);
-      lastRid = document.field("rid", OType.LINK);
+      lastRid = document.field("rid");
 
       Assert.assertTrue(rids.remove(document.<ORID> field("rid")));
     }
@@ -1413,6 +1418,7 @@ public class IndexTest extends ObjectDBBaseTest {
       Assert.assertEquals(result.size(), 5);
 
       for (ODocument document : result) {
+        document.setLazyLoad(false);
         if (lastKey > -1)
           Assert.assertTrue(lastKey >= (Integer) document.<OCompositeKey> field("key").getKeys().get(0));
 
@@ -1642,6 +1648,38 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertTrue(explain.<Collection<String>> field("involvedIndexes").contains("TestCreateIndexAbstractClass.value"));
   }
 
+  public void testValuesContainerIsRemovedIfIndexIsRemoved() {
+    if (database.getURL().startsWith("remote:"))
+      return;
+
+    final OSchema schema = database.getMetadata().getSchema();
+    OClass clazz = schema.createClass("ValuesContainerIsRemovedIfIndexIsRemovedClass");
+    clazz.createProperty("val", OType.STRING);
+
+    database
+        .command(
+            new OCommandSQL(
+                "create index ValuesContainerIsRemovedIfIndexIsRemovedIndex on ValuesContainerIsRemovedIfIndexIsRemovedClass (val) notunique"))
+        .execute();
+
+    for (int i = 0; i < 10; i++) {
+      for (int j = 0; j < 100; j++) {
+        ODocument document = new ODocument("ValuesContainerIsRemovedIfIndexIsRemovedClass");
+        document.field("val", "value" + i);
+        document.save();
+      }
+    }
+
+    final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage();
+    final ODiskCache diskCache = storageLocalAbstract.getDiskCache();
+
+    Assert.assertTrue(diskCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
+
+    database.command(new OCommandSQL("drop index ValuesContainerIsRemovedIfIndexIsRemovedIndex")).execute();
+
+    Assert.assertTrue(!diskCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
+  }
+
   private List<OClusterPosition> getValidPositions(int clusterId) {
     final List<OClusterPosition> positions = new ArrayList<OClusterPosition>();
 
@@ -1652,7 +1690,7 @@ public class IndexTest extends ObjectDBBaseTest {
       if (!iteratorCluster.hasNext())
         break;
 
-      ORecord<?> doc = iteratorCluster.next();
+      ORecord doc = iteratorCluster.next();
       positions.add(doc.getIdentity().getClusterPosition());
     }
     return positions;

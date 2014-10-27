@@ -1,34 +1,30 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.client.remote;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.id.OClusterPosition;
@@ -36,7 +32,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.ODataSegment;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -49,6 +44,15 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Wrapper of OStorageRemote that maintains the sessionId. It's bound to the ODatabase and allow to use the shared OStorageRemote.
@@ -227,12 +231,12 @@ public class OStorageRemoteThread implements OStorageProxy {
     throw new UnsupportedOperationException("restore");
   }
 
-  public OStorageOperationResult<OPhysicalPosition> createRecord(final int iDataSegmentId, final ORecordId iRid,
-      final byte[] iContent, ORecordVersion iRecordVersion, final byte iRecordType, final int iMode,
-      ORecordCallback<OClusterPosition> iCallback) {
+  public OStorageOperationResult<OPhysicalPosition> createRecord(final ORecordId iRid,
+																																 final byte[] iContent, ORecordVersion iRecordVersion, final byte iRecordType, final int iMode,
+																																 ORecordCallback<OClusterPosition> iCallback) {
     pushSession();
     try {
-      return delegate.createRecord(iDataSegmentId, iRid, iContent, OVersionFactory.instance().createVersion(), iRecordType, iMode,
+      return delegate.createRecord(iRid, iContent, OVersionFactory.instance().createVersion(), iRecordType, iMode,
 							iCallback);
     } finally {
       popSession();
@@ -285,14 +289,13 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
-  public boolean updateReplica(int dataSegmentId, ORecordId rid, byte[] content, ORecordVersion recordVersion, byte recordType)
-      throws IOException {
-    pushSession();
-    try {
-      return delegate.updateReplica(dataSegmentId, rid, content, recordVersion, recordType);
-    } finally {
-      popSession();
-    }
+  public ORecordConflictStrategy getConflictStrategy() {
+    throw new UnsupportedOperationException("getConflictStrategy");
+  }
+
+  @Override
+  public void setConflictStrategy(ORecordConflictStrategy iResolver) {
+    throw new UnsupportedOperationException("setConflictStrategy");
   }
 
   @Override
@@ -475,15 +478,6 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  public String getClusterTypeByName(final String iClusterName) {
-    pushSession();
-    try {
-      return delegate.getClusterTypeByName(iClusterName);
-    } finally {
-      popSession();
-    }
-  }
-
   public int getDefaultClusterId() {
     pushSession();
     try {
@@ -502,22 +496,22 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  public int addCluster(final String iClusterType, final String iClusterName, final String iLocation,
-      final String iDataSegmentName, boolean forceListBased, final Object... iArguments) {
+  public int addCluster(final String iClusterName,
+												boolean forceListBased, final Object... iArguments) {
     pushSession();
     try {
-      return delegate.addCluster(iClusterType, iClusterName, iLocation, iDataSegmentName, false, iArguments);
+      return delegate.addCluster(iClusterName, false, iArguments);
     } finally {
       popSession();
     }
   }
 
-  public int addCluster(String iClusterType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
-      boolean forceListBased, Object... iParameters) {
+  public int addCluster(String iClusterName, int iRequestedId,
+												boolean forceListBased, Object... iParameters) {
     pushSession();
     try {
       return delegate
-          .addCluster(iClusterType, iClusterName, iRequestedId, iLocation, iDataSegmentName, forceListBased, iParameters);
+          .addCluster(iClusterName, iRequestedId, forceListBased, iParameters);
     } finally {
       popSession();
     }
@@ -527,41 +521,6 @@ public class OStorageRemoteThread implements OStorageProxy {
     pushSession();
     try {
       return delegate.dropCluster(iClusterId, iTruncate);
-    } finally {
-      popSession();
-    }
-  }
-
-  public ODataSegment getDataSegmentById(final int iDataSegmentId) {
-    return delegate.getDataSegmentById(iDataSegmentId);
-  }
-
-  public int getDataSegmentIdByName(final String iDataSegmentName) {
-    return delegate.getDataSegmentIdByName(iDataSegmentName);
-  }
-
-  public int addDataSegment(final String iDataSegmentName) {
-    pushSession();
-    try {
-      return delegate.addDataSegment(iDataSegmentName);
-    } finally {
-      popSession();
-    }
-  }
-
-  public int addDataSegment(final String iSegmentName, final String iSegmentFileName) {
-    pushSession();
-    try {
-      return delegate.addDataSegment(iSegmentName, iSegmentFileName);
-    } finally {
-      popSession();
-    }
-  }
-
-  public boolean dropDataSegment(final String iSegmentName) {
-    pushSession();
-    try {
-      return delegate.dropDataSegment(iSegmentName);
     } finally {
       popSession();
     }

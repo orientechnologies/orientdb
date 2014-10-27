@@ -1,6 +1,27 @@
+/*
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
+
 package com.orientechnologies.orient.core.intent;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -12,26 +33,27 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class OIntentMassiveInsert implements OIntent {
-  private boolean                                     previousLocalCacheEnabled;
-  private boolean                                     previousLevel2CacheEnabled;
   private boolean                                     previousRetainRecords;
   private boolean                                     previousRetainObjects;
+  private boolean                                     previousValidation;
   private Map<ORecordHook, ORecordHook.HOOK_POSITION> removedHooks;
-  private OUser                       currentUser;
+  private OUser                                       currentUser;
 
-  public void begin(final ODatabaseRaw iDatabase, final Object... iArgs) {
+  public void begin(final ODatabaseRaw iDatabase) {
     // DISABLE CHECK OF SECURITY
     currentUser = iDatabase.getDatabaseOwner().getUser();
     iDatabase.getDatabaseOwner().setUser(null);
 
-    previousLocalCacheEnabled = iDatabase.getDatabaseOwner().getLocalCache().isEnabled();
-    iDatabase.getDatabaseOwner().getLocalCache().setEnable(false);
-
-    ODatabaseComplex<?> ownerDb = iDatabase.getDatabaseOwner();
+    ODatabaseComplexInternal<?> ownerDb = iDatabase.getDatabaseOwner();
 
     if (ownerDb instanceof ODatabaseRecord) {
       previousRetainRecords = ((ODatabaseRecord) ownerDb).isRetainRecords();
       ((ODatabaseRecord) ownerDb).setRetainRecords(false);
+
+      // VALIDATION
+      previousValidation = ((ODatabaseRecord) ownerDb).isValidationEnabled();
+      if (previousValidation)
+        ((ODatabaseRecord) ownerDb).setValidationEnabled(false);
     }
 
     while (ownerDb.getDatabaseOwner() != ownerDb)
@@ -58,11 +80,12 @@ public class OIntentMassiveInsert implements OIntent {
       // RE-ENABLE CHECK OF SECURITY
       iDatabase.getDatabaseOwner().setUser(currentUser);
 
-    iDatabase.getDatabaseOwner().getLocalCache().setEnable(previousLocalCacheEnabled);
-    ODatabaseComplex<?> ownerDb = iDatabase.getDatabaseOwner();
+    ODatabaseComplexInternal<?> ownerDb = iDatabase.getDatabaseOwner();
 
-    if (ownerDb instanceof ODatabaseRecord)
+    if (ownerDb instanceof ODatabaseRecord) {
       ((ODatabaseRecord) ownerDb).setRetainRecords(previousRetainRecords);
+      ((ODatabaseRecord) ownerDb).setValidationEnabled(previousValidation);
+    }
 
     while (ownerDb.getDatabaseOwner() != ownerDb)
       ownerDb = ownerDb.getDatabaseOwner();
@@ -77,5 +100,17 @@ public class OIntentMassiveInsert implements OIntent {
       }
     }
 
+  }
+
+  @Override
+  public OIntent copy() {
+    final OIntentMassiveInsert copy = new OIntentMassiveInsert();
+    copy.previousRetainRecords = previousRetainRecords;
+    copy.previousRetainObjects = previousRetainObjects;
+    copy.previousValidation = previousValidation;
+    copy.currentUser = currentUser;
+    if (removedHooks != null)
+      copy.removedHooks = new HashMap<ORecordHook, ORecordHook.HOOK_POSITION>(removedHooks);
+    return copy;
   }
 }

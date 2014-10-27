@@ -1,19 +1,28 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.db;
+
+import java.io.Closeable;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
 
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -22,24 +31,15 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.util.OBackupable;
 
-import java.io.Closeable;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.concurrent.Callable;
-
 /**
- * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br/>
+ * Generic Database interface. Represents the lower level of the Database providing raw API to access to the raw records.<br>
  * Limits:
  * <ul>
  * <li>Maximum records per cluster/class = <b>9.223.372.036 Billions</b>: 2^63 = 9.223.372.036.854.775.808 records</li>
  * <li>Maximum records per database = <b>302.231.454.903.657 Billions</b>: 2^15 clusters x 2^63 records = (2^78) 32.768 *
  * 9,223.372.036.854.775.808 = 302.231,454.903.657.293.676.544 records</li>
- * <li>Maximum storage per data-segment = <b>9.223.372 Terabytes</b>: 2^63 bytes = 9,223.372.036.854.775.808 Exabytes</li>
  * <li>Maximum storage per database = <b>19.807.040.628.566.084 Terabytes</b>: 2^31 data-segments x 2^63 bytes = (2^94)
  * 2.147.483.648 x 9,223.372.036.854.775.808 Exabytes = 19.807,040.628.566.084.398.385.987.584 Yottabytes</li>
  * </ul>
@@ -57,7 +57,7 @@ public interface ODatabase extends OBackupable, Closeable {
   }
 
   public static enum ATTRIBUTES {
-    TYPE, STATUS, DEFAULTCLUSTERID, DATEFORMAT, DATETIMEFORMAT, TIMEZONE, LOCALECOUNTRY, LOCALELANGUAGE, CHARSET, CUSTOM, CLUSTERSELECTION, MINIMUMCLUSTERS
+    TYPE, STATUS, DEFAULTCLUSTERID, DATEFORMAT, DATETIMEFORMAT, TIMEZONE, LOCALECOUNTRY, LOCALELANGUAGE, CHARSET, CUSTOM, CLUSTERSELECTION, MINIMUMCLUSTERS, CONFLICTSTRATEGY
   }
 
   /**
@@ -155,36 +155,11 @@ public interface ODatabase extends OBackupable, Closeable {
   public String getURL();
 
   /**
-   * Returns the underlying storage implementation.
-   * 
-   * @return The underlying storage implementation
-   * @see OStorage
-   */
-  public OStorage getStorage();
-
-  /**
-   * Internal only: replace the storage with a new one.
-   * 
-   * @param iNewStorage
-   *          The new storage to use. Usually it's a wrapped instance of the current cluster.
-   */
-  public void replaceStorage(OStorage iNewStorage);
-
-  /**
    * Returns the level1 cache. Cannot be null.
    * 
    * @return Current cache.
    */
   public OLocalRecordCache getLocalCache();
-
-  /**
-   * Returns the data segment id by name.
-   * 
-   * @param iDataSegmentName
-   *          Data segment name
-   * @return The id of searched data segment.
-   */
-  public int getDataSegmentIdByName(String iDataSegmentName);
 
   /**
    * Returns the default cluster id. If not specified all the new entities will be stored in the default cluster.
@@ -224,15 +199,6 @@ public interface ODatabase extends OBackupable, Closeable {
    * @return The id of searched cluster.
    */
   public int getClusterIdByName(String iClusterName);
-
-  /**
-   * Returns the cluster type.
-   * 
-   * @param iClusterName
-   *          Cluster name
-   * @return The cluster type as string
-   */
-  public String getClusterType(String iClusterName);
 
   /**
    * Returns the cluster name by id.
@@ -304,48 +270,25 @@ public interface ODatabase extends OBackupable, Closeable {
    * 
    * @param iClusterName
    *          Cluster name
-   * @param iType
-   *          Cluster type between the defined ones
    * @param iParameters
    *          Additional parameters to pass to the factories
    * @return Cluster id
    */
-  public int addCluster(String iClusterName, CLUSTER_TYPE iType, Object... iParameters);
+  public int addCluster(String iClusterName, Object... iParameters);
 
   /**
    * Adds a new cluster.
    * 
-   * @param iType
-   *          Cluster type between the defined ones
-   * @param iClusterName
-   *          Cluster name
-   * @param iDataSegmentName
-   *          Data segment where to store record of this cluster. null means 'default'
-   * @param iParameters
-   *          Additional parameters to pass to the factories
-   * 
-   * @return Cluster id
-   */
-  public int addCluster(String iType, String iClusterName, String iLocation, final String iDataSegmentName, Object... iParameters);
-
-  /**
-   * Adds a new cluster.
-   * 
-   * @param iType
-   *          Cluster type between the defined ones
    * @param iClusterName
    *          Cluster name
    * @param iRequestedId
    *          requested id of the cluster
-   * @param iDataSegmentName
-   *          Data segment where to store record of this cluster. null means 'default'
    * @param iParameters
    *          Additional parameters to pass to the factories
-   * 
+   *
    * @return Cluster id
    */
-  public int addCluster(String iType, String iClusterName, int iRequestedId, String iLocation, final String iDataSegmentName,
-      Object... iParameters);
+  public int addCluster(String iClusterName, int iRequestedId, Object... iParameters);
 
   /**
    * Drops a cluster by its name. Physical clusters will be completely deleted
@@ -364,21 +307,6 @@ public interface ODatabase extends OBackupable, Closeable {
    * @return true if has been removed, otherwise false
    */
   public boolean dropCluster(int iClusterId, final boolean iTruncate);
-
-  /**
-   * Adds a data segment where to store record content. Data segments contain the content of records. Cluster segments contain the
-   * pointer to them.
-   */
-  public int addDataSegment(String iSegmentName, String iLocation);
-
-  /**
-   * Drop a data segment and all the contained data.
-   * 
-   * @param name
-   *          segment name
-   * @return true if the segment has been removed, otherwise false
-   */
-  public boolean dropDataSegment(String name);
 
   /**
    * Sets a property value
@@ -440,10 +368,6 @@ public interface ODatabase extends OBackupable, Closeable {
    *          the listener to unregister
    */
   public void unregisterListener(ODatabaseListener iListener);
-
-  public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock);
-
-  public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock);
 
   public ORecordMetadata getRecordMetadata(final ORID rid);
 

@@ -3,20 +3,26 @@ package com.orientechnologies.orient.core.index.sbtree.local;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import com.orientechnologies.DatabaseAbstractTest;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import org.testng.annotations.*;
-
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPositionLong;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 /**
  * @author Andrey Lomakin
@@ -31,9 +37,9 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
   public void beforeClass() {
 		super.beforeClass();
 
-    localSBTree = new OSBTree<OCompositeKey, OIdentifiable>(".sbt", 2, false, ".nbt");
+    localSBTree = new OSBTree<OCompositeKey, OIdentifiable>(".sbt", false, ".nbt", null);
     localSBTree.create("localSBTreeCompositeKeyTest", OCompositeKeySerializer.INSTANCE, OLinkSerializer.INSTANCE, null,
-        (OAbstractPaginatedStorage) database.getStorage().getUnderlying(), false);
+        (OAbstractPaginatedStorage) database.getStorage().getUnderlying(), 2, false);
   }
 
   @BeforeMethod

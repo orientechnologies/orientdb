@@ -17,13 +17,18 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 /**
@@ -63,7 +68,7 @@ public class DatabaseThreadFactoryTest  extends DocumentDBBaseTest {
     Orient.instance().registerThreadDatabaseFactory(new ODatabaseThreadLocalFactory() {
 
       @Override
-      public ODatabaseRecord getThreadDatabase() {
+      public ODatabaseRecordInternal getThreadDatabase() {
         return ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
       }
     });

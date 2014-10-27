@@ -272,6 +272,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
     final OrientGraphFactory factory = new OrientGraphFactory(dburl, "admin", "admin");
     if (factory.exists())
       factory.drop();
+    factory.close();
     OrientGraphNoTx db = factory.getNoTx();
     db.drop();
     OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValue());

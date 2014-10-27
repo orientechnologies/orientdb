@@ -16,11 +16,12 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -29,11 +30,14 @@ import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
@@ -44,10 +48,10 @@ import java.util.Set;
 @Test(groups = "sql-select")
 public class SQLFunctionsTest extends DocumentDBBaseTest {
 
-	@Parameters(value = "url")
-	public SQLFunctionsTest(@Optional String url) {
-		super(url);
-	}
+  @Parameters(value = "url")
+  public SQLFunctionsTest(@Optional String url) {
+    super(url);
+  }
 
   @Test
   public void queryMax() {
@@ -116,13 +120,62 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
     }
   }
 
+  public void queryCountExtendsRestricted() {
+    OClass restricted = database.getMetadata().getSchema().getClass("ORestricted");
+    Assert.assertNotNull(restricted);
+
+    database.getMetadata().getSchema().createClass("QueryCountExtendsRestrictedClass", restricted);
+
+    OUser admin = database.getMetadata().getSecurity().getUser("admin");
+    OUser reader = database.getMetadata().getSecurity().getUser("reader");
+
+    ORole byPassRestrictedRole = database.getMetadata().getSecurity()
+        .createRole("byPassRestrictedRole", ORole.ALLOW_MODES.DENY_ALL_BUT);
+    byPassRestrictedRole.addRule(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_READ);
+
+    database.getMetadata().getSecurity().createUser("superReader", "superReader", "reader", "byPassRestrictedRole");
+
+    ODocument docAdmin = new ODocument("QueryCountExtendsRestrictedClass");
+    docAdmin.field("_allowRead", new HashSet<OIdentifiable>(Arrays.asList(admin.getDocument().getIdentity())));
+    docAdmin.save();
+
+    ODocument docReader = new ODocument("QueryCountExtendsRestrictedClass");
+    docReader.field("_allowRead", new HashSet<OIdentifiable>(Arrays.asList(reader.getDocument().getIdentity())));
+    docReader.save();
+
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select count(*) from QueryCountExtendsRestrictedClass"));
+    ODocument count = result.get(0);
+    Assert.assertEquals(2L, count.field("count"));
+
+    database.close();
+    database.open("admin", "admin");
+
+    result = database.query(new OSQLSynchQuery<ODocument>("select count(*) from QueryCountExtendsRestrictedClass"));
+    count = result.get(0);
+    Assert.assertEquals(2L, count.field("count"));
+
+    database.close();
+    database.open("reader", "reader");
+
+    result = database.query(new OSQLSynchQuery<ODocument>("select count(*) from QueryCountExtendsRestrictedClass"));
+    count = result.get(0);
+    Assert.assertEquals(1L, count.field("count"));
+
+    database.close();
+    database.open("superReader", "superReader");
+
+		result = database.query(new OSQLSynchQuery<ODocument>("select count(*) from QueryCountExtendsRestrictedClass"));
+		count = result.get(0);
+		Assert.assertEquals(2L, count.field("count"));
+	}
+
   @Test
   public void queryCountWithConditions() {
     OClass indexed = database.getMetadata().getSchema().getOrCreateClass("Indexed");
     indexed.createProperty("key", OType.STRING);
     indexed.createIndex("keyed", OClass.INDEX_TYPE.NOTUNIQUE, "key");
-    database.<ODocument> newInstance("Indexed").field("key", "one").save();
-    database.<ODocument> newInstance("Indexed").field("key", "two").save();
+    database.newInstance("Indexed").field("key", "one").save();
+    database.newInstance("Indexed").field("key", "two").save();
 
     List<ODocument> result = database.command(
         new OSQLSynchQuery<ODocument>("select count(*) as total from Indexed where key > 'one'")).execute();
@@ -195,6 +248,32 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
       List<Object> citiesFound = d.field("names");
       Assert.assertTrue(citiesFound.size() > 1);
     }
+  }
+
+  public void testSelectMap() {
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
+        "select list( 1, 4, 5.00, 'john', map( 'kAA', 'vAA' ) ) as myresult"));
+
+    Assert.assertEquals(result.size(), 1);
+
+    ODocument document = result.get(0);
+    List myresult = document.field("myresult");
+    Assert.assertNotNull(myresult);
+
+    Assert.assertTrue(myresult.remove(Integer.valueOf(1)));
+    Assert.assertTrue(myresult.remove(Integer.valueOf(4)));
+    Assert.assertTrue(myresult.remove(Float.valueOf(5)));
+    Assert.assertTrue(myresult.remove("john"));
+
+    Assert.assertEquals(myresult.size(), 1);
+
+    Assert.assertTrue(myresult.get(0) instanceof Map);
+    Map map = (Map) myresult.get(0);
+
+    String value = (String) map.get("kAA");
+    Assert.assertEquals(value, "vAA");
+
+    Assert.assertEquals(map.size(), 1);
   }
 
   @Test

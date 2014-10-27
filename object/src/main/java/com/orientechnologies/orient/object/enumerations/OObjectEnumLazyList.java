@@ -33,13 +33,13 @@ import com.orientechnologies.orient.core.record.ORecord;
 public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OObjectLazyEnumSerializer<List<TYPE>>, Serializable {
   private static final long     serialVersionUID = -8541477416577361792L;
 
-  private ORecord<?>            sourceRecord;
+  private ORecord            sourceRecord;
   private final List<Object>    serializedList;
   private final ArrayList<TYPE> list             = new ArrayList<TYPE>();
   private boolean               converted        = false;
   private final Class<Enum>     enumClass;
 
-  public OObjectEnumLazyList(final Class<Enum> iEnumClass, final ORecord<?> iSourceRecord, final List<Object> iRecordList) {
+  public OObjectEnumLazyList(final Class<Enum> iEnumClass, final ORecord iSourceRecord, final List<Object> iRecordList) {
     this.sourceRecord = iSourceRecord;
     this.serializedList = iRecordList;
     this.enumClass = iEnumClass;
@@ -48,7 +48,7 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OO
     }
   }
 
-  public OObjectEnumLazyList(final Class<Enum> iEnumClass, final ORecord<?> iSourceRecord, final List<Object> iRecordList,
+  public OObjectEnumLazyList(final Class<Enum> iEnumClass, final ORecord iSourceRecord, final List<Object> iRecordList,
       final Collection<? extends TYPE> iSourceList) {
     this.sourceRecord = iSourceRecord;
     this.serializedList = iRecordList;
@@ -64,7 +64,7 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OO
   }
 
   public boolean contains(final Object o) {
-    return list.contains(o);
+	  return this.indexOf(o) > -1;
   }
 
   public boolean add(TYPE element) {
@@ -92,11 +92,21 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OO
   }
 
   public int indexOf(final Object o) {
-    return list.indexOf(o);
+	  TYPE enumToCheck = objectToEnum(o);
+
+	  if(enumToCheck != null)
+		  return serializedList.indexOf(enumToCheck.name());
+	  else
+		  return -1;
   }
 
   public int lastIndexOf(final Object o) {
-    return list.lastIndexOf(o);
+	  TYPE enumToCheck = objectToEnum(o);
+
+	  if(enumToCheck != null)
+		  return serializedList.lastIndexOf(enumToCheck.name());
+	  else
+		  return -1;
   }
 
   public Object[] toArray() {
@@ -273,5 +283,15 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OO
   @Override
   public String toString() {
     return list.toString();
+  }
+  
+  private TYPE objectToEnum(Object o)
+  {
+	 if(o != null && (o.getClass() == this.enumClass))	
+	 {
+		 return (TYPE) o;
+	 }
+	 else
+		 return null;
   }
 }

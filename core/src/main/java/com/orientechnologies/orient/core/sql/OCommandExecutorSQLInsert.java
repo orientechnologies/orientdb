@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
@@ -31,9 +35,11 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -83,7 +89,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
       if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
         subjectName = subjectName.substring(OCommandExecutorSQLAbstract.CLASS_PREFIX.length());
 
-      final OClass cls = database.getMetadata().getSchema().getClass(subjectName);
+      final OClass cls = database.getMetadata().getImmutableSchemaSnapshot().getClass(subjectName);
       if (cls == null)
         throwParsingException("Class " + subjectName + " not found in database");
 
@@ -201,8 +207,20 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     return null;
   }
 
-  public boolean isReplicated() {
-    return indexName != null;
+  @Override
+  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return indexName != null ? DISTRIBUTED_EXECUTION_MODE.REPLICATE : DISTRIBUTED_EXECUTION_MODE.LOCAL;
+  }
+
+  @Override
+  public Set<String> getInvolvedClusters() {
+    if (className != null) {
+      final OClass clazz = getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(className);
+      return Collections.singleton(getDatabase().getClusterNameById(clazz.getClusterSelection().getCluster(clazz)));
+    } else if (clusterName != null)
+      return getInvolvedClustersOfClusters(Collections.singleton(clusterName));
+
+    return Collections.EMPTY_SET;
   }
 
   @Override
@@ -212,7 +230,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
 
   @Override
   public boolean result(final Object iRecord) {
-    final ORecord<?> rec = ((OIdentifiable) iRecord).getRecord().copy();
+    final ORecord rec = ((OIdentifiable) iRecord).getRecord().copy();
 
     // RESET THE IDENTITY TO AVOID UPDATE
     rec.getIdentity().reset();
@@ -260,7 +278,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     }
   }
 
-  protected void saveRecord(final ORecord<?> rec) {
+  protected void saveRecord(final ORecord rec) {
     if (clusterName != null)
       rec.save(clusterName);
     else

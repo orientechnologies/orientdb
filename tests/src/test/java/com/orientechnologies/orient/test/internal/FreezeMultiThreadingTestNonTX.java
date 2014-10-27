@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -483,8 +484,6 @@ public class FreezeMultiThreadingTestNonTX {
 
   @BeforeMethod
   public void setUp() throws Exception {
-    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
-
     OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT.setValue(1000);
     // OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.setValue(50);
 
@@ -582,7 +581,7 @@ public class FreezeMultiThreadingTestNonTX {
     outer: for (final ODocument firstDoc : firstDocs) {
       for (final ODocument secondDoc : secondDocs) {
         if (firstDoc.equals(secondDoc)) {
-          final ODatabaseRecord databaseRecord = ODatabaseRecordThreadLocal.INSTANCE.get();
+          final ODatabaseRecordInternal databaseRecord = ODatabaseRecordThreadLocal.INSTANCE.get();
           Assert.assertTrue(ODocumentHelper.hasSameContentOf(firstDoc, databaseRecord, secondDoc, databaseRecord, null));
           continue outer;
         }

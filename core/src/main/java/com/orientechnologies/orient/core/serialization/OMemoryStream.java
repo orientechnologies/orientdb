@@ -1,28 +1,33 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.serialization;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Arrays;
 
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.Orient;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
+import java.util.Arrays;
 
 /**
  * Class to parse and write buffers in very fast way.
@@ -35,6 +40,7 @@ public class OMemoryStream extends OutputStream {
 
   private byte[]           buffer;
   private int              position;
+  private Charset          charset               = Charset.forName("utf8");
 
   private static final int NATIVE_COPY_THRESHOLD = 9;
   private static long      metricResize          = 0;
@@ -43,7 +49,7 @@ public class OMemoryStream extends OutputStream {
     Orient
         .instance()
         .getProfiler()
-        .registerHookValue("system.memory.stream.resize", "Number of resizes of memory stream buffer", METRIC_TYPE.COUNTER,
+      .registerHookValue("system.memory.stream.resize", "Number of resizes of memory stream buffer", METRIC_TYPE.COUNTER,
             new OProfilerHookValue() {
               public Object getValue() {
                 return metricResize;
@@ -207,8 +213,12 @@ public class OMemoryStream extends OutputStream {
     write(iContent);
   }
 
-  public final int set(final String iContent) {
+  public final int setCustom(final String iContent) {
     return set(OBinaryProtocol.string2bytes(iContent));
+  }
+
+  public final int setUtf8(final String iContent) {
+    return set(iContent.getBytes(charset));
   }
 
   public int set(final boolean iContent) {
@@ -379,6 +389,16 @@ public class OMemoryStream extends OutputStream {
   }
 
   public String getAsString() {
+    if (position >= buffer.length)
+      return null;
+
+    final int size = getVariableSize();
+    String str = new String(buffer, position, size, charset);
+    position += size;
+    return str;
+  }
+
+  public String getAsStringCustom() {
     final int size = getVariableSize();
     if (size < 0)
       return null;

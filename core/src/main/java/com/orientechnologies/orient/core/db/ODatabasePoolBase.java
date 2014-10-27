@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.concur.resource.OReentrantResourcePool;
@@ -27,7 +31,7 @@ import java.util.Map;
  * @author Luca Garulli
  * 
  */
-public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
+public abstract class ODatabasePoolBase<DB extends ODatabaseInternal> extends Thread {
   protected final String              url;
   protected final String              userName;
   protected final String              userPassword;
@@ -44,13 +48,18 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
   }
 
   public ODatabasePoolBase<DB> setup() {
-    setup(OGlobalConfiguration.DB_POOL_MIN.getValueAsInteger(), OGlobalConfiguration.DB_POOL_MAX.getValueAsInteger());
+    if (dbPool == null)
+      setup(OGlobalConfiguration.DB_POOL_MIN.getValueAsInteger(), OGlobalConfiguration.DB_POOL_MAX.getValueAsInteger());
+
     return this;
   }
 
   public ODatabasePoolBase<DB> setup(final int iMinSize, final int iMaxSize) {
-    return this.setup(iMinSize, iMaxSize, OGlobalConfiguration.DB_POOL_IDLE_TIMEOUT.getValueAsLong(),
-        OGlobalConfiguration.DB_POOL_IDLE_CHECK_DELAY.getValueAsLong());
+    if (dbPool == null)
+      setup(iMinSize, iMaxSize, OGlobalConfiguration.DB_POOL_IDLE_TIMEOUT.getValueAsLong(),
+          OGlobalConfiguration.DB_POOL_IDLE_CHECK_DELAY.getValueAsLong());
+
+    return this;
   }
 
   public ODatabasePoolBase<DB> setup(final int iMinSize, final int iMaxSize, final long idleTimeout,
@@ -133,6 +142,11 @@ public abstract class ODatabasePoolBase<DB extends ODatabase> extends Thread {
     setup();
     return dbPool.getMaxConnections(name, userName);
   }
+
+	public int getCreatedInstances(final  String name, final String userName) {
+		setup();
+		return dbPool.getCreatedInstances(name, userName);
+	}
 
   /**
    * Acquires a connection from the pool specifying options. If the pool is empty, then the caller thread will wait for it.

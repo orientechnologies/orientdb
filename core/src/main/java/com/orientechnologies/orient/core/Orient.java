@@ -1,29 +1,34 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.core;
 
-import com.orientechnologies.common.concur.lock.OAdaptiveLock;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
 import com.orientechnologies.orient.core.db.ODatabaseFactory;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
@@ -31,47 +36,51 @@ import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.record.ORecordFactoryManager;
-import com.orientechnologies.orient.core.storage.OClusterFactory;
-import com.orientechnologies.orient.core.storage.ODefaultClusterFactory;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.fs.OMMapManagerLocator;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Orient extends OListenerManger<OOrientListener> {
-  public static final String                      ORIENTDB_HOME          = "ORIENTDB_HOME";
-  public static final String                      URL_SYNTAX             = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
+  public static final String                                                           ORIENTDB_HOME          = "ORIENTDB_HOME";
+  public static final String                                                           URL_SYNTAX             = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
 
-  protected static final Orient                   instance               = new Orient();
-  protected static boolean                        registerDatabaseByPath = false;
-  protected final Map<String, OEngine>            engines                = new HashMap<String, OEngine>();
-  protected final Map<String, OStorage>           storages               = new HashMap<String, OStorage>();
-  protected final Set<ODatabaseLifecycleListener> dbLifecycleListeners   = new HashSet<ODatabaseLifecycleListener>();
-  protected final ODatabaseFactory                databaseFactory        = new ODatabaseFactory();
-  protected final OScriptManager                  scriptManager          = new OScriptManager();
-  protected final Timer                           timer                  = new Timer(true);
-  protected final ThreadGroup                     threadGroup            = new ThreadGroup("OrientDB");
-  protected final AtomicInteger                   serialId               = new AtomicInteger();
-  protected OClusterFactory                       clusterFactory         = new ODefaultClusterFactory();
-  protected ORecordFactoryManager                 recordFactoryManager   = new ORecordFactoryManager();
-  protected OrientShutdownHook                    shutdownHook;
-  protected OMemoryWatchDog                       memoryWatchDog;
-  protected OProfilerMBean                        profiler               = new OProfiler();
-  protected ODatabaseThreadLocalFactory           databaseThreadFactory;
+  protected static final Orient                                                        instance               = new Orient();
+  protected static boolean                                                             registerDatabaseByPath = false;
 
-  protected volatile boolean                      active                 = false;
-  protected ThreadPoolExecutor                    workers;
+  protected final ConcurrentMap<String, OEngine>                                       engines                = new ConcurrentHashMap<String, OEngine>();
+  protected final ConcurrentMap<String, OStorage>                                      storages               = new ConcurrentHashMap<String, OStorage>();
+
+  protected final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners   = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
+  protected final ODatabaseFactory                                                     databaseFactory        = new ODatabaseFactory();
+  protected final OScriptManager                                                       scriptManager          = new OScriptManager();
+  protected final Timer                                                                timer                  = new Timer(true);
+  protected final ThreadGroup                                                          threadGroup            = new ThreadGroup(
+                                                                                                                  "OrientDB");
+  protected final AtomicInteger                                                        serialId               = new AtomicInteger();
+  private final ReadWriteLock                                                          engineLock             = new ReentrantReadWriteLock();
+  protected ORecordFactoryManager                                                      recordFactoryManager   = new ORecordFactoryManager();
+  protected ORecordConflictStrategyFactory                                             recordConflictStrategy = new ORecordConflictStrategyFactory();
+  protected OrientShutdownHook                                                         shutdownHook;
+  protected OProfilerMBean                                                             profiler               = new OProfiler();
+  protected ODatabaseThreadLocalFactory                                                databaseThreadFactory;
+  protected volatile boolean                                                           active                 = false;
+  protected ThreadPoolExecutor                                                         workers;
+  protected OSignalHandler                                                             signalHandler;
 
   protected Orient() {
-    super(new OAdaptiveLock(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean()));
+    super(true);
+
     startup();
   }
 
@@ -81,10 +90,9 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   public static String getHomePath() {
     String v = System.getProperty("orient.home");
+
     if (v == null)
-      v = System.getProperty(ORIENTDB_HOME);
-    if (v == null)
-      v = System.getenv(ORIENTDB_HOME);
+      v = OSystemVariableResolver.resolveVariable(ORIENTDB_HOME);
 
     return OFileUtils.getPath(v);
   }
@@ -96,7 +104,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   /**
    * Tells if to register database by path. Default is false. Setting to true allows to have multiple databases in different path
    * with the same name.
-   * 
+   *
    * @see #setRegisterDatabaseByPath(boolean)
    * @return
    */
@@ -107,21 +115,29 @@ public class Orient extends OListenerManger<OOrientListener> {
   /**
    * Register database by path. Default is false. Setting to true allows to have multiple databases in different path with the same
    * name.
-   * 
+   *
    * @param iValue
    */
   public static void setRegisterDatabaseByPath(final boolean iValue) {
     registerDatabaseByPath = iValue;
   }
 
+  public ORecordConflictStrategyFactory getRecordConflictStrategy() {
+    return recordConflictStrategy;
+  }
+
   public Orient startup() {
-    getLock().lock();
+    engineLock.writeLock().lock();
     try {
       if (active)
         // ALREADY ACTIVE
         return this;
 
       shutdownHook = new OrientShutdownHook();
+      if (signalHandler == null) {
+        signalHandler = new OSignalHandler();
+        signalHandler.installDefaultSignals();
+      }
 
       final int cores = Runtime.getRuntime().availableProcessors();
 
@@ -151,18 +167,16 @@ public class Orient extends OListenerManger<OOrientListener> {
       if (OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP.getValueAsBoolean())
         OGlobalConfiguration.dumpConfiguration(System.out);
 
-      memoryWatchDog = new OMemoryWatchDog();
-
       active = true;
       return this;
 
     } finally {
-      getLock().unlock();
+      engineLock.writeLock().unlock();
     }
   }
 
   public Orient shutdown() {
-    getLock().lock();
+    engineLock.writeLock().lock();
     try {
       if (!active)
         return this;
@@ -195,9 +209,6 @@ public class Orient extends OListenerManger<OOrientListener> {
         shutdownHook = null;
       }
 
-      if (OMMapManagerLocator.getInstance() != null)
-        OMMapManagerLocator.getInstance().shutdown();
-
       if (threadGroup != null)
         // STOP ALL THE PENDING THREADS
         threadGroup.interrupt();
@@ -208,28 +219,18 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       profiler.shutdown();
 
-      if (memoryWatchDog != null) {
-        // SHUTDOWN IT AND WAIT FOR COMPETITION
-        memoryWatchDog.sendShutdown();
-        try {
-          memoryWatchDog.join();
-        } catch (InterruptedException e) {
-        } finally {
-          memoryWatchDog = null;
-        }
-      }
-
       OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
       OLogManager.instance().flush();
 
     } finally {
-      getLock().unlock();
+      engineLock.writeLock().unlock();
     }
     return this;
   }
 
   public void closeAllStorages() {
-    if (storages != null) {
+    engineLock.writeLock().lock();
+    try {
       // CLOSE ALL THE STORAGES
       final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
       for (OStorage stg : storagesCopy) {
@@ -241,6 +242,8 @@ public class Orient extends OListenerManger<OOrientListener> {
         }
       }
       storages.clear();
+    } finally {
+      engineLock.writeLock().unlock();
     }
   }
 
@@ -255,6 +258,8 @@ public class Orient extends OListenerManger<OOrientListener> {
     if (iURL.endsWith("/"))
       iURL = iURL.substring(0, iURL.length() - 1);
 
+    iURL = iURL.replace("//", "/");
+
     // SEARCH FOR ENGINE
     int pos = iURL.indexOf(':');
     if (pos <= 0)
@@ -263,7 +268,7 @@ public class Orient extends OListenerManger<OOrientListener> {
 
     final String engineName = iURL.substring(0, pos);
 
-    getLock().lock();
+    engineLock.readLock().lock();
     try {
       final OEngine engine = engines.get(engineName.toLowerCase());
 
@@ -304,7 +309,10 @@ public class Orient extends OListenerManger<OOrientListener> {
         if (storage == null) {
           // NOT FOUND: CREATE IT
           storage = engine.createStorage(dbPath, parameters);
-          storages.put(dbName, storage);
+
+          final OStorage oldStorage = storages.putIfAbsent(dbName, storage);
+          if (oldStorage != null)
+            storage = oldStorage;
         }
       } else {
         // REGISTER IT WITH A SERIAL NAME TO AVOID BEING REUSED
@@ -316,98 +324,98 @@ public class Orient extends OListenerManger<OOrientListener> {
         l.onStorageRegistered(storage);
 
       return storage;
-
     } finally {
-      getLock().unlock();
+      engineLock.readLock().unlock();
     }
   }
 
-  public OStorage registerStorage(final OStorage iStorage) throws IOException {
-    getLock().lock();
+  public OStorage registerStorage(OStorage storage) throws IOException {
+    engineLock.readLock().lock();
     try {
       for (OOrientListener l : browseListeners())
-        l.onStorageRegistered(iStorage);
+        l.onStorageRegistered(storage);
 
-      if (!storages.containsKey(iStorage.getName()))
-        storages.put(iStorage.getName(), iStorage);
+      OStorage oldStorage = storages.putIfAbsent(storage.getName(), storage);
+      if (oldStorage != null)
+        storage = oldStorage;
 
+      return storage;
     } finally {
-      getLock().unlock();
+      engineLock.readLock().unlock();
     }
-    return iStorage;
   }
 
-  public OStorage getStorage(final String iDbName) {
-    getLock().lock();
+  public OStorage getStorage(final String dbName) {
+    engineLock.readLock().lock();
     try {
-      return storages.get(iDbName);
+      return storages.get(dbName);
     } finally {
-      getLock().unlock();
+      engineLock.readLock().unlock();
     }
   }
 
   public void registerEngine(final OEngine iEngine) {
-    getLock().lock();
+    engineLock.readLock().lock();
     try {
       engines.put(iEngine.getName(), iEngine);
     } finally {
-      getLock().unlock();
+      engineLock.readLock().unlock();
     }
   }
 
   /**
    * Returns the engine by its name.
    * 
-   * @param iEngineName
+   * @param engineName
    *          Engine name to retrieve
    * @return OEngine instance of found, otherwise null
    */
-  public OEngine getEngine(final String iEngineName) {
-    getLock().lock();
+  public OEngine getEngine(final String engineName) {
+    engineLock.readLock().lock();
     try {
-      return engines.get(iEngineName);
+      return engines.get(engineName);
     } finally {
-      getLock().unlock();
+      engineLock.readLock().unlock();
     }
   }
 
   public Set<String> getEngines() {
-    getLock().lock();
+    engineLock.readLock().lock();
     try {
       return Collections.unmodifiableSet(engines.keySet());
     } finally {
-      getLock().unlock();
+      engineLock.readLock().unlock();
     }
   }
 
-  public void unregisterStorageByName(final String iName) {
-    final String dbName = registerDatabaseByPath ? iName : OIOUtils.getRelativePathIfAny(iName, null);
+  public void unregisterStorageByName(final String name) {
+    final String dbName = registerDatabaseByPath ? name : OIOUtils.getRelativePathIfAny(name, null);
     final OStorage stg = storages.get(dbName);
     unregisterStorage(stg);
   }
 
-  public void unregisterStorage(final OStorage iStorage) {
+  public void unregisterStorage(final OStorage storage) {
     if (!active)
       // SHUTDOWNING OR NOT ACTIVE: RETURN
       return;
 
-    if (iStorage == null)
+    if (storage == null)
       return;
 
-    getLock().lock();
+    engineLock.writeLock().lock();
     try {
       // UNREGISTER ALL THE LISTENER ONE BY ONE AVOIDING SELF-RECURSION BY REMOVING FROM THE LIST
       final Iterable<OOrientListener> listenerCopy = getListenersCopy();
       for (Iterator<OOrientListener> it = listenerCopy.iterator(); it.hasNext();) {
         final OOrientListener l = it.next();
         unregisterListener(l);
-        l.onStorageUnregistered(iStorage);
+        l.onStorageUnregistered(storage);
       }
 
       final List<String> storagesToRemove = new ArrayList<String>();
 
       for (Entry<String, OStorage> s : storages.entrySet()) {
-        if (s.getValue().equals(iStorage))
+        if (s.getValue().equals(storage))
           storagesToRemove.add(s.getKey());
       }
 
@@ -415,18 +423,16 @@ public class Orient extends OListenerManger<OOrientListener> {
         storages.remove(dbName);
 
     } finally {
-      getLock().unlock();
+      engineLock.writeLock().unlock();
     }
   }
 
   public Collection<OStorage> getStorages() {
-    getLock().lock();
+    engineLock.readLock().lock();
     try {
-
       return new ArrayList<OStorage>(storages.values());
-
     } finally {
-      getLock().unlock();
+      engineLock.readLock().unlock();
     }
   }
 
@@ -440,11 +446,20 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   public Iterator<ODatabaseLifecycleListener> getDbLifecycleListeners() {
-    return dbLifecycleListeners.iterator();
+    return dbLifecycleListeners.keySet().iterator();
   }
 
   public void addDbLifecycleListener(final ODatabaseLifecycleListener iListener) {
-    dbLifecycleListeners.add(iListener);
+    final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> tmp = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>(
+        dbLifecycleListeners);
+    tmp.put(iListener, iListener.getPriority());
+    dbLifecycleListeners.clear();
+    for (ODatabaseLifecycleListener.PRIORITY p : ODatabaseLifecycleListener.PRIORITY.values()) {
+      for (Map.Entry<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> e : tmp.entrySet()) {
+        if (e.getValue() == p)
+          dbLifecycleListeners.put(e.getKey(), e.getValue());
+      }
+    }
   }
 
   public void removeDbLifecycleListener(final ODatabaseLifecycleListener iListener) {
@@ -459,24 +474,12 @@ public class Orient extends OListenerManger<OOrientListener> {
     return databaseThreadFactory;
   }
 
-  public OMemoryWatchDog getMemoryWatchDog() {
-    return memoryWatchDog;
-  }
-
   public ORecordFactoryManager getRecordFactoryManager() {
     return recordFactoryManager;
   }
 
   public void setRecordFactoryManager(final ORecordFactoryManager iRecordFactoryManager) {
     recordFactoryManager = iRecordFactoryManager;
-  }
-
-  public OClusterFactory getClusterFactory() {
-    return clusterFactory;
-  }
-
-  public void setClusterFactory(final OClusterFactory clusterFactory) {
-    this.clusterFactory = clusterFactory;
   }
 
   public ODatabaseFactory getDatabaseFactory() {

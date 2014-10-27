@@ -2,6 +2,8 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.collate.OCaseInsensitiveCollate;
 import com.orientechnologies.orient.core.collate.ODefaultCollate;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -200,6 +202,20 @@ public class CollateTest extends DocumentDBBaseTest {
 
     explain = database.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("collateCompositeIndexCS"));
+
+    result = database.query(new OSQLSynchQuery<ODocument>("select from index:collateCompositeIndexCS where key = ['VAL', 'VaL']"));
+
+    Assert.assertEquals(result.size(), 5);
+    for (ODocument document : result) {
+      final OCompositeKey key = document.field("key");
+      final List keys = key.getKeys();
+      Assert.assertEquals(keys.get(0), "VAL");
+      Assert.assertTrue("val".compareToIgnoreCase((String) keys.get(1)) == 0);
+
+      final ODocument record = document.<OIdentifiable> field("rid").getRecord();
+      Assert.assertEquals(record.field("csp"), "VAL");
+      Assert.assertEquals((record.<String> field("cip")).toUpperCase(), "VAL");
+    }
   }
 
   public void testCompositeIndexQueryCollateWasChanged() {

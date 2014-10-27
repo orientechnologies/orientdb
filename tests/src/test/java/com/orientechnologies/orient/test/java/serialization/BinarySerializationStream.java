@@ -27,7 +27,7 @@ public class BinarySerializationStream {
     time = System.currentTimeMillis();
     OMemoryStream mou = new OMemoryStream();
     for (int i = 0; i < 1000000; i++) {
-      mou.set("adfsdfsdfadfsdfsdfadfsdfsdfadfsdfsdf");
+      mou.setCustom("adfsdfsdfadfsdfsdfadfsdfsdfadfsdfsdf");
       mou.set(32);
       mou.set(32l);
       mou.set((byte) 32);

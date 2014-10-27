@@ -19,13 +19,14 @@ package com.orientechnologies.orient.core.schedule;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 
 /**
  * Author : henryzhao81@gmail.com Mar 28, 2013
  */
 public class OSchedulerListenerProxy extends OProxedResource<OSchedulerListener> implements OSchedulerListener {
-	public OSchedulerListenerProxy(final OSchedulerListener iDelegate, final ODatabaseRecord iDatabase) {
+	public OSchedulerListenerProxy(final OSchedulerListener iDelegate, final ODatabaseRecordInternal iDatabase) {
 		super(iDelegate, iDatabase);
 	}
 	

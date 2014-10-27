@@ -1,29 +1,36 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.index.engine;
-
-import java.util.*;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndexAbstractCursor;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexEngine;
+import com.orientechnologies.orient.core.index.OIndexKeyCursor;
+import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.index.hashindex.local.OHashIndexBucket;
 import com.orientechnologies.orient.core.index.hashindex.local.OLocalHashTable;
 import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashFunction;
@@ -34,6 +41,11 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.in
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OSimpleKeySerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
+
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * @author Andrey Lomakin
@@ -50,10 +62,17 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
 
   private volatile ORID                          identity;
 
-  public OHashTableIndexEngine() {
+  public OHashTableIndexEngine(Boolean durableInNonTxMode, ODurablePage.TrackMode trackMode) {
     hashFunction = new OMurmurHash3HashFunction<Object>();
+
+    boolean durableInNonTx;
+    if (durableInNonTxMode == null)
+      durableInNonTx = OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean();
+    else
+      durableInNonTx = durableInNonTxMode;
+
     hashTable = new OLocalHashTable<Object, V>(METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
-        NULL_BUCKET_FILE_EXTENSION, hashFunction, OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean());
+        NULL_BUCKET_FILE_EXTENSION, hashFunction, durableInNonTx, trackMode);
   }
 
   @Override
@@ -78,9 +97,9 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
     } else
       keySerializer = new OSimpleKeySerializer();
 
-    final ODatabaseRecord database = getDatabase();
+    final ODatabaseRecordInternal database = getDatabase();
     final ORecordBytes identityRecord = new ORecordBytes();
-    final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage();
+    final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
 
     database.save(identityRecord, clusterIndexName);
     identity = identityRecord.getIdentity();
@@ -110,8 +129,9 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
   public void load(ORID indexRid, String indexName, OIndexDefinition indexDefinition, OStreamSerializer valueSerializer,
       boolean isAutomatic) {
     identity = indexRid;
-    hashTable.load(indexName, indexDefinition != null ? indexDefinition.getTypes() : null, (OAbstractPaginatedStorage) getDatabase()
-        .getStorage().getUnderlying(), indexDefinition != null && !indexDefinition.isNullValuesIgnored());
+    hashTable.load(indexName, indexDefinition != null ? indexDefinition.getTypes() : null,
+        (OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying(),
+        indexDefinition != null && !indexDefinition.isNullValuesIgnored());
     hashFunction.setValueSerializer(hashTable.getKeySerializer());
   }
 
@@ -289,6 +309,89 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
   }
 
   @Override
+  public OIndexCursor descCursor(final ValuesTransformer<V> valuesTransformer) {
+    return new OIndexAbstractCursor() {
+      private int                                 nextEntriesIndex;
+      private OHashIndexBucket.Entry<Object, V>[] entries;
+
+      private Iterator<OIdentifiable>             currentIterator = new OEmptyIterator<OIdentifiable>();
+      private Object                              currentKey;
+
+      {
+        OHashIndexBucket.Entry<Object, V> lastEntry = hashTable.lastEntry();
+        if (lastEntry == null)
+          entries = new OHashIndexBucket.Entry[0];
+        else
+          entries = hashTable.floorEntries(lastEntry.key);
+
+        if (entries.length == 0)
+          currentIterator = null;
+      }
+
+      @Override
+      public Map.Entry<Object, OIdentifiable> nextEntry() {
+        if (currentIterator == null)
+          return null;
+
+        if (currentIterator.hasNext())
+          return nextCursorValue();
+
+        while (currentIterator != null && !currentIterator.hasNext()) {
+          if (entries.length == 0) {
+            currentIterator = null;
+            return null;
+          }
+
+          final OHashIndexBucket.Entry<Object, V> bucketEntry = entries[nextEntriesIndex];
+
+          currentKey = bucketEntry.key;
+
+          V value = bucketEntry.value;
+          if (valuesTransformer != null) {
+            currentIterator = valuesTransformer.transformFromValue(value).iterator();
+          } else
+            currentIterator = Collections.singletonList((OIdentifiable) value).iterator();
+
+          nextEntriesIndex--;
+
+          if (nextEntriesIndex < 0) {
+            entries = hashTable.lowerEntries(entries[0].key);
+
+            nextEntriesIndex = entries.length - 1;
+          }
+        }
+
+        if (currentIterator != null && !currentIterator.hasNext())
+          return nextCursorValue();
+
+        currentIterator = null;
+        return null;
+      }
+
+      private Map.Entry<Object, OIdentifiable> nextCursorValue() {
+        final OIdentifiable identifiable = currentIterator.next();
+
+        return new Map.Entry<Object, OIdentifiable>() {
+          @Override
+          public Object getKey() {
+            return currentKey;
+          }
+
+          @Override
+          public OIdentifiable getValue() {
+            return identifiable;
+          }
+
+          @Override
+          public OIdentifiable setValue(OIdentifiable value) {
+            throw new UnsupportedOperationException();
+          }
+        };
+      }
+    };
+  }
+
+  @Override
   public OIndexKeyCursor keyCursor() {
     return new OIndexKeyCursor() {
       private int                                 nextEntriesIndex;
@@ -321,8 +424,7 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
     };
   }
 
-
-  private ODatabaseRecord getDatabase() {
+  private ODatabaseRecordInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 }

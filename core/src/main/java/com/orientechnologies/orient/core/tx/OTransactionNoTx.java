@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.common.exception.OException;
@@ -23,7 +27,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -51,14 +55,24 @@ public class OTransactionNoTx extends OTransactionAbstract {
   }
 
   @Override
+  public int getEntryCount() {
+    return 0;
+  }
+
+  @Override
+  public boolean hasRecordCreation() {
+    return false;
+  }
+
+  @Override
   public void commit(boolean force) {
   }
 
   public void rollback() {
   }
 
-  public ORecordInternal<?> loadRecord(final ORID iRid, final ORecordInternal<?> iRecord, final String iFetchPlan,
-      final boolean ignonreCache, final boolean loadTombstone, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+  public ORecord loadRecord(final ORID iRid, final ORecord iRecord, final String iFetchPlan, final boolean ignonreCache,
+      final boolean loadTombstone, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     if (iRid.isNew())
       return null;
 
@@ -67,16 +81,16 @@ public class OTransactionNoTx extends OTransactionAbstract {
 
   /**
    * Update the record.
-   * 
+   *
+   * @param iRecord
    * @param iForceCreate
    * @param iRecordCreatedCallback
    * @param iRecordUpdatedCallback
    */
-  public void saveRecord(final ORecordInternal<?> iRecord, final String iClusterName, final OPERATION_MODE iMode,
-      boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
-      ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+  public ORecord saveRecord(final ORecord iRecord, final String iClusterName, final OPERATION_MODE iMode, boolean iForceCreate,
+      final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     try {
-      database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), true, iMode, iForceCreate,
+      return database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), true, iMode, iForceCreate,
           iRecordCreatedCallback, null);
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
@@ -90,25 +104,10 @@ public class OTransactionNoTx extends OTransactionAbstract {
     }
   }
 
-  @Override
-  public boolean updateReplica(ORecordInternal<?> iRecord) {
-    try {
-      return database.executeUpdateReplica(iRecord);
-    } catch (Exception e) {
-      // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
-      final ORecordId rid = (ORecordId) iRecord.getIdentity();
-      database.getLocalCache().freeRecord(rid);
-
-      if (e instanceof RuntimeException)
-        throw (RuntimeException) e;
-      throw new OException(e);
-    }
-  }
-
   /**
    * Deletes the record.
    */
-  public void deleteRecord(final ORecordInternal<?> iRecord, final OPERATION_MODE iMode) {
+  public void deleteRecord(final ORecord iRecord, final OPERATION_MODE iMode) {
     if (!iRecord.getIdentity().isPersistent())
       return;
 
@@ -149,7 +148,7 @@ public class OTransactionNoTx extends OTransactionAbstract {
     return 0;
   }
 
-  public ORecordInternal<?> getRecord(final ORID rid) {
+  public ORecord getRecord(final ORID rid) {
     return null;
   }
 

@@ -1,10 +1,29 @@
+/*
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
+
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -13,7 +32,9 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.tinkerpop.blueprints.Edge;
@@ -26,6 +47,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -49,6 +71,8 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     if (graph != null)
       settings = graph.settings;
   }
+
+  public abstract String getLabel();
 
   public abstract String getBaseClassName();
 
@@ -118,16 +142,22 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
         } else
           throw new IllegalArgumentException(
               "Invalid fields: expecting a pairs of fields as String,Object or a single Map<String,Object>, but found: " + f);
-      } else
+      } else {
+        if (fields.length % 2 != 0)
+          throw new IllegalArgumentException(
+              "Invalid fields: expecting a pairs of fields as String,Object or a single Map<String,Object>, but found: "
+                  + Arrays.toString(fields));
+
         // SET THE FIELDS
         for (int i = 0; i < fields.length; i += 2)
           setPropertyInternal(this, (ODocument) rawElement.getRecord(), fields[i].toString(), fields[i + 1]);
+      }
     }
     return (T) this;
   }
 
   /**
-   * Set a Property value.
+   * Sets a Property value.
    * 
    * @param key
    *          Property name
@@ -145,7 +175,27 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   }
 
   /**
-   * Removed a Property.
+   * Sets a Property value specifying a type. This is useful when you don't have a schema on this property but you want to force the
+   * type.
+   *
+   * @param key
+   *          Property name
+   * @param value
+   *          Property value
+   * @param iType
+   *          Type to set
+   */
+  public void setProperty(final String key, final Object value, final OType iType) {
+    validateProperty(this, key, value);
+    if (!isDetached())
+      graph.autoStartTransaction();
+    getRecord().field(key, value, iType);
+    if (!isDetached())
+      save();
+  }
+
+  /**
+   * Removes a Property.
    * 
    * @param key
    *          Property name
@@ -174,19 +224,29 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
       return null;
 
     if (key.equals("_class"))
-      return (T) getRecord().getSchemaClass().getName();
+      return (T) getRecord().getImmutableSchemaClass().getName();
     else if (key.equals("_version"))
       return (T) new Integer(getRecord().getVersion());
     else if (key.equals("_rid"))
       return (T) rawElement.getIdentity().toString();
 
     final Object fieldValue = getRecord().field(key);
-    if (fieldValue instanceof OIdentifiable)
+    if (fieldValue instanceof OIdentifiable && !(((OIdentifiable) fieldValue).getRecord() instanceof ORecordBytes))
       // CONVERT IT TO VERTEX/EDGE
       return (T) graph.getElement(fieldValue);
-    else if (OMultiValue.isMultiValue(fieldValue) && OMultiValue.getFirstValue(fieldValue) instanceof OIdentifiable)
+    else if (OMultiValue.isMultiValue(fieldValue) && OMultiValue.getFirstValue(fieldValue) instanceof OIdentifiable) {
+      final OIdentifiable firstValue = (OIdentifiable) OMultiValue.getFirstValue(fieldValue);
+
+      if (firstValue instanceof ODocument) {
+        final ODocument document = (ODocument) firstValue;
+
+        if (document.isEmbedded())
+          return (T) fieldValue;
+      }
+
       // CONVERT IT TO ITERABLE<VERTEX/EDGE>
       return (T) new OrientElementIterable<OrientElement>(graph, OMultiValue.getMultiValueIterable(fieldValue));
+    }
 
     return (T) fieldValue;
   }
@@ -219,9 +279,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
 
     if (rawElement instanceof ODocument)
       if (iClusterName != null)
-        ((ODocument) rawElement).save(iClusterName);
+        rawElement = ((ODocument) rawElement).save(iClusterName);
       else
-        ((ODocument) rawElement).save();
+        rawElement = ((ODocument) rawElement).save();
   }
 
   public int hashCode() {
@@ -385,6 +445,10 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
 
     if (myRID == null && otherRID == null)
       return 0;
+    if (myRID == null)
+      return -1;
+    if (otherRID == null)
+      return 1;
 
     return myRID.compareTo(otherRID);
   }
@@ -421,12 +485,29 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
       throw ExceptionFactory.propertyKeyCanNotBeEmpty();
   }
 
+  public void reload() {
+    final ODocument rec = getRecord();
+    if (rec != null)
+      rec.reload(null, true);
+  }
+
+  protected void copyTo(final OrientElement iCopy) {
+    iCopy.graph = graph;
+    iCopy.settings = settings;
+    if (rawElement instanceof ODocument) {
+      iCopy.rawElement = new ODocument().fromStream(((ODocument) rawElement).toStream());
+    } else if (rawElement instanceof ORID)
+      iCopy.rawElement = ((ORID) rawElement).copy();
+    else
+      throw new IllegalArgumentException("Cannot clone element " + rawElement);
+  }
+
   protected void checkClass() {
     // FORCE EARLY UNMARSHALLING
     final ODocument doc = getRecord();
     doc.deserializeFields();
 
-    final OClass cls = doc.getSchemaClass();
+    final OClass cls = doc.getImmutableSchemaClass();
 
     if (cls == null || !cls.isSubClassOf(getBaseClassName()))
       throw new IllegalArgumentException("The document received is not a " + getElementType() + ". Found class '" + cls + "'");

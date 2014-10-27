@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.serialization.serializer.stream;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
@@ -96,15 +100,15 @@ public class OStreamSerializerListRID implements OStreamSerializer, OBinarySeria
   }
 
   @Override
-  public void serializeNative(OMVRBTreeRIDSet object, byte[] stream, int startPosition, Object... hints) {
+  public void serializeNativeObject(OMVRBTreeRIDSet object, byte[] stream, int startPosition, Object... hints) {
     final byte[] serializedSet = object.toStream();
-    OBinaryTypeSerializer.INSTANCE.serializeNative(serializedSet, stream, startPosition);
+    OBinaryTypeSerializer.INSTANCE.serializeNativeObject(serializedSet, stream, startPosition);
 
   }
 
   @Override
-  public OMVRBTreeRIDSet deserializeNative(byte[] stream, int startPosition) {
-    final byte[] serializedSet = OBinaryTypeSerializer.INSTANCE.deserializeNative(stream, startPosition);
+  public OMVRBTreeRIDSet deserializeNativeObject(byte[] stream, int startPosition) {
+    final byte[] serializedSet = OBinaryTypeSerializer.INSTANCE.deserializeNativeObject(stream, startPosition);
 
     final String s = OBinaryProtocol.bytes2string(serializedSet);
 
@@ -117,14 +121,14 @@ public class OStreamSerializerListRID implements OStreamSerializer, OBinarySeria
   }
 
   @Override
-  public void serializeInDirectMemory(OMVRBTreeRIDSet object, ODirectMemoryPointer pointer, long offset, Object... hints) {
+  public void serializeInDirectMemoryObject(OMVRBTreeRIDSet object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     final byte[] serializedSet = object.toStream();
-    OBinaryTypeSerializer.INSTANCE.serializeInDirectMemory(serializedSet, pointer, offset);
+    OBinaryTypeSerializer.INSTANCE.serializeInDirectMemoryObject(serializedSet, pointer, offset);
   }
 
   @Override
-  public OMVRBTreeRIDSet deserializeFromDirectMemory(ODirectMemoryPointer pointer, long offset) {
-    final byte[] serializedSet = OBinaryTypeSerializer.INSTANCE.deserializeFromDirectMemory(pointer, offset);
+  public OMVRBTreeRIDSet deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
+    final byte[] serializedSet = OBinaryTypeSerializer.INSTANCE.deserializeFromDirectMemoryObject(pointer, offset);
 
     final String s = OBinaryProtocol.bytes2string(serializedSet);
 

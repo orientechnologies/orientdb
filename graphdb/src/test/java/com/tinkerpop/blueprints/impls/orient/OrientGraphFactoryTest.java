@@ -1,11 +1,11 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxPooled;
+import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxPooled;
 
 import static org.junit.Assert.assertEquals;
 
@@ -36,12 +36,12 @@ public class OrientGraphFactoryTest  {
   @Test
   public void dynamicType() {
     OrientGraphFactory factory = new OrientGraphFactory("memory:testPool");
-    OrientBaseGraph g = factory.setTransactional(true).get();
+    OrientBaseGraph g = factory.getTx();
     assertEquals(g.getClass(), OrientGraph.class);
     assertEquals(g.getRawGraph().getClass(), ODatabaseDocumentTx.class);
     g.shutdown();
 
-    g = factory.setTransactional(false).get();
+    g = factory.getNoTx();
     assertEquals(g.getClass(), OrientGraphNoTx.class);
     assertEquals(g.getRawGraph().getClass(), ODatabaseDocumentTx.class);
     g.shutdown();
@@ -55,5 +55,19 @@ public class OrientGraphFactoryTest  {
       assertEquals(g.getRawGraph().getClass(), ODatabaseDocumentTxPooled.class);
       g.shutdown();
     }
+  }
+
+  @Test
+  public void textReqTx() {
+    final OrientGraphFactory gfactory = new OrientGraphFactory("memory:testPool");
+    gfactory.setRequireTransaction(false);
+    gfactory.declareIntent(new OIntentMassiveInsert());
+
+    OrientGraph g = gfactory.getTx();
+    OrientVertex v1 = g.addVertex(null);
+    OrientVertex v2 = g.addVertex(null);
+    v1.addEdge("E", v2);
+
+    g.shutdown();
   }
 }

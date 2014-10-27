@@ -1,17 +1,21 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.core.config;
 
@@ -20,10 +24,13 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.storage.fs.OMMapManagerOld;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 
 import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
@@ -45,22 +52,21 @@ public enum OGlobalConfiguration {
       "Specifies if running in multi-thread environment. Setting this to false turns off the internal lock management",
       Boolean.class, Boolean.TRUE),
 
-  ENVIRONMENT_ALLOW_JVM_SHUTDOWN("environment.allowJVMShutdown", "Allows to shutdown the JVM if needed/requested", Boolean.class, true),
+  ENVIRONMENT_ALLOW_JVM_SHUTDOWN("environment.allowJVMShutdown", "Allows to shutdown the JVM if needed/requested", Boolean.class,
+      true),
 
   // MEMORY
   MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used if it is present", Boolean.class, true),
-
-  MEMORY_AUTOFREE_CHECK_EVERY("memory.autoFreeCheckEvery", "Time to check if memory resources are low", Long.class, 10000),
-
-  MEMORY_AUTOFREE_HEAP_THRESHOLD(
-      "memory.autoFreeHeapThreshold",
-      "Maximum size of used heap to let caches to keep records in RAM. Can be expressed in terms of absolute bytes or percentage in comparison to the maximum heap. For example 80% means that caches stop collecting records in RAM when free heap is lower than 20%",
-      String.class, "70%"),
 
   DIRECT_MEMORY_SAFE_MODE(
       "memory.directMemory.safeMode",
       "Indicates whether to do perform range check before each direct memory update, it is true by default, "
           + "but usually it can be safely put to false. It is needed to set to true only after dramatic changes in storage structures.",
+      Boolean.class, true),
+
+  DIRECT_MEMORY_ONLY_ALIGNED_ACCESS(
+      "memory.directMemory.onlyAlignedMemoryAccess",
+      "Some architectures does not allow unaligned memory access or suffer from speed degradation, on this platforms flag should be set to true",
       Boolean.class, true),
 
   JVM_GC_DELAY_FOR_OPTIMIZE("jvm.gc.delayForOptimize",
@@ -84,6 +90,16 @@ public enum OGlobalConfiguration {
 
   DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT("storage.diskCache.writeCacheFlushLockTimeout",
       "Maximum amount of time till write cache will be wait before page flush in ms.", Integer.class, -1),
+
+  DISK_CACHE_FREE_SPACE_LIMIT(
+      "storage.diskCache.diskFreeSpaceLimit",
+      "Minimum amount of space on disk after which database will "
+          + "work only in read mode, in megabytes. You need free space on disk which is sum of this parameter and maximum size of WAL on disk.",
+      Long.class, 100),
+
+  DISC_CACHE_FREE_SPACE_CHECK_INTERVAL("storage.diskCache.diskFreeSpaceCheckInterval",
+      "Interval, in seconds, after which storage periodically "
+          + "checks whether amount of free space enough to work in write mode", Integer.class, 5),
 
   STORAGE_CONFIGURATION_SYNC_ON_UPDATE("storage.configuration.syncOnUpdate",
       "Should we perform force sync of storage configuration for each update", Boolean.class, true),
@@ -116,6 +132,9 @@ public enum OGlobalConfiguration {
       "Amount of processed log operations, after which status of data restore procedure will be printed 0 or negative value, means that status will not be printed",
       Integer.class, 10000),
 
+  WAL_RESTORE_BATCH_SIZE("storage.wal.restore.batchSize",
+      "Amount of wal records are read at once in single batch during restore procedure", Integer.class, 1000),
+
   WAL_READ_CACHE_SIZE("storage.wal.readCacheSize", "Size of WAL read cache in amount of pages", Integer.class, 1000),
 
   WAL_FUZZY_CHECKPOINT_SHUTDOWN_TIMEOUT("storage.wal.fuzzyCheckpointShutdownWait",
@@ -139,9 +158,6 @@ public enum OGlobalConfiguration {
   PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY("storage.lowestFreeListBound", "The minimal amount of free space (in kb)"
       + " in page which is tracked in paginated storage", Integer.class, 16),
 
-  USE_NODE_ID_CLUSTER_POSITION("storage.cluster.useNodeIdAsClusterPosition", "Indicates whether cluster position should be"
-      + " treated as node id not as long value.", Boolean.class, Boolean.FALSE),
-
   STORAGE_USE_CRC32_FOR_EACH_RECORD("storage.cluster.usecrc32",
       "Indicates whether crc32 should be used for each record to check record integrity.", Boolean.class, false),
 
@@ -153,7 +169,7 @@ public enum OGlobalConfiguration {
   STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 30000),
 
   STORAGE_RECORD_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record",
-      Integer.class, 30000),
+      Integer.class, 100),
 
   STORAGE_USE_TOMBSTONES("storage.useTombstones", "When record will be deleted its cluster"
       + " position will not be freed but tombstone will be placed instead", Boolean.class, false),
@@ -163,9 +179,6 @@ public enum OGlobalConfiguration {
       "record.downsizing.enabled",
       "On updates if the record size is lower than before, reduces the space taken accordlying. If enabled this could increase defragmentation, but it reduces the used space",
       Boolean.class, true),
-
-  // CACHE
-  CACHE_LOCAL_ENABLED("cache.local.enabled", "Use the local cache", Boolean.class, true),
 
   // DATABASE
   OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database only saves objects bound to dirty records", Boolean.class, false),
@@ -189,6 +202,7 @@ public enum OGlobalConfiguration {
 
   DB_VALIDATION("db.validation", "Enables or disables validation of records", Boolean.class, true),
 
+  @Deprecated
   DB_USE_DISTRIBUTED_VERSION("db.use.distributedVersion", "Use extended version that is safe in distributed environment",
       Boolean.class, Boolean.FALSE),
 
@@ -320,7 +334,7 @@ public enum OGlobalConfiguration {
 
   // RIDBAG
   RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD("ridBag.embeddedToSbtreeBonsaiThreshold",
-      "Amount of values after which LINKBAG implementation will use sbtree as values container", Integer.class, 80),
+      "Amount of values after which LINKBAG implementation will use sbtree as values container", Integer.class, 40),
 
   RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD("ridBag.sbtreeBonsaiToEmbeddedToThreshold",
       "Amount of values after which LINKBAG implementation will use embedded values container (disabled by default)",
@@ -335,76 +349,9 @@ public enum OGlobalConfiguration {
   // FILE
   FILE_LOCK("file.lock", "Locks files when used. Default is false", boolean.class, true),
 
-  FILE_DEFRAG_STRATEGY("file.defrag.strategy", "Strategy to recycle free space: 0 = synchronous defrag, 1 = asynchronous defrag, ",
-      Integer.class, 0),
+  FILE_DELETE_DELAY("file.deleteDelay", "Delay time in ms to wait for another attempt to delete a locked file", Integer.class, 10),
 
-  FILE_DEFRAG_HOLE_MAX_DISTANCE(
-      "file.defrag.holeMaxDistance",
-      "Max distance in bytes between holes to cause their defrag. Set it to -1 to use dynamic size. Beware that if the db is huge moving blocks to defrag could be expensive",
-      Integer.class, 32768),
-
-  @Deprecated
-  FILE_MMAP_USE_OLD_MANAGER("file.mmap.useOldManager",
-      "Manager that will be used to handle mmap files. true = USE OLD MANAGER, false = USE NEW MANAGER", boolean.class, false),
-
-  @Deprecated
-  FILE_MMAP_AUTOFLUSH_TIMER("file.mmap.autoFlush.timer", "Auto flushes memory mapped blocks every X seconds. 0 = disabled",
-      int.class, 30),
-
-  @Deprecated
-  FILE_MMAP_AUTOFLUSH_UNUSED_TIME("file.mmap.autoFlush.unusedTime",
-      "Remove memory mapped blocks with unused time major than this value. Time is in seconds", int.class, 30),
-
-  @Deprecated
-  FILE_MMAP_LOCK_MEMORY("file.mmap.lockMemory",
-      "When using new map manager this parameter specify prevent memory swap or not. true = LOCK MEMORY, false = NOT LOCK MEMORY",
-      boolean.class, true),
-
-  @Deprecated
-  FILE_MMAP_STRATEGY(
-      "file.mmap.strategy",
-      "Strategy to use with memory mapped files. 0 = USE MMAP ALWAYS, 1 = USE MMAP ON WRITES OR ON READ JUST WHEN THE BLOCK POOL IS FREE, 2 = USE MMAP ON WRITES OR ON READ JUST WHEN THE BLOCK IS ALREADY AVAILABLE, 3 = USE MMAP ONLY IF BLOCK IS ALREADY AVAILABLE, 4 = NEVER USE MMAP",
-      Integer.class, 0),
-
-  @Deprecated
-  FILE_MMAP_BLOCK_SIZE("file.mmap.blockSize", "Size of the memory mapped block, default is 1Mb", Integer.class, 1048576,
-      new OConfigurationChangeCallback() {
-        public void change(final Object iCurrentValue, final Object iNewValue) {
-          OMMapManagerOld.setBlockSize(((Number) iNewValue).intValue());
-        }
-      }),
-
-  @Deprecated
-  FILE_MMAP_BUFFER_SIZE("file.mmap.bufferSize", "Size of the buffer for direct access to the file through the channel",
-      Integer.class, 8192),
-
-  @Deprecated
-  FILE_MMAP_MAX_MEMORY(
-      "file.mmap.maxMemory",
-      "Max memory allocatable by memory mapping manager. Note that on 32bit operating systems, the limit is 2Gb but will vary between operating systems",
-      Long.class, 134217728, new OConfigurationChangeCallback() {
-        public void change(final Object iCurrentValue, final Object iNewValue) {
-          OMMapManagerOld.setMaxMemory(OFileUtils.getSizeAsNumber(iNewValue));
-        }
-      }),
-
-  @Deprecated
-  FILE_MMAP_OVERLAP_STRATEGY(
-      "file.mmap.overlapStrategy",
-      "Strategy to use when a request overlaps in-memory buffers: 0 = Use the channel access, 1 = force the in-memory buffer and use the channel access, 2 = always create an overlapped in-memory buffer (default)",
-      Integer.class, 2, new OConfigurationChangeCallback() {
-        public void change(final Object iCurrentValue, final Object iNewValue) {
-          OMMapManagerOld.setOverlapStrategy((Integer) iNewValue);
-        }
-      }),
-
-  @Deprecated
-  FILE_MMAP_FORCE_DELAY("file.mmap.forceDelay",
-      "Delay time in ms to wait for another forced flush of the memory-mapped block to disk", Integer.class, 10),
-
-  @Deprecated
-  FILE_MMAP_FORCE_RETRY("file.mmap.forceRetry", "Number of times the memory-mapped block will try to flush to disk", Integer.class,
-      50),
+  FILE_DELETE_RETRY("file.deleteRetry", "Number of retries to delete a locked file", Integer.class, 50),
 
   JNA_DISABLE_USE_SYSTEM_LIBRARY("jna.disable.system.library",
       "This property disable to using JNA installed in your system. And use JNA bundled with database.", boolean.class, true),
@@ -417,6 +364,8 @@ public enum OGlobalConfiguration {
   NETWORK_LOCK_TIMEOUT("network.lockTimeout", "Timeout in ms to acquire a lock against a channel", Integer.class, 15000),
 
   NETWORK_SOCKET_TIMEOUT("network.socketTimeout", "TCP/IP Socket timeout in ms", Integer.class, 15000),
+
+  NETWORK_REQUEST_TIMEOUT("network.requestTimeout", "Request completion timeout in ms ", Integer.class, 3600000 /* one hour */),
 
   NETWORK_SOCKET_RETRY("network.retry", "Number of times the client retries its connection to the server on failure",
       Integer.class, 5),
@@ -491,7 +440,7 @@ public enum OGlobalConfiguration {
   // CLIENT
   CLIENT_CHANNEL_MIN_POOL("client.channel.minPool", "Minimum pool size", Integer.class, 1),
 
-  CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool", "Maximum channel pool size", Integer.class, 20),
+  CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool", "Maximum channel pool size", Integer.class, 100),
 
   CLIENT_CONNECT_POOL_WAIT_TIMEOUT("client.connectionPool.waitTimeout",
       "Maximum time which client should wait connection from the pool", Integer.class, 5000),
@@ -523,7 +472,7 @@ public enum OGlobalConfiguration {
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL(
       "server.log.dumpClientExceptionLevel",
       "Logs client exceptions. Use any level supported by Java java.util.logging.Level class: OFF, FINE, CONFIG, INFO, WARNING, SEVERE",
-      Level.class, Level.FINE),
+      Level.class, Level.SEVERE),
 
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE("server.log.dumpClientExceptionFullStackTrace",
       "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.TRUE),
@@ -533,10 +482,13 @@ public enum OGlobalConfiguration {
       "Maximum timeout in milliseconds to wait for CRUD remote tasks", Integer.class, 3000l),
 
   DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT("distributed.commandTaskTimeout",
-      "Maximum timeout in milliseconds to wait for Command remote tasks", Integer.class, 5000l),
+      "Maximum timeout in milliseconds to wait for Command remote tasks", Integer.class, 60000l),
 
   DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT("distributed.deployDbTaskTimeout",
       "Maximum timeout in milliseconds to wait for database deployment", Long.class, 1200000l),
+
+  DISTRIBUTED_DEPLOYCHUNK_TASK_SYNCH_TIMEOUT("distributed.deployChunkTaskTimeout",
+      "Maximum timeout in milliseconds to wait for database chunk deployment", Long.class, 15000l),
 
   DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION("distributed.deployDbTaskCompression",
       "Compression level between 0 and 9 to use in backup for database deployment", Integer.class, 7),
@@ -548,7 +500,10 @@ public enum OGlobalConfiguration {
       "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l),
 
   DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY("distributed.purgeResponsesTimerDelay",
-      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l);
+      "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l),
+
+  DB_DOCUMENT_SERIALIZER("db.document.serializer", "The default record serializer used by the document database", String.class,
+      ORecordSerializerBinary.NAME);
 
   private final String                 key;
   private final Object                 defValue;
@@ -643,30 +598,39 @@ public enum OGlobalConfiguration {
   }
 
   private static void autoConfig() {
-    if (System.getProperty("os.arch").indexOf("64") > -1) {
-      // 64 BIT
-
-      if (FILE_MMAP_MAX_MEMORY.getValueAsInteger() == 134217728) {
-        final OperatingSystemMXBean bean = java.lang.management.ManagementFactory.getOperatingSystemMXBean();
-
-        try {
-          final Class<?> cls = Class.forName("com.sun.management.OperatingSystemMXBean");
-          if (cls.isAssignableFrom(bean.getClass())) {
-            final Long maxOsMemory = (Long) cls.getMethod("getTotalPhysicalMemorySize", new Class[] {}).invoke(bean);
-            final long maxProcessMemory = Runtime.getRuntime().maxMemory();
-            long mmapBestMemory = (maxOsMemory.longValue() - maxProcessMemory) / 2;
-            FILE_MMAP_MAX_MEMORY.setValue(mmapBestMemory);
-          }
-        } catch (Exception e) {
-          // SUN JMX CLASS NOT AVAILABLE: CAN'T AUTO TUNE THE ENGINE
-        }
-      }
-    } else {
-      // 32 BIT, USE THE DEFAULT CONFIGURATION
+    if (System.getProperty(DISK_CACHE_SIZE.key) == null) {
+      autoConfigDiskCacheSize();
     }
+  }
 
-    System.setProperty(MEMORY_USE_UNSAFE.getKey(), MEMORY_USE_UNSAFE.getValueAsString());
-    System.setProperty(DIRECT_MEMORY_SAFE_MODE.getKey(), DIRECT_MEMORY_SAFE_MODE.getValueAsString());
+  private static void autoConfigDiskCacheSize() {
+    final OperatingSystemMXBean mxBean = ManagementFactory.getOperatingSystemMXBean();
+    try {
+      final Method memorySize = mxBean.getClass().getDeclaredMethod("getTotalPhysicalMemorySize");
+      memorySize.setAccessible(true);
+      final long totalMemory = (Long) memorySize.invoke(mxBean);
+
+      final long maxMemory = Runtime.getRuntime().maxMemory();
+
+      if (maxMemory > 512L * 1024 * 1024) {
+        OLogManager
+            .instance()
+            .warn(
+                null,
+                "Your maximum heap size is "
+                    + OFileUtils.getSizeAsString(maxMemory)
+                    + ", but OrientDB uses off-heap memory to avoid GC pauses. "
+                    + "In the case OrientDB is running as standalone, we recommend to use smaller amount of heap memory to let OrientDB using the rest as off-heap. "
+                    + "512 megabytes is recommended value of heap size.");
+      }
+
+      final long result = (totalMemory - maxMemory - 2L * 1024 * 1024 * 1024) / (1024 * 1024);
+      if (result > DISK_CACHE_SIZE.getValueAsLong())
+        DISK_CACHE_SIZE.setValue(result);
+    } catch (NoSuchMethodException e) {
+    } catch (InvocationTargetException e) {
+    } catch (IllegalAccessException e) {
+    }
   }
 
   public Object getValue() {

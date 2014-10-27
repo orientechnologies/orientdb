@@ -30,7 +30,6 @@ public class ODocumentSerializationPersistentTest {
 
   @BeforeMethod
   public void setUp() throws Exception {
-    OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.setValue(Boolean.TRUE);
 
     db = new ODatabaseDocumentTx("memory:testdocumentserialization");
     db.create();
@@ -63,7 +62,7 @@ public class ODocumentSerializationPersistentTest {
     Assert.assertEquals(loadedDoc.getIdentity(), docId);
     Assert.assertEquals(loadedDoc.getRecordVersion(), doc.getRecordVersion());
     Assert.assertEquals(loadedDoc.field("name"), "Artem");
-    Assert.assertEquals(loadedDoc.field("country", OType.LINK), linkedId);
+    Assert.assertEquals(loadedDoc.field("country"), linkedId);
 
     final List<Integer> numbers = loadedDoc.field("numbers");
     for (int i = 0; i < numbers.size(); i++) {

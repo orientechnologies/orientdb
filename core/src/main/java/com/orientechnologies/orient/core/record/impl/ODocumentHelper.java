@@ -1,25 +1,35 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.core.record.impl;
+
+import java.lang.reflect.Array;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Map.Entry;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
@@ -37,14 +47,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-import com.orientechnologies.orient.core.version.ODistributedVersion;
-
-import java.lang.reflect.Array;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Helper class to manage documents.
@@ -52,18 +54,24 @@ import java.util.Map.Entry;
  * @author Luca Garulli
  */
 public class ODocumentHelper {
-  public static final String ATTRIBUTE_THIS               = "@this";
-  public static final String ATTRIBUTE_RID                = "@rid";
-  public static final String ATTRIBUTE_RID_ID             = "@rid_id";
-  public static final String ATTRIBUTE_RID_POS            = "@rid_pos";
-  public static final String ATTRIBUTE_VERSION            = "@version";
-  public static final String ATTRIBUTE_VERSION_TIMESTAMP  = "@version_time";
-  public static final String ATTRIBUTE_VERSION_MACADDRESS = "@version_mac";
-  public static final String ATTRIBUTE_CLASS              = "@class";
-  public static final String ATTRIBUTE_TYPE               = "@type";
-  public static final String ATTRIBUTE_SIZE               = "@size";
-  public static final String ATTRIBUTE_FIELDS             = "@fields";
-  public static final String ATTRIBUTE_RAW                = "@raw";
+  public static final String ATTRIBUTE_THIS    = "@this";
+  public static final String ATTRIBUTE_RID     = "@rid";
+  public static final String ATTRIBUTE_RID_ID  = "@rid_id";
+  public static final String ATTRIBUTE_RID_POS = "@rid_pos";
+  public static final String ATTRIBUTE_VERSION = "@version";
+  public static final String ATTRIBUTE_CLASS   = "@class";
+  public static final String ATTRIBUTE_TYPE    = "@type";
+  public static final String ATTRIBUTE_SIZE    = "@size";
+  public static final String ATTRIBUTE_FIELDS  = "@fields";
+  public static final String ATTRIBUTE_RAW     = "@raw";
+
+  public static interface ODbRelatedCall<T> {
+    public T call();
+  }
+
+  public static interface RIDMapper {
+    ORID map(ORID rid);
+  }
 
   public static void sort(List<? extends OIdentifiable> ioResultSet, List<OPair<String, String>> iOrderCriteria,
       OCommandContext context) {
@@ -81,11 +89,11 @@ public class ODocumentHelper {
         return (RET) iValue;
       } else if (iValue instanceof String) {
         return (RET) new ORecordId((String) iValue);
-      } else if (iValue instanceof ORecord<?>) {
-        return (RET) ((ORecord<?>) iValue).getIdentity();
+      } else if (iValue instanceof ORecord) {
+        return (RET) ((ORecord) iValue).getIdentity();
       }
     } else if (ORecord.class.isAssignableFrom(iFieldType)) {
-      if (iValue instanceof ORID || iValue instanceof ORecord<?>) {
+      if (iValue instanceof ORID || iValue instanceof ORecord) {
         return (RET) iValue;
       } else if (iValue instanceof String) {
         return (RET) new ORecordId((String) iValue);
@@ -173,7 +181,7 @@ public class ODocumentHelper {
             + "' cannot accept value of type: " + iValue.getClass());
     } else if (Date.class.isAssignableFrom(iFieldType)) {
       if (iValue instanceof String && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
-        final OStorageConfiguration config = iDocument.getDatabase().getStorage().getConfiguration();
+        final OStorageConfiguration config = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration();
 
         DateFormat formatter = config.getDateFormatInstance();
 
@@ -274,7 +282,7 @@ public class ODocumentHelper {
           value = ((OCommandContext) value).getVariables();
 
         if (value instanceof OIdentifiable) {
-          final ORecord<?> record = currentRecord != null && currentRecord instanceof OIdentifiable ? ((OIdentifiable) currentRecord)
+          final ORecord record = currentRecord != null && currentRecord instanceof OIdentifiable ? ((OIdentifiable) currentRecord)
               .getRecord() : null;
 
           final Object index = getIndexPart(iContext, indexPart);
@@ -328,7 +336,7 @@ public class ODocumentHelper {
               conditionFieldValue = OType.convert(conditionFieldValue, fieldValue.getClass());
 
             if (fieldValue == null && !conditionFieldValue.equals("null") || fieldValue != null
-                & !fieldValue.equals(conditionFieldValue))
+                && !fieldValue.equals(conditionFieldValue))
               value = null;
           }
         } else if (value instanceof Map<?, ?>) {
@@ -444,9 +452,9 @@ public class ODocumentHelper {
           } else if (currentRecord != null) {
             // GET THE LINKED OBJECT IF ANY
             value = getIdentifiableValue(currentRecord, fieldName);
-            if (value != null && value instanceof ORecord<?> && ((ORecord<?>) value).getInternalStatus() == STATUS.NOT_LOADED)
+            if (value != null && value instanceof ORecord && ((ORecord) value).getInternalStatus() == STATUS.NOT_LOADED)
               // RELOAD IT
-              ((ORecord<?>) value).reload();
+              ((ORecord) value).reload();
           } else if (value instanceof Map<?, ?>)
             value = getMapEntry((Map<String, ?>) value, fieldName);
           else if (OMultiValue.isMultiValue(value)) {
@@ -506,7 +514,7 @@ public class ODocumentHelper {
   @SuppressWarnings("unchecked")
   protected static Object filterItem(final String iConditionFieldName, final Object iConditionFieldValue, final Object iValue) {
     if (iValue instanceof OIdentifiable) {
-      final ORecord<?> rec = ((OIdentifiable) iValue).getRecord();
+      final ORecord rec = ((OIdentifiable) iValue).getRecord();
       if (rec instanceof ODocument) {
         final ODocument doc = (ODocument) rec;
 
@@ -582,24 +590,17 @@ public class ODocumentHelper {
         return iCurrent.getIdentity().getClusterPosition();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_VERSION))
         return iCurrent.getRecord().getRecordVersion().getCounter();
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_VERSION_TIMESTAMP)
-          && OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean())
-        return ((ODistributedVersion) iCurrent.getRecord().getRecordVersion()).getTimestamp();
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_VERSION_MACADDRESS)
-          && OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean())
-        return ((ODistributedVersion) iCurrent.getRecord().getRecordVersion()).getMacAddress();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_CLASS))
         return ((ODocument) iCurrent.getRecord()).getClassName();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_TYPE))
-        return Orient.instance().getRecordFactoryManager()
-            .getRecordTypeName(((ORecordInternal<?>) iCurrent.getRecord()).getRecordType());
+        return Orient.instance().getRecordFactoryManager().getRecordTypeName(ORecordInternal.getRecordType(iCurrent.getRecord()));
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_SIZE)) {
-        final byte[] stream = ((ORecordInternal<?>) iCurrent.getRecord()).toStream();
+        final byte[] stream = iCurrent.getRecord().toStream();
         return stream != null ? stream.length : 0;
       } else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_FIELDS))
         return ((ODocument) iCurrent.getRecord()).fieldNames();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RAW))
-        return new String(((ORecordInternal<?>) iCurrent.getRecord()).toStream());
+        return new String(iCurrent.getRecord().toStream());
     }
 
     if (iCurrent == null)
@@ -619,7 +620,7 @@ public class ODocumentHelper {
     final String function = iFunction.toUpperCase();
 
     if (function.startsWith("SIZE("))
-      result = currentValue instanceof ORecord<?> ? 1 : OMultiValue.getSize(currentValue);
+      result = currentValue instanceof ORecord ? 1 : OMultiValue.getSize(currentValue);
     else if (function.startsWith("LENGTH("))
       result = currentValue.toString().length();
     else if (function.startsWith("TOUPPERCASE("))
@@ -676,7 +677,7 @@ public class ODocumentHelper {
       // EXTRACT ARGUMENTS
       final List<String> args = OStringSerializerHelper.getParameters(iFunction.substring(iFunction.indexOf('(')));
 
-      final ORecordInternal<?> currentRecord = iContext != null ? (ORecordInternal<?>) iContext.getVariable("$current") : null;
+      final ORecord currentRecord = iContext != null ? (ORecord) iContext.getVariable("$current") : null;
       for (int i = 0; i < args.size(); ++i) {
         final String arg = args.get(i);
         final Object o = OSQLHelper.getValue(arg, currentRecord, iContext);
@@ -733,7 +734,9 @@ public class ODocumentHelper {
         // EMBEDDED DOCUMENT
         iCloned._fieldValues.put(iEntry.getKey(), ((ODocument) fieldValue).copy());
 
-        // LISTS
+      } else if (fieldValue instanceof ORidBag) {
+        iCloned._fieldValues.put(iEntry.getKey(), ((ORidBag) fieldValue).copy());
+
       } else if (fieldValue instanceof ORecordLazyList) {
         iCloned._fieldValues.put(iEntry.getKey(), ((ORecordLazyList) fieldValue).copy(iCloned));
 
@@ -753,6 +756,11 @@ public class ODocumentHelper {
         // SETS
       } else if (fieldValue instanceof OMVRBTreeRIDSet) {
         iCloned._fieldValues.put(iEntry.getKey(), ((OMVRBTreeRIDSet) fieldValue).copy(iCloned));
+
+      } else if (fieldValue instanceof ORecordLazySet) {
+        final ORecordLazySet newList = new ORecordLazySet(iCloned);
+        newList.addAll((ORecordLazySet) fieldValue);
+        iCloned._fieldValues.put(iEntry.getKey(), newList);
 
       } else if (fieldValue instanceof ORecordTrackedSet) {
         final ORecordTrackedSet newList = new ORecordTrackedSet(iCloned);
@@ -782,15 +790,15 @@ public class ODocumentHelper {
         iCloned._fieldValues.put(iEntry.getKey(), new LinkedHashMap<String, Object>((Map<String, Object>) fieldValue));
       } else
         iCloned._fieldValues.put(iEntry.getKey(), fieldValue);
-    } else if (iCloned.getSchemaClass() != null) {
-      final OProperty prop = iCloned.getSchemaClass().getProperty(iEntry.getKey());
+    } else if (iCloned.getImmutableSchemaClass() != null) {
+      final OProperty prop = iCloned.getImmutableSchemaClass().getProperty(iEntry.getKey());
       if (prop != null && prop.isMandatory())
         iCloned._fieldValues.put(iEntry.getKey(), fieldValue);
     }
   }
 
-  public static boolean hasSameContentItem(final Object iCurrent, ODatabaseRecord iMyDb, final Object iOther,
-      final ODatabaseRecord iOtherDb, RIDMapper ridMapper) {
+  public static boolean hasSameContentItem(final Object iCurrent, ODatabaseRecordInternal iMyDb, final Object iOther,
+      final ODatabaseRecordInternal iOtherDb, RIDMapper ridMapper) {
     if (iCurrent instanceof ODocument) {
       final ODocument current = (ODocument) iCurrent;
       if (iOther instanceof ORID) {
@@ -810,21 +818,36 @@ public class ODocumentHelper {
   }
 
   /**
+   * Makes a deep comparison field by field to check if the passed ODocument instance is identical as identity and content to the
+   * current one. Instead equals() just checks if the RID are the same.
+   *
+   * @param iOther
+   *          ODocument instance
+   * @return true if the two document are identical, otherwise false
+   * @see #equals(Object)
+   */
+  @SuppressWarnings("unchecked")
+  public static boolean hasSameContentOf(final ODocument iCurrent, final ODatabaseRecordInternal iMyDb, final ODocument iOther,
+      final ODatabaseRecordInternal iOtherDb, RIDMapper ridMapper) {
+    return hasSameContentOf(iCurrent, iMyDb, iOther, iOtherDb, ridMapper, true);
+  }
+
+  /**
    * Makes a deep comparison field by field to check if the passed ODocument instance is identical in the content to the current
    * one. Instead equals() just checks if the RID are the same.
    * 
    * @param iOther
    *          ODocument instance
    * @return true if the two document are identical, otherwise false
-   * @see #equals(Object);
+   * @see #equals(Object)
    */
   @SuppressWarnings("unchecked")
-  public static boolean hasSameContentOf(final ODocument iCurrent, final ODatabaseRecord iMyDb, final ODocument iOther,
-      final ODatabaseRecord iOtherDb, RIDMapper ridMapper) {
+  public static boolean hasSameContentOf(final ODocument iCurrent, final ODatabaseRecordInternal iMyDb, final ODocument iOther,
+      final ODatabaseRecordInternal iOtherDb, RIDMapper ridMapper, final boolean iCheckAlsoIdentity) {
     if (iOther == null)
       return false;
 
-    if (!iCurrent.equals(iOther) && iCurrent.getIdentity().isValid())
+    if (iCheckAlsoIdentity && !iCurrent.equals(iOther) && iCurrent.getIdentity().isValid())
       return false;
 
     if (iMyDb != null)
@@ -910,8 +933,8 @@ public class ODocumentHelper {
     return true;
   }
 
-  public static boolean compareMaps(ODatabaseRecord iMyDb, Map<Object, Object> myFieldValue, ODatabaseRecord iOtherDb,
-      Map<Object, Object> otherFieldValue, RIDMapper ridMapper) {
+  public static boolean compareMaps(ODatabaseRecordInternal iMyDb, Map<Object, Object> myFieldValue,
+      ODatabaseRecordInternal iOtherDb, Map<Object, Object> otherFieldValue, RIDMapper ridMapper) {
     // CHECK IF THE ORDER IS RESPECTED
     final Map<Object, Object> myMap = myFieldValue;
     final Map<Object, Object> otherMap = otherFieldValue;
@@ -1001,8 +1024,8 @@ public class ODocumentHelper {
     }
   }
 
-  public static boolean compareCollections(ODatabaseRecord iMyDb, Collection<?> myFieldValue, ODatabaseRecord iOtherDb,
-      Collection<?> otherFieldValue, RIDMapper ridMapper) {
+  public static boolean compareCollections(ODatabaseRecordInternal iMyDb, Collection<?> myFieldValue,
+      ODatabaseRecordInternal iOtherDb, Collection<?> otherFieldValue, RIDMapper ridMapper) {
     final Collection<?> myCollection = myFieldValue;
     final Collection<?> otherCollection = otherFieldValue;
 
@@ -1065,8 +1088,8 @@ public class ODocumentHelper {
     }
   }
 
-  public static boolean compareSets(ODatabaseRecord iMyDb, Set<?> myFieldValue, ODatabaseRecord iOtherDb, Set<?> otherFieldValue,
-      RIDMapper ridMapper) {
+  public static boolean compareSets(ODatabaseRecordInternal iMyDb, Set<?> myFieldValue, ODatabaseRecordInternal iOtherDb,
+      Set<?> otherFieldValue, RIDMapper ridMapper) {
     final Set<?> mySet = myFieldValue;
     final Set<?> otherSet = otherFieldValue;
 
@@ -1151,8 +1174,8 @@ public class ODocumentHelper {
     }
   }
 
-  public static boolean compareBags(ODatabaseRecord iMyDb, ORidBag myFieldValue, ODatabaseRecord iOtherDb, ORidBag otherFieldValue,
-      RIDMapper ridMapper) {
+  public static boolean compareBags(ODatabaseRecordInternal iMyDb, ORidBag myFieldValue, ODatabaseRecordInternal iOtherDb,
+      ORidBag otherFieldValue, RIDMapper ridMapper) {
     final ORidBag myBag = myFieldValue;
     final ORidBag otherBag = otherFieldValue;
 
@@ -1326,16 +1349,8 @@ public class ODocumentHelper {
     }
   }
 
-  public static <T> T makeDbCall(final ODatabaseRecord databaseRecord, final ODbRelatedCall<T> function) {
+  public static <T> T makeDbCall(final ODatabaseRecordInternal databaseRecord, final ODbRelatedCall<T> function) {
     ODatabaseRecordThreadLocal.INSTANCE.set(databaseRecord);
     return function.call();
-  }
-
-  public static interface ODbRelatedCall<T> {
-    public T call();
-  }
-
-  public static interface RIDMapper {
-    ORID map(ORID rid);
   }
 }

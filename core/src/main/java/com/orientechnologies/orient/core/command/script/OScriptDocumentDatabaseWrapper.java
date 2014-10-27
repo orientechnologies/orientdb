@@ -1,27 +1,37 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.command.script;
 
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.db.ODataSegmentStrategy;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
+import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
@@ -37,7 +47,7 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.processor.OProcessException;
 import com.orientechnologies.orient.core.processor.OProcessorManager;
-import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
@@ -45,12 +55,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 /**
  * Document Database wrapper class to use from scripts.
@@ -189,10 +193,6 @@ public class OScriptDocumentDatabaseWrapper {
     return database.getName();
   }
 
-  public int addCluster(String iType, String iClusterName, String iLocation, String iDataSegmentName, Object... iParameters) {
-    return database.addCluster(iType, iClusterName, iLocation, iDataSegmentName, iParameters);
-  }
-
   public String getURL() {
     return database.getURL();
   }
@@ -214,11 +214,11 @@ public class OScriptDocumentDatabaseWrapper {
   }
 
   public ODocument save(final String iString) {
-    // return database.save((ORecordInternal<?>) new ODocument().fromJSON(iString));
-    return database.save((ORecordInternal<?>) new ODocument().fromJSON(iString, true));
+    // return database.save((ORecord) new ODocument().fromJSON(iString));
+    return database.save((ORecord) new ODocument().fromJSON(iString, true));
   }
 
-  public ODocument save(ORecordInternal<?> iRecord) {
+  public ODocument save(ORecord iRecord) {
     return database.save(iRecord);
   }
 
@@ -246,23 +246,11 @@ public class OScriptDocumentDatabaseWrapper {
     return database.getClusterNames();
   }
 
-  public int addDataSegment(String iName, String iLocation) {
-    return database.addDataSegment(iName, iLocation);
-  }
-
-  public String getClusterType(String iClusterName) {
-    return database.getClusterType(iClusterName);
-  }
-
   public OTransaction getTransaction() {
     return database.getTransaction();
   }
 
-  public int getDataSegmentIdByName(String iDataSegmentName) {
-    return database.getDataSegmentIdByName(iDataSegmentName);
-  }
-
-  public ODatabaseComplex<ORecordInternal<?>> begin() {
+  public ODatabaseComplex<ORecord> begin() {
     return database.begin();
   }
 
@@ -306,7 +294,7 @@ public class OScriptDocumentDatabaseWrapper {
     database.setUser(user);
   }
 
-  public ODocument save(ORecordInternal<?> iRecord, OPERATION_MODE iMode, boolean iForceCreate,
+  public ODocument save(ORecord iRecord, OPERATION_MODE iMode, boolean iForceCreate,
       final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     return database.save(iRecord, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
@@ -315,7 +303,7 @@ public class OScriptDocumentDatabaseWrapper {
     return database.getMetadata();
   }
 
-  public ODictionary<ORecordInternal<?>> getDictionary() {
+  public ODictionary<ORecord> getDictionary() {
     return database.getDictionary();
   }
 
@@ -323,27 +311,23 @@ public class OScriptDocumentDatabaseWrapper {
     return database.getRecordType();
   }
 
-  public ODatabaseComplex<ORecordInternal<?>> delete(ORID iRid) {
+  public ODatabaseComplex<ORecord> delete(ORID iRid) {
     return database.delete(iRid);
   }
 
-  public boolean dropDataSegment(String name) {
-    return database.dropDataSegment(name);
-  }
-
-  public <RET extends ORecordInternal<?>> RET load(ORID iRecordId) {
+  public <RET extends ORecord> RET load(ORID iRecordId) {
     return (RET) database.load(iRecordId);
   }
 
-  public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan) {
+  public <RET extends ORecord> RET load(ORID iRecordId, String iFetchPlan) {
     return (RET) database.load(iRecordId, iFetchPlan);
   }
 
-  public <RET extends ORecordInternal<?>> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache) {
+  public <RET extends ORecord> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache) {
     return (RET) database.load(iRecordId, iFetchPlan, iIgnoreCache);
   }
 
-  public <RET extends ORecordInternal<?>> RET getRecord(OIdentifiable iIdentifiable) {
+  public <RET extends ORecord> RET getRecord(OIdentifiable iIdentifiable) {
     return (RET) database.getRecord(iIdentifiable);
   }
 
@@ -351,7 +335,7 @@ public class OScriptDocumentDatabaseWrapper {
     return database.getDefaultClusterId();
   }
 
-  public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iRecord) {
+  public <RET extends ORecord> RET load(ORecord iRecord) {
     return (RET) database.load(iRecord);
   }
 
@@ -359,23 +343,23 @@ public class OScriptDocumentDatabaseWrapper {
     return database.declareIntent(iIntent);
   }
 
-  public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iRecord, String iFetchPlan) {
+  public <RET extends ORecord> RET load(ORecord iRecord, String iFetchPlan) {
     return (RET) database.load(iRecord, iFetchPlan);
   }
 
-  public <RET extends ORecordInternal<?>> RET load(ORecordInternal<?> iRecord, String iFetchPlan, boolean iIgnoreCache) {
+  public <RET extends ORecord> RET load(ORecord iRecord, String iFetchPlan, boolean iIgnoreCache) {
     return (RET) database.load(iRecord, iFetchPlan, iIgnoreCache);
   }
 
-  public ODatabaseComplex<?> setDatabaseOwner(ODatabaseComplex<?> iOwner) {
+  public ODatabaseComplex<?> setDatabaseOwner(ODatabaseComplexInternal<?> iOwner) {
     return database.setDatabaseOwner(iOwner);
   }
 
-  public void reload(ORecordInternal<?> iRecord) {
+  public void reload(ORecord iRecord) {
     database.reload(iRecord);
   }
 
-  public void reload(ORecordInternal<?> iRecord, String iFetchPlan, boolean iIgnoreCache) {
+  public void reload(ORecord iRecord, String iFetchPlan, boolean iIgnoreCache) {
     database.reload(iRecord, iFetchPlan, iIgnoreCache);
   }
 
@@ -383,7 +367,7 @@ public class OScriptDocumentDatabaseWrapper {
     return database.setProperty(iName, iValue);
   }
 
-  public ODocument save(ORecordInternal<?> iRecord, String iClusterName) {
+  public ODocument save(ORecord iRecord, String iClusterName) {
     return database.save(iRecord, iClusterName);
   }
 
@@ -419,21 +403,13 @@ public class OScriptDocumentDatabaseWrapper {
     return database.getSize();
   }
 
-  public ORecordInternal<?> getRecordByUserObject(Object iUserObject, boolean iCreateIfNotAvailable) {
+  public ORecord getRecordByUserObject(Object iUserObject, boolean iCreateIfNotAvailable) {
     return database.getRecordByUserObject(iUserObject, iCreateIfNotAvailable);
   }
 
-  public ODocument save(ORecordInternal<?> iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
+  public ODocument save(ORecord iRecord, String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
       final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     return database.save(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
-  }
-
-  public ODataSegmentStrategy getDataSegmentStrategy() {
-    return database.getDataSegmentStrategy();
-  }
-
-  public void setDataSegmentStrategy(ODataSegmentStrategy dataSegmentStrategy) {
-    database.setDataSegmentStrategy(dataSegmentStrategy);
   }
 
   public ODatabaseDocumentTx delete(ODocument iRecord) {
@@ -444,11 +420,11 @@ public class OScriptDocumentDatabaseWrapper {
     return database.countClass(iClassName);
   }
 
-  public ODatabaseComplex<ORecordInternal<?>> commit() {
+  public ODatabaseComplex<ORecord> commit() {
     return database.commit();
   }
 
-  public ODatabaseComplex<ORecordInternal<?>> rollback() {
+  public ODatabaseComplex<ORecord> rollback() {
     return database.rollback();
   }
 

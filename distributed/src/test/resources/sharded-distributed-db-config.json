@@ -11,13 +11,13 @@
         },
         "index": {
         },
-        "client_0": {
+        "client": {
             "servers" : [ "europe", "usa" ]
         },
-        "client_1": {
+        "client_usa": {
             "servers" : [ "usa" ]
         },
-        "client_2": {
+        "client_asia": {
             "servers" : [ "asia", "europe", "usa" ]
         },
         "*": {

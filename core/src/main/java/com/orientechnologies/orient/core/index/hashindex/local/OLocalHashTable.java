@@ -1,26 +1,32 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.index.hashindex.local;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.index.sbtree.local.OSBTreeException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -106,7 +112,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
   public static final int                LEVEL_MASK          = Integer.MAX_VALUE >>> (31 - MAX_LEVEL_DEPTH);
 
-  private OAbstractPaginatedStorage storage;
+  private OAbstractPaginatedStorage      storage;
 
   private String                         name;
 
@@ -130,11 +136,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
   private OHashTableDirectory            directory;
 
   private final boolean                  durableInNonTxMode;
-  private final ODurablePage.TrackMode   txTrackMode         = ODurablePage.TrackMode.valueOf(OGlobalConfiguration.INDEX_TX_MODE
-                                                                 .getValueAsString().toUpperCase());
+  private final ODurablePage.TrackMode   trackMode;
 
   public OLocalHashTable(String metadataConfigurationFileExtension, String treeStateFileExtension, String bucketFileExtension,
-      String nullBucketFileExtension, OHashFunction<K> keyHashFunction, boolean durableInNonTxMode) {
+      String nullBucketFileExtension, OHashFunction<K> keyHashFunction, boolean durableInNonTxMode, ODurablePage.TrackMode trackMode) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
     this.metadataConfigurationFileExtension = metadataConfigurationFileExtension;
     this.treeStateFileExtension = treeStateFileExtension;
@@ -144,6 +149,11 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     this.durableInNonTxMode = durableInNonTxMode;
 
     this.comparator = new KeyHashCodeComparator<K>(this.keyHashFunction);
+
+    if (trackMode == null)
+      this.trackMode = ODurablePage.TrackMode.valueOf(OGlobalConfiguration.INDEX_TX_MODE.getValueAsString().toUpperCase());
+    else
+      this.trackMode = trackMode;
   }
 
   public void create(String name, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer, OType[] keyTypes,
@@ -200,9 +210,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       } catch (IOException e) {
         endAtomicOperation(true);
         throw e;
-      } catch (RuntimeException e) {
+      } catch (Throwable e) {
         endAtomicOperation(true);
-        throw e;
+        throw new OStorageException(null, e);
       }
 
     } catch (IOException e) {
@@ -221,7 +231,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
     final ODurablePage.TrackMode trackMode = super.getTrackMode();
     if (!trackMode.equals(ODurablePage.TrackMode.NONE))
-      return txTrackMode;
+      return this.trackMode;
 
     return trackMode;
   }
@@ -294,9 +304,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       rollback();
 
       throw new OIndexException("Can not set serializer for index keys", e);
-    } catch (RuntimeException e) {
+    } catch (Throwable e) {
       rollback();
-      throw e;
+      throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
     }
@@ -342,9 +352,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     } catch (IOException e) {
       rollback();
       throw new OIndexException("Can not set serializer for index values", e);
-    } catch (RuntimeException e) {
+    } catch (Throwable e) {
       rollback();
-      throw e;
+      throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
     }
@@ -427,9 +437,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     } catch (IOException e) {
       rollback();
       throw new OIndexException("Error during index update", e);
-    } catch (RuntimeException e) {
+    } catch (Throwable e) {
       rollback();
-      throw e;
+      throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
     }
@@ -520,9 +530,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     } catch (IOException e) {
       rollback();
       throw new OIndexException("Error during index removal", e);
-    } catch (RuntimeException e) {
+    } catch (Throwable e) {
       rollback();
-      throw e;
+      throw new OStorageException(null, e);
     } finally {
       releaseExclusiveLock();
     }
@@ -580,9 +590,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     } catch (IOException e) {
       rollback();
       throw new OIndexException("Error during hash table clear", e);
-    } catch (RuntimeException e) {
+    } catch (Throwable e) {
       rollback();
-      throw e;
+      throw new OSBTreeException(null, e);
     } finally {
       releaseExclusiveLock();
     }
@@ -976,7 +986,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     }
   }
 
-  public OHashIndexBucket.Entry<K, V>[] lowerEntries(K key) throws IOException {
+  public OHashIndexBucket.Entry<K, V>[] lowerEntries(K key) {
     acquireSharedLock();
     try {
       key = keySerializer.preprocess(key, (Object[]) keyTypes);
@@ -1025,12 +1035,14 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       } finally {
         diskCache.release(cacheEntry);
       }
+    } catch (IOException ioe) {
+      throw new OIndexException("Exception during data read", ioe);
     } finally {
       releaseSharedLock();
     }
   }
 
-  public OHashIndexBucket.Entry<K, V>[] floorEntries(K key) throws IOException {
+  public OHashIndexBucket.Entry<K, V>[] floorEntries(K key) {
     acquireSharedLock();
     try {
       key = keySerializer.preprocess(key, (Object[]) keyTypes);
@@ -1080,6 +1092,8 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       } finally {
         diskCache.release(cacheEntry);
       }
+    } catch (IOException ioe) {
+      throw new OIndexException("Exception during data read", ioe);
     } finally {
       releaseSharedLock();
     }

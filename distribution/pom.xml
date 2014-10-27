@@ -42,12 +42,6 @@
     <dependencies>
         <dependency>
             <groupId>com.orientechnologies</groupId>
-            <artifactId>orient-commons</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-client</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -79,12 +73,6 @@
         <dependency>
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-tools</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.orientechnologies</groupId>
-            <artifactId>orientdb-nativeos</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

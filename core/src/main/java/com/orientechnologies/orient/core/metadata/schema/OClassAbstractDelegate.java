@@ -18,13 +18,13 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * Abstract Delegate for OClass interface.
@@ -56,12 +56,14 @@ public abstract class OClassAbstractDelegate implements OClass {
 
   @Override
   public OClass setAbstract(boolean iAbstract) {
-    return delegate.setAbstract(iAbstract);
+    delegate.setAbstract(iAbstract);
+    return this;
   }
 
   @Override
   public OClass setStrictMode(boolean iMode) {
-    return delegate.setStrictMode(iMode);
+    delegate.setStrictMode(iMode);
+    return this;
   }
 
   @Override
@@ -71,7 +73,8 @@ public abstract class OClassAbstractDelegate implements OClass {
 
   @Override
   public OClass setSuperClass(OClass iSuperClass) {
-    return delegate.setSuperClass(iSuperClass);
+    delegate.setSuperClass(iSuperClass);
+    return this;
   }
 
   @Override
@@ -81,7 +84,8 @@ public abstract class OClassAbstractDelegate implements OClass {
 
   @Override
   public OClass setName(String iName) {
-    return delegate.setName(iName);
+    delegate.setName(iName);
+    return this;
   }
 
   @Override
@@ -97,6 +101,11 @@ public abstract class OClassAbstractDelegate implements OClass {
   @Override
   public Collection<OProperty> properties() {
     return delegate.properties();
+  }
+
+  @Override
+  public Map<String, OProperty> propertiesMap() {
+    return delegate.propertiesMap();
   }
 
   @Override
@@ -161,7 +170,8 @@ public abstract class OClassAbstractDelegate implements OClass {
 
   @Override
   public OClass addClusterId(final int iId) {
-    return delegate.addClusterId(iId);
+    delegate.addClusterId(iId);
+    return this;
   }
 
   @Override
@@ -171,27 +181,26 @@ public abstract class OClassAbstractDelegate implements OClass {
 
   @Override
   public OClass setClusterSelection(final OClusterSelectionStrategy clusterSelection) {
-    return delegate.setClusterSelection(clusterSelection);
+    delegate.setClusterSelection(clusterSelection);
+    return this;
   }
 
   @Override
   public OClass setClusterSelection(final String iStrategyName) {
-    return delegate.setClusterSelection(iStrategyName);
+    delegate.setClusterSelection(iStrategyName);
+    return this;
   }
 
   @Override
   public OClass addCluster(final String iClusterName) {
-    return delegate.addCluster(iClusterName);
-  }
-
-  @Override
-  public OClass addCluster(final String iClusterName, final OStorage.CLUSTER_TYPE iClusterType) {
-    return delegate.addCluster(iClusterName, iClusterType);
+    delegate.addCluster(iClusterName);
+    return this;
   }
 
   @Override
   public OClass removeClusterId(final int iId) {
-    return delegate.removeClusterId(iId);
+    delegate.removeClusterId(iId);
+    return this;
   }
 
   @Override
@@ -221,7 +230,8 @@ public abstract class OClassAbstractDelegate implements OClass {
 
   @Override
   public OClass setOverSize(final float overSize) {
-    return delegate.setOverSize(overSize);
+    delegate.setOverSize(overSize);
+    return this;
   }
 
   @Override
@@ -261,7 +271,8 @@ public abstract class OClassAbstractDelegate implements OClass {
 
   @Override
   public OClass setShortName(final String shortName) {
-    return delegate.setShortName(shortName);
+    delegate.setShortName(shortName);
+    return this;
   }
 
   @Override
@@ -271,7 +282,8 @@ public abstract class OClassAbstractDelegate implements OClass {
 
   @Override
   public OClass set(ATTRIBUTES attribute, Object iValue) {
-    return delegate.set(attribute, iValue);
+    delegate.set(attribute, iValue);
+    return this;
   }
 
   @Override
@@ -358,8 +370,9 @@ public abstract class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public OClassImpl setCustom(final String iName, String iValue) {
-    return delegate.setCustom(iName, iValue);
+  public OClass setCustom(final String iName, String iValue) {
+    delegate.setCustom(iName, iValue);
+    return this;
   }
 
   @Override
@@ -386,4 +399,9 @@ public abstract class OClassAbstractDelegate implements OClass {
   public int compareTo(final OClass o) {
     return delegate.compareTo(o);
   }
+
+	@Override
+	public float getClassOverSize() {
+		return delegate.getClassOverSize();
+	}
 }

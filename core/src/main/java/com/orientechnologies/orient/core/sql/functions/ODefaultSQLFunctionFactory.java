@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.orient.core.sql.functions;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.functions.coll.*;
 import com.orientechnologies.orient.core.sql.functions.geo.OSQLFunctionDistance;
@@ -35,7 +31,17 @@ import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionEncode;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionIf;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionIfNull;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionSysdate;
+import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionUUID;
+import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionMedian;
+import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionMode;
+import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionPercentile;
+import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionStandardDeviation;
+import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionVariance;
 import com.orientechnologies.orient.core.sql.functions.text.OSQLFunctionFormat;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Default set of SQL function.
@@ -75,6 +81,12 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
     register(OSQLFunctionSysdate.NAME, OSQLFunctionSysdate.class);
     register(OSQLFunctionSum.NAME, OSQLFunctionSum.class);
     register(OSQLFunctionUnionAll.NAME, OSQLFunctionUnionAll.class);
+    register(OSQLFunctionMode.NAME, OSQLFunctionMode.class);
+    register(OSQLFunctionPercentile.NAME, OSQLFunctionPercentile.class);
+    register(OSQLFunctionMedian.NAME, OSQLFunctionMedian.class);
+    register(OSQLFunctionVariance.NAME, OSQLFunctionVariance.class);
+    register(OSQLFunctionStandardDeviation.NAME, OSQLFunctionStandardDeviation.class);
+    register(OSQLFunctionUUID.NAME, OSQLFunctionUUID.class);
   }
 
   public static void register(final String iName, final Object iImplementation) {

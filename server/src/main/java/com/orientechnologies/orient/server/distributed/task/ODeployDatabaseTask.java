@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+     *
+     *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+     *  *
+     *  *  Licensed under the Apache License, Version 2.0 (the "License");
+     *  *  you may not use this file except in compliance with the License.
+     *  *  You may obtain a copy of the License at
+     *  *
+     *  *       http://www.apache.org/licenses/LICENSE-2.0
+     *  *
+     *  *  Unless required by applicable law or agreed to in writing, software
+     *  *  distributed under the License is distributed on an "AS IS" BASIS,
+     *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     *  *  See the License for the specific language governing permissions and
+     *  *  limitations under the License.
+     *  *
+     *  * For more information: http://www.orientechnologies.com
+     *
+     */
 package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.common.io.OFileUtils;
@@ -21,6 +25,10 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OStorageAbstract;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
@@ -39,166 +47,194 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 
 /**
- * Ask for deployment of database from a remote node.
- * 
- * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
- */
-public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCommandOutputListener {
-  public final static int    CHUNK_MAX_SIZE = 1048576;    // 1MB
-  public static final String DEPLOYDB       = "deploydb.";
-  protected long             random;
+  * Ask for deployment of database from a remote node.
+  *
+  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+  *
+  */
+ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCommandOutputListener {
+   public final static int    CHUNK_MAX_SIZE        = 1048576;        // 1MB
+   public static final String DEPLOYDB              = "deploydb.";
+   protected final ODocument  databaseConfiguration = new ODocument();
+   protected long             random;
 
-  public ODeployDatabaseTask() {
-    random = UUID.randomUUID().getLeastSignificantBits();
-  }
+   public ODeployDatabaseTask() {
+   }
 
-  @Override
-  public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
-      throws Exception {
+   public ODeployDatabaseTask(final ODatabaseRecordTx db) {
+     random = UUID.randomUUID().getLeastSignificantBits();
 
-    if (!getNodeSource().equals(iManager.getLocalNodeName())) {
-      if (database == null)
-        throw new ODistributedException("Database instance is null");
+     if (db != null) {
+       // TO USE IN CASE OF CHECK CLUSTERS (SPLIT-NETWORK)
+       final OStorageAbstract stg = (OStorageAbstract) db.getStorage().getUnderlying();
 
-      final String databaseName = database.getName();
+       final ODocument clusters = new ODocument();
+       databaseConfiguration.field("clusters", clusters);
 
-      final Lock lock = iManager.getLock(databaseName);
-      if (lock.tryLock()) {
-        try {
-          final Long lastDeployment = (Long) iManager.getConfigurationMap().get(DEPLOYDB + databaseName);
-          if (lastDeployment != null && lastDeployment.longValue() == random) {
-            // SKIP IT
-            ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-                "skip deploying database because already executed");
-            return Boolean.FALSE;
-          }
+       for (String clName : stg.getClusterNames()) {
+         final OCluster c = stg.getClusterByName(clName);
 
-          iManager.getConfigurationMap().put(DEPLOYDB + databaseName, random);
+         final ODocument cluster = new ODocument();
+         clusters.field(clName, cluster);
 
-          // WAIT UNTIL ALL PENDING OPERATION ARE COMPLETED
-          while (database.getStorage().getLastOperationId() >= iManager.getMessageService().getLastMessageId()) {
-            ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                "pausing deploy of database %s until all pending operations are completed...", databaseName);
-            Thread.sleep(300);
-          }
+         try {
+           cluster.field("records", c.getEntries());
+           cluster.field("first", c.getFirstPosition().longValue());
+           cluster.field("last", c.getFirstPosition().longValue());
+         } catch (IOException e) {
+           OLogManager.instance().error(this, "Error on deploying cluster " + clName, e);
+         }
+       }
+     }
+   }
 
-          iManager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
+   @Override
+   public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
+       throws Exception {
 
-          ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "deploying database %s...",
-              databaseName);
+     if (!getNodeSource().equals(iManager.getLocalNodeName())) {
+       if (database == null)
+         throw new ODistributedException("Database instance is null");
 
-          final File f = new File(Orient.getTempPath() + "/backup_" + database.getName() + ".zip");
-          if (f.exists())
-            f.delete();
-          else
-            f.getParentFile().mkdirs();
-          f.createNewFile();
+       final String databaseName = database.getName();
 
-          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-              "creating backup of database '%s' in directory: %s...", databaseName, f.getAbsolutePath());
+       final Lock lock = iManager.getLock(databaseName);
+       if (lock.tryLock()) {
+         try {
+           final Long lastDeployment = (Long) iManager.getConfigurationMap().get(DEPLOYDB + databaseName);
+           if (lastDeployment != null && lastDeployment.longValue() == random) {
+             // SKIP IT
+             ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
+                 "skip deploying database '%s' because already executed", databaseName);
+             return Boolean.FALSE;
+           }
 
-          final AtomicLong lastOperationId = new AtomicLong(-1);
+           iManager.getConfigurationMap().put(DEPLOYDB + databaseName, random);
 
-          FileOutputStream fileOutputStream = new FileOutputStream(f);
-          try {
-            database.backup(fileOutputStream, null, new Callable<Object>() {
-              @Override
-              public Object call() throws Exception {
-                lastOperationId.set(database.getStorage().getLastOperationId());
-                return null;
-              }
-            }, this, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
+           iManager.setDatabaseStatus(getNodeSource(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
+           iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
-            final long fileSize = f.length();
+           ODistributedServerLog.warn(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT, "deploying database %s...",
+               databaseName);
 
-            ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
-                "sending the compressed database '%s' over the NETWORK to node '%s', size=%s, lastOperationId=%d...", databaseName,
-                getNodeSource(), OFileUtils.getSizeAsString(fileSize), lastOperationId.get());
+           final File f = new File(Orient.getTempPath() + "/backup_" + database.getName() + ".zip");
+           if (f.exists())
+             f.delete();
+           else
+             f.getParentFile().mkdirs();
+           f.createNewFile();
 
-            final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(lastOperationId.get(), f, 0, CHUNK_MAX_SIZE);
+           ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+               "creating backup of database '%s' in directory: %s...", databaseName, f.getAbsolutePath());
 
-            ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
-                "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
+           final AtomicLong lastOperationId = new AtomicLong(-1);
 
-            if (chunk.last)
-              // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
-              iManager.setDatabaseStatus(databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+           FileOutputStream fileOutputStream = new FileOutputStream(f);
+           try {
+             database.backup(fileOutputStream, null, new Callable<Object>() {
+               @Override
+               public Object call() throws Exception {
+                 lastOperationId.set(database.getStorage().getLastOperationId());
+                 return null;
+               }
+             }, this, OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION.getValueAsInteger(), CHUNK_MAX_SIZE);
 
-            return chunk;
+             final long fileSize = f.length();
 
-          } finally {
-            fileOutputStream.close();
-          }
+             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
+                 "sending the compressed database '%s' over the NETWORK to node '%s', size=%s, lastOperationId=%d...", databaseName,
+                 getNodeSource(), OFileUtils.getSizeAsString(fileSize), lastOperationId.get());
 
-        } finally {
-          lock.unlock();
+             final ODistributedDatabaseChunk chunk = new ODistributedDatabaseChunk(lastOperationId.get(), f, 0, CHUNK_MAX_SIZE);
 
-          ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
-              "deploy database task completed");
-        }
+             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
+                 "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
 
-      } else
-        ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-            "skip deploying database %s because another node is doing it", databaseName);
-    } else
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-          "skip deploying database from the same node");
+             if (chunk.last)
+               // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
+               iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
 
-    return Boolean.FALSE;
-  }
+             return chunk;
 
-  @Override
-  public RESULT_STRATEGY getResultStrategy() {
-    return RESULT_STRATEGY.UNION;
-  }
+           } finally {
+             fileOutputStream.close();
+           }
 
-  @Override
-  public QUORUM_TYPE getQuorumType() {
-    return QUORUM_TYPE.NONE;
-  }
+         } finally {
+           lock.unlock();
 
-  @Override
-  public boolean isRequireNodeOnline() {
-    return false;
-  }
+           ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
+               "deploy database task completed");
+         }
 
-  @Override
-  public long getTimeout() {
-    return OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT.getValueAsLong();
-  }
+       } else
+         ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
+             "skip deploying database %s because another node is doing it", databaseName);
+     } else
+       ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
+           "skip deploying database from the same node");
 
-  @Override
-  public String getPayload() {
-    return null;
-  }
+     return Boolean.FALSE;
+   }
 
-  @Override
-  public String getName() {
-    return "deploy_db";
-  }
+   @Override
+   public RESULT_STRATEGY getResultStrategy() {
+     return RESULT_STRATEGY.UNION;
+   }
 
-  @Override
-  public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeLong(random);
-  }
+   @Override
+   public QUORUM_TYPE getQuorumType() {
+     return QUORUM_TYPE.NONE;
+   }
 
-  @Override
-  public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    random = in.readLong();
-  }
+   @Override
+   public boolean isRequireNodeOnline() {
+     return true;
+   }
 
-  @Override
-  public void onMessage(String iText) {
-    if (iText.startsWith("\n"))
-      iText = iText.substring(1);
+   @Override
+   public long getTimeout() {
+     return OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT.getValueAsLong();
+   }
 
-    OLogManager.instance().info(this, iText);
-  }
+   @Override
+   public String getPayload() {
+     return null;
+   }
 
-  @Override
-  public boolean isRequiredOpenDatabase() {
-    return false;
-  }
+   @Override
+   public String getName() {
+     return "deploy_db";
+   }
 
-}
+   @Override
+   public void writeExternal(final ObjectOutput out) throws IOException {
+     out.writeLong(random);
+     final byte[] buffer = databaseConfiguration.toStream();
+     out.writeInt(buffer.length);
+     out.write(buffer);
+   }
+
+   @Override
+   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+     random = in.readLong();
+     final int bufferLength = in.readInt();
+     final byte[] buffer = new byte[bufferLength];
+     in.read(buffer);
+     databaseConfiguration.fromStream(buffer);
+   }
+
+   @Override
+   public void onMessage(String iText) {
+     if (iText.startsWith("\n"))
+       iText = iText.substring(1);
+
+     OLogManager.instance().info(this, iText);
+   }
+
+   @Override
+   public boolean isRequiredOpenDatabase() {
+     return true;
+   }
+
+ }

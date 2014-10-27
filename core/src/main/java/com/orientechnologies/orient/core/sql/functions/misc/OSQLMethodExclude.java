@@ -1,28 +1,33 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.sql.functions.misc;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Filter the content by excluding only some fields. If the content is a document, then creates a copy without the excluded fields.
@@ -57,17 +62,6 @@ public class OSQLMethodExclude extends OAbstractSQLMethod {
     super(NAME, 1, -1);
   }
 
-  private Object copy(final ODocument document, final Object[] iFieldNames) {
-    final ODocument doc = document.copy();
-    for (Object iFieldName : iFieldNames) {
-      if (iFieldName != null) {
-        final String fieldName = iFieldName.toString();
-        doc.removeField(fieldName);
-      }
-    }
-    return doc;
-  }
-
   @Override
   public String getSyntax() {
     return "Syntax error: exclude([<field-name>][,]*)";
@@ -79,6 +73,9 @@ public class OSQLMethodExclude extends OAbstractSQLMethod {
       if (iThis instanceof ODocument) {
         // ACT ON SINGLE DOCUMENT
         return copy((ODocument) iThis, iParams);
+      } else if (iThis instanceof Map) {
+        // ACT ON SINGLE MAP
+        return copy((Map) iThis, iParams);
       } else if (OMultiValue.isMultiValue(iThis)) {
         // ACT ON MULTIPLE DOCUMENTS
         final List<Object> result = new ArrayList<Object>(OMultiValue.getSize(iThis));
@@ -93,5 +90,27 @@ public class OSQLMethodExclude extends OAbstractSQLMethod {
 
     // INVALID, RETURN NULL
     return null;
+  }
+
+  private Object copy(final ODocument document, final Object[] iFieldNames) {
+    final ODocument doc = document.copy();
+    for (Object iFieldName : iFieldNames) {
+      if (iFieldName != null) {
+        final String fieldName = iFieldName.toString();
+        doc.removeField(fieldName);
+      }
+    }
+    return doc;
+  }
+
+  private Object copy(final Map map, final Object[] iFieldNames) {
+    final ODocument doc = new ODocument().fields(map);
+    for (Object iFieldName : iFieldNames) {
+      if (iFieldName != null) {
+        final String fieldName = iFieldName.toString();
+        doc.removeField(fieldName);
+      }
+    }
+    return doc;
   }
 }

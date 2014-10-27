@@ -1,9 +1,11 @@
 #!/bin/bash
 #
-# Copyright (c) 1999-2010 Luca Garulli
+# Copyright (c) Orient Technologies LTD (http://www.orientechnologies.com)
 #
-# 2012-07-31 - Added -w option 
+# HISTORY:
+# 2012-07-31: Added -w option
 #
+
 # resolve links - $0 may be a softlink
 PRG="$0"
 
@@ -50,7 +52,7 @@ LOG_LEVEL=warning
 WWW_PATH=$ORIENTDB_HOME/www
 JAVA_OPTS=-Djava.awt.headless=true
 
-$JAVA -client $JAVA_OPTS -Dorientdb.config.file="$CONFIG_FILE" -cp "$ORIENTDB_HOME/lib/orientdb-tools-@VERSION@.jar:$ORIENTDB_HOME/lib/*" com.orientechnologies.orient.server.OServerShutdownMain $*
+"$JAVA" -client $JAVA_OPTS -Dorientdb.config.file="$CONFIG_FILE" -cp "$ORIENTDB_HOME/lib/orientdb-tools-@VERSION@.jar:$ORIENTDB_HOME/lib/*" com.orientechnologies.orient.server.OServerShutdownMain $*
 
 if [ "x$wait" = "xyes" ] ; then
   while true ; do

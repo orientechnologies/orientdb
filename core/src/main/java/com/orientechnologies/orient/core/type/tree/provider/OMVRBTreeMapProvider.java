@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.type.tree.provider;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -25,6 +29,7 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ORecordBytesLazy;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -51,7 +56,7 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 
   public OMVRBTreeMapProvider(final OStorage iStorage, final String iClusterName, final ORID iRID) {
     this(iStorage, iClusterName, null, null);
-    record.setIdentity(iRID.getClusterId(), iRID.getClusterPosition());
+    ORecordInternal.setIdentity(record, iRID.getClusterId(), iRID.getClusterPosition());
   }
 
   public OMVRBTreeMapProvider(final OStorage iStorage, final String iClusterName, final OBinarySerializer<K> iKeySerializer,
@@ -109,12 +114,12 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
       stream.set(keySize);
 
       stream.set(keySerializer.getId());
-      stream.set(valueSerializer.getName());
+      stream.setCustom(valueSerializer.getName());
 
       if (streamKeySerializer != null)
-        stream.set(streamKeySerializer.getName());
+        stream.setCustom(streamKeySerializer.getName());
       else
-        stream.set("");
+        stream.setCustom("");
 
       final byte[] result = stream.toByteArray();
       record.fromStream(result);
@@ -165,15 +170,15 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 
       // @COMPATIBILITY BEFORE 1.0
       if (protocolVersion < 3) {
-        streamKeySerializer = OStreamSerializerFactory.get(stream.getAsString());
-        valueSerializer = OStreamSerializerFactory.get(stream.getAsString());
+        streamKeySerializer = OStreamSerializerFactory.get(stream.getAsStringCustom());
+        valueSerializer = OStreamSerializerFactory.get(stream.getAsStringCustom());
 
         keySerializer = createRelatedSerializer(streamKeySerializer);
       } else {
         keySerializer = (OBinarySerializer<K>) OBinarySerializerFactory.getInstance().getObjectSerializer(stream.getAsByte());
-        valueSerializer = OStreamSerializerFactory.get(stream.getAsString());
+        valueSerializer = OStreamSerializerFactory.get(stream.getAsStringCustom());
 
-        final String oldKeySerializerName = stream.getAsString();
+        final String oldKeySerializerName = stream.getAsStringCustom();
         if (oldKeySerializerName != null && oldKeySerializerName.length() > 0)
           streamKeySerializer = OStreamSerializerFactory.get(oldKeySerializerName);
       }

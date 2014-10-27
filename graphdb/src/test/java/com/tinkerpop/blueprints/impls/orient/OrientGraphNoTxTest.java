@@ -1,11 +1,12 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.io.File;
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
-
-import com.tinkerpop.blueprints.*;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.tinkerpop.blueprints.Graph;
+import com.tinkerpop.blueprints.GraphQueryTestSuite;
+import com.tinkerpop.blueprints.IndexableGraphTestSuite;
+import com.tinkerpop.blueprints.KeyIndexableGraphTestSuite;
+import com.tinkerpop.blueprints.TestSuite;
+import com.tinkerpop.blueprints.VertexQueryTestSuite;
 import com.tinkerpop.blueprints.impls.GraphTest;
 import com.tinkerpop.blueprints.util.io.gml.GMLReaderTestSuite;
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLReaderTestSuite;
@@ -13,6 +14,11 @@ import com.tinkerpop.blueprints.util.io.graphson.GraphSONReaderTestSuite;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+
+import java.io.File;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Marko A. Rodriguez (http://markorodriguez.com)
@@ -84,8 +90,10 @@ public class OrientGraphNoTxTest extends GraphTest {
     if (graph != null) {
       if (graph.isClosed())
         currentGraphs.remove(url);
-      else
+      else {
+        ODatabaseRecordThreadLocal.INSTANCE.set(graph.getRawGraph());
         return graph;
+      }
     }
 
     graph = new OrientGraphNoTx(url);

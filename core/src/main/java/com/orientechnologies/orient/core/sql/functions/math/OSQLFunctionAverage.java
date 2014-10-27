@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.sql.functions.math;
 
 import com.orientechnologies.common.collection.OMultiValue;
@@ -21,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -83,51 +88,45 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
       doc.put("total", total);
       return doc;
     } else {
-      if (sum instanceof Integer)
-        return sum.intValue() / total;
-      else if (sum instanceof Long)
-        return sum.longValue() / total;
-      else if (sum instanceof Float)
-        return sum.floatValue() / total;
-      else if (sum instanceof Double)
-        return sum.doubleValue() / total;
-      else if (sum instanceof BigDecimal)
-        return ((BigDecimal) sum).divide(new BigDecimal(total));
+    	return computeAverage(sum, total);
     }
-    return null;
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public Object mergeDistributedResult(List<Object> resultsToMerge) {
-    Number sum = null;
-    int total = 0;
+    Number dSum = null;
+    int dTotal = 0;
     for (Object iParameter : resultsToMerge) {
       final Map<String, Object> item = (Map<String, Object>) iParameter;
-      if (sum == null)
-        sum = (Number) item.get("sum");
+      if (dSum == null)
+        dSum = (Number) item.get("sum");
       else
-        sum = OType.increment(sum, (Number) item.get("sum"));
+        dSum = OType.increment(dSum, (Number) item.get("sum"));
 
-      total += (Integer) item.get("total");
+      dTotal += (Integer) item.get("total");
     }
 
-    if (sum instanceof Integer)
-      return sum.intValue() / total;
-    else if (sum instanceof Long)
-      return sum.longValue() / total;
-    else if (sum instanceof Float)
-      return sum.floatValue() / total;
-    else if (sum instanceof Double)
-      return sum.doubleValue() / total;
-    else if (sum instanceof BigDecimal)
-      return ((BigDecimal) sum).divide(new BigDecimal(total));
-
-    return null;
+    return computeAverage(dSum, dTotal);
   }
 
   @Override
   public boolean aggregateResults() {
     return configuredParameters.length == 1;
+  }
+  
+  private Object computeAverage(Number iSum, int iTotal) {
+  	if (iSum instanceof Integer)
+      return iSum.intValue() / iTotal;
+    else if (iSum instanceof Long)
+      return iSum.longValue() / iTotal;
+    else if (iSum instanceof Float)
+      return iSum.floatValue() / iTotal;
+    else if (iSum instanceof Double)
+      return iSum.doubleValue() / iTotal;
+    else if (iSum instanceof BigDecimal)
+      return ((BigDecimal) iSum).divide(new BigDecimal(iTotal), RoundingMode.HALF_UP);
+  	
+  	return null;
   }
 }

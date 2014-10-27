@@ -15,6 +15,23 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPosition;
@@ -25,6 +42,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -34,13 +52,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be because the order of clusters could
@@ -80,7 +91,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertTrue(result.size() != 0);
 
     for (ODocument d : result) {
-      Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
     }
   }
 
@@ -92,7 +103,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertTrue(result.size() != 0);
 
     for (ODocument d : result) {
-      Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
     }
   }
 
@@ -117,8 +128,15 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertTrue(result.size() != 0);
 
     for (ODocument d : result) {
-      Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
     }
+  }
+
+  @Test
+  public void testQueryCount() {
+    final long vertexesCount = database.countClass("V");
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select count(*) from V"));
+    Assert.assertEquals(result.get(0).field("count"), vertexesCount);
   }
 
   @Test
@@ -816,7 +834,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertTrue(result.size() != 0);
 
     for (ODocument d : result) {
-      Assert.assertEquals(d.getRecordType(), ODocument.RECORD_TYPE);
+      Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
     }
   }
 
@@ -1607,5 +1625,92 @@ public class SQLSelectTest extends AbstractSelectTest {
       positions.add(doc.getIdentity().getClusterPosition());
     }
     return positions;
+  }
+
+  public void testSelectFromIndexValues() {
+    database.command(new OCommandSQL("create index selectFromIndexValues on Profile (name) notunique")).execute();
+
+    final List<ODocument> classResult = new ArrayList<ODocument>((List<ODocument>) database.query(new OSQLSynchQuery<ODocument>(
+        "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
+
+    final List<ODocument> indexValuesResult = database.query(new OSQLSynchQuery<ODocument>(
+        "select from indexvalues:selectFromIndexValues where ((nick like 'J%') or (nick like 'N%')) and (name is not null)"));
+
+    Assert.assertEquals(indexValuesResult.size(), classResult.size());
+
+    String lastName = null;
+
+    for (ODocument document : indexValuesResult) {
+      String name = document.field("name");
+
+      if (lastName != null)
+        Assert.assertTrue(lastName.compareTo(name) <= 0);
+
+      lastName = name;
+      Assert.assertTrue(classResult.remove(document));
+    }
+
+    Assert.assertTrue(classResult.isEmpty());
+  }
+
+  public void testSelectFromIndexValuesAsc() {
+    database.command(new OCommandSQL("create index selectFromIndexValuesAsc on Profile (name) notunique")).execute();
+
+    final List<ODocument> classResult = new ArrayList<ODocument>((List<ODocument>) database.query(new OSQLSynchQuery<ODocument>(
+        "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
+
+    final List<ODocument> indexValuesResult = database.query(new OSQLSynchQuery<ODocument>(
+        "select from indexvaluesasc:selectFromIndexValuesAsc where ((nick like 'J%') or (nick like 'N%')) and (name is not null)"));
+
+    Assert.assertEquals(indexValuesResult.size(), classResult.size());
+
+    String lastName = null;
+
+    for (ODocument document : indexValuesResult) {
+      String name = document.field("name");
+
+      if (lastName != null)
+        Assert.assertTrue(lastName.compareTo(name) <= 0);
+
+      lastName = name;
+      Assert.assertTrue(classResult.remove(document));
+    }
+
+    Assert.assertTrue(classResult.isEmpty());
+  }
+
+  public void testSelectFromIndexValuesDesc() {
+    database.command(new OCommandSQL("create index selectFromIndexValuesDesc on Profile (name) notunique")).execute();
+
+    final List<ODocument> classResult = new ArrayList<ODocument>((List<ODocument>) database.query(new OSQLSynchQuery<ODocument>(
+        "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name is not null)")));
+
+    final List<ODocument> indexValuesResult = database
+        .query(new OSQLSynchQuery<ODocument>(
+            "select from indexvaluesdesc:selectFromIndexValuesDesc where ((nick like 'J%') or (nick like 'N%')) and (name is not null)"));
+
+    Assert.assertEquals(indexValuesResult.size(), classResult.size());
+
+    String lastName = null;
+
+    for (ODocument document : indexValuesResult) {
+      String name = document.field("name");
+
+      if (lastName != null)
+        Assert.assertTrue(lastName.compareTo(name) >= 0);
+
+      lastName = name;
+      Assert.assertTrue(classResult.remove(document));
+    }
+
+    Assert.assertTrue(classResult.isEmpty());
+  }
+
+  public void testQueryPerameterNotPersistent() {
+    ODocument doc = new ODocument();
+    doc.field("test", "test");
+    database.query(new OSQLSynchQuery<Object>("select from OUser where @rid = ?"), doc);
+    Assert.assertTrue(doc.isDirty());
+
   }
 }

@@ -1,29 +1,33 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.metadata.schema;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Schema class
@@ -75,6 +79,8 @@ public interface OClass extends Comparable<OClass> {
 
   public Collection<OProperty> properties();
 
+  public Map<String, OProperty> propertiesMap();
+
   public Collection<OProperty> getIndexedProperties();
 
   public OProperty getProperty(String iPropertyName);
@@ -109,8 +115,6 @@ public interface OClass extends Comparable<OClass> {
 
   public OClass addCluster(String iClusterName);
 
-  public OClass addCluster(String iClusterName, OStorage.CLUSTER_TYPE iClusterType);
-
   public OClass removeClusterId(int iId);
 
   public int[] getPolymorphicClusterIds();
@@ -120,6 +124,8 @@ public interface OClass extends Comparable<OClass> {
   public Collection<OClass> getAllBaseClasses();
 
   public long getSize();
+
+	public float getClassOverSize();
 
   /**
    * Returns the oversize factor. Oversize is used to extend the record size by a factor to avoid defragmentation upon updates. 0 or
@@ -384,7 +390,7 @@ public interface OClass extends Comparable<OClass> {
 
   public String getCustom(String iName);
 
-  public OClassImpl setCustom(String iName, String iValue);
+  public OClass setCustom(String iName, String iValue);
 
   public void removeCustom(String iName);
 

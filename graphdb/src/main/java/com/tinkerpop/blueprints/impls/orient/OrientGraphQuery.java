@@ -1,3 +1,23 @@
+/*
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
+
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -44,7 +64,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
   protected static final char   COLLECTION_END     = ']';
   protected static final char   PARENTHESIS_BEGIN  = '(';
   protected static final char   PARENTHESIS_END    = ')';
-  protected static final String QUERY_LABEL_BEGIN  = " and label in [";
+  protected static final String QUERY_LABEL_BEGIN  = " label in [";
   protected static final String QUERY_LABEL_END    = "]";
   protected static final String QUERY_WHERE        = " where ";
   protected static final String QUERY_SELECT_FROM  = "select from ";
@@ -139,7 +159,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
       // SUPPORTED USED THE BASIC IMPL
       return new OrientGraphQueryIterable<Vertex>(true, labels);
 
-    final StringBuilder text = new StringBuilder();
+    final StringBuilder text = new StringBuilder(512);
 
     // GO DIRECTLY AGAINST E CLASS AND SUB-CLASSES
     text.append(QUERY_SELECT_FROM);
@@ -156,23 +176,21 @@ public class OrientGraphQuery extends DefaultGraphQuery {
     } else
       text.append(OrientVertexType.CLASS_NAME);
 
-    // APPEND ALWAYS WHERE
-    text.append(QUERY_WHERE);
-    manageFilters(text);
+    final boolean usedWhere = manageFilters(text);
     if (!((OrientBaseGraph) graph).isUseClassForVertexLabel())
-      manageLabels(text);
+      manageLabels(usedWhere, text);
 
     if (orderBy.length() > 1) {
       text.append(ORDERBY);
       text.append(orderBy);
       text.append(" " + orderByDir + " ");
     }
-    if (skip > 0 && skip < Long.MAX_VALUE) {
+    if (skip > 0 && skip < Integer.MAX_VALUE) {
       text.append(SKIP);
       text.append(skip);
     }
 
-    if (limit > 0 && limit < Long.MAX_VALUE) {
+    if (limit > 0 && limit < Integer.MAX_VALUE) {
       text.append(LIMIT);
       text.append(limit);
     }
@@ -202,7 +220,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
     if (((OrientBaseGraph) graph).isUseLightweightEdges())
       return new OrientGraphQueryIterable<Edge>(false, labels);
 
-    final StringBuilder text = new StringBuilder();
+    final StringBuilder text = new StringBuilder(512);
 
     // GO DIRECTLY AGAINST E CLASS AND SUB-CLASSES
     text.append(QUERY_SELECT_FROM);
@@ -219,19 +237,16 @@ public class OrientGraphQuery extends DefaultGraphQuery {
     } else
       text.append(OrientEdgeType.CLASS_NAME);
 
-    // APPEND ALWAYS WHERE 1=1 TO MAKE CONCATENATING EASIER
-    text.append(QUERY_WHERE);
-
-    manageFilters(text);
+    final boolean usedWhere = manageFilters(text);
     if (!((OrientBaseGraph) graph).isUseClassForEdgeLabel())
-      manageLabels(text);
+      manageLabels(usedWhere, text);
 
     final OSQLSynchQuery<OIdentifiable> query = new OSQLSynchQuery<OIdentifiable>(text.toString());
 
     if (fetchPlan != null)
       query.setFetchPlan(fetchPlan);
 
-    if (limit > 0 && limit < Long.MAX_VALUE)
+    if (limit > 0 && limit < Integer.MAX_VALUE)
       query.setLimit((int) limit);
 
     return new OrientElementIterable<Edge>(((OrientBaseGraph) graph), ((OrientBaseGraph) graph).getRawGraph().query(query));
@@ -251,9 +266,15 @@ public class OrientGraphQuery extends DefaultGraphQuery {
     this.fetchPlan = fetchPlan;
   }
 
-  protected void manageLabels(final StringBuilder text) {
+  protected void manageLabels(final boolean usedWhere, final StringBuilder text) {
     if (labels != null && labels.length > 0) {
-      // APPEND LABELS
+
+      if( !usedWhere ){
+        // APPEND WHERE
+        text.append(QUERY_WHERE);
+      } else
+        text.append(QUERY_FILTER_AND);
+
       text.append(QUERY_LABEL_BEGIN);
       for (int i = 0; i < labels.length; ++i) {
         if (i > 0)
@@ -267,13 +288,15 @@ public class OrientGraphQuery extends DefaultGraphQuery {
   }
 
   @SuppressWarnings("unchecked")
-  protected void manageFilters(final StringBuilder text) {
+  protected boolean manageFilters(final StringBuilder text) {
     boolean firstPredicate = true;
     for (HasContainer has : hasContainers) {
       if (!firstPredicate)
         text.append(QUERY_FILTER_AND);
-      else
+      else {
+        text.append(QUERY_WHERE);
         firstPredicate = false;
+      }
 
       if (has.predicate instanceof Contains) {
         // IN AND NOT_IN
@@ -347,6 +370,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
           text.append(PARENTHESIS_END);
       }
     }
+    return !firstPredicate;
   }
 
   protected void generateFilterValue(final StringBuilder text, final Object iValue) {

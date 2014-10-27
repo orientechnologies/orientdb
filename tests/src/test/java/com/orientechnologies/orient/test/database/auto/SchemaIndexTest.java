@@ -116,7 +116,7 @@ public class SchemaIndexTest extends DocumentDBBaseTest {
       counter++;
     }
 
-    final int clusterId2 = database.addCluster("polymorpicIdsPropagationSuperSuper2", OStorage.CLUSTER_TYPE.PHYSICAL);
+    final int clusterId2 = database.addCluster("polymorpicIdsPropagationSuperSuper2");
 
     for (int i = 0; i < 10; i++) {
       ODocument document = new ODocument();

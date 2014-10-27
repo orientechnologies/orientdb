@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.graph.sql.functions;
 
 import com.orientechnologies.common.collection.OMultiValue;
@@ -82,8 +86,8 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
   protected Object v2v(final OrientBaseGraph graph, final OIdentifiable iRecord, final Direction iDirection, final String[] iLabels) {
     final ODocument rec = iRecord.getRecord();
 
-    if (rec.getSchemaClass() != null)
-      if (rec.getSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
+    if (rec.getImmutableSchemaClass()!= null)
+      if (rec.getImmutableSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
         // VERTEX
         final OrientVertex vertex = graph.getVertex(rec);
         if (vertex != null)
@@ -96,8 +100,8 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
   protected Object v2e(final OrientBaseGraph graph, final OIdentifiable iRecord, final Direction iDirection, final String[] iLabels) {
     final ODocument rec = iRecord.getRecord();
 
-    if (rec.getSchemaClass() != null)
-      if (rec.getSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
+    if (rec.getImmutableSchemaClass() != null)
+      if (rec.getImmutableSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
         // VERTEX
         final OrientVertex vertex = graph.getVertex(rec);
         if (vertex != null)
@@ -110,8 +114,8 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
   protected Object e2v(final OrientBaseGraph graph, final OIdentifiable iRecord, final Direction iDirection, final String[] iLabels) {
     final ODocument rec = iRecord.getRecord();
 
-    if (rec.getSchemaClass() != null)
-      if (rec.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+    if (rec.getImmutableSchemaClass() != null)
+      if (rec.getImmutableSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
         // EDGE
         final OrientEdge edge = graph.getEdge(rec);
         if (edge != null) {

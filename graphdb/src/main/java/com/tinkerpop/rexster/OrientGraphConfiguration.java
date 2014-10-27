@@ -1,3 +1,23 @@
+/*
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
+
 package com.tinkerpop.rexster;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -10,7 +30,7 @@ import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.SubnodeConfiguration;
 
 /**
- * Configuration class for Rexster (http://rexster.tinkerpop.com). Example usage within rexster.xml: <br/>
+ * Configuration class for Rexster (http://rexster.tinkerpop.com). Example usage within rexster.xml: <br>
  * 
  * <pre>
  * {@code
@@ -61,18 +81,6 @@ public class OrientGraphConfiguration implements GraphConfiguration {
       final String username = orientDbSpecificConfiguration.getString("username", "");
       final String password = orientDbSpecificConfiguration.getString("password", "");
 
-      // Caching must be turned off. OrientDB has different layers of cache:
-      // http://code.google.com/p/orient/wiki/Caching There's one Level1 cache per OGraphDatabase instance
-      // and one level2 per JVM. If a OGraphDatabase caches a vertex and then you change it in
-      // another thread/transaction you could see the older one. To fix it just disable the Level1 cache.
-      // If there were multiple running JVM you could have Level2 cache not updated for the same reason as
-      // above. Then you've to disable Level2 cache....per Luca.
-      //
-      // Disabling the level 1 cache seems to solve the problem where POSTs of edges in rapid succession
-      // force a transaction error like: Cannot update record #6:0 in storage 'orientdb-graph' because the
-      // version is not the latest. Probably you are updating an old record or it has been modified by
-      // another user (db=v2 your=v0)
-      OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
 
       // calling the open method opens the connection to graphdb. looks like the
       // implementation of shutdown will call the orientdb close method.

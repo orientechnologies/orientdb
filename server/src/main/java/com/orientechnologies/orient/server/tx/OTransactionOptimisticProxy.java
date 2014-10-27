@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.server.tx;
 
 import java.io.IOException;
@@ -41,27 +45,34 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 
 public class OTransactionOptimisticProxy extends OTransactionOptimistic {
-  private final Map<ORID, ORecordOperation>        tempEntries    = new LinkedHashMap<ORID, ORecordOperation>();
-  private final Map<ORecordId, ORecordInternal<?>> createdRecords = new HashMap<ORecordId, ORecordInternal<?>>();
-  private final Map<ORecordId, ORecordInternal<?>> updatedRecords = new HashMap<ORecordId, ORecordInternal<?>>();
-  private final int                                clientTxId;
-  private final OChannelBinary                     channel;
-  private final short                              protocolVersion;
+  private final Map<ORID, ORecordOperation> tempEntries    = new LinkedHashMap<ORID, ORecordOperation>();
+  private final Map<ORecordId, ORecord>     createdRecords = new HashMap<ORecordId, ORecord>();
+  private final Map<ORecordId, ORecord>     updatedRecords = new HashMap<ORecordId, ORecord>();
+  @Deprecated
+  private final int                         clientTxId;
+  private final OChannelBinary              channel;
+  private final short                       protocolVersion;
+  private ONetworkProtocolBinary            oNetworkProtocolBinary;
 
-  public OTransactionOptimisticProxy(final ODatabaseRecordTx iDatabase, final OChannelBinary iChannel, short protocolVersion)
-      throws IOException {
+  public OTransactionOptimisticProxy(final ODatabaseRecordTx iDatabase, final OChannelBinary iChannel, short protocolVersion,
+      ONetworkProtocolBinary oNetworkProtocolBinary) throws IOException {
     super(iDatabase);
     channel = iChannel;
     clientTxId = iChannel.readInt();
     this.protocolVersion = protocolVersion;
+    this.oNetworkProtocolBinary = oNetworkProtocolBinary;
   }
 
   @Override
@@ -83,20 +94,23 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
         switch (recordStatus) {
         case ORecordOperation.CREATED:
-          entry.getRecord().fill(rid, OVersionFactory.instance().createVersion(), channel.readBytes(), true);
+          oNetworkProtocolBinary.fillRecord(rid, channel.readBytes(), OVersionFactory.instance().createVersion(),
+              entry.getRecord(), database);
 
           // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW RID TO SEND BACK TO THE REQUESTER
           createdRecords.put(rid.copy(), entry.getRecord());
           break;
 
         case ORecordOperation.UPDATED:
-          entry.getRecord().fill(rid, channel.readVersion(), channel.readBytes(), true);
+          ORecordVersion version = channel.readVersion();
+          byte[] bytes = channel.readBytes();
+          oNetworkProtocolBinary.fillRecord(rid, bytes, version, entry.getRecord(), database);
           if (protocolVersion >= 23)
-            entry.getRecord().setContentChanged(channel.readBoolean());
+            ORecordInternal.setContentChanged(entry.getRecord(), channel.readBoolean());
           break;
 
         case ORecordOperation.DELETED:
-          entry.getRecord().fill(rid, channel.readVersion(), null, false);
+          ORecordInternal.fill(entry.getRecord(), rid, channel.readVersion(), null, false);
           break;
 
         default:
@@ -118,14 +132,15 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
       for (Entry<ORID, ORecordOperation> entry : tempEntries.entrySet()) {
 
         if (entry.getValue().type == ORecordOperation.UPDATED) {
-          // SPECIAL CASE FOR UPDATE: WE NEED TO LOAD THE RECORD AND APPLY CHANGES TO GET WORKING HOOKS (LIKE UNDEXES)
+          // SPECIAL CASE FOR UPDATE: WE NEED TO LOAD THE RECORD AND APPLY CHANGES TO GET WORKING HOOKS (LIKE INDEXES)
 
-          final ORecordInternal<?> record = entry.getValue().record.getRecord();
-          final ORecordInternal<?> loadedRecord = record.getIdentity().copy().getRecord();
+          final ORecord record = entry.getValue().record.getRecord();
+          final ORecord loadedRecord = record.getIdentity().copy().getRecord();
           if (loadedRecord == null)
             throw new ORecordNotFoundException(record.getIdentity().toString());
 
-          if (loadedRecord.getRecordType() == ODocument.RECORD_TYPE && loadedRecord.getRecordType() == record.getRecordType()) {
+          if (ORecordInternal.getRecordType(loadedRecord) == ODocument.RECORD_TYPE
+              && ORecordInternal.getRecordType(loadedRecord) == ORecordInternal.getRecordType(record)) {
             ((ODocument) loadedRecord).merge((ODocument) record, false, false);
             loadedRecord.getRecordVersion().copyFrom(record.getRecordVersion());
             entry.getValue().record = loadedRecord;
@@ -141,9 +156,9 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
       tempEntries.clear();
 
       // UNMARSHALL ALL THE RECORD AT THE END TO BE SURE ALL THE RECORD ARE LOADED IN LOCAL TX
-      for (ORecord<?> record : createdRecords.values())
+      for (ORecord record : createdRecords.values())
         unmarshallRecord(record);
-      for (ORecordInternal<?> record : updatedRecords.values())
+      for (ORecord record : updatedRecords.values())
         unmarshallRecord(record);
 
     } catch (IOException e) {
@@ -153,13 +168,13 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
   }
 
   @Override
-  public ORecordInternal<?> getRecord(final ORID rid) {
-    ORecordInternal<?> record = super.getRecord(rid);
+  public ORecord getRecord(final ORID rid) {
+    ORecord record = super.getRecord(rid);
     if (record == OTransactionRealAbstract.DELETED_RECORD)
       return record;
     else if (record == null && rid.isNew())
       // SEARCH BETWEEN CREATED RECORDS
-      record = (ORecordInternal<?>) createdRecords.get(rid);
+      record = createdRecords.get(rid);
 
     return record;
   }
@@ -192,17 +207,22 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           continue;
 
         final Object key;
-
-        final String serializedKey = OStringSerializerHelper.decode((String) entry.field("k"));
         try {
-          if (serializedKey.equals("*"))
-            key = null;
-          else {
-            final ODocument keyContainer = new ODocument();
-            keyContainer.setLazyLoad(false);
+          ODocument keyContainer;
+          if (protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_24) {
 
-            keyContainer.fromString(serializedKey);
-
+            final String serializedKey = OStringSerializerHelper.decode((String) entry.field("k"));
+            if (serializedKey.equals("*"))
+              keyContainer = null;
+            else {
+              keyContainer = new ODocument();
+              keyContainer.setLazyLoad(false);
+              ORecordSerializerSchemaAware2CSV.INSTANCE.fromString(serializedKey, keyContainer, null);
+            }
+          } else {
+            keyContainer = entry.field("k");
+          }
+          if (keyContainer != null) {
             final Object storedKey = keyContainer.field("key");
             if (storedKey instanceof List)
               key = new OCompositeKey((List<? extends Comparable<?>>) storedKey);
@@ -210,7 +230,8 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
               key = OStreamSerializerAnyStreamable.INSTANCE.fromStream((byte[]) storedKey);
             } else
               key = storedKey;
-          }
+          } else
+            key = null;
         } catch (IOException ioe) {
           throw new OTransactionException("Error during index changes deserialization. ", ioe);
         }
@@ -218,7 +239,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
         for (final ODocument op : operations) {
           final int operation = (Integer) op.rawField("o");
           final OTransactionIndexChanges.OPERATION indexOperation = OTransactionIndexChanges.OPERATION.values()[operation];
-          final OIdentifiable value = op.field("v", OType.LINK);
+          final OIdentifiable value = op.field("v");
 
           transactionIndexChanges.getChangesPerKey(key).add(value, indexOperation);
 
@@ -238,18 +259,18 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
     }
   }
 
-  public Map<ORecordId, ORecordInternal<?>> getCreatedRecords() {
+  public Map<ORecordId, ORecord> getCreatedRecords() {
     return createdRecords;
   }
 
-  public Map<ORecordId, ORecordInternal<?>> getUpdatedRecords() {
+  public Map<ORecordId, ORecord> getUpdatedRecords() {
     return updatedRecords;
   }
 
   /**
    * Unmarshalls collections. This prevent temporary RIDs remains stored as are.
    */
-  private void unmarshallRecord(final ORecord<?> iRecord) {
+  private void unmarshallRecord(final ORecord iRecord) {
     if (iRecord instanceof ODocument) {
       ((ODocument) iRecord).deserializeFields();
 

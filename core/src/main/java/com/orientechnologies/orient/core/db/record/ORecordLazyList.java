@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.db.record;
 
 import java.util.Collection;
@@ -29,6 +33,7 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
@@ -58,7 +63,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
   public ORecordLazyList(final ODocument iSourceRecord) {
     super(iSourceRecord);
     if (iSourceRecord != null) {
-      this.recordType = iSourceRecord.getRecordType();
+      this.recordType = ORecordInternal.getRecordType(iSourceRecord);
       if (!iSourceRecord.isLazyLoad())
         // SET AS NON-LAZY LOAD THE COLLECTION TOO
         autoConvertToRecord = false;
@@ -135,7 +140,7 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
   public OLazyIterator<OIdentifiable> iterator() {
     lazyLoad(false);
     return new OLazyRecordIterator(sourceRecord, new OLazyIteratorListWrapper<OIdentifiable>(super.listIterator()),
-        autoConvertToRecord);
+        autoConvertToRecord && getOwner().getInternalStatus() != STATUS.MARSHALLING);
   }
 
   @Override
@@ -499,10 +504,10 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
     final Object o = super.get(iIndex);
 
     if (o != null && o instanceof OIdentifiable && ((OIdentifiable) o).getIdentity().isPersistent()) {
-      if (o instanceof ORecord<?> && !((ORecord<?>) o).isDirty()) {
+      if (o instanceof ORecord && !((ORecord) o).isDirty()) {
         marshalling = true;
         try {
-          super.set(iIndex, ((ORecord<?>) o).getIdentity());
+          super.set(iIndex, ((ORecord) o).getIdentity());
           // CONVERTED
           return true;
         } catch (ORecordNotFoundException e) {

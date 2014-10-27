@@ -16,28 +16,25 @@
  */
 package com.orientechnologies.orient.object.metadata.schema;
 
-import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-
-import javassist.util.proxy.Proxy;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
+import javassist.util.proxy.Proxy;
+
+import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author luca.molino
@@ -49,6 +46,11 @@ public class OSchemaProxyObject implements OSchema {
 
   public OSchemaProxyObject(OSchema iUnderlying) {
     underlying = iUnderlying;
+  }
+
+  @Override
+  public OImmutableSchema makeSnapshot() {
+    return underlying.makeSnapshot();
   }
 
   @Override
@@ -74,11 +76,6 @@ public class OSchemaProxyObject implements OSchema {
   @Override
   public OClass createClass(String iClassName, OClass iSuperClass) {
     return underlying.createClass(iClassName, iSuperClass);
-  }
-
-  @Override
-  public OClass createClass(String iClassName, OClass iSuperClass, CLUSTER_TYPE iType) {
-    return underlying.createClass(iClassName, iSuperClass, iType);
   }
 
   @Override
@@ -147,6 +144,11 @@ public class OSchemaProxyObject implements OSchema {
   }
 
   @Override
+  public OGlobalProperty getGlobalPropertyById(int id) {
+    return underlying.getGlobalPropertyById(id);
+  }
+
+  @Override
   public Collection<OClass> getClasses() {
     return underlying.getClasses();
   }
@@ -184,6 +186,11 @@ public class OSchemaProxyObject implements OSchema {
   @Override
   public OClass getClassByClusterId(int clusterId) {
     return underlying.getClassByClusterId(clusterId);
+  }
+
+  @Override
+  public OClusterSelectionFactory getClusterSelectionFactory() {
+    return underlying.getClusterSelectionFactory();
   }
 
   /**
@@ -263,14 +270,16 @@ public class OSchemaProxyObject implements OSchema {
 
         case LINK:
           Class<?> linkedClazz = OObjectEntitySerializer.getSpecifiedLinkedType(f);
-           if (linkedClazz==null)  linkedClazz = f.getType();
+          if (linkedClazz == null)
+            linkedClazz = f.getType();
           generateLinkProperty(database, schema, field, t, linkedClazz);
           break;
         case LINKLIST:
         case LINKMAP:
         case LINKSET:
-           linkedClazz= OObjectEntitySerializer.getSpecifiedMultiLinkedType(f);
-          if (linkedClazz==null) linkedClazz = OReflectionHelper.getGenericMultivalueType(f);
+          linkedClazz = OObjectEntitySerializer.getSpecifiedMultiLinkedType(f);
+          if (linkedClazz == null)
+            linkedClazz = OReflectionHelper.getGenericMultivalueType(f);
           if (linkedClazz != null)
             generateLinkProperty(database, schema, field, t, linkedClazz);
           break;
@@ -409,6 +418,15 @@ public class OSchemaProxyObject implements OSchema {
       linkedClass = database.getMetadata().getSchema().getClass(linkedClazz);
     }
     schema.createProperty(field, t, linkedClass);
+  }
+
+  @Override
+  public List<OGlobalProperty> getGlobalProperties() {
+    return underlying.getGlobalProperties();
+  }
+
+  public OGlobalProperty createGlobalProperty(String name, OType type, Integer id) {
+    return underlying.createGlobalProperty(name, type, id);
   }
 
 }

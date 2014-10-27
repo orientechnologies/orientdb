@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
@@ -43,14 +47,16 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
                                                       .getValueAsInteger();
   private int                bottomThreshold      = OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD
                                                       .getValueAsInteger();
+  private final boolean durableNonTxMode;
 
-  public OIndexRIDContainer(String name) {
+  public OIndexRIDContainer(String name, boolean durableNonTxMode) {
     fileId = resolveFileIdByName(name + INDEX_FILE_EXTENSION);
     underlying = new HashSet<OIdentifiable>();
     isEmbedded = true;
+    this.durableNonTxMode = durableNonTxMode;
   }
 
-  public OIndexRIDContainer(String fileName, Set<OIdentifiable> underlying, boolean autoConvert) {
+  public OIndexRIDContainer(String fileName, Set<OIdentifiable> underlying, boolean autoConvert, boolean durableNonTxMode) {
     this.fileId = resolveFileIdByName(fileName + INDEX_FILE_EXTENSION);
     this.underlying = underlying;
     isEmbedded = !(underlying instanceof OIndexRIDContainerSBTree);
@@ -59,6 +65,8 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
       topThreshold = -1;
       bottomThreshold = -1;
     }
+
+    this.durableNonTxMode = durableNonTxMode;
   }
 
   private long resolveFileIdByName(String fileName) {
@@ -71,10 +79,11 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
     }
   }
 
-  public OIndexRIDContainer(long fileId, Set<OIdentifiable> underlying) {
+  public OIndexRIDContainer(long fileId, Set<OIdentifiable> underlying, boolean durableNonTxMode) {
     this.fileId = fileId;
     this.underlying = underlying;
     isEmbedded = !(underlying instanceof OIndexRIDContainerSBTree);
+		this.durableNonTxMode = durableNonTxMode;
   }
 
   public long getFileId() {
@@ -165,6 +174,10 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
     return isEmbedded;
   }
 
+  public boolean isDurableNonTxMode() {
+    return durableNonTxMode;
+  }
+
   public Set<OIdentifiable> getUnderlying() {
     return underlying;
   }
@@ -198,7 +211,7 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   }
 
   private void convertToSbTree() {
-    final OIndexRIDContainerSBTree tree = new OIndexRIDContainerSBTree(fileId);
+    final OIndexRIDContainerSBTree tree = new OIndexRIDContainerSBTree(fileId, durableNonTxMode);
 
     tree.addAll(underlying);
 

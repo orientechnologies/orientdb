@@ -17,8 +17,8 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.hazelcast.core.Hazelcast;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import org.junit.Assert;
 
 import java.io.IOException;
@@ -88,6 +88,9 @@ public abstract class AbstractServerClusterTest {
     System.out.println("Starting test against " + serverInstance.size() + " server nodes...");
 
     for (ServerRun server : serverInstance) {
+      System.out.println("\n******************************************************************************************");
+      System.out.println("STARTING SERVER -> " + server.getServerId() + "...");
+      System.out.println("******************************************************************************************\n");
       server.startServer(getDistributedServerConfiguration(server));
       try {
         Thread.sleep(delayServerStartup * serverInstance.size());
@@ -107,18 +110,31 @@ public abstract class AbstractServerClusterTest {
       Assert.assertNotNull(cfg);
     }
 
+    System.out.println("\n******************************************************************************************");
     System.out.println("Executing test...");
+    System.out.println("******************************************************************************************\n");
 
     try {
       executeTest();
     } finally {
+      onAfterExecution();
+
+      System.out.println("\n******************************************************************************************");
       System.out.println("Shutting down nodes...");
+      System.out.println("******************************************************************************************\n");
       for (ServerRun server : serverInstance)
         server.shutdownServer();
       Hazelcast.shutdownAll();
+      System.out.println("\n******************************************************************************************");
       System.out.println("Test finished");
+      System.out.println("******************************************************************************************\n");
+      deleteServers();
     }
   }
+
+  protected void onAfterExecution() {
+  }
+
 
   protected abstract String getDatabaseName();
 
@@ -128,26 +144,32 @@ public abstract class AbstractServerClusterTest {
    * @param db
    *          Current database
    */
-  protected void onAfterDatabaseCreation(final ODatabaseDocumentTx db) {
+  protected void onAfterDatabaseCreation(final OrientBaseGraph db) {
   }
 
   protected abstract void executeTest() throws Exception;
 
+  protected void prepare(final boolean iCopyDatabaseToNodes) throws IOException {
+    prepare(iCopyDatabaseToNodes, true);
+  }
+
   /**
    * Create the database on first node only
-   * 
+   *
    * @throws IOException
    */
-  protected void prepare(final boolean iCopyDatabaseToNodes) throws IOException {
+  protected void prepare(final boolean iCopyDatabaseToNodes, final boolean iCreateDatabase) throws IOException {
     // CREATE THE DATABASE
     final Iterator<ServerRun> it = serverInstance.iterator();
     final ServerRun master = it.next();
 
-    final ODatabaseDocumentTx db = master.createDatabase(getDatabaseName());
-    try {
-      onAfterDatabaseCreation(db);
-    } finally {
-      db.close();
+    if (iCreateDatabase) {
+      final OrientBaseGraph graph = master.createDatabase(getDatabaseName());
+      try {
+        onAfterDatabaseCreation(graph);
+      } finally {
+        graph.shutdown();
+      }
     }
 
     // COPY DATABASE TO OTHER SERVERS
@@ -159,6 +181,11 @@ public abstract class AbstractServerClusterTest {
       if (iCopyDatabaseToNodes)
         master.copyDatabase(getDatabaseName(), replicaSrv.getDatabasePath(getDatabaseName()));
     }
+  }
+
+  protected void deleteServers() {
+    for (ServerRun s : serverInstance)
+      s.deleteNode();
   }
 
   protected String getDistributedServerConfiguration(final ServerRun server) {

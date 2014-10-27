@@ -55,7 +55,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
   @Test
   public void insertOperator() {
-    final int clId = database.addCluster("anotherdefault", OStorage.CLUSTER_TYPE.PHYSICAL);
+    final int clId = database.addCluster("anotherdefault");
     final OClass profileClass = database.getMetadata().getSchema().getClass("Account");
     profileClass.addClusterId(clId);
 
@@ -71,7 +71,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     Assert.assertEquals(doc.field("name"), "Luca");
     Assert.assertEquals(doc.field("surname"), "Smith");
     Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 109.9f);
-    Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, positions.get(3)));
+    Assert.assertEquals(doc.field("location"), new ORecordId(addressId, positions.get(3)));
     Assert.assertEquals(doc.field("dummy"), "hooray");
 
     doc = (ODocument) database.command(
@@ -102,7 +102,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     Assert.assertEquals(doc.field("name"), "Marc");
     Assert.assertEquals(doc.field("surname"), "Smith");
     Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 120.0f);
-    Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, positions.get(3)));
+    Assert.assertEquals(doc.field("location"), new ORecordId(addressId, positions.get(3)));
     Assert.assertEquals(doc.field("dummy"), "hooray");
 
     database.delete(doc);
@@ -239,13 +239,16 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     if (schema.getClass("test") == null)
       schema.createClass("test");
 
+    final List<ODocument> usersCount = database.query(new OSQLSynchQuery<ODocument>("select count(*) from OUser"));
+    final long uCount = usersCount.get(0).field("count");
+
     ODocument doc = (ODocument) database.command(new OCommandSQL("INSERT INTO test SET names = (select name from OUser)"))
         .execute();
 
     Assert.assertTrue(doc != null);
     Assert.assertNotNull(doc.field("names"));
     Assert.assertTrue(doc.field("names") instanceof Collection);
-    Assert.assertEquals(((Collection<?>) doc.field("names")).size(), 3);
+    Assert.assertEquals(((Collection<?>) doc.field("names")).size(), uCount);
   }
 
   @Test
@@ -273,7 +276,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     Map<String, String> map = record.field("map");
     Assert.assertTrue(map.get("key").equals("value"));
     Assert.assertEquals(record.field("dir"), "");
-    Assert.assertEquals(record.field("user", OType.LINK), new ORecordId(3, positions.get(0)));
+    Assert.assertEquals(record.field("user"), new ORecordId(3, positions.get(0)));
   }
 
   public void insertSelect() {
@@ -300,7 +303,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     for (int i = 0; i < 100; i++) {
       if (!iteratorCluster.hasNext())
         break;
-      ORecord<?> doc = iteratorCluster.next();
+      ORecord doc = iteratorCluster.next();
       positions.add(doc.getIdentity().getClusterPosition());
     }
     return positions;

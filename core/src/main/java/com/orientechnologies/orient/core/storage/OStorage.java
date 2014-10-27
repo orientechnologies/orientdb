@@ -1,30 +1,29 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.storage;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
 
 import com.orientechnologies.common.concur.resource.OSharedContainer;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.id.OClusterPosition;
@@ -34,6 +33,11 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OBackupable;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+
 /**
  * This is the gateway interface between the Database side and the storage. Provided implementations are: Local, Remote and Memory.
  * 
@@ -42,12 +46,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  */
 
 public interface OStorage extends OBackupable, OSharedContainer {
-  public static final String DATA_DEFAULT_NAME    = "default";
   public static final String CLUSTER_DEFAULT_NAME = "default";
-
-  public enum CLUSTER_TYPE {
-    PHYSICAL, MEMORY
-  }
 
   public enum SIZE {
     TINY, MEDIUM, LARGE, HUGE
@@ -80,7 +79,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
   public OSharedResourceAdaptiveExternal getLock();
 
   // CRUD OPERATIONS
-  public OStorageOperationResult<OPhysicalPosition> createRecord(int iDataSegmentId, ORecordId iRecordId, byte[] iContent,
+  public OStorageOperationResult<OPhysicalPosition> createRecord(ORecordId iRecordId, byte[] iContent,
       ORecordVersion iRecordVersion, byte iRecordType, int iMode, ORecordCallback<OClusterPosition> iCallback);
 
   public OStorageOperationResult<ORawBuffer> readRecord(ORecordId iRid, String iFetchPlan, boolean iIgnoreCache,
@@ -91,9 +90,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   public OStorageOperationResult<Boolean> deleteRecord(ORecordId iRecordId, ORecordVersion iVersion, int iMode,
       ORecordCallback<Boolean> iCallback);
-
-  public boolean updateReplica(final int dataSegmentId, final ORecordId rid, final byte[] content,
-      final ORecordVersion recordVersion, final byte recordType) throws IOException;
 
   public ORecordMetadata getRecordMetadata(final ORID rid);
 
@@ -119,40 +115,24 @@ public interface OStorage extends OBackupable, OSharedContainer {
   /**
    * Add a new cluster into the storage.
    * 
-   * 
-   * @param iClusterType
-   *          Cluster type. Type depends by the implementation.
    * @param iClusterName
    *          name of the cluster
-   * @param iLocation
-   *          Location where to store the cluster
-   * @param iDataSegmentName
-   *          Name of the data-segment to use. null means 'default'
    * @param forceListBased
    * @param iParameters
    */
-  public int addCluster(String iClusterType, String iClusterName, String iLocation, String iDataSegmentName,
-      boolean forceListBased, Object... iParameters);
+  public int addCluster(String iClusterName, boolean forceListBased, Object... iParameters);
 
   /**
    * Add a new cluster into the storage.
    * 
-   * 
-   * @param iClusterType
-   *          Cluster type. Type depends by the implementation.
    * @param iClusterName
    *          name of the cluster
    * @param iRequestedId
    *          requested id of the cluster
-   * @param iLocation
-   *          Location where to store the cluster
-   * @param iDataSegmentName
-   *          Name of the data-segment to use. null means 'default'
    * @param forceListBased
    * @param iParameters
    */
-  public int addCluster(String iClusterType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
-      boolean forceListBased, Object... iParameters);
+  public int addCluster(String iClusterName, int iRequestedId, boolean forceListBased, Object... iParameters);
 
   public boolean dropCluster(String iClusterName, final boolean iTruncate);
 
@@ -164,13 +144,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
    * @return true if has been removed, otherwise false
    */
   public boolean dropCluster(int iId, final boolean iTruncate);
-
-  /**
-   * Add a new data segment in the default segment directory and with filename equals to the cluster name.
-   */
-  public int addDataSegment(String iDataSegmentName);
-
-  public int addDataSegment(String iSegmentName, String iDirectory);
 
   public long count(int iClusterId);
 
@@ -195,8 +168,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
   public void setDefaultClusterId(final int defaultClusterId);
 
   public int getClusterIdByName(String iClusterName);
-
-  public String getClusterTypeByName(String iClusterName);
 
   public String getPhysicalClusterNameById(int iClusterId);
 
@@ -233,10 +204,6 @@ public interface OStorage extends OBackupable, OSharedContainer {
   public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock);
 
   public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock);
-
-  public int getDataSegmentIdByName(String iDataSegmentName);
-
-  public boolean dropDataSegment(String iName);
 
   OPhysicalPosition[] higherPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition);
 
@@ -275,4 +242,8 @@ public interface OStorage extends OBackupable, OSharedContainer {
   public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback);
 
   public OCluster getClusterByName(String clusterName);
+
+  public ORecordConflictStrategy getConflictStrategy();
+
+  void setConflictStrategy(ORecordConflictStrategy iResolver);
 }

@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.hook;
 
 import com.orientechnologies.orient.core.record.ORecord;
@@ -34,16 +38,16 @@ public interface ORecordHook {
   }
 
   public enum TYPE {
-    ANY, BEFORE_CREATE, BEFORE_READ, BEFORE_UPDATE, BEFORE_DELETE, AFTER_CREATE, AFTER_READ, AFTER_UPDATE, AFTER_DELETE, CREATE_FAILED, READ_FAILED, UPDATE_FAILED, DELETE_FAILED, CREATE_REPLICATED, READ_REPLICATED, UPDATE_REPLICATED, DELETE_REPLICATED, BEFORE_REPLICA_ADD, AFTER_REPLICA_ADD, BEFORE_REPLICA_UPDATE, AFTER_REPLICA_UPDATE, BEFORE_REPLICA_DELETE, AFTER_REPLICA_DELETE, REPLICA_ADD_FAILED, REPLICA_UPDATE_FAILED, REPLICA_DELETE_FAILED
+    ANY, BEFORE_CREATE, BEFORE_READ, BEFORE_UPDATE, BEFORE_DELETE, AFTER_CREATE, AFTER_READ, AFTER_UPDATE, AFTER_DELETE, CREATE_FAILED, READ_FAILED, UPDATE_FAILED, DELETE_FAILED, CREATE_REPLICATED, READ_REPLICATED, UPDATE_REPLICATED, DELETE_REPLICATED
   }
 
   public enum RESULT {
-    RECORD_NOT_CHANGED, RECORD_CHANGED, SKIP, SKIP_IO
+    RECORD_NOT_CHANGED, RECORD_CHANGED, SKIP, SKIP_IO, RECORD_REPLACED
   }
 
   public void onUnregister();
 
-  public RESULT onTrigger(TYPE iType, ORecord<?> iRecord);
+  public RESULT onTrigger(TYPE iType, ORecord iRecord);
 
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode();
 }

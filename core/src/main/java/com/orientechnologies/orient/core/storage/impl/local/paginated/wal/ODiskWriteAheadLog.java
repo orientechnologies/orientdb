@@ -1,20 +1,34 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
+
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 import java.io.EOFException;
 import java.io.File;
@@ -38,16 +52,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.CRC32;
-
-import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 /**
  * @author Andrey Lomakin
@@ -281,10 +285,15 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     public void delete(boolean flush) throws IOException {
       close(flush);
 
-      boolean deleted = file.delete();
+      boolean deleted = OFileUtils.delete(file);
+      int retryCount = 0;
+
       while (!deleted) {
-        OMemoryWatchDog.freeMemoryForResourceCleanup(100);
-        deleted = !file.exists() || file.delete();
+        deleted = OFileUtils.delete(file);
+        retryCount++;
+
+        if (retryCount > 10)
+          throw new IOException("Can not delete file. Retry limit exceeded. (" + retryCount + ").");
       }
     }
 
@@ -613,6 +622,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         flushedLsn = null;
       } else {
 
+        logSize = 0;
+
         for (File walFile : walFiles) {
           LogSegment logSegment = new LogSegment(walFile, maxPagesCacheSize);
           logSegment.init();
@@ -765,7 +776,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         if (first != null) {
           first.stopFlush(false);
 
-          logSize -= first.filledUpTo();
+          recalculateLogSize();
 
           first.delete(false);
           fixMasterRecords();
@@ -803,6 +814,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         logSegment.delete(false);
         iterator.remove();
       }
+
+      recalculateLogSize();
     }
   }
 
@@ -836,10 +849,15 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       for (LogSegment logSegment : logSegments)
         logSegment.delete(false);
 
-      boolean deleted = masterRecordFile.delete();
+      boolean deleted = OFileUtils.delete(masterRecordFile);
+      int retryCount = 0;
+
       while (!deleted) {
-        OMemoryWatchDog.freeMemoryForResourceCleanup(100);
-        deleted = !masterRecordFile.exists() || masterRecordFile.delete();
+        deleted = OFileUtils.delete(masterRecordFile);
+        retryCount++;
+
+        if (retryCount > 10)
+          throw new IOException("Can not delete file. Retry limit exceeded. (" + retryCount + ").");
       }
     }
   }
@@ -896,11 +914,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   public OLogSequenceNumber getFlushedLSN() {
-    synchronized (syncObject) {
-      checkForClose();
-
-      return flushedLsn;
-    }
+    return flushedLsn;
   }
 
   public void cutTill(OLogSequenceNumber lsn) throws IOException {
@@ -925,6 +939,8 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         if (logSegment != null)
           logSegment.delete(false);
       }
+
+      recalculateLogSize();
     }
   }
 
@@ -933,6 +949,13 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       return null;
 
     return logSegments.remove(0);
+  }
+
+  private void recalculateLogSize() throws IOException {
+    logSize = 0;
+
+    for (LogSegment segment : logSegments)
+      logSize += segment.filledUpTo();
   }
 
   private void fixMasterRecords() throws IOException {
@@ -979,17 +1002,17 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   private OLogSequenceNumber readMasterRecord(String storageName, int index) throws IOException {
-    CRC32 crc32 = new CRC32();
+    final CRC32 crc32 = new CRC32();
     try {
       masterRecordLSNHolder.seek(index * (OIntegerSerializer.INT_SIZE + 2 * OLongSerializer.LONG_SIZE));
 
       int firstCRC = masterRecordLSNHolder.readInt();
-      long segment = masterRecordLSNHolder.readLong();
-      long position = masterRecordLSNHolder.readLong();
+      final long segment = masterRecordLSNHolder.readLong();
+      final long position = masterRecordLSNHolder.readLong();
 
       byte[] serializedLSN = new byte[2 * OLongSerializer.LONG_SIZE];
-      OLongSerializer.INSTANCE.serialize(segment, serializedLSN, 0);
-      OLongSerializer.INSTANCE.serialize(position, serializedLSN, OLongSerializer.LONG_SIZE);
+      OLongSerializer.INSTANCE.serializeLiteral(segment, serializedLSN, 0);
+      OLongSerializer.INSTANCE.serializeLiteral(position, serializedLSN, OLongSerializer.LONG_SIZE);
       crc32.update(serializedLSN);
 
       if (firstCRC != ((int) crc32.getValue())) {
@@ -1007,11 +1030,11 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
   private void writeMasterRecord(int index, OLogSequenceNumber masterRecord) throws IOException {
     masterRecordLSNHolder.seek(index * (OIntegerSerializer.INT_SIZE + 2 * OLongSerializer.LONG_SIZE));
-    CRC32 crc32 = new CRC32();
+    final CRC32 crc32 = new CRC32();
 
-    byte[] serializedLSN = new byte[2 * OLongSerializer.LONG_SIZE];
-    OLongSerializer.INSTANCE.serialize(masterRecord.getSegment(), serializedLSN, 0);
-    OLongSerializer.INSTANCE.serialize(masterRecord.getPosition(), serializedLSN, OLongSerializer.LONG_SIZE);
+    final byte[] serializedLSN = new byte[2 * OLongSerializer.LONG_SIZE];
+    OLongSerializer.INSTANCE.serializeLiteral(masterRecord.getSegment(), serializedLSN, 0);
+    OLongSerializer.INSTANCE.serializeLiteral(masterRecord.getPosition(), serializedLSN, OLongSerializer.LONG_SIZE);
     crc32.update(serializedLSN);
 
     masterRecordLSNHolder.writeInt((int) crc32.getValue());

@@ -1,9 +1,30 @@
+/*
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
+
 package com.tinkerpop.blueprints.impls.orient;
 
 import org.apache.commons.configuration.Configuration;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.tx.OTransaction.TXSTATUS;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 import com.tinkerpop.blueprints.TransactionalGraph;
@@ -14,33 +35,51 @@ import com.tinkerpop.blueprints.TransactionalGraph;
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public abstract class OrientTransactionalGraph extends OrientBaseGraph implements TransactionalGraph {
-  protected boolean autoStartTx = true;
+  protected boolean useLog = true;
 
   /**
    * Constructs a new object using an existent database instance.
-   * 
+   *
    * @param iDatabase
    *          Underlying database object to attach
    */
   protected OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase) {
-    this(iDatabase, true);
+    this(iDatabase, true, null, null);
   }
 
-  protected OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase, final boolean iAutoStartTx) {
-    super(iDatabase);
+  protected OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase, final String iUserName, final String iUserPasswd,
+      final Settings iConfiguration) {
+    super(iDatabase, iUserName, iUserPasswd, iConfiguration);
+    setCurrentGraphInThreadLocal();
+    this.setAutoStartTx(settings.autoStartTx);
+
+    if (settings.autoStartTx)
+      begin();
+  }
+
+  protected OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase, final boolean iAutoStartTx, final String iUserName,
+      final String iUserPasswd) {
+    super(iDatabase, iUserName, iUserPasswd, null);
     setCurrentGraphInThreadLocal();
     this.setAutoStartTx(iAutoStartTx);
 
     if (iAutoStartTx)
-      getContext(false).rawGraph.begin();
+      begin();
   }
 
   protected OrientTransactionalGraph(final ODatabaseDocumentPool pool) {
     super(pool);
     setCurrentGraphInThreadLocal();
 
-    getContext(false).rawGraph.begin();
+    begin();
   }
+
+	protected OrientTransactionalGraph(final ODatabaseDocumentPool pool, final Settings configuration) {
+		super(pool, configuration);
+		setCurrentGraphInThreadLocal();
+
+		begin();
+	}
 
   protected OrientTransactionalGraph(final String url) {
     this(url, true);
@@ -49,10 +88,10 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   protected OrientTransactionalGraph(final String url, final boolean iAutoStartTx) {
     super(url, ADMIN, ADMIN);
     setCurrentGraphInThreadLocal();
-    this.setAutoStartTx(iAutoStartTx);
+    setAutoStartTx(iAutoStartTx);
 
     if (iAutoStartTx)
-      getContext(false).rawGraph.begin();
+      begin();
   }
 
   protected OrientTransactionalGraph(final String url, final String username, final String password) {
@@ -65,7 +104,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     this.setAutoStartTx(iAutoStartTx);
 
     if (iAutoStartTx)
-      getContext(false).rawGraph.begin();
+      begin();
   }
 
   protected OrientTransactionalGraph(final Configuration configuration) {
@@ -74,6 +113,15 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     final Boolean autoStartTx = configuration.getBoolean("blueprints.orientdb.autoStartTx", null);
     if (autoStartTx != null)
       setAutoStartTx(autoStartTx);
+  }
+
+  public boolean isUseLog() {
+    return useLog;
+  }
+
+  public OrientTransactionalGraph setUseLog(final boolean useLog) {
+    this.useLog = useLog;
+    return this;
   }
 
   /**
@@ -85,12 +133,8 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   @SuppressWarnings("deprecation")
   @Override
   public void stopTransaction(final Conclusion conclusion) {
-    final OrientGraphContext context = getContext(false);
-    if (context == null)
-      return;
-
-    if (context.rawGraph.isClosed() || context.rawGraph.getTransaction() instanceof OTransactionNoTx
-        || context.rawGraph.getTransaction().getStatus() != TXSTATUS.BEGUN)
+    if (database.isClosed() || database.getTransaction() instanceof OTransactionNoTx
+        || database.getTransaction().getStatus() != TXSTATUS.BEGUN)
       return;
 
     if (Conclusion.SUCCESS == conclusion)
@@ -103,57 +147,47 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
    * Commits the current active transaction.
    */
   public void commit() {
-    final OrientGraphContext context = getContext(false);
-    if (context == null)
+    if (database == null)
       return;
 
-    context.rawGraph.commit();
-    if (autoStartTx)
-      getContext(false).rawGraph.begin();
+    database.commit();
+    if (settings.autoStartTx)
+      begin();
   }
 
   /**
    * Rollbacks the current active transaction. All the pending changes are rollbacked.
    */
   public void rollback() {
-    final OrientGraphContext context = getContext(false);
-    if (context == null)
+    if (database == null)
       return;
 
-    context.rawGraph.rollback();
-    if (autoStartTx)
-      getContext(false).rawGraph.begin();
+    database.rollback();
+    if (settings.autoStartTx)
+      begin();
   }
 
-  /**
-   * Tells if a transaction is started automatically when the graph is changed. This affects only when a transaction hasn't been
-   * started. Default is true.
-   * 
-   * @return
-   */
-  public boolean isAutoStartTx() {
-    return autoStartTx;
-  }
-
-  /**
-   * If enabled auto starts a new transaction right before the graph is changed. This affects only when a transaction hasn't been
-   * started. Default is true.
-   * 
-   * @param autoStartTx
-   */
-  public void setAutoStartTx(final boolean autoStartTx) {
-    this.autoStartTx = autoStartTx;
+  public void begin() {
+    final boolean txBegun = database.getTransaction().isActive();
+    if (!txBegun) {
+      database.begin();
+      database.getTransaction().setUsingLog(useLog);
+    }
   }
 
   @Override
   protected void autoStartTransaction() {
-    if (!autoStartTx)
-      return;
+    final boolean txBegun = database.getTransaction().isActive();
 
-    final OrientGraphContext context = getContext(true);
-    if (context.rawGraph.getTransaction() instanceof OTransactionNoTx
-        && context.rawGraph.getTransaction().getStatus() != TXSTATUS.BEGUN) {
-      context.rawGraph.begin();
+    if (!settings.autoStartTx) {
+      if (settings.requireTransaction && !txBegun)
+        throw new OTransactionException("Transaction required to change the Graph");
+
+      return;
     }
+
+    if (!txBegun)
+      begin();
   }
+
 }

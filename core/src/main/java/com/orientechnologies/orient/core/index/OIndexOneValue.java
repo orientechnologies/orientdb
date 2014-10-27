@@ -1,19 +1,30 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.index;
+
+import com.orientechnologies.common.comparator.ODefaultComparator;
+import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,16 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.common.comparator.ODefaultComparator;
-import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerRID;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
-
 /**
  * Abstract Index implementation that allows only one value for a key.
  * 
@@ -41,8 +42,9 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
  * 
  */
 public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
-  public OIndexOneValue(final String type, String algorithm, OIndexEngine<OIdentifiable> engine, String valueContainerAlgorithm) {
-    super(type, algorithm, engine, valueContainerAlgorithm);
+  public OIndexOneValue(final String type, String algorithm, OIndexEngine<OIdentifiable> engine, String valueContainerAlgorithm,
+      ODocument metadata) {
+    super(type, algorithm, engine, valueContainerAlgorithm, metadata);
   }
 
   public OIdentifiable get(Object iKey) {
@@ -72,7 +74,7 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
   }
 
   @Override
-  public void checkEntry(final OIdentifiable record, Object key) {
+  public ODocument checkEntry(final OIdentifiable record, Object key) {
     checkForRebuild();
 
     key = getCollatingValue(key);
@@ -80,26 +82,14 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     // CHECK IF ALREADY EXIST
     final OIdentifiable indexedRID = get(key);
     if (indexedRID != null && !indexedRID.getIdentity().equals(record.getIdentity())) {
-      // CHECK IF IN THE SAME TX THE ENTRY WAS DELETED
-      String storageType = getDatabase().getStorage().getType();
-      if (storageType.equals(OEngineMemory.NAME)) {
-        final OTransactionIndexChanges indexChanges = ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction()
-            .getIndexChanges(getName());
-        if (indexChanges != null) {
-          final OTransactionIndexChangesPerKey keyChanges = indexChanges.getChangesPerKey(key);
-          if (keyChanges != null) {
-            for (OTransactionIndexChangesPerKey.OTransactionIndexEntry entry : keyChanges.entries) {
-              if (entry.operation == OTransactionIndexChanges.OPERATION.REMOVE)
-                // WAS DELETED, OK!
-                return;
-            }
-          }
-        }
-      }
-
-      throw new OIndexException("Cannot index record : " + record + " found duplicated key '" + key + "' in index " + getName()
-          + " previously assigned to the record " + indexedRID);
+      final Boolean mergeSameKey = metadata != null && (Boolean) metadata.field(OIndex.MERGE_KEYS);
+      if (mergeSameKey != null && mergeSameKey)
+        return (ODocument) indexedRID.getRecord();
+      else
+        throw new OIndexException("Cannot index record : " + record + " found duplicated key '" + key + "' in index " + getName()
+            + " previously assigned to the record " + indexedRID);
     }
+    return null;
   }
 
   public OIndexOneValue create(final String name, final OIndexDefinition indexDefinition, final String clusterIndexName,
@@ -238,6 +228,18 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     acquireSharedLock();
     try {
       return indexEngine.cursor(null);
+    } finally {
+      releaseSharedLock();
+    }
+  }
+
+  @Override
+  public OIndexCursor descCursor() {
+    checkForRebuild();
+
+    acquireSharedLock();
+    try {
+      return indexEngine.descCursor(null);
     } finally {
       releaseSharedLock();
     }

@@ -1,3 +1,23 @@
+/*
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
+
 package com.tinkerpop.blueprints.impls.orient;
 
 import org.apache.commons.configuration.Configuration;
@@ -12,48 +32,47 @@ import com.tinkerpop.blueprints.Features;
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public class OrientGraph extends OrientTransactionalGraph {
-  protected final Features FEATURES = new Features();
+  private boolean          featuresInitialized = false;
+
+  protected final Features FEATURES            = new Features();
 
   /**
-   * Creates a new Transactional Graph using an existent database instance.
-   * 
+   * Creates a new Transactional Graph using an existent database instance. User and password are passed in case of re-open.
+   *
    * @param iDatabase
    *          Underlying database object to attach
    */
-  public OrientGraph(final ODatabaseDocumentTx iDatabase) {
-    super(iDatabase);
-    config();
+  public OrientGraph(final ODatabaseDocumentTx iDatabase, final String iUserName, final String iUserPasswd) {
+    super(iDatabase, true, iUserName, iUserPasswd);
   }
 
   /**
    * Creates a new Transactional Graph using an existent database instance and the auto-start setting to determine if auto start a
    * transaction.
-   * 
+   *
    * @param iDatabase
    *          Underlying database object to attach
    * @param iAutoStartTx
    *          True to auto start a transaction at the beginning and after each commit/rollback
    */
   public OrientGraph(final ODatabaseDocumentTx iDatabase, final boolean iAutoStartTx) {
-    super(iDatabase, iAutoStartTx);
-    config();
+    super(iDatabase, iAutoStartTx, null, null);
   }
 
   /**
    * Creates a new Transactional Graph from an URL using default user (admin) and password (admin).
-   * 
+   *
    * @param url
    *          OrientDB URL
    */
   public OrientGraph(final String url) {
     super(url, ADMIN, ADMIN);
-    config();
   }
 
   /**
    * Creates a new Transactional Graph from an URL using default user (admin) and password (admin). It receives also the auto-start
    * setting to determine if auto start a transaction.
-   * 
+   *
    * @param url
    *          OrientDB URL
    * @param iAutoStartTx
@@ -61,12 +80,11 @@ public class OrientGraph extends OrientTransactionalGraph {
    */
   public OrientGraph(final String url, final boolean iAutoStartTx) {
     super(url, ADMIN, ADMIN, iAutoStartTx);
-    config();
   }
 
   /**
    * Creates a new Transactional Graph from an URL using a username and a password.
-   * 
+   *
    * @param url
    *          OrientDB URL
    * @param username
@@ -76,14 +94,13 @@ public class OrientGraph extends OrientTransactionalGraph {
    */
   public OrientGraph(final String url, final String username, final String password) {
     super(url, username, password);
-    config();
   }
 
   /**
-   * 
+   *
    * Creates a new Transactional Graph from an URL using a username and a password. It receives also the auto-start setting to
    * determine if auto start a transaction.
-   * 
+   *
    * @param url
    *          OrientDB URL
    * @param username
@@ -95,19 +112,21 @@ public class OrientGraph extends OrientTransactionalGraph {
    */
   public OrientGraph(final String url, final String username, final String password, final boolean iAutoStartTx) {
     super(url, username, password, iAutoStartTx);
-    config();
   }
 
   /**
    * Creates a new Transactional Graph from a pool.
-   * 
+   *
    * @param pool
    *          Database pool where to acquire a database instance
    */
-  public OrientGraph(ODatabaseDocumentPool pool) {
+  public OrientGraph(final ODatabaseDocumentPool pool) {
     super(pool);
-    config();
   }
+
+	public OrientGraph(final ODatabaseDocumentPool pool, final Settings configuration) {
+		super(pool, configuration);
+	}
 
   /**
    * Builds a OrientGraph instance passing a configuration. Supported configuration settings are:
@@ -170,57 +189,80 @@ public class OrientGraph extends OrientTransactionalGraph {
    * <td>true</td>
    * </tr>
    * </table>
-   * 
-   * @param configuration
+   *
+   * @param iConfiguration
    *          graph settings see the details above.
    */
-  public OrientGraph(final Configuration configuration) {
-    super(configuration);
-    config();
+  public OrientGraph(final Configuration iConfiguration) {
+    super(iConfiguration);
+  }
+
+  /**
+   * Creates a new Transactional Graph using an existent database instance.
+   *
+   * @param iDatabase
+   *          Underlying database object to attach
+   */
+  public OrientGraph(final ODatabaseDocumentTx iDatabase) {
+    super(iDatabase);
+  }
+
+  /**
+   * Creates a new Transactional Graph using an existent database instance.
+   *
+   * @param iDatabase
+   *          Underlying database object to attach
+   */
+  public OrientGraph(final ODatabaseDocumentTx iDatabase, final String iUser, final String iPassword, final Settings iConfiguration) {
+    super(iDatabase, iUser, iPassword, iConfiguration);
   }
 
   /**
    * Returns the current Graph settings.
-   * 
+   *
    * @return Features object
    */
   public Features getFeatures() {
-    // DYNAMIC FEATURES BASED ON CONFIGURATION
-    FEATURES.supportsEdgeIndex = !settings.useLightweightEdges;
-    FEATURES.supportsEdgeKeyIndex = !settings.useLightweightEdges;
-    FEATURES.supportsEdgeIteration = !settings.useLightweightEdges;
-    FEATURES.supportsEdgeRetrieval = !settings.useLightweightEdges;
+    if (!featuresInitialized) {
+      FEATURES.supportsDuplicateEdges = true;
+      FEATURES.supportsSelfLoops = true;
+      FEATURES.isPersistent = true;
+      FEATURES.supportsVertexIteration = true;
+      FEATURES.supportsVertexIndex = true;
+      FEATURES.ignoresSuppliedIds = true;
+      FEATURES.supportsTransactions = true;
+      FEATURES.supportsVertexKeyIndex = true;
+      FEATURES.supportsKeyIndices = true;
+      FEATURES.isWrapper = false;
+      FEATURES.supportsIndices = true;
+      FEATURES.supportsVertexProperties = true;
+      FEATURES.supportsEdgeProperties = true;
+
+      // For more information on supported types, please see:
+      // http://code.google.com/p/orient/wiki/Types
+      FEATURES.supportsSerializableObjectProperty = true;
+      FEATURES.supportsBooleanProperty = true;
+      FEATURES.supportsDoubleProperty = true;
+      FEATURES.supportsFloatProperty = true;
+      FEATURES.supportsIntegerProperty = true;
+      FEATURES.supportsPrimitiveArrayProperty = true;
+      FEATURES.supportsUniformListProperty = true;
+      FEATURES.supportsMixedListProperty = true;
+      FEATURES.supportsLongProperty = true;
+      FEATURES.supportsMapProperty = true;
+      FEATURES.supportsStringProperty = true;
+      FEATURES.supportsThreadedTransactions = false;
+      FEATURES.supportsThreadIsolatedTransactions = false;
+
+      // DYNAMIC FEATURES BASED ON CONFIGURATION
+      FEATURES.supportsEdgeIndex = !settings.useLightweightEdges;
+      FEATURES.supportsEdgeKeyIndex = !settings.useLightweightEdges;
+      FEATURES.supportsEdgeIteration = !settings.useLightweightEdges;
+      FEATURES.supportsEdgeRetrieval = !settings.useLightweightEdges;
+
+      featuresInitialized = true;
+    }
+
     return FEATURES;
-  }
-
-  protected void config() {
-    FEATURES.supportsDuplicateEdges = true;
-    FEATURES.supportsSelfLoops = true;
-    FEATURES.isPersistent = true;
-    FEATURES.supportsVertexIteration = true;
-    FEATURES.supportsVertexIndex = true;
-    FEATURES.ignoresSuppliedIds = true;
-    FEATURES.supportsTransactions = true;
-    FEATURES.supportsVertexKeyIndex = true;
-    FEATURES.supportsKeyIndices = true;
-    FEATURES.isWrapper = false;
-    FEATURES.supportsIndices = true;
-    FEATURES.supportsVertexProperties = true;
-    FEATURES.supportsEdgeProperties = true;
-
-    // For more information on supported types, please see:
-    // http://code.google.com/p/orient/wiki/Types
-    FEATURES.supportsSerializableObjectProperty = true;
-    FEATURES.supportsBooleanProperty = true;
-    FEATURES.supportsDoubleProperty = true;
-    FEATURES.supportsFloatProperty = true;
-    FEATURES.supportsIntegerProperty = true;
-    FEATURES.supportsPrimitiveArrayProperty = true;
-    FEATURES.supportsUniformListProperty = true;
-    FEATURES.supportsMixedListProperty = true;
-    FEATURES.supportsLongProperty = true;
-    FEATURES.supportsMapProperty = true;
-    FEATURES.supportsStringProperty = true;
-    FEATURES.supportsThreadedTransactions = false;
   }
 }

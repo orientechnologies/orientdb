@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 import org.testng.annotations.Test;
 
 import java.util.HashMap;
@@ -26,18 +25,9 @@ public class TestOrientBulkInsert {
   }
 
   public TestOrientBulkInsert() throws InterruptedException {
-    // FIXME Eric_08.05.2013
-    // Mit der 1.3 von Orientdb gab es Memory Leak probleme beim inserten der Photos
-    // Mit den folgenden Parametern und dem Aufruf von
-    // this.dbWrapper.setMassiveInserts();
-    // wurde es besser aber immer noch nicht 100%
-    //
-    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false); // Turn off cache
-
     OGlobalConfiguration.INDEX_AUTO_LAZY_UPDATES.setValue(0); // Turn off cache
     OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(0);
 
-    OGlobalConfiguration.FILE_MMAP_STRATEGY.setValue(4);
     OGlobalConfiguration.TX_USE_LOG.setValue(false);
 
     Map defaultsMap = new HashMap<String, Object>();
@@ -56,7 +46,7 @@ public class TestOrientBulkInsert {
 
     OSchema schema = database.getMetadata().getSchema();
 
-    OClass cBulk = schema.createClass("classBulk", database.addCluster("cluster_bulk", CLUSTER_TYPE.PHYSICAL));
+    OClass cBulk = schema.createClass("classBulk", database.addCluster("cluster_bulk"));
 
     // Declare some fields
     for (int i = 1; i < 10; i++) {

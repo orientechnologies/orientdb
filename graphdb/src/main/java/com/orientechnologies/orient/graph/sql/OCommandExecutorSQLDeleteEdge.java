@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.graph.sql;
 
 import java.util.HashSet;
@@ -29,6 +33,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLRetryAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
@@ -41,6 +46,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 /**
  * SQL DELETE EDGE command.
@@ -168,20 +174,32 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
 
                 if (fromIds != null && toIds != null) {
                   // REMOVE ALL THE EDGES BETWEEN VERTICES
-                  for (OIdentifiable fromId : fromIds)
-                    for (Edge e : graph.getVertex(fromId).getEdges(Direction.OUT))
-                      if (toIds.contains(((OrientEdge) e).getInVertex().getIdentity()))
-                        edges.add((OrientEdge) e);
-                } else if (fromIds != null)
+                  for (OIdentifiable fromId : fromIds) {
+                    final OrientVertex v = graph.getVertex(fromId);
+                    if (v != null)
+                      for (Edge e : v.getEdges(Direction.OUT)) {
+                        final OIdentifiable inV = ((OrientEdge) e).getInVertex();
+                        if (inV != null && toIds.contains(inV.getIdentity()))
+                          edges.add((OrientEdge) e);
+                      }
+                  }
+                } else if (fromIds != null) {
                   // REMOVE ALL THE EDGES THAT START FROM A VERTEXES
-                  for (OIdentifiable fromId : fromIds)
-                    edges.add((OrientEdge) graph.getVertex(fromId).getEdges(Direction.OUT));
-                else if (toIds != null)
+                  for (OIdentifiable fromId : fromIds) {
+                    final OrientVertex v = graph.getVertex(fromId);
+                    if (v != null)
+                      edges.add((OrientEdge) v.getEdges(Direction.OUT));
+                  }
+                } else if (toIds != null) {
                   // REMOVE ALL THE EDGES THAT ARRIVE TO A VERTEXES
-                  for (OIdentifiable toId : toIds)
-                    edges.add((OrientEdge) graph.getVertex(toId).getEdges(Direction.IN));
-                else
-                  throw new OCommandExecutionException("Invalid target");
+                  for (OIdentifiable toId : toIds) {
+                    final OrientVertex v = graph.getVertex(toId);
+                    if (v != null) {
+                      edges.add((OrientEdge) v.getEdges(Direction.IN));
+                    }
+                  }
+                } else
+                  throw new OCommandExecutionException("Invalid target: " + toIds);
 
                 if (compiledFilter != null) {
                   // ADDITIONAL FILTERING
@@ -263,5 +281,10 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
 
   @Override
   public void end() {
+  }
+
+  @Override
+  public int getSecurityOperationType() {
+    return ORole.PERMISSION_DELETE;
   }
 }

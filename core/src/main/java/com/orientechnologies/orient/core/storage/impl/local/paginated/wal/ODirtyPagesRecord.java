@@ -1,13 +1,33 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
+/*
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 
-import java.util.HashSet;
-import java.util.Set;
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Andrey Lomakin
@@ -38,7 +58,7 @@ public class ODirtyPagesRecord extends OAbstractWALRecord {
       OLongSerializer.INSTANCE.serializeNative(dirtyPage.getPageIndex(), content, offset);
       offset += OLongSerializer.LONG_SIZE;
 
-      stringSerializer.serializeNative(dirtyPage.getFileName(), content, offset);
+      stringSerializer.serializeNativeObject(dirtyPage.getFileName(), content, offset);
       offset += stringSerializer.getObjectSize(dirtyPage.getFileName());
 
       OLongSerializer.INSTANCE.serializeNative(dirtyPage.getLsn().getSegment(), content, offset);
@@ -62,7 +82,7 @@ public class ODirtyPagesRecord extends OAbstractWALRecord {
       long pageIndex = OLongSerializer.INSTANCE.deserializeNative(content, offset);
       offset += OLongSerializer.LONG_SIZE;
 
-      String fileName = stringSerializer.deserializeNative(content, offset);
+      String fileName = stringSerializer.deserializeNativeObject(content, offset);
       offset += stringSerializer.getObjectSize(fileName);
 
       long segment = OLongSerializer.INSTANCE.deserializeNative(content, offset);

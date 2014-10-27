@@ -8,6 +8,10 @@
 
 Look also at [Presentations](https://github.com/orientechnologies/orientdb/wiki/Presentations) with video and slides introducing OrientDB.
 
+[![Gitter chat](https://badges.gitter.im/orientechnologies/orientdb.png)](https://gitter.im/orientechnologies/orientdb)
+
+
+
 ## Is OrientDB a Relational DBMS?
 
 No. OrientDB adheres to the [NoSQL](http://en.wikipedia.org/wiki/NoSQL) movement even though it supports a subset of [SQL](https://github.com/orientechnologies/orientdb/wiki/SQL) as query language. In this way it's easy to start using it without having to learn too much new stuff. OrientDB is a [Document Database](http://en.wikipedia.org/wiki/Document-oriented_database) but has the best features of other DBMSs. For example relationships are handled as in [Graph Databases](http://en.wikipedia.org/wiki/Graph_database).
@@ -39,7 +43,7 @@ OrientDB is free for any use (Apache 2 license). If you are in production don't 
 Start learning OrientDB by following the first  [Tutorial](https://github.com/orientechnologies/orientdb/wiki/Tutorial:-Document-and-graph-model).
 
 ## Main References
-- [Documentation](https://github.com/orientechnologies/orientdb/wiki)
+- [Documentation](http://www.orientechnologies.com/docs/)
 - For any questions visit the [OrientDB Community Group](http://www.orientdb.org/community-group.htm)
 - [Professional Support](www.orientechnologies.com/support/).
 

@@ -15,6 +15,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.types.ORef;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OMemoryInputStream;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
@@ -25,7 +26,7 @@ public class TrackedMapTest {
     final ODocument doc = new ODocument();
 
     final OTrackedMap<String> map = new OTrackedMap<String>(doc);
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final ORef<Boolean> changed = new ORef<Boolean>(false);
@@ -51,12 +52,12 @@ public class TrackedMapTest {
     final ODocument doc = new ODocument();
 
     final OTrackedMap<String> map = new OTrackedMap<String>(doc);
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     map.put("key1", "value1");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final ORef<Boolean> changed = new ORef<Boolean>(false);
@@ -82,12 +83,12 @@ public class TrackedMapTest {
     final ODocument doc = new ODocument();
 
     final OTrackedMap<String> map = new OTrackedMap<String>(doc);
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     map.put("key1", "value1");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final ORef<Boolean> changed = new ORef<Boolean>(false);
@@ -108,12 +109,12 @@ public class TrackedMapTest {
     final ODocument doc = new ODocument();
 
     final OTrackedMap<String> map = new OTrackedMap<String>(doc);
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     map.put("key1", "value1");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final ORef<Boolean> changed = new ORef<Boolean>(false);
@@ -135,7 +136,7 @@ public class TrackedMapTest {
 
     final OTrackedMap<String> map = new OTrackedMap<String>(doc);
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     map.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
@@ -160,7 +161,7 @@ public class TrackedMapTest {
 
     map.put("key1", "value1");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final ORef<Boolean> changed = new ORef<Boolean>(false);
@@ -189,7 +190,7 @@ public class TrackedMapTest {
 
     map.put("key1", "value1");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final ORef<Boolean> changed = new ORef<Boolean>(false);
@@ -213,7 +214,7 @@ public class TrackedMapTest {
 
     map.put("key1", "value1");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     map.setInternalStatus(ORecordElement.STATUS.UNMARSHALLING);
@@ -240,7 +241,7 @@ public class TrackedMapTest {
     trackedMap.put("key2", "value2");
     trackedMap.put("key3", "value3");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final Set<OMultiValueChangeEvent<Object, String>> firedEvents = new HashSet<OMultiValueChangeEvent<Object, String>>();
@@ -275,7 +276,7 @@ public class TrackedMapTest {
     trackedMap.put("key2", "value2");
     trackedMap.put("key3", "value3");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     final ORef<Boolean> changed = new ORef<Boolean>(false);
@@ -302,7 +303,7 @@ public class TrackedMapTest {
     trackedMap.put("key2", "value2");
     trackedMap.put("key3", "value3");
 
-    doc.unsetDirty();
+    ORecordInternal.unsetDirty(doc);
     Assert.assertFalse(doc.isDirty());
 
     trackedMap.clear();

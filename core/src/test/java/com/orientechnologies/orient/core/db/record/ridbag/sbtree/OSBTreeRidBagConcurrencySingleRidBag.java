@@ -33,27 +33,21 @@ public class OSBTreeRidBagConcurrencySingleRidBag {
   private ExecutorService                   threadExecutor  = Executors.newCachedThreadPool();
   private volatile boolean                  cont            = true;
 
-  private boolean                           firstLevelCache;
-  private boolean                           secondLevelCache;
-
   private int                               topThreshold;
   private int                               bottomThreshold;
 
   @BeforeMethod
   public void beforeMethod() {
-    firstLevelCache = OGlobalConfiguration.CACHE_LOCAL_ENABLED.getValueAsBoolean();
     topThreshold = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
     bottomThreshold = OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
 
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(30);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(20);
 
-    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
   }
 
   @AfterMethod
   public void afterMethod() {
-    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(firstLevelCache);
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(topThreshold);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(bottomThreshold);
   }

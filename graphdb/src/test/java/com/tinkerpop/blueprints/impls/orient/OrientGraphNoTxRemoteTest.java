@@ -2,16 +2,25 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
-import com.tinkerpop.blueprints.*;
+import com.tinkerpop.blueprints.Graph;
+import com.tinkerpop.blueprints.GraphQueryTestSuite;
+import com.tinkerpop.blueprints.KeyIndexableGraphTestSuite;
+import com.tinkerpop.blueprints.TestSuite;
+import com.tinkerpop.blueprints.VertexQueryTestSuite;
 import com.tinkerpop.blueprints.impls.GraphTest;
 import com.tinkerpop.blueprints.util.io.gml.GMLReaderTestSuite;
 import com.tinkerpop.blueprints.util.io.graphml.GraphMLReaderTestSuite;
 import com.tinkerpop.blueprints.util.io.graphson.GraphSONReaderTestSuite;
 import org.hamcrest.core.IsEqual;
-import org.junit.*;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
@@ -48,7 +57,7 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
     Assert.assertTrue(file.mkdir());
 
     oldOrientDBHome = System.getProperty("ORIENTDB_HOME");
-    System.setProperty("ORIENTDB_HOME", file.getAbsolutePath());
+    System.setProperty("ORIENTDB_HOME", serverHome);
 
     server = OServerMain.create();
     server.startup(OrientGraphRemoteTest.class.getResourceAsStream("/embedded-server-config.xml"));
@@ -132,8 +141,10 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
     if (graph != null) {
       if (graph.isClosed())
         currentGraphs.remove(url);
-      else
+      else {
+        ODatabaseRecordThreadLocal.INSTANCE.set(graph.getRawGraph());
         return graph;
+      }
     }
 
     try {
@@ -151,7 +162,6 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
     OrientGraphFactory factory = graphFactories.get(url);
     if (factory == null) {
       factory = new OrientGraphFactory(url);
-
       factory.setupPool(5, 256);
       graphFactories.put(url, factory);
     }

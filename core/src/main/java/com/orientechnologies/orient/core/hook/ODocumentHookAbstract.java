@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.hook;
 
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
@@ -190,37 +194,7 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
   public void onRecordDeleteReplicated(final ODocument iDocument) {
   }
 
-  public RESULT onRecordBeforeReplicaAdd(final ODocument iDocument) {
-    return RESULT.RECORD_NOT_CHANGED;
-  }
-
-  public void onRecordAfterReplicaAdd(final ODocument iDocument) {
-  }
-
-  public void onRecordReplicaAddFailed(final ODocument iDocument) {
-  }
-
-  public RESULT onRecordBeforeReplicaUpdate(final ODocument iDocument) {
-    return RESULT.RECORD_NOT_CHANGED;
-  }
-
-  public void onRecordAfterReplicaUpdate(final ODocument iDocument) {
-  }
-
-  public void onRecordReplicaUpdateFailed(final ODocument iDocument) {
-  }
-
-  public RESULT onRecordBeforeReplicaDelete(final ODocument iDocument) {
-    return RESULT.RECORD_NOT_CHANGED;
-  }
-
-  public void onRecordAfterReplicaDelete(final ODocument iDocument) {
-  }
-
-  public void onRecordReplicaDeleteFailed(final ODocument iDocument) {
-  }
-
-  public RESULT onTrigger(final TYPE iType, final ORecord<?> iRecord) {
+  public RESULT onTrigger(final TYPE iType, final ORecord iRecord) {
     if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && ODatabaseRecordThreadLocal.INSTANCE.get().getStatus() != STATUS.OPEN)
       return RESULT.RECORD_NOT_CHANGED;
 
@@ -293,39 +267,6 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
       onRecordDeleteReplicated(document);
       break;
 
-    case BEFORE_REPLICA_ADD:
-      return onRecordBeforeReplicaAdd(document);
-
-    case AFTER_REPLICA_ADD:
-      onRecordAfterReplicaAdd(document);
-      break;
-
-    case REPLICA_ADD_FAILED:
-      onRecordReplicaAddFailed(document);
-      break;
-
-    case BEFORE_REPLICA_UPDATE:
-      return onRecordBeforeReplicaUpdate(document);
-
-    case AFTER_REPLICA_UPDATE:
-      onRecordAfterReplicaUpdate(document);
-      break;
-
-    case REPLICA_UPDATE_FAILED:
-      onRecordReplicaUpdateFailed(document);
-      break;
-
-    case BEFORE_REPLICA_DELETE:
-      return onRecordBeforeReplicaDelete(document);
-
-    case AFTER_REPLICA_DELETE:
-      onRecordAfterReplicaDelete(document);
-      break;
-
-    case REPLICA_DELETE_FAILED:
-      onRecordReplicaDeleteFailed(document);
-      break;
-
     default:
       throw new IllegalStateException("Hook method " + iType + " is not managed");
     }
@@ -359,7 +300,7 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
     if (includeClasses == null && excludeClasses == null)
       return true;
 
-    final OClass clazz = iDocument.getSchemaClass();
+    final OClass clazz = iDocument.getImmutableSchemaClass();
     if (clazz == null)
       return false;
 

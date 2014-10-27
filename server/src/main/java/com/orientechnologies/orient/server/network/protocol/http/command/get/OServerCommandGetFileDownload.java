@@ -23,7 +23,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -53,7 +53,7 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
     iRequest.data.commandInfo = "Download";
     iRequest.data.commandDetail = rid;
 
-    final ORecordAbstract<?> response;
+    final ORecordAbstract response;
 
     try {
 
@@ -62,11 +62,11 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
         if (response instanceof ORecordBytes) {
           sendORecordBinaryFileContent(iRequest, iResponse, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, fileType,
               (ORecordBytes) response, fileName);
-        } else if (response instanceof ORecordSchemaAware) {
-          for (OProperty prop : ((ORecordSchemaAware<?>) response).getSchemaClass().properties()) {
+        } else if (response instanceof ODocument) {
+          for (OProperty prop : ((ODocument) response).getImmutableSchemaClass().properties()) {
             if (prop.getType().equals(OType.BINARY))
               sendBinaryFieldFileContent(iRequest, iResponse, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION,
-                  fileType, (byte[]) ((ORecordSchemaAware<?>) response).field(prop.getName()), fileName);
+                  fileType, (byte[]) ((ODocument) response).field(prop.getName()), fileName);
           }
         } else {
           iResponse.send(OHttpUtils.STATUS_INVALIDMETHOD_CODE, "Record requested is not a file nor has a readable schema",

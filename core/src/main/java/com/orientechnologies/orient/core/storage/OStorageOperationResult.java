@@ -1,3 +1,23 @@
+/*
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
+
 package com.orientechnologies.orient.core.storage;
 
 import java.io.Externalizable;
@@ -17,15 +37,32 @@ import java.io.ObjectOutput;
 public class OStorageOperationResult<RET> implements Externalizable {
 
   private RET     result;
+  private byte[]  modifiedRecordContent;
   private boolean isMoved;
-
-  public OStorageOperationResult(RET result) {
-    this(result, false);
+  
+  /**
+   * OStorageOperationResult void constructor as required for Exernalizable 
+   */
+  public OStorageOperationResult() {
   }
 
-  public OStorageOperationResult(RET result, boolean moved) {
+  public OStorageOperationResult(final RET result) {
+    this(result, null, false);
+  }
+
+  public OStorageOperationResult(final RET result, final boolean moved) {
     this.result = result;
-    isMoved = moved;
+    this.isMoved = moved;
+  }
+
+  public OStorageOperationResult(final RET result, final byte[] content, final boolean moved) {
+    this.result = result;
+    this.modifiedRecordContent = content;
+    this.isMoved = moved;
+  }
+
+  public byte[] getModifiedRecordContent() {
+    return modifiedRecordContent;
   }
 
   public boolean isMoved() {
@@ -40,6 +77,11 @@ public class OStorageOperationResult<RET> implements Externalizable {
   public void writeExternal(final ObjectOutput out) throws IOException {
     out.writeObject(result);
     out.writeBoolean(isMoved);
+    if (modifiedRecordContent != null) {
+      out.writeInt(modifiedRecordContent.length);
+      out.write(modifiedRecordContent);
+    } else
+      out.writeInt(-1);
   }
 
   @SuppressWarnings("unchecked")
@@ -47,5 +89,10 @@ public class OStorageOperationResult<RET> implements Externalizable {
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     result = (RET) in.readObject();
     isMoved = in.readBoolean();
+    final int modifiedRecordContentLength = in.readInt();
+    if (modifiedRecordContentLength > -1) {
+      modifiedRecordContent = new byte[modifiedRecordContentLength];
+      in.read(modifiedRecordContent);
+    }
   }
 }

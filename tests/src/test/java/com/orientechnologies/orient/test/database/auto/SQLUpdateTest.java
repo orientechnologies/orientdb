@@ -23,11 +23,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -36,6 +34,17 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be because the order of clusters could
@@ -56,6 +65,9 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
   public void beforeClass() throws Exception {
     super.beforeClass();
     OClass addressClass = database.getMetadata().getSchema().getClass("Address");
+    if (addressClass == null) {
+      addressClass = database.getMetadata().getSchema().createClass("Address");
+    }
 
     addressClusterId = addressClass.getDefaultClusterId();
   }
@@ -279,10 +291,8 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     sqlString = "UPDATE " + doc.getIdentity().toString() + " INCREMENT Age = 100 RETURN AFTER $current.Age";
     result1 = database.command(new OCommandSQL(sqlString)).execute();
     Assert.assertEquals(result1.size(), 1);
-    Assert.assertTrue(result1.get(0).containsField("result"));
-    Assert.assertEquals(result1.get(0).field("result"), 101);
-    Assert.assertTrue(result1.get(0).containsField("rid"));
-    Assert.assertTrue(result1.get(0).containsField("version"));
+    Assert.assertTrue(result1.get(0).containsField("value"));
+    Assert.assertEquals(result1.get(0).field("value"), 101);
     // check exclude + WHERE + LIMIT
     sqlString = "UPDATE " + doc.getIdentity().toString()
         + " INCREMENT Age = 100 RETURN AFTER $current.Exclude('really_big_field') WHERE Age=101 LIMIT 1";
@@ -383,6 +393,60 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
 
     Assert.assertTrue(myCollection.containsAll(Arrays.asList(1, 2)));
 
+  }
+
+  public void testEscaping() {
+    final OSchema schema = database.getMetadata().getSchema();
+    schema.createClass("FormatEscapingTest");
+
+    final ODocument document = new ODocument("FormatEscapingTest");
+    document.save();
+
+    database.command(
+        new OCommandSQL("UPDATE FormatEscapingTest SET test = format('aaa \\' bbb') WHERE @rid = " + document.getIdentity()))
+        .execute();
+
+    document.reload();
+
+    Assert.assertEquals(document.field("test"), "aaa ' bbb");
+
+    database.command(
+        new OCommandSQL("UPDATE FormatEscapingTest SET test = 'ccc \\' eee', test2 = format('aaa \\' bbb') WHERE @rid = "
+            + document.getIdentity())).execute();
+
+    document.reload();
+    Assert.assertEquals(document.field("test"), "ccc ' eee");
+    Assert.assertEquals(document.field("test2"), "aaa ' bbb");
+
+    database.command(new OCommandSQL("UPDATE FormatEscapingTest SET test = 'aaa \\n bbb' WHERE @rid = " + document.getIdentity()))
+        .execute();
+
+    document.reload();
+    Assert.assertEquals(document.field("test"), "aaa \n bbb");
+
+    database.command(new OCommandSQL("UPDATE FormatEscapingTest SET test = 'aaa \\r bbb' WHERE @rid = " + document.getIdentity()))
+        .execute();
+
+    document.reload();
+    Assert.assertEquals(document.field("test"), "aaa \r bbb");
+
+    database.command(new OCommandSQL("UPDATE FormatEscapingTest SET test = 'aaa \\b bbb' WHERE @rid = " + document.getIdentity()))
+        .execute();
+
+    document.reload();
+    Assert.assertEquals(document.field("test"), "aaa \b bbb");
+
+    database.command(new OCommandSQL("UPDATE FormatEscapingTest SET test = 'aaa \\t bbb' WHERE @rid = " + document.getIdentity()))
+        .execute();
+
+    document.reload();
+    Assert.assertEquals(document.field("test"), "aaa \t bbb");
+
+    database.command(new OCommandSQL("UPDATE FormatEscapingTest SET test = 'aaa \\f bbb' WHERE @rid = " + document.getIdentity()))
+        .execute();
+
+    document.reload();
+    Assert.assertEquals(document.field("test"), "aaa \f bbb");
   }
 
   private void checkUpdatedDoc(ODatabaseDocument database, String expectedName, String expectedCity, String expectedGender) {

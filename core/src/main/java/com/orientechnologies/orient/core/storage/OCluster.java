@@ -1,46 +1,39 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.storage;
-
-import java.io.IOException;
 
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
+import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
-/**
- * Handle the table to resolve logical address to physical address.<br/>
- * <br/>
- * Record structure:<br/>
- * <br/>
- * +---------------------------------------------+<br/>
- * | DATA SEGMENT........ | DATA OFFSET......... |<br/>
- * | 2 bytes = max 2^15-1 | 4 bytes = max 2^31-1 |<br/>
- * +---------------------------------------------+<br/>
- * = 6 bytes<br/>
- */
+import java.io.IOException;
+
 public interface OCluster {
 
   public static enum ATTRIBUTES {
-    NAME, DATASEGMENT, USE_WAL, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, COMPRESSION
+    NAME, USE_WAL, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, COMPRESSION, CONFLICTSTRATEGY, STATUS
   }
 
-  public void configure(OStorage iStorage, int iId, String iClusterName, final String iLocation, int iDataSegmentId,
-      Object... iParameters) throws IOException;
+  public void configure(OStorage iStorage, int iId, String iClusterName, Object... iParameters) throws IOException;
 
   public void configure(OStorage iStorage, OStorageClusterConfiguration iConfig) throws IOException;
 
@@ -56,7 +49,7 @@ public interface OCluster {
 
   public OModificationLock getExternalModificationLock();
 
-  public void set(ATTRIBUTES iAttribute, Object iValue) throws IOException;
+  public Object set(ATTRIBUTES iAttribute, Object iValue) throws IOException;
 
   public void convertToTombstone(OClusterPosition iPosition) throws IOException;
 
@@ -70,10 +63,6 @@ public interface OCluster {
    * @throws IOException
    */
   public void truncate() throws IOException;
-
-  public String getType();
-
-  public int getDataSegmentId();
 
   public OPhysicalPosition createRecord(byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException;
 
@@ -169,4 +158,6 @@ public interface OCluster {
    * @return false if record does not exist.
    */
   public boolean hideRecord(OClusterPosition position) throws IOException;
+
+  public ORecordConflictStrategy getRecordConflictStrategy();
 }

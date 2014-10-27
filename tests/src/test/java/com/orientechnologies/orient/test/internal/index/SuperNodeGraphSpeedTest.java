@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.test.internal.index;
 
-import junit.framework.Assert;
-
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
@@ -16,7 +15,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
  * @since 14.08.13
  */
 public class SuperNodeGraphSpeedTest extends SpeedTestMonoThread {
-  private final static long TOT = 1000000l;
+  private final static long TOT = 100000l;
   private OrientBaseGraph   graph;
   private OrientVertex      superNode;
 
@@ -40,6 +39,8 @@ public class SuperNodeGraphSpeedTest extends SpeedTestMonoThread {
     graph = factory.getNoTx();
 
     superNode = graph.addVertex(null);
+
+    factory.close();
   }
 
   @Override

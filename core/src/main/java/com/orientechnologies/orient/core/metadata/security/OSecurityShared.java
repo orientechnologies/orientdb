@@ -1,17 +1,21 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.core.metadata.security;
 
@@ -24,9 +28,11 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.ONullOutputListener;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
@@ -218,25 +224,8 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public ORole getRole(final String roleName, final boolean allowRepair) {
-    List<ODocument> result;
-
-    try {
-      result = getDatabase().<OCommandRequest> command(
-          new OSQLSynchQuery<ODocument>("select from ORole where name = '" + roleName + "' limit 1")).execute();
-
-      if (roleName.equalsIgnoreCase("admin") && result.isEmpty()) {
-        if (allowRepair)
-          repair();
-        result = getDatabase().<OCommandRequest> command(
-            new OSQLSynchQuery<ODocument>("select from ORole where name = '" + roleName + "' limit 1")).execute();
-      }
-    } catch (Exception e) {
-      if (allowRepair)
-        repair();
-      result = getDatabase().<OCommandRequest> command(
-          new OSQLSynchQuery<ODocument>("select from ORole where name = '" + roleName + "' limit 1").setFetchPlan("roles:1"))
-          .execute();
-    }
+    List<ODocument> result = getDatabase().<OCommandRequest> command(
+        new OSQLSynchQuery<ODocument>("select from ORole where name = '" + roleName + "' limit 1")).execute();
 
     if (result != null && !result.isEmpty())
       return new ORole(result.get(0));
@@ -262,12 +251,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public List<ODocument> getAllUsers() {
-    try {
-      return getDatabase().<OCommandRequest> command(new OSQLSynchQuery<ODocument>("select from OUser")).execute();
-    } catch (Exception e) {
-      repair();
-      return getDatabase().<OCommandRequest> command(new OSQLSynchQuery<ODocument>("select from OUser")).execute();
-    }
+    return getDatabase().<OCommandRequest> command(new OSQLSynchQuery<ODocument>("select from OUser")).execute();
   }
 
   public List<ODocument> getAllRoles() {
@@ -317,19 +301,6 @@ public class OSecurityShared implements OSecurity, OCloseable {
    * 
    * @return
    */
-  public OUser repair() {
-    OLogManager.instance().warn(this, "Repairing security structures...");
-
-    try {
-      getDatabase().getMetadata().getIndexManager().dropIndex("OUser.name");
-      getDatabase().getMetadata().getIndexManager().dropIndex("ORole.name");
-
-      return createMetadata();
-
-    } finally {
-      OLogManager.instance().warn(this, "Repair completed");
-    }
-  }
 
   public OUser createMetadata() {
     final ODatabaseRecord database = getDatabase();
@@ -349,8 +320,8 @@ public class OSecurityShared implements OSecurity, OCloseable {
       roleClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true).setCollate("ci");
       roleClass.createIndex("ORole.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
     } else {
-      final Set<OIndex<?>> indexes = roleClass.getInvolvedIndexes("name");
-      if (indexes.isEmpty())
+      final OProperty name = roleClass.getProperty("name");
+      if (name.getAllIndexes().isEmpty())
         roleClass.createIndex("ORole.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
     }
 
@@ -371,6 +342,10 @@ public class OSecurityShared implements OSecurity, OCloseable {
     if (!userClass.existsProperty("name")) {
       userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true).setCollate("ci");
       userClass.createIndex("OUser.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
+    } else {
+      final OProperty name = userClass.getProperty("name");
+      if (name.getAllIndexes().isEmpty())
+        userClass.createIndex("OUser.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
     }
     if (!userClass.existsProperty("password"))
       userClass.createProperty("password", OType.STRING).setMandatory(true).setNotNull(true);
@@ -457,26 +432,12 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   protected OUser getUser(final String iUserName, final boolean iAllowRepair) {
-    List<ODocument> result;
-    try {
-      result = getDatabase().<OCommandRequest> command(
-          new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("roles:1"))
-          .execute();
+    if (iUserName == null)
+      return null;
 
-      if (iUserName.equalsIgnoreCase("admin") && result.isEmpty()) {
-        if (iAllowRepair)
-          repair();
-        result = getDatabase().<OCommandRequest> command(
-            new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("roles:1"))
-            .execute();
-      }
-    } catch (Exception e) {
-      if (iAllowRepair)
-        repair();
-      result = getDatabase().<OCommandRequest> command(
-          new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("roles:1"))
-          .execute();
-    }
+    List<ODocument> result = getDatabase().<OCommandRequest> command(
+        new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("roles:1"))
+        .execute();
 
     if (result != null && !result.isEmpty())
       return new OUser(result.get(0));
@@ -484,7 +445,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
     return null;
   }
 
-  private ODatabaseRecord getDatabase() {
+  private ODatabaseRecordInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 }

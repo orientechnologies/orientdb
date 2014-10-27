@@ -16,11 +16,11 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
+import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyAbstractDelegate;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.tinkerpop.blueprints.Direction;
 
 /**
@@ -64,13 +64,22 @@ public class OrientVertexType extends OrientElementType {
   }
 
   public OrientVertexProperty createEdgeProperty(final Direction iDirection, String iEdgeClassName) {
-    iEdgeClassName = OrientBaseGraph.encodeClassName(iEdgeClassName);
+    return createEdgeProperty(iDirection, iEdgeClassName, OType.ANY);
+  }
 
-    final boolean useVertexFieldsForEdgeLabels = graph.isUseVertexFieldsForEdgeLabels();
+  public OrientVertexProperty createEdgeProperty(final Direction iDirection, final String iEdgeClassName, final OType iType) {
+    return graph.executeOutsideTx(new OCallable<OrientVertexProperty, OrientBaseGraph>() {
+      @Override
+      public OrientVertexProperty call(OrientBaseGraph iArgument) {
+        final String clsName = OrientBaseGraph.encodeClassName(iEdgeClassName);
 
-    final String fieldName = OrientVertex.getConnectionFieldName(iDirection, iEdgeClassName, useVertexFieldsForEdgeLabels);
+        final boolean useVertexFieldsForEdgeLabels = graph.isUseVertexFieldsForEdgeLabels();
 
-    return new OrientVertexProperty(graph, delegate.createProperty(fieldName, OType.ANY));
+        final String fieldName = OrientVertex.getConnectionFieldName(iDirection, clsName, useVertexFieldsForEdgeLabels);
+
+        return new OrientVertexProperty(graph, delegate.createProperty(fieldName, iType));
+      }
+    });
   }
 
   @Override
@@ -81,12 +90,6 @@ public class OrientVertexType extends OrientElementType {
   @Override
   public OrientVertexType addCluster(final String iClusterName) {
     delegate.addCluster(iClusterName);
-    return this;
-  }
-
-  @Override
-  public OrientVertexType addCluster(final String iClusterName, final OStorage.CLUSTER_TYPE iClusterType) {
-    delegate.addCluster(iClusterName, iClusterType);
     return this;
   }
 

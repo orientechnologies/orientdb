@@ -109,7 +109,7 @@ public class DictionaryTest extends DocumentDBBaseTest {
     }
 
     for (int i = total; i > 0; --i) {
-      ORecord<?> record = database.getDictionary().get("key-" + (originalSize + i));
+      ORecord record = database.getDictionary().get("key-" + (originalSize + i));
       record.toString().equals("test-dictionary-" + i);
     }
 

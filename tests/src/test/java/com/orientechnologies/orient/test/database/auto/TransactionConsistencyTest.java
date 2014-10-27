@@ -319,9 +319,9 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
   @Test
   public void createLinkInTx() {
     OClass profile = database.getMetadata().getSchema()
-        .createClass("MyProfile", database.addCluster("myprofile", OStorage.CLUSTER_TYPE.PHYSICAL));
+        .createClass("MyProfile", database.addCluster("myprofile"));
     OClass edge = database.getMetadata().getSchema()
-        .createClass("MyEdge", database.addCluster("myedge", OStorage.CLUSTER_TYPE.PHYSICAL));
+        .createClass("MyEdge", database.addCluster("myedge"));
     profile.createProperty("name", OType.STRING).setMin("3").setMax("30").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     profile.createProperty("surname", OType.STRING).setMin("3").setMax("30");
     profile.createProperty("in", OType.LINKSET, edge);

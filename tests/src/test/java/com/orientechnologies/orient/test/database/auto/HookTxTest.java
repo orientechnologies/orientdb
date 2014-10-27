@@ -127,7 +127,7 @@ public class HookTxTest extends ORecordHookAbstract {
 
   @Override
   @Test(enabled = false)
-  public RESULT onRecordBeforeCreate(ORecord<?> iRecord) {
+  public RESULT onRecordBeforeCreate(ORecord iRecord) {
     if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
         && ((ODocument) iRecord).getClassName().equals("Profile"))
       callbackCount += RECORD_BEFORE_CREATE;
@@ -136,7 +136,7 @@ public class HookTxTest extends ORecordHookAbstract {
 
   @Override
   @Test(enabled = false)
-  public void onRecordAfterCreate(ORecord<?> iRecord) {
+  public void onRecordAfterCreate(ORecord iRecord) {
     if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
         && ((ODocument) iRecord).getClassName().equals("Profile"))
       callbackCount += RECORD_AFTER_CREATE;
@@ -144,7 +144,7 @@ public class HookTxTest extends ORecordHookAbstract {
 
   @Override
   @Test(enabled = false)
-  public RESULT onRecordBeforeRead(ORecord<?> iRecord) {
+  public RESULT onRecordBeforeRead(ORecord iRecord) {
     if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
         && ((ODocument) iRecord).getClassName().equals("Profile"))
       callbackCount += RECORD_BEFORE_READ;
@@ -153,7 +153,7 @@ public class HookTxTest extends ORecordHookAbstract {
 
   @Override
   @Test(enabled = false)
-  public void onRecordAfterRead(ORecord<?> iRecord) {
+  public void onRecordAfterRead(ORecord iRecord) {
     if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
         && ((ODocument) iRecord).getClassName().equals("Profile"))
       callbackCount += RECORD_AFTER_READ;
@@ -161,7 +161,7 @@ public class HookTxTest extends ORecordHookAbstract {
 
   @Override
   @Test(enabled = false)
-  public RESULT onRecordBeforeUpdate(ORecord<?> iRecord) {
+  public RESULT onRecordBeforeUpdate(ORecord iRecord) {
     if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
         && ((ODocument) iRecord).getClassName().equals("Profile"))
       callbackCount += RECORD_BEFORE_UPDATE;
@@ -170,7 +170,7 @@ public class HookTxTest extends ORecordHookAbstract {
 
   @Override
   @Test(enabled = false)
-  public void onRecordAfterUpdate(ORecord<?> iRecord) {
+  public void onRecordAfterUpdate(ORecord iRecord) {
     if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
         && ((ODocument) iRecord).getClassName().equals("Profile"))
       callbackCount += RECORD_AFTER_UPDATE;
@@ -178,7 +178,7 @@ public class HookTxTest extends ORecordHookAbstract {
 
   @Override
   @Test(enabled = false)
-  public RESULT onRecordBeforeDelete(ORecord<?> iRecord) {
+  public RESULT onRecordBeforeDelete(ORecord iRecord) {
     if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
         && ((ODocument) iRecord).getClassName().equals("Profile"))
       callbackCount += RECORD_BEFORE_DELETE;
@@ -187,7 +187,7 @@ public class HookTxTest extends ORecordHookAbstract {
 
   @Override
   @Test(enabled = false)
-  public void onRecordAfterDelete(ORecord<?> iRecord) {
+  public void onRecordAfterDelete(ORecord iRecord) {
     if (iRecord instanceof ODocument && ((ODocument) iRecord).getClassName() != null
         && ((ODocument) iRecord).getClassName().equals("Profile"))
       callbackCount += RECORD_AFTER_DELETE;

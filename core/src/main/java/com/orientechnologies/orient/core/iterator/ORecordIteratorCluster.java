@@ -1,28 +1,31 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.iterator;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
@@ -31,16 +34,16 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * 
  * @author Luca Garulli
  */
-public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIdentifiableIterator<REC> {
-  private ORecord<?> currentRecord;
+public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIterator<REC> {
+  private ORecord currentRecord;
 
-  public ORecordIteratorCluster(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
+  public ORecordIteratorCluster(final ODatabaseRecordInternal iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
       final int iClusterId, final boolean iUseCache) {
     this(iDatabase, iLowLevelDatabase, iClusterId, OClusterPosition.INVALID_POSITION, OClusterPosition.INVALID_POSITION, iUseCache,
         false, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
-  public ORecordIteratorCluster(final ODatabaseRecord iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
+  public ORecordIteratorCluster(final ODatabaseRecordInternal iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
       final int iClusterId, final OClusterPosition firstClusterEntry, final OClusterPosition lastClusterEntry,
       final boolean iUseCache, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
@@ -99,7 +102,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
     boolean thereAreRecordsToBrowse = getCurrentEntry().compareTo(firstClusterEntry) > 0;
 
     if (thereAreRecordsToBrowse) {
-      ORecordInternal<?> record = getRecord();
+      ORecord record = getRecord();
       currentRecord = readCurrentRecord(record, -1);
     }
 
@@ -136,7 +139,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
       return false;
 
     if (!current.clusterPosition.isTemporary() && getCurrentEntry().compareTo(lastClusterEntry) < 0) {
-      ORecordInternal<?> record = getRecord();
+      ORecord record = getRecord();
       currentRecord = readCurrentRecord(record, +1);
       if (currentRecord != null)
         return true;
@@ -187,7 +190,7 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
   public REC next() {
     checkDirection(true);
 
-    ORecordInternal<?> record;
+    ORecord record;
 
     // ITERATE UNTIL THE NEXT GOOD RECORD
     while (hasNext()) {
@@ -215,6 +218,8 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
    */
   @Override
   public ORecordIteratorCluster<REC> begin() {
+    browsedRecords = 0;
+
     updateRangesOnLiveUpdate();
     resetCurrentPosition();
 
@@ -230,6 +235,8 @@ public class ORecordIteratorCluster<REC extends ORecordInternal<?>> extends OIde
    */
   @Override
   public ORecordIteratorCluster<REC> last() {
+    browsedRecords = 0;
+
     updateRangesOnLiveUpdate();
     resetCurrentPosition();
 

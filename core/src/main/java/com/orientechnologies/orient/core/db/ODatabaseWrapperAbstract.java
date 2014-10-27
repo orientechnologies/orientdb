@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.Orient;
@@ -26,7 +30,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorage.CLUSTER_TYPE;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,13 +41,13 @@ import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
-public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements ODatabase {
-  protected DB                  underlying;
-  protected ODatabaseComplex<?> databaseOwner;
+public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal> implements ODatabaseInternal {
+  protected DB                          underlying;
+  protected ODatabaseComplexInternal<?> databaseOwner;
 
   public ODatabaseWrapperAbstract(final DB iDatabase) {
     underlying = iDatabase;
-    databaseOwner = (ODatabaseComplex<?>) this;
+    databaseOwner = (ODatabaseComplexInternal<?>) this;
   }
 
   public <THISDB extends ODatabase> THISDB open(final String iUserName, final String iUserPassword) {
@@ -56,7 +59,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
   public <THISDB extends ODatabase> THISDB create() {
     return create(null);
   }
-
 
   public <THISDB extends ODatabase> THISDB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
     underlying.create(iInitialSettings);
@@ -206,16 +208,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
     return underlying.getClusterNames();
   }
 
-  public String getClusterType(final String iClusterName) {
-    checkOpeness();
-    return underlying.getClusterType(iClusterName);
-  }
-
-  public int getDataSegmentIdByName(final String iDataSegmentName) {
-    checkOpeness();
-    return underlying.getDataSegmentIdByName(iDataSegmentName);
-  }
-
   public int getClusterIdByName(final String iClusterName) {
     checkOpeness();
     return underlying.getClusterIdByName(iClusterName);
@@ -234,29 +226,14 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
     return underlying.getClusterRecordSizeByName(iClusterName);
   }
 
-  public int addCluster(final String iType, final String iClusterName, final String iLocation, final String iDataSegmentName,
-      final Object... iParameters) {
+  public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
     checkOpeness();
-    return underlying.addCluster(iType, iClusterName, iLocation, iDataSegmentName, iParameters);
+    return underlying.addCluster(iClusterName, iRequestedId, iParameters);
   }
 
-  public int addCluster(String iType, String iClusterName, int iRequestedId, String iLocation, String iDataSegmentName,
-      Object... iParameters) {
-    return underlying.addCluster(iType, iClusterName, iRequestedId, iLocation, iDataSegmentName, iParameters);
-  }
-
-  public int addCluster(final String iClusterName, final CLUSTER_TYPE iType, final Object... iParameters) {
+  public int addCluster(final String iClusterName, final Object... iParameters) {
     checkOpeness();
-    return underlying.addCluster(iType.toString(), iClusterName, null, null, iParameters);
-  }
-
-  public int addCluster(String iClusterName, CLUSTER_TYPE iType) {
-    checkOpeness();
-    return underlying.addCluster(iType.toString(), iClusterName, null, null);
-  }
-
-  public boolean dropDataSegment(final String name) {
-    return underlying.dropDataSegment(name);
+    return underlying.addCluster(iClusterName, iParameters);
   }
 
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
@@ -269,18 +246,12 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
     return underlying.dropCluster(iClusterId, true);
   }
 
-  public int addDataSegment(final String iSegmentName, final String iLocation) {
-    checkOpeness();
-    return underlying.addDataSegment(iSegmentName, iLocation);
-  }
-
   public int getDefaultClusterId() {
     checkOpeness();
     return underlying.getDefaultClusterId();
   }
 
   public boolean declareIntent(final OIntent iIntent) {
-    checkOpeness();
     return underlying.declareIntent(iIntent);
   }
 
@@ -288,13 +259,13 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabase> implements 
     return (DBTYPE) underlying;
   }
 
-  public ODatabaseComplex<?> getDatabaseOwner() {
+  public ODatabaseComplexInternal<?> getDatabaseOwner() {
     return databaseOwner;
   }
 
-  public ODatabaseComplex<?> setDatabaseOwner(final ODatabaseComplex<?> iOwner) {
+  public ODatabaseComplexInternal<?> setDatabaseOwner(final ODatabaseComplexInternal<?> iOwner) {
     databaseOwner = iOwner;
-    return (ODatabaseComplex<?>) this;
+    return (ODatabaseComplexInternal<?>) this;
   }
 
   @Override

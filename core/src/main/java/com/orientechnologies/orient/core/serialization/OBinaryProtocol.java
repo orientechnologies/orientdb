@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.serialization;
 
 import java.io.IOException;
@@ -33,33 +37,6 @@ public class OBinaryProtocol {
   public static final int SIZE_INT   = 4;
   public static final int SIZE_LONG  = 8;
 
-  public static int string2bytes(final String iInputText, final OutputStream iStream) throws IOException {
-    if (iInputText == null)
-      return -1;
-
-    final int beginOffset = iStream instanceof OMemoryStream ? ((OMemoryStream) iStream).getPosition() : -1;
-
-    final int len = iInputText.length();
-    for (int i = 0; i < len; i++) {
-      int c = iInputText.charAt(i);
-
-      if (c < 0x80) {
-        // 7-bits done in one byte.
-        iStream.write(c);
-      } else if (c < 0x800) {
-        // 8-11 bits done in 2 bytes
-        iStream.write(0xC0 | c >> 6);
-        iStream.write(0x80 | c & 0x3F);
-      } else {
-        // 12-16 bits done in 3 bytes
-        iStream.write(0xE0 | c >> 12);
-        iStream.write(0x80 | c >> 6 & 0x3F);
-        iStream.write(0x80 | c & 0x3F);
-      }
-    }
-
-    return beginOffset;
-  }
 
   public static final byte[] string2bytes(final String iInputText) {
     if (iInputText == null)
@@ -209,10 +186,6 @@ public class OBinaryProtocol {
     return new String(output, 0/* offset */, j/* count */);
   }
 
-  public static byte[] char2bytes(final char value) {
-    return OBinaryProtocol.char2bytes(value, new byte[2], 0);
-  }
-
   public static byte[] char2bytes(final char value, final byte[] b, final int iBeginOffset) {
     b[iBeginOffset] = (byte) ((value >>> 8) & 0xFF);
     b[iBeginOffset + 1] = (byte) ((value >>> 0) & 0xFF);
@@ -338,16 +311,8 @@ public class OBinaryProtocol {
     return (short) ((iStream.read() << 8) | (iStream.read() & 0xff));
   }
 
-  public static short bytes2short(final byte[] b) {
-    return bytes2short(b, 0);
-  }
-
   public static short bytes2short(final byte[] b, final int offset) {
     return (short) ((b[offset] << 8) | (b[offset + 1] & 0xff));
-  }
-
-  public static char bytes2char(final byte[] b) {
-    return OBinaryProtocol.bytes2char(b, 0);
   }
 
   public static char bytes2char(final byte[] b, final int offset) {

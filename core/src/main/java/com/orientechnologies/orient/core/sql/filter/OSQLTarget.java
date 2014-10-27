@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.sql.filter;
 
 import com.orientechnologies.common.parser.OBaseParser;
@@ -50,7 +54,11 @@ public class OSQLTarget extends OBaseParser {
   protected Iterable<? extends OIdentifiable>    targetRecords;
   protected Map<String, String>                  targetClusters;
   protected Map<OClass, String>                  targetClasses;
+
   protected String                               targetIndex;
+
+  protected String                               targetIndexValues;
+  protected boolean                              targetIndexValuesAsc;
 
   public OSQLTarget(final String iText, final OCommandContext iContext, final String iFilterKeyword) {
     super();
@@ -90,6 +98,14 @@ public class OSQLTarget extends OBaseParser {
 
   public String getTargetIndex() {
     return targetIndex;
+  }
+
+  public String getTargetIndexValues() {
+    return targetIndexValues;
+  }
+
+  public boolean isTargetIndexValuesAsc() {
+    return targetIndexValuesAsc;
   }
 
   @Override
@@ -139,7 +155,7 @@ public class OSQLTarget extends OBaseParser {
 
     } else if (c == OStringSerializerHelper.EMBEDDED_BEGIN) {
       // SUB QUERY
-      final StringBuilder subText = new StringBuilder();
+      final StringBuilder subText = new StringBuilder(256);
       parserSetCurrentPosition(OStringSerializerHelper.getEmbedded(parserText, parserGetCurrentPosition(), -1, subText) + 1);
       final OCommandSQL subCommand = new OCommandSQLResultset(subText.toString());
 
@@ -168,7 +184,7 @@ public class OSQLTarget extends OBaseParser {
       parserMoveCurrentPosition(1);
     } else {
 
-      while (!parserIsEnded() && (targetClasses == null && targetClusters == null && targetIndex == null)) {
+      while (!parserIsEnded() && (targetClasses == null && targetClusters == null && targetIndex == null && targetIndexValues == null)) {
         String originalSubjectName = parserRequiredWord(false, "Target not found");
         String subjectName = originalSubjectName.toUpperCase();
 
@@ -211,6 +227,15 @@ public class OSQLTarget extends OBaseParser {
           if (value != null)
             ((List<OIdentifiable>) targetRecords).add(value);
 
+        } else if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.INDEX_VALUES_PREFIX)) {
+          targetIndexValues = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_VALUES_PREFIX.length());
+          targetIndexValuesAsc = true;
+        } else if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.INDEX_VALUES_ASC_PREFIX)) {
+          targetIndexValues = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_VALUES_ASC_PREFIX.length());
+          targetIndexValuesAsc = true;
+        } else if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.INDEX_VALUES_DESC_PREFIX)) {
+          targetIndexValues = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_VALUES_DESC_PREFIX.length());
+          targetIndexValuesAsc = false;
         } else {
           if (subjectToMatch.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
             // REGISTER AS CLASS

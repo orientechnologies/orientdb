@@ -1,17 +1,21 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.core.sql;
 
@@ -32,11 +36,13 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -159,7 +165,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
         || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LET) || additionalStatement.equals(KEYWORD_LOCK)) {
       query = new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + additionalStatement + " "
           + parserText.substring(parserGetCurrentPosition()), this);
-      isUpsertAllowed = (getDatabase().getMetadata().getSchema().getClass(subjectName) != null);
+      isUpsertAllowed = (getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(subjectName) != null);
     } else if (!additionalStatement.isEmpty())
       throwSyntaxErrorException("Invalid keyword " + additionalStatement);
     else
@@ -266,6 +272,84 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     return true;
   }
 
+  @Override
+  public String getSyntax() {
+    return "UPDATE <class>|cluster:<cluster>> [SET|ADD|PUT|REMOVE|INCREMENT|CONTENT {<JSON>}|MERGE {<JSON>}] [[,] <field-name> = <expression>|<sub-command>]* [LOCK <NONE|RECORD>] [UPSERT] [RETURN <COUNT|BEFORE|AFTER>] [WHERE <conditions>]";
+  }
+
+  @Override
+  public void end() {
+  }
+
+  @Override
+  public int getSecurityOperationType() {
+    return ORole.PERMISSION_UPDATE;
+  }
+
+  protected void parseMerge() {
+    if (!parserIsEnded() && !parserGetLastWord().equals(KEYWORD_WHERE)) {
+      final String contentAsString = parserRequiredWord(false, "document to merge expected").trim();
+      merge = new ODocument().fromJSON(contentAsString);
+      parserSkipWhiteSpaces();
+    }
+
+    if (merge == null)
+      throwSyntaxErrorException("Document to merge not provided. Example: MERGE { \"name\": \"Jay\" }");
+  }
+
+  protected String getBlock(String fieldValue) {
+    final int startPos = parserGetCurrentPosition();
+
+    if (fieldValue.startsWith("{") || fieldValue.startsWith("[") || fieldValue.startsWith("[")) {
+      if (startPos > 0)
+        parserSetCurrentPosition(startPos - fieldValue.length());
+      else
+        parserSetCurrentPosition(parserText.length() - fieldValue.length());
+
+      parserSkipWhiteSpaces();
+      final StringBuilder buffer = new StringBuilder();
+      parserSetCurrentPosition(OStringSerializerHelper.parse(parserText, buffer, parserGetCurrentPosition(), -1,
+          OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true, true, false, -1, false,
+          OStringSerializerHelper.DEFAULT_IGNORE_CHARS));
+      fieldValue = buffer.toString();
+    }
+    return fieldValue;
+  }
+
+  /**
+   * Parses the returning keyword if found.
+   */
+  protected void parseReturn() throws OCommandSQLParsingException {
+    parserNextWord(false, " ");
+    String mode = parserGetLastWord().trim();
+
+    if (mode.equalsIgnoreCase("COUNT")) {
+      returnHandler = new ORecordCountHandler();
+    } else if (mode.equalsIgnoreCase("BEFORE") || mode.equalsIgnoreCase("AFTER")) {
+
+      parserNextWord(false, " ");
+      String returning = parserGetLastWord().trim();
+      Object returnExpression = null;
+      if (returning.equalsIgnoreCase(KEYWORD_WHERE) || returning.equalsIgnoreCase(KEYWORD_TIMEOUT)
+          || returning.equalsIgnoreCase(KEYWORD_LIMIT) || returning.equalsIgnoreCase(KEYWORD_UPSERT)
+          || returning.equalsIgnoreCase(KEYWORD_LOCK) || returning.length() == 0) {
+        parserGoBack();
+      } else {
+        if (returning.startsWith("$") || returning.startsWith("@"))
+          returnExpression = (returning.length() > 0) ? OSQLHelper.parseValue(this, returning, this.getContext()) : null;
+        else
+          throwSyntaxErrorException("record attribute (@attributes) or functions with $current variable expected");
+      }
+
+      if (mode.equalsIgnoreCase("BEFORE"))
+        returnHandler = new OOriginalRecordsReturnHandler(returnExpression, getContext());
+      else
+        returnHandler = new OUpdatedRecordsReturnHandler(returnExpression, getContext());
+
+    } else
+      throwSyntaxErrorException(" COUNT | BEFORE | AFTER keywords expected");
+  }
+
   private boolean handleContent(ODocument record) {
     boolean updated = false;
     if (content != null) {
@@ -325,8 +409,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       ORidBag bag = null;
       if (!record.containsField(entry.getKey())) {
         // GET THE TYPE IF ANY
-        if (record.getSchemaClass() != null) {
-          OProperty prop = record.getSchemaClass().getProperty(entry.getKey());
+        if (record.getImmutableSchemaClass() != null) {
+          OProperty prop = record.getImmutableSchemaClass().getProperty(entry.getKey());
           if (prop != null && prop.getType() == OType.LINKSET)
             // SET TYPE
             coll = new HashSet<Object>();
@@ -378,6 +462,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     return updated;
   }
 
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   private boolean handlePutEntries(ODocument record) {
     boolean updated = false;
     if (!putEntries.isEmpty()) {
@@ -386,8 +471,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
         Object fieldValue = record.field(entry.getKey());
 
         if (fieldValue == null) {
-          if (record.getSchemaClass() != null) {
-            final OProperty property = record.getSchemaClass().getProperty(entry.getKey());
+          if (record.getImmutableSchemaClass() != null) {
+            final OProperty property = record.getImmutableSchemaClass().getProperty(entry.getKey());
             if (property != null
                 && (property.getType() != null && (!property.getType().equals(OType.EMBEDDEDMAP) && !property.getType().equals(
                     OType.LINKMAP)))) {
@@ -399,13 +484,22 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
         }
 
         if (fieldValue instanceof Map<?, ?>) {
-          @SuppressWarnings("unchecked")
           Map<String, Object> map = (Map<String, Object>) fieldValue;
 
           OPair<String, Object> pair = entry.getValue();
 
           Object value = extractValue(record, pair);
 
+          if (record.getSchemaClass() != null) {
+            final OProperty property = record.getSchemaClass().getProperty(entry.getKey());
+            if (property != null && property.getType().equals(OType.LINKMAP) && !(value instanceof OIdentifiable)) {
+              throw new OCommandExecutionException("field " + entry.getKey() + " defined of type LINKMAP accept only link values");
+            }
+          }
+          if (OType.LINKMAP.equals(OType.getTypeByValue(fieldValue)) && !(value instanceof OIdentifiable)) {
+            map = new OTrackedMap(record, map, Object.class);
+            record.field(entry.getKey(), map, OType.EMBEDDEDMAP);
+          }
           map.put(pair.getKey(), value);
           updated = true;
         }
@@ -488,45 +582,6 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       // USE ONLY THE RID TO AVOID CONCURRENCY PROBLEM WITH OLD VERSIONS
       value = ((OIdentifiable) value).getIdentity();
     return value;
-  }
-
-  @Override
-  public String getSyntax() {
-    return "UPDATE <class>|cluster:<cluster>> [SET|ADD|PUT|REMOVE|INCREMENT|CONTENT {<JSON>}|MERGE {<JSON>}] [[,] <field-name> = <expression>|<sub-command>]* [LOCK <NONE|RECORD>] [UPSERT] [RETURN <COUNT|BEFORE|AFTER>] [WHERE <conditions>]";
-  }
-
-  @Override
-  public void end() {
-  }
-
-  protected void parseMerge() {
-    if (!parserIsEnded() && !parserGetLastWord().equals(KEYWORD_WHERE)) {
-      final String contentAsString = parserRequiredWord(false, "document to merge expected").trim();
-      merge = new ODocument().fromJSON(contentAsString);
-      parserSkipWhiteSpaces();
-    }
-
-    if (merge == null)
-      throwSyntaxErrorException("Document to merge not provided. Example: MERGE { \"name\": \"Jay\" }");
-  }
-
-  protected String getBlock(String fieldValue) {
-    final int startPos = parserGetCurrentPosition();
-
-    if (fieldValue.startsWith("{") || fieldValue.startsWith("[") || fieldValue.startsWith("[")) {
-      if (startPos > 0)
-        parserSetCurrentPosition(startPos - fieldValue.length());
-      else
-        parserSetCurrentPosition(parserText.length() - fieldValue.length());
-
-      parserSkipWhiteSpaces();
-      final StringBuilder buffer = new StringBuilder();
-      parserSetCurrentPosition(OStringSerializerHelper.parse(parserText, buffer, parserGetCurrentPosition(), -1,
-          OStringSerializerHelper.DEFAULT_FIELD_SEPARATOR, true, true, false, -1, false,
-          OStringSerializerHelper.DEFAULT_IGNORE_CHARS));
-      fieldValue = buffer.toString();
-    }
-    return fieldValue;
   }
 
   private void parseAddFields() {
@@ -621,39 +676,4 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     if (incrementEntries.size() == 0)
       throwSyntaxErrorException("Entries to increment <field> = <value> are missed. Example: salary = -100");
   }
-
-  /**
-   * Parses the returning keyword if found.
-   */
-  protected void parseReturn() throws OCommandSQLParsingException {
-    parserNextWord(false, " ");
-    String mode = parserGetLastWord().trim();
-
-    if (mode.equalsIgnoreCase("COUNT")) {
-      returnHandler = new ORecordCountHandler();
-    } else if (mode.equalsIgnoreCase("BEFORE") || mode.equalsIgnoreCase("AFTER")) {
-
-      parserNextWord(false, " ");
-      String returning = parserGetLastWord().trim();
-      Object returnExpression = null;
-      if (returning.equalsIgnoreCase(KEYWORD_WHERE) || returning.equalsIgnoreCase(KEYWORD_TIMEOUT)
-          || returning.equalsIgnoreCase(KEYWORD_LIMIT) || returning.equalsIgnoreCase(KEYWORD_UPSERT)
-          || returning.equalsIgnoreCase(KEYWORD_LOCK) || returning.length() == 0) {
-        parserGoBack();
-      } else {
-        if (returning.startsWith("$") || returning.startsWith("@"))
-          returnExpression = (returning.length() > 0) ? OSQLHelper.parseValue(this, returning, this.getContext()) : null;
-        else
-          throwSyntaxErrorException("record attribute (@attributes) or functions with $current variable expected");
-      }
-
-      if (mode.equalsIgnoreCase("BEFORE"))
-        returnHandler = new OOriginalRecordsReturnHandler(returnExpression, getContext());
-      else
-        returnHandler = new OUpdatedRecordsReturnHandler(returnExpression, getContext());
-
-    } else
-      throwSyntaxErrorException(" COUNT | BEFORE | AFTER keywords expected");
-  }
-
 }

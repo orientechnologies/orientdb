@@ -1,19 +1,42 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.record;
+
+import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.version.OVersionFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -23,30 +46,14 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.WeakHashMap;
 
-import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.version.ORecordVersion;
-import com.orientechnologies.orient.core.version.OVersionFactory;
-
 @SuppressWarnings({ "unchecked", "serial" })
-public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<T> {
+public abstract class ORecordAbstract implements ORecord {
   protected ORecordId                            _recordId;
   protected ORecordVersion                       _recordVersion          = OVersionFactory.instance().createVersion();
 
   protected byte[]                               _source;
   protected int                                  _size;
-  protected String                               _dataSegmentName;
+
   protected transient ORecordSerializer          _recordFormat;
   protected boolean                              _dirty                  = true;
   protected boolean                              _contentChanged         = true;
@@ -66,7 +73,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     unsetDirty();
   }
 
-  public ORecordAbstract<?> fill(final ORID iRid, final ORecordVersion iVersion, final byte[] iBuffer, boolean iDirty) {
+  protected ORecordAbstract fill(final ORID iRid, final ORecordVersion iVersion, final byte[] iBuffer, boolean iDirty) {
     _recordId.clusterId = iRid.getClusterId();
     _recordId.clusterPosition = iRid.getClusterPosition();
     _recordVersion.copyFrom(iVersion);
@@ -85,7 +92,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return _recordId;
   }
 
-  public ORecordAbstract<?> setIdentity(final ORecordId iIdentity) {
+  protected ORecordAbstract setIdentity(final ORecordId iIdentity) {
     _recordId = iIdentity;
     return this;
   }
@@ -95,11 +102,11 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return null;
   }
 
-  public ORecord<?> getRecord() {
+  public ORecord getRecord() {
     return this;
   }
 
-  public ORecordAbstract<?> setIdentity(final int iClusterId, final OClusterPosition iClusterPosition) {
+  protected ORecordAbstract setIdentity(final int iClusterId, final OClusterPosition iClusterPosition) {
     if (_recordId == null || _recordId == ORecordId.EMPTY_RECORD_ID)
       _recordId = new ORecordId(iClusterId, iClusterPosition);
     else {
@@ -113,17 +120,18 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return true;
   }
 
-  public ORecordAbstract<T> clear() {
+  public ORecordAbstract clear() {
     setDirty();
     invokeListenerEvent(ORecordListener.EVENT.CLEAR);
     return this;
   }
 
-  public ORecordAbstract<T> reset() {
+  public ORecordAbstract reset() {
     _status = ORecordElement.STATUS.LOADED;
     _recordVersion.reset();
     _size = 0;
 
+    _source = null;
     setDirty();
     if (_recordId != null)
       _recordId.reset();
@@ -142,10 +150,14 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return _source;
   }
 
-  public ORecordAbstract<T> fromStream(final byte[] iRecordBuffer) {
+  public ORecordAbstract fromStream(final byte[] iRecordBuffer) {
     _dirty = false;
     _contentChanged = false;
-    _source = iRecordBuffer;
+    if (ONetworkThreadLocalSerializer.getNetworkSerializer() != null) {
+      ONetworkThreadLocalSerializer.getNetworkSerializer().fromStream(iRecordBuffer, this, null);
+      _source = null;
+    } else
+      _source = iRecordBuffer;
     _size = iRecordBuffer != null ? iRecordBuffer.length : 0;
     _status = ORecordElement.STATUS.LOADED;
 
@@ -154,12 +166,14 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return this;
   }
 
-  public void unsetDirty() {
+  protected void unsetDirty() {
     _contentChanged = false;
     _dirty = false;
   }
 
-  public ORecordAbstract<T> setDirty() {
+  protected abstract byte getRecordType();
+
+  public ORecordAbstract setDirty() {
     if (!_dirty && _status != STATUS.UNMARSHALLING) {
       _dirty = true;
       _source = null;
@@ -177,14 +191,14 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     }
   }
 
-  public void onBeforeIdentityChanged(final ORecord<?> iRecord) {
+  public void onBeforeIdentityChanged(final ORecord iRecord) {
     prevRid = _recordId.copy();
   }
 
-  public void onAfterIdentityChanged(final ORecord<?> iRecord) {
+  public void onAfterIdentityChanged(final ORecord iRecord) {
     invokeListenerEvent(ORecordListener.EVENT.IDENTITY_CHANGED);
 
-    if (!prevRid.equals(this._recordId)) {
+    if (prevRid != null && !prevRid.equals(this._recordId)) {
       for (OIdentityChangeListener changeListener : identityChangeListeners)
         changeListener.onIdentityChanged(prevRid, this);
     }
@@ -196,24 +210,24 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return _dirty;
   }
 
-  public <RET extends ORecord<T>> RET fromJSON(final String iSource, final String iOptions) {
+  public <RET extends ORecord> RET fromJSON(final String iSource, final String iOptions) {
     // ORecordSerializerJSON.INSTANCE.fromString(iSource, this, null, iOptions);
     ORecordSerializerJSON.INSTANCE.fromString(iSource, this, null, iOptions, false); // Add new parameter to accommodate new API,
                                                                                      // nothing change
     return (RET) this;
   }
 
-  public <RET extends ORecord<T>> RET fromJSON(final String iSource) {
+  public <RET extends ORecord> RET fromJSON(final String iSource) {
     ORecordSerializerJSON.INSTANCE.fromString(iSource, this, null);
     return (RET) this;
   }
 
   // Add New API to load record if rid exist
-  public <RET extends ORecord<T>> RET fromJSON(final String iSource, boolean needReload) {
+  public <RET extends ORecord> RET fromJSON(final String iSource, boolean needReload) {
     return (RET) ORecordSerializerJSON.INSTANCE.fromString(iSource, this, null, needReload);
   }
 
-  public <RET extends ORecord<T>> RET fromJSON(final InputStream iContentResult) throws IOException {
+  public <RET extends ORecord> RET fromJSON(final InputStream iContentResult) throws IOException {
     final ByteArrayOutputStream out = new ByteArrayOutputStream();
     OIOUtils.copyStream(iContentResult, out, -1);
     ORecordSerializerJSON.INSTANCE.fromString(out.toString(), this, null);
@@ -225,7 +239,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
   }
 
   public String toJSON(final String iFormat) {
-    return ORecordSerializerJSON.INSTANCE.toString(this, new StringBuilder(), iFormat).toString();
+    return ORecordSerializerJSON.INSTANCE.toString(this, new StringBuilder(1024), iFormat).toString();
   }
 
   @Override
@@ -234,24 +248,12 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
         + _recordVersion.toString();
   }
 
-  public String getDataSegmentName() {
-    return _dataSegmentName;
-  }
-
-  public <RET extends ORecord<T>> RET setDataSegmentName(final String iName) {
-    if (_recordId.isValid())
-      throw new IllegalStateException("Cannot assign a data segment to a not new record");
-
-    _dataSegmentName = iName;
-    return (RET) this;
-  }
-
   public int getVersion() {
     checkForLoading();
     return _recordVersion.getCounter();
   }
 
-  public void setVersion(final int iVersion) {
+  protected void setVersion(final int iVersion) {
     _recordVersion.setCounter(iVersion);
   }
 
@@ -260,7 +262,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return _recordVersion;
   }
 
-  public ORecordAbstract<T> unload() {
+  public ORecordAbstract unload() {
     _status = ORecordElement.STATUS.NOT_LOADED;
     _source = null;
     unsetDirty();
@@ -268,17 +270,17 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return this;
   }
 
-  public ORecordInternal<T> load() {
+  public ORecord load() {
     if (!getIdentity().isValid())
       throw new ORecordNotFoundException("The record has no id, probably it's new or transient yet ");
 
     try {
-      final ORecordInternal<?> result = getDatabase().load(this);
+      final ORecord result = getDatabase().load(this);
 
       if (result == null)
         throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found");
 
-      return (ORecordInternal<T>) result;
+      return result;
     } catch (Exception e) {
       throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found", e);
     }
@@ -288,53 +290,59 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
+  protected ODatabaseRecordInternal getDatabaseInternal() {
+    return ODatabaseRecordThreadLocal.INSTANCE.get();
+  }
+
   public ODatabaseRecord getDatabaseIfDefined() {
     return ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
   }
 
-  public ORecordInternal<T> reload() {
+  protected ODatabaseRecordInternal getDatabaseIfDefinedInternal() {
+    return ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+  }
+
+  public ORecord reload() {
     return reload(null);
   }
 
-  public ORecordInternal<T> reload(final String iFetchPlan) {
+  public ORecord reload(final String iFetchPlan) {
     return reload(null, true);
   }
 
-  public ORecordInternal<T> reload(final String iFetchPlan, final boolean iIgnoreCache) {
+  public ORecord reload(final String iFetchPlan, final boolean iIgnoreCache) {
     if (!getIdentity().isValid())
       throw new ORecordNotFoundException("The record has no id. It is probably new or still transient");
 
     try {
       getDatabase().reload(this, iFetchPlan, iIgnoreCache);
 
-      // GET CONTENT
-      // fromStream(toStream());
-
       return this;
+    } catch (OOfflineClusterException e) {
+      throw e;
     } catch (Exception e) {
       throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found", e);
     }
   }
 
-  public ORecordAbstract<T> save() {
+  public ORecordAbstract save() {
     return save(false);
   }
 
-  public ORecordAbstract<T> save(final String iClusterName) {
+  public ORecordAbstract save(final String iClusterName) {
     return save(iClusterName, false);
   }
 
-  public ORecordAbstract<T> save(boolean forceCreate) {
+  public ORecordAbstract save(boolean forceCreate) {
     getDatabase().save(this, ODatabaseComplex.OPERATION_MODE.SYNCHRONOUS, forceCreate, null, null);
     return this;
   }
 
-  public ORecordAbstract<T> save(String iClusterName, boolean forceCreate) {
-    getDatabase().save(this, iClusterName, ODatabaseComplex.OPERATION_MODE.SYNCHRONOUS, forceCreate, null, null);
-    return this;
+  public ORecordAbstract save(String iClusterName, boolean forceCreate) {
+    return getDatabase().save(this, iClusterName, ODatabaseComplex.OPERATION_MODE.SYNCHRONOUS, forceCreate, null, null);
   }
 
-  public ORecordAbstract<T> delete() {
+  public ORecordAbstract delete() {
     getDatabase().delete(this);
     setDirty();
     return this;
@@ -397,7 +405,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     this._status = iStatus;
   }
 
-  public ORecordAbstract<T> copyTo(final ORecordAbstract<T> cloned) {
+  public ORecordAbstract copyTo(final ORecordAbstract cloned) {
     cloned._source = _source;
     cloned._size = _size;
     cloned._recordId = _recordId.copy();
@@ -417,7 +425,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
    * @param iListener
    *          ODocumentListener implementation
    */
-  public void addListener(final ORecordListener iListener) {
+  protected void addListener(final ORecordListener iListener) {
     if (_listeners == null)
       _listeners = Collections.newSetFromMap(new WeakHashMap<ORecordListener, Boolean>());
 
@@ -429,7 +437,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
    * 
    * @see ORecordListener
    */
-  public void removeListener(final ORecordListener listener) {
+  protected void removeListener(final ORecordListener listener) {
     if (_listeners != null) {
       _listeners.remove(listener);
       if (_listeners.isEmpty())
@@ -437,7 +445,7 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
     }
   }
 
-  public <RET extends ORecord<T>> RET flatCopy() {
+  protected <RET extends ORecord> RET flatCopy() {
     return (RET) copy();
   }
 
@@ -468,13 +476,16 @@ public abstract class ORecordAbstract<T> implements ORecord<T>, ORecordInternal<
       reload(null, true);
   }
 
-  @Override
-  public boolean isContentChanged() {
+  protected boolean isContentChanged() {
     return _contentChanged;
   }
 
-  @Override
-  public void setContentChanged(boolean contentChanged) {
+  protected void setContentChanged(boolean contentChanged) {
     _contentChanged = contentChanged;
   }
+  
+  protected void clearSource() {
+    this._source = null;
+  }
+  
 }

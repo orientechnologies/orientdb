@@ -1,11 +1,24 @@
-package com.tinkerpop.blueprints.impls.orient;
+/*
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.log.OLogManager;
@@ -13,12 +26,16 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandPredicate;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
@@ -29,13 +46,20 @@ import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
 
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * OrientDB Vertex implementation of TinkerPop Blueprints standard.
  * 
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 @SuppressWarnings("unchecked")
-public class OrientVertex extends OrientElement implements Vertex {
+public class OrientVertex extends OrientElement implements OrientExtendedVertex {
   public static final String CONNECTION_OUT_PREFIX = OrientBaseGraph.CONNECTION_OUT + "_";
   public static final String CONNECTION_IN_PREFIX  = OrientBaseGraph.CONNECTION_IN + "_";
 
@@ -57,7 +81,7 @@ public class OrientVertex extends OrientElement implements Vertex {
     setProperties(fields);
   }
 
-  protected OrientVertex(final OrientBaseGraph graph, final OIdentifiable record) {
+  public OrientVertex(final OrientBaseGraph graph, final OIdentifiable record) {
     super(graph, record);
   }
 
@@ -91,41 +115,56 @@ public class OrientVertex extends OrientElement implements Vertex {
   /**
    * (Internal only) Creates a link between a vertices and a Graph Element.
    */
-  public static Object createLink(final ODocument iFromVertex, final OIdentifiable iTo, final String iFieldName) {
+  public static Object createLink(final OrientBaseGraph iGraph, final ODocument iFromVertex, final OIdentifiable iTo,
+      final String iFieldName) {
     final Object out;
+    OType outType = iFromVertex.fieldType(iFieldName);
     Object found = iFromVertex.field(iFieldName);
-    final OProperty prop = iFromVertex.getSchemaClass().getProperty(iFieldName);
+
+    final OClass linkClass = iFromVertex.getImmutableSchemaClass();
+    if (linkClass == null)
+      throw new IllegalArgumentException("Class ot found in source vertex: " + iFromVertex);
+
+    final OProperty prop = linkClass.getProperty(iFieldName);
+    final OType propType = prop != null && prop.getType() != OType.ANY ? prop.getType() : null;
+
     if (found == null) {
-      // CREATE ONLY ONE LINK
-      if (prop == null || prop.getType().equals(OType.LINK) || "true".equalsIgnoreCase(prop.getCustom("ordered")))
+      if (iGraph.isAutoScaleEdgeType()
+          && (prop == null || propType == OType.LINK || "true".equalsIgnoreCase(prop.getCustom("ordered")))) {
+        // CREATE ONLY ONE LINK
         out = iTo;
-      else if (prop.getType().equals(OType.LINKBAG)) {
+        outType = OType.LINK;
+      } else if (propType == OType.LINKLIST || (prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered")))) {
+        final Collection coll = new ORecordLazyList(iFromVertex);
+        coll.add(iTo);
+        out = coll;
+        outType = OType.LINKLIST;
+      } else if (propType == null || propType == OType.LINKBAG) {
         final ORidBag bag = new ORidBag();
         bag.add(iTo);
         out = bag;
-      } else if (prop.getType().equals(OType.LINKLIST)) {
-        final Collection coll = new OTrackedList<Object>(iFromVertex);
-        coll.add(iTo);
-        out = coll;
+        outType = OType.LINKBAG;
       } else
         throw new IllegalStateException("Type of field provided in schema '" + prop.getType()
             + " can not be used for link creation.");
 
     } else if (found instanceof OIdentifiable) {
-      if (prop != null && prop.getType().equals(OType.LINK))
+      if (prop != null && propType == OType.LINK)
         throw new IllegalStateException("Type of field provided in schema '" + prop.getType()
             + " can not be used for creation to hold several links.");
 
       if (prop != null && "true".equalsIgnoreCase(prop.getCustom("ordered"))) {
-        final Collection coll = new OTrackedList<Object>(iFromVertex);
+        final Collection coll = new ORecordLazyList(iFromVertex);
         coll.add(found);
         coll.add(iTo);
         out = coll;
+        outType = OType.LINKLIST;
       } else {
         final ORidBag bag = new ORidBag();
         bag.add((OIdentifiable) found);
         bag.add(iTo);
         out = bag;
+        outType = OType.LINKBAG;
       }
     } else if (found instanceof ORidBag) {
       // ADD THE LINK TO THE COLLECTION
@@ -142,7 +181,7 @@ public class OrientVertex extends OrientElement implements Vertex {
 
     if (out != null)
       // OVERWRITE IT
-      iFromVertex.field(iFieldName, out);
+      iFromVertex.field(iFieldName, out, outType);
 
     return out;
   }
@@ -214,10 +253,6 @@ public class OrientVertex extends OrientElement implements Vertex {
 
       if (iVertexToRemove != null) {
         if (!fieldValue.equals(iVertexToRemove)) {
-          // OLogManager.instance().warn(null,
-          // "[OrientVertex.removeEdges] connections %s not found in field %s",
-          // iVertexToRemove,
-          // iFieldName);
           return;
         }
         iVertex.removeField(iFieldName);
@@ -246,7 +281,7 @@ public class OrientVertex extends OrientElement implements Vertex {
             found = true;
             break;
 
-          } else if (curr.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+          } else if (curr.getImmutableSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
             final Direction direction = getConnectionDirection(iFieldName, useVertexFieldsForEdgeLabels);
 
             // EDGE, REMOVE THE EDGE
@@ -299,7 +334,7 @@ public class OrientVertex extends OrientElement implements Vertex {
             found = true;
             break;
 
-          } else if (curr.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+          } else if (curr.getImmutableSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
             final Direction direction = getConnectionDirection(iFieldName, useVertexFieldsForEdgeLabels);
 
             // EDGE, REMOVE THE EDGE
@@ -341,10 +376,60 @@ public class OrientVertex extends OrientElement implements Vertex {
   /**
    * (Internal only)
    */
+  public static void replaceLinks(final ODocument iVertex, final String iFieldName, final OIdentifiable iVertexToRemove,
+      final OIdentifiable iNewVertex) {
+    if (iVertex == null)
+      return;
+
+    final Object fieldValue = iVertexToRemove != null ? iVertex.field(iFieldName) : iVertex.removeField(iFieldName);
+    if (fieldValue == null)
+      return;
+
+    if (fieldValue instanceof OIdentifiable) {
+      // SINGLE RECORD
+
+      if (iVertexToRemove != null) {
+        if (!fieldValue.equals(iVertexToRemove)) {
+          return;
+        }
+        iVertex.field(iFieldName, iNewVertex);
+      }
+
+    } else if (fieldValue instanceof ORidBag) {
+      // COLLECTION OF RECORDS: REMOVE THE ENTRY
+      final ORidBag bag = (ORidBag) fieldValue;
+
+      boolean found = false;
+      final Iterator<OIdentifiable> it = bag.rawIterator();
+      while (it.hasNext()) {
+        if (it.next().equals(iVertexToRemove)) {
+          // REMOVE THE OLD ENTRY
+          found = true;
+          it.remove();
+        }
+      }
+      if (found)
+        // ADD THE NEW ONE
+        bag.add(iNewVertex);
+
+    } else if (fieldValue instanceof Collection) {
+      final Collection col = (Collection) fieldValue;
+
+      if (col.remove(iVertexToRemove))
+        col.add(iNewVertex);
+    }
+
+    iVertex.save();
+  }
+
+  /**
+   * (Internal only)
+   */
   private static void deleteEdgeIfAny(final OIdentifiable iRecord) {
     if (iRecord != null) {
       final ODocument doc = iRecord.getRecord();
-      if (doc != null && doc.getSchemaClass() != null && doc.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME))
+      if (doc != null && doc.getImmutableSchemaClass() != null
+          && doc.getImmutableSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME))
         // DELETE THE EDGE RECORD TOO
         doc.delete();
     }
@@ -361,11 +446,11 @@ public class OrientVertex extends OrientElement implements Vertex {
       return;
 
     final String inverseFieldName = getInverseConnectionFieldName(iFieldName, useVertexFieldsForEdgeLabels);
-    if (r.getSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
+    if (r.getImmutableSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
       // DIRECT VERTEX
       removeEdges(r, inverseFieldName, iVertex, false, useVertexFieldsForEdgeLabels);
 
-    } else if (r.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+    } else if (r.getImmutableSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
       // EDGE, REMOVE THE EDGE
       final OIdentifiable otherVertex = OrientEdge.getConnection(r,
           getConnectionDirection(inverseFieldName, useVertexFieldsForEdgeLabels));
@@ -392,7 +477,7 @@ public class OrientVertex extends OrientElement implements Vertex {
     if (fieldRecord == null)
       return null;
 
-    if (fieldRecord.getSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
+    if (fieldRecord.getImmutableSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
       if (iTargetVertex != null && !iTargetVertex.equals(fieldValue))
         return null;
 
@@ -402,7 +487,7 @@ public class OrientVertex extends OrientElement implements Vertex {
       else
         toAdd = new OrientEdge(graph, fieldRecord, doc, connection.getValue());
 
-    } else if (fieldRecord.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+    } else if (fieldRecord.getImmutableSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
       // EDGE
       if (iTargetVertex != null) {
         Object targetVertex = OrientEdge.getConnection(fieldRecord, connection.getKey().opposite());
@@ -416,6 +501,17 @@ public class OrientVertex extends OrientElement implements Vertex {
       throw new IllegalStateException("Invalid content found in " + fieldName + " field: " + fieldRecord);
 
     return toAdd;
+  }
+
+  public OrientVertex copy() {
+    final OrientVertex v = new OrientVertex();
+    super.copyTo(v);
+    return v;
+  }
+
+  @Override
+  public OrientVertex getVertexInstance() {
+    return this;
   }
 
   /**
@@ -575,6 +671,115 @@ public class OrientVertex extends OrientElement implements Vertex {
   }
 
   /**
+   * Moves current vertex to another class. All edges are updated automatically.
+   *
+   * @param iClassName
+   *          New class name to assign
+   * @return New vertex's identity
+   * 
+   * @see #moveToCluster(String)
+   * @see #moveTo(String,String)
+   */
+  public ORID moveToClass(final String iClassName) {
+    return moveTo(iClassName, null);
+  }
+
+  /**
+   * Moves current vertex to another cluster. All edges are updated automatically.
+   *
+   * @param iClusterName
+   *          Cluster name where to save the new vertex
+   * @return New vertex's identity
+   * 
+   * @see #moveToClass(String)
+   * @see #moveTo(String,String)
+   */
+  public ORID moveToCluster(final String iClusterName) {
+    return moveTo(null, iClusterName);
+  }
+
+  /**
+   * Moves current vertex to another class/cluster. All edges are updated automatically.
+   * 
+   * @param iClassName
+   *          New class name to assign
+   * @param iClusterName
+   *          Cluster name where to save the new vertex
+   * @return New vertex's identity
+   * 
+   * @see #moveToClass(String)
+   * @see #moveToCluster(String)
+   */
+  public ORID moveTo(final String iClassName, final String iClusterName) {
+    final ORID oldIdentity = getIdentity().copy();
+
+    final ODocument doc = ((ODocument) rawElement.getRecord()).copy();
+
+    final Iterable<Edge> outEdges = getEdges(Direction.OUT);
+    final Iterable<Edge> inEdges = getEdges(Direction.IN);
+
+    if (iClassName != null)
+      // OVERWRITE CLASS
+      doc.setClassName(iClassName);
+
+    // SAVE THE NEW VERTEX
+    doc.setDirty();
+
+    // RESET IDENTITY
+    ORecordInternal.setIdentity(doc, new ORecordId());
+
+    if (iClusterName != null)
+      doc.save(iClusterName);
+    else
+      doc.save();
+
+    final ORID newIdentity = doc.getIdentity();
+
+    // CONVERT OUT EDGES
+    for (Edge e : outEdges) {
+      final OrientEdge oe = (OrientEdge) e;
+      if (oe.isLightweight()) {
+        // REPLACE ALL REFS IN inVertex
+        final OrientVertex inV = oe.getVertex(Direction.IN);
+
+        final String inFieldName = OrientVertex.getConnectionFieldName(Direction.IN, oe.getLabel(),
+            graph.isUseVertexFieldsForEdgeLabels());
+
+        replaceLinks(inV.getRecord(), inFieldName, oldIdentity, newIdentity);
+      } else {
+        // REPLACE WITH NEW VERTEX
+        oe.vOut = newIdentity;
+      }
+    }
+
+    for (Edge e : inEdges) {
+      final OrientEdge oe = (OrientEdge) e;
+      if (oe.isLightweight()) {
+        // REPLACE ALL REFS IN outVertex
+        final OrientVertex outV = oe.getVertex(Direction.OUT);
+
+        final String outFieldName = OrientVertex.getConnectionFieldName(Direction.OUT, oe.getLabel(),
+            graph.isUseVertexFieldsForEdgeLabels());
+
+        replaceLinks(outV.getRecord(), outFieldName, oldIdentity, newIdentity);
+      } else {
+        // REPLACE WITH NEW VERTEX
+        oe.vIn = newIdentity;
+      }
+    }
+
+    // FINAL SAVE
+    doc.save();
+
+    // DELETE OLD RECORD
+    final ORecord oldRecord = oldIdentity.getRecord();
+    if (oldRecord != null)
+      oldRecord.delete();
+
+    return newIdentity;
+  }
+
+  /**
    * Creates an edge between current Vertex and a target Vertex setting label as Edge's label.
    * 
    * @param label
@@ -654,7 +859,12 @@ public class OrientVertex extends OrientElement implements Vertex {
 
     // TEMPORARY STATIC LOCK TO AVOID MT PROBLEMS AGAINST OMVRBTreeRID
     final ODocument outDocument = getRecord();
+    if (outDocument == null)
+      throw new IllegalArgumentException("source vertex is invalid (rid=" + getIdentity() + ")");
+
     final ODocument inDocument = inVertex.getRecord();
+    if (inDocument == null)
+      throw new IllegalArgumentException("destination vertex is invalid (rid=" + inVertex.getIdentity() + ")");
 
     final OrientEdge edge;
     OIdentifiable to;
@@ -678,7 +888,10 @@ public class OrientVertex extends OrientElement implements Vertex {
       // CREATE A LIGHTWEIGHT DYNAMIC EDGE
       from = rawElement;
       to = inDocument;
-      edge = new OrientEdge(graph, from, to, label);
+      if (settings.keepInMemoryReferences)
+        edge = new OrientEdge(graph, from.getIdentity(), to.getIdentity(), label);
+      else
+        edge = new OrientEdge(graph, from, to, label);
     } else {
       // CREATE THE EDGE DOCUMENT TO STORE FIELDS TOO
       edge = new OrientEdge(graph, label, fields);
@@ -700,10 +913,10 @@ public class OrientVertex extends OrientElement implements Vertex {
     }
 
     // OUT-VERTEX ---> IN-VERTEX/EDGE
-    createLink(outDocument, to, outFieldName);
+    createLink(graph, outDocument, to, outFieldName);
 
     // IN-VERTEX ---> OUT-VERTEX/EDGE
-    createLink(inDocument, from, inFieldName);
+    createLink(graph, inDocument, from, inFieldName);
 
     if (graph != null) {
       edge.save(iClusterName);
@@ -843,6 +1056,7 @@ public class OrientVertex extends OrientElement implements Vertex {
    * disable this feature execute this at database level <code>alter database custom useClassForVertexLabel=false
    </code>
    */
+  @Override
   public String getLabel() {
     setCurrentGraphInThreadLocal();
 
@@ -872,15 +1086,27 @@ public class OrientVertex extends OrientElement implements Vertex {
   }
 
   /**
+   * (Blueprints Extension) Returns the Vertex type as OrientVertexType object.
+   */
+  @Override
+  public OrientVertexType getType() {
+    return new OrientVertexType(graph, getRecord().getSchemaClass());
+  }
+
+  /**
    * Returns a string representation of the vertex.
    */
   public String toString() {
     if (graph != null)
       graph.setCurrentGraphInThreadLocal();
 
-    final String clsName = getRecord().getClassName();
+    final ODocument record = getRecord();
+    if (record == null)
+      return "<invalid record " + rawElement.getIdentity() + ">";
 
-    if (clsName.equals(OrientVertexType.CLASS_NAME))
+    final String clsName = record.getClassName();
+
+    if (OrientVertexType.CLASS_NAME.equals(clsName))
       return StringFactory.vertexString(this);
 
     return StringFactory.V + "(" + clsName + ")" + StringFactory.L_BRACKET + getId() + StringFactory.R_BRACKET;
@@ -1000,7 +1226,8 @@ public class OrientVertex extends OrientElement implements Vertex {
     if (!settings.useVertexFieldsForEdgeLabels && label != null)
       return false;
 
-    if (settings.useLightweightEdges && (fields == null || fields.length == 0 || fields[0] == null)) {
+    if (settings.useLightweightEdges
+        && (fields == null || fields.length == 0 || fields[0] == null || (fields[0] instanceof Map && ((Map) fields[0]).isEmpty()))) {
       Object field = iFromVertex.field(iOutFieldName);
       if (field != null)
         if (field instanceof Collection<?>)
@@ -1042,10 +1269,10 @@ public class OrientVertex extends OrientElement implements Vertex {
     final OrientVertex toAdd;
 
     final ODocument fieldRecord = ((OIdentifiable) fieldValue).getRecord();
-    if (fieldRecord.getSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
+    if (fieldRecord.getImmutableSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
       // DIRECT VERTEX
       toAdd = new OrientVertex(graph, fieldRecord);
-    } else if (fieldRecord.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+    } else if (fieldRecord.getImmutableSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
       // EDGE
       if (settings.useVertexFieldsForEdgeLabels || OrientEdge.isLabeled(OrientEdge.getRecordLabel(fieldRecord), iLabels)) {
         final OIdentifiable vertexDoc = OrientEdge.getConnection(fieldRecord, connection.getKey().opposite());

@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.metadata.schema;
 
 import com.orientechnologies.orient.core.collate.OCollate;
@@ -52,8 +56,12 @@ public interface OProperty extends Comparable<OProperty> {
    * @return
    */
   public OClass getLinkedClass();
+  
+  public OProperty setLinkedClass(OClass oClass);
 
   public OType getLinkedType();
+  
+  public OProperty setLinkedType(OType type);
 
   public boolean isNotNull();
 
@@ -62,6 +70,8 @@ public interface OProperty extends Comparable<OProperty> {
   public OCollate getCollate();
 
   public OProperty setCollate(String iCollateName);
+  
+  public OProperty setCollate(OCollate collate);
 
   public boolean isMandatory();
 
@@ -69,7 +79,7 @@ public interface OProperty extends Comparable<OProperty> {
 
   boolean isReadonly();
 
-  OPropertyImpl setReadonly(boolean iReadonly);
+  OProperty setReadonly(boolean iReadonly);
 
   /**
    * Min behavior depends on the Property OType.
@@ -150,7 +160,7 @@ public interface OProperty extends Comparable<OProperty> {
    * @deprecated Use {@link com.orientechnologies.orient.core.index.OIndexManager#dropIndex(String)} instead.
    */
   @Deprecated
-  public OPropertyImpl dropIndexes();
+  public OProperty dropIndexes();
 
   /**
    * @return All indexes in which this property participates as first key item.
@@ -185,18 +195,18 @@ public interface OProperty extends Comparable<OProperty> {
 
   public String getRegexp();
 
-  public OPropertyImpl setRegexp(String regexp);
+  public OProperty setRegexp(String regexp);
 
   /**
    * Change the type. It checks for compatibility between the change of type.
    * 
    * @param iType
    */
-  public OPropertyImpl setType(final OType iType);
+  public OProperty setType(final OType iType);
 
   public String getCustom(final String iName);
 
-  public OPropertyImpl setCustom(final String iName, final String iValue);
+  public OProperty setCustom(final String iName, final String iValue);
 
   public void removeCustom(final String iName);
 
@@ -207,4 +217,6 @@ public interface OProperty extends Comparable<OProperty> {
   public OClass getOwnerClass();
 
   public Object get(ATTRIBUTES iAttribute);
+
+  public Integer getId();
 }

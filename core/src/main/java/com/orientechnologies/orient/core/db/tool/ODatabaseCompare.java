@@ -1,23 +1,36 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.db.tool;
+
+import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OClusterPosition;
@@ -28,6 +41,9 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
@@ -36,13 +52,6 @@ import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
-
-import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
 
 public class ODatabaseCompare extends ODatabaseImpExpAbstract {
   private OStorage              storage1;
@@ -56,6 +65,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
   private OIndex<OIdentifiable> exportImportHashTable             = null;
   private int                   differences                       = 0;
+  private boolean               compareIndexMetadata              = false;
 
   public ODatabaseCompare(String iDb1URL, String iDb2URL, final OCommandOutputListener iListener) throws IOException {
     super(null, null, iListener);
@@ -89,6 +99,10 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     excludeClusters.add("orids");
     excludeClusters.add(OMetadataDefault.CLUSTER_INDEX_NAME);
     excludeClusters.add(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
+  }
+
+  public void setCompareIndexMetadata(boolean compareIndexMetadata) {
+    this.compareIndexMetadata = compareIndexMetadata;
   }
 
   public boolean isCompareEntriesForAutomaticIndexes() {
@@ -148,8 +162,10 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       compareClusters();
       compareRecords(ridMapper);
 
-      if (isDocumentDatabases())
+      if (isDocumentDatabases()) {
+        compareSchama();
         compareIndexes(ridMapper);
+      }
 
       if (differences == 0) {
         listener.onMessage("\n\nDatabases match.");
@@ -166,6 +182,134 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     } finally {
       storage1.close();
       storage2.close();
+    }
+  }
+
+  private void compareSchama() {
+    OSchema schema1 = databaseDocumentTxOne.getMetadata().getImmutableSchemaSnapshot();
+    OSchema schema2 = databaseDocumentTxTwo.getMetadata().getImmutableSchemaSnapshot();
+    boolean ok = true;
+    for (OClass clazz : schema1.getClasses()) {
+      OClass clazz2 = schema2.getClass(clazz.getName());
+      if (clazz2 == null) {
+        listener.onMessage("\n- ERR: Class definition " + clazz.getName() + " for DB2 is null.");
+        continue;
+      }
+      if (clazz.getSuperClass() != null) {
+        if (!clazz.getSuperClass().getName().equals(clazz2.getSuperClass().getName())) {
+          listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same superclass in DB2.");
+          ok = false;
+        }
+      }
+      if (!clazz.getClassIndexes().equals(clazz2.getClassIndexes())) {
+        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined indexes in DB2.");
+        ok = false;
+      }
+      if (!Arrays.equals(clazz.getClusterIds(), clazz2.getClusterIds())) {
+        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined clusters in DB2.");
+        ok = false;
+      }
+      if (!clazz.getCustomKeys().equals(clazz2.getCustomKeys())) {
+        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined custom keys in DB2.");
+        ok = false;
+      }
+      if ((clazz.getJavaClass() == null && clazz2.getJavaClass() != null)
+          || (clazz.getJavaClass() != null && !clazz.getJavaClass().equals(clazz2.getJavaClass()))) {
+        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined Java class in DB2.");
+        ok = false;
+      }
+      if (clazz.getOverSize() != clazz2.getOverSize()) {
+        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined overSize in DB2.");
+        ok = false;
+      }
+
+      if (clazz.getDefaultClusterId() != clazz2.getDefaultClusterId()) {
+        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined default cluser id in DB2.");
+        ok = false;
+      }
+
+      if (clazz.getSize() != clazz2.getSize()) {
+        listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same defined size in DB2.");
+        ok = false;
+      }
+      for (OProperty prop : clazz.declaredProperties()) {
+        OProperty prop2 = clazz2.getProperty(prop.getName());
+        if (prop2 == null) {
+          listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as missed property " + prop.getName()
+              + "in DB2.");
+          ok = false;
+        }
+        if (prop.getType() != prop2.getType()) {
+          listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same type for property "
+              + prop.getName() + "in DB2. ");
+          ok = false;
+        }
+
+        if (prop.getLinkedType() != prop2.getLinkedType()) {
+          listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same linkedtype for property "
+              + prop.getName() + "in DB2.");
+          ok = false;
+        }
+
+        if (prop.getMin() != null) {
+          if (!prop.getMin().equals(prop2.getMin())) {
+            listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same min for property "
+                + prop.getName() + "in DB2.");
+            ok = false;
+          }
+        }
+        if (prop.getMax() != null) {
+          if (!prop.getMax().equals(prop2.getMax())) {
+            listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same max for property "
+                + prop.getName() + "in DB2.");
+            ok = false;
+          }
+        }
+
+        if (prop.getMax() != null) {
+          if (!prop.getMax().equals(prop2.getMax())) {
+            listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same regexp for property "
+                + prop.getName() + "in DB2.");
+            ok = false;
+          }
+        }
+
+        if (prop.getLinkedClass() != null) {
+          if (!prop.getLinkedClass().equals(prop2.getLinkedClass())) {
+            listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same linked class for property "
+                + prop.getName() + "in DB2.");
+            ok = false;
+          }
+        }
+
+        if (prop.getLinkedClass() != null) {
+          if (!prop.getCustomKeys().equals(prop2.getCustomKeys())) {
+            listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same custom keys for property "
+                + prop.getName() + "in DB2.");
+            ok = false;
+          }
+        }
+        if (prop.isMandatory() != prop2.isMandatory()) {
+          listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same mandatory flag for property "
+              + prop.getName() + "in DB2.");
+          ok = false;
+        }
+        if (prop.isNotNull() != prop2.isNotNull()) {
+          listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same nut null flag for property "
+              + prop.getName() + "in DB2.");
+          ok = false;
+        }
+        if (prop.isReadonly() != prop2.isReadonly()) {
+          listener.onMessage("\n- ERR: Class definition for " + clazz.getName()
+              + " as not same readonly flag setting for property " + prop.getName() + "in DB2.");
+          ok = false;
+        }
+
+      }
+      if (!ok) {
+        ++differences;
+        ok = true;
+      }
     }
   }
 
@@ -310,39 +454,41 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
         ++differences;
       }
 
-      final ODocument metadataOne = indexOne.getMetadata();
-      final ODocument metadataTwo = indexTwo.getMetadata();
+      if (compareIndexMetadata) {
+        final ODocument metadataOne = indexOne.getMetadata();
+        final ODocument metadataTwo = indexTwo.getMetadata();
 
-      if (metadataOne == null && metadataTwo != null) {
-        ok = false;
-        listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 is null but for DB2 is not.");
-        listener.onMessage("\n");
-        ++differences;
-      } else if (metadataOne != null && metadataTwo == null) {
-        ok = false;
-        listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 is not null but for DB2 is null.");
-        listener.onMessage("\n");
-        ++differences;
-      } else if (metadataOne != null && metadataTwo != null
-          && !ODocumentHelper.hasSameContentOf(metadataOne, databaseDocumentTxOne, metadataTwo, databaseDocumentTxTwo, ridMapper)) {
-        ok = false;
-        listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 and for DB2 are different.");
-        makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<Object>() {
-          @Override
-          public Object call() {
-            listener.onMessage("\n--- M1: " + metadataOne);
-            return null;
-          }
-        });
-        makeDbCall(databaseDocumentTxTwo, new ODbRelatedCall<Object>() {
-          @Override
-          public Object call() {
-            listener.onMessage("\n--- M2: " + metadataTwo);
-            return null;
-          }
-        });
-        listener.onMessage("\n");
-        ++differences;
+        if (metadataOne == null && metadataTwo != null) {
+          ok = false;
+          listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 is null but for DB2 is not.");
+          listener.onMessage("\n");
+          ++differences;
+        } else if (metadataOne != null && metadataTwo == null) {
+          ok = false;
+          listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 is not null but for DB2 is null.");
+          listener.onMessage("\n");
+          ++differences;
+        } else if (metadataOne != null && metadataTwo != null
+            && !ODocumentHelper.hasSameContentOf(metadataOne, databaseDocumentTxOne, metadataTwo, databaseDocumentTxTwo, ridMapper)) {
+          ok = false;
+          listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 and for DB2 are different.");
+          makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<Object>() {
+            @Override
+            public Object call() {
+              listener.onMessage("\n--- M1: " + metadataOne);
+              return null;
+            }
+          });
+          makeDbCall(databaseDocumentTxTwo, new ODbRelatedCall<Object>() {
+            @Override
+            public Object call() {
+              listener.onMessage("\n--- M2: " + metadataTwo);
+              return null;
+            }
+          });
+          listener.onMessage("\n");
+          ++differences;
+        }
       }
 
       if (((compareEntriesForAutomaticIndexes && !indexOne.getType().equals("DICTIONARY")) || !indexOne.isAutomatic())) {
@@ -497,7 +643,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       final OClusterPosition db1Max = db1Range[1];
       final OClusterPosition db2Max = db2Range[1];
 
+      ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocumentTxOne);
       final ODocument doc1 = new ODocument();
+      ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocumentTxTwo);
       final ODocument doc2 = new ODocument();
 
       final ORecordId rid = new ORecordId(clusterId);
@@ -525,6 +673,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
           if (isDocumentDatabases() && rid.equals(new ORecordId(storage1.getConfiguration().indexMgrRecordId))
               && rid.equals(new ORecordId(storage2.getConfiguration().indexMgrRecordId)))
+            continue;
+          if (isDocumentDatabases() && rid.equals(new ORecordId(storage1.getConfiguration().schemaRecordId))
+              && rid.equals(new ORecordId(storage2.getConfiguration().schemaRecordId)))
             continue;
 
           final ORawBuffer buffer1 = storage1.readRecord(rid, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)

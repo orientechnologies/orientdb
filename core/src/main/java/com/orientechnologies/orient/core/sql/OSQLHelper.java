@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.sql;
 
 import java.util.ArrayList;
@@ -33,9 +37,9 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerCSVAbstract;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
@@ -229,7 +233,7 @@ public class OSQLHelper {
     return iObject;
   }
 
-  public static Object getValue(final Object iObject, final ORecordInternal<?> iRecord, final OCommandContext iContext) {
+  public static Object getValue(final Object iObject, final ORecord iRecord, final OCommandContext iContext) {
     if (iObject == null)
       return null;
 
@@ -237,7 +241,7 @@ public class OSQLHelper {
       return ((OSQLFilterItem) iObject).getValue(iRecord, null, iContext);
     else if (iObject instanceof String) {
       final String s = ((String) iObject).trim();
-      if (!s.isEmpty() && !OIOUtils.isStringContent(iObject) && !Character.isDigit(s.charAt(0)))
+      if (iRecord != null & !s.isEmpty() && !OIOUtils.isStringContent(iObject) && !Character.isDigit(s.charAt(0)))
         // INTERPRETS IT
         return ODocumentHelper.getFieldValue(iRecord, s, iContext);
     }
@@ -259,7 +263,7 @@ public class OSQLHelper {
 
     if (iFieldValue instanceof ODocument && !((ODocument) iFieldValue).getIdentity().isValid())
       // EMBEDDED DOCUMENT
-      ((ODocument) iFieldValue).addOwner(iDocument);
+      ODocumentInternal.addOwner((ODocument) iFieldValue, iDocument);
 
     // can't use existing getValue with iContext
     if (iFieldValue == null)
@@ -287,8 +291,8 @@ public class OSQLHelper {
           fieldValue = ODatabaseRecordThreadLocal.INSTANCE.get().command(cmd).execute();
 
           // CHECK FOR CONVERSIONS
-          if (iDocument.getSchemaClass() != null) {
-            final OProperty prop = iDocument.getSchemaClass().getProperty(fieldName);
+          if (iDocument.getImmutableSchemaClass() != null) {
+            final OProperty prop = iDocument.getImmutableSchemaClass().getProperty(fieldName);
             if (prop != null) {
               if (prop.getType() == OType.LINK) {
                 if (OMultiValue.isMultiValue(fieldValue)) {
@@ -311,7 +315,7 @@ public class OSQLHelper {
             for (Object o : OMultiValue.getMultiValueIterable(fieldValue)) {
               if (o instanceof OIdentifiable && !((OIdentifiable) o).getIdentity().isPersistent()) {
                 // TEMPORARY / EMBEDDED
-                final ORecord<?> rec = ((OIdentifiable) o).getRecord();
+                final ORecord rec = ((OIdentifiable) o).getRecord();
                 if (rec != null && rec instanceof ODocument) {
                   // CHECK FOR ONE FIELD ONLY
                   final ODocument doc = (ODocument) rec;
@@ -321,7 +325,8 @@ public class OSQLHelper {
                   } else {
                     // TRANSFORM IT IN EMBEDDED
                     doc.getIdentity().reset();
-                    doc.addOwner(iDocument);
+                    ODocumentInternal.addOwner(doc, iDocument);
+                    ODocumentInternal.addOwner(doc, iDocument);
                     tempColl.add(doc);
                   }
                 }

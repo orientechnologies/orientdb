@@ -98,9 +98,8 @@
     </mailingLists>
 
     <modules>
+        <module>test-commons</module>
         <module>client</module>
-        <module>commons</module>
-        <module>nativeos</module>
         <module>core</module>
         <module>enterprise</module>
         <module>object</module>
@@ -142,8 +141,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.build.resourceEncoding>UTF-8</project.build.resourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <javac.src.version>1.6</javac.src.version>
-        <javac.target.version>1.6</javac.target.version>
+        <maven.compiler.source>1.6</maven.compiler.source>
+        <maven.compiler.target>1.6</maven.compiler.target>
         <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ssZ</maven.build.timestamp.format>
         <implementation.build>${scmBranch}@r${buildNumber}</implementation.build>
         <!-- | Configuration properties for the OSGi maven-bundle-plugin -->
@@ -153,7 +152,7 @@
         <osgi.dynamicImport/>
         <osgi.private/>
         <!-- | shared build/report plugins version -->
-        <surefire.version>2.16</surefire.version>
+        <surefire.version>2.17</surefire.version>
         <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/
         </sonatypeOssDistMgmtSnapshotsUrl>
     </properties>
@@ -190,10 +189,11 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>2.8</version>
-                    <configuration>I	
-                       <maxmemory>1G</maxmemory>
-                    </configuration>	
+                    <version>2.9.1</version>
+                    <configuration>
+                        <additionalparam>-Xdoclint:none</additionalparam>
+                        <maxmemory>2G</maxmemory>
+                    </configuration>
                 </plugin>
 
                 <plugin>
@@ -285,6 +285,13 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefire.version}</version>
+                <configuration>
+                  <systemPropertyVariables>
+                    <!-- SET THIS TO AVOID ASKING FOR PASSWORD DURING TESTS -->
+                    <propertyName>ORIENTDB_ROOT_PASSWORD</propertyName>
+                    <propertyName>ORIENTDB_NODE_NAME</propertyName>
+                  </systemPropertyVariables>
+                </configuration>
             </plugin>
 
             <plugin>
@@ -342,8 +349,8 @@
                         <manifestEntries>
                             <Implementation-Build>${implementation.build}</Implementation-Build>
                             <Implementation-Build-Date>${maven.build.timestamp}</Implementation-Build-Date>
-                            <X-Compile-Source-JDK>${javac.src.version}</X-Compile-Source-JDK>
-                            <X-Compile-Target-JDK>${javac.target.version}</X-Compile-Target-JDK>
+                            <X-Compile-Source-JDK>${maven.compiler.source}</X-Compile-Source-JDK>
+                            <X-Compile-Target-JDK>${maven.compiler.target}</X-Compile-Target-JDK>
                         </manifestEntries>
                     </archive>
                 </configuration>
@@ -454,8 +461,9 @@
                         <artifactId>maven-compiler-plugin</artifactId>
                         <version>2.3.2</version>
                         <configuration>
-                            <source>${javac.src.version}</source>
-                            <target>${javac.target.version}</target>
+                            <compilerArgument>-XDignore.symbol.file</compilerArgument>
+                            <source>${maven.compiler.source}</source>
+                            <target>${maven.compiler.target}</target>
                             <showDeprecation>true</showDeprecation>
                             <showWarnings>true</showWarnings>
                             <optimize>true</optimize>
@@ -480,8 +488,8 @@
                         <artifactId>maven-compiler-plugin</artifactId>
                         <version>2.3.2</version>
                         <configuration>
-                            <source>${javac.src.version}</source>
-                            <target>${javac.target.version}</target>
+                            <source>${maven.compiler.source}</source>
+                            <target>${maven.compiler.target}</target>
                             <showDeprecation>true</showDeprecation>
                             <showWarnings>true</showWarnings>
                             <optimize>true</optimize>
@@ -504,7 +512,8 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <executions>
+                            <version>1.4</version>
+                            <executions>
                             <execution>
                                 <id>sign-artifacts</id>
                                 <phase>verify</phase>
@@ -541,8 +550,8 @@
                                             <Implementation-Build>${implementation.build}</Implementation-Build>
                                             <Implementation-Build-Date>${maven.build.timestamp}
                                             </Implementation-Build-Date>
-                                            <X-Compile-Source-JDK>${javac.src.version}</X-Compile-Source-JDK>
-                                            <X-Compile-Target-JDK>${javac.target.version}</X-Compile-Target-JDK>
+                                            <X-Compile-Source-JDK>${maven.compiler.source}</X-Compile-Source-JDK>
+                                            <X-Compile-Target-JDK>${maven.compiler.target}</X-Compile-Target-JDK>
                                         </manifestEntries>
                                     </archive>
                                 </configuration>
@@ -570,8 +579,8 @@
                                             <Implementation-Build>${implementation.build}</Implementation-Build>
                                             <Implementation-Build-Date>${maven.build.timestamp}
                                             </Implementation-Build-Date>
-                                            <X-Compile-Source-JDK>${javac.src.version}</X-Compile-Source-JDK>
-                                            <X-Compile-Target-JDK>${javac.target.version}</X-Compile-Target-JDK>
+                                            <X-Compile-Source-JDK>${maven.compiler.source}</X-Compile-Source-JDK>
+                                            <X-Compile-Target-JDK>${maven.compiler.target}</X-Compile-Target-JDK>
                                         </manifestEntries>
                                     </archive>
                                 </configuration>

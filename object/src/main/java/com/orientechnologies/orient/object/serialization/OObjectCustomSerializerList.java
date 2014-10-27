@@ -29,13 +29,13 @@ import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
 public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OObjectLazyCustomSerializer<List<TYPE>>, Serializable {
   private static final long       serialVersionUID = -8541477416577361792L;
 
-  private ORecord<?>              sourceRecord;
+  private ORecord              sourceRecord;
   private final List<Object>      serializedList;
   private final ArrayList<Object> list             = new ArrayList<Object>();
   private boolean                 converted        = false;
   private final Class<?>          deserializeClass;
 
-  public OObjectCustomSerializerList(final Class<?> iDeserializeClass, final ORecord<?> iSourceRecord,
+  public OObjectCustomSerializerList(final Class<?> iDeserializeClass, final ORecord iSourceRecord,
       final List<Object> iRecordList) {
     this.sourceRecord = iSourceRecord;
     this.serializedList = iRecordList;
@@ -45,7 +45,7 @@ public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OObjectLaz
     }
   }
 
-  public OObjectCustomSerializerList(final Class<?> iDeserializeClass, final ORecord<?> iSourceRecord,
+  public OObjectCustomSerializerList(final Class<?> iDeserializeClass, final ORecord iSourceRecord,
       final List<Object> iRecordList, final Collection<? extends TYPE> iSourceList) {
     this.sourceRecord = iSourceRecord;
     this.serializedList = iRecordList;

@@ -1,27 +1,23 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.sql.filter;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -39,11 +35,19 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNot;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 /**
  * Parses text in SQL format and build a tree of conditions.
- * 
+ *
  * @author Luca Garulli
- * 
+ *
  */
 public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
   protected Set<OProperty>                properties = new HashSet<OProperty>();
@@ -101,21 +105,23 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
     return evaluate(null, null, iContext);
   }
 
-  public Object evaluate(final ORecord<?> iRecord, ODocument iCurrentResult, final OCommandContext iContext) {
+  public Object evaluate(final ORecord iRecord, ODocument iCurrentResult, final OCommandContext iContext) {
     if (rootCondition == null)
       return true;
 
     return rootCondition.evaluate(iRecord, iCurrentResult, iContext);
   }
 
-  private Object extractConditions(final OSQLFilterCondition iParentCondition) {
+  protected Object extractConditions(final OSQLFilterCondition iParentCondition) {
     final int oldPosition = parserGetCurrentPosition();
     parserNextWord(true, " )=><,\r\n");
     final String word = parserGetLastWord();
 
+    boolean inBraces = word.length() > 0 && word.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN;
+
     if (word.length() > 0 && (word.equalsIgnoreCase("SELECT") || word.equalsIgnoreCase("TRAVERSE"))) {
       // SUB QUERY
-      final StringBuilder embedded = new StringBuilder();
+      final StringBuilder embedded = new StringBuilder(256);
       OStringSerializerHelper.getEmbedded(parserText, oldPosition - 1, -1, embedded);
       parserSetCurrentPosition(oldPosition + embedded.length() + 1);
       return new OSQLSynchQuery<Object>(embedded.toString());
@@ -146,11 +152,14 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
       }
     }
 
+    currentCondition.inBraces = inBraces;
+
     // END OF TEXT
     return currentCondition;
   }
 
   protected OSQLFilterCondition extractCondition() {
+
     if (!parserSkipWhiteSpaces())
       // END OF TEXT
       return null;
@@ -266,7 +275,9 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
           braces--;
           parserMoveCurrentPosition(+1);
         }
-
+        if(subCondition instanceof OSQLFilterCondition){
+          ((OSQLFilterCondition) subCondition).inBraces = true;
+        }
         result[i] = subCondition;
       } else if (word.charAt(0) == OStringSerializerHelper.LIST_BEGIN) {
         // COLLECTION OF ELEMENTS

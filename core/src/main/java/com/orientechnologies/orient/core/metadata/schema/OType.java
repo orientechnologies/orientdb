@@ -1,123 +1,182 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.types.OBinary;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-
-import java.lang.reflect.Array;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.common.collection.OMultiCollectionIterator;
+import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.types.OBinary;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
+import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+
 /**
- * Generic representation of a type.<br/>
+ * Generic representation of a type.<br>
  * allowAssignmentFrom accepts any class, but Array.class means that the type accepts generic Arrays.
  * 
  * @author Luca Garulli
  * 
  */
 public enum OType {
-  BOOLEAN("Boolean", 0, new Class<?>[] { Boolean.class, Boolean.TYPE }, new Class<?>[] { Boolean.class, Number.class }),
+  BOOLEAN("Boolean", 0, Boolean.class, new Class<?>[] { Number.class }),
 
-  INTEGER("Integer", 1, new Class<?>[] { Integer.class, Integer.TYPE }, new Class<?>[] { Integer.class, Number.class }),
+  INTEGER("Integer", 1, Integer.class, new Class<?>[] { Number.class }),
 
-  SHORT("Short", 2, new Class<?>[] { Short.class, Short.TYPE }, new Class<?>[] { Short.class, Number.class }),
+  SHORT("Short", 2, Short.class, new Class<?>[] { Number.class }),
 
-  LONG("Long", 3, new Class<?>[] { Long.class, Long.TYPE }, new Class<?>[] { Long.class, Number.class, }),
+  LONG("Long", 3, Long.class, new Class<?>[] { Number.class, }),
 
-  FLOAT("Float", 4, new Class<?>[] { Float.class, Float.TYPE }, new Class<?>[] { Float.class, Number.class }),
+  FLOAT("Float", 4, Float.class, new Class<?>[] { Number.class }),
 
-  DOUBLE("Double", 5, new Class<?>[] { Double.class, Double.TYPE }, new Class<?>[] { Double.class, Number.class }),
+  DOUBLE("Double", 5, Double.class, new Class<?>[] { Number.class }),
 
-  DATETIME("Datetime", 6, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Number.class }),
+  DATETIME("Datetime", 6, Date.class, new Class<?>[] { Date.class, Number.class }),
 
-  STRING("String", 7, new Class<?>[] { String.class }, new Class<?>[] { String.class, Enum.class }),
+  STRING("String", 7, String.class, new Class<?>[] { Enum.class }),
 
-  BINARY("Binary", 8, new Class<?>[] { byte[].class }, new Class<?>[] { byte[].class }),
+  BINARY("Binary", 8, byte[].class, new Class<?>[] { byte[].class }),
 
-  EMBEDDED("Embedded", 9, new Class<?>[] { Object.class }, new Class<?>[] { OSerializableStream.class }),
+  EMBEDDED("Embedded", 9, Object.class, new Class<?>[] { OSerializableStream.class, ODocumentSerializable.class }),
 
-  EMBEDDEDLIST("EmbeddedList", 10, new Class<?>[] { List.class }, new Class<?>[] { List.class }),
+  EMBEDDEDLIST("EmbeddedList", 10, List.class, new Class<?>[] { List.class, OMultiCollectionIterator.class }),
 
-  EMBEDDEDSET("EmbeddedSet", 11, new Class<?>[] { Set.class }, new Class<?>[] { Set.class }),
+  EMBEDDEDSET("EmbeddedSet", 11, Set.class, new Class<?>[] { Set.class }),
 
-  EMBEDDEDMAP("EmbeddedMap", 12, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }),
+  EMBEDDEDMAP("EmbeddedMap", 12, Map.class, new Class<?>[] { Map.class }),
 
-  LINK("Link", 13, new Class<?>[] { Object.class, ORecordId.class }, new Class<?>[] { ORecord.class, ORID.class }),
+  LINK("Link", 13, Object.class, new Class<?>[] { OIdentifiable.class, ORID.class }),
 
-  LINKLIST("LinkList", 14, new Class<?>[] { List.class }, new Class<?>[] { List.class }),
+  LINKLIST("LinkList", 14, List.class, new Class<?>[] { List.class }),
 
-  LINKSET("LinkSet", 15, new Class<?>[] { OMVRBTreeRIDSet.class, ORecordLazySet.class }, new Class<?>[] { OMVRBTreeRIDSet.class,
-      Set.class }),
+  LINKSET("LinkSet", 15, Set.class, new Class<?>[] { Set.class }),
 
-  LINKMAP("LinkMap", 16, new Class<?>[] { Map.class }, new Class<?>[] { Map.class }),
+  LINKMAP("LinkMap", 16, Map.class, new Class<?>[] { Map.class }),
 
-  BYTE("Byte", 17, new Class<?>[] { Byte.class, Byte.TYPE }, new Class<?>[] { Byte.class, Number.class }),
+  BYTE("Byte", 17, Byte.class, new Class<?>[] { Number.class }),
 
-  TRANSIENT("Transient", 18, new Class<?>[] {}, new Class<?>[] {}),
+  TRANSIENT("Transient", 18, null, new Class<?>[] {}),
 
-  DATE("Date", 19, new Class<?>[] { Date.class }, new Class<?>[] { Date.class, Number.class }),
+  DATE("Date", 19, Date.class, new Class<?>[] { Number.class }),
 
-  CUSTOM("Custom", 20, new Class<?>[] { OSerializableStream.class }, new Class<?>[] { OSerializableStream.class }),
+  CUSTOM("Custom", 20, OSerializableStream.class, new Class<?>[] { OSerializableStream.class }),
 
-  DECIMAL("Decimal", 21, new Class<?>[] { BigDecimal.class }, new Class<?>[] { BigDecimal.class, Number.class }),
+  DECIMAL("Decimal", 21, BigDecimal.class, new Class<?>[] { BigDecimal.class, Number.class }),
 
-  LINKBAG("LinkBag", 22, new Class<?>[] { ORidBag.class }, new Class<?>[] { ORidBag.class }),
+  LINKBAG("LinkBag", 22, ORidBag.class, new Class<?>[] { ORidBag.class }),
 
-  ANY("Any", 23, new Class<?>[] {}, new Class<?>[] {});
+  ANY("Any", 23, null, new Class<?>[] {});
 
   // Don't change the order, the type discover get broken if you change the order.
-  protected static final OType[] TYPES       = new OType[] { STRING, BOOLEAN, BYTE, INTEGER, SHORT, LONG, FLOAT, DOUBLE, DATETIME,
-      DATE, BINARY, EMBEDDEDLIST, EMBEDDEDSET, EMBEDDEDMAP, LINK, LINKLIST, LINKSET, LINKMAP, EMBEDDED, CUSTOM, TRANSIENT, DECIMAL,
-      LINKBAG, ANY                          };
+  protected static final OType[]              TYPES          = new OType[] { EMBEDDEDLIST, EMBEDDEDSET, EMBEDDEDMAP, LINK, CUSTOM,
+      EMBEDDED, STRING, DATETIME                            };
 
-  protected static final OType[] TYPES_BY_ID = new OType[24];
+  protected static final OType[]              TYPES_BY_ID    = new OType[24];
+  // Values previosly stored in javaTypes
+  protected static final Map<Class<?>, OType> TYPES_BY_CLASS = new HashMap<Class<?>, OType>();
+
   static {
     for (OType oType : values()) {
       TYPES_BY_ID[oType.id] = oType;
     }
+    // This is made by hand because not all types should be add.
+    TYPES_BY_CLASS.put(Boolean.class, BOOLEAN);
+    TYPES_BY_CLASS.put(Boolean.TYPE, BOOLEAN);
+    TYPES_BY_CLASS.put(Integer.TYPE, INTEGER);
+    TYPES_BY_CLASS.put(Integer.class, INTEGER);
+    TYPES_BY_CLASS.put(BigInteger.class, INTEGER);
+    TYPES_BY_CLASS.put(Short.class, SHORT);
+    TYPES_BY_CLASS.put(Short.TYPE, SHORT);
+    TYPES_BY_CLASS.put(Long.class, LONG);
+    TYPES_BY_CLASS.put(Long.TYPE, LONG);
+    TYPES_BY_CLASS.put(Float.TYPE, FLOAT);
+    TYPES_BY_CLASS.put(Float.class, FLOAT);
+    TYPES_BY_CLASS.put(Double.TYPE, DOUBLE);
+    TYPES_BY_CLASS.put(Double.class, DOUBLE);
+    TYPES_BY_CLASS.put(Date.class, DATETIME);
+    TYPES_BY_CLASS.put(String.class, STRING);
+    TYPES_BY_CLASS.put(Enum.class, STRING);
+    TYPES_BY_CLASS.put(byte[].class, BINARY);
+    TYPES_BY_CLASS.put(Byte.class, BYTE);
+    TYPES_BY_CLASS.put(Byte.TYPE, BYTE);
+    TYPES_BY_CLASS.put(Character.class, STRING);
+    TYPES_BY_CLASS.put(Character.TYPE, STRING);
+    TYPES_BY_CLASS.put(ORecordId.class, LINK);
+    TYPES_BY_CLASS.put(BigDecimal.class, DECIMAL);
+    TYPES_BY_CLASS.put(ORidBag.class, LINKBAG);
+    TYPES_BY_CLASS.put(OTrackedSet.class, EMBEDDEDSET);
+    TYPES_BY_CLASS.put(OMVRBTreeRIDSet.class, LINKSET);
+    TYPES_BY_CLASS.put(ORecordLazySet.class, LINKSET);
+    TYPES_BY_CLASS.put(OTrackedList.class, EMBEDDEDLIST);
+    TYPES_BY_CLASS.put(ORecordLazyList.class, LINKLIST);
+    TYPES_BY_CLASS.put(OTrackedMap.class, EMBEDDEDMAP);
+    TYPES_BY_CLASS.put(ORecordLazyMap.class, LINKMAP);
+    BYTE.castable.add(BOOLEAN);
+    SHORT.castable.addAll(Arrays.asList(new OType[] { BOOLEAN, BYTE }));
+    INTEGER.castable.addAll(Arrays.asList(new OType[] { BOOLEAN, BYTE, SHORT }));
+    LONG.castable.addAll(Arrays.asList(new OType[] { BOOLEAN, BYTE, SHORT, INTEGER }));
+    FLOAT.castable.addAll(Arrays.asList(new OType[] { BOOLEAN, BYTE, SHORT, INTEGER }));
+    DOUBLE.castable.addAll(Arrays.asList(new OType[] { BOOLEAN, BYTE, SHORT, INTEGER, LONG, FLOAT }));
+    DECIMAL.castable.addAll(Arrays.asList(new OType[] { BOOLEAN, BYTE, SHORT, INTEGER, LONG, FLOAT, DOUBLE }));
+    LINKLIST.castable.add(LINKSET);
+    EMBEDDEDLIST.castable.add(EMBEDDEDSET);
   }
 
-  protected String               name;
-  protected int                  id;
-  protected Class<?>[]           javaTypes;
-  protected Class<?>[]           allowAssignmentFrom;
+  protected final String                      name;
+  protected final int                         id;
+  protected final Class<?>                    javaDefaultType;
+  protected final Class<?>[]                  allowAssignmentFrom;
+  protected final Set<OType>                  castable;
 
-  private OType(final String iName, final int iId, final Class<?>[] iJavaTypes, final Class<?>[] iAllowAssignmentBy) {
+  private OType(final String iName, final int iId, final Class<?> iJavaDefaultType, final Class<?>[] iAllowAssignmentBy) {
     name = iName;
     id = iId;
-    javaTypes = iJavaTypes;
+    javaDefaultType = iJavaDefaultType;
     allowAssignmentFrom = iAllowAssignmentBy;
-
+    castable = new HashSet<OType>();
+    castable.add(this);
   }
 
   /**
@@ -153,14 +212,17 @@ public enum OType {
     if (iClass == null)
       return null;
 
-    for (final OType type : TYPES)
-      for (int i = 0; i < type.javaTypes.length; ++i) {
-        if (type.javaTypes[i] == iClass)
-          return type;
-        if (type.javaTypes[i] == Array.class && iClass.isArray())
-          return type;
-      }
+    OType type = TYPES_BY_CLASS.get(iClass);
+    if (type != null)
+      return type;
+    type = getTypeByClassInherit(iClass);
 
+    return type;
+  }
+
+  private static OType getTypeByClassInherit(final Class<?> iClass) {
+    if (iClass.isArray())
+      return EMBEDDEDLIST;
     int priority = 0;
     boolean comparedAtLeastOnce;
     do {
@@ -169,16 +231,54 @@ public enum OType {
         if (type.allowAssignmentFrom.length > priority) {
           if (type.allowAssignmentFrom[priority].isAssignableFrom(iClass))
             return type;
-          if (type.allowAssignmentFrom[priority].isArray() && iClass.isArray())
-            return type;
           comparedAtLeastOnce = true;
         }
       }
 
       priority++;
     } while (comparedAtLeastOnce);
-
     return null;
+  }
+
+  public static OType getTypeByValue(Object value) {
+    if (value == null)
+      return null;
+    Class<?> clazz = value.getClass();
+    OType type = TYPES_BY_CLASS.get(clazz);
+    if (type != null)
+      return type;
+
+    OType byType = getTypeByClassInherit(clazz);
+    if (LINK == byType) {
+      if (value instanceof ODocument && ((ODocument) value).hasOwners())
+        return EMBEDDED;
+    } else if (EMBEDDEDSET == byType) {
+      if (checkLinkCollection(((Collection<?>) value)))
+        return LINKSET;
+    } else if (EMBEDDEDLIST == byType && !clazz.isArray()) {
+      if (value instanceof OMultiCollectionIterator<?>)
+        type = ((OMultiCollectionIterator<?>) value).isEmbedded() ? OType.EMBEDDEDLIST : OType.LINKLIST;
+      else if (checkLinkCollection(((Collection<?>) value)))
+        return LINKLIST;
+
+    } else if (EMBEDDEDMAP == byType) {
+      if (checkLinkCollection(((Map<?, ?>) value).values()))
+        return LINKMAP;
+    }
+    return byType;
+  }
+
+  private static boolean checkLinkCollection(Collection<?> toCheck) {
+    boolean empty = true;
+    for (Object object : toCheck) {
+      if (object != null && !(object instanceof OIdentifiable))
+        return false;
+      else if (object != null)
+        empty = false;
+    }
+    if (!empty)
+      return true;
+    return false;
   }
 
   public static boolean isSimpleType(final Object iObject) {
@@ -599,6 +699,7 @@ public enum OType {
    *          Any type supported
    * @return The string if the conversion succeed, otherwise the IllegalArgumentException exception
    */
+  @Deprecated
   public String asString(final Object iValue) {
     return iValue.toString();
   }
@@ -613,10 +714,15 @@ public enum OType {
   }
 
   public Class<?> getDefaultJavaType() {
-    return javaTypes.length > 0 ? javaTypes[0] : null;
+    return javaDefaultType;
   }
 
+  public Set<OType> getCastable() {
+    return castable;
+  }
+
+  @Deprecated
   public Class<?>[] getJavaTypes() {
-    return javaTypes;
+    return null;
   }
 }

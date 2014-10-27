@@ -1,26 +1,49 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.core.db.tool;
+
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.text.ParseException;
+import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.zip.GZIPInputStream;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODocumentFieldVisitor;
 import com.orientechnologies.orient.core.db.document.ODocumentFieldWalker;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
@@ -64,25 +87,6 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.lang.reflect.InvocationTargetException;
-import java.text.ParseException;
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.zip.GZIPInputStream;
-
 /**
  * Import data from a file into a database.
  * 
@@ -94,7 +98,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
   private Map<OPropertyImpl, String> linkedClasses          = new HashMap<OPropertyImpl, String>();
   private Map<OClass, String>        superClasses           = new HashMap<OClass, String>();
   private OJSONReader                jsonReader;
-  private ORecordInternal<?>         record;
+  private ORecord                    record;
   private boolean                    schemaImported         = false;
   private int                        exporterVersion        = -1;
   private ORID                       schemaRecordId;
@@ -351,7 +355,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
   }
 
-  public ODatabaseImport(final ODatabaseDocument database, final String iFileName, final OCommandOutputListener iListener)
+  public ODatabaseImport(final ODatabaseDocumentInternal database, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
     super(database, iFileName, iListener);
 
@@ -372,7 +376,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     database.declareIntent(new OIntentMassiveInsert());
   }
 
-  public ODatabaseImport(final ODatabaseDocument database, final InputStream iStream, final OCommandOutputListener iListener)
+  public ODatabaseImport(final ODatabaseDocumentInternal database, final InputStream iStream, final OCommandOutputListener iListener)
       throws IOException {
     super(database, "streaming", iListener);
     jsonReader = new OJSONReader(new InputStreamReader(iStream));
@@ -393,7 +397,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
 
-      database.getLocalCache().setEnable(false);
       database.setMVCC(false);
       database.setValidationEnabled(false);
 
@@ -495,6 +498,34 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     database.declareIntent(null);
   }
 
+  public boolean isMigrateLinks() {
+    return migrateLinks;
+  }
+
+  public void setMigrateLinks(boolean migrateLinks) {
+    this.migrateLinks = migrateLinks;
+  }
+
+  public boolean isRebuildIndexes() {
+    return rebuildIndexes;
+  }
+
+  public void setRebuildIndexes(boolean rebuildIndexes) {
+    this.rebuildIndexes = rebuildIndexes;
+  }
+
+  public boolean isPreserveClusterIDs() {
+    return preserveClusterIDs;
+  }
+
+  public boolean isMerge() {
+    return merge;
+  }
+
+  public void setMerge(boolean merge) {
+    this.merge = merge;
+  }
+
   public boolean isDeleteRIDMapping() {
     return deleteRIDMapping;
   }
@@ -548,8 +579,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     database.dropCluster(OStorage.CLUSTER_DEFAULT_NAME, true);
 
-    database.getStorage().setDefaultClusterId(
-        database.addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OStorage.CLUSTER_DEFAULT_NAME, null, null));
+    database.getStorage().setDefaultClusterId(database.addCluster(OStorage.CLUSTER_DEFAULT_NAME));
 
     // Starting from v4 schema has been moved to internal cluster.
     // Create a stub at #2:0 to prevent cluster position shifting.
@@ -700,7 +730,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     } while (jsonReader.lastChar() == ',');
 
-    listener.onMessage("\nDone. Imported " + n + " indexes.");
+    listener.onMessage("\nDone. Imported " + String.format("%,d", n) + " indexes.");
 
     jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
   }
@@ -712,8 +742,27 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     @SuppressWarnings("unused")
     int schemaVersion = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"version\"")
         .readNumber(OJSONReader.ANY_NUMBER, true);
-    jsonReader.readNext(OJSONReader.COMMA_SEPARATOR).readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"classes\"")
-        .readNext(OJSONReader.BEGIN_COLLECTION);
+    jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
+    jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT);
+    // This can be removed after the M1 expires
+    if (jsonReader.getValue().equals("\"globalProperties\"")) {
+      jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
+      do {
+        jsonReader.readNext(OJSONReader.BEGIN_OBJECT);
+        jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"name\"");
+        String name = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+        jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"global-id\"");
+        String id = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+        jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"type\"");
+        String type = jsonReader.readString(OJSONReader.NEXT_IN_OBJECT);
+        // getDatabase().getMetadata().getSchema().createGlobalProperty(name, OType.valueOf(type), Integer.valueOf(id));
+        jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+      } while (jsonReader.lastChar() == ',');
+      jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
+      jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT);
+    }
+
+    jsonReader.checkContent("\"classes\"").readNext(OJSONReader.BEGIN_COLLECTION);
 
     long classImported = 0;
 
@@ -840,7 +889,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       next = jsonReader.readString(OJSONReader.COMMA_SEPARATOR);
       next = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).getValue();
     }
-
     next = jsonReader.checkContent("\"type\"").readString(OJSONReader.NEXT_IN_OBJECT);
 
     final OType type = OType.valueOf(next);
@@ -887,10 +935,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     }
 
     OPropertyImpl prop = (OPropertyImpl) iClass.getProperty(propName);
-    if (prop == null)
+    if (prop == null) {
       // CREATE IT
       prop = (OPropertyImpl) iClass.createProperty(propName, type);
-
+    }
     prop.setMandatory(mandatory);
     prop.setReadonly(readonly);
     prop.setNotNull(notNull);
@@ -976,9 +1024,19 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           }
         }
 
-      int id = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"id\"").readInteger(OJSONReader.COMMA_SEPARATOR);
-      String type = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"type\"")
-          .readString(OJSONReader.NEXT_IN_OBJECT);
+      int id;
+      if (exporterVersion < 9) {
+        id = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"id\"").readInteger(OJSONReader.COMMA_SEPARATOR);
+        String type = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"type\"")
+            .readString(OJSONReader.NEXT_IN_OBJECT);
+      } else
+        id = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"id\"").readInteger(OJSONReader.NEXT_IN_OBJECT);
+
+      String type;
+      if (jsonReader.lastChar() == ',')
+        type = jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"type\"").readString(OJSONReader.NEXT_IN_OBJECT);
+      else
+        type = "PHYSICAL";
 
       if (jsonReader.lastChar() == ',') {
         rid = new ORecordId(jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT).checkContent("\"rid\"")
@@ -992,12 +1050,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       if (clusterId == -1) {
         // CREATE IT
         if (!preserveClusterIDs)
-          clusterId = database.addCluster(type, name, null, null);
+          clusterId = database.addCluster(name);
         else {
-          clusterId = database.addCluster(type, name, id, null, null);
+          clusterId = database.addCluster(name, id, null);
           assert clusterId == id;
         }
-
       }
 
       if (clusterId != id) {
@@ -1005,8 +1062,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           if (database.countClusterElements(clusterId - 1) == 0) {
             listener.onMessage("Found previous version: migrating old clusters...");
             database.dropCluster(name, true);
-            database.addCluster(type, "temp_" + clusterId, null, null);
-            clusterId = database.addCluster(type, name, null, null);
+            database.addCluster("temp_" + clusterId, null);
+            clusterId = database.addCluster(name);
           } else
             throw new OConfigurationException("Imported cluster '" + name + "' has id=" + clusterId
                 + " different from the original: " + id + ". To continue the import drop the cluster '"
@@ -1014,7 +1071,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
                 + " records");
         } else {
           database.dropCluster(clusterId, false);
-          database.addCluster(type, name, id, null, null);
+          database.addCluster(name, id, null);
         }
       }
 
@@ -1022,7 +1079,8 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           && !(name.equalsIgnoreCase(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME)
               || name.equalsIgnoreCase(OMetadataDefault.CLUSTER_INTERNAL_NAME) || name
                 .equalsIgnoreCase(OMetadataDefault.CLUSTER_INDEX_NAME))) {
-        database.command(new OCommandSQL("truncate cluster " + name)).execute();
+        if (!merge)
+          database.command(new OCommandSQL("truncate cluster " + name)).execute();
 
         for (OIndex existingIndex : database.getMetadata().getIndexManager().getIndexes()) {
           if (existingIndex.getClusters().contains(name)) {
@@ -1063,7 +1121,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     listener.onMessage("\nDone " + indexesToRebuild.size() + " indexes were rebuilt.");
 
     if (recreateManualIndex) {
-      database.addCluster(OStorage.CLUSTER_TYPE.PHYSICAL.toString(), OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME, null, null);
+      database.addCluster(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
       database.getMetadata().getIndexManager().create();
 
       listener.onMessage("\nManual index cluster was recreated.");
@@ -1114,19 +1172,19 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           lastClusterId = rid.getClusterId();
           // CHANGED CLUSTERID: DUMP STATISTICS
           System.out.print("\n- Importing records into cluster '" + database.getClusterNameById(lastClusterId) + "' (id="
-              + lastClusterId + "): ");
+              + lastClusterId + ")");
 
         } else if (rid.getClusterId() != lastClusterId || jsonReader.lastChar() == ']') {
           // CHANGED CLUSTERID: DUMP STATISTICS
-          System.out.print(" = " + clusterRecords + " records");
+          System.out.printf(" = %,d records", clusterRecords);
           clusterRecords = 0;
 
           lastClusterId = rid.getClusterId();
           System.out.print("\n- Importing records into cluster '" + database.getClusterNameById(lastClusterId) + "' (id="
-              + lastClusterId + "): ");
+              + lastClusterId + ")");
         } else if (clusterRecords % 10000 == 0)
           // DUMP PROGRESS
-          System.out.print(".");
+          System.out.printf("\n  - %,d records imported...", clusterRecords);
 
         ++totalRecords;
       }
@@ -1136,7 +1194,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     if (migrateLinks)
       migrateLinksInImportedDocuments();
 
-    listener.onMessage("\n\nDone. Imported " + totalRecords + " records\n");
+    listener.onMessage("\n\nDone. Imported " + String.format("%,d", totalRecords) + " records\n");
 
     jsonReader.readNext(OJSONReader.COMMA_SEPARATOR);
 
@@ -1204,9 +1262,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       if ((clusterId != manualIndexCluster && clusterId != internalCluster && clusterId != indexCluster)) {
         record.getRecordVersion().copyFrom(OVersionFactory.instance().createVersion());
         record.setDirty();
-        record.setIdentity(new ORecordId());
+        ORecordInternal.setIdentity(record, new ORecordId());
 
-        if (!preserveRids && record instanceof ODocument && ((ODocument) record).getSchemaClass() != null)
+        if (!preserveRids && record instanceof ODocument && ((ODocument) record).getImmutableSchemaClass() != null)
           record.save();
         else
           record.save(database.getClusterNameById(clusterId));
@@ -1372,14 +1430,15 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       listener.onMessage("\n- Cluster " + clusterName + "...");
 
-      int clusterId = database.getClusterIdByName(clusterName);
+      final int clusterId = database.getClusterIdByName(clusterName);
+      final long clusterRecords = database.countClusterElements(clusterId);
       OStorage storage = database.getStorage();
 
       OPhysicalPosition[] positions = storage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(
           OClusterPositionFactory.INSTANCE.valueOf(0)));
       while (positions.length > 0) {
         for (OPhysicalPosition position : positions) {
-          ORecord<?> record = database.load(new ORecordId(clusterId, position.clusterPosition));
+          ORecord record = database.load(new ORecordId(clusterId, position.clusterPosition));
           if (record instanceof ODocument) {
             ODocument document = (ODocument) record;
             rewriteLinksInDocument(document);
@@ -1388,13 +1447,14 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             totalDocuments++;
 
             if (documents % 10000 == 0)
-              listener.onMessage("\n" + documents + " documents were processed...");
+              listener.onMessage("\n  - " + String.format("%,d", documents) + "/" + String.format("%,d", clusterRecords) + " "
+                  + String.format("%.2f", (float) ((float) documents * 100 / (float) clusterRecords)) + " documents processed...");
           }
         }
 
         positions = storage.higherPhysicalPositions(clusterId, positions[positions.length - 1]);
       }
-      listener.onMessage(" Processed: " + documents);
+      listener.onMessage(" Processed: " + String.format("%,d", documents));
     }
 
     listener.onMessage("\nTotal links updated: " + totalDocuments);

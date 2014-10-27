@@ -15,11 +15,6 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -30,6 +25,11 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Graph related command operator executor factory. It's auto-discovered.
@@ -49,6 +49,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     commands.put(OCommandExecutorSQLDeleteEdge.NAME, OCommandExecutorSQLDeleteEdge.class);
     commands.put(OCommandExecutorSQLCreateVertex.NAME, OCommandExecutorSQLCreateVertex.class);
     commands.put(OCommandExecutorSQLDeleteVertex.NAME, OCommandExecutorSQLDeleteVertex.class);
+    commands.put(OCommandExecutorSQLMoveVertex.NAME, OCommandExecutorSQLMoveVertex.class);
 
     COMMANDS = Collections.unmodifiableMap(commands);
   }
@@ -77,7 +78,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
   /**
    * @return a Non Transactional OrientGraph implementation from the current database in thread local.
    */
-  public static OrientBaseGraph getNoTxGraph() {
+  public static OrientGraphNoTx getGraphNoTx() {
     ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (!(database instanceof ODatabaseDocumentTx))
       database = new ODatabaseDocumentTx((ODatabaseRecordTx) database);

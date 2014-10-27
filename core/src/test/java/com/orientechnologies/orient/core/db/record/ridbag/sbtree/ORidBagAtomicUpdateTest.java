@@ -8,17 +8,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import com.orientechnologies.DatabaseAbstractTest;
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.DatabaseAbstractTest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -92,6 +89,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     rootDoc.save();
     database.commit();
 
+		database.getLocalCache().clear();
     ODocument staleCMEDoc = database.load(cmeDoc.getIdentity());
     Assert.assertNotSame(staleCMEDoc, cmeDoc);
     cmeDoc.field("v", "v");
@@ -195,7 +193,9 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
+		database.getLocalCache().clear();
     ODocument staleCMEDoc = database.load(cmeDoc.getIdentity());
+
     Assert.assertNotSame(staleCMEDoc, cmeDoc);
     cmeDoc.field("v", "v");
     cmeDoc.save();
@@ -335,7 +335,9 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
+		database.getLocalCache().clear();
     ODocument staleCMEDoc = database.load(cmeDoc.getIdentity());
+
     Assert.assertNotSame(staleCMEDoc, cmeDoc);
     cmeDoc.field("v", "v");
     cmeDoc.save();
@@ -481,6 +483,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
+		database.getLocalCache().clear();
     ODocument staleCMEDoc = database.load(cmeDoc.getIdentity());
     Assert.assertNotSame(staleCMEDoc, cmeDoc);
     cmeDoc.field("v", "v");
@@ -660,6 +663,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
 
       document.save();
 
+			database.getLocalCache().clear();
       ODocument staleDocument = database.load(document.getIdentity());
       ORidBag staleRidBag = staleDocument.field("ridBag");
 
@@ -720,6 +724,8 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     document.save();
 
     ODocument copyOne = database.load(document.getIdentity());
+
+		database.getLocalCache().clear();
     ODocument copyTwo = database.load(document.getIdentity());
 
     Assert.assertNotSame(copyOne, copyTwo);
@@ -792,6 +798,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
       amountOfDeletedDocsPerLevel.add(rnd.nextInt(5) + 5);
     }
 
+		database.getLocalCache().clear();
     ODocument staleCMEDoc = database.load(cmeDoc.getIdentity());
     Assert.assertNotSame(staleCMEDoc, cmeDoc);
     cmeDoc.field("v", "v");
@@ -910,6 +917,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     document = database.load(document.getIdentity());
     ridBag = document.field("ridBag");
 
+		database.getLocalCache().clear();
     ODocument staleDocument = database.load(cmeDocument.getIdentity());
     Assert.assertNotSame(staleDocument, cmeDocument);
 
@@ -972,6 +980,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     document = database.load(document.getIdentity());
     ridBag = document.field("ridBag");
 
+		database.getLocalCache().clear();
     ODocument cmeDocument = database.load(document.getIdentity());
     Assert.assertNotSame(cmeDocument, document);
     cmeDocument.field("v", "v1");
@@ -1088,6 +1097,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     document = database.load(document.getIdentity());
     ridBag = document.field("ridBag");
 
+		database.getLocalCache().clear();
     ODocument staleDoc = database.load(cmeDoc.getIdentity());
     Assert.assertNotSame(staleDoc, cmeDoc);
 

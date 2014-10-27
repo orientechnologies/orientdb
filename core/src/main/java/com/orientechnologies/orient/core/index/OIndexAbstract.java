@@ -1,31 +1,23 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.index;
-
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
 
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
@@ -35,7 +27,7 @@ import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
@@ -48,14 +40,27 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
+
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 /**
  * Handles indexing when records change.
@@ -73,6 +78,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   protected String                     valueContainerAlgorithm;
   @ODocumentInstance
   protected ODocument                  configuration;
+  protected ODocument                  metadata;
   private String                       name;
   private String                       algorithm;
   private Set<String>                  clustersToIndex  = new HashSet<String>();
@@ -98,7 +104,8 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     public boolean             clear         = false;
   }
 
-  public OIndexAbstract(final String type, String algorithm, final OIndexEngine<T> indexEngine, String valueContainerAlgorithm) {
+  public OIndexAbstract(final String type, String algorithm, final OIndexEngine<T> indexEngine, String valueContainerAlgorithm,
+      ODocument metadata) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
         .getValueAsInteger(), true);
     acquireExclusiveLock();
@@ -107,6 +114,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
       this.type = type;
       this.indexEngine = indexEngine;
       this.algorithm = algorithm;
+      this.metadata = metadata;
       this.valueContainerAlgorithm = valueContainerAlgorithm;
 
       indexEngine.init();
@@ -214,8 +222,9 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
       if (clustersToIndex != null)
         this.clustersToIndex = new HashSet<String>(clustersToIndex);
       else
-        this.clustersToIndex = new HashSet<String>(clustersToIndex);
+        this.clustersToIndex = new HashSet<String>();
 
+      markStorageDirty();
       indexEngine.create(this.name, indexDefinition, clusterIndexName, valueSerializer, isAutomatic());
 
       if (rebuild)
@@ -256,7 +265,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
         indexEngine.load(rid, name, indexDefinition, determineValueSerializer(), isAutomatic());
       } catch (Exception e) {
         if (onCorruptionRepairDatabase(null, "load", "Index will be rebuilt")) {
-          if (isAutomatic() && getDatabase().getStorage() instanceof OStorageEmbedded)
+          if (isAutomatic() && getStorage() instanceof OStorageEmbedded)
             // AUTOMATIC REBUILD IT
             OLogManager.instance().warn(this, "Cannot load index '%s' from storage (rid=%s): rebuilt it from scratch", getName(),
                 rid);
@@ -356,6 +365,8 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     try {
       acquireExclusiveLock();
       try {
+        markStorageDirty();
+
         rebuildThread = Thread.currentThread();
         rebuilding = true;
 
@@ -364,6 +375,8 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
         } catch (Exception e) {
           // IGNORE EXCEPTION: IF THE REBUILD WAS LAUNCHED IN CASE OF RID INVALID CLEAR ALWAYS GOES IN ERROR
         }
+
+        removeValuesContainer();
 
         int documentNum = 0;
         long documentTotal = 0;
@@ -374,42 +387,12 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
         if (iProgressListener != null)
           iProgressListener.onBegin(this, documentTotal, true);
 
-        for (final String clusterName : clustersToIndex)
-          try {
-            for (final ORecord<?> record : getDatabase().browseCluster(clusterName)) {
-              if (Thread.interrupted())
-                throw new OCommandExecutionException("The index rebuild has been interrupted");
-
-              if (record instanceof ODocument) {
-                final ODocument doc = (ODocument) record;
-
-                if (indexDefinition == null)
-                  throw new OConfigurationException("Index '" + name + "' cannot be rebuilt because has no a valid definition ("
-                      + indexDefinition + ")");
-
-                final Object fieldValue = indexDefinition.getDocumentValueToIndex(doc);
-
-                if (fieldValue != null) {
-                  try {
-                    populateIndex(doc, fieldValue);
-                  } catch (OIndexException e) {
-                    OLogManager.instance().error(
-                        this,
-                        "Exception during index rebuild. Exception was caused by following key/ value pair - key %s, value %s."
-                            + " Rebuild will continue from this point.", e, fieldValue, doc.getIdentity());
-                  }
-
-                  ++documentIndexed;
-                }
-              }
-              documentNum++;
-
-              if (iProgressListener != null)
-                iProgressListener.onProgress(this, documentNum, documentNum * 100f / documentTotal);
-            }
-          } catch (NoSuchElementException e) {
-            // END OF CLUSTER REACHED, IGNORE IT
-          }
+        // INDEX ALL CLUSTERS
+        for (final String clusterName : clustersToIndex) {
+          final long[] metrics = indexCluster(clusterName, iProgressListener, documentNum, documentIndexed, documentTotal);
+          documentNum += metrics[0];
+          documentIndexed += metrics[1];
+        }
 
         if (iProgressListener != null)
           iProgressListener.onCompletition(this, true);
@@ -443,17 +426,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   }
 
   public boolean remove(Object key, final OIdentifiable value) {
-    checkForRebuild();
-
-    key = getCollatingValue(key);
-
-    modificationLock.requestModificationLock();
-    try {
-      return remove(key);
-    } finally {
-      modificationLock.releaseModificationLock();
-    }
-
+    return remove(key);
   }
 
   public boolean remove(Object key) {
@@ -462,10 +435,10 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     key = getCollatingValue(key);
 
     modificationLock.requestModificationLock();
-
     try {
       acquireSharedLock();
       try {
+        markStorageDirty();
         return indexEngine.remove(key);
       } finally {
         releaseSharedLock();
@@ -483,6 +456,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     try {
       acquireSharedLock();
       try {
+        markStorageDirty();
         indexEngine.clear();
         return this;
       } finally {
@@ -500,27 +474,14 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
       acquireExclusiveLock();
 
       try {
+        markStorageDirty();
         indexEngine.delete();
 
         // REMOVE THE INDEX ALSO FROM CLASS MAP
         if (getDatabase().getMetadata() != null)
           getDatabase().getMetadata().getIndexManager().removeClassPropertyIndex(this);
 
-        if (valueContainerAlgorithm.equals(ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER)) {
-          final OStorage storage = getDatabase().getStorage();
-          if (storage instanceof OLocalPaginatedStorage) {
-            final ODiskCache diskCache = ((OLocalPaginatedStorage) storage).getDiskCache();
-            try {
-              final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
-              if (diskCache.exists(fileName)) {
-                final long fileId = diskCache.openFile(fileName);
-                diskCache.deleteFile(fileId);
-              }
-            } catch (IOException e) {
-              OLogManager.instance().error(this, "Can't delete file for value containers", e);
-            }
-          }
-        }
+        removeValuesContainer();
 
         return this;
 
@@ -538,6 +499,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     try {
       acquireExclusiveLock();
       try {
+        markStorageDirty();
         indexEngine.deleteWithoutLoad(indexName);
       } finally {
         releaseExclusiveLock();
@@ -583,7 +545,9 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     try {
       if (clustersToIndex.add(clusterName)) {
         updateConfiguration();
-        rebuild();
+
+        // INDEX SINGLE CLUSTER
+        indexCluster(clusterName, null, 0, 0, 0);
       }
 
       return this;
@@ -606,7 +570,8 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     }
   }
 
-  public void checkEntry(final OIdentifiable iRecord, final Object iKey) {
+  public ODocument checkEntry(final OIdentifiable iRecord, final Object iKey) {
+    return null;
   }
 
   public ODocument updateConfiguration() {
@@ -622,7 +587,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
         if (indexDefinition != null) {
           final ODocument indexDefDocument = indexDefinition.toStream();
           if (!indexDefDocument.hasOwners())
-            indexDefDocument.addOwner(configuration);
+            ODocumentInternal.addOwner(indexDefDocument, configuration);
 
           configuration.field(OIndexInternal.INDEX_DEFINITION, indexDefDocument, OType.EMBEDDED);
           configuration.field(OIndexInternal.INDEX_DEFINITION_CLASS, indexDefinition.getClass().getName());
@@ -805,6 +770,38 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     return rebuilding;
   }
 
+  protected void startStorageAtomicOperation() {
+    try {
+      getStorage().startAtomicOperation();
+    } catch (IOException e) {
+      throw new OIndexException("Error during start of atomic operation", e);
+    }
+  }
+
+  protected void commitStorageAtomicOperation() {
+    try {
+      getStorage().commitAtomicOperation();
+    } catch (IOException e) {
+      throw new OIndexException("Error during commit of atomic operation", e);
+    }
+  }
+
+  protected void rollbackStorageAtomicOperation() {
+    try {
+      getStorage().rollbackAtomicOperation();
+    } catch (IOException e) {
+      throw new OIndexException("Error during rollback of atomic operation", e);
+    }
+  }
+
+  protected void markStorageDirty() {
+    try {
+      getStorage().markDirty();
+    } catch (IOException e) {
+      throw new OIndexException("Can not mark storage as dirty", e);
+    }
+  }
+
   protected abstract OStreamSerializer determineValueSerializer();
 
   protected void populateIndex(ODocument doc, Object fieldValue) {
@@ -846,7 +843,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     }
   }
 
-  protected ODatabaseRecord getDatabase() {
+  protected ODatabaseRecordInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
@@ -856,16 +853,85 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     }
   }
 
+  protected long[] indexCluster(final String clusterName, final OProgressListener iProgressListener, long documentNum,
+      long documentIndexed, long documentTotal) {
+    try {
+      for (final ORecord record : getDatabase().browseCluster(clusterName)) {
+        if (Thread.interrupted())
+          throw new OCommandExecutionException("The index rebuild has been interrupted");
+
+        if (record instanceof ODocument) {
+          final ODocument doc = (ODocument) record;
+
+          if (indexDefinition == null)
+            throw new OConfigurationException("Index '" + name + "' cannot be rebuilt because has no a valid definition ("
+                + indexDefinition + ")");
+
+          final Object fieldValue = indexDefinition.getDocumentValueToIndex(doc);
+
+          if (fieldValue != null) {
+            try {
+              populateIndex(doc, fieldValue);
+            } catch (OIndexException e) {
+              OLogManager.instance().error(
+                  this,
+                  "Exception during index rebuild. Exception was caused by following key/ value pair - key %s, value %s."
+                      + " Rebuild will continue from this point.", e, fieldValue, doc.getIdentity());
+            }
+
+            ++documentIndexed;
+          }
+        }
+        documentNum++;
+
+        if (iProgressListener != null)
+          iProgressListener.onProgress(this, documentNum, documentNum * 100f / documentTotal);
+      }
+    } catch (NoSuchElementException e) {
+      // END OF CLUSTER REACHED, IGNORE IT
+    }
+
+    return new long[] { documentNum, documentIndexed };
+  }
+
+  private OAbstractPaginatedStorage getStorage() {
+    return ((OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying());
+  }
+
+  private void removeValuesContainer() {
+    if (valueContainerAlgorithm.equals(ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER)) {
+      final OStorage storage = getStorage();
+      if (storage instanceof OAbstractPaginatedStorage) {
+        final ODiskCache diskCache = ((OAbstractPaginatedStorage) storage).getDiskCache();
+        try {
+          final String fileName = getName() + OIndexRIDContainer.INDEX_FILE_EXTENSION;
+          if (diskCache.exists(fileName)) {
+            final long fileId = diskCache.openFile(fileName);
+            diskCache.deleteFile(fileId);
+          }
+        } catch (IOException e) {
+          OLogManager.instance().error(this, "Can't delete file for value containers", e);
+        }
+      }
+    }
+  }
+
   private void applyIndexTxEntry(Map<Object, Object> snapshot, ODocument entry) {
     final Object key;
     if (entry.field("k") != null) {
-      final String serializedKey = OStringSerializerHelper.decode((String) entry.field("k"));
+      Object serKey = entry.field("k");
       try {
-        final ODocument keyContainer = new ODocument();
-        keyContainer.setLazyLoad(false);
+        ODocument keyContainer = null;
+        // Check for PROTOCOL_VERSION_24 that remove CSV serialization.
+        if (serKey instanceof String) {
+          final String serializedKey = OStringSerializerHelper.decode((String) serKey);
+          keyContainer = new ODocument();
+          keyContainer.setLazyLoad(false);
 
-        ORecordSerializerSchemaAware2CSV.INSTANCE.fromString(serializedKey, keyContainer, null);
-
+          ORecordSerializerSchemaAware2CSV.INSTANCE.fromString(serializedKey, keyContainer, null);
+        } else if (serKey instanceof ODocument) {
+          keyContainer = (ODocument) serKey;
+        }
         final Object storedKey = keyContainer.field("key");
         if (storedKey instanceof List)
           key = new OCompositeKey((List<? extends Comparable<?>>) storedKey);
@@ -882,8 +948,9 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     final List<ODocument> operations = entry.field("ops");
     if (operations != null) {
       for (final ODocument op : operations) {
+        op.setLazyLoad(false);
         final int operation = (Integer) op.rawField("o");
-        final OIdentifiable value = op.field("v", OType.LINK);
+        final OIdentifiable value = op.field("v");
 
         if (operation == OPERATION.PUT.ordinal())
           putInSnapshot(key, value, snapshot);

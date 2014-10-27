@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
@@ -26,7 +30,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
@@ -82,8 +85,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
     configuration = new OStorageConfigurationSegment(this);
 
-    DELETE_MAX_RETRIES = OGlobalConfiguration.FILE_MMAP_FORCE_RETRY.getValueAsInteger();
-    DELETE_WAIT_TIME = OGlobalConfiguration.FILE_MMAP_FORCE_DELAY.getValueAsInteger();
+    DELETE_MAX_RETRIES = OGlobalConfiguration.FILE_DELETE_RETRY.getValueAsInteger();
+    DELETE_WAIT_TIME = OGlobalConfiguration.FILE_DELETE_DELAY.getValueAsInteger();
 
     dirtyFlag = new OPaginatedStorageDirtyFlag(storagePath + File.separator + "dirty.fl");
   }
@@ -172,14 +175,14 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   @Override
   protected void preOpenSteps() throws IOException {
     if (configuration.binaryFormatVersion >= 11) {
-      if (dirtyFlag.exits())
+      if (dirtyFlag.exists())
         dirtyFlag.open();
       else {
         dirtyFlag.create();
         dirtyFlag.makeDirty();
       }
     } else {
-      if (dirtyFlag.exits())
+      if (dirtyFlag.exists())
         dirtyFlag.open();
       else {
         dirtyFlag.create();
@@ -261,9 +264,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
               this,
               "Cannot delete database files because they are still locked by the OrientDB process: waiting %d ms and retrying %d/%d...",
               DELETE_WAIT_TIME, i, DELETE_MAX_RETRIES);
-
-      // FORCE FINALIZATION TO COLLECT ALL THE PENDING BUFFERS
-      OMemoryWatchDog.freeMemoryForResourceCleanup(DELETE_WAIT_TIME);
     }
 
     throw new OStorageException("Cannot delete database '" + name + "' located in: " + dbDir + ". Database files seem locked");
@@ -328,6 +328,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB,
         OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_TTL.getValueAsLong() * 1000,
         OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), this, writeAheadLog, false, true);
+
+		diskCache.addLowDiskSpaceListener(this);
   }
 
   private boolean exists(String path) {

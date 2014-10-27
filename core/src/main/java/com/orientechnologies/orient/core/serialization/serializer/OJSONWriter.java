@@ -1,17 +1,21 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.core.serialization.serializer;
 
@@ -60,7 +64,10 @@ public class OJSONWriter {
   }
 
   public static String writeValue(Object iValue, final String iFormat) throws IOException {
-    final StringBuilder buffer = new StringBuilder();
+    if (iValue == null)
+      return "null";
+
+    final StringBuilder buffer = new StringBuilder(64);
 
     final boolean oldAutoConvertSettings;
 
@@ -70,10 +77,7 @@ public class OJSONWriter {
     } else
       oldAutoConvertSettings = false;
 
-    if (iValue == null)
-      buffer.append("null");
-
-    else if (iValue instanceof Boolean || iValue instanceof Number)
+    if (iValue instanceof Boolean || iValue instanceof Number)
       buffer.append(iValue.toString());
 
     else if (iValue instanceof OIdentifiable) {
@@ -86,7 +90,7 @@ public class OJSONWriter {
         if (iFormat != null && iFormat.contains("shallow"))
           buffer.append("{}");
         else {
-          final ORecord<?> rec = linked.getRecord();
+          final ORecord rec = linked.getRecord();
           if (rec != null)
             buffer.append(rec.toJSON(iFormat));
           else
@@ -133,6 +137,8 @@ public class OJSONWriter {
       buffer.append('{');
       buffer.append(writeValue(entry.getKey(), iFormat));
       buffer.append(":");
+      if (iFormat.contains("prettyPrint"))
+        buffer.append(' ');
       buffer.append(writeValue(entry.getValue(), iFormat));
       buffer.append('}');
     }
@@ -229,7 +235,7 @@ public class OJSONWriter {
   }
 
   public static String mapToJSON(Map<?, ?> iMap) {
-    return mapToJSON(iMap, null, new StringBuilder());
+    return mapToJSON(iMap, null, new StringBuilder(128));
   }
 
   public static String mapToJSON(final Map<?, ?> iMap, final String iFormat, final StringBuilder buffer) {
@@ -284,7 +290,7 @@ public class OJSONWriter {
     return this;
   }
 
-  public OJSONWriter writeRecord(final int iIdentLevel, final boolean iNewLine, final Object iName, final ORecord<?> iRecord)
+  public OJSONWriter writeRecord(final int iIdentLevel, final boolean iNewLine, final Object iName, final ORecord iRecord)
       throws IOException {
     if (!firstAttribute)
       out.append(",");
@@ -330,6 +336,8 @@ public class OJSONWriter {
     if (iName != null && !iName.isEmpty()) {
       out.append(writeValue(iName, format));
       out.append(":");
+      if (prettyPrint)
+        out.append(' ');
     }
     out.append("[");
 
@@ -382,12 +390,22 @@ public class OJSONWriter {
     if (iName != null) {
       out.append(writeValue(iName, iFormat));
       out.append(":");
+      if (prettyPrint)
+        out.append(' ');
     }
 
-    if (iFormat.contains("graph") && (iValue == null || iValue instanceof OIdentifiable)
-        && (iName.startsWith("in_") || iName.startsWith("out_"))) {
+    if (iFormat.contains("graph") && iName != null && (iName.startsWith("in_") || iName.startsWith("out_"))
+        && (iValue == null || iValue instanceof OIdentifiable)) {
       // FORCE THE OUTPUT AS COLLECTION
-      out.append("[1]");
+      out.append('[');
+      if (iValue instanceof OIdentifiable) {
+        final boolean shallow = iFormat != null && iFormat.contains("shallow");
+        if (shallow)
+          out.append("1");
+        else
+          out.append(writeValue(iValue, iFormat));
+      }
+      out.append(']');
     } else
       out.append(writeValue(iValue, iFormat));
 

@@ -1,23 +1,23 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.graph.script;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
@@ -35,11 +35,15 @@ import com.tinkerpop.blueprints.Parameter;
 import com.tinkerpop.blueprints.TransactionalGraph;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph.THREAD_MODE;
+import com.tinkerpop.blueprints.impls.orient.OrientConfigurableGraph.THREAD_MODE;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Blueprints Graph wrapper class to use from scripts.
@@ -122,11 +126,11 @@ public class OScriptGraphWrapper implements TransactionalGraph {
     graph.drop();
   }
 
-  public <T extends Element> Index<T> createIndex(String indexName, Class<T> indexClass, Parameter... indexParameters) {
+  public <T extends Element> Index<T> createIndex(final String indexName, Class<T> indexClass, Parameter... indexParameters) {
     return graph.createIndex(indexName, indexClass, indexParameters);
   }
 
-  public <T extends Element> Index<T> getIndex(String indexName, Class<T> indexClass) {
+  public <T extends Element> Index<T> getIndex(final String indexName, Class<T> indexClass) {
     return graph.getIndex(indexName, indexClass);
   }
 
@@ -134,7 +138,7 @@ public class OScriptGraphWrapper implements TransactionalGraph {
     return graph.getIndices();
   }
 
-  public void dropIndex(String indexName) {
+  public void dropIndex(final String indexName) {
     graph.dropIndex(indexName);
   }
 
@@ -146,7 +150,7 @@ public class OScriptGraphWrapper implements TransactionalGraph {
     return graph.addVertex(id, prop);
   }
 
-  public OrientVertex addTemporaryVertex(String iClassName, Object[] prop) {
+  public OrientVertex addTemporaryVertex(final String iClassName, Object[] prop) {
     return graph.addTemporaryVertex(iClassName, prop);
   }
 
@@ -170,15 +174,15 @@ public class OScriptGraphWrapper implements TransactionalGraph {
     return graph.getVertices(iPolymorphic);
   }
 
-  public Iterable<Vertex> getVerticesOfClass(String iClassName) {
+  public Iterable<Vertex> getVerticesOfClass(final String iClassName) {
     return graph.getVerticesOfClass(iClassName);
   }
 
-  public Iterable<Vertex> getVerticesOfClass(String iClassName, boolean iPolymorphic) {
+  public Iterable<Vertex> getVerticesOfClass(final String iClassName, boolean iPolymorphic) {
     return graph.getVerticesOfClass(iClassName, iPolymorphic);
   }
 
-  public Iterable<Vertex> getVertices(String iKey, Object iValue) {
+  public Iterable<Vertex> getVertices(final String iKey, Object iValue) {
     return graph.getVertices(iKey, iValue);
   }
 
@@ -190,27 +194,27 @@ public class OScriptGraphWrapper implements TransactionalGraph {
     return graph.getEdges(iPolymorphic);
   }
 
-  public Iterable<Edge> getEdgesOfClass(String iClassName) {
+  public Iterable<Edge> getEdgesOfClass(final String iClassName) {
     return graph.getEdgesOfClass(iClassName);
   }
 
-  public Iterable<Edge> getEdgesOfClass(String iClassName, boolean iPolymorphic) {
+  public Iterable<Edge> getEdgesOfClass(final String iClassName, boolean iPolymorphic) {
     return graph.getEdgesOfClass(iClassName, iPolymorphic);
   }
 
-  public Iterable<Edge> getEdges(String iKey, Object iValue) {
+  public Iterable<Edge> getEdges(final String iKey, final Object iValue) {
     return graph.getEdges(iKey, iValue);
   }
 
-  public OrientEdge getEdge(Object id) {
+  public OrientEdge getEdge(final Object id) {
     return graph.getEdge(id);
   }
 
-  public void removeEdge(Edge edge) {
+  public void removeEdge(final Edge edge) {
     graph.removeEdge(edge);
   }
 
-  public OrientBaseGraph reuse(ODatabaseDocumentTx iDatabase) {
+  public OrientBaseGraph reuse(final ODatabaseDocumentTx iDatabase) {
     return graph.reuse(iDatabase);
   }
 
@@ -234,23 +238,23 @@ public class OScriptGraphWrapper implements TransactionalGraph {
     return graph.getVertexBaseType();
   }
 
-  public final OClass getVertexType(String iTypeName) {
+  public final OClass getVertexType(final String iTypeName) {
     return graph.getVertexType(iTypeName);
   }
 
-  public OClass createVertexType(String iClassName) {
+  public OClass createVertexType(final String iClassName) {
     return graph.createVertexType(iClassName);
   }
 
-  public OClass createVertexType(String iClassName, String iSuperClassName) {
+  public OClass createVertexType(final String iClassName, String iSuperClassName) {
     return graph.createVertexType(iClassName, iSuperClassName);
   }
 
-  public OClass createVertexType(String iClassName, OClass iSuperClass) {
+  public OClass createVertexType(final String iClassName, OClass iSuperClass) {
     return graph.createVertexType(iClassName, iSuperClass);
   }
 
-  public final void dropVertexType(String iTypeName) {
+  public final void dropVertexType(final String iTypeName) {
     graph.dropVertexType(iTypeName);
   }
 
@@ -258,23 +262,23 @@ public class OScriptGraphWrapper implements TransactionalGraph {
     return graph.getEdgeBaseType();
   }
 
-  public final OClass getEdgeType(String iTypeName) {
+  public final OClass getEdgeType(final String iTypeName) {
     return graph.getEdgeType(iTypeName);
   }
 
-  public OClass createEdgeType(String iClassName) {
+  public OClass createEdgeType(final String iClassName) {
     return graph.createEdgeType(iClassName);
   }
 
-  public OClass createEdgeType(String iClassName, String iSuperClassName) {
+  public OClass createEdgeType(final String iClassName, String iSuperClassName) {
     return graph.createEdgeType(iClassName, iSuperClassName);
   }
 
-  public OClass createEdgeType(String iClassName, OClass iSuperClass) {
+  public OClass createEdgeType(final String iClassName, OClass iSuperClass) {
     return graph.createEdgeType(iClassName, iSuperClass);
   }
 
-  public final void dropEdgeType(String iTypeName) {
+  public final void dropEdgeType(final String iTypeName) {
     graph.dropEdgeType(iTypeName);
   }
 
@@ -282,11 +286,11 @@ public class OScriptGraphWrapper implements TransactionalGraph {
     return graph.getElement(id);
   }
 
-  public <T extends Element> void dropKeyIndex(String key, Class<T> elementClass) {
+  public <T extends Element> void dropKeyIndex(final String key, Class<T> elementClass) {
     graph.dropKeyIndex(key, elementClass);
   }
 
-  public <T extends Element> void createKeyIndex(String key, Class<T> elementClass, Parameter... indexParameters) {
+  public <T extends Element> void createKeyIndex(final String key, Class<T> elementClass, Parameter... indexParameters) {
     graph.createKeyIndex(key, elementClass, indexParameters);
   }
 
@@ -330,7 +334,7 @@ public class OScriptGraphWrapper implements TransactionalGraph {
     return graph.countVertices();
   }
 
-  public long countVertices(String iClassName) {
+  public long countVertices(final String iClassName) {
     return graph.countVertices(iClassName);
   }
 
@@ -338,7 +342,7 @@ public class OScriptGraphWrapper implements TransactionalGraph {
     return graph.countEdges();
   }
 
-  public long countEdges(String iClassName) {
+  public long countEdges(final String iClassName) {
     return graph.countEdges(iClassName);
   }
 
@@ -387,7 +391,7 @@ public class OScriptGraphWrapper implements TransactionalGraph {
   }
 
   public OrientBaseGraph setThreadMode(THREAD_MODE iControl) {
-    return graph.setThreadMode(iControl);
+    return (OrientBaseGraph) graph.setThreadMode(iControl);
   }
 
 }

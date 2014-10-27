@@ -2,8 +2,8 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.util.Map;
 
-import junit.framework.Assert;
 
+import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -34,7 +34,7 @@ public class RemoteProtocolCommandsTest extends DocumentDBBaseTest {
 
     final Map<String, String> list = admin.listDatabases();
 
-    Assert.assertTrue("Check plocal db is in list", list.containsKey(plocalDatabaseName));
-    Assert.assertTrue("Check memory db is in list", list.containsKey(memoryDatabaseName));
+    Assert.assertTrue(list.containsKey(plocalDatabaseName), "Check plocal db is in list");
+    Assert.assertTrue(list.containsKey(memoryDatabaseName), "Check memory db is in list");
   }
 }
