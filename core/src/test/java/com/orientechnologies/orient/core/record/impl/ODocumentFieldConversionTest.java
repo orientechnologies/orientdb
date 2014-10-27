@@ -4,6 +4,8 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.math.BigDecimal;
+import java.util.Calendar;
+import java.util.Date;
 
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -33,6 +35,39 @@ public class ODocumentFieldConversionTest {
     clazz.createProperty("float", OType.FLOAT);
     clazz.createProperty("double", OType.DOUBLE);
     clazz.createProperty("decimal", OType.DECIMAL);
+    clazz.createProperty("date", OType.DATE);
+  }
+
+  @Test
+  public void testDateToSchemaConversion() {
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    Calendar calendare = Calendar.getInstance();
+    calendare.set(Calendar.MILLISECOND, 0);
+    Date date = calendare.getTime();
+
+    String dateString = ((ODatabaseDocumentTx) db).getStorage().getConfiguration().getDateTimeFormatInstance().format(date);
+    ODocument doc = new ODocument(clazz);
+    doc.field("date", dateString);
+    assertTrue(doc.field("date") instanceof Date);
+    assertEquals(date, doc.field("date"));
+
+    doc.field("date", 20304);
+    assertTrue(doc.field("date") instanceof Date);
+    assertEquals(20304L, ((Date) doc.field("date")).getTime());
+
+    doc.field("date", 43432440f);
+    assertTrue(doc.field("date") instanceof Date);
+    assertEquals(43432440L, ((Date) doc.field("date")).getTime());
+
+    doc.field("date", 43432444D);
+    assertTrue(doc.field("date") instanceof Date);
+    assertEquals(43432444L, ((Date) doc.field("date")).getTime());
+
+    doc.field("date", 20304L);
+    assertTrue(doc.field("date") instanceof Date);
+    assertEquals(20304L, ((Date) doc.field("date")).getTime());
+
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
   }
 
   @Test
@@ -95,7 +130,6 @@ public class ODocumentFieldConversionTest {
     assertTrue(doc.field("string") instanceof String);
     assertEquals("true", doc.field("string"));
     ODatabaseRecordThreadLocal.INSTANCE.remove();
-
   }
 
   @Test
@@ -288,6 +322,8 @@ public class ODocumentFieldConversionTest {
     doc.field("string", 25);
     doc.field("boolean", "true");
     doc.field("decimal", -1);
+    doc.field("date", 20304L);
+
     doc.setClass(clazz);
     assertTrue(doc.field("float") instanceof Float);
     assertEquals(1f, doc.field("float"));
@@ -306,6 +342,10 @@ public class ODocumentFieldConversionTest {
 
     assertTrue(doc.field("decimal") instanceof BigDecimal);
     assertEquals(new BigDecimal(-1), doc.field("decimal"));
+
+    assertTrue(doc.field("date") instanceof Date);
+    assertEquals(20304L, ((Date) doc.field("date")).getTime());
+
     ODatabaseRecordThreadLocal.INSTANCE.remove();
   }
 

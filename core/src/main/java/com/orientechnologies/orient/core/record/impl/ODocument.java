@@ -1423,36 +1423,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   @Override
-  public void onBeforeIdentityChanged(final ORecord iRecord) {
-    super.onBeforeIdentityChanged(iRecord);
-    if (_owners != null) {
-      final List<WeakReference<ORecordElement>> temp = new ArrayList<WeakReference<ORecordElement>>(_owners);
-
-      ORecordElement e;
-      for (WeakReference<ORecordElement> o : temp) {
-        e = o.get();
-        if (e != null)
-          e.onBeforeIdentityChanged(iRecord);
-      }
-    }
-  }
-
-  @Override
-  public void onAfterIdentityChanged(final ORecord iRecord) {
-    super.onAfterIdentityChanged(iRecord);
-    if (_owners != null) {
-      final List<WeakReference<ORecordElement>> temp = new ArrayList<WeakReference<ORecordElement>>(_owners);
-
-      ORecordElement e;
-      for (WeakReference<ORecordElement> o : temp) {
-        e = o.get();
-        if (e != null)
-          e.onAfterIdentityChanged(iRecord);
-      }
-    }
-  }
-
-  @Override
   public ODocument fromStream(final byte[] iRecordBuffer) {
     removeAllCollectionChangeListeners();
 
@@ -2084,6 +2054,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         final OProperty prop = _clazz.getProperty(fieldEntry.getKey());
         fieldType = prop != null ? prop.getType() : null;
       }
+      if (fieldType == null)
+        fieldType = OType.getTypeByValue(fieldEntry.getValue());
 
       if (fieldType == null
           || !(OType.EMBEDDEDLIST.equals(fieldType) || OType.EMBEDDEDMAP.equals(fieldType) || OType.EMBEDDEDSET.equals(fieldType)
