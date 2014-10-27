@@ -188,12 +188,6 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
       sourceRecord.setDirtyNoChanged();
   }
 
-  public void onBeforeIdentityChanged(ORecord iRecord) {
-  }
-
-  public void onAfterIdentityChanged(ORecord iRecord) {
-  }
-
   public void addChangeListener(final OMultiValueChangeListener<Integer, T> changeListener) {
     changeListeners.add(changeListener);
   }

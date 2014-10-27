@@ -157,13 +157,7 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
       sourceRecord.setDirtyNoChanged();
   }
 
-  public void onBeforeIdentityChanged(ORecord iRecord) {
-  }
-
-  public void onAfterIdentityChanged(ORecord iRecord) {
-  }
-
-  public STATUS getInternalStatus() {
+   public STATUS getInternalStatus() {
     return status;
   }
 

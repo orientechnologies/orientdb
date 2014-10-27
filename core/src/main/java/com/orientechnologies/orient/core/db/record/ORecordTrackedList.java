@@ -39,16 +39,4 @@ public class ORecordTrackedList extends OTrackedList<OIdentifiable> {
   public Iterator<OIdentifiable> rawIterator() {
     return iterator();
   }
-
-  /**
-   * The item's identity does not affect nothing.
-   */
-  public void onBeforeIdentityChanged(final ORecord iRecord) {
-  }
-
-  /**
-   * The item's identity does not affect nothing.
-   */
-  public void onAfterIdentityChanged(final ORecord iRecord) {
-  }
 }

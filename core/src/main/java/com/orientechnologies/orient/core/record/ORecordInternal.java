@@ -101,12 +101,20 @@ public class ORecordInternal {
     rec.clearSource();
   }
 
-  public static void addIdentityChangeListener(ORecord record, OIdentityChangeListenerNew identityChangeListener) {
+  public static void addIdentityChangeListener(ORecord record, OIdentityChangeListener identityChangeListener) {
     ((ORecordAbstract) record).addIdentityChangeListener(identityChangeListener);
   }
 
-  public static void removeIdentityChangeListener(ORecord record, OIdentityChangeListenerNew identityChangeListener) {
+  public static void removeIdentityChangeListener(ORecord record, OIdentityChangeListener identityChangeListener) {
     ((ORecordAbstract) record).removeIdentityChangeListener(identityChangeListener);
+  }
+
+  public static void onBeforeIdentityChanged(ORecord record) {
+    ((ORecordAbstract) record).onBeforeIdentityChanged(record);
+  }
+
+  public static void onAfterIdentityChanged(ORecord record) {
+    ((ORecordAbstract) record).onAfterIdentityChanged(record);
   }
 
 }
