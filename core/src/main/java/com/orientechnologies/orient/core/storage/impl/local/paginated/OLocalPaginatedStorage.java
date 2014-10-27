@@ -315,7 +315,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
 
       dirtyFlag.makeDirty();
       if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE.getValueAsBoolean())
-        scheduleFullCheckpoint();
+        makeFullCheckpoint();
 
     } catch (OStorageException e) {
       close();
@@ -1340,35 +1340,26 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
     modificationLock.allowModifications();
   }
 
-  public void makeFullCheckpoint() {
+  private void makeFullCheckpoint() {
     if (writeAheadLog == null)
       return;
 
     try {
-      modificationLock.prohibitModifications();
+      writeAheadLog.flush();
 
-      lock.acquireSharedLock();
-      try {
-        writeAheadLog.flush();
+      if (configuration != null)
+        configuration.synch();
 
-        if (configuration != null)
-          configuration.synch();
+      final OLogSequenceNumber lastLSN = writeAheadLog.logFullCheckpointStart();
+      diskCache.flushBuffer();
+      writeAheadLog.logFullCheckpointEnd();
+      writeAheadLog.flush();
 
-        final OLogSequenceNumber lastLSN = writeAheadLog.logFullCheckpointStart();
-        diskCache.flushBuffer();
-        writeAheadLog.logFullCheckpointEnd();
-        writeAheadLog.flush();
+      writeAheadLog.cutTill(lastLSN);
 
-        writeAheadLog.cutTill(lastLSN);
-
-        dirtyFlag.clearDirty();
-      } catch (IOException ioe) {
-        throw new OStorageException("Error during checkpoint creation for storage " + name, ioe);
-      } finally {
-        lock.releaseSharedLock();
-      }
-    } finally {
-      modificationLock.allowModifications();
+      dirtyFlag.clearDirty();
+    } catch (IOException ioe) {
+      throw new OStorageException("Error during checkpoint creation for storage " + name, ioe);
     }
   }
 
@@ -1379,10 +1370,18 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       executor.execute(new Runnable() {
         @Override
         public void run() {
+          modificationLock.prohibitModifications();
           try {
-            makeFullCheckpoint();
-          } catch (Throwable t) {
-            OLogManager.instance().error(this, "Error during background checkpoint creation for storage " + name, t);
+            lock.acquireSharedLock();
+            try {
+              makeFullCheckpoint();
+            } catch (Throwable t) {
+              OLogManager.instance().error(this, "Error during background checkpoint creation for storage " + name, t);
+            } finally {
+              lock.releaseSharedLock();
+            }
+          } finally {
+            modificationLock.allowModifications();
           }
         }
       });
@@ -2019,7 +2018,7 @@ public class OLocalPaginatedStorage extends OStorageLocalAbstract {
       if (!cluster.exists()) {
         cluster.create(-1);
         if (makeFullCheckPointAfterClusterCreate && fullCheckPoint)
-          scheduleFullCheckpoint();
+          makeFullCheckpoint();
       } else {
         cluster.open();
       }

@@ -127,7 +127,7 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
       cluster.set(attribute, value);
       final OStorage storage = getDatabase().getStorage();
       if (storage instanceof OLocalPaginatedStorage)
-        ((OLocalPaginatedStorage) storage).makeFullCheckpoint();
+        ((OLocalPaginatedStorage) storage).synch();
     } catch (IOException ioe) {
       throw new OCommandExecutionException("Error altering cluster '" + clusterName + "'", ioe);
     }
