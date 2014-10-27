@@ -94,7 +94,6 @@ public class OUser extends ODocumentWrapper {
         if (role == null) {
           OLogManager.instance().warn(this, "User '%s' declare to have the role '%s' but it does not exist in database, skipt it",
               getName(), d.field("name"));
-          document.getDatabase().getMetadata().getSecurity().repair();
         } else
           roles.add(role);
       }
