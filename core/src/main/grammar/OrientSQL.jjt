@@ -561,8 +561,8 @@ void ProjectionItem():
 			LOOKAHEAD( InputParameter() )
 			InputParameter()
 			|
-			LOOKAHEAD( OperationChain() )
-			OperationChain()
+			LOOKAHEAD( Expression() )
+			Expression()
 		)
 		[<AS> Alias() ]
 	)
@@ -613,8 +613,8 @@ void FilterItem():
 	LOOKAHEAD( InputParameter() )
     InputParameter()
     |
-    LOOKAHEAD( OperationChain() )
-	OperationChain()
+    LOOKAHEAD( Expression() )
+	Expression()
 }
 
 void ArraySelector():
@@ -634,8 +634,8 @@ void ArraySelector():
 	LOOKAHEAD( InputParameter() )
     InputParameter()
     |
-    LOOKAHEAD( OperationChain() )
-	OperationChain()
+    LOOKAHEAD( Expression() )
+	Expression()
 }
 
 void ArraySingleValuesSelector():
@@ -654,8 +654,8 @@ void ArrayRangeSelector():
         LOOKAHEAD( InputParameter() )
         InputParameter()
         |
-        LOOKAHEAD( OperationChain() )
-	    OperationChain()
+        LOOKAHEAD( Expression() )
+	    Expression()
     )
     <MINUS>
     (
@@ -665,8 +665,8 @@ void ArrayRangeSelector():
         LOOKAHEAD( InputParameter() )
         InputParameter()
         |
-        LOOKAHEAD( OperationChain() )
-	    OperationChain()
+        LOOKAHEAD( Expression() )
+	    Expression()
     )
 }
 
@@ -766,14 +766,85 @@ void Modifier():
    	    LOOKAHEAD(3)
         <DOT> SuffixIdentifier()
     )
-    [ Modifier() ]
+    [
+        LOOKAHEAD( Modifier() )
+        Modifier()
+    ]
 }
 
-void OperationChain():
+void Expression():
 {}
 {
-	BaseIdentifier() [ Modifier() ]
+    LOOKAHEAD( AddExpression() )
+	AddExpression()
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void AddExpression():
+{}
+{
+	MultExpression() ( ( <PLUS> | <MINUS> ) MultExpression() )*
+}
+
+void MultExpression():
+{}
+{
+    FirstLevelExpression() ( ( <STAR> | <SLASH> ) FirstLevelExpression() )*
+}
+
+void FirstLevelExpression():
+{}
+{
+    LOOKAHEAD( ParenthesisExpression() )
+    ParenthesisExpression()
+    |
+    LOOKAHEAD( BaseExpression() )
+    BaseExpression()
+}
+
+void ParenthesisExpression():
+{}
+{
+	<LPAREN> AddExpression() <RPAREN>
+}
+
+void BaseExpression():
+{}
+{
+	BaseIdentifier() [ LOOKAHEAD( Modifier() ) Modifier() ]
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 void FromClause():
@@ -846,7 +917,7 @@ void AndBlock():
 void NotBlock():
 {}
 {
-	[ <NOT> ] ( ConditionBlock() | ParenthesisBlock() )
+	[ LOOKAHEAD(2) <NOT> ] (  LOOKAHEAD(ConditionBlock())  ConditionBlock() | LOOKAHEAD(ParenthesisBlock()) ParenthesisBlock() )
 }
 
 void ParenthesisBlock():
@@ -991,8 +1062,10 @@ void ContainsValueCondition():
 {
     FilterItem() ContainsValueOperator()
     (
+        LOOKAHEAD( 3 )
         <LPAREN> OrBlock() <RPAREN>
         |
+        LOOKAHEAD( FilterItem() )
         FilterItem()
     )
 }
@@ -1050,8 +1123,10 @@ void ContainsCondition():
 	FilterItem() <CONTAINS>
 
 	(
+	    LOOKAHEAD( 3 )
 	    <LPAREN> OrBlock() <RPAREN>
 	    |
+	    LOOKAHEAD( FilterItem() )
 	    FilterItem()
 	)
 
@@ -1096,7 +1171,7 @@ void ContainsAllCondition():
 void ContainsTextCondition():
 {}
 {
-	FilterItem() <CONTAINSTEXT> ( <STRING_LITERAL> | OperationChain() )
+	FilterItem() <CONTAINSTEXT> ( <STRING_LITERAL> | Expression() )
 }
 
 void MatchesCondition():

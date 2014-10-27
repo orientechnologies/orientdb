@@ -36,50 +36,55 @@ public interface OrientSqlTreeConstants
   public int JJTSUFFIXIDENTIFIER = 30;
   public int JJTBASEIDENTIFIER = 31;
   public int JJTMODIFIER = 32;
-  public int JJTOPERATIONCHAIN = 33;
-  public int JJTFROMCLAUSE = 34;
-  public int JJTFROMITEM = 35;
-  public int JJTCLUSTER = 36;
-  public int JJTMETADATAIDENTIFIER = 37;
-  public int JJTINDEXIDENTIFIER = 38;
-  public int JJTWHERECLAUSE = 39;
-  public int JJTORBLOCK = 40;
-  public int JJTANDBLOCK = 41;
-  public int JJTNOTBLOCK = 42;
-  public int JJTPARENTHESISBLOCK = 43;
-  public int JJTCONDITIONBLOCK = 44;
-  public int JJTCOMPAREOPERATOR = 45;
-  public int JJTLTOPERATOR = 46;
-  public int JJTGTOPERATOR = 47;
-  public int JJTNEOPERATOR = 48;
-  public int JJTNEQOPERATOR = 49;
-  public int JJTGEOPERATOR = 50;
-  public int JJTLEOPERATOR = 51;
-  public int JJTLIKEOPERATOR = 52;
-  public int JJTCONTAINSKEYOPERATOR = 53;
-  public int JJTCONTAINSVALUEOPERATOR = 54;
-  public int JJTEQUALSCOMPAREOPERATOR = 55;
-  public int JJTBINARYCONDITION = 56;
-  public int JJTCONTAINSVALUECONDITION = 57;
-  public int JJTINSTANCEOFCONDITION = 58;
-  public int JJTINDEXMATCHCONDITION = 59;
-  public int JJTBETWEENCONDITION = 60;
-  public int JJTISNULLCONDITION = 61;
-  public int JJTISNOTNULLCONDITION = 62;
-  public int JJTISDEFINEDCONDITION = 63;
-  public int JJTISNOTDEFINEDCONDITION = 64;
-  public int JJTCONTAINSCONDITION = 65;
-  public int JJTINOPERATOR = 66;
-  public int JJTINCONDITION = 67;
-  public int JJTNOTINCONDITION = 68;
-  public int JJTCONTAINSALLCONDITION = 69;
-  public int JJTCONTAINSTEXTCONDITION = 70;
-  public int JJTMATCHESCONDITION = 71;
-  public int JJTORDERBY = 72;
-  public int JJTGROUPBY = 73;
-  public int JJTLIMIT = 74;
-  public int JJTSKIP = 75;
-  public int JJTITEMSCOLLECTION = 76;
+  public int JJTEXPRESSION = 33;
+  public int JJTADDEXPRESSION = 34;
+  public int JJTMULTEXPRESSION = 35;
+  public int JJTFIRSTLEVELEXPRESSION = 36;
+  public int JJTPARENTHESISEXPRESSION = 37;
+  public int JJTBASEEXPRESSION = 38;
+  public int JJTFROMCLAUSE = 39;
+  public int JJTFROMITEM = 40;
+  public int JJTCLUSTER = 41;
+  public int JJTMETADATAIDENTIFIER = 42;
+  public int JJTINDEXIDENTIFIER = 43;
+  public int JJTWHERECLAUSE = 44;
+  public int JJTORBLOCK = 45;
+  public int JJTANDBLOCK = 46;
+  public int JJTNOTBLOCK = 47;
+  public int JJTPARENTHESISBLOCK = 48;
+  public int JJTCONDITIONBLOCK = 49;
+  public int JJTCOMPAREOPERATOR = 50;
+  public int JJTLTOPERATOR = 51;
+  public int JJTGTOPERATOR = 52;
+  public int JJTNEOPERATOR = 53;
+  public int JJTNEQOPERATOR = 54;
+  public int JJTGEOPERATOR = 55;
+  public int JJTLEOPERATOR = 56;
+  public int JJTLIKEOPERATOR = 57;
+  public int JJTCONTAINSKEYOPERATOR = 58;
+  public int JJTCONTAINSVALUEOPERATOR = 59;
+  public int JJTEQUALSCOMPAREOPERATOR = 60;
+  public int JJTBINARYCONDITION = 61;
+  public int JJTCONTAINSVALUECONDITION = 62;
+  public int JJTINSTANCEOFCONDITION = 63;
+  public int JJTINDEXMATCHCONDITION = 64;
+  public int JJTBETWEENCONDITION = 65;
+  public int JJTISNULLCONDITION = 66;
+  public int JJTISNOTNULLCONDITION = 67;
+  public int JJTISDEFINEDCONDITION = 68;
+  public int JJTISNOTDEFINEDCONDITION = 69;
+  public int JJTCONTAINSCONDITION = 70;
+  public int JJTINOPERATOR = 71;
+  public int JJTINCONDITION = 72;
+  public int JJTNOTINCONDITION = 73;
+  public int JJTCONTAINSALLCONDITION = 74;
+  public int JJTCONTAINSTEXTCONDITION = 75;
+  public int JJTMATCHESCONDITION = 76;
+  public int JJTORDERBY = 77;
+  public int JJTGROUPBY = 78;
+  public int JJTLIMIT = 79;
+  public int JJTSKIP = 80;
+  public int JJTITEMSCOLLECTION = 81;
 
 
   public String[] jjtNodeName = {
@@ -116,7 +121,12 @@ public interface OrientSqlTreeConstants
     "SuffixIdentifier",
     "BaseIdentifier",
     "Modifier",
-    "OperationChain",
+    "Expression",
+    "AddExpression",
+    "MultExpression",
+    "FirstLevelExpression",
+    "ParenthesisExpression",
+    "BaseExpression",
     "FromClause",
     "FromItem",
     "Cluster",
@@ -162,4 +172,4 @@ public interface OrientSqlTreeConstants
     "ItemsCollection",
   };
 }
-/* JavaCC - OriginalChecksum=e4a7b68957736371017b18d00849dd6b (do not edit this line) */
+/* JavaCC - OriginalChecksum=32bd5d04b0c5f09958ac6070e2fb1471 (do not edit this line) */
