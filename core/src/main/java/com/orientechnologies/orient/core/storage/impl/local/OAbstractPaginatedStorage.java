@@ -265,35 +265,26 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
     }
   }
 
-  public void makeFullCheckpoint() throws IOException {
+  protected void makeFullCheckpoint() throws IOException {
     if (writeAheadLog == null)
       return;
 
     try {
-      modificationLock.prohibitModifications();
+      writeAheadLog.flush();
 
-      lock.acquireSharedLock();
-      try {
-        writeAheadLog.flush();
+      if (configuration != null)
+        configuration.synch();
 
-        if (configuration != null)
-          configuration.synch();
+      final OLogSequenceNumber lastLSN = writeAheadLog.logFullCheckpointStart();
+      diskCache.flushBuffer();
+      writeAheadLog.logFullCheckpointEnd();
+      writeAheadLog.flush();
 
-        final OLogSequenceNumber lastLSN = writeAheadLog.logFullCheckpointStart();
-        diskCache.flushBuffer();
-        writeAheadLog.logFullCheckpointEnd();
-        writeAheadLog.flush();
+      writeAheadLog.cutTill(lastLSN);
 
-        writeAheadLog.cutTill(lastLSN);
-
-        clearStorageDirty();
-      } catch (IOException ioe) {
-        throw new OStorageException("Error during checkpoint creation for storage " + name, ioe);
-      } finally {
-        lock.releaseSharedLock();
-      }
-    } finally {
-      modificationLock.allowModifications();
+      clearStorageDirty();
+    } catch (IOException ioe) {
+      throw new OStorageException("Error during checkpoint creation for storage " + name, ioe);
     }
   }
 
