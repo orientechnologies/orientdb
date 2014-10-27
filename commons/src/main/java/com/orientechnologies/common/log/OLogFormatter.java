@@ -1,5 +1,7 @@
 package com.orientechnologies.common.log;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -23,19 +25,21 @@ public class OLogFormatter extends Formatter {
     }
 
     // FORMAT THE STACK TRACE
-    final StringBuilder buffer = new StringBuilder();
+    final StringBuilder buffer = new StringBuilder(512);
     buffer.append(record.getMessage());
 
-    Throwable current = record.getThrown();
+    final Throwable current = record.getThrown();
+    if (current != null) {
+      buffer.append(EOL);
 
-    while (current != null) {
-      buffer.append(EOL).append(current.getMessage());
+      StringWriter writer = new StringWriter();
+      PrintWriter printWriter = new PrintWriter(writer);
 
-      for (StackTraceElement stackTraceElement : record.getThrown().getStackTrace()) {
-        buffer.append(EOL).append("-> ");
-        buffer.append(stackTraceElement.toString());
-      }
-      current = current.getCause();
+      current.printStackTrace(printWriter);
+      printWriter.flush();
+
+      buffer.append(writer.getBuffer());
+      printWriter.close();
     }
 
     return buffer.toString();
