@@ -31,8 +31,11 @@ import java.util.*;
  */
 public class OCommandExecutorUtility {
   private static Method java8MethodIsArray;
-  private static Method java8MethodValues;
-
+  static {
+   try {
+     java8MethodIsArray = Class.forName("jdk.nashorn.api.scripting.JSObject").getDeclaredMethod("isArray",null);
+   } catch(Exception e) {}
+  }
   /**
    * Manages cross compiler compatibility issues.
    * 
@@ -41,47 +44,27 @@ public class OCommandExecutorUtility {
    * @return
    */
   public static Object transformResult(Object result) {
+    if (java8MethodIsArray == null || !(result instanceof Map)) { 
+      return result;
+    }
     // PATCH BY MAT ABOUT NASHORN RETURNING VALUE FOR ARRAYS.
-    if (result!=null && result.getClass().getName().contains("nashorn") && result instanceof Map) {
-      try {
-        if (isActuallyAnArray(result)) {
-          List<?> partial = new ArrayList(((Map) result).values());
-          List<Object> finalResult = new ArrayList<Object>();
-          for (Object o : partial) {
-            if (o instanceof Map) {
-              Map<Object, Object> innerMap = (Map) o;
-              Set<Object> keys = innerMap.keySet();
-              Map<Object, Object> newMap = new LinkedHashMap<Object, Object>();
-              for (Object key : keys) {
-                newMap.put(key, transformResult(innerMap.get(key)));
-              }
-              finalResult.add(newMap.values());
-            } else {
-              finalResult.add(o);
-            }
-          }
-
-          return finalResult;
-        }else{
-          Map<Object, Object> mapResult = (Map) result;
-          List<Object> keys = new ArrayList<Object>(mapResult.keySet());
-          for (Object key : keys) {
-            mapResult.put(key, transformResult(mapResult.get(key)));
-          }
-          return mapResult;
-        }
-      } catch (Exception e) {
-      }
-    }
-
-    return result;
-  }
-
-  private static boolean isActuallyAnArray(Object iObject) {
     try {
-      return Boolean.TRUE.equals(Class.forName("jdk.nashorn.api.scripting.JSObject").getDeclaredMethod("isArray", null).invoke(iObject));
-    }  catch(Exception e) {
-      return false;
-    }
+      if ((Boolean) java8MethodIsArray.invoke(result)) {
+        List<?> partial = new ArrayList(((Map) result).values());
+        List<Object> finalResult = new ArrayList<Object>();
+        for (Object o : partial) {
+          finalResult.add(transformResult(o));
+        }
+        return finalResult;
+      } else {
+        Map<Object, Object> mapResult = (Map) result;
+        List<Object> keys = new ArrayList<Object>(mapResult.keySet());
+        for (Object key : keys) {
+          mapResult.put(key, transformResult(mapResult.get(key)));
+        }
+        return mapResult;
+      }
+    } catch (Exception e) {}
+    return result;
   }
 }
