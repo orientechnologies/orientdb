@@ -48,23 +48,20 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordAbstract implements ORecord {
-  protected ORecordId                               _recordId;
-  protected ORecordVersion                          _recordVersion             = OVersionFactory.instance().createVersion();
+  protected ORecordId                            _recordId;
+  protected ORecordVersion                       _recordVersion             = OVersionFactory.instance().createVersion();
 
-  protected byte[]                                  _source;
-  protected int                                     _size;
+  protected byte[]                               _source;
+  protected int                                  _size;
 
-  protected transient ORecordSerializer             _recordFormat;
-  protected boolean                                 _dirty                     = true;
-  protected boolean                                 _contentChanged            = true;
-  protected ORecordElement.STATUS                   _status                    = ORecordElement.STATUS.LOADED;
-  protected transient Set<ORecordListener>          _listeners                 = null;
+  protected transient ORecordSerializer          _recordFormat;
+  protected boolean                              _dirty                     = true;
+  protected boolean                              _contentChanged            = true;
+  protected ORecordElement.STATUS                _status                    = ORecordElement.STATUS.LOADED;
+  protected transient Set<ORecordListener>       _listeners                 = null;
 
-  private ORID                                      prevRid                    = null;
-  private transient Set<OIdentityChangeListener>    identityChangeListeners    = Collections
-                                                                                   .newSetFromMap(new WeakHashMap<OIdentityChangeListener, Boolean>());
-  private transient Set<OIdentityChangeListenerNew> newIdentityChangeListeners = Collections
-                                                                                   .newSetFromMap(new WeakHashMap<OIdentityChangeListenerNew, Boolean>());
+  private transient Set<OIdentityChangeListener> newIdentityChangeListeners = Collections
+                                                                                .newSetFromMap(new WeakHashMap<OIdentityChangeListener, Boolean>());
 
   public ORecordAbstract() {
   }
@@ -193,24 +190,17 @@ public abstract class ORecordAbstract implements ORecord {
     }
   }
 
-  public void onBeforeIdentityChanged(final ORecord iRecord) {
-    prevRid = _recordId.copy();
-    for (OIdentityChangeListenerNew changeListener : newIdentityChangeListeners)
+  protected void onBeforeIdentityChanged(final ORecord iRecord) {
+    for (OIdentityChangeListener changeListener : newIdentityChangeListeners)
       changeListener.onBeforeIdentityChange(this);
   }
 
-  public void onAfterIdentityChanged(final ORecord iRecord) {
+  protected void onAfterIdentityChanged(final ORecord iRecord) {
     invokeListenerEvent(ORecordListener.EVENT.IDENTITY_CHANGED);
 
-    for (OIdentityChangeListenerNew changeListener : newIdentityChangeListeners)
+    for (OIdentityChangeListener changeListener : newIdentityChangeListeners)
       changeListener.onAfterIdentityChange(this);
 
-    if (prevRid != null && !prevRid.equals(this._recordId)) {
-      for (OIdentityChangeListener changeListener : identityChangeListeners)
-        changeListener.onIdentityChanged(prevRid, this);
-    }
-
-    prevRid = null;
   }
 
   public boolean isDirty() {
@@ -456,21 +446,11 @@ public abstract class ORecordAbstract implements ORecord {
     return (RET) copy();
   }
 
-  @Override
-  public void addIdentityChangeListener(OIdentityChangeListener identityChangeListener) {
-    identityChangeListeners.add(identityChangeListener);
-  }
-
-  @Override
-  public void removeIdentityChangeListener(OIdentityChangeListener identityChangeListener) {
-    identityChangeListeners.remove(identityChangeListener);
-  }
-
-  protected void addIdentityChangeListener(OIdentityChangeListenerNew identityChangeListener) {
+  protected void addIdentityChangeListener(OIdentityChangeListener identityChangeListener) {
     newIdentityChangeListeners.add(identityChangeListener);
   }
 
-  protected void removeIdentityChangeListener(OIdentityChangeListenerNew identityChangeListener) {
+  protected void removeIdentityChangeListener(OIdentityChangeListener identityChangeListener) {
     newIdentityChangeListeners.remove(identityChangeListener);
   }
 

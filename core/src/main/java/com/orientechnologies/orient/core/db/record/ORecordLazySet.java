@@ -30,7 +30,7 @@ import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OIdentityChangeListener;
-import com.orientechnologies.orient.core.record.OIdentityChangeListenerNew;
+import com.orientechnologies.orient.core.record.OIdentityChangeListener;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -54,7 +54,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
  * 
  */
 public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiable>, ORecordLazyMultiValue, ORecordElement,
-    OIdentityChangeListenerNew {
+    OIdentityChangeListener {
   protected boolean                     autoConvertToRecord = true;
   protected Map<OIdentifiable, ORecord> recordCache;
 
@@ -150,14 +150,6 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
       }
     }
 
-  }
-
-  @Override
-  public void onAfterIdentityChanged(ORecord iRecord) {
-    if (iRecord instanceof ORecord)
-      map.put(iRecord, iRecord);
-    else
-      map.put(iRecord, ENTRY_REMOVAL);
   }
 
   @Override
