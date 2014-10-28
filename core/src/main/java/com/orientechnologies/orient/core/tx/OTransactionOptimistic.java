@@ -353,9 +353,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           rid.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(newObjectCounter--);
 
           ORecordInternal.onAfterIdentityChanged(iRecord);
-        } else
-          // REMOVE FROM THE DB'S CACHE
-          database.getLocalCache().freeRecord(rid);
+        }
 
         ORecordOperation txEntry = getRecordEntry(rid);
 
