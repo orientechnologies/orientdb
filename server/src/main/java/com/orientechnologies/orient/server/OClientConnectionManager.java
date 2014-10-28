@@ -164,6 +164,13 @@ public class OClientConnectionManager {
   public void kill(final OClientConnection connection) {
     if (connection != null) {
       final ONetworkProtocol protocol = connection.protocol;
+
+      try {
+        // INTERRUPT THE NEWTORK MANAGER TOO
+        protocol.interrupt();
+      } catch (Exception e) {
+      }
+
       disconnect(connection);
 
       // KILL THE NETWORK MANAGER TOO
@@ -182,7 +189,7 @@ public class OClientConnectionManager {
     if (connection != null) {
       final ONetworkProtocol protocol = connection.protocol;
       if (protocol != null)
-        // INTERRUPT THE NEWTORK MANAGER TOO
+        // INTERRUPT THE NEWTORK MANAGER
         protocol.interrupt();
     }
   }
