@@ -16,13 +16,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.testng.Assert;
@@ -897,5 +891,45 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     ODocument embeddedDoc = testClass2Document.field("testClass1Property");
     Assert.assertEquals(embeddedDoc.getSchemaClass(), testClass1);
+  }
+
+  public void testRemoveAllLinkList() {
+    final ODocument doc = new ODocument();
+
+    final List<ODocument> allDocs = new ArrayList<ODocument>();
+
+    for (int i = 0; i < 10; i++) {
+      final ODocument linkDoc = new ODocument();
+      linkDoc.save();
+
+      allDocs.add(linkDoc);
+    }
+
+    doc.field("linkList", allDocs);
+    doc.save();
+
+    doc.reload();
+
+    final List<ODocument> docsToRemove = new ArrayList<ODocument>(allDocs.size() / 2);
+    for (int i = 0; i < 5; i++)
+      docsToRemove.add(allDocs.get(i));
+
+    List<OIdentifiable> linkList = doc.field("linkList");
+    linkList.removeAll(docsToRemove);
+
+    Assert.assertEquals(linkList.size(), 5);
+
+    for (int i = 5; i < 10; i++)
+      Assert.assertEquals(linkList.get(i - 5), allDocs.get(i));
+
+    doc.save();
+
+    doc.reload();
+
+    linkList = doc.field("linkList");
+    Assert.assertEquals(linkList.size(), 5);
+
+    for (int i = 5; i < 10; i++)
+      Assert.assertEquals(linkList.get(i - 5), allDocs.get(i));
   }
 }
