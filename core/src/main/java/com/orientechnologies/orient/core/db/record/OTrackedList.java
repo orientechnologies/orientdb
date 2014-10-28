@@ -140,7 +140,16 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     return false;
   }
 
-  @Override
+	@Override
+	public boolean removeAll(Collection<?> c) {
+		boolean removed = false;
+		for (Object o : c)
+		  removed = removed | remove(o);
+
+		return removed;
+	}
+
+	@Override
   public void clear() {
     final List<T> origValues;
     if (changeListeners.isEmpty())
