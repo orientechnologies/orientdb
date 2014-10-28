@@ -18,77 +18,78 @@ public interface OrientSqlTreeConstants
   public int JJTUPDATEITEM = 12;
   public int JJTUPDATEADDITEM = 13;
   public int JJTINSERTSTATEMENT = 14;
-  public int JJTINSERTEXPRESSION = 15;
-  public int JJTINPUTPARAMETER = 16;
-  public int JJTPOSITIONALPARAMETER = 17;
-  public int JJTNAMEDPARAMETER = 18;
-  public int JJTPROJECTION = 19;
-  public int JJTPROJECTIONITEM = 20;
-  public int JJTVALUEITEM = 21;
-  public int JJTFILTERITEM = 22;
-  public int JJTARRAYSELECTOR = 23;
-  public int JJTARRAYNUMBERSELECTOR = 24;
-  public int JJTARRAYSINGLEVALUESSELECTOR = 25;
-  public int JJTARRAYRANGESELECTOR = 26;
-  public int JJTALIAS = 27;
-  public int JJTRECORDATTRIBUTE = 28;
-  public int JJTTHISOPERATION = 29;
-  public int JJTFUNCTIONCALL = 30;
-  public int JJTMETHODCALL = 31;
-  public int JJTLEVELZEROIDENTIFIER = 32;
-  public int JJTSUFFIXIDENTIFIER = 33;
-  public int JJTBASEIDENTIFIER = 34;
-  public int JJTMODIFIER = 35;
-  public int JJTEXPRESSION = 36;
-  public int JJTMULTEXPRESSION = 37;
-  public int JJTFIRSTLEVELEXPRESSION = 38;
-  public int JJTPARENTHESISEXPRESSION = 39;
-  public int JJTBASEEXPRESSION = 40;
-  public int JJTFROMCLAUSE = 41;
-  public int JJTFROMITEM = 42;
-  public int JJTCLUSTER = 43;
-  public int JJTMETADATAIDENTIFIER = 44;
-  public int JJTINDEXIDENTIFIER = 45;
-  public int JJTWHERECLAUSE = 46;
-  public int JJTORBLOCK = 47;
-  public int JJTANDBLOCK = 48;
-  public int JJTNOTBLOCK = 49;
-  public int JJTPARENTHESISBLOCK = 50;
-  public int JJTCONDITIONBLOCK = 51;
-  public int JJTCOMPAREOPERATOR = 52;
-  public int JJTLTOPERATOR = 53;
-  public int JJTGTOPERATOR = 54;
-  public int JJTNEOPERATOR = 55;
-  public int JJTNEQOPERATOR = 56;
-  public int JJTGEOPERATOR = 57;
-  public int JJTLEOPERATOR = 58;
-  public int JJTLIKEOPERATOR = 59;
-  public int JJTCONTAINSKEYOPERATOR = 60;
-  public int JJTCONTAINSVALUEOPERATOR = 61;
-  public int JJTEQUALSCOMPAREOPERATOR = 62;
-  public int JJTBINARYCONDITION = 63;
-  public int JJTCONTAINSVALUECONDITION = 64;
-  public int JJTINSTANCEOFCONDITION = 65;
-  public int JJTINDEXMATCHCONDITION = 66;
-  public int JJTBETWEENCONDITION = 67;
-  public int JJTISNULLCONDITION = 68;
-  public int JJTISNOTNULLCONDITION = 69;
-  public int JJTISDEFINEDCONDITION = 70;
-  public int JJTISNOTDEFINEDCONDITION = 71;
-  public int JJTCONTAINSCONDITION = 72;
-  public int JJTINOPERATOR = 73;
-  public int JJTINCONDITION = 74;
-  public int JJTNOTINCONDITION = 75;
-  public int JJTCONTAINSALLCONDITION = 76;
-  public int JJTCONTAINSTEXTCONDITION = 77;
-  public int JJTMATCHESCONDITION = 78;
-  public int JJTORDERBY = 79;
-  public int JJTGROUPBY = 80;
-  public int JJTLIMIT = 81;
-  public int JJTSKIP = 82;
-  public int JJTITEMSCOLLECTION = 83;
-  public int JJTFETCHPLAN = 84;
-  public int JJTFETCHPLANITEM = 85;
+  public int JJTINPUTPARAMETER = 15;
+  public int JJTPOSITIONALPARAMETER = 16;
+  public int JJTNAMEDPARAMETER = 17;
+  public int JJTPROJECTION = 18;
+  public int JJTPROJECTIONITEM = 19;
+  public int JJTVALUEITEM = 20;
+  public int JJTFILTERITEM = 21;
+  public int JJTARRAYSELECTOR = 22;
+  public int JJTARRAYNUMBERSELECTOR = 23;
+  public int JJTARRAYSINGLEVALUESSELECTOR = 24;
+  public int JJTARRAYRANGESELECTOR = 25;
+  public int JJTALIAS = 26;
+  public int JJTRECORDATTRIBUTE = 27;
+  public int JJTTHISOPERATION = 28;
+  public int JJTFUNCTIONCALL = 29;
+  public int JJTMETHODCALL = 30;
+  public int JJTLEVELZEROIDENTIFIER = 31;
+  public int JJTSUFFIXIDENTIFIER = 32;
+  public int JJTBASEIDENTIFIER = 33;
+  public int JJTMODIFIER = 34;
+  public int JJTEXPRESSION = 35;
+  public int JJTMULTEXPRESSION = 36;
+  public int JJTFIRSTLEVELEXPRESSION = 37;
+  public int JJTPARENTHESISEXPRESSION = 38;
+  public int JJTBASEEXPRESSION = 39;
+  public int JJTFROMCLAUSE = 40;
+  public int JJTFROMITEM = 41;
+  public int JJTCLUSTER = 42;
+  public int JJTMETADATAIDENTIFIER = 43;
+  public int JJTINDEXIDENTIFIER = 44;
+  public int JJTWHERECLAUSE = 45;
+  public int JJTORBLOCK = 46;
+  public int JJTANDBLOCK = 47;
+  public int JJTNOTBLOCK = 48;
+  public int JJTPARENTHESISBLOCK = 49;
+  public int JJTCONDITIONBLOCK = 50;
+  public int JJTCOMPAREOPERATOR = 51;
+  public int JJTLTOPERATOR = 52;
+  public int JJTGTOPERATOR = 53;
+  public int JJTNEOPERATOR = 54;
+  public int JJTNEQOPERATOR = 55;
+  public int JJTGEOPERATOR = 56;
+  public int JJTLEOPERATOR = 57;
+  public int JJTLIKEOPERATOR = 58;
+  public int JJTCONTAINSKEYOPERATOR = 59;
+  public int JJTCONTAINSVALUEOPERATOR = 60;
+  public int JJTEQUALSCOMPAREOPERATOR = 61;
+  public int JJTBINARYCONDITION = 62;
+  public int JJTCONTAINSVALUECONDITION = 63;
+  public int JJTINSTANCEOFCONDITION = 64;
+  public int JJTINDEXMATCHCONDITION = 65;
+  public int JJTBETWEENCONDITION = 66;
+  public int JJTISNULLCONDITION = 67;
+  public int JJTISNOTNULLCONDITION = 68;
+  public int JJTISDEFINEDCONDITION = 69;
+  public int JJTISNOTDEFINEDCONDITION = 70;
+  public int JJTCONTAINSCONDITION = 71;
+  public int JJTINOPERATOR = 72;
+  public int JJTINCONDITION = 73;
+  public int JJTNOTINCONDITION = 74;
+  public int JJTCONTAINSALLCONDITION = 75;
+  public int JJTCONTAINSTEXTCONDITION = 76;
+  public int JJTMATCHESCONDITION = 77;
+  public int JJTORDERBY = 78;
+  public int JJTGROUPBY = 79;
+  public int JJTLIMIT = 80;
+  public int JJTSKIP = 81;
+  public int JJTITEMSCOLLECTION = 82;
+  public int JJTFETCHPLAN = 83;
+  public int JJTFETCHPLANITEM = 84;
+  public int JJTTRAVERSEPROJECTIONITEM = 85;
+  public int JJTARRAY = 86;
 
 
   public String[] jjtNodeName = {
@@ -107,7 +108,6 @@ public interface OrientSqlTreeConstants
     "UpdateItem",
     "UpdateAddItem",
     "InsertStatement",
-    "InsertExpression",
     "InputParameter",
     "PositionalParameter",
     "NamedParameter",
@@ -178,6 +178,8 @@ public interface OrientSqlTreeConstants
     "ItemsCollection",
     "FetchPlan",
     "FetchPlanItem",
+    "TraverseProjectionItem",
+    "Array",
   };
 }
-/* JavaCC - OriginalChecksum=a991cbcda96ead8767f5f4074648e81a (do not edit this line) */
+/* JavaCC - OriginalChecksum=27822ec8ac6758902ab2e6e73804daea (do not edit this line) */

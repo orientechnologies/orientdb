@@ -428,10 +428,11 @@ void TraverseStatement():
 {}
 {
 	<TRAVERSE>
-	[ Projection() ]
+	[ TraverseProjectionItem() ( <COMMA> TraverseProjectionItem() )* ]
 	<FROM>
 	FromClause()
 	[ <WHILE> WhereClause() ]
+    [ Limit() ]
 }
 
 
@@ -464,25 +465,7 @@ void UpdateStatement():
 void UpdateItem():
 {}
 {
-	Identifier() <EQ>
-	(
-		<NULL>
-		|
-		<STRING_LITERAL>
-		|
-		LOOKAHEAD(Rid())
-		Rid()
-		|
-		LOOKAHEAD(3)
-		Integer()
-		|
-		<FLOATING_POINT_LITERAL>
-		|
-		<CHARACTER_LITERAL>
-		|
-		<LBRACKET> Rid() ("," Rid())* <RBRACKET>
-	)
-
+	Identifier() <EQ> ValueItem()
 }
 
 void UpdateAddItem():
@@ -513,30 +496,26 @@ void InsertStatement():
 {
 	<INSERT>
 	<INTO>
-	( Identifier() | Cluster() )
-	<LPAREN> Identifier() ("," Identifier()) <RPAREN>
-	<VALUES>
-	<LPAREN> InsertExpression() ("," InsertExpression()) <RPAREN>
-}
-
-void InsertExpression():
-{}
-{
-	<NULL>
-	|
-	<STRING_LITERAL>
-	|
-	LOOKAHEAD(3)
-	Integer()
-	|
-	<FLOATING_POINT_LITERAL>
-	|
-	LOOKAHEAD(Rid())
-	Rid()
-	|
-	<CHARACTER_LITERAL>
-	|
-	<LBRACKET> Rid() ("," Rid())* <RBRACKET>
+	(
+	    Identifier()
+	    |
+	    Cluster()
+	    |
+	    IndexIdentifier()
+	)
+	(
+        (
+            <LPAREN> Identifier() (<COMMA> Identifier())* <RPAREN>
+            <VALUES>
+            <LPAREN> ValueItem() (<COMMA> ValueItem())* <RPAREN>
+        )
+        |
+        (
+            <SET>
+            Identifier() <EQ> ValueItem()
+            ( <COMMA> Identifier() <EQ> ValueItem() )*
+        )
+	)
 }
 
 void InputParameter():
@@ -600,6 +579,8 @@ void ValueItem():
         <CHARACTER_LITERAL>
         |
         Integer()
+        |
+        Array()
         |
         (
             LOOKAHEAD(2)
@@ -1229,3 +1210,21 @@ void FetchPlanItem():
     <COLON> Integer()
 }
 
+
+
+void TraverseProjectionItem():
+{}
+{
+    <STAR>
+    |
+    (
+        BaseIdentifier() [ LOOKAHEAD( Modifier() ) Modifier() ]
+    )
+
+}
+
+void Array():
+{}
+{
+    <LBRACKET> [ ValueItem() ( <COMMA> ValueItem() )* ] <RBRACKET>
+}

@@ -32,8 +32,12 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+import com.orientechnologies.orient.core.sql.parser.OrientSql;
+import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -62,9 +66,26 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
   private Object                         returnExpression = null;
   private List<ODocument>                queryResult      = null;
 
+  private void testNewParser(OCommandRequest iRequest){
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
+    String text = textRequest.getText();
+    InputStream is = new ByteArrayInputStream(text.getBytes());
+    OrientSql osql = new OrientSql(is);
+    try {
+      osql.OrientGrammar();
+    } catch (ParseException e) {
+      System.out.println("NEW PARSER FAILED: "+text);
+      throwParsingException(e.getMessage());
+      //      throw new RuntimeException(e);
+    }
+  }
+
+
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLInsert parse(final OCommandRequest iRequest) {
     final ODatabaseRecord database = getDatabase();
+
+    testNewParser(iRequest);
 
     init((OCommandRequestText) iRequest);
 

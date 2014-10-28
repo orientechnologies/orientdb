@@ -19,7 +19,6 @@ public interface OrientSqlVisitor
   public Object visit(OUpdateItem node, Object data);
   public Object visit(OUpdateAddItem node, Object data);
   public Object visit(OInsertStatement node, Object data);
-  public Object visit(OInsertExpression node, Object data);
   public Object visit(OInputParameter node, Object data);
   public Object visit(OPositionalParameter node, Object data);
   public Object visit(ONamedParameter node, Object data);
@@ -90,5 +89,7 @@ public interface OrientSqlVisitor
   public Object visit(OItemsCollection node, Object data);
   public Object visit(OFetchPlan node, Object data);
   public Object visit(OFetchPlanItem node, Object data);
+  public Object visit(OTraverseProjectionItem node, Object data);
+  public Object visit(OArray node, Object data);
 }
-/* JavaCC - OriginalChecksum=212de6787f5af1f861dfde06c07b0239 (do not edit this line) */
+/* JavaCC - OriginalChecksum=d6e1eb1cf4660bef30911d7cffe2b9e3 (do not edit this line) */

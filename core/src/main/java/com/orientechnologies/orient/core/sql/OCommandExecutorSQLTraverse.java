@@ -22,11 +22,16 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.sql.parser.OrientSql;
+import com.orientechnologies.orient.core.sql.parser.ParseException;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -61,11 +66,26 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
   // HANDLES ITERATION IN LAZY WAY
   private OTraverse          traverse         = new OTraverse();
 
+  private void testNewParser(OCommandRequest iRequest){
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
+    String text = textRequest.getText();
+    InputStream is = new ByteArrayInputStream(text.getBytes());
+    OrientSql osql = new OrientSql(is);
+    try {
+      osql.OrientGrammar();
+    } catch (ParseException e) {
+      System.out.println("NEW PARSER FAILED: "+text);
+      throwParsingException(e.getMessage());
+      //      throw new RuntimeException(e);
+    }
+  }
+
   /**
    * Compile the filter conditions only the first time.
    */
   public OCommandExecutorSQLTraverse parse(final OCommandRequest iRequest) {
     super.parse(iRequest);
+    testNewParser(iRequest);
 
     final int pos = parseFields();
     if (pos == -1)
