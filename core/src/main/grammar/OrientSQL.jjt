@@ -119,6 +119,8 @@ TOKEN:
 	|
 	< DESC: ( "d" | "D" ) ( "e" | "E" ) ( "s" | "S" ) ( "c" | "C" ) >
 	|
+	< FETCHPLAN: ( "f" | "F" ) ( "e" | "E" ) ( "t" | "T" ) ( "c" | "C" ) ( "h" | "H" ) ( "p" | "P" ) ( "l" | "L" ) ( "a" | "A" ) ( "n" | "N" ) >
+	|
 	< THIS: "@this" >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> >
@@ -398,7 +400,7 @@ void Statement():
 void SelectWithoutTargetStatement():
 {}
 {
-	<SELECT> ValueItem() [<AS> Alias() ] ( <COMMA> ValueItem() [<AS> Alias() ] )*
+	<SELECT> ValueItem() [<AS> Alias() ] ( <COMMA> ValueItem() [<AS> Alias() ] )* [ FetchPlan() ]
 }
 
 void SelectStatement():
@@ -418,6 +420,7 @@ void SelectStatement():
             Limit()  [ Skip() ]
         ]
     )
+    [ FetchPlan() ]
 
 }
 
@@ -790,24 +793,10 @@ void Expression():
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 void MultExpression():
 {}
 {
-    FirstLevelExpression() (  LOOKAHEAD( 2 ) ( <STAR> | <SLASH> ) FirstLevelExpression() )*
+    FirstLevelExpression() (  LOOKAHEAD( 2 ) ( <STAR> | <SLASH> | <REM> ) FirstLevelExpression() )*
 }
 
 void FirstLevelExpression():
@@ -835,24 +824,6 @@ void BaseExpression():
 	    BaseIdentifier() [ LOOKAHEAD( Modifier() ) Modifier() ]
 	)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -1241,5 +1212,20 @@ void ItemsCollection():
 
 
 
+void FetchPlan():
+{}
+{
+    <FETCHPLAN> FetchPlanItem() ( FetchPlanItem() )*
+}
 
+void FetchPlanItem():
+{}
+{
+    (
+        <STAR>
+        |
+        Identifier() ( <DOT> Identifier() )*
+    )
+    <COLON> Integer()
+}
 

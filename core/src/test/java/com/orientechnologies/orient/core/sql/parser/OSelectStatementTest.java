@@ -118,6 +118,22 @@ public class OSelectStatementTest {
   }
 
 
+  public void testFetchPlan1() {
+    SimpleNode result = checkRightSyntax("" +
+        "select 'Ay' as a , 'bEE' as b from Foo fetchplan *:1");
+    result.dump("    ");
+    assertTrue(result.children[0] instanceof OStatement);
+    OStatement stm = (OStatement) result.children[0];
+    assertTrue(stm.children[0] instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) stm.children[0];
+  }
+
+  public void testFetchPlan2() {
+    SimpleNode result = checkRightSyntax("" +
+        "select 'Ay' as a , 'bEE' as b fetchplan *:1");
+    result.dump("    ");
+    assertTrue(result.children[0] instanceof OStatement);
+  }
 
   public void testContainsWithCondition() {
     SimpleNode result = checkRightSyntax(

@@ -87,6 +87,8 @@ public interface OrientSqlTreeConstants
   public int JJTLIMIT = 81;
   public int JJTSKIP = 82;
   public int JJTITEMSCOLLECTION = 83;
+  public int JJTFETCHPLAN = 84;
+  public int JJTFETCHPLANITEM = 85;
 
 
   public String[] jjtNodeName = {
@@ -174,6 +176,8 @@ public interface OrientSqlTreeConstants
     "Limit",
     "Skip",
     "ItemsCollection",
+    "FetchPlan",
+    "FetchPlanItem",
   };
 }
-/* JavaCC - OriginalChecksum=2b957623a5a794da051c56fd95c25595 (do not edit this line) */
+/* JavaCC - OriginalChecksum=a991cbcda96ead8767f5f4074648e81a (do not edit this line) */

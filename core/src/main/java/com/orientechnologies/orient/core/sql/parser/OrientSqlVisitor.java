@@ -88,5 +88,7 @@ public interface OrientSqlVisitor
   public Object visit(OLimit node, Object data);
   public Object visit(OSkip node, Object data);
   public Object visit(OItemsCollection node, Object data);
+  public Object visit(OFetchPlan node, Object data);
+  public Object visit(OFetchPlanItem node, Object data);
 }
-/* JavaCC - OriginalChecksum=b76fdccd25d1fc3e02ed3db5f20ec62b (do not edit this line) */
+/* JavaCC - OriginalChecksum=212de6787f5af1f861dfde06c07b0239 (do not edit this line) */
