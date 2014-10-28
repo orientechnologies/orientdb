@@ -214,6 +214,10 @@ TOKEN :
 	      "'"
       )
   >
+  |
+  < INTEGER_RANGE:
+    (<MINUS>)? <INTEGER_LITERAL> <RANGE> (<MINUS>)?<INTEGER_LITERAL>
+  >
 }
 
 
@@ -275,6 +279,7 @@ TOKEN :
 | < RSIGNEDSHIFTASSIGN: ">>=" >
 | < RUNSIGNEDSHIFTASSIGN: ">>>=" >
 | < ELLIPSIS: "..." >
+| < RANGE: ".." >
 | < NOT: ( "N" | "n") ( "O" | "o") ( "T" | "t")  >
 | < IN: ( "I" | "i") ( "N" | "n") >
 | < LIKE: ( "L" | "l") ( "I" | "i") ( "K" | "k") ( "E" | "e") >
@@ -345,7 +350,7 @@ SimpleNode OrientGrammar() :
 void Identifier():
 {}
 {
-    <IDENTIFIER> | <IN> | <SET> | <ORDER> | <KEY> | <OFFSET> | <GROUP>
+    <IDENTIFIER> | <IN> | <SET> | <ORDER> | <KEY> | <OFFSET> | <GROUP> | <VALUES>
 }
 
 void Integer():
@@ -353,6 +358,23 @@ void Integer():
 {
     [ <MINUS> ] <INTEGER_LITERAL>
 }
+
+void FloatingPoint():
+{}
+{
+    [ <MINUS> ] <FLOATING_POINT_LITERAL>
+}
+
+void Number():
+{}
+{
+    LOOKAHEAD( Integer() )
+    Integer()
+    |
+    LOOKAHEAD( FloatingPoint() )
+    FloatingPoint()
+}
+
 
 void Statement():
 {}
@@ -549,12 +571,8 @@ void ProjectionItem():
 		(
 			<NULL>
 			|
-			Integer()
-			|
 			LOOKAHEAD(2)
 			<STRING_LITERAL>
-			|
-			<FLOATING_POINT_LITERAL>
 			|
 			<CHARACTER_LITERAL>
 			|
@@ -590,7 +608,7 @@ void ValueItem():
             LOOKAHEAD( FunctionCall() )
             FunctionCall()
         )
-        [ Modifier() ]
+        [ LOOKAHEAD( Modifier() ) Modifier() ]
     )
 }
 
@@ -600,14 +618,12 @@ void FilterItem():
 	<NULL>
 	|
 	LOOKAHEAD(3)
-	Integer()
-	|
 	<STRING_LITERAL>
 	|
-	<FLOATING_POINT_LITERAL>
-	|
+	LOOKAHEAD(3)
 	<CHARACTER_LITERAL>
 	|
+	LOOKAHEAD( Rid() )
 	Rid()
 	|
 	LOOKAHEAD( InputParameter() )
@@ -620,17 +636,23 @@ void FilterItem():
 void ArraySelector():
 {}
 {
-	LOOKAHEAD(3)
-	Integer()
-	|
 	<STRING_LITERAL>
-	|
-	<FLOATING_POINT_LITERAL>
 	|
 	<CHARACTER_LITERAL>
 	|
+	LOOKAHEAD( Rid() )
 	Rid()
 	|
+	LOOKAHEAD( InputParameter() )
+    InputParameter()
+    |
+    LOOKAHEAD( Expression() )
+	Expression()
+}
+
+void ArrayNumberSelector():
+{}
+{
 	LOOKAHEAD( InputParameter() )
     InputParameter()
     |
@@ -647,28 +669,13 @@ void ArraySingleValuesSelector():
 void ArrayRangeSelector():
 {}
 {
+    <INTEGER_RANGE>
+    |
     (
-        LOOKAHEAD(3)
-        Integer()
-        |
-        LOOKAHEAD( InputParameter() )
-        InputParameter()
-        |
-        LOOKAHEAD( Expression() )
-	    Expression()
-    )
-    <MINUS>
-    (
-        LOOKAHEAD(3)
-        Integer()
-        |
-        LOOKAHEAD( InputParameter() )
-        InputParameter()
-        |
-        LOOKAHEAD( Expression() )
-	    Expression()
+        ArrayNumberSelector() <RANGE> ArrayNumberSelector()
     )
 }
+
 
 void Alias():
 {}
@@ -714,19 +721,22 @@ void MethodCall():
 void LevelZeroIdentifier():
 {}
 {
-    LOOKAHEAD(2)
+    LOOKAHEAD( FunctionCall() )
     FunctionCall()
     |
     <THIS>
     |
+    LOOKAHEAD( ItemsCollection() )
     ItemsCollection()
 }
 
 void SuffixIdentifier():
 {}
 {
+    LOOKAHEAD( Identifier() )
     Identifier()
     |
+    LOOKAHEAD( RecordAttribute() )
     RecordAttribute()
 }
 
@@ -747,23 +757,24 @@ void Modifier():
 
     (
 
-        "["
-            (
-                LOOKAHEAD( OrBlock() )
-                OrBlock()
-                |
-                LOOKAHEAD( ArraySingleValuesSelector() )
-                ArraySingleValuesSelector()
-                |
-                LOOKAHEAD( ArrayRangeSelector() )
-                ArrayRangeSelector()
-            )
-        "]"
+        (
+            <LBRACKET>
+                (
+                    LOOKAHEAD( ArrayRangeSelector() )
+                    ArrayRangeSelector()
+                    |
+                    LOOKAHEAD( OrBlock() )
+                    OrBlock()
+                    |
+                    LOOKAHEAD( ArraySingleValuesSelector() )
+                    ArraySingleValuesSelector()
+                )
+            <RBRACKET>
+        )
    	    |
-   	    LOOKAHEAD(3)
+   	    LOOKAHEAD( MethodCall() )
    	    MethodCall()
    	    |
-   	    LOOKAHEAD(3)
         <DOT> SuffixIdentifier()
     )
     [
@@ -775,8 +786,7 @@ void Modifier():
 void Expression():
 {}
 {
-    LOOKAHEAD( AddExpression() )
-	AddExpression()
+	MultExpression() (  LOOKAHEAD( 2 ) ( <PLUS> | <MINUS> ) MultExpression() )*
 }
 
 
@@ -793,16 +803,11 @@ void Expression():
 
 
 
-void AddExpression():
-{}
-{
-	MultExpression() ( ( <PLUS> | <MINUS> ) MultExpression() )*
-}
 
 void MultExpression():
 {}
 {
-    FirstLevelExpression() ( ( <STAR> | <SLASH> ) FirstLevelExpression() )*
+    FirstLevelExpression() (  LOOKAHEAD( 2 ) ( <STAR> | <SLASH> ) FirstLevelExpression() )*
 }
 
 void FirstLevelExpression():
@@ -818,13 +823,17 @@ void FirstLevelExpression():
 void ParenthesisExpression():
 {}
 {
-	<LPAREN> AddExpression() <RPAREN>
+	<LPAREN> Expression() <RPAREN>
 }
 
 void BaseExpression():
 {}
 {
-	BaseIdentifier() [ LOOKAHEAD( Modifier() ) Modifier() ]
+    Number()
+    |
+    (
+	    BaseIdentifier() [ LOOKAHEAD( Modifier() ) Modifier() ]
+	)
 }
 
 
@@ -858,7 +867,7 @@ void FromItem():
 {
 	Rid()
 	|
-	<LBRACKET> Rid() ("," Rid())* <RBRACKET>
+	<LBRACKET> Rid() ( <COMMA> Rid())* <RBRACKET>
 	|
 	Cluster()
 	|
@@ -911,13 +920,30 @@ void OrBlock():
 void AndBlock():
 {}
 {
-	( NotBlock() ) ( <AND> ( NotBlock() ) )*
+    NotBlock() ( <AND> NotBlock() )*
 }
 
 void NotBlock():
 {}
 {
-	[ LOOKAHEAD(2) <NOT> ] (  LOOKAHEAD(ConditionBlock())  ConditionBlock() | LOOKAHEAD(ParenthesisBlock()) ParenthesisBlock() )
+    (
+        <NOT>
+        (
+            LOOKAHEAD( ConditionBlock() )
+            ConditionBlock()
+            |
+            LOOKAHEAD( ParenthesisBlock() )
+            ParenthesisBlock()
+        )
+    )
+    |
+    (
+        LOOKAHEAD( ConditionBlock() )
+        ConditionBlock()
+        |
+        LOOKAHEAD( ParenthesisBlock() )
+        ParenthesisBlock()
+    )
 }
 
 void ParenthesisBlock():
@@ -1073,7 +1099,7 @@ void ContainsValueCondition():
 void InstanceofCondition():
 {}
 {
-    FilterItem() <INSTANCEOF> Identifier()
+    FilterItem() <INSTANCEOF> ( Identifier() | <STRING_LITERAL> )
 }
 
 void IndexMatchCondition():
@@ -1124,7 +1150,7 @@ void ContainsCondition():
 
 	(
 	    LOOKAHEAD( 3 )
-	    <LPAREN> OrBlock() <RPAREN>
+	    ( <LPAREN> OrBlock() <RPAREN> )
 	    |
 	    LOOKAHEAD( FilterItem() )
 	    FilterItem()

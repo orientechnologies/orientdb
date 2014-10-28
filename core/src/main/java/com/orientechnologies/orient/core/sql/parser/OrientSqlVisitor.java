@@ -8,6 +8,8 @@ public interface OrientSqlVisitor
   public Object visit(OOrientGrammar node, Object data);
   public Object visit(OIdentifier node, Object data);
   public Object visit(OInteger node, Object data);
+  public Object visit(OFloatingPoint node, Object data);
+  public Object visit(ONumber node, Object data);
   public Object visit(OStatement node, Object data);
   public Object visit(OSelectWithoutTargetStatement node, Object data);
   public Object visit(OSelectStatement node, Object data);
@@ -26,6 +28,7 @@ public interface OrientSqlVisitor
   public Object visit(OValueItem node, Object data);
   public Object visit(OFilterItem node, Object data);
   public Object visit(OArraySelector node, Object data);
+  public Object visit(OArrayNumberSelector node, Object data);
   public Object visit(OArraySingleValuesSelector node, Object data);
   public Object visit(OArrayRangeSelector node, Object data);
   public Object visit(OAlias node, Object data);
@@ -38,7 +41,6 @@ public interface OrientSqlVisitor
   public Object visit(OBaseIdentifier node, Object data);
   public Object visit(OModifier node, Object data);
   public Object visit(OExpression node, Object data);
-  public Object visit(OAddExpression node, Object data);
   public Object visit(OMultExpression node, Object data);
   public Object visit(OFirstLevelExpression node, Object data);
   public Object visit(OParenthesisExpression node, Object data);
@@ -87,4 +89,4 @@ public interface OrientSqlVisitor
   public Object visit(OSkip node, Object data);
   public Object visit(OItemsCollection node, Object data);
 }
-/* JavaCC - OriginalChecksum=44cf72d5aee82dcb49d4eb47c7f0a576 (do not edit this line) */
+/* JavaCC - OriginalChecksum=b76fdccd25d1fc3e02ed3db5f20ec62b (do not edit this line) */

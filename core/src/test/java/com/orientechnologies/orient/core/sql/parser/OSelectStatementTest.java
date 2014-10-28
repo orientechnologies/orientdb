@@ -87,6 +87,59 @@ public class OSelectStatementTest {
     OSelectStatement select = (OSelectStatement) stm.children[0];
   }
 
+  public void testMath1() {
+    SimpleNode result = checkRightSyntax("" +
+"select * from sqlSelectIndexReuseTestClass where prop1 = 1 + 1");
+    // result.dump("    ");
+    assertTrue(result.children[0] instanceof OStatement);
+    OStatement stm = (OStatement) result.children[0];
+    assertTrue(stm.children[0] instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) stm.children[0];
+  }
+
+  public void testMath2() {
+    SimpleNode result = checkRightSyntax("" +
+        "select * from sqlSelectIndexReuseTestClass where prop1 = foo + 1");
+    // result.dump("    ");
+    assertTrue(result.children[0] instanceof OStatement);
+    OStatement stm = (OStatement) result.children[0];
+    assertTrue(stm.children[0] instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) stm.children[0];
+  }
+
+  public void testMath5() {
+    SimpleNode result = checkRightSyntax("" +
+        "select * from sqlSelectIndexReuseTestClass where prop1 = foo + 1 * bar - 5");
+    result.dump("    ");
+    assertTrue(result.children[0] instanceof OStatement);
+    OStatement stm = (OStatement) result.children[0];
+    assertTrue(stm.children[0] instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) stm.children[0];
+  }
+
+
+
+  public void testContainsWithCondition() {
+    SimpleNode result = checkRightSyntax(
+"select from Profile where customReferences.values() CONTAINS 'a'");
+    result.dump("    ");
+    assertTrue(result.children[0] instanceof OStatement);
+    OStatement stm = (OStatement) result.children[0];
+    assertTrue(stm.children[0] instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) stm.children[0];
+  }
+
+
+  public void testRange() {
+    SimpleNode result = checkRightSyntax(
+"select * from ThisClass where a = b[pippo..pluto]");
+    result.dump("    ");
+    assertTrue(result.children[0] instanceof OStatement);
+    OStatement stm = (OStatement) result.children[0];
+    assertTrue(stm.children[0] instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) stm.children[0];
+  }
+
   public void testNamedParam() {
     SimpleNode result = checkRightSyntax("select from JavaComplexTestClass where enumField = :enumItem");
     // result.dump("    ");
