@@ -1,29 +1,23 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.db;
-
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -38,7 +32,6 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
@@ -55,6 +48,12 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecordInternal> extends ODatabaseWrapperAbstract<DB>
@@ -177,14 +176,12 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecordI
     return underlying.browseCluster(iClusterName);
   }
 
-  public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(final String iClusterName,
-      final Class<REC> iRecordClass) {
+  public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(final String iClusterName, final Class<REC> iRecordClass) {
     return underlying.browseCluster(iClusterName, iRecordClass);
   }
 
-  public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(final String iClusterName,
-      final Class<REC> iRecordClass, OClusterPosition startClusterPosition, OClusterPosition endClusterPosition,
-      final boolean loadTombstones) {
+  public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(final String iClusterName, final Class<REC> iRecordClass,
+      long startClusterPosition, long endClusterPosition, final boolean loadTombstones) {
 
     return underlying.browseCluster(iClusterName, iRecordClass, startClusterPosition, endClusterPosition, loadTombstones);
   }
@@ -247,8 +244,8 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecordI
   }
 
   @Override
-  public <RET extends ORecord> RET load(ORecord iObject, String iFetchPlan, boolean iIgnoreCache,
-      boolean loadTombstone, OStorage.LOCKING_STRATEGY iLockingStrategy) {
+  public <RET extends ORecord> RET load(ORecord iObject, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
+      OStorage.LOCKING_STRATEGY iLockingStrategy) {
     return (RET) underlying.load(iObject, iFetchPlan, iIgnoreCache, loadTombstone, OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
@@ -289,8 +286,8 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecordI
     return (RET) underlying.save(iRecord, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 
-  public <RET extends ORecord> RET save(final ORecord iRecord, final String iClusterName,
-      final OPERATION_MODE iMode, boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
+  public <RET extends ORecord> RET save(final ORecord iRecord, final String iClusterName, final OPERATION_MODE iMode,
+      boolean iForceCreate, final ORecordCallback<? extends Number> iRecordCreatedCallback,
       ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     return (RET) underlying.save(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
@@ -411,6 +408,23 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecordI
     }, iListener, compressionLevel, bufferSize);
   }
 
+  @Override
+  public ORecordConflictStrategy getConflictStrategy() {
+    return getStorage().getConflictStrategy();
+  }
+
+  @Override
+  public ODatabaseRecordWrapperAbstract<DB> setConflictStrategy(final String iStrategyName) {
+    getStorage().setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
+    return this;
+  }
+
+  @Override
+  public ODatabaseRecordWrapperAbstract<DB> setConflictStrategy(final ORecordConflictStrategy iResolver) {
+    getStorage().setConflictStrategy(iResolver);
+    return this;
+  }
+
   protected void checkClusterBoundedToClass(final int iClusterId) {
     if (iClusterId == -1)
       return;
@@ -427,22 +441,5 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecordI
         }
       }
     }
-  }
-
-  @Override
-  public ORecordConflictStrategy getConflictStrategy() {
-    return getStorage().getConflictStrategy();
-  }
-
-  @Override
-  public ODatabaseRecordWrapperAbstract<DB> setConflictStrategy(final ORecordConflictStrategy iResolver) {
-    getStorage().setConflictStrategy(iResolver);
-    return this;
-  }
-
-  @Override
-  public ODatabaseRecordWrapperAbstract<DB> setConflictStrategy(final String iStrategyName) {
-    getStorage().setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
-    return this;
   }
 }

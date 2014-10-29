@@ -51,8 +51,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
-import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -518,6 +516,10 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     return preserveClusterIDs;
   }
 
+  public void setPreserveClusterIDs(boolean preserveClusterIDs) {
+    this.preserveClusterIDs = preserveClusterIDs;
+  }
+
   public boolean isMerge() {
     return merge;
   }
@@ -532,10 +534,6 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
   public void setDeleteRIDMapping(boolean deleteRIDMapping) {
     this.deleteRIDMapping = deleteRIDMapping;
-  }
-
-  public void setPreserveClusterIDs(boolean preserveClusterIDs) {
-    this.preserveClusterIDs = preserveClusterIDs;
   }
 
   @Override
@@ -1229,7 +1227,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           return null;
       }
 
-      if (record.getIdentity().getClusterId() == 0 && record.getIdentity().getClusterPosition().longValue() == 1)
+      if (record.getIdentity().getClusterId() == 0 && record.getIdentity().getClusterPosition() == 1)
         // JUMP INTERNAL RECORDS
         return null;
 
@@ -1273,7 +1271,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           // SAVE IT ONLY IF DIFFERENT
           exportImportHashTable.put(rid, record.getIdentity());
 
-        if (record.getIdentity().equals(new ORecordId(37, new OClusterPositionLong(8)))) {
+        if (record.getIdentity().equals(new ORecordId(37, 8))) {
           record = ORecordSerializerJSON.INSTANCE.fromString(value, record, null);
         }
       }
@@ -1434,8 +1432,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       final long clusterRecords = database.countClusterElements(clusterId);
       OStorage storage = database.getStorage();
 
-      OPhysicalPosition[] positions = storage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(
-          OClusterPositionFactory.INSTANCE.valueOf(0)));
+      OPhysicalPosition[] positions = storage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(0));
       while (positions.length > 0) {
         for (OPhysicalPosition position : positions) {
           ORecord record = database.load(new ORecordId(clusterId, position.clusterPosition));

@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.record;
 
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -30,7 +29,8 @@ public class ORecordInternal {
   /**
    * Internal only. Fills in one shot the record.
    */
-  public static ORecordAbstract fill(ORecord record, ORID iRid, ORecordVersion iVersion, byte[] iBuffer, boolean iDirty) {
+  public static ORecordAbstract fill(final ORecord record, final ORID iRid, final ORecordVersion iVersion, final byte[] iBuffer,
+      final boolean iDirty) {
     ORecordAbstract rec = (ORecordAbstract) record;
     rec.fill(iRid, iVersion, iBuffer, iDirty);
     return rec;
@@ -39,7 +39,7 @@ public class ORecordInternal {
   /**
    * Internal only. Changes the identity of the record.
    */
-  public static ORecordAbstract setIdentity(ORecord record, int iClusterId, OClusterPosition iClusterPosition) {
+  public static ORecordAbstract setIdentity(final ORecord record, final int iClusterId, final long iClusterPosition) {
     ORecordAbstract rec = (ORecordAbstract) record;
     rec.setIdentity(iClusterId, iClusterPosition);
     return rec;
@@ -48,7 +48,7 @@ public class ORecordInternal {
   /**
    * Internal only. Changes the identity of the record.
    */
-  public static ORecordAbstract setIdentity(ORecord record, ORecordId iIdentity) {
+  public static ORecordAbstract setIdentity(final ORecord record, final ORecordId iIdentity) {
     ORecordAbstract rec = (ORecordAbstract) record;
     rec.setIdentity(iIdentity);
     return rec;
@@ -57,7 +57,7 @@ public class ORecordInternal {
   /**
    * Internal only. Unsets the dirty status of the record.
    */
-  public static void unsetDirty(ORecord record) {
+  public static void unsetDirty(final ORecord record) {
     ORecordAbstract rec = (ORecordAbstract) record;
     rec.unsetDirty();
   }
@@ -65,7 +65,7 @@ public class ORecordInternal {
   /**
    * Internal only. Sets the version.
    */
-  public static void setVersion(ORecord record, int iVersion) {
+  public static void setVersion(final ORecord record, final int iVersion) {
     ORecordAbstract rec = (ORecordAbstract) record;
     rec.setVersion(iVersion);
   }
@@ -88,14 +88,6 @@ public class ORecordInternal {
     rec.setContentChanged(changed);
   }
 
-  /**
-   * Internal only. Executes a flat copy of the record.
-   */
-  public <RET extends ORecord> RET flatCopy(ORecord record) {
-    ORecordAbstract rec = (ORecordAbstract) record;
-    return rec.flatCopy();
-  }
-
   public static void clearSource(ORecord record) {
     ORecordAbstract rec = (ORecordAbstract) record;
     rec.clearSource();
@@ -115,6 +107,14 @@ public class ORecordInternal {
 
   public static void onAfterIdentityChanged(ORecord record) {
     ((ORecordAbstract) record).onAfterIdentityChanged(record);
+  }
+
+  /**
+   * Internal only. Executes a flat copy of the record.
+   */
+  public <RET extends ORecord> RET flatCopy(ORecord record) {
+    ORecordAbstract rec = (ORecordAbstract) record;
+    return rec.flatCopy();
   }
 
 }

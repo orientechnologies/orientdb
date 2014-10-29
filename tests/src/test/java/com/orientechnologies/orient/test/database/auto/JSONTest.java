@@ -605,7 +605,7 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertEquals(bag.size(), 1);
     OIdentifiable rid = bag.rawIterator().next();
     Assert.assertTrue(rid.getIdentity().getClusterId() == 57);
-    Assert.assertTrue(rid.getIdentity().getClusterPosition().intValue() == 0);
+    Assert.assertTrue(rid.getIdentity().getClusterPosition() == 0);
   }
 
   public void testNestedLinkCreation() {

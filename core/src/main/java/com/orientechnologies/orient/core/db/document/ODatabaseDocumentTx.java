@@ -20,6 +20,13 @@
 
 package com.orientechnologies.orient.core.db.document;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -35,7 +42,6 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.exception.OValidationException;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
@@ -52,13 +58,6 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
 
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabaseRecordTx> implements ODatabaseDocumentInternal {
@@ -239,8 +238,8 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
    * {@inheritDoc}
    */
   @Override
-  public ORecordIteratorCluster<ODocument> browseCluster(String iClusterName, OClusterPosition startClusterPosition,
-      OClusterPosition endClusterPosition, boolean loadTombstones) {
+  public ORecordIteratorCluster<ODocument> browseCluster(String iClusterName, long startClusterPosition, long endClusterPosition,
+      boolean loadTombstones) {
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
     return new ORecordIteratorCluster<ODocument>(this, underlying, getClusterIdByName(iClusterName), startClusterPosition,

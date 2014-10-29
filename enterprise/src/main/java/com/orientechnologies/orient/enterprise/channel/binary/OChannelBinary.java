@@ -23,8 +23,6 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
@@ -35,7 +33,6 @@ import com.orientechnologies.orient.enterprise.channel.OChannel;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -235,40 +232,8 @@ public abstract class OChannelBinary extends OChannel {
 
   public ORecordId readRID() throws IOException {
     final int clusterId = readShort();
-
-    final OClusterPosition clusterPosition = readClusterPosition();
+    final long clusterPosition = readLong();
     return new ORecordId(clusterId, clusterPosition);
-  }
-
-  public OClusterPosition readClusterPosition() throws IOException {
-    final int serializedSize = OClusterPositionFactory.INSTANCE.getSerializedSize();
-
-    if (debug)
-      OLogManager.instance().info(this, "%s - Reading cluster position (%d bytes)....", socket.getRemoteSocketAddress(),
-          serializedSize);
-
-    final OClusterPosition clusterPosition = OClusterPositionFactory.INSTANCE.fromStream((InputStream) in);
-
-    updateMetricReceivedBytes(serializedSize);
-
-    if (debug)
-      OLogManager.instance().info(this, "%s - Read cluster position: %s", socket.getRemoteSocketAddress(), clusterPosition);
-
-    return clusterPosition;
-  }
-
-  public OChannelBinary writeClusterPosition(final OClusterPosition clusterPosition) throws IOException {
-    final int serializedSize = OClusterPositionFactory.INSTANCE.getSerializedSize();
-
-    if (debug)
-      OLogManager.instance().info(this, "%s - Writing cluster position (%d bytes) : %s....", socket.getRemoteSocketAddress(),
-          serializedSize, clusterPosition);
-
-    out.write(clusterPosition.toStream());
-
-    updateMetricTransmittedBytes(serializedSize);
-
-    return this;
   }
 
   public ORecordVersion readVersion() throws IOException {
@@ -381,7 +346,7 @@ public abstract class OChannelBinary extends OChannel {
 
   public void writeRID(final ORID iRID) throws IOException {
     writeShort((short) iRID.getClusterId());
-    writeClusterPosition(iRID.getClusterPosition());
+    writeLong(iRID.getClusterPosition());
   }
 
   public void writeVersion(final ORecordVersion version) throws IOException {

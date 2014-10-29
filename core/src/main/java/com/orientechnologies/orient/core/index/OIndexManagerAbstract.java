@@ -126,7 +126,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
         save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
       } catch (Exception e) {
         // RESET RID TO ALLOCATE A NEW ONE
-        if (document.getIdentity().getClusterPosition().isPersistent()) {
+        if (ORecordId.isPersistent(document.getIdentity().getClusterPosition())) {
           document.getIdentity().reset();
           save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
         }

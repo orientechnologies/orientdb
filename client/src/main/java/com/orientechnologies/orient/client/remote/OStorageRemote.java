@@ -19,6 +19,22 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
+
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -45,7 +61,6 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollecti
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -70,21 +85,6 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
-
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
 
 /**
  * This object is bound to each remote ODatabase instances.
@@ -308,7 +308,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public OStorageOperationResult<OPhysicalPosition> createRecord(final ORecordId iRid, final byte[] iContent,
-      ORecordVersion iRecordVersion, final byte iRecordType, int iMode, final ORecordCallback<OClusterPosition> iCallback) {
+      ORecordVersion iRecordVersion, final byte iRecordType, int iMode, final ORecordCallback<Long> iCallback) {
 
     if (iMode == 1 && iCallback == null)
       // ASYNCHRONOUS MODE NO ANSWER
@@ -337,7 +337,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           // SYNCHRONOUS
           try {
             beginResponse(network);
-            iRid.clusterPosition = network.readClusterPosition();
+            iRid.clusterPosition = network.readLong();
             ppos.clusterPosition = iRid.clusterPosition;
             if (network.getSrvProtocolVersion() >= 11) {
               ppos.recordVersion = network.readVersion();
@@ -360,12 +360,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                 .getSbTreeCollectionManager();
             Callable<Object> response = new Callable<Object>() {
               public Object call() throws Exception {
-                final OClusterPosition result;
+                final long result;
 
                 try {
                   OStorageRemoteThreadLocal.INSTANCE.get().sessionId = sessionId;
                   beginResponse(network);
-                  result = network.readClusterPosition();
+                  result = network.readLong();
                   if (network.getSrvProtocolVersion() >= 11)
                     network.readVersion();
 
@@ -394,7 +394,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } while (true);
   }
 
-	@Override
+  @Override
   public ORecordMetadata getRecordMetadata(final ORID rid) {
 
     OChannelBinaryAsynchClient network = null;
@@ -637,7 +637,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return count(new int[] { iClusterId }, countTombstones);
   }
 
-  public OClusterPosition[] getClusterDataRange(final int iClusterId) {
+  public long[] getClusterDataRange(final int iClusterId) {
 
     OChannelBinaryAsynchClient network = null;
     do {
@@ -653,7 +653,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         try {
           beginResponse(network);
-          return new OClusterPosition[] { network.readClusterPosition(), network.readClusterPosition() };
+          return new long[] { network.readLong(), network.readLong() };
         } finally {
           endResponse(network);
         }
@@ -675,7 +675,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         try {
           network = beginRequest(OChannelBinaryProtocol.REQUEST_POSITIONS_HIGHER);
           network.writeInt(iClusterId);
-          network.writeClusterPosition(iClusterPosition.clusterPosition);
+          network.writeLong(iClusterPosition.clusterPosition);
 
         } finally {
           endRequest(network);
@@ -711,7 +711,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         try {
           network = beginRequest(OChannelBinaryProtocol.REQUEST_POSITIONS_CEILING);
           network.writeInt(clusterId);
-          network.writeClusterPosition(physicalPosition.clusterPosition);
+          network.writeLong(physicalPosition.clusterPosition);
 
         } finally {
           endRequest(network);
@@ -747,7 +747,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         try {
           network = beginRequest(OChannelBinaryProtocol.REQUEST_POSITIONS_LOWER);
           network.writeInt(iClusterId);
-          network.writeClusterPosition(physicalPosition.clusterPosition);
+          network.writeLong(physicalPosition.clusterPosition);
 
         } finally {
           endRequest(network);
@@ -785,7 +785,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         try {
           network = beginRequest(OChannelBinaryProtocol.REQUEST_POSITIONS_FLOOR);
           network.writeInt(clusterId);
-          network.writeClusterPosition(physicalPosition.clusterPosition);
+          network.writeLong(physicalPosition.clusterPosition);
 
         } finally {
           endRequest(network);
@@ -1856,7 +1856,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     for (int i = 0; i < physicalPositions.length; i++) {
       final OPhysicalPosition position = new OPhysicalPosition();
 
-      position.clusterPosition = network.readClusterPosition();
+      position.clusterPosition = network.readLong();
       position.recordSize = network.readInt();
       position.recordVersion = network.readVersion();
 

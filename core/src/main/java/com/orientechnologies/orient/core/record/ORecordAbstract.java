@@ -19,14 +19,6 @@
  */
 package com.orientechnologies.orient.core.record;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Set;
-import java.util.WeakHashMap;
-
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -35,7 +27,6 @@ import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
@@ -45,6 +36,14 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Set;
+import java.util.WeakHashMap;
 
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordAbstract implements ORecord {
@@ -105,7 +104,7 @@ public abstract class ORecordAbstract implements ORecord {
     return this;
   }
 
-  protected ORecordAbstract setIdentity(final int iClusterId, final OClusterPosition iClusterPosition) {
+  protected ORecordAbstract setIdentity(final int iClusterId, final long iClusterPosition) {
     if (_recordId == null || _recordId == ORecordId.EMPTY_RECORD_ID)
       _recordId = new ORecordId(iClusterId, iClusterPosition);
     else {

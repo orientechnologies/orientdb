@@ -16,7 +16,6 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.DatabaseAbstractTest;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -35,7 +34,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
   @BeforeClass
   public void beforeClass() {
-		super.beforeClass();
+    super.beforeClass();
 
     localSBTree = new OSBTree<OCompositeKey, OIdentifiable>(".sbt", false, ".nbt", null);
     localSBTree.create("localSBTreeCompositeKeyTest", OCompositeKeySerializer.INSTANCE, OLinkSerializer.INSTANCE, null,
@@ -49,7 +48,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
         final OCompositeKey compositeKey = new OCompositeKey();
         compositeKey.addKey(i);
         compositeKey.addKey(j);
-        localSBTree.put(compositeKey, new ORecordId((int) i, new OClusterPositionLong((long) (j))));
+        localSBTree.put(compositeKey, new ORecordId((int) i, (long) j));
       }
     }
   }
@@ -64,7 +63,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
     localSBTree.clear();
     localSBTree.delete();
 
-		super.afterClass();
+    super.afterClass();
   }
 
   public void testIterateBetweenValuesInclusive() {
@@ -77,7 +76,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
     for (int i = 2; i <= 3; i++) {
       for (int j = 1; j <= 9; j++) {
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong(j))));
+        assertTrue(orids.contains(new ORecordId(i, j)));
       }
     }
 
@@ -87,7 +86,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
     assertEquals(orids.size(), 18);
     for (int i = 2; i <= 3; i++) {
       for (int j = 1; j <= 9; j++) {
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong(j))));
+        assertTrue(orids.contains(new ORecordId(i, j)));
       }
     }
   }
@@ -100,7 +99,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
     assertEquals(orids.size(), 9);
 
     for (int j = 1; j <= 9; j++) {
-      assertTrue(orids.contains(new ORecordId(2, new OClusterPositionLong(j))));
+      assertTrue(orids.contains(new ORecordId(2, j)));
     }
 
     cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0), true, compositeKey(3.0), false, false);
@@ -109,7 +108,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
     assertEquals(orids.size(), 9);
 
     for (int j = 1; j <= 9; j++) {
-      assertTrue(orids.contains(new ORecordId(2, new OClusterPositionLong(j))));
+      assertTrue(orids.contains(new ORecordId(2, j)));
     }
   }
 
@@ -121,7 +120,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
     assertEquals(orids.size(), 9);
 
     for (int i = 1; i <= 9; i++) {
-      assertTrue(orids.contains(new ORecordId(3, new OClusterPositionLong((i)))));
+      assertTrue(orids.contains(new ORecordId(3, i)));
     }
 
     cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0), false, compositeKey(3.0), true, false);
@@ -130,7 +129,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
     assertEquals(orids.size(), 9);
 
     for (int i = 1; i <= 9; i++) {
-      assertTrue(orids.contains(new ORecordId(3, new OClusterPositionLong((i)))));
+      assertTrue(orids.contains(new ORecordId(3, i)));
     }
   }
 
@@ -152,7 +151,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
     assertEquals(orids.size(), 9);
 
     for (int i = 1; i <= 9; i++) {
-      assertTrue(orids.contains(new ORecordId(2, new OClusterPositionLong((i)))));
+      assertTrue(orids.contains(new ORecordId(2, i)));
     }
 
     cursor = localSBTree.iterateEntriesBetween(compositeKey(1.0), false, compositeKey(3.0), false, false);
@@ -161,7 +160,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
     assertEquals(orids.size(), 9);
 
     for (int i = 1; i <= 9; i++) {
-      assertTrue(orids.contains(new ORecordId(2, new OClusterPositionLong((i)))));
+      assertTrue(orids.contains(new ORecordId(2, i)));
     }
   }
 
@@ -176,7 +175,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
       for (int j = 1; j <= 9; j++) {
         if (i == 2 && j < 4)
           continue;
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
+        assertTrue(orids.contains(new ORecordId(i, j)));
       }
     }
 
@@ -189,7 +188,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
       for (int j = 1; j <= 9; j++) {
         if (i == 2 && j < 4)
           continue;
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
+        assertTrue(orids.contains(new ORecordId(i, j)));
       }
     }
   }
@@ -202,7 +201,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
     assertEquals(orids.size(), 6);
 
     for (int j = 4; j <= 9; j++) {
-      assertTrue(orids.contains(new ORecordId(2, new OClusterPositionLong((j)))));
+      assertTrue(orids.contains(new ORecordId(2, j)));
     }
 
     cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0, 4.0), true, compositeKey(3.0), false, false);
@@ -211,7 +210,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
     assertEquals(orids.size(), 6);
 
     for (int j = 4; j <= 9; j++) {
-      assertTrue(orids.contains(new ORecordId(2, new OClusterPositionLong((j)))));
+      assertTrue(orids.contains(new ORecordId(2, j)));
     }
   }
 
@@ -226,7 +225,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
       for (int j = 1; j <= 9; j++) {
         if (i == 2 && j <= 4)
           continue;
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
+        assertTrue(orids.contains(new ORecordId(i, j)));
       }
     }
 
@@ -238,7 +237,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
       for (int j = 1; j <= 9; j++) {
         if (i == 2 && j <= 4)
           continue;
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
+        assertTrue(orids.contains(new ORecordId(i, j)));
       }
     }
 
@@ -252,7 +251,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
     assertEquals(orids.size(), 5);
 
     for (int i = 5; i <= 9; i++) {
-      assertTrue(orids.contains(new ORecordId(2, new OClusterPositionLong((i)))));
+      assertTrue(orids.contains(new ORecordId(2, i)));
     }
 
     cursor = localSBTree.iterateEntriesBetween(compositeKey(2.0, 4.0), false, compositeKey(3.0), false, false);
@@ -261,7 +260,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
     assertEquals(orids.size(), 5);
 
     for (int i = 5; i <= 9; i++) {
-      assertTrue(orids.contains(new ORecordId(2, new OClusterPositionLong((i)))));
+      assertTrue(orids.contains(new ORecordId(2, i)));
     }
   }
 
@@ -273,7 +272,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
     for (int i = 2; i <= 3; i++)
       for (int j = 1; j <= 9; j++) {
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
+        assertTrue(orids.contains(new ORecordId(i, j)));
       }
 
     cursor = localSBTree.iterateEntriesMajor(compositeKey(2.0), true, false);
@@ -283,7 +282,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
     for (int i = 2; i <= 3; i++)
       for (int j = 1; j <= 9; j++) {
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
+        assertTrue(orids.contains(new ORecordId(i, j)));
       }
   }
 
@@ -293,7 +292,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
     assertEquals(orids.size(), 9);
 
     for (int i = 1; i <= 9; i++) {
-      assertTrue(orids.contains(new ORecordId(3, new OClusterPositionLong((i)))));
+      assertTrue(orids.contains(new ORecordId(3, i)));
     }
 
     cursor = localSBTree.iterateEntriesMajor(compositeKey(2.0), false, false);
@@ -302,7 +301,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
     assertEquals(orids.size(), 9);
 
     for (int i = 1; i <= 9; i++) {
-      assertTrue(orids.contains(new ORecordId(3, new OClusterPositionLong((i)))));
+      assertTrue(orids.contains(new ORecordId(3, i)));
     }
   }
 
@@ -316,7 +315,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
       for (int j = 1; j <= 9; j++) {
         if (i == 2 && j < 3)
           continue;
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
+        assertTrue(orids.contains(new ORecordId(i, j)));
       }
 
     cursor = localSBTree.iterateEntriesMajor(compositeKey(2.0, 3.0), true, false);
@@ -328,7 +327,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
       for (int j = 1; j <= 9; j++) {
         if (i == 2 && j < 3)
           continue;
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
+        assertTrue(orids.contains(new ORecordId(i, j)));
       }
   }
 
@@ -342,7 +341,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
       for (int j = 1; j <= 9; j++) {
         if (i == 2 && j <= 3)
           continue;
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
+        assertTrue(orids.contains(new ORecordId(i, j)));
       }
 
     cursor = localSBTree.iterateEntriesMajor(compositeKey(2.0, 3.0), false, false);
@@ -354,7 +353,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
       for (int j = 1; j <= 9; j++) {
         if (i == 2 && j <= 3)
           continue;
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
+        assertTrue(orids.contains(new ORecordId(i, j)));
       }
   }
 
@@ -365,7 +364,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
     for (int i = 1; i <= 3; i++)
       for (int j = 1; j <= 9; j++) {
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
+        assertTrue(orids.contains(new ORecordId(i, j)));
       }
 
     cursor = localSBTree.iterateEntriesMinor(compositeKey(3.0), true, false);
@@ -375,7 +374,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
     for (int i = 1; i <= 3; i++)
       for (int j = 1; j <= 9; j++) {
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
+        assertTrue(orids.contains(new ORecordId(i, j)));
       }
 
   }
@@ -387,7 +386,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
     for (int i = 1; i < 3; i++)
       for (int j = 1; j <= 9; j++) {
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
+        assertTrue(orids.contains(new ORecordId(i, j)));
       }
 
     cursor = localSBTree.iterateEntriesMinor(compositeKey(3.0), false, false);
@@ -397,7 +396,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
     for (int i = 1; i < 3; i++)
       for (int j = 1; j <= 9; j++) {
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
+        assertTrue(orids.contains(new ORecordId(i, j)));
       }
   }
 
@@ -412,7 +411,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
         if (i == 3 && j > 2)
           continue;
 
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
+        assertTrue(orids.contains(new ORecordId(i, j)));
       }
 
     cursor = localSBTree.iterateEntriesMinor(compositeKey(3.0, 2.0), true, false);
@@ -425,7 +424,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
         if (i == 3 && j > 2)
           continue;
 
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
+        assertTrue(orids.contains(new ORecordId(i, j)));
       }
   }
 
@@ -438,7 +437,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
     for (int i = 1; i < 3; i++)
       for (int j = 1; j <= 9; j++) {
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
+        assertTrue(orids.contains(new ORecordId(i, j)));
       }
 
     cursor = localSBTree.iterateEntriesMinor(compositeKey(3.0, 2.0), false, false);
@@ -448,7 +447,7 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
     for (int i = 1; i < 3; i++)
       for (int j = 1; j <= 9; j++) {
-        assertTrue(orids.contains(new ORecordId(i, new OClusterPositionLong((j)))));
+        assertTrue(orids.contains(new ORecordId(i, j)));
       }
   }
 

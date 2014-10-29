@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -20,10 +19,10 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 /**
  * @author Andrey Lomakin
@@ -32,10 +31,8 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
 @Test
 public class OSBTreeBonsaiLocalTest {
   private static final int                             KEYS_COUNT = 500000;
-
-  private ODatabaseDocumentTx                          databaseDocumentTx;
-
   protected OSBTreeBonsaiLocal<Integer, OIdentifiable> sbTree;
+  private ODatabaseDocumentTx                          databaseDocumentTx;
 
   @BeforeClass
   public void beforeClass() {
@@ -77,12 +74,11 @@ public class OSBTreeBonsaiLocalTest {
 
   public void testKeyPut() throws Exception {
     for (int i = 0; i < KEYS_COUNT; i++) {
-      sbTree.put(i, new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      sbTree.put(i, new ORecordId(i % 32000, i));
     }
 
     for (int i = 0; i < KEYS_COUNT; i++)
-      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)), i
-          + " key is absent");
+      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i), i + " key is absent");
 
     Assert.assertEquals(0, (int) sbTree.firstKey());
     Assert.assertEquals(KEYS_COUNT - 1, (int) sbTree.lastKey());
@@ -98,17 +94,17 @@ public class OSBTreeBonsaiLocalTest {
 
     while (keys.size() < KEYS_COUNT) {
       int key = random.nextInt(Integer.MAX_VALUE);
-      sbTree.put(key, new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
+      sbTree.put(key, new ORecordId(key % 32000, key));
       keys.add(key);
 
-      Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
+      Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
     }
 
     Assert.assertEquals(sbTree.firstKey(), keys.first());
     Assert.assertEquals(sbTree.lastKey(), keys.last());
 
     for (int key : keys)
-      Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
+      Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
   }
 
   public void testKeyPutRandomGaussian() throws Exception {
@@ -125,31 +121,23 @@ public class OSBTreeBonsaiLocalTest {
     while (keys.size() < KEYS_COUNT) {
       int key = generateGaussianKey(mx, dx, random);
 
-      sbTree.put(key, new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
+      sbTree.put(key, new ORecordId(key % 32000, key));
       keys.add(key);
 
-      Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
+      Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
     }
 
     Assert.assertEquals(sbTree.firstKey(), keys.first());
     Assert.assertEquals(sbTree.lastKey(), keys.last());
 
     for (int key : keys)
-      Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
-  }
-
-  private int generateGaussianKey(double mx, double dx, MersenneTwisterFast random) {
-    double v;
-    do {
-      v = random.nextGaussian() * dx + mx;
-    } while (v < 0 || v > Integer.MAX_VALUE);
-    return (int) v;
+      Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
   }
 
   public void testKeyDeleteRandomUniform() throws Exception {
     NavigableSet<Integer> keys = new TreeSet<Integer>();
     for (int i = 0; i < KEYS_COUNT; i++) {
-      sbTree.put(i, new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      sbTree.put(i, new ORecordId(i % 32000, i));
       keys.add(i);
     }
 
@@ -169,7 +157,7 @@ public class OSBTreeBonsaiLocalTest {
       if (key % 3 == 0) {
         Assert.assertNull(sbTree.get(key));
       } else {
-        Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
+        Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
       }
     }
   }
@@ -188,10 +176,10 @@ public class OSBTreeBonsaiLocalTest {
     while (keys.size() < KEYS_COUNT) {
       int key = generateGaussianKey(mx, dx, random);
 
-      sbTree.put(key, new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
+      sbTree.put(key, new ORecordId(key % 32000, key));
       keys.add(key);
 
-      Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
+      Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
     }
 
     Iterator<Integer> keysIterator = keys.iterator();
@@ -212,19 +200,19 @@ public class OSBTreeBonsaiLocalTest {
       if (key % 3 == 0) {
         Assert.assertNull(sbTree.get(key));
       } else {
-        Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
+        Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
       }
     }
   }
 
   public void testKeyDelete() throws Exception {
     for (int i = 0; i < KEYS_COUNT; i++) {
-      sbTree.put(i, new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      sbTree.put(i, new ORecordId(i % 32000, i));
     }
 
     for (int i = 0; i < KEYS_COUNT; i++) {
       if (i % 3 == 0)
-        Assert.assertEquals(sbTree.remove(i), new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+        Assert.assertEquals(sbTree.remove(i), new ORecordId(i % 32000, i));
     }
 
     Assert.assertEquals((int) sbTree.firstKey(), 1);
@@ -234,24 +222,23 @@ public class OSBTreeBonsaiLocalTest {
       if (i % 3 == 0)
         Assert.assertNull(sbTree.get(i));
       else
-        Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+        Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
     }
   }
 
   public void testKeyAddDelete() throws Exception {
     for (int i = 0; i < KEYS_COUNT; i++) {
-      sbTree.put(i, new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      sbTree.put(i, new ORecordId(i % 32000, i));
 
-      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
     }
 
     for (int i = 0; i < KEYS_COUNT; i++) {
       if (i % 3 == 0)
-        Assert.assertEquals(sbTree.remove(i), new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+        Assert.assertEquals(sbTree.remove(i), new ORecordId(i % 32000, i));
 
       if (i % 2 == 0)
-        sbTree.put(KEYS_COUNT + i,
-            new ORecordId((KEYS_COUNT + i) % 32000, OClusterPositionFactory.INSTANCE.valueOf(KEYS_COUNT + i)));
+        sbTree.put(KEYS_COUNT + i, new ORecordId((KEYS_COUNT + i) % 32000, KEYS_COUNT + i));
     }
 
     Assert.assertEquals((int) sbTree.firstKey(), 1);
@@ -261,11 +248,10 @@ public class OSBTreeBonsaiLocalTest {
       if (i % 3 == 0)
         Assert.assertNull(sbTree.get(i));
       else
-        Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
+        Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
 
       if (i % 2 == 0)
-        Assert.assertEquals(sbTree.get(KEYS_COUNT + i),
-            new ORecordId((KEYS_COUNT + i) % 32000, OClusterPositionFactory.INSTANCE.valueOf(KEYS_COUNT + i)));
+        Assert.assertEquals(sbTree.get(KEYS_COUNT + i), new ORecordId((KEYS_COUNT + i) % 32000, KEYS_COUNT + i));
     }
   }
 
@@ -276,8 +262,8 @@ public class OSBTreeBonsaiLocalTest {
     while (keyValues.size() < KEYS_COUNT) {
       int key = random.nextInt(Integer.MAX_VALUE);
 
-      sbTree.put(key, new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
-      keyValues.put(key, new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
+      sbTree.put(key, new ORecordId(key % 32000, key));
+      keyValues.put(key, new ORecordId(key % 32000, key));
     }
 
     assertMajorValues(keyValues, random, true);
@@ -294,8 +280,8 @@ public class OSBTreeBonsaiLocalTest {
     while (keyValues.size() < KEYS_COUNT) {
       int key = random.nextInt(Integer.MAX_VALUE);
 
-      sbTree.put(key, new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
-      keyValues.put(key, new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
+      sbTree.put(key, new ORecordId(key % 32000, key));
+      keyValues.put(key, new ORecordId(key % 32000, key));
     }
 
     assertMinorValues(keyValues, random, true);
@@ -312,8 +298,8 @@ public class OSBTreeBonsaiLocalTest {
     while (keyValues.size() < KEYS_COUNT) {
       int key = random.nextInt(Integer.MAX_VALUE);
 
-      sbTree.put(key, new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
-      keyValues.put(key, new ORecordId(key % 32000, OClusterPositionFactory.INSTANCE.valueOf(key)));
+      sbTree.put(key, new ORecordId(key % 32000, key));
+      keyValues.put(key, new ORecordId(key % 32000, key));
     }
 
     assertBetweenValues(keyValues, random, true, true);
@@ -323,6 +309,108 @@ public class OSBTreeBonsaiLocalTest {
 
     Assert.assertEquals(sbTree.firstKey(), keyValues.firstKey());
     Assert.assertEquals(sbTree.lastKey(), keyValues.lastKey());
+  }
+
+  public void testAddKeyValuesInTwoBucketsAndMakeFirstEmpty() throws Exception {
+    for (int i = 0; i < 110; i++)
+      sbTree.put(i, new ORecordId(i % 32000, i));
+
+    for (int i = 0; i < 56; i++)
+      sbTree.remove(i);
+
+    Assert.assertEquals((int) sbTree.firstKey(), 56);
+
+    for (int i = 0; i < 56; i++)
+      Assert.assertNull(sbTree.get(i));
+
+    for (int i = 56; i < 110; i++)
+      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
+  }
+
+  public void testAddKeyValuesInTwoBucketsAndMakeLastEmpty() throws Exception {
+    for (int i = 0; i < 110; i++)
+      sbTree.put(i, new ORecordId(i % 32000, i));
+
+    for (int i = 110; i > 50; i--)
+      sbTree.remove(i);
+
+    Assert.assertEquals((int) sbTree.lastKey(), 50);
+
+    for (int i = 110; i > 50; i--)
+      Assert.assertNull(sbTree.get(i));
+
+    for (int i = 50; i >= 0; i--)
+      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
+  }
+
+  public void testAddKeyValuesAndRemoveFirstMiddleAndLastPages() throws Exception {
+    for (int i = 0; i < 326; i++)
+      sbTree.put(i, new ORecordId(i % 32000, i));
+
+    for (int i = 0; i < 60; i++)
+      sbTree.remove(i);
+
+    for (int i = 100; i < 220; i++)
+      sbTree.remove(i);
+
+    for (int i = 260; i < 326; i++)
+      sbTree.remove(i);
+
+    Assert.assertEquals((int) sbTree.firstKey(), 60);
+    Assert.assertEquals((int) sbTree.lastKey(), 259);
+
+    Collection<OIdentifiable> result = sbTree.getValuesMinor(250, true, -1);
+
+    Set<OIdentifiable> identifiables = new HashSet<OIdentifiable>(result);
+    for (int i = 250; i >= 220; i--) {
+      boolean removed = identifiables.remove(new ORecordId(i % 32000, i));
+      Assert.assertTrue(removed);
+    }
+
+    for (int i = 99; i >= 60; i--) {
+      boolean removed = identifiables.remove(new ORecordId(i % 32000, i));
+      Assert.assertTrue(removed);
+    }
+
+    Assert.assertTrue(identifiables.isEmpty());
+
+    result = sbTree.getValuesMajor(70, true, -1);
+    identifiables = new HashSet<OIdentifiable>(result);
+
+    for (int i = 70; i < 100; i++) {
+      boolean removed = identifiables.remove(new ORecordId(i % 32000, i));
+      Assert.assertTrue(removed);
+    }
+
+    for (int i = 220; i < 260; i++) {
+      boolean removed = identifiables.remove(new ORecordId(i % 32000, i));
+      Assert.assertTrue(removed);
+    }
+
+    Assert.assertTrue(identifiables.isEmpty());
+
+    result = sbTree.getValuesBetween(70, true, 250, true, -1);
+    identifiables = new HashSet<OIdentifiable>(result);
+
+    for (int i = 70; i < 100; i++) {
+      boolean removed = identifiables.remove(new ORecordId(i % 32000, i));
+      Assert.assertTrue(removed);
+    }
+
+    for (int i = 220; i <= 250; i++) {
+      boolean removed = identifiables.remove(new ORecordId(i % 32000, i));
+      Assert.assertTrue(removed);
+    }
+
+    Assert.assertTrue(identifiables.isEmpty());
+  }
+
+  private int generateGaussianKey(double mx, double dx, MersenneTwisterFast random) {
+    double v;
+    do {
+      v = random.nextGaussian() * dx + mx;
+    } while (v < 0 || v > Integer.MAX_VALUE);
+    return (int) v;
   }
 
   private void assertMajorValues(NavigableMap<Integer, ORID> keyValues, MersenneTwisterFast random, boolean keyInclusive) {
@@ -362,100 +450,6 @@ public class OSBTreeBonsaiLocalTest {
 
       Assert.assertEquals(result.size(), 0);
     }
-  }
-
-  public void testAddKeyValuesInTwoBucketsAndMakeFirstEmpty() throws Exception {
-    for (int i = 0; i < 110; i++)
-      sbTree.put(i, new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
-
-    for (int i = 0; i < 56; i++)
-      sbTree.remove(i);
-
-    Assert.assertEquals((int) sbTree.firstKey(), 56);
-
-    for (int i = 0; i < 56; i++)
-      Assert.assertNull(sbTree.get(i));
-
-    for (int i = 56; i < 110; i++)
-      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
-  }
-
-  public void testAddKeyValuesInTwoBucketsAndMakeLastEmpty() throws Exception {
-    for (int i = 0; i < 110; i++)
-      sbTree.put(i, new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
-
-    for (int i = 110; i > 50; i--)
-      sbTree.remove(i);
-
-    Assert.assertEquals((int) sbTree.lastKey(), 50);
-
-    for (int i = 110; i > 50; i--)
-      Assert.assertNull(sbTree.get(i));
-
-    for (int i = 50; i >= 0; i--)
-      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
-  }
-
-  public void testAddKeyValuesAndRemoveFirstMiddleAndLastPages() throws Exception {
-    for (int i = 0; i < 326; i++)
-      sbTree.put(i, new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
-
-    for (int i = 0; i < 60; i++)
-      sbTree.remove(i);
-
-    for (int i = 100; i < 220; i++)
-      sbTree.remove(i);
-
-    for (int i = 260; i < 326; i++)
-      sbTree.remove(i);
-
-    Assert.assertEquals((int) sbTree.firstKey(), 60);
-    Assert.assertEquals((int) sbTree.lastKey(), 259);
-
-    Collection<OIdentifiable> result = sbTree.getValuesMinor(250, true, -1);
-
-    Set<OIdentifiable> identifiables = new HashSet<OIdentifiable>(result);
-    for (int i = 250; i >= 220; i--) {
-      boolean removed = identifiables.remove(new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
-      Assert.assertTrue(removed);
-    }
-
-    for (int i = 99; i >= 60; i--) {
-      boolean removed = identifiables.remove(new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
-      Assert.assertTrue(removed);
-    }
-
-    Assert.assertTrue(identifiables.isEmpty());
-
-    result = sbTree.getValuesMajor(70, true, -1);
-    identifiables = new HashSet<OIdentifiable>(result);
-
-    for (int i = 70; i < 100; i++) {
-      boolean removed = identifiables.remove(new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
-      Assert.assertTrue(removed);
-    }
-
-    for (int i = 220; i < 260; i++) {
-      boolean removed = identifiables.remove(new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
-      Assert.assertTrue(removed);
-    }
-
-    Assert.assertTrue(identifiables.isEmpty());
-
-    result = sbTree.getValuesBetween(70, true, 250, true, -1);
-    identifiables = new HashSet<OIdentifiable>(result);
-
-    for (int i = 70; i < 100; i++) {
-      boolean removed = identifiables.remove(new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
-      Assert.assertTrue(removed);
-    }
-
-    for (int i = 220; i <= 250; i++) {
-      boolean removed = identifiables.remove(new ORecordId(i % 32000, OClusterPositionFactory.INSTANCE.valueOf(i)));
-      Assert.assertTrue(removed);
-    }
-
-    Assert.assertTrue(identifiables.isEmpty());
   }
 
   private void assertMinorValues(NavigableMap<Integer, ORID> keyValues, MersenneTwisterFast random, boolean keyInclusive) {

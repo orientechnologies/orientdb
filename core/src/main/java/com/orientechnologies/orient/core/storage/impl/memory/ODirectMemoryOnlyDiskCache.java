@@ -391,6 +391,10 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
       }
     }
 
+    private long getUsedMemory() {
+      return content.size();
+    }
+
     private void clear() {
       boolean thereAreNotReleased = false;
 
@@ -419,5 +423,14 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
 
   @Override
   public void removeLowDiskSpaceListener(OWOWCache.LowDiskSpaceListener listener) {
+  }
+
+  @Override
+  public long getUsedMemory() {
+    long totalPages = 0;
+    for (MemoryFile file : files.values())
+      totalPages += file.getUsedMemory();
+
+    return totalPages * (pageSize + 2 * OWOWCache.PAGE_PADDING);
   }
 }

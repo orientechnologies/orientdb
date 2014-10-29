@@ -19,20 +19,6 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -66,7 +52,6 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHook.DISTRIBUTED_EXECUTION_MODE;
 import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
@@ -102,6 +87,9 @@ import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.util.*;
+import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecordInternal {
@@ -591,7 +579,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    */
   @Override
   public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(final String iClusterName, final Class<REC> iRecordClass,
-      final OClusterPosition startClusterPosition, final OClusterPosition endClusterPosition, final boolean loadTombstones) {
+      final long startClusterPosition, final long endClusterPosition, final boolean loadTombstones) {
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
     setCurrentDatabaseinThreadLocal();
@@ -607,7 +595,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    */
   @Override
   public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(final String iClusterName,
-      final OClusterPosition startClusterPosition, final OClusterPosition endClusterPosition, final boolean loadTombstones) {
+      final long startClusterPosition, final long endClusterPosition, final boolean loadTombstones) {
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
     setCurrentDatabaseinThreadLocal();
@@ -1049,7 +1037,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     } catch (OException e) {
       throw e;
     } catch (Throwable t) {
-      if (!record.getIdentity().getClusterPosition().isValid())
+      if (!ORecordId.isValid(record.getIdentity().getClusterPosition()))
         throw new ODatabaseException("Error on saving record in cluster #" + record.getIdentity().getClusterId(), t);
       else
         throw new ODatabaseException("Error on saving record " + record.getIdentity(), t);
@@ -1413,6 +1401,20 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       }
   }
 
+  public ORecordConflictStrategy getConflictStrategy() {
+    return getStorage().getConflictStrategy();
+  }
+
+  public ODatabaseRecordAbstract setConflictStrategy(final ORecordConflictStrategy iResolver) {
+    getStorage().setConflictStrategy(iResolver);
+    return this;
+  }
+
+  public ODatabaseRecordAbstract setConflictStrategy(final String iStrategyName) {
+    getStorage().setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
+    return this;
+  }
+
   // Never used so can be deprecate.
   @Deprecated
   protected ORecordSerializer resolveFormat(final Object iObject) {
@@ -1518,19 +1520,5 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         }
       }
     }
-  }
-
-  public ORecordConflictStrategy getConflictStrategy() {
-    return getStorage().getConflictStrategy();
-  }
-
-  public ODatabaseRecordAbstract setConflictStrategy(final ORecordConflictStrategy iResolver) {
-    getStorage().setConflictStrategy(iResolver);
-    return this;
-  }
-
-  public ODatabaseRecordAbstract setConflictStrategy(final String iStrategyName) {
-    getStorage().setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
-    return this;
   }
 }

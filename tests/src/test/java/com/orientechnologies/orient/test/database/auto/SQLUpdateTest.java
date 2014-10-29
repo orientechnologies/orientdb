@@ -15,26 +15,16 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -75,7 +65,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
   @Test
   public void updateWithWhereOperator() {
 
-    List<OClusterPosition> positions = getValidPositions(4);
+    List<Long> positions = getValidPositions(4);
 
     Integer records = database.command(
         new OCommandSQL("update Profile set salary = 120.30, location = 4:" + positions.get(2)
@@ -133,7 +123,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
 
     List<ODocument> docs = database.query(new OSQLSynchQuery<ODocument>("select from Account"));
 
-    List<OClusterPosition> positions = getValidPositions(addressClusterId);
+    List<Long> positions = getValidPositions(addressClusterId);
 
     for (ODocument doc : docs) {
 
@@ -457,8 +447,8 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     Assert.assertEquals(expectedGender, oDoc.field("gender"));
   }
 
-  private List<OClusterPosition> getValidPositions(int clusterId) {
-    final List<OClusterPosition> positions = new ArrayList<OClusterPosition>();
+  private List<Long> getValidPositions(int clusterId) {
+    final List<Long> positions = new ArrayList<Long>();
 
     final ORecordIteratorCluster<ODocument> iteratorCluster = database.browseCluster(database.getClusterNameById(clusterId));
 

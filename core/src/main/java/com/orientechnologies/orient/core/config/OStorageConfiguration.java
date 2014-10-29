@@ -19,12 +19,20 @@
  */
 package com.orientechnologies.orient.core.config;
 
+import java.io.IOException;
+import java.text.DecimalFormatSymbols;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.OImmutableRecordId;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -34,15 +42,6 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-
-import java.io.IOException;
-import java.text.DecimalFormatSymbols;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.TimeZone;
 
 /**
  * Versions:
@@ -64,8 +63,7 @@ import java.util.TimeZone;
  */
 @SuppressWarnings("serial")
 public class OStorageConfiguration implements OSerializableStream {
-  public static final ORecordId                      CONFIG_RID                    = new OImmutableRecordId(0,
-                                                                                       OClusterPositionFactory.INSTANCE.valueOf(0));
+  public static final ORecordId                      CONFIG_RID                    = new OImmutableRecordId(0, 0);
 
   public static final String                         DEFAULT_CHARSET               = "UTF-8";
   private String                                     charset                       = DEFAULT_CHARSET;
