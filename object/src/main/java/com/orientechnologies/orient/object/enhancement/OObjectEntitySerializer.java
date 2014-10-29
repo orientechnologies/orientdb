@@ -16,32 +16,6 @@
  */
 package com.orientechnologies.orient.object.enhancement;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
-import javassist.util.proxy.Proxy;
-import javassist.util.proxy.ProxyObject;
-
-import javax.persistence.CascadeType;
-import javax.persistence.ManyToMany;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
-import javax.persistence.ManyToOne;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.Orient;
@@ -55,7 +29,6 @@ import com.orientechnologies.orient.core.annotation.OId;
 import com.orientechnologies.orient.core.annotation.OVersion;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
@@ -66,7 +39,6 @@ import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -85,6 +57,30 @@ import com.orientechnologies.orient.object.metadata.schema.OSchemaProxyObject;
 import com.orientechnologies.orient.object.serialization.OObjectSerializationThreadLocal;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerContext;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
+import javassist.util.proxy.Proxy;
+import javassist.util.proxy.ProxyObject;
+
+import javax.persistence.CascadeType;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * @author luca.molino
@@ -837,7 +833,7 @@ public class OObjectEntitySerializer {
       if (f.getType().equals(String.class))
         setFieldValue(f, iObject, iValue.toString());
       else if (f.getType().equals(Long.class))
-        setFieldValue(f, iObject, iValue.getClusterPosition().longValue());
+        setFieldValue(f, iObject, iValue.getClusterPosition());
       else if (f.getType().isAssignableFrom(ORID.class))
         setFieldValue(f, iObject, iValue);
     }
@@ -1062,7 +1058,7 @@ public class OObjectEntitySerializer {
         } else if (id instanceof Number) {
           // TREATS AS CLUSTER POSITION
           ((ORecordId) iRecord.getIdentity()).clusterId = schemaClass.getDefaultClusterId();
-          ((ORecordId) iRecord.getIdentity()).clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(((Number) id).longValue());
+          ((ORecordId) iRecord.getIdentity()).clusterPosition = ((Number) id).longValue();
         } else if (id instanceof String)
           ((ORecordId) iRecord.getIdentity()).fromString((String) id);
         else if (id.getClass().equals(Object.class))

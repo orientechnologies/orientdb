@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
@@ -334,7 +333,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
-  public void convertToTombstone(OClusterPosition iPosition) throws IOException {
+  public void convertToTombstone(long iPosition) throws IOException {
     throw new UnsupportedOperationException("convertToTombstone");
   }
 
@@ -389,7 +388,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
             updateClusterState(trackMode, 1, addEntryResult.recordsSizeDiff);
 
-            final OClusterPosition clusterPosition = clusterPositionMap.add(addEntryResult.pageIndex, addEntryResult.pagePosition);
+            final long clusterPosition = clusterPositionMap.add(addEntryResult.pageIndex, addEntryResult.pagePosition);
 
             endAtomicOperation(false);
 
@@ -489,7 +488,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
             updateClusterState(trackMode, 1, recordsSizeDiff);
 
-            OClusterPosition clusterPosition = clusterPositionMap.add(firstPageIndex, firstPagePosition);
+            long clusterPosition = clusterPositionMap.add(firstPageIndex, firstPagePosition);
 
             endAtomicOperation(false);
 
@@ -507,7 +506,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     }
   }
 
-  public ORawBuffer readRecord(OClusterPosition clusterPosition) throws IOException {
+  public ORawBuffer readRecord(long clusterPosition) throws IOException {
     acquireSharedLock();
     try {
       OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition);
@@ -563,7 +562,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     }
   }
 
-  public boolean deleteRecord(OClusterPosition clusterPosition) throws IOException {
+  public boolean deleteRecord(long clusterPosition) throws IOException {
     externalModificationLock.requestModificationLock();
     boolean operationStarted = false;
     try {
@@ -641,7 +640,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
-  public boolean hideRecord(OClusterPosition position) throws IOException {
+  public boolean hideRecord(long position) throws IOException {
     externalModificationLock.requestModificationLock();
     try {
       acquireExclusiveLock();
@@ -678,7 +677,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
   }
 
-  public void updateRecord(OClusterPosition clusterPosition, byte[] content, final ORecordVersion recordVersion,
+  public void updateRecord(long clusterPosition, byte[] content, final ORecordVersion recordVersion,
       final byte recordType) throws IOException {
     content = compression.compress(content);
 
@@ -932,7 +931,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   public OPhysicalPosition getPhysicalPosition(OPhysicalPosition position) throws IOException {
     acquireSharedLock();
     try {
-      OClusterPosition clusterPosition = position.clusterPosition;
+      long clusterPosition = position.clusterPosition;
       OClusterPositionMapBucket.PositionEntry positionEntry = clusterPositionMap.get(clusterPosition);
 
       if (positionEntry == null)
@@ -972,22 +971,22 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
-  public void updateDataSegmentPosition(OClusterPosition iPosition, int iDataSegmentId, long iDataPosition) throws IOException {
+  public void updateDataSegmentPosition(long iPosition, int iDataSegmentId, long iDataPosition) throws IOException {
     throw new UnsupportedOperationException("updateDataSegmentPosition");
   }
 
   @Override
-  public void removePhysicalPosition(OClusterPosition iPosition) throws IOException {
+  public void removePhysicalPosition(long iPosition) throws IOException {
     throw new UnsupportedOperationException("updateDataSegmentPosition");
   }
 
   @Override
-  public void updateRecordType(OClusterPosition iPosition, byte iRecordType) throws IOException {
+  public void updateRecordType(long iPosition, byte iRecordType) throws IOException {
     throw new UnsupportedOperationException("updateRecordType");
   }
 
   @Override
-  public void updateVersion(OClusterPosition iPosition, ORecordVersion iVersion) throws IOException {
+  public void updateVersion(long iPosition, ORecordVersion iVersion) throws IOException {
     throw new UnsupportedOperationException("updateVersion");
   }
 
@@ -1009,7 +1008,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
-  public OClusterPosition getFirstPosition() throws IOException {
+  public long getFirstPosition() throws IOException {
     acquireSharedLock();
     try {
       return clusterPositionMap.getFirstPosition();
@@ -1019,7 +1018,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
-  public OClusterPosition getLastPosition() throws IOException {
+  public long getLastPosition() throws IOException {
     acquireSharedLock();
     try {
       return clusterPositionMap.getLastPosition();
@@ -1103,7 +1102,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   public OPhysicalPosition[] higherPositions(OPhysicalPosition position) throws IOException {
     acquireSharedLock();
     try {
-      final OClusterPosition[] clusterPositions = clusterPositionMap.higherPositions(position.clusterPosition);
+      final long[] clusterPositions = clusterPositionMap.higherPositions(position.clusterPosition);
       return convertToPhysicalPositions(clusterPositions);
     } finally {
       releaseSharedLock();
@@ -1114,7 +1113,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   public OPhysicalPosition[] ceilingPositions(OPhysicalPosition position) throws IOException {
     acquireSharedLock();
     try {
-      final OClusterPosition[] clusterPositions = clusterPositionMap.ceilingPositions(position.clusterPosition);
+      final long[] clusterPositions = clusterPositionMap.ceilingPositions(position.clusterPosition);
       return convertToPhysicalPositions(clusterPositions);
     } finally {
       releaseSharedLock();
@@ -1125,7 +1124,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   public OPhysicalPosition[] lowerPositions(OPhysicalPosition position) throws IOException {
     acquireSharedLock();
     try {
-      final OClusterPosition[] clusterPositions = clusterPositionMap.lowerPositions(position.clusterPosition);
+      final long[] clusterPositions = clusterPositionMap.lowerPositions(position.clusterPosition);
       return convertToPhysicalPositions(clusterPositions);
     } finally {
       releaseSharedLock();
@@ -1136,7 +1135,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   public OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException {
     acquireSharedLock();
     try {
-      final OClusterPosition[] clusterPositions = clusterPositionMap.floorPositions(position.clusterPosition);
+      final long[] clusterPositions = clusterPositionMap.floorPositions(position.clusterPosition);
       return convertToPhysicalPositions(clusterPositions);
     } finally {
       releaseSharedLock();
@@ -1288,7 +1287,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     storageLocal.getConfiguration().update();
   }
 
-  private OPhysicalPosition createPhysicalPosition(byte recordType, OClusterPosition clusterPosition, ORecordVersion version) {
+  private OPhysicalPosition createPhysicalPosition(byte recordType, long clusterPosition, ORecordVersion version) {
     final OPhysicalPosition physicalPosition = new OPhysicalPosition();
     physicalPosition.recordType = recordType;
     physicalPosition.recordSize = -1;
@@ -1297,7 +1296,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     return physicalPosition;
   }
 
-  private byte[] readFullEntry(OClusterPosition clusterPosition, long pageIndex, int recordPosition) throws IOException {
+  private byte[] readFullEntry(long clusterPosition, long pageIndex, int recordPosition) throws IOException {
     if (diskCache.getFilledUpTo(fileId) <= pageIndex)
       return null;
 
@@ -1593,7 +1592,7 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
 
   }
 
-  private OPhysicalPosition[] convertToPhysicalPositions(OClusterPosition[] clusterPositions) {
+  private OPhysicalPosition[] convertToPhysicalPositions(long[] clusterPositions) {
     OPhysicalPosition[] positions = new OPhysicalPosition[clusterPositions.length];
     for (int i = 0; i < positions.length; i++) {
       OPhysicalPosition physicalPosition = new OPhysicalPosition();

@@ -24,8 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
@@ -38,7 +36,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -46,6 +43,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
@@ -57,6 +55,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.orientechnologies.orient.test.database.base.OrientTest;
@@ -210,7 +209,7 @@ public class IndexTest extends ObjectDBBaseTest {
     database.getMetadata().getIndexManager().reload();
     Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("idx"));
 
-    final List<OClusterPosition> positions = getValidPositions(3);
+    final List<Long> positions = getValidPositions(3);
 
     database.command(new OCommandSQL("insert into index:IDX (key,rid) values (10,#3:" + positions.get(0) + ')')).execute();
     database.command(new OCommandSQL("insert into index:IDX (key,rid) values (20,#3:" + positions.get(1) + ')')).execute();
@@ -1680,8 +1679,8 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertTrue(!diskCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
   }
 
-  private List<OClusterPosition> getValidPositions(int clusterId) {
-    final List<OClusterPosition> positions = new ArrayList<OClusterPosition>();
+  private List<Long> getValidPositions(int clusterId) {
+    final List<Long> positions = new ArrayList<Long>();
 
     final ORecordIteratorCluster<?> iteratorCluster = database.getUnderlying()
         .browseCluster(database.getClusterNameById(clusterId));

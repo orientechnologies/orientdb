@@ -15,15 +15,14 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 
 public class ReadAllClusterObjectsSpeedTest extends SpeedTestMonoThread {
   private static final String CLUSTER_NAME = "Animal";
@@ -49,7 +48,7 @@ public class ReadAllClusterObjectsSpeedTest extends SpeedTestMonoThread {
 
     final ORecordId rid = new ORecordId(clusterId);
     for (int i = 0; i < db.countClusterElements(CLUSTER_NAME); ++i) {
-      rid.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(i);
+      rid.clusterPosition = i;
 
       buffer = db.read(rid, null, false, false, OStorage.LOCKING_STRATEGY.DEFAULT).getResult();
       if (buffer != null)

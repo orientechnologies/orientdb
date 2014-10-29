@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.orient.core.db.raw;
 
@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntent;
@@ -307,10 +306,10 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     Orient.instance().getRecordFactoryManager().getRecordTypeClass(iRecordType);
 
     try {
-      if (iForceCreate || iRid.clusterPosition.isNew()) {
+      if (iForceCreate || ORecordId.isNew(iRid.clusterPosition)) {
         // CREATE
         final OStorageOperationResult<OPhysicalPosition> ppos = storage.createRecord(iRid, iContent, iVersion, iRecordType, iMode,
-            (ORecordCallback<OClusterPosition>) iRecordCreatedCallback);
+            (ORecordCallback<Long>) iRecordCreatedCallback);
         return new OStorageOperationResult<ORecordVersion>(ppos.getResult().recordVersion, ppos.isMoved());
 
       } else {
@@ -656,17 +655,19 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       break;
 
     case CUSTOM:
-      int indx = stringValue!=null?stringValue.indexOf('='):-1;
-      if (indx<0) {
+      int indx = stringValue != null ? stringValue.indexOf('=') : -1;
+      if (indx < 0) {
         if ("clear".equalsIgnoreCase(stringValue)) {
           clearCustomInternal();
         } else
           throw new IllegalArgumentException("Syntax error: expected <name> = <value> or clear, instead found: " + iValue);
       } else {
         String customName = stringValue.substring(0, indx).trim();
-        String customValue = stringValue.substring(indx+1).trim();
-        if(customValue.isEmpty()) removeCustomInternal(customName);
-        else setCustomInternal(customName, customValue);
+        String customValue = stringValue.substring(indx + 1).trim();
+        if (customValue.isEmpty())
+          removeCustomInternal(customName);
+        else
+          setCustomInternal(customName, customValue);
       }
       break;
 
@@ -708,9 +709,9 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     }
     return null;
   }
-  
+
   public void removeCustomInternal(final String iName) {
-	  setCustomInternal(iName, null);
+    setCustomInternal(iName, null);
   }
 
   public void setCustomInternal(final String iName, final String iValue) {
@@ -751,7 +752,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     return storage.callInLock(iCallable, iExclusiveLock);
   }
 
-	@Override
+  @Override
   public ORecordMetadata getRecordMetadata(final ORID rid) {
     return storage.getRecordMetadata(rid);
   }

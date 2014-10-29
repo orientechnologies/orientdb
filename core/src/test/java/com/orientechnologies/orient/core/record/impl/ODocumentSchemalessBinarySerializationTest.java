@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
@@ -36,6 +35,50 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 public class ODocumentSchemalessBinarySerializationTest {
 
   protected ORecordSerializer serializer;
+
+  public static class Custom implements OSerializableStream {
+    byte[] bytes = new byte[10];
+
+    @Override
+    public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
+      bytes = iStream;
+      return this;
+    }
+
+    @Override
+    public byte[] toStream() throws OSerializationException {
+      for (int i = 0; i < bytes.length; i++) {
+        bytes[i] = (byte) i;
+      }
+      return bytes;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj != null && Arrays.equals(bytes, ((Custom) obj).bytes);
+    }
+  }
+
+  public static class CustomDocument implements ODocumentSerializable {
+    private ODocument document;
+
+    @Override
+    public void fromDocument(ODocument document) {
+      this.document = document;
+    }
+
+    @Override
+    public ODocument toDocument() {
+      document = new ODocument();
+      document.field("test", "some strange content");
+      return document;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj != null && document.field("test").equals(((CustomDocument) obj).document.field("test"));
+    }
+  }
 
   public ODocumentSchemalessBinarySerializationTest() {
     serializer = new ORecordSerializerBinary();
@@ -59,8 +102,8 @@ public class ODocumentSchemalessBinarySerializationTest {
     document.field("dateTime", new Date());
     document.field("bigNumber", new BigDecimal("43989872423376487952454365232141525434.32146432321442534"));
     ORidBag bag = new ORidBag();
-    bag.add(new ORecordId(1, new OClusterPositionLong(1)));
-    bag.add(new ORecordId(2, new OClusterPositionLong(2)));
+    bag.add(new ORecordId(1, 1));
+    bag.add(new ORecordId(2, 2));
     // document.field("ridBag", bag);
     Calendar c = Calendar.getInstance();
     document.field("date", c.getTime(), OType.DATE);
@@ -76,7 +119,7 @@ public class ODocumentSchemalessBinarySerializationTest {
     document.field("bytes", byteValue);
 
     document.field("utf8String", new String("A" + "\u00ea" + "\u00f1" + "\u00fc" + "C"));
-    document.field("recordId", new ORecordId(10, new OClusterPositionLong(10)));
+    document.field("recordId", new ORecordId(10, 10));
 
     byte[] res = serializer.toStream(document, false);
     ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
@@ -373,7 +416,7 @@ public class ODocumentSchemalessBinarySerializationTest {
     listMixed.add("hello");
     listMixed.add(new Date());
     listMixed.add((byte) 10);
-    listMixed.add(new ORecordId(10, new OClusterPositionLong(20)));
+    listMixed.add(new ORecordId(10, 20));
     document.field("listMixed", listMixed);
 
     byte[] res = serializer.toStream(document, false);
@@ -395,17 +438,17 @@ public class ODocumentSchemalessBinarySerializationTest {
     try {
       ODocument document = new ODocument();
       Set<ORecordId> linkSet = new HashSet<ORecordId>();
-      linkSet.add(new ORecordId(10, new OClusterPositionLong(20)));
-      linkSet.add(new ORecordId(10, new OClusterPositionLong(21)));
-      linkSet.add(new ORecordId(10, new OClusterPositionLong(22)));
-      linkSet.add(new ORecordId(11, new OClusterPositionLong(22)));
+      linkSet.add(new ORecordId(10, 20));
+      linkSet.add(new ORecordId(10, 21));
+      linkSet.add(new ORecordId(10, 22));
+      linkSet.add(new ORecordId(11, 22));
       document.field("linkSet", linkSet, OType.LINKSET);
 
       List<ORecordId> linkList = new ArrayList<ORecordId>();
-      linkList.add(new ORecordId(10, new OClusterPositionLong(20)));
-      linkList.add(new ORecordId(10, new OClusterPositionLong(21)));
-      linkList.add(new ORecordId(10, new OClusterPositionLong(22)));
-      linkList.add(new ORecordId(11, new OClusterPositionLong(22)));
+      linkList.add(new ORecordId(10, 20));
+      linkList.add(new ORecordId(10, 21));
+      linkList.add(new ORecordId(10, 22));
+      linkList.add(new ORecordId(11, 22));
       document.field("linkList", linkList, OType.LINKLIST);
       byte[] res = serializer.toStream(document, false);
       ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
@@ -500,65 +543,6 @@ public class ODocumentSchemalessBinarySerializationTest {
   }
 
   @Test
-  private void testCollectionOfEmbeddedDocument() {
-
-    ODatabaseRecordThreadLocal.INSTANCE.remove();
-    
-    ODocument document = new ODocument();
-
-    ODocument embeddedInList = new ODocument();
-    embeddedInList.field("name", "test");
-    embeddedInList.field("surname", "something");
-
-    ODocument embeddedInList2 = new ODocument();
-    embeddedInList2.field("name", "test1");
-    embeddedInList2.field("surname", "something2");
-
-    List<ODocument> embeddedList = new ArrayList<ODocument>();
-    embeddedList.add(embeddedInList);
-    embeddedList.add(embeddedInList2);
-    embeddedList.add(new ODocument());
-    document.field("embeddedList", embeddedList, OType.EMBEDDEDLIST);
-
-    ODocument embeddedInSet = new ODocument();
-    embeddedInSet.field("name", "test2");
-    embeddedInSet.field("surname", "something3");
-
-    ODocument embeddedInSet2 = new ODocument();
-    embeddedInSet2.field("name", "test5");
-    embeddedInSet2.field("surname", "something6");
-
-    Set<ODocument> embeddedSet = new HashSet<ODocument>();
-    embeddedSet.add(embeddedInSet);
-    embeddedSet.add(embeddedInSet2);
-    embeddedSet.add(new ODocument());
-    document.field("embeddedSet", embeddedSet, OType.EMBEDDEDSET);
-
-    byte[] res = serializer.toStream(document, false);
-    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
-
-    List<ODocument> ser = extr.field("embeddedList");
-    assertEquals(ser.size(), 3);
-    assertNotNull(ser.get(0));
-    assertNotNull(ser.get(1));
-    assertNotNull(ser.get(2));
-    ODocument inList = ser.get(0);
-    assertNotNull(inList);
-    assertEquals(inList.field("name"), embeddedInList.field("name"));
-    assertEquals(inList.field("surname"), embeddedInList.field("surname"));
-
-    Set<ODocument> setEmb = extr.field("embeddedSet");
-    assertEquals(setEmb.size(), 3);
-    boolean ok = false;
-    for (ODocument inSet : setEmb) {
-      assertNotNull(inSet);
-      if (embeddedInSet.field("name").equals(inSet.field("name")) && embeddedInSet.field("surname").equals(inSet.field("surname")))
-        ok = true;
-    }
-    assertTrue(ok, "not found record in the set after serilize");
-  }
-
-  @Test
   public void testlistOfList() {
     ODatabaseRecordThreadLocal.INSTANCE.remove();
     ODocument document = new ODocument();
@@ -650,7 +634,7 @@ public class ODocumentSchemalessBinarySerializationTest {
       ODocument document = new ODocument();
 
       Map<String, OIdentifiable> map = new HashMap<String, OIdentifiable>();
-      map.put("link", new ORecordId(0, new OClusterPositionLong(0)));
+      map.put("link", new ORecordId(0, 0));
       document.field("map", map, OType.LINKMAP);
 
       byte[] res = serializer.toStream(document, false);
@@ -678,29 +662,6 @@ public class ODocumentSchemalessBinarySerializationTest {
     }
   }
 
-  public static class Custom implements OSerializableStream {
-    byte[] bytes = new byte[10];
-
-    @Override
-    public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
-      bytes = iStream;
-      return this;
-    }
-
-    @Override
-    public byte[] toStream() throws OSerializationException {
-      for (int i = 0; i < bytes.length; i++) {
-        bytes[i] = (byte) i;
-      }
-      return bytes;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return obj!= null && Arrays.equals(bytes, ((Custom) obj).bytes);
-    }
-  }
-
   @Test
   public void testDocumentWithCostum() {
     ODatabaseRecordThreadLocal.INSTANCE.remove();
@@ -713,27 +674,6 @@ public class ODocumentSchemalessBinarySerializationTest {
     assertEquals(extr.fields(), document.fields());
     assertEquals(extr.field("test"), document.field("test"));
     assertEquals(extr.field("custom"), document.field("custom"));
-  }
-
-  public static class CustomDocument implements ODocumentSerializable {
-    private ODocument document;
-
-    @Override
-    public void fromDocument(ODocument document) {
-      this.document = document;
-    }
-
-    @Override
-    public ODocument toDocument() {
-      document = new ODocument();
-      document.field("test", "some strange content");
-      return document;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return obj!=null && document.field("test").equals(((CustomDocument) obj).document.field("test"));
-    }
   }
 
   @Test
@@ -750,4 +690,62 @@ public class ODocumentSchemalessBinarySerializationTest {
     assertEquals(extr.field("custom"), document.field("custom"));
   }
 
+  @Test
+  private void testCollectionOfEmbeddedDocument() {
+
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
+
+    ODocument document = new ODocument();
+
+    ODocument embeddedInList = new ODocument();
+    embeddedInList.field("name", "test");
+    embeddedInList.field("surname", "something");
+
+    ODocument embeddedInList2 = new ODocument();
+    embeddedInList2.field("name", "test1");
+    embeddedInList2.field("surname", "something2");
+
+    List<ODocument> embeddedList = new ArrayList<ODocument>();
+    embeddedList.add(embeddedInList);
+    embeddedList.add(embeddedInList2);
+    embeddedList.add(new ODocument());
+    document.field("embeddedList", embeddedList, OType.EMBEDDEDLIST);
+
+    ODocument embeddedInSet = new ODocument();
+    embeddedInSet.field("name", "test2");
+    embeddedInSet.field("surname", "something3");
+
+    ODocument embeddedInSet2 = new ODocument();
+    embeddedInSet2.field("name", "test5");
+    embeddedInSet2.field("surname", "something6");
+
+    Set<ODocument> embeddedSet = new HashSet<ODocument>();
+    embeddedSet.add(embeddedInSet);
+    embeddedSet.add(embeddedInSet2);
+    embeddedSet.add(new ODocument());
+    document.field("embeddedSet", embeddedSet, OType.EMBEDDEDSET);
+
+    byte[] res = serializer.toStream(document, false);
+    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
+
+    List<ODocument> ser = extr.field("embeddedList");
+    assertEquals(ser.size(), 3);
+    assertNotNull(ser.get(0));
+    assertNotNull(ser.get(1));
+    assertNotNull(ser.get(2));
+    ODocument inList = ser.get(0);
+    assertNotNull(inList);
+    assertEquals(inList.field("name"), embeddedInList.field("name"));
+    assertEquals(inList.field("surname"), embeddedInList.field("surname"));
+
+    Set<ODocument> setEmb = extr.field("embeddedSet");
+    assertEquals(setEmb.size(), 3);
+    boolean ok = false;
+    for (ODocument inSet : setEmb) {
+      assertNotNull(inSet);
+      if (embeddedInSet.field("name").equals(inSet.field("name")) && embeddedInSet.field("surname").equals(inSet.field("surname")))
+        ok = true;
+    }
+    assertTrue(ok, "not found record in the set after serilize");
+  }
 }

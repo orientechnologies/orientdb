@@ -69,7 +69,6 @@ import com.orientechnologies.orient.core.fetch.OFetchListener;
 import com.orientechnologies.orient.core.fetch.OFetchPlan;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchContext;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
@@ -527,13 +526,13 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (!isConnectionAlive())
       return;
 
-    OClusterPosition[] pos = connection.database.getStorage().getClusterDataRange(channel.readShort());
+    final long[] pos = connection.database.getStorage().getClusterDataRange(channel.readShort());
 
     beginResponse();
     try {
       sendOk(clientTxId);
-      channel.writeClusterPosition(pos[0]);
-      channel.writeClusterPosition(pos[1]);
+      channel.writeLong(pos[0]);
+      channel.writeLong(pos[1]);
     } finally {
       endResponse();
     }
@@ -1300,7 +1299,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       beginResponse();
       try {
         sendOk(clientTxId);
-        channel.writeClusterPosition(record.getIdentity().getClusterPosition());
+        channel.writeLong(record.getIdentity().getClusterPosition());
         if (connection.data.protocolVersion >= 11)
           channel.writeVersion(record.getRecordVersion());
 
@@ -1344,7 +1343,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     if (connection.data.protocolVersion >= 13)
       loadTombstones = channel.readByte() > 0;
 
-    if (rid.clusterId == 0 && rid.clusterPosition.longValue() == 0) {
+    if (rid.clusterId == 0 && rid.clusterPosition == 0) {
       // @COMPATIBILITY 0.9.25
       // SEND THE DB CONFIGURATION INSTEAD SINCE IT WAS ON RECORD 0:0
       OFetchHelper.checkFetchPlanValid(fetchPlanString);
@@ -1827,7 +1826,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     setDataCommandInfo("Retrieve lower positions");
 
     final int clusterId = channel.readInt();
-    final OClusterPosition clusterPosition = channel.readClusterPosition();
+    final long clusterPosition = channel.readLong();
 
     beginResponse();
     try {
@@ -1840,7 +1839,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         channel.writeInt(previousPositions.length);
 
         for (final OPhysicalPosition physicalPosition : previousPositions) {
-          channel.writeClusterPosition(physicalPosition.clusterPosition);
+          channel.writeLong(physicalPosition.clusterPosition);
           channel.writeInt(physicalPosition.recordSize);
           channel.writeVersion(physicalPosition.recordVersion);
         }
@@ -1858,7 +1857,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     setDataCommandInfo("Retrieve floor positions");
 
     final int clusterId = channel.readInt();
-    final OClusterPosition clusterPosition = channel.readClusterPosition();
+    final long clusterPosition = channel.readLong();
 
     beginResponse();
     try {
@@ -1871,7 +1870,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         channel.writeInt(previousPositions.length);
 
         for (final OPhysicalPosition physicalPosition : previousPositions) {
-          channel.writeClusterPosition(physicalPosition.clusterPosition);
+          channel.writeLong(physicalPosition.clusterPosition);
           channel.writeInt(physicalPosition.recordSize);
           channel.writeVersion(physicalPosition.recordVersion);
         }
@@ -1889,7 +1888,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     setDataCommandInfo("Retrieve higher positions");
 
     final int clusterId = channel.readInt();
-    final OClusterPosition clusterPosition = channel.readClusterPosition();
+    final long clusterPosition = channel.readLong();
 
     beginResponse();
     try {
@@ -1902,7 +1901,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         channel.writeInt(nextPositions.length);
         for (final OPhysicalPosition physicalPosition : nextPositions) {
-          channel.writeClusterPosition(physicalPosition.clusterPosition);
+          channel.writeLong(physicalPosition.clusterPosition);
           channel.writeInt(physicalPosition.recordSize);
           channel.writeVersion(physicalPosition.recordVersion);
         }
@@ -1918,7 +1917,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     setDataCommandInfo("Retrieve ceiling positions");
 
     final int clusterId = channel.readInt();
-    final OClusterPosition clusterPosition = channel.readClusterPosition();
+    final long clusterPosition = channel.readLong();
 
     beginResponse();
     try {
@@ -1931,7 +1930,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         channel.writeInt(previousPositions.length);
 
         for (final OPhysicalPosition physicalPosition : previousPositions) {
-          channel.writeClusterPosition(physicalPosition.clusterPosition);
+          channel.writeLong(physicalPosition.clusterPosition);
           channel.writeInt(physicalPosition.recordSize);
           channel.writeVersion(physicalPosition.recordVersion);
         }
