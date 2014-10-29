@@ -125,4 +125,6 @@ public interface ODiskCache {
   void addLowDiskSpaceListener(OWOWCache.LowDiskSpaceListener listener);
 
   void removeLowDiskSpaceListener(OWOWCache.LowDiskSpaceListener listener);
+
+	long getUsedMemory();
 }

@@ -181,8 +181,8 @@ public class OWOWCache {
   }
 
   private void addAllocatedSpace(long diff) {
-		if (diff == 0)
-			return;
+    if (diff == 0)
+      return;
 
     allocatedSpace.addAndGet(diff);
 
@@ -447,6 +447,10 @@ public class OWOWCache {
     } finally {
       filesLock.releaseReadLock();
     }
+  }
+
+  public long getAllocatedPages() {
+    return cacheSize.get();
   }
 
   public boolean isOpen(long fileId) {
