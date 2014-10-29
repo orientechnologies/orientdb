@@ -203,9 +203,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock);
 
-  public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock);
-
-  OPhysicalPosition[] higherPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition);
+	OPhysicalPosition[] higherPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition);
 
   OPhysicalPosition[] lowerPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition);
 

@@ -308,17 +308,7 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  @Override
-  public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock) {
-    pushSession();
-    try {
-      return delegate.callInRecordLock(iCallable, rid, iExclusiveLock);
-    } finally {
-      popSession();
-    }
-  }
-
-  @Override
+	@Override
   public boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode, ORecordCallback<Boolean> callback) {
     pushSession();
     try {

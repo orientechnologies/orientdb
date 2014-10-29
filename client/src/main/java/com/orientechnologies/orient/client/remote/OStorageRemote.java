@@ -394,12 +394,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } while (true);
   }
 
-  @Override
-  public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock) {
-    throw new UnsupportedOperationException("callInRecordLock()");
-  }
-
-  @Override
+	@Override
   public ORecordMetadata getRecordMetadata(final ORID rid) {
 
     OChannelBinaryAsynchClient network = null;

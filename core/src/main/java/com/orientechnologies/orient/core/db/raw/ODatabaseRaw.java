@@ -751,12 +751,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     return storage.callInLock(iCallable, iExclusiveLock);
   }
 
-  @Override
-  public <V> V callInRecordLock(final Callable<V> iCallable, final ORID rid, final boolean iExclusiveLock) {
-    return storage.callInRecordLock(iCallable, rid, iExclusiveLock);
-  }
-
-  @Override
+	@Override
   public ORecordMetadata getRecordMetadata(final ORID rid) {
     return storage.getRecordMetadata(rid);
   }
