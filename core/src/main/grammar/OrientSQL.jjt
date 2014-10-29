@@ -73,11 +73,21 @@ TOKEN:
 	|
 	< INSERT: ( "i" | "I" ) ( "n" | "N" ) ( "s" | "S" ) ( "e" | "E" ) ( "r" | "R" ) ( "t" | "T" ) >
 	|
-	< UPDATE: ( "u" | "U" ) ( "p" | "P" ) ( "d" | "D" ) ( "a" | "A" ) ( "t" | "T" ) ( "e" | "E" ) >
+	< CREATE: ( "c" | "C" ) ( "r" | "R" ) ( "e" | "E" ) ( "a" | "a" ) ( "t" | "T" ) ( "e" | "E" ) >
 	|
 	< DELETE: ( "d" | "D" ) ( "e" | "E" ) ( "l" | "L" ) ( "e" | "E" ) ( "t" | "T" ) ( "e" | "E" ) >
 	|
+	< VERTEX: ( "v" | "V" ) ( "e" | "E" ) ( "r" | "R" ) ( "t" | "T" ) ( "e" | "E" ) ( "x" | "X" ) >
+	|
+	< EDGE: ( "e" | "E" ) ( "d" | "D" ) ( "g" | "G" ) ( "e" | "E" ) >
+	|
+	< UPDATE: ( "u" | "U" ) ( "p" | "P" ) ( "d" | "D" ) ( "a" | "A" ) ( "t" | "T" ) ( "e" | "E" ) >
+	|
+	< UPSERT: ( "u" | "U" ) ( "p" | "P" ) ( "s" | "S" ) ( "e" | "E" ) ( "r" | "R" ) ( "t" | "T" ) >
+	|
 	< FROM: ( "f" | "F" ) ( "r" | "R" ) ( "o" | "O" ) ( "m" | "M" ) >
+	|
+	< TO: ( "t" | "T" ) ( "o" | "O" ) >
 	|
 	< WHERE: ( "w" | "W" ) ( "h" | "H" ) ( "e" | "E" ) ( "r" | "R" ) ( "e" | "E" ) >
 	|
@@ -91,7 +101,15 @@ TOKEN:
 	|
 	< ADD: ( "a" | "A" ) ( "d" | "D" ) ( "d" | "D" ) >
 	|
+	< PUT: ( "p" | "P" ) ( "u" | "U" ) ( "t" | "T" ) >
+	|
+	< MERGE: ( "m" | "M" ) ( "e" | "E" ) ( "r" | "R" ) ( "g" | "G" ) ( "e" | "E" ) >
+	|
+	< CONTENT: ( "c" | "C" ) ( "o" | "O" ) ( "n" | "N" ) ( "t" | "T" ) ( "e" | "E" ) ( "n" | "N" ) ( "t" | "T" )  >
+	|
 	< REMOVE: ( "r" | "R" ) ( "e" | "E" ) ( "m" | "M" ) ( "o" | "O" ) ( "v" | "V" ) ( "e" | "E" ) >
+	|
+	< INCREMENT: ( "i" | "I" ) ( "n" | "N" ) ( "c" | "C" ) ( "r" | "R" ) ( "e" | "E" ) ( "m" | "M" ) ( "e" | "E" ) ( "n" | "N" ) ( "t" | "T" ) >
 	|
 	< AND: ( "a" | "A" ) ( "n" | "N" ) ( "d" | "D" ) >
 	|
@@ -113,6 +131,8 @@ TOKEN:
 	|
 	< OFFSET: ( "o" | "O" ) ( "f" | "F" ) ( "f" | "F" ) ( "s" | "S" ) ( "e" | "E" ) ( "t" | "T" ) >
 	|
+	< TIMEOUT: ( "t" | "T" ) ( "i" | "I" ) ( "m" | "M" ) ( "e" | "E" ) ( "o" | "O" ) ( "u" | "U" ) ( "t" | "T" ) >
+	|
 	< ASC: ( "a" | "A" ) ( "s" | "S" ) ( "c" | "C" ) >
 	|
 	< AS: ( "a" | "A" ) ( "s" | "S" ) >
@@ -120,6 +140,20 @@ TOKEN:
 	< DESC: ( "d" | "D" ) ( "e" | "E" ) ( "s" | "S" ) ( "c" | "C" ) >
 	|
 	< FETCHPLAN: ( "f" | "F" ) ( "e" | "E" ) ( "t" | "T" ) ( "c" | "C" ) ( "h" | "H" ) ( "p" | "P" ) ( "l" | "L" ) ( "a" | "A" ) ( "n" | "N" ) >
+	|
+	< RETURN: ( "r" | "R" ) ( "e" | "E" ) ( "t" | "T" ) ( "u" | "U" ) ( "r" | "R" ) ( "n" | "N" ) >
+	|
+	< BEFORE: ( "b" | "B" ) ( "e" | "E" ) ( "f" | "F" ) ( "o" | "O" ) ( "r" | "R" ) ( "e" | "E" ) >
+	|
+	< AFTER: ( "a" | "A" ) ( "f" | "F" ) ( "t" | "T" ) ( "e" | "E" ) ( "r" | "R" ) >
+	|
+	< LOCK: ( "l" | "L" ) ( "o" | "O" ) ( "c" | "C" ) ( "k" | "K" ) >
+    |
+    < RECORD: ( "r" | "R" ) ( "e" | "E" ) ( "c" | "C" ) ( "o" | "O" ) ( "r" | "R" ) ( "d" | "D" ) >
+    |
+    < WAIT: ( "w" | "W" ) ( "a" | "A" ) ( "i" | "I" ) ( "t" | "T" ) >
+    |
+    < RETRY: ( "r" | "R" ) ( "e" | "E" ) ( "t" | "T" ) ( "r" | "R" ) ( "y" | "Y" ) >
 	|
 	< THIS: "@this" >
 	|
@@ -220,6 +254,10 @@ TOKEN :
   < INTEGER_RANGE:
     (<MINUS>)? <INTEGER_LITERAL> <RANGE> (<MINUS>)?<INTEGER_LITERAL>
   >
+  |
+  < TRUE: "true" >
+  |
+  < FALSE: "false" >
 }
 
 
@@ -352,7 +390,7 @@ SimpleNode OrientGrammar() :
 void Identifier():
 {}
 {
-    <IDENTIFIER> | <IN> | <SET> | <ORDER> | <KEY> | <OFFSET> | <GROUP> | <VALUES>
+    <IDENTIFIER> | <IN> | <SET> | <PUT> | <ADD> | <REMOVE> | <MERGE> | <CONTENT> | <ORDER> | <KEY> | <OFFSET> | <GROUP> | <VALUES> | <RECORD> | <TO>
 }
 
 void Integer():
@@ -389,11 +427,25 @@ void Statement():
 		|
 		TraverseStatement()
         |
+        LOOKAHEAD(2)
 		DeleteStatement()
+		|
+		LOOKAHEAD(2)
+		DeleteVertexStatement()
 		|
 		InsertStatement()
 		|
+		LOOKAHEAD(CreateVertexStatement())
+		CreateVertexStatement()
+		|
+		LOOKAHEAD(CreateVertexStatementNoTarget())
+		CreateVertexStatementNoTarget()
+		|
+		LOOKAHEAD(2)
+        CreateEdgeStatement()
+        |
 		UpdateStatement()
+
 	)
 }
 
@@ -421,7 +473,7 @@ void SelectStatement():
         ]
     )
     [ FetchPlan() ]
-
+    [ <LOCK> <RECORD> ]
 }
 
 void TraverseStatement():
@@ -441,7 +493,16 @@ void DeleteStatement():
 {
 	<DELETE>
 	<FROM>
-	Identifier()
+	FromClause()
+	[ <WHERE> WhereClause() ]
+}
+
+void DeleteVertexStatement():
+{}
+{
+	<DELETE>
+	<VERTEX>
+	FromClause()
 	[ <WHERE> WhereClause() ]
 }
 
@@ -450,22 +511,88 @@ void UpdateStatement():
 {
 	<UPDATE>
 	(
+	    Rid()
+	    |
 		Identifier()
 		|
 		Cluster()
 		|
 		IndexIdentifier()
 	)
-	(
-		( <SET> UpdateItem() ( "," UpdateItem() )* )
-	)
+	( UpdateOperations() )+
+	[ <UPSERT> ]
+	[ <RETURN> ( <BEFORE> | <AFTER> ) [ Projection() ] ]
 	[ <WHERE> WhereClause() ]
+	[ <LOCK> <RECORD> ]
+	[ Limit() ]
+	[ Timeout() ]
 }
+
+void UpdateOperations():
+{}
+{
+    ( <SET> UpdateItem() ( <COMMA> UpdateItem() )* )
+    |
+    ( <PUT> UpdatePutItem() ( <COMMA> UpdatePutItem() )* )
+    |
+    (
+        ( <MERGE> | <CONTENT> )
+        UpdateMergeItem() ( <COMMA> UpdateMergeItem() )*
+    )
+    |
+    (
+        (
+            <INCREMENT>
+            |
+            <ADD>
+        )
+        UpdateIncrementItem() ( <COMMA> UpdateIncrementItem() )*
+     )
+     |
+     ( <REMOVE> UpdateRemoveItem() ( <COMMA> UpdateRemoveItem() )* )
+}
+
 
 void UpdateItem():
 {}
 {
-	Identifier() <EQ> ValueItem()
+	Identifier()
+	(
+	    <EQ>
+	    |
+	    <PLUSASSIGN>
+        |
+        <MINUSASSIGN>
+        |
+        <STARASSIGN>
+        |
+        <SLASHASSIGN>
+	)
+	Expression()
+}
+
+void UpdateIncrementItem():
+{}
+{
+	Identifier() <EQ> Expression()
+}
+
+void UpdateRemoveItem():
+{}
+{
+	Identifier() [ <EQ> Expression() ]
+}
+
+void UpdatePutItem():
+{}
+{
+	Identifier() <EQ> Expression() <COMMA> Expression()
+}
+
+void UpdateMergeItem():
+{}
+{
+	Identifier() <EQ> Json()
 }
 
 void UpdateAddItem():
@@ -503,20 +630,96 @@ void InsertStatement():
 	    |
 	    IndexIdentifier()
 	)
-	(
+    InsertBody()
+}
+
+
+void InsertBody():
+{}
+{
+    (
+        LOOKAHEAD(2)
         (
             <LPAREN> Identifier() (<COMMA> Identifier())* <RPAREN>
             <VALUES>
-            <LPAREN> ValueItem() (<COMMA> ValueItem())* <RPAREN>
+            <LPAREN> Expression() (<COMMA> Expression())* <RPAREN>
+        )
+        |
+        LOOKAHEAD(3)
+        (
+            <SET>
+            Identifier() <EQ> Expression()
+            ( <COMMA> Identifier() <EQ> Expression() )*
         )
         |
         (
-            <SET>
-            Identifier() <EQ> ValueItem()
-            ( <COMMA> Identifier() <EQ> ValueItem() )*
+            [ <FROM> ]
+            (
+                SelectStatement()
+                |
+                LOOKAHEAD(2)
+                (
+                    <LPAREN> SelectStatement() <RPAREN>
+                )
+            )
         )
-	)
+        |
+        ( <CONTENT> Json() )
+    )
+    [ <RETURN> Projection() ]
 }
+
+
+void CreateVertexStatement():
+{}
+{
+	<CREATE>
+	<VERTEX>
+	(
+	    LOOKAHEAD(3)
+	    Identifier()
+	    |
+	    Cluster()
+	)
+	[ InsertBody() ]
+}
+
+void CreateVertexStatementNoTarget():
+{}
+{
+	<CREATE>
+	<VERTEX>
+	[ InsertBody() ]
+}
+
+
+void CreateEdgeStatement():
+{}
+{
+	<CREATE>
+	<EDGE>
+	[ Identifier() ]
+	<FROM>
+	(
+	    Rid()
+	    |
+	    ( <LBRACKET> [ Rid() ( <COMMA> Rid() )* ] <RBRACKET> )
+	    |
+	    ( <LPAREN> ( LOOKAHEAD(SelectStatement()) SelectStatement() | LOOKAHEAD(SelectWithoutTargetStatement()) SelectWithoutTargetStatement() ) <RPAREN> )
+	)
+	<TO>
+	(
+        Rid()
+        |
+        ( <LBRACKET> [ Rid() ( <COMMA> Rid() )* ] <RBRACKET> )
+        |
+        ( <LPAREN> ( LOOKAHEAD(SelectStatement()) SelectStatement() | LOOKAHEAD(SelectWithoutTargetStatement()) SelectWithoutTargetStatement() ) <RPAREN> )
+    )
+    [ InsertBody() ]
+    [ Retry() ]
+    [ Wait() ]
+}
+
 
 void InputParameter():
 {}
@@ -550,20 +753,7 @@ void ProjectionItem():
 	"*"
 	|
 	(
-		(
-			<NULL>
-			|
-			LOOKAHEAD(2)
-			<STRING_LITERAL>
-			|
-			<CHARACTER_LITERAL>
-			|
-			LOOKAHEAD( InputParameter() )
-			InputParameter()
-			|
-			LOOKAHEAD( Expression() )
-			Expression()
-		)
+        Expression()
 		[<AS> Alias() ]
 	)
 }
@@ -576,54 +766,40 @@ void ValueItem():
         |
         <FLOATING_POINT_LITERAL>
         |
-        <CHARACTER_LITERAL>
-        |
+        LOOKAHEAD( Integer() )
         Integer()
         |
-        Array()
-        |
         (
-            LOOKAHEAD(2)
-            <STRING_LITERAL>
-            |
-            LOOKAHEAD( InputParameter() )
-            InputParameter()
-            |
-            LOOKAHEAD( FunctionCall() )
-            FunctionCall()
+            (
+                LOOKAHEAD( Rid() )
+                Rid()
+                |
+                Array()
+                |
+                Json()
+                |
+                <CHARACTER_LITERAL>
+                |
+                LOOKAHEAD(2)
+                <STRING_LITERAL>
+                |
+                LOOKAHEAD( InputParameter() )
+                InputParameter()
+                |
+                LOOKAHEAD( FunctionCall() )
+                FunctionCall()
+            )
+            [ LOOKAHEAD( Modifier() ) Modifier() ]
         )
-        [ LOOKAHEAD( Modifier() ) Modifier() ]
+        |
+        LOOKAHEAD(2)
+        (<LPAREN> SelectStatement() <RPAREN> )
     )
-}
-
-void FilterItem():
-{}
-{
-	<NULL>
-	|
-	LOOKAHEAD(3)
-	<STRING_LITERAL>
-	|
-	LOOKAHEAD(3)
-	<CHARACTER_LITERAL>
-	|
-	LOOKAHEAD( Rid() )
-	Rid()
-	|
-	LOOKAHEAD( InputParameter() )
-    InputParameter()
-    |
-    LOOKAHEAD( Expression() )
-	Expression()
 }
 
 void ArraySelector():
 {}
 {
-	<STRING_LITERAL>
-	|
-	<CHARACTER_LITERAL>
-	|
 	LOOKAHEAD( Rid() )
 	Rid()
 	|
@@ -641,7 +817,7 @@ void ArrayNumberSelector():
     InputParameter()
     |
     LOOKAHEAD( Expression() )
-	Expression()
+	MathExpression()
 }
 
 void ArraySingleValuesSelector():
@@ -689,7 +865,7 @@ void FunctionCall():
 		|
 		(
 			[
-			FilterItem() ( <COMMA> FilterItem() )*
+			Expression() ( <COMMA> Expression() )*
 			]
 		)
 	)
@@ -699,7 +875,7 @@ void FunctionCall():
 void MethodCall():
 {}
 {
-	( <DOT> Identifier() <LPAREN> [ FilterItem() ( <COMMA> FilterItem() )* ] <RPAREN> )
+	( <DOT> Identifier() <LPAREN> [ Expression() ( <COMMA> Expression() )* ] <RPAREN> )
 }
 
 void LevelZeroIdentifier():
@@ -710,8 +886,8 @@ void LevelZeroIdentifier():
     |
     <THIS>
     |
-    LOOKAHEAD( ItemsCollection() )
-    ItemsCollection()
+    LOOKAHEAD( Collection() )
+    Collection()
 }
 
 void SuffixIdentifier():
@@ -770,6 +946,31 @@ void Modifier():
 void Expression():
 {}
 {
+    <NULL>
+    |
+    LOOKAHEAD(2)
+    <STRING_LITERAL>
+    |
+    <CHARACTER_LITERAL>
+    |
+    LOOKAHEAD( Rid() )
+    Rid()
+    |
+    LOOKAHEAD( InputParameter() )
+    InputParameter()
+    |
+	MathExpression()
+	|
+	Json()
+	|
+	<TRUE>
+	|
+	<FALSE>
+}
+
+void MathExpression():
+{}
+{
 	MultExpression() (  LOOKAHEAD( 2 ) ( <PLUS> | <MINUS> ) MultExpression() )*
 }
 
@@ -793,7 +994,7 @@ void FirstLevelExpression():
 void ParenthesisExpression():
 {}
 {
-	<LPAREN> Expression() <RPAREN>
+	<LPAREN> ( Expression() | SelectStatement() ) <RPAREN>
 }
 
 void BaseExpression():
@@ -1032,26 +1233,26 @@ void EqualsCompareOperator():
 void BinaryCondition():
 {}
 {
- 	FilterItem() CompareOperator() FilterItem()
+ 	Expression() CompareOperator() Expression()
 }
 
 void ContainsValueCondition():
 {}
 {
-    FilterItem() ContainsValueOperator()
+    Expression() ContainsValueOperator()
     (
         LOOKAHEAD( 3 )
         <LPAREN> OrBlock() <RPAREN>
         |
-        LOOKAHEAD( FilterItem() )
-        FilterItem()
+        LOOKAHEAD( Expression() )
+        Expression()
     )
 }
 
 void InstanceofCondition():
 {}
 {
-    FilterItem() <INSTANCEOF> ( Identifier() | <STRING_LITERAL> )
+    Expression() <INSTANCEOF> ( Identifier() | <STRING_LITERAL> )
 }
 
 void IndexMatchCondition():
@@ -1059,53 +1260,53 @@ void IndexMatchCondition():
 {
  	<KEY>
  	(
- 	    CompareOperator() <LBRACKET> [ FilterItem() ( <COMMA> FilterItem() )* ] <RBRACKET>
+ 	    CompareOperator() <LBRACKET> [ Expression() ( <COMMA> Expression() )* ] <RBRACKET>
  	    |
- 	    <BETWEEN> <LBRACKET> [ FilterItem() ( <COMMA> FilterItem() )* ] <RBRACKET> <AND> <LBRACKET> [ FilterItem() ( <COMMA> FilterItem() )* ] <RBRACKET>
+ 	    <BETWEEN> <LBRACKET> [ Expression() ( <COMMA> Expression() )* ] <RBRACKET> <AND> <LBRACKET> [ Expression() ( <COMMA> Expression() )* ] <RBRACKET>
  	)
 }
 
 void BetweenCondition():
 {}
 {
-	FilterItem() <BETWEEN> FilterItem() <AND> FilterItem()
+	Expression() <BETWEEN> Expression() <AND> Expression()
 }
 
 void IsNullCondition():
 {}
 {
-	FilterItem() <IS> <NULL>
+	Expression() <IS> <NULL>
 }
 
 void IsNotNullCondition():
 {}
 {
-	FilterItem() <IS> <NOT> <NULL>
+	Expression() <IS> <NOT> <NULL>
 }
 
 void IsDefinedCondition():
 {}
 {
-	FilterItem() <IS> <DEFINED>
+	Expression() <IS> <DEFINED>
 }
 
 void IsNotDefinedCondition():
 {}
 {
-	FilterItem() <IS> <NOT> <DEFINED>
+	Expression() <IS> <NOT> <DEFINED>
 }
 
 void ContainsCondition():
 {}
 {
-	FilterItem() <CONTAINS>
+	Expression() <CONTAINS>
 
 	(
 	    LOOKAHEAD( 3 )
 	    ( <LPAREN> OrBlock() <RPAREN> )
 	    |
-	    LOOKAHEAD( FilterItem() )
-	    FilterItem()
+	    LOOKAHEAD( Expression() )
+	    Expression()
 	)
 
 }
@@ -1119,9 +1320,9 @@ void InOperator():
 void InCondition():
 {}
 {
-	FilterItem() InOperator()
+	Expression() InOperator()
 	(
-	    <LBRACKET> FilterItem() (<COMMA> FilterItem())* <RBRACKET>
+	    <LBRACKET> Expression() (<COMMA> Expression())* <RBRACKET>
 	    |
 	    <LPAREN> SelectStatement() <RPAREN>
 	    |
@@ -1132,9 +1333,9 @@ void InCondition():
 void NotInCondition():
 {}
 {
-	FilterItem() <NOT> InOperator()
+	Expression() <NOT> InOperator()
 	(
-	    <LBRACKET> FilterItem() (<COMMA> FilterItem())* <RBRACKET>
+	    <LBRACKET> Expression() (<COMMA> Expression())* <RBRACKET>
         |
         <LPAREN> SelectStatement() <RPAREN>
 	)
@@ -1143,19 +1344,19 @@ void NotInCondition():
 void ContainsAllCondition():
 {}
 {
-	FilterItem() <CONTAINSALL> <LPAREN> OrBlock() <RPAREN>
+	Expression() <CONTAINSALL> <LPAREN> OrBlock() <RPAREN>
 }
 
 void ContainsTextCondition():
 {}
 {
-	FilterItem() <CONTAINSTEXT> ( <STRING_LITERAL> | Expression() )
+	Expression() <CONTAINSTEXT> Expression()
 }
 
 void MatchesCondition():
 {}
 {
-	FilterItem() <MATCHES> <STRING_LITERAL>
+	Expression() <MATCHES> <STRING_LITERAL>
 }
 
 void OrderBy():
@@ -1185,10 +1386,36 @@ void Skip():
 	<OFFSET> Integer()
 }
 
-void ItemsCollection():
+void Timeout():
 {}
 {
-    <LBRACKET> ValueItem() ( <COMMA> ValueItem() )* <RBRACKET>
+	<TIMEOUT> Integer()
+}
+
+
+void Wait():
+{}
+{
+	<WAIT> Integer()
+}
+
+
+void Retry():
+{}
+{
+	<RETRY> Integer()
+}
+
+
+
+
+
+
+
+void Collection():
+{}
+{
+    <LBRACKET> Expression() ( <COMMA> Expression() )* <RBRACKET>
 }
 
 
@@ -1226,5 +1453,22 @@ void TraverseProjectionItem():
 void Array():
 {}
 {
-    <LBRACKET> [ ValueItem() ( <COMMA> ValueItem() )* ] <RBRACKET>
+    <LBRACKET> [ Expression() ( <COMMA> Expression() )* ] <RBRACKET>
 }
+
+
+void Json():
+{}
+{
+    <LBRACE>
+    [
+        ( Identifier() | <STRING_LITERAL> ) <COLON> Expression()
+        ( <COMMA> ( Identifier() | <STRING_LITERAL> ) <COLON> Expression() )*
+    ]
+    <RBRACE>
+}
+
+
+
+
+/*TODO review ValueItem and Expression*/

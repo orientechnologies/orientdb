@@ -65,6 +65,8 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
 
     init((OCommandRequestText) iRequest);
 
+    testNewParser(iRequest);
+
     parserRequiredKeyword("DELETE");
     parserRequiredKeyword("VERTEX");
 

@@ -185,19 +185,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return doc;
   }
 
-  private void testNewParser(OCommandRequest iRequest){
-    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
-    String text = textRequest.getText();
-    InputStream is = new ByteArrayInputStream(text.getBytes());
-    OrientSql osql = new OrientSql(is);
-    try {
-      osql.OrientGrammar();
-    } catch (ParseException e) {
-      System.out.println("NEW PARSER FAILED: "+text);
-      throwParsingException(e.getMessage());
-//      throw new RuntimeException(e);
-    }
-  }
 
   /**
    * Compile the filter conditions only the first time.

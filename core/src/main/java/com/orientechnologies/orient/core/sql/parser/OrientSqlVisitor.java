@@ -15,17 +15,26 @@ public interface OrientSqlVisitor
   public Object visit(OSelectStatement node, Object data);
   public Object visit(OTraverseStatement node, Object data);
   public Object visit(ODeleteStatement node, Object data);
+  public Object visit(ODeleteVertexStatement node, Object data);
   public Object visit(OUpdateStatement node, Object data);
+  public Object visit(OUpdateOperations node, Object data);
   public Object visit(OUpdateItem node, Object data);
+  public Object visit(OUpdateIncrementItem node, Object data);
+  public Object visit(OUpdateRemoveItem node, Object data);
+  public Object visit(OUpdatePutItem node, Object data);
+  public Object visit(OUpdateMergeItem node, Object data);
   public Object visit(OUpdateAddItem node, Object data);
   public Object visit(OInsertStatement node, Object data);
+  public Object visit(OInsertBody node, Object data);
+  public Object visit(OCreateVertexStatement node, Object data);
+  public Object visit(OCreateVertexStatementNoTarget node, Object data);
+  public Object visit(OCreateEdgeStatement node, Object data);
   public Object visit(OInputParameter node, Object data);
   public Object visit(OPositionalParameter node, Object data);
   public Object visit(ONamedParameter node, Object data);
   public Object visit(OProjection node, Object data);
   public Object visit(OProjectionItem node, Object data);
   public Object visit(OValueItem node, Object data);
-  public Object visit(OFilterItem node, Object data);
   public Object visit(OArraySelector node, Object data);
   public Object visit(OArrayNumberSelector node, Object data);
   public Object visit(OArraySingleValuesSelector node, Object data);
@@ -40,6 +49,7 @@ public interface OrientSqlVisitor
   public Object visit(OBaseIdentifier node, Object data);
   public Object visit(OModifier node, Object data);
   public Object visit(OExpression node, Object data);
+  public Object visit(OMathExpression node, Object data);
   public Object visit(OMultExpression node, Object data);
   public Object visit(OFirstLevelExpression node, Object data);
   public Object visit(OParenthesisExpression node, Object data);
@@ -86,10 +96,14 @@ public interface OrientSqlVisitor
   public Object visit(OGroupBy node, Object data);
   public Object visit(OLimit node, Object data);
   public Object visit(OSkip node, Object data);
-  public Object visit(OItemsCollection node, Object data);
+  public Object visit(OTimeout node, Object data);
+  public Object visit(OWait node, Object data);
+  public Object visit(ORetry node, Object data);
+  public Object visit(OCollection node, Object data);
   public Object visit(OFetchPlan node, Object data);
   public Object visit(OFetchPlanItem node, Object data);
   public Object visit(OTraverseProjectionItem node, Object data);
   public Object visit(OArray node, Object data);
+  public Object visit(OJson node, Object data);
 }
-/* JavaCC - OriginalChecksum=d6e1eb1cf4660bef30911d7cffe2b9e3 (do not edit this line) */
+/* JavaCC - OriginalChecksum=6854972a5a2c1db3af66769d7740bfdf (do not edit this line) */

@@ -6,6 +6,7 @@ import static org.testng.Assert.fail;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.testng.annotations.Test;
 
@@ -158,6 +159,15 @@ public class OSelectStatementTest {
 
   public void testNamedParam() {
     SimpleNode result = checkRightSyntax("select from JavaComplexTestClass where enumField = :enumItem");
+    // result.dump("    ");
+    assertTrue(result.children[0] instanceof OStatement);
+    OStatement stm = (OStatement) result.children[0];
+    assertTrue(stm.children[0] instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) stm.children[0];
+  }
+
+  public void testBoolean() {
+    SimpleNode result = checkRightSyntax("select from Foo where bar = true");
     // result.dump("    ");
     assertTrue(result.children[0] instanceof OStatement);
     OStatement stm = (OStatement) result.children[0];

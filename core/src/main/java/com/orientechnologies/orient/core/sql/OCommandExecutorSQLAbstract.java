@@ -22,13 +22,19 @@ package com.orientechnologies.orient.core.sql;
 import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
+import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
+import com.orientechnologies.orient.core.sql.parser.OrientSql;
+import com.orientechnologies.orient.core.sql.parser.ParseException;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -195,5 +201,20 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     return db.getUser() != null
         && db.getUser().checkIfAllowed(ODatabaseSecurityResources.CLUSTER + "." + iClusterName, getSecurityOperationType()) != null;
   }
+
+  protected void testNewParser(OCommandRequest iRequest){
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
+    String text = textRequest.getText();
+    InputStream is = new ByteArrayInputStream(text.getBytes());
+    OrientSql osql = new OrientSql(is);
+    try {
+      osql.OrientGrammar();
+    } catch (ParseException e) {
+      System.out.println("NEW PARSER FAILED: "+text);
+      throwParsingException(e.getMessage());
+      //      throw new RuntimeException(e);
+    }
+  }
+
 
 }

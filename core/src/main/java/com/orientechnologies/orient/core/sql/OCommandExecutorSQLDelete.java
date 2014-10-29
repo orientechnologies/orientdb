@@ -38,11 +38,15 @@ import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+import com.orientechnologies.orient.core.sql.parser.OrientSql;
+import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -71,11 +75,13 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
   public OCommandExecutorSQLDelete() {
   }
 
+
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDelete parse(final OCommandRequest iRequest) {
     final ODatabaseRecord database = getDatabase();
 
     init((OCommandRequestText) iRequest);
+    testNewParser(iRequest);
 
     query = null;
     recordCount = 0;

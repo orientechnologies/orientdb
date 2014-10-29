@@ -19,6 +19,8 @@
   */
 package com.orientechnologies.orient.core.sql;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -47,6 +49,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
+import com.orientechnologies.orient.core.sql.parser.OrientSql;
+import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -82,11 +86,15 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
   private boolean                            isUpsertAllowed   = false;
   private boolean                            updated           = false;
 
+
+
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLUpdate parse(final OCommandRequest iRequest) {
     final ODatabaseRecord database = getDatabase();
 
     init((OCommandRequestText) iRequest);
+
+    testNewParser(iRequest);
 
     setEntries.clear();
     addEntries.clear();

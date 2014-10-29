@@ -56,6 +56,7 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
     final ODatabaseRecord database = getDatabase();
 
     init((OCommandRequestText) iRequest);
+    testNewParser(iRequest);
 
     String className = null;
 
