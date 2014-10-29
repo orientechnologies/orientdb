@@ -4,8 +4,13 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -36,6 +41,27 @@ public class ODocumentFieldConversionTest {
     clazz.createProperty("double", OType.DOUBLE);
     clazz.createProperty("decimal", OType.DECIMAL);
     clazz.createProperty("date", OType.DATE);
+
+    clazz.createProperty("byteList", OType.EMBEDDEDLIST, OType.BYTE);
+    clazz.createProperty("integerList", OType.EMBEDDEDLIST, OType.INTEGER);
+    clazz.createProperty("longList", OType.EMBEDDEDLIST, OType.LONG);
+    clazz.createProperty("stringList", OType.EMBEDDEDLIST, OType.STRING);
+    clazz.createProperty("floatList", OType.EMBEDDEDLIST, OType.FLOAT);
+    clazz.createProperty("doubleList", OType.EMBEDDEDLIST, OType.DOUBLE);
+    clazz.createProperty("decimalList", OType.EMBEDDEDLIST, OType.DECIMAL);
+    clazz.createProperty("booleanList", OType.EMBEDDEDLIST, OType.BOOLEAN);
+    clazz.createProperty("dateList", OType.EMBEDDEDLIST, OType.DATE);
+
+    clazz.createProperty("byteSet", OType.EMBEDDEDSET, OType.BYTE);
+    clazz.createProperty("integerSet", OType.EMBEDDEDSET, OType.INTEGER);
+    clazz.createProperty("longSet", OType.EMBEDDEDSET, OType.LONG);
+    clazz.createProperty("stringSet", OType.EMBEDDEDSET, OType.STRING);
+    clazz.createProperty("floatSet", OType.EMBEDDEDSET, OType.FLOAT);
+    clazz.createProperty("doubleSet", OType.EMBEDDEDSET, OType.DOUBLE);
+    clazz.createProperty("decimalSet", OType.EMBEDDEDSET, OType.DECIMAL);
+    clazz.createProperty("booleanSet", OType.EMBEDDEDSET, OType.BOOLEAN);
+    clazz.createProperty("dateSet", OType.EMBEDDEDSET, OType.DATE);
+
   }
 
   @Test
@@ -345,6 +371,342 @@ public class ODocumentFieldConversionTest {
 
     assertTrue(doc.field("date") instanceof Date);
     assertEquals(20304L, ((Date) doc.field("date")).getTime());
+
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
+  }
+
+  @SuppressWarnings({ "rawtypes" })
+  @Test
+  public void testListByteCoversion() {
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    List values = new ArrayList();
+    ODocument doc = new ODocument(clazz);
+    doc.field("byteList", values);
+    fillList(values);
+
+    Set set = new HashSet();
+    doc.field("byteSet", set);
+    fillSet(set);
+    doc.autoConvertValues();
+
+    values = doc.field("byteList");
+    for (Object val : values) {
+      assertTrue(val instanceof Byte);
+      assertEquals(val, (byte) 1);
+    }
+    set = doc.field("byteSet");
+    for (Object val : set) {
+      assertTrue(val instanceof Byte);
+    }
+    for (int i = 1; i < 7; i++) {
+      assertTrue(set.contains((byte) i));
+    }
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
+  }
+
+  @Test
+  @SuppressWarnings({ "rawtypes" })
+  public void testListIntegerCoversion() {
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    List values = new ArrayList();
+    ODocument doc = new ODocument(clazz);
+    doc.field("integerList", values);
+    fillList(values);
+    Set set = new HashSet();
+    doc.field("integerSet", set);
+    fillSet(set);
+
+    doc.autoConvertValues();
+
+    values = doc.field("integerList");
+    for (Object val : values) {
+      assertTrue(val instanceof Integer);
+      assertEquals((Integer) 1, val);
+    }
+    set = doc.field("integerSet");
+    for (Object val : set) {
+      assertTrue(val instanceof Integer);
+    }
+    for (int i = 1; i < 7; i++) {
+      assertTrue(set.contains(i));
+    }
+
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
+  }
+
+  @Test
+  @SuppressWarnings({ "rawtypes" })
+  public void testListLongCoversion() {
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    List values = new ArrayList();
+    ODocument doc = new ODocument(clazz);
+    doc.field("longList", values);
+    fillList(values);
+    Set set = new HashSet();
+    doc.field("longSet", set);
+    fillSet(set);
+
+    doc.autoConvertValues();
+
+    values = doc.field("longList");
+    for (Object val : values) {
+      assertTrue(val instanceof Long);
+      assertEquals((Long) 1L, val);
+    }
+    set = doc.field("longSet");
+    for (Object val : set) {
+      assertTrue(val instanceof Long);
+    }
+    for (int i = 1; i < 7; i++) {
+      assertTrue(set.contains((long) i));
+    }
+
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
+  }
+
+  @Test
+  @SuppressWarnings({ "rawtypes", "unchecked" })
+  public void testListBooleanCoversion() {
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    List values = new ArrayList();
+    ODocument doc = new ODocument(clazz);
+    doc.field("booleanList", values);
+    values.add((byte) 1);
+    values.add("true");
+    values.add(1L);
+    values.add(1);
+    values.add((short) 1);
+
+    values.add(1f);
+    values.add(1d);
+    values.add(new BigDecimal(1));
+
+    Set set = new HashSet();
+    doc.field("booleanSet", set);
+    set.add((byte) 1);
+    set.add(2L);
+    set.add(3);
+    set.add((short) 4);
+    set.add("true");
+    set.add(6f);
+    set.add(7d);
+    set.add(new BigDecimal(8));
+
+    doc.autoConvertValues();
+
+    values = doc.field("booleanList");
+    for (Object val : values) {
+      assertTrue(val instanceof Boolean);
+      assertEquals((Boolean) true, val);
+    }
+
+    set = doc.field("booleanSet");
+    assertEquals(1, set.size());
+    assertTrue(set.iterator().next() instanceof Boolean);
+    assertTrue((Boolean) set.iterator().next());
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
+  }
+
+  @Test
+  @SuppressWarnings({ "rawtypes", "unchecked" })
+  public void testListStringCoversion() {
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    List values = new ArrayList();
+    ODocument doc = new ODocument(clazz);
+    doc.field("stringList", values);
+    values.add((byte) 1);
+    values.add(1L);
+    values.add(1);
+    values.add((short) 1);
+
+    values.add(1f);
+    values.add(1d);
+    values.add(new BigDecimal(1));
+
+    Set set = new HashSet();
+    doc.field("stringSet", set);
+    fillSet(set);
+    doc.autoConvertValues();
+
+    values = doc.field("stringList");
+    for (Object val : values) {
+      assertTrue(val instanceof String);
+      assertTrue(((String) val).contains("1"));
+    }
+    set = doc.field("stringSet");
+    for (Object val : set) {
+      assertTrue(val instanceof String);
+    }
+    for (int i = 1; i < 7; i++) {
+      boolean contain = false;
+      for (Object object : set) {
+        if (object.toString().contains(((Integer) i).toString()))
+          contain = true;
+      }
+      assertTrue(contain);
+    }
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
+  }
+
+  @SuppressWarnings({ "rawtypes", "unchecked" })
+  private void fillSet(Set set) {
+    set.add((byte) 1);
+    set.add(2L);
+    set.add(3);
+    set.add((short) 4);
+    set.add("5");
+    set.add(6f);
+    set.add(7d);
+    set.add(new BigDecimal(8));
+  }
+
+  @Test
+  @SuppressWarnings({ "rawtypes" })
+  public void testListFloatCoversion() {
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    List values = new ArrayList();
+    ODocument doc = new ODocument(clazz);
+    doc.field("floatList", values);
+    fillList(values);
+
+    Set set = new HashSet();
+    doc.field("floatSet", set);
+    fillSet(set);
+
+    doc.autoConvertValues();
+
+    values = doc.field("floatList");
+    for (Object val : values) {
+      assertTrue(val instanceof Float);
+      assertEquals((Float) 1f, val);
+    }
+    set = doc.field("floatSet");
+    for (Object val : set) {
+      assertTrue(val instanceof Float);
+    }
+    for (int i = 1; i < 7; i++) {
+      assertTrue(set.contains(new Float(i)));
+    }
+
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
+  }
+
+  @SuppressWarnings({ "rawtypes", "unchecked" })
+  private void fillList(List values) {
+    values.add((byte) 1);
+    values.add(1L);
+    values.add(1);
+    values.add((short) 1);
+    values.add("1");
+    values.add(1f);
+    values.add(1d);
+    values.add(new BigDecimal(1));
+
+  }
+
+  @Test
+  @SuppressWarnings({ "rawtypes" })
+  public void testListDoubleCoversion() {
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    List values = new ArrayList();
+    ODocument doc = new ODocument(clazz);
+    doc.field("doubleList", values);
+    fillList(values);
+
+    Set set = new HashSet();
+    doc.field("doubleSet", set);
+    fillSet(set);
+
+    doc.autoConvertValues();
+
+    values = doc.field("doubleList");
+    for (Object val : values) {
+      assertTrue(val instanceof Double);
+      assertEquals((Double) 1d, val);
+    }
+    set = doc.field("doubleSet");
+    for (Object val : set) {
+      assertTrue(val instanceof Double);
+    }
+    for (int i = 1; i < 7; i++) {
+      assertTrue(set.contains(new Double(i)));
+    }
+
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
+  }
+
+  @Test
+  @SuppressWarnings({ "rawtypes" })
+  public void testListDecimalCoversion() {
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    List values = new ArrayList();
+    ODocument doc = new ODocument(clazz);
+    doc.field("decimalList", values);
+    fillList(values);
+
+    Set set = new HashSet();
+    doc.field("decimalSet", set);
+    fillSet(set);
+    doc.autoConvertValues();
+
+    values = doc.field("decimalList");
+    for (Object val : values) {
+      assertTrue(val instanceof BigDecimal);
+      assertTrue(val.toString().contains("1"));
+    }
+
+    set = doc.field("decimalSet");
+    for (Object val : set) {
+      assertTrue(val instanceof BigDecimal);
+    }
+    for (int i = 1; i < 7; i++) {
+      boolean contain = false;
+      for (Object object : set) {
+        if (object.toString().contains(((Integer) i).toString()))
+          contain = true;
+      }
+      assertTrue(contain);
+    }
+
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
+  }
+
+  @Test
+  @SuppressWarnings({ "rawtypes", "unchecked" })
+  public void testListDateCoversion() {
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    List values = new ArrayList();
+    ODocument doc = new ODocument(clazz);
+    doc.field("dateList", values);
+    values.add(1L);
+    values.add(1);
+    values.add((short) 1);
+    values.add(1f);
+    values.add(1d);
+    values.add(new BigDecimal(1));
+    Set set = new HashSet();
+    doc.field("dateSet", set);
+    set.add(1L);
+    set.add(2);
+    set.add((short) 3);
+    set.add(4f);
+    set.add(5d);
+    set.add(new BigDecimal(6));
+
+    doc.autoConvertValues();
+
+    values = doc.field("dateList");
+    for (Object val : values) {
+      assertTrue(val instanceof Date);
+      assertEquals(1, ((Date) val).getTime());
+    }
+    set = doc.field("dateSet");
+    for (Object val : set) {
+      assertTrue(val instanceof Date);
+    }
+    for (int i = 1; i < 7; i++) {
+      assertTrue(set.contains(new Date(i)));
+    }
 
     ODatabaseRecordThreadLocal.INSTANCE.remove();
   }

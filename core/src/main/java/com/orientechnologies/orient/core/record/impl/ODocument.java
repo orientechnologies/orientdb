@@ -1939,6 +1939,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     checkForLoading();
     checkForFields();
 
+    autoConvertValues();
+
     final OClass immutableSchemaClass = getImmutableSchemaClass();
     if (immutableSchemaClass != null) {
       if (immutableSchemaClass.isStrictMode()) {
@@ -1952,6 +1954,43 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
       for (OProperty p : immutableSchemaClass.properties()) {
         validateField(this, p);
+      }
+    }
+  }
+
+  protected void autoConvertValues() {
+    OClass clazz = getImmutableSchemaClass();
+    if (clazz != null) {
+      for (OProperty prop : clazz.properties()) {
+        OType type = prop.getType();
+        OType linkedType = prop.getLinkedType();
+        if (linkedType == null)
+          continue;
+        Object value = field(prop.getName());
+        if (value == null)
+          continue;
+        if (type == OType.EMBEDDEDLIST) {
+          List<Object> list = new OTrackedList<Object>(this);
+          Collection<Object> values = (Collection<Object>) value;
+          for (Object object : values) {
+            list.add(OType.convert(object, linkedType.getDefaultJavaType()));
+          }
+          field(prop.getName(), list);
+        } else if (type == OType.EMBEDDEDMAP) {
+          Map<Object, Object> map = new OTrackedMap<Object>(this);
+          Map<Object, Object> values = (Map<Object, Object>) value;
+          for (Entry<Object, Object> object : values.entrySet()) {
+            map.put(object.getKey(), OType.convert(object.getValue(), linkedType.getDefaultJavaType()));
+          }
+          field(prop.getName(), map);
+        } else if (type == OType.EMBEDDEDSET && linkedType != null) {
+          Set<Object> list = new OTrackedSet<Object>(this);
+          Collection<Object> values = (Collection<Object>) value;
+          for (Object object : values) {
+            list.add(OType.convert(object, linkedType.getDefaultJavaType()));
+          }
+          field(prop.getName(), list);
+        }
       }
     }
   }
