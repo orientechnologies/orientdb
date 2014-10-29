@@ -301,7 +301,7 @@ public class OServerAdmin {
       }
     }
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(null);
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
 
     return this;
   }

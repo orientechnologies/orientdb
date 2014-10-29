@@ -178,7 +178,7 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
         }
 
       status = STATUS.CLOSED;
-      ODatabaseRecordThreadLocal.INSTANCE.set(null);
+      ODatabaseRecordThreadLocal.INSTANCE.remove();
 
     } catch (OException e) {
       // PASS THROUGH
