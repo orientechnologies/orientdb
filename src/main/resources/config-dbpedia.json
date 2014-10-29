@@ -3,7 +3,7 @@
     log: "info",
     fileDirectory: "/temp/datasets/dbpedia_csv/",
     fileName: "Person.csv.gz",
-    parallel: true
+    parallel: false
   },
   begin: [
    { let: { name: "$filePath",  expression: "$fileDirectory.append( $fileName )"} },
