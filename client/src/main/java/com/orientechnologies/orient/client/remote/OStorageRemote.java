@@ -394,12 +394,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } while (true);
   }
 
-  @Override
-  public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock) {
-    throw new UnsupportedOperationException("callInRecordLock()");
-  }
-
-  @Override
+	@Override
   public ORecordMetadata getRecordMetadata(final ORID rid) {
 
     OChannelBinaryAsynchClient network = null;
@@ -1365,7 +1360,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       if (members != null) {
         serverURLs.clear();
 
-//        parseServerURLs();
+        // parseServerURLs();
 
         for (ODocument m : members)
           if (m != null && !serverURLs.contains((String) m.field("name"))) {
@@ -1763,7 +1758,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     String lastURL = iCurrentURL;
     do {
-      network = engine.getConnectionManager().acquire(lastURL, clientConfiguration, connectionOptions, asynchEventListener);
+      try {
+        network = engine.getConnectionManager().acquire(lastURL, clientConfiguration, connectionOptions, asynchEventListener);
+      } catch (Exception e) {
+        // CATCH ANY EXCEPTION AND TRY WITH A NEXT ONE IF ANY
+        network = null;
+      }
 
       if (network == null) {
         lastURL = useNewServerURL(lastURL);

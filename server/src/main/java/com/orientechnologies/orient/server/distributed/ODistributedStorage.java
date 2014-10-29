@@ -1043,12 +1043,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
     return wrapped.callInLock(iCallable, iExclusiveLock);
   }
 
-  @Override
-  public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock) {
-    return wrapped.callInRecordLock(iCallable, rid, iExclusiveLock);
-  }
-
-  public STATUS getStatus() {
+	public STATUS getStatus() {
     return wrapped.getStatus();
   }
 
