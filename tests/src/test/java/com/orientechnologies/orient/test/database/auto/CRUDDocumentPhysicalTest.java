@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import org.testng.Assert;
 import org.testng.annotations.*;
 
@@ -931,5 +932,39 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     for (int i = 5; i < 10; i++)
       Assert.assertEquals(linkList.get(i - 5), allDocs.get(i));
+  }
+
+  public void testRemoveAndReload() {
+    ODocument doc1;
+
+    database.begin();
+    {
+      doc1 = new ODocument();
+      doc1.save();
+    }
+    database.commit();
+
+    database.begin();
+    {
+      database.delete(doc1);
+    }
+    database.commit();
+
+    database.begin();
+    {
+      ODocument deletedDoc = database.load(doc1.getIdentity());
+      Assert.assertNull(deletedDoc); // OK!
+    }
+    database.commit();
+
+    database.begin();
+    try {
+      doc1.reload();
+      Assert.fail(); // <=================== AssertionError
+    } catch (ORecordNotFoundException e) {
+      // OK
+      // The JavaDoc of #reload() is documented : "If the record does not exist a ORecordNotFoundException exception is thrown.".
+    }
+    database.commit();
   }
 }

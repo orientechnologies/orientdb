@@ -1412,48 +1412,53 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
     final long timer = Orient.instance().getProfiler().startChrono();
     clusterSegment.getExternalModificationLock().requestModificationLock();
     try {
-
+      lockRecord(rid, iLockingStrategy);
       try {
-        switch (iLockingStrategy) {
-        case DEFAULT:
-        case KEEP_SHARED_LOCK:
-          rid.lock(false);
-          break;
-        case NONE:
-          // DO NOTHING
-          break;
-        case KEEP_EXCLUSIVE_LOCK:
-          rid.lock(true);
-        }
         ORawBuffer buff;
         if (atomicLock)
           lock.acquireSharedLock();
         try {
           buff = doReadRecord(clusterSegment, rid);
+          return buff;
         } finally {
           if (atomicLock)
             lock.releaseSharedLock();
         }
-        switch (iLockingStrategy) {
-        case DEFAULT:
-          rid.unlock();
-          break;
-
-        case KEEP_EXCLUSIVE_LOCK:
-        case NONE:
-        case KEEP_SHARED_LOCK:
-          // DO NOTHING
-          break;
-        }
-        return buff;
-      } catch (RuntimeException e) {
-        rid.unlock();
-        throw e;
+      } finally {
+        unlockRecord(rid, iLockingStrategy);
       }
     } finally {
       clusterSegment.getExternalModificationLock().releaseModificationLock();
 
       Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from database", timer, "db.*.readRecord");
+    }
+  }
+
+  private void unlockRecord(ORecordId rid, LOCKING_STRATEGY iLockingStrategy) {
+    switch (iLockingStrategy) {
+    case DEFAULT:
+      rid.unlock();
+      break;
+
+    case KEEP_EXCLUSIVE_LOCK:
+    case NONE:
+    case KEEP_SHARED_LOCK:
+      // DO NOTHING
+      break;
+    }
+  }
+
+  private void lockRecord(ORecordId rid, LOCKING_STRATEGY iLockingStrategy) {
+    switch (iLockingStrategy) {
+    case DEFAULT:
+    case KEEP_SHARED_LOCK:
+      rid.lock(false);
+      break;
+    case NONE:
+      // DO NOTHING
+      break;
+    case KEEP_EXCLUSIVE_LOCK:
+      rid.lock(true);
     }
   }
 
