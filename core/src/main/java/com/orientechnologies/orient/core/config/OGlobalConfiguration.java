@@ -503,9 +503,7 @@ public enum OGlobalConfiguration {
       "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l),
 
   DB_DOCUMENT_SERIALIZER("db.document.serializer", "The default record serializer used by the document database", String.class,
-      ORecordSerializerBinary.NAME),
-  
-  DB_CUSTOMIZED_CLUSTER_SELECTION("db.customized.cluster.selection", "Register customized cluster selection in OClusterSelectionFactory", String.class, null);
+      ORecordSerializerBinary.NAME);
 
   private final String                 key;
   private final Object                 defValue;
