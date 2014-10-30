@@ -744,10 +744,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   @Override
-  public int getClusterForNewInstance() {
+  public int getClusterForNewInstance(final ODocument doc) {
     acquireSchemaReadLock();
     try {
-      return clusterSelection.getCluster(this);
+      return clusterSelection.getCluster(this, doc);
     } finally {
       releaseSchemaReadLock();
     }

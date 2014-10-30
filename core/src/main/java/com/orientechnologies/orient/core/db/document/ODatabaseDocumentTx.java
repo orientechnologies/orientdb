@@ -322,7 +322,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
         if (schemaClass != null && doc.getIdentity().getClusterId() < 0) {
           // CLASS FOUND: FORCE THE STORING IN THE CLUSTER CONFIGURED
-          final String clusterName = getClusterNameById(doc.getImmutableSchemaClass().getClusterForNewInstance());
+          final String clusterName = getClusterNameById(doc.getImmutableSchemaClass().getClusterForNewInstance(doc));
 
           return (RET) super.save(doc, clusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
         }
@@ -422,7 +422,7 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
 
       if (iClusterName == null && schemaClass != null)
         // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
-        iClusterName = getClusterNameById(schemaClass.getClusterForNewInstance());
+        iClusterName = getClusterNameById(schemaClass.getClusterForNewInstance(doc));
 
       int id = getClusterIdByName(iClusterName);
       if (id == -1)

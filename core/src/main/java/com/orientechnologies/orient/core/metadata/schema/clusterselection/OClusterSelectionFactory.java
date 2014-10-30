@@ -15,7 +15,11 @@
  */
 package com.orientechnologies.orient.core.metadata.schema.clusterselection;
 
+import java.lang.reflect.Field;
+
 import com.orientechnologies.common.factory.OConfigurableStatefulFactory;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 /**
  * Factory to get the cluster selection strategy.
@@ -29,8 +33,29 @@ public class OClusterSelectionFactory extends OConfigurableStatefulFactory<Strin
     register(ODefaultClusterSelectionStrategy.NAME, ODefaultClusterSelectionStrategy.class);
     register(ORoundRobinClusterSelectionStrategy.NAME, ORoundRobinClusterSelectionStrategy.class);
     register(OBalancedClusterSelectionStrategy.NAME, OBalancedClusterSelectionStrategy.class);
+    this.registerCustomizedStrategy();
   }
 
+  private void registerCustomizedStrategy() {
+    final OGlobalConfiguration cfg = OGlobalConfiguration.findByKey("db.customized.cluster.selection");
+    if(cfg != null) {
+      String clzName = (String)cfg.getValue();
+      try {
+        Class clz = Class.forName(clzName);
+        Field field = clz.getField("NAME");
+        if(field != null) {
+          String fieldValue = (String)field.get(clz.newInstance());
+          //OLogManager.instance().info(this, "register key : " + fieldValue + " value : " + clz.getName());
+          register(fieldValue, clz);
+        } else {
+          OLogManager.instance().error(this, "NAME field missing");
+        }
+      }catch(Exception ex) {
+        OLogManager.instance().error(this, "failed to register class - " + clzName);
+      }        
+    }
+  }
+  
   public OClusterSelectionStrategy getStrategy(final String iStrategy) {
     return newInstance(iStrategy);
   }

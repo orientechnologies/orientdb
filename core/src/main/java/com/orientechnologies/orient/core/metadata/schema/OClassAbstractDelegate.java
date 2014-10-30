@@ -149,8 +149,8 @@ public abstract class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public int getClusterForNewInstance() {
-    return delegate.getClusterForNewInstance();
+  public int getClusterForNewInstance(final ODocument doc) {
+    return delegate.getClusterForNewInstance(doc);
   }
 
   @Override

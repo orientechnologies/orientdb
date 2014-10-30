@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.metadata.schema.clusterselection;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Returns always the first cluster configured.
@@ -25,7 +26,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 public class ODefaultClusterSelectionStrategy implements OClusterSelectionStrategy {
   public static final String NAME = "default";
 
-  public int getCluster(final OClass iClass) {
+  public int getCluster(final OClass iClass, final ODocument doc) {
     return iClass.getDefaultClusterId();
   }
 

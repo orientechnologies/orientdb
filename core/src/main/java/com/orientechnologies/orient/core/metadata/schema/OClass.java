@@ -97,7 +97,7 @@ public interface OClass extends Comparable<OClass> {
 
   public Class<?> getJavaClass();
 
-  int getClusterForNewInstance();
+  int getClusterForNewInstance(final ODocument doc);
 
   public int getDefaultClusterId();
 

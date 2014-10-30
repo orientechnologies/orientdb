@@ -216,7 +216,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
   public Set<String> getInvolvedClusters() {
     if (className != null) {
       final OClass clazz = getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(className);
-      return Collections.singleton(getDatabase().getClusterNameById(clazz.getClusterSelection().getCluster(clazz)));
+      return Collections.singleton(getDatabase().getClusterNameById(clazz.getClusterSelection().getCluster(clazz, null)));
     } else if (clusterName != null)
       return getInvolvedClustersOfClusters(Collections.singleton(clusterName));
 
