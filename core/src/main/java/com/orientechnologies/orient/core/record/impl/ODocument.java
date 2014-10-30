@@ -1689,7 +1689,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     if (_className != null && getIdentity().isNew()) {
       OClass _clazz = getImmutableSchemaClass();
       if (_clazz != null)
-        return save(getDatabase().getClusterNameById(_clazz.getClusterForNewInstance()), forceCreate);
+        return save(getDatabase().getClusterNameById(_clazz.getClusterForNewInstance(this)), forceCreate);
     }
 
     convertAllMultiValuesToTrackedVersions();

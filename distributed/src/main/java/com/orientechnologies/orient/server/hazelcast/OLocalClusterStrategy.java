@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
@@ -53,7 +54,7 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
   }
 
   @Override
-  public int getCluster(final OClass iClass) {
+  public int getCluster(final OClass iClass, final ODocument doc) {
     if (!iClass.equals(cls))
       throw new IllegalArgumentException("Class '" + iClass + "' is different than the configured one: " + cls);
 

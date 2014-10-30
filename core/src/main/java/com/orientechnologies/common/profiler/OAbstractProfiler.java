@@ -1,28 +1,36 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.common.profiler;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.sun.management.OperatingSystemMXBean;
 
+import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,6 +39,15 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class OAbstractProfiler extends OSharedResourceAbstract implements OProfilerMBean {
 
+  protected static OperatingSystemMXBean                 osMgmtBean    = null;
+
+  static {
+    try {
+      osMgmtBean = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+    } catch (Exception e) {
+      osMgmtBean = null;
+    }
+  }
   protected final Map<String, OProfilerHookValue>        hooks         = new ConcurrentHashMap<String, OProfilerHookValue>();
   protected final ConcurrentHashMap<String, String>      dictionary    = new ConcurrentHashMap<String, String>();
   protected final ConcurrentHashMap<String, METRIC_TYPE> types         = new ConcurrentHashMap<String, METRIC_TYPE>();
@@ -47,6 +64,37 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
     hooks.putAll(profiler.hooks);
     dictionary.putAll(profiler.dictionary);
     types.putAll(profiler.types);
+  }
+
+  public static void dumpEnvironment(final PrintStream out) {
+    final Runtime runtime = Runtime.getRuntime();
+
+    int stgs = 0;
+    long diskCacheUsed = 0;
+    long diskCacheTotal = 0;
+    for (OStorage stg : Orient.instance().getStorages()) {
+      if (stg instanceof OLocalPaginatedStorage) {
+        diskCacheUsed += ((OLocalPaginatedStorage) stg).getDiskCache().getUsedMemory();
+        diskCacheTotal += OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;
+        stgs++;
+      }
+    }
+
+    if (osMgmtBean != null) {
+      final long osTotalMem = osMgmtBean.getTotalPhysicalMemorySize();
+      final long osUsedMem = osTotalMem - osMgmtBean.getFreePhysicalMemorySize();
+
+      out.printf("OrientDB Memory profiler: Heap=%s of %s - DiskCache (%s dbs)=%s of %s - OS=%s of %s\n",
+          OFileUtils.getSizeAsString(runtime.totalMemory() - runtime.freeMemory()),
+          OFileUtils.getSizeAsString(runtime.maxMemory()), stgs, OFileUtils.getSizeAsString(diskCacheUsed),
+          OFileUtils.getSizeAsString(diskCacheTotal), OFileUtils.getSizeAsString(osUsedMem), OFileUtils.getSizeAsString(osTotalMem));
+
+    } else {
+      out.printf("OrientDB Memory profiler: Heap=%s of %s - DiskCache (%s dbs)=%s of %s\n",
+          OFileUtils.getSizeAsString(runtime.totalMemory() - runtime.freeMemory()),
+          OFileUtils.getSizeAsString(runtime.maxMemory()), stgs, OFileUtils.getSizeAsString(diskCacheUsed),
+          OFileUtils.getSizeAsString(diskCacheTotal));
+    }
   }
 
   public void shutdown() {
