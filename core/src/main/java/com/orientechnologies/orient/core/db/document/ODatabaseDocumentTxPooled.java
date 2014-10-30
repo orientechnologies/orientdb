@@ -127,6 +127,8 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
       ownerPool = null;
       localCopy.release(this);
     }
+
+		ODatabaseRecordThreadLocal.INSTANCE.remove();
   }
 
   public void forceClose() {
