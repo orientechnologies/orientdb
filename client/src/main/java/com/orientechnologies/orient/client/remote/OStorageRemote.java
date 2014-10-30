@@ -15,6 +15,22 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
+
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -66,21 +82,6 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
-
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
 
 /**
  * This object is bound to each remote ODatabase instances.
@@ -1729,59 +1730,67 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   /**
-   * Parse the URLs. Multiple URLs must be separated by semicolon (;)
+   * Parse the URLs. Multiple URLs must be separated by semicolon (;). This operation is synchronized in eclusive mode to avoid race
+   * conditions on URL management.
    */
   protected void parseServerURLs() {
-    String lastHost = null;
-    int dbPos = url.indexOf('/');
-    if (dbPos == -1) {
-      // SHORT FORM
-      addHost(url);
-      lastHost = url;
-      name = url;
-    } else {
-      name = url.substring(url.lastIndexOf("/") + 1);
-      for (String host : url.substring(0, dbPos).split(ADDRESS_SEPARATOR)) {
-        lastHost = host;
-        addHost(host);
+    lock.acquireExclusiveLock();
+    try {
+
+      String lastHost = null;
+      int dbPos = url.indexOf('/');
+      if (dbPos == -1) {
+        // SHORT FORM
+        addHost(url);
+        lastHost = url;
+        name = url;
+      } else {
+        name = url.substring(url.lastIndexOf("/") + 1);
+        for (String host : url.substring(0, dbPos).split(ADDRESS_SEPARATOR)) {
+          lastHost = host;
+          addHost(host);
+        }
       }
-    }
 
-    if (serverURLs.size() == 1 && OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_ENABLED.getValueAsBoolean()) {
-      // LOOK FOR LOAD BALANCING DNS TXT RECORD
-      final String primaryServer = lastHost;
+      if (serverURLs.size() == 1 && OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_ENABLED.getValueAsBoolean()) {
+        // LOOK FOR LOAD BALANCING DNS TXT RECORD
+        final String primaryServer = lastHost;
 
-      OLogManager.instance().debug(this, "Retrieving URLs from DNS '%s' (timeout=%d)...", primaryServer,
-          OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT.getValueAsInteger());
+        OLogManager.instance().debug(this, "Retrieving URLs from DNS '%s' (timeout=%d)...", primaryServer,
+            OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT.getValueAsInteger());
 
-      try {
-        final Hashtable<String, String> env = new Hashtable<String, String>();
-        env.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
-        env.put("com.sun.jndi.ldap.connect.timeout",
-            OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT.getValueAsString());
-        final DirContext ictx = new InitialDirContext(env);
-        final String hostName = !primaryServer.contains(":") ? primaryServer : primaryServer.substring(0,
-            primaryServer.indexOf(":"));
-        final Attributes attrs = ictx.getAttributes(hostName, new String[] { "TXT" });
-        final Attribute attr = attrs.get("TXT");
-        if (attr != null) {
-          for (int i = 0; i < attr.size(); ++i) {
-            String configuration = (String) attr.get(i);
-            if (configuration.startsWith("\""))
-              configuration = configuration.substring(1, configuration.length() - 1);
-            if (configuration != null) {
-              serverURLs.clear();
-              final String[] parts = configuration.split(" ");
-              for (String part : parts) {
-                if (part.startsWith("s=")) {
-                  addHost(part.substring("s=".length()));
+        try {
+          final Hashtable<String, String> env = new Hashtable<String, String>();
+          env.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
+          env.put("com.sun.jndi.ldap.connect.timeout",
+              OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT.getValueAsString());
+          final DirContext ictx = new InitialDirContext(env);
+          final String hostName = !primaryServer.contains(":") ? primaryServer : primaryServer.substring(0,
+              primaryServer.indexOf(":"));
+          final Attributes attrs = ictx.getAttributes(hostName, new String[] { "TXT" });
+          final Attribute attr = attrs.get("TXT");
+          if (attr != null) {
+            for (int i = 0; i < attr.size(); ++i) {
+              String configuration = (String) attr.get(i);
+              if (configuration.startsWith("\""))
+                configuration = configuration.substring(1, configuration.length() - 1);
+              if (configuration != null) {
+                serverURLs.clear();
+                final String[] parts = configuration.split(" ");
+                for (String part : parts) {
+                  if (part.startsWith("s=")) {
+                    addHost(part.substring("s=".length()));
+                  }
                 }
               }
             }
           }
+        } catch (NamingException ignore) {
         }
-      } catch (NamingException ignore) {
       }
+
+    } finally {
+      lock.releaseExclusiveLock();
     }
   }
 
