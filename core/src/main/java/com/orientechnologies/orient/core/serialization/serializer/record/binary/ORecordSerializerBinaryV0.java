@@ -69,7 +69,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
 
   @Override
-  public void deserialize(final ODocument document, final BytesContainer bytes) {
+  public void deserialize(final ODocument document, final BytesContainer bytes, final String[] iFields) {
 
     final String className = readString(bytes);
     if (className.length() != 0)
@@ -77,12 +77,17 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
     int last = 0;
     String field;
+    int unmarshalledFields = 0;
+
     while (true) {
+
       OGlobalProperty prop = null;
       final int len = OVarIntSerializer.readAsInteger(bytes);
-      if (len == 0)
+
+      if (len == 0) {
+        // SCAN COMPLETED
         break;
-      else if (len > 0) {
+      } else if (len > 0) {
         final String res = new String(bytes.bytes, bytes.offset, len, utf8);
         bytes.skip(len);
         field = res;
@@ -120,8 +125,28 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         document.field(field, value, type);
       } else
         document.field(field, (Object) null);
+
+      boolean exit = false;
+      if (iFields != null) {
+        for (int i = 0; i < iFields.length; ++i) {
+          if (field.equals(iFields[i])) {
+            unmarshalledFields++;
+
+            if (unmarshalledFields >= iFields.length)
+              exit = true;
+
+            break ;
+          }
+        }
+        if (exit)
+          break;
+      }
     }
-    ORecordInternal.clearSource(document);
+
+    if (iFields == null || iFields.length == 0)
+      // CLEAR SOURCE
+      ORecordInternal.clearSource(document);
+
     if (last > bytes.offset)
       bytes.offset = last;
   }
@@ -230,7 +255,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       break;
     case EMBEDDED:
       value = new ODocument();
-      deserialize((ODocument) value, bytes);
+      deserialize((ODocument) value, bytes, null);
       if (((ODocument) value).containsField(ODocumentSerializable.CLASS_NAME)) {
         String className = ((ODocument) value).field(ODocumentSerializable.CLASS_NAME);
         try {

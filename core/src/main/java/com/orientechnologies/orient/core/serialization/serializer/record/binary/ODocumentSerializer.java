@@ -26,6 +26,6 @@ public interface ODocumentSerializer {
 
   public void serialize(ODocument document, BytesContainer bytes);
 
-  public void deserialize(ODocument document, BytesContainer bytes);
+  public void deserialize(ODocument document, BytesContainer bytes, String[] iFields);
 
 }
