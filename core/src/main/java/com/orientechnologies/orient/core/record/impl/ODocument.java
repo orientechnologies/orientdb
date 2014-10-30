@@ -971,6 +971,22 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     return this;
   }
 
+  protected void rawField(final String iFieldName, final Object iFieldValue, final OType iFieldType) {
+    if (_fieldValues == null)
+      _fieldValues = _ordered ? new LinkedHashMap<String, Object>() : new HashMap<String, Object>();
+    if (_fieldTypes == null)
+      _fieldTypes = new HashMap<String, OType>();
+
+    _fieldValues.put(iFieldName, iFieldValue);
+    addCollectionChangeListener(iFieldName, iFieldValue);
+    if (iFieldType != null)
+      _fieldTypes.put(iFieldName, iFieldType);
+  }
+
+  protected boolean rawFieldContains(final String iFiledName) {
+    return _fieldValues != null && _fieldValues.containsKey(iFiledName);
+  }
+
   /**
    * Deprecated. Use fromMap(Map) instead.<br>
    * Fills a document passing the field names/values as a Map String,Object where the keys are the field names and the values are

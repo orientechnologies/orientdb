@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
@@ -99,7 +100,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         field = prop.getName();
       }
 
-      if (document.containsField(field)) {
+      if (ODocumentInternal.rawFieldContains(document, field)) {
         // SKIP FIELD
         if (prop != null && prop.getType() != OType.ANY)
           bytes.skip(OIntegerSerializer.INT_SIZE);
@@ -122,9 +123,11 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         if (bytes.offset > last)
           last = bytes.offset;
         bytes.offset = headerCursor;
-        document.field(field, value, type);
+        ODocumentInternal.rawField(document, field, value, type);
+        // document.field(field, value, type);
       } else
-        document.field(field, (Object) null);
+        ODocumentInternal.rawField(document, field, null, null);
+      // document.field(field, (Object) null);
 
       boolean exit = false;
       if (iFields != null) {
@@ -135,7 +138,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
             if (unmarshalledFields >= iFields.length)
               exit = true;
 
-            break ;
+            break;
           }
         }
         if (exit)
@@ -266,7 +269,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         } catch (Exception e) {
           throw new RuntimeException(e);
         }
-      }
+      } else
+        ODocumentInternal.addOwner((ODocument) value, document);
+
       break;
     case EMBEDDEDSET:
       value = readEmbeddedCollection(bytes, new OTrackedSet<Object>(document), document);
@@ -299,6 +304,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     case LINKBAG:
       ORidBag bag = new ORidBag();
       bag.fromStream(bytes);
+      bag.setOwner(document);
       value = bag;
       break;
     case TRANSIENT:

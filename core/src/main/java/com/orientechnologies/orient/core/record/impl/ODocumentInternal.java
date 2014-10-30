@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 
 public class ODocumentInternal {
 
@@ -36,4 +37,11 @@ public class ODocumentInternal {
     oDocument.removeOwner(iOwner);
   }
 
+  public static void rawField(final ODocument oDocument, final String iFieldName, final Object iFieldValue, final OType iFieldType) {
+    oDocument.rawField(iFieldName, iFieldValue, iFieldType);
+  }
+
+  public static boolean rawFieldContains(final ODocument oDocument, final String iFiledName) {
+    return oDocument.rawFieldContains(iFiledName);
+  }
 }
