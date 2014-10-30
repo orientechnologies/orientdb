@@ -47,7 +47,7 @@ public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTe
 
     @Override
     public void init() {
-      database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
+      database = new ODatabaseDocumentTx("plocal:./test").open("admin", "admin");
       database.setSerializer(new ORecordSerializerBinary());
 
       record = database.newInstance();
@@ -92,7 +92,7 @@ public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTe
 
   @Override
   public void init() {
-    database = new ODatabaseDocumentTx(System.getProperty("url"));
+    database = new ODatabaseDocumentTx("plocal:./test");
     database.setSerializer(new ORecordSerializerBinary());
     if (database.exists()) {
       database.open("admin", "admin");
