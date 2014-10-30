@@ -2048,7 +2048,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   protected void printApplicationInfo() {
     message("\nOrientDB console v." + OConstants.getVersion() + " " + OConstants.ORIENT_URL);
-    message("\nType 'help' to display all the commands supported.");
+    message("\nType 'help' to display all the supported commands.");
   }
 
   protected void dumpResultSet(final int limit) {
