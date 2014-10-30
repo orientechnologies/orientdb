@@ -20,12 +20,10 @@
 
 package com.orientechnologies.orient.core;
 
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
-import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
 
 public class OSignalHandler implements SignalHandler {
   public OSignalHandler() {
@@ -48,9 +46,7 @@ public class OSignalHandler implements SignalHandler {
       System.out.println();
       OGlobalConfiguration.dumpConfiguration(System.out);
       System.out.println();
-      Orient.instance().getProfiler().dump();
-      System.out.println();
-      OIOUtils.dump(System.out);
+      Orient.instance().getProfiler().dump(System.out);
       System.out.println();
     }
   }

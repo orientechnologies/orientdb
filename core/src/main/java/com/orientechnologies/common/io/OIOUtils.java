@@ -283,16 +283,4 @@ public class OIOUtils {
     }
     return isLong;
   }
-
-  public static void dump(final PrintStream out) {
-    Runtime runtime = Runtime.getRuntime();
-    out.printf("+------------------------+\n");
-    out.printf("|     HEAP STATISTICS    |\n");
-    out.printf("+------------+-----------+\n");
-    out.printf("|Used Memory | %-10s|\n", OFileUtils.getSizeAsString(runtime.totalMemory() - runtime.freeMemory()));
-    out.printf("|Free Memory | %-10s|\n", OFileUtils.getSizeAsString(runtime.freeMemory()));
-    out.printf("|Total Memory| %-10s|\n", OFileUtils.getSizeAsString(runtime.totalMemory()));
-    out.printf("|Max Memory  | %-10s|\n", OFileUtils.getSizeAsString(runtime.maxMemory()));
-    out.printf("+------------+-----------+\n");
-  }
 }
