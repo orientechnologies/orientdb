@@ -36,6 +36,17 @@ public class UserRepositoryImpl extends OrientBaseRepository<User> implements Us
   }
 
   @Override
+  public User findUserOrCreateByLogin(String login) {
+
+    User user = findUserByLogin(login);
+    if (user == null) {
+      user = new User(login, null, null);
+      user = save(user);
+    }
+    return user;
+  }
+
+  @Override
   public User findByGithubToken(String token) {
     OrientGraph db = dbFactory.getGraph();
     String query = String.format("select from %s where token = '%s'", getEntityClass().getSimpleName(), token);

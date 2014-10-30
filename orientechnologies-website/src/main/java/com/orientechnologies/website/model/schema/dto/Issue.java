@@ -20,6 +20,7 @@ public class Issue {
   private Date               createdAt;
   private Date               closedAt;
 
+  private User               user;
   private User               assignee;
 
   public String getId() {
@@ -96,5 +97,13 @@ public class Issue {
 
   public void addLabel(String name) {
     labels.add(name);
+  }
+
+  public User getUser() {
+    return user;
+  }
+
+  public void setUser(User user) {
+    this.user = user;
   }
 }

@@ -5,6 +5,7 @@ import java.io.IOException;
 import com.orientechnologies.website.model.schema.dto.Organization;
 import com.orientechnologies.website.model.schema.dto.Repository;
 import com.orientechnologies.website.model.schema.dto.User;
+import com.orientechnologies.website.repository.RepositoryRepository;
 import com.orientechnologies.website.services.RepositoryService;
 import com.orientechnologies.website.services.reactor.GitHubIssueImporter;
 import com.orientechnologies.website.services.reactor.ReactorMSG;
@@ -48,6 +49,9 @@ public class OrganizationServiceImpl implements OrganizationService {
 
   @Autowired
   private RepositoryService      repositoryService;
+
+  @Autowired
+  private RepositoryRepository   repoRepository;
 
   @Autowired
   private Reactor                reactor;
@@ -126,13 +130,16 @@ public class OrganizationServiceImpl implements OrganizationService {
       String token = developerAuthentication.getGithubToken();
 
       try {
+
+        Repository r = null;
         GitHub github = GitHub.connectUsingOAuth(token);
         GHRepository repository = github.getRepository(org + '/' + repo);
-        Repository r = repositoryService.createRepo(repository.getName(), repository.getDescription());
-
-        createHasRepoRelationship(organization, r);
-        dbFactory.getGraph().commit();
-
+        r = repoRepository.findByOrgAndName(org, repo);
+        if (r == null) {
+          r = repositoryService.createRepo(repository.getName(), repository.getDescription());
+          createHasRepoRelationship(organization, r);
+          dbFactory.getGraph().commit();
+        }
         GitHubIssueImporter.GitHubIssueMessage gitHubIssueMessage = new GitHubIssueImporter.GitHubIssueMessage(repository);
         reactor.notify(ReactorMSG.ISSUE_IMPORT, Event.wrap(gitHubIssueMessage));
         return r;

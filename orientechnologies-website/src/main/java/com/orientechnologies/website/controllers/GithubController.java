@@ -1,21 +1,28 @@
 package com.orientechnologies.website.controllers;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.configuration.ApiVersion;
 import com.orientechnologies.website.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 
 import com.orientechnologies.website.configuration.GitHubConfiguration;
+import reactor.core.Reactor;
+import reactor.event.Event;
+import sun.net.httpserver.HttpServerImpl;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * Created by Enrico Risa on 20/10/14.
@@ -24,13 +31,16 @@ import com.orientechnologies.website.configuration.GitHubConfiguration;
 @EnableAutoConfiguration
 @RequestMapping("github")
 @ApiVersion(1)
-public class GithubLoginController {
+public class GithubController {
 
   @Autowired
   private GitHubConfiguration gitHubConfiguration;
 
   @Autowired
-  private UserService userService;
+  private UserService         userService;
+
+  @Autowired
+  private Reactor             reactor;
 
   @RequestMapping(value = "/login", method = RequestMethod.GET)
   public RedirectView login() {
@@ -76,4 +86,22 @@ public class GithubLoginController {
     return view;
   }
 
+  @RequestMapping(value = "/events", method = RequestMethod.POST)
+  @ResponseStatus(HttpStatus.OK)
+  public void handleEvent(HttpServletRequest req) {
+    try {
+
+      final ByteArrayOutputStream out = new ByteArrayOutputStream();
+      OIOUtils.copyStream(req.getInputStream(), out, -1);
+      ODocument doc = new ODocument().fromJSON(out.toString(), "noMap");
+
+      if (doc.containsField("action")) {
+        reactor.notify(doc.field("action"), Event.wrap(doc));
+      }
+
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+  }
 }

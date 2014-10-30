@@ -85,11 +85,35 @@ public class OSiteSchema {
   }
 
   // Vertices
-  public enum Comment implements OTypeHolder<CommentDTO> {
-    TEXT("text") {
+  public enum Comment implements OTypeHolder<com.orientechnologies.website.model.schema.dto.Comment> {
+    COMMENT_ID("comment_id") {
+      @Override
+      public OType getType() {
+        return OType.INTEGER;
+      }
+    },
+    BODY("body") {
       @Override
       public OType getType() {
         return OType.STRING;
+      }
+    },
+    USER("user") {
+      @Override
+      public OType getType() {
+        return OType.LINK;
+      }
+    },
+    CREATED_AT("createdAt") {
+      @Override
+      public OType getType() {
+        return OType.DATETIME;
+      }
+    },
+    UPDATED_AT("updatedAt") {
+      @Override
+      public OType getType() {
+        return OType.DATETIME;
       }
     };
     private final String name;
@@ -99,13 +123,32 @@ public class OSiteSchema {
     }
 
     @Override
-    public ODocument toDoc(CommentDTO doc, OrientBaseGraph graph) {
-      return null;
+    public ODocument toDoc(com.orientechnologies.website.model.schema.dto.Comment entity, OrientBaseGraph graph) {
+      ODocument doc;
+      if (entity.getId() == null) {
+        doc = new ODocument(entity.getClass().getSimpleName());
+      } else {
+        doc = graph.getRawGraph().load(new ORecordId(entity.getId()));
+      }
+      doc.field(COMMENT_ID.toString(), entity.getCommentId());
+      doc.field(BODY.toString(), entity.getBody());
+      doc.field(CREATED_AT.toString(), entity.getCreatedAt());
+      doc.field(UPDATED_AT.toString(), entity.getUpdatedAt());
+      doc.field(USER.toString(), (entity.getUser() != null ? new ORecordId(entity.getUser().getId()) : null));
+      return doc;
     }
 
     @Override
-    public CommentDTO fromDoc(ODocument doc) {
-      return null;
+    public com.orientechnologies.website.model.schema.dto.Comment fromDoc(ODocument doc) {
+
+      com.orientechnologies.website.model.schema.dto.Comment comment = new com.orientechnologies.website.model.schema.dto.Comment();
+      comment.setId(doc.getIdentity().toString());
+      comment.setCommentId((Integer) doc.field(COMMENT_ID.toString()));
+      comment.setBody((String) doc.field(BODY.toString()));
+      comment.setCreatedAt((Date) doc.field(CREATED_AT.toString()));
+      comment.setCreatedAt((Date) doc.field(CREATED_AT.toString()));
+      comment.setUser(User.NAME.fromDoc((ODocument) doc.field(USER.toString())));
+      return comment;
     }
 
     @Override
@@ -143,6 +186,12 @@ public class OSiteSchema {
       @Override
       public OType getType() {
         return OType.EMBEDDEDSET;
+      }
+    },
+    USER("user") {
+      @Override
+      public OType getType() {
+        return OType.LINK;
       }
     },
     ASSIGNEE("assignee") {
@@ -186,6 +235,7 @@ public class OSiteSchema {
       doc.field(NUMBER.toString(), entity.getNumber());
       doc.field(STATE.toString(), entity.getState());
       doc.field(ASSIGNEE.toString(), (entity.getAssignee() != null ? new ORecordId(entity.getAssignee().getId()) : null));
+      doc.field(USER.toString(), (entity.getUser() != null ? new ORecordId(entity.getUser().getId()) : null));
       return doc;
     }
 
@@ -370,6 +420,9 @@ public class OSiteSchema {
 
     @Override
     public com.orientechnologies.website.model.schema.dto.User fromDoc(ODocument doc) {
+      if (doc == null) {
+        return null;
+      }
       com.orientechnologies.website.model.schema.dto.User user = new com.orientechnologies.website.model.schema.dto.User();
       user.setEmail((String) doc.field(OSiteSchema.User.EMAIL.toString()));
       user.setId(doc.getIdentity().toString());

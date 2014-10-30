@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.website.model.schema.OSiteSchema;
+import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.model.schema.dto.Repository;
 import com.orientechnologies.website.repository.RepositoryRepository;
 import com.tinkerpop.blueprints.Vertex;
@@ -44,5 +45,21 @@ public class RepositoryRepositoryImpl extends OrientBaseRepository<Repository> i
       return null;
     }
 
+  }
+
+  @Override
+  public Issue findIssueByRepoAndNumber(String repo, Integer number) {
+
+    OrientGraph graph = dbFactory.getGraph();
+    String query = String.format("select from (select expand(out('%s')) from %s where %s = '%s') where %s = %d",
+        OSiteSchema.HasIssue.class.getSimpleName(), getEntityClass().getSimpleName(), OSiteSchema.Repository.CODENAME, repo,
+        OSiteSchema.Issue.NUMBER, number);
+    List<ODocument> vertexes = graph.getRawGraph().query(new OSQLSynchQuery<Object>(query));
+
+    try {
+      return OSiteSchema.Issue.NUMBER.fromDoc(vertexes.iterator().next());
+    } catch (NoSuchElementException e) {
+      return null;
+    }
   }
 }
