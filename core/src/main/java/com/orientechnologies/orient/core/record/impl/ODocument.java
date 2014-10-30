@@ -983,7 +983,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       _fieldTypes.put(iFieldName, iFieldType);
   }
 
-  protected boolean rawFieldContains(final String iFiledName) {
+  protected boolean rawContainsField(final String iFiledName) {
     return _fieldValues != null && _fieldValues.containsKey(iFiledName);
   }
 

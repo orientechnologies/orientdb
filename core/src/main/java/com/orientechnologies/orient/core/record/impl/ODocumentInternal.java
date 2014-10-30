@@ -41,7 +41,7 @@ public class ODocumentInternal {
     oDocument.rawField(iFieldName, iFieldValue, iFieldType);
   }
 
-  public static boolean rawFieldContains(final ODocument oDocument, final String iFiledName) {
-    return oDocument.rawFieldContains(iFiledName);
+  public static boolean rawContainsField(final ODocument oDocument, final String iFiledName) {
+    return oDocument.rawContainsField(iFiledName);
   }
 }

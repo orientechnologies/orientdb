@@ -100,7 +100,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         field = prop.getName();
       }
 
-      if (ODocumentInternal.rawFieldContains(document, field)) {
+      if (ODocumentInternal.rawContainsField(document, field)) {
         // SKIP FIELD
         if (prop != null && prop.getType() != OType.ANY)
           bytes.skip(OIntegerSerializer.INT_SIZE);
