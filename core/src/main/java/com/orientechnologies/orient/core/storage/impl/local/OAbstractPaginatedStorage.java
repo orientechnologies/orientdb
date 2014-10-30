@@ -2144,7 +2144,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
         batch.add(walRecord);
 
         if (batch.size() >= batchSize) {
-          OLogManager.instance().info(this, "Heap memory is low apply batch of operations are read from WAL.");
+          OLogManager.instance()
+              .info(this, "WAL size exceed configured heap memory for recovery (%s=%d). Fetching WAL records in batch",
+                  OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getKey(),
+                  OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getValueAsInteger());
           recordsProcessed = restoreWALBatch(batch, operationUnits, recordsProcessed, reportInterval);
           batch = new ArrayList<OWALRecord>();
         }
