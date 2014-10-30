@@ -254,8 +254,8 @@ public class OImmutableClass implements OClass {
   }
 
   @Override
-  public int getClusterForNewInstance() {
-    return clusterSelection.getCluster(this);
+  public int getClusterForNewInstance(final ODocument doc) {
+    return clusterSelection.getCluster(this, doc);
   }
 
   @Override

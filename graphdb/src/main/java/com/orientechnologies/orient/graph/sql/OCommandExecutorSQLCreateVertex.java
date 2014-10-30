@@ -137,7 +137,7 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
   @Override
   public Set<String> getInvolvedClusters() {
     if (clazz != null)
-      return Collections.singleton(getDatabase().getClusterNameById(clazz.getClusterSelection().getCluster(clazz)));
+      return Collections.singleton(getDatabase().getClusterNameById(clazz.getClusterSelection().getCluster(clazz, null)));
     else if (clusterName != null)
       return getInvolvedClustersOfClusters(Collections.singleton(clusterName));
 
