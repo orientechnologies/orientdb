@@ -19,49 +19,44 @@
 package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
+import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.orientechnologies.orient.etl.OETLProcessor;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-public class OSkipTransformer extends OAbstractTransformer {
-  protected String     expression;
+public class OFlowTransformer extends OAbstractTransformer {
+  protected String     operation;
   protected OSQLFilter sqlFilter;
 
   @Override
   public ODocument getConfiguration() {
     return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
-        + "{expression:{optional:false,description:'Expression to evaluate'}}]," + "input:['ODocument'],output:'ODocument'}");
+        + "{operation:{optional:false,description:'Flow operation between: skip and halt'}}],"
+        + "input:['Object'],output:'Object'}");
   }
 
   @Override
   public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, OBasicCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
-    expression = iConfiguration.field("expression");
-    sqlFilter = new OSQLFilter(expression, context, null);
+    operation = iConfiguration.field("operation");
+    if (operation == null)
+      throw new OConfigurationException("Flow transformer has not mandatory 'operation' field");
+    if (!operation.equalsIgnoreCase("halt") && !operation.equalsIgnoreCase("halt"))
+      throw new OConfigurationException("Flow transformer has invalid 'operation' field='" + operation
+          + "', while supported are: 'skip' and 'halt'");
   }
 
   @Override
   public String getName() {
-    return "skip";
+    return "flow";
   }
 
   @Override
   public Object executeTransform(final Object input) {
-    ODocument doc;
-    if (input instanceof ODocument)
-      doc = (ODocument) input;
-    else if (input instanceof OrientVertex)
-      doc = ((OrientVertex) input).getRecord();
-    else
-      throw new IllegalArgumentException(getName() + " transformer: unsupported input object '" + input + "' of class: "
-          + input.getClass());
-
-    final Boolean result = (Boolean) sqlFilter.evaluate(doc, null, context);
-    if (result)
-      // TRUE: SKIP IT
+    if (operation.equalsIgnoreCase("skip"))
       return null;
 
-    return input;
+    throw new OETLProcessHaltedException("Process stopped because this condition: " + ifExpression);
   }
 }

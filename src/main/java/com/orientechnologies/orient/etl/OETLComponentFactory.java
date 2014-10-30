@@ -74,7 +74,7 @@ public class OETLComponentFactory {
     registerTransformer(OLinkTransformer.class);
     registerTransformer(OLogTransformer.class);
     registerTransformer(OMergeTransformer.class);
-    registerTransformer(OSkipTransformer.class);
+    registerTransformer(OFlowTransformer.class);
     registerTransformer(OVertexTransformer.class);
 
     registerLoader(OOrientDBLoader.class);
