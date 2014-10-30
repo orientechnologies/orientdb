@@ -184,6 +184,10 @@ public class Orient extends OListenerManger<OOrientListener> {
       active = false;
 
       workers.shutdown();
+      try {
+        workers.awaitTermination(2, TimeUnit.MINUTES);
+      } catch (InterruptedException e) {
+      }
 
       OLogManager.instance().debug(this, "Orient Engine is shutting down...");
 
