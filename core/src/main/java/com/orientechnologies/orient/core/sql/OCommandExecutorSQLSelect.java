@@ -352,6 +352,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   public Object execute(final Map<Object, Object> iArgs) {
     try {
+      bindDefaultContextVariables();
+
       if (iArgs != null)
       // BIND ARGUMENTS INTO CONTEXT TO ACCESS FROM ANY POINT (EVEN FUNCTIONS)
       {
