@@ -34,6 +34,7 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.RowIdLifetime;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -47,11 +48,11 @@ import java.util.Set;
  * @author Luca Garulli (Orient Technologies - l.garulli--at--orientechnologies.com)
  */
 public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
+  private final static Set<String>   SYSTEM_TABLES = new HashSet<String>(Arrays.asList(new String[] { "OUser", "ORole",
+      "OIdentity", "ORIDs", "ORestricted", "OFunction", "OTriggered", "OSchedule" }));
   private final OrientJdbcConnection connection;
   private final ODatabaseRecord      database;
   private final OMetadata            metadata;
-  private final static Set<String>   SYSTEM_TABLES = new HashSet<String>(Arrays.asList(new String[] { "OUser", "ORole",
-      "OIdentity", "ORIDs", "ORestricted", "OFunction", "OTriggered", "OSchedule" }));
 
   public OrientJdbcDatabaseMetaData(OrientJdbcConnection iConnection, ODatabaseRecord iDatabase) {
     connection = iConnection;
@@ -619,8 +620,8 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       String type;
       if (SYSTEM_TABLES.contains(cls.getName()))
         type = "SYSTEM TABLE";
-//      else if ("memory".equals(database.getClusterType(database.getClusterNameById(cls.getDefaultClusterId()))))
-//        type = "VIEW";
+      // else if ("memory".equals(database.getClusterType(database.getClusterNameById(cls.getDefaultClusterId()))))
+      // type = "VIEW";
       else
         type = "TABLE";
 
@@ -642,7 +643,48 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   }
 
   public ResultSet getTypeInfo() throws SQLException {
-    return null;
+    final List<ODocument> info = new ArrayList<ODocument>();
+
+    info.add(new ODocument().field("TYPE_NAME", OType.BINARY.toString()).field("DATA_TYPE", Types.BINARY)
+        .field("NULLABLE", DatabaseMetaData.typeNullable).field("CASE_SENSITIVE", true).field("SEARCHABLE", true));
+    info.add(new ODocument().field("TYPE_NAME", OType.BOOLEAN.toString()).field("DATA_TYPE", Types.BOOLEAN)
+        .field("NULLABLE", DatabaseMetaData.typeNullable).field("CASE_SENSITIVE", true).field("SEARCHABLE", true));
+    info.add(new ODocument().field("TYPE_NAME", OType.BYTE.toString()).field("DATA_TYPE", Types.TINYINT)
+        .field("NULLABLE", DatabaseMetaData.typeNullable).field("CASE_SENSITIVE", true).field("UNSIGNED_ATTRIBUTE", true)
+        .field("SEARCHABLE", true));
+    info.add(new ODocument().field("TYPE_NAME", OType.DATE.toString()).field("DATA_TYPE", Types.DATE)
+        .field("NULLABLE", DatabaseMetaData.typeNullable).field("CASE_SENSITIVE", true).field("SEARCHABLE", true));
+    info.add(new ODocument().field("TYPE_NAME", OType.DATETIME.toString()).field("DATA_TYPE", Types.DATE)
+        .field("NULLABLE", DatabaseMetaData.typeNullable).field("CASE_SENSITIVE", true).field("SEARCHABLE", true));
+    info.add(new ODocument().field("TYPE_NAME", OType.DECIMAL.toString()).field("DATA_TYPE", Types.DECIMAL)
+        .field("NULLABLE", DatabaseMetaData.typeNullable).field("CASE_SENSITIVE", true).field("UNSIGNED_ATTRIBUTE", false)
+        .field("SEARCHABLE", true));
+    info.add(new ODocument().field("TYPE_NAME", OType.FLOAT.toString()).field("DATA_TYPE", Types.FLOAT)
+        .field("NULLABLE", DatabaseMetaData.typeNullable).field("CASE_SENSITIVE", true).field("UNSIGNED_ATTRIBUTE", false)
+        .field("SEARCHABLE", true));
+    info.add(new ODocument().field("TYPE_NAME", OType.DOUBLE.toString()).field("DATA_TYPE", Types.DOUBLE)
+        .field("NULLABLE", DatabaseMetaData.typeNullable).field("CASE_SENSITIVE", true).field("UNSIGNED_ATTRIBUTE", false)
+        .field("SEARCHABLE", true));
+    info.add(new ODocument().field("TYPE_NAME", OType.EMBEDDED.toString()).field("DATA_TYPE", Types.STRUCT)
+        .field("NULLABLE", DatabaseMetaData.typeNullable).field("CASE_SENSITIVE", true).field("SEARCHABLE", true));
+    info.add(new ODocument().field("TYPE_NAME", OType.EMBEDDEDLIST.toString()).field("DATA_TYPE", Types.ARRAY)
+        .field("NULLABLE", DatabaseMetaData.typeNullable).field("CASE_SENSITIVE", true).field("SEARCHABLE", true));
+    info.add(new ODocument().field("TYPE_NAME", OType.INTEGER.toString()).field("DATA_TYPE", Types.INTEGER)
+        .field("NULLABLE", DatabaseMetaData.typeNullable).field("CASE_SENSITIVE", true).field("UNSIGNED_ATTRIBUTE", false)
+        .field("SEARCHABLE", true));
+    info.add(new ODocument().field("TYPE_NAME", OType.LINKLIST.toString()).field("DATA_TYPE", Types.ARRAY)
+        .field("NULLABLE", DatabaseMetaData.typeNullable).field("CASE_SENSITIVE", true).field("SEARCHABLE", true));
+    info.add(new ODocument().field("TYPE_NAME", OType.LONG.toString()).field("DATA_TYPE", Types.BIGINT)
+        .field("NULLABLE", DatabaseMetaData.typeNullable).field("CASE_SENSITIVE", true).field("UNSIGNED_ATTRIBUTE", false)
+        .field("SEARCHABLE", true));
+    info.add(new ODocument().field("TYPE_NAME", OType.STRING.toString()).field("DATA_TYPE", Types.VARCHAR)
+        .field("NULLABLE", DatabaseMetaData.typeNullable).field("CASE_SENSITIVE", true).field("SEARCHABLE", true));
+    info.add(new ODocument().field("TYPE_NAME", OType.SHORT.toString()).field("DATA_TYPE", Types.SMALLINT)
+        .field("NULLABLE", DatabaseMetaData.typeNullable).field("CASE_SENSITIVE", true).field("UNSIGNED_ATTRIBUTE", false)
+        .field("SEARCHABLE", true));
+
+    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), info, ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public ResultSet getUDTs(String catalog, String schemaPattern, String typeNamePattern, int[] types) throws SQLException {
