@@ -17,6 +17,8 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractReplicatedTask;
@@ -127,8 +129,27 @@ public class ODistributedResponseManager {
         boolean foundBucket = false;
         for (int i = 0; i < responseGroups.size(); ++i) {
           final List<ODistributedResponse> sameResponse = responseGroups.get(i);
-          if (sameResponse.isEmpty() || (sameResponse.get(0).getPayload() == null && response.getPayload() == null)
-              || sameResponse.get(0).getPayload().equals(response.getPayload())) {
+
+          boolean found = false;
+
+          if (sameResponse.isEmpty())
+            // FIRST RESULT: USE THIS
+            found = true;
+          else {
+            final Object currentPL = sameResponse.get(0).getPayload();
+            
+            if(currentPL == null && response.getPayload() == null)
+              // BOTH NULL: USE THIS
+              found = true;
+            else if( currentPL.equals(response.getPayload()))
+              // ARE THE SAME: USE THIS
+              found = true;
+            else if( currentPL instanceof ODocument && ODocumentHelper.hasSameContentOf((ODocument) currentPL, null, (ODocument) response.getPayload(), null, null ))
+              // CONTENT IS THE SAME: USE THIS
+              found = true;
+          }
+
+          if (found) {
             sameResponse.add(response);
             foundBucket = true;
             break;
