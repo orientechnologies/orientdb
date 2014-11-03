@@ -15,7 +15,13 @@
  */
 package com.orientechnologies.orient.core.metadata.schema.clusterselection;
 
+import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
+
+import java.lang.reflect.Method;
+import java.util.Iterator;
+
 import com.orientechnologies.common.factory.OConfigurableStatefulFactory;
+import com.orientechnologies.common.log.OLogManager;
 
 /**
  * Factory to get the cluster selection strategy.
@@ -25,10 +31,26 @@ import com.orientechnologies.common.factory.OConfigurableStatefulFactory;
 public class OClusterSelectionFactory extends OConfigurableStatefulFactory<String, OClusterSelectionStrategy> {
   public OClusterSelectionFactory() {
     setDefaultClass(ORoundRobinClusterSelectionStrategy.class);
-
-    register(ODefaultClusterSelectionStrategy.NAME, ODefaultClusterSelectionStrategy.class);
-    register(ORoundRobinClusterSelectionStrategy.NAME, ORoundRobinClusterSelectionStrategy.class);
-    register(OBalancedClusterSelectionStrategy.NAME, OBalancedClusterSelectionStrategy.class);
+    this.registerStrategy();
+  }
+  
+  private static ClassLoader orientClassLoader  = OClusterSelectionFactory.class.getClassLoader();
+  private void registerStrategy() {
+    final Iterator<OClusterSelectionStrategy> ite = lookupProviderWithOrientClassLoader(OClusterSelectionStrategy.class, orientClassLoader);
+    while(ite.hasNext()) {
+      OClusterSelectionStrategy strategy = ite.next();
+      Class clz = strategy.getClass();
+      try {
+        Method method = clz.getMethod("getName");
+        if(method != null) {
+          String key = (String)method.invoke(clz.newInstance());
+          register(key, clz);
+        } else
+          OLogManager.instance().error(this, "getName() funciton missing");
+      }catch(Exception ex) {
+          OLogManager.instance().error(this, "failed to register class - " + clz.getName());
+      }
+    }
   }
 
   public OClusterSelectionStrategy getStrategy(final String iStrategy) {
