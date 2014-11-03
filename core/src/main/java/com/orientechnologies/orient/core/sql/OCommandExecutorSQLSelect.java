@@ -1355,6 +1355,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return Math.min(sqlLimit, requestLimit);
   }
 
+  private boolean tryOptimizeSort(final OClass iSchemaClass){
+    if (orderedFields.size() == 0) {
+      return false;
+    } else {
+      return optimizeSort(iSchemaClass);
+    }
+  }
+
   @SuppressWarnings("rawtypes")
   private boolean searchForIndexes(final OClass iSchemaClass) {
     this.foundResults.clear();
@@ -1363,11 +1371,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     // fetch all possible variants of subqueries that can be used in indexes.
     if (compiledFilter == null) {
-      if (orderedFields.size() == 0) {
-        return false;
-      } else {
-        return optimizeSort(iSchemaClass);
-      }
+      return tryOptimizeSort(iSchemaClass);
     }
 
 
@@ -1479,7 +1483,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           }
         }
         if (!indexUsed) {
-          return false;
+          return tryOptimizeSort(iSchemaClass);
         }
       }
 
