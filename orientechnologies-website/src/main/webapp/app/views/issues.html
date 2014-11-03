@@ -1,0 +1,23 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-6">
+      <form>
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search">
+        </div>
+      </form>
+    </div>
+    <div class="col-md-2">
+      <a href="#/issues/new" class="btn btn-success">New Issue</a>
+    </div>
+  </div>
+  <div class="row">
+
+    <div class="list-group">
+      <a href="#issues/{{issue.repository.codename}}@{{issue.number}}" class="list-group-item" ng-repeat="issue in issues">
+        <h5 class="list-group-item-heading"> {{issue.title}}</h5>
+      </a>
+    </div>
+
+  </div>
+</div>

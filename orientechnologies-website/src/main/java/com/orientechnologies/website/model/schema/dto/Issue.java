@@ -13,9 +13,10 @@ public class Issue {
   private String             id;
   private Integer            number;
   private String             title;
-  private String             description;
+  private String             body;
   private String             state;
   private Collection<String> labels = new ArrayList<String>();
+  private Repository         repository;
 
   private Date               createdAt;
   private Date               closedAt;
@@ -47,12 +48,12 @@ public class Issue {
     this.title = title;
   }
 
-  public String getDescription() {
-    return description;
+  public String getBody() {
+    return body;
   }
 
-  public void setDescription(String description) {
-    this.description = description;
+  public void setBody(String body) {
+    this.body = body;
   }
 
   public String getState() {
@@ -105,5 +106,13 @@ public class Issue {
 
   public void setUser(User user) {
     this.user = user;
+  }
+
+  public Repository getRepository() {
+    return repository;
+  }
+
+  public void setRepository(Repository repository) {
+    this.repository = repository;
   }
 }

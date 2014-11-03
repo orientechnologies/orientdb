@@ -26,7 +26,7 @@ public class WebMvcConfig extends WebMvcConfigurationSupport {
 
   @Override
   public RequestMappingHandlerMapping requestMappingHandlerMapping() {
-    ApiVersionRequestMappingHandlerMapping v = new ApiVersionRequestMappingHandlerMapping("v");
+    ApiVersionRequestMappingHandlerMapping v = new ApiVersionRequestMappingHandlerMapping("api/v");
     v.setInterceptors(getInterceptors());
     return v;
   }

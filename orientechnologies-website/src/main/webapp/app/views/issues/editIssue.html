@@ -1,0 +1,62 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-10">
+      <h3>{{ issue.title}}</h3>
+    </div>
+    <div class="col-md-2">
+      <a href="#/issues/new" class="btn btn-sm btn-success">New Issue</a>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-1">
+      <span class="label label-success">{{issue.state}}</span>
+    </div>
+    <div class="col-md-4">
+      {{issue.user.login}} opened this issue {{ issue.createdAt | fromNow}}
+    </div>
+    <hr>
+  </div>
+  <div class="row">
+
+    <div class="col-md-10">
+      <div class="row">
+        <div class="col-md-1">
+
+        </div>
+        <div class="col-md-11">
+          <div class="panel panel-default">
+
+            <div class="panel-heading">{{issue.user.login}} commented {{ issue.createdAt | fromNow}}</div>
+            <div class="panel-body">
+              <div mkeditor ng-model="issue.body"></div>
+              <!--{{issue.body}}-->
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <div ng-repeat="comment in comments">
+          <div class="col-md-1">
+
+          </div>
+          <div class="col-md-11">
+            <div class="panel panel-default">
+
+              <div class="panel-heading">{{comment.user.login}} commented {{ comment.createdAt | fromNow}}</div>
+              <div class="panel-body">
+                <div mkeditor ng-model="comment.body"></div>
+                <!--{{comment.body}}-->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+
+      </div>
+    </div>
+    <div class="col-md-2">
+
+    </div>
+  </div>
+</div>

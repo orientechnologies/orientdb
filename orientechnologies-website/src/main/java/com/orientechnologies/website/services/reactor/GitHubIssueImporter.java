@@ -83,7 +83,7 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
         isNew = true;
       }
       issueDto.setNumber(issue.getNumber());
-      issueDto.setDescription(issue.getBody());
+      issueDto.setBody(issue.getBody());
       issueDto.setTitle(issue.getTitle());
       issueDto.setState(issue.getState().name());
       for (GHIssue.Label label : issue.getLabels()) {

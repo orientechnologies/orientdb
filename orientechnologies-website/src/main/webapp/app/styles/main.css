@@ -1,7 +1,7 @@
 /* Space out content a bit */
 body {
-  padding-top: 20px;
   padding-bottom: 20px;
+  background: #edeff0;
 }
 
 /* Everything but the jumbotron gets side spacing for mobile first views */
@@ -76,4 +76,32 @@ body {
   .jumbotron {
     border-bottom: 0;
   }
+  .sidebar {
+    width: 70px;
+  }
+  .app-view {
+    margin-left: 70px;
+    margin-top: 60px;
+  }
+  .footer {
+    margin-left: 70px;
+  }
+}
+.sidebar {
+  position: fixed;
+  background: #384047;
+  top: 0;
+  bottom: 0;
+  z-index: 1031;
+}
+.app .navbar-default {
+  background: #edeff0;
+}
+
+.sidebar .nav li > a {
+  text-align: center;
+  margin: 10px;
+  padding: 10px 10px;
+  color: #60676d;
+
 }

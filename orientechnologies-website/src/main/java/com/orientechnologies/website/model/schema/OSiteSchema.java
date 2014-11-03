@@ -7,7 +7,10 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.model.schema.dto.*;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.util.*;
 
@@ -139,7 +142,7 @@ public class OSiteSchema {
     }
 
     @Override
-    public com.orientechnologies.website.model.schema.dto.Comment fromDoc(ODocument doc) {
+    public com.orientechnologies.website.model.schema.dto.Comment fromDoc(ODocument doc, OrientBaseGraph graph) {
 
       com.orientechnologies.website.model.schema.dto.Comment comment = new com.orientechnologies.website.model.schema.dto.Comment();
       comment.setId(doc.getIdentity().toString());
@@ -147,7 +150,7 @@ public class OSiteSchema {
       comment.setBody((String) doc.field(BODY.toString()));
       comment.setCreatedAt((Date) doc.field(CREATED_AT.toString()));
       comment.setCreatedAt((Date) doc.field(CREATED_AT.toString()));
-      comment.setUser(User.NAME.fromDoc((ODocument) doc.field(USER.toString())));
+      comment.setUser(User.NAME.fromDoc((ODocument) doc.field(USER.toString()), graph));
       return comment;
     }
 
@@ -164,7 +167,7 @@ public class OSiteSchema {
         return OType.STRING;
       }
     },
-    DESCRIPTION("description") {
+    BODY("body") {
       @Override
       public OType getType() {
         return OType.STRING;
@@ -227,7 +230,7 @@ public class OSiteSchema {
       } else {
         doc = graph.getRawGraph().load(new ORecordId(entity.getId()));
       }
-      doc.field(DESCRIPTION.toString(), entity.getDescription());
+      doc.field(BODY.toString(), entity.getBody());
       doc.field(CREATED_AT.toString(), entity.getCreatedAt());
       doc.field(CLOSED_AT.toString(), entity.getClosedAt());
       doc.field(TITLE.toString(), entity.getTitle());
@@ -240,17 +243,24 @@ public class OSiteSchema {
     }
 
     @Override
-    public com.orientechnologies.website.model.schema.dto.Issue fromDoc(ODocument doc) {
+    public com.orientechnologies.website.model.schema.dto.Issue fromDoc(ODocument doc, OrientBaseGraph graph) {
       com.orientechnologies.website.model.schema.dto.Issue issue = new com.orientechnologies.website.model.schema.dto.Issue();
       issue.setId(doc.getIdentity().toString());
       issue.setTitle((String) doc.field(TITLE.toString()));
-      issue.setDescription((String) doc.field(DESCRIPTION.toString()));
+      issue.setBody((String) doc.field(BODY.toString()));
       issue.setState((String) doc.field(STATE.toString()));
       issue.setClosedAt((Date) doc.field(CLOSED_AT.toString()));
       issue.setCreatedAt((Date) doc.field(CREATED_AT.toString()));
       issue.setLabels(new ArrayList<String>((Collection<? extends String>) doc.field(LABELS.toString())));
       issue.setNumber((Integer) doc.field(NUMBER.toString()));
-      issue.setAssignee(User.NAME.fromDoc((ODocument) doc.field(ASSIGNEE.toString())));
+
+      OrientVertex iss = new OrientVertex(graph, doc);
+      for (Vertex vertex : iss.getVertices(Direction.IN, HasIssue.class.getSimpleName())) {
+        issue.setRepository(Repository.CODENAME.fromDoc(((OrientVertex) vertex).getRecord(), graph));
+        break;
+      }
+      issue.setAssignee(User.NAME.fromDoc((ODocument) doc.field(ASSIGNEE.toString()), graph));
+      issue.setUser(User.NAME.fromDoc((ODocument) doc.field(USER.toString()), graph));
       return issue;
     }
 
@@ -294,7 +304,7 @@ public class OSiteSchema {
     }
 
     @Override
-    public com.orientechnologies.website.model.schema.dto.Organization fromDoc(ODocument doc) {
+    public com.orientechnologies.website.model.schema.dto.Organization fromDoc(ODocument doc, OrientBaseGraph graph) {
       com.orientechnologies.website.model.schema.dto.Organization organization = new com.orientechnologies.website.model.schema.dto.Organization();
       organization.setId(doc.getIdentity().toString());
       organization.setName((String) doc.field(OSiteSchema.Organization.NAME.toString()));
@@ -348,7 +358,7 @@ public class OSiteSchema {
     }
 
     @Override
-    public com.orientechnologies.website.model.schema.dto.Repository fromDoc(ODocument doc) {
+    public com.orientechnologies.website.model.schema.dto.Repository fromDoc(ODocument doc, OrientBaseGraph graph) {
       com.orientechnologies.website.model.schema.dto.Repository repo = new com.orientechnologies.website.model.schema.dto.Repository();
       repo.setCodename((String) doc.field(OSiteSchema.Repository.CODENAME.toString()));
       repo.setDescription((String) doc.field(OSiteSchema.Repository.DESCRIPTION.toString()));
@@ -382,7 +392,7 @@ public class OSiteSchema {
     }
 
     @Override
-    public ClientDTO fromDoc(ODocument doc) {
+    public ClientDTO fromDoc(ODocument doc, OrientBaseGraph graph) {
       return null;
     }
 
@@ -419,7 +429,7 @@ public class OSiteSchema {
     };
 
     @Override
-    public com.orientechnologies.website.model.schema.dto.User fromDoc(ODocument doc) {
+    public com.orientechnologies.website.model.schema.dto.User fromDoc(ODocument doc, OrientBaseGraph graph) {
       if (doc == null) {
         return null;
       }
@@ -546,7 +556,7 @@ public class OSiteSchema {
   public interface OTypeHolder<T> {
     public OType getType();
 
-    public T fromDoc(ODocument doc);
+    public T fromDoc(ODocument doc, OrientBaseGraph graph);
 
     public ODocument toDoc(T doc, OrientBaseGraph graph);
   }

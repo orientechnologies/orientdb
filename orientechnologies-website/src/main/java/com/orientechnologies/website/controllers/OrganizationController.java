@@ -1,6 +1,7 @@
 package com.orientechnologies.website.controllers;
 
 import com.orientechnologies.website.configuration.ApiVersion;
+import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.model.schema.dto.Organization;
 import com.orientechnologies.website.model.schema.dto.Repository;
 import com.orientechnologies.website.services.OrganizationService;
@@ -12,9 +13,11 @@ import org.springframework.web.bind.annotation.*;
 
 import com.orientechnologies.website.repository.OrganizationRepository;
 
+import java.util.List;
+
 @RestController
 @EnableAutoConfiguration
-@RequestMapping("org")
+@RequestMapping("orgs")
 @ApiVersion(1)
 public class OrganizationController {
 
@@ -33,6 +36,11 @@ public class OrganizationController {
     } else {
       return new ResponseEntity<Organization>(organization, HttpStatus.OK);
     }
+  }
+
+  @RequestMapping(value = "{name}/issues", method = RequestMethod.GET)
+  public ResponseEntity<List<Issue>> getOrganizationIssues(@PathVariable("name") String name) {
+    return new ResponseEntity<List<Issue>>(orgRepository.findOrganizationIssues(name), HttpStatus.OK);
   }
 
   @RequestMapping(value = "{name}/members/{username}", method = RequestMethod.POST)

@@ -22,7 +22,7 @@ public abstract class OrientBaseRepository<T> implements BaseRepository<T> {
   }
 
   public T fromDoc(ODocument doc) {
-    return getHolder().fromDoc(doc);
+    return getHolder().fromDoc(doc, dbFactory.getGraph());
   }
 
   @Override
