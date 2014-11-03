@@ -111,6 +111,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   private boolean                                           validation;
   private OCurrentStorageComponentsFactory                  componentsFactory;
 
+  private boolean                                           initialized       = false;
+
   public ODatabaseRecordAbstract(final String iURL, final byte iRecordType) {
     super(new ODatabaseRaw(iURL));
     setCurrentDatabaseinThreadLocal();
@@ -137,65 +139,14 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     try {
       super.open(iUserName, iUserPassword);
-      ORecordSerializerFactory serializerFactory = ORecordSerializerFactory.instance();
-      String serializeName = getStorage().getConfiguration().getRecordSerializer();
-      if (serializeName == null)
-        serializeName = ORecordSerializerSchemaAware2CSV.NAME;
-      serializer = serializerFactory.getFormat(serializeName);
-      if (serializer == null)
-        throw new ODatabaseException("RecordSerializer with name '" + serializeName + "' not found ");
-      if (getStorage().getConfiguration().getRecordSerializerVersion() > serializer.getMinSupportedVersion())
-        // TODO: I need a better message!
-        throw new ODatabaseException("Persistent record serializer version is not support by the current implementation");
 
-      componentsFactory = getStorage().getComponentsFactory();
-
-      final OSBTreeCollectionManager sbTreeCM = getStorage().getResource(OSBTreeCollectionManager.class.getSimpleName(),
-          new Callable<OSBTreeCollectionManager>() {
-            @Override
-            public OSBTreeCollectionManager call() throws Exception {
-              Class<? extends OSBTreeCollectionManager> managerClass = getStorage().getCollectionManagerClass();
-
-              if (managerClass == null) {
-                OLogManager.instance().warn(this, "Current implementation of storage does not support sbtree collections");
-                return null;
-              } else {
-                return managerClass.newInstance();
-              }
-            }
-          });
-
-      sbTreeCollectionManager = sbTreeCM != null ? new OSBTreeCollectionManagerProxy(this, sbTreeCM) : null;
-
-      level1Cache.startup();
-
-      metadata = new OMetadataDefault();
-      metadata.load();
-
-      recordFormat = DEF_RECORD_FORMAT;
+      initAtFirstOpen(iUserName, iUserPassword);
 
       if (!(getStorage() instanceof OStorageProxy)) {
-        if (metadata.getIndexManager().autoRecreateIndexesAfterCrash()) {
-          metadata.getIndexManager().recreateIndexes();
-
-          setCurrentDatabaseinThreadLocal();
-          user = null;
-        }
-
-        installHooks();
-
         user = metadata.getSecurity().authenticate(iUserName, iUserPassword);
-      } else
-        // REMOTE CREATE DUMMY USER
-        user = new OUser(iUserName, OUser.encryptPassword(iUserPassword)).addRole(new ORole("passthrough", null,
-            ORole.ALLOW_MODES.ALLOW_ALL_BUT));
+      }
 
       checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
-
-      if (!metadata.getSchema().existsClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME))
-        // @COMPATIBILITY 1.0RC9
-        metadata.getSchema().createClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
-
       // WAKE UP LISTENERS
       callOnOpenListeners();
 
@@ -207,6 +158,71 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       throw new ODatabaseException("Cannot open database", e);
     }
     return (DB) this;
+  }
+
+  public void resetInitialization() {
+    initialized = false;
+  }
+
+  private void initAtFirstOpen(String iUserName, String iUserPassword) {
+    if (initialized)
+      return;
+
+    ORecordSerializerFactory serializerFactory = ORecordSerializerFactory.instance();
+    String serializeName = getStorage().getConfiguration().getRecordSerializer();
+    if (serializeName == null)
+      serializeName = ORecordSerializerSchemaAware2CSV.NAME;
+    serializer = serializerFactory.getFormat(serializeName);
+    if (serializer == null)
+      throw new ODatabaseException("RecordSerializer with name '" + serializeName + "' not found ");
+    if (getStorage().getConfiguration().getRecordSerializerVersion() > serializer.getMinSupportedVersion())
+      // TODO: I need a better message!
+      throw new ODatabaseException("Persistent record serializer version is not support by the current implementation");
+
+    componentsFactory = getStorage().getComponentsFactory();
+
+    final OSBTreeCollectionManager sbTreeCM = getStorage().getResource(OSBTreeCollectionManager.class.getSimpleName(),
+        new Callable<OSBTreeCollectionManager>() {
+          @Override
+          public OSBTreeCollectionManager call() throws Exception {
+            Class<? extends OSBTreeCollectionManager> managerClass = getStorage().getCollectionManagerClass();
+
+            if (managerClass == null) {
+              OLogManager.instance().warn(this, "Current implementation of storage does not support sbtree collections");
+              return null;
+            } else {
+              return managerClass.newInstance();
+            }
+          }
+        });
+
+    sbTreeCollectionManager = sbTreeCM != null ? new OSBTreeCollectionManagerProxy(this, sbTreeCM) : null;
+
+    level1Cache.startup();
+
+    metadata = new OMetadataDefault();
+    metadata.load();
+
+    recordFormat = DEF_RECORD_FORMAT;
+
+    if (!(getStorage() instanceof OStorageProxy)) {
+      if (metadata.getIndexManager().autoRecreateIndexesAfterCrash()) {
+        metadata.getIndexManager().recreateIndexes();
+
+        setCurrentDatabaseinThreadLocal();
+        user = null;
+      }
+
+      installHooks();
+    } else
+      user = new OUser(iUserName, OUser.encryptPassword(iUserPassword)).addRole(new ORole("passthrough", null,
+          ORole.ALLOW_MODES.ALLOW_ALL_BUT));
+
+    if (!metadata.getSchema().existsClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME))
+      // @COMPATIBILITY 1.0RC9
+      metadata.getSchema().createClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
+
+    initialized = true;
   }
 
   /**
@@ -324,28 +340,10 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     callOnCloseListeners();
 
-    for (ORecordHook h : hooks.keySet())
-      h.onUnregister();
-    hooks.clear();
-
-    if (metadata != null) {
-      if (!(getStorage() instanceof OStorageProxy)) {
-        final OIndexManager indexManager = metadata.getIndexManager();
-
-        if (indexManager != null)
-          indexManager.waitTillIndexRestore();
-      }
-
-      if (metadata != null) {
-        metadata.close();
-        metadata = null;
-      }
-    }
-
     super.close();
 
-    user = null;
-    level1Cache.shutdown();
+    level1Cache.clear();
+
     ODatabaseRecordThreadLocal.INSTANCE.remove();
   }
 

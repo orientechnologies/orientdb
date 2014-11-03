@@ -190,6 +190,7 @@ public class ODatabaseRecordTx extends ODatabaseRecordAbstract {
   public void close() {
     if (isClosed())
       return;
+
     try {
       commit(true);
     } catch (Exception e) {

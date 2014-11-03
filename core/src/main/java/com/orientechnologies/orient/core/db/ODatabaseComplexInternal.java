@@ -47,5 +47,4 @@ public interface ODatabaseComplexInternal<T> extends ODatabaseComplex<T>, ODatab
    * Internal method. Don't call it directly unless you're building an internal component.
    */
   public void setInternal(ATTRIBUTES attribute, Object iValue);
-
 }

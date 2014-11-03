@@ -481,6 +481,10 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     return this;
   }
 
+  @Override
+  public void resetInitialization() {
+  }
+
   public Object setProperty(final String iName, final Object iValue) {
     if (iValue == null)
       return properties.remove(iName.toLowerCase());

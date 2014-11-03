@@ -628,4 +628,9 @@ public class ODatabaseDocumentTx extends ODatabaseRecordWrapperAbstract<ODatabas
       }
     }
   }
+
+  @Override
+  public void resetInitialization() {
+    underlying.resetInitialization();
+  }
 }

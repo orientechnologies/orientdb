@@ -574,6 +574,7 @@ public class OServer {
           }
 
           // SERVER AUTHENTICATED, BYPASS SECURITY
+          database.resetInitialization();
           database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
           database.open(user, password);
         }
@@ -596,7 +597,8 @@ public class OServer {
         }
 
         // SERVER AUTHENTICATED, BYPASS SECURITY
-        database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
+				database.resetInitialization();
+				database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
         database.open(replicatorUser.name, replicatorUser.password);
       }
 
