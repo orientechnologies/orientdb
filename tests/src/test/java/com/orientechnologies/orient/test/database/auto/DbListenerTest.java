@@ -142,8 +142,6 @@ public class DbListenerTest extends DocumentDBBaseTest {
     database.close();
     Assert.assertEquals(onClose, 1);
 
-    database.registerListener(new DbListener());
-
     database.open("admin", "admin");
     Assert.assertEquals(onOpen, 1);
 

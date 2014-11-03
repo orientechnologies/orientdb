@@ -52,8 +52,6 @@ public class OLocalRecordCache extends OAbstractRecordCache {
     CACHE_HIT = profilerPrefix + "cache.found";
     CACHE_MISS = profilerPrefix + "cache.notFound";
 
-    excludedCluster = db.getClusterIdByName(CLUSTER_INDEX_NAME);
-
     super.startup();
   }
 

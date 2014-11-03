@@ -44,12 +44,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
@@ -96,7 +91,11 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       // SET DEFAULT PROPERTIES
       setProperty("fetch-max", 50);
 
+      storage = Orient.instance().loadStorage(url);
     } catch (Throwable t) {
+      if (storage != null)
+        Orient.instance().unregisterStorage(storage);
+
       throw new ODatabaseException("Error on opening database '" + iURL + "'", t);
     }
   }
@@ -106,16 +105,20 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       if (status == STATUS.OPEN)
         throw new IllegalStateException("Database " + getName() + " is already open");
 
-      if (storage == null)
-        storage = Orient.instance().loadStorage(url);
-
-      storage.open(iUserName, iUserPassword, properties);
+      if (storage.isClosed()) {
+        storage.open(iUserName, iUserPassword, properties);
+      } else if (storage instanceof OStorageProxy) {
+        final String name = ((OStorageProxy) storage).getUserName();
+        if (!name.equals(iUserName)) {
+          storage.close();
+          storage.open(iUserName, iUserPassword, properties);
+        }
+      }
 
       status = STATUS.OPEN;
 
     } catch (OStorageException e) {
       // UNREGISTER STORAGE
-      Orient.instance().unregisterStorage(storage);
 
       // PASS THROUGH
       throw e;
@@ -502,12 +505,6 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
       currentIntent = null;
     }
 
-    resetListeners();
-
-    if (storage != null)
-      storage.close();
-
-    storage = null;
     status = STATUS.CLOSED;
   }
 
@@ -535,7 +532,9 @@ public class ODatabaseRaw extends OListenerManger<ODatabaseListener> implements 
     buffer.append("OrientDB[");
     buffer.append(url != null ? url : "?");
     buffer.append(']');
-    if (getStorage() != null) {
+
+    final OStorage storage = getStorage();
+    if (storage != null && !storage.isClosed()) {
       buffer.append(" (users: ");
       buffer.append(getStorage().getUsers());
       buffer.append(')');
