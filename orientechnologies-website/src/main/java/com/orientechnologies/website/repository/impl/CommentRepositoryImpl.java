@@ -3,6 +3,9 @@ package com.orientechnologies.website.repository.impl;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import com.orientechnologies.website.model.schema.HasComment;
+import com.orientechnologies.website.model.schema.OComment;
+import com.orientechnologies.website.model.schema.OTypeHolder;
 import org.springframework.stereotype.Repository;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -20,8 +23,8 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 public class CommentRepositoryImpl extends OrientBaseRepository<Comment> implements CommentRepository {
 
   @Override
-  public OSiteSchema.OTypeHolder<Comment> getHolder() {
-    return OSiteSchema.Comment.BODY;
+  public OTypeHolder<Comment> getHolder() {
+    return OComment.BODY;
   }
 
   @Override
@@ -33,8 +36,8 @@ public class CommentRepositoryImpl extends OrientBaseRepository<Comment> impleme
   public Comment findByIssueAndCommentId(Issue issue, int id) {
 
     OrientGraph graph = dbFactory.getGraph();
-    String query = String.format("select from (select expand(out('%s')) from %s) where %s = %d",
-        OSiteSchema.HasComment.class.getSimpleName(), issue.getId(), OSiteSchema.Comment.COMMENT_ID, id);
+    String query = String.format("select from (select expand(out('%s')) from %s) where %s = %d", HasComment.class.getSimpleName(),
+        issue.getId(), OComment.COMMENT_ID, id);
 
     List<ODocument> vertexes = graph.getRawGraph().query(new OSQLSynchQuery<Object>(query));
 

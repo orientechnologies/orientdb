@@ -2,9 +2,8 @@ package com.orientechnologies.website.services.impl;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.website.OrientDBFactory;
-import com.orientechnologies.website.model.schema.OSiteSchema;
+import com.orientechnologies.website.model.schema.HasIssue;
 import com.orientechnologies.website.model.schema.dto.Issue;
-import com.orientechnologies.website.model.schema.dto.Organization;
 import com.orientechnologies.website.model.schema.dto.Repository;
 import com.orientechnologies.website.repository.RepositoryRepository;
 import com.orientechnologies.website.services.RepositoryService;
@@ -42,6 +41,6 @@ public class RepositoryServiceImpl implements RepositoryService {
     OrientGraph graph = dbFactory.getGraph();
     OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(repository.getId()));
     OrientVertex devVertex = new OrientVertex(graph, new ORecordId(issue.getId()));
-    orgVertex.addEdge(OSiteSchema.HasIssue.class.getSimpleName(), devVertex);
+    orgVertex.addEdge(HasIssue.class.getSimpleName(), devVertex);
   }
 }

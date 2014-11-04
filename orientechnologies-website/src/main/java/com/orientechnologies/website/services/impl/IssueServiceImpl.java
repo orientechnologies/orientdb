@@ -1,11 +1,11 @@
 package com.orientechnologies.website.services.impl;
 
+import com.orientechnologies.website.model.schema.HasComment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.website.OrientDBFactory;
-import com.orientechnologies.website.model.schema.OSiteSchema;
 import com.orientechnologies.website.model.schema.dto.Comment;
 import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.services.IssueService;
@@ -31,6 +31,6 @@ public class IssueServiceImpl implements IssueService {
     OrientGraph graph = dbFactory.getGraph();
     OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(issue.getId()));
     OrientVertex devVertex = new OrientVertex(graph, new ORecordId(comment.getId()));
-    orgVertex.addEdge(OSiteSchema.HasComment.class.getSimpleName(), devVertex);
+    orgVertex.addEdge(HasComment.class.getSimpleName(), devVertex);
   }
 }

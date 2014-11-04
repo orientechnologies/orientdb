@@ -2,6 +2,8 @@ package com.orientechnologies.website.services.impl;
 
 import java.io.IOException;
 
+import com.orientechnologies.website.model.schema.HasMember;
+import com.orientechnologies.website.model.schema.HasRepo;
 import com.orientechnologies.website.model.schema.dto.Organization;
 import com.orientechnologies.website.model.schema.dto.Repository;
 import com.orientechnologies.website.model.schema.dto.User;
@@ -22,7 +24,6 @@ import org.springframework.stereotype.Service;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.exception.ServiceException;
-import com.orientechnologies.website.model.schema.OSiteSchema;
 import com.orientechnologies.website.repository.UserRepository;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import com.orientechnologies.website.security.DeveloperAuthentication;
@@ -170,7 +171,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(organization.getId()));
     OrientVertex devVertex = new OrientVertex(graph, new ORecordId(user.getId()));
 
-    orgVertex.addEdge(OSiteSchema.HasMember.class.getSimpleName(), devVertex);
+    orgVertex.addEdge(HasMember.class.getSimpleName(), devVertex);
 
   }
 
@@ -180,6 +181,6 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(organization.getId()));
     OrientVertex devVertex = new OrientVertex(graph, new ORecordId(repository.getId()));
-    orgVertex.addEdge(OSiteSchema.HasRepo.class.getSimpleName(), devVertex);
+    orgVertex.addEdge(HasRepo.class.getSimpleName(), devVertex);
   }
 }

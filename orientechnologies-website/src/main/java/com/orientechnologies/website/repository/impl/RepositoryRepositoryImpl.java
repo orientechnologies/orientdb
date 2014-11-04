@@ -2,7 +2,7 @@ package com.orientechnologies.website.repository.impl;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.website.model.schema.OSiteSchema;
+import com.orientechnologies.website.model.schema.*;
 import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.model.schema.dto.Repository;
 import com.orientechnologies.website.repository.RepositoryRepository;
@@ -18,8 +18,8 @@ import java.util.NoSuchElementException;
 public class RepositoryRepositoryImpl extends OrientBaseRepository<Repository> implements RepositoryRepository {
 
   @Override
-  public OSiteSchema.OTypeHolder<Repository> getHolder() {
-    return OSiteSchema.Repository.NAME;
+  public OTypeHolder<Repository> getHolder() {
+    return ORepository.NAME;
   }
 
   @Override
@@ -33,7 +33,7 @@ public class RepositoryRepositoryImpl extends OrientBaseRepository<Repository> i
     OrientGraph graph = dbFactory.getGraph();
 
     String query = String.format("select from %s where %s = '%s' and in('%s')[0].%s = '%s'", getEntityClass().getSimpleName(),
-        OSiteSchema.Repository.CODENAME, name, OSiteSchema.HasRepo.class.getSimpleName(), OSiteSchema.Organization.CODENAME, org);
+        ORepository.CODENAME, name, HasRepo.class.getSimpleName(), OOrganization.CODENAME, org);
     List<ODocument> vertexes = graph.getRawGraph().query(new OSQLSynchQuery<Object>(query));
 
     try {
@@ -49,12 +49,11 @@ public class RepositoryRepositoryImpl extends OrientBaseRepository<Repository> i
 
     OrientGraph graph = dbFactory.getGraph();
     String query = String.format("select from (select expand(out('%s')) from %s where %s = '%s') where %s = %d",
-        OSiteSchema.HasIssue.class.getSimpleName(), getEntityClass().getSimpleName(), OSiteSchema.Repository.CODENAME, repo,
-        OSiteSchema.Issue.NUMBER, number);
+        HasIssue.class.getSimpleName(), getEntityClass().getSimpleName(), ORepository.CODENAME, repo, OIssue.NUMBER, number);
     List<ODocument> vertexes = graph.getRawGraph().query(new OSQLSynchQuery<Object>(query));
 
     try {
-      return OSiteSchema.Issue.NUMBER.fromDoc(vertexes.iterator().next(), graph);
+      return OIssue.NUMBER.fromDoc(vertexes.iterator().next(), graph);
     } catch (NoSuchElementException e) {
       return null;
     }

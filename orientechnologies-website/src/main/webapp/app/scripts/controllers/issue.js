@@ -11,6 +11,8 @@ angular.module('webappApp')
   .controller('IssueNewCtrl', function ($scope, Organization) {
 
 
+    $scope.repositories = Organization.all("repos").getList().$object;
+
   });
 angular.module('webappApp')
   .controller('IssueEditCtrl', function ($scope, $routeParams, Repo) {

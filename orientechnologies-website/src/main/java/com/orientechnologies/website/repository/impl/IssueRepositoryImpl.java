@@ -1,6 +1,8 @@
 package com.orientechnologies.website.repository.impl;
 
+import com.orientechnologies.website.model.schema.OIssue;
 import com.orientechnologies.website.model.schema.OSiteSchema;
+import com.orientechnologies.website.model.schema.OTypeHolder;
 import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.repository.IssueRepository;
 import org.springframework.stereotype.Repository;
@@ -12,8 +14,8 @@ import org.springframework.stereotype.Repository;
 public class IssueRepositoryImpl extends OrientBaseRepository<Issue> implements IssueRepository {
 
   @Override
-  public OSiteSchema.OTypeHolder<Issue> getHolder() {
-    return OSiteSchema.Issue.CREATED_AT;
+  public OTypeHolder<Issue> getHolder() {
+    return OIssue.CREATED_AT;
   }
 
   @Override

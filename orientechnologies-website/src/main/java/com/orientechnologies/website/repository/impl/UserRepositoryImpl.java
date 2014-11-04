@@ -3,6 +3,8 @@ package com.orientechnologies.website.repository.impl;
 import java.util.NoSuchElementException;
 
 import com.orientechnologies.website.model.schema.OSiteSchema;
+import com.orientechnologies.website.model.schema.OTypeHolder;
+import com.orientechnologies.website.model.schema.OUser;
 import com.orientechnologies.website.model.schema.dto.User;
 import com.orientechnologies.website.repository.UserRepository;
 import org.springframework.stereotype.Repository;
@@ -66,7 +68,7 @@ public class UserRepositoryImpl extends OrientBaseRepository<User> implements Us
   }
 
   @Override
-  public OSiteSchema.OTypeHolder<User> getHolder() {
-    return OSiteSchema.User.EMAIL;
+  public OTypeHolder<User> getHolder() {
+    return OUser.EMAIL;
   }
 }

@@ -43,6 +43,11 @@ public class OrganizationController {
     return new ResponseEntity<List<Issue>>(orgRepository.findOrganizationIssues(name), HttpStatus.OK);
   }
 
+  @RequestMapping(value = "{name}/repos", method = RequestMethod.GET)
+  public ResponseEntity<List<Repository>> getOrganizationRepositories(@PathVariable("name") String name) {
+    return new ResponseEntity<List<Repository>>(orgRepository.findOrganizationRepositories(name), HttpStatus.OK);
+  }
+
   @RequestMapping(value = "{name}/members/{username}", method = RequestMethod.POST)
   @ResponseStatus(HttpStatus.OK)
   public void addMemberToOrg(@PathVariable("name") String name, @PathVariable("username") String username) {
