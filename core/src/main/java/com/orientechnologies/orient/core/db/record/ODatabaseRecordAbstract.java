@@ -58,14 +58,12 @@ import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORestrictedAccessHook;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.metadata.security.OUserTrigger;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
+import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -100,13 +98,14 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   protected ORecordSerializer                               serializer;
   private OSBTreeCollectionManager                          sbTreeCollectionManager;
   private OMetadataDefault                                  metadata;
-  private OUser                                             user;
+  private OImmutableUser                                    user;
+
   private byte                                              recordType;
   @Deprecated
   private String                                            recordFormat;
   private Map<ORecordHook, ORecordHook.HOOK_POSITION>       hooks             = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>();
   private boolean                                           retainRecords     = true;
-  private OLocalRecordCache                                 level1Cache;
+  private OLocalRecordCache                                 localCache;
   private boolean                                           mvcc;
   private boolean                                           validation;
   private OCurrentStorageComponentsFactory                  componentsFactory;
@@ -124,7 +123,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     databaseOwner = this;
 
     recordType = iRecordType;
-    level1Cache = new OLocalRecordCache(new OCacheLevelOneLocatorImpl());
+    localCache = new OLocalRecordCache(new OCacheLevelOneLocatorImpl());
 
     mvcc = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
     validation = OGlobalConfiguration.DB_VALIDATION.getValueAsBoolean();
@@ -143,13 +142,20 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       initAtFirstOpen(iUserName, iUserPassword);
 
       if (!(getStorage() instanceof OStorageProxy)) {
-        user = metadata.getSecurity().authenticate(iUserName, iUserPassword);
+        final OSchemaProxy schema = getMetadata().getSchema();
+        if (user == null || user.getVersion() != schema.getVersion() || !user.getName().equalsIgnoreCase(iUserName)) {
+          final OUser usr = metadata.getSecurity().authenticate(iUserName, iUserPassword);
+          if (usr != null)
+            user = new OImmutableUser(schema.getVersion(), usr);
+          else
+            user = null;
+
+          checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
+        }
       }
 
-      checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
       // WAKE UP LISTENERS
       callOnOpenListeners();
-
     } catch (OException e) {
       close();
       throw e;
@@ -161,6 +167,13 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   }
 
   public void resetInitialization() {
+    for (ORecordHook h : hooks.keySet())
+      h.onUnregister();
+
+    hooks.clear();
+
+    localCache.shutdown();
+
     initialized = false;
   }
 
@@ -198,7 +211,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     sbTreeCollectionManager = sbTreeCM != null ? new OSBTreeCollectionManagerProxy(this, sbTreeCM) : null;
 
-    level1Cache.startup();
+    localCache.startup();
 
     metadata = new OMetadataDefault();
     metadata.load();
@@ -214,9 +227,12 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       }
 
       installHooks();
+      registerHook(new OSecurityTrackerHook(metadata.getSecurity()), ORecordHook.HOOK_POSITION.LAST);
+
+      user = null;
     } else
-      user = new OUser(iUserName, OUser.encryptPassword(iUserPassword)).addRole(new ORole("passthrough", null,
-          ORole.ALLOW_MODES.ALLOW_ALL_BUT));
+      user = new OImmutableUser(-1, new OUser(iUserName, OUser.encryptPassword(iUserPassword)).addRole(new ORole("passthrough",
+          null, ORole.ALLOW_MODES.ALLOW_ALL_BUT)));
 
     if (!metadata.getSchema().existsClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME))
       // @COMPATIBILITY 1.0RC9
@@ -258,7 +274,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
               }
             }
           }));
-      level1Cache.startup();
+      localCache.startup();
 
       getStorage().getConfiguration().setRecordSerializer(getSerializer().toString());
       getStorage().getConfiguration().setRecordSerializerVersion(getSerializer().getCurrentVersion());
@@ -272,7 +288,14 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       metadata = new OMetadataDefault();
       metadata.create();
 
-      user = getMetadata().getSecurity().getUser(OUser.ADMIN);
+      registerHook(new OSecurityTrackerHook(metadata.getSecurity()), ORecordHook.HOOK_POSITION.LAST);
+
+			final OUser usr = getMetadata().getSecurity().getUser(OUser.ADMIN);
+
+			if (usr == null)
+				user = null;
+			else
+      	user = new OImmutableUser(getMetadata().getSecurity().getVersion(), usr);
 
       if (!metadata.getSchema().existsClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME))
         // @COMPATIBILITY 1.0RC9
@@ -342,7 +365,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
     super.close();
 
-    level1Cache.clear();
+    localCache.clear();
 
     ODatabaseRecordThreadLocal.INSTANCE.remove();
   }
@@ -1219,15 +1242,23 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   /**
    * {@inheritDoc}
    */
-  public OUser getUser() {
+  public OSecurityUser getUser() {
     return user;
   }
 
   /**
    * {@inheritDoc}
    */
-  public void setUser(OUser user) {
-    this.user = user;
+  public void setUser(OSecurityUser user) {
+    if (user instanceof OUser) {
+      OMetadata metadata = getMetadata();
+      if (metadata != null) {
+        final OSecurity security = metadata.getSecurity();
+        this.user = new OImmutableUser(security.getVersion(), (OUser) user);
+      } else
+        this.user = new OImmutableUser(-1, (OUser) user);
+    } else
+      this.user = (OImmutableUser) user;
   }
 
   /**
@@ -1291,7 +1322,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    */
   @Override
   public OLocalRecordCache getLocalCache() {
-    return level1Cache;
+    return localCache;
   }
 
   /**

@@ -41,16 +41,13 @@ import java.util.Set;
  * 
  * @see ORole
  */
-public class OUser extends ODocumentWrapper {
+public class OUser extends ODocumentWrapper implements  OSecurityUser {
   public static final String ADMIN            = "admin";
   public static final String CLASS_NAME       = "OUser";
   private static final long  serialVersionUID = 1L;
   // AVOID THE INVOCATION OF SETTER
   protected Set<ORole>       roles            = new HashSet<ORole>();
 
-  public enum STATUSES {
-    SUSPENDED, ACTIVE
-  }
 
   /**
    * Constructor used in unmarshalling.
@@ -216,9 +213,9 @@ public class OUser extends ODocumentWrapper {
     return this;
   }
 
-  public OUser addRole(final ORole iRole) {
+  public OUser addRole(final OSecurityRole iRole) {
     if (iRole != null)
-      roles.add(iRole);
+      roles.add((ORole)iRole);
 
     final HashSet<ODocument> persistentRoles = new HashSet<ODocument>();
     for (ORole r : roles) {
@@ -267,4 +264,9 @@ public class OUser extends ODocumentWrapper {
   public String toString() {
     return getName();
   }
+
+	@Override
+	public OIdentifiable getIdentity() {
+		return document;
+	}
 }

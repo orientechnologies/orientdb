@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
@@ -40,7 +41,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.security.OUser.STATUSES;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -53,6 +53,8 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
  * 
  */
 public class OSecurityShared implements OSecurity, OCloseable {
+  private final AtomicLong   version                = new AtomicLong();
+
   public static final String RESTRICTED_CLASSNAME   = "ORestricted";
   public static final String IDENTITY_CLASSNAME     = "OIdentity";
   public static final String ALLOW_ALL_FIELD        = "_allow";
@@ -119,29 +121,29 @@ public class OSecurityShared implements OSecurity, OCloseable {
     if (iAllowAll == null || iAllowAll.isEmpty())
       return true;
 
-    final OUser currentUser = ODatabaseRecordThreadLocal.INSTANCE.get().getUser();
+    final OSecurityUser currentUser = ODatabaseRecordThreadLocal.INSTANCE.get().getUser();
     if (currentUser != null) {
       // CHECK IF CURRENT USER IS ENLISTED
-      if (!iAllowAll.contains(currentUser.getDocument().getIdentity())) {
+      if (!iAllowAll.contains(currentUser.getIdentity())) {
         // CHECK AGAINST SPECIFIC _ALLOW OPERATION
-        if (iAllowOperation != null && iAllowOperation.contains(currentUser.getDocument().getIdentity()))
+        if (iAllowOperation != null && iAllowOperation.contains(currentUser.getIdentity()))
           return true;
 
         // CHECK IF AT LEAST ONE OF THE USER'S ROLES IS ENLISTED
-        for (ORole r : currentUser.getRoles()) {
+        for (OSecurityRole r : currentUser.getRoles()) {
           // CHECK AGAINST GENERIC _ALLOW
-          if (iAllowAll.contains(r.getDocument().getIdentity()))
+          if (iAllowAll.contains(r.getIdentity()))
             return true;
           // CHECK AGAINST SPECIFIC _ALLOW OPERATION
-          if (iAllowOperation != null && iAllowOperation.contains(r.getDocument().getIdentity()))
+          if (iAllowOperation != null && iAllowOperation.contains(r.getIdentity()))
             return true;
           // CHECK inherited permissions from parent roles, fixes #1980: Record Level Security: permissions don't follow role's
           // inheritance
-          ORole parentRole = r.getParentRole();
+          OSecurityRole parentRole = r.getParentRole();
           while (parentRole != null) {
-            if (iAllowAll.contains(parentRole.getDocument().getIdentity()))
+            if (iAllowAll.contains(parentRole.getIdentity()))
               return true;
-            if (iAllowOperation != null && iAllowOperation.contains(parentRole.getDocument().getIdentity()))
+            if (iAllowOperation != null && iAllowOperation.contains(parentRole.getIdentity()))
               return true;
             parentRole = parentRole.getParentRole();
           }
@@ -159,7 +161,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
     if (user == null)
       throw new OSecurityAccessException(dbName, "User or password not valid for database: '" + dbName + "'");
 
-    if (user.getAccountStatus() != STATUSES.ACTIVE)
+    if (user.getAccountStatus() != OSecurityUser.STATUSES.ACTIVE)
       throw new OSecurityAccessException(dbName, "User '" + iUserName + "' is not active");
 
     if (!(getDatabase().getStorage() instanceof OStorageProxy)) {
@@ -443,6 +445,16 @@ public class OSecurityShared implements OSecurity, OCloseable {
       return new OUser(result.get(0));
 
     return null;
+  }
+
+  @Override
+  public long getVersion() {
+    return version.get();
+  }
+
+  @Override
+  public void incrementVersion() {
+    version.incrementAndGet();
   }
 
   private ODatabaseRecordInternal getDatabase() {

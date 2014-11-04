@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 
 import java.util.HashMap;
@@ -37,7 +38,7 @@ public class OIntentMassiveInsert implements OIntent {
   private boolean                                     previousRetainObjects;
   private boolean                                     previousValidation;
   private Map<ORecordHook, ORecordHook.HOOK_POSITION> removedHooks;
-  private OUser                                       currentUser;
+  private OSecurityUser currentUser;
 
   public void begin(final ODatabaseRaw iDatabase) {
     // DISABLE CHECK OF SECURITY

@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.processor.OComposableProcessor;
 import com.orientechnologies.orient.core.processor.OProcessException;
@@ -286,7 +287,7 @@ public class OScriptDocumentDatabaseWrapper {
     return (RET) database.setValidationEnabled(iValue);
   }
 
-  public OUser getUser() {
+  public OSecurityUser getUser() {
     return database.getUser();
   }
 

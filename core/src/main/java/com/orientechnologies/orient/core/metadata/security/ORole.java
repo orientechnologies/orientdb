@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -43,7 +43,7 @@ import java.util.Map.Entry;
  * Mode = ALLOW (allow all but) or DENY (deny all but)
  */
 @SuppressWarnings("unchecked")
-public class ORole extends ODocumentWrapper {
+public class ORole extends ODocumentWrapper implements OSecurityRole {
   public static final String          ADMIN             = "admin";
   public static final String          CLASS_NAME        = "ORole";
   public final static int             PERMISSION_NONE   = 0;
@@ -61,10 +61,6 @@ public class ORole extends ODocumentWrapper {
   protected ALLOW_MODES               mode              = ALLOW_MODES.DENY_ALL_BUT;
   protected ORole                     parentRole;
   protected Map<String, Byte>         rules             = new LinkedHashMap<String, Byte>();
-
-  public enum ALLOW_MODES {
-    DENY_ALL_BUT, ALLOW_ALL_BUT
-  }
 
   /**
    * Constructor used in unmarshalling.
@@ -251,8 +247,8 @@ public class ORole extends ODocumentWrapper {
     return parentRole;
   }
 
-  public ORole setParentRole(final ORole iParent) {
-    this.parentRole = iParent;
+  public ORole setParentRole(final OSecurityRole iParent) {
+    this.parentRole = (ORole) iParent;
     document.field("inheritedRole", parentRole != null ? parentRole.getDocument() : null);
     return this;
   }
@@ -270,5 +266,10 @@ public class ORole extends ODocumentWrapper {
   @Override
   public String toString() {
     return getName();
+  }
+
+  @Override
+  public OIdentifiable getIdentity() {
+    return document;
   }
 }

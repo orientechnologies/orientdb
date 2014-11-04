@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
@@ -216,11 +217,11 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     return record.getIdentity();
   }
 
-  public OUser getUser() {
+  public OSecurityUser getUser() {
     return underlying.getUser();
   }
 
-  public void setUser(OUser user) {
+  public void setUser(OSecurityUser user) {
     underlying.setUser(user);
   }
 
