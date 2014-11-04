@@ -202,7 +202,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
   protected void bindDefaultContextVariables(){
     if(context != null) {
       if(getDatabase() != null &&  getDatabase().getUser() != null) {
-        context.setVariable(DEFAULT_PARAM_USER, getDatabase().getUser().getDocument());
+        context.setVariable(DEFAULT_PARAM_USER, getDatabase().getUser().getIdentity());
       }
     }
   }
