@@ -17,17 +17,17 @@ package com.orientechnologies.orient.test.database.speed;
 
 import java.io.UnsupportedEncodingException;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 
 @Test(enabled = false)
 public class DictionaryLookupSpeedTest extends OrientMonoThreadTest {
-	private ODatabaseFlat	database;
+	private ODatabaseDocumentTx database;
 
 	public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
 		DictionaryLookupSpeedTest test = new DictionaryLookupSpeedTest();
@@ -37,7 +37,7 @@ public class DictionaryLookupSpeedTest extends OrientMonoThreadTest {
 	public DictionaryLookupSpeedTest() {
 		super(100000);
 		Orient.instance().getProfiler().startRecording();
-		database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
+		database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
 	}
 
 	@Override

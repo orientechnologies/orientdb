@@ -15,11 +15,11 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
@@ -27,7 +27,7 @@ import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 
 @Test(enabled = false)
 public class LocalCreateFlatSpeedTest extends OrientMonoThreadTest {
-  private ODatabaseFlat database;
+  private ODatabaseDocumentTx database;
   private ORecordFlat   record;
   private long          date = System.currentTimeMillis();
 
@@ -45,13 +45,13 @@ public class LocalCreateFlatSpeedTest extends OrientMonoThreadTest {
   public void init() {
     Orient.instance().getProfiler().startRecording();
 
-    database = new ODatabaseFlat(System.getProperty("url"));
+    database = new ODatabaseDocumentTx(System.getProperty("url"));
     if (database.exists())
       database.open("admin", "admin");
     else
       database.create();
 
-    record = database.newInstance();
+    record = new ORecordFlat();
 
     database.declareIntent(new OIntentMassiveInsert());
     database.begin(TXTYPE.NOTX);

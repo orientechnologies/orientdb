@@ -15,10 +15,10 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
@@ -26,7 +26,7 @@ import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 
 @Test(enabled = false)
 public class DictionaryPutSpeedTest extends OrientMonoThreadTest {
-	private ODatabaseFlat	database;
+	private ODatabaseDocumentTx database;
 	private ORecordFlat		record;
 	private long					startNum;
 
@@ -40,10 +40,10 @@ public class DictionaryPutSpeedTest extends OrientMonoThreadTest {
 		super(1000000);
 
 		String url = System.getProperty("url");
-		database = new ODatabaseFlat(url).open("admin", "admin");
+		database = new ODatabaseDocumentTx(url).open("admin", "admin");
 		database.declareIntent(new OIntentMassiveInsert());
 
-		record = database.newInstance();
+		record = new ORecordFlat();
 		startNum = 0;// database.countClusterElements("Animal");
 
 		 Orient.instance().getProfiler().startRecording();

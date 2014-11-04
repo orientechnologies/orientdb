@@ -15,16 +15,16 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 
 @Test(enabled = false)
 public class TxRemoteCreateFlatSpeedTest extends OrientMonoThreadTest {
-  private ODatabaseFlat database;
+  private ODatabaseDocumentTx database;
   private ORecordFlat   record;
 
   public static void main(String[] iArgs) throws InstantiationException, IllegalAccessException {
@@ -40,8 +40,8 @@ public class TxRemoteCreateFlatSpeedTest extends OrientMonoThreadTest {
   public void init() {
     Orient.instance().getProfiler().startRecording();
 
-    database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
-    record = database.newInstance();
+    database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
+    record = new ORecordFlat();
 
     database.begin();
   }
