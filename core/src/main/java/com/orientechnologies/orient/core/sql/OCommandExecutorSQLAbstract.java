@@ -65,6 +65,9 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
   public static final String METADATA_SCHEMA          = "SCHEMA";
   public static final String METADATA_INDEXMGR        = "INDEXMANAGER";
 
+  public static final String DEFAULT_PARAM_USER       = "$user";
+
+
   protected long             timeoutMs                = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
   protected TIMEOUT_STRATEGY timeoutStrategy          = TIMEOUT_STRATEGY.EXCEPTION;
 
@@ -194,6 +197,14 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
   protected boolean checkClusterAccess(final ODatabaseRecord db, final String iClusterName) {
     return db.getUser() != null
         && db.getUser().checkIfAllowed(ODatabaseSecurityResources.CLUSTER + "." + iClusterName, getSecurityOperationType()) != null;
+  }
+
+  protected void bindDefaultContextVariables(){
+    if(context != null) {
+      if(getDatabase() != null &&  getDatabase().getUser() != null) {
+        context.setVariable(DEFAULT_PARAM_USER, getDatabase().getUser().getDocument());
+      }
+    }
   }
 
 }

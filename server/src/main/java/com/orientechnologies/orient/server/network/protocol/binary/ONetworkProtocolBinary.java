@@ -826,6 +826,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     else
       storageType = "local";
 
+    if (storageType == null)
+      storageType = "plocal";
+
     checkServerAccess("database.delete");
 
     connection.database = getDatabaseInstance(dbName, ODatabaseDocument.TYPE, storageType);

@@ -109,6 +109,9 @@ public class OJSONFetchContext implements OFetchContext {
     settings.indentLevel++;
     try {
       jsonWriter.beginObject(settings.indentLevel, true, iFieldName);
+      if(!(iUserObject instanceof ODocument)) {
+        collectionStack.add(new ODocument()); // <-- sorry for this... fixes #2845 but this mess should be rewritten...
+      }
     } catch (IOException e) {
       throw new OFetchException("Error writing map field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
     }
@@ -117,6 +120,9 @@ public class OJSONFetchContext implements OFetchContext {
   public void onAfterMap(final ODocument iRootRecord, final String iFieldName, final Object iUserObject) {
     try {
       jsonWriter.endObject(settings.indentLevel, true);
+      if(!(iUserObject instanceof ODocument)) {
+        collectionStack.pop();
+      }
     } catch (IOException e) {
       throw new OFetchException("Error writing map field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
     }

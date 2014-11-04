@@ -75,12 +75,14 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
     final ORID r = rid.getIdentity();
 
     OShortSerializer.INSTANCE.serializeNative((short) r.getClusterId(), stream, startPosition);
-    OLongSerializer.INSTANCE.serializeNative(r.getClusterPosition(), stream, startPosition + OShortSerializer.SHORT_SIZE);
+    // Wrong implementation but needed for binary compatibility should be used serializeNative
+    OLongSerializer.INSTANCE.serialize(r.getClusterPosition(), stream, startPosition + OShortSerializer.SHORT_SIZE);
   }
 
   public ORecordId deserializeNativeObject(byte[] stream, int startPosition) {
     final int clusterId = OShortSerializer.INSTANCE.deserializeNative(stream, startPosition);
-    final long clusterPosition = OLongSerializer.INSTANCE.deserializeNative(stream, startPosition + OShortSerializer.SHORT_SIZE);
+    // Wrong implementation but needed for binary compatibility should be used deserializeNative
+    final long clusterPosition = OLongSerializer.INSTANCE.deserialize(stream, startPosition + OShortSerializer.SHORT_SIZE);
     return new ORecordId(clusterId, clusterPosition);
   }
 
@@ -89,15 +91,24 @@ public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {
     final ORID r = rid.getIdentity();
 
     OShortSerializer.INSTANCE.serializeInDirectMemory((short) r.getClusterId(), pointer, offset);
-    OLongSerializer.INSTANCE.serializeInDirectMemory(r.getClusterPosition(), pointer, offset + OShortSerializer.SHORT_SIZE);
+    // Wrong implementation but needed for binary compatibility
+    byte[] stream = new byte[OLongSerializer.LONG_SIZE];
+    OLongSerializer.INSTANCE.serialize(r.getClusterPosition(), stream, 0);
+    pointer.set(offset + OShortSerializer.SHORT_SIZE, stream, 0, OLongSerializer.LONG_SIZE);
+    // OLongSerializer.INSTANCE.serializeInDirectMemory(r.getClusterPosition(), pointer, offset + OShortSerializer.SHORT_SIZE);
   }
 
   @Override
   public OIdentifiable deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset) {
     final int clusterId = OShortSerializer.INSTANCE.deserializeFromDirectMemory(pointer, offset);
-    final long clusterPosition = OLongSerializer.INSTANCE
-        .deserializeFromDirectMemory(pointer, offset + OShortSerializer.SHORT_SIZE);
-    ;
+
+    // Wrong implementation but needed for binary compatibility
+    final long clusterPosition = OLongSerializer.INSTANCE.deserialize(
+        pointer.get(offset + OShortSerializer.SHORT_SIZE, OLongSerializer.LONG_SIZE), 0);
+
+    // final long clusterPosition = OLongSerializer.INSTANCE
+    // .deserializeFromDirectMemory(pointer, offset + OShortSerializer.SHORT_SIZE);
+
     return new ORecordId(clusterId, clusterPosition);
   }
 
