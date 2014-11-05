@@ -3,6 +3,7 @@ package com.orientechnologies.website.model.schema;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.website.model.schema.dto.Comment;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 
 import java.util.Date;
@@ -65,9 +66,9 @@ public enum OComment implements OTypeHolder<com.orientechnologies.website.model.
   }
 
   @Override
-  public com.orientechnologies.website.model.schema.dto.Comment fromDoc(ODocument doc, OrientBaseGraph graph) {
+  public Comment fromDoc(ODocument doc, OrientBaseGraph graph) {
 
-    com.orientechnologies.website.model.schema.dto.Comment comment = new com.orientechnologies.website.model.schema.dto.Comment();
+    Comment comment = new Comment();
     comment.setId(doc.getIdentity().toString());
     comment.setCommentId((Integer) doc.field(COMMENT_ID.toString()));
     comment.setBody((String) doc.field(BODY.toString()));

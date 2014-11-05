@@ -1,37 +1,35 @@
 package com.orientechnologies.website.services.impl;
 
-import java.io.IOException;
-
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.website.OrientDBFactory;
+import com.orientechnologies.website.exception.ServiceException;
+import com.orientechnologies.website.github.GOrganization;
+import com.orientechnologies.website.github.GRepo;
+import com.orientechnologies.website.github.GitHub;
 import com.orientechnologies.website.model.schema.HasMember;
 import com.orientechnologies.website.model.schema.HasRepo;
 import com.orientechnologies.website.model.schema.dto.Organization;
 import com.orientechnologies.website.model.schema.dto.Repository;
 import com.orientechnologies.website.model.schema.dto.User;
+import com.orientechnologies.website.repository.OrganizationRepository;
 import com.orientechnologies.website.repository.RepositoryRepository;
+import com.orientechnologies.website.repository.UserRepository;
+import com.orientechnologies.website.security.DeveloperAuthentication;
+import com.orientechnologies.website.services.OrganizationService;
 import com.orientechnologies.website.services.RepositoryService;
 import com.orientechnologies.website.services.reactor.GitHubIssueImporter;
 import com.orientechnologies.website.services.reactor.ReactorMSG;
-import org.kohsuke.github.GHOrganization;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GHUser;
-import org.kohsuke.github.GitHub;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.website.OrientDBFactory;
-import com.orientechnologies.website.exception.ServiceException;
-import com.orientechnologies.website.repository.UserRepository;
-import com.orientechnologies.website.repository.OrganizationRepository;
-import com.orientechnologies.website.security.DeveloperAuthentication;
-import com.orientechnologies.website.services.OrganizationService;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import reactor.core.Reactor;
 import reactor.event.Event;
+
+import java.io.IOException;
 
 /**
  * Created by Enrico Risa on 17/10/14.
@@ -67,11 +65,15 @@ public class OrganizationServiceImpl implements OrganizationService {
       String token = developerAuthentication.getGithubToken();
 
       try {
-        GitHub github = GitHub.connectUsingOAuth(token);
-        GHUser user = github.getUser(username);
-        GHOrganization ghOrganization = github.getOrganization(org);
-        boolean isMember = ghOrganization.hasMember(user);
 
+        GitHub gitHub = new GitHub(token);
+
+        GOrganization gOrganization = gitHub.organization(org);
+        // GitHub github = GitHub.connectUsingOAuth(token);
+        // GHUser user = github.getUser(username);
+        // GHOrganization ghOrganization = github.getOrganization(org);
+        // boolean isMember = ghOrganization.hasMember(user);
+        boolean isMember = gOrganization.hasMember(username);
         if (isMember) {
           User developer = userRepository.findUserByLogin(username);
           if (developer == null) {
@@ -80,7 +82,8 @@ public class OrganizationServiceImpl implements OrganizationService {
           }
           createMembership(organization, developer);
         } else {
-          throw ServiceException.create(HttpStatus.NOT_FOUND.value()).withMessage("Organization %s has no member %s", org, user);
+          throw ServiceException.create(HttpStatus.NOT_FOUND.value())
+              .withMessage("Organization %s has no member %s", org, username);
         }
 
       } catch (IOException e) {
@@ -109,8 +112,8 @@ public class OrganizationServiceImpl implements OrganizationService {
     // TODO see http://stackoverflow.com/questions/20144295/github-api-v3-determine-if-user-is-an-owner-of-an-organization
 
     try {
-      GitHub github = GitHub.connectUsingOAuth(token);
-      GHOrganization organization = github.getOrganization(name);
+      GitHub github = new GitHub(token);
+      GOrganization organization = github.organization(name);
       Organization org = createOrganization(organization.getLogin(), organization.getName());
       createMembership(org, developerAuthentication.getUser());
 
@@ -133,8 +136,14 @@ public class OrganizationServiceImpl implements OrganizationService {
       try {
 
         Repository r = null;
-        GitHub github = GitHub.connectUsingOAuth(token);
-        GHRepository repository = github.getRepository(org + '/' + repo);
+        GitHub github = new GitHub(token);
+
+        GRepo repository = github.repo(org + '/' + repo);
+        // Github gu = new RtGithub(token);
+        // Repo repo1 = gu.repos().get(new Coordinates.Simple(org + '/' + repo));
+
+        // GHRepository repository = github.getRepository(org + '/' + repo);
+
         r = repoRepository.findByOrgAndName(org, repo);
         if (r == null) {
           r = repositoryService.createRepo(repository.getName(), repository.getDescription());
@@ -142,6 +151,7 @@ public class OrganizationServiceImpl implements OrganizationService {
           dbFactory.getGraph().commit();
         }
         GitHubIssueImporter.GitHubIssueMessage gitHubIssueMessage = new GitHubIssueImporter.GitHubIssueMessage(repository);
+
         reactor.notify(ReactorMSG.ISSUE_IMPORT, Event.wrap(gitHubIssueMessage));
         return r;
       } catch (IOException e) {

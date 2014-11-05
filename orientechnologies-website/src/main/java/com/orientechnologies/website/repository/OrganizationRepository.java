@@ -1,9 +1,6 @@
 package com.orientechnologies.website.repository;
 
-import com.orientechnologies.website.model.schema.dto.Comment;
-import com.orientechnologies.website.model.schema.dto.Issue;
-import com.orientechnologies.website.model.schema.dto.Organization;
-import com.orientechnologies.website.model.schema.dto.Repository;
+import com.orientechnologies.website.model.schema.dto.*;
 
 import java.util.List;
 
@@ -18,4 +15,7 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
   public Issue findSingleOrganizationIssueByRepoAndNumber(String name, String repo, String number);
 
   public List<Comment> findSingleOrganizationIssueCommentByRepoAndNumber(String owner, String repo, String number);
+
+  public Milestone findMilestoneByOwnerRepoAndNumberIssueAndNumberMilestone(String owner, String repo, Integer iNumber,
+      Integer mNumber);
 }

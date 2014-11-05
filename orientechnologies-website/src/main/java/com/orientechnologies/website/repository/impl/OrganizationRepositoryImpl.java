@@ -1,26 +1,26 @@
 package com.orientechnologies.website.repository.impl;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.NoSuchElementException;
-
-import com.orientechnologies.website.model.schema.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Repository;
-
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.website.OrientDBFactory;
+import com.orientechnologies.website.model.schema.*;
 import com.orientechnologies.website.model.schema.dto.Comment;
 import com.orientechnologies.website.model.schema.dto.Issue;
+import com.orientechnologies.website.model.schema.dto.Milestone;
 import com.orientechnologies.website.model.schema.dto.Organization;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.NoSuchElementException;
 
 @Repository
 public class OrganizationRepositoryImpl extends OrientBaseRepository<Organization> implements OrganizationRepository {
@@ -77,10 +77,9 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   public Issue findSingleOrganizationIssueByRepoAndNumber(String name, String repo, String number) {
 
     OrientGraph db = dbFactory.getGraph();
-    String query = String
-        .format(
-            "select from (select expand(out('HasIssue')) from (select expand(out('HasRepo')) from Organization where codename = '%s') where codename = '%s') where number = '%s'",
-            name, repo, number);
+    String query = String.format(
+        "select expand(out('HasRepo')[codename = '%s'].out('HasIssue')[number = '%s'])  from Organization where codename = '%s') ",
+        repo, number, name);
 
     Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
     try {
@@ -106,6 +105,24 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     }
 
     return comments;
+  }
+
+  @Override
+  public Milestone findMilestoneByOwnerRepoAndNumberIssueAndNumberMilestone(String owner, String repo, Integer iNumber,
+      Integer mNumber) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String
+        .format(
+            "select expand(out('HasRepo')[codename = '%s'].out('HasIssue')[number = %d].out('HasMilestone')[number = %d])   from Organization  where codename = '%s')",
+            repo, iNumber, mNumber, owner);
+
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+    try {
+      ODocument doc = vertices.iterator().next().getRecord();
+      return OMilestone.NUMBER.fromDoc(doc, db);
+    } catch (NoSuchElementException e) {
+      return null;
+    }
   }
 
   @Override

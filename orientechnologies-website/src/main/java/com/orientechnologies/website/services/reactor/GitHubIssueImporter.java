@@ -1,26 +1,20 @@
 package com.orientechnologies.website.services.reactor;
 
+import com.orientechnologies.website.OrientDBFactory;
+import com.orientechnologies.website.github.*;
 import com.orientechnologies.website.model.schema.dto.Comment;
 import com.orientechnologies.website.model.schema.dto.Issue;
+import com.orientechnologies.website.model.schema.dto.Milestone;
 import com.orientechnologies.website.model.schema.dto.Repository;
-import com.orientechnologies.website.repository.CommentRepository;
-import com.orientechnologies.website.repository.IssueRepository;
-import com.orientechnologies.website.repository.RepositoryRepository;
-import com.orientechnologies.website.repository.UserRepository;
+import com.orientechnologies.website.repository.*;
 import com.orientechnologies.website.services.IssueService;
 import com.orientechnologies.website.services.RepositoryService;
-import org.kohsuke.github.GHIssue;
-import org.kohsuke.github.GHIssueComment;
-import org.kohsuke.github.GHIssueState;
-import org.kohsuke.github.GHRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.event.Event;
 import reactor.function.Consumer;
-
-import com.orientechnologies.website.OrientDBFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -31,26 +25,31 @@ import java.util.List;
 @Service
 public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.GitHubIssueMessage>> {
 
-  protected Logger             log = LoggerFactory.getLogger(this.getClass());
+  protected Logger               log = LoggerFactory.getLogger(this.getClass());
   @Autowired
-  private OrientDBFactory      dbFactory;
+  private OrientDBFactory        dbFactory;
 
   @Autowired
-  private RepositoryRepository repoRepository;
+  private RepositoryRepository   repoRepository;
 
   @Autowired
-  private RepositoryService    repositoryService;
+  private RepositoryService      repositoryService;
 
   @Autowired
-  private IssueRepository      issueRepo;
+  private OrganizationRepository organizationRepository;
+  @Autowired
+  private IssueRepository        issueRepo;
 
   @Autowired
-  private IssueService         issueService;
+  private IssueService           issueService;
   @Autowired
-  private UserRepository       userRepo;
+  private UserRepository         userRepo;
 
   @Autowired
-  private CommentRepository    commentRepository;
+  private CommentRepository      commentRepository;
+
+  @Autowired
+  private MilestoneRepository    milestoneRepository;
 
   @Override
   public void accept(Event<GitHubIssueMessage> event) {
@@ -61,8 +60,10 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
       dbFactory.getGraph().begin();
 
       Repository repoDtp = repoRepository.findByOrgAndName(message.org, message.repo);
-      importIssue(message, repoDtp, GHIssueState.CLOSED);
-      importIssue(message, repoDtp, GHIssueState.OPEN);
+
+      importLabels(message, repoDtp);
+      importIssue(message, repoDtp, GIssueState.CLOSED);
+      importIssue(message, repoDtp, GIssueState.OPEN);
 
       dbFactory.getGraph().commit();
     } catch (IOException e) {
@@ -70,10 +71,15 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
     }
   }
 
-  private void importIssue(GitHubIssueMessage message, Repository repoDtp, GHIssueState state) throws IOException {
-    List<GHIssue> issues = message.repository.getIssues(state);
+  private void importLabels(GitHubIssueMessage message, Repository repoDtp) {
+
+  }
+
+  private void importIssue(GitHubIssueMessage message, Repository repoDtp, GIssueState state) throws IOException {
+    List<GIssue> issues = message.repository.getIssues(state);
+
     int i = 0;
-    for (GHIssue issue : issues) {
+    for (GIssue issue : issues) {
 
       Issue issueDto = repoRepository.findIssueByRepoAndNumber(repoDtp.getCodename(), issue.getNumber());
 
@@ -86,8 +92,28 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
       issueDto.setBody(issue.getBody());
       issueDto.setTitle(issue.getTitle());
       issueDto.setState(issue.getState().name());
-      for (GHIssue.Label label : issue.getLabels()) {
+      for (GLabel label : issue.getLabels()) {
         issueDto.addLabel(label.getName());
+      }
+
+      GMilestone m = issue.getMilestone();
+      Milestone milestone = null;
+
+      if (m != null) {
+        milestone = organizationRepository.findMilestoneByOwnerRepoAndNumberIssueAndNumberMilestone(message.org, message.repo,
+            issue.getNumber(), m.getNumber());
+        if (milestone == null) {
+          milestone = new Milestone();
+        }
+
+        milestone.setNumber(m.getNumber());
+        milestone.setTitle(m.getTitle());
+        milestone.setDescription(m.getDescription());
+        milestone.setState(m.getState().name());
+        milestone.setCreatedAt(m.getCreatedAt());
+        milestone.setDueOn(m.getDueOn());
+
+        milestone = milestoneRepository.save(milestone);
       }
 
       issueDto.setUser(userRepo.findUserOrCreateByLogin(issue.getUser().getLogin()));
@@ -102,7 +128,7 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
       issueDto = issueRepo.save(issueDto);
 
       boolean isNewComment = false;
-      for (GHIssueComment ghIssueComment : issue.getComments()) {
+      for (GComment ghIssueComment : issue.getComments()) {
         Comment comment = commentRepository.findByIssueAndCommentId(issueDto, ghIssueComment.getId());
 
         isNewComment = false;
@@ -119,8 +145,11 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
         comment = commentRepository.save(comment);
         if (isNewComment)
           issueService.commentIssue(issueDto, comment);
+
       }
 
+      if (milestone != null)
+        issueService.changeMilestone(issueDto, milestone);
       if (isNew)
         repositoryService.createIssue(repoDtp, issueDto);
 
@@ -133,9 +162,9 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
 
     private final String org;
     private String       repo;
-    private GHRepository repository;
+    private GRepo        repository;
 
-    public GitHubIssueMessage(GHRepository repository) {
+    public GitHubIssueMessage(GRepo repository) {
       this.repository = repository;
       org = repository.getFullName().split("/")[0];
       repo = repository.getFullName().split("/")[1];
