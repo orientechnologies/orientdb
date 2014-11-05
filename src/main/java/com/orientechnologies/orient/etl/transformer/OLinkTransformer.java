@@ -76,7 +76,7 @@ public class OLinkTransformer extends OAbstractLookupTransformer {
     ODocument doc;
 
     if (!(input instanceof OIdentifiable)) {
-      log(OETLProcessor.LOG_LEVELS.DEBUG, "skip because input value is not a record");
+      log(OETLProcessor.LOG_LEVELS.DEBUG, "skip because input value is not a record, but rather an instance of class: %s", input.getClass());
       return null;
     }
 
