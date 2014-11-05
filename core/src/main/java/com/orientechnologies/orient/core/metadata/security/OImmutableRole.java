@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,17 +19,18 @@ public class OImmutableRole implements OSecurityRole {
   private final Map<String, Byte> rules = new HashMap<String, Byte>();
   private final String            name;
   private final ORID              rid;
+  private final ORole             role;
 
   public OImmutableRole(ORole role) {
     if (role.getParentRole() == null)
-      parentRole = null;
+      this.parentRole = null;
     else
-      parentRole = new OImmutableRole(role.getParentRole());
+      this.parentRole = new OImmutableRole(role.getParentRole());
 
-    mode = role.getMode();
-    name = role.getName();
-    rid = role.getIdentity().getIdentity();
-
+    this.mode = role.getMode();
+    this.name = role.getName();
+    this.rid = role.getIdentity().getIdentity();
+    this.role = role;
     rules.putAll(role.getRules());
   }
 
@@ -94,5 +96,10 @@ public class OImmutableRole implements OSecurityRole {
   @Override
   public OIdentifiable getIdentity() {
     return rid;
+  }
+  
+  @Override
+  public ODocument getDocument() {
+    return role.getDocument();
   }
 }
