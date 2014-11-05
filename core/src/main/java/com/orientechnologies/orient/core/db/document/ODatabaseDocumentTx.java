@@ -101,7 +101,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   private STATUS                                            status;
   private OIntent                                           currentIntent;
 
-  private ODatabaseInternal<?>                       databaseOwner;
+  private ODatabaseInternal<?>                              databaseOwner;
 
   @Deprecated
   private static final String                               DEF_RECORD_FORMAT = "csv";
@@ -1149,6 +1149,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   @Override
   public int getClusterIdByName(String iClusterName) {
+    if (iClusterName == null)
+      return -1;
+
     return storage.getClusterIdByName(iClusterName.toLowerCase());
   }
 
@@ -2404,12 +2407,16 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
       final OClass schemaClass = doc.getImmutableSchemaClass();
 
-      if (iClusterName == null && schemaClass != null) {
-        // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
-        if (schemaClass.isAbstract())
-          throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and can not be saved");
+      if (iClusterName == null) {
+        if (schemaClass != null) {
+          // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
+          if (schemaClass.isAbstract())
+            throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and can not be saved");
 
-        iClusterName = getClusterNameById(schemaClass.getClusterForNewInstance(doc));
+          iClusterName = getClusterNameById(schemaClass.getClusterForNewInstance(doc));
+        } else {
+          iClusterName = getClusterNameById(storage.getDefaultClusterId());
+        }
       }
 
       int id = getClusterIdByName(iClusterName);
