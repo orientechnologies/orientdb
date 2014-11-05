@@ -22,8 +22,6 @@ package com.orientechnologies.orient.core.tx;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
-import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -132,25 +130,5 @@ public abstract class OTransactionAbstract implements OTransaction {
   @Override
   public HashMap<ORID, OStorage.LOCKING_STRATEGY> getLockedRecords() {
     return locks;
-  }
-
-  protected void invokeCommitAgainstListeners() {
-    // WAKE UP LISTENERS
-    for (ODatabaseListener listener : ((ODatabaseRaw) database.getUnderlying()).browseListeners())
-      try {
-        listener.onBeforeTxCommit(database.getUnderlying());
-      } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error on commit callback against listener: " + listener, t);
-      }
-  }
-
-  protected void invokeRollbackAgainstListeners() {
-    // WAKE UP LISTENERS
-    for (ODatabaseListener listener : ((ODatabaseRaw) database.getUnderlying()).browseListeners())
-      try {
-        listener.onBeforeTxRollback(database.getUnderlying());
-      } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error on rollback callback against listener: " + listener, t);
-      }
   }
 }

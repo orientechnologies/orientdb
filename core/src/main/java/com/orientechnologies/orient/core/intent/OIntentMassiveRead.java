@@ -20,13 +20,13 @@
 
 package com.orientechnologies.orient.core.intent;
 
-import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 
 public class OIntentMassiveRead implements OIntent {
-  public void begin(final ODatabaseRaw iDatabase) {
+  public void begin(final ODatabaseRecordInternal iDatabase) {
   }
 
-  public void end(final ODatabaseRaw iDatabase) {
+  public void end(final ODatabaseRecordInternal iDatabase) {
   }
 
   @Override

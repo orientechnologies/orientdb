@@ -32,7 +32,7 @@ import org.testng.annotations.Test;
 
 import java.util.Date;
 
-@Test(enabled = false)
+
 public class LocalCreateDocumentMultiThreadIndexedSpeedTest extends OrientMultiThreadTest {
   private ODatabaseDocument database;
   private long              foundObjects;
@@ -135,11 +135,11 @@ public class LocalCreateDocumentMultiThreadIndexedSpeedTest extends OrientMultiT
 
   @Override
   public void deinit() {
-    long total = database.countClusterElements("Account");
-
-    System.out.println("\nTotal objects in Account cluster after the test: " + total);
-    System.out.println("Created " + (total - foundObjects));
-    Assert.assertEquals(total - foundObjects, threadCycles);
+//    long total = database.countClusterElements("Account");
+//
+//    System.out.println("\nTotal objects in Account cluster after the test: " + total);
+//    System.out.println("Created " + (total - foundObjects));
+//    Assert.assertEquals(total - foundObjects, threadCycles);
 
     if (database != null)
       database.close();

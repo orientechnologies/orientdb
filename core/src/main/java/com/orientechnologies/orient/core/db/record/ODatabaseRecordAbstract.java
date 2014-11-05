@@ -20,13 +20,16 @@
 package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCacheLevelOneLocatorImpl;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestInternal;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
@@ -34,18 +37,14 @@ import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
-import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.ORidBagDeleteHook;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerProxy;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.hook.OHookThreadLocal;
 import com.orientechnologies.orient.core.hook.ORecordHook;
@@ -57,6 +56,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
@@ -69,28 +69,34 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OSchedulerTrigger;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
-public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<ODatabaseRaw> implements ODatabaseRecordInternal {
+public abstract class ODatabaseRecordAbstract extends OListenerManger<ODatabaseListener> implements ODatabaseRecordInternal {
+
+  protected final Map<String, Object>                       properties        = new HashMap<String, Object>();
+  protected String                                          url;
+  protected OStorage                                        storage;
+  protected STATUS                                          status;
+  protected OIntent                                         currentIntent;
+
+  private ODatabaseComplexInternal<?>                       databaseOwner;
 
   @Deprecated
   private static final String                               DEF_RECORD_FORMAT = "csv";
@@ -113,20 +119,36 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   private boolean                                           initialized       = false;
 
   public ODatabaseRecordAbstract(final String iURL, final byte iRecordType) {
-    super(new ODatabaseRaw(iURL));
-    setCurrentDatabaseinThreadLocal();
+    super(false);
 
-    underlying.setOwner(this);
+    if (iURL == null)
+      throw new IllegalArgumentException("URL parameter is null");
 
-    unmodifiableHooks = Collections.unmodifiableMap(hooks);
+    try {
+      url = iURL.replace('\\', '/');
+      status = STATUS.CLOSED;
 
-    databaseOwner = this;
+      // SET DEFAULT PROPERTIES
+      setProperty("fetch-max", 50);
 
-    recordType = iRecordType;
-    localCache = new OLocalRecordCache(new OCacheLevelOneLocatorImpl());
+      storage = Orient.instance().loadStorage(url);
 
-    mvcc = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
-    validation = OGlobalConfiguration.DB_VALIDATION.getValueAsBoolean();
+      setCurrentDatabaseinThreadLocal();
+
+      unmodifiableHooks = Collections.unmodifiableMap(hooks);
+
+      recordType = iRecordType;
+      localCache = new OLocalRecordCache(new OCacheLevelOneLocatorImpl());
+
+      mvcc = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
+      validation = OGlobalConfiguration.DB_VALIDATION.getValueAsBoolean();
+
+    } catch (Throwable t) {
+      if (storage != null)
+        Orient.instance().unregisterStorage(storage);
+
+      throw new ODatabaseException("Error on opening database '" + iURL + "'", t);
+    }
   }
 
   /**
@@ -137,7 +159,20 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     setCurrentDatabaseinThreadLocal();
 
     try {
-      super.open(iUserName, iUserPassword);
+      if (status == STATUS.OPEN)
+        throw new IllegalStateException("Database " + getName() + " is already open");
+
+      if (storage.isClosed()) {
+        storage.open(iUserName, iUserPassword, properties);
+      } else if (storage instanceof OStorageProxy) {
+        final String name = ((OStorageProxy) storage).getUserName();
+        if (!name.equals(iUserName)) {
+          storage.close();
+          storage.open(iUserName, iUserPassword, properties);
+        }
+      }
+
+      status = STATUS.OPEN;
 
       initAtFirstOpen(iUserName, iUserPassword);
 
@@ -173,6 +208,8 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     hooks.clear();
 
     localCache.shutdown();
+
+    close();
 
     initialized = false;
   }
@@ -257,7 +294,24 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     setCurrentDatabaseinThreadLocal();
 
     try {
-      super.create(iInitialSettings);
+      if (status == STATUS.OPEN)
+        throw new IllegalStateException("Database " + getName() + " is already open");
+
+      if (storage == null)
+        storage = Orient.instance().loadStorage(url);
+
+      if (iInitialSettings != null) {
+        // SETUP INITIAL SETTINGS
+        final OContextConfiguration ctxCfg = storage.getConfiguration().getContextConfiguration();
+        for (Map.Entry<OGlobalConfiguration, Object> e : iInitialSettings.entrySet()) {
+          ctxCfg.setValue(e.getKey(), e.getValue());
+        }
+      }
+
+      storage.create(properties);
+
+      status = STATUS.OPEN;
+
       componentsFactory = getStorage().getComponentsFactory();
 
       sbTreeCollectionManager = new OSBTreeCollectionManagerProxy(this, getStorage().getResource(
@@ -290,12 +344,12 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
       registerHook(new OSecurityTrackerHook(metadata.getSecurity()), ORecordHook.HOOK_POSITION.LAST);
 
-			final OUser usr = getMetadata().getSecurity().getUser(OUser.ADMIN);
+      final OUser usr = getMetadata().getSecurity().getUser(OUser.ADMIN);
 
-			if (usr == null)
-				user = null;
-			else
-      	user = new OImmutableUser(getMetadata().getSecurity().getVersion(), usr);
+      if (usr == null)
+        user = null;
+      else
+        user = new OImmutableUser(getMetadata().getSecurity().getVersion(), usr);
 
       if (!metadata.getSchema().existsClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME))
         // @COMPATIBILITY 1.0RC9
@@ -306,9 +360,9 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         it.next().onCreate(getDatabaseOwner());
 
       // WAKE UP LISTENERS
-      for (ODatabaseListener listener : underlying.browseListeners())
+      for (ODatabaseListener listener : browseListeners())
         try {
-          listener.onCreate(underlying);
+          listener.onCreate(this);
         } catch (Throwable ignore) {
         }
 
@@ -351,7 +405,50 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       metadata = null;
     }
 
-    super.drop();
+    final Iterable<ODatabaseListener> tmpListeners = getListenersCopy();
+    closeOnDelete();
+
+    try {
+      if (storage == null)
+        storage = Orient.instance().loadStorage(url);
+
+      storage.delete();
+      storage = null;
+
+      // WAKE UP LISTENERS
+      for (ODatabaseListener listener : tmpListeners)
+        try {
+          listener.onDelete(this);
+        } catch (Throwable t) {
+        }
+
+      status = STATUS.CLOSED;
+      ODatabaseRecordThreadLocal.INSTANCE.remove();
+
+    } catch (OException e) {
+      // PASS THROUGH
+      throw e;
+    } catch (Exception e) {
+      throw new ODatabaseException("Cannot delete database", e);
+    }
+  }
+
+  private void closeOnDelete() {
+    if (status != STATUS.OPEN)
+      return;
+
+    if (currentIntent != null) {
+      currentIntent.end(this);
+      currentIntent = null;
+    }
+
+    resetListeners();
+
+    if (storage != null)
+      storage.close(true, true);
+
+    storage = null;
+    status = STATUS.CLOSED;
   }
 
   /**
@@ -361,9 +458,17 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   public void close() {
     setCurrentDatabaseinThreadLocal();
 
+    if (status != STATUS.OPEN)
+      return;
+
     callOnCloseListeners();
 
-    super.close();
+    if (currentIntent != null) {
+      currentIntent.end(this);
+      currentIntent = null;
+    }
+
+    status = STATUS.CLOSED;
 
     localCache.clear();
 
@@ -400,7 +505,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   @Override
   public void reload() {
     metadata.reload();
-    super.reload();
+    storage.reload();
   }
 
   public <RET extends ORecord> RET reload(final ORecord iRecord) {
@@ -710,7 +815,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, name);
     setCurrentDatabaseinThreadLocal();
 
-    return super.countClusterElements(iClusterId, countTombstones);
+    return storage.count(iClusterId, countTombstones);
   }
 
   /**
@@ -724,7 +829,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, name);
     }
 
-    return super.countClusterElements(iClusterIds, countTombstones);
+    return storage.count(iClusterIds, countTombstones);
   }
 
   /**
@@ -734,7 +839,11 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
   public long countClusterElements(final String iClusterName) {
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
     setCurrentDatabaseinThreadLocal();
-    return super.countClusterElements(iClusterName);
+
+    final int clusterId = getClusterIdByName(iClusterName);
+    if (clusterId < 0)
+      throw new IllegalArgumentException("Cluster '" + iClusterName + "' was not found");
+    return storage.count(clusterId);
   }
 
   /**
@@ -908,7 +1017,14 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         return (RET) record;
       }
 
-      final ORawBuffer recordBuffer = underlying.read(rid, iFetchPlan, iIgnoreCache, loadTombstones, iLockingStrategy).getResult();
+      final ORawBuffer recordBuffer;
+      if (!rid.isValid())
+        recordBuffer = null;
+      else {
+        OFetchHelper.checkFetchPlanValid(iFetchPlan);
+        recordBuffer = storage.readRecord(rid, iFetchPlan, iIgnoreCache, null, loadTombstones, iLockingStrategy).getResult();
+      }
+
       if (recordBuffer == null)
         return null;
 
@@ -932,13 +1048,14 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
         getLocalCache().updateRecord(iRecord);
 
       return (RET) iRecord;
-    } catch (OException e) {
-      // RE-THROW THE EXCEPTION
-      throw e;
-
-    } catch (Exception e) {
-      // WRAP IT AS ODATABASE EXCEPTION
-      throw new ODatabaseException("Error on retrieving record " + rid, e);
+    } catch (OOfflineClusterException t) {
+      throw t;
+    } catch (Throwable t) {
+      if (rid.isTemporary())
+        throw new ODatabaseException("Error on retrieving record using temporary RecordId: " + rid, t);
+      else
+        throw new ODatabaseException("Error on retrieving record " + rid + " (cluster: "
+            + storage.getPhysicalClusterNameById(rid.clusterId) + ")", t);
     } finally {
       ORecordSerializationContext.pullContext();
       getMetadata().clearThreadLocalSchemaSnapshot();
@@ -1023,9 +1140,24 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
         try {
           // SAVE IT
-          operationResult = underlying.save(rid, ORecordInternal.isContentChanged(record), stream == null ? new byte[0] : stream,
-              realVersion, ORecordInternal.getRecordType(record), iMode.ordinal(), iForceCreate, iRecordCreatedCallback,
-              iRecordUpdatedCallback);
+          boolean updateContent = ORecordInternal.isContentChanged(record);
+          byte[] content = (stream == null) ? new byte[0] : stream;
+          byte recordType = ORecordInternal.getRecordType(record);
+          int mode = iMode.ordinal();
+
+          // CHECK IF RECORD TYPE IS SUPPORTED
+          Orient.instance().getRecordFactoryManager().getRecordTypeClass(recordType);
+
+          if (iForceCreate || ORecordId.isNew(rid.clusterPosition)) {
+            // CREATE
+            final OStorageOperationResult<OPhysicalPosition> ppos = storage.createRecord(rid, content, iVersion, recordType, mode,
+                (ORecordCallback<Long>) iRecordCreatedCallback);
+            operationResult = new OStorageOperationResult<ORecordVersion>(ppos.getResult().recordVersion, ppos.isMoved());
+
+          } else {
+            // UPDATE
+            operationResult = storage.updateRecord(rid, updateContent, content, iVersion, recordType, mode, iRecordUpdatedCallback);
+          }
 
           final ORecordVersion version = operationResult.getResult();
 
@@ -1108,11 +1240,17 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
 
         final OStorageOperationResult<Boolean> operationResult;
         try {
-          if (prohibitTombstones)
-            operationResult = new OStorageOperationResult<Boolean>(underlying.cleanOutRecord(rid, realVersion, iRequired,
-                (byte) iMode.ordinal()));
-          else
-            operationResult = underlying.delete(rid, realVersion, iRequired, (byte) iMode.ordinal());
+          if (prohibitTombstones) {
+            final boolean result = storage.cleanOutRecord(rid, iVersion, iMode.ordinal(), null);
+            if (!result && iRequired)
+              throw new ORecordNotFoundException("The record with id " + rid + " was not found");
+            operationResult = new OStorageOperationResult<Boolean>(result);
+          } else {
+            final OStorageOperationResult<Boolean> result = storage.deleteRecord(rid, iVersion, iMode.ordinal(), null);
+            if (!result.getResult() && iRequired)
+              throw new ORecordNotFoundException("The record with id " + rid + " was not found");
+            operationResult = new OStorageOperationResult<Boolean>(result.getResult());
+          }
 
           if (iCallTriggers) {
             if (!operationResult.isMoved() && rec != null)
@@ -1165,7 +1303,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     try {
 
       final OStorageOperationResult<Boolean> operationResult;
-      operationResult = underlying.hide(rid, (byte) iMode.ordinal());
+      operationResult = storage.hideRecord(rid, iMode.ordinal(), null);
 
       // REMOVE THE RECORD FROM 1 AND 2 LEVEL CACHES
       if (!operationResult.isMoved())
@@ -1219,13 +1357,12 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    * {@inheritDoc}
    */
   public <DB extends ODatabase> DB setStatus(final STATUS status) {
-    final String cmd = String.format("alter database status %s", status.toString());
-    command(new OCommandSQL(cmd)).execute();
+    setStatusInternal(status);
     return (DB) this;
   }
 
   public void setStatusInternal(final STATUS status) {
-    underlying.setStatus(status);
+    this.status = status;
   }
 
   public void setDefaultClusterIdInternal(final int iDefClusterId) {
@@ -1236,7 +1373,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
    * {@inheritDoc}
    */
   public void setInternal(final ATTRIBUTES iAttribute, final Object iValue) {
-    underlying.set(iAttribute, iValue);
+    set(iAttribute, iValue);
   }
 
   /**
@@ -1408,7 +1545,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       it.next().onOpen(getDatabaseOwner());
 
     // WAKE UP LISTENERS
-    for (ODatabaseListener listener : underlying.getListenersCopy())
+    for (ODatabaseListener listener : getListenersCopy())
       try {
         listener.onOpen(getDatabaseOwner());
       } catch (Throwable t) {
@@ -1422,7 +1559,7 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
       it.next().onClose(getDatabaseOwner());
 
     // WAKE UP LISTENERS
-    for (ODatabaseListener listener : underlying.getListenersCopy())
+    for (ODatabaseListener listener : getListenersCopy())
       try {
         listener.onClose(getDatabaseOwner());
       } catch (Throwable t) {
@@ -1450,10 +1587,6 @@ public abstract class ODatabaseRecordAbstract extends ODatabaseWrapperAbstract<O
     return ORecordSerializerFactory.instance().getFormatForObject(iObject, recordFormat);
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
   protected void checkOpeness() {
     if (isClosed())
       throw new ODatabaseException("Database '" + getURL() + "' is closed");
