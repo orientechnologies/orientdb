@@ -25,58 +25,61 @@ import org.testng.annotations.*;
 
 @Test(groups = { "index" })
 public class SQLDropClassIndexTest {
-	private static final OType				EXPECTED_PROP1_TYPE	= OType.DOUBLE;
-	private static final OType				EXPECTED_PROP2_TYPE	= OType.INTEGER;
+  private static final OType  EXPECTED_PROP1_TYPE = OType.DOUBLE;
+  private static final OType  EXPECTED_PROP2_TYPE = OType.INTEGER;
 
-	private final ODatabaseDocumentTx	database;
+  private ODatabaseDocumentTx database;
+  private final String        url;
 
-	@Parameters(value = "url")
-	public SQLDropClassIndexTest(final String iURL) {
-		database = new ODatabaseDocumentTx(iURL);
-	}
+  @Parameters(value = "url")
+  public SQLDropClassIndexTest(final String url) {
+    this.url = url;
+  }
 
-	@BeforeClass
-	public void beforeClass() {
-		if (database.isClosed())
-			database.open("admin", "admin");
+  @BeforeClass
+  public void beforeClass() {
+    database = new ODatabaseDocumentTx(url);
 
-		final OSchema schema = database.getMetadata().getSchema();
-		final OClass oClass = schema.createClass("SQLDropClassTestClass");
-		oClass.createProperty("prop1", EXPECTED_PROP1_TYPE);
-		oClass.createProperty("prop2", EXPECTED_PROP2_TYPE);
+    if (database.isClosed())
+      database.open("admin", "admin");
 
-		schema.save();
-		database.close();
-	}
+    final OSchema schema = database.getMetadata().getSchema();
+    final OClass oClass = schema.createClass("SQLDropClassTestClass");
+    oClass.createProperty("prop1", EXPECTED_PROP1_TYPE);
+    oClass.createProperty("prop2", EXPECTED_PROP2_TYPE);
 
-	@BeforeMethod
-	public void beforeMethod() {
-		if (database.isClosed())
-			database.open("admin", "admin");
-	}
+    schema.save();
+    database.close();
+  }
 
-	@AfterMethod
-	public void afterMethod() {
-		database.close();
-	}
+  @BeforeMethod
+  public void beforeMethod() {
+    if (database.isClosed())
+      database.open("admin", "admin");
+  }
 
-	@Test
-	public void testIndexDeletion() throws Exception {
-		database.command(new OCommandSQL("CREATE INDEX SQLDropClassCompositeIndex ON SQLDropClassTestClass (prop1, prop2) UNIQUE"))
-				.execute();
-		database.getMetadata().getIndexManager().reload();
+  @AfterMethod
+  public void afterMethod() {
+    database.close();
+  }
 
-		Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("SQLDropClassCompositeIndex"));
+  @Test
+  public void testIndexDeletion() throws Exception {
+    database.command(new OCommandSQL("CREATE INDEX SQLDropClassCompositeIndex ON SQLDropClassTestClass (prop1, prop2) UNIQUE"))
+        .execute();
+    database.getMetadata().getIndexManager().reload();
 
-		database.command(new OCommandSQL("DROP CLASS SQLDropClassTestClass")).execute();
-		database.getMetadata().getIndexManager().reload();
-		database.getMetadata().getSchema().reload();
+    Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("SQLDropClassCompositeIndex"));
 
-		Assert.assertNull(database.getMetadata().getSchema().getClass("SQLDropClassTestClass"));
-		Assert.assertNull(database.getMetadata().getIndexManager().getIndex("SQLDropClassCompositeIndex"));
-		database.close();
-		database.open("admin", "admin");
-		Assert.assertNull(database.getMetadata().getSchema().getClass("SQLDropClassTestClass"));
-		Assert.assertNull(database.getMetadata().getIndexManager().getIndex("SQLDropClassCompositeIndex"));
-	}
+    database.command(new OCommandSQL("DROP CLASS SQLDropClassTestClass")).execute();
+    database.getMetadata().getIndexManager().reload();
+    database.getMetadata().getSchema().reload();
+
+    Assert.assertNull(database.getMetadata().getSchema().getClass("SQLDropClassTestClass"));
+    Assert.assertNull(database.getMetadata().getIndexManager().getIndex("SQLDropClassCompositeIndex"));
+    database.close();
+    database.open("admin", "admin");
+    Assert.assertNull(database.getMetadata().getSchema().getClass("SQLDropClassTestClass"));
+    Assert.assertNull(database.getMetadata().getIndexManager().getIndex("SQLDropClassCompositeIndex"));
+  }
 }

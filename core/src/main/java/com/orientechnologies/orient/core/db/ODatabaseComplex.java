@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -80,12 +81,12 @@ public interface ODatabaseComplex<T extends Object> extends ODatabase, OUserObje
    * 
    * @see OSecurity
    */
-  public OUser getUser();
+  public OSecurityUser getUser();
 
   /**
    * Set user for current database instance
    */
-  public void setUser(OUser user);
+  public void setUser(OSecurityUser user);
 
   /**
    * Loads the entity and return it.

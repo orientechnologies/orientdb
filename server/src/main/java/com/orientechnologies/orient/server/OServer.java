@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.security.OSecurityManager;
@@ -112,7 +113,6 @@ public class OServer {
 
     threadGroup = new ThreadGroup("OrientDB Server");
 
-    OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(true);
     System.setProperty("com.sun.management.jmxremote", "true");
 
     Orient.instance().startup();
@@ -546,30 +546,40 @@ public class OServer {
     return this;
   }
 
-  public ODatabaseComplex<?> openDatabase(final String iDbType, final String iDbUrl, final String iUser, final String iPassword) {
+  public ODatabaseComplex<?> openDatabase(final String iDbType, final String iDbUrl, final String user, final String password) {
     final String path = getStoragePath(iDbUrl);
 
     final ODatabaseComplexInternal<?> database = Orient.instance().getDatabaseFactory().createDatabase(iDbType, path);
 
-    if (database.isClosed())
-      if (database.getStorage() instanceof ODirectMemoryStorage)
-        database.create();
-      else {
+    final OStorage storage = database.getStorage();
+    if (database.isClosed()) {
+      if (database.getStorage() instanceof ODirectMemoryStorage) {
+        if (!storage.exists())
+          try {
+            database.create();
+          } catch (OStorageException e) {
+          }
+
+        if (database.isClosed())
+          database.open(user, password);
+      } else {
         try {
-          database.open(iUser, iPassword);
+          database.open(user, password);
         } catch (OSecurityException e) {
           // TRY WITH SERVER'S USER
           try {
-            serverLogin(iUser, iPassword, "database.passthrough");
+            serverLogin(user, password, "database.passthrough");
           } catch (OSecurityException ex) {
             throw e;
           }
 
           // SERVER AUTHENTICATED, BYPASS SECURITY
+          database.resetInitialization();
           database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
-          database.open(iUser, iPassword);
+          database.open(user, password);
         }
       }
+    }
 
     return database;
   }
@@ -587,7 +597,8 @@ public class OServer {
         }
 
         // SERVER AUTHENTICATED, BYPASS SECURITY
-        database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
+				database.resetInitialization();
+				database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
         database.open(replicatorUser.name, replicatorUser.password);
       }
 

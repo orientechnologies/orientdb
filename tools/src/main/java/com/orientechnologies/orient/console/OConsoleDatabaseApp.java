@@ -19,6 +19,14 @@
  */
 package com.orientechnologies.orient.console;
 
+import java.io.*;
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.Map.Entry;
+
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
@@ -39,17 +47,11 @@ import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
-import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
-import com.orientechnologies.orient.core.db.tool.ODatabaseExportException;
-import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
-import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
+import com.orientechnologies.orient.core.db.tool.*;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -76,34 +78,20 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.Map.Entry;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
-  protected static final int          DEFAULT_WIDTH      = 150;
-  private int                         windowSize         = DEFAULT_WIDTH;
-  protected ODatabaseDocumentInternal currentDatabase;
-  protected String                    currentDatabaseName;
-  protected ORecord                   currentRecord;
-  protected int                       currentRecordIdx;
-  protected List<OIdentifiable>       currentResultSet;
-  protected OServerAdmin              serverAdmin;
-  private int                         lastPercentStep;
-  private String                      currentDatabaseUserName;
-  private String                      currentDatabaseUserPassword;
-  private int                         collectionMaxItems = 10;
+  protected static final int    DEFAULT_WIDTH      = 150;
+  private int                   windowSize         = DEFAULT_WIDTH;
+  protected ODatabaseDocumentTx currentDatabase;
+  protected String              currentDatabaseName;
+  protected ORecord             currentRecord;
+  protected int                 currentRecordIdx;
+  protected List<OIdentifiable> currentResultSet;
+  protected OServerAdmin        serverAdmin;
+  private int                   lastPercentStep;
+  private String                currentDatabaseUserName;
+  private String                currentDatabaseUserPassword;
+  private int                   collectionMaxItems = 10;
 
   public OConsoleDatabaseApp(final String[] args) {
     super(args);
@@ -1888,8 +1876,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void reloadRecordInternal(String iRecordId, String iFetchPlan) {
     checkForDatabase();
 
-    currentRecord = ((ODatabaseRecordAbstract) currentDatabase.getUnderlying()).executeReadRecord(new ORecordId(iRecordId), null,
-        iFetchPlan, true, false, OStorage.LOCKING_STRATEGY.DEFAULT);
+    currentRecord = currentDatabase.executeReadRecord(new ORecordId(iRecordId), null, iFetchPlan, true, false,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
     displayRecord(null);
 
     message("\nOK");
@@ -2017,8 +2005,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     super.onBefore();
 
     setResultset(new ArrayList<OIdentifiable>());
-
-    OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
 
     // DISABLE THE NETWORK AND STORAGE TIMEOUTS
     OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.setValue(0);

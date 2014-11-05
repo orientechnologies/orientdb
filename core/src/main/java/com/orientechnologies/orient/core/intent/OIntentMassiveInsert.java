@@ -20,35 +20,34 @@
 
 package com.orientechnologies.orient.core.intent;
 
-import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
-import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.hook.ORecordHook;
-import com.orientechnologies.orient.core.index.OClassIndexManager;
-import com.orientechnologies.orient.core.metadata.security.OUser;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
+import com.orientechnologies.orient.core.db.object.ODatabaseObject;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.hook.ORecordHook;
+import com.orientechnologies.orient.core.index.OClassIndexManager;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 
 public class OIntentMassiveInsert implements OIntent {
   private boolean                                     previousRetainRecords;
   private boolean                                     previousRetainObjects;
   private boolean                                     previousValidation;
   private Map<ORecordHook, ORecordHook.HOOK_POSITION> removedHooks;
-  private OUser                                       currentUser;
+  private OSecurityUser                               currentUser;
 
   private boolean                                     disableValidation = true;
   private boolean                                     disableSecurity   = true;
   private boolean                                     disableHooks      = true;
 
-  public void begin(final ODatabaseRaw iDatabase) {
+  public void begin(final ODatabaseRecordInternal iDatabase) {
     if (disableSecurity) {
       // DISABLE CHECK OF SECURITY
       currentUser = iDatabase.getDatabaseOwner().getUser();
       iDatabase.getDatabaseOwner().setUser(null);
     }
-
     ODatabaseComplexInternal<?> ownerDb = iDatabase.getDatabaseOwner();
 
     if (ownerDb instanceof ODatabaseRecord) {
@@ -85,7 +84,7 @@ public class OIntentMassiveInsert implements OIntent {
     }
   }
 
-  public void end(final ODatabaseRaw iDatabase) {
+  public void end(final ODatabaseRecordInternal iDatabase) {
     if (disableSecurity)
       if (currentUser != null)
         // RE-ENABLE CHECK OF SECURITY

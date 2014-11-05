@@ -27,11 +27,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
@@ -61,6 +57,16 @@ public class MultipleDBTest extends DocumentDBBaseTest {
   @BeforeMethod
   @Override
   public void beforeMethod() throws Exception {
+  }
+
+  @AfterMethod
+  @Override
+  public void afterMethod() throws Exception {
+  }
+
+  @AfterClass
+  @Override
+  public void afterClass() throws Exception {
   }
 
   @Test

@@ -6,6 +6,7 @@ import static org.testng.Assert.assertTrue;
 import java.io.IOException;
 import java.util.*;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -136,6 +137,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     database.close();
     storage.close(true, false);
 
+		database = new ODatabaseDocumentTx(database.getURL());
     database.open("admin", "admin");
 
     doc = database.load(rid);
@@ -212,6 +214,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     database.close();
     storage.close(true, false);
 
+		database.resetInitialization();
     database.open("admin", "admin");
 
     doc = database.load(rid);
@@ -334,6 +337,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     database.close();
     storage.close(true, false);
 
+		database = new ODatabaseDocumentTx(database.getURL());
     database.open("admin", "admin");
 
     doc = database.load(rid);
@@ -452,6 +456,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     database.close();
     storage.close(true, false);
 
+		database = new ODatabaseDocumentTx(database.getURL());
     database.open("admin", "admin");
 
     doc = database.load(rid);
@@ -575,6 +580,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     database.close();
     storage.close(true, false);
 
+		database = new ODatabaseDocumentTx(database.getURL());
     database.open("admin", "admin");
 
     doc = database.load(rid);
@@ -762,6 +768,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     database.close();
     storage.close(true, false);
 
+		database = new ODatabaseDocumentTx(database.getURL());
     database.open("admin", "admin");
 
     doc = database.load(id);

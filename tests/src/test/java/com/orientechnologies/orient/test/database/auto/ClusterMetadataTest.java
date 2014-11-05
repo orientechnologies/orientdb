@@ -45,6 +45,7 @@ public class ClusterMetadataTest extends DocumentDBBaseTest {
     database.close();
     storage.close(true, false);
 
+		database.resetInitialization();
     database.open("admin", "admin");
 
     cluster = database.getStorage().getClusterById(clusterId);

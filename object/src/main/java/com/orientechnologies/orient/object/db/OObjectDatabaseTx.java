@@ -1,29 +1,28 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.object.db;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
@@ -32,15 +31,9 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -196,15 +189,15 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     checkOpeness();
     checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, iClassName);
 
-    return new OObjectIteratorClass<RET>(this, (ODatabaseRecordAbstract) getUnderlying().getUnderlying(), iClassName, iPolymorphic);
+    return new OObjectIteratorClass<RET>(this, (ODatabaseDocumentTx) getUnderlying(), iClassName, iPolymorphic);
   }
 
   public <RET> OObjectIteratorCluster<RET> browseCluster(final String iClusterName) {
     checkOpeness();
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
-    return (OObjectIteratorCluster<RET>) new OObjectIteratorCluster<Object>(this, (ODatabaseRecordAbstract) getUnderlying()
-        .getUnderlying(), getClusterIdByName(iClusterName));
+    return (OObjectIteratorCluster<RET>) new OObjectIteratorCluster<Object>(this, (ODatabaseDocumentTx) getUnderlying(),
+        getClusterIdByName(iClusterName));
   }
 
   public <RET> RET load(final Object iPojo) {
@@ -525,7 +518,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   @Override
   public ODatabasePojoAbstract<Object> commit(boolean force) throws OTransactionException {
-    ((ODatabaseRecordTx) underlying.getUnderlying()).commit(force);
+    underlying.commit(force);
 
     if (getTransaction().isActive())
       return this;
@@ -559,7 +552,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   @Override
   public ODatabasePojoAbstract<Object> rollback(boolean force) throws OTransactionException {
     // BY PASS DOCUMENT DB
-    ((ODatabaseRecordTx) underlying.getUnderlying()).rollback(force);
+    underlying.rollback(force);
 
     if (!underlying.getTransaction().isActive()) {
       // COPY ALL TX ENTRIES
@@ -816,4 +809,8 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     return false;
   }
 
+  @Override
+  public void resetInitialization() {
+    underlying.resetInitialization();
+  }
 }

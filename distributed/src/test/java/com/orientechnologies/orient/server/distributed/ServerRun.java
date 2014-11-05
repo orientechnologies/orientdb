@@ -65,8 +65,6 @@ public class ServerRun {
   }
 
   protected OrientBaseGraph createDatabase(final String iName) {
-    OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
-
     String dbPath = getDatabasePath(iName);
 
     new File(dbPath).mkdirs();

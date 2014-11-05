@@ -349,12 +349,7 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   public String toString() {
-    pushSession();
-    try {
-      return delegate.toString();
-    } finally {
-      popSession();
-    }
+    return delegate.toString();
   }
 
   public long[] getClusterDataRange(final int iClusterId) {
@@ -596,7 +591,7 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   public boolean isClosed() {
-    return delegate.isClosed();
+    return sessionId < 0 || delegate.isClosed();
   }
 
   public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
@@ -679,6 +674,11 @@ public class OStorageRemoteThread implements OStorageProxy {
 
   public STATUS getStatus() {
     return delegate.getStatus();
+  }
+
+  @Override
+  public String getUserName() {
+    return delegate.getUserName();
   }
 
   @Override

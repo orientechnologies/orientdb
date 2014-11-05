@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -39,7 +39,7 @@ public class ORecordFlat extends ORecordAbstract implements ORecordStringable {
   public static final byte  RECORD_TYPE      = 'f';
   protected String          value;
 
-  public ORecordFlat(ODatabaseFlat iDatabase) {
+  public ORecordFlat(ODatabaseDocumentTx iDatabase) {
     this();
     ODatabaseRecordThreadLocal.INSTANCE.set(iDatabase);
   }

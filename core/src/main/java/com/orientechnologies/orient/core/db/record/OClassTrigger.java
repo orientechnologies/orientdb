@@ -16,16 +16,17 @@
 
 package com.orientechnologies.orient.core.db.record;
 
+import java.lang.reflect.Method;
+
+import javax.script.*;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.script.OCommandScriptException;
-import com.orientechnologies.orient.core.command.script.OScriptDocumentDatabaseWrapper;
-import com.orientechnologies.orient.core.command.script.OScriptInjection;
-import com.orientechnologies.orient.core.command.script.OScriptManager;
-import com.orientechnologies.orient.core.command.script.OScriptOrientWrapper;
+import com.orientechnologies.orient.core.command.script.*;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.id.ORID;
@@ -36,13 +37,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-
-import javax.script.Bindings;
-import javax.script.Invocable;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-import java.lang.reflect.Method;
 
 /**
  * Author : henryzhao81@gmail.com Feb 19, 2013
@@ -271,8 +265,6 @@ public class OClassTrigger extends ODocumentHookAbstract {
       return RESULT.RECORD_NOT_CHANGED;
 
     ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if (db != null && !(db instanceof ODatabaseRecordTx))
-      db = db.getUnderlying();
     // final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(funcName);
     final OScriptManager scriptManager = Orient.instance().getScriptManager();
     final ScriptEngine scriptEngine = scriptManager.getEngine(func.getLanguage());
@@ -284,7 +276,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
       i.bind(binding);
     binding.put("doc", iDocument);
     if (db != null) {
-      binding.put("db", new OScriptDocumentDatabaseWrapper((ODatabaseRecordTx) db));
+      binding.put("db", new OScriptDocumentDatabaseWrapper((ODatabaseDocumentTx) db));
       binding.put("orient", new OScriptOrientWrapper(db));
     } else
       binding.put("orient", new OScriptOrientWrapper());

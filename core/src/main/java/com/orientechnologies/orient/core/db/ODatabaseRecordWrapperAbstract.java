@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -152,11 +153,11 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecordI
     return (RET) underlying.setValidationEnabled(iValue);
   }
 
-  public OUser getUser() {
+  public OSecurityUser getUser() {
     return underlying.getUser();
   }
 
-  public void setUser(OUser user) {
+  public void setUser(OSecurityUser user) {
     underlying.setUser(user);
   }
 

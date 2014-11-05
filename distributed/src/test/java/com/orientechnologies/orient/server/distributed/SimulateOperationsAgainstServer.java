@@ -50,7 +50,6 @@ public class SimulateOperationsAgainstServer {
 
   public SimulateOperationsAgainstServer() {
     OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.setValue(threads + 5);
-    OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(true);
   }
 
   public void randomExecute() {

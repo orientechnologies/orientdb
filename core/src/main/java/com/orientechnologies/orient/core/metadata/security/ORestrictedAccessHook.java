@@ -59,15 +59,15 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
 
       final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
-      ODocument identity = null;
+      OIdentifiable identity = null;
       if (identityType.equals("user")) {
-        final OUser user = db.getUser();
+        final OSecurityUser user = db.getUser();
         if (user != null)
-          identity = user.getDocument();
+          identity = user.getIdentity();
       } else if (identityType.equals("role")) {
-        final Set<ORole> roles = db.getUser().getRoles();
+        final Set<? extends  OSecurityRole> roles = db.getUser().getRoles();
         if (!roles.isEmpty())
-          identity = roles.iterator().next().getDocument();
+          identity = roles.iterator().next().getIdentity();
       } else
         throw new OConfigurationException("Wrong custom field '" + OSecurityShared.ONCREATE_IDENTITY_TYPE + "' in class '"
             + cls.getName() + "' with value '" + identityType + "'. Supported ones are: 'user', 'role'");

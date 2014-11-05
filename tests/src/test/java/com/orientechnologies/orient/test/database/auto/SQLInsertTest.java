@@ -248,7 +248,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     Assert.assertEquals(((Collection<?>) doc.field("names")).size(), uCount);
   }
 
-  @Test
+  @Test(dependsOnMethods = "insertOperator")
   public void insertCluster() {
     ODocument doc = database.command(
         new OCommandSQL("insert into Account cluster anotherdefault (id, title) values (10, 'NoSQL movement')")).execute();

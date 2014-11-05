@@ -162,11 +162,6 @@ public enum OGlobalConfiguration {
   STORAGE_USE_CRC32_FOR_EACH_RECORD("storage.cluster.usecrc32",
       "Indicates whether crc32 should be used for each record to check record integrity.", Boolean.class, false),
 
-  STORAGE_KEEP_OPEN(
-      "storage.keepOpen",
-      "Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process shuts down",
-      Boolean.class, Boolean.TRUE),
-
   STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 30000),
 
   STORAGE_RECORD_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record",

@@ -29,8 +29,7 @@ public abstract class BaseTest<T extends ODatabaseComplex> {
       dropDb = true;
     }
 
-    database = createDatabaseInstance(url);
-    this.url = database.getURL();
+    this.url = url;
   }
 
   @Parameters(value = "url")
@@ -42,14 +41,16 @@ public abstract class BaseTest<T extends ODatabaseComplex> {
     } else
       url = url + prefix;
 
-    database = createDatabaseInstance(url);
-    this.url = database.getURL();
+		this.url = url;
   }
 
   protected abstract T createDatabaseInstance(String url);
 
   @BeforeClass
   public void beforeClass() throws Exception {
+    database = createDatabaseInstance(url);
+    this.url = database.getURL();
+
     if (dropDb) {
       if (database.exists()) {
         database.open("admin", "admin");
@@ -106,16 +107,14 @@ public abstract class BaseTest<T extends ODatabaseComplex> {
     database.addCluster("flat");
     database.addCluster("binary");
 
-    OClass account = database.getMetadata().getSchema()
-        .createClass("Account", database.addCluster("account"));
+    OClass account = database.getMetadata().getSchema().createClass("Account", database.addCluster("account"));
     account.createProperty("id", OType.INTEGER);
     account.createProperty("birthDate", OType.DATE);
     account.createProperty("binary", OType.BINARY);
 
     database.getMetadata().getSchema().createClass("Company", account);
 
-    OClass profile = database.getMetadata().getSchema()
-        .createClass("Profile", database.addCluster("profile"));
+    OClass profile = database.getMetadata().getSchema().createClass("Profile", database.addCluster("profile"));
     profile.createProperty("nick", OType.STRING).setMin("3").setMax("30").createIndex(OClass.INDEX_TYPE.UNIQUE);
     profile.createProperty("name", OType.STRING).setMin("3").setMax("30").createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
     profile.createProperty("surname", OType.STRING).setMin("3").setMax("30");

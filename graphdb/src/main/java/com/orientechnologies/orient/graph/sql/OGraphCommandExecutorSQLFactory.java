@@ -15,21 +15,20 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Graph related command operator executor factory. It's auto-discovered.
@@ -69,9 +68,6 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
    */
   public static OrientGraph getGraph(final boolean autoStartTx) {
     ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
-    if (!(database instanceof ODatabaseDocumentTx))
-      database = new ODatabaseDocumentTx((ODatabaseRecordTx) database);
-
     return new OrientGraph((ODatabaseDocumentTx) database, autoStartTx);
   }
 
@@ -80,9 +76,6 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
    */
   public static OrientGraphNoTx getGraphNoTx() {
     ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
-    if (!(database instanceof ODatabaseDocumentTx))
-      database = new ODatabaseDocumentTx((ODatabaseRecordTx) database);
-
     return new OrientGraphNoTx((ODatabaseDocumentTx) database);
   }
 

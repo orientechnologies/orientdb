@@ -116,7 +116,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private int                           maxPool;
   private ORemoteServerEventListener    asynchEventListener;
   private String                        connectionDbType;
-  private String                        connectionUserName;
+
+  private volatile String               connectionUserName;
+
   private String                        connectionUserPassword;
   private Map<String, Object>           connectionOptions;
   private OEngineRemote                 engine;
@@ -191,9 +193,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       componentsFactory = new OCurrentStorageComponentsFactory(configuration);
     } catch (Exception e) {
-      if (!OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean())
-        close();
-
       if (e instanceof RuntimeException)
         // PASS THROUGH
         throw (RuntimeException) e;
@@ -2022,4 +2021,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return false;
   }
 
+	@Override
+	public String getUserName() {
+		return connectionUserName;
+	}
 }
