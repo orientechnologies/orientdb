@@ -52,33 +52,36 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Orient extends OListenerManger<OOrientListener> {
-  public static final String ORIENTDB_HOME = "ORIENTDB_HOME";
-  public static final String URL_SYNTAX    = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
+  public static final String                                                           ORIENTDB_HOME          = "ORIENTDB_HOME";
+  public static final String                                                           URL_SYNTAX             = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
 
-  protected static Orient  instance               = new Orient();
-  protected static boolean registerDatabaseByPath = false;
+  protected static Orient                                                              instance               = new Orient();
+  protected static boolean                                                             registerDatabaseByPath = false;
 
-  protected final ConcurrentMap<String, OEngine>  engines  = new ConcurrentHashMap<String, OEngine>();
-  protected final ConcurrentMap<String, OStorage> storages = new ConcurrentHashMap<String, OStorage>();
+  protected final ConcurrentMap<String, OEngine>                                       engines                = new ConcurrentHashMap<String, OEngine>();
+  protected final ConcurrentMap<String, OStorage>                                      storages               = new ConcurrentHashMap<String, OStorage>();
 
-  protected final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
-  protected final ODatabaseFactory                                                     databaseFactory      = new ODatabaseFactory();
-  protected final OScriptManager                                                       scriptManager        = new OScriptManager();
-  protected final Timer timer;
-  protected final ThreadGroup                    threadGroup            = new ThreadGroup("OrientDB");
-  protected final AtomicInteger                  serialId               = new AtomicInteger();
-  private final   ReadWriteLock                  engineLock             = new ReentrantReadWriteLock();
-  protected       ORecordFactoryManager          recordFactoryManager   = new ORecordFactoryManager();
-  protected       ORecordConflictStrategyFactory recordConflictStrategy = new ORecordConflictStrategyFactory();
-  protected OrientShutdownHook          shutdownHook;
-  protected OProfilerMBean              profiler;
-  protected ODatabaseThreadLocalFactory databaseThreadFactory;
-  protected volatile boolean active = false;
-  protected ThreadPoolExecutor workers;
-  protected OSignalHandler     signalHandler;
+  protected final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners   = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
+  protected final ODatabaseFactory                                                     databaseFactory        = new ODatabaseFactory();
+  protected final OScriptManager                                                       scriptManager          = new OScriptManager();
+  protected final Timer                                                                timer;
+  protected final ThreadGroup                                                          threadGroup;
+  protected final AtomicInteger                                                        serialId               = new AtomicInteger();
+  private final ReadWriteLock                                                          engineLock             = new ReentrantReadWriteLock();
+  protected ORecordFactoryManager                                                      recordFactoryManager   = new ORecordFactoryManager();
+  protected ORecordConflictStrategyFactory                                             recordConflictStrategy = new ORecordConflictStrategyFactory();
+  protected OrientShutdownHook                                                         shutdownHook;
+  protected OProfilerMBean                                                             profiler;
+  protected ODatabaseThreadLocalFactory                                                databaseThreadFactory;
+  protected volatile boolean                                                           active                 = false;
+  protected ThreadPoolExecutor                                                         workers;
+  protected OSignalHandler                                                             signalHandler;
 
   protected Orient() {
     super(true);
+
+    threadGroup = new ThreadGroup("OrientDB");
+    threadGroup.setDaemon(false);
 
     instance = this;
     timer = new Timer(true);
