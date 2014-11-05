@@ -17,5 +17,6 @@ class OAlias extends SimpleNode {
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
+
 }
 /* JavaCC - OriginalChecksum=c0c2ff315abe152a8ea5f2ecafd0f853 (do not edit this line) */

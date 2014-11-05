@@ -77,6 +77,7 @@ public class OSelectStatementTest {
     OStatement stm = (OStatement) result.children[0];
     assertTrue(stm.children[0] instanceof OSelectStatement);
     OSelectStatement select = (OSelectStatement) stm.children[0];
+    select.get
   }
 
   public void testNotIn() {

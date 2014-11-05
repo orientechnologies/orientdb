@@ -333,6 +333,8 @@ TOKEN :
 | < MATCHES: ( "M" | "m") ( "A" | "a") ( "T" | "t") ( "C" | "c") ( "H" | "h") ( "E" | "e") ( "S" | "s") >
 | < KEY: ( "K" | "k") ( "E" | "e") ( "Y" | "y") >
 | < INSTANCEOF: "instanceof" >
+| < CLUSTER: "cluster" >
+
 }
 
 
@@ -349,7 +351,7 @@ TOKEN :
 |
   < INDEXVALUESDESC_IDENTIFIER: "indexvaluesdesc:" <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
 |
-  < CLUSTER_IDENTIFIER: "cluster:" <IDENTIFIER>  >
+  < CLUSTER_IDENTIFIER: <CLUSTER> <COLON> <IDENTIFIER>  >
 |
   < METADATA_IDENTIFIER: "metadata:" <IDENTIFIER>  >
 |
@@ -459,7 +461,7 @@ void SelectStatement():
 {}
 {
 	<SELECT>
-    [ Projection() ]
+    [ jjtThis.projection = Projection() ]
     <FROM>
     FromClause()
     [ <WHERE> WhereClause() ]
@@ -624,7 +626,7 @@ void InsertStatement():
 	<INSERT>
 	<INTO>
 	(
-	    Identifier()
+	    Identifier() [<CLUSTER> Identifier()]
 	    |
 	    Cluster()
 	    |
@@ -741,10 +743,11 @@ void NamedParameter():
 	<COLON> Identifier()
 }
 
-void Projection():
+OProjection Projection():
 {}
 {
 	 	ProjectionItem()  ( "," ProjectionItem() )*
+	 	{return jjtThis;}
 }
 
 void ProjectionItem():
@@ -756,6 +759,7 @@ void ProjectionItem():
         Expression()
 		[<AS> Alias() ]
 	)
+
 }
 
 void ValueItem():

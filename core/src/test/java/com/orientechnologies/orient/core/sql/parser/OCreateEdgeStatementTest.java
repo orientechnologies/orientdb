@@ -55,6 +55,20 @@ public class OCreateEdgeStatementTest {
 
   }
 
+  public void testCreateFromRidSet() {
+    checkRightSyntax("create edge Foo from #11:0 to #11:1 set foo='bar', bar=2");
+
+  }
+
+  public void testCreateFromRidArraySet() {
+    checkRightSyntax("create edge Foo from [#11:0, #11:3] to [#11:1, #12:0] set foo='bar', bar=2");
+
+  }
+
+  public void testRetrySet() {
+    checkRightSyntax("create edge Foo from [#11:0, #11:3] to [#11:1, #12:0] set foo='bar', bar=2 retry 3 wait 20");
+
+  }
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);

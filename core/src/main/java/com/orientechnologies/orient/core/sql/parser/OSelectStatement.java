@@ -4,6 +4,9 @@ package com.orientechnologies.orient.core.sql.parser;
 
 public
 class OSelectStatement extends SimpleNode {
+
+  protected OProjection projection;
+
   public OSelectStatement(int id) {
     super(id);
   }
@@ -12,10 +15,19 @@ class OSelectStatement extends SimpleNode {
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
+
+
+  public OProjection getProjection() {
+    return projection;
+  }
+
+  public void setProjection(OProjection projection) {
+    this.projection = projection;
+  }
+
 }
 /* JavaCC - OriginalChecksum=b26959b9726a8cf35d6283eca931da6b (do not edit this line) */
