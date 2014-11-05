@@ -97,6 +97,18 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     init();
   }
 
+  /**
+   * Constructor to wrap an existing database connect for object connections
+   * 
+   * @param iDatabase
+   *          an open database connection
+   */
+  public OObjectDatabaseTx(ODatabaseDocumentTx iDatabase) {
+    super(iDatabase);
+    underlying.setDatabaseOwner(this);
+    init();
+  }
+
   public <T> T newInstance(final Class<T> iType) {
     return (T) newInstance(iType.getSimpleName(), null, new Object[0]);
   }
