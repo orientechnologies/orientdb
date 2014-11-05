@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Map;
 
@@ -36,4 +37,6 @@ public interface OSecurityRole {
 	public Map<String, Byte> getRules();
 
 	public OIdentifiable getIdentity();
+	
+	public ODocument getDocument();
 }
