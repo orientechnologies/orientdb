@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.core.index;
 
+import java.util.*;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
@@ -27,8 +29,8 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
@@ -39,15 +41,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Manages indexes at database level. A single instance is shared among multiple databases. Contentions are managed by r/w locks.
@@ -62,7 +55,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
   protected volatile Thread recreateIndexesThread = null;
   private volatile boolean  rebuildCompleted      = false;
 
-  public OIndexManagerShared(final ODatabaseRecord iDatabase) {
+  public OIndexManagerShared(final ODatabaseDocument iDatabase) {
     super(iDatabase);
   }
 
@@ -280,7 +273,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         // BUILDING ALREADY IN PROGRESS
         return;
 
-      final ODatabaseRecord db = getDatabase();
+      final ODatabaseDocument db = getDatabase();
       document = db.load(new ORecordId(getDatabase().getStorage().getConfiguration().indexMgrRecordId));
       final ODocument doc = new ODocument();
       document.copyTo(doc);

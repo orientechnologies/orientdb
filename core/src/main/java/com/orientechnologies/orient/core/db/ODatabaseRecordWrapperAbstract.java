@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
@@ -148,7 +148,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecordI
     return underlying.isValidationEnabled();
   }
 
-  public <RET extends ODatabaseRecord> RET setValidationEnabled(final boolean iValue) {
+  public <RET extends ODatabaseDocument> RET setValidationEnabled(final boolean iValue) {
     return (RET) underlying.setValidationEnabled(iValue);
   }
 
@@ -300,9 +300,9 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecordI
     return underlying.isRetainRecords();
   }
 
-  public ODatabaseRecord setRetainRecords(boolean iValue) {
+  public ODatabaseDocument setRetainRecords(boolean iValue) {
     underlying.setRetainRecords(iValue);
-    return (ODatabaseRecord) this.getClass().cast(this);
+    return (ODatabaseDocument) this.getClass().cast(this);
   }
 
   public ORecord getRecordByUserObject(final Object iUserObject, final boolean iCreateIfNotAvailable) {
@@ -335,16 +335,16 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecordI
     return false;
   }
 
-  public <DBTYPE extends ODatabaseRecord> DBTYPE checkSecurity(final String iResource, final int iOperation) {
+  public <DBTYPE extends ODatabaseDocument> DBTYPE checkSecurity(final String iResource, final int iOperation) {
     return (DBTYPE) underlying.checkSecurity(iResource, iOperation);
   }
 
-  public <DBTYPE extends ODatabaseRecord> DBTYPE checkSecurity(final String iResourceGeneric, final int iOperation,
+  public <DBTYPE extends ODatabaseDocument> DBTYPE checkSecurity(final String iResourceGeneric, final int iOperation,
       final Object iResourceSpecific) {
     return (DBTYPE) underlying.checkSecurity(iResourceGeneric, iOperation, iResourceSpecific);
   }
 
-  public <DBTYPE extends ODatabaseRecord> DBTYPE checkSecurity(final String iResourceGeneric, final int iOperation,
+  public <DBTYPE extends ODatabaseDocument> DBTYPE checkSecurity(final String iResourceGeneric, final int iOperation,
       final Object... iResourcesSpecific) {
     return (DBTYPE) underlying.checkSecurity(iResourceGeneric, iOperation, iResourcesSpecific);
   }

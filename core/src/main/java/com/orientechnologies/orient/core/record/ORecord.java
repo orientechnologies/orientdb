@@ -21,7 +21,7 @@ package com.orientechnologies.orient.core.record;
 
 import java.io.Serializable;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -102,7 +102,7 @@ public interface ORecord extends ORecordElement, OIdentifiable, Serializable, OS
    * 
    * @return
    */
-  public ODatabaseRecord getDatabase();
+  public ODatabaseDocument getDatabase();
 
   /**
    * Checks if the record is dirty, namely if it was changed in memory.

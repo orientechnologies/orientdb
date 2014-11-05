@@ -19,8 +19,11 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
+import java.io.*;
+import java.util.Date;
+
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -28,13 +31,6 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.util.Date;
 
 public class ORecordSerializerDocument2Binary implements ORecordSerializer {
   public static final String NAME = "ORecordDocument2binary";
@@ -49,7 +45,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
     return 0;
   }
 
-  public ORecord fromStream(ODatabaseRecord iDatabase, byte[] iSource) {
+  public ORecord fromStream(ODatabaseDocument iDatabase, byte[] iSource) {
     // TODO: HANDLE FACTORIES
     return fromStream(iSource, null, null);
   }
@@ -269,7 +265,8 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
     return NAME;
   }
 
-  protected ODocument newObject(ODatabaseRecord iDatabase, String iClassName) throws InstantiationException, IllegalAccessException {
+  protected ODocument newObject(ODatabaseDocument iDatabase, String iClassName) throws InstantiationException,
+      IllegalAccessException {
     return new ODocument();
   }
 }

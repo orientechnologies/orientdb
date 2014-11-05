@@ -19,24 +19,16 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.util.OMultiKey;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -68,7 +60,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
   protected ReadWriteLock                                     lock               = new ReentrantReadWriteLock();
 
-  public OIndexManagerAbstract(final ODatabaseRecord iDatabase) {
+  public OIndexManagerAbstract(final ODatabaseDocument iDatabase) {
     super(new ODocument());
   }
 
@@ -371,7 +363,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   }
 
   protected void acquireExclusiveLock() {
-    final ODatabaseRecord databaseRecord = getDatabaseIfDefined();
+    final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
     if (databaseRecord != null) {
       final OMetadata metadata = databaseRecord.getMetadata();
       if (metadata != null)
@@ -384,7 +376,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   protected void releaseExclusiveLock() {
     lock.writeLock().unlock();
 
-    final ODatabaseRecord databaseRecord = getDatabaseIfDefined();
+    final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
     if (databaseRecord != null) {
       final OMetadata metadata = databaseRecord.getMetadata();
       if (metadata != null)
@@ -402,11 +394,11 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     }
   }
 
-  protected ODatabaseRecordInternal getDatabase() {
+  protected ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
-  protected ODatabaseRecordInternal getDatabaseIfDefined() {
+  protected ODatabaseDocumentInternal getDatabaseIfDefined() {
     return ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
   }
 

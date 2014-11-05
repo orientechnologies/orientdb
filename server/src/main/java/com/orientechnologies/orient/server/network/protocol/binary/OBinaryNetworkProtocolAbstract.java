@@ -19,6 +19,10 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.util.logging.Level;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -28,7 +32,6 @@ import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
@@ -61,10 +64,6 @@ import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolEx
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
-
-import java.io.IOException;
-import java.net.Socket;
-import java.util.logging.Level;
 
 /**
  * Abstract base class for binary network implementations.
@@ -263,8 +262,12 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       }
     }
 
-    OLogManager.instance().info(this, "Created database '%s' of type '%s'", iDatabase.getName(),
-        iDatabase.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage ? iDatabase.getStorage().getUnderlying().getType() : "memory");
+    OLogManager.instance().info(
+        this,
+        "Created database '%s' of type '%s'",
+        iDatabase.getName(),
+        iDatabase.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage ? iDatabase.getStorage().getUnderlying()
+            .getType() : "memory");
 
     // if (iDatabase.getStorage() instanceof OStorageLocal)
     // // CLOSE IT BECAUSE IT WILL BE OPEN AT FIRST USE
@@ -293,7 +296,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     return Orient.instance().getDatabaseFactory().createDatabase(dbType, path);
   }
 
-  protected int deleteRecord(final ODatabaseRecord iDatabase, final ORID rid, final ORecordVersion version) {
+  protected int deleteRecord(final ODatabaseDocument iDatabase, final ORID rid, final ORecordVersion version) {
     try {
       // TRY TO SEE IF THE RECORD EXISTS
       final ORecord record = rid.getRecord();
@@ -309,7 +312,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     }
   }
 
-  protected int hideRecord(final ODatabaseRecord iDatabase, final ORID rid) {
+  protected int hideRecord(final ODatabaseDocument iDatabase, final ORID rid) {
     try {
       iDatabase.hide(rid);
       return 1;
@@ -318,7 +321,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     }
   }
 
-  protected int cleanOutRecord(final ODatabaseRecord iDatabase, final ORID rid, final ORecordVersion version) {
+  protected int cleanOutRecord(final ODatabaseDocument iDatabase, final ORID rid, final ORecordVersion version) {
     iDatabase.delete(rid, version);
     return 1;
   }

@@ -22,7 +22,7 @@ package com.orientechnologies.orient.core.metadata.security;
 import java.util.List;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * 
  */
 public class OSecurityProxy extends OProxedResource<OSecurity> implements OSecurity {
-  public OSecurityProxy(final OSecurity iDelegate, final ODatabaseRecordInternal iDatabase) {
+  public OSecurityProxy(final OSecurity iDelegate, final ODatabaseDocumentInternal iDatabase) {
     super(iDelegate, iDatabase);
   }
 

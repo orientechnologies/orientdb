@@ -19,17 +19,16 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
+import java.util.Set;
+
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.util.Set;
 
 /**
  * Checks the access against restricted resources. Restricted resources are those documents of classes that implement ORestricted
@@ -57,7 +56,7 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
       if (identityType == null)
         identityType = "user";
 
-      final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+      final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
       OIdentifiable identity = null;
       if (identityType.equals("user")) {
@@ -65,7 +64,7 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
         if (user != null)
           identity = user.getIdentity();
       } else if (identityType.equals("role")) {
-        final Set<? extends  OSecurityRole> roles = db.getUser().getRoles();
+        final Set<? extends OSecurityRole> roles = db.getUser().getRoles();
         if (!roles.isEmpty())
           identity = roles.iterator().next().getIdentity();
       } else
@@ -105,7 +104,7 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
     final OClass cls = iDocument.getImmutableSchemaClass();
     if (cls != null && cls.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME)) {
 
-      final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+      final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
       if (db.getUser() == null)
         return true;

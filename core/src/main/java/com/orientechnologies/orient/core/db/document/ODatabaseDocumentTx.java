@@ -41,7 +41,10 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.*;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.OClassTrigger;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.ORidBagDeleteHook;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerProxy;
@@ -521,7 +524,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   /**
    * Deletes the record without checking the version.
    */
-  public ODatabaseRecord delete(final ORID iRecord, final OPERATION_MODE iMode) {
+  public ODatabaseDocument delete(final ORID iRecord, final OPERATION_MODE iMode) {
     ORecord record = iRecord.getRecord();
     if (record == null)
       return this;
@@ -530,7 +533,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     return this;
   }
 
-  public ODatabaseRecord delete(final ORecord iRecord, final OPERATION_MODE iMode) {
+  public ODatabaseDocument delete(final ORecord iRecord, final OPERATION_MODE iMode) {
     currentTx.deleteRecord(iRecord, iMode);
     return this;
   }
@@ -666,7 +669,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   /**
    * {@inheritDoc}
    */
-  public <DB extends ODatabaseRecord> DB checkSecurity(final String iResource, final int iOperation) {
+  public <DB extends ODatabaseDocument> DB checkSecurity(final String iResource, final int iOperation) {
     if (user != null) {
       try {
         user.allow(iResource, iOperation);
@@ -686,7 +689,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   /**
    * {@inheritDoc}
    */
-  public <DB extends ODatabaseRecord> DB checkSecurity(final String iResourceGeneric, final int iOperation,
+  public <DB extends ODatabaseDocument> DB checkSecurity(final String iResourceGeneric, final int iOperation,
       final Object... iResourcesSpecific) {
 
     if (user != null) {
@@ -736,7 +739,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   /**
    * {@inheritDoc}
    */
-  public <DB extends ODatabaseRecord> DB checkSecurity(final String iResourceGeneric, final int iOperation,
+  public <DB extends ODatabaseDocument> DB checkSecurity(final String iResourceGeneric, final int iOperation,
       final Object iResourceSpecific) {
     checkOpeness();
     if (user != null) {
@@ -813,7 +816,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   /**
    * {@inheritDoc}
    */
-  public ODatabaseRecord setRetainRecords(boolean retainRecords) {
+  public ODatabaseDocument setRetainRecords(boolean retainRecords) {
     this.retainRecords = retainRecords;
     return this;
   }
@@ -1019,7 +1022,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   /**
    * {@inheritDoc}
    */
-  public <DB extends ODatabaseRecord> DB setValidationEnabled(final boolean iEnabled) {
+  public <DB extends ODatabaseDocument> DB setValidationEnabled(final boolean iEnabled) {
     validation = iEnabled;
     return (DB) this;
   }
@@ -1518,7 +1521,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   /**
    * Deletes the record without checking the version.
    */
-  public ODatabaseRecord delete(final ORID iRecord) {
+  public ODatabaseDocument delete(final ORID iRecord) {
     checkOpeness();
     final ORecord rec = iRecord.getRecord();
     if (rec != null)
@@ -1540,7 +1543,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     return componentsFactory.binarySerializerFactory;
   }
 
-  public ODatabaseRecord begin(final OTransaction iTx) {
+  public ODatabaseDocument begin(final OTransaction iTx) {
     checkOpeness();
     if (currentTx.isActive() && iTx.equals(currentTx)) {
       currentTx.begin();
@@ -2510,7 +2513,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-  public ODatabaseRecord commit(boolean force) throws OTransactionException {
+  public ODatabaseDocument commit(boolean force) throws OTransactionException {
     checkOpeness();
     if (!currentTx.isActive())
       return this;
@@ -2584,7 +2587,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-  public ODatabaseRecord rollback(boolean force) throws OTransactionException {
+  public ODatabaseDocument rollback(boolean force) throws OTransactionException {
     checkOpeness();
     if (currentTx.isActive()) {
 

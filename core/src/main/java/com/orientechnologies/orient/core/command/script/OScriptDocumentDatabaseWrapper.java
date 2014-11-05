@@ -28,11 +28,11 @@ import java.util.Map.Entry;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
-import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
+import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.id.ORID;
@@ -277,7 +277,7 @@ public class OScriptDocumentDatabaseWrapper {
     return database.getClusterRecordSizeByName(iClusterName);
   }
 
-  public <RET extends ODatabaseRecord> RET setValidationEnabled(boolean iValue) {
+  public <RET extends ODatabaseDocument> RET setValidationEnabled(boolean iValue) {
     return (RET) database.setValidationEnabled(iValue);
   }
 
@@ -390,7 +390,7 @@ public class OScriptDocumentDatabaseWrapper {
     return database.isRetainRecords();
   }
 
-  public ODatabaseRecord setRetainRecords(boolean iValue) {
+  public ODatabaseDocument setRetainRecords(boolean iValue) {
     return database.setRetainRecords(iValue);
   }
 

@@ -31,6 +31,7 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
@@ -797,8 +798,8 @@ public class ODocumentHelper {
     }
   }
 
-  public static boolean hasSameContentItem(final Object iCurrent, ODatabaseRecordInternal iMyDb, final Object iOther,
-      final ODatabaseRecordInternal iOtherDb, RIDMapper ridMapper) {
+  public static boolean hasSameContentItem(final Object iCurrent, ODatabaseDocumentInternal iMyDb, final Object iOther,
+      final ODatabaseDocumentInternal iOtherDb, RIDMapper ridMapper) {
     if (iCurrent instanceof ODocument) {
       final ODocument current = (ODocument) iCurrent;
       if (iOther instanceof ORID) {
@@ -827,8 +828,8 @@ public class ODocumentHelper {
    * @see #equals(Object)
    */
   @SuppressWarnings("unchecked")
-  public static boolean hasSameContentOf(final ODocument iCurrent, final ODatabaseRecordInternal iMyDb, final ODocument iOther,
-      final ODatabaseRecordInternal iOtherDb, RIDMapper ridMapper) {
+  public static boolean hasSameContentOf(final ODocument iCurrent, final ODatabaseDocumentInternal iMyDb, final ODocument iOther,
+      final ODatabaseDocumentInternal iOtherDb, RIDMapper ridMapper) {
     return hasSameContentOf(iCurrent, iMyDb, iOther, iOtherDb, ridMapper, true);
   }
 
@@ -842,8 +843,8 @@ public class ODocumentHelper {
    * @see #equals(Object)
    */
   @SuppressWarnings("unchecked")
-  public static boolean hasSameContentOf(final ODocument iCurrent, final ODatabaseRecordInternal iMyDb, final ODocument iOther,
-      final ODatabaseRecordInternal iOtherDb, RIDMapper ridMapper, final boolean iCheckAlsoIdentity) {
+  public static boolean hasSameContentOf(final ODocument iCurrent, final ODatabaseDocumentInternal iMyDb, final ODocument iOther,
+      final ODatabaseDocumentInternal iOtherDb, RIDMapper ridMapper, final boolean iCheckAlsoIdentity) {
     if (iOther == null)
       return false;
 
@@ -933,8 +934,8 @@ public class ODocumentHelper {
     return true;
   }
 
-  public static boolean compareMaps(ODatabaseRecordInternal iMyDb, Map<Object, Object> myFieldValue,
-      ODatabaseRecordInternal iOtherDb, Map<Object, Object> otherFieldValue, RIDMapper ridMapper) {
+  public static boolean compareMaps(ODatabaseDocumentInternal iMyDb, Map<Object, Object> myFieldValue,
+      ODatabaseDocumentInternal iOtherDb, Map<Object, Object> otherFieldValue, RIDMapper ridMapper) {
     // CHECK IF THE ORDER IS RESPECTED
     final Map<Object, Object> myMap = myFieldValue;
     final Map<Object, Object> otherMap = otherFieldValue;
@@ -1024,8 +1025,8 @@ public class ODocumentHelper {
     }
   }
 
-  public static boolean compareCollections(ODatabaseRecordInternal iMyDb, Collection<?> myFieldValue,
-      ODatabaseRecordInternal iOtherDb, Collection<?> otherFieldValue, RIDMapper ridMapper) {
+  public static boolean compareCollections(ODatabaseDocumentInternal iMyDb, Collection<?> myFieldValue,
+      ODatabaseDocumentInternal iOtherDb, Collection<?> otherFieldValue, RIDMapper ridMapper) {
     final Collection<?> myCollection = myFieldValue;
     final Collection<?> otherCollection = otherFieldValue;
 
@@ -1088,7 +1089,7 @@ public class ODocumentHelper {
     }
   }
 
-  public static boolean compareSets(ODatabaseRecordInternal iMyDb, Set<?> myFieldValue, ODatabaseRecordInternal iOtherDb,
+  public static boolean compareSets(ODatabaseDocumentInternal iMyDb, Set<?> myFieldValue, ODatabaseDocumentInternal iOtherDb,
       Set<?> otherFieldValue, RIDMapper ridMapper) {
     final Set<?> mySet = myFieldValue;
     final Set<?> otherSet = otherFieldValue;
@@ -1174,7 +1175,7 @@ public class ODocumentHelper {
     }
   }
 
-  public static boolean compareBags(ODatabaseRecordInternal iMyDb, ORidBag myFieldValue, ODatabaseRecordInternal iOtherDb,
+  public static boolean compareBags(ODatabaseDocumentInternal iMyDb, ORidBag myFieldValue, ODatabaseDocumentInternal iOtherDb,
       ORidBag otherFieldValue, RIDMapper ridMapper) {
     final ORidBag myBag = myFieldValue;
     final ORidBag otherBag = otherFieldValue;
@@ -1349,7 +1350,7 @@ public class ODocumentHelper {
     }
   }
 
-  public static <T> T makeDbCall(final ODatabaseRecordInternal databaseRecord, final ODbRelatedCall<T> function) {
+  public static <T> T makeDbCall(final ODatabaseDocumentInternal databaseRecord, final ODbRelatedCall<T> function) {
     ODatabaseRecordThreadLocal.INSTANCE.set(databaseRecord);
     return function.call();
   }

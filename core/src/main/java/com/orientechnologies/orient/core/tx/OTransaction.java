@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
@@ -53,7 +53,7 @@ public interface OTransaction {
 
   public void rollback(boolean force, int commitLevelDiff);
 
-  public ODatabaseRecord getDatabase();
+  public ODatabaseDocument getDatabase();
 
   public void clearRecordEntries();
 

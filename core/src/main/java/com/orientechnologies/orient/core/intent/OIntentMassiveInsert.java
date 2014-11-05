@@ -20,23 +20,23 @@
 
 package com.orientechnologies.orient.core.intent;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class OIntentMassiveInsert implements OIntent {
   private boolean                                     previousRetainRecords;
   private boolean                                     previousRetainObjects;
   private boolean                                     previousValidation;
   private Map<ORecordHook, ORecordHook.HOOK_POSITION> removedHooks;
-  private OSecurityUser currentUser;
+  private OSecurityUser                               currentUser;
 
   public void begin(final ODatabaseRecordInternal iDatabase) {
     // DISABLE CHECK OF SECURITY
@@ -45,14 +45,14 @@ public class OIntentMassiveInsert implements OIntent {
 
     ODatabaseComplexInternal<?> ownerDb = iDatabase.getDatabaseOwner();
 
-    if (ownerDb instanceof ODatabaseRecord) {
-      previousRetainRecords = ((ODatabaseRecord) ownerDb).isRetainRecords();
-      ((ODatabaseRecord) ownerDb).setRetainRecords(false);
+    if (ownerDb instanceof ODatabaseDocument) {
+      previousRetainRecords = ((ODatabaseDocument) ownerDb).isRetainRecords();
+      ((ODatabaseDocument) ownerDb).setRetainRecords(false);
 
       // VALIDATION
-      previousValidation = ((ODatabaseRecord) ownerDb).isValidationEnabled();
+      previousValidation = ((ODatabaseDocument) ownerDb).isValidationEnabled();
       if (previousValidation)
-        ((ODatabaseRecord) ownerDb).setValidationEnabled(false);
+        ((ODatabaseDocument) ownerDb).setValidationEnabled(false);
     }
 
     while (ownerDb.getDatabaseOwner() != ownerDb)
@@ -81,9 +81,9 @@ public class OIntentMassiveInsert implements OIntent {
 
     ODatabaseComplexInternal<?> ownerDb = iDatabase.getDatabaseOwner();
 
-    if (ownerDb instanceof ODatabaseRecord) {
-      ((ODatabaseRecord) ownerDb).setRetainRecords(previousRetainRecords);
-      ((ODatabaseRecord) ownerDb).setValidationEnabled(previousValidation);
+    if (ownerDb instanceof ODatabaseDocument) {
+      ((ODatabaseDocument) ownerDb).setRetainRecords(previousRetainRecords);
+      ((ODatabaseDocument) ownerDb).setValidationEnabled(previousValidation);
     }
 
     while (ownerDb.getDatabaseOwner() != ownerDb)

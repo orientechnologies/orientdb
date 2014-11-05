@@ -21,8 +21,8 @@
 package com.orientechnologies.orient.core.intent;
 
 import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 
 /**
@@ -36,9 +36,9 @@ public class OIntentNoCache implements OIntent {
   public void begin(final ODatabaseRecordInternal iDatabase) {
     ODatabaseComplexInternal<?> ownerDb = iDatabase.getDatabaseOwner();
 
-    if (ownerDb instanceof ODatabaseRecord) {
-      previousRetainRecords = ((ODatabaseRecord) ownerDb).isRetainRecords();
-      ((ODatabaseRecord) ownerDb).setRetainRecords(false);
+    if (ownerDb instanceof ODatabaseDocument) {
+      previousRetainRecords = ((ODatabaseDocument) ownerDb).isRetainRecords();
+      ((ODatabaseDocument) ownerDb).setRetainRecords(false);
     }
 
     while (ownerDb.getDatabaseOwner() != ownerDb)
@@ -53,8 +53,8 @@ public class OIntentNoCache implements OIntent {
   public void end(final ODatabaseRecordInternal iDatabase) {
     ODatabaseComplexInternal<?> ownerDb = iDatabase.getDatabaseOwner();
 
-    if (ownerDb instanceof ODatabaseRecord) {
-      ((ODatabaseRecord) ownerDb).setRetainRecords(previousRetainRecords);
+    if (ownerDb instanceof ODatabaseDocument) {
+      ((ODatabaseDocument) ownerDb).setRetainRecords(previousRetainRecords);
     }
 
     while (ownerDb.getDatabaseOwner() != ownerDb)

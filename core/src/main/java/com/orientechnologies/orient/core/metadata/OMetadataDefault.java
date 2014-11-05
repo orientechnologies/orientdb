@@ -27,6 +27,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.index.OIndexManager;
@@ -48,26 +49,25 @@ import com.orientechnologies.orient.core.schedule.OSchedulerListener;
 import com.orientechnologies.orient.core.schedule.OSchedulerListenerImpl;
 import com.orientechnologies.orient.core.schedule.OSchedulerListenerProxy;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 
 public class OMetadataDefault implements OMetadata {
-  public static final String                      CLUSTER_INTERNAL_NAME     = "internal";
-  public static final String                      CLUSTER_INDEX_NAME        = "index";
-  public static final String                      CLUSTER_MANUAL_INDEX_NAME = "manindex";
-  public static final String                      DATASEGMENT_INDEX_NAME    = "index";
+  public static final String                           CLUSTER_INTERNAL_NAME     = "internal";
+  public static final String                           CLUSTER_INDEX_NAME        = "index";
+  public static final String                           CLUSTER_MANUAL_INDEX_NAME = "manindex";
+  public static final String                           DATASEGMENT_INDEX_NAME    = "index";
 
-  protected int                                   schemaClusterId;
+  protected int                                        schemaClusterId;
 
-  protected OSchemaProxy                          schema;
-  protected OSecurity                             security;
-  protected OIndexManagerProxy                    indexManager;
-  protected OFunctionLibraryProxy                 functionLibrary;
-  protected OSchedulerListenerProxy               scheduler;
-  protected static final OProfilerMBean           PROFILER                  = Orient.instance().getProfiler();
+  protected OSchemaProxy                               schema;
+  protected OSecurity                                  security;
+  protected OIndexManagerProxy                         indexManager;
+  protected OFunctionLibraryProxy                      functionLibrary;
+  protected OSchedulerListenerProxy                    scheduler;
+  protected static final OProfilerMBean                PROFILER                  = Orient.instance().getProfiler();
 
-  private final AtomicReference<OImmutableSchema> schemaCache               = new AtomicReference<OImmutableSchema>();
+  private final AtomicReference<OImmutableSchema>      schemaCache               = new AtomicReference<OImmutableSchema>();
 
-	private final ThreadLocal<ThreadLocalSchemaSnapshot> threadLocalSchemaSnapshot = new ThreadLocal<ThreadLocalSchemaSnapshot>();
+  private final ThreadLocal<ThreadLocalSchemaSnapshot> threadLocalSchemaSnapshot = new ThreadLocal<ThreadLocalSchemaSnapshot>();
 
   public OMetadataDefault() {
   }
@@ -102,41 +102,41 @@ public class OMetadataDefault implements OMetadata {
     return schema;
   }
 
-	@Override
-	public void makeThreadLocalSchemaSnapshot() {
-		ThreadLocalSchemaSnapshot schemaSnapshot = threadLocalSchemaSnapshot.get();
+  @Override
+  public void makeThreadLocalSchemaSnapshot() {
+    ThreadLocalSchemaSnapshot schemaSnapshot = threadLocalSchemaSnapshot.get();
 
-		if (schemaSnapshot == null) {
-			final OImmutableSchema immutableSchema = getImmutableSchemaSnapshot();
-			schemaSnapshot = new ThreadLocalSchemaSnapshot(immutableSchema);
+    if (schemaSnapshot == null) {
+      final OImmutableSchema immutableSchema = getImmutableSchemaSnapshot();
+      schemaSnapshot = new ThreadLocalSchemaSnapshot(immutableSchema);
 
-			threadLocalSchemaSnapshot.set(schemaSnapshot);
-			return;
-		}
+      threadLocalSchemaSnapshot.set(schemaSnapshot);
+      return;
+    }
 
-		schemaSnapshot.snapshotCounter++;
-	}
+    schemaSnapshot.snapshotCounter++;
+  }
 
-	@Override
-	public void clearThreadLocalSchemaSnapshot() {
-		ThreadLocalSchemaSnapshot schemaSnapshot = threadLocalSchemaSnapshot.get();
+  @Override
+  public void clearThreadLocalSchemaSnapshot() {
+    ThreadLocalSchemaSnapshot schemaSnapshot = threadLocalSchemaSnapshot.get();
 
-		if (schemaSnapshot.snapshotCounter <= 0)
-			throw new IllegalStateException("Thread local schema snapshot is cleared more times than it is done");
+    if (schemaSnapshot.snapshotCounter <= 0)
+      throw new IllegalStateException("Thread local schema snapshot is cleared more times than it is done");
 
-		schemaSnapshot.snapshotCounter--;
+    schemaSnapshot.snapshotCounter--;
 
-		if (schemaSnapshot.snapshotCounter == 0)
-			threadLocalSchemaSnapshot.set(null);
-	}
+    if (schemaSnapshot.snapshotCounter == 0)
+      threadLocalSchemaSnapshot.set(null);
+  }
 
-	@Override
+  @Override
   public OImmutableSchema getImmutableSchemaSnapshot() {
-    final ThreadLocalSchemaSnapshot schemaSnapshot  = threadLocalSchemaSnapshot.get();
+    final ThreadLocalSchemaSnapshot schemaSnapshot = threadLocalSchemaSnapshot.get();
 
-		OImmutableSchema immutableSchema = null;
-		if(schemaSnapshot != null)
-			immutableSchema = schemaSnapshot.schema;
+    OImmutableSchema immutableSchema = null;
+    if (schemaSnapshot != null)
+      immutableSchema = schemaSnapshot.schema;
 
     if (immutableSchema != null)
       return immutableSchema;
@@ -171,7 +171,7 @@ public class OMetadataDefault implements OMetadata {
   }
 
   private void init(final boolean iLoad) {
-    final ODatabaseRecordInternal database = getDatabase();
+    final ODatabaseDocumentInternal database = getDatabase();
     schemaClusterId = database.getClusterIdByName(CLUSTER_INTERNAL_NAME);
 
     schema = new OSchemaProxy(database.getStorage().getResource(OSchema.class.getSimpleName(), new Callable<OSchemaShared>() {
@@ -266,7 +266,7 @@ public class OMetadataDefault implements OMetadata {
       security.close(false);
   }
 
-  protected ODatabaseRecordInternal getDatabase() {
+  protected ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
@@ -278,12 +278,12 @@ public class OMetadataDefault implements OMetadata {
     return scheduler;
   }
 
-	private final class ThreadLocalSchemaSnapshot {
-		private final OImmutableSchema schema;
-		private int snapshotCounter = 1;
+  private final class ThreadLocalSchemaSnapshot {
+    private final OImmutableSchema schema;
+    private int                    snapshotCounter = 1;
 
-		private ThreadLocalSchemaSnapshot(OImmutableSchema schema) {
-			this.schema = schema;
-		}
-	}
+    private ThreadLocalSchemaSnapshot(OImmutableSchema schema) {
+      this.schema = schema;
+    }
+  }
 }

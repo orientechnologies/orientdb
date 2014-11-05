@@ -35,8 +35,8 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -127,7 +127,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 
   // TODO: CREATE A REGULAR JSR223 SCRIPT IMPL
   protected Object executeSQL() {
-    ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     try {
 
       return executeSQLScript(db, parserText);
@@ -142,7 +142,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
     throw new OCommandScriptException("Error on execution of the script: " + iText, request.getText(), 0);
   }
 
-  protected Object executeSQLScript(ODatabaseRecord db, final String iText) throws IOException {
+  protected Object executeSQLScript(ODatabaseDocument db, final String iText) throws IOException {
     Object lastResult = null;
     int maxRetry = 1;
 

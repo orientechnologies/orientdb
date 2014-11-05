@@ -21,7 +21,7 @@ import java.util.HashMap;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -40,7 +40,7 @@ public class OServerCommandPostImportDatabase extends OHttpMultipartRequestComma
   protected static final String[] NAMES = { "POST|import/*" };
   protected StringWriter          buffer;
   protected InputStream           importData;
-  protected ODatabaseRecord       database;
+  protected ODatabaseDocument     database;
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {

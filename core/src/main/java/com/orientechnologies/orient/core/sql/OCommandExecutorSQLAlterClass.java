@@ -26,7 +26,7 @@ import java.util.Map;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES;
@@ -48,7 +48,7 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
   private String             value;
 
   public OCommandExecutorSQLAlterClass parse(final OCommandRequest iRequest) {
-    final ODatabaseRecord database = getDatabase();
+    final ODatabaseDocument database = getDatabase();
 
     init((OCommandRequestText) iRequest);
 
@@ -101,7 +101,7 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
    * Execute the ALTER CLASS.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    final ODatabaseRecord database = getDatabase();
+    final ODatabaseDocument database = getDatabase();
 
     if (attribute == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");

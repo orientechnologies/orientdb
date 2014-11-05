@@ -20,13 +20,12 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-
 import javassist.util.proxy.ProxyObject;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.object.OLazyObjectSetInterface;
 import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -252,8 +251,8 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
     for (Object e : copy) {
       if (e != null) {
         if (e instanceof ORID)
-          add(database
-              .getUserObjectByRecord(((ODatabaseRecord) getDatabase().getUnderlying()).load((ORID) e, fetchPlan), fetchPlan));
+          add(database.getUserObjectByRecord(((ODatabaseDocument) getDatabase().getUnderlying()).load((ORID) e, fetchPlan),
+              fetchPlan));
         else if (e instanceof ODocument)
           add(database.getUserObjectByRecord((ORecord) e, fetchPlan));
         else
@@ -274,7 +273,7 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
     for (Object e : copy) {
       if (e != null) {
         if (e instanceof ORID)
-          super.add(database.getUserObjectByRecord(((ODatabaseRecord) getDatabase().getUnderlying()).load((ORID) e, fetchPlan),
+          super.add(database.getUserObjectByRecord(((ODatabaseDocument) getDatabase().getUnderlying()).load((ORID) e, fetchPlan),
               fetchPlan));
         else if (e instanceof ODocument)
           super.add(database.getUserObjectByRecord((ORecord) e, fetchPlan));
@@ -295,8 +294,8 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
     for (Object e : copy) {
       if (e != null) {
         if (e instanceof ORID) {
-          e = database
-              .getUserObjectByRecord(((ODatabaseRecord) getDatabase().getUnderlying()).load((ORID) e, fetchPlan), fetchPlan);
+          e = database.getUserObjectByRecord(((ODatabaseDocument) getDatabase().getUnderlying()).load((ORID) e, fetchPlan),
+              fetchPlan);
           super.add((TYPE) ((OObjectDatabaseTx) getDatabase()).detachAll(e, nonProxiedInstance));
         } else if (e instanceof ODocument) {
           e = database.getUserObjectByRecord((ORecord) e, fetchPlan);
