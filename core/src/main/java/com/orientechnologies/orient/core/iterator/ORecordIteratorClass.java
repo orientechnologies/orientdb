@@ -21,8 +21,8 @@ package com.orientechnologies.orient.core.iterator;
 
 import java.util.Arrays;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -45,23 +45,23 @@ public class ORecordIteratorClass<REC extends ORecord> extends ORecordIteratorCl
   /**
    * This method is only to maintain the retro compatibility with TinkerPop BP 2.2
    */
-  public ORecordIteratorClass(final ODatabaseRecordInternal iDatabase, final ODatabaseDocumentTx iLowLevelDatabase,
+  public ORecordIteratorClass(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentTx iLowLevelDatabase,
       final String iClassName, final boolean iPolymorphic) {
     this(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, true, false);
   }
 
-  public ORecordIteratorClass(final ODatabaseRecordInternal iDatabase, final ODatabaseRecordInternal iLowLevelDatabase,
+  public ORecordIteratorClass(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
       final String iClassName, final boolean iPolymorphic) {
     this(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, true, false);
   }
 
-  public ORecordIteratorClass(final ODatabaseRecordInternal iDatabase, final ODatabaseRecordInternal iLowLevelDatabase,
+  public ORecordIteratorClass(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
       final String iClassName, final boolean iPolymorphic, final boolean iUseCache, final boolean iterateThroughTombstones) {
     this(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, iUseCache, iterateThroughTombstones,
         OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
-  public ORecordIteratorClass(final ODatabaseRecordInternal iDatabase, final ODatabaseRecordInternal iLowLevelDatabase,
+  public ORecordIteratorClass(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
       final String iClassName, final boolean iPolymorphic, final boolean iUseCache, final boolean iterateThroughTombstones,
       final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);

@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OSchemaException;
@@ -56,7 +55,7 @@ import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 @SuppressWarnings("unchecked")
-public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecordInternal> extends
+public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseDocumentInternal> extends
     ODatabaseWrapperAbstract<DB, ORecord> implements ODatabaseInternal<ORecord> {
 
   public ODatabaseRecordWrapperAbstract(final DB iDatabase) {

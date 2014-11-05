@@ -25,6 +25,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.*;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -264,7 +265,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
     if (func == null)
       return RESULT.RECORD_NOT_CHANGED;
 
-    ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     // final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(funcName);
     final OScriptManager scriptManager = Orient.instance().getScriptManager();
     final ScriptEngine scriptEngine = scriptManager.getEngine(func.getLanguage());

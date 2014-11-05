@@ -25,10 +25,10 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -454,7 +454,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
     version.incrementAndGet();
   }
 
-  private ODatabaseRecordInternal getDatabase() {
+  private ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 }

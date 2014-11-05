@@ -16,28 +16,17 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -776,7 +765,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   public void testSerialization() {
     ORecordSerializer current = ODatabaseDocumentTx.getDefaultSerializer();
     ODatabaseDocumentTx.setDefaultSerializer(ORecordSerializerSchemaAware2CSV.INSTANCE);
-    ODatabaseRecordInternal oldDb = ODatabaseRecordThreadLocal.INSTANCE.get();
+    ODatabaseDocumentInternal oldDb = ODatabaseRecordThreadLocal.INSTANCE.get();
     ORecordSerializer dbser = oldDb.getSerializer();
     ((ODatabaseDocumentTx) oldDb).setSerializer(ORecordSerializerSchemaAware2CSV.INSTANCE);
     final byte[] streamOrigin = "Account@html:{\"path\":\"html/layout\"},config:{\"title\":\"Github Admin\",\"modules\":(githubDisplay:\"github_display\")},complex:(simple1:\"string1\",one_level1:(simple2:\"string2\"),two_levels:(simple3:\"string3\",one_level2:(simple4:\"string4\")))"

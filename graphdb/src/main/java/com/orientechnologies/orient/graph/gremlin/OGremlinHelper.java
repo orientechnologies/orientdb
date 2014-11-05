@@ -35,9 +35,9 @@ import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
@@ -283,13 +283,14 @@ public class OGremlinHelper {
     return instance;
   }
 
-  public static ODatabaseDocumentTx getGraphDatabase(final ODatabaseRecordInternal iCurrentDatabase) {
-    ODatabaseRecordInternal currentDb = ODatabaseRecordThreadLocal.INSTANCE.get();
+  public static ODatabaseDocumentTx getGraphDatabase(final ODatabaseDocumentInternal iCurrentDatabase) {
+    ODatabaseDocumentInternal currentDb = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (currentDb == null && iCurrentDatabase != null)
       // GET FROM THE RECORD
       currentDb = iCurrentDatabase;
 
-    currentDb = (ODatabaseRecordInternal) currentDb.getDatabaseOwner();
+    if (currentDb != null)
+      currentDb = (ODatabaseDocumentInternal) currentDb.getDatabaseOwner();
 
     final ODatabaseDocumentTx db;
     if (currentDb instanceof ODatabaseDocumentTx)

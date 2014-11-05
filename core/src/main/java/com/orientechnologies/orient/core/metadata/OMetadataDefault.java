@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.index.OIndexManagerRemote;
@@ -176,7 +175,7 @@ public class OMetadataDefault implements OMetadata {
 
     schema = new OSchemaProxy(database.getStorage().getResource(OSchema.class.getSimpleName(), new Callable<OSchemaShared>() {
       public OSchemaShared call() {
-        ODatabaseRecordInternal database = getDatabase();
+        ODatabaseDocumentInternal database = getDatabase();
         final OSchemaShared instance = new OSchemaShared(database.getStorageVersions().classesAreDetectedByClusterId());
         if (iLoad)
           instance.load();

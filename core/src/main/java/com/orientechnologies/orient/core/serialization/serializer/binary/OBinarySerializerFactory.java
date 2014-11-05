@@ -26,8 +26,8 @@ import java.util.concurrent.ConcurrentMap;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.*;
 import com.orientechnologies.common.serialization.types.legacy.OStringSerializer_1_5_1;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
@@ -102,7 +102,7 @@ public class OBinarySerializerFactory {
   }
 
   public static OBinarySerializerFactory getInstance() {
-    final ODatabaseRecordInternal database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (database != null)
       return database.getSerializerFactory();
     else

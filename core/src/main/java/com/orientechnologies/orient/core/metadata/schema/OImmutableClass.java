@@ -1,15 +1,15 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.io.IOException;
+import java.util.*;
+
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-
-import java.io.IOException;
-import java.util.*;
 
 /**
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
@@ -615,7 +615,7 @@ public class OImmutableClass implements OClass {
     return name.compareTo(other.getName());
   }
 
-  private ODatabaseRecordInternal getDatabase() {
+  private ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 

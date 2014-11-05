@@ -19,9 +19,12 @@
  */
 package com.orientechnologies.orient.core.sql.query;
 
+import java.util.*;
+import java.util.Map.Entry;
+
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
@@ -32,15 +35,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * SQL query implementation.
@@ -66,7 +60,7 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
    */
   @SuppressWarnings("unchecked")
   public List<T> run(final Object... iArgs) {
-    final ODatabaseRecordInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (database == null)
       throw new OQueryParsingException("No database configured");
 

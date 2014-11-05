@@ -19,7 +19,7 @@
  */
 package com.orientechnologies.orient.core.iterator;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -29,7 +29,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * @author Luca Garulli
  */
 public class ORecordIteratorClassDescendentOrder<REC extends ORecord> extends ORecordIteratorClass<REC> {
-  public ORecordIteratorClassDescendentOrder(ODatabaseRecordInternal iDatabase, ODatabaseRecordInternal iLowLevelDatabase,
+  public ORecordIteratorClassDescendentOrder(ODatabaseDocumentInternal iDatabase, ODatabaseDocumentInternal iLowLevelDatabase,
       String iClassName, boolean iPolymorphic, boolean iUseCache, boolean iterateThroughTombstones,
       OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLowLevelDatabase, iClassName, iPolymorphic, iUseCache, iterateThroughTombstones, iLockingStrategy);

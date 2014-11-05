@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -287,7 +286,7 @@ public abstract class ORecordAbstract implements ORecord {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
-  protected ODatabaseRecordInternal getDatabaseInternal() {
+  protected ODatabaseDocumentInternal getDatabaseInternal() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
@@ -295,7 +294,7 @@ public abstract class ORecordAbstract implements ORecord {
     return ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
   }
 
-  protected ODatabaseRecordInternal getDatabaseIfDefinedInternal() {
+  protected ODatabaseDocumentInternal getDatabaseIfDefinedInternal() {
     return ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
   }
 

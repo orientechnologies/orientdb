@@ -26,8 +26,8 @@ import java.util.Map;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
@@ -90,7 +90,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       final int keySize = determineKeySize(indexDefinition);
 
       final ORecordBytes identityRecord = new ORecordBytes();
-      ODatabaseRecordInternal database = getDatabase();
+      ODatabaseDocumentInternal database = getDatabase();
 
       final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
 
@@ -144,7 +144,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   public void deleteWithoutLoad(String indexName) {
     acquireExclusiveLock();
     try {
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
 
       sbTree.deleteWithoutLoad(indexName, storageLocalAbstract);
@@ -158,7 +158,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
       boolean isAutomatic) {
     acquireExclusiveLock();
     try {
-      ODatabaseRecordInternal database = getDatabase();
+      ODatabaseDocumentInternal database = getDatabase();
       final OAbstractPaginatedStorage storageLocalAbstract = (OAbstractPaginatedStorage) database.getStorage().getUnderlying();
 
       sbTree.load(indexName, determineKeySerializer(indexDefinition), valueSerializer,
@@ -383,7 +383,7 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     return true;
   }
 
-  private ODatabaseRecordInternal getDatabase() {
+  private ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 

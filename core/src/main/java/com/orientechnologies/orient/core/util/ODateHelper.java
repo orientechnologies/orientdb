@@ -26,9 +26,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 
 public class ODateHelper {
   public static final String DEF_DATE_FORMAT     = "yyyy-MM-dd";
@@ -46,7 +46,7 @@ public class ODateHelper {
   }
 
   public static DateFormat getDateFormatInstance() {
-    final ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db != null && !db.isClosed())
       return db.getStorage().getConfiguration().getDateFormatInstance();
     else
@@ -54,7 +54,7 @@ public class ODateHelper {
   }
 
   public static String getDateFormat() {
-    final ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db != null && !db.isClosed())
       return db.getStorage().getConfiguration().getDateFormat();
     else
@@ -62,7 +62,7 @@ public class ODateHelper {
   }
 
   public static DateFormat getDateTimeFormatInstance() {
-    final ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db != null && !db.isClosed())
       return db.getStorage().getConfiguration().getDateTimeFormatInstance();
     else
@@ -70,7 +70,7 @@ public class ODateHelper {
   }
 
   public static String getDateTimeFormat() {
-    final ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db != null && !db.isClosed())
       return db.getStorage().getConfiguration().getDateTimeFormat();
     else

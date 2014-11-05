@@ -19,11 +19,7 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.util.*;
 import java.util.zip.Deflater;
 import java.util.zip.GZIPOutputStream;
@@ -34,13 +30,16 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
-import com.orientechnologies.orient.core.metadata.schema.*;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
@@ -60,7 +59,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
   protected int           compressionLevel  = Deflater.BEST_SPEED;
   protected int           compressionBuffer = 16384;              // 16Kb
 
-  public ODatabaseExport(final ODatabaseRecordInternal iDatabase, final String iFileName, final OCommandOutputListener iListener)
+  public ODatabaseExport(final ODatabaseDocumentInternal iDatabase, final String iFileName, final OCommandOutputListener iListener)
       throws IOException {
     super(iDatabase, iFileName, iListener);
 
@@ -86,7 +85,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
     writer.beginObject();
   }
 
-  public ODatabaseExport(final ODatabaseRecordInternal iDatabase, final OutputStream iOutputStream,
+  public ODatabaseExport(final ODatabaseDocumentInternal iDatabase, final OutputStream iOutputStream,
       final OCommandOutputListener iListener) throws IOException {
     super(iDatabase, "streaming", iListener);
 

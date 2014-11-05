@@ -19,8 +19,12 @@
  */
 package com.orientechnologies.orient.core.iterator;
 
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
+
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -31,10 +35,6 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
-
 /**
  * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator cannot change
  * it.
@@ -42,30 +42,30 @@ import java.util.NoSuchElementException;
  * @author Luca Garulli
  */
 public abstract class OIdentifiableIterator<REC extends OIdentifiable> implements Iterator<REC>, Iterable<REC> {
-  protected final ODatabaseRecordInternal database;
-  protected final ORecordId               current                = new ORecordId();
-  private final ODatabaseRecordInternal   lowLevelDatabase;
-  private final OStorage                  dbStorage;
-  private final boolean                   useCache;
-  private final boolean                   iterateThroughTombstones;
-  protected boolean                       liveUpdated            = false;
-  protected long                          limit                  = -1;
-  protected long                          browsedRecords         = 0;
-  protected OStorage.LOCKING_STRATEGY     lockingStrategy        = OStorage.LOCKING_STRATEGY.DEFAULT;
-  protected long                          totalAvailableRecords;
-  protected List<ORecordOperation>        txEntries;
-  protected int                           currentTxEntryPosition = -1;
-  protected long                          firstClusterEntry      = 0;
-  protected long                          lastClusterEntry       = Long.MAX_VALUE;
-  private String                          fetchPlan;
-  private ORecord                         reusedRecord           = null;                             // DEFAULT = NOT
+  protected final ODatabaseDocumentInternal database;
+  protected final ORecordId                 current                = new ORecordId();
+  private final ODatabaseDocumentInternal   lowLevelDatabase;
+  private final OStorage                    dbStorage;
+  private final boolean                     useCache;
+  private final boolean                     iterateThroughTombstones;
+  protected boolean                         liveUpdated            = false;
+  protected long                            limit                  = -1;
+  protected long                            browsedRecords         = 0;
+  protected OStorage.LOCKING_STRATEGY       lockingStrategy        = OStorage.LOCKING_STRATEGY.DEFAULT;
+  protected long                            totalAvailableRecords;
+  protected List<ORecordOperation>          txEntries;
+  protected int                             currentTxEntryPosition = -1;
+  protected long                            firstClusterEntry      = 0;
+  protected long                            lastClusterEntry       = Long.MAX_VALUE;
+  private String                            fetchPlan;
+  private ORecord                           reusedRecord           = null;                             // DEFAULT = NOT
   // REUSE IT
-  private Boolean                         directionForward;
-  private long                            currentEntry           = ORID.CLUSTER_POS_INVALID;
-  private int                             currentEntryPosition   = -1;
-  private OPhysicalPosition[]             positionsToProcess     = null;
+  private Boolean                           directionForward;
+  private long                              currentEntry           = ORID.CLUSTER_POS_INVALID;
+  private int                               currentEntryPosition   = -1;
+  private OPhysicalPosition[]               positionsToProcess     = null;
 
-  public OIdentifiableIterator(final ODatabaseRecordInternal iDatabase, final ODatabaseRecordInternal iLowLevelDatabase,
+  public OIdentifiableIterator(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
       final boolean useCache, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     database = iDatabase;
     lowLevelDatabase = iLowLevelDatabase;

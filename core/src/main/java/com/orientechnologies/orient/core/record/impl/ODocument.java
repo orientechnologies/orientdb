@@ -147,7 +147,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     this(iClassName);
     _recordId = (ORecordId) iRID;
 
-    final ODatabaseRecordInternal database = getDatabaseInternal();
+    final ODatabaseDocumentInternal database = getDatabaseInternal();
     if (_recordId.clusterId > -1 && database.getStorageVersions().classesAreDetectedByClusterId()) {
       final OSchema schema = database.getMetadata().getImmutableSchemaSnapshot();
       final OClass cls = schema.getClassByClusterId(_recordId.clusterId);
@@ -1824,7 +1824,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   private void fetchClassName() {
-    final ODatabaseRecordInternal database = getDatabaseIfDefinedInternal();
+    final ODatabaseDocumentInternal database = getDatabaseIfDefinedInternal();
     if (database != null && database.getStorageVersions() != null && database.getStorageVersions().classesAreDetectedByClusterId()) {
       if (_recordId.clusterId < 0) {
         checkForLoading();
@@ -2138,7 +2138,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   protected void setup() {
     super.setup();
 
-    final ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db != null)
       _recordFormat = db.getSerializer();
 

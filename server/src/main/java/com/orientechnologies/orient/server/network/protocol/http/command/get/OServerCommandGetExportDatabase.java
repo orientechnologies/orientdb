@@ -25,7 +25,7 @@ import java.util.Date;
 import java.util.zip.GZIPOutputStream;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -49,7 +49,7 @@ public class OServerCommandGetExportDatabase extends OServerCommandAuthenticated
   protected void exportStandard(final OHttpRequest iRequest, final OHttpResponse iResponse) throws InterruptedException,
       IOException {
     iRequest.data.commandInfo = "Database export";
-    final ODatabaseRecordInternal database = getProfiledDatabaseInstance(iRequest);
+    final ODatabaseDocumentInternal database = getProfiledDatabaseInstance(iRequest);
     try {
       iResponse.writeStatus(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION);
       iResponse.writeHeaders(OHttpUtils.CONTENT_GZIP);

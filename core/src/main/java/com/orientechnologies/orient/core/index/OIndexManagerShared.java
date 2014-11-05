@@ -27,11 +27,11 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMultiKey;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -317,7 +317,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     if (rebuildCompleted)
       return false;
 
-    final ODatabaseRecordInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (!OGlobalConfiguration.INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE.getValueAsBoolean())
       return false;
 

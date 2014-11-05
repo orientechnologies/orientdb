@@ -27,8 +27,8 @@ import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEG
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
@@ -173,7 +173,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
   }
 
   protected Set<String> getInvolvedClustersOfIndex(final String iIndexName) {
-    final ODatabaseRecordInternal db = getDatabase();
+    final ODatabaseDocumentInternal db = getDatabase();
 
     final Set<String> clusters = new HashSet<String>();
 

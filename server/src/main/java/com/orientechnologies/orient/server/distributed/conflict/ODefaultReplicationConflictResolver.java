@@ -25,7 +25,6 @@ import java.util.List;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -87,7 +86,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
 
       final OServerUserConfiguration replicatorUser = serverInstance.getUser(ODistributedAbstractPlugin.REPLICATOR_USER);
 
-      final ODatabaseRecordInternal threadDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      final ODatabaseDocumentInternal threadDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
       if (threadDb != null && !threadDb.isClosed() && threadDb.getStorage().getName().equals(iDatabaseName))
         database = threadDb;
       else
@@ -128,12 +127,12 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
       for (int retry = 0; retry < MAX_RETRIES; ++retry) {
         ODistributedServerLog
             .debug(
-										this,
-										cluster.getLocalNodeName(),
-										iRemoteNode,
-										DIRECTION.IN,
-										"Resolved conflict automatically between versions on CREATE record %s/%s v.%d (other RID=%s v.%d). Current record version will be overwritten",
-										database.getName(), iCurrentRID, iCurrentVersion, iOtherRID, iOtherVersion);
+                this,
+                cluster.getLocalNodeName(),
+                iRemoteNode,
+                DIRECTION.IN,
+                "Resolved conflict automatically between versions on CREATE record %s/%s v.%d (other RID=%s v.%d). Current record version will be overwritten",
+                database.getName(), iCurrentRID, iCurrentVersion, iOtherRID, iOtherVersion);
 
         final ORecord record = iCurrentRID.getRecord();
         ORecordInternal.setVersion(record, iOtherVersion - 1);

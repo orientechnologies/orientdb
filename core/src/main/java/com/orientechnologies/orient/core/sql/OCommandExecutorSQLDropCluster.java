@@ -24,8 +24,8 @@ import java.util.Map;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 
@@ -74,7 +74,7 @@ public class OCommandExecutorSQLDropCluster extends OCommandExecutorSQLAbstract 
     if (clusterName == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    final ODatabaseRecordInternal database = getDatabase();
+    final ODatabaseDocumentInternal database = getDatabase();
 
     // CHECK IF ANY CLASS IS USING IT
     final int clusterId = database.getStorage().getClusterIdByName(clusterName);

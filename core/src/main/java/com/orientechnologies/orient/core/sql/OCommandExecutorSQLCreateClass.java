@@ -24,8 +24,8 @@ import java.util.Map;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 
@@ -48,7 +48,7 @@ public class OCommandExecutorSQLCreateClass extends OCommandExecutorSQLAbstract 
   private int[]              clusterIds;
 
   public OCommandExecutorSQLCreateClass parse(final OCommandRequest iRequest) {
-    final ODatabaseRecordInternal database = getDatabase();
+    final ODatabaseDocumentInternal database = getDatabase();
     init((OCommandRequestText) iRequest);
 
     StringBuilder word = new StringBuilder();

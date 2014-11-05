@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.annotation.OAfterSerialization;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -115,7 +116,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       rid = iLinkedRecord.getIdentity();
 
       if ((rid.isNew() && !rid.isTemporary()) || iLinkedRecord.isDirty()) {
-        final ODatabaseRecordInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
+        final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
         if (iLinkedRecord instanceof ODocument) {
           final OClass schemaClass = ((ODocument) iLinkedRecord).getImmutableSchemaClass();
           database.save(iLinkedRecord,

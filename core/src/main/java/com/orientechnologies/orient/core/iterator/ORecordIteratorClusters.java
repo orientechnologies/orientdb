@@ -22,7 +22,7 @@ package com.orientechnologies.orient.core.iterator;
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -44,7 +44,7 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
   protected ORID    beginRange;
   protected ORID    endRange;
 
-  public ORecordIteratorClusters(final ODatabaseRecordInternal iDatabase, final ODatabaseRecordInternal iLowLevelDatabase,
+  public ORecordIteratorClusters(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
       final int[] iClusterIds, final boolean iUseCache, final boolean iterateThroughTombstones,
       final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
@@ -55,7 +55,7 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
     config();
   }
 
-  protected ORecordIteratorClusters(final ODatabaseRecordInternal iDatabase, final ODatabaseRecordInternal iLowLevelDatabase,
+  protected ORecordIteratorClusters(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
       final boolean iUseCache, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
   }

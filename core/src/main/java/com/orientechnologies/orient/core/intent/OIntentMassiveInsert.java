@@ -23,10 +23,10 @@ package com.orientechnologies.orient.core.intent;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -42,7 +42,7 @@ public class OIntentMassiveInsert implements OIntent {
   private boolean                                     disableSecurity   = true;
   private boolean                                     disableHooks      = true;
 
-  public void begin(final ODatabaseRecordInternal iDatabase) {
+  public void begin(final ODatabaseDocumentInternal iDatabase) {
     if (disableSecurity) {
       // DISABLE CHECK OF SECURITY
       currentUser = iDatabase.getDatabaseOwner().getUser();
@@ -84,7 +84,7 @@ public class OIntentMassiveInsert implements OIntent {
     }
   }
 
-  public void end(final ODatabaseRecordInternal iDatabase) {
+  public void end(final ODatabaseDocumentInternal iDatabase) {
     if (disableSecurity)
       if (currentUser != null)
         // RE-ENABLE CHECK OF SECURITY

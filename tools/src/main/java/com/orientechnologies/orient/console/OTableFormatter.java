@@ -19,20 +19,20 @@
  */
 package com.orientechnologies.orient.console;
 
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.console.OConsoleApplication;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
-
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.Map.Entry;
 
 public class OTableFormatter {
   protected final static String       MORE            = "...";
@@ -149,7 +149,7 @@ public class OTableFormatter {
         value = ((ORecord) value).getIdentity().toString();
       }
     } else if (value instanceof Date) {
-      final ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
       if (db != null)
         value = db.getStorage().getConfiguration().getDateTimeFormatInstance().format((Date) value);
       else {

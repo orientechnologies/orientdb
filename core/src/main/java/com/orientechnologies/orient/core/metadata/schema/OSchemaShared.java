@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -425,7 +424,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         throw new OSchemaException("Class " + className
             + " cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
 
-      final ODatabaseRecordInternal db = getDatabase();
+      final ODatabaseDocumentInternal db = getDatabase();
       final OStorage storage = db.getStorage();
 
       final StringBuilder cmd = new StringBuilder("drop class ");
@@ -735,7 +734,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   public void create() {
     rwSpinLock.acquireWriteLock();
     try {
-      final ODatabaseRecordInternal db = getDatabase();
+      final ODatabaseDocumentInternal db = getDatabase();
       super.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
       db.getStorage().getConfiguration().schemaRecordId = document.getIdentity().toString();
       db.getStorage().getConfiguration().update();
@@ -867,7 +866,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         }
       }
 
-      final ODatabaseRecordInternal db = getDatabase();
+      final ODatabaseDocumentInternal db = getDatabase();
       final OStorage storage = db.getStorage();
 
       if (isDistributedCommand()) {
@@ -971,7 +970,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   private int[] createClusters(String className) {
     className = className.toLowerCase();
 
-    final ODatabaseRecordInternal database = getDatabase();
+    final ODatabaseDocumentInternal database = getDatabase();
     final OStorage storage = database.getStorage();
 
     int[] clusterIds;// CREATE A NEW CLUSTER(S)
@@ -1035,7 +1034,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   }
 
   private void deleteDefaultCluster(OClass clazz) {
-    final ODatabaseRecordInternal database = getDatabase();
+    final ODatabaseDocumentInternal database = getDatabase();
     final int clusterId = clazz.getDefaultClusterId();
     final OCluster cluster = database.getStorage().getClusterById(clusterId);
 

@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.*;
@@ -125,7 +124,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   public OPropertyImpl setType(final OType type) {
     getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
 
-    final ODatabaseRecordInternal database = getDatabase();
+    final ODatabaseDocumentInternal database = getDatabase();
     acquireSchemaWriteLock();
     try {
       final OStorage storage = database.getStorage();
@@ -296,7 +295,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -341,7 +340,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -399,7 +398,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -454,7 +453,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -491,7 +490,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -528,7 +527,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -566,7 +565,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -604,7 +603,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -642,7 +641,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -684,7 +683,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     try {
       final String cmd = String.format("alter property %s custom %s=%s", getFullName(), name, value);
 
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -726,7 +725,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       final String cmd = String.format("alter property %s custom clear", getFullName());
@@ -872,7 +871,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       final String cmd = String.format("alter property %s collate %s", getFullName(), collate);

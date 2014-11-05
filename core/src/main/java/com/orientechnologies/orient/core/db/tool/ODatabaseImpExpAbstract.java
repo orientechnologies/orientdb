@@ -26,8 +26,8 @@ import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
@@ -38,28 +38,28 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * 
  */
 public abstract class ODatabaseImpExpAbstract {
-  protected ODatabaseRecordInternal database;
-  protected String                  fileName;
+  protected ODatabaseDocumentInternal database;
+  protected String                    fileName;
 
-  protected Set<String>             includeClusters;
-  protected Set<String>             excludeClusters;
-  protected Set<String>             includeClasses;
-  protected Set<String>             excludeClasses;
-  protected boolean                 includeInfo               = true;
-  protected boolean                 includeClusterDefinitions = true;
-  protected boolean                 includeSchema             = true;
-  protected boolean                 includeSecurity           = false;
-  protected boolean                 includeRecords            = true;
-  protected boolean                 includeIndexDefinitions   = true;
-  protected boolean                 includeManualIndexes      = true;
-  protected boolean                 useLineFeedForRecords     = false;
-  protected boolean                 preserveRids              = false;
+  protected Set<String>               includeClusters;
+  protected Set<String>               excludeClusters;
+  protected Set<String>               includeClasses;
+  protected Set<String>               excludeClasses;
+  protected boolean                   includeInfo               = true;
+  protected boolean                   includeClusterDefinitions = true;
+  protected boolean                   includeSchema             = true;
+  protected boolean                   includeSecurity           = false;
+  protected boolean                   includeRecords            = true;
+  protected boolean                   includeIndexDefinitions   = true;
+  protected boolean                   includeManualIndexes      = true;
+  protected boolean                   useLineFeedForRecords     = false;
+  protected boolean                   preserveRids              = false;
 
-  protected OCommandOutputListener  listener;
+  protected OCommandOutputListener    listener;
 
-  protected final static String     DEFAULT_EXT               = ".json";
+  protected final static String       DEFAULT_EXT               = ".json";
 
-  public ODatabaseImpExpAbstract(final ODatabaseRecordInternal iDatabase, final String iFileName,
+  public ODatabaseImpExpAbstract(final ODatabaseDocumentInternal iDatabase, final String iFileName,
       final OCommandOutputListener iListener) {
     database = iDatabase;
     fileName = iFileName;

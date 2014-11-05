@@ -23,7 +23,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 import com.orientechnologies.common.util.OCollections;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -129,7 +129,7 @@ public final class OIndexes {
    * @throws OIndexException
    *           if index type does not exist
    */
-  public static OIndexInternal<?> createIndex(ODatabaseRecordInternal database, String indexType, String algorithm,
+  public static OIndexInternal<?> createIndex(ODatabaseDocumentInternal database, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata) throws OConfigurationException, OIndexException {
     Iterator<OIndexFactory> ite = getAllFactories();
     boolean found = false;

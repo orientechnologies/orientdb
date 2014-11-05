@@ -16,26 +16,23 @@
  */
 package com.orientechnologies.orient.object.enhancement;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.*;
+import java.util.*;
+import java.util.Map.Entry;
+import javassist.util.proxy.Proxy;
+import javassist.util.proxy.ProxyObject;
+
+import javax.persistence.*;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.annotation.OAccess;
-import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
-import com.orientechnologies.orient.core.annotation.OAfterSerialization;
-import com.orientechnologies.orient.core.annotation.OBeforeDeserialization;
-import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
-import com.orientechnologies.orient.core.annotation.ODocumentInstance;
-import com.orientechnologies.orient.core.annotation.OId;
-import com.orientechnologies.orient.core.annotation.OVersion;
+import com.orientechnologies.orient.core.annotation.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedMap;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
@@ -57,30 +54,6 @@ import com.orientechnologies.orient.object.metadata.schema.OSchemaProxyObject;
 import com.orientechnologies.orient.object.serialization.OObjectSerializationThreadLocal;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerContext;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
-import javassist.util.proxy.Proxy;
-import javassist.util.proxy.ProxyObject;
-
-import javax.persistence.CascadeType;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * @author luca.molino
@@ -373,7 +346,7 @@ public class OObjectEntitySerializer {
     boolean reloadSchema = false;
     boolean automaticSchemaGeneration = false;
 
-    final ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
     final OSchema oSchema = db.getMetadata().getSchema();
 
     if (!oSchema.existsClass(iClass.getSimpleName())) {
