@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.storage.impl.local.eh;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
@@ -49,8 +49,8 @@ public class OPhysicalPositionSerializer implements OBinarySerializer<OPhysicalP
   @Override
   public void serialize(OPhysicalPosition object, byte[] stream, int startPosition, Object... hints) {
     int position = startPosition;
-    OClusterPositionSerializer.INSTANCE.serialize(object.clusterPosition, stream, position);
-    position += OClusterPositionSerializer.INSTANCE.getFixedLength();
+    OLongSerializer.INSTANCE.serialize(object.clusterPosition, stream, position);
+    position += OLongSerializer.INSTANCE.getFixedLength();
 
     object.recordVersion.getSerializer().writeTo(stream, position, object.recordVersion);
     position += OVersionFactory.instance().getVersionSize();
@@ -65,8 +65,8 @@ public class OPhysicalPositionSerializer implements OBinarySerializer<OPhysicalP
   public OPhysicalPosition deserialize(byte[] stream, int startPosition) {
     final OPhysicalPosition physicalPosition = new OPhysicalPosition();
     int position = startPosition;
-    physicalPosition.clusterPosition = OClusterPositionSerializer.INSTANCE.deserialize(stream, position);
-    position += OClusterPositionSerializer.INSTANCE.getFixedLength();
+    physicalPosition.clusterPosition = OLongSerializer.INSTANCE.deserialize(stream, position);
+    position += OLongSerializer.INSTANCE.getFixedLength();
 
     final ORecordVersion version = OVersionFactory.instance().createVersion();
     version.getSerializer().readFrom(stream, position, version);
@@ -92,7 +92,7 @@ public class OPhysicalPositionSerializer implements OBinarySerializer<OPhysicalP
 
   @Override
   public int getFixedLength() {
-    final int clusterPositionSize = OClusterPositionSerializer.INSTANCE.getFixedLength();
+    final int clusterPositionSize = OLongSerializer.INSTANCE.getFixedLength();
     final int versionSize = OVersionFactory.instance().getVersionSize();
 
     return clusterPositionSize + versionSize + 2 * OIntegerSerializer.INT_SIZE + OLongSerializer.LONG_SIZE
@@ -102,8 +102,8 @@ public class OPhysicalPositionSerializer implements OBinarySerializer<OPhysicalP
   @Override
   public void serializeNativeObject(OPhysicalPosition object, byte[] stream, int startPosition, Object... hints) {
     int position = startPosition;
-    OClusterPositionSerializer.INSTANCE.serializeNativeObject(object.clusterPosition, stream, position);
-    position += OClusterPositionSerializer.INSTANCE.getFixedLength();
+    OLongSerializer.INSTANCE.serializeNativeObject(object.clusterPosition, stream, position);
+    position += OLongSerializer.INSTANCE.getFixedLength();
 
     object.recordVersion.getSerializer().fastWriteTo(stream, position, object.recordVersion);
     position += OVersionFactory.instance().getVersionSize();
@@ -118,8 +118,8 @@ public class OPhysicalPositionSerializer implements OBinarySerializer<OPhysicalP
   public OPhysicalPosition deserializeNativeObject(byte[] stream, int startPosition) {
     final OPhysicalPosition physicalPosition = new OPhysicalPosition();
     int position = startPosition;
-    physicalPosition.clusterPosition = OClusterPositionSerializer.INSTANCE.deserializeNativeObject(stream, position);
-    position += OClusterPositionSerializer.INSTANCE.getFixedLength();
+    physicalPosition.clusterPosition = OLongSerializer.INSTANCE.deserializeNativeObject(stream, position);
+    position += OLongSerializer.INSTANCE.getFixedLength();
 
     final ORecordVersion version = OVersionFactory.instance().createVersion();
     version.getSerializer().fastReadFrom(stream, position, version);
@@ -142,8 +142,8 @@ public class OPhysicalPositionSerializer implements OBinarySerializer<OPhysicalP
   public void serializeInDirectMemoryObject(OPhysicalPosition object, ODirectMemoryPointer pointer, long offset, Object... hints) {
     long currentOffset = offset;
 
-    OClusterPositionSerializer.INSTANCE.serializeInDirectMemoryObject(object.clusterPosition, pointer, currentOffset);
-    currentOffset += OClusterPositionSerializer.INSTANCE.getFixedLength();
+    OLongSerializer.INSTANCE.serializeInDirectMemoryObject(object.clusterPosition, pointer, currentOffset);
+    currentOffset += OLongSerializer.INSTANCE.getFixedLength();
 
     byte[] serializedVersion = new byte[OVersionFactory.instance().getVersionSize()];
     object.recordVersion.getSerializer().fastWriteTo(serializedVersion, 0, object.recordVersion);
@@ -161,9 +161,8 @@ public class OPhysicalPositionSerializer implements OBinarySerializer<OPhysicalP
     final OPhysicalPosition physicalPosition = new OPhysicalPosition();
 
     long currentPointer = offset;
-    physicalPosition.clusterPosition = OClusterPositionSerializer.INSTANCE.deserializeFromDirectMemoryObject(pointer,
-        currentPointer);
-    currentPointer += OClusterPositionSerializer.INSTANCE.getFixedLength();
+    physicalPosition.clusterPosition = OLongSerializer.INSTANCE.deserializeFromDirectMemoryObject(pointer, currentPointer);
+    currentPointer += OLongSerializer.INSTANCE.getFixedLength();
 
     final ORecordVersion version = OVersionFactory.instance().createVersion();
     byte[] serializedVersion = pointer.get(currentPointer, OVersionFactory.instance().getVersionSize());

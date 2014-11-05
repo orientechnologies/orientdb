@@ -1,29 +1,28 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -58,31 +57,11 @@ public class ORuntimeResult {
     value = createProjectionDocument(iProgressive);
   }
 
-  public void applyRecord(final OIdentifiable iRecord) {
-    applyRecord(value, projections, context, iRecord);
-  }
-
-  /**
-   * Set a single value. This is useful in case of query optimization like with indexes
-   * 
-   * @param iName
-   *          Field name
-   * @param iValue
-   *          Field value
-   */
-  public void applyValue(final String iName, final Object iValue) {
-    value.field(iName, iValue);
-  }
-
-  public ODocument getResult() {
-    return getResult(value, projections);
-  }
-
   public static ODocument createProjectionDocument(final int iProgressive) {
     final ODocument doc = new ODocument().setOrdered(true);
     // ASSIGN A TEMPORARY RID TO ALLOW PAGINATION IF ANY
     ((ORecordId) doc.getIdentity()).clusterId = -2;
-    ((ORecordId) doc.getIdentity()).clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(iProgressive);
+    ((ORecordId) doc.getIdentity()).clusterPosition = iProgressive;
     return doc;
   }
 
@@ -184,6 +163,26 @@ public class ORuntimeResult {
       final OCommandContext iContext, final OIdentifiable iRecord) {
     return ORuntimeResult.getResult(
         ORuntimeResult.applyRecord(ORuntimeResult.createProjectionDocument(iId), iProjections, iContext, iRecord), iProjections);
+  }
+
+  public void applyRecord(final OIdentifiable iRecord) {
+    applyRecord(value, projections, context, iRecord);
+  }
+
+  /**
+   * Set a single value. This is useful in case of query optimization like with indexes
+   * 
+   * @param iName
+   *          Field name
+   * @param iValue
+   *          Field value
+   */
+  public void applyValue(final String iName, final Object iValue) {
+    value.field(iName, iValue);
+  }
+
+  public ODocument getResult() {
+    return getResult(value, projections);
   }
 
   public Object getFieldValue() {

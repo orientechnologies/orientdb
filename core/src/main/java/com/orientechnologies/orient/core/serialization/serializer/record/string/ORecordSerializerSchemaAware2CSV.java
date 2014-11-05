@@ -159,7 +159,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
           boolean setFieldType = false;
 
           // SEARCH FOR A CONFIGURED PROPERTY
-          prop = record.getSchemaClass() != null ? record.getSchemaClass().getProperty(fieldName) : null;
+          prop = record.getImmutableSchemaClass() != null ? record.getImmutableSchemaClass().getProperty(fieldName) : null;
           if (prop != null && prop.getType() != OType.ANY) {
             // RECOGNIZED PROPERTY
             type = prop.getType();
@@ -294,8 +294,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
       } else
         iMarshalledRecords.add(record);
 
-    if (!iOnlyDelta && record.getSchemaClass() != null) {
-      iOutput.append(record.getSchemaClass().getStreamableName());
+    if (!iOnlyDelta && record.getImmutableSchemaClass() != null) {
+      iOutput.append(record.getImmutableSchemaClass().getStreamableName());
       iOutput.append(OStringSerializerHelper.CLASS_SEPARATOR);
     }
 
@@ -318,7 +318,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
         iOutput.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
       // SEARCH FOR A CONFIGURED PROPERTY
-      prop = record.getSchemaClass() != null ? record.getSchemaClass().getProperty(fieldName) : null;
+      prop = record.getImmutableSchemaClass() != null ? record.getImmutableSchemaClass().getProperty(fieldName) : null;
       fieldClassName = getClassName(fieldValue);
 
       type = record.fieldType(fieldName);
@@ -510,9 +510,9 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
     // GET THE OVERSIZE IF ANY
     final float overSize;
-    if (record.getSchemaClass() != null)
+    if (record.getImmutableSchemaClass() != null)
       // GET THE CONFIGURED OVERSIZE SETTED PER CLASS
-      overSize = record.getSchemaClass().getOverSize();
+      overSize = record.getImmutableSchemaClass().getOverSize();
     else
       overSize = 0;
 
@@ -554,7 +554,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
     if (iDatabase == null || iDatabase.isClosed() || iFieldClassName == null)
       return null;
 
-    OClass linkedClass = iDatabase.getMetadata().getSchema().getClass(iFieldClassName);
+    OClass linkedClass = iDatabase.getMetadata().getImmutableSchemaSnapshot().getClass(iFieldClassName);
 
     if (iDatabase.getDatabaseOwner() instanceof ODatabaseObject) {
       ODatabaseObject dbo = (ODatabaseObject) iDatabase.getDatabaseOwner();

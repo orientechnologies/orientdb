@@ -19,7 +19,6 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -37,19 +36,77 @@ import com.orientechnologies.orient.server.OServerMain;
  */
 @Test
 public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestore {
+  private final AtomicLong    idGen           = new AtomicLong();
   private ODatabaseDocumentTx baseDocumentTx;
   private ODatabaseDocumentTx testDocumentTx;
-
   private File                buildDir;
-  private final AtomicLong    idGen           = new AtomicLong();
-
   private ExecutorService     executorService = Executors.newCachedThreadPool();
   private Process             process;
 
+  public static final class RemoteDBRunner {
+    public static void main(String[] args) throws Exception {
+      OGlobalConfiguration.DISK_CACHE_SIZE.setValue(512);
+
+      OServer server = OServerMain.create();
+      server.startup(RemoteDBRunner.class
+          .getResourceAsStream("/com/orientechnologies/orient/core/storage/impl/local/paginated/db-create-big-records-config.xml"));
+      server.activate();
+      while (true)
+        ;
+    }
+  }
+
+  public class DataPropagationTask implements Callable<Void> {
+    private ODatabaseDocumentTx baseDB;
+    private ODatabaseDocumentTx testDB;
+
+    public DataPropagationTask(ODatabaseDocumentTx baseDB, ODatabaseDocumentTx testDocumentTx) {
+      this.baseDB = new ODatabaseDocumentTx(baseDB.getURL());
+      this.testDB = new ODatabaseDocumentTx(testDocumentTx.getURL());
+    }
+
+    @Override
+    public Void call() throws Exception {
+      Random random = new Random();
+      baseDB.open("admin", "admin");
+      testDB.open("admin", "admin");
+
+      try {
+        while (true) {
+          final ODocument document = new ODocument("TestClass");
+          document.field("id", idGen.getAndIncrement());
+          document.field("timestamp", System.currentTimeMillis());
+          document.field("stringValue", "sfe" + random.nextLong());
+
+          byte[] binaryValue = new byte[random.nextInt(2 * 65536) + 65537];
+          random.nextBytes(binaryValue);
+
+          document.field("binaryValue", binaryValue);
+
+          saveDoc(document);
+        }
+
+      } finally {
+        baseDB.close();
+        testDB.close();
+      }
+    }
+
+    private void saveDoc(ODocument document) {
+      ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
+
+      ODocument testDoc = new ODocument();
+      document.copyTo(testDoc);
+      document.save();
+
+      ODatabaseRecordThreadLocal.INSTANCE.set(testDB);
+      testDoc.save();
+      ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
+    }
+  }
+
   @BeforeClass
   public void beforeClass() throws Exception {
-    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
-
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/localPaginatedStorageSmallCacheBigRecordsCrashRestore";
 
@@ -153,8 +210,7 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestore {
 
     OStorage baseStorage = baseDocumentTx.getStorage();
 
-    OPhysicalPosition[] physicalPositions = baseStorage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(
-        OClusterPositionFactory.INSTANCE.valueOf(0)));
+    OPhysicalPosition[] physicalPositions = baseStorage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(0));
 
     int recordsRestored = 0;
     int recordsTested = 0;
@@ -193,69 +249,6 @@ public class LocalPaginatedStorageSmallCacheBigRecordsCrashRestore {
 
     System.out.println(recordsRestored + " records were restored. Total records " + recordsTested
         + ". Max interval for lost records " + (lastTs - minTs));
-  }
-
-  public static final class RemoteDBRunner {
-    public static void main(String[] args) throws Exception {
-      OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
-      OGlobalConfiguration.DISK_CACHE_SIZE.setValue(512);
-
-      OServer server = OServerMain.create();
-      server.startup(RemoteDBRunner.class
-          .getResourceAsStream("/com/orientechnologies/orient/core/storage/impl/local/paginated/db-create-big-records-config.xml"));
-      server.activate();
-      while (true)
-        ;
-    }
-  }
-
-  public class DataPropagationTask implements Callable<Void> {
-    private ODatabaseDocumentTx baseDB;
-    private ODatabaseDocumentTx testDB;
-
-    public DataPropagationTask(ODatabaseDocumentTx baseDB, ODatabaseDocumentTx testDocumentTx) {
-      this.baseDB = new ODatabaseDocumentTx(baseDB.getURL());
-      this.testDB = new ODatabaseDocumentTx(testDocumentTx.getURL());
-    }
-
-    @Override
-    public Void call() throws Exception {
-      Random random = new Random();
-      baseDB.open("admin", "admin");
-      testDB.open("admin", "admin");
-
-      try {
-        while (true) {
-          final ODocument document = new ODocument("TestClass");
-          document.field("id", idGen.getAndIncrement());
-          document.field("timestamp", System.currentTimeMillis());
-          document.field("stringValue", "sfe" + random.nextLong());
-
-          byte[] binaryValue = new byte[random.nextInt(2 * 65536) + 65537];
-          random.nextBytes(binaryValue);
-
-          document.field("binaryValue", binaryValue);
-
-          saveDoc(document);
-        }
-
-      } finally {
-        baseDB.close();
-        testDB.close();
-      }
-    }
-
-    private void saveDoc(ODocument document) {
-      ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
-
-      ODocument testDoc = new ODocument();
-      document.copyTo(testDoc);
-      document.save();
-
-      ODatabaseRecordThreadLocal.INSTANCE.set(testDB);
-      testDoc.save();
-      ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
-    }
   }
 
 }

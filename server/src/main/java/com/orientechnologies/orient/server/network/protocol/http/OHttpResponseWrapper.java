@@ -345,4 +345,20 @@ public class OHttpResponseWrapper {
   public void setContentType(final String contentType) {
     response.setContentType(contentType);
   }
+  
+  public String getContent() {
+    return response.getContent();
+  }
+
+  public void setContent(String content) {
+    response.setContent(content);
+  }
+
+  public int getCode() {
+    return response.getCode();
+  }
+
+  public void setCode(int code) {
+    response.setCode(code);
+  }
 }

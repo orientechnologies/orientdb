@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
@@ -76,7 +77,7 @@ public class ODistributedWorker extends Thread {
 
   public ODistributedWorker(final OHazelcastDistributedDatabase iDistributed, final IQueue<ODistributedRequest> iRequestQueue,
       final String iDatabaseName, final int i, final boolean iRestoringMessages) {
-    setName("OrientDB DistributedWorker-" + iDatabaseName + "-" + i);
+    setName("OrientDB DistributedWorker node=" + iDistributed.getLocalNodeName() + " db=" + iDatabaseName + " id=" + i);
     distributed = iDistributed;
     requestQueue = iRequestQueue;
     databaseName = iDatabaseName;
@@ -268,7 +269,7 @@ public class ODistributedWorker extends Thread {
 
       // EXECUTE IT LOCALLY
       final Serializable responsePayload;
-      OUser origin = null;
+      OSecurityUser origin = null;
       try {
         if (task.isRequiredOpenDatabase())
           initDatabaseInstance();

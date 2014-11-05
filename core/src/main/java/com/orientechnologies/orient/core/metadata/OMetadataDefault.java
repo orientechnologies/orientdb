@@ -1,26 +1,27 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.metadata;
 
 import java.io.IOException;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfilerMBean;
@@ -35,6 +36,7 @@ import com.orientechnologies.orient.core.index.OIndexManagerShared;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryProxy;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
@@ -46,21 +48,26 @@ import com.orientechnologies.orient.core.schedule.OSchedulerListener;
 import com.orientechnologies.orient.core.schedule.OSchedulerListenerImpl;
 import com.orientechnologies.orient.core.schedule.OSchedulerListenerProxy;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 
 public class OMetadataDefault implements OMetadata {
-  public static final String            CLUSTER_INTERNAL_NAME     = "internal";
-  public static final String            CLUSTER_INDEX_NAME        = "index";
-  public static final String            CLUSTER_MANUAL_INDEX_NAME = "manindex";
-  public static final String            DATASEGMENT_INDEX_NAME    = "index";
+  public static final String                      CLUSTER_INTERNAL_NAME     = "internal";
+  public static final String                      CLUSTER_INDEX_NAME        = "index";
+  public static final String                      CLUSTER_MANUAL_INDEX_NAME = "manindex";
+  public static final String                      DATASEGMENT_INDEX_NAME    = "index";
 
-  protected int                         schemaClusterId;
+  protected int                                   schemaClusterId;
 
-  protected OSchemaProxy                schema;
-  protected OSecurity                   security;
-  protected OIndexManagerProxy          indexManager;
-  protected OFunctionLibraryProxy       functionLibrary;
-  protected OSchedulerListenerProxy     scheduler;
-  protected static final OProfilerMBean PROFILER                  = Orient.instance().getProfiler();
+  protected OSchemaProxy                          schema;
+  protected OSecurity                             security;
+  protected OIndexManagerProxy                    indexManager;
+  protected OFunctionLibraryProxy                 functionLibrary;
+  protected OSchedulerListenerProxy               scheduler;
+  protected static final OProfilerMBean           PROFILER                  = Orient.instance().getProfiler();
+
+  private final AtomicReference<OImmutableSchema> schemaCache               = new AtomicReference<OImmutableSchema>();
+
+	private final ThreadLocal<ThreadLocalSchemaSnapshot> threadLocalSchemaSnapshot = new ThreadLocal<ThreadLocalSchemaSnapshot>();
 
   public OMetadataDefault() {
   }
@@ -91,8 +98,64 @@ public class OMetadataDefault implements OMetadata {
     scheduler.create();
   }
 
-  public OSchema getSchema() {
+  public OSchemaProxy getSchema() {
     return schema;
+  }
+
+	@Override
+	public void makeThreadLocalSchemaSnapshot() {
+		ThreadLocalSchemaSnapshot schemaSnapshot = threadLocalSchemaSnapshot.get();
+
+		if (schemaSnapshot == null) {
+			final OImmutableSchema immutableSchema = getImmutableSchemaSnapshot();
+			schemaSnapshot = new ThreadLocalSchemaSnapshot(immutableSchema);
+
+			threadLocalSchemaSnapshot.set(schemaSnapshot);
+			return;
+		}
+
+		schemaSnapshot.snapshotCounter++;
+	}
+
+	@Override
+	public void clearThreadLocalSchemaSnapshot() {
+		ThreadLocalSchemaSnapshot schemaSnapshot = threadLocalSchemaSnapshot.get();
+
+		if (schemaSnapshot.snapshotCounter <= 0)
+			throw new IllegalStateException("Thread local schema snapshot is cleared more times than it is done");
+
+		schemaSnapshot.snapshotCounter--;
+
+		if (schemaSnapshot.snapshotCounter == 0)
+			threadLocalSchemaSnapshot.set(null);
+	}
+
+	@Override
+  public OImmutableSchema getImmutableSchemaSnapshot() {
+    final ThreadLocalSchemaSnapshot schemaSnapshot  = threadLocalSchemaSnapshot.get();
+
+		OImmutableSchema immutableSchema = null;
+		if(schemaSnapshot != null)
+			immutableSchema = schemaSnapshot.schema;
+
+    if (immutableSchema != null)
+      return immutableSchema;
+
+    if (schema == null)
+      return null;
+
+    OImmutableSchema newSchema;
+    do {
+      immutableSchema = schemaCache.get();
+      if (immutableSchema != null && immutableSchema.version == schema.getVersion()) {
+        newSchema = immutableSchema;
+        break;
+      }
+
+      newSchema = schema.makeSnapshot();
+    } while (!schemaCache.compareAndSet(immutableSchema, newSchema));
+
+    return newSchema;
   }
 
   public OSecurity getSecurity() {
@@ -214,4 +277,13 @@ public class OMetadataDefault implements OMetadata {
   public OSchedulerListener getSchedulerListener() {
     return scheduler;
   }
+
+	private final class ThreadLocalSchemaSnapshot {
+		private final OImmutableSchema schema;
+		private int snapshotCounter = 1;
+
+		private ThreadLocalSchemaSnapshot(OImmutableSchema schema) {
+			this.schema = schema;
+		}
+	}
 }

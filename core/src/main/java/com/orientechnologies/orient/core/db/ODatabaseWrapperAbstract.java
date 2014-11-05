@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.Orient;
@@ -48,11 +48,11 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal> imp
   public ODatabaseWrapperAbstract(final DB iDatabase) {
     underlying = iDatabase;
     databaseOwner = (ODatabaseComplexInternal<?>) this;
+    Orient.instance().getDatabaseFactory().register(databaseOwner);
   }
 
   public <THISDB extends ODatabase> THISDB open(final String iUserName, final String iUserPassword) {
     underlying.open(iUserName, iUserPassword);
-    Orient.instance().getDatabaseFactory().register(databaseOwner);
     return (THISDB) this;
   }
 
@@ -62,7 +62,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal> imp
 
   public <THISDB extends ODatabase> THISDB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
     underlying.create(iInitialSettings);
-    Orient.instance().getDatabaseFactory().register(databaseOwner);
     return (THISDB) this;
   }
 
@@ -125,7 +124,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal> imp
 
   public void close() {
     underlying.close();
-    Orient.instance().getDatabaseFactory().unregister(databaseOwner);
   }
 
   public void replaceStorage(OStorage iNewStorage) {
@@ -252,7 +250,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal> imp
   }
 
   public boolean declareIntent(final OIntent iIntent) {
-    checkOpeness();
     return underlying.declareIntent(iIntent);
   }
 
@@ -314,11 +311,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal> imp
 
   public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
     return getStorage().callInLock(iCallable, iExclusiveLock);
-  }
-
-  @Override
-  public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock) {
-    return underlying.callInRecordLock(iCallable, rid, iExclusiveLock);
   }
 
   @Override

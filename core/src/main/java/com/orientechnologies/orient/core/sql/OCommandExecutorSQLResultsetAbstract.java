@@ -356,7 +356,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       // check only classes that specified in query will go to result set
       if ((targetClasses != null) && (!targetClasses.isEmpty())) {
         for (OClass targetClass : targetClasses.keySet()) {
-          if (!targetClass.isSuperClassOf(recordSchemaAware.getSchemaClass()))
+          if (!targetClass.isSuperClassOf(recordSchemaAware.getImmutableSchemaClass()))
             return false;
         }
         context.updateMetric("documentAnalyzedCompatibleClass", +1);

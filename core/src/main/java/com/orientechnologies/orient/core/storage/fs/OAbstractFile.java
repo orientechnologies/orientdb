@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.storage.fs;
 
 import com.orientechnologies.common.concur.lock.OLockException;
@@ -122,7 +122,7 @@ public abstract class OAbstractFile implements OFile {
 
   public abstract void writeByte(long iOffset, byte iValue) throws IOException;
 
-  public abstract void write(long iOffset, byte[] iSourceBuffer) throws IOException;
+  public abstract long write(long iOffset, byte[] iSourceBuffer) throws IOException;
 
   protected abstract void init() throws IOException;
 
@@ -489,19 +489,16 @@ public abstract class OAbstractFile implements OFile {
           newFileSize = DEFAULT_SIZE;
 
         // GET THE STEP SIZE IN BYTES
-        long stepSizeInBytes = incrementSize > 0 ? incrementSize : -1 * size / 100 * incrementSize;
+        long stepSizeInBytes = Math.max(1024, incrementSize > 0 ? incrementSize : -1 * size / 100 * incrementSize);
 
         // FIND THE BEST SIZE TO ALLOCATE (BASED ON INCREMENT-SIZE)
         while (newFileSize - offset <= iSize) {
           newFileSize += stepSizeInBytes;
-
-          if (newFileSize == 0)
-            // EMPTY FILE: ALLOCATE REQUESTED SIZE ONLY
-            newFileSize = iSize;
-          if (newFileSize > maxSize && maxSize > 0)
-            // TOO BIG: ROUND TO THE MAXIMUM FILE SIZE
-            newFileSize = maxSize;
         }
+
+        if (newFileSize > maxSize && maxSize > 0)
+          // TOO BIG: ROUND TO THE MAXIMUM FILE SIZE
+          newFileSize = maxSize;
 
         setSize(newFileSize);
       }

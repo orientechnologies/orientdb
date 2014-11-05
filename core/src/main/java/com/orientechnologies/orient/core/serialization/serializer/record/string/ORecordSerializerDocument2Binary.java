@@ -1,42 +1,40 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Date;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.Date;
 
 public class ORecordSerializerDocument2Binary implements ORecordSerializer {
   public static final String NAME = "ORecordDocument2binary";
@@ -49,10 +47,6 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
   @Override
   public int getMinSupportedVersion() {
     return 0;
-  }
-
-  protected ODocument newObject(ODatabaseRecord iDatabase, String iClassName) throws InstantiationException, IllegalAccessException {
-    return new ODocument();
   }
 
   public ORecord fromStream(ODatabaseRecord iDatabase, byte[] iSource) {
@@ -76,7 +70,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
       Object value;
       int length;
       byte[] buffer;
-      for (OProperty p : record.getSchemaClass().properties()) {
+      for (OProperty p : record.getImmutableSchemaClass().properties()) {
         value = null;
 
         switch (p.getType()) {
@@ -121,7 +115,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
           value = in.readInt();
           break;
         case LINK:
-          value = new ORecordId(in.readInt(), OClusterPositionFactory.INSTANCE.fromStream((InputStream) in));
+          value = new ORecordId(in.readInt(), in.readLong());
           break;
         case LINKLIST:
           break;
@@ -169,7 +163,7 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
       // MARSHALL ALL THE PROPERTIES
       Object value;
       byte[] buffer;
-      for (OProperty p : record.getSchemaClass().properties()) {
+      for (OProperty p : record.getImmutableSchemaClass().properties()) {
         value = record.field(p.getName());
 
         switch (p.getType()) {
@@ -228,9 +222,9 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
               throw new ODatabaseException("Invalid property value in '" + p.getName() + "': found " + value.getClass()
                   + " while it was expected a ORecord");
 
-            ORID rid = ((ORecord) value).getIdentity();
+            final ORID rid = ((ORecord) value).getIdentity();
             out.writeInt(rid.getClusterId());
-            out.write(rid.getClusterPosition().toStream());
+            out.writeLong(rid.getClusterPosition());
           }
           break;
         case LINKLIST:
@@ -273,5 +267,9 @@ public class ORecordSerializerDocument2Binary implements ORecordSerializer {
   @Override
   public String toString() {
     return NAME;
+  }
+
+  protected ODocument newObject(ODatabaseRecord iDatabase, String iClassName) throws InstantiationException, IllegalAccessException {
+    return new ODocument();
   }
 }

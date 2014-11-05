@@ -536,13 +536,7 @@ public abstract class OStringSerializerHelper {
     if (iText == null)
       return false;
 
-    final int max = iText.length();
-    for (int i = 0; i < max; ++i) {
-      if (iText.charAt(i) == iSeparator)
-        return true;
-    }
-
-    return false;
+    return iText.indexOf(iSeparator) > -1;
   }
 
   public static int getCollection(final String iText, final int iStartPosition, final Collection<String> iCollection) {
@@ -786,7 +780,7 @@ public abstract class OStringSerializerHelper {
       final String className = iValue.substring(0, classSeparatorPos);
       final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
       if (className != null && database != null)
-        iLinkedClass = database.getMetadata().getSchema().getClass(className);
+        iLinkedClass = database.getMetadata().getImmutableSchemaSnapshot().getClass(className);
     }
     return iLinkedClass;
   }

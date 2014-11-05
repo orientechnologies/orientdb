@@ -57,8 +57,10 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
     } else
       writeAheadLog = null;
 
-    if (diskCache == null)
-      diskCache = new ODirectMemoryOnlyDiskCache(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB);
+    if (diskCache == null) {
+			diskCache = new ODirectMemoryOnlyDiskCache(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB);
+			diskCache.addLowDiskSpaceListener(this);
+		}
   }
 
   @Override

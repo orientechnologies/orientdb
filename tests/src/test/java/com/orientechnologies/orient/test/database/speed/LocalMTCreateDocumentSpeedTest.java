@@ -84,11 +84,12 @@ public class LocalMTCreateDocumentSpeedTest {
     @Override
     public Void call() throws Exception {
       ODatabaseDocumentTx database = new ODatabaseDocumentTx(System.getProperty("url"));
-      database.open("admin", "admin");
+
 
       latch.await();
 
       while (!stop) {
+				database.open("admin", "admin");
         ODocument record = new ODocument("Account");
         record.field("id", 1);
         record.field("name", "Luca");
@@ -96,9 +97,10 @@ public class LocalMTCreateDocumentSpeedTest {
         record.field("birthDate", date);
         record.field("salary", 3000f);
         record.save();
+				database.close();
       }
 
-      database.close();
+
       return null;
     }
   }

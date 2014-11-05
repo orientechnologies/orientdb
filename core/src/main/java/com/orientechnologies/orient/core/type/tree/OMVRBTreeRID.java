@@ -1,49 +1,40 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.type.tree;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.WeakHashMap;
+import java.util.*;
 
 import com.orientechnologies.common.collection.OLazyIterator;
-import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeEntry;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OLazyRecordIterator;
 import com.orientechnologies.orient.core.db.record.OLazyRecordMultiIterator;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
+import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeEntry;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -57,14 +48,12 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
  */
 public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiable> implements
     OTrackedMultiValue<OIdentifiable, OIdentifiable>, ORecordLazyMultiValue {
+  private static final Object                                          NEWMAP_VALUE        = new Object();
+  private static final long                                            serialVersionUID    = 1L;
   private IdentityHashMap<ORecord, Object>                             newEntries;
   private boolean                                                      autoConvertToRecord = true;
   private Set<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> changeListeners     = Collections
                                                                                                .newSetFromMap(new WeakHashMap<OMultiValueChangeListener<OIdentifiable, OIdentifiable>, Boolean>());
-
-  private static final Object                                          NEWMAP_VALUE        = new Object();
-  private static final long                                            serialVersionUID    = 1L;
-
   private boolean                                                      marshalling;
 
   public OMVRBTreeRID(Collection<OIdentifiable> iInitValues) {
@@ -324,14 +313,16 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
     ((OMVRBTreeRIDProvider) dataProvider).lazyUnmarshall();
     if (hasNewItems()) {
       if (super.size() == 0)
-        return new OLazyRecordIterator(new HashSet<OIdentifiable>(newEntries.keySet()), iAutoConvertToRecord);
+        return new OLazyRecordIterator(new HashSet<OIdentifiable>(newEntries.keySet()), iAutoConvertToRecord
+            && getOwner().getInternalStatus() != STATUS.MARSHALLING);
 
       // MIX PERSISTENT AND NEW TOGETHER
       return new OLazyRecordMultiIterator(null, new Object[] { keySet(), new HashSet<OIdentifiable>(newEntries.keySet()) },
           iAutoConvertToRecord);
     }
 
-    return new OLazyRecordIterator(keySet().iterator(), iAutoConvertToRecord);
+    return new OLazyRecordIterator(keySet().iterator(), iAutoConvertToRecord
+        && getOwner().getInternalStatus() != STATUS.MARSHALLING);
   }
 
   @Override
@@ -377,10 +368,6 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
   }
 
   @Override
-  protected void saveTreeNode() {
-  }
-
-  @Override
   public int commitChanges() {
     if (!((OMVRBTreeRIDProvider) getProvider()).isEmbeddedStreaming()) {
       saveAllNewEntries();
@@ -394,11 +381,6 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
    */
   public OMVRBTreePersistent<OIdentifiable, OIdentifiable> save() {
     return this;
-  }
-
-  @Override
-  protected void setSizeDelta(final int iDelta) {
-    setSize(getTreeSize() + iDelta);
   }
 
   /**
@@ -419,7 +401,7 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
     final Set<ORID> keys = new HashSet<ORID>(nodesInMemory);
     OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable> entry;
     for (ORID rid : keys) {
-      if (rid.getClusterPosition().isTemporary()) {
+      if (ORecordId.isTemporary(rid.getClusterPosition())) {
         // FIX IT IN CACHE
         entry = (OMVRBTreeEntryPersistent<OIdentifiable, OIdentifiable>) searchNodeInCache(rid);
 
@@ -493,44 +475,8 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
     return buffer.toString();
   }
 
-  @Override
-  protected void setRoot(final OMVRBTreeEntry<OIdentifiable, OIdentifiable> iRoot) {
-    int size = 0;
-    if (iRoot != null)
-      size = getTreeSize();
-
-    super.setRoot(iRoot);
-
-    if (iRoot != null)
-      setSize(size);
-  }
-
-  /**
-   * Notifies the changes to the owner if it's embedded.
-   */
-  @SuppressWarnings("unchecked")
-  protected <RET> RET setDirty() {
-    ((OMVRBTreeRIDProvider) getProvider()).setDirty();
-
-    if (((OMVRBTreeRIDProvider) getProvider()).isEmbeddedStreaming())
-      setDirtyOwner();
-    else if (ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().getStatus() != OTransaction.TXSTATUS.BEGUN)
-      // SAVE IT RIGHT NOW SINCE IT'S DISCONNECTED FROM OWNER
-      save();
-
-    return (RET) this;
-  }
-
   public IdentityHashMap<ORecord, Object> getTemporaryEntries() {
     return newEntries;
-  }
-
-  protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
-    setDirty();
-    for (final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener : changeListeners) {
-      if (changeListener != null)
-        changeListener.onAfterRecordChanged(event);
-    }
   }
 
   @Override
@@ -597,5 +543,50 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
   @Override
   public void setAutoConvertToRecord(boolean convertToRecord) {
     autoConvertToRecord = convertToRecord;
+  }
+
+  @Override
+  protected void saveTreeNode() {
+  }
+
+  @Override
+  protected void setSizeDelta(final int iDelta) {
+    setSize(getTreeSize() + iDelta);
+  }
+
+  @Override
+  protected void setRoot(final OMVRBTreeEntry<OIdentifiable, OIdentifiable> iRoot) {
+    int size = 0;
+    if (iRoot != null)
+      size = getTreeSize();
+
+    super.setRoot(iRoot);
+
+    if (iRoot != null)
+      setSize(size);
+  }
+
+  /**
+   * Notifies the changes to the owner if it's embedded.
+   */
+  @SuppressWarnings("unchecked")
+  protected <RET> RET setDirty() {
+    ((OMVRBTreeRIDProvider) getProvider()).setDirty();
+
+    if (((OMVRBTreeRIDProvider) getProvider()).isEmbeddedStreaming())
+      setDirtyOwner();
+    else if (ODatabaseRecordThreadLocal.INSTANCE.get().getTransaction().getStatus() != OTransaction.TXSTATUS.BEGUN)
+      // SAVE IT RIGHT NOW SINCE IT'S DISCONNECTED FROM OWNER
+      save();
+
+    return (RET) this;
+  }
+
+  protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
+    setDirty();
+    for (final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener : changeListeners) {
+      if (changeListener != null)
+        changeListener.onAfterRecordChanged(event);
+    }
   }
 }

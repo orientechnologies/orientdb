@@ -1,28 +1,27 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.storage;
 
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 import java.io.IOException;
@@ -30,7 +29,7 @@ import java.io.IOException;
 public interface OCluster {
 
   public static enum ATTRIBUTES {
-    NAME, USE_WAL, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, COMPRESSION, CONFLICTSTRATEGY
+    NAME, USE_WAL, RECORD_GROW_FACTOR, RECORD_OVERFLOW_GROW_FACTOR, COMPRESSION, CONFLICTSTRATEGY, STATUS
   }
 
   public void configure(OStorage iStorage, int iId, String iClusterName, Object... iParameters) throws IOException;
@@ -49,9 +48,9 @@ public interface OCluster {
 
   public OModificationLock getExternalModificationLock();
 
-  public void set(ATTRIBUTES iAttribute, Object iValue) throws IOException;
+  public Object set(ATTRIBUTES iAttribute, Object iValue) throws IOException;
 
-  public void convertToTombstone(OClusterPosition iPosition) throws IOException;
+  public void convertToTombstone(long iPosition) throws IOException;
 
   public long getTombstonesCount();
 
@@ -66,12 +65,11 @@ public interface OCluster {
 
   public OPhysicalPosition createRecord(byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException;
 
-  public boolean deleteRecord(OClusterPosition clusterPosition) throws IOException;
+  public boolean deleteRecord(long clusterPosition) throws IOException;
 
-  public void updateRecord(OClusterPosition clusterPosition, byte[] content, ORecordVersion recordVersion, byte recordType)
-      throws IOException;
+  public void updateRecord(long clusterPosition, byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException;
 
-  public ORawBuffer readRecord(OClusterPosition clusterPosition) throws IOException;
+  public ORawBuffer readRecord(long clusterPosition) throws IOException;
 
   public boolean exists();
 
@@ -91,22 +89,22 @@ public interface OCluster {
    * Updates position in data segment (usually on defrag).
    */
 
-  public void updateDataSegmentPosition(OClusterPosition iPosition, int iDataSegmentId, long iDataPosition) throws IOException;
+  public void updateDataSegmentPosition(long iPosition, int iDataSegmentId, long iDataPosition) throws IOException;
 
   /**
    * Removes the Logical Position entry.
    */
-  public void removePhysicalPosition(OClusterPosition iPosition) throws IOException;
+  public void removePhysicalPosition(long iPosition) throws IOException;
 
-  public void updateRecordType(OClusterPosition iPosition, final byte iRecordType) throws IOException;
+  public void updateRecordType(long iPosition, final byte iRecordType) throws IOException;
 
-  public void updateVersion(OClusterPosition iPosition, ORecordVersion iVersion) throws IOException;
+  public void updateVersion(long iPosition, ORecordVersion iVersion) throws IOException;
 
   public long getEntries();
 
-  public OClusterPosition getFirstPosition() throws IOException;
+  public long getFirstPosition() throws IOException;
 
-  public OClusterPosition getLastPosition() throws IOException;
+  public long getLastPosition() throws IOException;
 
   public int getId();
 
@@ -157,7 +155,7 @@ public interface OCluster {
    * 
    * @return false if record does not exist.
    */
-  public boolean hideRecord(OClusterPosition position) throws IOException;
+  public boolean hideRecord(long position) throws IOException;
 
   public ORecordConflictStrategy getRecordConflictStrategy();
 }

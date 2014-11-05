@@ -37,6 +37,9 @@ public class OFilterOptimizer {
   }
 
   private OSQLFilterCondition optimize(OSQLFilterCondition condition, OIndexSearchResult indexMatch) {
+    if(condition==null){
+      return null;
+    }
     OQueryOperator operator = condition.getOperator();
     while (operator == null) {
       if (condition.getRight() == null && condition.getLeft() instanceof OSQLFilterCondition) {

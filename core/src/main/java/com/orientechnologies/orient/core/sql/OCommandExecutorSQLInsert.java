@@ -89,7 +89,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
       if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
         subjectName = subjectName.substring(OCommandExecutorSQLAbstract.CLASS_PREFIX.length());
 
-      final OClass cls = database.getMetadata().getSchema().getClass(subjectName);
+      final OClass cls = database.getMetadata().getImmutableSchemaSnapshot().getClass(subjectName);
       if (cls == null)
         throwParsingException("Class " + subjectName + " not found in database");
 
@@ -215,8 +215,8 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
   @Override
   public Set<String> getInvolvedClusters() {
     if (className != null) {
-      final OClass clazz = getDatabase().getMetadata().getSchema().getClass(className);
-      return Collections.singleton(getDatabase().getClusterNameById(clazz.getClusterSelection().getCluster(clazz)));
+      final OClass clazz = getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(className);
+      return Collections.singleton(getDatabase().getClusterNameById(clazz.getClusterSelection().getCluster(clazz, null)));
     } else if (clusterName != null)
       return getInvolvedClustersOfClusters(Collections.singleton(clusterName));
 

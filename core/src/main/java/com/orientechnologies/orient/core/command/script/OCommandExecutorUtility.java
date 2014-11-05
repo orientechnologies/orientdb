@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core.command.script;
 
 import java.lang.reflect.Method;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Script utility class
@@ -31,8 +31,11 @@ import java.util.Map;
  */
 public class OCommandExecutorUtility {
   private static Method java8MethodIsArray;
-  private static Method java8MethodValues;
-
+  static {
+   try {
+     java8MethodIsArray = Class.forName("jdk.nashorn.api.scripting.JSObject").getDeclaredMethod("isArray",null);
+   } catch(Exception e) {}
+  }
   /**
    * Manages cross compiler compatibility issues.
    * 
@@ -40,16 +43,28 @@ public class OCommandExecutorUtility {
    *          Result to transform
    * @return
    */
-  public static Object transformResult(final Object result) {
-    // PATCH BY MAT ABOUT NASHORN RETURNING VALUE FOR ARRAYS. TEST IF 0 IS PRESENT AS KEY. IN THIS CASE RETURNS THE VALUES NOT THE
-    // OBJECT AS MAP
-    if (result instanceof Map)
-      try {
-        if (((Map) result).containsKey("0"))
-          return ((Map) result).values();
-      } catch (Exception e) {
+  public static Object transformResult(Object result) {
+    if (java8MethodIsArray == null || !(result instanceof Map)) { 
+      return result;
+    }
+    // PATCH BY MAT ABOUT NASHORN RETURNING VALUE FOR ARRAYS.
+    try {
+      if ((Boolean) java8MethodIsArray.invoke(result)) {
+        List<?> partial = new ArrayList(((Map) result).values());
+        List<Object> finalResult = new ArrayList<Object>();
+        for (Object o : partial) {
+          finalResult.add(transformResult(o));
+        }
+        return finalResult;
+      } else {
+        Map<Object, Object> mapResult = (Map) result;
+        List<Object> keys = new ArrayList<Object>(mapResult.keySet());
+        for (Object key : keys) {
+          mapResult.put(key, transformResult(mapResult.get(key)));
+        }
+        return mapResult;
       }
-
+    } catch (Exception e) {}
     return result;
   }
 }

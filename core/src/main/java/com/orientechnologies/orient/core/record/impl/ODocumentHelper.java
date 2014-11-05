@@ -19,11 +19,17 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import java.lang.reflect.Array;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
@@ -41,14 +47,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-import com.orientechnologies.orient.core.version.ODistributedVersion;
-
-import java.lang.reflect.Array;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Helper class to manage documents.
@@ -56,18 +54,16 @@ import java.util.Map.Entry;
  * @author Luca Garulli
  */
 public class ODocumentHelper {
-  public static final String ATTRIBUTE_THIS               = "@this";
-  public static final String ATTRIBUTE_RID                = "@rid";
-  public static final String ATTRIBUTE_RID_ID             = "@rid_id";
-  public static final String ATTRIBUTE_RID_POS            = "@rid_pos";
-  public static final String ATTRIBUTE_VERSION            = "@version";
-  public static final String ATTRIBUTE_VERSION_TIMESTAMP  = "@version_time";
-  public static final String ATTRIBUTE_VERSION_MACADDRESS = "@version_mac";
-  public static final String ATTRIBUTE_CLASS              = "@class";
-  public static final String ATTRIBUTE_TYPE               = "@type";
-  public static final String ATTRIBUTE_SIZE               = "@size";
-  public static final String ATTRIBUTE_FIELDS             = "@fields";
-  public static final String ATTRIBUTE_RAW                = "@raw";
+  public static final String ATTRIBUTE_THIS    = "@this";
+  public static final String ATTRIBUTE_RID     = "@rid";
+  public static final String ATTRIBUTE_RID_ID  = "@rid_id";
+  public static final String ATTRIBUTE_RID_POS = "@rid_pos";
+  public static final String ATTRIBUTE_VERSION = "@version";
+  public static final String ATTRIBUTE_CLASS   = "@class";
+  public static final String ATTRIBUTE_TYPE    = "@type";
+  public static final String ATTRIBUTE_SIZE    = "@size";
+  public static final String ATTRIBUTE_FIELDS  = "@fields";
+  public static final String ATTRIBUTE_RAW     = "@raw";
 
   public static interface ODbRelatedCall<T> {
     public T call();
@@ -594,12 +590,6 @@ public class ODocumentHelper {
         return iCurrent.getIdentity().getClusterPosition();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_VERSION))
         return iCurrent.getRecord().getRecordVersion().getCounter();
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_VERSION_TIMESTAMP)
-          && OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean())
-        return ((ODistributedVersion) iCurrent.getRecord().getRecordVersion()).getTimestamp();
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_VERSION_MACADDRESS)
-          && OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean())
-        return ((ODistributedVersion) iCurrent.getRecord().getRecordVersion()).getMacAddress();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_CLASS))
         return ((ODocument) iCurrent.getRecord()).getClassName();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_TYPE))
@@ -800,8 +790,8 @@ public class ODocumentHelper {
         iCloned._fieldValues.put(iEntry.getKey(), new LinkedHashMap<String, Object>((Map<String, Object>) fieldValue));
       } else
         iCloned._fieldValues.put(iEntry.getKey(), fieldValue);
-    } else if (iCloned.getSchemaClass() != null) {
-      final OProperty prop = iCloned.getSchemaClass().getProperty(iEntry.getKey());
+    } else if (iCloned.getImmutableSchemaClass() != null) {
+      final OProperty prop = iCloned.getImmutableSchemaClass().getProperty(iEntry.getKey());
       if (prop != null && prop.isMandatory())
         iCloned._fieldValues.put(iEntry.getKey(), fieldValue);
     }

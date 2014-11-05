@@ -504,6 +504,52 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertTrue(newDoc.hasSameContentOf(doc));
   }
 
+
+  public void testSameNameCollectionsAndMap2() {
+    ODocument doc = new ODocument();
+    doc.field("string", "STRING_VALUE");
+    List<ODocument> list = new ArrayList<ODocument>();
+    for (int i = 0; i < 2; i++) {
+      ODocument doc1 = new ODocument();
+      list.add(doc1);
+      Map<String, ODocument> docMap = new HashMap<String, ODocument>();
+      for (int j = 0; j < 5; j++) {
+        ODocument doc2 = new ODocument();
+        doc2.field("blabla", j);
+        docMap.put(String.valueOf(j), doc2);
+      }
+      doc1.field("theMap", docMap);
+      list.add(doc1);
+    }
+    doc.field("theList", list);
+    String json = doc.toJSON();
+    ODocument newDoc = new ODocument().fromJSON(json);
+    Assert.assertEquals(newDoc.toJSON(), json);
+    Assert.assertTrue(newDoc.hasSameContentOf(doc));
+
+  }
+
+  public void testSameNameCollectionsAndMap3() {
+    ODocument doc = new ODocument();
+    doc.field("string", "STRING_VALUE");
+    List<Map<String, ODocument>> list = new ArrayList<Map<String, ODocument>>();
+    for (int i = 0; i < 2; i++) {
+      Map<String, ODocument> docMap = new HashMap<String, ODocument>();
+      for (int j = 0; j < 5; j++) {
+        ODocument doc1 = new ODocument();
+        doc1.field("blabla", j);
+        docMap.put(String.valueOf(j), doc1);
+      }
+
+      list.add(docMap);
+    }
+    doc.field("theList", list);
+    String json = doc.toJSON();
+    ODocument newDoc = new ODocument().fromJSON(json);
+    Assert.assertEquals(newDoc.toJSON(), json);
+
+  }
+
   public void testNestedJsonCollection() {
     if (!database.getMetadata().getSchema().existsClass("Device"))
       database.getMetadata().getSchema().createClass("Device");
@@ -605,7 +651,7 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertEquals(bag.size(), 1);
     OIdentifiable rid = bag.rawIterator().next();
     Assert.assertTrue(rid.getIdentity().getClusterId() == 57);
-    Assert.assertTrue(rid.getIdentity().getClusterPosition().intValue() == 0);
+    Assert.assertTrue(rid.getIdentity().getClusterPosition() == 0);
   }
 
   public void testNestedLinkCreation() {

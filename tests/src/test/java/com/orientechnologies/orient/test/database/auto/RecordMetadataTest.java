@@ -2,9 +2,10 @@ package com.orientechnologies.orient.test.database.auto;
 
 import static org.testng.Assert.assertEquals;
 
-import org.testng.annotations.*;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
@@ -21,6 +22,11 @@ public class RecordMetadataTest extends DocumentDBBaseTest {
     super(url);
   }
 
+  private static void assetORIDEquals(ORID actual, ORID expected) {
+    assertEquals(actual.getClusterId(), expected.getClusterId());
+    assertEquals(actual.getClusterPosition(), expected.getClusterPosition());
+  }
+
   public void testGetRecordMetadata() {
 
     final ODocument doc = new ODocument();
@@ -33,10 +39,5 @@ public class RecordMetadataTest extends DocumentDBBaseTest {
       assetORIDEquals(doc.getIdentity(), metadata.getRecordId());
       assertEquals(doc.getRecordVersion().getCounter(), metadata.getRecordVersion().getCounter());
     }
-  }
-
-  private static void assetORIDEquals(ORID actual, ORID expected) {
-    assertEquals(actual.getClusterId(), expected.getClusterId());
-    assertEquals(actual.getClusterPosition().longValueHigh(), expected.getClusterPosition().longValueHigh());
   }
 }

@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.tinkerpop.blueprints.impls.orient;
 
@@ -47,6 +47,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -141,10 +142,16 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
         } else
           throw new IllegalArgumentException(
               "Invalid fields: expecting a pairs of fields as String,Object or a single Map<String,Object>, but found: " + f);
-      } else
+      } else {
+        if (fields.length % 2 != 0)
+          throw new IllegalArgumentException(
+              "Invalid fields: expecting a pairs of fields as String,Object or a single Map<String,Object>, but found: "
+                  + Arrays.toString(fields));
+
         // SET THE FIELDS
         for (int i = 0; i < fields.length; i += 2)
           setPropertyInternal(this, (ODocument) rawElement.getRecord(), fields[i].toString(), fields[i + 1]);
+      }
     }
     return (T) this;
   }
@@ -217,7 +224,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
       return null;
 
     if (key.equals("_class"))
-      return (T) getRecord().getSchemaClass().getName();
+      return (T) getRecord().getImmutableSchemaClass().getName();
     else if (key.equals("_version"))
       return (T) new Integer(getRecord().getVersion());
     else if (key.equals("_rid"))
@@ -436,9 +443,12 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     final ORID myRID = getIdentity();
     final ORID otherRID = iOther.getIdentity();
 
-    if (myRID == null && otherRID == null) return 0;
-    if (myRID == null) return -1;
-    if (otherRID == null) return 1;
+    if (myRID == null && otherRID == null)
+      return 0;
+    if (myRID == null)
+      return -1;
+    if (otherRID == null)
+      return 1;
 
     return myRID.compareTo(otherRID);
   }
@@ -497,7 +507,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     final ODocument doc = getRecord();
     doc.deserializeFields();
 
-    final OClass cls = doc.getSchemaClass();
+    final OClass cls = doc.getImmutableSchemaClass();
 
     if (cls == null || !cls.isSubClassOf(getBaseClassName()))
       throw new IllegalArgumentException("The document received is not a " + getElementType() + ". Found class '" + cls + "'");

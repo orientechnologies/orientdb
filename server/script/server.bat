@@ -69,7 +69,7 @@ if NOT exist "%CONFIG_FILE%" set CONFIG_FILE=%ORIENTDB_HOME%/config/orientdb-ser
 set LOG_FILE=%ORIENTDB_HOME%/config/orientdb-server-log.properties
 set WWW_PATH=%ORIENTDB_HOME%/www
 set ORIENTDB_SETTINGS=-Dprofiler.enabled=true
-set JAVA_OPTS_SCRIPT=-Djna.nosys=true -XX:+HeapDumpOnOutOfMemoryError -Djava.awt.headless=true -Dfile.encoding=UTF8 -Drhino.opt.level=9
+set JAVA_OPTS_SCRIPT=-Xmx512m -Djna.nosys=true -XX:+HeapDumpOnOutOfMemoryError -Djava.awt.headless=true -Dfile.encoding=UTF8 -Drhino.opt.level=9
 
 call %JAVA% -server %JAVA_OPTS% %JAVA_OPTS_SCRIPT% %ORIENTDB_SETTINGS% -Djava.util.logging.config.file="%LOG_FILE%" -Dorientdb.config.file="%CONFIG_FILE%" -Dorientdb.www.path="%WWW_PATH%" -Dorientdb.build.number="@BUILD@" -cp "%ORIENTDB_HOME%\lib\*;" %CMD_LINE_ARGS% com.orientechnologies.orient.server.OServerMain
 

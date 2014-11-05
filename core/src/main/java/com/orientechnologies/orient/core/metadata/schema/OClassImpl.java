@@ -1,36 +1,23 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.metadata.schema;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
@@ -46,7 +33,6 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -61,7 +47,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -74,6 +59,9 @@ import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
+
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Schema Class implementation.
@@ -756,10 +744,10 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   @Override
-  public int getClusterForNewInstance() {
+  public int getClusterForNewInstance(final ODocument doc) {
     acquireSchemaReadLock();
     try {
-      return clusterSelection.getCluster(this);
+      return clusterSelection.getCluster(this, doc);
     } finally {
       releaseSchemaReadLock();
     }
@@ -997,24 +985,13 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return this;
   }
 
-  public float getOverSizeInternal() {
+  @Override
+  public float getClassOverSize() {
     acquireSchemaReadLock();
     try {
       return overSize;
     } finally {
       releaseSchemaReadLock();
-    }
-  }
-
-  private void setOverSizeInternal(final float overSize) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
-    acquireSchemaWriteLock();
-    try {
-      checkEmbedded();
-
-      this.overSize = overSize;
-    } finally {
-      releaseSchemaWriteLock();
     }
   }
 
@@ -1110,7 +1087,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     try {
       final int prime = 31;
       int result = super.hashCode();
-      result = prime * result + ((owner == null) ? 0 : owner.hashCode());
+      result = prime * result;
       return result;
     } finally {
       releaseSchemaReadLock();
@@ -1627,6 +1604,18 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return owner;
   }
 
+  private void setOverSizeInternal(final float overSize) {
+    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    acquireSchemaWriteLock();
+    try {
+      checkEmbedded();
+
+      this.overSize = overSize;
+    } finally {
+      releaseSchemaWriteLock();
+    }
+  }
+
   private void setCustomInternal(final String name, final String value) {
     acquireSchemaWriteLock();
     try {
@@ -1670,7 +1659,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
       if (!database.getStorageVersions().classesAreDetectedByClusterId()) {
         for (int clusterId : clusterIds) {
-          OClusterPosition[] range = storage.getClusterDataRange(clusterId);
+          long[] range = storage.getClusterDataRange(clusterId);
 
           OPhysicalPosition[] positions = storage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(range[0]));
           do {

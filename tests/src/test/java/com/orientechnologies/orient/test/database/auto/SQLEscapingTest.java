@@ -18,10 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.List;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -31,6 +28,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 @Test(groups = "sql-select")
 public class SQLEscapingTest {
   private ODatabaseDocument database;
+  private String            url;
 
   public SQLEscapingTest() {
     database = new ODatabaseDocumentTx("memory:testescaping");
@@ -39,8 +37,14 @@ public class SQLEscapingTest {
   }
 
   @Parameters(value = "url")
-  public SQLEscapingTest(String iURL) {
-    database = new ODatabaseDocumentTx(iURL);
+  public SQLEscapingTest(String url) {
+    this.url = url;
+  }
+
+  @BeforeClass
+  public void beforeClass() {
+    if (database == null)
+      database = new ODatabaseDocumentTx(url);
   }
 
   @BeforeMethod

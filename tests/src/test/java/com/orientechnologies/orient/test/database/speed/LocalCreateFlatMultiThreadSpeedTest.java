@@ -15,11 +15,11 @@
  */
 package com.orientechnologies.orient.test.database.speed;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.test.SpeedTestMultiThreads;
-import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
@@ -28,12 +28,12 @@ import com.orientechnologies.orient.test.database.base.OrientThreadTest;
 
 @Test(enabled = false)
 public class LocalCreateFlatMultiThreadSpeedTest extends OrientMultiThreadTest {
-  protected ODatabaseFlat database;
+  protected ODatabaseDocumentTx database;
   private long            foundObjects;
 
   @Test(enabled = false)
   public static class CreateObjectsThread extends OrientThreadTest {
-    protected ODatabaseFlat database;
+    protected ODatabaseDocumentTx database;
     protected ORecordFlat   record;
 
     public CreateObjectsThread(final SpeedTestMultiThreads parent, final int threadId) {
@@ -42,8 +42,8 @@ public class LocalCreateFlatMultiThreadSpeedTest extends OrientMultiThreadTest {
 
     @Override
     public void init() {
-      database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
-      record = database.newInstance();
+      database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
+      record = new ORecordFlat();
       database.declareIntent(new OIntentMassiveInsert());
       database.begin(TXTYPE.NOTX);
     }
@@ -75,7 +75,7 @@ public class LocalCreateFlatMultiThreadSpeedTest extends OrientMultiThreadTest {
 
   @Override
   public void init() {
-    database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
+    database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
     foundObjects = database.countClusterElements("flat");
 
     System.out.println("\nTotal objects in Animal cluster before the test: " + foundObjects);

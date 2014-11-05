@@ -20,18 +20,20 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.testng.Assert;
 import org.testng.annotations.*;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OStorageRemote;
-import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -52,12 +54,22 @@ public class MultipleDBTest extends DocumentDBBaseTest {
   public void beforeClass() throws Exception {
   }
 
-	@BeforeMethod
-	@Override
-	public void beforeMethod() throws Exception {
-	}
+  @BeforeMethod
+  @Override
+  public void beforeMethod() throws Exception {
+  }
 
-	@Test
+  @AfterMethod
+  @Override
+  public void afterMethod() throws Exception {
+  }
+
+  @AfterClass
+  @Override
+  public void afterClass() throws Exception {
+  }
+
+  @Test
   public void testObjectMultipleDBsThreaded() throws Exception {
     final int operations_write = 1000;
     final int operations_read = 1;
@@ -98,8 +110,7 @@ public class MultipleDBTest extends DocumentDBBaseTest {
               dummy = tx.save(dummy);
 
               // CAN'T WORK FOR LHPEPS CLUSTERS BECAUSE CLUSTER POSITION CANNOT BE KNOWN
-              Assert.assertEquals(((ORID) dummy.getId()).getClusterPosition(), OClusterPositionFactory.INSTANCE.valueOf(j),
-                  "RID was " + dummy.getId());
+              Assert.assertEquals(((ORID) dummy.getId()).getClusterPosition(), j, "RID was " + dummy.getId());
 
               if ((j + 1) % 20000 == 0) {
                 System.out.println("(" + getDbId(tx) + ") " + "Operations (WRITE) executed: " + (j + 1));
@@ -194,8 +205,7 @@ public class MultipleDBTest extends DocumentDBBaseTest {
               dummy = tx.save(dummy);
 
               // CAN'T WORK FOR LHPEPS CLUSTERS BECAUSE CLUSTER POSITION CANNOT BE KNOWN
-              Assert.assertEquals(dummy.getIdentity().getClusterPosition(), OClusterPositionFactory.INSTANCE.valueOf(j), "RID was "
-                  + dummy.getIdentity());
+              Assert.assertEquals(dummy.getIdentity().getClusterPosition(), j, "RID was " + dummy.getIdentity());
 
               if ((j + 1) % 20000 == 0) {
                 System.out.println("(" + getDbId(tx) + ") " + "Operations (WRITE) executed: " + (j + 1));

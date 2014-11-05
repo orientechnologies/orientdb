@@ -20,11 +20,10 @@
 
 package com.orientechnologies.orient.core.intent;
 
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 
 /**
  * Disable cache. This is helpful with operation like UPDATE/DELETE of many records.
@@ -34,10 +33,7 @@ public class OIntentNoCache implements OIntent {
   private boolean previousRetainRecords;
   private boolean previousRetainObjects;
 
-  public void begin(final ODatabaseRaw iDatabase) {
-    previousLocalCacheEnabled = iDatabase.getDatabaseOwner().getLocalCache().isEnabled();
-    iDatabase.getDatabaseOwner().getLocalCache().setEnable(false);
-
+  public void begin(final ODatabaseRecordInternal iDatabase) {
     ODatabaseComplexInternal<?> ownerDb = iDatabase.getDatabaseOwner();
 
     if (ownerDb instanceof ODatabaseRecord) {
@@ -54,8 +50,7 @@ public class OIntentNoCache implements OIntent {
     }
   }
 
-  public void end(final ODatabaseRaw iDatabase) {
-    iDatabase.getDatabaseOwner().getLocalCache().setEnable(previousLocalCacheEnabled);
+  public void end(final ODatabaseRecordInternal iDatabase) {
     ODatabaseComplexInternal<?> ownerDb = iDatabase.getDatabaseOwner();
 
     if (ownerDb instanceof ODatabaseRecord) {

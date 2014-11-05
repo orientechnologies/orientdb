@@ -1,52 +1,47 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.orient.core.intent;
 
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
-import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class OIntentMassiveInsert implements OIntent {
-  private boolean                                     previousLocalCacheEnabled;
   private boolean                                     previousRetainRecords;
   private boolean                                     previousRetainObjects;
   private boolean                                     previousValidation;
   private Map<ORecordHook, ORecordHook.HOOK_POSITION> removedHooks;
-  private OUser                                       currentUser;
+  private OSecurityUser currentUser;
 
-  public void begin(final ODatabaseRaw iDatabase) {
+  public void begin(final ODatabaseRecordInternal iDatabase) {
     // DISABLE CHECK OF SECURITY
     currentUser = iDatabase.getDatabaseOwner().getUser();
     iDatabase.getDatabaseOwner().setUser(null);
-
-    previousLocalCacheEnabled = iDatabase.getDatabaseOwner().getLocalCache().isEnabled();
-    iDatabase.getDatabaseOwner().getLocalCache().setEnable(false);
 
     ODatabaseComplexInternal<?> ownerDb = iDatabase.getDatabaseOwner();
 
@@ -79,12 +74,11 @@ public class OIntentMassiveInsert implements OIntent {
     }
   }
 
-  public void end(final ODatabaseRaw iDatabase) {
+  public void end(final ODatabaseRecordInternal iDatabase) {
     if (currentUser != null)
       // RE-ENABLE CHECK OF SECURITY
       iDatabase.getDatabaseOwner().setUser(currentUser);
 
-    iDatabase.getDatabaseOwner().getLocalCache().setEnable(previousLocalCacheEnabled);
     ODatabaseComplexInternal<?> ownerDb = iDatabase.getDatabaseOwner();
 
     if (ownerDb instanceof ODatabaseRecord) {
@@ -110,7 +104,6 @@ public class OIntentMassiveInsert implements OIntent {
   @Override
   public OIntent copy() {
     final OIntentMassiveInsert copy = new OIntentMassiveInsert();
-    copy.previousLocalCacheEnabled = previousLocalCacheEnabled;
     copy.previousRetainRecords = previousRetainRecords;
     copy.previousRetainObjects = previousRetainObjects;
     copy.previousValidation = previousValidation;

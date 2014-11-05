@@ -17,13 +17,13 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 
 /**
  * Running server instance.
@@ -64,22 +64,19 @@ public class ServerRun {
     OFileUtils.deleteRecursively(new File(getServerHome()));
   }
 
-  protected ODatabaseDocumentTx createDatabase(final String iName) {
-    OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
-
+  protected OrientBaseGraph createDatabase(final String iName) {
     String dbPath = getDatabasePath(iName);
 
     new File(dbPath).mkdirs();
 
-    final ODatabaseDocumentTx database = new ODatabaseDocumentTx("plocal:" + dbPath);
-    if (database.exists()) {
+    final OrientGraphFactory factory = new OrientGraphFactory("plocal:" + dbPath);
+    if (factory.exists()) {
       System.out.println("Dropping previous database '" + iName + "' under: " + dbPath + "...");
       OFileUtils.deleteRecursively(new File(dbPath));
     }
 
     System.out.println("Creating database '" + iName + "' under: " + dbPath + "...");
-    database.create();
-    return database;
+    return factory.getNoTx();
   }
 
   protected void copyDatabase(final String iDatabaseName, final String iDestinationDirectory) throws IOException {
@@ -91,8 +88,7 @@ public class ServerRun {
     OFileUtils.copyDirectory(new File(getDatabasePath(iDatabaseName)), new File(iDestinationDirectory));
   }
 
-  protected OServer startServer(final String iServerConfigFile) throws Exception, InstantiationException, IllegalAccessException,
-      ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IOException {
+  protected OServer startServer(final String iServerConfigFile) throws Exception {
     System.out.println("Starting server " + serverId + " from " + getServerHome() + "...");
 
     System.setProperty("ORIENTDB_HOME", getServerHome());

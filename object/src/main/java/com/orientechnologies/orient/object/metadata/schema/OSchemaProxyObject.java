@@ -22,10 +22,7 @@ import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -49,6 +46,11 @@ public class OSchemaProxyObject implements OSchema {
 
   public OSchemaProxyObject(OSchema iUnderlying) {
     underlying = iUnderlying;
+  }
+
+  @Override
+  public OImmutableSchema makeSnapshot() {
+    return underlying.makeSnapshot();
   }
 
   @Override

@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.tinkerpop.blueprints.impls.orient;
 
@@ -76,12 +76,11 @@ import java.util.Set;
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public abstract class OrientBaseGraph extends OrientConfigurableGraph implements OrientExtendedGraph {
-  public static final String          CONNECTION_OUT  = "out";
-  public static final String          CONNECTION_IN   = "in";
-  public static final String          CLASS_PREFIX    = "class:";
-  public static final String          CLUSTER_PREFIX  = "cluster:";
-  public static final String          ADMIN           = "admin";
-  private static final Object         manualIndexLock = new Object();
+  public static final String          CONNECTION_OUT = "out";
+  public static final String          CONNECTION_IN  = "in";
+  public static final String          CLASS_PREFIX   = "class:";
+  public static final String          CLUSTER_PREFIX = "cluster:";
+  public static final String          ADMIN          = "admin";
   private final ODatabaseDocumentPool pool;
   protected ODatabaseDocumentTx       database;
   private String                      url;
@@ -112,6 +111,16 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     this.username = database.getUser() != null ? database.getUser().getName() : null;
 
     readDatabaseConfiguration();
+  }
+
+  public OrientBaseGraph(final ODatabaseDocumentPool pool, final Settings iConfiguration) {
+    this.pool = pool;
+
+    database = pool.acquire();
+    this.username = database.getUser() != null ? database.getUser().getName() : null;
+
+    readDatabaseConfiguration();
+    configure(iConfiguration);
   }
 
   public OrientBaseGraph(final String url) {
@@ -325,19 +334,18 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       final Parameter... indexParameters) {
     return executeOutsideTx(new OCallable<Index<T>, OrientBaseGraph>() {
       public Index<T> call(final OrientBaseGraph g) {
-        synchronized (manualIndexLock) {
-          final OIndexManager indexManager = database.getMetadata().getIndexManager();
 
-          if (indexManager.getIndex(indexName) != null)
-            throw ExceptionFactory.indexAlreadyExists(indexName);
+        final OIndexManager indexManager = database.getMetadata().getIndexManager();
 
-          final OrientIndex<? extends OrientElement> index = new OrientIndex<OrientElement>(g, indexName, indexClass, null);
+        if (indexManager.getIndex(indexName) != null)
+          throw ExceptionFactory.indexAlreadyExists(indexName);
 
-          // SAVE THE CONFIGURATION INTO THE GLOBAL CONFIG
-          saveIndexConfiguration();
+        final OrientIndex<? extends OrientElement> index = new OrientIndex<OrientElement>(g, indexName, indexClass, null);
 
-          return (Index<T>) index;
-        }
+        // SAVE THE CONFIGURATION INTO THE GLOBAL CONFIG
+        saveIndexConfiguration();
+
+        return (Index<T>) index;
       }
     }, "create index '", indexName, "'");
   }
@@ -387,19 +395,16 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       @Override
       public Object call(OrientBaseGraph g) {
         try {
-          synchronized (manualIndexLock) {
-            final OIndexManager indexManager = getRawGraph().getMetadata().getIndexManager();
-            final OIndex index = indexManager.getIndex(indexName);
-            final String recordMapIndexName = index.getConfiguration().field(OrientIndex.CONFIG_RECORD_MAP_NAME);
+          final OIndexManager indexManager = getRawGraph().getMetadata().getIndexManager();
+          final OIndex index = indexManager.getIndex(indexName);
+          final String recordMapIndexName = index.getConfiguration().field(OrientIndex.CONFIG_RECORD_MAP_NAME);
 
-            indexManager.dropIndex(indexName);
-            if (recordMapIndexName != null)
-              getRawGraph().getMetadata().getIndexManager().dropIndex(recordMapIndexName);
+          indexManager.dropIndex(indexName);
+          if (recordMapIndexName != null)
+            getRawGraph().getMetadata().getIndexManager().dropIndex(recordMapIndexName);
 
-            saveIndexConfiguration();
-            return null;
-          }
-
+          saveIndexConfiguration();
+          return null;
         } catch (Exception e) {
           g.rollback();
           throw new RuntimeException(e.getMessage(), e);
@@ -443,7 +448,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    *          Fields must be a odd pairs of key/value or a single object as Map containing entries as key/value pairs
    * @return The new OrientVertex created
    */
-  public OrientVertex addVertex(final Object id, final Object... prop) {
+  public OrientVertex addVertex(Object id, final Object... prop) {
     String className = null;
     String clusterName = null;
     Object[] fields = null;
@@ -459,6 +464,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
           else if (s.startsWith(CLUSTER_PREFIX))
             // GET THE CLASS NAME
             clusterName = s.substring(CLUSTER_PREFIX.length());
+          else
+            id = s;
         }
       }
 
@@ -703,7 +710,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       final String className = iKey.substring(0, pos);
       key = iKey.substring(iKey.indexOf('.') + 1);
 
-      final OClass clazz = database.getMetadata().getSchema().getClass(className);
+      final OClass clazz = database.getMetadata().getImmutableSchemaSnapshot().getClass(className);
 
       final Collection<? extends OIndex<?>> indexes = clazz.getIndexes();
       for (OIndex<?> index : indexes) {
@@ -780,7 +787,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    */
   public Iterable<Vertex> getVertices(final String label, final String[] iKey, Object[] iValue) {
 
-    final OClass clazz = database.getMetadata().getSchema().getClass(label);
+    final OClass clazz = database.getMetadata().getImmutableSchemaSnapshot().getClass(label);
     Set<OIndex<?>> indexes = clazz.getInvolvedIndexes(Arrays.asList(iKey));
     if (indexes.iterator().hasNext()) {
       final OIndex<?> idx = indexes.iterator().next();
@@ -1237,7 +1244,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     final ODocument doc = rec.getRecord();
     if (doc != null) {
-      final OClass schemaClass = doc.getSchemaClass();
+      final OClass schemaClass = doc.getImmutableSchemaClass();
       if (schemaClass != null && schemaClass.isSubClassOf(OrientEdgeType.CLASS_NAME))
         return new OrientEdge(this, doc);
       else
@@ -1369,7 +1376,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (elementClass == null)
       throw ExceptionFactory.classForElementCannotBeNull();
 
-    final OSchema schema = getRawGraph().getMetadata().getSchema();
+    final OSchema schema = getRawGraph().getMetadata().getImmutableSchemaSnapshot();
     final String elementOClassName = getClassName(elementClass);
 
     Set<String> result = new HashSet<String>();
@@ -1559,8 +1566,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       else if (c.name.equals("useVertexFieldsForEdgeLabels"))
         setUseVertexFieldsForEdgeLabels(Boolean.parseBoolean(c.value));
     }
-
-    loadManualIndexes();
   }
 
   private void openOrCreate() {

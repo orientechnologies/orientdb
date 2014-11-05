@@ -15,29 +15,14 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -53,9 +38,25 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Test(groups = { "crud", "record-vobject" }, sequential = true)
 public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
@@ -63,8 +64,8 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   protected static final int TOT_RECORDS_COMPANY = 10;
 
   protected long             startRecordNumber;
-  private ODocument          record;
   String                     base64;
+  private ODocument          record;
 
   @Parameters(value = "url")
   public CRUDDocumentPhysicalTest(@Optional String url) {
@@ -519,17 +520,17 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
       // RELOAD THE DOCUMENT, THIS WILL PUT IT IN L1 CACHE
       doc = database.load(docRid, "*:-1");
       doc = testInvalidFetchPlanInvalidateL1Cache(doc, docRid);
-      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(1, OClusterPositionFactory.INSTANCE.valueOf(0)));
-      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(1, OClusterPositionFactory.INSTANCE.valueOf(1)));
-      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(1, OClusterPositionFactory.INSTANCE.valueOf(2)));
-      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(2, OClusterPositionFactory.INSTANCE.valueOf(0)));
-      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(2, OClusterPositionFactory.INSTANCE.valueOf(1)));
-      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(2, OClusterPositionFactory.INSTANCE.valueOf(2)));
-      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(3, OClusterPositionFactory.INSTANCE.valueOf(0)));
-      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(3, OClusterPositionFactory.INSTANCE.valueOf(1)));
-      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(3, OClusterPositionFactory.INSTANCE.valueOf(2)));
-      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(4, OClusterPositionFactory.INSTANCE.valueOf(0)));
-      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(4, OClusterPositionFactory.INSTANCE.valueOf(1)));
+      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(1, 0));
+      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(1, 1));
+      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(1, 2));
+      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(2, 0));
+      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(2, 1));
+      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(2, 2));
+      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(3, 0));
+      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(3, 1));
+      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(3, 2));
+      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(4, 0));
+      doc = testInvalidFetchPlanInvalidateL1Cache(doc, new ORecordId(4, 1));
       // CLOSE DB AND RE-TEST THE LOAD TO MAKE SURE
     } finally {
       database.close();
@@ -539,80 +540,19 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
 
     doc = testInvalidFetchPlanClearL1Cache(doc, docRid);
-    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(1, OClusterPositionFactory.INSTANCE.valueOf(0)));
-    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(1, OClusterPositionFactory.INSTANCE.valueOf(1)));
-    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(1, OClusterPositionFactory.INSTANCE.valueOf(2)));
-    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(2, OClusterPositionFactory.INSTANCE.valueOf(0)));
-    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(2, OClusterPositionFactory.INSTANCE.valueOf(1)));
-    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(2, OClusterPositionFactory.INSTANCE.valueOf(2)));
-    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(3, OClusterPositionFactory.INSTANCE.valueOf(0)));
-    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(3, OClusterPositionFactory.INSTANCE.valueOf(1)));
-    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(3, OClusterPositionFactory.INSTANCE.valueOf(2)));
-    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(4, OClusterPositionFactory.INSTANCE.valueOf(0)));
-    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(4, OClusterPositionFactory.INSTANCE.valueOf(1)));
+    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(1, 0));
+    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(1, 1));
+    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(1, 2));
+    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(2, 0));
+    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(2, 1));
+    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(2, 2));
+    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(3, 0));
+    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(3, 1));
+    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(3, 2));
+    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(4, 0));
+    doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(4, 1));
     doc = database.load(docRid);
     doc.delete();
-  }
-
-  private ODocument testInvalidFetchPlanInvalidateL1Cache(ODocument doc, ORID docRid) {
-    try {
-      // LOAD DOCUMENT, CHECK BEFORE GETTING IT FROM L1 CACHE
-      doc = database.load(docRid, "invalid");
-      Assert.fail("Should throw IllegalArgumentException");
-    } catch (Exception e) {
-    }
-    // INVALIDATE L1 CACHE TO CHECK THE L2 CACHE
-    database.getLocalCache().invalidate();
-    try {
-      // LOAD DOCUMENT, CHECK BEFORE GETTING IT FROM L2 CACHE
-      doc = database.load(docRid, "invalid");
-      Assert.fail("Should throw IllegalArgumentException");
-    } catch (Exception e) {
-    }
-    // CLEAR THE L2 CACHE TO CHECK THE RAW READ
-    try {
-      // LOAD DOCUMENT NOT IN ANY CACHE
-      doc = database.load(docRid, "invalid");
-      Assert.fail("Should throw IllegalArgumentException");
-    } catch (Exception e) {
-    }
-    return doc;
-  }
-
-  private ODocument testInvalidFetchPlanClearL1Cache(ODocument doc, ORID docRid) {
-    try {
-      // LOAD DOCUMENT NOT IN ANY CACHE
-      doc = database.load(docRid, "invalid");
-      Assert.fail("Should throw IllegalArgumentException");
-    } catch (Exception e) {
-    }
-    // LOAD DOCUMENT, THIS WILL PUT IT IN L1 CACHE
-    try {
-      database.load(docRid);
-    } catch (Exception e) {
-    }
-    try {
-      // LOAD DOCUMENT, CHECK BEFORE GETTING IT FROM L1 CACHE
-      doc = database.load(docRid, "invalid");
-      Assert.fail("Should throw IllegalArgumentException");
-    } catch (Exception e) {
-    }
-    // CLEAR L1 CACHE, THIS WILL PUT IT IN L2 CACHE
-    database.getLocalCache().clear();
-    try {
-      // LOAD DOCUMENT, CHECK BEFORE GETTING IT FROM L2 CACHE
-      doc = database.load(docRid, "invalid");
-      Assert.fail("Should throw IllegalArgumentException");
-    } catch (Exception e) {
-    }
-
-    try {
-      // LOAD DOCUMENT NOT IN ANY CACHE
-      doc = database.load(docRid, "invalid");
-      Assert.fail("Should throw IllegalArgumentException");
-    } catch (Exception e) {
-    }
-    return doc;
   }
 
   public void testEncoding() {
@@ -712,10 +652,10 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
       record.field("location", "Italy");
       record.field("salary", (i + 300));
 
-      database.save(record, OPERATION_MODE.ASYNCHRONOUS, false, new ORecordCallback<OClusterPosition>() {
+      database.save(record, OPERATION_MODE.ASYNCHRONOUS, false, new ORecordCallback<Long>() {
 
         @Override
-        public void call(ORecordId iRID, OClusterPosition iParameter) {
+        public void call(ORecordId iRID, Long iParameter) {
           callBackCalled.incrementAndGet();
         }
       }, null);
@@ -897,5 +837,140 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     ODocument embeddedDoc = testClass2Document.field("testClass1Property");
     Assert.assertEquals(embeddedDoc.getSchemaClass(), testClass1);
+  }
+
+  public void testRemoveAllLinkList() {
+    final ODocument doc = new ODocument();
+
+    final List<ODocument> allDocs = new ArrayList<ODocument>();
+
+    for (int i = 0; i < 10; i++) {
+      final ODocument linkDoc = new ODocument();
+      linkDoc.save();
+
+      allDocs.add(linkDoc);
+    }
+
+    doc.field("linkList", allDocs);
+    doc.save();
+
+    doc.reload();
+
+    final List<ODocument> docsToRemove = new ArrayList<ODocument>(allDocs.size() / 2);
+    for (int i = 0; i < 5; i++)
+      docsToRemove.add(allDocs.get(i));
+
+    List<OIdentifiable> linkList = doc.field("linkList");
+    linkList.removeAll(docsToRemove);
+
+    Assert.assertEquals(linkList.size(), 5);
+
+    for (int i = 5; i < 10; i++)
+      Assert.assertEquals(linkList.get(i - 5), allDocs.get(i));
+
+    doc.save();
+
+    doc.reload();
+
+    linkList = doc.field("linkList");
+    Assert.assertEquals(linkList.size(), 5);
+
+    for (int i = 5; i < 10; i++)
+      Assert.assertEquals(linkList.get(i - 5), allDocs.get(i));
+  }
+
+  public void testRemoveAndReload() {
+    ODocument doc1;
+
+    database.begin();
+    {
+      doc1 = new ODocument();
+      doc1.save();
+    }
+    database.commit();
+
+    database.begin();
+    {
+      database.delete(doc1);
+    }
+    database.commit();
+
+    database.begin();
+    {
+      ODocument deletedDoc = database.load(doc1.getIdentity());
+      Assert.assertNull(deletedDoc); // OK!
+    }
+    database.commit();
+
+    database.begin();
+    try {
+      doc1.reload();
+      Assert.fail(); // <=================== AssertionError
+    } catch (ORecordNotFoundException e) {
+      // OK
+      // The JavaDoc of #reload() is documented : "If the record does not exist a ORecordNotFoundException exception is thrown.".
+    }
+    database.commit();
+  }
+
+  private ODocument testInvalidFetchPlanInvalidateL1Cache(ODocument doc, ORID docRid) {
+    try {
+      // LOAD DOCUMENT, CHECK BEFORE GETTING IT FROM L1 CACHE
+      doc = database.load(docRid, "invalid");
+      Assert.fail("Should throw IllegalArgumentException");
+    } catch (Exception e) {
+    }
+    // INVALIDATE L1 CACHE TO CHECK THE L2 CACHE
+    database.getLocalCache().invalidate();
+    try {
+      // LOAD DOCUMENT, CHECK BEFORE GETTING IT FROM L2 CACHE
+      doc = database.load(docRid, "invalid");
+      Assert.fail("Should throw IllegalArgumentException");
+    } catch (Exception e) {
+    }
+    // CLEAR THE L2 CACHE TO CHECK THE RAW READ
+    try {
+      // LOAD DOCUMENT NOT IN ANY CACHE
+      doc = database.load(docRid, "invalid");
+      Assert.fail("Should throw IllegalArgumentException");
+    } catch (Exception e) {
+    }
+    return doc;
+  }
+
+  private ODocument testInvalidFetchPlanClearL1Cache(ODocument doc, ORID docRid) {
+    try {
+      // LOAD DOCUMENT NOT IN ANY CACHE
+      doc = database.load(docRid, "invalid");
+      Assert.fail("Should throw IllegalArgumentException");
+    } catch (Exception e) {
+    }
+    // LOAD DOCUMENT, THIS WILL PUT IT IN L1 CACHE
+    try {
+      database.load(docRid);
+    } catch (Exception e) {
+    }
+    try {
+      // LOAD DOCUMENT, CHECK BEFORE GETTING IT FROM L1 CACHE
+      doc = database.load(docRid, "invalid");
+      Assert.fail("Should throw IllegalArgumentException");
+    } catch (Exception e) {
+    }
+    // CLEAR L1 CACHE, THIS WILL PUT IT IN L2 CACHE
+    database.getLocalCache().clear();
+    try {
+      // LOAD DOCUMENT, CHECK BEFORE GETTING IT FROM L2 CACHE
+      doc = database.load(docRid, "invalid");
+      Assert.fail("Should throw IllegalArgumentException");
+    } catch (Exception e) {
+    }
+
+    try {
+      // LOAD DOCUMENT NOT IN ANY CACHE
+      doc = database.load(docRid, "invalid");
+      Assert.fail("Should throw IllegalArgumentException");
+    } catch (Exception e) {
+    }
+    return doc;
   }
 }

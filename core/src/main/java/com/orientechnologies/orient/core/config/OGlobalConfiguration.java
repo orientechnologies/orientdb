@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.config;
 
 import com.orientechnologies.common.io.OFileUtils;
@@ -91,6 +91,16 @@ public enum OGlobalConfiguration {
   DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT("storage.diskCache.writeCacheFlushLockTimeout",
       "Maximum amount of time till write cache will be wait before page flush in ms.", Integer.class, -1),
 
+  DISK_CACHE_FREE_SPACE_LIMIT(
+      "storage.diskCache.diskFreeSpaceLimit",
+      "Minimum amount of space on disk after which database will "
+          + "work only in read mode, in megabytes. You need free space on disk which is sum of this parameter and maximum size of WAL on disk.",
+      Long.class, 100),
+
+  DISC_CACHE_FREE_SPACE_CHECK_INTERVAL("storage.diskCache.diskFreeSpaceCheckInterval",
+      "Interval, in seconds, after which storage periodically "
+          + "checks whether amount of free space enough to work in write mode", Integer.class, 5),
+
   STORAGE_CONFIGURATION_SYNC_ON_UPDATE("storage.configuration.syncOnUpdate",
       "Should we perform force sync of storage configuration for each update", Boolean.class, true),
 
@@ -151,15 +161,10 @@ public enum OGlobalConfiguration {
   STORAGE_USE_CRC32_FOR_EACH_RECORD("storage.cluster.usecrc32",
       "Indicates whether crc32 should be used for each record to check record integrity.", Boolean.class, false),
 
-  STORAGE_KEEP_OPEN(
-      "storage.keepOpen",
-      "Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process shuts down",
-      Boolean.class, Boolean.TRUE),
-
   STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 30000),
 
   STORAGE_RECORD_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record",
-      Integer.class, 30000),
+      Integer.class, 100),
 
   STORAGE_USE_TOMBSTONES("storage.useTombstones", "When record will be deleted its cluster"
       + " position will not be freed but tombstone will be placed instead", Boolean.class, false),
@@ -169,9 +174,6 @@ public enum OGlobalConfiguration {
       "record.downsizing.enabled",
       "On updates if the record size is lower than before, reduces the space taken accordlying. If enabled this could increase defragmentation, but it reduces the used space",
       Boolean.class, true),
-
-  // CACHE
-  CACHE_LOCAL_ENABLED("cache.local.enabled", "Use the local cache", Boolean.class, true),
 
   // DATABASE
   OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database only saves objects bound to dirty records", Boolean.class, false),
@@ -465,7 +467,7 @@ public enum OGlobalConfiguration {
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL(
       "server.log.dumpClientExceptionLevel",
       "Logs client exceptions. Use any level supported by Java java.util.logging.Level class: OFF, FINE, CONFIG, INFO, WARNING, SEVERE",
-      Level.class, Level.FINE),
+      Level.class, Level.SEVERE),
 
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE("server.log.dumpClientExceptionFullStackTrace",
       "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.TRUE),

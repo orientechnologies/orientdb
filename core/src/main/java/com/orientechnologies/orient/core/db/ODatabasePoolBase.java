@@ -143,6 +143,11 @@ public abstract class ODatabasePoolBase<DB extends ODatabaseInternal> extends Th
     return dbPool.getMaxConnections(name, userName);
   }
 
+	public int getCreatedInstances(final  String name, final String userName) {
+		setup();
+		return dbPool.getCreatedInstances(name, userName);
+	}
+
   /**
    * Acquires a connection from the pool specifying options. If the pool is empty, then the caller thread will wait for it.
    * 

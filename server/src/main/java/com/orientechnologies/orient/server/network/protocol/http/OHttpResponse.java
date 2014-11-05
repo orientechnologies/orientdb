@@ -66,6 +66,8 @@ import com.orientechnologies.common.collection.OMultiValue;
    public String                callbackFunction;
    public String                contentEncoding;
    public boolean               sendStarted   = false;
+   public String                content;
+   public int                   code;
 
    public OHttpResponse(final OutputStream iOutStream, final String iHttpVersion, final String[] iAdditionalHeaders,
        final String iResponseCharSet, final String iServerInfo, final String iSessionId, final String iCallbackFunction) {
@@ -90,21 +92,26 @@ import com.orientechnologies.common.collection.OMultiValue;
        return;
      sendStarted = true;
 
-     final String content;
-     final String contentType;
+    //final String content;
+    //final String contentType;
 
-     if (callbackFunction != null) {
-       content = callbackFunction + "(" + iContent + ")";
-       contentType = "text/javascript";
-     } else {
-       content = iContent != null ? iContent.toString() : null;
-       contentType = iContentType;
-     }
+    if (callbackFunction != null) {
+      content = callbackFunction + "(" + iContent + ")";
+      contentType = "text/javascript";
+    } else {
+      if(content == null || content.length() == 0)
+        content = iContent != null ? iContent.toString() : null;
+      if(contentType == null || contentType.length() == 0)
+        contentType = iContentType;
+    }
 
      final boolean empty = content == null || content.length() == 0;
 
-     writeStatus(empty && iCode == 200 ? 204 : iCode, iReason);
-     writeHeaders(contentType, iKeepAlive);
+    if(this.code > 0)
+      writeStatus(this.code, iReason);
+    else
+      writeStatus(empty && iCode == 200 ? 204 : iCode, iReason);
+    writeHeaders(contentType, iKeepAlive);
 
      if (iHeaders != null)
        writeLine(iHeaders);
@@ -472,5 +479,21 @@ import com.orientechnologies.common.collection.OMultiValue;
    private boolean isJSObject(Object iResult) {
      return iResult.getClass().getName().equals("jdk.nashorn.api.scripting.ScriptObjectMirror");
    }
+
+  public String getContent() {
+    return content;
+  }
+        
+  public void setContent(String content) {
+    this.content = content;
+  }
+        
+  public int getCode() {
+    return code;
+  }
+        
+  public void setCode(int code) {
+    this.code = code;
+  }
 
  }

@@ -19,25 +19,23 @@
   */
 package com.orientechnologies.orient.core.sql;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * SQL ALTER PROPERTY command: Changes an attribute of an existent property in the target class.
@@ -128,16 +126,17 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
       clusterId = cluster.getId();
     }
 
+    Object result;
     try {
-      cluster.set(attribute, value);
+      result = cluster.set(attribute, value);
       final OStorage storage = getDatabase().getStorage();
       if (storage instanceof OLocalPaginatedStorage)
-        ((OLocalPaginatedStorage) storage).makeFullCheckpoint();
+        ((OLocalPaginatedStorage) storage).synch();
     } catch (IOException ioe) {
       throw new OCommandExecutionException("Error altering cluster '" + clusterName + "'", ioe);
     }
 
-    return null;
+    return result;
   }
 
   protected OCluster getCluster() {

@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -47,27 +47,27 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
 
   @Override
   public RESULT onRecordBeforeCreate(final ODocument iDocument) {
-    final OClass cls = iDocument.getSchemaClass();
+    final OClass cls = iDocument.getImmutableSchemaClass();
     if (cls != null && cls.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME)) {
-      String fieldNames = ((OClassImpl) cls).getCustom(OSecurityShared.ONCREATE_FIELD);
+      String fieldNames = cls.getCustom(OSecurityShared.ONCREATE_FIELD);
       if (fieldNames == null)
         fieldNames = OSecurityShared.ALLOW_ALL_FIELD;
       final String[] fields = fieldNames.split(",");
-      String identityType = ((OClassImpl) cls).getCustom(OSecurityShared.ONCREATE_IDENTITY_TYPE);
+      String identityType = cls.getCustom(OSecurityShared.ONCREATE_IDENTITY_TYPE);
       if (identityType == null)
         identityType = "user";
 
       final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
-      ODocument identity = null;
+      OIdentifiable identity = null;
       if (identityType.equals("user")) {
-        final OUser user = db.getUser();
+        final OSecurityUser user = db.getUser();
         if (user != null)
-          identity = user.getDocument();
+          identity = user.getIdentity();
       } else if (identityType.equals("role")) {
-        final Set<ORole> roles = db.getUser().getRoles();
+        final Set<? extends  OSecurityRole> roles = db.getUser().getRoles();
         if (!roles.isEmpty())
-          identity = roles.iterator().next().getDocument();
+          identity = roles.iterator().next().getIdentity();
       } else
         throw new OConfigurationException("Wrong custom field '" + OSecurityShared.ONCREATE_IDENTITY_TYPE + "' in class '"
             + cls.getName() + "' with value '" + identityType + "'. Supported ones are: 'user', 'role'");
@@ -102,7 +102,7 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
 
   @SuppressWarnings("unchecked")
   protected boolean isAllowed(final ODocument iDocument, final String iAllowOperation, final boolean iReadOriginal) {
-    final OClass cls = iDocument.getSchemaClass();
+    final OClass cls = iDocument.getImmutableSchemaClass();
     if (cls != null && cls.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME)) {
 
       final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();

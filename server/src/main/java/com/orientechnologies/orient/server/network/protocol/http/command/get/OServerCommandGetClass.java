@@ -43,7 +43,7 @@ public class OServerCommandGetClass extends OServerCommandAuthenticatedDbAbstrac
      try {
        db = getProfiledDatabaseInstance(iRequest);
 
-       if (db.getMetadata().getSchema().getClass(urlParts[2]) == null)
+       if (db.getMetadata().getImmutableSchemaSnapshot().getClass(urlParts[2]) == null)
          throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");
 
        final StringWriter buffer = new StringWriter();

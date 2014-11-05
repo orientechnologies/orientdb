@@ -134,7 +134,7 @@ import java.io.IOException;
        // return false;
 
        // Set user rid after authentication
-       iRequest.data.currentUserId = db.getUser() == null ? "<server user>" : db.getUser().getDocument().getIdentity().toString();
+       iRequest.data.currentUserId = db.getUser() == null ? "<server user>" : db.getUser().getIdentity().toString();
 
        // AUTHENTICATED: CREATE THE SESSION
        iRequest.sessionId = OHttpSessionManager.getInstance().createSession(iDatabaseName, iAuthenticationParts.get(0),
@@ -186,7 +186,7 @@ import java.io.IOException;
 
        String currentUserId = iRequest.data.currentUserId;
        if (currentUserId != null && currentUserId.length() > 0 && localDatabase != null && localDatabase.getUser() != null) {
-         if (!currentUserId.equals(localDatabase.getUser().getDocument().getIdentity().toString())) {
+         if (!currentUserId.equals(localDatabase.getUser().getIdentity().toString())) {
            ODocument userDoc = localDatabase.load(new ORecordId(currentUserId));
            localDatabase.setUser(new OUser(userDoc));
          }

@@ -120,8 +120,8 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       if ((rid.isNew() && !rid.isTemporary()) || iLinkedRecord.isDirty()) {
         final ODatabaseRecordInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
         if (iLinkedRecord instanceof ODocument) {
-          final OClass schemaClass = ((ODocument) iLinkedRecord).getSchemaClass();
-          database.save(iLinkedRecord, schemaClass != null ? database.getClusterNameById(schemaClass.getClusterForNewInstance())
+          final OClass schemaClass = ((ODocument) iLinkedRecord).getImmutableSchemaClass();
+          database.save(iLinkedRecord, schemaClass != null ? database.getClusterNameById(schemaClass.getClusterForNewInstance((ODocument) iLinkedRecord))
               : null);
         } else
           // STORE THE TRAVERSED OBJECT TO KNOW THE RECORD ID. CALL THIS VERSION TO AVOID CLEAR OF STACK IN THREAD-LOCAL
@@ -209,7 +209,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       if (iValue.length() > 1) {
         int pos = iValue.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
         if (pos > -1)
-          ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getClass(iValue.substring(1, pos));
+          ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getImmutableSchemaSnapshot().getClass(iValue.substring(1, pos));
         else
           pos = 0;
 
@@ -772,7 +772,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
           if (id.getIdentity().isTemporary())
             doc.save();
 
-          linkedClass = doc.getSchemaClass();
+          linkedClass = doc.getImmutableSchemaClass();
         } else
           linkedClass = null;
       }

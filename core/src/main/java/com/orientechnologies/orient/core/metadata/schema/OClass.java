@@ -97,7 +97,7 @@ public interface OClass extends Comparable<OClass> {
 
   public Class<?> getJavaClass();
 
-  int getClusterForNewInstance();
+  int getClusterForNewInstance(final ODocument doc);
 
   public int getDefaultClusterId();
 
@@ -124,6 +124,8 @@ public interface OClass extends Comparable<OClass> {
   public Collection<OClass> getAllBaseClasses();
 
   public long getSize();
+
+	public float getClassOverSize();
 
   /**
    * Returns the oversize factor. Oversize is used to extend the record size by a factor to avoid defragmentation upon updates. 0 or

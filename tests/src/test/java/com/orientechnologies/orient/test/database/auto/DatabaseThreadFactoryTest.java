@@ -52,7 +52,7 @@ public class DatabaseThreadFactoryTest  extends DocumentDBBaseTest {
     try {
       ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
       db.close();
-      ODatabaseRecordThreadLocal.INSTANCE.set(null);
+      ODatabaseRecordThreadLocal.INSTANCE.remove();
     } catch (ODatabaseException ode) {
     }
   }

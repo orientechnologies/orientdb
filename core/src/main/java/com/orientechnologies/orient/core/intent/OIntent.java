@@ -19,7 +19,7 @@
   */
 package com.orientechnologies.orient.core.intent;
 
-import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 
 /**
  * Intents aim to define common use case in order to optimize the execution.
@@ -34,7 +34,7 @@ public interface OIntent {
    * @param iDatabase
    *          Database where to activate it
    */
-  public void begin(ODatabaseRaw iDatabase);
+  public void begin(ODatabaseRecordInternal iDatabase);
 
   /**
    * Activate the intent.
@@ -42,7 +42,7 @@ public interface OIntent {
    * @param iDatabase
    *          Database where to activate it
    */
-  public void end(ODatabaseRaw iDatabase);
+  public void end(ODatabaseRecordInternal iDatabase);
 
   public OIntent copy();
 }

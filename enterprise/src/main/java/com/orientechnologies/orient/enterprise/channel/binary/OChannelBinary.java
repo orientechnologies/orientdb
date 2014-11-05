@@ -1,34 +1,31 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.enterprise.channel.binary;
 
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-import com.orientechnologies.orient.core.version.ODistributedVersion;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
@@ -36,7 +33,6 @@ import com.orientechnologies.orient.enterprise.channel.OChannel;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -236,53 +232,14 @@ public abstract class OChannelBinary extends OChannel {
 
   public ORecordId readRID() throws IOException {
     final int clusterId = readShort();
-
-    final OClusterPosition clusterPosition = readClusterPosition();
+    final long clusterPosition = readLong();
     return new ORecordId(clusterId, clusterPosition);
   }
 
-  public OClusterPosition readClusterPosition() throws IOException {
-    final int serializedSize = OClusterPositionFactory.INSTANCE.getSerializedSize();
-
-    if (debug)
-      OLogManager.instance().info(this, "%s - Reading cluster position (%d bytes)....", socket.getRemoteSocketAddress(),
-          serializedSize);
-
-    final OClusterPosition clusterPosition = OClusterPositionFactory.INSTANCE.fromStream((InputStream) in);
-
-    updateMetricReceivedBytes(serializedSize);
-
-    if (debug)
-      OLogManager.instance().info(this, "%s - Read cluster position: %s", socket.getRemoteSocketAddress(), clusterPosition);
-
-    return clusterPosition;
-  }
-
-  public OChannelBinary writeClusterPosition(final OClusterPosition clusterPosition) throws IOException {
-    final int serializedSize = OClusterPositionFactory.INSTANCE.getSerializedSize();
-
-    if (debug)
-      OLogManager.instance().info(this, "%s - Writing cluster position (%d bytes) : %s....", socket.getRemoteSocketAddress(),
-          serializedSize, clusterPosition);
-
-    out.write(clusterPosition.toStream());
-
-    updateMetricTransmittedBytes(serializedSize);
-
-    return this;
-  }
-
   public ORecordVersion readVersion() throws IOException {
-    if (OVersionFactory.instance().isDistributed()) {
-      final int recordVersion = readInt();
-      final long timestamp = readLong();
-      final long macAddress = readLong();
-      return OVersionFactory.instance().createDistributedVersion(recordVersion, timestamp, macAddress);
-    } else {
-      final ORecordVersion version = OVersionFactory.instance().createVersion();
-      version.setCounter(readInt());
-      return version;
-    }
+    final ORecordVersion version = OVersionFactory.instance().createVersion();
+    version.setCounter(readInt());
+    return version;
   }
 
   public OChannelBinary writeByte(final byte iContent) throws IOException {
@@ -371,7 +328,8 @@ public abstract class OChannelBinary extends OChannel {
   public OChannelBinary writeCollectionString(final Collection<String> iCollection) throws IOException {
     if (debug)
       OLogManager.instance().info(this, "%s - Writing strings (4+%d=%d items): %s", socket.getRemoteSocketAddress(),
-          iCollection != null ? iCollection.size() : 0, iCollection != null ? iCollection.size() + 4 : 4, iCollection!=null? iCollection.toString():"null");
+          iCollection != null ? iCollection.size() : 0, iCollection != null ? iCollection.size() + 4 : 4,
+          iCollection != null ? iCollection.toString() : "null");
 
     updateMetricTransmittedBytes(OBinaryProtocol.SIZE_INT);
     if (iCollection == null)
@@ -388,19 +346,11 @@ public abstract class OChannelBinary extends OChannel {
 
   public void writeRID(final ORID iRID) throws IOException {
     writeShort((short) iRID.getClusterId());
-    writeClusterPosition(iRID.getClusterPosition());
+    writeLong(iRID.getClusterPosition());
   }
 
   public void writeVersion(final ORecordVersion version) throws IOException {
-    if (version instanceof ODistributedVersion) {
-      final ODistributedVersion v = (ODistributedVersion) version;
-      writeInt(v.getCounter());
-      writeLong(v.getTimestamp());
-      writeLong(v.getMacAddress());
-    } else {
-      // Usual serialization
-      writeInt(version.getCounter());
-    }
+    writeInt(version.getCounter());
   }
 
   public void clearInput() throws IOException {

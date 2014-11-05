@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core;
 
 import com.orientechnologies.common.io.OFileUtils;
@@ -76,6 +76,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   protected ODatabaseThreadLocalFactory                                                databaseThreadFactory;
   protected volatile boolean                                                           active                 = false;
   protected ThreadPoolExecutor                                                         workers;
+  protected OSignalHandler                                                             signalHandler;
 
   protected Orient() {
     super(true);
@@ -133,6 +134,10 @@ public class Orient extends OListenerManger<OOrientListener> {
         return this;
 
       shutdownHook = new OrientShutdownHook();
+      if (signalHandler == null) {
+        signalHandler = new OSignalHandler();
+        signalHandler.installDefaultSignals();
+      }
 
       final int cores = Runtime.getRuntime().availableProcessors();
 
@@ -179,6 +184,10 @@ public class Orient extends OListenerManger<OOrientListener> {
       active = false;
 
       workers.shutdown();
+      try {
+        workers.awaitTermination(2, TimeUnit.MINUTES);
+      } catch (InterruptedException e) {
+      }
 
       OLogManager.instance().debug(this, "Orient Engine is shutting down...");
 
@@ -252,6 +261,8 @@ public class Orient extends OListenerManger<OOrientListener> {
 
     if (iURL.endsWith("/"))
       iURL = iURL.substring(0, iURL.length() - 1);
+
+    iURL = iURL.replace("//", "/");
 
     // SEARCH FOR ENGINE
     int pos = iURL.indexOf(':');

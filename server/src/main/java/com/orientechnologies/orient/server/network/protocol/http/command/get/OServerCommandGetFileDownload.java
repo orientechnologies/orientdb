@@ -63,7 +63,7 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
           sendORecordBinaryFileContent(iRequest, iResponse, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, fileType,
               (ORecordBytes) response, fileName);
         } else if (response instanceof ODocument) {
-          for (OProperty prop : ((ODocument) response).getSchemaClass().properties()) {
+          for (OProperty prop : ((ODocument) response).getImmutableSchemaClass().properties()) {
             if (prop.getType().equals(OType.BINARY))
               sendBinaryFieldFileContent(iRequest, iResponse, OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION,
                   fileType, (byte[]) ((ODocument) response).field(prop.getName()), fileName);

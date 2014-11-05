@@ -45,6 +45,6 @@ public interface ODatabaseInternal extends ODatabase {
 
   public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock);
 
-  public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock);
 
+	public void resetInitialization();
 }

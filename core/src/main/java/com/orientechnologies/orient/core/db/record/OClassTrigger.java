@@ -180,13 +180,13 @@ public class OClassTrigger extends ODocumentHookAbstract {
       return RESULT.RECORD_NOT_CHANGED;
 
     final ODocument document = (ODocument) iRecord;
-    if (document.getSchemaClass() != null && document.getSchemaClass().isSubClassOf(CLASSNAME))
+    if (document.getImmutableSchemaClass() != null && document.getImmutableSchemaClass().isSubClassOf(CLASSNAME))
       return super.onTrigger(iType, iRecord);
     return RESULT.RECORD_NOT_CHANGED;
   }
 
   private Object checkClzAttribute(final ODocument iDocument, String attr) {
-    final OClass clz = iDocument.getSchemaClass();
+    final OClass clz = iDocument.getImmutableSchemaClass();
     if (clz != null && clz.isSubClassOf(CLASSNAME)) {
       OFunction func = null;
       String fieldName = ((OClassImpl) clz).getCustom(attr);

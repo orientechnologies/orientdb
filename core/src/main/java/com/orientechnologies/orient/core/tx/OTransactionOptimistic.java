@@ -1,30 +1,26 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.orient.core.tx;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -41,7 +37,6 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -53,6 +48,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -274,8 +270,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       break;
     case ORecordOperation.LOADED:
       /**
-       * Read hooks already invoked in {@link com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract#executeReadRecord}
-       * .
+       * Read hooks already invoked in {@link com.orientechnologies.orient.core.db.record.ODatabaseRecordTx#executeReadRecord} .
        */
       break;
     case ORecordOperation.UPDATED:
@@ -333,7 +328,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         final ORecordId rid = (ORecordId) iRecord.getIdentity();
 
         if (!rid.isValid()) {
-          iRecord.onBeforeIdentityChanged(iRecord);
+          ORecordInternal.onBeforeIdentityChanged(iRecord);
 
           // ASSIGN A UNIQUE SERIAL TEMPORARY ID
           if (rid.clusterId == ORID.CLUSTER_ID_INVALID)
@@ -341,20 +336,18 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
           if (database.getStorageVersions().classesAreDetectedByClusterId() && iRecord instanceof ODocument) {
             final ODocument recordSchemaAware = (ODocument) iRecord;
-            final OClass recordClass = recordSchemaAware.getSchemaClass();
-            final OClass clusterIdClass = database.getMetadata().getSchema().getClassByClusterId(rid.clusterId);
+            final OClass recordClass = recordSchemaAware.getImmutableSchemaClass();
+            final OClass clusterIdClass = database.getMetadata().getImmutableSchemaSnapshot().getClassByClusterId(rid.clusterId);
             if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
                 || (recordClass != null && !recordClass.equals(clusterIdClass)))
               throw new OSchemaException("Record saved into cluster " + iClusterName + " should be saved with class "
                   + clusterIdClass + " but saved with class " + recordClass);
           }
 
-          rid.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(newObjectCounter--);
+          rid.clusterPosition = newObjectCounter--;
 
-          iRecord.onAfterIdentityChanged(iRecord);
-        } else
-          // REMOVE FROM THE DB'S CACHE
-          database.getLocalCache().freeRecord(rid);
+          ORecordInternal.onAfterIdentityChanged(iRecord);
+        }
 
         ORecordOperation txEntry = getRecordEntry(rid);
 
@@ -406,8 +399,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         break;
       case ORecordOperation.LOADED:
         /**
-         * Read hooks already invoked in
-         * {@link com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract#executeReadRecord}.
+         * Read hooks already invoked in {@link com.orientechnologies.orient.core.db.record.ODatabaseRecordTx#executeReadRecord}.
          */
         break;
       case ORecordOperation.UPDATED:
