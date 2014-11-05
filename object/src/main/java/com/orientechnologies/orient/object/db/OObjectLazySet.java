@@ -309,6 +309,6 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
   }
 
   protected ODatabasePojoAbstract<TYPE> getDatabase() {
-    return (ODatabasePojoAbstract<TYPE>) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner();
+    return OLazyCollectionUtil.getDatabase();
   }
 }

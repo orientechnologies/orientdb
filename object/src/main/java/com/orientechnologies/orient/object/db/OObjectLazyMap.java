@@ -28,7 +28,6 @@ import java.util.Set;
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.OLazyObjectMapInterface;
 import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -271,6 +270,6 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
 
   @SuppressWarnings("unchecked")
   protected ODatabasePojoAbstract<TYPE> getDatabase() {
-    return (ODatabasePojoAbstract<TYPE>) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner();
+    return OLazyCollectionUtil.getDatabase();
   }
 }

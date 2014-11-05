@@ -106,9 +106,9 @@ public class OServer {
       InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
     serverRootDirectory = OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME + "}", ".");
 
-    defaultSettings();
-
     OLogManager.installCustomFormatter();
+
+    defaultSettings();
 
     threadGroup = new ThreadGroup("OrientDB Server");
 

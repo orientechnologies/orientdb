@@ -465,7 +465,7 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
   }
 
   protected OObjectDatabaseTx getDatabase() {
-    return ((OObjectDatabaseTx) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner());
+    return (OObjectDatabaseTx) OLazyCollectionUtil.getDatabase();
   }
 
   protected boolean indexLoaded(int iIndex) {

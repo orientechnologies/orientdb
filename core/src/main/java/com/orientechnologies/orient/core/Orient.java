@@ -55,7 +55,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   public static final String                                                           ORIENTDB_HOME          = "ORIENTDB_HOME";
   public static final String                                                           URL_SYNTAX             = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
 
-  protected static final Orient                                                        instance               = new Orient();
+  protected static Orient                                                              instance               = new Orient();
   protected static boolean                                                             registerDatabaseByPath = false;
 
   protected final ConcurrentMap<String, OEngine>                                       engines                = new ConcurrentHashMap<String, OEngine>();
@@ -64,15 +64,14 @@ public class Orient extends OListenerManger<OOrientListener> {
   protected final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners   = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
   protected final ODatabaseFactory                                                     databaseFactory        = new ODatabaseFactory();
   protected final OScriptManager                                                       scriptManager          = new OScriptManager();
-  protected final Timer                                                                timer                  = new Timer(true);
-  protected final ThreadGroup                                                          threadGroup            = new ThreadGroup(
-                                                                                                                  "OrientDB");
+  protected final Timer                                                                timer;
+  protected final ThreadGroup                                                          threadGroup;
   protected final AtomicInteger                                                        serialId               = new AtomicInteger();
   private final ReadWriteLock                                                          engineLock             = new ReentrantReadWriteLock();
   protected ORecordFactoryManager                                                      recordFactoryManager   = new ORecordFactoryManager();
   protected ORecordConflictStrategyFactory                                             recordConflictStrategy = new ORecordConflictStrategyFactory();
   protected OrientShutdownHook                                                         shutdownHook;
-  protected OProfilerMBean                                                             profiler               = new OProfiler();
+  protected OProfilerMBean                                                             profiler;
   protected ODatabaseThreadLocalFactory                                                databaseThreadFactory;
   protected volatile boolean                                                           active                 = false;
   protected ThreadPoolExecutor                                                         workers;
@@ -80,6 +79,13 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   protected Orient() {
     super(true);
+
+    threadGroup = new ThreadGroup("OrientDB");
+    threadGroup.setDaemon(false);
+
+    instance = this;
+    timer = new Timer(true);
+    profiler = new OProfiler();
 
     startup();
   }
