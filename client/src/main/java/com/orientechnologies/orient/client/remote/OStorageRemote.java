@@ -324,6 +324,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           // SYNCHRONOUS
           try {
             beginResponse(network);
+            if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_25)
+              iRid.clusterId = network.readShort();
+
             iRid.clusterPosition = network.readLong();
             ppos.clusterPosition = iRid.clusterPosition;
             if (network.getSrvProtocolVersion() >= 11) {
@@ -352,6 +355,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                 try {
                   OStorageRemoteThreadLocal.INSTANCE.get().sessionId = sessionId;
                   beginResponse(network);
+                  if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_25)
+                    iRid.clusterId = network.readShort();
                   result = network.readLong();
                   if (network.getSrvProtocolVersion() >= 11)
                     network.readVersion();
