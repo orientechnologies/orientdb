@@ -108,6 +108,9 @@ public enum OGlobalConfiguration {
   STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method is used in storage."
       + " Possible values : gzip, nothing, snappy, snappy-native. Default is snappy.", String.class, "nothing"),
 
+  @Deprecated
+  STORAGE_KEEP_OPEN("storage.keepOpen", "Deprecated", Boolean.class, Boolean.TRUE),
+
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
   WAL_SYNC_ON_PAGE_FLUSH("storage.wal.syncOnPageFlush", "Should we perform force sync during WAL page flush", Boolean.class, true),
@@ -612,13 +615,17 @@ public enum OGlobalConfiguration {
 
       final long result = (osFreeMemory + jvmTotMemory - jvmMaxMemory) / (1024 * 1024) * 70 / 100;
       if (result > 0) {
-        OLogManager.instance().info(null, "Auto-config DISKCACHE=%,dMB (heap=%,dMB osFreeMemory=%,dMB)", result, jvmMaxMemory / 1024 / 1024, osFreeMemory / 1024 / 1024);
+        OLogManager.instance().info(null, "Auto-config DISKCACHE=%,dMB (heap=%,dMB osFreeMemory=%,dMB)", result,
+            jvmMaxMemory / 1024 / 1024, osFreeMemory / 1024 / 1024);
         DISK_CACHE_SIZE.setValue(result);
       } else {
         // LOW MEMORY: SET IT TO 64MB ONLY
         OLogManager
             .instance()
-            .warn(null, "No enough free physical memory available: %,dMB (heap=%,dMB). Set lower Heap and restart OrientDB. Now running with DISKCACHE=64MB", osFreeMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
+            .warn(
+                null,
+                "No enough free physical memory available: %,dMB (heap=%,dMB). Set lower Heap and restart OrientDB. Now running with DISKCACHE=64MB",
+                osFreeMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
         DISK_CACHE_SIZE.setValue(OReadWriteDiskCache.MIN_CACHE_SIZE);
       }
 
