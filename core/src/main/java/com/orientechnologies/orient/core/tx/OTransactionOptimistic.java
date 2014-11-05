@@ -20,11 +20,7 @@
 
 package com.orientechnologies.orient.core.tx;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -274,8 +270,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       break;
     case ORecordOperation.LOADED:
       /**
-       * Read hooks already invoked in {@link com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract#executeReadRecord}
-       * .
+       * Read hooks already invoked in {@link com.orientechnologies.orient.core.db.record.ODatabaseRecordTx#executeReadRecord} .
        */
       break;
     case ORecordOperation.UPDATED:
@@ -404,8 +399,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         break;
       case ORecordOperation.LOADED:
         /**
-         * Read hooks already invoked in
-         * {@link com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract#executeReadRecord}.
+         * Read hooks already invoked in {@link com.orientechnologies.orient.core.db.record.ODatabaseRecordTx#executeReadRecord}.
          */
         break;
       case ORecordOperation.UPDATED:

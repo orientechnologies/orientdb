@@ -3,7 +3,7 @@ package com.orientechnologies.orient.test.database.speed;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -25,7 +25,7 @@ public class IteratorSpeedTest {
       document.save();
     }
 
-    ORecordIteratorClass iterator = new ORecordIteratorClass(db, (ODatabaseRecordAbstract) db.getUnderlying(), "SpeedTest", true);
+    ORecordIteratorClass iterator = new ORecordIteratorClass(db, (ODatabaseRecordTx) db.getUnderlying(), "SpeedTest", true);
     iterator.setRange(new ORecordId(oClass.getDefaultClusterId(), 999998), new ORecordId(oClass.getDefaultClusterId(), 999999));
 
     long start = System.nanoTime();

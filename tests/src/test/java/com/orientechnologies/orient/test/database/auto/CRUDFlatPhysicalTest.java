@@ -18,14 +18,14 @@ package com.orientechnologies.orient.test.database.auto;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
-import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 
 @Test(groups = { "crud", "record-csv" }, sequential = true)
@@ -73,7 +73,7 @@ public class CRUDFlatPhysicalTest extends DocumentDBBaseTest {
     for (int i = 0; i < TOT_RECORDS; i++)
       ids.add(i);
 
-    for (ORecordFlat rec : new ORecordIteratorCluster<ORecordFlat>(database, (ODatabaseRecordAbstract) database.getUnderlying(),
+    for (ORecordFlat rec : new ORecordIteratorCluster<ORecordFlat>(database, (ODatabaseRecordTx) database.getUnderlying(),
         database.getClusterIdByName(CLUSTER_NAME), true)) {
       fields = rec.value().split("-");
 
@@ -88,7 +88,7 @@ public class CRUDFlatPhysicalTest extends DocumentDBBaseTest {
   public void updateRaw() {
     String[] fields;
 
-    for (ORecordFlat rec : new ORecordIteratorCluster<ORecordFlat>(database, (ODatabaseRecordAbstract) database.getUnderlying(),
+    for (ORecordFlat rec : new ORecordIteratorCluster<ORecordFlat>(database, (ODatabaseRecordTx) database.getUnderlying(),
         database.getClusterIdByName(CLUSTER_NAME), true)) {
       fields = rec.value().split("-");
       int i = Integer.parseInt(fields[0]);
@@ -107,7 +107,7 @@ public class CRUDFlatPhysicalTest extends DocumentDBBaseTest {
     for (int i = 0; i < TOT_RECORDS; i++)
       ids.add(i);
 
-    for (ORecordFlat rec : new ORecordIteratorCluster<ORecordFlat>(database, (ODatabaseRecordAbstract) database.getUnderlying(),
+    for (ORecordFlat rec : new ORecordIteratorCluster<ORecordFlat>(database, (ODatabaseRecordTx) database.getUnderlying(),
         database.getClusterIdByName(CLUSTER_NAME), true)) {
       fields = rec.value().split("-");
 
