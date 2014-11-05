@@ -16,13 +16,9 @@
 
 package com.orientechnologies.lucene.operator;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.*;
@@ -33,11 +29,14 @@ import com.orientechnologies.orient.core.sql.OIndexSearchResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
-import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEqualityNotNulls;
 import com.orientechnologies.orient.core.sql.operator.OQueryTargetOperator;
 import com.spatial4j.core.context.SpatialContext;
 import com.spatial4j.core.distance.DistanceUtils;
 import com.spatial4j.core.shape.Point;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class OLuceneNearOperator extends OQueryTargetOperator {
 
@@ -149,8 +148,8 @@ public class OLuceneNearOperator extends OQueryTargetOperator {
   }
 
   @Override
-  public Collection<OIdentifiable> filterRecords(ODatabaseComplex<?> iRecord, List<String> iTargetClasses,
-      OSQLFilterCondition iCondition, Object iLeft, Object iRight) {
+  public Collection<OIdentifiable> filterRecords(ODatabase<?> iRecord, List<String> iTargetClasses, OSQLFilterCondition iCondition,
+      Object iLeft, Object iRight) {
     return null;
   }
 }

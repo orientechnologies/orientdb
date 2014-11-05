@@ -72,6 +72,7 @@ public class GraphEmbeddedTest extends BaseLuceneTest {
     graph.addVertex("class:City", new Object[] { "name", "London" });
     graph.addVertex("class:City", new Object[] { "name", "Rome" });
 
+
     graph.commit();
 
     Iterable<Vertex> vertexes = graph.getVertices("City", new String[] { "name" }, new Object[] { "London" });

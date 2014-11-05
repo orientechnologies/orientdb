@@ -16,22 +16,22 @@
 
 package com.orientechnologies.lucene;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.orientechnologies.lucene.index.OLuceneFullTextIndex;
 import com.orientechnologies.lucene.index.OLuceneSpatialIndex;
-import com.orientechnologies.lucene.manager.*;
+import com.orientechnologies.lucene.manager.OLuceneFullTextIndexManager;
+import com.orientechnologies.lucene.manager.OLuceneSpatialIndexManager;
 import com.orientechnologies.lucene.shape.OShapeFactoryImpl;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.index.OIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class OLuceneIndexFactory implements OIndexFactory {
 
@@ -66,13 +66,13 @@ public class OLuceneIndexFactory implements OIndexFactory {
   }
 
   @Override
-  public OIndexInternal<?> createIndex(ODatabaseRecordInternal oDatabaseRecord, String indexType, String algorithm,
+  public OIndexInternal<?> createIndex(ODatabaseDocumentInternal oDatabaseRecord, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata) throws OConfigurationException {
     return createLuceneIndex(oDatabaseRecord, indexType, valueContainerAlgorithm, metadata);
   }
 
-  private OIndexInternal<?> createLuceneIndex(ODatabaseRecord oDatabaseRecord, String indexType, String valueContainerAlgorithm,
-      ODocument metadata) {
+  private OIndexInternal<?> createLuceneIndex(ODatabaseDocumentInternal oDatabaseRecord, String indexType,
+      String valueContainerAlgorithm, ODocument metadata) {
     if (OClass.INDEX_TYPE.FULLTEXT.toString().equals(indexType)) {
       return new OLuceneFullTextIndex(indexType, LUCENE_ALGORITHM, new OLuceneIndexEngine<Set<OIdentifiable>>(
           new OLuceneFullTextIndexManager(), indexType), valueContainerAlgorithm, metadata);

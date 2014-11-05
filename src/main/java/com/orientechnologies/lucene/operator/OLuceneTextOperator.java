@@ -16,12 +16,9 @@
 
 package com.orientechnologies.lucene.operator;
 
-import java.util.Collection;
-import java.util.List;
-
 import com.orientechnologies.lucene.collections.OFullTextCompositeKey;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -34,6 +31,9 @@ import com.orientechnologies.orient.core.sql.OIndexSearchResult;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryTargetOperator;
+
+import java.util.Collection;
+import java.util.List;
 
 public class OLuceneTextOperator extends OQueryTargetOperator {
 
@@ -76,8 +76,8 @@ public class OLuceneTextOperator extends OQueryTargetOperator {
   }
 
   @Override
-  public Collection<OIdentifiable> filterRecords(ODatabaseComplex<?> iRecord, List<String> iTargetClasses,
-      OSQLFilterCondition iCondition, Object iLeft, Object iRight) {
+  public Collection<OIdentifiable> filterRecords(ODatabase<?> iRecord, List<String> iTargetClasses, OSQLFilterCondition iCondition,
+      Object iLeft, Object iRight) {
     return null;
   }
 

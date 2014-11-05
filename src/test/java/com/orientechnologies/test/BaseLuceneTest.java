@@ -50,7 +50,7 @@ public abstract class BaseLuceneTest {
   private boolean               remote;
   protected ODatabaseDocumentTx serverDatabase;
   private Process               process;
-  protected String                buildDirectory;
+  protected String              buildDirectory;
   private final ExecutorService pool = Executors.newFixedThreadPool(1);
 
   public BaseLuceneTest() {
@@ -144,7 +144,6 @@ public abstract class BaseLuceneTest {
 
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
-      OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
 
       if (args.length > 0) {
         OServer server = OServerMain.create();

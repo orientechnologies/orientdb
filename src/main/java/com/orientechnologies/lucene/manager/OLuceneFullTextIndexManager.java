@@ -16,11 +16,14 @@
 
 package com.orientechnologies.lucene.manager;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Set;
-
+import com.orientechnologies.lucene.OLuceneIndexType;
+import com.orientechnologies.lucene.collections.OFullTextCompositeKey;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.OContextualRecordId;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
@@ -34,14 +37,10 @@ import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.util.Version;
 
-import com.orientechnologies.lucene.OLuceneIndexType;
-import com.orientechnologies.lucene.collections.OFullTextCompositeKey;
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.OContextualRecordId;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
 
@@ -133,7 +132,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
   }
 
   private Set<OIdentifiable> getResults(Query query, OCommandContext context) {
-    Set<OIdentifiable> results = new LinkedHashSet<OIdentifiable>();
+
     try {
       IndexSearcher searcher = getSearcher();
 
@@ -142,10 +141,11 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
         limit = (Integer) context.getVariable("$limit");
       }
 
+      final long startFetching = System.currentTimeMillis();
       final TopDocs docs = searcher.search(query, (limit != null && limit > 0) ? limit : Integer.MAX_VALUE);
       ScoreDoc[] hits = docs.scoreDocs;
       sendTotalHits(context, docs);
-
+      Set<OIdentifiable> results = new LinkedHashSet<OIdentifiable>(hits.length);
       for (final ScoreDoc score : hits) {
         Document ret = searcher.doc(score.doc);
         String rId = ret.get(RID);
@@ -156,11 +156,14 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
         }));
 
       }
-
+      if (context != null) {
+        sendLookupTime(context, docs, limit, startFetching);
+      }
+      return results;
     } catch (IOException e) {
       throw new OIndexException("Error reading from Lucene index", e);
     }
-    return results;
+
   }
 
   @Override

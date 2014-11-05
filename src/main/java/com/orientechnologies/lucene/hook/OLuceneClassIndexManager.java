@@ -16,11 +16,6 @@
 
 package com.orientechnologies.lucene.hook;
 
-import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_CREATE;
-import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_UPDATE;
-
-import java.util.*;
-
 import com.orientechnologies.lucene.OLuceneIndex;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.record.*;
@@ -32,6 +27,11 @@ import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.util.*;
+
+import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_CREATE;
+import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_UPDATE;
 
 public class OLuceneClassIndexManager extends ODocumentHookAbstract implements ODatabaseLifecycleListener {
 
@@ -512,23 +512,17 @@ public class OLuceneClassIndexManager extends ODocumentHookAbstract implements O
 
   }
 
-  // @Override
-  // public void onCreate(ODatabase iDatabase) {
-  // ((ODatabaseComplex<?>) iDatabase).registerHook(this);
-  // }
-  //
-  // @Override
-  // public void onOpen(ODatabase iDatabase) {
-  // ((ODatabaseComplex<?>) iDatabase).registerHook(this);
-  // }
-  //
-  // @Override
-  // public void onClose(ODatabase iDatabase) {
-  // ((ODatabaseComplex<?>) iDatabase).unregisterHook(this);
-  //
-  // }
+  @Override
+  public void onCreateClass(ODatabaseInternal iDatabase, OClass iClass) {
 
-  private ODatabaseRecord getDatabase() {
+  }
+
+  @Override
+  public void onDropClass(ODatabaseInternal iDatabase, OClass iClass) {
+
+  }
+
+  private ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 }
