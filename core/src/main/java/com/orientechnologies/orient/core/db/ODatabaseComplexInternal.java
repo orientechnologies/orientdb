@@ -20,9 +20,7 @@
 
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
-
-public interface ODatabaseComplexInternal<T> extends ODatabaseComplex<T>, ODatabaseInternal {
+public interface ODatabaseComplexInternal<T> extends ODatabase<T>, ODatabaseInternal<T> {
 
   /**
    * Returns the database owner. Used in wrapped instances to know the up level ODatabase instance.

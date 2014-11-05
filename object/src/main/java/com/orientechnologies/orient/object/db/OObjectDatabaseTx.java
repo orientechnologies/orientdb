@@ -482,7 +482,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   @Override
-  public ODatabaseComplex<Object> cleanOutRecord(ORID iRID, ORecordVersion iVersion) {
+  public ODatabase<Object> cleanOutRecord(ORID iRID, ORecordVersion iVersion) {
     deleteRecord(iRID, iVersion, true);
     return this;
   }

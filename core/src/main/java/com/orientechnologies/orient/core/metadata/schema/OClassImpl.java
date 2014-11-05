@@ -23,7 +23,7 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -1578,7 +1578,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   }
 
-  public void checkPersistentPropertyType(ODatabaseComplex<ORecord> database, String propertyName, OType type) {
+  public void checkPersistentPropertyType(ODatabase<ORecord> database, String propertyName, OType type) {
 
     StringBuilder builder = new StringBuilder(256);
     builder.append("select count(*) from ").append(name).append(" where ");

@@ -25,7 +25,7 @@ import java.util.concurrent.Callable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-public interface ODatabaseInternal extends ODatabase {
+public interface ODatabaseInternal<T> extends ODatabase<T> {
 
   /**
    * Returns the underlying storage implementation.

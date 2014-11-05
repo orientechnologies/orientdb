@@ -29,8 +29,7 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
+import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -246,7 +245,7 @@ public class OScriptDocumentDatabaseWrapper {
     return database.getTransaction();
   }
 
-  public ODatabaseComplex<ORecord> begin() {
+  public ODatabase<ORecord> begin() {
     return database.begin();
   }
 
@@ -262,7 +261,7 @@ public class OScriptDocumentDatabaseWrapper {
     return database.getClusterNameById(iClusterId);
   }
 
-  public <RET extends ODatabaseComplex<?>> RET setMVCC(boolean iValue) {
+  public <RET extends ODatabase<?>> RET setMVCC(boolean iValue) {
     return (RET) database.setMVCC(iValue);
   }
 
@@ -307,7 +306,7 @@ public class OScriptDocumentDatabaseWrapper {
     return database.getRecordType();
   }
 
-  public ODatabaseComplex<ORecord> delete(ORID iRid) {
+  public ODatabase<ORecord> delete(ORID iRid) {
     return database.delete(iRid);
   }
 
@@ -347,7 +346,7 @@ public class OScriptDocumentDatabaseWrapper {
     return (RET) database.load(iRecord, iFetchPlan, iIgnoreCache);
   }
 
-  public ODatabaseComplex<?> setDatabaseOwner(ODatabaseComplexInternal<?> iOwner) {
+  public ODatabase<?> setDatabaseOwner(ODatabaseComplexInternal<?> iOwner) {
     return database.setDatabaseOwner(iOwner);
   }
 
@@ -416,11 +415,11 @@ public class OScriptDocumentDatabaseWrapper {
     return database.countClass(iClassName);
   }
 
-  public ODatabaseComplex<ORecord> commit() {
+  public ODatabase<ORecord> commit() {
     return database.commit();
   }
 
-  public ODatabaseComplex<ORecord> rollback() {
+  public ODatabase<ORecord> rollback() {
     return database.rollback();
   }
 

@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core.record;
 
 import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
@@ -330,12 +330,12 @@ public abstract class ORecordAbstract implements ORecord {
   }
 
   public ORecordAbstract save(boolean forceCreate) {
-    getDatabase().save(this, ODatabaseComplex.OPERATION_MODE.SYNCHRONOUS, forceCreate, null, null);
+    getDatabase().save(this, ODatabase.OPERATION_MODE.SYNCHRONOUS, forceCreate, null, null);
     return this;
   }
 
   public ORecordAbstract save(String iClusterName, boolean forceCreate) {
-    return getDatabase().save(this, iClusterName, ODatabaseComplex.OPERATION_MODE.SYNCHRONOUS, forceCreate, null, null);
+    return getDatabase().save(this, iClusterName, ODatabase.OPERATION_MODE.SYNCHRONOUS, forceCreate, null, null);
   }
 
   public ORecordAbstract delete() {

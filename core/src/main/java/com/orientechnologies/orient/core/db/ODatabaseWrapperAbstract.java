@@ -19,6 +19,15 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -31,17 +40,8 @@ import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-
 @SuppressWarnings("unchecked")
-public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal> implements ODatabaseInternal {
+public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> implements ODatabaseInternal<T> {
   protected DB                          underlying;
   protected ODatabaseComplexInternal<?> databaseOwner;
 
@@ -309,7 +309,8 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal> imp
     underlying.unregisterListener(iListener);
   }
 
-  public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
+  @Override
+  public <V> V callInLock(Callable<V> iCallable, boolean iExclusiveLock) {
     return getStorage().callInLock(iCallable, iExclusiveLock);
   }
 

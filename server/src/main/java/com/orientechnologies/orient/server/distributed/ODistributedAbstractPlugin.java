@@ -22,10 +22,7 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -175,7 +172,7 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
 
       final OStorage dbStorage = iDatabase.getStorage();
 
-      if (iDatabase instanceof ODatabaseComplex<?> && dbStorage instanceof OStorageEmbedded) {
+      if (iDatabase instanceof ODatabase<?> && dbStorage instanceof OStorageEmbedded) {
         ODistributedStorage storage = storages.get(iDatabase.getURL());
         if (storage == null) {
           storage = new ODistributedStorage(serverInstance, (OStorageEmbedded) dbStorage);

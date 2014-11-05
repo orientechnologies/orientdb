@@ -19,6 +19,12 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -40,7 +46,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
-import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
@@ -50,15 +55,9 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-
 @SuppressWarnings("unchecked")
-public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecordInternal> extends ODatabaseWrapperAbstract<DB>
-    implements ODatabaseComplexInternal<ORecord> {
+public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecordInternal> extends
+    ODatabaseWrapperAbstract<DB, ORecord> implements ODatabaseComplexInternal<ORecord> {
 
   public ODatabaseRecordWrapperAbstract(final DB iDatabase) {
     super(iDatabase);
@@ -123,15 +122,15 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecordI
     underlying.replaceStorage(iNewStorage);
   }
 
-  public ODatabaseComplex<ORecord> begin() {
+  public ODatabase<ORecord> begin() {
     return underlying.begin();
   }
 
-  public ODatabaseComplex<ORecord> begin(final TXTYPE iType) {
+  public ODatabase<ORecord> begin(final TXTYPE iType) {
     return underlying.begin(iType);
   }
 
-  public ODatabaseComplex<ORecord> begin(final OTransaction iTx) {
+  public ODatabase<ORecord> begin(final OTransaction iTx) {
     return underlying.begin(iTx);
   }
 
@@ -140,7 +139,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecordI
     return underlying.isMVCC();
   }
 
-  public <RET extends ODatabaseComplex<?>> RET setMVCC(final boolean iValue) {
+  public <RET extends ODatabase<?>> RET setMVCC(final boolean iValue) {
     checkOpeness();
     return (RET) underlying.setMVCC(iValue);
   }
@@ -199,13 +198,13 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecordI
     return (RET) underlying.newInstance();
   }
 
-  public ODatabaseComplex<ORecord> delete(final ORID iRid) {
+  public ODatabase<ORecord> delete(final ORID iRid) {
     underlying.delete(iRid);
     return this;
   }
 
   @Override
-  public ODatabaseComplex<ORecord> delete(final ORID iRid, final ORecordVersion iVersion) {
+  public ODatabase<ORecord> delete(final ORID iRid, final ORecordVersion iVersion) {
     underlying.delete(iRid, iVersion);
     return this;
   }
@@ -216,12 +215,12 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecordI
   }
 
   @Override
-  public ODatabaseComplex<ORecord> cleanOutRecord(ORID rid, ORecordVersion version) {
+  public ODatabase<ORecord> cleanOutRecord(ORID rid, ORecordVersion version) {
     underlying.cleanOutRecord(rid, version);
     return this;
   }
 
-  public ODatabaseComplex<ORecord> delete(final ORecord iRecord) {
+  public ODatabase<ORecord> delete(final ORecord iRecord) {
     underlying.delete(iRecord);
     return this;
   }
@@ -350,12 +349,12 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecordI
     return (DBTYPE) underlying.checkSecurity(iResourceGeneric, iOperation, iResourcesSpecific);
   }
 
-  public <DBTYPE extends ODatabaseComplex<?>> DBTYPE registerHook(final ORecordHook iHookImpl) {
+  public <DBTYPE extends ODatabase<?>> DBTYPE registerHook(final ORecordHook iHookImpl) {
     underlying.registerHook(iHookImpl);
     return (DBTYPE) this;
   }
 
-  public <DBTYPE extends ODatabaseComplex<?>> DBTYPE registerHook(final ORecordHook iHookImpl, ORecordHook.HOOK_POSITION iPosition) {
+  public <DBTYPE extends ODatabase<?>> DBTYPE registerHook(final ORecordHook iHookImpl, ORecordHook.HOOK_POSITION iPosition) {
     underlying.registerHook(iHookImpl, iPosition);
     return (DBTYPE) this;
   }
@@ -368,7 +367,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecordI
     return underlying.getHooks();
   }
 
-  public <DBTYPE extends ODatabaseComplex<?>> DBTYPE unregisterHook(final ORecordHook iHookImpl) {
+  public <DBTYPE extends ODatabase<?>> DBTYPE unregisterHook(final ORecordHook iHookImpl) {
     underlying.unregisterHook(iHookImpl);
     return (DBTYPE) this;
   }

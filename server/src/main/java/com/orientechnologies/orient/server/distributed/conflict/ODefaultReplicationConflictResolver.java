@@ -22,8 +22,8 @@ package com.orientechnologies.orient.server.distributed.conflict;
 import java.util.Date;
  import java.util.List;
 
- import com.orientechnologies.orient.core.db.ODatabaseComplex;
- import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
  import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
  import com.orientechnologies.orient.core.db.record.OIdentifiable;
  import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -68,7 +68,7 @@ import java.util.Date;
    private boolean                   ignoreIfMergeOk;
    private boolean                   latestAlwaysWin;
 
-   private ODatabaseComplex<?>       database;
+   private ODatabase<?> database;
    private OIndex<?>                 index                      = null;
    private OServer                   serverInstance;
    private ODistributedServerManager cluster;

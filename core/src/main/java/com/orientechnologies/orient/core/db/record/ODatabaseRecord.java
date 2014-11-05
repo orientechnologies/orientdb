@@ -19,7 +19,7 @@
  */
 package com.orientechnologies.orient.core.db.record;
 
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.ORecord;
 
@@ -28,7 +28,7 @@ import com.orientechnologies.orient.core.record.ORecord;
  * 
  * @author Luca Garulli
  */
-public interface ODatabaseRecord extends ODatabaseComplex<ORecord> {
+public interface ODatabaseRecord extends ODatabase<ORecord> {
 
   /**
    * Browses all the records of the specified cluster.

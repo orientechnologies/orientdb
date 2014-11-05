@@ -29,7 +29,7 @@ import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -451,7 +451,7 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     return new OCommandSQL(text);
   }
 
-  protected ODatabaseComplex<ORecord> getDatabase() {
+  protected ODatabase<ORecord> getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 }

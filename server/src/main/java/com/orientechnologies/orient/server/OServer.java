@@ -32,7 +32,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -546,7 +545,7 @@ public class OServer {
     return this;
   }
 
-  public ODatabaseComplex<?> openDatabase(final String iDbType, final String iDbUrl, final String user, final String password) {
+  public ODatabase<?> openDatabase(final String iDbType, final String iDbUrl, final String user, final String password) {
     final String path = getStoragePath(iDbUrl);
 
     final ODatabaseComplexInternal<?> database = Orient.instance().getDatabaseFactory().createDatabase(iDbType, path);

@@ -28,7 +28,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.script.formatter.*;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
@@ -112,7 +112,7 @@ public class OScriptManager {
    *          Language as filter
    * @return String containing all the functions
    */
-  public String getLibrary(final ODatabaseComplex<?> db, final String iLanguage) {
+  public String getLibrary(final ODatabase<?> db, final String iLanguage) {
     if (db == null)
       // NO DB = NO LIBRARY
       return null;

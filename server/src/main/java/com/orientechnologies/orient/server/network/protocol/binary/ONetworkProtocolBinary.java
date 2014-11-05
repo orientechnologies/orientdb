@@ -42,7 +42,6 @@ import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -409,7 +408,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           + "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
   }
 
-  protected ODatabaseComplex<?> openDatabase(final ODatabaseComplexInternal<?> database, final String iUser, final String iPassword) {
+  protected ODatabase<?> openDatabase(final ODatabaseComplexInternal<?> database, final String iUser, final String iPassword) {
 
     if (database.isClosed())
       if (database.getStorage() instanceof ODirectMemoryStorage && !database.exists())

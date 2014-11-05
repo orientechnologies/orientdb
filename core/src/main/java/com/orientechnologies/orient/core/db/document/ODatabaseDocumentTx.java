@@ -481,12 +481,12 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   /**
    * Deletes the record checking the version.
    */
-  public ODatabaseComplex<ORecord> delete(final ORID iRecord, final ORecordVersion iVersion) {
+  public ODatabase<ORecord> delete(final ORID iRecord, final ORecordVersion iVersion) {
     executeDeleteRecord(iRecord, iVersion, true, true, OPERATION_MODE.SYNCHRONOUS, false);
     return this;
   }
 
-  public ODatabaseComplex<ORecord> cleanOutRecord(final ORID iRecord, final ORecordVersion iVersion) {
+  public ODatabase<ORecord> cleanOutRecord(final ORID iRecord, final ORecordVersion iVersion) {
     executeDeleteRecord(iRecord, iVersion, true, true, OPERATION_MODE.SYNCHRONOUS, true);
     return this;
   }
@@ -873,7 +873,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   /**
    * {@inheritDoc}
    */
-  public <DB extends ODatabaseComplex<?>> DB setMVCC(boolean mvcc) {
+  public <DB extends ODatabase<?>> DB setMVCC(boolean mvcc) {
     this.mvcc = mvcc;
     return (DB) this;
   }
@@ -907,7 +907,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   /**
    * {@inheritDoc}
    */
-  public <DB extends ODatabaseComplex<?>> DB registerHook(final ORecordHook iHookImpl, final ORecordHook.HOOK_POSITION iPosition) {
+  public <DB extends ODatabase<?>> DB registerHook(final ORecordHook iHookImpl, final ORecordHook.HOOK_POSITION iPosition) {
     final Map<ORecordHook, ORecordHook.HOOK_POSITION> tmp = new LinkedHashMap<ORecordHook, ORecordHook.HOOK_POSITION>(hooks);
     tmp.put(iHookImpl, iPosition);
     hooks.clear();
@@ -923,14 +923,14 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   /**
    * {@inheritDoc}
    */
-  public <DB extends ODatabaseComplex<?>> DB registerHook(final ORecordHook iHookImpl) {
+  public <DB extends ODatabase<?>> DB registerHook(final ORecordHook iHookImpl) {
     return (DB) registerHook(iHookImpl, ORecordHook.HOOK_POSITION.REGULAR);
   }
 
   /**
    * {@inheritDoc}
    */
-  public <DB extends ODatabaseComplex<?>> DB unregisterHook(final ORecordHook iHookImpl) {
+  public <DB extends ODatabase<?>> DB unregisterHook(final ORecordHook iHookImpl) {
     if (iHookImpl != null) {
       iHookImpl.onUnregister();
       hooks.remove(iHookImpl);
@@ -2505,7 +2505,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * {@inheritDoc}
    */
   @Override
-  public ODatabaseComplex<ORecord> commit() {
+  public ODatabase<ORecord> commit() {
     return commit(false);
   }
 
@@ -2579,7 +2579,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * {@inheritDoc}
    */
   @Override
-  public ODatabaseComplex<ORecord> rollback() {
+  public ODatabase<ORecord> rollback() {
     return rollback(false);
   }
 

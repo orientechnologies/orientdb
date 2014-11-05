@@ -26,7 +26,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.annotation.OAfterSerialization;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
@@ -127,7 +127,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
           // STORE THE TRAVERSED OBJECT TO KNOW THE RECORD ID. CALL THIS VERSION TO AVOID CLEAR OF STACK IN THREAD-LOCAL
           database.save(iLinkedRecord);
 
-        final ODatabaseComplex<?> dbOwner = database.getDatabaseOwner();
+        final ODatabase<?> dbOwner = database.getDatabaseOwner();
         dbOwner.registerUserObjectAfterLinkSave(iLinkedRecord);
 
         resultRid = iLinkedRecord;
@@ -548,7 +548,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     }
   }
 
-  public void embeddedMapToStream(ODatabaseComplex<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
+  public void embeddedMapToStream(ODatabase<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
       final StringBuilder iOutput, final OClass iLinkedClass, OType iLinkedType, final Object iValue,
       final Set<ODocument> iMarshalledRecords, final boolean iSaveOnlyDirty) {
     iOutput.append(OStringSerializerHelper.MAP_BEGIN);
@@ -721,7 +721,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     return coll;
   }
 
-  public StringBuilder embeddedCollectionToStream(ODatabaseComplex<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
+  public StringBuilder embeddedCollectionToStream(ODatabase<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
       final StringBuilder iOutput, final OClass iLinkedClass, final OType iLinkedType, final Object iValue,
       final Set<ODocument> iMarshalledRecords, final boolean iSaveOnlyDirty, final boolean iSet) {
     iOutput.append(iSet ? OStringSerializerHelper.SET_BEGIN : OStringSerializerHelper.LIST_BEGIN);

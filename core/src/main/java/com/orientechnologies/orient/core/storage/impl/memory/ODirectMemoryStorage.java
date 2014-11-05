@@ -22,7 +22,7 @@ package com.orientechnologies.orient.core.storage.impl.memory;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -68,7 +68,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
 		ORecordId recordId = new ORecordId();
 		recordId.clusterId = 0;
     createRecord(recordId, new byte[0], new OSimpleVersion(), ORecordBytes.RECORD_TYPE,
-        ODatabaseComplex.OPERATION_MODE.SYNCHRONOUS.ordinal(), null);
+        ODatabase.OPERATION_MODE.SYNCHRONOUS.ordinal(), null);
   }
 
   @Override

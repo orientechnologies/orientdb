@@ -23,7 +23,7 @@ import java.util.Collection;
 import java.util.List;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -39,7 +39,7 @@ public abstract class OQueryTargetOperator extends OQueryOperator {
     super(iKeyword, iPrecedence, false);
   }
 
-  public abstract Collection<OIdentifiable> filterRecords(final ODatabaseComplex<?> iRecord, final List<String> iTargetClasses,
+  public abstract Collection<OIdentifiable> filterRecords(final ODatabase<?> iRecord, final List<String> iTargetClasses,
       final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight);
 
   /**

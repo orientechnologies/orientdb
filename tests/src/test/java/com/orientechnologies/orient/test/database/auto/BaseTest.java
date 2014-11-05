@@ -1,13 +1,13 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import org.testng.annotations.*;
 
 @Test
-public abstract class BaseTest<T extends ODatabaseComplex> {
+public abstract class BaseTest<T extends ODatabase> {
   protected T      database;
   protected String url;
   private boolean  dropDb = false;
@@ -96,7 +96,7 @@ public abstract class BaseTest<T extends ODatabaseComplex> {
   }
 
   protected void createBasicTestSchema() {
-    ODatabaseComplex database = this.database;
+    ODatabase database = this.database;
     if (database instanceof OObjectDatabaseTx)
       database = ((OObjectDatabaseTx) database).getUnderlying();
 
