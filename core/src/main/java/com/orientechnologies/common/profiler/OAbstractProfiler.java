@@ -22,9 +22,11 @@ package com.orientechnologies.common.profiler;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.sun.management.OperatingSystemMXBean;
@@ -35,6 +37,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class OAbstractProfiler extends OSharedResourceAbstract implements OProfilerMBean {
@@ -58,12 +61,15 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
   }
 
   public OAbstractProfiler() {
+    installMemoryChecker();
   }
 
   public OAbstractProfiler(final OAbstractProfiler profiler) {
     hooks.putAll(profiler.hooks);
     dictionary.putAll(profiler.dictionary);
     types.putAll(profiler.types);
+
+    installMemoryChecker();
   }
 
   public static void dumpEnvironment(final PrintStream out) {
@@ -251,6 +257,52 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
   @Override
   public String toJSON(String command, final String iPar1) {
     return null;
+  }
+
+  protected void installMemoryChecker() {
+    Orient.instance().getTimer().schedule(new TimerTask() {
+      @Override
+      public void run() {
+        final java.lang.management.OperatingSystemMXBean mxBean = ManagementFactory.getOperatingSystemMXBean();
+        final long jvmTotMemory = Runtime.getRuntime().totalMemory();
+        final long jvmMaxMemory = Runtime.getRuntime().maxMemory();
+
+        for (OStorage s : Orient.instance().getStorages()) {
+          if (s instanceof OLocalPaginatedStorage) {
+            final ODiskCache dk = ((OLocalPaginatedStorage) s).getDiskCache();
+            if (dk == null)
+              // NOT YET READY
+              continue;
+
+            final long totalDiskCacheUsedMemory = dk.getUsedMemory() / OFileUtils.MEGABYTE;
+            final long maxDiskCacheUsedMemory = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong();
+
+            if (jvmTotMemory < jvmMaxMemory && (totalDiskCacheUsedMemory * 120 / 100) > maxDiskCacheUsedMemory) {
+
+              final long suggestedMaxHeap = jvmTotMemory * 120 / 100;
+              final long suggestedDiskCache = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong()
+                  + (jvmMaxMemory - suggestedMaxHeap) / OFileUtils.MEGABYTE;
+
+              OLogManager
+                  .instance()
+                  .info(
+                      this,
+                      "Database '%s' uses %,dMB/%,dMB of DISKCACHE memory, while Heap is not completely used (usedHeap=%dMB maxHeap=%dMB). To improve performance set maxHeap to %dMB and DISKCACHE to %dMB",
+                      s.getName(), totalDiskCacheUsedMemory, maxDiskCacheUsedMemory, jvmTotMemory / OFileUtils.MEGABYTE,
+                      jvmMaxMemory / OFileUtils.MEGABYTE, suggestedMaxHeap / OFileUtils.MEGABYTE, suggestedDiskCache);
+
+              OLogManager
+                  .instance()
+                  .info(
+                      this,
+                      "-> Open server.sh (or server.bat on Windows) and change the following variables: 1) MAXHEAP=-Xmx%dM 2) MAXDISKCACHE=%d",
+                      suggestedMaxHeap / OFileUtils.MEGABYTE, suggestedDiskCache);
+            }
+
+          }
+        }
+      }
+    }, 5000, 5000);
   }
 
   /**

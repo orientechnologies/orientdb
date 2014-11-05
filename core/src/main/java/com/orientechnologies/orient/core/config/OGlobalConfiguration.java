@@ -23,6 +23,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 
@@ -333,8 +334,10 @@ public enum OGlobalConfiguration {
       "How much free space should be in sbtreebonsai file before it will be reused during next allocation", Float.class, 0.5),
 
   // RIDBAG
-  RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD("ridBag.embeddedToSbtreeBonsaiThreshold",
-      "Amount of values after which LINKBAG implementation will use sbtree as values container", Integer.class, 40),
+  RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD(
+      "ridBag.embeddedToSbtreeBonsaiThreshold",
+      "Amount of values after which LINKBAG implementation will use sbtree as values container. Set to -1 to force always using it",
+      Integer.class, 40),
 
   RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD("ridBag.sbtreeBonsaiToEmbeddedToThreshold",
       "Amount of values after which LINKBAG implementation will use embedded values container (disabled by default)",
@@ -606,27 +609,24 @@ public enum OGlobalConfiguration {
   private static void autoConfigDiskCacheSize() {
     final OperatingSystemMXBean mxBean = ManagementFactory.getOperatingSystemMXBean();
     try {
-      final Method memorySize = mxBean.getClass().getDeclaredMethod("getTotalPhysicalMemorySize");
+      final Method memorySize = mxBean.getClass().getDeclaredMethod("getFreePhysicalMemorySize");
       memorySize.setAccessible(true);
-      final long totalMemory = (Long) memorySize.invoke(mxBean);
+      final long osFreeMemory = (Long) memorySize.invoke(mxBean);
+      final long jvmTotMemory = Runtime.getRuntime().totalMemory();
+      final long jvmMaxMemory = Runtime.getRuntime().maxMemory();
 
-      final long maxMemory = Runtime.getRuntime().maxMemory();
-
-      if (maxMemory > 512L * 1024 * 1024) {
+      final long result = (osFreeMemory + jvmTotMemory - jvmMaxMemory) / (1024 * 1024) * 70 / 100;
+      if (result > 0) {
+        OLogManager.instance().info(null, "Auto-config DISKCACHE=%,dMB (heap=%,dMB osFreeMemory=%,dMB)", result, jvmMaxMemory / 1024 / 1024, osFreeMemory / 1024 / 1024);
+        DISK_CACHE_SIZE.setValue(result);
+      } else {
+        // LOW MEMORY: SET IT TO 64MB ONLY
         OLogManager
             .instance()
-            .warn(
-                null,
-                "Your maximum heap size is "
-                    + OFileUtils.getSizeAsString(maxMemory)
-                    + ", but OrientDB uses off-heap memory to avoid GC pauses. "
-                    + "In the case OrientDB is running as standalone, we recommend to use smaller amount of heap memory to let OrientDB using the rest as off-heap. "
-                    + "512 megabytes is recommended value of heap size.");
+            .warn(null, "No enough free physical memory available: %,dMB (heap=%,dMB). Set lower Heap and restart OrientDB. Now running with DISKCACHE=64MB", osFreeMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
+        DISK_CACHE_SIZE.setValue(OReadWriteDiskCache.MIN_CACHE_SIZE);
       }
 
-      final long result = (totalMemory - maxMemory - 2L * 1024 * 1024 * 1024) / (1024 * 1024);
-      if (result > DISK_CACHE_SIZE.getValueAsLong())
-        DISK_CACHE_SIZE.setValue(result);
     } catch (NoSuchMethodException e) {
     } catch (InvocationTargetException e) {
     } catch (IllegalAccessException e) {
