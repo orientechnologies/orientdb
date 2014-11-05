@@ -24,7 +24,6 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 
@@ -73,8 +72,8 @@ public class CRUDFlatPhysicalTest extends DocumentDBBaseTest {
     for (int i = 0; i < TOT_RECORDS; i++)
       ids.add(i);
 
-    for (ORecordFlat rec : new ORecordIteratorCluster<ORecordFlat>(database, (ODatabaseRecordTx) database.getUnderlying(),
-        database.getClusterIdByName(CLUSTER_NAME), true)) {
+    for (ORecordFlat rec : new ORecordIteratorCluster<ORecordFlat>(database, database, database.getClusterIdByName(CLUSTER_NAME),
+        true)) {
       fields = rec.value().split("-");
 
       int i = Integer.parseInt(fields[0]);
@@ -88,8 +87,8 @@ public class CRUDFlatPhysicalTest extends DocumentDBBaseTest {
   public void updateRaw() {
     String[] fields;
 
-    for (ORecordFlat rec : new ORecordIteratorCluster<ORecordFlat>(database, (ODatabaseRecordTx) database.getUnderlying(),
-        database.getClusterIdByName(CLUSTER_NAME), true)) {
+    for (ORecordFlat rec : new ORecordIteratorCluster<ORecordFlat>(database, database, database.getClusterIdByName(CLUSTER_NAME),
+        true)) {
       fields = rec.value().split("-");
       int i = Integer.parseInt(fields[0]);
       if (i % 2 == 0) {
@@ -107,8 +106,8 @@ public class CRUDFlatPhysicalTest extends DocumentDBBaseTest {
     for (int i = 0; i < TOT_RECORDS; i++)
       ids.add(i);
 
-    for (ORecordFlat rec : new ORecordIteratorCluster<ORecordFlat>(database, (ODatabaseRecordTx) database.getUnderlying(),
-        database.getClusterIdByName(CLUSTER_NAME), true)) {
+    for (ORecordFlat rec : new ORecordIteratorCluster<ORecordFlat>(database, database, database.getClusterIdByName(CLUSTER_NAME),
+        true)) {
       fields = rec.value().split("-");
 
       int i = Integer.parseInt(fields[0]);

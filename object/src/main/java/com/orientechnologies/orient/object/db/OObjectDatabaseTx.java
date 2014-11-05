@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -190,15 +189,15 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     checkOpeness();
     checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, iClassName);
 
-    return new OObjectIteratorClass<RET>(this, (ODatabaseRecordTx) getUnderlying().getUnderlying(), iClassName, iPolymorphic);
+    return new OObjectIteratorClass<RET>(this, (ODatabaseDocumentTx) getUnderlying(), iClassName, iPolymorphic);
   }
 
   public <RET> OObjectIteratorCluster<RET> browseCluster(final String iClusterName) {
     checkOpeness();
     checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
-    return (OObjectIteratorCluster<RET>) new OObjectIteratorCluster<Object>(this, (ODatabaseRecordTx) getUnderlying()
-        .getUnderlying(), getClusterIdByName(iClusterName));
+    return (OObjectIteratorCluster<RET>) new OObjectIteratorCluster<Object>(this, (ODatabaseDocumentTx) getUnderlying(),
+        getClusterIdByName(iClusterName));
   }
 
   public <RET> RET load(final Object iPojo) {
@@ -519,7 +518,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   @Override
   public ODatabasePojoAbstract<Object> commit(boolean force) throws OTransactionException {
-    ((ODatabaseRecordTx) underlying.getUnderlying()).commit(force);
+    underlying.commit(force);
 
     if (getTransaction().isActive())
       return this;
@@ -553,7 +552,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   @Override
   public ODatabasePojoAbstract<Object> rollback(boolean force) throws OTransactionException {
     // BY PASS DOCUMENT DB
-    ((ODatabaseRecordTx) underlying.getUnderlying()).rollback(force);
+    underlying.rollback(force);
 
     if (!underlying.getTransaction().isActive()) {
       // COPY ALL TX ENTRIES

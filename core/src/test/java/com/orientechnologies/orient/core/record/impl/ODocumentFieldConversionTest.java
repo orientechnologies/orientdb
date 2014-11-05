@@ -4,21 +4,13 @@ import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -26,8 +18,8 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 
 public class ODocumentFieldConversionTest {
 
-  private ODatabaseDocument db;
-  private OClass            clazz;
+  private ODatabaseDocumentTx db;
+  private OClass              clazz;
 
   @BeforeTest
   public void before() {
@@ -77,12 +69,12 @@ public class ODocumentFieldConversionTest {
 
   @Test
   public void testDateToSchemaConversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     Calendar calendare = Calendar.getInstance();
     calendare.set(Calendar.MILLISECOND, 0);
     Date date = calendare.getTime();
 
-    String dateString = ((ODatabaseDocumentTx) db).getStorage().getConfiguration().getDateTimeFormatInstance().format(date);
+    String dateString = db.getStorage().getConfiguration().getDateTimeFormatInstance().format(date);
     ODocument doc = new ODocument(clazz);
     doc.field("date", dateString);
     assertTrue(doc.field("date") instanceof Date);
@@ -109,7 +101,7 @@ public class ODocumentFieldConversionTest {
 
   @Test
   public void testLiteralToSchemaConvertionInteger() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     ODocument doc = new ODocument(clazz);
     doc.field("integer", 2L);
     assertTrue(doc.field("integer") instanceof Integer);
@@ -140,7 +132,7 @@ public class ODocumentFieldConversionTest {
 
   @Test
   public void testLiteralToSchemaConvertionString() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     ODocument doc = new ODocument(clazz);
 
     doc.field("string", 1);
@@ -171,7 +163,7 @@ public class ODocumentFieldConversionTest {
 
   @Test
   public void testLiteralToSchemaConvertionFloat() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     ODocument doc = new ODocument(clazz);
 
     doc.field("float", 1);
@@ -202,7 +194,7 @@ public class ODocumentFieldConversionTest {
 
   @Test
   public void testLiteralToSchemaConvertionDouble() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     ODocument doc = new ODocument(clazz);
 
     doc.field("double", 1);
@@ -233,7 +225,7 @@ public class ODocumentFieldConversionTest {
 
   @Test
   public void testLiteralToSchemaConvertionLong() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     ODocument doc = new ODocument(clazz);
 
     doc.field("long", 1);
@@ -264,7 +256,7 @@ public class ODocumentFieldConversionTest {
 
   @Test
   public void testLiteralToSchemaConvertionBoolean() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     ODocument doc = new ODocument(clazz);
 
     doc.field("boolean", 0);
@@ -295,7 +287,7 @@ public class ODocumentFieldConversionTest {
 
   @Test
   public void testLiteralToSchemaConvertionDecimal() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     ODocument doc = new ODocument(clazz);
 
     doc.field("decimal", 0);
@@ -326,7 +318,7 @@ public class ODocumentFieldConversionTest {
 
   @Test
   public void testConversionAlsoWithWrongType() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     ODocument doc = new ODocument(clazz);
 
     doc.field("float", 2, OType.INTEGER);
@@ -349,7 +341,7 @@ public class ODocumentFieldConversionTest {
 
   @Test
   public void testLiteralConversionAfterSchemaSet() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     ODocument doc = new ODocument();
 
     doc.field("float", 1);
@@ -389,7 +381,7 @@ public class ODocumentFieldConversionTest {
   @SuppressWarnings({ "rawtypes" })
   @Test
   public void testListByteCoversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     List values = new ArrayList();
     ODocument doc = new ODocument(clazz);
     doc.field("byteList", values);
@@ -418,7 +410,7 @@ public class ODocumentFieldConversionTest {
   @Test
   @SuppressWarnings({ "rawtypes" })
   public void testCollectionIntegerCoversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     List values = new ArrayList();
     ODocument doc = new ODocument(clazz);
     doc.field("integerList", values);
@@ -448,7 +440,7 @@ public class ODocumentFieldConversionTest {
   @Test
   @SuppressWarnings({ "rawtypes" })
   public void testCollectionLongCoversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     List values = new ArrayList();
     ODocument doc = new ODocument(clazz);
     doc.field("longList", values);
@@ -478,7 +470,7 @@ public class ODocumentFieldConversionTest {
   @Test
   @SuppressWarnings({ "rawtypes", "unchecked" })
   public void testCollectionBooleanCoversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     List values = new ArrayList();
     ODocument doc = new ODocument(clazz);
     doc.field("booleanList", values);
@@ -521,7 +513,7 @@ public class ODocumentFieldConversionTest {
   @Test
   @SuppressWarnings({ "rawtypes", "unchecked" })
   public void testCollectionStringCoversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     List values = new ArrayList();
     ODocument doc = new ODocument(clazz);
     doc.field("stringList", values);
@@ -574,7 +566,7 @@ public class ODocumentFieldConversionTest {
   @Test
   @SuppressWarnings({ "rawtypes" })
   public void testCollectionFloatCoversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     List values = new ArrayList();
     ODocument doc = new ODocument(clazz);
     doc.field("floatList", values);
@@ -618,7 +610,7 @@ public class ODocumentFieldConversionTest {
   @Test
   @SuppressWarnings({ "rawtypes" })
   public void testCollectionDoubleCoversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     List values = new ArrayList();
     ODocument doc = new ODocument(clazz);
     doc.field("doubleList", values);
@@ -649,7 +641,7 @@ public class ODocumentFieldConversionTest {
   @Test
   @SuppressWarnings({ "rawtypes" })
   public void testCollectionDecimalCoversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     List values = new ArrayList();
     ODocument doc = new ODocument(clazz);
     doc.field("decimalList", values);
@@ -685,7 +677,7 @@ public class ODocumentFieldConversionTest {
   @Test
   @SuppressWarnings({ "rawtypes", "unchecked" })
   public void testCollectionDateCoversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     List values = new ArrayList();
     ODocument doc = new ODocument(clazz);
     doc.field("dateList", values);
@@ -724,7 +716,7 @@ public class ODocumentFieldConversionTest {
 
   @Test
   public void testMapIntegerConversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     Map<String, Object> values = new HashMap<String, Object>();
     ODocument doc = new ODocument(clazz);
     doc.field("integerMap", values);
@@ -740,7 +732,7 @@ public class ODocumentFieldConversionTest {
 
   @Test
   public void testMapLongConversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     Map<String, Object> values = new HashMap<String, Object>();
     ODocument doc = new ODocument(clazz);
     doc.field("longMap", values);
@@ -756,7 +748,7 @@ public class ODocumentFieldConversionTest {
 
   @Test
   public void testMapByteConversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     Map<String, Object> values = new HashMap<String, Object>();
     ODocument doc = new ODocument(clazz);
     doc.field("byteMap", values);
@@ -772,7 +764,7 @@ public class ODocumentFieldConversionTest {
 
   @Test
   public void testMapFloatConversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     Map<String, Object> values = new HashMap<String, Object>();
     ODocument doc = new ODocument(clazz);
     doc.field("floatMap", values);
@@ -788,7 +780,7 @@ public class ODocumentFieldConversionTest {
 
   @Test
   public void testMapDoubleConversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     Map<String, Object> values = new HashMap<String, Object>();
     ODocument doc = new ODocument(clazz);
     doc.field("doubleMap", values);
@@ -804,7 +796,7 @@ public class ODocumentFieldConversionTest {
 
   @Test
   public void testMapDecimalConversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     Map<String, Object> values = new HashMap<String, Object>();
     ODocument doc = new ODocument(clazz);
     doc.field("decimalMap", values);
@@ -820,7 +812,7 @@ public class ODocumentFieldConversionTest {
 
   @Test
   public void testMapStringConversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     Map<String, Object> values = new HashMap<String, Object>();
     ODocument doc = new ODocument(clazz);
     doc.field("stringMap", values);
@@ -836,7 +828,7 @@ public class ODocumentFieldConversionTest {
 
   @Test
   public void testMapDateConversion() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) ((ODatabaseDocumentTx) db).getUnderlying());
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
     Map<String, Object> values = new HashMap<String, Object>();
     ODocument doc = new ODocument(clazz);
     doc.field("dateMap", values);

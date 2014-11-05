@@ -19,11 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.*;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
@@ -35,7 +31,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorageAbstract;
@@ -61,7 +56,7 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
   public ODeployDatabaseTask() {
   }
 
-  public ODeployDatabaseTask(final ODatabaseRecordTx db) {
+  public ODeployDatabaseTask(final ODatabaseDocumentTx db) {
     random = UUID.randomUUID().getLeastSignificantBits();
 
     if (db != null) {

@@ -21,22 +21,14 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.script.Bindings;
-import javax.script.Invocable;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
+import javax.script.*;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.script.OCommandScriptException;
-import com.orientechnologies.orient.core.command.script.OScriptDocumentDatabaseWrapper;
-import com.orientechnologies.orient.core.command.script.OScriptInjection;
-import com.orientechnologies.orient.core.command.script.OScriptManager;
-import com.orientechnologies.orient.core.command.script.OScriptOrientWrapper;
+import com.orientechnologies.orient.core.command.script.*;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -162,8 +154,6 @@ public class OScheduler implements Runnable {
     try {
       if (this.function == null)
         return;
-      if (db != null && !(db instanceof ODatabaseRecordTx))
-        db = db.getUnderlying();
       scriptManager = Orient.instance().getScriptManager();
       final ScriptEngine scriptEngine = scriptManager.getEngine(this.function.getLanguage());
       binding = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE);
@@ -172,7 +162,7 @@ public class OScheduler implements Runnable {
         i.bind(binding);
       binding.put("doc", this.document);
       if (db != null)
-        binding.put("db", new OScriptDocumentDatabaseWrapper((ODatabaseRecordTx) db));
+        binding.put("db", new OScriptDocumentDatabaseWrapper((ODatabaseDocumentTx) db));
       binding.put("orient", new OScriptOrientWrapper(db));
       if (iArgs != null) {
         for (Entry<Object, Object> a : iArgs.entrySet()) {

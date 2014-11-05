@@ -18,15 +18,15 @@ package com.orientechnologies.orient.test.database.base;
 import java.io.UnsupportedEncodingException;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
 public abstract class OrientTxSpeedTest extends SpeedTestMonoThread {
-	public OrientTxSpeedTest(int iCycles) {
-		super(iCycles);
-	}
+  public OrientTxSpeedTest(int iCycles) {
+    super(iCycles);
+  }
 
-	protected void cycle(ODatabaseRecordTx iDatabase) throws UnsupportedEncodingException {
-		if (data.getCyclesDone() == data.getCycles() - 1)
-			iDatabase.commit();
-	}
+  protected void cycle(ODatabaseDocumentTx iDatabase) throws UnsupportedEncodingException {
+    if (data.getCyclesDone() == data.getCycles() - 1)
+      iDatabase.commit();
+  }
 }

@@ -15,12 +15,18 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.testng.Assert;
+import org.testng.annotations.*;
+
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -40,23 +46,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Test(groups = { "crud", "record-vobject" }, sequential = true)
 public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
@@ -778,10 +767,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     ODatabaseDocumentTx.setDefaultSerializer(ORecordSerializerSchemaAware2CSV.INSTANCE);
     ODatabaseRecordInternal oldDb = ODatabaseRecordThreadLocal.INSTANCE.get();
     ORecordSerializer dbser = oldDb.getSerializer();
-    if (oldDb instanceof ODatabaseDocumentTx)
-      ((ODatabaseDocumentTx) oldDb).setSerializer(ORecordSerializerSchemaAware2CSV.INSTANCE);
-    else
-      ((ODatabaseRecordTx) oldDb).setSerializer(ORecordSerializerSchemaAware2CSV.INSTANCE);
+    ((ODatabaseDocumentTx) oldDb).setSerializer(ORecordSerializerSchemaAware2CSV.INSTANCE);
     final byte[] streamOrigin = "Account@html:{\"path\":\"html/layout\"},config:{\"title\":\"Github Admin\",\"modules\":(githubDisplay:\"github_display\")},complex:(simple1:\"string1\",one_level1:(simple2:\"string2\"),two_levels:(simple3:\"string3\",one_level2:(simple4:\"string4\")))"
         .getBytes();
     ODocument doc = (ODocument) ORecordSerializerSchemaAware2CSV.INSTANCE.fromStream(streamOrigin, new ODocument(), null);
@@ -789,10 +775,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     final byte[] streamDest = ORecordSerializerSchemaAware2CSV.INSTANCE.toStream(doc, false);
     Assert.assertEquals(streamOrigin, streamDest);
     ODatabaseDocumentTx.setDefaultSerializer(current);
-    if (oldDb instanceof ODatabaseDocumentTx)
-      ((ODatabaseDocumentTx) oldDb).setSerializer(dbser);
-    else
-      ((ODatabaseRecordTx) oldDb).setSerializer(dbser);
+    ((ODatabaseDocumentTx) oldDb).setSerializer(dbser);
   }
 
   public void testUpdateNoVersionCheck() {

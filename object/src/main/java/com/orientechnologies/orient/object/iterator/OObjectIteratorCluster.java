@@ -21,8 +21,8 @@ package com.orientechnologies.orient.object.iterator;
 
 import java.util.Iterator;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.iterator.object.OObjectIteratorClusterInterface;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -34,7 +34,8 @@ public class OObjectIteratorCluster<T> implements OObjectIteratorClusterInterfac
   private ORecordIteratorCluster<ODocument> underlying;
   private String                            fetchPlan;
 
-  public OObjectIteratorCluster(final OObjectDatabaseTx iDatabase, final ODatabaseRecordTx iUnderlyingDatabase, final int iClusterId) {
+  public OObjectIteratorCluster(final OObjectDatabaseTx iDatabase, final ODatabaseDocumentTx iUnderlyingDatabase,
+      final int iClusterId) {
     database = iDatabase;
     underlying = new ORecordIteratorCluster<ODocument>(iDatabase.getUnderlying(), iUnderlyingDatabase, iClusterId, true);
   }

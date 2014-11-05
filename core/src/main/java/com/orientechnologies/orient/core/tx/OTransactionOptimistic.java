@@ -29,7 +29,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
@@ -103,7 +103,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     }
   }
 
-  public OTransactionOptimistic(final ODatabaseRecordTx iDatabase) {
+  public OTransactionOptimistic(final ODatabaseDocumentTx iDatabase) {
     super(iDatabase, txSerial.incrementAndGet());
   }
 
@@ -270,7 +270,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       break;
     case ORecordOperation.LOADED:
       /**
-       * Read hooks already invoked in {@link com.orientechnologies.orient.core.db.record.ODatabaseRecordTx#executeReadRecord} .
+       * Read hooks already invoked in {@link com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx#executeReadRecord} .
        */
       break;
     case ORecordOperation.UPDATED:
@@ -399,7 +399,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         break;
       case ORecordOperation.LOADED:
         /**
-         * Read hooks already invoked in {@link com.orientechnologies.orient.core.db.record.ODatabaseRecordTx#executeReadRecord}.
+         * Read hooks already invoked in {@link com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx#executeReadRecord}
+         * .
          */
         break;
       case ORecordOperation.UPDATED:

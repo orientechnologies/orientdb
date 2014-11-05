@@ -15,23 +15,19 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.io.IOException;
+
+import org.testng.Assert;
+import org.testng.annotations.*;
+
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import java.io.IOException;
 
 /**
  * Tests the right calls of all the db's listener API.
@@ -241,7 +237,7 @@ public class DbListenerTest extends DocumentDBBaseTest {
 
       @Override
       public void onBeforeTxCommit(ODatabase iDatabase) {
-        OTransaction tx = ((ODatabaseRecordTx) iDatabase).getTransaction();
+        OTransaction tx = ((ODatabaseDocumentTx) iDatabase).getTransaction();
         Iterable<? extends ORecordOperation> recs = tx.getCurrentRecordEntries();
         for (ORecordOperation op : recs) {
           ODocument doc = (ODocument) op.getRecord();

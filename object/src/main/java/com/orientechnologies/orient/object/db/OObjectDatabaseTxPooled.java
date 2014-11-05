@@ -20,8 +20,9 @@
 package com.orientechnologies.orient.object.db;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.*;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.ODatabasePoolBase;
+import com.orientechnologies.orient.core.db.ODatabasePooled;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 /**
@@ -55,10 +56,7 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
     ODatabaseRecordThreadLocal.INSTANCE.set(getUnderlying());
 
     try {
-      ODatabase current = underlying;
-      while (!(current instanceof ODatabaseRecordTx) && ((ODatabaseComplexInternal<?>) current).getUnderlying() != null)
-        current = ((ODatabaseComplexInternal<?>) current).getUnderlying();
-      ((ODatabaseRecordTx) current).callOnOpenListeners();
+      underlying.callOnOpenListeners();
 
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on reusing database '%s' in pool", e, getName());
@@ -107,10 +105,7 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
     }
 
     try {
-      ODatabase current = underlying;
-      while (!(current instanceof ODatabaseRecordTx) && ((ODatabaseComplexInternal<?>) current).getUnderlying() != null)
-        current = ((ODatabaseComplexInternal<?>) current).getUnderlying();
-      ((ODatabaseRecordTx) current).callOnCloseListeners();
+      underlying.callOnCloseListeners();
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on releasing database '%s' in pool", e, getName());
     }

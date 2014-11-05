@@ -47,10 +47,8 @@ import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.tool.*;
@@ -82,18 +80,18 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
-  protected static final int          DEFAULT_WIDTH      = 150;
-  private int                         windowSize         = DEFAULT_WIDTH;
-  protected ODatabaseDocumentInternal currentDatabase;
-  protected String                    currentDatabaseName;
-  protected ORecord                   currentRecord;
-  protected int                       currentRecordIdx;
-  protected List<OIdentifiable>       currentResultSet;
-  protected OServerAdmin              serverAdmin;
-  private int                         lastPercentStep;
-  private String                      currentDatabaseUserName;
-  private String                      currentDatabaseUserPassword;
-  private int                         collectionMaxItems = 10;
+  protected static final int    DEFAULT_WIDTH      = 150;
+  private int                   windowSize         = DEFAULT_WIDTH;
+  protected ODatabaseDocumentTx currentDatabase;
+  protected String              currentDatabaseName;
+  protected ORecord             currentRecord;
+  protected int                 currentRecordIdx;
+  protected List<OIdentifiable> currentResultSet;
+  protected OServerAdmin        serverAdmin;
+  private int                   lastPercentStep;
+  private String                currentDatabaseUserName;
+  private String                currentDatabaseUserPassword;
+  private int                   collectionMaxItems = 10;
 
   public OConsoleDatabaseApp(final String[] args) {
     super(args);
@@ -1878,8 +1876,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void reloadRecordInternal(String iRecordId, String iFetchPlan) {
     checkForDatabase();
 
-    currentRecord = ((ODatabaseRecordTx) currentDatabase.getUnderlying()).executeReadRecord(new ORecordId(iRecordId), null,
-        iFetchPlan, true, false, OStorage.LOCKING_STRATEGY.DEFAULT);
+    currentRecord = currentDatabase.executeReadRecord(new ORecordId(iRecordId), null, iFetchPlan, true, false,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
     displayRecord(null);
 
     message("\nOK");
