@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -931,7 +930,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     // OVERWRITE CLUSTER SELECTION STRATEGY
     final String nodeName = getLocalNodeName();
 
-    final OSchema schema = ((ODatabaseComplexInternal<?>) iDatabase).getDatabaseOwner().getMetadata().getSchema();
+    final OSchema schema = ((ODatabaseInternal<?>) iDatabase).getDatabaseOwner().getMetadata().getSchema();
 
     boolean distribCfgDirty = false;
     for (final OClass c : schema.getClasses())
@@ -946,7 +945,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       getServerInstance().openDatabase(iDatabase);
 
     // OVERWRITE CLUSTER SELECTION STRATEGY
-    final OSchema schema = ((ODatabaseComplexInternal<?>) iDatabase).getDatabaseOwner().getMetadata().getSchema();
+    final OSchema schema = ((ODatabaseInternal<?>) iDatabase).getDatabaseOwner().getMetadata().getSchema();
 
     for (OClass c : schema.getClasses()) {
       ((OClassImpl) c).setClusterSelectionInternal(new OLocalClusterStrategy(this, iDatabase.getName(), c));

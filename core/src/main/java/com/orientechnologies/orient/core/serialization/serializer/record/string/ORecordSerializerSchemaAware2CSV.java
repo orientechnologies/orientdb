@@ -31,7 +31,7 @@ import java.util.Set;
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
@@ -550,7 +550,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
     return iValue != null ? iValue.getClass().getSimpleName() : null;
   }
 
-  private OClass getLinkInfo(final ODatabaseComplexInternal<?> iDatabase, final String iFieldClassName) {
+  private OClass getLinkInfo(final ODatabaseInternal<?> iDatabase, final String iFieldClassName) {
     if (iDatabase == null || iDatabase.isClosed() || iFieldClassName == null)
       return null;
 

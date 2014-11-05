@@ -101,7 +101,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   private STATUS                                            status;
   private OIntent                                           currentIntent;
 
-  private ODatabaseComplexInternal<?>                       databaseOwner;
+  private ODatabaseInternal<?>                       databaseOwner;
 
   @Deprecated
   private static final String                               DEF_RECORD_FORMAT = "csv";
@@ -788,8 +788,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * {@inheritDoc}
    */
   @Override
-  public ODatabaseComplexInternal<?> getDatabaseOwner() {
-    ODatabaseComplexInternal<?> current = databaseOwner;
+  public ODatabaseInternal<?> getDatabaseOwner() {
+    ODatabaseInternal<?> current = databaseOwner;
 
     while (current != null && current != this && current.getDatabaseOwner() != current)
       current = current.getDatabaseOwner();
@@ -801,7 +801,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * {@inheritDoc}
    */
   @Override
-  public ODatabaseComplexInternal<ORecord> setDatabaseOwner(ODatabaseComplexInternal<?> iOwner) {
+  public ODatabaseInternal<ORecord> setDatabaseOwner(ODatabaseInternal<?> iOwner) {
     databaseOwner = iOwner;
     return this;
   }

@@ -23,7 +23,7 @@ package com.orientechnologies.orient.core.intent;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
@@ -48,7 +48,7 @@ public class OIntentMassiveInsert implements OIntent {
       currentUser = iDatabase.getDatabaseOwner().getUser();
       iDatabase.getDatabaseOwner().setUser(null);
     }
-    ODatabaseComplexInternal<?> ownerDb = iDatabase.getDatabaseOwner();
+    ODatabaseInternal<?> ownerDb = iDatabase.getDatabaseOwner();
 
     if (ownerDb instanceof ODatabaseDocument) {
       previousRetainRecords = ((ODatabaseDocument) ownerDb).isRetainRecords();
@@ -90,7 +90,7 @@ public class OIntentMassiveInsert implements OIntent {
         // RE-ENABLE CHECK OF SECURITY
         iDatabase.getDatabaseOwner().setUser(currentUser);
 
-    ODatabaseComplexInternal<?> ownerDb = iDatabase.getDatabaseOwner();
+    ODatabaseInternal<?> ownerDb = iDatabase.getDatabaseOwner();
 
     if (ownerDb instanceof ODatabaseDocument) {
       ((ODatabaseDocument) ownerDb).setRetainRecords(previousRetainRecords);

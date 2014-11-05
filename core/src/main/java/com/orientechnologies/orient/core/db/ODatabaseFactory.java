@@ -37,7 +37,7 @@ import java.util.WeakHashMap;
  * 
  */
 public class ODatabaseFactory {
-  final WeakHashMap<ODatabaseComplexInternal<?>, Thread> instances = new WeakHashMap<ODatabaseComplexInternal<?>, Thread>();
+  final WeakHashMap<ODatabaseInternal<?>, Thread> instances = new WeakHashMap<ODatabaseInternal<?>, Thread>();
 
   public synchronized List<ODatabase<?>> getInstances(final String iDatabaseName) {
     final List<ODatabase<?>> result = new ArrayList<ODatabase<?>>();
@@ -55,7 +55,7 @@ public class ODatabaseFactory {
    * @param db
    * @return
    */
-  public synchronized ODatabase<?> register(final ODatabaseComplexInternal<?> db) {
+  public synchronized ODatabase<?> register(final ODatabaseInternal<?> db) {
     instances.put(db, Thread.currentThread());
     return db;
   }
@@ -65,7 +65,7 @@ public class ODatabaseFactory {
    * 
    * @param db
    */
-  public synchronized void unregister(final ODatabaseComplexInternal<?> db) {
+  public synchronized void unregister(final ODatabaseInternal<?> db) {
     instances.remove(db);
   }
 
@@ -75,7 +75,7 @@ public class ODatabaseFactory {
    * @param iStorage
    */
   public synchronized void unregister(final OStorage iStorage) {
-    for (ODatabaseComplexInternal<?> db : new HashSet<ODatabaseComplexInternal<?>>(instances.keySet())) {
+    for (ODatabaseInternal<?> db : new HashSet<ODatabaseInternal<?>>(instances.keySet())) {
       if (db != null && db.getStorage() == iStorage) {
         db.close();
         instances.remove(db);

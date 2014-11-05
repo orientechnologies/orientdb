@@ -20,7 +20,7 @@
 
 package com.orientechnologies.orient.core.intent;
 
-import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
@@ -34,7 +34,7 @@ public class OIntentNoCache implements OIntent {
   private boolean previousRetainObjects;
 
   public void begin(final ODatabaseRecordInternal iDatabase) {
-    ODatabaseComplexInternal<?> ownerDb = iDatabase.getDatabaseOwner();
+    ODatabaseInternal<?> ownerDb = iDatabase.getDatabaseOwner();
 
     if (ownerDb instanceof ODatabaseDocument) {
       previousRetainRecords = ((ODatabaseDocument) ownerDb).isRetainRecords();
@@ -51,7 +51,7 @@ public class OIntentNoCache implements OIntent {
   }
 
   public void end(final ODatabaseRecordInternal iDatabase) {
-    ODatabaseComplexInternal<?> ownerDb = iDatabase.getDatabaseOwner();
+    ODatabaseInternal<?> ownerDb = iDatabase.getDatabaseOwner();
 
     if (ownerDb instanceof ODatabaseDocument) {
       ((ODatabaseDocument) ownerDb).setRetainRecords(previousRetainRecords);

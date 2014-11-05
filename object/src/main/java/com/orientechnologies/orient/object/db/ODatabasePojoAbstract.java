@@ -62,7 +62,7 @@ import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseWrapperAbstract<ODatabaseDocumentTx, T> implements
-    ODatabaseSchemaAware<T>, ODatabaseComplexInternal<T> {
+    ODatabaseSchemaAware<T>, ODatabaseInternal<T> {
   protected IdentityHashMap<Object, ODocument> objects2Records = new IdentityHashMap<Object, ODocument>();
   protected IdentityHashMap<ODocument, T>      records2Objects = new IdentityHashMap<ODocument, T>();
   protected HashMap<ORID, ODocument>           rid2Records     = new HashMap<ORID, ODocument>();

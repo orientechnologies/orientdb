@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
-import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -346,7 +346,7 @@ public class OScriptDocumentDatabaseWrapper {
     return (RET) database.load(iRecord, iFetchPlan, iIgnoreCache);
   }
 
-  public ODatabase<?> setDatabaseOwner(ODatabaseComplexInternal<?> iOwner) {
+  public ODatabase<?> setDatabaseOwner(ODatabaseInternal<?> iOwner) {
     return database.setDatabaseOwner(iOwner);
   }
 

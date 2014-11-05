@@ -43,11 +43,11 @@ import com.orientechnologies.orient.core.storage.OStorage;
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> implements ODatabaseInternal<T> {
   protected DB                          underlying;
-  protected ODatabaseComplexInternal<?> databaseOwner;
+  protected ODatabaseInternal<?> databaseOwner;
 
   public ODatabaseWrapperAbstract(final DB iDatabase) {
     underlying = iDatabase;
-    databaseOwner = (ODatabaseComplexInternal<?>) this;
+    databaseOwner = this;
     Orient.instance().getDatabaseFactory().register(databaseOwner);
   }
 
@@ -257,13 +257,13 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
     return (DBTYPE) underlying;
   }
 
-  public ODatabaseComplexInternal<?> getDatabaseOwner() {
+  public ODatabaseInternal<?> getDatabaseOwner() {
     return databaseOwner;
   }
 
-  public ODatabaseComplexInternal<?> setDatabaseOwner(final ODatabaseComplexInternal<?> iOwner) {
+  public ODatabaseInternal<?> setDatabaseOwner(final ODatabaseInternal<?> iOwner) {
     databaseOwner = iOwner;
-    return (ODatabaseComplexInternal<?>) this;
+    return this;
   }
 
   @Override

@@ -1,19 +1,20 @@
 package com.orientechnologies.orient.test.database.speed;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.*;
+
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.concurrent.*;
 
 /**
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
@@ -85,11 +86,10 @@ public class LocalMTCreateDocumentSpeedTest {
     public Void call() throws Exception {
       ODatabaseDocumentTx database = new ODatabaseDocumentTx(System.getProperty("url"));
 
-
       latch.await();
 
       while (!stop) {
-				database.open("admin", "admin");
+        database.open("admin", "admin");
         ODocument record = new ODocument("Account");
         record.field("id", 1);
         record.field("name", "Luca");
@@ -97,9 +97,8 @@ public class LocalMTCreateDocumentSpeedTest {
         record.field("birthDate", date);
         record.field("salary", 3000f);
         record.save();
-				database.close();
+        database.close();
       }
-
 
       return null;
     }

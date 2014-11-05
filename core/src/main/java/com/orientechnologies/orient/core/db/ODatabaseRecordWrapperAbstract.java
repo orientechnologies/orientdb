@@ -57,7 +57,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseRecordInternal> extends
-    ODatabaseWrapperAbstract<DB, ORecord> implements ODatabaseComplexInternal<ORecord> {
+    ODatabaseWrapperAbstract<DB, ORecord> implements ODatabaseInternal<ORecord> {
 
   public ODatabaseRecordWrapperAbstract(final DB iDatabase) {
     super(iDatabase);
