@@ -23,7 +23,6 @@ import java.util.Set;
 
 import javassist.util.proxy.ProxyObject;
 
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.OLazyObjectSetInterface;
 import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -310,6 +309,6 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
   }
 
   protected ODatabasePojoAbstract<TYPE> getDatabase() {
-    return (ODatabasePojoAbstract<TYPE>) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner();
+    return OLazyCollectionUtil.getDatabase();
   }
 }

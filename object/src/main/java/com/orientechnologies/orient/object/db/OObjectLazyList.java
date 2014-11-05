@@ -30,7 +30,6 @@ import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.OLazyObjectListInterface;
 import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -470,7 +469,7 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
   }
 
   protected OObjectDatabaseTx getDatabase() {
-    return ((OObjectDatabaseTx) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner());
+    return (OObjectDatabaseTx) OLazyCollectionUtil.getDatabase();
   }
 
   protected boolean indexLoaded(int iIndex) {
