@@ -21,8 +21,8 @@ public class Issue {
   private Date               createdAt;
   private Date               closedAt;
 
-  private User               user;
-  private User               assignee;
+  private OUser user;
+  private OUser assignee;
 
   public String getId() {
     return id;
@@ -88,11 +88,11 @@ public class Issue {
     this.closedAt = closedAt;
   }
 
-  public User getAssignee() {
+  public OUser getAssignee() {
     return assignee;
   }
 
-  public void setAssignee(User assignee) {
+  public void setAssignee(OUser assignee) {
     this.assignee = assignee;
   }
 
@@ -100,11 +100,11 @@ public class Issue {
     labels.add(name);
   }
 
-  public User getUser() {
+  public OUser getUser() {
     return user;
   }
 
-  public void setUser(User user) {
+  public void setUser(OUser user) {
     this.user = user;
   }
 

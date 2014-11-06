@@ -2,10 +2,7 @@ package com.orientechnologies.website.services.reactor;
 
 import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.github.*;
-import com.orientechnologies.website.model.schema.dto.Comment;
-import com.orientechnologies.website.model.schema.dto.Issue;
-import com.orientechnologies.website.model.schema.dto.Milestone;
-import com.orientechnologies.website.model.schema.dto.Repository;
+import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.repository.*;
 import com.orientechnologies.website.services.IssueService;
 import com.orientechnologies.website.services.RepositoryService;
@@ -17,6 +14,7 @@ import reactor.event.Event;
 import reactor.function.Consumer;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -46,6 +44,10 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
   private UserRepository         userRepo;
 
   @Autowired
+  private EventRepository        eventRepository;
+  @Autowired
+  private LabelRepository        labelRepository;
+  @Autowired
   private CommentRepository      commentRepository;
 
   @Autowired
@@ -62,8 +64,8 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
       Repository repoDtp = repoRepository.findByOrgAndName(message.org, message.repo);
 
       importLabels(message, repoDtp);
+      importMilestones(message, repoDtp);
       importIssue(message, repoDtp, GIssueState.CLOSED);
-      importIssue(message, repoDtp, GIssueState.OPEN);
 
       dbFactory.getGraph().commit();
     } catch (IOException e) {
@@ -71,8 +73,55 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
     }
   }
 
-  private void importLabels(GitHubIssueMessage message, Repository repoDtp) {
+  private void importLabels(GitHubIssueMessage message, Repository repoDtp) throws IOException {
 
+    List<GLabel> labels = message.repository.getLabels();
+
+    boolean labelNew = false;
+    for (GLabel label : labels) {
+      Label l = repoRepository.findLabelsByRepoAndName(repoDtp.getName(), label.getName());
+
+      labelNew = false;
+      if (l == null) {
+        l = new Label();
+        labelNew = true;
+
+      }
+      l.setName(label.getName());
+      l.setColor(label.getColor());
+      l = labelRepository.save(l);
+      if (labelNew) {
+        createRepositoryLabelAssociation(repoDtp, l);
+      }
+    }
+  }
+
+  private void createRepositoryLabelAssociation(Repository repoDtp, Label l) {
+
+    repositoryService.addLabel(repoDtp, l);
+  }
+
+  private void importMilestones(GitHubIssueMessage message, Repository repoDtp) throws IOException {
+    List<GMilestone> milestones = message.repository.getMilestones();
+
+    boolean milestoneNew = false;
+    for (GMilestone milestone : milestones) {
+      Milestone m = repoRepository.findMilestoneByRepoAndName(repoDtp.getName(), milestone.getNumber());
+      milestoneNew = false;
+      if (m == null) {
+        m = new Milestone();
+        milestoneNew = true;
+      }
+      m = fillMilestone(milestone, m);
+      if (milestoneNew) {
+        createRepositoryMilestoneAssociation(repoDtp, m);
+      }
+    }
+
+  }
+
+  private void createRepositoryMilestoneAssociation(Repository repoDtp, Milestone m) {
+    repositoryService.addMilestone(repoDtp, m);
   }
 
   private void importIssue(GitHubIssueMessage message, Repository repoDtp, GIssueState state) throws IOException {
@@ -81,81 +130,128 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
     int i = 0;
     for (GIssue issue : issues) {
 
-      Issue issueDto = repoRepository.findIssueByRepoAndNumber(repoDtp.getCodename(), issue.getNumber());
-
-      boolean isNew = false;
-      if (issueDto == null) {
-        issueDto = new Issue();
-        isNew = true;
-      }
-      issueDto.setNumber(issue.getNumber());
-      issueDto.setBody(issue.getBody());
-      issueDto.setTitle(issue.getTitle());
-      issueDto.setState(issue.getState().name());
-      for (GLabel label : issue.getLabels()) {
-        issueDto.addLabel(label.getName());
-      }
-
-      GMilestone m = issue.getMilestone();
-      Milestone milestone = null;
-
-      if (m != null) {
-        milestone = organizationRepository.findMilestoneByOwnerRepoAndNumberIssueAndNumberMilestone(message.org, message.repo,
-            issue.getNumber(), m.getNumber());
-        if (milestone == null) {
-          milestone = new Milestone();
-        }
-
-        milestone.setNumber(m.getNumber());
-        milestone.setTitle(m.getTitle());
-        milestone.setDescription(m.getDescription());
-        milestone.setState(m.getState().name());
-        milestone.setCreatedAt(m.getCreatedAt());
-        milestone.setDueOn(m.getDueOn());
-
-        milestone = milestoneRepository.save(milestone);
-      }
-
-      issueDto.setUser(userRepo.findUserOrCreateByLogin(issue.getUser().getLogin()));
-
-      issueDto.setCreatedAt(issue.getCreatedAt());
-      issueDto.setClosedAt(issue.getClosedAt());
-      String login = issue.getAssignee() != null ? issue.getAssignee().getLogin() : null;
-      if (login != null) {
-        issueDto.setAssignee(userRepo.findUserOrCreateByLogin(login));
-      }
-
-      issueDto = issueRepo.save(issueDto);
-
-      boolean isNewComment = false;
-      for (GComment ghIssueComment : issue.getComments()) {
-        Comment comment = commentRepository.findByIssueAndCommentId(issueDto, ghIssueComment.getId());
-
-        isNewComment = false;
-        if (comment == null) {
-          comment = new Comment();
-          isNewComment = true;
-        }
-        comment.setCommentId(ghIssueComment.getId());
-        comment.setBody(ghIssueComment.getBody());
-        comment.setUser(userRepo.findUserOrCreateByLogin(ghIssueComment.getUser().getLogin()));
-        comment.setCreatedAt(ghIssueComment.getCreatedAt());
-        comment.setUpdatedAt(comment.getUpdatedAt());
-
-        comment = commentRepository.save(comment);
-        if (isNewComment)
-          issueService.commentIssue(issueDto, comment);
-
-      }
-
-      if (milestone != null)
-        issueService.changeMilestone(issueDto, milestone);
-      if (isNew)
-        repositoryService.createIssue(repoDtp, issueDto);
-
+      importSingleIssue(message, repoDtp, issue);
       i++;
       log.info("Imported %d issues", i);
     }
+  }
+
+  private void importSingleIssue(GitHubIssueMessage message, Repository repoDtp, GIssue issue) throws IOException {
+    Issue issueDto = repoRepository.findIssueByRepoAndNumber(repoDtp.getName(), issue.getNumber());
+
+    boolean isNew = false;
+    if (issueDto == null) {
+      issueDto = new Issue();
+      isNew = true;
+    }
+    issueDto.setNumber(issue.getNumber());
+    issueDto.setBody(issue.getBody());
+    issueDto.setTitle(issue.getTitle());
+    issueDto.setState(issue.getState().toString());
+    // import labels
+    importIssueLabels(repoDtp, issue, issueDto);
+    GMilestone m = issue.getMilestone();
+
+    issueDto.setUser(userRepo.findUserOrCreateByLogin(issue.getUser().getLogin()));
+
+    issueDto.setCreatedAt(issue.getCreatedAt());
+    issueDto.setClosedAt(issue.getClosedAt());
+    String login = issue.getAssignee() != null ? issue.getAssignee().getLogin() : null;
+    if (login != null) {
+      issueDto.setAssignee(userRepo.findUserOrCreateByLogin(login));
+    }
+
+    issueDto = issueRepo.save(issueDto);
+
+    // IMPORT COMMENTS
+    importIssueComments(issue, issueDto);
+
+    // IMPORT EVENTS
+    importIssueEvents(repoDtp, issue, issueDto);
+
+    // IMPORT ISSUE MILESTONE
+    importIssueMilestone(repoDtp, issueDto, m);
+
+    if (isNew)
+      repositoryService.createIssue(repoDtp, issueDto);
+  }
+
+  private void importIssueEvents(Repository repoDtp, GIssue issue, Issue issueDto) throws IOException {
+
+    for (GEvent event : issue.getEvents()) {
+      com.orientechnologies.website.model.schema.dto.Event e = repoRepository.findIssueEventByRepoAndNumberAndEventNumber(
+          repoDtp.getName(), issueDto.getNumber(), event.getId());
+      if (e == null) {
+        e = new com.orientechnologies.website.model.schema.dto.Event();
+        e.setCreatedAt(event.getCreatedAt());
+        e.setEventId(event.getId());
+
+        e = eventRepository.save(e);
+        createIssueEventAssociation(issueDto, e);
+      }
+    }
+  }
+
+  private void createIssueEventAssociation(Issue issueDto, com.orientechnologies.website.model.schema.dto.Event e) {
+    issueService.fireEvent(issueDto, e);
+  }
+
+  private void importIssueComments(GIssue issue, Issue issueDto) throws IOException {
+    boolean isNewComment = false;
+    for (GComment ghIssueComment : issue.getComments()) {
+      Comment comment = commentRepository.findByIssueAndCommentId(issueDto, ghIssueComment.getId());
+
+      isNewComment = false;
+      if (comment == null) {
+        comment = new Comment();
+        isNewComment = true;
+      }
+      comment.setCommentId(ghIssueComment.getId());
+      comment.setBody(ghIssueComment.getBody());
+      comment.setUser(userRepo.findUserOrCreateByLogin(ghIssueComment.getUser().getLogin()));
+      comment.setCreatedAt(ghIssueComment.getCreatedAt());
+      comment.setUpdatedAt(ghIssueComment.getUpdatedAt());
+
+      comment = commentRepository.save(comment);
+      if (isNewComment)
+        issueService.commentIssue(issueDto, comment);
+
+    }
+  }
+
+  private void importIssueMilestone(Repository repoDtp, Issue issueDto, GMilestone m) {
+    Milestone milestone = null;
+
+    if (m != null) {
+      milestone = repoRepository.findMilestoneByRepoAndName(repoDtp.getName(), m.getNumber());
+    }
+
+    if (milestone != null)
+      issueService.changeMilestone(issueDto, milestone);
+  }
+
+  private void importIssueLabels(Repository repoDtp, GIssue issue, Issue issueDto) {
+    List<Label> labels = new ArrayList<Label>();
+    for (GLabel label : issue.getLabels()) {
+
+      Label l = repoRepository.findLabelsByRepoAndName(repoDtp.getName(), label.getName());
+      if (l != null) {
+        labels.add(l);
+      }
+    }
+    issueService.changeLabels(issueDto, labels);
+  }
+
+  private Milestone fillMilestone(GMilestone m, Milestone milestone) {
+    milestone.setNumber(m.getNumber());
+    milestone.setTitle(m.getTitle());
+    milestone.setDescription(m.getDescription());
+    milestone.setState(m.getState().name());
+    milestone.setCreatedAt(m.getCreatedAt());
+    milestone.setDueOn(m.getDueOn());
+
+    milestone = milestoneRepository.save(milestone);
+    return milestone;
   }
 
   public static class GitHubIssueMessage {

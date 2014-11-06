@@ -2,6 +2,7 @@ package com.orientechnologies.website.controllers;
 
 import com.orientechnologies.website.configuration.ApiVersion;
 import com.orientechnologies.website.model.schema.dto.Comment;
+import com.orientechnologies.website.model.schema.dto.Event;
 import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,5 +38,12 @@ public class RepositoryController {
       @PathVariable("repo") String repo, @PathVariable("number") String number) {
     return new ResponseEntity<List<Comment>>(organizationRepository.findSingleOrganizationIssueCommentByRepoAndNumber(owner, repo,
         number), HttpStatus.OK);
+  }
+
+  @RequestMapping(value = "{owner}/{repo}/issues/{number}/events", method = RequestMethod.GET)
+  public ResponseEntity<List<Event>> getSingleIssueEvents(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
+      @PathVariable("number") String number) {
+    return new ResponseEntity<List<Event>>(organizationRepository.findEventsByOwnerRepoAndIssueNumber(owner, repo, number),
+        HttpStatus.OK);
   }
 }

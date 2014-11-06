@@ -16,12 +16,6 @@ public enum ORepository implements OTypeHolder<com.orientechnologies.website.mod
       return OType.STRING;
     }
   },
-  CODENAME("codename") {
-    @Override
-    public OType getType() {
-      return OType.STRING;
-    }
-  },
   DESCRIPTION("description") {
     @Override
     public OType getType() {
@@ -38,11 +32,10 @@ public enum ORepository implements OTypeHolder<com.orientechnologies.website.mod
   public ODocument toDoc(com.orientechnologies.website.model.schema.dto.Repository entity, OrientBaseGraph graph) {
     ODocument doc = null;
     if (entity.getId() == null) {
-      doc = new ODocument(ORepository.class.getSimpleName());
+      doc = new ODocument(entity.getClass().getSimpleName());
     } else {
       doc = graph.getRawGraph().load(new ORecordId(entity.getId()));
     }
-    doc.field(CODENAME.toString(), entity.getCodename());
     doc.field(NAME.toString(), entity.getName());
     doc.field(DESCRIPTION.toString(), entity.getDescription());
     return doc;
@@ -51,7 +44,7 @@ public enum ORepository implements OTypeHolder<com.orientechnologies.website.mod
   @Override
   public com.orientechnologies.website.model.schema.dto.Repository fromDoc(ODocument doc, OrientBaseGraph graph) {
     com.orientechnologies.website.model.schema.dto.Repository repo = new com.orientechnologies.website.model.schema.dto.Repository();
-    repo.setCodename((String) doc.field(CODENAME.toString()));
+    repo.setName((String) doc.field(NAME.toString()));
     repo.setDescription((String) doc.field(DESCRIPTION.toString()));
     repo.setId(doc.getIdentity().toString());
     return repo;

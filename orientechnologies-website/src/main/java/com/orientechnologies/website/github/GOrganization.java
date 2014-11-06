@@ -8,7 +8,12 @@ import java.io.IOException;
 public class GOrganization extends GEntity {
 
   protected GOrganization(GitHub owner, String content) {
-    super(owner, content);
+    super(owner, null, content);
+  }
+
+  @Override
+  protected String getBaseUrl() {
+    return null;
   }
 
   public boolean hasMember(String username) throws IOException {
@@ -16,7 +21,7 @@ public class GOrganization extends GEntity {
   }
 
   public String getLogin() {
-    return null;
+    return get("login");
   }
 
   public String getName() {

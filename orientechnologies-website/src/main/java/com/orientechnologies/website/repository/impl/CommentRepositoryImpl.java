@@ -3,14 +3,13 @@ package com.orientechnologies.website.repository.impl;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import com.orientechnologies.website.model.schema.HasComment;
+import com.orientechnologies.website.model.schema.HasEvents;
 import com.orientechnologies.website.model.schema.OComment;
 import com.orientechnologies.website.model.schema.OTypeHolder;
 import org.springframework.stereotype.Repository;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.website.model.schema.OSiteSchema;
 import com.orientechnologies.website.model.schema.dto.Comment;
 import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.repository.CommentRepository;
@@ -36,7 +35,7 @@ public class CommentRepositoryImpl extends OrientBaseRepository<Comment> impleme
   public Comment findByIssueAndCommentId(Issue issue, int id) {
 
     OrientGraph graph = dbFactory.getGraph();
-    String query = String.format("select from (select expand(out('%s')) from %s) where %s = %d", HasComment.class.getSimpleName(),
+    String query = String.format("select from (select expand(out('%s')) from %s) where %s = %d", HasEvents.class.getSimpleName(),
         issue.getId(), OComment.COMMENT_ID, id);
 
     List<ODocument> vertexes = graph.getRawGraph().query(new OSQLSynchQuery<Object>(query));

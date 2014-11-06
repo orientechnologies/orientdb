@@ -8,7 +8,6 @@ public class Repository {
   private String id;
   private String name;
   private String description;
-  private String codename;
 
   public String getDescription() {
     return description;
@@ -24,14 +23,6 @@ public class Repository {
 
   public void setName(String name) {
     this.name = name;
-  }
-
-  public String getCodename() {
-    return codename;
-  }
-
-  public void setCodename(String codename) {
-    this.codename = codename;
   }
 
   public String getId() {

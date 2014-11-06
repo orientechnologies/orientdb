@@ -13,4 +13,5 @@ public interface OTypeHolder<T> {
   public T fromDoc(ODocument doc, OrientBaseGraph graph);
 
   public ODocument toDoc(T doc, OrientBaseGraph graph);
+
 }

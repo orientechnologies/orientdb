@@ -16,6 +16,8 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
 
   public List<Comment> findSingleOrganizationIssueCommentByRepoAndNumber(String owner, String repo, String number);
 
+  public List<Event> findEventsByOwnerRepoAndIssueNumber(String owner, String repo, String number);
+
   public Milestone findMilestoneByOwnerRepoAndNumberIssueAndNumberMilestone(String owner, String repo, Integer iNumber,
       Integer mNumber);
 }

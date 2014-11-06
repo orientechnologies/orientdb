@@ -9,19 +9,14 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
  * Created by Enrico Risa on 04/11/14.
  */
 
-public enum OUser implements OTypeHolder<com.orientechnologies.website.model.schema.dto.User> {
+public enum OUser implements OTypeHolder<com.orientechnologies.website.model.schema.dto.OUser> {
   NAME("name") {
     @Override
     public OType getType() {
       return OType.STRING;
     }
   },
-  USERNAME("username") {
-    @Override
-    public OType getType() {
-      return OType.STRING;
-    }
-  },
+
   TOKEN("token") {
     @Override
     public OType getType() {
@@ -36,29 +31,31 @@ public enum OUser implements OTypeHolder<com.orientechnologies.website.model.sch
   };
 
   @Override
-  public com.orientechnologies.website.model.schema.dto.User fromDoc(ODocument doc, OrientBaseGraph graph) {
+  public com.orientechnologies.website.model.schema.dto.OUser fromDoc(ODocument doc, OrientBaseGraph graph) {
     if (doc == null) {
       return null;
     }
-    com.orientechnologies.website.model.schema.dto.User user = new com.orientechnologies.website.model.schema.dto.User();
+    com.orientechnologies.website.model.schema.dto.OUser user = new com.orientechnologies.website.model.schema.dto.OUser();
     user.setEmail((String) doc.field(EMAIL.toString()));
     user.setId(doc.getIdentity().toString());
-    user.setLogin((String) doc.field(USERNAME.toString()));
+    user.setName((String) doc.field(NAME.toString()));
     user.setToken((String) doc.field(TOKEN.toString()));
     return user;
   }
 
   @Override
-  public ODocument toDoc(com.orientechnologies.website.model.schema.dto.User entity, OrientBaseGraph graph) {
+  public ODocument toDoc(com.orientechnologies.website.model.schema.dto.OUser entity, OrientBaseGraph graph) {
     ODocument doc = null;
     if (entity.getId() == null) {
       doc = new ODocument(OUser.class.getSimpleName());
     } else {
       doc = graph.getRawGraph().load(new ORecordId(entity.getId()));
     }
-    doc.field(USERNAME.toString(), entity.getLogin());
+    doc.field(NAME.toString(), entity.getName());
     doc.field(TOKEN.toString(), entity.getToken());
     doc.field(EMAIL.toString(), entity.getEmail());
+    doc.field("status", "active");
+    doc.field("password", "test");
     return doc;
   }
 

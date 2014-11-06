@@ -3,7 +3,6 @@ package com.orientechnologies.website.model.schema;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.website.model.schema.dto.Comment;
 import com.orientechnologies.website.model.schema.dto.Milestone;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 
@@ -22,7 +21,7 @@ public enum OMilestone implements OTypeHolder<Milestone> {
   TITLE("title") {
     @Override
     public OType getType() {
-      return OType.INTEGER;
+      return OType.STRING;
     }
   },
   CREATOR("creator") {
@@ -34,13 +33,13 @@ public enum OMilestone implements OTypeHolder<Milestone> {
   DESCRIPTION("description") {
     @Override
     public OType getType() {
-      return OType.INTEGER;
+      return OType.STRING;
     }
   },
   STATE("state") {
     @Override
     public OType getType() {
-      return OType.INTEGER;
+      return OType.STRING;
     }
   },
   CREATED_AT("createdAt") {

@@ -7,7 +7,6 @@ public class Organization {
 
   private String id;
   private String name;
-  private String codename;
 
   public String getName() {
     return name;
@@ -15,14 +14,6 @@ public class Organization {
 
   public void setName(String name) {
     this.name = name;
-  }
-
-  public String getCodename() {
-    return codename;
-  }
-
-  public void setCodename(String codename) {
-    this.codename = codename;
   }
 
   public String getId() {

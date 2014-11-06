@@ -5,28 +5,37 @@ import java.util.Date;
 /**
  * Created by Enrico Risa on 05/11/14.
  */
-public class GMilestone {
+public class GMilestone extends GEntity {
+  protected GMilestone(GitHub github, GEntity owner, String content) {
+    super(github, owner, content);
+  }
+
   public Integer getNumber() {
-    return null;
+    return get("number");
   }
 
   public String getTitle() {
-    return null;
+    return get("title");
   }
 
   public String getDescription() {
-    return null;
+    return get("description");
   }
 
   public GIssueState getState() {
-    return null;
+    return GIssueState.valueOf(((String) get("state")).toUpperCase());
   }
 
   public Date getCreatedAt() {
-    return null;
+    return toDate((String) get("created_at"));
   }
 
   public Date getDueOn() {
+    return toDate((String) get("due_on"));
+  }
+
+  @Override
+  protected String getBaseUrl() {
     return null;
   }
 }

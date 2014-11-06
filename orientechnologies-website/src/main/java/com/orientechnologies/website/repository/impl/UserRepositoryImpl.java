@@ -1,31 +1,28 @@
 package com.orientechnologies.website.repository.impl;
 
-import java.util.NoSuchElementException;
-
-import com.orientechnologies.website.model.schema.OSiteSchema;
-import com.orientechnologies.website.model.schema.OTypeHolder;
-import com.orientechnologies.website.model.schema.OUser;
-import com.orientechnologies.website.model.schema.dto.User;
-import com.orientechnologies.website.repository.UserRepository;
-import org.springframework.stereotype.Repository;
-
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.website.model.schema.OTypeHolder;
+import com.orientechnologies.website.model.schema.dto.OUser;
+import com.orientechnologies.website.repository.UserRepository;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import org.springframework.stereotype.Repository;
+
+import java.util.NoSuchElementException;
 
 /**
  * Created by Enrico Risa on 20/10/14.
  */
 
 @Repository
-public class UserRepositoryImpl extends OrientBaseRepository<User> implements UserRepository {
+public class UserRepositoryImpl extends OrientBaseRepository<OUser> implements UserRepository {
 
   @Override
-  public User findUserByLogin(String login) {
+  public OUser findUserByLogin(String login) {
 
     OrientGraph db = dbFactory.getGraph();
-    String query = String.format("select from %s where username = '%s'", getEntityClass().getSimpleName(), login);
+    String query = String.format("select from %s where name = '%s'", getEntityClass().getSimpleName(), login);
     Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
     try {
       ODocument doc = vertices.iterator().next().getRecord();
@@ -38,18 +35,18 @@ public class UserRepositoryImpl extends OrientBaseRepository<User> implements Us
   }
 
   @Override
-  public User findUserOrCreateByLogin(String login) {
+  public OUser findUserOrCreateByLogin(String login) {
 
-    User user = findUserByLogin(login);
+    OUser user = findUserByLogin(login);
     if (user == null) {
-      user = new User(login, null, null);
+      user = new OUser(login, null, null);
       user = save(user);
     }
     return user;
   }
 
   @Override
-  public User findByGithubToken(String token) {
+  public OUser findByGithubToken(String token) {
     OrientGraph db = dbFactory.getGraph();
     String query = String.format("select from %s where token = '%s'", getEntityClass().getSimpleName(), token);
     Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
@@ -63,12 +60,12 @@ public class UserRepositoryImpl extends OrientBaseRepository<User> implements Us
   }
 
   @Override
-  public Class<User> getEntityClass() {
-    return User.class;
+  public Class<OUser> getEntityClass() {
+    return OUser.class;
   }
 
   @Override
-  public OTypeHolder<User> getHolder() {
-    return OUser.EMAIL;
+  public OTypeHolder<OUser> getHolder() {
+    return com.orientechnologies.website.model.schema.OUser.EMAIL;
   }
 }

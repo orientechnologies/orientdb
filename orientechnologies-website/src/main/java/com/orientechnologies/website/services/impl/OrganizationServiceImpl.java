@@ -8,9 +8,9 @@ import com.orientechnologies.website.github.GRepo;
 import com.orientechnologies.website.github.GitHub;
 import com.orientechnologies.website.model.schema.HasMember;
 import com.orientechnologies.website.model.schema.HasRepo;
+import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.model.schema.dto.Organization;
 import com.orientechnologies.website.model.schema.dto.Repository;
-import com.orientechnologies.website.model.schema.dto.User;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import com.orientechnologies.website.repository.RepositoryRepository;
 import com.orientechnologies.website.repository.UserRepository;
@@ -75,9 +75,9 @@ public class OrganizationServiceImpl implements OrganizationService {
         // boolean isMember = ghOrganization.hasMember(user);
         boolean isMember = gOrganization.hasMember(username);
         if (isMember) {
-          User developer = userRepository.findUserByLogin(username);
+          OUser developer = userRepository.findUserByLogin(username);
           if (developer == null) {
-            developer = new User(username, null, null);
+            developer = new OUser(username, null, null);
             developer = userRepository.save(developer);
           }
           createMembership(organization, developer);
@@ -169,13 +169,11 @@ public class OrganizationServiceImpl implements OrganizationService {
   public Organization createOrganization(String name, String description) {
 
     Organization org = new Organization();
-    org.setCodename(name);
-    org.setName(description);
-
+    org.setName(name);
     return organizationRepository.save(org);
   }
 
-  private void createMembership(Organization organization, User user) {
+  private void createMembership(Organization organization, OUser user) {
     OrientGraph graph = dbFactory.getGraph();
 
     OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(organization.getId()));

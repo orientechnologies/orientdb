@@ -5,13 +5,13 @@ import java.util.Date;
 /**
  * Created by Enrico Risa on 24/10/14.
  */
-public class Comment {
+public class Comment extends Event {
 
   private String  id;
   private Integer commentId;
   private String  body;
-  private User    user;
-  private Date    createdAt;
+  private OUser   user;
+
   private Date    updatedAt;
 
   public Integer getCommentId() {
@@ -38,20 +38,12 @@ public class Comment {
     this.id = id;
   }
 
-  public User getUser() {
+  public OUser getUser() {
     return user;
   }
 
-  public void setUser(User user) {
+  public void setUser(OUser user) {
     this.user = user;
-  }
-
-  public Date getCreatedAt() {
-    return createdAt;
-  }
-
-  public void setCreatedAt(Date createdAt) {
-    this.createdAt = createdAt;
   }
 
   public Date getUpdatedAt() {

@@ -24,7 +24,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
   protected void configure(HttpSecurity http) throws Exception {
 
     http.csrf().disable();
-    http.authorizeRequests().antMatchers("/v1/github/**").permitAll().antMatchers("/v1/**").authenticated().and()
+    http.authorizeRequests().antMatchers("/api/v1/github/**").permitAll().antMatchers("/api/v1/**").authenticated().and()
         .addFilterBefore(new StatelessAuthenticationFilter(tokenAuthenticationService), UsernamePasswordAuthenticationFilter.class);
   }
 

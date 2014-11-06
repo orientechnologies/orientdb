@@ -14,12 +14,6 @@ public enum OOrganization implements OTypeHolder<com.orientechnologies.website.m
     public OType getType() {
       return OType.STRING;
     }
-  },
-  CODENAME("codename") {
-    @Override
-    public OType getType() {
-      return OType.STRING;
-    }
   };
 
   private final String name;
@@ -37,7 +31,6 @@ public enum OOrganization implements OTypeHolder<com.orientechnologies.website.m
       doc = graph.getRawGraph().load(new ORecordId(entity.getId()));
     }
     doc.field(NAME.toString(), entity.getName());
-    doc.field(CODENAME.toString(), entity.getCodename());
     return doc;
   }
 
@@ -46,7 +39,6 @@ public enum OOrganization implements OTypeHolder<com.orientechnologies.website.m
     com.orientechnologies.website.model.schema.dto.Organization organization = new com.orientechnologies.website.model.schema.dto.Organization();
     organization.setId(doc.getIdentity().toString());
     organization.setName((String) doc.field(OOrganization.NAME.toString()));
-    organization.setCodename((String) doc.field(OOrganization.CODENAME.toString()));
     return organization;
   }
 

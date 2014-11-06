@@ -1,16 +1,15 @@
 package com.orientechnologies.website.interceptor;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.website.OrientDBFactory;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.website.OrientDBFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 @Component
 public class OrientDBFactoryInterceptor extends HandlerInterceptorAdapter {

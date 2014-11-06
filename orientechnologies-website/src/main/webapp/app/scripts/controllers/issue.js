@@ -25,7 +25,7 @@ angular.module('webappApp')
     $scope.issue = Repo.one(repo).all("issues").one(number).get().$object;
 
 
-    $scope.comments = Repo.one(repo).all("issues").one(number).all("comments").getList().$object;
+    $scope.comments = Repo.one(repo).all("issues").one(number).all("events").getList().$object;
 
   });
 

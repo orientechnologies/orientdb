@@ -31,12 +31,7 @@ public enum OComment implements OTypeHolder<com.orientechnologies.website.model.
       return OType.LINK;
     }
   },
-  CREATED_AT("createdAt") {
-    @Override
-    public OType getType() {
-      return OType.DATETIME;
-    }
-  },
+
   UPDATED_AT("updatedAt") {
     @Override
     public OType getType() {
@@ -59,7 +54,7 @@ public enum OComment implements OTypeHolder<com.orientechnologies.website.model.
     }
     doc.field(COMMENT_ID.toString(), entity.getCommentId());
     doc.field(BODY.toString(), entity.getBody());
-    doc.field(CREATED_AT.toString(), entity.getCreatedAt());
+    doc.field(OEvent.CREATED_AT.toString(), entity.getCreatedAt());
     doc.field(UPDATED_AT.toString(), entity.getUpdatedAt());
     doc.field(USER.toString(), (entity.getUser() != null ? new ORecordId(entity.getUser().getId()) : null));
     return doc;
@@ -72,8 +67,8 @@ public enum OComment implements OTypeHolder<com.orientechnologies.website.model.
     comment.setId(doc.getIdentity().toString());
     comment.setCommentId((Integer) doc.field(COMMENT_ID.toString()));
     comment.setBody((String) doc.field(BODY.toString()));
-    comment.setCreatedAt((Date) doc.field(CREATED_AT.toString()));
-    comment.setCreatedAt((Date) doc.field(CREATED_AT.toString()));
+    comment.setCreatedAt((Date) doc.field(OEvent.CREATED_AT.toString()));
+    comment.setCreatedAt((Date) doc.field(OEvent.CREATED_AT.toString()));
     comment.setUser(OUser.NAME.fromDoc((ODocument) doc.field(USER.toString()), graph));
     return comment;
   }

@@ -8,28 +8,28 @@ import java.util.Collection;
 /**
  * Created by Enrico Risa on 20/10/14.
  */
-public class User implements UserDetails {
+public class OUser implements UserDetails {
 
   private String id;
-  private String login;
+  private String name;
   private String token;
   private String email;
 
-  public User(String login, String token, String email) {
-    this.login = login;
+  public OUser(String name, String token, String email) {
+    this.name = name;
     this.token = token;
     this.email = email;
   }
 
-  public User() {
+  public OUser() {
   }
 
-  public String getLogin() {
-    return login;
+  public String getName() {
+    return name;
   }
 
-  public void setLogin(String login) {
-    this.login = login;
+  public void setName(String name) {
+    this.name = name;
   }
 
   public String getToken() {
@@ -68,7 +68,7 @@ public class User implements UserDetails {
 
   @Override
   public String getUsername() {
-    return getLogin();
+    return getName();
   }
 
   @Override
