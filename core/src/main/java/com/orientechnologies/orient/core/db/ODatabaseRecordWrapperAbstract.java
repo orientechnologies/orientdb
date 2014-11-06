@@ -31,14 +31,18 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
 import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -47,7 +51,9 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
@@ -56,7 +62,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
 
 @SuppressWarnings("unchecked")
 public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseDocumentInternal> extends
-    ODatabaseWrapperAbstract<DB, ORecord> implements ODatabaseInternal<ORecord> {
+    ODatabaseWrapperAbstract<DB, ORecord> implements ODatabaseDocumentInternal {
 
   public ODatabaseRecordWrapperAbstract(final DB iDatabase) {
     super(iDatabase);
@@ -422,6 +428,82 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseDocumen
   public ODatabaseRecordWrapperAbstract<DB> setConflictStrategy(final ORecordConflictStrategy iResolver) {
     getStorage().setConflictStrategy(iResolver);
     return this;
+  }
+
+  @Override
+  public void resetInitialization() {
+    underlying.resetInitialization();
+  }
+
+  @Override
+  public ODatabase<ORecord> commit() throws OTransactionException {
+    return underlying.commit();
+  }
+
+  @Override
+  public ODatabase<ORecord> commit(boolean force) throws OTransactionException {
+    return underlying.commit(false);
+  }
+
+  @Override
+  public ODatabase<ORecord> rollback() throws OTransactionException {
+    return underlying.rollback();
+  }
+
+  @Override
+  public ODatabase<ORecord> rollback(boolean force) throws OTransactionException {
+    return underlying.rollback(force);
+  }
+
+  @Override
+  public String getType() {
+    return underlying.getType();
+  }
+
+  @Override
+  public OCurrentStorageComponentsFactory getStorageVersions() {
+    return underlying.getStorageVersions();
+  }
+
+  @Override
+  public OSBTreeCollectionManager getSbTreeCollectionManager() {
+    return underlying.getSbTreeCollectionManager();
+  }
+
+  @Override
+  public ORecordSerializer getSerializer() {
+    return underlying.getSerializer();
+  }
+
+  @Override
+  public ORecordIteratorClass<ODocument> browseClass(String iClassName) {
+    return underlying.browseClass(iClassName);
+  }
+
+  @Override
+  public ORecordIteratorClass<ODocument> browseClass(String iClassName, boolean iPolymorphic) {
+    return underlying.browseClass(iClassName, iPolymorphic);
+  }
+
+  @Override
+  public <REC extends ORecord> ORecordIteratorCluster<REC> browseCluster(String iClusterName, long startClusterPosition,
+      long endClusterPosition, boolean loadTombstones) {
+    return underlying.browseCluster(iClusterName, startClusterPosition, endClusterPosition, loadTombstones);
+  }
+
+  @Override
+  public <RET> RET newInstance(String iClassName) {
+    return underlying.newInstance(iClassName);
+  }
+
+  @Override
+  public long countClass(String iClassName) {
+    return underlying.countClass(iClassName);
+  }
+
+  @Override
+  public long countClass(String iClassName, boolean iPolymorphic) {
+    return underlying.countClass(iClassName, iPolymorphic);
   }
 
   protected void checkClusterBoundedToClass(final int iClusterId) {
