@@ -345,6 +345,17 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   public byte[] toStream() throws OSerializationException {
+    return toStream(Integer.MAX_VALUE);
+  }
+
+  /**
+   * Added version used for managed Network Versioning.
+   * 
+   * @param version
+   * @return
+   * @throws OSerializationException
+   */
+  public byte[] toStream(int version) throws OSerializationException {
     final StringBuilder buffer = new StringBuilder(8192);
 
     write(buffer, CURRENT_VERSION);
@@ -361,7 +372,8 @@ public class OStorageConfiguration implements OSerializableStream {
 
     write(buffer, timeZone.getID());
     write(buffer, charset);
-    write(buffer, conflictStrategy);
+    if (version > 24)
+      write(buffer, conflictStrategy);
 
     phySegmentToStream(buffer, fileTemplate);
 
@@ -385,11 +397,23 @@ public class OStorageConfiguration implements OSerializableStream {
         write(buffer, paginatedClusterConfiguration.recordOverflowGrowFactor);
         write(buffer, paginatedClusterConfiguration.recordGrowFactor);
         write(buffer, paginatedClusterConfiguration.compression);
-        write(buffer, paginatedClusterConfiguration.conflictStrategy);
-        write(buffer, paginatedClusterConfiguration.getStatus().name().toString());
+        if (version > 24)
+          write(buffer, paginatedClusterConfiguration.conflictStrategy);
+        if (version > 25)
+          write(buffer, paginatedClusterConfiguration.getStatus().name().toString());
       }
     }
-
+    if (version <= 25) {
+      // dataSegment array
+      write(buffer, 0);
+      // tx Segment File
+      write(buffer, "");
+      write(buffer, "");
+      write(buffer, 0);
+      // tx segment flags
+      write(buffer, false);
+      write(buffer, false);
+    }
     write(buffer, properties.size());
     for (OStorageEntryConfiguration e : properties)
       entryToStream(buffer, e);
@@ -398,14 +422,16 @@ public class OStorageConfiguration implements OSerializableStream {
     write(buffer, clusterSelection);
     write(buffer, minimumClusters);
 
-    write(buffer, recordSerializer);
-    write(buffer, recordSerializerVersion);
+    if (version > 24) {
+      write(buffer, recordSerializer);
+      write(buffer, recordSerializerVersion);
 
-    // WRITE CONFIGURATION
-    write(buffer, configuration.getContextSize());
-    for (String k : configuration.getContextKeys()) {
-      write(buffer, k);
-      write(buffer, configuration.getValueAsString(OGlobalConfiguration.findByKey(k)));
+      // WRITE CONFIGURATION
+      write(buffer, configuration.getContextSize());
+      for (String k : configuration.getContextKeys()) {
+        write(buffer, k);
+        write(buffer, configuration.getValueAsString(OGlobalConfiguration.findByKey(k)));
+      }
     }
 
     // PLAIN: ALLOCATE ENOUGH SPACE TO REUSE IT EVERY TIME
