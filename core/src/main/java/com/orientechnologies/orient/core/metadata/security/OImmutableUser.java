@@ -24,6 +24,7 @@ public class OImmutableUser implements OSecurityUser {
 
   private final STATUSES            status;
   private final ORID                rid;
+  private final OUser               user;
 
   public OImmutableUser(long version, OUser user) {
     this.version = version;
@@ -31,6 +32,7 @@ public class OImmutableUser implements OSecurityUser {
     this.password = user.getPassword();
     this.status = user.getAccountStatus();
     this.rid = user.getIdentity().getIdentity();
+    this.user = user;
 
     for (ORole role : user.getRoles()) {
       roles.add(new OImmutableRole(role));
@@ -145,8 +147,14 @@ public class OImmutableUser implements OSecurityUser {
     return version;
   }
 
-	@Override
-	public OIdentifiable getIdentity() {
-		return rid;
-	}
+  @Override
+  public OIdentifiable getIdentity() {
+	return rid;
+  }
+  
+  @Override
+  public ODocument getDocument() {
+    return user.getDocument();
+  }
+	
 }

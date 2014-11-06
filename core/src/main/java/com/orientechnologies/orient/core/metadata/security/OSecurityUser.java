@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Set;
 
@@ -43,5 +44,7 @@ public interface OSecurityUser {
 
   public boolean hasRole(final String iRoleName, final boolean iIncludeInherited);
 
-	public OIdentifiable getIdentity();
+  public OIdentifiable getIdentity();
+  
+  public ODocument getDocument();
 }

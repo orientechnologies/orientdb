@@ -1286,6 +1286,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       beginResponse();
       try {
         sendOk(clientTxId);
+        if (connection.data.protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_25)
+          channel.writeShort((short) record.getIdentity().getClusterId());
         channel.writeLong(record.getIdentity().getClusterPosition());
         if (connection.data.protocolVersion >= 11)
           channel.writeVersion(record.getRecordVersion());
