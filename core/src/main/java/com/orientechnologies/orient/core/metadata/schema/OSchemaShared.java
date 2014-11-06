@@ -59,8 +59,10 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  */
 @SuppressWarnings("unchecked")
 public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, OCloseable {
-  public static final int                       CURRENT_VERSION_NUMBER  = 5;
+  public static final int                       CURRENT_VERSION_NUMBER  = 4;
   public static final int                       VERSION_NUMBER_V4       = 4;
+  // this is needed for guarantee the compatibility to 2.0-M1 and 2.0-M2 no changed associated with it
+  public static final int                       VERSION_NUMBER_V5       = 5;
   private static final long                     serialVersionUID        = 1L;
 
   private final boolean                         clustersCanNotBeSharedAmongClasses;
@@ -575,7 +577,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
                 this,
                 "Database's schema is empty! Recreating the system classes and allow the opening of the database but double check the integrity of the database");
         return;
-      } else if (schemaVersion != CURRENT_VERSION_NUMBER && VERSION_NUMBER_V4 != schemaVersion) {
+      } else if (schemaVersion != CURRENT_VERSION_NUMBER && VERSION_NUMBER_V5 != schemaVersion) {
+        // VERSION_NUMBER_V5 is needed for guarantee the compatibility to 2.0-M1 and 2.0-M2 no changed associated with it
         // HANDLE SCHEMA UPGRADE
         throw new OConfigurationException(
             "Database schema is different. Please export your old database with the previous version of OrientDB and reimport it using the current one.");
@@ -584,7 +587,9 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       properties.clear();
       propertiesByNameType.clear();
       List<ODocument> globalProperties = document.field("globalProperties");
+      boolean hasGlobalProperties = false;
       if (globalProperties != null) {
+        hasGlobalProperties = true;
         for (ODocument oDocument : globalProperties) {
           OGlobalPropertyImpl prop = new OGlobalPropertyImpl();
           prop.fromDocument(oDocument);
@@ -641,7 +646,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         }
       }
 
-      if (schemaVersion == VERSION_NUMBER_V4) {
+      if (!hasGlobalProperties) {
         if (getDatabase().getStorage().getUnderlying() instanceof OStorageEmbedded)
           saveInternal();
       }

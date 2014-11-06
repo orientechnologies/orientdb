@@ -1341,7 +1341,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       try {
         sendOk(clientTxId);
         channel.writeByte((byte) 1);
-        channel.writeBytes(connection.database.getStorage().getConfiguration().toStream());
+        channel.writeBytes(connection.database.getStorage().getConfiguration().toStream(connection.data.protocolVersion));
         channel.writeVersion(OVersionFactory.instance().createVersion());
         channel.writeByte(ORecordBytes.RECORD_TYPE);
         channel.writeByte((byte) 0); // NO MORE RECORDS
