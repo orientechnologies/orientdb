@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.*;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -12,6 +13,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
@@ -22,12 +24,14 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
  */
 @Test
 public class LocalMTCreateDocumentSpeedTest {
-  private ODatabaseDocumentTx database;
-  private Date                date            = new Date();
-  private CountDownLatch      latch           = new CountDownLatch(1);
-  private List<Future>        futures;
-  private volatile boolean    stop            = false;
-  private ExecutorService     executorService = Executors.newCachedThreadPool();
+  private ODatabaseDocumentTx            database;
+  private Date                           date            = new Date();
+  private CountDownLatch                 latch           = new CountDownLatch(1);
+  private List<Future>                   futures;
+  private volatile boolean               stop            = false;
+  private ExecutorService                executorService = Executors.newCachedThreadPool();
+
+  private final OPartitionedDatabasePool databasePool    = new OPartitionedDatabasePool(System.getProperty("url"), "admin", "admin");
 
   @BeforeClass
   public void init() {
@@ -71,10 +75,8 @@ public class LocalMTCreateDocumentSpeedTest {
 
   @AfterClass
   public void deinit() {
-    System.out.println(Orient.instance().getProfiler().dump());
-
     if (database != null)
-      database.close();
+      database.drop();
   }
 
   private final class Saver implements Callable<Void> {
@@ -84,12 +86,11 @@ public class LocalMTCreateDocumentSpeedTest {
 
     @Override
     public Void call() throws Exception {
-      ODatabaseDocumentTx database = new ODatabaseDocumentTx(System.getProperty("url"));
-
       latch.await();
 
       while (!stop) {
-        database.open("admin", "admin");
+        ODatabaseDocument database = databasePool.acquire();
+
         ODocument record = new ODocument("Account");
         record.field("id", 1);
         record.field("name", "Luca");
@@ -97,7 +98,8 @@ public class LocalMTCreateDocumentSpeedTest {
         record.field("birthDate", date);
         record.field("salary", 3000f);
         record.save();
-        database.close();
+
+        databasePool.release(database);
       }
 
       return null;
