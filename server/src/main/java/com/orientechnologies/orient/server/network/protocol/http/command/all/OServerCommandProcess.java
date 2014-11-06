@@ -103,7 +103,7 @@ public class OServerCommandProcess extends OServerCommandAuthenticatedDbAbstract
       }
 
       iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-          msg.toString(), null, true);
+          msg.toString(), null);
 
     } finally {
       if (db != null)
