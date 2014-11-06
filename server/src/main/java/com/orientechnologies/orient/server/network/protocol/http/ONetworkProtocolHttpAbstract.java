@@ -15,20 +15,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.net.Socket;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.net.URLDecoder;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.IllegalFormatException;
-import java.util.InputMismatchException;
-import java.util.Map;
-import java.util.zip.GZIPInputStream;
-
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -75,6 +61,20 @@ import com.orientechnologies.orient.server.network.protocol.http.command.put.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutIndex;
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.URLDecoder;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.IllegalFormatException;
+import java.util.InputMismatchException;
+import java.util.Map;
+import java.util.zip.GZIPInputStream;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   private static final String          COMMAND_SEPARATOR = "|";
@@ -136,7 +136,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       callbackF = null;
 
     response = new OHttpResponse(channel.outStream, request.httpVersion, additionalResponseHeaders, responseCharSet,
-        connection.data.serverInfo, request.sessionId, callbackF);
+        connection.data.serverInfo, request.sessionId, callbackF, request.keepAlive);
     if (request.contentEncoding != null && request.contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
       response.setContentEncoding(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED);
     }
@@ -189,7 +189,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
                   + URLDecoder.decode(command, "UTF-8"));
 
           sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, OHttpUtils.STATUS_INVALIDMETHOD_DESCRIPTION, null,
-              OHttpUtils.CONTENT_TEXT_PLAIN, "Command not found: " + command);
+              OHttpUtils.CONTENT_TEXT_PLAIN, "Command not found: " + command, request.keepAlive);
         } catch (IOException e1) {
           sendShutdown();
         }
@@ -332,18 +332,18 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     }
 
     try {
-      sendTextContent(errorCode, errorReason, responseHeaders, OHttpUtils.CONTENT_TEXT_PLAIN, errorMessage);
+      sendTextContent(errorCode, errorReason, responseHeaders, OHttpUtils.CONTENT_TEXT_PLAIN, errorMessage, request.keepAlive);
     } catch (IOException e1) {
       sendShutdown();
     }
   }
 
   protected void sendTextContent(final int iCode, final String iReason, String iHeaders, final String iContentType,
-      final String iContent) throws IOException {
+      final String iContent, final boolean iKeepAlive) throws IOException {
     final boolean empty = iContent == null || iContent.length() == 0;
 
     sendStatus(empty && iCode == 200 ? 204 : iCode, iReason);
-    sendResponseHeaders(iContentType);
+    sendResponseHeaders(iContentType, iKeepAlive);
     if (iHeaders != null)
       writeLine(iHeaders);
 
@@ -368,13 +368,13 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     writeLine(request.httpVersion + " " + iStatus + " " + iReason);
   }
 
-  protected void sendResponseHeaders(final String iContentType) throws IOException {
+  protected void sendResponseHeaders(final String iContentType, final boolean iKeepAlive) throws IOException {
     writeLine("Cache-Control: no-cache, no-store, max-age=0, must-revalidate");
     writeLine("Pragma: no-cache");
     writeLine("Date: " + new Date());
     writeLine("Content-Type: " + iContentType + "; charset=" + responseCharSet);
     writeLine("Server: " + connection.data.serverInfo);
-    writeLine("Connection: Keep-Alive");
+    writeLine("Connection: " + (iKeepAlive ? "Keep-Alive" : "close"));
     if (getAdditionalResponseHeaders() != null)
       for (String h : getAdditionalResponseHeaders())
         writeLine(h);
@@ -409,6 +409,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
             iRequest.authorization = auth.substring(OHttpUtils.AUTHORIZATION_BASIC.length() + 1);
 
             iRequest.authorization = new String(OBase64Utils.decode(iRequest.authorization));
+
+          } else if (OStringSerializerHelper.startsWithIgnoreCase(line, "Connection: ")) {
+            iRequest.keepAlive = line.substring("Connection: ".length()).equalsIgnoreCase("Keep-Alive");
 
           } else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_COOKIE)) {
             final String sessionPair = line.substring(OHttpUtils.HEADER_COOKIE.length());
@@ -447,7 +450,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
             iRequest.authentication = line.substring(OHttpUtils.HEADER_AUTHENTICATION.length());
           else if (OStringSerializerHelper.startsWithIgnoreCase(line, "Expect: 100-continue"))
             // SUPPORT THE CONTINUE TO AUTHORIZE THE CLIENT TO SEND THE CONTENT WITHOUT WAITING THE DELAY
-            sendTextContent(100, null, null, null, null);
+            sendTextContent(100, null, null, null, null, iRequest.keepAlive);
           else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_CONTENT_ENCODING))
             iRequest.contentEncoding = line.substring(OHttpUtils.HEADER_CONTENT_ENCODING.length());
 
@@ -589,11 +592,11 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       if (request.httpMethod != null && request.url != null) {
         try {
           sendTextContent(505, "Error on executing of " + request.httpMethod + " for the resource: " + request.url, null,
-              "text/plain", t.toString());
+              "text/plain", t.toString(), request.keepAlive);
         } catch (IOException e) {
         }
       } else
-        sendTextContent(505, "Error on executing request", null, "text/plain", t.toString());
+        sendTextContent(505, "Error on executing request", null, "text/plain", t.toString(), request.keepAlive);
 
       readAllContent(request);
     } finally {

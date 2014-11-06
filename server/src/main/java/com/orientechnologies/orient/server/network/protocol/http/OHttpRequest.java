@@ -33,30 +33,30 @@ import java.util.Set;
  * 
  */
 public class OHttpRequest {
-  public final OContextConfiguration        configuration;
-  public final InputStream                  in;
-  public String                             authorization;
-  public String                             sessionId;
-  public String                             url;
-  public Map<String, String>                parameters;
-  public String                             httpMethod;
-  public String                             httpVersion;
-  public String                             contentType;
-  public String                             contentEncoding;
-  public String                             content;
-  public OHttpMultipartBaseInputStream      multipartStream;
-  public String                             boundary;
-  public String                             databaseName;
-  public boolean                            isMultipart;
-  public String                             ifMatch;
-  public String                             authentication;
-  protected Map<String, String>             headers;
+  public final OContextConfiguration         configuration;
+  public final InputStream                   in;
+  public       String                        authorization;
+  public       String                        sessionId;
+  public       String                        url;
+  public       Map<String, String>           parameters;
+  public       String                        httpMethod;
+  public       String                        httpVersion;
+  public       String                        contentType;
+  public       String                        contentEncoding;
+  public       String                        content;
+  public       OHttpMultipartBaseInputStream multipartStream;
+  public       String                        boundary;
+  public       String                        databaseName;
+  public       boolean                       isMultipart;
+  public       String                        ifMatch;
+  public       String                        authentication;
+  protected    Map<String, String>           headers;
 
   public final ONetworkProtocolData         data;
   public final ONetworkProtocolHttpAbstract executor;
+  public       boolean                      keepAlive=false;
 
-  public OHttpRequest(final ONetworkProtocolHttpAbstract iExecutor, final InputStream iInStream, final ONetworkProtocolData iData,
-      final OContextConfiguration iConfiguration) {
+  public OHttpRequest(final ONetworkProtocolHttpAbstract iExecutor, final InputStream iInStream, final ONetworkProtocolData iData, final OContextConfiguration iConfiguration) {
     executor = iExecutor;
     in = iInStream;
     data = iData;
@@ -80,7 +80,7 @@ public class OHttpRequest {
       headers = new HashMap<String, String>();
 
     final int pos = h.indexOf(':');
-    if (pos > -1) {
+    if (pos>-1) {
       headers.put(h.substring(0, pos).trim().toLowerCase(), h.substring(pos + 1).trim());
     }
   }

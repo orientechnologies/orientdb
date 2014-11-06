@@ -15,6 +15,15 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
+import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -29,15 +38,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
-
-import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 
 /**
  * Maintains information about current HTTP response.
@@ -60,9 +60,10 @@ public class OHttpResponse {
   public String              callbackFunction;
   public String              contentEncoding;
   public boolean             sendStarted   = false;
+  public boolean             keepAlive     = false;
 
   public OHttpResponse(final OutputStream iOutStream, final String iHttpVersion, final String[] iAdditionalHeaders,
-      final String iResponseCharSet, final String iServerInfo, final String iSessionId, final String iCallbackFunction) {
+      final String iResponseCharSet, final String iServerInfo, final String iSessionId, final String iCallbackFunction, final boolean iKeepAlive) {
     out = iOutStream;
     httpVersion = iHttpVersion;
     additionalHeaders = iAdditionalHeaders;
@@ -70,6 +71,7 @@ public class OHttpResponse {
     serverInfo = iServerInfo;
     sessionId = iSessionId;
     callbackFunction = iCallbackFunction;
+    keepAlive = iKeepAlive;
   }
 
   public void send(final int iCode, final String iReason, final String iContentType, final Object iContent, final String iHeaders)
@@ -139,7 +141,7 @@ public class OHttpResponse {
     writeLine("Date: " + new Date());
     writeLine("Content-Type: " + iContentType + "; charset=" + characterSet);
     writeLine("Server: " + serverInfo);
-    writeLine("Connection: " + (iKeepAlive ? "Keep-Alive" : "close"));
+    writeLine("Connection: " + (keepAlive ? "Keep-Alive" : "close"));
 
     // SET CONTENT ENCDOING
     if (contentEncoding != null && contentEncoding.length() > 0) {
@@ -195,10 +197,6 @@ public class OHttpResponse {
       else
         writeRecords(newResult, null, iFormat, accept);
     }
-  }
-
-  private boolean isJSObject(Object iResult) {
-    return iResult.getClass().getName().equals("jdk.nashorn.api.scripting.ScriptObjectMirror");
   }
 
   public void writeRecords(final Object iRecords) throws IOException {
@@ -466,6 +464,10 @@ public class OHttpResponse {
 
   public void setSessionId(String sessionId) {
     this.sessionId = sessionId;
+  }
+
+  private boolean isJSObject(Object iResult) {
+    return iResult.getClass().getName().equals("jdk.nashorn.api.scripting.ScriptObjectMirror");
   }
 
 }
