@@ -5,12 +5,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.*;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
@@ -89,7 +87,7 @@ public class LocalMTCreateDocumentSpeedTest {
       latch.await();
 
       while (!stop) {
-        ODatabaseDocument database = databasePool.acquire();
+        final ODatabaseDocumentTx database = databasePool.acquire();
 
         ODocument record = new ODocument("Account");
         record.field("id", 1);
@@ -99,7 +97,7 @@ public class LocalMTCreateDocumentSpeedTest {
         record.field("salary", 3000f);
         record.save();
 
-        databasePool.release(database);
+        database.close();
       }
 
       return null;

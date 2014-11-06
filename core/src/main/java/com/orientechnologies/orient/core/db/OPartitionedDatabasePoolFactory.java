@@ -1,8 +1,5 @@
 package com.orientechnologies.orient.core.db;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 

@@ -19,6 +19,7 @@ import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -38,6 +39,8 @@ import java.util.Locale;
 @Test(groups = "db")
 public class DbCreationTest extends ObjectDBBaseTest {
 
+	private OPartitionedDatabasePool pool;
+
   @Parameters(value = "url")
   public DbCreationTest(@Optional String url) {
     super(url);
@@ -48,6 +51,7 @@ public class DbCreationTest extends ObjectDBBaseTest {
 	@BeforeClass
 	@Override
 	public void beforeClass() throws Exception {
+		pool = new OPartitionedDatabasePool(url, "admin", "admin");
 	}
 
 	@AfterClass
@@ -196,8 +200,11 @@ public class DbCreationTest extends ObjectDBBaseTest {
 
     ODatabaseHelper.createDatabase(db, url, getStorageType());
     db.close();
+
+		pool = new OPartitionedDatabasePool(url, "admin", "admin");
+
     // Get connection from pool
-    db = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    db = pool.acquire();
     db.close();
 
     // Destroy db in the back of the pool
@@ -208,8 +215,6 @@ public class DbCreationTest extends ObjectDBBaseTest {
     db = new ODatabaseDocumentTx(url);
     ODatabaseHelper.createDatabase(db, url, getStorageType());
     db.close();
-
-    ODatabaseDocumentPool.global().close();
   }
 
   @Test
@@ -220,8 +225,10 @@ public class DbCreationTest extends ObjectDBBaseTest {
       db.close();
     }
 
+		pool = new OPartitionedDatabasePool(url, "admin", "admin");
+
     for (int i = 0; i < 500; i++) {
-      ODatabaseDocumentPool.global().acquire(url, "admin", "admin").close();
+      pool.acquire().close();
     }
   }
 

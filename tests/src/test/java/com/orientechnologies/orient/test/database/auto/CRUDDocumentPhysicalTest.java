@@ -16,27 +16,16 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -60,16 +49,26 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 
 @Test(groups = { "crud", "record-vobject" }, sequential = true)
 public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
-  protected static final int TOT_RECORDS         = 100;
-  protected static final int TOT_RECORDS_COMPANY = 10;
+  protected static final int       TOT_RECORDS         = 100;
+  protected static final int       TOT_RECORDS_COMPANY = 10;
 
-  protected long             startRecordNumber;
-  String                     base64;
-  private ODocument          record;
+  protected long                   startRecordNumber;
+  String                           base64;
+  private ODocument                record;
+
+  private OPartitionedDatabasePool pool;
 
   @Parameters(value = "url")
   public CRUDDocumentPhysicalTest(@Optional String url) {
     super(url);
+  }
+
+  @BeforeClass
+  @Override
+  public void beforeClass() throws Exception {
+    super.beforeClass();
+
+    pool = new OPartitionedDatabasePool(url, "admin", "admin");
   }
 
   @BeforeMethod
@@ -77,7 +76,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   public void beforeMethod() throws Exception {
     database.close();
 
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    database = pool.acquire();
   }
 
   @AfterClass
@@ -91,11 +90,11 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
   @Test
   public void testPool() throws IOException {
-    final ODatabaseDocumentTx[] dbs = new ODatabaseDocumentTx[ODatabaseDocumentPool.global().getMaxSize()];
+    final ODatabaseDocumentTx[] dbs = new ODatabaseDocumentTx[pool.getMaxSize()];
 
     for (int i = 0; i < 10; ++i) {
       for (int db = 0; db < dbs.length; ++db)
-        dbs[db] = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+        dbs[db] = pool.acquire();
       for (int db = 0; db < dbs.length; ++db)
         dbs[db].close();
     }
@@ -537,7 +536,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     }
 
     database = null;
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    database = pool.acquire();
 
     doc = testInvalidFetchPlanClearL1Cache(doc, docRid);
     doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(1, 0));
@@ -672,7 +671,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     // WAIT UNTIL ALL RECORD ARE INSERTED. USE A NEW DATABASE CONNECTION
     // TO AVOID TO ENQUEUE THE COUNT ITSELF
-    final ODatabaseDocumentTx db = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    final ODatabaseDocumentTx db = pool.acquire();
     long tot;
     while ((tot = db.countClusterElements("Account")) < startRecordNumber + TOT_RECORDS) {
       System.out.println("Asynchronous insertion: found " + tot + " records but waiting till " + (startRecordNumber + TOT_RECORDS)
@@ -706,7 +705,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     database.close();
 
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    database = pool.acquire();
     bank.reload();
     Assert.assertTrue(((ODocument) bank.field("embedded")).isEmbedded());
     Assert.assertFalse(((ODocument) bank.field("embedded")).getIdentity().isPersistent());
@@ -738,7 +737,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     bank.save();
     database.close();
 
-    database = ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+    database = pool.acquire();
     bank.reload();
 
     ODocument changedDoc1 = bank.field("embedded.total", 100);

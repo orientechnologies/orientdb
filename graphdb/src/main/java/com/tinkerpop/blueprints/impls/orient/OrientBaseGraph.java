@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -67,16 +68,16 @@ import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public abstract class OrientBaseGraph extends OrientConfigurableGraph implements OrientExtendedGraph {
-  public static final String          CONNECTION_OUT = "out";
-  public static final String          CONNECTION_IN  = "in";
-  public static final String          CLASS_PREFIX   = "class:";
-  public static final String          CLUSTER_PREFIX = "cluster:";
-  public static final String          ADMIN          = "admin";
-  private final ODatabaseDocumentPool pool;
-  protected ODatabaseDocumentTx       database;
-  private String                      url;
-  private String                      username;
-  private String                      password;
+  public static final String             CONNECTION_OUT = "out";
+  public static final String             CONNECTION_IN  = "in";
+  public static final String             CLASS_PREFIX   = "class:";
+  public static final String             CLUSTER_PREFIX = "cluster:";
+  public static final String             ADMIN          = "admin";
+  private final OPartitionedDatabasePool pool;
+  protected ODatabaseDocumentTx          database;
+  private String                         url;
+  private String                         username;
+  private String                         password;
 
   /**
    * Constructs a new object using an existent database instance.
@@ -95,7 +96,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     configure(iConfiguration);
   }
 
-  public OrientBaseGraph(final ODatabaseDocumentPool pool) {
+  public OrientBaseGraph(final OPartitionedDatabasePool pool) {
     this.pool = pool;
 
     database = pool.acquire();
@@ -104,7 +105,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     readDatabaseConfiguration();
   }
 
-  public OrientBaseGraph(final ODatabaseDocumentPool pool, final Settings iConfiguration) {
+  public OrientBaseGraph(final OPartitionedDatabasePool pool, final Settings iConfiguration) {
     this.pool = pool;
 
     database = pool.acquire();

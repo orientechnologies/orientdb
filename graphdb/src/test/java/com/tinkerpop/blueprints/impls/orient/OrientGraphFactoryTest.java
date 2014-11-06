@@ -54,17 +54,6 @@ public class OrientGraphFactoryTest {
   }
 
   @Test
-  public void createPool() {
-    OrientGraphFactory factory = new OrientGraphFactory("memory:testPool").setupPool(1, 10);
-    for (int i = 0; i < 100; ++i) {
-      OrientGraph g = factory.getTx();
-      assertEquals(g.getRawGraph().getClass(), ODatabaseDocumentTxPooled.class);
-      g.shutdown();
-    }
-    factory.close();
-  }
-
-  @Test
   public void releaseThreadLocal() {
     OrientGraphFactory factory = new OrientGraphFactory("memory:testPool");
     OrientBaseGraph createGraph = factory.getTx();
