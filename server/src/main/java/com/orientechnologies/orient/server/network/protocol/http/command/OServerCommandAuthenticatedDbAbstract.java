@@ -33,7 +33,12 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.server.network.protocol.http.*;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestException;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpSession;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
 /**
  * Database based authenticated command. Authenticats against the database taken as second parameter of the URL. The URL must be in
@@ -161,7 +166,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       header = "WWW-Authenticate: Basic realm=\"OrientDB db-" + iDatabaseName + "\"";
     }
     iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-        "401 Unauthorized.", header, false);
+        "401 Unauthorized.", header);
   }
 
   protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest) throws InterruptedException {
