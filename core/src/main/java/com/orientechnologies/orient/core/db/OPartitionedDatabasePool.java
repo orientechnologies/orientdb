@@ -22,7 +22,7 @@ public class OPartitionedDatabasePool {
   private final AtomicInteger  acquiredConnections = new AtomicInteger();
 
   private static final int     HASH_INCREMENT      = 0x61c88647;
-  private static final int     MIN_POOL_SIZE       = 2;
+  private static final int     MIN_POOL_SIZE       = 1;
 
   private static AtomicInteger nextHashCode        = new AtomicInteger();
 
@@ -39,7 +39,7 @@ public class OPartitionedDatabasePool {
 
   private final AtomicBoolean                                                         poolBusy      = new AtomicBoolean();
   private final int                                                                   maxPartitions = Runtime.getRuntime()
-                                                                                                        .availableProcessors() << 2;
+                                                                                                        .availableProcessors() << 3;
 
   private volatile AtomicReference<ConcurrentLinkedQueue<DatabaseDocumentTxPolled>>[] partitions;
 
@@ -91,7 +91,7 @@ public class OPartitionedDatabasePool {
   }
 
   public ODatabaseDocumentTx acquire() {
-    final AtomicReference<ConcurrentLinkedQueue<DatabaseDocumentTxPolled>>[] pts = partitions;
+
 
     final PoolData data = poolData.get();
     if (data.acquireCount > 0) {
@@ -102,6 +102,8 @@ public class OPartitionedDatabasePool {
     acquiredConnections.incrementAndGet();
     try {
       while (true) {
+				final AtomicReference<ConcurrentLinkedQueue<DatabaseDocumentTxPolled>>[] pts = partitions;
+
         final int index = (pts.length - 1) & data.hashCode;
 
         ConcurrentLinkedQueue<DatabaseDocumentTxPolled> queue = pts[index].get();
