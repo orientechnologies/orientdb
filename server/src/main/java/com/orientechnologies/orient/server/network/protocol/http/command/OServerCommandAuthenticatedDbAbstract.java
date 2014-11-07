@@ -40,8 +40,18 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpSession;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
+/*
+ import com.nimbusds.jose.JOSEException;
+ import com.nimbusds.jose.JWSSigner;
+ import com.nimbusds.jose.JWSVerifier;
+ import com.nimbusds.jose.crypto.MACSigner;
+ import com.nimbusds.jose.crypto.MACVerifier;
+ import com.nimbusds.jwt.ReadOnlyJWTClaimsSet;
+ import com.nimbusds.jwt.SignedJWT;
+ */
+
 /**
- * Database based authenticated command. Authenticats against the database taken as second parameter of the URL. The URL must be in
+ * Database based authenticated command. Authenticates against the database taken as second parameter of the URL. The URL must be in
  * this format:
  *
  * <pre>
@@ -66,54 +76,85 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       throw new OHttpRequestException("Syntax error in URL. Expected is: <command>/<database>[/...]");
 
     iRequest.databaseName = urlParts[1];
-    final List<String> authenticationParts = iRequest.authorization != null ? OStringSerializerHelper.split(iRequest.authorization,
-        ':') : null;
-
-    OHttpSession currentSession;
-    if (iRequest.sessionId != null && iRequest.sessionId.length() > 1) {
-      currentSession = OHttpSessionManager.getInstance().getSession(iRequest.sessionId);
-      if (currentSession != null && authenticationParts != null) {
-        if (!currentSession.getUserName().equals(authenticationParts.get(0))) {
-          // CHANGED USER, INVALIDATE THE SESSION
-          currentSession = null;
-        }
+    if (iRequest.bearerTokenRaw != null) {
+      // Bearer authentication
+      try {
+        iRequest.bearerToken = server.getTokenHandler().parseToken(iRequest.bearerTokenRaw.getBytes());
+      } catch (Exception e) {
+        // TODO: Catch all expected exceptions correctly!
+        OLogManager.instance().warn(this, "Bearer token parsing failed", e);
       }
-    } else
-      currentSession = null;
 
-    if (currentSession == null) {
-      // NO SESSION
-      if (iRequest.authorization == null || SESSIONID_LOGOUT.equals(iRequest.sessionId)) {
-        iResponse.setSessionId(SESSIONID_UNAUTHORIZED);
+      if (iRequest.bearerToken == null || iRequest.bearerToken.getIsVerified() == false) {
+        // Token parsing or verification failed - for now fail silently.
         sendAuthorizationRequest(iRequest, iResponse, iRequest.databaseName);
         return false;
-      } else
-        return authenticate(iRequest, iResponse, authenticationParts, iRequest.databaseName);
+      }
 
+      // CHECK THE REQUEST VALIDITY
+      server.getTokenHandler().validateToken(iRequest.bearerToken, urlParts[0], urlParts[1]);
+      if (iRequest.bearerToken.getIsValid() == false) {
+
+        // SECURITY PROBLEM: CROSS DATABASE REQUEST!
+        OLogManager.instance().warn(this, "Token '%s' is not valid for database '%s'", iRequest.bearerTokenRaw,
+            iRequest.databaseName);
+        sendAuthorizationRequest(iRequest, iResponse, iRequest.databaseName);
+        return false;
+
+      }
+
+      return iRequest.bearerToken.getIsValid();
     } else {
-      // CHECK THE SESSION VALIDITY
-      if (!currentSession.getDatabaseName().equals(iRequest.databaseName)) {
+      // HTTP basic authentication
+      final List<String> authenticationParts = iRequest.authorization != null ? OStringSerializerHelper.split(
+          iRequest.authorization, ':') : null;
 
-        // SECURITY PROBLEM: CROSS DATABASE REQUEST!
-        OLogManager.instance().warn(this,
-            "Session %s is trying to access to the database '%s', but has been authenticated against the database '%s'",
-            iRequest.sessionId, iRequest.databaseName, currentSession.getDatabaseName());
-        OHttpSessionManager.getInstance().removeSession(iRequest.sessionId);
-        sendAuthorizationRequest(iRequest, iResponse, iRequest.databaseName);
-        return false;
+      OHttpSession currentSession;
+      if (iRequest.sessionId != null && iRequest.sessionId.length() > 1) {
+        currentSession = OHttpSessionManager.getInstance().getSession(iRequest.sessionId);
+        if (currentSession != null && authenticationParts != null) {
+          if (!currentSession.getUserName().equals(authenticationParts.get(0))) {
+            // CHANGED USER, INVALIDATE THE SESSION
+            currentSession = null;
+          }
+        }
+      } else
+        currentSession = null;
 
-      } else if (authenticationParts != null && !currentSession.getUserName().equals(authenticationParts.get(0))) {
+      if (currentSession == null) {
+        // NO SESSION
+        if (iRequest.authorization == null || SESSIONID_LOGOUT.equals(iRequest.sessionId)) {
+          iResponse.setSessionId(SESSIONID_UNAUTHORIZED);
+          sendAuthorizationRequest(iRequest, iResponse, iRequest.databaseName);
+          return false;
+        } else
+          return authenticate(iRequest, iResponse, authenticationParts, iRequest.databaseName);
 
-        // SECURITY PROBLEM: CROSS DATABASE REQUEST!
-        OLogManager.instance().warn(this,
-            "Session %s is trying to access to the database '%s' with user '%s', but has been authenticated with user '%s'",
-            iRequest.sessionId, iRequest.databaseName, authenticationParts.get(0), currentSession.getUserName());
-        OHttpSessionManager.getInstance().removeSession(iRequest.sessionId);
-        sendAuthorizationRequest(iRequest, iResponse, iRequest.databaseName);
-        return false;
+      } else {
+        // CHECK THE SESSION VALIDITY
+        if (!currentSession.getDatabaseName().equals(iRequest.databaseName)) {
+
+          // SECURITY PROBLEM: CROSS DATABASE REQUEST!
+          OLogManager.instance().warn(this,
+              "Session %s is trying to access to the database '%s', but has been authenticated against the database '%s'",
+              iRequest.sessionId, iRequest.databaseName, currentSession.getDatabaseName());
+          OHttpSessionManager.getInstance().removeSession(iRequest.sessionId);
+          sendAuthorizationRequest(iRequest, iResponse, iRequest.databaseName);
+          return false;
+
+        } else if (authenticationParts != null && !currentSession.getUserName().equals(authenticationParts.get(0))) {
+
+          // SECURITY PROBLEM: CROSS DATABASE REQUEST!
+          OLogManager.instance().warn(this,
+              "Session %s is trying to access to the database '%s' with user '%s', but has been authenticated with user '%s'",
+              iRequest.sessionId, iRequest.databaseName, authenticationParts.get(0), currentSession.getUserName());
+          OHttpSessionManager.getInstance().removeSession(iRequest.sessionId);
+          sendAuthorizationRequest(iRequest, iResponse, iRequest.databaseName);
+          return false;
+        }
+
+        return true;
       }
-
-      return true;
     }
   }
 
@@ -170,6 +211,35 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
   }
 
   protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest) throws InterruptedException {
+    final OHttpSession session = OHttpSessionManager.getInstance().getSession(iRequest.sessionId);
+    if (iRequest.bearerToken != null) {
+      return getProfiledDatabaseInstanceToken(iRequest);
+    } else {
+      return getProfiledDatabaseInstanceBasic(iRequest);
+    }
+  }
+
+  protected ODatabaseDocumentTx getProfiledDatabaseInstanceToken(final OHttpRequest iRequest) throws InterruptedException {
+    // after authentication, if current login user is different compare with current DB user, reset DB user to login user
+    ODatabaseDocumentInternal localDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    if (localDatabase == null) {
+      localDatabase = (ODatabaseDocumentTx) server.openDatabase("document", iRequest.databaseName, iRequest.bearerToken);
+    } else {
+      String currentUserId = iRequest.bearerToken.getSubject();
+      if (currentUserId != null && currentUserId.length() > 0 && localDatabase != null && localDatabase.getUser() != null) {
+        if (!currentUserId.equals(localDatabase.getUser().getDocument().getIdentity().toString())) {
+          ODocument userDoc = localDatabase.load(new ORecordId(currentUserId));
+          localDatabase.setUser(new OUser(userDoc));
+        }
+      }
+    }
+
+    iRequest.data.lastDatabase = localDatabase.getName();
+    iRequest.data.lastUser = localDatabase.getUser() != null ? localDatabase.getUser().getName() : null;
+    return (ODatabaseDocumentTx) localDatabase.getDatabaseOwner();
+  }
+
+  protected ODatabaseDocumentTx getProfiledDatabaseInstanceBasic(final OHttpRequest iRequest) throws InterruptedException {
     final OHttpSession session = OHttpSessionManager.getInstance().getSession(iRequest.sessionId);
 
     if (session == null)

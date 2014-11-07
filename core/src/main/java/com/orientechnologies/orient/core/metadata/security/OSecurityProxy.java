@@ -25,6 +25,7 @@ import java.util.Set;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -86,8 +87,16 @@ public class OSecurityProxy extends OProxedResource<OSecurity> implements OSecur
     return delegate.authenticate(iUsername, iUserPassword);
   }
 
+  public OUser authenticate(final IToken authToken) {
+    return delegate.authenticate(authToken);
+  }
+
   public OUser getUser(final String iUserName) {
     return delegate.getUser(iUserName);
+  }
+
+  public OUser getUser(final ORID iUserId) {
+    return delegate.getUser(iUserId);
   }
 
   public OUser createUser(final String iUserName, final String iUserPassword, final String... iRoles) {

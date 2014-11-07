@@ -31,6 +31,7 @@
                 <fileset dir="distributed" includes="build.xml"/>
                 <fileset dir="tools" includes="build.xml"/>
                 <fileset dir="graphdb" includes="build.xml"/>
+                <fileset dir="token-auth-jwt" includes="build.xml"/>
                 <fileset dir="tests" includes="build.xml"/>
             </subant>
 

@@ -51,6 +51,7 @@ import com.orientechnologies.orient.core.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.*;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.security.IToken;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -172,6 +173,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
     } finally {
       lock.releaseExclusiveLock();
     }
+  }
+
+  public void open(final IToken iToken, final Map<String, Object> iProperties) {
+    open(iToken.getSubject(), "", iProperties);
   }
 
   public void create(final Map<String, Object> iProperties) {

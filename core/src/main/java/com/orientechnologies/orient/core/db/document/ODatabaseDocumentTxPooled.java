@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 import com.orientechnologies.orient.core.db.ODatabasePooled;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.metadata.security.IToken;
 
 /**
  * Pooled wrapper to the ODatabaseDocumentTx class. Allows to being reused across calls. The close() method does not close the
@@ -63,6 +64,13 @@ public class ODatabaseDocumentTxPooled extends ODatabaseDocumentTx implements OD
 
   @Override
   public ODatabaseDocumentTxPooled open(final String iUserName, final String iUserPassword) {
+    throw new UnsupportedOperationException(
+        "Database instance was retrieved from a pool. You cannot open the database in this way. Use directly a ODatabaseDocumentTx instance if you want to manually open the connection");
+  }
+
+
+  @Override
+  public ODatabaseDocumentTxPooled open(final IToken iToken) {
     throw new UnsupportedOperationException(
         "Database instance was retrieved from a pool. You cannot open the database in this way. Use directly a ODatabaseDocumentTx instance if you want to manually open the connection");
   }

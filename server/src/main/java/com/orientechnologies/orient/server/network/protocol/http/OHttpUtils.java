@@ -19,13 +19,13 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
-import com.orientechnologies.common.exception.OException;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.orientechnologies.common.exception.OException;
 
 /**
  * Contains HTTP utilities static methods and constants.
@@ -56,6 +56,7 @@ public class OHttpUtils {
   public static final String HEADER_CONTENT_ENCODING             = "Accept-Encoding: ";
   public static final String HEADER_ETAG                         = "ETag: ";
 
+  public static final String AUTHORIZATION_BEARER                = "Bearer";
   public static final String AUTHORIZATION_BASIC                 = "Basic";
   public static final String OSESSIONID                          = "OSESSIONID";
 

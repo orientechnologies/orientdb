@@ -19,6 +19,21 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.IllegalFormatException;
+import java.util.InputMismatchException;
+import java.util.Map;
+import java.util.zip.GZIPInputStream;
+
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -49,9 +64,27 @@ import com.orientechnologies.orient.server.network.protocol.http.command.delete.
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteIndex;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteProperty;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.*;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetClass;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetCluster;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetConnect;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetConnections;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDatabase;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDictionary;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDisconnect;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDocument;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDocumentByClass;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetExportDatabase;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetFileDownload;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetIndex;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetListDatabases;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetQuery;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetServer;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStorageAllocation;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetSupportedLanguages;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandKillDbConnection;
 import com.orientechnologies.orient.server.network.protocol.http.command.options.OServerCommandOptions;
 import com.orientechnologies.orient.server.network.protocol.http.command.patch.OServerCommandPatchDocument;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostAuthToken;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostBatch;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostClass;
 import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostCommand;
@@ -65,21 +98,6 @@ import com.orientechnologies.orient.server.network.protocol.http.command.put.OSe
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutIndex;
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.net.Socket;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.net.URLDecoder;
-import java.nio.charset.Charset;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.IllegalFormatException;
-import java.util.InputMismatchException;
-import java.util.Map;
-import java.util.zip.GZIPInputStream;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   private static final String          COMMAND_SEPARATOR = "|";
@@ -350,6 +368,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
     sendStatus(empty && iCode == 200 ? 204 : iCode, iReason);
     sendResponseHeaders(iContentType, iKeepAlive);
+
     if (iHeaders != null)
       writeLine(iHeaders);
 
@@ -409,16 +428,16 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
           if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_AUTHORIZATION)) {
             // STORE AUTHORIZATION INFORMATION INTO THE REQUEST
             final String auth = line.substring(OHttpUtils.HEADER_AUTHORIZATION.length());
-            if (!OStringSerializerHelper.startsWithIgnoreCase(auth, OHttpUtils.AUTHORIZATION_BASIC))
-              throw new IllegalArgumentException("Only HTTP Basic authorization is supported");
-
-            iRequest.authorization = auth.substring(OHttpUtils.AUTHORIZATION_BASIC.length() + 1);
-
-            iRequest.authorization = new String(OBase64Utils.decode(iRequest.authorization));
-
+            if (OStringSerializerHelper.startsWithIgnoreCase(auth, OHttpUtils.AUTHORIZATION_BASIC)) {
+              iRequest.authorization = auth.substring(OHttpUtils.AUTHORIZATION_BASIC.length() + 1);
+              iRequest.authorization = new String(OBase64Utils.decode(iRequest.authorization));
+            } else if (OStringSerializerHelper.startsWithIgnoreCase(auth, OHttpUtils.AUTHORIZATION_BEARER)) {
+              iRequest.bearerTokenRaw = auth.substring(OHttpUtils.AUTHORIZATION_BEARER.length() + 1);
+            } else {
+              throw new IllegalArgumentException("Only HTTP Basic and Bearer authorization are supported");
+            }
           } else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_CONNECTION)) {
             iRequest.keepAlive = line.substring(OHttpUtils.HEADER_CONNECTION.length()).equalsIgnoreCase("Keep-Alive");
-
           } else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_COOKIE)) {
             final String sessionPair = line.substring(OHttpUtils.HEADER_COOKIE.length());
 
@@ -708,6 +727,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     cmdManager.registerCommand(new OServerCommandAction());
     cmdManager.registerCommand(new OServerCommandKillDbConnection());
     cmdManager.registerCommand(new OServerCommandGetSupportedLanguages());
+    cmdManager.registerCommand(new OServerCommandPostAuthToken());
 
     for (OServerCommandConfiguration c : iListener.getStatefulCommands())
       try {
