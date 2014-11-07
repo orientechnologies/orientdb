@@ -22,7 +22,7 @@ public class OPartitionedDatabasePool {
   private final AtomicInteger  acquiredConnections = new AtomicInteger();
 
   private static final int     HASH_INCREMENT      = 0x61c88647;
-  private static final int     MIN_POOL_SIZE       = 1;
+  private static final int     MIN_POOL_SIZE       = 2;
 
   private static AtomicInteger nextHashCode        = new AtomicInteger();
 
