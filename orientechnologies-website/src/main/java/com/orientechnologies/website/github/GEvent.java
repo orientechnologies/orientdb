@@ -1,5 +1,7 @@
 package com.orientechnologies.website.github;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.util.Date;
 
 /**
@@ -22,5 +24,13 @@ public class GEvent extends GEntity {
   @Override
   protected String getBaseUrl() {
     return null;
+  }
+
+  public String getEvent() {
+    return get("event");
+  }
+
+  public GUser getActor() {
+    return toUser((ODocument) get("actor"));
   }
 }

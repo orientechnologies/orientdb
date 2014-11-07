@@ -4,14 +4,16 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.model.schema.dto.Issue;
+import com.orientechnologies.website.model.schema.dto.Label;
+import com.orientechnologies.website.model.schema.dto.OLabel;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by Enrico Risa on 04/11/14.
@@ -108,7 +110,7 @@ public enum OIssue implements OTypeHolder<Issue> {
     issue.setState((String) doc.field(STATE.toString()));
     issue.setClosedAt((Date) doc.field(CLOSED_AT.toString()));
     issue.setCreatedAt((Date) doc.field(CREATED_AT.toString()));
-    issue.setLabels(new ArrayList<String>((Collection<? extends String>) doc.field(LABELS.toString())));
+
     issue.setNumber((Integer) doc.field(NUMBER.toString()));
 
     OrientVertex iss = new OrientVertex(graph, doc);
@@ -116,6 +118,16 @@ public enum OIssue implements OTypeHolder<Issue> {
       issue.setRepository(ORepository.NAME.fromDoc(((OrientVertex) vertex).getRecord(), graph));
       break;
     }
+    for (Vertex vertex : iss.getVertices(Direction.OUT, HasMilestone.class.getSimpleName())) {
+      issue.setMilestone(OMilestone.NUMBER.fromDoc(((OrientVertex) vertex).getRecord(), graph));
+      break;
+    }
+    List<Label> labelList = new ArrayList<Label>();
+    for (Vertex vertex : iss.getVertices(Direction.OUT, HasLabel.class.getSimpleName())) {
+      Label l = OLabel.NAME.fromDoc(((OrientVertex) vertex).getRecord(), graph);
+      labelList.add(l);
+    }
+    issue.setLabels(labelList);
     issue.setAssignee(OUser.NAME.fromDoc((ODocument) doc.field(ASSIGNEE.toString()), graph));
     issue.setUser(OUser.NAME.fromDoc((ODocument) doc.field(USER.toString()), graph));
     return issue;

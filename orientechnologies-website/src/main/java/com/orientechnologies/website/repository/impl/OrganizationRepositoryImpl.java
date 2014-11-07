@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.model.schema.*;
 import com.orientechnologies.website.model.schema.dto.*;
+import com.orientechnologies.website.model.schema.dto.User;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
@@ -59,7 +60,7 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   @Override
   public List<com.orientechnologies.website.model.schema.dto.Repository> findOrganizationRepositories(String name) {
     OrientGraph db = dbFactory.getGraph();
-    String query = String.format("select expand(out('HasRepo')) from Organization where codename = '%s'", name);
+    String query = String.format("select expand(out('HasRepo')) from Organization where name = '%s'", name);
     Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
 
     List<com.orientechnologies.website.model.schema.dto.Repository> issues = new ArrayList<com.orientechnologies.website.model.schema.dto.Repository>();
@@ -96,7 +97,7 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     OrientVertex vertex = new OrientVertex(db, new ORecordId(issue.getId()));
 
     List<Comment> comments = new ArrayList<Comment>();
-    for (Vertex vertex1 : vertex.getVertices(Direction.OUT, HasEvents.class.getSimpleName())) {
+    for (Vertex vertex1 : vertex.getVertices(Direction.OUT, HasEvent.class.getSimpleName())) {
       OrientVertex v = (OrientVertex) vertex1;
       comments.add(OComment.COMMENT_ID.fromDoc(v.getRecord(), db));
     }
@@ -112,11 +113,27 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     OrientVertex vertex = new OrientVertex(db, new ORecordId(issue.getId()));
 
     List<Event> events = new ArrayList<Event>();
-    for (Vertex vertex1 : vertex.getVertices(Direction.OUT, HasEvents.class.getSimpleName())) {
+    for (Vertex vertex1 : vertex.getVertices(Direction.OUT, HasEvent.class.getSimpleName())) {
       OrientVertex v = (OrientVertex) vertex1;
       events.add(OEvent.CREATED_AT.fromDoc(v.getRecord(), db));
     }
     return events;
+  }
+
+  @Override
+  public List<User> findTeamMembers(String owner, String repo) {
+
+    // Todo Change the query when the team concept is introduced to repository
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format("select expand(out('HasMember')) from Organization where name = '%s'", owner);
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+
+    List<User> users = new ArrayList<User>();
+    for (OrientVertex vertice : vertices) {
+      ODocument doc = vertice.getRecord();
+      users.add(com.orientechnologies.website.model.schema.OUser.NAME.fromDoc(doc, db));
+    }
+    return users;
   }
 
   @Override
@@ -135,6 +152,21 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     } catch (NoSuchElementException e) {
       return null;
     }
+  }
+
+  @Override
+  public List<Milestone> findRepoMilestones(String owner, String repo) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format(
+        "select expand(out('HasRepo')[name = '%s'].out('HasMilestone'))   from Organization  where name = '%s')", repo, owner);
+
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+    List<Milestone> milestones = new ArrayList<Milestone>();
+    for (OrientVertex vertice : vertices) {
+      ODocument doc = vertice.getRecord();
+      milestones.add(OMilestone.NUMBER.fromDoc(doc, db));
+    }
+    return milestones;
   }
 
   @Override

@@ -2,7 +2,6 @@ package com.orientechnologies.website.repository.impl;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.OrientDBFactory;
-import com.orientechnologies.website.model.schema.OSiteSchema;
 import com.orientechnologies.website.model.schema.OTypeHolder;
 import com.orientechnologies.website.repository.BaseRepository;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;

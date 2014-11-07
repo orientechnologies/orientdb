@@ -11,23 +11,23 @@
               <div class="row">
                 <div class="col-md-3">
                   <label>Repository</label>
-                  <select class="form-control" required ng-model="issue.repo"
-                          ng-options="repo.codename for repo in repositories"></select>
+                  <select class="form-control" required ng-model="repo"
+                          ng-options="repo.name for repo in repositories"></select>
                 </div>
                 <div class="col-md-3">
                   <label>Assignee</label>
-                  <select class="form-control" ng-model="issue.repo"
-                          ng-options="repo.codename for repo in repositories"></select>
+                  <select class="form-control" ng-model="issue.assignee"
+                          ng-options="a.name for a in assignees"></select>
                 </div>
                 <div class="col-md-3">
                   <label>Version</label>
-                  <select class="form-control" required ng-model="issue.repo"
-                          ng-options="repo.codename for repo in repositories"></select>
+                  <select class="form-control" required ng-model="issue.version"
+                          ng-options="m.title for m in milestones"></select>
                 </div>
                 <div class="col-md-3">
                   <label>Milestone</label>
-                  <select class="form-control" required ng-model="issue.repo"
-                          ng-options="repo.codename for repo in repositories"></select>
+                  <select class="form-control" required ng-model="issue.milestone"
+                          ng-options="m.title for m in milestones"></select>
                 </div>
               </div>
               <div class="row">

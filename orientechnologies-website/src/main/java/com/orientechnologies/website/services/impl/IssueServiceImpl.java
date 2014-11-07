@@ -1,6 +1,6 @@
 package com.orientechnologies.website.services.impl;
 
-import com.orientechnologies.website.model.schema.HasEvents;
+import com.orientechnologies.website.model.schema.HasEvent;
 import com.orientechnologies.website.model.schema.HasLabel;
 import com.orientechnologies.website.model.schema.HasMilestone;
 import com.orientechnologies.website.model.schema.dto.*;
@@ -48,7 +48,7 @@ public class IssueServiceImpl implements IssueService {
     OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(issue.getId()));
     OrientVertex devVertex = new OrientVertex(graph, new ORecordId(e.getId()));
 
-    orgVertex.addEdge(HasEvents.class.getSimpleName(), devVertex);
+    orgVertex.addEdge(HasEvent.class.getSimpleName(), devVertex);
   }
 
   private void createLabelsRelationship(Issue issue, List<Label> labels) {
@@ -84,6 +84,6 @@ public class IssueServiceImpl implements IssueService {
     OrientGraph graph = dbFactory.getGraph();
     OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(issue.getId()));
     OrientVertex devVertex = new OrientVertex(graph, new ORecordId(comment.getId()));
-    orgVertex.addEdge(HasEvents.class.getSimpleName(), devVertex);
+    orgVertex.addEdge(HasEvent.class.getSimpleName(), devVertex);
   }
 }

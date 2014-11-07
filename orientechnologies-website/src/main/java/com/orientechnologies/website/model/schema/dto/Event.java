@@ -7,9 +7,9 @@ import java.util.Date;
  */
 public class Event {
 
-  private String  id;
-  private Integer eventId;
-  private Date    createdAt;
+  private String id;
+
+  private Date   createdAt;
 
   public Date getCreatedAt() {
     return createdAt;
@@ -20,14 +20,6 @@ public class Event {
 
   }
 
-  public void setEventId(Integer eventId) {
-    this.eventId = eventId;
-  }
-
-  public Integer getEventId() {
-    return eventId;
-  }
-
   public String getId() {
     return id;
   }
@@ -35,4 +27,6 @@ public class Event {
   public void setId(String id) {
     this.id = id;
   }
+
+
 }

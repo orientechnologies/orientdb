@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.model.schema.dto.Comment;
 import com.orientechnologies.website.model.schema.dto.Event;
+import com.orientechnologies.website.model.schema.dto.IssueEvent;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 
 /**
@@ -11,12 +12,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
  */
 public enum OEvent implements OTypeHolder<Event> {
 
-  EVENT_ID("event_id") {
-    @Override
-    public OType getType() {
-      return OType.INTEGER;
-    }
-  },
   CREATED_AT("createdAt") {
     @Override
     public OType getType() {
@@ -36,13 +31,22 @@ public enum OEvent implements OTypeHolder<Event> {
 
     if (Comment.class.getSimpleName().equals(doc.getClassName())) {
       return OComment.COMMENT_ID.fromDoc(doc, graph);
+    } else if (IssueEvent.class.getSimpleName().equals(doc.getClassName())) {
+      return OIssueEvent.EVENT_ID.fromDoc(doc, graph);
     }
     return null;
   }
 
   @Override
-  public ODocument toDoc(Event doc, OrientBaseGraph graph) {
-    throw new UnsupportedOperationException();
+  public ODocument toDoc(Event event, OrientBaseGraph graph) {
+
+    ODocument doc = null;
+    if (event instanceof IssueEvent) {
+      doc = OIssueEvent.EVENT_ID.toDoc((IssueEvent) event, graph);
+    } else if (event instanceof Comment) {
+      doc = OComment.COMMENT_ID.toDoc((Comment) event, graph);
+    }
+    return doc;
   }
 
   @Override

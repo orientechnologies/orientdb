@@ -1,5 +1,7 @@
 package com.orientechnologies.website.model.schema.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -10,19 +12,20 @@ import java.util.List;
  */
 public class Issue {
 
-  private String             id;
-  private Integer            number;
-  private String             title;
-  private String             body;
-  private String             state;
-  private Collection<String> labels = new ArrayList<String>();
-  private Repository         repository;
+  @JsonIgnore
+  private String            id;
+  private Integer           number;
+  private String            title;
+  private String            body;
+  private String            state;
+  private Collection<Label> labels = new ArrayList<Label>();
+  private Repository        repository;
+  private Milestone         milestone;
+  private Date              createdAt;
+  private Date              closedAt;
 
-  private Date               createdAt;
-  private Date               closedAt;
-
-  private OUser user;
-  private OUser assignee;
+  private User user;
+  private User assignee;
 
   public String getId() {
     return id;
@@ -34,6 +37,14 @@ public class Issue {
 
   public Integer getNumber() {
     return number;
+  }
+
+  public Milestone getMilestone() {
+    return milestone;
+  }
+
+  public void setMilestone(Milestone milestone) {
+    this.milestone = milestone;
   }
 
   public void setNumber(Integer number) {
@@ -64,11 +75,11 @@ public class Issue {
     this.state = state;
   }
 
-  public Collection<String> getLabels() {
+  public Collection<Label> getLabels() {
     return labels;
   }
 
-  public void setLabels(List<String> labels) {
+  public void setLabels(List<Label> labels) {
     this.labels = labels;
   }
 
@@ -88,23 +99,23 @@ public class Issue {
     this.closedAt = closedAt;
   }
 
-  public OUser getAssignee() {
+  public User getAssignee() {
     return assignee;
   }
 
-  public void setAssignee(OUser assignee) {
+  public void setAssignee(User assignee) {
     this.assignee = assignee;
   }
 
-  public void addLabel(String name) {
+  public void addLabel(Label name) {
     labels.add(name);
   }
 
-  public OUser getUser() {
+  public User getUser() {
     return user;
   }
 
-  public void setUser(OUser user) {
+  public void setUser(User user) {
     this.user = user;
   }
 

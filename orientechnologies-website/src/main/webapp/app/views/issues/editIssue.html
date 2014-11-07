@@ -9,16 +9,20 @@
   </div>
   <div class="row">
     <div class="col-md-1">
-      <span class="label label-success">{{issue.state}}</span>
+      <h4><span class="label label-success">{{issue.state}}</span></h4>
     </div>
     <div class="col-md-4">
-      {{issue.user.login}} opened this issue {{ issue.createdAt | fromNow}}
+      <b>{{issue.user.name}}</b> opened this issue {{ issue.createdAt | fromNow}}
     </div>
-    <hr>
+  </div>
+  <div class="row">
+    <div class="col-md-12">
+      <hr>
+    </div>
   </div>
   <div class="row">
 
-    <div class="col-md-10">
+    <div class="col-md-9">
       <div class="row">
         <div class="col-md-1">
 
@@ -26,10 +30,9 @@
         <div class="col-md-11">
           <div class="panel panel-default">
 
-            <div class="panel-heading">{{issue.user.login}} commented {{ issue.createdAt | fromNow}}</div>
+            <div class="panel-heading"><b>{{issue.user.name}}</b> commented {{ issue.createdAt | fromNow}}</div>
             <div class="panel-body">
               <div mkeditor ng-model="issue.body"></div>
-              <!--{{issue.body}}-->
             </div>
           </div>
         </div>
@@ -42,21 +45,69 @@
           <div class="col-md-11">
             <div class="panel panel-default">
 
-              <div class="panel-heading">{{comment.user.login}} commented {{ comment.createdAt | fromNow}}</div>
+              <div class="panel-heading"><b>{{comment.user.name}}</b> commented {{ comment.createdAt | fromNow}}</div>
               <div class="panel-body">
                 <div mkeditor ng-model="comment.body"></div>
-                <!--{{comment.body}}-->
               </div>
             </div>
           </div>
         </div>
       </div>
       <div class="row">
+        <div class="col-md-1">
 
+        </div>
+        <div class="col-md-11">
+          <div class="panel panel-default">
+
+            <div class="panel-heading">Leave a Comment</div>
+            <div class="panel-body">
+              <div mkeditor ng-model="newComment"></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="col-md-2">
+    <div class="col-md-2 issue-sidebar">
+      <div class="row">
+        <div class="col-md-12">
+          <button class="btn btn-transparent ">Labels <i class="fa fa-gear pull-right"></i></button>
+        </div>
+        <div class="col-md-12">
+          <div class="row">
+            <div class="col-md-12 issue-label" ng-repeat="label in issue.labels">
+              <span class="label" style="background-color: #{{label.color}}">{{label.name}}</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-12">
+          <hr>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <button class="btn btn-transparent ">Milestone <i class="fa fa-gear pull-right"></i></button>
+        </div>
+        <div class="col-md-12 milestone">
+          <span class="label label-primary">{{issue.milestone.title}}</span>
+        </div>
+        <div class="col-md-12">
+          <hr>
+        </div>
 
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <button class="btn btn-transparent">Assignee <i class="fa fa-gear pull-right"></i></button>
+        </div>
+        <div class="col-md-12">
+          {{issue.assignee.name}}
+        </div>
+
+        <div class="col-md-12">
+          <hr>
+        </div>
+      </div>
     </div>
   </div>
 </div>

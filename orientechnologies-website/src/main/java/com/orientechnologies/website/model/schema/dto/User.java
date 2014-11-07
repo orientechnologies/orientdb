@@ -1,5 +1,6 @@
 package com.orientechnologies.website.model.schema.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -8,20 +9,23 @@ import java.util.Collection;
 /**
  * Created by Enrico Risa on 20/10/14.
  */
-public class OUser implements UserDetails {
+public class User implements UserDetails {
 
+  @JsonIgnore
   private String id;
   private String name;
+  @JsonIgnore
   private String token;
+  @JsonIgnore
   private String email;
 
-  public OUser(String name, String token, String email) {
+  public User(String name, String token, String email) {
     this.name = name;
     this.token = token;
     this.email = email;
   }
 
-  public OUser() {
+  public User() {
   }
 
   public String getName() {
@@ -56,36 +60,43 @@ public class OUser implements UserDetails {
     this.id = id;
   }
 
+  @JsonIgnore
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
     return null;
   }
 
+  @JsonIgnore
   @Override
   public String getPassword() {
     return null;
   }
 
+  @JsonIgnore
   @Override
   public String getUsername() {
     return getName();
   }
 
+  @JsonIgnore
   @Override
   public boolean isAccountNonExpired() {
     return false;
   }
 
+  @JsonIgnore
   @Override
   public boolean isAccountNonLocked() {
     return false;
   }
 
+  @JsonIgnore
   @Override
   public boolean isCredentialsNonExpired() {
     return false;
   }
 
+  @JsonIgnore
   @Override
   public boolean isEnabled() {
     return false;

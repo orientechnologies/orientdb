@@ -3,7 +3,7 @@ package com.orientechnologies.website.repository.impl;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.website.model.schema.OTypeHolder;
-import com.orientechnologies.website.model.schema.dto.OUser;
+import com.orientechnologies.website.model.schema.dto.User;
 import com.orientechnologies.website.repository.UserRepository;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -16,10 +16,10 @@ import java.util.NoSuchElementException;
  */
 
 @Repository
-public class UserRepositoryImpl extends OrientBaseRepository<OUser> implements UserRepository {
+public class UserRepositoryImpl extends OrientBaseRepository<User> implements UserRepository {
 
   @Override
-  public OUser findUserByLogin(String login) {
+  public User findUserByLogin(String login) {
 
     OrientGraph db = dbFactory.getGraph();
     String query = String.format("select from %s where name = '%s'", getEntityClass().getSimpleName(), login);
@@ -35,18 +35,18 @@ public class UserRepositoryImpl extends OrientBaseRepository<OUser> implements U
   }
 
   @Override
-  public OUser findUserOrCreateByLogin(String login) {
+  public User findUserOrCreateByLogin(String login) {
 
-    OUser user = findUserByLogin(login);
+    User user = findUserByLogin(login);
     if (user == null) {
-      user = new OUser(login, null, null);
+      user = new User(login, null, null);
       user = save(user);
     }
     return user;
   }
 
   @Override
-  public OUser findByGithubToken(String token) {
+  public User findByGithubToken(String token) {
     OrientGraph db = dbFactory.getGraph();
     String query = String.format("select from %s where token = '%s'", getEntityClass().getSimpleName(), token);
     Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
@@ -60,12 +60,12 @@ public class UserRepositoryImpl extends OrientBaseRepository<OUser> implements U
   }
 
   @Override
-  public Class<OUser> getEntityClass() {
-    return OUser.class;
+  public Class<User> getEntityClass() {
+    return User.class;
   }
 
   @Override
-  public OTypeHolder<OUser> getHolder() {
+  public OTypeHolder<User> getHolder() {
     return com.orientechnologies.website.model.schema.OUser.EMAIL;
   }
 }

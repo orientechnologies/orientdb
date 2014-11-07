@@ -1,9 +1,7 @@
 package com.orientechnologies.website.controllers;
 
 import com.orientechnologies.website.configuration.ApiVersion;
-import com.orientechnologies.website.model.schema.dto.Comment;
-import com.orientechnologies.website.model.schema.dto.Event;
-import com.orientechnologies.website.model.schema.dto.Issue;
+import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -45,5 +43,16 @@ public class RepositoryController {
       @PathVariable("number") String number) {
     return new ResponseEntity<List<Event>>(organizationRepository.findEventsByOwnerRepoAndIssueNumber(owner, repo, number),
         HttpStatus.OK);
+  }
+
+  @RequestMapping(value = "{owner}/{repo}/teams", method = RequestMethod.GET)
+  public ResponseEntity<List<User>> getRepositoryTeams(@PathVariable("owner") String owner, @PathVariable("repo") String repo) {
+    return new ResponseEntity<List<User>>(organizationRepository.findTeamMembers(owner, repo), HttpStatus.OK);
+  }
+
+  @RequestMapping(value = "{owner}/{repo}/milestones", method = RequestMethod.GET)
+  public ResponseEntity<List<Milestone>> getRepositoryMilestones(@PathVariable("owner") String owner,
+      @PathVariable("repo") String repo) {
+    return new ResponseEntity<List<Milestone>>(organizationRepository.findRepoMilestones(owner, repo), HttpStatus.OK);
   }
 }

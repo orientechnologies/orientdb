@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
 public class EventRepositoryImpl extends OrientBaseRepository<Event> implements EventRepository {
   @Override
   public OTypeHolder<Event> getHolder() {
-    return OEvent.EVENT_ID;
+    return OEvent.CREATED_AT;
   }
 
   @Override

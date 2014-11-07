@@ -70,7 +70,7 @@ public class RepositoryRepositoryImpl extends OrientBaseRepository<Repository> i
     List<ODocument> vertexes = graph.getRawGraph().query(new OSQLSynchQuery<Object>(query));
 
     try {
-      return OEvent.EVENT_ID.fromDoc(vertexes.iterator().next(), graph);
+      return OEvent.CREATED_AT.fromDoc(vertexes.iterator().next(), graph);
     } catch (NoSuchElementException e) {
       return null;
     }

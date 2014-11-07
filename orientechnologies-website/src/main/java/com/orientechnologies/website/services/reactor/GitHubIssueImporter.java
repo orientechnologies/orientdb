@@ -179,14 +179,15 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
   private void importIssueEvents(Repository repoDtp, GIssue issue, Issue issueDto) throws IOException {
 
     for (GEvent event : issue.getEvents()) {
-      com.orientechnologies.website.model.schema.dto.Event e = repoRepository.findIssueEventByRepoAndNumberAndEventNumber(
-          repoDtp.getName(), issueDto.getNumber(), event.getId());
+      IssueEvent e = (IssueEvent) repoRepository.findIssueEventByRepoAndNumberAndEventNumber(repoDtp.getName(),
+          issueDto.getNumber(), event.getId());
       if (e == null) {
-        e = new com.orientechnologies.website.model.schema.dto.Event();
+        e = new IssueEvent();
         e.setCreatedAt(event.getCreatedAt());
         e.setEventId(event.getId());
-
-        e = eventRepository.save(e);
+        e.setEvent(event.getEvent());
+        e.setActor(userRepo.findUserOrCreateByLogin(event.getActor().getLogin()));
+        e = (IssueEvent) eventRepository.save(e);
         createIssueEventAssociation(issueDto, e);
       }
     }

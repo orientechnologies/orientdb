@@ -42,4 +42,6 @@ public abstract class GEntity {
   protected GUser toUser(ODocument doc) {
     return doc != null ? new GUser(github, this, doc.toJSON()) : null;
   }
+
+
 }

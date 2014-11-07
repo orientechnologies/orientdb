@@ -1,10 +1,13 @@
 package com.orientechnologies.website.model.schema.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 /**
  * Created by Enrico Risa on 06/11/14.
  */
 public class Label {
 
+  @JsonIgnore
   private String id;
   private String name;
   private String color;

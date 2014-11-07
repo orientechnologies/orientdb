@@ -14,22 +14,16 @@ angular.module('webappApp').directive('mkeditor', function ($timeout) {
         if (value) {
           ngModel.$setViewValue(value);
         }
-        var editor = new EpicEditor({
-          container: elem[0],
-          basePath: "bower_components/epiceditor/epiceditor",
-          button: {
-            fullscreen: false,
-            bar: "auto"
+
+        $(elem[0]).markdown({
+          autofocus: false,
+          savable: false,
+          onShow: function (e) {
+            e.setContent(value);
           }
-        }).load(function () {
-
-          });
+        })
 
 
-        if (value) {
-          editor.getElement('editor').body.innerHTML = value;
-        }
-        editor.preview();
         unregister();
       }
     }

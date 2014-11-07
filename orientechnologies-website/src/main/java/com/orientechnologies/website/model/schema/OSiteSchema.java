@@ -28,7 +28,7 @@ public class OSiteSchema {
     addVertexClass(OOrganization.class, Organization.class.getSimpleName());
 
     addEdgeClass(HasLabel.class);
-    addEdgeClass(HasEvents.class);
+    addEdgeClass(HasEvent.class);
     addEdgeClass(HasIssue.class);
     addEdgeClass(HasMember.class);
     addEdgeClass(HasRepo.class);

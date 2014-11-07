@@ -3,13 +3,14 @@ package com.orientechnologies.website.model.schema;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.website.model.schema.dto.User;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 
 /**
  * Created by Enrico Risa on 04/11/14.
  */
 
-public enum OUser implements OTypeHolder<com.orientechnologies.website.model.schema.dto.OUser> {
+public enum OUser implements OTypeHolder<User> {
   NAME("name") {
     @Override
     public OType getType() {
@@ -31,11 +32,11 @@ public enum OUser implements OTypeHolder<com.orientechnologies.website.model.sch
   };
 
   @Override
-  public com.orientechnologies.website.model.schema.dto.OUser fromDoc(ODocument doc, OrientBaseGraph graph) {
+  public User fromDoc(ODocument doc, OrientBaseGraph graph) {
     if (doc == null) {
       return null;
     }
-    com.orientechnologies.website.model.schema.dto.OUser user = new com.orientechnologies.website.model.schema.dto.OUser();
+    User user = new User();
     user.setEmail((String) doc.field(EMAIL.toString()));
     user.setId(doc.getIdentity().toString());
     user.setName((String) doc.field(NAME.toString()));
@@ -44,7 +45,7 @@ public enum OUser implements OTypeHolder<com.orientechnologies.website.model.sch
   }
 
   @Override
-  public ODocument toDoc(com.orientechnologies.website.model.schema.dto.OUser entity, OrientBaseGraph graph) {
+  public ODocument toDoc(User entity, OrientBaseGraph graph) {
     ODocument doc = null;
     if (entity.getId() == null) {
       doc = new ODocument(OUser.class.getSimpleName());

@@ -1,15 +1,15 @@
 package com.orientechnologies.website.repository;
 
-import com.orientechnologies.website.model.schema.dto.OUser;
+import com.orientechnologies.website.model.schema.dto.User;
 
 /**
  * Created by Enrico Risa on 20/10/14.
  */
-public interface UserRepository extends BaseRepository<OUser> {
+public interface UserRepository extends BaseRepository<User> {
 
-  public OUser findUserByLogin(String login);
+  public User findUserByLogin(String login);
 
-  public OUser findUserOrCreateByLogin(String login);
+  public User findUserOrCreateByLogin(String login);
 
-  public OUser findByGithubToken(String token);
+  public User findByGithubToken(String token);
 }

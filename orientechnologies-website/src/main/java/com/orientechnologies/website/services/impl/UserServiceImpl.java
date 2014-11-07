@@ -1,6 +1,6 @@
 package com.orientechnologies.website.services.impl;
 
-import com.orientechnologies.website.model.schema.dto.OUser;
+import com.orientechnologies.website.model.schema.dto.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,11 +28,11 @@ public class UserServiceImpl implements UserService {
     try {
       GitHub github = new GitHub(token);
       GUser self = github.user();
-      OUser user = userRepository.findUserByLogin(self.getLogin());
+      User user = userRepository.findUserByLogin(self.getLogin());
       String email = self.getEmail();
 
       if (user == null) {
-        user = new OUser(self.getLogin(), token, email);
+        user = new User(self.getLogin(), token, email);
       } else {
         user.setToken(token);
         user.setEmail(email);

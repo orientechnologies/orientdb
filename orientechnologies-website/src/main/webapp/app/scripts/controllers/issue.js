@@ -8,11 +8,17 @@ angular.module('webappApp')
   });
 
 angular.module('webappApp')
-  .controller('IssueNewCtrl', function ($scope, Organization) {
+  .controller('IssueNewCtrl', function ($scope, Organization, Repo) {
 
 
     $scope.repositories = Organization.all("repos").getList().$object;
 
+    $scope.$watch("repo", function (val) {
+      if (val) {
+        $scope.assignees = Repo.one(val.name).all("teams").getList().$object;
+        $scope.milestones = Repo.one(val.name).all("milestones").getList().$object;
+      }
+    });
   });
 angular.module('webappApp')
   .controller('IssueEditCtrl', function ($scope, $routeParams, Repo) {
