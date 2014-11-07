@@ -452,7 +452,14 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   public void removeShutdownHook() {
     if (shutdownHook != null)
-      Runtime.getRuntime().removeShutdownHook(shutdownHook);
+    {
+      shutdownHook.cancel();
+      shutdownHook = null;
+    }
+  }
+  
+  public boolean isSelfManagedShutdown() {
+	  return shutdownHook != null;
   }
 
   public Iterator<ODatabaseLifecycleListener> getDbLifecycleListeners() {
