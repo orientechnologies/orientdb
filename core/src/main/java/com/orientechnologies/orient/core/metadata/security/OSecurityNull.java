@@ -19,11 +19,13 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
+//import com.nimbusds.jwt.SignedJWT;
 import java.util.List;
 import java.util.Set;
+
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Dummy security implementation.
@@ -46,6 +48,10 @@ public class OSecurityNull implements OSecurity {
   }
 
   public OUser getUser(String iUserName) {
+    return null;
+  }
+
+  public OUser getUser(ORID iUserId) {
     return null;
   }
 
@@ -82,6 +88,10 @@ public class OSecurityNull implements OSecurity {
   }
 
   public OUser authenticate(String iUsername, String iUserPassword) {
+    return null;
+  }
+
+  public OUser authenticate(IToken authToken) {
     return null;
   }
 

@@ -20,13 +20,16 @@
 package com.orientechnologies.orient.server.network.protocol.http;
 
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
+import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.metadata.security.IToken;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
 
@@ -59,6 +62,12 @@ public class OHttpRequest {
   public boolean                            keepAlive = true;
   protected Map<String, String>             headers;
 
+  public String                             bearerTokenRaw;
+  public IToken                             bearerToken;
+
+  // public String jwtUserRid;
+  // public String jwtDatabase;
+
   public OHttpRequest(final ONetworkProtocolHttpAbstract iExecutor, final InputStream iInStream, final ONetworkProtocolData iData,
       final OContextConfiguration iConfiguration) {
     executor = iExecutor;
@@ -87,6 +96,28 @@ public class OHttpRequest {
     if (pos > -1) {
       headers.put(h.substring(0, pos).trim().toLowerCase(), h.substring(pos + 1).trim());
     }
+  }
+
+  public Map<String, String> getUrlEncodedContent() {
+    if (content == null || content.length() < 1) {
+      return null;
+    }
+    HashMap<String, String> retMap = new HashMap<String, String>();
+    String key, value;
+    try {
+      String[] pairs = content.split("\\&");
+      for (int i = 0; i < pairs.length; i++) {
+        String[] fields = pairs[i].split("=");
+        if (fields.length == 2) {
+          key = URLDecoder.decode(fields[0], "UTF-8");
+          value = URLDecoder.decode(fields[1], "UTF-8");
+          retMap.put(key, value);
+        }
+      }
+    } catch (UnsupportedEncodingException usEx) {
+      // noop
+    }
+    return retMap;
   }
 
   public String getHeader(final String iName) {

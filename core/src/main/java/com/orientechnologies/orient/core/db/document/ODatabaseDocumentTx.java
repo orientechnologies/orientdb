@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.db.document;
 
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
@@ -77,6 +78,8 @@ import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
 import com.orientechnologies.orient.core.metadata.security.ORestrictedAccessHook;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.metadata.security.IToken;
+import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OSecurityTrackerHook;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -273,6 +276,76 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         }
       }
 
+      // WAKE UP LISTENERS
+      callOnOpenListeners();
+    } catch (OException e) {
+      close();
+      throw e;
+    } catch (Exception e) {
+      close();
+      throw new ODatabaseException("Cannot open database", e);
+    }
+    return (DB) this;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public <DB extends ODatabase> DB open(final IToken iToken) {
+    setCurrentDatabaseinThreadLocal();
+    try {
+      ORecordSerializerFactory serializerFactory = ORecordSerializerFactory.instance();
+      String serializeName = getStorage().getConfiguration().getRecordSerializer();
+      if (serializeName == null)
+        serializeName = ORecordSerializerSchemaAware2CSV.NAME;
+      serializer = serializerFactory.getFormat(serializeName);
+      if (serializer == null)
+        throw new ODatabaseException("RecordSerializer with name '" + serializeName + "' not found ");
+      if (getStorage().getConfiguration().getRecordSerializerVersion() > serializer.getMinSupportedVersion())
+        // TODO: I need a better message!
+        throw new ODatabaseException("Persistent record serializer version is not support by the current implementation");
+      componentsFactory = getStorage().getComponentsFactory();
+      final OSBTreeCollectionManager sbTreeCM = getStorage().getResource(OSBTreeCollectionManager.class.getSimpleName(),
+          new Callable<OSBTreeCollectionManager>() {
+            @Override
+            public OSBTreeCollectionManager call() throws Exception {
+              Class<? extends OSBTreeCollectionManager> managerClass = getStorage().getCollectionManagerClass();
+              if (managerClass == null) {
+                OLogManager.instance().warn(this, "Current implementation of storage does not support sbtree collections");
+                return null;
+              } else {
+                return managerClass.newInstance();
+              }
+            }
+          });
+      sbTreeCollectionManager = sbTreeCM != null ? new OSBTreeCollectionManagerProxy(this, sbTreeCM) : null;
+      localCache.startup();
+      metadata = new OMetadataDefault();
+      metadata.load();
+      recordFormat = DEF_RECORD_FORMAT;
+      if (!(getStorage() instanceof OStorageProxy)) {
+        if (metadata.getIndexManager().autoRecreateIndexesAfterCrash()) {
+          metadata.getIndexManager().recreateIndexes();
+          setCurrentDatabaseinThreadLocal();
+          user = null;
+        }
+        installHooks();
+        final OUser usr = metadata.getSecurity().authenticate(iToken);
+        if (usr != null)
+          user = new OImmutableUser(metadata.getSchema().getVersion(), usr);
+        else
+          user = null;
+      } else
+        /*
+         * --- FOR ORIENT STAFF - Is the following applicable for token auth? // REMOTE CREATE DUMMY USER user = new
+         * OUser(iUserName, OUser.encryptPassword(iUserPassword)).addRole(new ORole("passthrough", null,
+         * ORole.ALLOW_MODES.ALLOW_ALL_BUT));
+         */
+        checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
+      if (!metadata.getSchema().existsClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME))
+        // @COMPATIBILITY 1.0RC9
+        metadata.getSchema().createClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
       // WAKE UP LISTENERS
       callOnOpenListeners();
     } catch (OException e) {

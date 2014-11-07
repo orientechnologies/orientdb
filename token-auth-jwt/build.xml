@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<project basedir="." default="compile" name="token-auth-jwt">
+  <property name="project.jar-deps"      value="core/target/orient-core-${version}.jar" />
+  <import file="../_base/base-build.xml" />
+</project>
