@@ -3,7 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 public
-class OInsertStatement extends SimpleNode {
+class OInsertStatement extends OStatement {
   public OInsertStatement(int id) {
     super(id);
   }
@@ -12,10 +12,5 @@ class OInsertStatement extends SimpleNode {
     super(p, id);
   }
 
-
-  /** Accept the visitor. **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
 }
 /* JavaCC - OriginalChecksum=ccfabcf022d213caed873e6256cb26ad (do not edit this line) */

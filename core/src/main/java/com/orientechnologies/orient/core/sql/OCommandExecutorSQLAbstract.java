@@ -208,7 +208,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     InputStream is = new ByteArrayInputStream(text.getBytes());
     OrientSql osql = new OrientSql(is);
     try {
-      osql.OrientGrammar();
+      osql.parse();
     } catch (ParseException e) {
       System.out.println("NEW PARSER FAILED: "+text);
       throwParsingException(e.getMessage());

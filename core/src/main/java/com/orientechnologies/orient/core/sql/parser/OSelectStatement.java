@@ -3,9 +3,26 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 public
-class OSelectStatement extends SimpleNode {
+class OSelectStatement extends OStatement {
+
+  protected OFromClause target;
 
   protected OProjection projection;
+
+  protected OWhereClause whereClause;
+
+  protected OGroupBy groupBy;
+
+  protected OOrderBy orderBy;
+
+  protected Integer skip;
+
+  protected Integer limit;
+
+  protected Boolean lockRecord;
+
+  protected OFetchPlan fetchPlan;
+
 
   public OSelectStatement(int id) {
     super(id);
@@ -13,11 +30,6 @@ class OSelectStatement extends SimpleNode {
 
   public OSelectStatement(OrientSql p, int id) {
     super(p, id);
-  }
-
-  /** Accept the visitor. **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
   }
 
 
@@ -29,5 +41,68 @@ class OSelectStatement extends SimpleNode {
     this.projection = projection;
   }
 
+  public OFromClause getTarget() {
+    return target;
+  }
+
+  public void setTarget(OFromClause target) {
+    this.target = target;
+  }
+
+  public OWhereClause getWhereClause() {
+    return whereClause;
+  }
+
+  public void setWhereClause(OWhereClause whereClause) {
+    this.whereClause = whereClause;
+  }
+
+  public OGroupBy getGroupBy() {
+    return groupBy;
+  }
+
+  public void setGroupBy(OGroupBy groupBy) {
+    this.groupBy = groupBy;
+  }
+
+  public OOrderBy getOrderBy() {
+    return orderBy;
+  }
+
+  public void setOrderBy(OOrderBy orderBy) {
+    this.orderBy = orderBy;
+  }
+
+  public Integer getSkip() {
+    return skip;
+  }
+
+  public void setSkip(Integer skip) {
+    this.skip = skip;
+  }
+
+  public Integer getLimit() {
+    return limit;
+  }
+
+  public void setLimit(Integer limit) {
+    this.limit = limit;
+  }
+
+  public Boolean getLockRecord() {
+    return lockRecord;
+  }
+
+  public void setLockRecord(Boolean lockRecord) {
+    this.lockRecord = lockRecord;
+  }
+
+  public OFetchPlan getFetchPlan() {
+    return fetchPlan;
+  }
+
+  public void setFetchPlan(OFetchPlan fetchPlan) {
+    this.fetchPlan = fetchPlan;
+  }
 }
 /* JavaCC - OriginalChecksum=b26959b9726a8cf35d6283eca931da6b (do not edit this line) */

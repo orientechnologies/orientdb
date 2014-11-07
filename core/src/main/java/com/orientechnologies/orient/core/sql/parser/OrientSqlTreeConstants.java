@@ -4,7 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 public interface OrientSqlTreeConstants
 {
   public int JJTRID = 0;
-  public int JJTORIENTGRAMMAR = 1;
+  public int JJTPARSE = 1;
   public int JJTIDENTIFIER = 2;
   public int JJTINTEGER = 3;
   public int JJTFLOATINGPOINT = 4;
@@ -108,7 +108,7 @@ public interface OrientSqlTreeConstants
 
   public String[] jjtNodeName = {
     "Rid",
-    "OrientGrammar",
+    "parse",
     "Identifier",
     "Integer",
     "FloatingPoint",
@@ -210,4 +210,4 @@ public interface OrientSqlTreeConstants
     "Json",
   };
 }
-/* JavaCC - OriginalChecksum=2596b482ffc5b0b78ae19adf41b98674 (do not edit this line) */
+/* JavaCC - OriginalChecksum=84a999b0d35454f4337f62cb20c7ca8e (do not edit this line) */

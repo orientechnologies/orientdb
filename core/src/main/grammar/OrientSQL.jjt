@@ -40,7 +40,7 @@ public class OrientSql {
     System.out.println("Reading from standard input...");
     OrientSql t = new OrientSql(System.in);
     try {
-      SimpleNode n = t.OrientGrammar();
+      OStatement n = t.parse();
       n.dump("");
       System.out.println("Thank you.");
     } catch (Exception e) {
@@ -382,135 +382,188 @@ void Rid():
 }
 
 /** Root production. */
-SimpleNode OrientGrammar() :
-{}
+OStatement parse() :
+{OStatement result;}
 {
-  Statement() <EOF>
-  { return jjtThis; }
+  result = Statement() <EOF>
+  { return result; }
 }
 
-void Identifier():
-{}
+OIdentifier Identifier():
+{Token token;}
 {
-    <IDENTIFIER> | <IN> | <SET> | <PUT> | <ADD> | <REMOVE> | <MERGE> | <CONTENT> | <ORDER> | <KEY> | <OFFSET> | <GROUP> | <VALUES> | <RECORD> | <TO>
+(
+    token = <IDENTIFIER>
+    |
+    token = <IN>
+    |
+    token = <SET>
+    |
+    token = <PUT>
+    |
+    token = <ADD>
+    |
+    token = <REMOVE>
+    |
+    token = <MERGE>
+    |
+    token = <CONTENT>
+    |
+    token = <ORDER>
+    |
+    token = <KEY>
+    |
+    token = <OFFSET>
+    |
+    token = <GROUP>
+    |
+    token = <VALUES>
+    |
+    token = <RECORD>
+    |
+    token = <TO>
+) { jjtThis.value = token.image; return jjtThis; }
 }
 
-void Integer():
-{}
+OInteger Integer():
 {
-    [ <MINUS> ] <INTEGER_LITERAL>
+    int sign = 1;
+    Token tokenVal;
+}
+{
+(
+    [ <MINUS> {sign = -1;} ] tokenVal = <INTEGER_LITERAL> {jjtThis.value = sign * Integer.parseInt(tokenVal.image);}
+) { return jjtThis; }
 }
 
-void FloatingPoint():
-{}
+OFloatingPoint FloatingPoint():
 {
-    [ <MINUS> ] <FLOATING_POINT_LITERAL>
+String stringValue;
+Token tokenVal;
+}
+{
+(
+    [ <MINUS> { jjtThis.sign = -1; } ] tokenVal = <FLOATING_POINT_LITERAL> { jjtThis.stringValue = tokenVal.image; }
+){ return jjtThis; }
 }
 
-void Number():
-{}
+ONumber Number():
+{ ONumber result; }
 {
+(
     LOOKAHEAD( Integer() )
-    Integer()
+    result = Integer()
     |
     LOOKAHEAD( FloatingPoint() )
-    FloatingPoint()
+    result = FloatingPoint()
+) { return result; }
 }
 
 
-void Statement():
-{}
+OStatement Statement():
+{ OStatement result = null;}
 {
 	(
 	    LOOKAHEAD( SelectStatement() )
-		SelectStatement()
+		result = SelectStatement()
 		|
-		SelectWithoutTargetStatement()
+		result = SelectWithoutTargetStatement()
 		|
-		TraverseStatement()
+		result = TraverseStatement()
         |
         LOOKAHEAD(2)
-		DeleteStatement()
+		result = DeleteStatement()
 		|
 		LOOKAHEAD(2)
-		DeleteVertexStatement()
+		result = DeleteVertexStatement()
 		|
-		InsertStatement()
+		result = InsertStatement()
 		|
 		LOOKAHEAD(CreateVertexStatement())
-		CreateVertexStatement()
+		result = CreateVertexStatement()
 		|
 		LOOKAHEAD(CreateVertexStatementNoTarget())
-		CreateVertexStatementNoTarget()
+		result = CreateVertexStatementNoTarget()
 		|
 		LOOKAHEAD(2)
-        CreateEdgeStatement()
+        result = CreateEdgeStatement()
         |
-		UpdateStatement()
+		result = UpdateStatement()
 
-	)
+	) { return result; }
 }
 
-void SelectWithoutTargetStatement():
+OSelectWithoutTargetStatement SelectWithoutTargetStatement():
 {}
 {
+(
 	<SELECT> ValueItem() [<AS> Alias() ] ( <COMMA> ValueItem() [<AS> Alias() ] )* [ FetchPlan() ]
+) { return jjtThis; }
 }
 
-void SelectStatement():
+OSelectStatement SelectStatement():
 {}
 {
+(
 	<SELECT>
     [ jjtThis.projection = Projection() ]
     <FROM>
-    FromClause()
-    [ <WHERE> WhereClause() ]
-    [ OrderBy() ]
-    [ GroupBy() ]
+    jjtThis.target = FromClause()
+    [ <WHERE> jjtThis.whereClause = WhereClause() ]
+    [ jjtThis.orderBy = OrderBy() ]
+    [ jjtThis.groupBy = GroupBy() ]
     (
         [
-            Skip() [ Limit() ]
+            jjtThis.skip = Skip() [ jjtThis.limit = Limit() ]
             |
-            Limit()  [ Skip() ]
+            jjtThis.limit = Limit() [ jjtThis.skip = Skip() ]
         ]
     )
-    [ FetchPlan() ]
-    [ <LOCK> <RECORD> ]
+    [ jjtThis.fetchPlan = FetchPlan() ]
+    [ <LOCK> <RECORD> {jjtThis.lockRecord = true;} ]
+) {return jjtThis;}
 }
 
-void TraverseStatement():
+OTraverseStatement TraverseStatement():
 {}
 {
+(
 	<TRAVERSE>
 	[ TraverseProjectionItem() ( <COMMA> TraverseProjectionItem() )* ]
 	<FROM>
 	FromClause()
 	[ <WHILE> WhereClause() ]
     [ Limit() ]
+) {return jjtThis;}
 }
 
 
-void DeleteStatement():
+ODeleteStatement DeleteStatement():
 {}
 {
+(
 	<DELETE>
 	<FROM>
 	FromClause()
 	[ <WHERE> WhereClause() ]
+) {return jjtThis;}
 }
 
-void DeleteVertexStatement():
+ODeleteVertexStatement DeleteVertexStatement():
 {}
 {
+(
 	<DELETE>
 	<VERTEX>
 	FromClause()
 	[ <WHERE> WhereClause() ]
+) {return jjtThis;}
 }
 
-void UpdateStatement():
+OUpdateStatement UpdateStatement():
 {}
 {
+(
 	<UPDATE>
 	(
 	    Rid()
@@ -528,6 +581,7 @@ void UpdateStatement():
 	[ <LOCK> <RECORD> ]
 	[ Limit() ]
 	[ Timeout() ]
+) {return jjtThis;}
 }
 
 void UpdateOperations():
@@ -555,9 +609,10 @@ void UpdateOperations():
 }
 
 
-void UpdateItem():
+OUpdateItem UpdateItem():
 {}
 {
+(
 	Identifier()
 	(
 	    <EQ>
@@ -571,6 +626,7 @@ void UpdateItem():
         <SLASHASSIGN>
 	)
 	Expression()
+) { return jjtThis; }
 }
 
 void UpdateIncrementItem():
@@ -620,9 +676,10 @@ void UpdateAddItem():
 }
 
 
-void InsertStatement():
+OInsertStatement InsertStatement():
 {}
 {
+(
 	<INSERT>
 	<INTO>
 	(
@@ -633,6 +690,7 @@ void InsertStatement():
 	    IndexIdentifier()
 	)
     InsertBody()
+) {return jjtThis;}
 }
 
 
@@ -672,9 +730,10 @@ void InsertBody():
 }
 
 
-void CreateVertexStatement():
+OCreateVertexStatement CreateVertexStatement():
 {}
 {
+(
 	<CREATE>
 	<VERTEX>
 	(
@@ -684,20 +743,24 @@ void CreateVertexStatement():
 	    Cluster()
 	)
 	[ InsertBody() ]
+) {return jjtThis;}
 }
 
-void CreateVertexStatementNoTarget():
+OCreateVertexStatementNoTarget CreateVertexStatementNoTarget():
 {}
 {
+(
 	<CREATE>
 	<VERTEX>
 	[ InsertBody() ]
+) {return jjtThis;}
 }
 
 
-void CreateEdgeStatement():
+OCreateEdgeStatement CreateEdgeStatement():
 {}
 {
+(
 	<CREATE>
 	<EDGE>
 	[ Identifier() ]
@@ -720,6 +783,7 @@ void CreateEdgeStatement():
     [ InsertBody() ]
     [ Retry() ]
     [ Wait() ]
+) {return jjtThis;}
 }
 
 
@@ -744,22 +808,28 @@ void NamedParameter():
 }
 
 OProjection Projection():
-{}
 {
-	 	ProjectionItem()  ( "," ProjectionItem() )*
-	 	{return jjtThis;}
+    java.util.List<OProjectionItem> items = new java.util.ArrayList<OProjectionItem>();
+    OProjectionItem lastItem = null;
+}
+{
+    (
+	 	lastItem = ProjectionItem() {items.add(lastItem);} ( "," lastItem = ProjectionItem() {items.add(lastItem);} )*
+	)
+	{jjtThis.items = items; return jjtThis;}
 }
 
-void ProjectionItem():
+OProjectionItem ProjectionItem():
 {}
 {
-	"*"
+(
+	"*" {jjtThis.all = true;}
 	|
 	(
-        Expression()
-		[<AS> Alias() ]
+        jjtThis.expression = Expression()
+		[ <AS> jjtThis.alias = Alias() ]
 	)
-
+){return jjtThis;}
 }
 
 void ValueItem():
@@ -841,10 +911,11 @@ void ArrayRangeSelector():
 }
 
 
-void Alias():
-{}
+String Alias():
+{ OIdentifier identifier; }
 {
-	Identifier()
+	identifier = Identifier()
+	{return identifier.getValue();}
 }
 
 void RecordAttribute():
@@ -860,16 +931,17 @@ void ThisOperation():
 }
 
 void FunctionCall():
-{}
+{
+OExpression lastExpression = null;}
 {
 	Identifier()
 	<LPAREN>
 	(
-		<STAR>
+		<STAR> { jjtThis.star = true;}
 		|
 		(
 			[
-			Expression() ( <COMMA> Expression() )*
+			lastExpression = Expression() {jjtThis.params.add(lastExpression);} ( <COMMA> lastExpression = Expression() {jjtThis.params.add(lastExpression);})*
 			]
 		)
 	)
@@ -947,29 +1019,32 @@ void Modifier():
     ]
 }
 
-void Expression():
+OExpression Expression():
 {}
 {
-    <NULL>
-    |
-    LOOKAHEAD(2)
-    <STRING_LITERAL>
-    |
-    <CHARACTER_LITERAL>
-    |
-    LOOKAHEAD( Rid() )
-    Rid()
-    |
-    LOOKAHEAD( InputParameter() )
-    InputParameter()
-    |
-	MathExpression()
-	|
-	Json()
-	|
-	<TRUE>
-	|
-	<FALSE>
+    (
+        <NULL>
+        |
+        LOOKAHEAD(2)
+        <STRING_LITERAL>
+        |
+        <CHARACTER_LITERAL>
+        |
+        LOOKAHEAD( Rid() )
+        Rid()
+        |
+        LOOKAHEAD( InputParameter() )
+        InputParameter()
+        |
+        MathExpression()
+        |
+        Json()
+        |
+        <TRUE>
+        |
+        <FALSE>
+	)
+	{ return jjtThis; }
 }
 
 void MathExpression():
@@ -1013,15 +1088,17 @@ void BaseExpression():
 
 
 
-void FromClause():
+OFromClause FromClause():
 {}
 {
 	FromItem()
+	{ return jjtThis; }
 }
 
-void FromItem():
+OFromItem FromItem():
 {}
 {
+(
 	Rid()
 	|
 	<LBRACKET> Rid() ( <COMMA> Rid())* <RBRACKET>
@@ -1035,12 +1112,14 @@ void FromItem():
 	Identifier()
 	|
 	<LPAREN> ( SelectStatement() | TraverseStatement() ) <RPAREN>
+) { return jjtThis; }
 }
 
-void Cluster():
+OCluster Cluster():
 {}
 {
 	<CLUSTER_IDENTIFIER>
+    { return jjtThis; }
 }
 
 void MetadataIdentifier():
@@ -1062,10 +1141,11 @@ void IndexIdentifier():
 	<INDEXVALUESDESC_IDENTIFIER>
 }
 
-void WhereClause():
+OWhereClause WhereClause():
 {}
 {
 	OrBlock()
+	{return jjtThis;}
 }
 
 void OrBlock():
@@ -1363,31 +1443,40 @@ void MatchesCondition():
 	Expression() <MATCHES> <STRING_LITERAL>
 }
 
-void OrderBy():
+OOrderBy OrderBy():
 {}
 {
+(
 	<ORDER> <BY> ( Identifier() | Rid() | <RECORD_ATTRIBUTE> ) [ <DESC> | <ASC> ]
 	( "," ( Identifier() | Rid() | <RECORD_ATTRIBUTE> )  [ <DESC> | <ASC> ] )*
+) {return jjtThis;}
 }
 
-void GroupBy():
+OGroupBy GroupBy():
 {}
 {
+(
 	<GROUP> <BY> Identifier() ( "," Identifier() )*
+) {return jjtThis;}
 }
 
-void Limit():
-{}
+
+Integer Limit():
+{ OInteger value = null; }
 {
-	<LIMIT> Integer()
+(
+	<LIMIT> value = Integer()
+){ return value.getValue(); }
 }
 
-void Skip():
-{}
+Integer Skip():
+{ OInteger value = null;}
 {
-	<SKIP2> Integer()
+(
+	<SKIP2> value = Integer()
 	|
-	<OFFSET> Integer()
+	<OFFSET> value = Integer()
+) {return value.getValue();}
 }
 
 void Timeout():
@@ -1424,10 +1513,12 @@ void Collection():
 
 
 
-void FetchPlan():
+OFetchPlan FetchPlan():
 {}
 {
+(
     <FETCHPLAN> FetchPlanItem() ( FetchPlanItem() )*
+){ return jjtThis; }
 }
 
 void FetchPlanItem():
@@ -1475,4 +1566,3 @@ void Json():
 
 
 
-/*TODO review ValueItem and Expression*/

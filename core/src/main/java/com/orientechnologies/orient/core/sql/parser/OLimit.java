@@ -4,6 +4,9 @@ package com.orientechnologies.orient.core.sql.parser;
 
 public
 class OLimit extends SimpleNode {
+
+  protected Integer num;
+
   public OLimit(int id) {
     super(id);
   }
@@ -16,6 +19,14 @@ class OLimit extends SimpleNode {
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
+  }
+
+  public Integer getNum() {
+    return num;
+  }
+
+  public void setNum(Integer num) {
+    this.num = num;
   }
 }
 /* JavaCC - OriginalChecksum=1063b9489290bb08de6048ba55013171 (do not edit this line) */

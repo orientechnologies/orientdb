@@ -3,7 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 public
-class OCreateVertexStatement extends SimpleNode {
+class OCreateVertexStatement extends OStatement {
   public OCreateVertexStatement(int id) {
     super(id);
   }
@@ -12,10 +12,5 @@ class OCreateVertexStatement extends SimpleNode {
     super(p, id);
   }
 
-
-  /** Accept the visitor. **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
 }
 /* JavaCC - OriginalChecksum=0ac3d3f09a76b9924a17fd05bc293863 (do not edit this line) */

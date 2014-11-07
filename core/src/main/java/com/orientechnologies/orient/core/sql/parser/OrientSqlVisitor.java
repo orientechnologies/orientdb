@@ -5,7 +5,7 @@ public interface OrientSqlVisitor
 {
   public Object visit(SimpleNode node, Object data);
   public Object visit(ORid node, Object data);
-  public Object visit(OOrientGrammar node, Object data);
+  public Object visit(Oparse node, Object data);
   public Object visit(OIdentifier node, Object data);
   public Object visit(OInteger node, Object data);
   public Object visit(OFloatingPoint node, Object data);
@@ -106,4 +106,4 @@ public interface OrientSqlVisitor
   public Object visit(OArray node, Object data);
   public Object visit(OJson node, Object data);
 }
-/* JavaCC - OriginalChecksum=6854972a5a2c1db3af66769d7740bfdf (do not edit this line) */
+/* JavaCC - OriginalChecksum=2b60a1644f9f1c81c5929a0e50a1eab6 (do not edit this line) */

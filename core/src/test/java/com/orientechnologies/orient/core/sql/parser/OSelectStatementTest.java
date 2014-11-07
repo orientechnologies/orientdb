@@ -1,13 +1,12 @@
 package com.orientechnologies.orient.core.sql.parser;
 
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.testng.annotations.Test;
 
 @Test
@@ -24,7 +23,7 @@ public class OSelectStatementTest {
   protected SimpleNode checkSyntax(String query, boolean isCorrect) {
     OrientSql osql = getParserFor(query);
     try {
-      SimpleNode result = osql.OrientGrammar();
+      SimpleNode result = osql.parse();
       if (!isCorrect) {
         fail();
       }
@@ -36,6 +35,28 @@ public class OSelectStatementTest {
       }
     }
     return null;
+  }
+
+  public void testParserSimpleSelect1() {
+    SimpleNode stm = checkRightSyntax("select from Foo");
+    assertTrue(stm instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) stm;
+    assertTrue(select.getProjection() == null);
+    assertTrue(select.getTarget() != null);
+    assertTrue(!Boolean.TRUE.equals(select.getLockRecord()));
+    assertTrue(select.getWhereClause() == null);
+  }
+
+  public void testParserSimpleSelect2() {
+    SimpleNode stm = checkRightSyntax("select bar from Foo");
+    assertTrue(stm instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) stm;
+    assertTrue(select.getProjection() != null);
+    assertTrue(select.getProjection().getItems() != null);
+    assertEquals(select.getProjection().getItems().size(), 1);
+    assertTrue(select.getTarget() != null);
+    assertTrue(!Boolean.TRUE.equals(select.getLockRecord()));
+    assertTrue(select.getWhereClause() == null);
   }
 
   public void testSimpleSelect() {
@@ -73,152 +94,127 @@ public class OSelectStatementTest {
   public void testIn() {
     SimpleNode result = checkRightSyntax("select count(*) from OFunction where name in [\"a\"]");
     // result.dump("    ");
-    assertTrue(result.children[0] instanceof OStatement);
-    OStatement stm = (OStatement) result.children[0];
-    assertTrue(stm.children[0] instanceof OSelectStatement);
-    OSelectStatement select = (OSelectStatement) stm.children[0];
-    select.get
+    assertTrue(result instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) result;
+
   }
 
   public void testNotIn() {
     SimpleNode result = checkRightSyntax("select count(*) from OFunction where name not in [\"a\"]");
     // result.dump("    ");
-    assertTrue(result.children[0] instanceof OStatement);
+    assertTrue(result instanceof OStatement);
     OStatement stm = (OStatement) result.children[0];
-    assertTrue(stm.children[0] instanceof OSelectStatement);
-    OSelectStatement select = (OSelectStatement) stm.children[0];
+
   }
 
   public void testMath1() {
-    SimpleNode result = checkRightSyntax("" +
-"select * from sqlSelectIndexReuseTestClass where prop1 = 1 + 1");
+    SimpleNode result = checkRightSyntax("" + "select * from sqlSelectIndexReuseTestClass where prop1 = 1 + 1");
     // result.dump("    ");
-    assertTrue(result.children[0] instanceof OStatement);
-    OStatement stm = (OStatement) result.children[0];
-    assertTrue(stm.children[0] instanceof OSelectStatement);
-    OSelectStatement select = (OSelectStatement) stm.children[0];
+    assertTrue(result instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) result;
+
   }
 
   public void testMath2() {
-    SimpleNode result = checkRightSyntax("" +
-        "select * from sqlSelectIndexReuseTestClass where prop1 = foo + 1");
+    SimpleNode result = checkRightSyntax("" + "select * from sqlSelectIndexReuseTestClass where prop1 = foo + 1");
     // result.dump("    ");
-    assertTrue(result.children[0] instanceof OStatement);
-    OStatement stm = (OStatement) result.children[0];
-    assertTrue(stm.children[0] instanceof OSelectStatement);
-    OSelectStatement select = (OSelectStatement) stm.children[0];
+    assertTrue(result instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) result;
+
   }
 
   public void testMath5() {
-    SimpleNode result = checkRightSyntax("" +
-        "select * from sqlSelectIndexReuseTestClass where prop1 = foo + 1 * bar - 5");
+    SimpleNode result = checkRightSyntax("" + "select * from sqlSelectIndexReuseTestClass where prop1 = foo + 1 * bar - 5");
     result.dump("    ");
-    assertTrue(result.children[0] instanceof OStatement);
-    OStatement stm = (OStatement) result.children[0];
-    assertTrue(stm.children[0] instanceof OSelectStatement);
-    OSelectStatement select = (OSelectStatement) stm.children[0];
+    assertTrue(result instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) result;
+
   }
 
-
   public void testFetchPlan1() {
-    SimpleNode result = checkRightSyntax("" +
-        "select 'Ay' as a , 'bEE' as b from Foo fetchplan *:1");
+    SimpleNode result = checkRightSyntax("" + "select 'Ay' as a , 'bEE' as b from Foo fetchplan *:1");
     result.dump("    ");
-    assertTrue(result.children[0] instanceof OStatement);
-    OStatement stm = (OStatement) result.children[0];
-    assertTrue(stm.children[0] instanceof OSelectStatement);
-    OSelectStatement select = (OSelectStatement) stm.children[0];
+    assertTrue(result instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) result;
+
   }
 
   public void testFetchPlan2() {
-    SimpleNode result = checkRightSyntax("" +
-        "select 'Ay' as a , 'bEE' as b fetchplan *:1");
+    SimpleNode result = checkRightSyntax("" + "select 'Ay' as a , 'bEE' as b fetchplan *:1");
     result.dump("    ");
-    assertTrue(result.children[0] instanceof OStatement);
+    assertTrue(result instanceof OSelectWithoutTargetStatement);
+    OSelectWithoutTargetStatement select = (OSelectWithoutTargetStatement) result;
+
   }
 
   public void testContainsWithCondition() {
-    SimpleNode result = checkRightSyntax(
-"select from Profile where customReferences.values() CONTAINS 'a'");
+    SimpleNode result = checkRightSyntax("select from Profile where customReferences.values() CONTAINS 'a'");
     result.dump("    ");
-    assertTrue(result.children[0] instanceof OStatement);
-    OStatement stm = (OStatement) result.children[0];
-    assertTrue(stm.children[0] instanceof OSelectStatement);
-    OSelectStatement select = (OSelectStatement) stm.children[0];
+    assertTrue(result instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) result;
+
   }
 
-
   public void testRange() {
-    SimpleNode result = checkRightSyntax(
-"select * from ThisClass where a = b[pippo..pluto]");
+    SimpleNode result = checkRightSyntax("select * from ThisClass where a = b[pippo..pluto]");
     result.dump("    ");
-    assertTrue(result.children[0] instanceof OStatement);
-    OStatement stm = (OStatement) result.children[0];
-    assertTrue(stm.children[0] instanceof OSelectStatement);
-    OSelectStatement select = (OSelectStatement) stm.children[0];
+    assertTrue(result instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) result;
+
   }
 
   public void testNamedParam() {
     SimpleNode result = checkRightSyntax("select from JavaComplexTestClass where enumField = :enumItem");
     // result.dump("    ");
-    assertTrue(result.children[0] instanceof OStatement);
-    OStatement stm = (OStatement) result.children[0];
-    assertTrue(stm.children[0] instanceof OSelectStatement);
-    OSelectStatement select = (OSelectStatement) stm.children[0];
+    assertTrue(result instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) result;
+
   }
 
   public void testBoolean() {
     SimpleNode result = checkRightSyntax("select from Foo where bar = true");
     // result.dump("    ");
-    assertTrue(result.children[0] instanceof OStatement);
-    OStatement stm = (OStatement) result.children[0];
-    assertTrue(stm.children[0] instanceof OSelectStatement);
-    OSelectStatement select = (OSelectStatement) stm.children[0];
+    assertTrue(result instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) result;
+
   }
 
   public void testDottedAtField() {
     SimpleNode result = checkRightSyntax("select from City where country.@class = 'Country'");
     // result.dump("    ");
-    assertTrue(result.children[0] instanceof OStatement);
-    OStatement stm = (OStatement) result.children[0];
-    assertTrue(stm.children[0] instanceof OSelectStatement);
-    OSelectStatement select = (OSelectStatement) stm.children[0];
+    assertTrue(result instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) result;
+
   }
 
   public void testLongDotted() {
     SimpleNode result = checkRightSyntax("select from Profile where location.city.country.name = 'Spain'");
     // result.dump("    ");
-    assertTrue(result.children[0] instanceof OStatement);
-    OStatement stm = (OStatement) result.children[0];
-    assertTrue(stm.children[0] instanceof OSelectStatement);
-    OSelectStatement select = (OSelectStatement) stm.children[0];
+    assertTrue(result instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) result;
+
   }
 
   public void testInIsNotAReservedWord() {
-    SimpleNode result = checkRightSyntax(
-"select count(*) from TRVertex where in.type() not in [\"LINKSET\"] ");
+    SimpleNode result = checkRightSyntax("select count(*) from TRVertex where in.type() not in [\"LINKSET\"] ");
     // result.dump("    ");
-    assertTrue(result.children[0] instanceof OStatement);
-    OStatement stm = (OStatement) result.children[0];
-    assertTrue(stm.children[0] instanceof OSelectStatement);
-    OSelectStatement select = (OSelectStatement) stm.children[0];
+    assertTrue(result instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) result;
+
   }
 
-
-
   public void testSelectFunction() {
-    SimpleNode result = checkRightSyntax(
-        "select max(1,2,7,0,-2,3), 'pluto'");
+    SimpleNode result = checkRightSyntax("select max(1,2,7,0,-2,3), 'pluto'");
     // result.dump("    ");
-    assertTrue(result.children[0] instanceof OStatement);
-    OStatement stm = (OStatement) result.children[0];
-    assertTrue(stm.children[0] instanceof OSelectWithoutTargetStatement);
+    assertTrue(result instanceof OSelectWithoutTargetStatement);
+    OSelectWithoutTargetStatement select = (OSelectWithoutTargetStatement) result;
+
   }
 
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {
-      SimpleNode n = osql.OrientGrammar();
+      SimpleNode n = osql.parse();
       n.dump(" ");
     } catch (ParseException e) {
       e.printStackTrace();

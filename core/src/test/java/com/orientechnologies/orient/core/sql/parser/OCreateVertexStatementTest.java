@@ -21,7 +21,7 @@ public class OCreateVertexStatementTest {
   protected SimpleNode checkSyntax(String query, boolean isCorrect) {
     OrientSql osql = getParserFor(query);
     try {
-      SimpleNode result = osql.OrientGrammar();
+      SimpleNode result = osql.parse();
       if (!isCorrect) {
         fail();
       }
@@ -69,7 +69,7 @@ public class OCreateVertexStatementTest {
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {
-      SimpleNode n = osql.OrientGrammar();
+      SimpleNode n = osql.parse();
       n.dump(" ");
     } catch (ParseException e) {
       e.printStackTrace();

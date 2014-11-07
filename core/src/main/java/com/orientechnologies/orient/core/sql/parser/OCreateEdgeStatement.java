@@ -3,7 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 public
-class OCreateEdgeStatement extends SimpleNode {
+class OCreateEdgeStatement extends OStatement {
   public OCreateEdgeStatement(int id) {
     super(id);
   }
@@ -12,10 +12,5 @@ class OCreateEdgeStatement extends SimpleNode {
     super(p, id);
   }
 
-
-  /** Accept the visitor. **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
 }
 /* JavaCC - OriginalChecksum=2d3dc5693940ffa520146f8f7f505128 (do not edit this line) */

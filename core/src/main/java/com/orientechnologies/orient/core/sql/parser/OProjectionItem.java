@@ -4,6 +4,13 @@ package com.orientechnologies.orient.core.sql.parser;
 
 public
 class OProjectionItem extends SimpleNode {
+
+  protected boolean all = false;
+
+  protected String alias;
+
+  protected OExpression expression;
+
   public OProjectionItem(int id) {
     super(id);
   }
@@ -16,6 +23,30 @@ class OProjectionItem extends SimpleNode {
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
+  }
+
+  public boolean isAll() {
+    return all;
+  }
+
+  public void setAll(boolean all) {
+    this.all = all;
+  }
+
+  public String getAlias() {
+    return alias;
+  }
+
+  public void setAlias(String alias) {
+    this.alias = alias;
+  }
+
+  public OExpression getExpression() {
+    return expression;
+  }
+
+  public void setExpression(OExpression expression) {
+    this.expression = expression;
   }
 }
 /* JavaCC - OriginalChecksum=6d6010734c7434a6f516e2eac308e9ce (do not edit this line) */

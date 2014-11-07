@@ -3,7 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 public
-class ODeleteVertexStatement extends SimpleNode {
+class ODeleteVertexStatement extends OStatement {
   public ODeleteVertexStatement(int id) {
     super(id);
   }
@@ -12,10 +12,5 @@ class ODeleteVertexStatement extends SimpleNode {
     super(p, id);
   }
 
-
-  /** Accept the visitor. **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
-  }
 }
 /* JavaCC - OriginalChecksum=b62d3046f4bd1b9c1f78ed4f125b06d3 (do not edit this line) */

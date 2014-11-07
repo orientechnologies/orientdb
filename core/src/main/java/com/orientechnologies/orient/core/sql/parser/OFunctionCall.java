@@ -2,8 +2,14 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OFunctionCall extends SimpleNode {
+import java.util.ArrayList;
+import java.util.List;
+
+public class OFunctionCall extends SimpleNode {
+
+  protected boolean           star   = false;
+  protected List<OExpression> params = new ArrayList<OExpression>();
+
   public OFunctionCall(int id) {
     super(id);
   }
@@ -12,10 +18,25 @@ class OFunctionCall extends SimpleNode {
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
+  }
+
+  public boolean isStar() {
+    return star;
+  }
+
+  public void setStar(boolean star) {
+    this.star = star;
+  }
+
+  public List<OExpression> getParams() {
+    return params;
+  }
+
+  public void setParams(List<OExpression> params) {
+    this.params = params;
   }
 }
 /* JavaCC - OriginalChecksum=290d4e1a3f663299452e05f8db718419 (do not edit this line) */
