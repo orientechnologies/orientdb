@@ -161,7 +161,7 @@ public class JwtTokenHandler extends OServerPluginAbstract implements ITokenHand
     return valid;
   }
 
-  public byte[] getSignedToken(ODatabaseDocumentInternal db, OSecurityUser  user) {
+  public byte[] getSignedToken(ODatabaseDocumentInternal db, OSecurityUser user) {
     ByteArrayOutputStream tokenByteOS = new ByteArrayOutputStream(1024);
     JwtHeader header = new JwtHeader();
     header.setAlgorithm("HS256");
