@@ -20,18 +20,28 @@
 
 package com.orientechnologies.orient.core;
 
+import java.util.Hashtable;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
+@SuppressWarnings("restriction")
 public class OSignalHandler implements SignalHandler {
+  private Hashtable<Signal, SignalHandler> redefinedHandlers = new Hashtable(4);
+  
   public OSignalHandler() {
   }
 
   public void listenTo(final String name, final SignalHandler iListener) {
     Signal signal = new Signal(name);
-    Signal.handle(signal, iListener);
+    SignalHandler redefinedHandler = Signal.handle(signal, iListener);
+    if(redefinedHandler!=null)
+    {
+    	redefinedHandlers.put(signal, redefinedHandler);
+    }
   }
 
   public void handle(Signal signal) {
@@ -39,15 +49,24 @@ public class OSignalHandler implements SignalHandler {
 
     final String s = signal.toString().trim();
 
-    if (s.equals("SIGKILL") || s.equals("SIGHUP") || s.equals("SIGINT") || s.equals("SIGTERM")) {
-      Orient.instance().shutdown();
-      System.exit(1);
+    if (Orient.instance().isSelfManagedShutdown() 
+    		&& (s.equals("SIGKILL") || s.equals("SIGHUP") || s.equals("SIGINT") || s.equals("SIGTERM"))) {
+    	 Orient.instance().shutdown();
+    	 System.exit(1);
     } else if (s.equals("SIGTRAP")) {
       System.out.println();
       OGlobalConfiguration.dumpConfiguration(System.out);
       System.out.println();
       Orient.instance().getProfiler().dump(System.out);
       System.out.println();
+    }
+    else
+    {
+    	SignalHandler redefinedHandler = redefinedHandlers.get(signal);
+        if(redefinedHandler!=null)
+        {
+        	redefinedHandler.handle(signal);
+        }
     }
   }
 

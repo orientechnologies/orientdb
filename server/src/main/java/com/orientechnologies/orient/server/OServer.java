@@ -61,6 +61,7 @@ import javax.management.InstanceAlreadyExistsException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MalformedObjectNameException;
 import javax.management.NotCompliantMBeanException;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -256,6 +257,14 @@ public class OServer {
     startupLatch.countDown();
 
     return this;
+  }
+  
+  public void removeShutdownHook() {
+    if (shutdownHook != null)
+    {
+      shutdownHook.cancel();
+      shutdownHook = null;
+    }
   }
 
   public boolean shutdown() {
