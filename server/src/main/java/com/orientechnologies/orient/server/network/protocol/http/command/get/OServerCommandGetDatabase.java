@@ -146,7 +146,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
      ODatabaseDocumentTx db = null;
      try {
        if (urlParts.length > 2) {
-         db = server.getDatabasePool().acquire(urlParts[1], urlParts[2], urlParts[3]);
+         db = server.getDatabasePoolFactory().get(urlParts[1], urlParts[2], urlParts[3]).acquire();
        } else
          db = getProfiledDatabaseInstance(iRequest);
 
