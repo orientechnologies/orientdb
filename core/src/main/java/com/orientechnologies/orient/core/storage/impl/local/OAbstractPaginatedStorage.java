@@ -99,8 +99,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
   }
 
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
-    addUser();
-
     if (status == STATUS.OPEN)
       // ALREADY OPENED: THIS IS THE CASE WHEN A STORAGE INSTANCE IS
       // REUSED
@@ -180,8 +178,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
 
       if (status != STATUS.CLOSED)
         throw new OStorageException("Cannot create new storage '" + name + "' because it is not closed");
-
-      addUser();
 
       if (exists())
         throw new OStorageException("Cannot create new storage '" + name + "' because it already exists");
@@ -280,13 +276,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
     lock.acquireExclusiveLock();
     try {
       // CLOSE THE DATABASE BY REMOVING THE CURRENT USER
-      if (status != STATUS.CLOSED) {
-        if (getUsers() > 0) {
-          while (removeUser() > 0)
-            ;
-        }
-      }
-
       doClose(true, true);
 
       try {
@@ -1709,6 +1698,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
   }
 
   private void doClose(boolean force, boolean onDelete) {
+    if (!force && !onDelete)
+      return;
+
     if (status == STATUS.CLOSED)
       return;
 
@@ -1716,7 +1708,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
 
     lock.acquireExclusiveLock();
     try {
-      if (!checkForClose(force))
+      if (status == STATUS.CLOSED)
         return;
 
       status = STATUS.CLOSING;

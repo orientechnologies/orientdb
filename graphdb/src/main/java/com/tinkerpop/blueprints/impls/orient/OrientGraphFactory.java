@@ -45,6 +45,9 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    * Closes all pooled databases and clear the pool.
    */
   public void close() {
+		if (pool != null)
+			pool.close();
+
     pool = null;
   }
 
