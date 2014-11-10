@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
-import com.sun.management.OperatingSystemMXBean;
 
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
@@ -40,17 +39,11 @@ import java.util.Map.Entry;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+
 public abstract class OAbstractProfiler extends OSharedResourceAbstract implements OProfilerMBean {
 
-  protected static OperatingSystemMXBean                 osMgmtBean    = null;
-
-  static {
-    try {
-      osMgmtBean = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-    } catch (Exception e) {
-      osMgmtBean = null;
-    }
-  }
   protected final Map<String, OProfilerHookValue>        hooks         = new ConcurrentHashMap<String, OProfilerHookValue>();
   protected final ConcurrentHashMap<String, String>      dictionary    = new ConcurrentHashMap<String, String>();
   protected final ConcurrentHashMap<String, METRIC_TYPE> types         = new ConcurrentHashMap<String, METRIC_TYPE>();
@@ -85,22 +78,30 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
         stgs++;
       }
     }
+    try
+	{
+		MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+		ObjectName osMBeanName = ObjectName.getInstance(ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME);
+		if(mbs.isInstanceOf(osMBeanName, "com.sun.management.OperatingSystemMXBean"))
+		{
+		  final long osTotalMem = ((Number)mbs.getAttribute(osMBeanName, "TotalPhysicalMemorySize")).longValue();
+		  final long osUsedMem = ((Number)mbs.getAttribute(osMBeanName, "FreePhysicalMemorySize")).longValue();
 
-    if (osMgmtBean != null) {
-      final long osTotalMem = osMgmtBean.getTotalPhysicalMemorySize();
-      final long osUsedMem = osTotalMem - osMgmtBean.getFreePhysicalMemorySize();
-
-      out.printf("OrientDB Memory profiler: Heap=%s of %s - DiskCache (%s dbs)=%s of %s - OS=%s of %s\n",
-          OFileUtils.getSizeAsString(runtime.totalMemory() - runtime.freeMemory()),
-          OFileUtils.getSizeAsString(runtime.maxMemory()), stgs, OFileUtils.getSizeAsString(diskCacheUsed),
-          OFileUtils.getSizeAsString(diskCacheTotal), OFileUtils.getSizeAsString(osUsedMem), OFileUtils.getSizeAsString(osTotalMem));
-
-    } else {
+		  out.printf("OrientDB Memory profiler: Heap=%s of %s - DiskCache (%s dbs)=%s of %s - OS=%s of %s\n",
+		      OFileUtils.getSizeAsString(runtime.totalMemory() - runtime.freeMemory()),
+		      OFileUtils.getSizeAsString(runtime.maxMemory()), stgs, OFileUtils.getSizeAsString(diskCacheUsed),
+		      OFileUtils.getSizeAsString(diskCacheTotal), OFileUtils.getSizeAsString(osUsedMem), OFileUtils.getSizeAsString(osTotalMem));
+		  return;
+		}
+	} catch (Exception e)
+	{
+		// Nothing to do. Proceed with default output
+	} 
+    
       out.printf("OrientDB Memory profiler: Heap=%s of %s - DiskCache (%s dbs)=%s of %s\n",
           OFileUtils.getSizeAsString(runtime.totalMemory() - runtime.freeMemory()),
           OFileUtils.getSizeAsString(runtime.maxMemory()), stgs, OFileUtils.getSizeAsString(diskCacheUsed),
           OFileUtils.getSizeAsString(diskCacheTotal));
-    }
   }
 
   public void shutdown() {
