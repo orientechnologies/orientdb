@@ -364,7 +364,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
   protected void acquireExclusiveLock() {
     final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
-    if (databaseRecord != null) {
+    if (databaseRecord != null && !databaseRecord.isClosed()) {
       final OMetadata metadata = databaseRecord.getMetadata();
       if (metadata != null)
         metadata.makeThreadLocalSchemaSnapshot();
@@ -377,7 +377,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     lock.writeLock().unlock();
 
     final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
-    if (databaseRecord != null) {
+    if (databaseRecord != null && !databaseRecord.isClosed()) {
       final OMetadata metadata = databaseRecord.getMetadata();
       if (metadata != null)
         metadata.clearThreadLocalSchemaSnapshot();
