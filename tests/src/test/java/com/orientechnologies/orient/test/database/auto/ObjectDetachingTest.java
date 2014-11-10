@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import javassist.util.proxy.Proxy;
 
 import org.testng.Assert;

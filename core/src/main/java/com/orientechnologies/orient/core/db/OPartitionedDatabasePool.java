@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.db;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 
@@ -61,6 +60,15 @@ public class OPartitionedDatabasePool {
     partitions = pts;
 
   }
+
+  public String getUrl() {
+    return url;
+  }
+
+  public String getUserName() {
+    return userName;
+  }
+
 
   private void initQueue(String url, PoolPartition partition) {
     ConcurrentLinkedQueue<DatabaseDocumentTxPolled> queue = partition.queue;
@@ -167,7 +175,7 @@ public class OPartitionedDatabasePool {
             data.acquireCount = 1;
             data.acquiredDatabase = db;
 
-						partition.acquiredConnections.incrementAndGet();
+            partition.acquiredConnections.incrementAndGet();
             partition.currentSize.incrementAndGet();
 
             return db;
@@ -175,7 +183,7 @@ public class OPartitionedDatabasePool {
         } else {
           db.open(userName, password);
           db.partition = partition;
-					partition.acquiredConnections.incrementAndGet();
+          partition.acquiredConnections.incrementAndGet();
 
           data.acquireCount = 1;
           data.acquiredDatabase = db;

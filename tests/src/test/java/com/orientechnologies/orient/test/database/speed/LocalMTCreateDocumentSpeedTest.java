@@ -3,8 +3,10 @@ package com.orientechnologies.orient.test.database.speed;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.*;
 
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -13,6 +15,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 
@@ -29,7 +32,9 @@ public class LocalMTCreateDocumentSpeedTest {
   private volatile boolean               stop            = false;
   private ExecutorService                executorService = Executors.newCachedThreadPool();
 
-  private final OPartitionedDatabasePool databasePool    = new OPartitionedDatabasePool(System.getProperty("url"), "admin", "admin");
+  private final List<String>             users           = new ArrayList<String>();
+
+  private final OPartitionedDatabasePoolFactory poolFactory    = new OPartitionedDatabasePoolFactory();
 
   @BeforeClass
   public void init() {
@@ -47,6 +52,12 @@ public class LocalMTCreateDocumentSpeedTest {
     database.set(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, 8);
 
     database.getMetadata().getSchema().createClass("Account");
+
+    final OSecurity security = database.getMetadata().getSecurity();
+    for (int i = 0; i < 100; i++) {
+      users.add("user" + i);
+      security.createUser("user" + i, "user" + i, "admin");
+    }
 
     futures = new ArrayList<Future>();
     for (int i = 0; i < 8; i++)
@@ -84,10 +95,15 @@ public class LocalMTCreateDocumentSpeedTest {
 
     @Override
     public Void call() throws Exception {
+			Random random = new Random();
       latch.await();
 
       while (!stop) {
-        final ODatabaseDocumentTx database = databasePool.acquire();
+
+				final String user = users.get(random.nextInt(users.size()));
+
+				final OPartitionedDatabasePool pool = poolFactory.get(System.getProperty("url"), user, user);
+        final ODatabaseDocumentTx database = pool.acquire();
 
         ODocument record = new ODocument("Account");
         record.field("id", 1);
