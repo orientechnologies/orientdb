@@ -78,6 +78,8 @@ DocController.controller("DocumentCreateController", ['$scope', '$routeParams', 
 DocController.controller("DocumentModalController", ['$scope', '$routeParams', '$location', 'DocumentApi', 'Database', 'Notification', function ($scope, $routeParams, $location, DocumentApi, Database, Notification) {
 
     $scope.types = Database.getSupportedTypes();
+
+    $scope.database = $scope.db;
     $scope.reload = function () {
         $scope.doc = DocumentApi.get({ database: $scope.db, document: $scope.rid}, function () {
             $scope.headers = Database.getPropertyFromDoc($scope.doc);
@@ -85,6 +87,9 @@ DocController.controller("DocumentModalController", ['$scope', '$routeParams', '
             Notification.push({content: JSON.stringify(error)});
             $location.path('/404');
         });
+    }
+    $scope.showClass = function(){
+     $scope.$hide();
     }
     $scope.save = function () {
 

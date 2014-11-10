@@ -279,7 +279,8 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
         modalScope.db = database;
         modalScope.classInject = clazz;
         modalScope.parentScope = $scope;
-        var modalPromise = $modal({template: 'views/database/newProperty.html', scope: modalScope, show: true});
+        var modalPromise = $modal({template: 'views/database/newProperty.html', animation : 'am-fade-and-slide-top', scope: modalScope, show: false, placement : 'bottom'});
+        modalPromise.$promise.then(modalPromise.show);
 
     };
     $scope.addProperties = function (prop) {

@@ -101,24 +101,18 @@
             </div>
         </div>
     </div>
-    <div class="container-fluid container-notification">
-        <div class="row">
-            <div class="col-md-12">
-                <div ng-controller="NotificationController">
-                    <div ng-include src="'views/notification.html'"></div>
-                </div>
-            </div>
-        </div>
-    </div>
+
 </div>
 <div id="footer">
-    <div class="container">
-        <div class="row">
-
+  <div class="container-fluid container-notification">
+    <div class="row">
+      <div class="col-md-12">
+        <div ng-controller="NotificationController">
+          <div ng-include src="'views/notification.html'"></div>
         </div>
-        <!--/row-->
-
+      </div>
     </div>
+  </div>
     <!--/container-->
 </div>
 
@@ -126,7 +120,7 @@
 <script type="text/javascript" src="components/angular-ui-select2/src/select2.js"></script> -->
 <!-- build:js scripts/scripts.js -->
 
-<script src="components/jquery/dist/jquery.min.js"></script>
+<script src="components/jquery/jquery.min.js"></script>
 <script src="components/angular/angular.min.js"></script>
 <script src="components/angular-cookies/angular-cookies.min.js"></script>
 <script src="components/angular-sanitize/angular-sanitize.min.js"></script>

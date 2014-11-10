@@ -26,14 +26,14 @@ a.navbar-brand > img {
 
 }
 
-html,
-body {
+html{
     height: 100%;
+
     /* The html and body elements cannot have any padding or margin. */
 }
 
 body {
-
+  min-height: 100%;
 }
 
 .landing-page {
