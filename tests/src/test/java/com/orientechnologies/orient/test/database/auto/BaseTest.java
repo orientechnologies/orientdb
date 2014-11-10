@@ -1,10 +1,20 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-import org.testng.annotations.*;
+
+import java.io.IOException;
 
 @Test
 public abstract class BaseTest<T extends ODatabase> {
@@ -24,9 +34,14 @@ public abstract class BaseTest<T extends ODatabase> {
       storageType = "memory";
 
     if (url == null) {
-      final String buildDirectory = System.getProperty("buildDirectory", ".");
-      url = getStorageType() + ":" + buildDirectory + "/test-db/demo";
-      dropDb = true;
+      if ("remote".equals(storageType)) {
+        url = getStorageType() + ":localhost/demo";
+        dropDb = true;
+      } else {
+        final String buildDirectory = System.getProperty("buildDirectory", ".");
+        url = getStorageType() + ":" + buildDirectory + "/test-db/demo";
+        dropDb = true;
+      }
     }
 
     this.url = url;
@@ -41,33 +56,28 @@ public abstract class BaseTest<T extends ODatabase> {
     } else
       url = url + prefix;
 
-		this.url = url;
+    this.url = url;
   }
-
-  protected abstract T createDatabaseInstance(String url);
 
   @BeforeClass
   public void beforeClass() throws Exception {
     database = createDatabaseInstance(url);
     this.url = database.getURL();
 
+    String remoteStorageType = storageType;
+
     if (dropDb) {
-      if (database.exists()) {
+      if (storageType.equals("remote"))
+        remoteStorageType = "plocal";
+
+      if (ODatabaseHelper.existsDatabase(database, remoteStorageType)) {
         database.open("admin", "admin");
-        database.drop();
+        ODatabaseHelper.dropDatabase(database, remoteStorageType);
       }
 
       createDatabase();
     } else
       database.open("admin", "admin");
-  }
-
-  protected void createDatabase() {
-    database.create();
-  }
-
-  protected final String getStorageType() {
-    return storageType;
   }
 
   @AfterClass
@@ -76,7 +86,11 @@ public abstract class BaseTest<T extends ODatabase> {
       if (database.isClosed())
         database.open("admin", "admin");
 
-      database.drop();
+      String remoteStorageType = storageType;
+      if (storageType.equals("remote"))
+        remoteStorageType = "plocal";
+
+      ODatabaseHelper.dropDatabase(database, remoteStorageType);
     } else {
       if (!database.isClosed())
         database.close();
@@ -93,6 +107,16 @@ public abstract class BaseTest<T extends ODatabase> {
   public void afterMethod() throws Exception {
     if (!database.isClosed())
       database.close();
+  }
+
+  protected abstract T createDatabaseInstance(String url);
+
+  protected void createDatabase() throws IOException {
+    ODatabaseHelper.createDatabase(database, database.getURL());
+  }
+
+  protected final String getStorageType() {
+    return storageType;
   }
 
   protected void createBasicTestSchema() {
