@@ -54,8 +54,8 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
@@ -108,7 +108,7 @@ public class OServer {
   protected OConfigurableHooksManager                      hookManager;
   protected ODistributedServerManager                      distributedManager;
   protected ITokenHandler                                  tokenHandler;
-  private ODatabaseDocumentPool                            dbPool;
+  private OPartitionedDatabasePoolFactory                  dbPoolFactory;
   private Random                                           random                 = new Random();
   private Map<String, Object>                              variables              = new HashMap<String, Object>();
   private String                                           serverRootDirectory;
@@ -210,11 +210,8 @@ public class OServer {
       OGlobalConfiguration.dumpConfiguration(System.out);
     }
 
-    dbPool = new ODatabaseDocumentPool();
-    dbPool.setup(contextConfiguration.getValueAsInteger(OGlobalConfiguration.DB_POOL_MIN),
-        contextConfiguration.getValueAsInteger(OGlobalConfiguration.DB_POOL_MAX),
-        contextConfiguration.getValueAsLong(OGlobalConfiguration.DB_POOL_IDLE_TIMEOUT),
-        contextConfiguration.getValueAsLong(OGlobalConfiguration.DB_POOL_IDLE_CHECK_DELAY));
+    dbPoolFactory = new OPartitionedDatabasePoolFactory();
+    dbPoolFactory.setMaxPoolSize(contextConfiguration.getValueAsInteger(OGlobalConfiguration.DB_POOL_MAX));
 
     databaseDirectory = contextConfiguration.getValue("server.database.path", serverRootDirectory + "/databases/");
     databaseDirectory = OFileUtils.getPath(OSystemVariableResolver.resolveSystemVariables(databaseDirectory));
@@ -646,8 +643,8 @@ public class OServer {
     return tokenHandler;
   }
 
-  public ODatabaseDocumentPool getDatabasePool() {
-    return dbPool;
+  public OPartitionedDatabasePoolFactory getDatabasePoolFactory() {
+    return dbPoolFactory;
   }
 
   public void setServerRootDirectory(final String rootDirectory) {

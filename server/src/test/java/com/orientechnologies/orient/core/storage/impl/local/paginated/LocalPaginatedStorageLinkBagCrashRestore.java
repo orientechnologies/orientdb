@@ -12,6 +12,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -20,7 +21,6 @@ import org.testng.annotations.Test;
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -47,6 +47,8 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
 
   private volatile long                      lastClusterPosition;
 
+	private final OPartitionedDatabasePoolFactory poolFactory = new OPartitionedDatabasePoolFactory();
+
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
       OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(30);
@@ -68,11 +70,11 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
         final long ts = System.currentTimeMillis();
 
         try {
-          ODatabaseDocumentTx base_db = ODatabaseDocumentPool.global().acquire(URL_BASE, "admin", "admin");
+          ODatabaseDocumentTx base_db = poolFactory.get(URL_BASE, "admin", "admin").acquire();
           ODocument base_document = addDocument(ts);
           base_db.close();
 
-          ODatabaseDocumentTx test_db = ODatabaseDocumentPool.global().acquire(URL_TEST, "admin", "admin");
+          ODatabaseDocumentTx test_db = poolFactory.get(URL_TEST, "admin", "admin").acquire();
           ODocument test_document = addDocument(ts);
           test_db.close();
 
@@ -114,11 +116,11 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
             for (int i = 0; i < 10; i++)
               ridsToAdd.add(new ORecordId(0, positionCounter.incrementAndGet()));
 
-            ODatabaseDocumentTx base_db = ODatabaseDocumentPool.global().acquire(URL_BASE, "admin", "admin");
+            ODatabaseDocumentTx base_db = poolFactory.get(URL_BASE, "admin", "admin").acquire();
             addRids(orid, base_db, ridsToAdd, ts);
             base_db.close();
 
-            ODatabaseDocumentTx test_db = ODatabaseDocumentPool.global().acquire(URL_TEST, "admin", "admin");
+            ODatabaseDocumentTx test_db = poolFactory.get(URL_TEST, "admin", "admin").acquire();
             test_db.open("admin", "admin");
             addRids(orid, test_db, ridsToAdd, ts);
             test_db.close();
@@ -158,7 +160,7 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
 
           lockManager.acquireLock(this, orid, OLockManager.LOCK.EXCLUSIVE);
           try {
-            ODatabaseDocumentTx base_db = ODatabaseDocumentPool.global().acquire(URL_BASE, "admin", "admin");
+            ODatabaseDocumentTx base_db = poolFactory.get(URL_BASE, "admin", "admin").acquire();
             final List<ORID> ridsToRemove = new ArrayList<ORID>();
 
             ODocument document = base_db.load(orid);
@@ -181,7 +183,7 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
 
             base_db.close();
 
-            ODatabaseDocumentTx test_db = ODatabaseDocumentPool.global().acquire(URL_TEST, "admin", "admin");
+            ODatabaseDocumentTx test_db = poolFactory.get(URL_TEST, "admin", "admin").acquire();
             document = test_db.load(orid);
             document.setLazyLoad(false);
 
