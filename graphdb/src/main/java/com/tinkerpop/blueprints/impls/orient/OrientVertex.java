@@ -273,7 +273,10 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         for (Iterator<OIdentifiable> it = bag.rawIterator(); it.hasNext();) {
           final ODocument curr = it.next().getRecord();
 
-          if (iVertexToRemove.equals(curr)) {
+          if (curr == null)
+            // ALREADY DELETED (BYPASSING GRAPH API?), JUST REMOVE THE REFERENCE FROM BAG
+            it.remove();
+          else if (iVertexToRemove.equals(curr)) {
             // FOUND AS VERTEX
             it.remove();
             if (iAlsoInverse)

@@ -18,30 +18,26 @@ public class OPartitionedDatabasePool {
 
   private final int            maxSize;
 
-  private final AtomicInteger  currentSize         = new AtomicInteger();
-  private final AtomicInteger  acquiredConnections = new AtomicInteger();
+  private static final int     HASH_INCREMENT = 0x61c88647;
+  private static final int     MIN_POOL_SIZE  = 2;
 
-  private static final int     HASH_INCREMENT      = 0x61c88647;
-  private static final int     MIN_POOL_SIZE       = 2;
-
-  private static AtomicInteger nextHashCode        = new AtomicInteger();
+  private static AtomicInteger nextHashCode   = new AtomicInteger();
 
   private static int nextHashCode() {
     return nextHashCode.getAndAdd(HASH_INCREMENT);
   }
 
-  private final ThreadLocal<PoolData>                                                 poolData      = new ThreadLocal<PoolData>() {
-                                                                                                      @Override
-                                                                                                      protected PoolData initialValue() {
-                                                                                                        return new PoolData();
-                                                                                                      }
-                                                                                                    };
+  private final ThreadLocal<PoolData> poolData      = new ThreadLocal<PoolData>() {
+                                                      @Override
+                                                      protected PoolData initialValue() {
+                                                        return new PoolData();
+                                                      }
+                                                    };
 
-  private final AtomicBoolean                                                         poolBusy      = new AtomicBoolean();
-  private final int                                                                   maxPartitions = Runtime.getRuntime()
-                                                                                                        .availableProcessors() << 3;
+  private final AtomicBoolean         poolBusy      = new AtomicBoolean();
+  private final int                   maxPartitions = Runtime.getRuntime().availableProcessors() << 3;
 
-  private volatile AtomicReference<ConcurrentLinkedQueue<DatabaseDocumentTxPolled>>[] partitions;
+  private volatile PoolPartition[]    partitions;
 
   public OPartitionedDatabasePool(String url, String userName, String password) {
     this(url, userName, password, 64);
@@ -53,33 +49,43 @@ public class OPartitionedDatabasePool {
     this.password = password;
     this.maxSize = maxSize;
 
-    final AtomicReference<ConcurrentLinkedQueue<DatabaseDocumentTxPolled>>[] pts = new AtomicReference[2];
-    for (int i = 0; i < pts.length; i++) {
-      final ConcurrentLinkedQueue<DatabaseDocumentTxPolled> queue = new ConcurrentLinkedQueue<DatabaseDocumentTxPolled>();
-      pts[i] = new AtomicReference<ConcurrentLinkedQueue<DatabaseDocumentTxPolled>>(queue);
+    final PoolPartition[] pts = new PoolPartition[2];
 
-      initQueue(url, queue);
+    for (int i = 0; i < pts.length; i++) {
+      final PoolPartition partition = new PoolPartition();
+      pts[i] = partition;
+
+      initQueue(url, partition);
     }
 
     partitions = pts;
 
   }
 
-  private void initQueue(String url, ConcurrentLinkedQueue<DatabaseDocumentTxPolled> queue) {
+  private void initQueue(String url, PoolPartition partition) {
+    ConcurrentLinkedQueue<DatabaseDocumentTxPolled> queue = partition.queue;
+
     for (int n = 0; n < MIN_POOL_SIZE; n++) {
       final DatabaseDocumentTxPolled db = new DatabaseDocumentTxPolled(url);
       queue.add(db);
     }
 
-    currentSize.addAndGet(MIN_POOL_SIZE);
+    partition.currentSize.addAndGet(MIN_POOL_SIZE);
   }
 
-	public int getMaxSize() {
-		return maxSize;
-	}
+  public int getMaxSize() {
+    return maxSize;
+  }
 
-	public int getAvailableConnections() {
-    final int result = currentSize.get() - acquiredConnections.get();
+  public int getAvailableConnections() {
+    int result = 0;
+
+    for (PoolPartition partition : partitions) {
+      if (partition != null) {
+        result += partition.currentSize.get() - partition.acquiredConnections.get();
+      }
+    }
+
     if (result < 0)
       return 0;
 
@@ -87,95 +93,101 @@ public class OPartitionedDatabasePool {
   }
 
   public int getCreatedInstances() {
-    return currentSize.get();
+    int result = 0;
+
+    for (PoolPartition partition : partitions) {
+      if (partition != null) {
+        result += partition.currentSize.get();
+      }
+    }
+
+    if (result < 0)
+      return 0;
+
+    return result;
   }
 
   public ODatabaseDocumentTx acquire() {
 
-
     final PoolData data = poolData.get();
     if (data.acquireCount > 0) {
       data.acquireCount++;
+
+      assert data.acquiredDatabase != null;
+
       return data.acquiredDatabase;
     }
 
-    acquiredConnections.incrementAndGet();
-    try {
-      while (true) {
-				final AtomicReference<ConcurrentLinkedQueue<DatabaseDocumentTxPolled>>[] pts = partitions;
+    while (true) {
+      final PoolPartition[] pts = partitions;
 
-        final int index = (pts.length - 1) & data.hashCode;
+      final int index = (pts.length - 1) & data.hashCode;
 
-        ConcurrentLinkedQueue<DatabaseDocumentTxPolled> queue = pts[index].get();
-        if (queue == null) {
-          if (poolBusy.compareAndSet(false, true)) {
-            if (pts == partitions) {
-              final AtomicReference<ConcurrentLinkedQueue<DatabaseDocumentTxPolled>> queueRef = pts[index];
+      PoolPartition partition = pts[index];
+      if (partition == null) {
+        if (!poolBusy.get() && poolBusy.compareAndSet(false, true)) {
+          if (pts == partitions) {
+            partition = pts[index];
 
-              if (queueRef.get() == null) {
-                queue = new ConcurrentLinkedQueue<DatabaseDocumentTxPolled>();
-                initQueue(url, queue);
-                queueRef.set(queue);
-              }
+            if (partition == null) {
+              partition = new PoolPartition();
+              initQueue(url, partition);
+              pts[index] = partition;
             }
-
-            poolBusy.set(false);
           }
 
-          continue;
-        } else {
-          DatabaseDocumentTxPolled db = queue.poll();
-          if (db == null) {
-            if (pts.length < maxPartitions) {
-              if (poolBusy.compareAndSet(false, true)) {
-                if (pts == partitions) {
-                  final AtomicReference<ConcurrentLinkedQueue<DatabaseDocumentTxPolled>>[] newPartitions = new AtomicReference[partitions.length << 1];
-                  System.arraycopy(partitions, 0, newPartitions, 0, partitions.length);
+          poolBusy.set(false);
+        }
 
-                  for (int i = partitions.length - 1; i < newPartitions.length; i++)
-                    newPartitions[i] = new AtomicReference<ConcurrentLinkedQueue<DatabaseDocumentTxPolled>>();
+        continue;
+      } else {
+        DatabaseDocumentTxPolled db = partition.queue.poll();
+        if (db == null) {
+          if (pts.length < maxPartitions) {
+            if (poolBusy.compareAndSet(false, true)) {
+              if (pts == partitions) {
+                final PoolPartition[] newPartitions = new PoolPartition[partitions.length << 1];
+                System.arraycopy(partitions, 0, newPartitions, 0, partitions.length);
 
-                  partitions = newPartitions;
-                }
-
-                poolBusy.set(false);
+                partitions = newPartitions;
               }
 
-              continue;
-            } else {
-              if (currentSize.get() >= maxSize)
-                throw new IllegalStateException("You have reached maximum pool size");
-
-              db = new DatabaseDocumentTxPolled(url);
-              db.open(userName, password);
-              db.queue = queue;
-
-              data.acquireCount = 1;
-              data.acquiredDatabase = db;
-
-              currentSize.incrementAndGet();
-
-              return db;
+              poolBusy.set(false);
             }
+
+            continue;
           } else {
+            if (partition.currentSize.get() >= maxSize)
+              throw new IllegalStateException("You have reached maximum pool size for given partition");
+
+            db = new DatabaseDocumentTxPolled(url);
             db.open(userName, password);
-            db.queue = queue;
+            db.partition = partition;
 
             data.acquireCount = 1;
             data.acquiredDatabase = db;
 
+						partition.acquiredConnections.incrementAndGet();
+            partition.currentSize.incrementAndGet();
+
             return db;
           }
+        } else {
+          db.open(userName, password);
+          db.partition = partition;
+					partition.acquiredConnections.incrementAndGet();
+
+          data.acquireCount = 1;
+          data.acquiredDatabase = db;
+
+          return db;
         }
       }
-    } catch (RuntimeException e) {
-      acquiredConnections.decrementAndGet();
-      throw e;
     }
   }
 
   private final class DatabaseDocumentTxPolled extends ODatabaseDocumentTx {
-    private ConcurrentLinkedQueue<DatabaseDocumentTxPolled> queue;
+    private PoolPartition partition;
 
     private DatabaseDocumentTxPolled(String iURL) {
       super(iURL);
@@ -184,22 +196,22 @@ public class OPartitionedDatabasePool {
     @Override
     public void close() {
       final PoolData data = poolData.get();
-			if (data.acquireCount == 0)
-				return;
+      if (data.acquireCount == 0)
+        return;
 
       data.acquireCount--;
 
       if (data.acquireCount > 0)
         return;
 
-      ConcurrentLinkedQueue<DatabaseDocumentTxPolled> q = queue;
-      queue = null;
+      PoolPartition p = partition;
+      partition = null;
 
       super.close();
       data.acquiredDatabase = null;
 
-      q.offer(this);
-      acquiredConnections.decrementAndGet();
+      p.queue.offer(this);
+      p.acquiredConnections.decrementAndGet();
     }
   }
 
@@ -212,5 +224,11 @@ public class OPartitionedDatabasePool {
 
     private int                      acquireCount;
     private DatabaseDocumentTxPolled acquiredDatabase;
+  }
+
+  private static final class PoolPartition {
+    private final AtomicInteger                                   currentSize         = new AtomicInteger();
+    private final AtomicInteger                                   acquiredConnections = new AtomicInteger();
+    private final ConcurrentLinkedQueue<DatabaseDocumentTxPolled> queue               = new ConcurrentLinkedQueue<DatabaseDocumentTxPolled>();
   }
 }

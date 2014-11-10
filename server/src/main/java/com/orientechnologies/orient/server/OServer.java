@@ -271,6 +271,13 @@ public class OServer {
     return this;
   }
 
+  public void removeShutdownHook() {
+    if (shutdownHook != null) {
+      shutdownHook.cancel();
+      shutdownHook = null;
+    }
+  }
+
   public boolean shutdown() {
     if (!running)
       return false;
