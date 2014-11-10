@@ -975,13 +975,13 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     return getStorage().getConflictStrategy();
   }
 
-  public ODatabaseDocumentTx setConflictStrategy(final String iStrategyName) {
-    getStorage().setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
+  public ODatabaseDocumentTx setConflictStrategy(final ORecordConflictStrategy iResolver) {
+    getStorage().setConflictStrategy(iResolver);
     return this;
   }
 
-  public ODatabaseDocumentTx setConflictStrategy(final ORecordConflictStrategy iResolver) {
-    getStorage().setConflictStrategy(iResolver);
+  public ODatabaseDocumentTx setConflictStrategy(final String iStrategyName) {
+    getStorage().setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
     return this;
   }
 
@@ -2043,7 +2043,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    */
   @Override
   public <RET extends ORecord> RET save(final ORecord iRecord) {
-    return (RET) save(iRecord, OPERATION_MODE.SYNCHRONOUS, false, null, null);
+    return (RET) save(iRecord, null, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
   /**
@@ -2078,44 +2078,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   @Override
   public <RET extends ORecord> RET save(final ORecord iRecord, final OPERATION_MODE iMode, boolean iForceCreate,
       final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
-    checkOpeness();
-    if (!(iRecord instanceof ODocument)) {
-      return (RET) currentTx.saveRecord(iRecord, null, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
-    }
-
-    ODocument doc = (ODocument) iRecord;
-    doc.validate();
-    ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
-
-    try {
-      if (iForceCreate || doc.getIdentity().isNew()) {
-        // NEW RECORD
-        if (doc.getClassName() != null)
-          checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, doc.getClassName());
-
-        final OClass schemaClass = doc.getImmutableSchemaClass();
-
-        if (schemaClass != null && doc.getIdentity().getClusterId() < 0) {
-          // CLASS FOUND: FORCE THE STORING IN THE CLUSTER CONFIGURED
-          final String clusterName = getClusterNameById(doc.getImmutableSchemaClass().getClusterForNewInstance(doc));
-
-          return (RET) currentTx.saveRecord(doc, clusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
-        }
-      } else {
-        // UPDATE: CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
-        if (doc.getClassName() != null)
-          checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_UPDATE, doc.getClassName());
-      }
-
-      doc = (ODocument) currentTx.saveRecord(doc, null, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
-    } catch (OException e) {
-      // PASS THROUGH
-      throw e;
-    } catch (Exception e) {
-      throw new ODatabaseException("Error on saving record " + iRecord.getIdentity() + " of class  '"
-          + (doc.getClassName() != null ? doc.getClassName() : "?") + "'", e);
-    }
-    return (RET) doc;
+    return save(iRecord, null, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 
   /**
@@ -2187,6 +2150,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       return (RET) currentTx.saveRecord(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 
     ODocument doc = (ODocument) iRecord;
+    doc.validate();
+    ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
 
     if (iForceCreate || !doc.getIdentity().isValid()) {
       if (doc.getClassName() != null)
@@ -2230,9 +2195,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       if (doc.getClassName() != null)
         checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_UPDATE, doc.getClassName());
     }
-
-    doc.validate();
-    ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
 
     doc = (ODocument) currentTx.saveRecord(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback,
         iRecordUpdatedCallback);
