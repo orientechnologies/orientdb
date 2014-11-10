@@ -58,7 +58,6 @@ public class OServerNetworkListener extends Thread {
   private int                               socketBufferSize;
   private OContextConfiguration             configuration;
   private OServer                           server;
-  private ONetworkProtocol                  protocol;
   private int                               protocolVersion   = -1;
 
   public OServerNetworkListener(final OServer iServer, final OServerSocketFactory iSocketFactory, final String iHostName,
@@ -172,11 +171,6 @@ public class OServerNetworkListener extends Thread {
   public void shutdown() {
     this.active = false;
 
-    if (protocol != null) {
-      protocol.sendShutdown();
-      protocol = null;
-    }
-
     if (serverSocket != null)
       try {
         serverSocket.close();
@@ -228,7 +222,7 @@ public class OServerNetworkListener extends Thread {
           socket.setReceiveBufferSize(socketBufferSize);
 
           // CREATE A NEW PROTOCOL INSTANCE
-          protocol = protocolType.newInstance();
+          ONetworkProtocol protocol = protocolType.newInstance();
 
           // CONFIGURE THE PROTOCOL FOR THE INCOMING CONNECTION
           protocol.config(this, server, socket, configuration);
@@ -243,7 +237,6 @@ public class OServerNetworkListener extends Thread {
       try {
         if (serverSocket != null && !serverSocket.isClosed())
           serverSocket.close();
-        protocol = null;
       } catch (IOException ioe) {
       }
     }
@@ -276,10 +269,6 @@ public class OServerNetworkListener extends Thread {
     StringBuilder builder = new StringBuilder(64);
     builder.append(protocolType.getSimpleName()).append(" ").append(serverSocket.getLocalSocketAddress()).append(":");
     return builder.toString();
-  }
-
-  public ONetworkProtocol getProtocol() {
-    return protocol;
   }
 
   public Object getCommand(final Class<?> iCommandClass) {
