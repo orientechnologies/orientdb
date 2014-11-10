@@ -326,7 +326,7 @@ module.exports = function (grunt) {
         'ngmin',
         'copy',
         'cdnify',
-//        'uglify',
+//      'uglify',
 //        'rev',
         'usemin'
     ]);
