@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionIf;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionIfNull;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionSysdate;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionUUID;
+import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionUser;
 import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionMedian;
 import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionMode;
 import com.orientechnologies.orient.core.sql.functions.stat.OSQLFunctionPercentile;
@@ -87,6 +88,7 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
     register(OSQLFunctionVariance.NAME, OSQLFunctionVariance.class);
     register(OSQLFunctionStandardDeviation.NAME, OSQLFunctionStandardDeviation.class);
     register(OSQLFunctionUUID.NAME, OSQLFunctionUUID.class);
+    register(OSQLFunctionUser.NAME, OSQLFunctionUser.class);
   }
 
   public static void register(final String iName, final Object iImplementation) {
