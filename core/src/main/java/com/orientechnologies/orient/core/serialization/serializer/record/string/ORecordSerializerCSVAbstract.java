@@ -91,16 +91,17 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         // SAVE AT THE FLY AND STORE THE NEW RID
         final ORecord<?> record = rid.getRecord();
 
-        final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
-        if (database.getTransaction().isActive()) {
-          // USE THE DEFAULT CLUSTER
-          database.save((ORecordInternal<?>) record);
+        if (record != null) {
+          final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
+          if (database.getTransaction().isActive()) {
+            // USE THE DEFAULT CLUSTER
+            database.save((ORecordInternal<?>) record);
 
-        } else
-          database.save((ORecordInternal<?>) record);
-
-        if (record != null)
+          } else
+            database.save((ORecordInternal<?>) record);
           rid = record.getIdentity();
+        }
+
         resultRid = rid;
       }
     } else {
