@@ -226,6 +226,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       if (status == STATUS.OPEN)
         throw new IllegalStateException("Database " + getName() + " is already open");
 
+      if (user != null && !user.getName().equals(iUserName))
+        initialized = false;
+
       if (storage.isClosed()) {
         storage.open(iUserName, iUserPassword, properties);
       } else if (storage instanceof OStorageProxy) {
@@ -975,13 +978,13 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     return getStorage().getConflictStrategy();
   }
 
-  public ODatabaseDocumentTx setConflictStrategy(final ORecordConflictStrategy iResolver) {
-    getStorage().setConflictStrategy(iResolver);
+  public ODatabaseDocumentTx setConflictStrategy(final String iStrategyName) {
+    getStorage().setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
     return this;
   }
 
-  public ODatabaseDocumentTx setConflictStrategy(final String iStrategyName) {
-    getStorage().setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
+  public ODatabaseDocumentTx setConflictStrategy(final ORecordConflictStrategy iResolver) {
+    getStorage().setConflictStrategy(iResolver);
     return this;
   }
 
@@ -2159,21 +2162,25 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
       final OClass schemaClass = doc.getImmutableSchemaClass();
 
-      if (iClusterName == null) {
-        if (schemaClass != null) {
-          // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
-          if (schemaClass.isAbstract())
-            throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and can not be saved");
+      int clusterId = iRecord.getIdentity().getClusterId();
+      if (clusterId == ORID.CLUSTER_ID_INVALID) {
+        // COMPUTE THE CLUSTER ID
+        if (iClusterName == null) {
+          if (schemaClass != null) {
+            // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
+            if (schemaClass.isAbstract())
+              throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and can not be saved");
 
-          iClusterName = getClusterNameById(schemaClass.getClusterForNewInstance(doc));
-        } else {
-          iClusterName = getClusterNameById(storage.getDefaultClusterId());
+            iClusterName = getClusterNameById(schemaClass.getClusterForNewInstance(doc));
+          } else {
+            iClusterName = getClusterNameById(storage.getDefaultClusterId());
+          }
         }
-      }
 
-      int id = getClusterIdByName(iClusterName);
-      if (id == -1)
-        throw new IllegalArgumentException("Cluster name " + iClusterName + " is not configured");
+        clusterId = getClusterIdByName(iClusterName);
+        if (clusterId == -1)
+          throw new IllegalArgumentException("Cluster name " + iClusterName + " is not configured");
+      }
 
       final int[] clusterIds;
       if (schemaClass != null) {
@@ -2181,15 +2188,13 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         clusterIds = schemaClass.getClusterIds();
         int i = 0;
         for (; i < clusterIds.length; ++i)
-          if (clusterIds[i] == id)
+          if (clusterIds[i] == clusterId)
             break;
 
         if (i == clusterIds.length)
           throw new IllegalArgumentException("Cluster name " + iClusterName + " is not configured to store the class "
               + doc.getClassName());
-      } else
-        clusterIds = new int[] { id };
-
+      }
     } else {
       // UPDATE: CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
       if (doc.getClassName() != null)
