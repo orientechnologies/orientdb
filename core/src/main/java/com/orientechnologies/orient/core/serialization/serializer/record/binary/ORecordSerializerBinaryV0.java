@@ -577,8 +577,10 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       if (((ORID) link).isValid() && ((ORID) link).isNew()) {
         final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
         ORecord record = link.getRecord();
-        database.save(record);
-        return record;
+        if (record != null) {
+          database.save(record);
+          return record;
+        }
       }
     } else if (link instanceof ORecord) {
       ORID rid = link.getIdentity();

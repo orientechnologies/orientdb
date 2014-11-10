@@ -86,15 +86,11 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         final ORecord record = rid.getRecord();
 
         final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
-        if (database.getTransaction().isActive()) {
-          // USE THE DEFAULT CLUSTER
+        if (record != null) {
           database.save((ORecord) record);
-
-        } else
-          database.save((ORecord) record);
-
-        if (record != null)
           rid = record.getIdentity();
+        }
+
         resultRid = rid;
       }
     } else {
