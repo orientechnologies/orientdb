@@ -2,8 +2,11 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class ONotBlock extends SimpleNode {
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
+public class ONotBlock extends OBooleanExpression {
+  OBooleanExpression sub;
+
   public ONotBlock(int id) {
     super(id);
   }
@@ -12,10 +15,13 @@ class ONotBlock extends SimpleNode {
     super(p, id);
   }
 
-
-  /** Accept the visitor. **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord) {
+    if (sub == null) {
+      return true;
+    }
+    return !sub.evaluate(currentRecord);
   }
+
 }
 /* JavaCC - OriginalChecksum=1926313b3f854235aaa20811c22d583b (do not edit this line) */

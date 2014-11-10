@@ -2,8 +2,14 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OOrBlock extends SimpleNode {
+import java.util.ArrayList;
+import java.util.List;
+
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
+public class OOrBlock extends OBooleanExpression {
+  List<OBooleanExpression> subBlocks = new ArrayList<OBooleanExpression>();
+
   public OOrBlock(int id) {
     super(id);
   }
@@ -12,10 +18,26 @@ class OOrBlock extends SimpleNode {
     super(p, id);
   }
 
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord) {
+    if (getSubBlocks() == null) {
+      return true;
+    }
 
-  /** Accept the visitor. **/
-  public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
-    return visitor.visit(this, data);
+    for (OBooleanExpression block : subBlocks) {
+      if (block.evaluate(currentRecord)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public List<OBooleanExpression> getSubBlocks() {
+    return subBlocks;
+  }
+
+  public void setSubBlocks(List<OBooleanExpression> subBlocks) {
+    this.subBlocks = subBlocks;
   }
 }
 /* JavaCC - OriginalChecksum=98d3077303a598705894dbb7bd4e1573 (do not edit this line) */

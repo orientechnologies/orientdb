@@ -55,6 +55,8 @@ public interface OrientSqlVisitor
   public Object visit(OParenthesisExpression node, Object data);
   public Object visit(OBaseExpression node, Object data);
   public Object visit(OFromClause node, Object data);
+  public Object visit(OLetClause node, Object data);
+  public Object visit(OLetItem node, Object data);
   public Object visit(OFromItem node, Object data);
   public Object visit(OCluster node, Object data);
   public Object visit(OMetadataIdentifier node, Object data);
@@ -106,4 +108,4 @@ public interface OrientSqlVisitor
   public Object visit(OArray node, Object data);
   public Object visit(OJson node, Object data);
 }
-/* JavaCC - OriginalChecksum=2b60a1644f9f1c81c5929a0e50a1eab6 (do not edit this line) */
+/* JavaCC - OriginalChecksum=02532e4374bbd318f9463d31f747539e (do not edit this line) */

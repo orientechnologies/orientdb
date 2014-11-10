@@ -2,8 +2,10 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OFromClause extends SimpleNode {
+public class OFromClause extends SimpleNode {
+
+  protected OIdentifier className;
+
   public OFromClause(int id) {
     super(id);
   }
@@ -12,10 +14,17 @@ class OFromClause extends SimpleNode {
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
+  }
+
+  public OIdentifier getClassName() {
+    return className;
+  }
+
+  public void setClassName(OIdentifier className) {
+    this.className = className;
   }
 }
 /* JavaCC - OriginalChecksum=051839d20dabfa4cce26ebcbe0d03a86 (do not edit this line) */

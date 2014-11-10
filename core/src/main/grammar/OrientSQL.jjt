@@ -154,6 +154,8 @@ TOKEN:
     < WAIT: ( "w" | "W" ) ( "a" | "A" ) ( "i" | "I" ) ( "t" | "T" ) >
     |
     < RETRY: ( "r" | "R" ) ( "e" | "E" ) ( "t" | "T" ) ( "r" | "R" ) ( "y" | "Y" ) >
+    |
+    < LET: ( "l" | "L" ) ( "e" | "E" ) ( "t" | "T" ) >
 	|
 	< THIS: "@this" >
 	|
@@ -509,6 +511,7 @@ OSelectStatement SelectStatement():
     [ jjtThis.projection = Projection() ]
     <FROM>
     jjtThis.target = FromClause()
+    [ jjtThis.letClause = LetClause() ]
     [ <WHERE> jjtThis.whereClause = WhereClause() ]
     [ jjtThis.orderBy = OrderBy() ]
     [ jjtThis.groupBy = GroupBy() ]
@@ -1095,6 +1098,23 @@ OFromClause FromClause():
 	{ return jjtThis; }
 }
 
+OLetClause LetClause():
+{}
+{
+(
+    <LET> LetItem() ( <COMMA> LetItem() )*
+) { return jjtThis; }
+}
+
+OLetItem LetItem():
+{}
+{
+(
+	Identifier() <EQ> Expression()
+) { return jjtThis; }
+}
+
+
 OFromItem FromItem():
 {}
 {
@@ -1109,7 +1129,7 @@ OFromItem FromItem():
 	|
     MetadataIdentifier()
 	|
-	Identifier()
+	jjtThis.className = Identifier()
 	|
 	<LPAREN> ( SelectStatement() | TraverseStatement() ) <RPAREN>
 ) { return jjtThis; }
@@ -1148,21 +1168,28 @@ OWhereClause WhereClause():
 	{return jjtThis;}
 }
 
-void OrBlock():
-{}
+OOrBlock OrBlock():
+{ OAndBlock lastAnd = null; }
 {
-	AndBlock() ( <OR> AndBlock() )*
+(
+	lastAnd = AndBlock() { jjtThis.getSubBlocks().add(lastAnd); }
+	( <OR> lastAnd = AndBlock() { jjtThis.getSubBlocks().add(lastAnd); } )*
+) { return jjtThis; }
 }
 
-void AndBlock():
-{}
+OAndBlock AndBlock():
+{ONotBlock lastNot = null; }
 {
-    NotBlock() ( <AND> NotBlock() )*
+(
+    lastNot = NotBlock() { jjtThis.getSubBlocks().add(lastNot); }
+    ( <AND> lastNot = NotBlock() { jjtThis.getSubBlocks().add(lastNot); } )*
+) { return jjtThis; }
 }
 
-void NotBlock():
+ONotBlock NotBlock():
 {}
 {
+(
     (
         <NOT>
         (
@@ -1181,6 +1208,7 @@ void NotBlock():
         LOOKAHEAD( ParenthesisBlock() )
         ParenthesisBlock()
     )
+) { return jjtThis; }
 }
 
 void ParenthesisBlock():
