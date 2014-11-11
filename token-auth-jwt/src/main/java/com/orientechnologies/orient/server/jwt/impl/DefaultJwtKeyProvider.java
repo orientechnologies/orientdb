@@ -1,7 +1,7 @@
-package com.emrul.orient.jwt.impl;
+package com.orientechnologies.orient.server.jwt.impl;
 
-import com.orientechnologies.orient.core.metadata.security.jwt.IJwtHeader;
-import com.orientechnologies.orient.core.metadata.security.jwt.IJwtKeyProvider;
+import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
+import com.orientechnologies.orient.core.metadata.security.jwt.OJwtKeyProvider;
 
 import javax.crypto.spec.SecretKeySpec;
 import java.security.Key;
@@ -11,7 +11,7 @@ import java.security.Key;
  *
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
-public class DefaultJwtKeyProvider implements IJwtKeyProvider {
+public class DefaultJwtKeyProvider implements OJwtKeyProvider {
 
   private SecretKeySpec secret_key;
 
@@ -20,7 +20,7 @@ public class DefaultJwtKeyProvider implements IJwtKeyProvider {
   }
 
   @Override
-  public Key getKey(IJwtHeader header) {
+  public Key getKey(OJwtHeader header) {
     return secret_key;
   }
 }

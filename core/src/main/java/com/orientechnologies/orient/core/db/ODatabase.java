@@ -38,7 +38,7 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.metadata.security.IToken;
+import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -94,7 +94,7 @@ public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2Record
    *          Authentication token
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public <DB extends ODatabase> DB open(final IToken iToken);
+  public <DB extends ODatabase> DB open(final OToken iToken);
 
   /**
    * Creates a new database.

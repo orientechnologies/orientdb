@@ -1,4 +1,4 @@
-package com.emrul.orient.jwt.impl;
+package com.orientechnologies.orient.server.jwt.impl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -11,22 +11,22 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.crypto.Mac;
 
-import com.emrul.orient.jwt.mixin.IJwtHeaderMixin;
-import com.emrul.orient.jwt.mixin.IJwtPayloadMixin;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.metadata.security.IToken;
-import com.orientechnologies.orient.core.metadata.security.ITokenHandler;
+import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.core.metadata.security.OTokenHandler;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
-import com.orientechnologies.orient.core.metadata.security.jwt.IJwtHeader;
-import com.orientechnologies.orient.core.metadata.security.jwt.IJwtKeyProvider;
-import com.orientechnologies.orient.core.metadata.security.jwt.IJwtPayload;
+import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
+import com.orientechnologies.orient.core.metadata.security.jwt.OJwtKeyProvider;
+import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.jwt.mixin.OJwtHeaderMixin;
+import com.orientechnologies.orient.server.jwt.mixin.OJwtPayloadMixin;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 /**
@@ -34,7 +34,7 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
  *
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
-public class JwtTokenHandler extends OServerPluginAbstract implements ITokenHandler {
+public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHandler {
   private static final String                         JWT_TOKEN_HANDLER = "JwtTokenHandler";
 
   private final ObjectMapper                          mapper;
@@ -56,13 +56,13 @@ public class JwtTokenHandler extends OServerPluginAbstract implements ITokenHand
                                                                         };
 
   private OServer                                     serverInstance;
-  private IJwtKeyProvider                             keyProvider;
+  private OJwtKeyProvider                             keyProvider;
 
   public JwtTokenHandler() {
     mapper = new ObjectMapper().registerModule(new AfterburnerModule()).configure(
         DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    mapper.addMixInAnnotations(IJwtHeader.class, IJwtHeaderMixin.class);
-    mapper.addMixInAnnotations(IJwtPayload.class, IJwtPayloadMixin.class);
+    mapper.addMixInAnnotations(OJwtHeader.class, OJwtHeaderMixin.class);
+    mapper.addMixInAnnotations(OJwtPayload.class, OJwtPayloadMixin.class);
 
     // .registerModule();
   }
@@ -86,8 +86,8 @@ public class JwtTokenHandler extends OServerPluginAbstract implements ITokenHand
   }
 
   @Override
-  public IToken parseToken(byte[] tokenBytes) throws InvalidKeyException, NoSuchAlgorithmException, IOException {
-    IToken token = null;
+  public OToken parseWebToken(byte[] tokenBytes) throws InvalidKeyException, NoSuchAlgorithmException, IOException {
+    OToken token = null;
 
     // / <header>.<payload>.<signature>
     int firstDot = -1, secondDot = -1;
@@ -146,7 +146,7 @@ public class JwtTokenHandler extends OServerPluginAbstract implements ITokenHand
   }
 
   @Override
-  public boolean validateToken(IToken token, String command, String database) {
+  public boolean validateToken(OToken token, String command, String database) {
     boolean valid = false;
     if (!(token instanceof JsonWebToken)) {
       return false;
@@ -161,7 +161,7 @@ public class JwtTokenHandler extends OServerPluginAbstract implements ITokenHand
     return valid;
   }
 
-  public byte[] getSignedToken(ODatabaseDocumentInternal db, OSecurityUser user) {
+  public byte[] getSignedWebToken(ODatabaseDocumentInternal db, OSecurityUser user) {
     ByteArrayOutputStream tokenByteOS = new ByteArrayOutputStream(1024);
     JwtHeader header = new JwtHeader();
     header.setAlgorithm("HS256");
@@ -213,7 +213,7 @@ public class JwtTokenHandler extends OServerPluginAbstract implements ITokenHand
     return JWT_TOKEN_HANDLER;
   }
 
-  protected IJwtKeyProvider getKeyProvider() {
+  protected OJwtKeyProvider getKeyProvider() {
     return keyProvider;
   }
 }

@@ -11,14 +11,14 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
  *
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
-public interface ITokenHandler {
+public interface OTokenHandler {
   // Return null if token is unparseable or fails verification.
   // The returned token should be checked to ensure isVerified == true.
-  public IToken parseToken(byte tokenBytes[]) throws InvalidKeyException, NoSuchAlgorithmException, IOException;
+  public OToken parseWebToken(byte tokenBytes[]) throws InvalidKeyException, NoSuchAlgorithmException, IOException;
 
-  public boolean validateToken(IToken token, String command, String database);
+  public boolean validateToken(OToken token, String command, String database);
 
   // Return a byte array representing a signed token
-  public byte[] getSignedToken(ODatabaseDocumentInternal db, OSecurityUser user);
+  public byte[] getSignedWebToken(ODatabaseDocumentInternal db, OSecurityUser user);
 
 }

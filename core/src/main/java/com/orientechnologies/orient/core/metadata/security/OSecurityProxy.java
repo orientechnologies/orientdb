@@ -87,7 +87,7 @@ public class OSecurityProxy extends OProxedResource<OSecurity> implements OSecur
     return delegate.authenticate(iUsername, iUserPassword);
   }
 
-  public OUser authenticate(final IToken authToken) {
+  public OUser authenticate(final OToken authToken) {
     return delegate.authenticate(authToken);
   }
 

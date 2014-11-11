@@ -190,7 +190,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   // Token MUST be validated before being passed to this method.
-  public OUser authenticate(final IToken authToken) {
+  public OUser authenticate(final OToken authToken) {
     final String dbName = getDatabase().getName();
     if ( authToken.getIsValid() != true ) {
       throw new OSecurityAccessException(dbName, "Token not valid");

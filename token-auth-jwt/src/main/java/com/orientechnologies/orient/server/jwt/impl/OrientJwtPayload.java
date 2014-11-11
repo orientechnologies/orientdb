@@ -1,7 +1,7 @@
-package com.emrul.orient.jwt.impl;
+package com.orientechnologies.orient.server.jwt.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.orientechnologies.orient.core.metadata.security.jwt.IJwtPayload;
+import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  *
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
-public class OrientJwtPayload implements IJwtPayload {
+public class OrientJwtPayload implements OJwtPayload {
   public String iss;
   public String sub;
   public String aud;

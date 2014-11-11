@@ -1,12 +1,12 @@
-package com.emrul.orient.jwt.impl;
+package com.orientechnologies.orient.server.jwt.impl;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.security.IToken;
+import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.metadata.security.jwt.IJsonWebToken;
-import com.orientechnologies.orient.core.metadata.security.jwt.IJwtHeader;
-import com.orientechnologies.orient.core.metadata.security.jwt.IJwtPayload;
+import com.orientechnologies.orient.core.metadata.security.jwt.OJsonWebToken;
+import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
+import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -14,10 +14,10 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  *
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
-public class JsonWebToken implements IJsonWebToken, IToken {
+public class JsonWebToken implements OJsonWebToken, OToken {
 
-  public final IJwtHeader  header;
-  public final IJwtPayload payload;
+  public final OJwtHeader  header;
+  public final OJwtPayload payload;
   private boolean          isVerified;
   private boolean          isValid;
 
@@ -25,7 +25,7 @@ public class JsonWebToken implements IJsonWebToken, IToken {
     this(new JwtHeader(), new OrientJwtPayload());
   }
 
-  public JsonWebToken(IJwtHeader header, IJwtPayload payload) {
+  public JsonWebToken(OJwtHeader header, OJwtPayload payload) {
     isVerified = false;
     isValid = false;
     this.header = header;
@@ -33,12 +33,12 @@ public class JsonWebToken implements IJsonWebToken, IToken {
   }
 
   @Override
-  public IJwtHeader getHeader() {
+  public OJwtHeader getHeader() {
     return header;
   }
 
   @Override
-  public IJwtPayload getPayload() {
+  public OJwtPayload getPayload() {
     return payload;
   }
 

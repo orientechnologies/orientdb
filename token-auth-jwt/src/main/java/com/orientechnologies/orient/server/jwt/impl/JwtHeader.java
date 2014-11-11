@@ -1,13 +1,13 @@
-package com.emrul.orient.jwt.impl;
+package com.orientechnologies.orient.server.jwt.impl;
 
-import com.orientechnologies.orient.core.metadata.security.jwt.IJwtHeader;
+import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
 
 /**
  * Created by emrul on 28/09/2014.
  *
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
-public class JwtHeader implements IJwtHeader {
+public class JwtHeader implements OJwtHeader {
 
   private String typ;
   private String alg;

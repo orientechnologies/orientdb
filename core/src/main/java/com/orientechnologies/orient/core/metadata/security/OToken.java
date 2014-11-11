@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
  *
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
-public interface IToken {
+public interface OToken {
 
   public boolean getIsVerified();
 

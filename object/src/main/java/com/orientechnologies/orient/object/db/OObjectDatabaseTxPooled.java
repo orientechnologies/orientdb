@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.db.ODatabasePoolBase;
 import com.orientechnologies.orient.core.db.ODatabasePooled;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.metadata.security.IToken;
+import com.orientechnologies.orient.core.metadata.security.OToken;
 
 /**
  * Pooled wrapper to the OObjectDatabaseTx class. Allows to being reused across calls. The close() method does not close the
@@ -72,7 +72,7 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
 
 
   @Override
-  public OObjectDatabaseTxPooled open(IToken iToken) {
+  public OObjectDatabaseTxPooled open(OToken iToken) {
     throw new UnsupportedOperationException(
         "Database instance was retrieved from a pool. You cannot open the database in this way. Use directly a OObjectDatabaseTx instance if you want to manually open the connection");
   }

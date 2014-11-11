@@ -30,9 +30,11 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.security.OTokenHandler;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestException;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -66,6 +68,13 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
   public static final char   DBNAME_DIR_SEPARATOR   = '$';
   public static final String SESSIONID_UNAUTHORIZED = "-";
   public static final String SESSIONID_LOGOUT       = "!";
+  private OTokenHandler      handler;
+
+  @Override
+  public void configure(OServer server) {
+    super.configure(server);
+    handler = server.getPlugin("JwtTokenHandler");
+  }
 
   @Override
   public boolean beforeExecute(final OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
@@ -79,7 +88,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     if (iRequest.bearerTokenRaw != null) {
       // Bearer authentication
       try {
-        iRequest.bearerToken = server.getTokenHandler().parseToken(iRequest.bearerTokenRaw.getBytes());
+        iRequest.bearerToken = handler.parseWebToken(iRequest.bearerTokenRaw.getBytes());
       } catch (Exception e) {
         // TODO: Catch all expected exceptions correctly!
         OLogManager.instance().warn(this, "Bearer token parsing failed", e);
@@ -92,7 +101,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       }
 
       // CHECK THE REQUEST VALIDITY
-      server.getTokenHandler().validateToken(iRequest.bearerToken, urlParts[0], urlParts[1]);
+      handler.validateToken(iRequest.bearerToken, urlParts[0], urlParts[1]);
       if (iRequest.bearerToken.getIsValid() == false) {
 
         // SECURITY PROBLEM: CROSS DATABASE REQUEST!

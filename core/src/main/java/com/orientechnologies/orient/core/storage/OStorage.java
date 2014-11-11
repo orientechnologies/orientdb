@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFact
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.security.IToken;
+import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OBackupable;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -62,7 +62,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
 
   public void open(String iUserName, String iUserPassword, final Map<String, Object> iProperties);
 
-  public void open(IToken iToken, final Map<String, Object> iProperties);
+  public void open(OToken iToken, final Map<String, Object> iProperties);
 
   public void create(Map<String, Object> iProperties);
 

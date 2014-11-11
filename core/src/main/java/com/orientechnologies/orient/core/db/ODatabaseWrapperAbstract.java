@@ -37,7 +37,7 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntent;
-import com.orientechnologies.orient.core.metadata.security.IToken;
+import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 
@@ -57,7 +57,7 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
     return (THISDB) this;
   }
 
-  public <THISDB extends ODatabase> THISDB open(final IToken iToken) {
+  public <THISDB extends ODatabase> THISDB open(final OToken iToken) {
     underlying.open(iToken);
     Orient.instance().getDatabaseFactory().register(databaseOwner);
     return (THISDB) this;

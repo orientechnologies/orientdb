@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.security.IToken;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -130,7 +129,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
 
   @Override
-  public <THISDB extends ODatabase> THISDB open(IToken iToken) {
+  public <THISDB extends ODatabase> THISDB open(OToken iToken) {
     super.open(iToken);
     entityManager.registerEntityClass(OUser.class);
     entityManager.registerEntityClass(ORole.class);

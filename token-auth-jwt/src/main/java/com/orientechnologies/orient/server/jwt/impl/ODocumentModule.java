@@ -1,4 +1,4 @@
-package com.emrul.orient.jwt.impl;
+package com.orientechnologies.orient.server.jwt.impl;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
 

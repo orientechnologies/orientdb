@@ -58,7 +58,7 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.security.IToken;
+import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -193,7 +193,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
   }
 
-  public void open(final IToken iToken, final Map<String, Object> iOptions) {
+  public void open(final OToken iToken, final Map<String, Object> iOptions) {
     // TODO: Token auth for remote client
   }
 

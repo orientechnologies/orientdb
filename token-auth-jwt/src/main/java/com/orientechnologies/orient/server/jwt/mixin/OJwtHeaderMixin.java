@@ -1,4 +1,4 @@
-package com.emrul.orient.jwt.mixin;
+package com.orientechnologies.orient.server.jwt.mixin;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  *
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
-public interface IJwtHeaderMixin {
+public interface OJwtHeaderMixin {
 
   @JsonProperty(value = "alg")
   public String getAlggorithm();

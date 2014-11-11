@@ -29,7 +29,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.metadata.security.IToken;
+import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
 
@@ -64,9 +64,6 @@ public class OHttpRequest {
 
   public String                             bearerTokenRaw;
   public IToken                             bearerToken;
-
-  // public String jwtUserRid;
-  // public String jwtDatabase;
 
   public OHttpRequest(final ONetworkProtocolHttpAbstract iExecutor, final InputStream iInStream, final ONetworkProtocolData iData,
       final OContextConfiguration iConfiguration) {

@@ -91,7 +91,7 @@ public class OSecurityNull implements OSecurity {
     return null;
   }
 
-  public OUser authenticate(IToken authToken) {
+  public OUser authenticate(OToken authToken) {
     return null;
   }
 

@@ -8,8 +8,10 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.metadata.security.OTokenHandler;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -23,10 +25,17 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 public class OServerCommandPostAuthToken extends OServerCommandAbstract {
   private static final String[] NAMES           = { "POST|token/*" };
   private static final String   RESPONSE_FORMAT = "indent:-1,attribSameRow";
+  private OTokenHandler         handler;
 
   @Override
   public String[] getNames() {
     return NAMES;
+  }
+
+  @Override
+  public void configure(OServer server) {
+    super.configure(server);
+    handler = server.getPlugin("JwtTokenHandler");
   }
 
   @Override
@@ -60,7 +69,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
           user = db.getUser();
 
           if (user != null) {
-            byte[] tokenBytes = server.getTokenHandler().getSignedToken(db, user);
+            byte[] tokenBytes = handler.getSignedWebToken(db, user);
             signedToken = new String(tokenBytes);
           } else {
             // Server user (not supported yet!)
