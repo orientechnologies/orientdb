@@ -13,7 +13,6 @@ import javax.crypto.Mac;
 
 import com.emrul.orient.jwt.mixin.IJwtHeaderMixin;
 import com.emrul.orient.jwt.mixin.IJwtPayloadMixin;
-import com.emrul.util.Base64;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
@@ -25,6 +24,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.jwt.IJwtHeader;
 import com.orientechnologies.orient.core.metadata.security.jwt.IJwtKeyProvider;
 import com.orientechnologies.orient.core.metadata.security.jwt.IJwtPayload;
+import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
@@ -35,28 +35,28 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
 public class JwtTokenHandler extends OServerPluginAbstract implements ITokenHandler {
-  private final ObjectMapper                       mapper;
+  private static final String                         JWT_TOKEN_HANDLER = "JwtTokenHandler";
 
-  private static final int                         JWT_DELIMITER  = '.';
+  private final ObjectMapper                          mapper;
 
-  public static final Base64.Encoder               b64encoder     = Base64.getUrlEncoder();
-  public static final Base64.Decoder               b64decoder     = Base64.getUrlDecoder();
+  private static final int                            JWT_DELIMITER     = '.';
 
-  protected final ConcurrentHashMap<String, Class> payloadClasses = new ConcurrentHashMap<String, Class>();
+  protected final ConcurrentHashMap<String, Class<?>> payloadClasses    = new ConcurrentHashMap<String, Class<?>>();
 
-  private static final ThreadLocal<Mac>            threadLocalMac = new ThreadLocal<Mac>() {
-                                                                    @Override
-                                                                    protected Mac initialValue() {
-                                                                      try {
-                                                                        return Mac.getInstance("HmacSHA256");
-                                                                      } catch (NoSuchAlgorithmException nsa) {
-                                                                        throw new IllegalArgumentException("Can't find algorithm.");
-                                                                      }
-                                                                    }
-                                                                  };
+  private static final ThreadLocal<Mac>               threadLocalMac    = new ThreadLocal<Mac>() {
+                                                                          @Override
+                                                                          protected Mac initialValue() {
+                                                                            try {
+                                                                              return Mac.getInstance("HmacSHA256");
+                                                                            } catch (NoSuchAlgorithmException nsa) {
+                                                                              throw new IllegalArgumentException(
+                                                                                  "Can't find algorithm.");
+                                                                            }
+                                                                          }
+                                                                        };
 
-  private OServer                                  serverInstance;
-  private IJwtKeyProvider                          keyProvider;
+  private OServer                                     serverInstance;
+  private IJwtKeyProvider                             keyProvider;
 
   public JwtTokenHandler() {
     mapper = new ObjectMapper().registerModule(new AfterburnerModule()).configure(
@@ -77,7 +77,7 @@ public class JwtTokenHandler extends OServerPluginAbstract implements ITokenHand
 
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("oAuth2Key")) {
-        byte secret[] = Base64.getUrlDecoder().decode(param.value);
+        byte secret[] = OBase64Utils.decode(param.value, OBase64Utils.URL_SAFE);
         keyProvider = new DefaultJwtKeyProvider(secret);
       }
     }
@@ -110,7 +110,7 @@ public class JwtTokenHandler extends OServerPluginAbstract implements ITokenHand
     if (secondDot == -1)
       return null;
 
-    byte[] decodedHeader = b64decoder.decode(tokenBytes, 0, firstDot);
+    byte[] decodedHeader = OBase64Utils.decode(tokenBytes, 0, firstDot, OBase64Utils.URL_SAFE);
     JwtHeader header = mapper.readValue(decodedHeader, JwtHeader.class);
 
     Mac mac = threadLocalMac.get();
@@ -120,13 +120,13 @@ public class JwtTokenHandler extends OServerPluginAbstract implements ITokenHand
       mac.update(tokenBytes, 0, secondDot);
       byte[] calculatedSignature = mac.doFinal();
 
-      byte[] decodedSignature = b64decoder.decode(tokenBytes, secondDot + 1, tokenBytes.length);
+      byte[] decodedSignature = OBase64Utils.decode(tokenBytes, secondDot + 1, tokenBytes.length, OBase64Utils.URL_SAFE);
 
       boolean signatureValid = Arrays.equals(calculatedSignature, decodedSignature);
 
       if (signatureValid) {
-        byte[] decodedPayload = b64decoder.decode(tokenBytes, firstDot + 1, secondDot);
-        Class payloadClass = payloadClasses.get(header.getType());
+        byte[] decodedPayload = OBase64Utils.decode(tokenBytes, firstDot + 1, secondDot, OBase64Utils.URL_SAFE);
+        Class<?> payloadClass = payloadClasses.get(header.getType());
         if (payloadClass == null) {
           throw new Exception("Payload class not registered:" + header.getType());
         }
@@ -187,15 +187,18 @@ public class JwtTokenHandler extends OServerPluginAbstract implements ITokenHand
     Mac mac = threadLocalMac.get();
 
     try {
-      tokenByteOS.write(b64encoder.encode(mapper.writeValueAsBytes(header)));
+      byte[] bytes = mapper.writeValueAsBytes(header);
+      tokenByteOS.write(OBase64Utils.encodeBytesToBytes(bytes, 0, bytes.length, OBase64Utils.URL_SAFE));
       tokenByteOS.write(JWT_DELIMITER);
-      tokenByteOS.write(b64encoder.encode(mapper.writeValueAsBytes(payload)));
+      bytes = mapper.writeValueAsBytes(payload);
+      tokenByteOS.write(OBase64Utils.encodeBytesToBytes(bytes, 0, bytes.length, OBase64Utils.URL_SAFE));
 
       byte[] unsignedToken = tokenByteOS.toByteArray();
 
       tokenByteOS.write(JWT_DELIMITER);
       mac.init(getKeyProvider().getKey(header));
-      tokenByteOS.write(b64encoder.encode(mac.doFinal(unsignedToken)));
+      bytes = mac.doFinal(unsignedToken);
+      tokenByteOS.write(OBase64Utils.encodeBytesToBytes(bytes, 0, bytes.length, OBase64Utils.URL_SAFE));
 
     } catch (Exception ex) {
       OLogManager.instance().error(this, "Error signing token", ex);
@@ -207,7 +210,7 @@ public class JwtTokenHandler extends OServerPluginAbstract implements ITokenHand
 
   @Override
   public String getName() {
-    return "JwtTokenHandler";
+    return JWT_TOKEN_HANDLER;
   }
 
   protected IJwtKeyProvider getKeyProvider() {
