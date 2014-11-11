@@ -218,7 +218,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       try {
         iCallback.call();
       } catch (Exception e) {
-        new ODistributedException(e);
+        throw new ODistributedException(e);
       }
 
     setOnline();
