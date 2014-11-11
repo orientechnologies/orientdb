@@ -60,7 +60,7 @@
 
 
     <target name="test-embedded" depends="test-init">
-        <echo>REMOVE FIlES OF PREVIOUS INSTANCE OF TEST DATABASE</echo>
+        <echo>REMOVE FILES OF PREVIOUS INSTANCE OF TEST DATABASE</echo>
         <delete failonerror="false">
             <fileset dir="${test.db.path}" includes="**/*"/>
         </delete>

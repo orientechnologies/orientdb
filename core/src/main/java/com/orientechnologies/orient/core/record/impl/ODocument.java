@@ -19,16 +19,11 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
-import java.io.*;
-import java.lang.ref.WeakReference;
-import java.text.ParseException;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.types.OModifiableInteger;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -42,7 +37,11 @@ import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
-import com.orientechnologies.orient.core.metadata.schema.*;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordListener;
@@ -51,6 +50,17 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.io.ByteArrayOutputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.lang.ref.WeakReference;
+import java.text.ParseException;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -69,12 +79,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
                                                                                                      return new OModifiableInteger();
                                                                                                    }
                                                                                                  };
-
-  private String                                                         _className;
-
-  private OClass                                                         _immutableClazz;
-  private int                                                            _immutableSchemaVersion = 1;
-
   protected Map<String, Object>                                          _fieldValues;
   protected Map<String, Object>                                          _fieldOriginalValues;
   protected Map<String, OType>                                           _fieldTypes;
@@ -85,6 +89,9 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   protected boolean                                                      _lazyLoad               = true;
   protected boolean                                                      _allowChainedAccess     = true;
   protected transient List<WeakReference<ORecordElement>>                _owners                 = null;
+  private String                                                         _className;
+  private OClass                                                         _immutableClazz;
+  private int                                                            _immutableSchemaVersion = 1;
 
   /**
    * Internal constructor used on unmarshalling.
@@ -940,22 +947,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     return this;
   }
 
-  protected void rawField(final String iFieldName, final Object iFieldValue, final OType iFieldType) {
-    if (_fieldValues == null)
-      _fieldValues = _ordered ? new LinkedHashMap<String, Object>() : new HashMap<String, Object>();
-    if (_fieldTypes == null)
-      _fieldTypes = new HashMap<String, OType>();
-
-    _fieldValues.put(iFieldName, iFieldValue);
-    addCollectionChangeListener(iFieldName, iFieldValue);
-    if (iFieldType != null)
-      _fieldTypes.put(iFieldName, iFieldType);
-  }
-
-  protected boolean rawContainsField(final String iFiledName) {
-    return _fieldValues != null && _fieldValues.containsKey(iFiledName);
-  }
-
   /**
    * Deprecated. Use fromMap(Map) instead.<br>
    * Fills a document passing the field names/values as a Map String,Object where the keys are the field names and the values are
@@ -1645,32 +1636,16 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   @Override
   public ODocument save() {
-    return save(false);
+    return (ODocument) save(null, false);
   }
 
   @Override
   public ODocument save(final String iClusterName) {
-    return save(iClusterName, false);
+    return (ODocument) save(iClusterName, false);
   }
 
-  @Override
-  public ODocument save(boolean forceCreate) {
-    if (_className != null && getIdentity().isNew()) {
-      OClass _clazz = getImmutableSchemaClass();
-      if (_clazz != null)
-        return save(getDatabase().getClusterNameById(_clazz.getClusterForNewInstance(this)), forceCreate);
-    }
-
-    convertAllMultiValuesToTrackedVersions();
-    validate();
-    return (ODocument) super.save(forceCreate);
-  }
-
-  @Override
-  public ODocument save(final String iClusterName, boolean forceCreate) {
-    convertAllMultiValuesToTrackedVersions();
-    validate();
-    return (ODocument) super.save(iClusterName, forceCreate);
+  public ORecordAbstract save(final String iClusterName, final boolean forceCreate) {
+    return getDatabase().save(this, iClusterName, ODatabase.OPERATION_MODE.SYNCHRONOUS, forceCreate, null, null);
   }
 
   /*
@@ -1823,27 +1798,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     return null;
   }
 
-  private void fetchClassName() {
-    final ODatabaseDocumentInternal database = getDatabaseIfDefinedInternal();
-    if (database != null && database.getStorageVersions() != null && database.getStorageVersions().classesAreDetectedByClusterId()) {
-      if (_recordId.clusterId < 0) {
-        checkForLoading();
-        checkForFields("@class");
-      } else {
-        final OSchema schema = database.getMetadata().getImmutableSchemaSnapshot();
-        if (schema != null) {
-          OClass _clazz = schema.getClassByClusterId(_recordId.clusterId);
-          if (_clazz != null)
-            _className = _clazz.getName();
-        }
-      }
-    } else {
-      // CLASS NOT FOUND: CHECK IF NEED LOADING AND UNMARSHALLING
-      checkForLoading();
-      checkForFields("@class");
-    }
-  }
-
   public OClass getImmutableSchemaClass() {
     if (_className == null)
       fetchClassName();
@@ -1896,20 +1850,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   /**
-   * Check and convert the field of the document matching the types specified by the class.
-   * 
-   * @param _clazz
-   */
-  private void convertFieldsToClass(OClass _clazz) {
-    for (OProperty prop : _clazz.properties()) {
-      OType type = fieldType(prop.getName());
-      if ((type == null && containsField(prop.getName())) || (type != null && type != prop.getType())) {
-        field(prop.getName(), field(prop.getName()), prop.getType());
-      }
-    }
-  }
-
-  /**
    * Validates the record following the declared constraints defined in schema such as mandatory, notNull, min, max, regexp, etc. If
    * the schema is not defined for the current class or there are not constraints then the validation is ignored.
    * 
@@ -1941,6 +1881,22 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         validateField(this, p);
       }
     }
+  }
+
+  protected void rawField(final String iFieldName, final Object iFieldValue, final OType iFieldType) {
+    if (_fieldValues == null)
+      _fieldValues = _ordered ? new LinkedHashMap<String, Object>() : new HashMap<String, Object>();
+    if (_fieldTypes == null)
+      _fieldTypes = new HashMap<String, OType>();
+
+    _fieldValues.put(iFieldName, iFieldValue);
+    addCollectionChangeListener(iFieldName, iFieldValue);
+    if (iFieldType != null)
+      _fieldTypes.put(iFieldName, iFieldType);
+  }
+
+  protected boolean rawContainsField(final String iFiledName) {
+    return _fieldValues != null && _fieldValues.containsKey(iFiledName);
   }
 
   protected void autoConvertValues() {
@@ -2167,6 +2123,41 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     _immutableClazz = null;
     _immutableSchemaVersion = -1;
     convertFieldsToClass(iClass);
+  }
+
+  private void fetchClassName() {
+    final ODatabaseDocumentInternal database = getDatabaseIfDefinedInternal();
+    if (database != null && database.getStorageVersions() != null && database.getStorageVersions().classesAreDetectedByClusterId()) {
+      if (_recordId.clusterId < 0) {
+        checkForLoading();
+        checkForFields("@class");
+      } else {
+        final OSchema schema = database.getMetadata().getImmutableSchemaSnapshot();
+        if (schema != null) {
+          OClass _clazz = schema.getClassByClusterId(_recordId.clusterId);
+          if (_clazz != null)
+            _className = _clazz.getName();
+        }
+      }
+    } else {
+      // CLASS NOT FOUND: CHECK IF NEED LOADING AND UNMARSHALLING
+      checkForLoading();
+      checkForFields("@class");
+    }
+  }
+
+  /**
+   * Check and convert the field of the document matching the types specified by the class.
+   * 
+   * @param _clazz
+   */
+  private void convertFieldsToClass(OClass _clazz) {
+    for (OProperty prop : _clazz.properties()) {
+      OType type = fieldType(prop.getName());
+      if ((type == null && containsField(prop.getName())) || (type != null && type != prop.getType())) {
+        field(prop.getName(), field(prop.getName()), prop.getType());
+      }
+    }
   }
 
   private void saveOldFieldValue(String iFieldName, Object oldValue) {

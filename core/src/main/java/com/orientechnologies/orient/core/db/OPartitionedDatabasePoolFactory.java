@@ -12,6 +12,7 @@ import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 public class OPartitionedDatabasePoolFactory {
 
   private volatile int                                                          maxPoolSize = 64;
+  private boolean                                                               closed      = false;
 
   private final ConcurrentLinkedHashMap<PoolIdentity, OPartitionedDatabasePool> poolStore;
 
@@ -30,10 +31,15 @@ public class OPartitionedDatabasePoolFactory {
   }
 
   public void setMaxPoolSize(int maxPoolSize) {
-    this.maxPoolSize = maxPoolSize;
+		checkForClose();
+
+		this.maxPoolSize = maxPoolSize;
   }
 
-  public OPartitionedDatabasePool get(String url, String userName, String userPassword) {
+
+	public OPartitionedDatabasePool get(String url, String userName, String userPassword) {
+		checkForClose();
+
     final PoolIdentity poolIdentity = new PoolIdentity(url, userName, userPassword);
 
     OPartitionedDatabasePool pool = poolStore.get(poolIdentity);
@@ -50,14 +56,30 @@ public class OPartitionedDatabasePoolFactory {
   }
 
   public Collection<OPartitionedDatabasePool> getPools() {
+		checkForClose();
+
     return Collections.unmodifiableCollection(poolStore.values());
   }
 
-  public void clear() {
+  public void close() {
+		if (closed)
+			return;
+
+		closed = true;
+
+		for (OPartitionedDatabasePool pool : poolStore.values())
+		  pool.close();
+
     poolStore.clear();
   }
 
-  private static final class PoolIdentity {
+	private void checkForClose() {
+		if (closed)
+			throw  new IllegalStateException("Pool factory is closed");
+	}
+
+
+	private static final class PoolIdentity {
     private final String url;
     private final String userName;
     private final String userPassword;

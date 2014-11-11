@@ -1,10 +1,12 @@
 package com.orientechnologies.orient.core.db;
 
+import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
@@ -38,6 +40,8 @@ public class OPartitionedDatabasePool {
 
   private volatile PoolPartition[]    partitions;
 
+  private volatile boolean            closed        = false;
+
   public OPartitionedDatabasePool(String url, String userName, String password) {
     this(url, userName, password, 64);
   }
@@ -69,7 +73,6 @@ public class OPartitionedDatabasePool {
     return userName;
   }
 
-
   private void initQueue(String url, PoolPartition partition) {
     ConcurrentLinkedQueue<DatabaseDocumentTxPolled> queue = partition.queue;
 
@@ -86,6 +89,8 @@ public class OPartitionedDatabasePool {
   }
 
   public int getAvailableConnections() {
+    checkForClose();
+
     int result = 0;
 
     for (PoolPartition partition : partitions) {
@@ -101,6 +106,8 @@ public class OPartitionedDatabasePool {
   }
 
   public int getCreatedInstances() {
+    checkForClose();
+
     int result = 0;
 
     for (PoolPartition partition : partitions) {
@@ -116,6 +123,7 @@ public class OPartitionedDatabasePool {
   }
 
   public ODatabaseDocumentTx acquire() {
+    checkForClose();
 
     final PoolData data = poolData.get();
     if (data.acquireCount > 0) {
@@ -194,11 +202,37 @@ public class OPartitionedDatabasePool {
     }
   }
 
+  private void checkForClose() {
+    if (closed)
+      throw new IllegalStateException("Pool is closed");
+  }
+
+  public void close() {
+    if (closed)
+      return;
+
+    closed = true;
+
+    for (PoolPartition partition : partitions) {
+      if (partition == null)
+        continue;
+
+      final Queue<DatabaseDocumentTxPolled> queue = partition.queue;
+
+      while (!queue.isEmpty()) {
+        DatabaseDocumentTxPolled db = queue.poll();
+        OStorage storage = db.getStorage();
+        storage.close();
+      }
+
+    }
+  }
+
   private final class DatabaseDocumentTxPolled extends ODatabaseDocumentTx {
     private PoolPartition partition;
 
     private DatabaseDocumentTxPolled(String iURL) {
-      super(iURL);
+      super(iURL, true);
     }
 
     @Override
