@@ -159,7 +159,7 @@ public class ODistributedResponseManager {
             }
           }
 
-          if (foundBucket = true) {
+          if (foundBucket == true) {
             responseGroup.add(response);
             break;
           }

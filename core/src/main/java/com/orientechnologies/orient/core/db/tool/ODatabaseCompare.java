@@ -236,6 +236,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
           listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as missed property " + prop.getName()
               + "in DB2.");
           ok = false;
+          continue;
         }
         if (prop.getType() != prop2.getType()) {
           listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same type for property "
