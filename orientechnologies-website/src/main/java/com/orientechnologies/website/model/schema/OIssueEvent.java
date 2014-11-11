@@ -12,6 +12,12 @@ import java.util.Date;
  * Created by Enrico Risa on 07/11/14.
  */
 public enum OIssueEvent implements OTypeHolder<IssueEvent> {
+  UUID("uuid") {
+    @Override
+    public OType getType() {
+      return OType.STRING;
+    }
+  },
   EVENT_ID("event_id") {
     @Override
     public OType getType() {
@@ -57,6 +63,7 @@ public enum OIssueEvent implements OTypeHolder<IssueEvent> {
     ODocument doc;
     if (entity.getId() == null) {
       doc = new ODocument(entity.getClass().getSimpleName());
+      doc.field(UUID.toString(), java.util.UUID.randomUUID());
     } else {
       doc = graph.getRawGraph().load(new ORecordId(entity.getId()));
     }

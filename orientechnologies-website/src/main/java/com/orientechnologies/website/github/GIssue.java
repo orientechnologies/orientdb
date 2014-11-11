@@ -60,7 +60,7 @@ public class GIssue extends GEntity {
   }
 
   public GUser getAssignee() {
-    ODocument doc = get("assegnee");
+    ODocument doc = get("assignee");
 
     return doc != null ? new GUser(github, this, doc.toJSON()) : null;
   }

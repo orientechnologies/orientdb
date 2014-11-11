@@ -12,11 +12,38 @@
     </div>
   </div>
   <div class="row">
-    <div class="list-group">
-      <a href="#issues/{{issue.repository.name}}@{{issue.number}}" class="list-group-item" ng-repeat="issue in issues">
-        <h5 class="list-group-item-heading"> {{issue.title}}</h5>
-      </a>
-    </div>
+    <div class="panel panel-default issues-panel">
+      <div class="panel-heading">Panel heading</div>
+      <div class="list-group">
+        <div class="list-group-item" ng-repeat="issue in issues">
+          <!--<a href="#issues/{{issue.repository.name}}@{{issue.number}}" class="list-group-item" ng-repeat="issue in issues"> -->
 
+          <div class="row">
+            <div class="col-md-1">
+              <div class="col-md-6">
+                <input type="checkbox">
+              </div>
+              <div class="col-md-6">
+                <i class="fa fa-check-circle-o" ng-class="'issue-' + issue.state"></i>
+              </div>
+            </div>
+            <div class="col-md-9">
+              <h5 class="list-group-item-heading"><a href="#issues/{{issue.repository.name}}@{{issue.uuid}}">
+                {{issue.title}}</a></h5>
+              <p class="issue-info">#{{issue.number}} opened {{issue.createdAt | fromNow}} by {{issue.user.name}}</p>
+            </div>
+            <div class="col-md-2">
+              <div class="col-md-6">
+                {{issue.assignee.name}}
+              </div>
+              <div class="col-md-6">
+                <span class="badge">{{issue.comments}}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!--</a>-->
+      </div>
+    </div>
   </div>
 </div>

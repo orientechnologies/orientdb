@@ -3,6 +3,7 @@ package com.orientechnologies.website.model.schema;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.website.model.schema.dto.Comment;
 import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.model.schema.dto.Label;
 import com.orientechnologies.website.model.schema.dto.OLabel;
@@ -21,6 +22,12 @@ import java.util.List;
 
 public enum OIssue implements OTypeHolder<Issue> {
   TITLE("title") {
+    @Override
+    public OType getType() {
+      return OType.STRING;
+    }
+  },
+  UUID("uuid") {
     @Override
     public OType getType() {
       return OType.STRING;
@@ -86,6 +93,7 @@ public enum OIssue implements OTypeHolder<Issue> {
     ODocument doc;
     if (entity.getId() == null) {
       doc = new ODocument(entity.getClass().getSimpleName());
+      doc.field(UUID.toString(), java.util.UUID.randomUUID().toString());
     } else {
       doc = graph.getRawGraph().load(new ORecordId(entity.getId()));
     }
@@ -96,8 +104,9 @@ public enum OIssue implements OTypeHolder<Issue> {
     doc.field(LABELS.toString(), entity.getLabels());
     doc.field(NUMBER.toString(), entity.getNumber());
     doc.field(STATE.toString(), entity.getState());
-    doc.field(ASSIGNEE.toString(), (entity.getAssignee() != null ? new ORecordId(entity.getAssignee().getId()) : null));
-    doc.field(USER.toString(), (entity.getUser() != null ? new ORecordId(entity.getUser().getId()) : null));
+    // MOVED TO EDGES
+    // doc.field(ASSIGNEE.toString(), (entity.getAssignee() != null ? new ORecordId(entity.getAssignee().getId()) : null));
+    // doc.field(USER.toString(), (entity.getUser() != null ? new ORecordId(entity.getUser().getId()) : null));
     return doc;
   }
 
@@ -110,7 +119,7 @@ public enum OIssue implements OTypeHolder<Issue> {
     issue.setState((String) doc.field(STATE.toString()));
     issue.setClosedAt((Date) doc.field(CLOSED_AT.toString()));
     issue.setCreatedAt((Date) doc.field(CREATED_AT.toString()));
-
+    issue.setUuid((String) doc.field(UUID.toString()));
     issue.setNumber((Integer) doc.field(NUMBER.toString()));
 
     OrientVertex iss = new OrientVertex(graph, doc);
@@ -122,14 +131,30 @@ public enum OIssue implements OTypeHolder<Issue> {
       issue.setMilestone(OMilestone.NUMBER.fromDoc(((OrientVertex) vertex).getRecord(), graph));
       break;
     }
+    for (Vertex vertex : iss.getVertices(Direction.OUT, HasVersion.class.getSimpleName())) {
+      issue.setVersion(OMilestone.NUMBER.fromDoc(((OrientVertex) vertex).getRecord(), graph));
+      break;
+    }
     List<Label> labelList = new ArrayList<Label>();
     for (Vertex vertex : iss.getVertices(Direction.OUT, HasLabel.class.getSimpleName())) {
       Label l = OLabel.NAME.fromDoc(((OrientVertex) vertex).getRecord(), graph);
       labelList.add(l);
     }
+    for (Vertex vertex : iss.getVertices(Direction.OUT, IsAssigned.class.getSimpleName())) {
+      issue.setAssignee(OUser.NAME.fromDoc(((OrientVertex) vertex).getRecord(), graph));
+      break;
+    }
+    for (Vertex vertex : iss.getVertices(Direction.IN, HasOpened.class.getSimpleName())) {
+      issue.setUser(OUser.NAME.fromDoc(((OrientVertex) vertex).getRecord(), graph));
+      break;
+    }
+    long count = 0;
+    for (Vertex vertex : iss.getVertices(Direction.OUT, HasEvent.class.getSimpleName())) {
+      count += ((OrientVertex) vertex).getLabel().equals(Comment.class.getSimpleName()) ? 1 : 0;
+    }
+    issue.setComments(count);
     issue.setLabels(labelList);
-    issue.setAssignee(OUser.NAME.fromDoc((ODocument) doc.field(ASSIGNEE.toString()), graph));
-    issue.setUser(OUser.NAME.fromDoc((ODocument) doc.field(USER.toString()), graph));
+
     return issue;
   }
 

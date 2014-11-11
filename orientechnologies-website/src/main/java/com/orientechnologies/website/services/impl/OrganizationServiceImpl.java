@@ -69,10 +69,7 @@ public class OrganizationServiceImpl implements OrganizationService {
         GitHub gitHub = new GitHub(token);
 
         GOrganization gOrganization = gitHub.organization(org);
-        // GitHub github = GitHub.connectUsingOAuth(token);
-        // GHUser user = github.getUser(username);
-        // GHOrganization ghOrganization = github.getOrganization(org);
-        // boolean isMember = ghOrganization.hasMember(user);
+
         boolean isMember = gOrganization.hasMember(username);
         if (isMember) {
           User developer = userRepository.findUserByLogin(username);

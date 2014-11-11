@@ -72,11 +72,26 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   }
 
   @Override
+  public com.orientechnologies.website.model.schema.dto.Repository findOrganizationRepository(String name, String repo) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format("select expand(out('HasRepo')[name = '%s']) from Organization where name = '%s'", repo, name);
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+
+    try {
+      ODocument doc = vertices.iterator().next().getRecord();
+      return ORepository.NAME.fromDoc(doc, db);
+    } catch (NoSuchElementException e) {
+      return null;
+    }
+
+  }
+
+  @Override
   public Issue findSingleOrganizationIssueByRepoAndNumber(String name, String repo, String number) {
 
     OrientGraph db = dbFactory.getGraph();
     String query = String.format(
-        "select expand(out('HasRepo')[name = '%s'].out('HasIssue')[number = '%s'])  from Organization where name = '%s') ", repo,
+        "select expand(out('HasRepo')[name = '%s'].out('HasIssue')[uuid = '%s'])  from Organization where name = '%s') ", repo,
         number, name);
 
     Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
@@ -110,6 +125,9 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     OrientGraph db = dbFactory.getGraph();
     Issue issue = findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
 
+    if (issue == null) {
+      return null;
+    }
     OrientVertex vertex = new OrientVertex(db, new ORecordId(issue.getId()));
 
     List<Event> events = new ArrayList<Event>();
@@ -142,7 +160,7 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     OrientGraph db = dbFactory.getGraph();
     String query = String
         .format(
-            "select expand(out('HasRepo')[name = '%s'].out('HasIssue')[number = %d].out('HasMilestone')[number = %d])   from Organization  where name = '%s')",
+            "select expand(out('HasRepo')[name = '%s'].out('HasIssue')[uuid = %d].out('HasMilestone')[number = %d])  from Organization  where name = '%s')",
             repo, iNumber, mNumber, owner);
 
     Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();

@@ -11,6 +11,8 @@ public interface RepositoryService {
 
   public void createIssue(Repository repo, Issue issue);
 
+  public Issue openIssue(Repository repository,Issue issue);
+
   public void addLabel(Repository repo, Label label);
 
   public void addMilestone(Repository repoDtp, Milestone m);

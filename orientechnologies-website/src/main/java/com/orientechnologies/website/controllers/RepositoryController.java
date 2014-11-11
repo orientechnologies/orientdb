@@ -3,14 +3,14 @@ package com.orientechnologies.website.controllers;
 import com.orientechnologies.website.configuration.ApiVersion;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.repository.OrganizationRepository;
+import com.orientechnologies.website.services.IssueService;
+import com.orientechnologies.website.services.OrganizationService;
+import com.orientechnologies.website.services.RepositoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -23,12 +23,21 @@ public class RepositoryController {
   @Autowired
   private OrganizationRepository organizationRepository;
 
+  @Autowired
+  private OrganizationService    organizationService;
+
+  @Autowired
+  private RepositoryService      repositoryService;
+
+  @Autowired
+  protected IssueService         issueService;
+
   @RequestMapping(value = "{owner}/{repo}/issues/{number}", method = RequestMethod.GET)
   public ResponseEntity<Issue> getSingleIssue(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
       @PathVariable("number") String number) {
 
-    return new ResponseEntity<Issue>(organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number),
-        HttpStatus.OK);
+    Issue issue = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
+    return issue != null ? new ResponseEntity<Issue>(issue, HttpStatus.OK) : new ResponseEntity<Issue>(HttpStatus.NOT_FOUND);
   }
 
   @RequestMapping(value = "{owner}/{repo}/issues/{number}/comments", method = RequestMethod.GET)
@@ -41,8 +50,29 @@ public class RepositoryController {
   @RequestMapping(value = "{owner}/{repo}/issues/{number}/events", method = RequestMethod.GET)
   public ResponseEntity<List<Event>> getSingleIssueEvents(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
       @PathVariable("number") String number) {
-    return new ResponseEntity<List<Event>>(organizationRepository.findEventsByOwnerRepoAndIssueNumber(owner, repo, number),
-        HttpStatus.OK);
+    List<Event> events = organizationRepository.findEventsByOwnerRepoAndIssueNumber(owner, repo, number);
+    return events != null ? new ResponseEntity<List<Event>>(events, HttpStatus.OK) : new ResponseEntity<List<Event>>(
+        HttpStatus.NOT_FOUND);
+  }
+
+  @RequestMapping(value = "{owner}/{repo}/issues", method = RequestMethod.POST)
+  public ResponseEntity<Issue> createIssue(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
+      @RequestBody Issue issue) {
+
+    Repository r = organizationRepository.findOrganizationRepository(owner, repo);
+
+    return r != null ? new ResponseEntity<Issue>(repositoryService.openIssue(r, issue), HttpStatus.OK) : new ResponseEntity<Issue>(
+        HttpStatus.NOT_FOUND);
+  }
+
+  @RequestMapping(value = "{owner}/{repo}/issues/{number}/comments", method = RequestMethod.POST)
+  public ResponseEntity<Comment> postComment(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
+      @PathVariable("number") String number, @RequestBody Comment comment) {
+
+    Issue i = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
+
+    return i != null ? new ResponseEntity<Comment>(issueService.createNewCommentOnIssue(i, comment), HttpStatus.OK)
+        : new ResponseEntity<Comment>(HttpStatus.NOT_FOUND);
   }
 
   @RequestMapping(value = "{owner}/{repo}/teams", method = RequestMethod.GET)

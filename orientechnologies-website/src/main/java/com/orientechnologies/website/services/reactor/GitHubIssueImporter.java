@@ -149,20 +149,28 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
     issueDto.setTitle(issue.getTitle());
     issueDto.setState(issue.getState().toString());
     // import labels
-    importIssueLabels(repoDtp, issue, issueDto);
-    GMilestone m = issue.getMilestone();
 
-    issueDto.setUser(userRepo.findUserOrCreateByLogin(issue.getUser().getLogin()));
+    GMilestone m = issue.getMilestone();
 
     issueDto.setCreatedAt(issue.getCreatedAt());
     issueDto.setClosedAt(issue.getClosedAt());
-    String login = issue.getAssignee() != null ? issue.getAssignee().getLogin() : null;
-    if (login != null) {
-      issueDto.setAssignee(userRepo.findUserOrCreateByLogin(login));
-    }
 
     issueDto = issueRepo.save(issueDto);
 
+    importIssueLabels(repoDtp, issue, issueDto);
+
+    User user = userRepo.findUserOrCreateByLogin(issue.getUser().getLogin());
+
+    // IMPORT ISSUE CREATOR
+    importIssueUser(issueDto, user);
+
+    // IMPORT ISSUE ASSIGNEE
+
+    String login = issue.getAssignee() != null ? issue.getAssignee().getLogin() : null;
+    if (login != null) {
+      User assignee = userRepo.findUserOrCreateByLogin(login);
+      importIssueAssignee(issueDto, user);
+    }
     // IMPORT COMMENTS
     importIssueComments(issue, issueDto);
 
@@ -174,6 +182,14 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
 
     if (isNew)
       repositoryService.createIssue(repoDtp, issueDto);
+  }
+
+  private void importIssueAssignee(Issue issueDto, User user) {
+    issueService.changeAssignee(issueDto, user);
+  }
+
+  private void importIssueUser(Issue issueDto, User user) {
+    issueService.changeUser(issueDto, user);
   }
 
   private void importIssueEvents(Repository repoDtp, GIssue issue, Issue issueDto) throws IOException {

@@ -117,6 +117,7 @@ body {
 
 }
 
+
 .issue-sidebar .issue-label {
   text-align: center;
 
@@ -144,3 +145,50 @@ body {
 .btn-transparent {
   background-color: transparent;
 }
+
+.edit-issue .panel {
+  margin-bottom: 0px;
+}
+
+.edit-issue .event {
+  margin-left: 20px;
+  padding: 10px;
+  border-left: 2px solid #f3f3f3;
+}
+
+.fa-closed:before {
+  content: '\f056';
+}
+
+.fa-assigned:before {
+  content: '\f007';
+}
+
+.fa-milestoned:before {
+  content: "\f091";
+}
+
+.fa-labeled:before {
+  content: "\f02b";
+}
+
+.issues-panel .issue-open {
+  color: #6cc644;
+}
+
+.issues-panel .list-group-item .issue-info {
+  color: #999;
+}
+.issues-panel .list-group-item-heading a {
+  color: #000000;
+
+}
+.issues-panel .list-group-item-heading a:hover {
+  color: #428bca;
+  text-decoration: none;
+}
+.vertical-align {
+  display: flex;
+  align-items: center;
+}
+

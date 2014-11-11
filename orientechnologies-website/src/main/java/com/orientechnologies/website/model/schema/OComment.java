@@ -13,6 +13,12 @@ import java.util.Date;
  */
 // Vertices
 public enum OComment implements OTypeHolder<com.orientechnologies.website.model.schema.dto.Comment> {
+  UUID("uuid") {
+    @Override
+    public OType getType() {
+      return OType.STRING;
+    }
+  },
   COMMENT_ID("comment_id") {
     @Override
     public OType getType() {
@@ -49,6 +55,7 @@ public enum OComment implements OTypeHolder<com.orientechnologies.website.model.
     ODocument doc;
     if (entity.getId() == null) {
       doc = new ODocument(entity.getClass().getSimpleName());
+      doc.field(UUID.toString(), java.util.UUID.randomUUID());
     } else {
       doc = graph.getRawGraph().load(new ORecordId(entity.getId()));
     }

@@ -11,9 +11,17 @@ public interface IssueService {
 
   public void commentIssue(Issue issue, Comment comment);
 
+  public Comment createNewCommentOnIssue(Issue issue, Comment comment);
+
   public void changeMilestone(Issue issue, Milestone milestone);
 
   public void changeLabels(Issue issue, List<Label> labels);
 
   public void fireEvent(Issue issueDto, Event e);
+
+  public void changeUser(Issue issue, User user);
+
+  public void changeAssignee(Issue issue, User user);
+
+  public void changeVersion(Issue issue, Milestone milestone);
 }

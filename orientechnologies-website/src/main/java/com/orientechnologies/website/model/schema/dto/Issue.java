@@ -14,6 +14,7 @@ public class Issue {
 
   @JsonIgnore
   private String            id;
+  private String            uuid;
   private Integer           number;
   private String            title;
   private String            body;
@@ -21,11 +22,13 @@ public class Issue {
   private Collection<Label> labels = new ArrayList<Label>();
   private Repository        repository;
   private Milestone         milestone;
+  private Milestone         version;
   private Date              createdAt;
   private Date              closedAt;
-
-  private User user;
-  private User assignee;
+  private Long              comments;
+  private User              user;
+  private User              assignee;
+  private Boolean           confidential;
 
   public String getId() {
     return id;
@@ -125,5 +128,37 @@ public class Issue {
 
   public void setRepository(Repository repository) {
     this.repository = repository;
+  }
+
+  public Long getComments() {
+    return comments;
+  }
+
+  public void setComments(Long comments) {
+    this.comments = comments;
+  }
+
+  public Boolean getConfidential() {
+    return confidential;
+  }
+
+  public void setConfidential(Boolean confidential) {
+    this.confidential = confidential;
+  }
+
+  public Milestone getVersion() {
+    return version;
+  }
+
+  public void setVersion(Milestone version) {
+    this.version = version;
+  }
+
+  public String getUuid() {
+    return uuid;
+  }
+
+  public void setUuid(String uid) {
+    this.uuid = uid;
   }
 }
