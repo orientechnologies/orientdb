@@ -549,7 +549,8 @@ public class OServerAdmin {
         storage.getEngine().getConnectionManager().remove(network);
         throw new OStorageException("Error on executing  '" + iActivity + "'", e);
       } catch (Exception e2) {
-        storage.getEngine().getConnectionManager().release(network);
+        if (network != null)
+          storage.getEngine().getConnectionManager().release(network);
         throw new OStorageException("Error on executing  '" + iActivity + "'", e2);
       }
     }

@@ -195,7 +195,8 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
           // RE-THROW THE EXCEPTION UP
           throw e;
         } catch (OIOException e) {
-          OLogManager.instance().error(this, "\nError on exporting record %s because of I/O problems", e, rec.getIdentity());
+          OLogManager.instance().error(this, "\nError on exporting record %s because of I/O problems", e,
+              rec == null ? null : rec.getIdentity());
           // RE-THROW THE EXCEPTION UP
           throw e;
         } catch (Throwable t) {

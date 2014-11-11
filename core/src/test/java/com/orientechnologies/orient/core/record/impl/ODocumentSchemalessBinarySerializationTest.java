@@ -55,7 +55,7 @@ public class ODocumentSchemalessBinarySerializationTest {
 
     @Override
     public boolean equals(Object obj) {
-      return obj != null && Arrays.equals(bytes, ((Custom) obj).bytes);
+      return obj != null && obj instanceof Custom && Arrays.equals(bytes, ((Custom) obj).bytes);
     }
   }
 

@@ -90,7 +90,8 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
         storage.getEngine().getConnectionManager().remove(client);
         throw new ODatabaseException("Can't create sb-tree bonsai.", e);
       } catch (RuntimeException e2) {
-        storage.getEngine().getConnectionManager().release(client);
+        if (client != null)
+          storage.getEngine().getConnectionManager().release(client);
         throw e2;
       }
     } else {

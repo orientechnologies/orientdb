@@ -712,14 +712,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
       if (result instanceof Throwable)
         ODistributedServerLog.error(this, getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
-            "error on executing request %d (%s) on local node: ", (Throwable) result, req.getId(), req != null ? req.getTask()
-                : "-");
+            "error on executing request %d (%s) on local node: ", (Throwable) result, req.getId(), req.getTask());
 
       return result;
 
     } catch (Throwable e) {
       ODistributedServerLog.error(this, getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
-          "error on executing distributed request %d on local node: %s", e, req.getId(), req != null ? req.getTask() : "-");
+          "error on executing distributed request %d on local node: %s", e, req.getId(), req.getTask());
 
       return e;
     }

@@ -29,7 +29,8 @@ public class TestQueryRecordLockUnlock {
       id = doc.getIdentity();
       db.commit();
     } finally {
-      db.close();
+      if (db != null)
+        db.close();
     }
     int thread = 10;
 
@@ -86,7 +87,8 @@ public class TestQueryRecordLockUnlock {
       id = doc.getIdentity();
       db.commit();
     } finally {
-      db.close();
+      if (db != null)
+        db.close();
     }
     int thread = 10;
 
@@ -129,7 +131,6 @@ public class TestQueryRecordLockUnlock {
     }
   }
 
-  
   @Test
   public void testLockReleaseAfterIncrementOpenClose() throws InterruptedException {
     final ORID id;
@@ -144,7 +145,8 @@ public class TestQueryRecordLockUnlock {
       id = doc.getIdentity();
       db.commit();
     } finally {
-      db.close();
+      if (db != null)
+        db.close();
     }
     int thread = 10;
 

@@ -19,19 +19,19 @@
   */
 package com.orientechnologies.orient.client.remote;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.engine.OEngineAbstract;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-
 public class OEngineRemote extends OEngineAbstract {
   public static final String                         NAME           = "remote";
-  protected static final Map<String, OStorageRemote> sharedStorages = new ConcurrentHashMap<String, OStorageRemote>();
+  protected static final Map<String, OStorageRemote> sharedStorages = new HashMap<String, OStorageRemote>();
   protected final ORemoteConnectionManager           connectionManager;
 
   public OEngineRemote() {
@@ -78,7 +78,9 @@ public class OEngineRemote extends OEngineAbstract {
   public void shutdown() {
     super.shutdown();
     connectionManager.close();
-    sharedStorages.clear();
+    synchronized (sharedStorages) {
+      sharedStorages.clear();
+    }
   }
 
   public ORemoteConnectionManager getConnectionManager() {

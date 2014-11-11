@@ -156,8 +156,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
       storage = Orient.instance().loadStorage(url);
 
-      setCurrentDatabaseinThreadLocal();
-
       unmodifiableHooks = Collections.unmodifiableMap(hooks);
 
       recordType = ODocument.RECORD_TYPE;

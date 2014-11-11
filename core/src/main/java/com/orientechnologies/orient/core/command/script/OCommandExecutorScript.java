@@ -187,7 +187,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 
             // PUT THE RESULT INTO THE CONTEXT
             getContext().setVariable(variable, lastResult);
-          } else if (lastCommand.equalsIgnoreCase("begin")) {
+          } else if ("begin".equalsIgnoreCase(lastCommand)) {
 
             if (txBegun)
               throw new OCommandSQLParsingException("Transaction already begun");
@@ -198,7 +198,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 
             db.begin();
 
-          } else if (lastCommand.equalsIgnoreCase("rollback")) {
+          } else if ("rollback".equalsIgnoreCase(lastCommand)) {
 
             if (!txBegun)
               throw new OCommandSQLParsingException("Transaction not begun");

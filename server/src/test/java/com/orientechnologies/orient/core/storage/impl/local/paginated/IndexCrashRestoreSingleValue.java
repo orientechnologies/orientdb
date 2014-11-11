@@ -191,7 +191,6 @@ public class IndexCrashRestoreSingleValue {
 
     @Override
     public Void call() throws Exception {
-      Random random = new Random();
       baseDB.open("admin", "admin");
       testDB.open("admin", "admin");
 

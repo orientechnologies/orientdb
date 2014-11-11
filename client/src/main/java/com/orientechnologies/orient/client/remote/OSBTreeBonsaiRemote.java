@@ -101,7 +101,8 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
       storage.getEngine().getConnectionManager().remove(client);
       throw new ODatabaseException("Can't get by key from sb-tree bonsai.", e);
     } catch (RuntimeException e2) {
-      storage.getEngine().getConnectionManager().release(client);
+      if (client != null)
+        storage.getEngine().getConnectionManager().release(client);
       throw e2;
     }
   }
@@ -208,7 +209,8 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
       return list;
 
     } catch (IOException e) {
-      storage.getEngine().getConnectionManager().remove(client);
+      if (client != null)
+        storage.getEngine().getConnectionManager().remove(client);
       throw new ODatabaseException("Can't get first key from sb-tree bonsai.", e);
     } catch (RuntimeException e2) {
       storage.getEngine().getConnectionManager().release(client);
@@ -245,7 +247,8 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
           serializerId);
       return serializer.deserialize(stream, OByteSerializer.BYTE_SIZE);
     } catch (IOException e) {
-      storage.getEngine().getConnectionManager().remove(client);
+      if (client != null)
+        storage.getEngine().getConnectionManager().remove(client);
       throw new ODatabaseException("Can't get first key from sb-tree bonsai.", e);
     } catch (RuntimeException e2) {
       storage.getEngine().getConnectionManager().release(client);
@@ -292,7 +295,8 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
       storage.getEngine().getConnectionManager().remove(client);
       throw new ODatabaseException("Can't get by real bag size sb-tree bonsai.", e);
     } catch (RuntimeException e2) {
-      storage.getEngine().getConnectionManager().release(client);
+      if (client != null)
+        storage.getEngine().getConnectionManager().release(client);
       throw e2;
     }
 

@@ -2122,7 +2122,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     _immutableClazz = null;
     _immutableSchemaVersion = -1;
-    convertFieldsToClass(iClass);
+    if (iClass != null)
+      convertFieldsToClass(iClass);
   }
 
   private void fetchClassName() {
