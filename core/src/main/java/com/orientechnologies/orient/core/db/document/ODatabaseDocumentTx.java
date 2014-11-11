@@ -20,13 +20,6 @@
 
 package com.orientechnologies.orient.core.db.document;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
@@ -40,7 +33,14 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.ODatabaseListener;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -49,7 +49,14 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.ORidBagDeleteHo
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerProxy;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
-import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OSchemaException;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.exception.OTransactionBlockedException;
+import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.hook.OHookThreadLocal;
 import com.orientechnologies.orient.core.hook.ORecordHook;
@@ -66,7 +73,16 @@ import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaProxy;
+import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
+import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
+import com.orientechnologies.orient.core.metadata.security.ORestrictedAccessHook;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OSecurity;
+import com.orientechnologies.orient.core.metadata.security.OSecurityTrackerHook;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.metadata.security.OUserTrigger;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -78,7 +94,14 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
@@ -90,6 +113,13 @@ import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
@@ -129,7 +159,16 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   private boolean                                           keepStorageOpen   = false;
 
-  /**
+	protected static ORecordSerializer                        defaultSerializer;
+	static {
+		defaultSerializer = ORecordSerializerFactory.instance().getFormat(
+						OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString());
+		if (defaultSerializer == null)
+			throw new ODatabaseException("Impossible to find serializer with name "
+							+ OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString());
+	}
+
+	/**
    * Creates a new connection to the database.
    *
    * @param iURL
@@ -202,6 +241,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     try {
       if (status == STATUS.OPEN)
         throw new IllegalStateException("Database " + getName() + " is already open");
+
+      if (user != null && !user.getName().equals(iUserName))
+        initialized = false;
 
       if (storage.isClosed()) {
         storage.open(iUserName, iUserPassword, properties);
@@ -2020,7 +2062,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    */
   @Override
   public <RET extends ORecord> RET save(final ORecord iRecord) {
-    return (RET) save(iRecord, OPERATION_MODE.SYNCHRONOUS, false, null, null);
+    return (RET) save(iRecord, null, OPERATION_MODE.SYNCHRONOUS, false, null, null);
   }
 
   /**
@@ -2055,44 +2097,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   @Override
   public <RET extends ORecord> RET save(final ORecord iRecord, final OPERATION_MODE iMode, boolean iForceCreate,
       final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
-    checkOpeness();
-    if (!(iRecord instanceof ODocument)) {
-      return (RET) currentTx.saveRecord(iRecord, null, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
-    }
-
-    ODocument doc = (ODocument) iRecord;
-    doc.validate();
-    ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
-
-    try {
-      if (iForceCreate || doc.getIdentity().isNew()) {
-        // NEW RECORD
-        if (doc.getClassName() != null)
-          checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, doc.getClassName());
-
-        final OClass schemaClass = doc.getImmutableSchemaClass();
-
-        if (schemaClass != null && doc.getIdentity().getClusterId() < 0) {
-          // CLASS FOUND: FORCE THE STORING IN THE CLUSTER CONFIGURED
-          final String clusterName = getClusterNameById(doc.getImmutableSchemaClass().getClusterForNewInstance(doc));
-
-          return (RET) currentTx.saveRecord(doc, clusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
-        }
-      } else {
-        // UPDATE: CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
-        if (doc.getClassName() != null)
-          checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_UPDATE, doc.getClassName());
-      }
-
-      doc = (ODocument) currentTx.saveRecord(doc, null, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
-    } catch (OException e) {
-      // PASS THROUGH
-      throw e;
-    } catch (Exception e) {
-      throw new ODatabaseException("Error on saving record " + iRecord.getIdentity() + " of class  '"
-          + (doc.getClassName() != null ? doc.getClassName() : "?") + "'", e);
-    }
-    return (RET) doc;
+    return save(iRecord, null, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
   }
 
   /**
@@ -2164,6 +2169,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       return (RET) currentTx.saveRecord(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 
     ODocument doc = (ODocument) iRecord;
+    doc.validate();
+    ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
 
     if (iForceCreate || !doc.getIdentity().isValid()) {
       if (doc.getClassName() != null)
@@ -2171,21 +2178,25 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
       final OClass schemaClass = doc.getImmutableSchemaClass();
 
-      if (iClusterName == null) {
-        if (schemaClass != null) {
-          // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
-          if (schemaClass.isAbstract())
-            throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and can not be saved");
+      int clusterId = iRecord.getIdentity().getClusterId();
+      if (clusterId == ORID.CLUSTER_ID_INVALID) {
+        // COMPUTE THE CLUSTER ID
+        if (iClusterName == null) {
+          if (schemaClass != null) {
+            // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
+            if (schemaClass.isAbstract())
+              throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and can not be saved");
 
-          iClusterName = getClusterNameById(schemaClass.getClusterForNewInstance(doc));
-        } else {
-          iClusterName = getClusterNameById(storage.getDefaultClusterId());
+            iClusterName = getClusterNameById(schemaClass.getClusterForNewInstance(doc));
+          } else {
+            iClusterName = getClusterNameById(storage.getDefaultClusterId());
+          }
         }
-      }
 
-      int id = getClusterIdByName(iClusterName);
-      if (id == -1)
-        throw new IllegalArgumentException("Cluster name " + iClusterName + " is not configured");
+        clusterId = getClusterIdByName(iClusterName);
+        if (clusterId == -1)
+          throw new IllegalArgumentException("Cluster name " + iClusterName + " is not configured");
+      }
 
       final int[] clusterIds;
       if (schemaClass != null) {
@@ -2193,23 +2204,18 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         clusterIds = schemaClass.getClusterIds();
         int i = 0;
         for (; i < clusterIds.length; ++i)
-          if (clusterIds[i] == id)
+          if (clusterIds[i] == clusterId)
             break;
 
         if (i == clusterIds.length)
           throw new IllegalArgumentException("Cluster name " + iClusterName + " is not configured to store the class "
               + doc.getClassName());
-      } else
-        clusterIds = new int[] { id };
-
+      }
     } else {
       // UPDATE: CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
       if (doc.getClassName() != null)
         checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_UPDATE, doc.getClassName());
     }
-
-    doc.validate();
-    ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
 
     doc = (ODocument) currentTx.saveRecord(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback,
         iRecordUpdatedCallback);
