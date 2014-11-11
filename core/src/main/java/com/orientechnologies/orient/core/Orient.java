@@ -432,6 +432,11 @@ public class Orient extends OListenerManger<OOrientListener> {
       for (String dbName : storagesToRemove)
         storages.remove(dbName);
 
+      // UNREGISTER STORAGE FROM ENGINES IN CASE IS CACHED
+      for( OEngine engine : engines.values() ){
+        engine.removeStorage( storage );
+      }
+
     } finally {
       engineLock.writeLock().unlock();
     }
