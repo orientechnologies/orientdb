@@ -133,6 +133,7 @@ public class ODistributedResponseManager {
 
       // PUT THE RESPONSE IN THE RIGHT RESPONSE GROUP
       if (groupResponsesByResult) {
+        // TODO: AVOID TO KEEP ALL THE RESULT FOR THE SAME RESP GROUP, BUT RATHER THE FIRST ONE + COUNTER
         boolean foundBucket = false;
         for (int i = 0; i < responseGroups.size(); ++i) {
           final List<ODistributedResponse> responseGroup = responseGroups.get(i);
@@ -159,7 +160,7 @@ public class ODistributedResponseManager {
             }
           }
 
-          if (foundBucket == true) {
+          if (foundBucket) {
             responseGroup.add(response);
             break;
           }
