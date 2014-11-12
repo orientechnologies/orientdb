@@ -1,0 +1,22 @@
+
+.fa-closed:before {
+  content: '\f056';
+}
+
+.fa-assigned:before {
+  content: '\f007';
+}
+
+.fa-milestoned:before {
+  content: "\f091";
+}
+
+.fa-labeled:before {
+  content: "\f02b";
+}
+.fa-unlabeled:before {
+  content: "\f02b";
+}
+.fa-versioned:before {
+  content: "\f188";
+}

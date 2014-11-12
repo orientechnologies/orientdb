@@ -1,20 +1,23 @@
 package com.orientechnologies.website.services.impl;
 
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.helper.SecurityHelper;
 import com.orientechnologies.website.model.schema.*;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.repository.CommentRepository;
+import com.orientechnologies.website.repository.EventRepository;
+import com.orientechnologies.website.repository.RepositoryRepository;
+import com.orientechnologies.website.services.IssueService;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.website.OrientDBFactory;
-import com.orientechnologies.website.services.IssueService;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -25,10 +28,15 @@ import java.util.List;
 public class IssueServiceImpl implements IssueService {
 
   @Autowired
-  private OrientDBFactory     dbFactory;
+  private OrientDBFactory      dbFactory;
 
   @Autowired
-  protected CommentRepository commentRepository;
+  protected CommentRepository  commentRepository;
+
+  @Autowired
+  private RepositoryRepository repoRepository;
+  @Autowired
+  private EventRepository      eventRepository;
 
   @Override
   public void commentIssue(Issue issue, Comment comment) {
@@ -52,8 +60,46 @@ public class IssueServiceImpl implements IssueService {
   }
 
   @Override
-  public void changeLabels(Issue issue, List<Label> labels) {
-    createLabelsRelationship(issue, labels);
+  public void changeLabels(Issue issue, List<Label> labels, boolean replace) {
+    createLabelsRelationship(issue, labels, replace);
+  }
+
+  @Override
+  public List<Label> addLabels(Issue issue, List<String> labels) {
+
+    List<Label> lbs = new ArrayList<Label>();
+
+    for (String label : labels) {
+      Label l = repoRepository.findLabelsByRepoAndName(issue.getRepository().getName(), label);
+      lbs.add(l);
+    }
+    changeLabels(issue, lbs, false);
+
+    for (Label lb : lbs) {
+      IssueEvent e = new IssueEvent();
+      e.setCreatedAt(new Date());
+      e.setEvent("labeled");
+      e.setLabel(lb);
+      e.setActor(SecurityHelper.currentUser());
+      e = (IssueEvent) eventRepository.save(e);
+      fireEvent(issue, e);
+    }
+    return lbs;
+  }
+
+  @Override
+  public void removeLabel(Issue issue, String label) {
+    Label l = repoRepository.findLabelsByRepoAndName(issue.getRepository().getName(), label);
+    if (l != null) {
+      removeLabelRelationship(issue, l);
+      IssueEvent e = new IssueEvent();
+      e.setCreatedAt(new Date());
+      e.setEvent("unlabeled");
+      e.setLabel(l);
+      e.setActor(SecurityHelper.currentUser());
+      e = (IssueEvent) eventRepository.save(e);
+      fireEvent(issue, e);
+    }
   }
 
   @Override
@@ -107,15 +153,31 @@ public class IssueServiceImpl implements IssueService {
     orgVertex.addEdge(IsAssigned.class.getSimpleName(), devVertex);
   }
 
-  private void createLabelsRelationship(Issue issue, List<Label> labels) {
+  private void removeLabelRelationship(Issue issue, Label label) {
 
     OrientGraph graph = dbFactory.getGraph();
     OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(issue.getId()));
 
     for (Edge edge : orgVertex.getEdges(Direction.OUT, HasLabel.class.getSimpleName())) {
-      edge.remove();
+      Vertex v = edge.getVertex(Direction.IN);
+      if (label.getName().equals(v.getProperty(OLabel.NAME.toString()))) {
+        edge.remove();
+      }
+
     }
 
+  }
+
+  private void createLabelsRelationship(Issue issue, List<Label> labels, boolean replace) {
+
+    OrientGraph graph = dbFactory.getGraph();
+    OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(issue.getId()));
+
+    if (replace) {
+      for (Edge edge : orgVertex.getEdges(Direction.OUT, HasLabel.class.getSimpleName())) {
+        edge.remove();
+      }
+    }
     for (Label label : labels) {
       OrientVertex devVertex = new OrientVertex(graph, new ORecordId(label.getId()));
       orgVertex.addEdge(HasLabel.class.getSimpleName(), devVertex);

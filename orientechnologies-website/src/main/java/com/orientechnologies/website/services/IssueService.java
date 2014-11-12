@@ -15,7 +15,11 @@ public interface IssueService {
 
   public void changeMilestone(Issue issue, Milestone milestone);
 
-  public void changeLabels(Issue issue, List<Label> labels);
+  public void changeLabels(Issue issue, List<Label> labels, boolean replace);
+
+  public List<Label> addLabels(Issue issue, List<String> labels);
+
+  public void removeLabel(Issue issue, String label);
 
   public void fireEvent(Issue issueDto, Event e);
 
@@ -24,4 +28,5 @@ public interface IssueService {
   public void changeAssignee(Issue issue, User user);
 
   public void changeVersion(Issue issue, Milestone milestone);
+
 }

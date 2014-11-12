@@ -17,7 +17,9 @@ angular
     'ngSanitize',
     'ngTouch',
     'restangular',
-    'ngMoment'
+    'ngMoment',
+    'mgcrea.ngStrap',
+    'ngUtilFilters'
   ])
   .config(function ($routeProvider, $httpProvider, RestangularProvider) {
     $routeProvider

@@ -188,6 +188,21 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   }
 
   @Override
+  public List<Label> findRepoLabels(String owner, String repo) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format(
+        "select expand(out('HasRepo')[name = '%s'].out('HasLabel'))   from Organization  where name = '%s')", repo, owner);
+
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+    List<Label> labels = new ArrayList<Label>();
+    for (OrientVertex vertice : vertices) {
+      ODocument doc = vertice.getRecord();
+      labels.add(OLabel.NAME.fromDoc(doc, db));
+    }
+    return labels;
+  }
+
+  @Override
   public Organization save(Organization entity) {
 
     OrientGraph db = dbFactory.getGraph();

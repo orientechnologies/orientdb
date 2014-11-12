@@ -117,7 +117,6 @@ body {
 
 }
 
-
 .issue-sidebar .issue-label {
   text-align: center;
 
@@ -156,22 +155,6 @@ body {
   border-left: 2px solid #f3f3f3;
 }
 
-.fa-closed:before {
-  content: '\f056';
-}
-
-.fa-assigned:before {
-  content: '\f007';
-}
-
-.fa-milestoned:before {
-  content: "\f091";
-}
-
-.fa-labeled:before {
-  content: "\f02b";
-}
-
 .issues-panel .issue-open {
   color: #6cc644;
 }
@@ -179,16 +162,128 @@ body {
 .issues-panel .list-group-item .issue-info {
   color: #999;
 }
+
 .issues-panel .list-group-item-heading a {
   color: #000000;
 
 }
+
 .issues-panel .list-group-item-heading a:hover {
   color: #428bca;
   text-decoration: none;
 }
+
 .vertical-align {
   display: flex;
   align-items: center;
+}
+
+/* Label Popover change*/
+
+.label-popover .popover-content {
+  padding: 0px;
+}
+
+.label-popover .popover-content .label {
+  width: 100%;
+  display: inline-block;
+}
+
+.label-popover .popover-content ul {
+  list-style-type: none;
+}
+
+.labels-group .label-item {
+  width: 100%;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+
+.labels-group .label-item:last-child {
+  border-bottom: none;
+}
+
+.label-item .color {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 2px;
+  margin-bottom: 2px;
+  border-radius: 3px;
+  vertical-align: middle;
+}
+
+.labels-group {
+  padding: 0px;
+  margin-bottom: 0px;
+}
+
+.label-unselected:hover {
+  background-color: #f4f4f4 !important;
+}
+
+.label-unselected {
+  background-color: white !important;
+}
+
+/* Version Popover change*/
+
+.versions-group {
+  padding: 0px;
+  margin-bottom: 0px;
+}
+.versions-group .version-item:last-child {
+  border-bottom: none;
+}
+
+.version-popover .popover-content {
+  padding: 0px;
+}
+
+.version-popover .popover-content .label {
+  width: 100%;
+  display: inline-block;
+}
+
+.version-popover .popover-content ul {
+  list-style-type: none;
+}
+
+.versions-group .version-item {
+  width: 100%;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+.versions-group  li.version-selected {
+  background-color: rgb(66, 139, 202);
+  background-color: rgba(66, 139, 202,0.4);
+}
+
+/* Milestone Popover change*/
+
+.text-center {
+  text-align: center;
+}
+
+.events-list .event {
+  border-top: 1px solid #f3f3f3;
+}
+
+.events-list .event .fa {
+
+  position: relative;
+  left: -27px;
+  width: 32px;
+  height: 32px;
+  line-height: 28px;
+  color: #666;
+  text-align: center;
+  background-color: #f3f3f3;
+  border: 2px solid #fff;
+  border-radius: 50%;
 }
 

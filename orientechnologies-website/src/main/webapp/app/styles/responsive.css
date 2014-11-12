@@ -1,0 +1,24 @@
+.label-popover {
+  width: 300px;
+}
+.version-popover {
+  width: 300px;
+}
+.version-popover .form-group {
+  margin-top: 15px;
+  padding-left: 15px;
+  padding-right: 15px;
+}
+.label-popover .form-group {
+  margin-top: 15px;
+  padding-left: 15px;
+  padding-right: 15px;
+}
+.label-popover-divider {
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
+.version-popover-divider {
+  margin-top: 0px;
+  margin-bottom: 0px;
+}

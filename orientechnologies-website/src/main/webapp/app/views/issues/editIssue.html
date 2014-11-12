@@ -37,7 +37,7 @@
           </div>
         </div>
       </div>
-      <div class="row">
+      <div class="row events-list">
         <div ng-repeat="comment in comments">
           <div class="col-md-1">
 
@@ -48,7 +48,7 @@
 
               <div class="panel-heading"><b>{{comment.user.name}}</b> commented {{ comment.createdAt | fromNow}}</div>
               <div class="panel-body">
-                <div mkeditor ng-model="comment.body"></div>
+                <div mkeditor ng-show="comment.body" ng-model="comment.body"></div>
               </div>
             </div>
             <div class="event" ng-if="comment.event">
@@ -88,7 +88,10 @@
     <div class="col-md-2 issue-sidebar">
       <div class="row">
         <div class="col-md-12">
-          <button class="btn btn-transparent ">Labels <i class="fa fa-gear pull-right"></i></button>
+          <button class="btn btn-transparent" class="btn btn-lg btn-primary" data-placement="bottom-right"
+                  data-animation="am-fade-and-scale" data-template="views/issues/popover/labels.html"
+                  title="{{popover.title}}" data-content="{{popover.content}}" data-trigger="click" bs-popover>Labels <i
+            class="fa fa-gear pull-right"></i></button>
         </div>
         <div class="col-md-12">
           <div class="row">
@@ -103,7 +106,10 @@
       </div>
       <div class="row">
         <div class="col-md-12">
-          <button class="btn btn-transparent ">Version <i class="fa fa-gear pull-right"></i></button>
+          <button class="btn btn-transparent " data-placement="bottom-right" data-animation="am-fade-and-scale"
+                  data-template="views/issues/popover/versions.html" title="{{popover.title}}"
+                  data-content="{{popover.content}}" data-trigger="click" bs-popover>Version <i
+            class="fa fa-gear pull-right"></i></button>
         </div>
         <div class="col-md-12 milestone">
           <span ng-show="issue.version" class="label label-primary">{{issue.version.title}}</span>

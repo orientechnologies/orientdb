@@ -256,7 +256,7 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
         labels.add(l);
       }
     }
-    issueService.changeLabels(issueDto, labels);
+    issueService.changeLabels(issueDto, labels, true);
   }
 
   private Milestone fillMilestone(GMilestone m, Milestone milestone) {

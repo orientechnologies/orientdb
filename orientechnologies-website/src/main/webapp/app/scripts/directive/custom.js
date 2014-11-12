@@ -17,23 +17,25 @@ angular.module('webappApp').directive('mkeditor', function ($timeout) {
 
         }
         if (!editor) {
-          $(elem[0]).markdown({
+          var mk = $(elem).markdown({
             autofocus: false,
             savable: false,
             onShow: function (e) {
+
               e.setContent(value);
+              e.showPreview();
               editor = e;
             },
             onChange: function (e) {
               ngModel.$setViewValue(e.getContent());
             }
           })
+
         } else {
           editor.setContent(value);
         }
 
       }
     }
-
   }
 });

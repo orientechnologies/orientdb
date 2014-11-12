@@ -26,4 +26,6 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
       Integer mNumber);
 
   public List<Milestone> findRepoMilestones(String owner, String repo);
+
+  public List<Label> findRepoLabels(String owner, String repo);
 }

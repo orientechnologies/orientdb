@@ -109,7 +109,7 @@ public class RepositoryServiceImpl implements RepositoryService {
         labels.add(l);
       }
     }
-    issueService.changeLabels(issue, labels);
+    issueService.changeLabels(issue, labels, false);
   }
 
   private void handleMilestone(Repository repository, Issue issue, Integer milestone) {

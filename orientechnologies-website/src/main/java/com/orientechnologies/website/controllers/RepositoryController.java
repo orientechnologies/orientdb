@@ -3,6 +3,7 @@ package com.orientechnologies.website.controllers;
 import com.orientechnologies.website.configuration.ApiVersion;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.repository.OrganizationRepository;
+import com.orientechnologies.website.repository.RepositoryRepository;
 import com.orientechnologies.website.services.IssueService;
 import com.orientechnologies.website.services.OrganizationService;
 import com.orientechnologies.website.services.RepositoryService;
@@ -28,6 +29,9 @@ public class RepositoryController {
 
   @Autowired
   private RepositoryService      repositoryService;
+
+  @Autowired
+  private RepositoryRepository   repoRepository;
 
   @Autowired
   protected IssueService         issueService;
@@ -65,6 +69,31 @@ public class RepositoryController {
         HttpStatus.NOT_FOUND);
   }
 
+  @RequestMapping(value = "{owner}/{repo}/issues/{number}/labels", method = RequestMethod.POST)
+  public ResponseEntity<List<Label>> addLabels(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
+      @PathVariable("number") String number, @RequestBody List<String> labels) {
+
+    Issue i = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
+
+    if (i == null) {
+      return new ResponseEntity<List<Label>>(HttpStatus.NOT_FOUND);
+    }
+
+    return new ResponseEntity<List<Label>>(issueService.addLabels(i, labels), HttpStatus.OK);
+  }
+
+  @RequestMapping(value = "{owner}/{repo}/issues/{number}/labels/{lname}", method = RequestMethod.DELETE)
+  public ResponseEntity<List<Label>> deleteLabel(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
+      @PathVariable("number") String number, @PathVariable("lname") String lname) {
+
+    Issue i = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
+    if (i == null) {
+      return new ResponseEntity<List<Label>>(HttpStatus.NOT_FOUND);
+    }
+    issueService.removeLabel(i, lname);
+    return new ResponseEntity<List<Label>>(HttpStatus.OK);
+  }
+
   @RequestMapping(value = "{owner}/{repo}/issues/{number}/comments", method = RequestMethod.POST)
   public ResponseEntity<Comment> postComment(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
       @PathVariable("number") String number, @RequestBody Comment comment) {
@@ -78,6 +107,11 @@ public class RepositoryController {
   @RequestMapping(value = "{owner}/{repo}/teams", method = RequestMethod.GET)
   public ResponseEntity<List<User>> getRepositoryTeams(@PathVariable("owner") String owner, @PathVariable("repo") String repo) {
     return new ResponseEntity<List<User>>(organizationRepository.findTeamMembers(owner, repo), HttpStatus.OK);
+  }
+
+  @RequestMapping(value = "{owner}/{repo}/labels", method = RequestMethod.GET)
+  public ResponseEntity<List<Label>> getRepositoryLabels(@PathVariable("owner") String owner, @PathVariable("repo") String repo) {
+    return new ResponseEntity<List<Label>>(organizationRepository.findRepoLabels(owner, repo), HttpStatus.OK);
   }
 
   @RequestMapping(value = "{owner}/{repo}/milestones", method = RequestMethod.GET)
