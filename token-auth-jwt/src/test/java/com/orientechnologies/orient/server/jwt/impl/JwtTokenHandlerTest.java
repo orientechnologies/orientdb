@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.jwt.impl;
 
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
@@ -28,22 +29,26 @@ public class JwtTokenHandlerTest {
   public void testTokenCreation() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + JwtTokenHandlerTest.class.getSimpleName());
     db.create();
-    OSecurityUser original = db.getUser();
-    JwtTokenHandler handler = new JwtTokenHandler();
-    handler.config(null, I_PARAMS);
-    byte[] token = handler.getSignedWebToken(db, original);
+    try {
+      OSecurityUser original = db.getUser();
+      JwtTokenHandler handler = new JwtTokenHandler();
+      handler.config(null, I_PARAMS);
+      byte[] token = handler.getSignedWebToken(db, original);
 
-    OToken tok = handler.parseWebToken(token);
+      OToken tok = handler.parseWebToken(token);
 
-    assertNotNull(tok);
+      assertNotNull(tok);
 
-    assertTrue(tok.getIsVerified());
+      assertTrue(tok.getIsVerified());
 
-    OUser user = tok.getUser(db);
-    assertEquals(user.getName(), original.getName());
-    boolean boole = handler.validateToken(tok, "open", db.getName());
-    assertTrue(boole);
-    assertTrue(tok.getIsValid());
+      OUser user = tok.getUser(db);
+      assertEquals(user.getName(), original.getName());
+      boolean boole = handler.validateToken(tok, "open", db.getName());
+      assertTrue(boole);
+      assertTrue(tok.getIsValid());
+    } finally {
+      db.drop();
+    }
   }
 
   @Test(expectedExceptions = Exception.class)
@@ -95,6 +100,33 @@ public class JwtTokenHandlerTest {
     assertEquals(payload.getIssuer(), des.getIssuer());
     assertEquals(payload.getNotBefore(), des.getNotBefore());
     assertEquals(payload.getTokenId(), des.getTokenId());
+
+  }
+
+  @Test
+  public void testTokenForge() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + JwtTokenHandlerTest.class.getSimpleName());
+    db.create();
+    try {
+      OSecurityUser original = db.getUser();
+      JwtTokenHandler handler = new JwtTokenHandler();
+
+      handler.config(null, I_PARAMS);
+      byte[] token = handler.getSignedWebToken(db, original);
+      byte[] token2 = handler.getSignedWebToken(db, original);
+      String s = new String(token);
+      String s2 = new String(token2);
+
+      String newS = s.substring(0, s.lastIndexOf('.')) + s2.substring(s2.lastIndexOf('.'));
+
+      OToken tok = handler.parseWebToken(newS.getBytes());
+
+      assertNotNull(tok);
+
+      assertFalse(tok.getIsVerified());
+    } finally {
+      db.drop();
+    }
 
   }
 }

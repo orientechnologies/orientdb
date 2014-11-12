@@ -43,7 +43,7 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
 
   private final ObjectMapper            mapper;
 
-  private static final int              JWT_DELIMITER     = '.';
+  protected static final int            JWT_DELIMITER     = '.';
 
   private static final ThreadLocal<Mac> threadLocalMac    = new ThreadLocal<Mac>() {
                                                             @Override
@@ -118,15 +118,13 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
 
       boolean signatureValid = Arrays.equals(calculatedSignature, decodedSignature);
 
-      if (signatureValid) {
-        byte[] decodedPayload = OBase64Utils.decode(tokenBytes, firstDot + 1, secondDot - (firstDot + 1), OBase64Utils.URL_SAFE);
-        token = new JsonWebToken(header, deserializeWebPayload(header.getType(), decodedPayload));
-        token.setIsVerified(true);
-        return token;
-      }
+      byte[] decodedPayload = OBase64Utils.decode(tokenBytes, firstDot + 1, secondDot - (firstDot + 1), OBase64Utils.URL_SAFE);
+      token = new JsonWebToken(header, deserializeWebPayload(header.getType(), decodedPayload));
+      token.setIsVerified(signatureValid);
 
     } catch (Exception ex) {
       OLogManager.instance().warn(this, "Error parsing token", ex);
+      throw new RuntimeException("Error parsing token", ex);
       // noop
     } finally {
       mac.reset();
