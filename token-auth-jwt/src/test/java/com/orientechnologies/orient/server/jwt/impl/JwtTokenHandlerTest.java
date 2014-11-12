@@ -26,7 +26,7 @@ public class JwtTokenHandlerTest {
                                                                     JwtTokenHandler.O_SIGN_KEY, "crappy key") };
 
   @Test
-  public void testTokenCreation() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
+  public void testWebTokenCreationValidation() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
     ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + JwtTokenHandlerTest.class.getSimpleName());
     db.create();
     try {
@@ -127,6 +127,32 @@ public class JwtTokenHandlerTest {
     } finally {
       db.drop();
     }
-
   }
+
+  @Test
+  public void testBinartTokenCreationValidation() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + JwtTokenHandlerTest.class.getSimpleName());
+    db.create();
+    try {
+      OSecurityUser original = db.getUser();
+      JwtTokenHandler handler = new JwtTokenHandler();
+      handler.config(null, I_PARAMS);
+      byte[] token = handler.getSignedBinaryToken(db, original);
+
+      OToken tok = handler.parseBinaryToken(token);
+
+      assertNotNull(tok);
+
+      assertTrue(tok.getIsVerified());
+
+      OUser user = tok.getUser(db);
+      assertEquals(user.getName(), original.getName());
+      boolean boole = handler.validateToken(tok, "open", db.getName());
+      assertTrue(boole);
+      assertTrue(tok.getIsValid());
+    } finally {
+      db.drop();
+    }
+  }
+
 }

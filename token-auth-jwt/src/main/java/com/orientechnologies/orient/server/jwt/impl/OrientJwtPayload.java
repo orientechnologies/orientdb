@@ -2,7 +2,6 @@ package com.orientechnologies.orient.server.jwt.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Created by emrul on 28/09/2014.

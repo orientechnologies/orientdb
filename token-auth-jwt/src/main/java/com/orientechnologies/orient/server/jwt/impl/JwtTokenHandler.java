@@ -1,8 +1,10 @@
 package com.orientechnologies.orient.server.jwt.impl;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.security.InvalidKeyException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Date;
@@ -15,9 +17,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
-import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OTokenHandler;
@@ -79,57 +80,58 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
   }
 
   @Override
-  public OToken parseWebToken(byte[] tokenBytes) throws InvalidKeyException, NoSuchAlgorithmException, IOException {
-    OToken token = null;
+  public OToken parseWebToken(byte[] tokenBytes) {
+    JsonWebToken token = null;
 
     // / <header>.<payload>.<signature>
     int firstDot = -1, secondDot = -1;
-    int x;
-    for (x = 0; x < tokenBytes.length; x++) {
+    for (int x = 0; x < tokenBytes.length; x++) {
       if (tokenBytes[x] == JWT_DELIMITER) {
-        firstDot = x; // stores reference to first '.' character in JWT token
-        break;
+        if (firstDot == -1)
+          firstDot = x; // stores reference to first '.' character in JWT token
+        else {
+          secondDot = x;
+          break;
+        }
       }
     }
+
     if (firstDot == -1)
       throw new RuntimeException("Token data too short missed header");
 
-    for (x = firstDot + 1; x < tokenBytes.length; x++) {
-      if (tokenBytes[x] == JWT_DELIMITER) {
-        secondDot = x; // stores reference to second '.' character in JWT token
-        break;
-      }
-    }
     if (secondDot == -1)
       throw new RuntimeException("Token data too short missed signature");
 
     byte[] decodedHeader = OBase64Utils.decode(tokenBytes, 0, firstDot, OBase64Utils.URL_SAFE);
-    OrientJwtHeader header = deserializeWebHeader(decodedHeader);
+    byte[] decodedPayload = OBase64Utils.decode(tokenBytes, firstDot + 1, secondDot - (firstDot + 1), OBase64Utils.URL_SAFE);
+    byte[] decodedSignature = OBase64Utils.decode(tokenBytes, secondDot + 1, tokenBytes.length - (secondDot + 1),
+        OBase64Utils.URL_SAFE);
 
+    OrientJwtHeader header = deserializeWebHeader(decodedHeader);
+    OJwtPayload deserializeWebPayload = deserializeWebPayload(header.getType(), decodedPayload);
+    token = new JsonWebToken(header, deserializeWebPayload);
+
+    token.setIsVerified(verifyTokenSignature(header, tokenBytes, 0, secondDot, decodedSignature));
+    return token;
+  }
+
+  private boolean verifyTokenSignature(OJwtHeader header, byte[] base, int baseOffset, int baseLength, byte[] signature) {
     Mac mac = threadLocalMac.get();
 
     try {
       mac.init(getKeyProvider().getKey(header));
-      mac.update(tokenBytes, 0, secondDot);
+      mac.update(base, baseOffset, baseLength);
       byte[] calculatedSignature = mac.doFinal();
 
-      byte[] decodedSignature = OBase64Utils.decode(tokenBytes, secondDot + 1, tokenBytes.length - (secondDot + 1),
-          OBase64Utils.URL_SAFE);
+      return Arrays.equals(calculatedSignature, signature);
 
-      boolean signatureValid = Arrays.equals(calculatedSignature, decodedSignature);
-
-      byte[] decodedPayload = OBase64Utils.decode(tokenBytes, firstDot + 1, secondDot - (firstDot + 1), OBase64Utils.URL_SAFE);
-      token = new JsonWebToken(header, deserializeWebPayload(header.getType(), decodedPayload));
-      token.setIsVerified(signatureValid);
-
-    } catch (Exception ex) {
-      OLogManager.instance().warn(this, "Error parsing token", ex);
-      throw new RuntimeException("Error parsing token", ex);
-      // noop
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new OException(e);
     } finally {
       mac.reset();
     }
-    return token;
   }
 
   @Override
@@ -148,15 +150,23 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
     return valid;
   }
 
-  protected OrientJwtHeader deserializeWebHeader(byte[] decodedHeader) throws JsonParseException, JsonMappingException, IOException {
-    return mapper.readValue(decodedHeader, OrientJwtHeader.class);
+  protected OrientJwtHeader deserializeWebHeader(byte[] decodedHeader) {
+    try {
+      return mapper.readValue(decodedHeader, OrientJwtHeader.class);
+    } catch (Exception e) {
+      throw new OException(e);
+    }
   }
 
-  protected OJwtPayload deserializeWebPayload(String type, byte[] decodedPayload) throws Exception {
+  protected OJwtPayload deserializeWebPayload(String type, byte[] decodedPayload) {
     if (!"OrientDB".equals(type)) {
-      throw new Exception("Payload class not registered:" + type);
+      throw new OException("Payload class not registered:" + type);
     }
-    return mapper.readValue(decodedPayload, OrientJwtPayload.class);
+    try {
+      return mapper.readValue(decodedPayload, OrientJwtPayload.class);
+    } catch (Exception e) {
+      throw new OException(e);
+    }
   }
 
   public byte[] getSignedWebToken(ODatabaseDocumentInternal db, OSecurityUser user) {
@@ -167,29 +177,34 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
 
     OJwtPayload payload = createPayload(db, user);
     header.setType(getPayloadType(payload));
-
-    Mac mac = threadLocalMac.get();
-
     try {
       byte[] bytes = serializeWebHeader(header);
       tokenByteOS.write(OBase64Utils.encodeBytesToBytes(bytes, 0, bytes.length, OBase64Utils.URL_SAFE));
       tokenByteOS.write(JWT_DELIMITER);
       bytes = serializeWebPayload(payload);
       tokenByteOS.write(OBase64Utils.encodeBytesToBytes(bytes, 0, bytes.length, OBase64Utils.URL_SAFE));
-
       byte[] unsignedToken = tokenByteOS.toByteArray();
-
       tokenByteOS.write(JWT_DELIMITER);
-      mac.init(getKeyProvider().getKey(header));
-      bytes = mac.doFinal(unsignedToken);
-      tokenByteOS.write(OBase64Utils.encodeBytesToBytes(bytes, 0, bytes.length, OBase64Utils.URL_SAFE));
 
+      bytes = signToken(header, unsignedToken);
+      tokenByteOS.write(OBase64Utils.encodeBytesToBytes(bytes, 0, bytes.length, OBase64Utils.URL_SAFE));
     } catch (Exception ex) {
-      OLogManager.instance().error(this, "Error signing token", ex);
-      throw new OSecurityAccessException(db.getName(), "Error on token parsion", ex);
+      throw new OException("Error on token parsing", ex);
     }
 
     return tokenByteOS.toByteArray();
+  }
+
+  private byte[] signToken(OrientJwtHeader header, byte[] unsignedToken) {
+    Mac mac = threadLocalMac.get();
+    try {
+      mac.init(getKeyProvider().getKey(header));
+      return mac.doFinal(unsignedToken);
+    } catch (Exception ex) {
+      throw new OException("Error on token parsing", ex);
+    } finally {
+      mac.reset();
+    }
   }
 
   protected byte[] serializeWebHeader(OJwtHeader header) throws Exception {
@@ -216,6 +231,80 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
     payload.setTokenId(UUID.randomUUID().toString());
     payload.setExpiry(expDate.getTime());
     return payload;
+  }
+
+  public byte[] getSignedBinaryToken(ODatabaseDocumentInternal db, OSecurityUser user) {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    try {
+      OrientJwtHeader header = new OrientJwtHeader();
+      header.setAlgorithm("HS256");
+      header.setKeyId("");
+      serializeBinaryHeader(header, baos);
+      OJwtPayload payload = createPayload(db, user);
+      serializeBinaryPayload(payload, baos);
+
+      byte[] signature = signToken(header, baos.toByteArray());
+      baos.write(signature);
+
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new OException(e);
+    }
+    return baos.toByteArray();
+  }
+
+  private void serializeBinaryPayload(OJwtPayload payload, OutputStream baos) throws Exception {
+    byte[] res = serializeWebPayload(payload);
+    baos.write(res.length);
+    baos.write(res);
+  }
+
+  private void serializeBinaryHeader(OrientJwtHeader header, OutputStream baos) throws Exception {
+    byte[] res = serializeWebHeader(header);
+    baos.write(res.length);
+    baos.write(res);
+  }
+
+  public OToken parseBinaryToken(byte[] binaryToken) {
+    try {
+      ByteArrayInputStream bais = new ByteArrayInputStream(binaryToken);
+
+      OJwtHeader header = deserializeBinaryHeader(bais);
+      OJwtPayload payload = deserializeBinaryPayload(bais);
+
+      JsonWebToken token = new JsonWebToken(header, payload);
+      int end = binaryToken.length - bais.available();
+      byte[] decodedSignature = new byte[bais.available()];
+      bais.read(decodedSignature);
+
+      token.setIsVerified(verifyTokenSignature(header, binaryToken, 0, end, decodedSignature));
+      return token;
+    } catch (IOException e) {
+      throw new OException(e);
+    }
+  }
+
+  private OJwtPayload deserializeBinaryPayload(InputStream bais) {
+    try {
+      int size = bais.read();
+      byte[] data = new byte[size];
+      bais.read(data);
+      return mapper.readValue(data, OrientJwtPayload.class);
+    } catch (Exception e) {
+      throw new OException(e);
+    }
+  }
+
+  private OJwtHeader deserializeBinaryHeader(InputStream bais) {
+    try {
+      int size = bais.read();
+      byte[] data = new byte[size];
+      bais.read(data);
+      return mapper.readValue(data, OrientJwtHeader.class);
+    } catch (Exception e) {
+      throw new OException(e);
+    }
   }
 
   protected String getPayloadType(OJwtPayload payload) {

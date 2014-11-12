@@ -63,7 +63,7 @@ public class OHttpRequest {
   protected Map<String, String>             headers;
 
   public String                             bearerTokenRaw;
-  public IToken                             bearerToken;
+  public OToken                             bearerToken;
 
   public OHttpRequest(final ONetworkProtocolHttpAbstract iExecutor, final InputStream iInStream, final ONetworkProtocolData iData,
       final OContextConfiguration iConfiguration) {
