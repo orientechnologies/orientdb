@@ -94,7 +94,7 @@ public class OJDBCExtractor extends OAbstractExtractor {
         final ResultSet countRs = stm.executeQuery(query);
         try {
           if (countRs != null && countRs.next())
-            total = countRs.getInt(0);
+            total = countRs.getInt(1);
         } finally {
           if (countRs != null)
             try {
