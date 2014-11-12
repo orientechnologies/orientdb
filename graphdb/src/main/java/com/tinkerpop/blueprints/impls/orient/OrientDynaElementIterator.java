@@ -66,10 +66,10 @@ class OrientDynaElementIterator implements Iterator<Object> {
 
       final OClass schemaClass = currentDocument.getImmutableSchemaClass();
       if (schemaClass != null && schemaClass.isSubClassOf(graph.getEdgeBaseType()))
-        currentElement = new OrientEdge(graph, currentDocument);
+        currentElement = new OrientEdge(currentDocument);
       else
         // RETURN VERTEX IN ALL THE CASES, EVEN FOR PROJECTED DOCUMENTS
-        currentElement = new OrientVertex(graph, currentDocument);
+        currentElement = new OrientVertex(currentDocument);
     }
 
     return currentElement;

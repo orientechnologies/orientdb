@@ -279,7 +279,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     init();
 
     if (id instanceof OIdentifiable)
-      return new OrientVertex((OrientBaseGraph) null, (OIdentifiable) id);
+      return new OrientVertex((OIdentifiable) id);
 
     OrientVertex v = getFromCache(id);
     if (v != null) {
