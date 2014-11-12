@@ -97,33 +97,31 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     this.password = iUserPassword;
 
     database = iDatabase;
+		makeActive();
+
     readDatabaseConfiguration();
     configure(iConfiguration);
-
-    makeActive();
   }
 
   public OrientBaseGraph(final OPartitionedDatabasePool pool) {
     this.pool = pool;
 
     database = pool.acquire();
+		makeActive();
     this.username = database.getUser() != null ? database.getUser().getName() : null;
 
     readDatabaseConfiguration();
-
-    makeActive();
   }
 
   public OrientBaseGraph(final OPartitionedDatabasePool pool, final Settings iConfiguration) {
     this.pool = pool;
 
     database = pool.acquire();
-    this.username = database.getUser() != null ? database.getUser().getName() : null;
+		this.username = database.getUser() != null ? database.getUser().getName() : null;
+		makeActive();
 
-    readDatabaseConfiguration();
+		readDatabaseConfiguration();
     configure(iConfiguration);
-
-    makeActive();
   }
 
   public OrientBaseGraph(final String url) {
