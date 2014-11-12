@@ -11,7 +11,6 @@ import java.util.UUID;
 import javax.crypto.Mac;
 
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -93,7 +92,7 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
       }
     }
     if (firstDot == -1)
-      return null;
+      throw new RuntimeException("Token data too short missed header");
 
     for (x = firstDot + 1; x < tokenBytes.length; x++) {
       if (tokenBytes[x] == JWT_DELIMITER) {
@@ -102,10 +101,10 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
       }
     }
     if (secondDot == -1)
-      return null;
+      throw new RuntimeException("Token data too short missed signature");
 
     byte[] decodedHeader = OBase64Utils.decode(tokenBytes, 0, firstDot, OBase64Utils.URL_SAFE);
-    JwtHeader header = deserializeWebHeader(decodedHeader);
+    OrientJwtHeader header = deserializeWebHeader(decodedHeader);
 
     Mac mac = threadLocalMac.get();
 
@@ -151,8 +150,8 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
     return valid;
   }
 
-  protected JwtHeader deserializeWebHeader(byte[] decodedHeader) throws JsonParseException, JsonMappingException, IOException {
-    return mapper.readValue(decodedHeader, JwtHeader.class);
+  protected OrientJwtHeader deserializeWebHeader(byte[] decodedHeader) throws JsonParseException, JsonMappingException, IOException {
+    return mapper.readValue(decodedHeader, OrientJwtHeader.class);
   }
 
   protected OJwtPayload deserializeWebPayload(String type, byte[] decodedPayload) throws Exception {
@@ -164,7 +163,7 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
 
   public byte[] getSignedWebToken(ODatabaseDocumentInternal db, OSecurityUser user) {
     ByteArrayOutputStream tokenByteOS = new ByteArrayOutputStream(1024);
-    JwtHeader header = new JwtHeader();
+    OrientJwtHeader header = new OrientJwtHeader();
     header.setAlgorithm("HS256");
     header.setKeyId("");
 
@@ -174,10 +173,10 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
     Mac mac = threadLocalMac.get();
 
     try {
-      byte[] bytes = serializeHeader(header);
+      byte[] bytes = serializeWebHeader(header);
       tokenByteOS.write(OBase64Utils.encodeBytesToBytes(bytes, 0, bytes.length, OBase64Utils.URL_SAFE));
       tokenByteOS.write(JWT_DELIMITER);
-      bytes = serializePayload(payload);
+      bytes = serializeWebPayload(payload);
       tokenByteOS.write(OBase64Utils.encodeBytesToBytes(bytes, 0, bytes.length, OBase64Utils.URL_SAFE));
 
       byte[] unsignedToken = tokenByteOS.toByteArray();
@@ -195,11 +194,11 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
     return tokenByteOS.toByteArray();
   }
 
-  protected byte[] serializeHeader(OJwtHeader header) throws JsonProcessingException {
+  protected byte[] serializeWebHeader(OJwtHeader header) throws Exception {
     return mapper.writeValueAsBytes(header);
   }
 
-  protected byte[] serializePayload(OJwtPayload payload) throws JsonProcessingException {
+  protected byte[] serializeWebPayload(OJwtPayload payload) throws Exception {
     return mapper.writeValueAsBytes(payload);
   }
 

@@ -9,7 +9,7 @@ package com.orientechnologies.orient.core.metadata.security.jwt;
  */
 public interface OJwtHeader {
 
-    public String getAlggorithm();
+    public String getAlgorithm();
 
     public void setAlgorithm(String alg);
 

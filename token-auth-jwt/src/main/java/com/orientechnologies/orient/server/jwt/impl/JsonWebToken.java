@@ -22,7 +22,7 @@ public class JsonWebToken implements OJsonWebToken, OToken {
   private boolean          isValid;
 
   public JsonWebToken() {
-    this(new JwtHeader(), new OrientJwtPayload());
+    this(new OrientJwtHeader(), new OrientJwtPayload());
   }
 
   public JsonWebToken(OJwtHeader header, OJwtPayload payload) {

@@ -7,14 +7,14 @@ import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
  *
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
-public class JwtHeader implements OJwtHeader {
+public class OrientJwtHeader implements OJwtHeader {
 
   private String typ;
   private String alg;
   private String kid;
 
   @Override
-  public String getAlggorithm() {
+  public String getAlgorithm() {
     return alg;
   }
 
