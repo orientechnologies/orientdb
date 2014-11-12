@@ -67,7 +67,7 @@ public class OHttpResponse {
   public boolean               sendStarted   = false;
   public String                content;
   public int                   code;
-  public boolean               keepAlive;
+  public boolean               keepAlive     = true;
 
   public OHttpResponse(final OutputStream iOutStream, final String iHttpVersion, final String[] iAdditionalHeaders,
       final String iResponseCharSet, final String iServerInfo, final String iSessionId, final String iCallbackFunction,
@@ -131,7 +131,8 @@ public class OHttpResponse {
 
     if (binaryContent != null)
       out.write(binaryContent);
-    out.flush();
+
+    flush();
   }
 
   public void writeStatus(final int iStatus, final String iReason) throws IOException {
@@ -387,7 +388,7 @@ public class OHttpResponse {
         out.write(b);
     }
 
-    out.flush();
+    flush();
   }
 
   public void sendStream(final int iCode, final String iReason, final String iContentType, final String iFileName,
@@ -406,7 +407,7 @@ public class OHttpResponse {
     iWriter.call(chunkedOutput);
     chunkedOutput.close();
 
-    out.flush();
+    flush();
   }
 
   // Compress content string
@@ -451,6 +452,8 @@ public class OHttpResponse {
 
   public void flush() throws IOException {
     out.flush();
+    if (keepAlive)
+      out.close();
   }
 
   public String getContentType() {
