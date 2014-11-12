@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OTokenHandler;
@@ -37,13 +38,13 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
 public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHandler {
+  public static final String            O_SIGN_KEY        = "oAuth2Key";
+
   private static final String           JWT_TOKEN_HANDLER = "JwtTokenHandler";
 
   private final ObjectMapper            mapper;
 
   private static final int              JWT_DELIMITER     = '.';
-
-  // protected final ConcurrentHashMap<String, Class<?>> payloadClasses = new ConcurrentHashMap<String, Class<?>>();
 
   private static final ThreadLocal<Mac> threadLocalMac    = new ThreadLocal<Mac>() {
                                                             @Override
@@ -56,7 +57,6 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
                                                             }
                                                           };
 
-  private OServer                       serverInstance;
   private OJwtKeyProvider               keyProvider;
 
   public JwtTokenHandler() {
@@ -65,25 +65,18 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
     mapper.addMixInAnnotations(OJwtHeader.class, OJwtHeaderMixin.class);
     mapper.addMixInAnnotations(OJwtPayload.class, OJwtPayloadMixin.class);
 
-    // .registerModule();
   }
-
-  // public void registerPayloadClass(String name, Class clazz) {
-  // payloadClasses.put(name, clazz);
-  // }
 
   @Override
   public void config(final OServer iServer, final OServerParameterConfiguration[] iParams) {
-    serverInstance = iServer;
 
     for (OServerParameterConfiguration param : iParams) {
-      if (param.name.equalsIgnoreCase("oAuth2Key")) {
+      if (param.name.equalsIgnoreCase(O_SIGN_KEY)) {
         byte secret[] = OBase64Utils.decode(param.value, OBase64Utils.URL_SAFE);
         keyProvider = new DefaultJwtKeyProvider(secret);
       }
     }
 
-    // this.registerPayloadClass("OrientDb", JwtTokenHandler.class);
   }
 
   @Override
@@ -121,17 +114,13 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
       mac.update(tokenBytes, 0, secondDot);
       byte[] calculatedSignature = mac.doFinal();
 
-      byte[] decodedSignature = OBase64Utils.decode(tokenBytes, secondDot + 1, tokenBytes.length, OBase64Utils.URL_SAFE);
+      byte[] decodedSignature = OBase64Utils.decode(tokenBytes, secondDot + 1, tokenBytes.length - (secondDot + 1),
+          OBase64Utils.URL_SAFE);
 
       boolean signatureValid = Arrays.equals(calculatedSignature, decodedSignature);
 
       if (signatureValid) {
-        byte[] decodedPayload = OBase64Utils.decode(tokenBytes, firstDot + 1, secondDot, OBase64Utils.URL_SAFE);
-        // Class<?> payloadClass = payloadClasses.get(header.getType());
-        // if (payloadClass == null) {
-        // throw new Exception("Payload class not registered:" + header.getType());
-        // }
-
+        byte[] decodedPayload = OBase64Utils.decode(tokenBytes, firstDot + 1, secondDot - (firstDot + 1), OBase64Utils.URL_SAFE);
         token = new JsonWebToken(header, deserializeWebPayload(header.getType(), decodedPayload));
         token.setIsVerified(true);
         return token;
@@ -167,6 +156,9 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
   }
 
   protected OJwtPayload deserializeWebPayload(String type, byte[] decodedPayload) throws Exception {
+    if (!"OrientDB".equals(type)) {
+      throw new Exception("Payload class not registered:" + type);
+    }
     return mapper.readValue(decodedPayload, OrientJwtPayload.class);
   }
 
@@ -197,7 +189,7 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
 
     } catch (Exception ex) {
       OLogManager.instance().error(this, "Error signing token", ex);
-
+      throw new OSecurityAccessException(db.getName(), "Error on token parsion", ex);
     }
 
     return tokenByteOS.toByteArray();
@@ -241,4 +233,5 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
   protected OJwtKeyProvider getKeyProvider() {
     return keyProvider;
   }
+
 }
