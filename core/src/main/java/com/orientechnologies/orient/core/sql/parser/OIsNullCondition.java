@@ -2,8 +2,12 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OIsNullCondition extends SimpleNode {
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
+public class OIsNullCondition extends OBooleanExpression {
+
+  protected OExpression expression;
+
   public OIsNullCondition(int id) {
     super(id);
   }
@@ -12,10 +16,22 @@ class OIsNullCondition extends SimpleNode {
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
+  }
+
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord) {
+    return false;
+  }
+
+  public OExpression getExpression() {
+    return expression;
+  }
+
+  public void setExpression(OExpression expression) {
+    this.expression = expression;
   }
 }
 /* JavaCC - OriginalChecksum=29ebbc506a98f90953af91a66a03aa1e (do not edit this line) */

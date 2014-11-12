@@ -5,7 +5,9 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 public class ONotBlock extends OBooleanExpression {
-  OBooleanExpression sub;
+  protected OBooleanExpression sub;
+
+  protected boolean negate = false;
 
   public ONotBlock(int id) {
     super(id);
@@ -23,5 +25,20 @@ public class ONotBlock extends OBooleanExpression {
     return !sub.evaluate(currentRecord);
   }
 
+  public OBooleanExpression getSub() {
+    return sub;
+  }
+
+  public void setSub(OBooleanExpression sub) {
+    this.sub = sub;
+  }
+
+  public boolean isNegate() {
+    return negate;
+  }
+
+  public void setNegate(boolean negate) {
+    this.negate = negate;
+  }
 }
 /* JavaCC - OriginalChecksum=1926313b3f854235aaa20811c22d583b (do not edit this line) */

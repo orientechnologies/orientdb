@@ -790,12 +790,14 @@ OCreateEdgeStatement CreateEdgeStatement():
 }
 
 
-void InputParameter():
+OInputParameter InputParameter():
 {}
 {
+(
 	PositionalParameter()
 	|
 	NamedParameter()
+){return jjtThis;}
 }
 
 void PositionalParameter():
@@ -1191,284 +1193,352 @@ ONotBlock NotBlock():
 {
 (
     (
-        <NOT>
+        <NOT> {jjtThis.negate = true;}
         (
             LOOKAHEAD( ConditionBlock() )
-            ConditionBlock()
+            jjtThis.sub = ConditionBlock()
             |
             LOOKAHEAD( ParenthesisBlock() )
-            ParenthesisBlock()
+            jjtThis.sub = ParenthesisBlock()
         )
     )
     |
     (
         LOOKAHEAD( ConditionBlock() )
-        ConditionBlock()
+        jjtThis.sub = ConditionBlock()
         |
         LOOKAHEAD( ParenthesisBlock() )
-        ParenthesisBlock()
+        jjtThis.sub = ParenthesisBlock()
     )
 ) { return jjtThis; }
 }
 
-void ParenthesisBlock():
-{}
+OBooleanExpression ParenthesisBlock():
+{OBooleanExpression subElement = null; }
 {
-	<LPAREN> OrBlock() <RPAREN>
+(
+	<LPAREN> subElement = OrBlock() <RPAREN>
+){ return subElement; }
 }
 
-void ConditionBlock():
-{}
+OBooleanExpression ConditionBlock():
+{OBooleanExpression result = null;}
 {
+(
 	LOOKAHEAD( IsNotNullCondition() )
-	IsNotNullCondition()
+	result = IsNotNullCondition()
 	|
 	LOOKAHEAD( IsNullCondition() )
-	IsNullCondition()
+	result = IsNullCondition()
 	|
 	LOOKAHEAD( IsNotDefinedCondition() )
-	IsNotDefinedCondition()
+	result = IsNotDefinedCondition()
 	|
 	LOOKAHEAD( IsDefinedCondition() )
-	IsDefinedCondition()
+	result = IsDefinedCondition()
 	|
 	LOOKAHEAD( InCondition() )
-    InCondition()
+    result = InCondition()
     |
     LOOKAHEAD( NotInCondition() )
-    NotInCondition()
+    result = NotInCondition()
 	|
 	LOOKAHEAD( BinaryCondition() )
-	BinaryCondition()
+	result = BinaryCondition()
 	|
 	LOOKAHEAD( BetweenCondition() )
-	BetweenCondition()
+	result = BetweenCondition()
 	|
 	LOOKAHEAD( ContainsCondition() )
-	ContainsCondition()
+	result = ContainsCondition()
 	|
 	LOOKAHEAD( ContainsValueCondition() )
-	ContainsValueCondition()
+	result = ContainsValueCondition()
 	|
 	LOOKAHEAD( ContainsAllCondition() )
-    ContainsAllCondition()
+    result = ContainsAllCondition()
     |
     LOOKAHEAD( ContainsTextCondition() )
-	ContainsTextCondition()
+	result = ContainsTextCondition()
 	|
 	LOOKAHEAD( MatchesCondition() )
-	MatchesCondition()
+	result = MatchesCondition()
 	|
 	LOOKAHEAD( IndexMatchCondition() )
-	IndexMatchCondition()
+	result = IndexMatchCondition()
 	|
     LOOKAHEAD( InstanceofCondition() )
-    InstanceofCondition()
-
+    result = InstanceofCondition()
+){ return result; }
 }
 
-void CompareOperator():
-{}
+OBinaryCompareOperator CompareOperator():
+{  OBinaryCompareOperator result;}
 {
-		EqualsCompareOperator()
-      | LtOperator()
-      | GtOperator()
-      | NeOperator()
-      | NeqOperator()
-      | GeOperator()
-      | LeOperator()
-      | LikeOperator()
-      | ContainsKeyOperator()
+(
+		result = EqualsCompareOperator()
+      | result = LtOperator()
+      | result = GtOperator()
+      | result = NeOperator()
+      | result = NeqOperator()
+      | result = GeOperator()
+      | result = LeOperator()
+      | result = LikeOperator()
+      | result = ContainsKeyOperator()
+){return result;}
 }
 
 
-void LtOperator():
+OLtOperator LtOperator():
 {}
 {
+(
 	<LT>
+){return jjtThis;}
 }
 
-void GtOperator():
+OGtOperator GtOperator():
 {}
 {
+(
 	<GT>
+){return jjtThis;}
 }
 
-void NeOperator():
+ONeOperator NeOperator():
 {}
 {
+(
 	<NE>
+){return jjtThis;}
 }
 
-void NeqOperator():
+ONeqOperator NeqOperator():
 {}
 {
+(
 	<NEQ>
+){return jjtThis;}
 }
 
-void GeOperator():
+OGeOperator GeOperator():
 {}
 {
+(
 	<GE>
+){return jjtThis;}
 }
 
-void LeOperator():
+OLeOperator LeOperator():
 {}
 {
+(
 	<LE>
+){return jjtThis;}
 }
 
-void LikeOperator():
+OLikeOperator LikeOperator():
 {}
 {
+(
 	<LIKE>
+){return jjtThis;}
 }
 
-void ContainsKeyOperator():
+OContainsKeyOperator ContainsKeyOperator():
 {}
 {
+(
 	<CONTAINSKEY>
+){return jjtThis;}
 }
 
-void ContainsValueOperator():
+OContainsValueOperator ContainsValueOperator():
 {}
 {
+(
 	<CONTAINSVALUE>
+){return jjtThis;}
 }
 
-void EqualsCompareOperator():
+OEqualsCompareOperator EqualsCompareOperator():
 {}
 {
+(
 	<EQ>
+){return jjtThis;}
 }
 
-void BinaryCondition():
+OBooleanExpression BinaryCondition():
 {}
 {
- 	Expression() CompareOperator() Expression()
+(
+ 	jjtThis.left = Expression()
+ 	jjtThis.operator = CompareOperator()
+ 	jjtThis.right = Expression()
+){return jjtThis;}
 }
 
-void ContainsValueCondition():
+OBooleanExpression ContainsValueCondition():
 {}
 {
-    Expression() ContainsValueOperator()
+(
+    jjtThis.left = Expression()
+    jjtThis.operator = ContainsValueOperator()
     (
         LOOKAHEAD( 3 )
-        <LPAREN> OrBlock() <RPAREN>
+        <LPAREN> jjtThis.condition = OrBlock() <RPAREN>
         |
         LOOKAHEAD( Expression() )
-        Expression()
+        jjtThis.expression = Expression()
     )
+) { return jjtThis;}
 }
 
-void InstanceofCondition():
+OBooleanExpression InstanceofCondition():
 {}
 {
+(
     Expression() <INSTANCEOF> ( Identifier() | <STRING_LITERAL> )
+){return jjtThis;}
 }
 
-void IndexMatchCondition():
+OBooleanExpression IndexMatchCondition():
 {}
 {
+(
  	<KEY>
  	(
  	    CompareOperator() <LBRACKET> [ Expression() ( <COMMA> Expression() )* ] <RBRACKET>
  	    |
  	    <BETWEEN> <LBRACKET> [ Expression() ( <COMMA> Expression() )* ] <RBRACKET> <AND> <LBRACKET> [ Expression() ( <COMMA> Expression() )* ] <RBRACKET>
  	)
+){return jjtThis;}
 }
 
-void BetweenCondition():
+OBooleanExpression BetweenCondition():
 {}
 {
-	Expression() <BETWEEN> Expression() <AND> Expression()
+(
+	jjtThis.first = Expression() <BETWEEN>
+	jjtThis.second = Expression() <AND>
+	jjtThis.third = Expression()
+){return jjtThis;}
 }
 
-void IsNullCondition():
+OBooleanExpression IsNullCondition():
 {}
 {
-	Expression() <IS> <NULL>
+(
+	jjtThis.expression = Expression() <IS> <NULL>
+){return jjtThis;}
 }
 
-void IsNotNullCondition():
+OBooleanExpression IsNotNullCondition():
 {}
 {
-	Expression() <IS> <NOT> <NULL>
+(
+	jjtThis.expression = Expression() <IS> <NOT> <NULL>
+){return jjtThis;}
 }
 
-void IsDefinedCondition():
+OBooleanExpression IsDefinedCondition():
 {}
 {
-	Expression() <IS> <DEFINED>
+(
+	jjtThis.expression = Expression() <IS> <DEFINED>
+){return jjtThis;}
 }
 
-void IsNotDefinedCondition():
+OBooleanExpression IsNotDefinedCondition():
 {}
 {
-	Expression() <IS> <NOT> <DEFINED>
+(
+	jjtThis.expression = Expression() <IS> <NOT> <DEFINED>
+){return jjtThis;}
 }
 
-void ContainsCondition():
+OBooleanExpression ContainsCondition():
 {}
 {
-	Expression() <CONTAINS>
+(
+	jjtThis.left = Expression() <CONTAINS>
 
 	(
 	    LOOKAHEAD( 3 )
-	    ( <LPAREN> OrBlock() <RPAREN> )
+	    ( <LPAREN> jjtThis.condition = OrBlock() <RPAREN> )
 	    |
 	    LOOKAHEAD( Expression() )
-	    Expression()
+	    jjtThis.right = Expression()
 	)
-
+){return jjtThis;}
 }
 
-void InOperator():
+OInOperator InOperator():
 {}
 {
     <IN>
+    {return jjtThis;}
 }
 
-void InCondition():
-{}
+OBooleanExpression InCondition():
+{OExpression lastExpression;}
 {
-	Expression() InOperator()
+(
+	jjtThis.left = Expression()
+	jjtThis.operator = InOperator()
 	(
-	    <LBRACKET> Expression() (<COMMA> Expression())* <RBRACKET>
+	    (
+	        <LBRACKET>
+	        lastExpression = Expression()
+	        {
+	            jjtThis.rightCollection = new java.util.ArrayList();
+	            jjtThis.rightCollection.add(lastExpression);
+	        }
+	        (<COMMA> lastExpression = Expression())* <RBRACKET> )
 	    |
-	    <LPAREN> SelectStatement() <RPAREN>
+	    ( <LPAREN> jjtThis.rightStatement = SelectStatement() <RPAREN>)
 	    |
-	    InputParameter()
+	    jjtThis.rightParam = InputParameter()
 	)
+){return jjtThis;}
 }
 
-void NotInCondition():
+OBooleanExpression NotInCondition():
 {}
 {
+(
 	Expression() <NOT> InOperator()
 	(
-	    <LBRACKET> Expression() (<COMMA> Expression())* <RBRACKET>
+	    ( <LBRACKET> Expression() (<COMMA> Expression())* <RBRACKET> )
         |
-        <LPAREN> SelectStatement() <RPAREN>
+        ( <LPAREN> SelectStatement() <RPAREN> )
 	)
+){return jjtThis;}
 }
 
-void ContainsAllCondition():
+OBooleanExpression ContainsAllCondition():
 {}
 {
+(
 	Expression() <CONTAINSALL> <LPAREN> OrBlock() <RPAREN>
+){return jjtThis;}
 }
 
-void ContainsTextCondition():
+OBooleanExpression ContainsTextCondition():
 {}
 {
+(
 	Expression() <CONTAINSTEXT> Expression()
+){return jjtThis;}
 }
 
-void MatchesCondition():
+OBooleanExpression MatchesCondition():
 {}
 {
+(
 	Expression() <MATCHES> <STRING_LITERAL>
+){return jjtThis;}
 }
 
 OOrderBy OrderBy():

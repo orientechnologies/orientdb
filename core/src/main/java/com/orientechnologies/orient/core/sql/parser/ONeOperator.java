@@ -3,7 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 public
-class ONeOperator extends SimpleNode {
+class ONeOperator extends SimpleNode  implements OBinaryCompareOperator{
   public ONeOperator(int id) {
     super(id);
   }
@@ -16,6 +16,10 @@ class ONeOperator extends SimpleNode {
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
+  }
+
+  @Override public boolean execute(Object left, Object right) {
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=ac0ae426fb86c930dea83013ddc202ba (do not edit this line) */

@@ -4,6 +4,9 @@ package com.orientechnologies.orient.core.sql.parser;
 
 public
 class OFromItem extends SimpleNode {
+
+  protected OIdentifier className;
+
   public OFromItem(int id) {
     super(id);
   }
