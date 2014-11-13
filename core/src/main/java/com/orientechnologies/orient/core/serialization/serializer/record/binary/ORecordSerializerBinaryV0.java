@@ -37,7 +37,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -195,10 +194,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       final Object value = values[i].getValue();
       if (value != null) {
         final OType type = getFieldType(document, values[i].getKey(), value, props);
-        if (type == null) {
-          throw new OSerializationException("Impossible serialize value of type " + value.getClass()
-              + " with the ODocument binary serializer");
-        }
+        // temporary skip serialization skip of unknown types
+        if (type == null)
+          continue;
 
         pointer = writeSingleValue(bytes, value, type, getLinkedType(document, type, values[i].getKey()));
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
@@ -562,10 +560,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       Object value = values[i].getValue();
       if (value != null) {
         OType type = getTypeFromValueEmbedded(value);
-        if (type == null) {
-          throw new OSerializationException("Impossible serialize value of type " + value.getClass()
-              + " with the ODocument binary serializer");
-        }
+        // temporary skip serialization of unknown types
+        if (type == null)
+          continue;
         pointer = writeSingleValue(bytes, value, type, null);
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
         writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
@@ -640,9 +637,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       if (type != null) {
         writeOType(bytes, bytes.alloc(1), type);
         writeSingleValue(bytes, itemValue, type, null);
-      } else {
-        throw new OSerializationException("Impossible serialize value of type " + value.getClass()
-            + " with the ODocument binary serializer");
       }
     }
     return pos;
