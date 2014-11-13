@@ -690,6 +690,99 @@ public class ODocumentSchemalessBinarySerializationTest {
     assertEquals(extr.field("custom"), document.field("custom"));
   }
 
+  private class WrongData {
+
+  }
+
+  @Test(expectedExceptions = OSerializationException.class)
+  private void testSetOfWrongData() {
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
+
+    ODocument document = new ODocument();
+
+    Set<Object> embeddedSet = new HashSet<Object>();
+    embeddedSet.add(new WrongData());
+    document.field("embeddedSet", embeddedSet, OType.EMBEDDEDSET);
+
+    serializer.toStream(document, false);
+  }
+
+  @Test(expectedExceptions = OSerializationException.class)
+  private void testListOfWrongData() {
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
+
+    ODocument document = new ODocument();
+
+    List<Object> embeddedList = new ArrayList<Object>();
+    embeddedList.add(new WrongData());
+    document.field("embeddedList", embeddedList, OType.EMBEDDEDLIST);
+
+    serializer.toStream(document, false);
+  }
+
+  @Test(expectedExceptions = OSerializationException.class)
+  private void testMapOfWrongData() {
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
+
+    ODocument document = new ODocument();
+
+    Map<String, Object> embeddedMap = new HashMap<String, Object>();
+    embeddedMap.put("name", new WrongData());
+    document.field("embeddedMap", embeddedMap, OType.EMBEDDEDMAP);
+
+    serializer.toStream(document, false);
+  }
+
+  @Test(expectedExceptions = ClassCastException.class)
+  private void testLinkSetOfWrongData() {
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
+
+    ODocument document = new ODocument();
+
+    Set<Object> linkSet = new HashSet<Object>();
+    linkSet.add(new WrongData());
+    document.field("linkSet", linkSet, OType.LINKSET);
+
+    serializer.toStream(document, false);
+  }
+
+  @Test(expectedExceptions = ClassCastException.class)
+  private void testLinkListOfWrongData() {
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
+
+    ODocument document = new ODocument();
+
+    List<Object> linkList = new ArrayList<Object>();
+    linkList.add(new WrongData());
+    document.field("linkList", linkList, OType.LINKLIST);
+
+    serializer.toStream(document, false);
+  }
+
+  @Test(expectedExceptions = ClassCastException.class)
+  private void testLinkMapOfWrongData() {
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
+
+    ODocument document = new ODocument();
+
+    Map<String, Object> linkMap = new HashMap<String, Object>();
+    linkMap.put("name", new WrongData());
+    document.field("linkMap", linkMap, OType.LINKMAP);
+
+    serializer.toStream(document, false);
+  }
+
+  @Test(expectedExceptions = OSerializationException.class)
+  private void testFieldWrongData() {
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
+
+    ODocument document = new ODocument();
+
+    document.field("wrongData", new WrongData());
+
+    serializer.toStream(document, false);
+  }
+
   @Test
   private void testCollectionOfEmbeddedDocument() {
 
