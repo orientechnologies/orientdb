@@ -79,7 +79,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   private String                                           password;
 
   private static final ThreadLocal<OrientBaseGraph>        currentGraph   = new ThreadLocal<OrientBaseGraph>();
-  private static final ThreadLocal<Deque<OrientBaseGraph>> initQueue      = new ThreadLocal<Deque<OrientBaseGraph>>() {
+  private static final ThreadLocal<Deque<OrientBaseGraph>> initStack = new ThreadLocal<Deque<OrientBaseGraph>>() {
                                                                             @Override
                                                                             protected Deque<OrientBaseGraph> initialValue() {
                                                                               return new ArrayDeque<OrientBaseGraph>();
@@ -93,8 +93,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   /**
    * Internal
    */
-  public static void clearInitQueue() {
-    initQueue.get().clear();
+  public static void clearInitStack() {
+    initStack.get().clear();
   }
 
   /**
@@ -114,7 +114,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     readDatabaseConfiguration();
     configure(iConfiguration);
-    pushInInitQueue();
+    pushInInitStack();
   }
 
   public OrientBaseGraph(final OPartitionedDatabasePool pool) {
@@ -125,7 +125,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     this.username = database.getUser() != null ? database.getUser().getName() : null;
 
     readDatabaseConfiguration();
-    pushInInitQueue();
+    pushInInitStack();
   }
 
   public OrientBaseGraph(final OPartitionedDatabasePool pool, final Settings iConfiguration) {
@@ -137,7 +137,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     readDatabaseConfiguration();
     configure(iConfiguration);
-    pushInInitQueue();
+    pushInInitStack();
   }
 
   public OrientBaseGraph(final String url) {
@@ -152,7 +152,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     this.openOrCreate();
 
     readDatabaseConfiguration();
-    pushInInitQueue();
+    pushInInitStack();
   }
 
   /**
@@ -1060,7 +1060,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       }
     }
 
-    final OrientBaseGraph graph = pollFromInitQueue();
+    final OrientBaseGraph graph = pollFromInitStack();
     currentGraph.set(graph);
 
     url = null;
@@ -1735,13 +1735,13 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         || idx.getConfiguration().field(OrientIndex.CONFIG_CLASSNAME) != null;
   }
 
-  private void pushInInitQueue() {
-    final Deque<OrientBaseGraph> queue = initQueue.get();
+  private void pushInInitStack() {
+    final Deque<OrientBaseGraph> queue = initStack.get();
     queue.push(this);
   }
 
-  private OrientBaseGraph pollFromInitQueue() {
-    final Deque<OrientBaseGraph> queue = initQueue.get();
+  private OrientBaseGraph pollFromInitStack() {
+    final Deque<OrientBaseGraph> queue = initStack.get();
     queue.poll();
 
     return queue.peek();
