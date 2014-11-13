@@ -1,0 +1,116 @@
+           .                                          
+          .`        `                                 
+          ,      `:.                                  
+         `,`    ,:`                                   
+         .,.   :,,                                    
+         .,,  ,,,                                     
+    .    .,.:::::  ````                                 :::::::::     :::::::::
+    ,`   .::,,,,::.,,,,,,`;;                      .:    ::::::::::    :::    :::
+    `,.  ::,,,,,,,:.,,.`  `                       .:    :::      :::  :::     :::
+     ,,:,:,,,,,,,,::.   `        `         ``     .:    :::      :::  :::     :::
+      ,,:.,,,,,,,,,: `::, ,,   ::,::`   : :,::`  ::::   :::      :::  :::    :::
+       ,:,,,,,,,,,,::,:   ,,  :.    :   ::    :   .:    :::      :::  :::::::
+        :,,,,,,,,,,:,::   ,,  :      :  :     :   .:    :::      :::  :::::::::
+  `     :,,,,,,,,,,:,::,  ,, .::::::::  :     :   .:    :::      :::  :::     :::
+  `,...,,:,,,,,,,,,: .:,. ,, ,,         :     :   .:    :::      :::  :::     :::
+    .,,,,::,,,,,,,:  `: , ,,  :     `   :     :   .:    :::      :::  :::     :::
+      ...,::,,,,::.. `:  .,,  :,    :   :     :   .:    :::::::::::   :::     :::
+           ,::::,,,. `:   ,,   :::::    :     :   .:    :::::::::     ::::::::::
+           ,,:` `,,.                                  
+          ,,,    .,`                                  
+         ,,.     `,                                          GRAPH DATABASE   
+       ``        `.                                   
+                 ``                                   
+                 `                                    
+***********************************************************************************************************************
+                              ORIENT DATABASE  http://www.orientechnologies.com
+***********************************************************************************************************************
+
+ UPGRADE GUIDE
+----------------
+
+ Semantic Versioning System
+-----------------------------
+
+OrientDB uses the Semantic Versioning System (http://semver.org) where given a version number MAJOR.MINOR.PATCH,
+increment the:
+
+- MAJOR version when you make incompatible API changes,
+- MINOR version when you add functionality in a backwards-compatible manner
+- PATCH version when you make backwards-compatible bug fixes.
+
+So between PATCH versions the compatibility is assured (example 1.4.0 -> 1.4.1). Between MINOR and MAJOR versions you
+could export and re-import the database. See below in the column "Database":
+
+
+  Compatibility Matrix
+ ---------------------------
+
++--------+-------+--------------------------------------------+-----------+----------+----------+
+|        |       |                   API                      |           | BINARY   | HTTP     |
+|  FROM  |  TO   |--------------------------------------------+ DATABASE  | NETWORK  | NETWORK  |
+|        |       | Blueprints | Document | Object | Nat.Graph |           | PROTOCOL | PROTOCOL |
++--------+-------+------------+----------+--------+-----------+-----------+----------+----------+
+| 1.4.x  | 1.5.x | Changed    |   OK     |   OK   |    OK     | Automatic | 16, 17   | 10       |
+|        |       | v. 2.4.x   |          |        |           |           |          |          |
++--------+-------+------------+----------+--------+-----------+-----------+----------+----------+
+| 1.3.x  | 1.4.x | Changed    |   OK     |   OK   |    OK     | Automatic | 14, 15   | n.a.     |
+|        |       | v. 2.3.x   |          |        |           |           |          |          |
++--------+-------+------------+----------+--------+-----------+-----------+----------+----------+
+| 1.2.x  | 1.3.x | Changed    |   OK     |   OK   |    OK     | Export &  | 12, 13   | n.a.     |
+|        |       | v. 2.2.x   |          |        |           | Re-import |          |          |
++--------+-------+------------+----------+--------+-----------+-----------+----------+----------+
+
+References:
+
+- Binary Network Protocol: https://github.com/orientechnologies/orientdb/wiki/Network-Binary-Protocol
+- HTTP Network Protocol: https://github.com/orientechnologies/orientdb/wiki/OrientDB-REST
+ 
+
+ Migrate from LOCAL storage engine to PLOCAL
+---------------------------------------------
+
+1) Open a new shell (Linux/Mac) or a Command Prompt (Windows)
+
+2) export the database using the console. Example by exporting the database under /temp/db:
+
+   > bin/console.sh (or bin/console.bat under Windows)
+   orientdb> connect database local:/temp/db admin admin
+   orientdb> export database /temp/db.json.gzip
+   orientdb> disconnect
+
+3) now always in the console create a new database using the "plocal" engine:
+
+   a) on a local filesystem:
+
+      orientdb> create database plocal:/temp/newdb admin admin plocal graph
+
+   b) on a remote server (use the server's credentials to access):
+
+      orientdb> create database remote:localhost/newdb root password plocal graph
+
+4) now always in the console import the old database in the new one:
+
+   orientdb> import database /temp/db.json.gzip -preserveClusterIDs=true
+   orientdb> quit
+
+
+  API history
+ ----------------------
+ - 1.4.x Blueprints becomes the new standard API for the Graph Database. All the GraphDB APIs are deprecated
+
+
+
+ Information 
+--------------
+
+For more information visit the official website: http://www.orientdb.org.
+
+Remember OrientDB is an Open Source project released with the Apache v2 license,
+so it's always FREE for any purpose. If you're interested to Enterprise tools,
+professional support, training or consultancy contact: info@orientechnologies.com.
+
+Enjoy with Graphs,
+Orient Technologies
+The company behind OrientDB
+(www.orientechnologies.com)
