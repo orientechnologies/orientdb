@@ -53,7 +53,10 @@ public class OConsoleBlock extends OAbstractBlock {
     if (file == null && commands == null)
       throw new OConfigurationException("file or commands are mandatory");
 
-    console = new OConsoleDatabaseApp(new String[] { file });
+    if (file != null)
+      console = new OConsoleDatabaseApp(new String[] { file });
+    else
+      console = new OConsoleDatabaseApp(commands.toArray(new String[commands.size()]));
   }
 
   @Override
