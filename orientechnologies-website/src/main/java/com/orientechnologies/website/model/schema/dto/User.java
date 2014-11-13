@@ -12,7 +12,8 @@ import java.util.Collection;
 public class User implements UserDetails {
 
   @JsonIgnore
-  private String id;
+  private String rid;
+  private Long   id;
   private String name;
   @JsonIgnore
   private String token;
@@ -26,6 +27,14 @@ public class User implements UserDetails {
   }
 
   public User() {
+  }
+
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public Long getId() {
+    return id;
   }
 
   public String getName() {
@@ -52,12 +61,12 @@ public class User implements UserDetails {
     this.email = email;
   }
 
-  public String getId() {
-    return id;
+  public String getRid() {
+    return rid;
   }
 
-  public void setId(String id) {
-    this.id = id;
+  public void setRid(String rid) {
+    this.rid = rid;
   }
 
   @JsonIgnore

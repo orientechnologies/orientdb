@@ -63,7 +63,7 @@ public enum OComment implements OTypeHolder<com.orientechnologies.website.model.
     doc.field(BODY.toString(), entity.getBody());
     doc.field(OEvent.CREATED_AT.toString(), entity.getCreatedAt());
     doc.field(UPDATED_AT.toString(), entity.getUpdatedAt());
-    doc.field(USER.toString(), (entity.getUser() != null ? new ORecordId(entity.getUser().getId()) : null));
+    doc.field(USER.toString(), (entity.getUser() != null ? new ORecordId(entity.getUser().getRid()) : null));
     return doc;
   }
 

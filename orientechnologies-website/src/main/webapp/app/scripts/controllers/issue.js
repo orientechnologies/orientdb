@@ -44,7 +44,11 @@ angular.module('webappApp')
     });
 
 
-    $scope.comments = Repo.one(repo).all("issues").one(number).all("events").getList().$object;
+    function refreshEvents() {
+      $scope.comments = Repo.one(repo).all("issues").one(number).all("events").getList().$object;
+    }
+
+    refreshEvents();
 
     $scope.labels = Repo.one(repo).all("labels").getList().$object;
 
@@ -60,12 +64,24 @@ angular.module('webappApp')
       });
     }
 
+    $scope.close = function () {
+      Repo.one(repo).all("issues").one(number).patch({state: "closed"}).then(function (data) {
+        $scope.issue.state = "closed";
+        refreshEvents();
+      });
+    }
+    $scope.reopen = function () {
+      Repo.one(repo).all("issues").one(number).patch({state: "open"}).then(function (data) {
+        $scope.issue.state = "open";
+        refreshEvents();
+      });
+    }
     // CHANGE LABEL EVENT
     $scope.$on("label:added", function (e, label) {
 
       Repo.one(repo).all("issues").one(number).all("labels").post([label.name]).then(function (data) {
         $scope.issue.labels.push(label);
-        $scope.comments = Repo.one(repo).all("issues").one(number).all("events").getList().$object;
+        refreshEvents();
       });
 
 
@@ -76,7 +92,7 @@ angular.module('webappApp')
       Repo.one(repo).all("issues").one(number).one("labels", label.name).remove().then(function () {
         var idx = $scope.issue.labels.indexOf(label);
         $scope.issue.labels.splice(idx, 1);
-        $scope.comments = Repo.one(repo).all("issues").one(number).all("events").getList().$object;
+        refreshEvents();
       });
     })
 
@@ -84,7 +100,21 @@ angular.module('webappApp')
 
     $scope.$on("version:changed", function (e, version) {
 
-      $scope.issue.version = version;
+      Repo.one(repo).all("issues").one(number).patch({version: version.number}).then(function (data) {
+        $scope.issue.version = version;
+        refreshEvents();
+      })
+
+
+    })
+    // CHANGE MILESTONE EVENT
+    $scope.$on("milestone:changed", function (e, milestone) {
+
+      Repo.one(repo).all("issues").one(number).patch({milestone: milestone.number}).then(function (data) {
+        $scope.issue.milestone = milestone;
+        refreshEvents();
+      })
+
 
     })
   });
@@ -113,18 +143,27 @@ angular.module('webappApp')
 
 angular.module('webappApp')
   .controller('ChangeMilestoneCtrl', function ($scope, $routeParams, Repo, $popover) {
-
+    $scope.isMilestoneSelected = function (milestone) {
+      return $scope.issue.milestone ? milestone.number == $scope.issue.milestone.number : false;
+    }
+    $scope.toggleMilestone = function (milestone) {
+      if (!$scope.isMilestoneSelected(milestone)) {
+        $scope.$emit("milestone:changed", milestone);
+        $scope.$hide();
+      }
+    }
 
   });
 angular.module('webappApp')
   .controller('ChangeVersionCtrl', function ($scope, $routeParams, Repo, $popover) {
 
     $scope.isVersionSelected = function (version) {
-      return version.number == $scope.issue.version.number;
+      return $scope.issue.version ? version.number == $scope.issue.version.number : false;
     }
     $scope.toggleVersion = function (version) {
       if (!$scope.isVersionSelected(version)) {
         $scope.$emit("version:changed", version);
+        $scope.$hide();
       }
     }
   });

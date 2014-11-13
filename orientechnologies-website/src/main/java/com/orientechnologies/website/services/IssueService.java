@@ -29,4 +29,5 @@ public interface IssueService {
 
   public void changeVersion(Issue issue, Milestone milestone);
 
+  public Issue changeState(Issue issue, String state);
 }

@@ -35,11 +35,12 @@ public class UserRepositoryImpl extends OrientBaseRepository<User> implements Us
   }
 
   @Override
-  public User findUserOrCreateByLogin(String login) {
+  public User findUserOrCreateByLogin(String login, Long id) {
 
     User user = findUserByLogin(login);
     if (user == null) {
       user = new User(login, null, null);
+      user.setId(id);
       user = save(user);
     }
     return user;

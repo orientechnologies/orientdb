@@ -3,6 +3,9 @@
 angular.module('webappApp').directive('mkeditor', function ($timeout) {
   return {
     require: '^ngModel',
+    scope: {
+      readOnly: "=readOnly"
+    },
     link: function (scope, elem, attrs, ngModel) {
 
 
@@ -17,13 +20,13 @@ angular.module('webappApp').directive('mkeditor', function ($timeout) {
 
         }
         if (!editor) {
-          var mk = $(elem).markdown({
+          $(elem).markdown({
             autofocus: false,
             savable: false,
             onShow: function (e) {
 
               e.setContent(value);
-              e.showPreview();
+              //e.showPreview();
               editor = e;
             },
             onChange: function (e) {
@@ -37,5 +40,16 @@ angular.module('webappApp').directive('mkeditor', function ($timeout) {
 
       }
     }
+  }
+});
+angular.module('webappApp').directive('avatar', function ($timeout) {
+  return {
+    restrict: 'E',
+    scope: {
+      user: "=user",
+      dim: "=dim",
+      name: "=name"
+    },
+    templateUrl: 'views/avatar.html'
   }
 });

@@ -174,7 +174,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     OrientGraph graph = dbFactory.getGraph();
 
     OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(organization.getId()));
-    OrientVertex devVertex = new OrientVertex(graph, new ORecordId(user.getId()));
+    OrientVertex devVertex = new OrientVertex(graph, new ORecordId(user.getRid()));
 
     orgVertex.addEdge(HasMember.class.getSimpleName(), devVertex);
 

@@ -15,4 +15,10 @@ public class SecurityHelper {
     DeveloperAuthentication developerAuthentication = (DeveloperAuthentication) auth;
     return developerAuthentication.getUser();
   }
+
+  public static String currentToken() {
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    DeveloperAuthentication developerAuthentication = (DeveloperAuthentication) auth;
+    return developerAuthentication.getGithubToken();
+  }
 }

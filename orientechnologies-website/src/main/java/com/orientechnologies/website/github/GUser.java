@@ -17,6 +17,10 @@ public class GUser extends GEntity {
     return get("email");
   }
 
+  public Long getId() {
+    return get("id");
+  }
+
   @Override
   protected String getBaseUrl() {
     return null;

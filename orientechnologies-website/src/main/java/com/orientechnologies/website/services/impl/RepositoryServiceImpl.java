@@ -2,11 +2,13 @@ package com.orientechnologies.website.services.impl;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.website.OrientDBFactory;
+import com.orientechnologies.website.github.GitHub;
 import com.orientechnologies.website.helper.SecurityHelper;
 import com.orientechnologies.website.model.schema.HasIssue;
 import com.orientechnologies.website.model.schema.HasLabel;
 import com.orientechnologies.website.model.schema.HasMilestone;
 import com.orientechnologies.website.model.schema.dto.*;
+import com.orientechnologies.website.model.schema.dto.web.IssueDTO;
 import com.orientechnologies.website.repository.EventRepository;
 import com.orientechnologies.website.repository.IssueRepository;
 import com.orientechnologies.website.repository.RepositoryRepository;
@@ -59,7 +61,7 @@ public class RepositoryServiceImpl implements RepositoryService {
   }
 
   @Override
-  public Issue openIssue(Repository repository, Issue issue) {
+  public Issue openIssue(Repository repository, IssueDTO issue) {
     if (Boolean.TRUE.equals(issue.getConfidential())) {
       return createPrivateIssue(repository, issue);
     } else {
@@ -67,21 +69,54 @@ public class RepositoryServiceImpl implements RepositoryService {
     }
   }
 
-  private Issue createPrivateIssue(Repository repository, Issue issue) {
-    String assignee = issue.getAssignee() != null ? issue.getAssignee().getName() : null;
-    Integer milestoneId = issue.getMilestone().getNumber();
-    Integer versionId = issue.getVersion().getNumber();
-    issue.setCreatedAt(new Date());
-    issue.setState("open");
-    issue = issueRepository.save(issue);
-    createIssue(repository, issue);
+  @Override
+  public Issue patchIssue(Issue original, IssueDTO issue) {
+
+    Repository r = original.getRepository();
+
+    if (issue.getVersion() != null) {
+      if (original.getVersion() == null || original.getVersion().getNumber() != issue.getVersion()) {
+        handleVersion(r, original, issue.getVersion());
+      }
+    }
+    if (issue.getMilestone() != null) {
+      if (original.getMilestone() == null || original.getMilestone().getNumber() != issue.getMilestone()) {
+        handleMilestone(r, original, issue.getMilestone());
+      }
+    }
+    if (issue.getState() != null) {
+      if (!original.getState().equals(issue.getState())) {
+        String evt = issue.getState().equals("open") ? "reopened" : "closed";
+        original = issueService.changeState(original, issue.getState());
+        IssueEvent e = new IssueEvent();
+        e.setCreatedAt(new Date());
+        e.setEvent(evt);
+        e.setActor(SecurityHelper.currentUser());
+        e = (IssueEvent) eventRepository.save(e);
+        issueService.fireEvent(original, e);
+      }
+    }
+    return original;
+  }
+
+  private Issue createPrivateIssue(Repository repository, IssueDTO issue) {
+    String assignee = issue.getAssignee();
+    Integer milestoneId = issue.getMilestone();
+    Integer versionId = issue.getVersion();
+    Issue issueDomain = new Issue();
+    issueDomain.setTitle(issue.getTitle());
+    issueDomain.setBody(issue.getBody());
+    issueDomain.setCreatedAt(new Date());
+    issueDomain.setState("open");
+    issueDomain = issueRepository.save(issueDomain);
+    createIssue(repository, issueDomain);
     User user = SecurityHelper.currentUser();
-    issueService.changeUser(issue, user);
-    handleAssignee(issue, assignee);
-    handleMilestone(repository, issue, milestoneId);
-    handleVersion(repository, issue, versionId);
-    handleLabels(repository, issue);
-    return issue;
+    issueService.changeUser(issueDomain, user);
+    handleAssignee(issueDomain, assignee);
+    handleMilestone(repository, issueDomain, milestoneId);
+    handleVersion(repository, issueDomain, versionId);
+    handleLabels(repository, issueDomain, issue.getLabels());
+    return issueDomain;
   }
 
   private void handleVersion(Repository repository, Issue issue, Integer milestone) {
@@ -100,11 +135,11 @@ public class RepositoryServiceImpl implements RepositoryService {
     }
   }
 
-  private void handleLabels(Repository repository, Issue issue) {
+  private void handleLabels(Repository repository, Issue issue, List<String> labelsList) {
 
     List<Label> labels = new ArrayList<Label>();
-    for (Label label : issue.getLabels()) {
-      Label l = repositoryRepository.findLabelsByRepoAndName(repository.getName(), label.getName());
+    for (String label : labelsList) {
+      Label l = repositoryRepository.findLabelsByRepoAndName(repository.getName(), label);
       if (l != null) {
         labels.add(l);
       }
@@ -142,7 +177,9 @@ public class RepositoryServiceImpl implements RepositoryService {
     }
   }
 
-  private Issue createPublicIssue(Repository repository, Issue issue) {
+  private Issue createPublicIssue(Repository repository, IssueDTO issue) {
+
+    GitHub github = new GitHub(SecurityHelper.currentToken());
     return null;
   }
 

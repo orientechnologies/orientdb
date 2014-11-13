@@ -7,6 +7,7 @@ import com.orientechnologies.website.model.schema.*;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.repository.CommentRepository;
 import com.orientechnologies.website.repository.EventRepository;
+import com.orientechnologies.website.repository.IssueRepository;
 import com.orientechnologies.website.repository.RepositoryRepository;
 import com.orientechnologies.website.services.IssueService;
 import com.tinkerpop.blueprints.Direction;
@@ -37,6 +38,8 @@ public class IssueServiceImpl implements IssueService {
   private RepositoryRepository repoRepository;
   @Autowired
   private EventRepository      eventRepository;
+  @Autowired
+  private IssueRepository      issueRepository;
 
   @Override
   public void commentIssue(Issue issue, Comment comment) {
@@ -126,7 +129,7 @@ public class IssueServiceImpl implements IssueService {
       edge.remove();
     }
 
-    OrientVertex devVertex = new OrientVertex(graph, new ORecordId(user.getId()));
+    OrientVertex devVertex = new OrientVertex(graph, new ORecordId(user.getRid()));
     devVertex.addEdge(HasOpened.class.getSimpleName(), orgVertex);
   }
 
@@ -141,6 +144,12 @@ public class IssueServiceImpl implements IssueService {
     createVersionRelationship(issue, milestone);
   }
 
+  @Override
+  public Issue changeState(Issue issue, String state) {
+    issue.setState(state);
+    return issueRepository.save(issue);
+  }
+
   private void createAssigneeRelationship(Issue issue, User user) {
     OrientGraph graph = dbFactory.getGraph();
     OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(issue.getId()));
@@ -149,7 +158,7 @@ public class IssueServiceImpl implements IssueService {
       edge.remove();
     }
 
-    OrientVertex devVertex = new OrientVertex(graph, new ORecordId(user.getId()));
+    OrientVertex devVertex = new OrientVertex(graph, new ORecordId(user.getRid()));
     orgVertex.addEdge(IsAssigned.class.getSimpleName(), devVertex);
   }
 

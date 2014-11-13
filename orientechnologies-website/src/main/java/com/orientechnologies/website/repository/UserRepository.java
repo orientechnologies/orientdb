@@ -9,7 +9,7 @@ public interface UserRepository extends BaseRepository<User> {
 
   public User findUserByLogin(String login);
 
-  public User findUserOrCreateByLogin(String login);
+  public User findUserOrCreateByLogin(String login, Long id);
 
   public User findByGithubToken(String token);
 }

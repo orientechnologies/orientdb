@@ -70,7 +70,7 @@ public enum OIssueEvent implements OTypeHolder<IssueEvent> {
     doc.field(EVENT.toString(), entity.getEvent());
     doc.field(EVENT_ID.toString(), entity.getEventId());
     doc.field(OEvent.CREATED_AT.toString(), entity.getCreatedAt());
-    doc.field(ACTOR.toString(), (entity.getActor() != null ? new ORecordId(entity.getActor().getId()) : null));
+    doc.field(ACTOR.toString(), (entity.getActor() != null ? new ORecordId(entity.getActor().getRid()) : null));
     return doc;
   }
 

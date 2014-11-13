@@ -159,16 +159,18 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
 
     importIssueLabels(repoDtp, issue, issueDto);
 
-    User user = userRepo.findUserOrCreateByLogin(issue.getUser().getLogin());
+    GUser user1 = issue.getUser();
+    User user = userRepo.findUserOrCreateByLogin(user1.getLogin(), user1.getId());
 
     // IMPORT ISSUE CREATOR
     importIssueUser(issueDto, user);
 
     // IMPORT ISSUE ASSIGNEE
 
-    String login = issue.getAssignee() != null ? issue.getAssignee().getLogin() : null;
+    GUser assignee1 = issue.getAssignee();
+    String login = assignee1 != null ? assignee1.getLogin() : null;
     if (login != null) {
-      User assignee = userRepo.findUserOrCreateByLogin(login);
+      User assignee = userRepo.findUserOrCreateByLogin(login, assignee1.getId());
       importIssueAssignee(issueDto, user);
     }
     // IMPORT COMMENTS
@@ -202,7 +204,8 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
         e.setCreatedAt(event.getCreatedAt());
         e.setEventId(event.getId());
         e.setEvent(event.getEvent());
-        e.setActor(userRepo.findUserOrCreateByLogin(event.getActor().getLogin()));
+        GUser actor = event.getActor();
+        e.setActor(userRepo.findUserOrCreateByLogin(actor.getLogin(), actor.getId()));
         e = (IssueEvent) eventRepository.save(e);
         createIssueEventAssociation(issueDto, e);
       }
@@ -225,7 +228,8 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
       }
       comment.setCommentId(ghIssueComment.getId());
       comment.setBody(ghIssueComment.getBody());
-      comment.setUser(userRepo.findUserOrCreateByLogin(ghIssueComment.getUser().getLogin()));
+      GUser user = ghIssueComment.getUser();
+      comment.setUser(userRepo.findUserOrCreateByLogin(user.getLogin(), user.getId()));
       comment.setCreatedAt(ghIssueComment.getCreatedAt());
       comment.setUpdatedAt(ghIssueComment.getUpdatedAt());
 

@@ -2,6 +2,7 @@ package com.orientechnologies.website.controllers;
 
 import com.orientechnologies.website.configuration.ApiVersion;
 import com.orientechnologies.website.model.schema.dto.*;
+import com.orientechnologies.website.model.schema.dto.web.IssueDTO;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import com.orientechnologies.website.repository.RepositoryRepository;
 import com.orientechnologies.website.services.IssueService;
@@ -61,12 +62,21 @@ public class RepositoryController {
 
   @RequestMapping(value = "{owner}/{repo}/issues", method = RequestMethod.POST)
   public ResponseEntity<Issue> createIssue(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
-      @RequestBody Issue issue) {
+      @RequestBody IssueDTO issue) {
 
     Repository r = organizationRepository.findOrganizationRepository(owner, repo);
 
     return r != null ? new ResponseEntity<Issue>(repositoryService.openIssue(r, issue), HttpStatus.OK) : new ResponseEntity<Issue>(
         HttpStatus.NOT_FOUND);
+  }
+
+  @RequestMapping(value = "{owner}/{repo}/issues/{number}", method = RequestMethod.PATCH)
+  public ResponseEntity<Issue> patchIssue(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
+      @PathVariable("number") String number, @RequestBody IssueDTO issue) {
+
+    Issue i = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
+    return i != null ? new ResponseEntity<Issue>(repositoryService.patchIssue(i, issue), HttpStatus.OK)
+        : new ResponseEntity<Issue>(HttpStatus.NOT_FOUND);
   }
 
   @RequestMapping(value = "{owner}/{repo}/issues/{number}/labels", method = RequestMethod.POST)

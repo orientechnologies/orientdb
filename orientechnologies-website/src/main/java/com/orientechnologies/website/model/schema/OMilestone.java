@@ -104,7 +104,7 @@ public enum OMilestone implements OTypeHolder<Milestone> {
     doc.field(CREATED_AT.toString(), entity.getCreatedAt());
     doc.field(UPDATED_AT.toString(), entity.getUpdatedAt());
     doc.field(DUE_ON.toString(), entity.getDueOn());
-    doc.field(CREATOR.toString(), (entity.getCreator() != null ? new ORecordId(entity.getCreator().getId()) : null));
+    doc.field(CREATOR.toString(), (entity.getCreator() != null ? new ORecordId(entity.getCreator().getRid()) : null));
     return doc;
   }
 }

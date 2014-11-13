@@ -2,6 +2,9 @@
 .fa-closed:before {
   content: '\f056';
 }
+.fa-reopened:before {
+  content: '\f192';
+}
 
 .fa-assigned:before {
   content: '\f007';
