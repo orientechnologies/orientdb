@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.io.*;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.*;
@@ -41,6 +34,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -56,15 +50,43 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ODistributedStorage;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.task.ODeployDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation for clustering.
@@ -1194,19 +1216,37 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
         if (cfgClusterNames.contains(newClusterName)) {
           // FOUND A CLUSTER PREVIOUSLY ASSIGNED TO THE LOCAL ONE: CHANGE ASSIGNMENT TO LOCAL NODE AGAIN
-          ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE,
+          ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
               "class %s, change mastership of cluster '%s' (id=%d) to local node '%s'", iClass, newClusterName,
               iDatabase.getClusterIdByName(newClusterName), nodeName);
           cfg.setMasterServer(newClusterName, nodeName);
         } else {
 
           // CREATE A NEW CLUSTER WHERE LOCAL NODE IS THE MASTER
-          ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE, "class %s, creation of new local cluster '%s' (id=%d)",
+          ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "class %s, creation of new local cluster '%s' (id=%d)",
               iClass, newClusterName, iDatabase.getClusterIdByName(newClusterName));
 
-          iClass.addCluster(newClusterName);
+          if (OScenarioThreadLocal.INSTANCE.get() == OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED) {
+            final Future<?> result = Orient.instance().getWorkers().submit(new Runnable() {
+              @Override
+              public void run() {
+                ODatabaseRecordThreadLocal.INSTANCE.set((com.orientechnologies.orient.core.db.ODatabaseDocumentInternal) iDatabase);
+                iClass.addCluster(newClusterName);
+                ODatabaseRecordThreadLocal.INSTANCE.remove();
+              }
+            });
 
-          ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE,
+          } else
+            iClass.addCluster(newClusterName);
+
+          // if (OScenarioThreadLocal.INSTANCE.get() == OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED) {
+          // final Set<String> nodes = getRemoteNodeIds();
+          // nodes.remove(getLocalNodeName());
+          //
+          // sendRequest(iDatabase.getName(), null, nodes, new OSQLCommandTask(""), EXECUTION_MODE.RESPONSE);
+          // }
+
+          ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
               "class %s, set mastership of cluster '%s' (id=%d) to '%s'", iClass, newClusterName,
               iDatabase.getClusterIdByName(newClusterName), nodeName);
           cfg.setMasterServer(newClusterName, nodeName);
