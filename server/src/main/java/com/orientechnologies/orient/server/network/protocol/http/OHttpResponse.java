@@ -184,7 +184,7 @@ public class OHttpResponse {
     else {
       final Object newResult;
       if (isJSObject(iResult)) {
-        newResult = Collections.singleton(new ODocument().field("value", iResult)).iterator();
+        newResult = Collections.singleton(new ODocument((Map<?, Object>)iResult)).iterator();
       } else if (iResult instanceof Map<?, ?>) {
         newResult = ((Map<?, ?>) iResult).entrySet().iterator();
       } else if (OMultiValue.isMultiValue(iResult)
