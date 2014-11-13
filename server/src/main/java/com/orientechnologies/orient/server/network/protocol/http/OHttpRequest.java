@@ -19,16 +19,16 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
-import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
-import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
-
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
+import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
+import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
 
 /**
  * Maintains information about current HTTP request.
@@ -53,10 +53,10 @@ public class OHttpRequest {
   public OHttpMultipartBaseInputStream      multipartStream;
   public String                             boundary;
   public String                             databaseName;
-  public boolean                            keepAlive;
   public boolean                            isMultipart;
   public String                             ifMatch;
   public String                             authentication;
+  public boolean                            keepAlive = true;
   protected Map<String, String>             headers;
 
   public OHttpRequest(final ONetworkProtocolHttpAbstract iExecutor, final InputStream iInStream, final ONetworkProtocolData iData,

@@ -21,6 +21,8 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
+import java.util.Map;
+
 /**
  * Converts a document in JSON string.
  * 
@@ -48,6 +50,9 @@ public class OSQLMethodToJSON extends OAbstractSQLMethod {
 
     if (iThis instanceof ODocument) {
       final ODocument doc = (ODocument) iThis;
+      return iParams.length == 1 ? doc.toJSON(((String) iParams[0]).replace("\"", "")) : doc.toJSON();
+    } else if (iThis instanceof Map) {
+      final ODocument doc = new ODocument().fromMap((Map<String, Object>) iThis);
       return iParams.length == 1 ? doc.toJSON(((String) iParams[0]).replace("\"", "")) : doc.toJSON();
     }
     return null;
