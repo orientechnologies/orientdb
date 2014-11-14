@@ -1,36 +1,33 @@
 package com.orientechnologies.website.services.reactor;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.website.services.reactor.event.comment.GithubCommentEvent;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import reactor.event.Event;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import javax.annotation.PostConstruct;
+import java.util.List;
 
 /**
  * Created by Enrico Risa on 27/10/14.
  */
 @Component
-public class GithubIssueCommentEventHandler implements GitHubBaseHandler<Event<ODocument>> {
+public class GithubIssueCommentEventHandler extends GitHubBaseHandler<Event<ODocument>> {
 
-  public static List<String> events = new ArrayList<String>() {
-                                      {
-                                        add("created");
-                                      }
-                                    };
+  @Autowired
+  protected List<GithubCommentEvent> eventLit;
+
+  @PostConstruct
+  protected void init() {
+    for (GithubCommentEvent e : eventLit) {
+      events.put(e.handleWhat(), e);
+    }
+  }
 
   @Override
   public void accept(Event<ODocument> oDocumentEvent) {
-
-    ODocument msg = oDocumentEvent.getData();
-
-    ODocument comment = msg.field("comment");
+    fireEvent(oDocumentEvent.getData());
   }
 
-  @Override
-  public List<String> handleWhat() {
-    return events;
-  }
 }

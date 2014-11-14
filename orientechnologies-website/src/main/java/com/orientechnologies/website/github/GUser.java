@@ -18,7 +18,8 @@ public class GUser extends GEntity {
   }
 
   public Long getId() {
-    return get("id");
+
+    return ((Integer) get("id")).longValue();
   }
 
   @Override

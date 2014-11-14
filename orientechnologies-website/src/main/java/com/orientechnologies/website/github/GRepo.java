@@ -51,6 +51,13 @@ public class GRepo extends GEntity {
     return issues;
   }
 
+  public GIssue openIssue(String content) throws IOException {
+    String res = GitHub.REQUEST.uri().path(getBaseUrl() + "/issues").back().body().set(content).back().method("POST")
+        .header("Authorization", String.format("token %s", github.token)).fetch().body();
+    return new GIssue(github, this, res);
+
+  }
+
   public List<GLabel> getLabels() throws IOException {
     String content = github.REQUEST.uri().path(getBaseUrl() + "/labels").back().method("GET")
         .header("Authorization", String.format("token %s", github.token)).fetch().body();

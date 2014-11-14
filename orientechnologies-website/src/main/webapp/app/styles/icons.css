@@ -13,6 +13,9 @@
 .fa-milestoned:before {
   content: "\f091";
 }
+.fa-renamed:before {
+  content: "\f044";
+}
 
 .fa-labeled:before {
   content: "\f02b";

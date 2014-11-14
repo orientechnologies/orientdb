@@ -59,7 +59,7 @@ angular
 angular.module('webappApp').factory('oauthHttpInterceptor', function () {
   return {
     request: function (config) {
-      config.headers['X-AUTH-TOKEN'] = 'f700749119b872149320fe6726652cf086a8dd9c';
+      config.headers['X-AUTH-TOKEN'] = 'ea05530bd2e36f2caf082c0a8815a7125445fc4b';
       return config;
     }
   };

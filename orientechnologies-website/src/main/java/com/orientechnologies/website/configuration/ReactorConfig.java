@@ -1,8 +1,7 @@
 package com.orientechnologies.website.configuration;
 
-import com.orientechnologies.website.services.reactor.GitHubBaseHandler;
+import com.orientechnologies.website.services.reactor.GitHubHandler;
 import com.orientechnologies.website.services.reactor.GitHubIssueImporter;
-import com.orientechnologies.website.services.reactor.GithubIssueEventHandler;
 import com.orientechnologies.website.services.reactor.ReactorMSG;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -13,7 +12,6 @@ import reactor.core.spec.Reactors;
 import reactor.event.Event;
 
 import javax.annotation.PostConstruct;
-
 import java.util.List;
 
 import static reactor.event.selector.Selectors.$;
@@ -25,19 +23,19 @@ import static reactor.event.selector.Selectors.$;
 public class ReactorConfig {
 
   @Autowired
-  private GitHubIssueImporter               hubIssueImporter;
+  private GitHubIssueImporter             hubIssueImporter;
 
   @Autowired
-  private List<GitHubBaseHandler<Event<?>>> handlers;
+  protected List<GitHubHandler<Event<?>>> handlers;
 
   @Autowired
-  private Reactor                           reactor;
+  private Reactor                         reactor;
 
   @PostConstruct
   public void startup() {
 
     reactor.on($(ReactorMSG.ISSUE_IMPORT), hubIssueImporter);
-    for (GitHubBaseHandler<Event<?>> handler : handlers) {
+    for (GitHubHandler<Event<?>> handler : handlers) {
       for (String s : handler.handleWhat()) {
         reactor.on($(s), handler);
       }

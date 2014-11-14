@@ -46,9 +46,8 @@ public class GitHub {
     return new GRepo(this, content);
   }
 
-  public GIssue openIssue(String repo, String content) throws IOException {
-    REQUEST.uri().path("/repos" + repo + "/issues").back().body().set(content).back().method("POST")
-        .header("Authorization", String.format("token %s", token)).fetch().body();
+  public GRepo repo(String repo, String content) throws IOException {
+    return new GRepo(this, content);
   }
 
   public GUser user() throws IOException {

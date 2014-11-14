@@ -5,9 +5,10 @@ package com.orientechnologies.website.model.schema.dto;
  */
 public class Repository {
 
-  private String id;
-  private String name;
-  private String description;
+  private String       id;
+  private String       name;
+  private String       description;
+  private Organization organization;
 
   public String getDescription() {
     return description;
@@ -31,5 +32,13 @@ public class Repository {
 
   public void setId(String id) {
     this.id = id;
+  }
+
+  public Organization getOrganization() {
+    return organization;
+  }
+
+  public void setOrganization(Organization organization) {
+    this.organization = organization;
   }
 }

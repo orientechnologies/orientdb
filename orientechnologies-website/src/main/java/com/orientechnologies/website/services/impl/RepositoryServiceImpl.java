@@ -2,7 +2,6 @@ package com.orientechnologies.website.services.impl;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.website.OrientDBFactory;
-import com.orientechnologies.website.github.GitHub;
 import com.orientechnologies.website.helper.SecurityHelper;
 import com.orientechnologies.website.model.schema.HasIssue;
 import com.orientechnologies.website.model.schema.HasLabel;
@@ -20,6 +19,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -47,6 +47,13 @@ public class RepositoryServiceImpl implements RepositoryService {
   @Autowired
   protected EventRepository      eventRepository;
 
+  protected RepositoryService    githubService;
+
+  @PostConstruct
+  protected void init() {
+    githubService = new RepositoryServiceGithub(this);
+  }
+
   @Override
   public Repository createRepo(String name, String description) {
     Repository repo = new Repository();
@@ -65,13 +72,21 @@ public class RepositoryServiceImpl implements RepositoryService {
     if (Boolean.TRUE.equals(issue.getConfidential())) {
       return createPrivateIssue(repository, issue);
     } else {
-      return createPublicIssue(repository, issue);
+      return githubService.openIssue(repository, issue);
     }
   }
 
   @Override
   public Issue patchIssue(Issue original, IssueDTO issue) {
 
+    if (Boolean.TRUE.equals(original.getConfidential())) {
+      return patchPrivateIssue(original, issue);
+    } else {
+      return githubService.patchIssue(original, issue);
+    }
+  }
+
+  private Issue patchPrivateIssue(Issue original, IssueDTO issue) {
     Repository r = original.getRepository();
 
     if (issue.getVersion() != null) {
@@ -175,12 +190,6 @@ public class RepositoryServiceImpl implements RepositoryService {
       e = (IssueEvent) eventRepository.save(e);
       issueService.fireEvent(issue, e);
     }
-  }
-
-  private Issue createPublicIssue(Repository repository, IssueDTO issue) {
-
-    GitHub github = new GitHub(SecurityHelper.currentToken());
-    return null;
   }
 
   @Override

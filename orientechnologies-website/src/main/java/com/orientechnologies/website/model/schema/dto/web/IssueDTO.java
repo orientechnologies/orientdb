@@ -1,5 +1,7 @@
 package com.orientechnologies.website.model.schema.dto.web;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,10 +16,11 @@ public class IssueDTO {
   private List<String> labels = new ArrayList<String>();
   private Integer      milestone;
   private Integer      version;
-  private String       user;
+
   private String       assignee;
   private Boolean      confidential;
 
+  @JsonIgnore
   public String getState() {
     return state;
   }
@@ -34,20 +37,13 @@ public class IssueDTO {
     this.milestone = milestone;
   }
 
+  @JsonIgnore
   public Integer getVersion() {
     return version;
   }
 
   public void setVersion(Integer version) {
     this.version = version;
-  }
-
-  public String getUser() {
-    return user;
-  }
-
-  public void setUser(String user) {
-    this.user = user;
   }
 
   public String getAssignee() {
@@ -82,6 +78,7 @@ public class IssueDTO {
     this.labels = labels;
   }
 
+  @JsonIgnore
   public Boolean getConfidential() {
     return confidential;
   }

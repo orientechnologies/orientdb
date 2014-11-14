@@ -101,7 +101,7 @@ public enum OIssue implements OTypeHolder<Issue> {
     doc.field(CREATED_AT.toString(), entity.getCreatedAt());
     doc.field(CLOSED_AT.toString(), entity.getClosedAt());
     doc.field(TITLE.toString(), entity.getTitle());
-    doc.field(LABELS.toString(), entity.getLabels());
+//    doc.field(LABELS.toString(), entity.getLabels());
     doc.field(NUMBER.toString(), entity.getNumber());
     doc.field(STATE.toString(), entity.getState());
     // MOVED TO EDGES

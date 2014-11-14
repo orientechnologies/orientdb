@@ -1,28 +1,25 @@
 package com.orientechnologies.website.controllers;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.configuration.ApiVersion;
+import com.orientechnologies.website.configuration.GitHubConfiguration;
 import com.orientechnologies.website.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
-
-import com.orientechnologies.website.configuration.GitHubConfiguration;
 import reactor.core.Reactor;
 import reactor.event.Event;
-import sun.net.httpserver.HttpServerImpl;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 /**
  * Created by Enrico Risa on 20/10/14.
@@ -47,7 +44,7 @@ public class GithubController {
 
     String baseUrl = gitHubConfiguration.getLoginUrl() + "/authorize?";
     String s = "client_id=" + gitHubConfiguration.getClientId();
-    String locationUrl = baseUrl + s + "&scope=user,read:org";
+    String locationUrl = baseUrl + s + "&scope=user,read:org,public_repo";
     RedirectView view = new RedirectView();
     view.setUrl(locationUrl);
     return view;

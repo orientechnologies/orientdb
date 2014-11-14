@@ -3,7 +3,10 @@ package com.orientechnologies.website.model.schema;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 /**
  * Created by Enrico Risa on 04/11/14.
@@ -47,6 +50,12 @@ public enum ORepository implements OTypeHolder<com.orientechnologies.website.mod
     repo.setName((String) doc.field(NAME.toString()));
     repo.setDescription((String) doc.field(DESCRIPTION.toString()));
     repo.setId(doc.getIdentity().toString());
+
+    OrientVertex iss = new OrientVertex(graph, doc);
+    for (Vertex vertex : iss.getVertices(Direction.IN, HasRepo.class.getSimpleName())) {
+      repo.setOrganization(OOrganization.NAME.fromDoc(((OrientVertex) vertex).getRecord(), graph));
+      break;
+    }
     return repo;
   }
 
