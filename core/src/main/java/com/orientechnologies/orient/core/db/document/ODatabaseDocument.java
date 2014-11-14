@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.ODatabaseSchemaAware;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
+import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -159,7 +160,7 @@ public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAw
    *          Operation to execute against the resource
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public <DB extends ODatabaseDocument> DB checkSecurity(String iResource, int iOperation);
+  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric resourceGeneric, String resourceSpecific, int iOperation);
 
   /**
    * Checks if the operation on a resource is allowed for the current user. The check is made in two steps:
@@ -178,7 +179,7 @@ public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAw
    *          Target resource, i.e.: "employee" to specify the cluster name.
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public <DB extends ODatabaseDocument> DB checkSecurity(String iResourceGeneric, int iOperation, Object iResourceSpecific);
+  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric iResourceGeneric, int iOperation, Object iResourceSpecific);
 
   /**
    * Checks if the operation against multiple resources is allowed for the current user. The check is made in two steps:
@@ -197,7 +198,7 @@ public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAw
    *          Target resources as an array of Objects, i.e.: ["employee", 2] to specify cluster name and id.
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  public <DB extends ODatabaseDocument> DB checkSecurity(String iResourceGeneric, int iOperation, Object... iResourcesSpecific);
+  public <DB extends ODatabaseDocument> DB checkSecurity(ORule.ResourceGeneric iResourceGeneric, int iOperation, Object... iResourcesSpecific);
 
   /**
    * Tells if validation of record is active. Default is true.
@@ -214,4 +215,57 @@ public interface ODatabaseDocument extends ODatabase<ORecord>, ODatabaseSchemaAw
    * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   public <DB extends ODatabaseDocument> DB setValidationEnabled(boolean iEnabled);
+
+
+	/**
+	 * Checks if the operation on a resource is allowed for the current user.
+	 *
+	 * @param iResource
+	 *          Resource where to execute the operation
+	 * @param iOperation
+	 *          Operation to execute against the resource
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
+	@Deprecated
+	public <DB extends ODatabaseDocument> DB checkSecurity(String iResource, int iOperation);
+
+	/**
+	 * Checks if the operation on a resource is allowed for the current user. The check is made in two steps:
+	 * <ol>
+	 * <li>
+	 * Access to all the resource as *</li>
+	 * <li>
+	 * Access to the specific target resource</li>
+	 * </ol>
+	 *
+	 * @param iResourceGeneric
+	 *          Resource where to execute the operation, i.e.: database.clusters
+	 * @param iOperation
+	 *          Operation to execute against the resource
+	 * @param iResourceSpecific
+	 *          Target resource, i.e.: "employee" to specify the cluster name.
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
+	@Deprecated
+	public <DB extends ODatabaseDocument> DB checkSecurity(String iResourceGeneric, int iOperation, Object iResourceSpecific);
+
+	/**
+	 * Checks if the operation against multiple resources is allowed for the current user. The check is made in two steps:
+	 * <ol>
+	 * <li>
+	 * Access to all the resource as *</li>
+	 * <li>
+	 * Access to the specific target resources</li>
+	 * </ol>
+	 *
+	 * @param iResourceGeneric
+	 *          Resource where to execute the operation, i.e.: database.clusters
+	 * @param iOperation
+	 *          Operation to execute against the resource
+	 * @param iResourcesSpecific
+	 *          Target resources as an array of Objects, i.e.: ["employee", 2] to specify cluster name and id.
+	 * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+	 */
+	@Deprecated
+	public <DB extends ODatabaseDocument> DB checkSecurity(String iResourceGeneric, int iOperation, Object... iResourcesSpecific);
 }

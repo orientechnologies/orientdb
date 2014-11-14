@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorClusters;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
@@ -411,7 +412,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     final OClass cls = parsedTarget.getTargetClasses().keySet().iterator().next();
 
     final ODatabaseDocumentInternal database = getDatabase();
-    database.checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, cls.getName().toLowerCase());
+    database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, cls.getName().toLowerCase());
 
     // NO INDEXES: SCAN THE ENTIRE CLUSTER
 
@@ -435,7 +436,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       if (clusterName == null || clusterName.length() == 0)
         throw new OCommandExecutionException("No cluster or schema class selected in query");
 
-      database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, clusterName.toLowerCase());
+      database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, clusterName.toLowerCase());
 
       if (Character.isDigit(clusterName.charAt(0))) {
         // GET THE CLUSTER NUMBER

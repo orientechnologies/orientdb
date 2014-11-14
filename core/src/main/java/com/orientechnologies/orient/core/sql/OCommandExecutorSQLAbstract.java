@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
+import com.orientechnologies.orient.core.metadata.security.ORule;
 
 /**
  * SQL abstract Command Executor implementation.
@@ -195,7 +196,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
   protected boolean checkClusterAccess(final ODatabaseDocument db, final String iClusterName) {
     return db.getUser() != null
-        && db.getUser().checkIfAllowed(ODatabaseSecurityResources.CLUSTER + "." + iClusterName, getSecurityOperationType()) != null;
+        && db.getUser().checkIfAllowed(ORule.ResourceGeneric.CLUSTER, iClusterName, getSecurityOperationType()) != null;
   }
 
   protected void bindDefaultContextVariables() {

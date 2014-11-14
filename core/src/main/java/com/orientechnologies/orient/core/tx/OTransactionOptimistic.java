@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -265,7 +266,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     switch (iStatus) {
     case ORecordOperation.CREATED:
-      database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
+      database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
       database.callbackHooks(TYPE.BEFORE_CREATE, iRecord);
       break;
     case ORecordOperation.LOADED:
@@ -274,11 +275,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
        */
       break;
     case ORecordOperation.UPDATED:
-      database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
+      database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
       database.callbackHooks(TYPE.BEFORE_UPDATE, iRecord);
       break;
     case ORecordOperation.DELETED:
-      database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_DELETE, iClusterName);
+      database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, iClusterName);
       database.callbackHooks(TYPE.BEFORE_DELETE, iRecord);
       break;
     }

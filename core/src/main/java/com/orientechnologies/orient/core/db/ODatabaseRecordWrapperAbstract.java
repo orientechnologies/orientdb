@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -71,46 +72,46 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseDocumen
 
   @Override
   public <THISDB extends ODatabase> THISDB create() {
-    checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_CREATE);
+    checkSecurity(ORule.ResourceGeneric.DATABASE, ORole.PERMISSION_CREATE);
     return (THISDB) super.create();
   }
 
   @Override
   public <THISDB extends ODatabase> THISDB create(final Map<OGlobalConfiguration, Object> iInitialSettings) {
-    checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_CREATE);
+    checkSecurity(ORule.ResourceGeneric.DATABASE, ORole.PERMISSION_CREATE);
     return (THISDB) super.create(iInitialSettings);
   }
 
   @Override
   public void drop() {
     checkOpeness();
-    checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_DELETE);
+    checkSecurity(ORule.ResourceGeneric.DATABASE, ORole.PERMISSION_DELETE);
     super.drop();
   }
 
   @Override
   public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
     checkOpeness();
-    checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
+    checkSecurity(ORule.ResourceGeneric.DATABASE, ORole.PERMISSION_UPDATE);
     return super.addCluster(iClusterName, iRequestedId, iParameters);
   }
 
   @Override
   public int addCluster(String iClusterName, Object... iParameters) {
     checkOpeness();
-    checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
+    checkSecurity(ORule.ResourceGeneric.DATABASE, ORole.PERMISSION_UPDATE);
     return super.addCluster(iClusterName, iParameters);
   }
 
   @Override
   public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
-    checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
+    checkSecurity(ORule.ResourceGeneric.DATABASE, ORole.PERMISSION_UPDATE);
     checkClusterBoundedToClass(getClusterIdByName(iClusterName));
     return super.dropCluster(iClusterName, iTruncate);
   }
 
   public boolean dropCluster(int iClusterId, final boolean iTruncate) {
-    checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
+    checkSecurity(ORule.ResourceGeneric.DATABASE, ORole.PERMISSION_UPDATE);
     checkClusterBoundedToClass(iClusterId);
     return super.dropCluster(iClusterId, iTruncate);
   }
@@ -340,16 +341,16 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseDocumen
     return false;
   }
 
-  public <DBTYPE extends ODatabaseDocument> DBTYPE checkSecurity(final String iResource, final int iOperation) {
-    return (DBTYPE) underlying.checkSecurity(iResource, iOperation);
+  public <DBTYPE extends ODatabaseDocument> DBTYPE checkSecurity(ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation) {
+    return (DBTYPE) underlying.checkSecurity(resourceGeneric, resourceSpecific, iOperation);
   }
 
-  public <DBTYPE extends ODatabaseDocument> DBTYPE checkSecurity(final String iResourceGeneric, final int iOperation,
+  public <DBTYPE extends ODatabaseDocument> DBTYPE checkSecurity(final ORule.ResourceGeneric iResourceGeneric, final int iOperation,
       final Object iResourceSpecific) {
     return (DBTYPE) underlying.checkSecurity(iResourceGeneric, iOperation, iResourceSpecific);
   }
 
-  public <DBTYPE extends ODatabaseDocument> DBTYPE checkSecurity(final String iResourceGeneric, final int iOperation,
+  public <DBTYPE extends ODatabaseDocument> DBTYPE checkSecurity(final ORule.ResourceGeneric iResourceGeneric, final int iOperation,
       final Object... iResourcesSpecific) {
     return (DBTYPE) underlying.checkSecurity(iResourceGeneric, iOperation, iResourcesSpecific);
   }

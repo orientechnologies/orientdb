@@ -264,32 +264,34 @@ public class OSecurityShared implements OSecurity, OCloseable {
     final OUser adminUser = createMetadata();
 
     final ORole readerRole = createRole("reader", ORole.ALLOW_MODES.DENY_ALL_BUT);
-    readerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
-    readerRole.addRule(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
-    readerRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + OMetadataDefault.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
-    readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_READ);
-    readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_READ);
-    readerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_READ);
-    readerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_READ);
-    readerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
-    readerRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_READ);
-    readerRole.addRule(ODatabaseSecurityResources.FUNCTION + ".*", ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.CLUSTER, OMetadataDefault.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "orole", ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "ouser", ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.RECORD_HOOK, null, ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.FUNCTION, null, ORole.PERMISSION_READ);
     readerRole.save();
+
     createUser("reader", "reader", new String[] { readerRole.getName() });
 
     final ORole writerRole = createRole("writer", ORole.ALLOW_MODES.DENY_ALL_BUT);
-    writerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
-    writerRole
-        .addRule(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ + ORole.PERMISSION_CREATE + ORole.PERMISSION_UPDATE);
-    writerRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + OMetadataDefault.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
-    writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_READ);
-    writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_READ);
-    writerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_ALL);
-    writerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_ALL);
-    writerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_ALL);
-    writerRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_ALL);
-    readerRole.addRule(ODatabaseSecurityResources.FUNCTION + ".*", ORole.PERMISSION_READ);
+    writerRole.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_READ);
+    writerRole.addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_READ + ORole.PERMISSION_CREATE
+        + ORole.PERMISSION_UPDATE);
+    writerRole.addRule(ORule.ResourceGeneric.CLUSTER, OMetadataDefault.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
+    writerRole.addRule(ORule.ResourceGeneric.CLUSTER, "orole", ORole.PERMISSION_READ);
+    writerRole.addRule(ORule.ResourceGeneric.CLUSTER, "ouser", ORole.PERMISSION_READ);
+    writerRole.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_ALL);
+    writerRole.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_ALL);
+    writerRole.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_ALL);
+    writerRole.addRule(ORule.ResourceGeneric.RECORD_HOOK, null, ORole.PERMISSION_ALL);
+    readerRole.addRule(ORule.ResourceGeneric.FUNCTION, null, ORole.PERMISSION_READ);
     writerRole.save();
+
     createUser("writer", "writer", new String[] { writerRole.getName() });
 
     return adminUser;
@@ -326,8 +328,9 @@ public class OSecurityShared implements OSecurity, OCloseable {
 
     if (!roleClass.existsProperty("mode"))
       roleClass.createProperty("mode", OType.BYTE);
+
     if (!roleClass.existsProperty("rules"))
-      roleClass.createProperty("rules", OType.EMBEDDEDMAP, OType.BYTE);
+      roleClass.createProperty("rules", OType.EMBEDDEDSET);
     if (!roleClass.existsProperty("inheritedRole"))
       roleClass.createProperty("inheritedRole", OType.LINK, roleClass);
 
@@ -357,7 +360,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
     ORole adminRole = getRole(ORole.ADMIN, false);
     if (adminRole == null) {
       adminRole = createRole(ORole.ADMIN, ORole.ALLOW_MODES.ALLOW_ALL_BUT);
-      adminRole.addRule(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_ALL).save();
+      adminRole.addRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_ALL).save();
     }
 
     OUser adminUser = getUser(OUser.ADMIN, false);
@@ -403,6 +406,11 @@ public class OSecurityShared implements OSecurity, OCloseable {
 
       // ROLE
       final OClass roleClass = getDatabase().getMetadata().getSchema().getClass("ORole");
+
+      final OProperty rules = roleClass.getProperty("rules");
+      if (rules != null && !OType.EMBEDDEDSET.equals(rules.getType())) {
+        roleClass.dropProperty("rules");
+      }
 
       if (!roleClass.existsProperty("inheritedRole")) {
         roleClass.createProperty("inheritedRole", OType.LINK, roleClass);

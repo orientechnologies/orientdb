@@ -4,39 +4,55 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 03/11/14
  */
 public interface OSecurityRole {
-	public enum ALLOW_MODES {
-		DENY_ALL_BUT, ALLOW_ALL_BUT
-	}
+  public enum ALLOW_MODES {
+    DENY_ALL_BUT, ALLOW_ALL_BUT
+  }
 
-	public boolean allow(final String iResource, final int iCRUDOperation);
+  public boolean allow(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iCRUDOperation);
 
-	public boolean hasRule(final String iResource);
+  public boolean hasRule(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific);
 
-	public OSecurityRole addRule(final String iResource, final int iOperation);
+  public OSecurityRole addRule(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation);
 
-	public OSecurityRole grant(final String iResource, final int iOperation);
+  public OSecurityRole grant(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation);
 
-	public OSecurityRole revoke(final String iResource, final int iOperation);
+  public OSecurityRole revoke(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation);
 
-	public String getName();
+  @Deprecated
+  public boolean allow(final String iResource, final int iCRUDOperation);
 
-	public OSecurityRole.ALLOW_MODES getMode();
+  @Deprecated
+  public boolean hasRule(final String iResource);
 
-	public OSecurityRole setMode(final OSecurityRole.ALLOW_MODES iMode);
+  @Deprecated
+  public OSecurityRole addRule(final String iResource, final int iOperation);
 
-	public OSecurityRole getParentRole();
+  @Deprecated
+  public OSecurityRole grant(final String iResource, final int iOperation);
 
-	public OSecurityRole setParentRole(final OSecurityRole iParent);
+  @Deprecated
+  public OSecurityRole revoke(final String iResource, final int iOperation);
 
-	public Map<String, Byte> getRules();
+  public String getName();
 
-	public OIdentifiable getIdentity();
-	
-	public ODocument getDocument();
+  public OSecurityRole.ALLOW_MODES getMode();
+
+  public OSecurityRole setMode(final OSecurityRole.ALLOW_MODES iMode);
+
+  public OSecurityRole getParentRole();
+
+  public OSecurityRole setParentRole(final OSecurityRole iParent);
+
+  public Set<ORule> getRules();
+
+  public OIdentifiable getIdentity();
+
+  public ODocument getDocument();
 }

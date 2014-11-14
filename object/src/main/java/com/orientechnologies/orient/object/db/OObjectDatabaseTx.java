@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
@@ -47,8 +48,8 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -141,7 +142,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    * @see OEntityManager#registerEntityClasses(String)
    */
   public <RET extends Object> RET newInstance(final String iClassName, final Object iEnclosingClass, Object... iArgs) {
-    checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, iClassName);
+    checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_CREATE, iClassName);
 
     try {
       Class<?> entityClass = entityManager.getEntityClass(iClassName);
@@ -167,7 +168,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    */
   public <RET extends Object> RET newInstance(final String iClassName, final Object iEnclosingClass, ODocument iDocument,
       Object... iArgs) {
-    checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, iClassName);
+    checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_CREATE, iClassName);
 
     try {
       Class<?> entityClass = entityManager.getEntityClass(iClassName);
@@ -202,14 +203,14 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   public <RET> OObjectIteratorClass<RET> browseClass(final String iClassName, final boolean iPolymorphic) {
     checkOpeness();
-    checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, iClassName);
+    checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iClassName);
 
     return new OObjectIteratorClass<RET>(this, (ODatabaseDocumentTx) getUnderlying(), iClassName, iPolymorphic);
   }
 
   public <RET> OObjectIteratorCluster<RET> browseCluster(final String iClusterName) {
     checkOpeness();
-    checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
     return (OObjectIteratorCluster<RET>) new OObjectIteratorCluster<Object>(this, (ODatabaseDocumentTx) getUnderlying(),
         getClusterIdByName(iClusterName));
@@ -647,15 +648,18 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     return new ODocument();
   }
 
-  public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final byte iOperation) {
-    return (DBTYPE) underlying.checkSecurity(iResource, iOperation);
+  public <DBTYPE extends ODatabase> DBTYPE checkSecurity(ORule.ResourceGeneric resourceGeneric, String resourceSpecific,
+      final byte iOperation) {
+    return (DBTYPE) underlying.checkSecurity(resourceGeneric, resourceSpecific, iOperation);
   }
 
-  public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final int iOperation, Object iResourceSpecific) {
+  public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final ORule.ResourceGeneric iResource, final int iOperation,
+      Object iResourceSpecific) {
     return (DBTYPE) underlying.checkSecurity(iResource, iOperation, iResourceSpecific);
   }
 
-  public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final int iOperation, Object... iResourcesSpecific) {
+  public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final ORule.ResourceGeneric iResource, final int iOperation,
+      Object... iResourcesSpecific) {
     return (DBTYPE) underlying.checkSecurity(iResource, iOperation, iResourcesSpecific);
   }
 

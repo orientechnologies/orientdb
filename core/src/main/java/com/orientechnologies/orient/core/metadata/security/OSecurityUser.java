@@ -14,11 +14,21 @@ public interface OSecurityUser {
 		SUSPENDED, ACTIVE
 	}
 
-  public OSecurityRole allow(final String iResource, final int iOperation);
+  public OSecurityRole allow(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation);
 
-  public OSecurityRole checkIfAllowed(final String iResource, final int iOperation);
+  public OSecurityRole checkIfAllowed(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation);
 
-  public boolean isRuleDefined(final String iResource);
+  public boolean isRuleDefined(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific);
+
+	@Deprecated
+	public OSecurityRole allow(final String iResource, final int iOperation);
+
+	@Deprecated
+	public OSecurityRole checkIfAllowed(final String iResource, final int iOperation);
+
+	@Deprecated
+	public boolean isRuleDefined(final String iResource);
+
 
   public boolean checkPassword(final String iPassword);
 
