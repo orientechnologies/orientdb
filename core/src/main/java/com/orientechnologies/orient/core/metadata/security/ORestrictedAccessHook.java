@@ -109,8 +109,8 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
       if (db.getUser() == null)
         return true;
 
-      if (db.getUser().isRuleDefined(ODatabaseSecurityResources.BYPASS_RESTRICTED))
-        if (db.getUser().checkIfAllowed(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_READ) != null)
+      if (db.getUser().isRuleDefined(ORule.ResourceGeneric.BYPASS_RESTRICTED, null))
+        if (db.getUser().checkIfAllowed(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_READ) != null)
           // BYPASS RECORD LEVEL SECURITY: ONLY "ADMIN" ROLE CAN BY DEFAULT
           return true;
 

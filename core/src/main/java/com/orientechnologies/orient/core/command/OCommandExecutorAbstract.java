@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
 
 /**
  * Abstract implementation of Executor Command interface.
@@ -49,7 +50,7 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
   }
 
   public OCommandExecutorAbstract init(final OCommandRequestText iRequest) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.COMMAND, ORole.PERMISSION_READ);
     parserText = iRequest.getText().trim();
     parserTextUpperCase = parserText.toUpperCase(Locale.ENGLISH);
     return this;

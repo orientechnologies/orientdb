@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 /**
@@ -156,7 +157,7 @@ public class OImmutableSchema implements OSchema {
 
   @Override
   public Collection<OClass> getClasses() {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_READ);
     return new HashSet<OClass>(classes.values());
   }
 
@@ -182,7 +183,7 @@ public class OImmutableSchema implements OSchema {
 
   @Override
   public Set<OClass> getClassesRelyOnCluster(String clusterName) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_READ);
 
     final int clusterId = getDatabase().getClusterIdByName(clusterName);
     final Set<OClass> result = new HashSet<OClass>();

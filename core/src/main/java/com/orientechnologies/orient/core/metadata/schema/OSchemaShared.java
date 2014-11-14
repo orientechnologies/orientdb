@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.*;
@@ -132,7 +133,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   }
 
   public int countClasses() {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_READ);
 
     acquireSchemaReadLock();
     try {
@@ -413,7 +414,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       if (className == null)
         throw new IllegalArgumentException("Class name is null");
 
-      getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_DELETE);
+      getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
 
       final String key = className.toLowerCase();
 
@@ -694,7 +695,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   }
 
   public Collection<OClass> getClasses() {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_READ);
     acquireSchemaReadLock();
     try {
       return new HashSet<OClass>(classes.values());
@@ -705,7 +706,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   @Override
   public Set<OClass> getClassesRelyOnCluster(final String clusterName) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_READ);
 
     acquireSchemaReadLock();
     try {
@@ -836,7 +837,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       throws ClusterIdsAreEmptyException {
     OClass result;
 
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_CREATE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_CREATE);
     acquireSchemaWriteLock();
     try {
       StringBuilder cmd = null;
@@ -931,7 +932,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       } else
         clusterIds = clusterIdsToAdd;
 
-      database.checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_CREATE);
+      database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_CREATE);
 
       final String key = className.toLowerCase();
 
@@ -1004,7 +1005,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       if (className == null)
         throw new IllegalArgumentException("Class name is null");
 
-      getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_DELETE);
+      getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
 
       final String key = className.toLowerCase();
 

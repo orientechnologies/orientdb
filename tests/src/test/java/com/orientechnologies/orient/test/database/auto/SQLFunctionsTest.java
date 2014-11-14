@@ -20,6 +20,7 @@ import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import com.orientechnologies.orient.core.metadata.security.ORule;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -126,7 +127,7 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
 
     ORole byPassRestrictedRole = database.getMetadata().getSecurity()
         .createRole("byPassRestrictedRole", ORole.ALLOW_MODES.DENY_ALL_BUT);
-    byPassRestrictedRole.addRule(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_READ);
+    byPassRestrictedRole.addRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_READ);
     byPassRestrictedRole.save();
 
     database.getMetadata().getSecurity().createUser("superReader", "superReader", "reader", "byPassRestrictedRole");
