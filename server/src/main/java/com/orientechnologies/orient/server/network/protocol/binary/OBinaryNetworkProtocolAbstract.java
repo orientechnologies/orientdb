@@ -42,6 +42,8 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.core.metadata.security.OTokenHandler;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -78,6 +80,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   protected int                  requestType;
   protected int                  clientTxId;
   protected boolean              okSent;
+  protected OTokenHandler        tokenHandler;
 
   public OBinaryNetworkProtocolAbstract(final String iThreadName) {
     super(Orient.instance().getThreadGroup(), iThreadName);
@@ -90,6 +93,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       final OContextConfiguration iConfig) throws IOException {
     server = iServer;
     channel = new OChannelBinaryServer(iSocket, iConfig);
+    tokenHandler = server.getPlugin("JwtTokenHandler");
   }
 
   @Override
@@ -192,6 +196,11 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     try {
       requestType = channel.readByte();
       clientTxId = channel.readInt();
+      byte[] token = channel.readBytes();
+      if (token != null && token.length > 0) {
+        OToken otoken = tokenHandler.parseBinaryToken(token);
+        // tokenHandler.validateToken(token, command, database)
+      }
 
       timer = Orient.instance().getProfiler().startChrono();
 

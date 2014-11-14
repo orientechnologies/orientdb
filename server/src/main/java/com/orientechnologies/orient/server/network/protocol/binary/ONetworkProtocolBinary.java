@@ -72,6 +72,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.OTokenHandler;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -128,7 +129,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     channel.flush();
     start();
-
     setName("OrientDB <- BinaryClient (" + iSocket.getRemoteSocketAddress() + ")");
   }
 
@@ -603,6 +603,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       try {
         sendOk(clientTxId);
         channel.writeInt(connection.id);
+        if (connection.data.protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
+          byte[] token = tokenHandler.getSignedBinaryToken(connection.database, connection.database.getUser());
+          channel.writeBytes(token);
+        }
 
         sendDatabaseInformation();
 
@@ -627,11 +631,16 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     readConnectionData();
 
     connection.serverUser = server.serverLogin(channel.readString(), channel.readString(), "connect");
-
     beginResponse();
     try {
       sendOk(clientTxId);
       channel.writeInt(connection.id);
+      if (connection.data.protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
+        // if(connection.database > null)
+        byte[] token = new byte[] {}; // tokenHandler.getSignedBinaryToken(connection.database, connection.serverUser);
+        channel.writeBytes(token);
+      }
+
     } finally {
       endResponse();
     }

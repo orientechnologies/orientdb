@@ -117,7 +117,8 @@ public class OChannelBinaryProtocol {
 
   public static final int   PROTOCOL_VERSION_24                     = 24;
   public static final int   PROTOCOL_VERSION_25                     = 25;
-  public static final int   CURRENT_PROTOCOL_VERSION                = 26; // SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
+  public static final int   PROTOCOL_VERSION_26                     = 26;
+  public static final int   CURRENT_PROTOCOL_VERSION                = 27; // SENT AS SHORT AS FIRST PACKET AFTER SOCKET CONNECTION
 
   public static OIdentifiable readIdentifiable(final OChannelBinaryAsynchClient network) throws IOException {
     final int classId = network.readShort();

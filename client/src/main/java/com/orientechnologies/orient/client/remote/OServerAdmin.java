@@ -43,10 +43,11 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
  */
 public class OServerAdmin {
   private OStorageRemote storage;
-  private int            sessionId = -1;
+  private int            sessionId    = -1;
+  private byte[]         sessionToken = null;
 
   /**
-   * Creates the object passing a remote URL to connect.
+   * Creates the object passing a remote URL to connect. sessionToken
    * 
    * @param iURL
    *          URL to connect. It supports only the "remote" storage type.
@@ -82,7 +83,7 @@ public class OServerAdmin {
    * @throws IOException
    */
   public synchronized OServerAdmin connect(final String iUserName, final String iUserPassword) throws IOException {
-    storage.setSessionId(null, -1);
+    storage.setSessionId(null, -1, null);
 
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONNECT);
@@ -99,7 +100,8 @@ public class OServerAdmin {
       try {
         storage.beginResponse(network);
         sessionId = network.readInt();
-        storage.setSessionId(network.getServerURL(), sessionId);
+        sessionToken = network.readBytes();
+        storage.setSessionId(network.getServerURL(), sessionId, sessionToken);
       } finally {
         storage.endResponse(network);
       }
