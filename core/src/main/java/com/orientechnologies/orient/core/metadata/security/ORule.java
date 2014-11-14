@@ -82,7 +82,7 @@ public class ORule {
 			return null;
 
 		if (resource.substring(0, found.getKey().length()).equalsIgnoreCase(found.getKey()))
-			return resource.substring(found.getKey().length());
+			return resource.substring(found.getKey().length() + 1);
 
 		return resource;
 	}
