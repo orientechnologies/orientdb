@@ -56,27 +56,36 @@ public class OGraphBatchInsertSimple {
   private final String        userName;
   private final String        dbUrl;
   private final String        password;
-
+  Map<Long, List<Long>>       out                      = new HashMap<Long, List<Long>>();
+  Map<Long, List<Long>>       in                       = new HashMap<Long, List<Long>>();
   private String              idPropertyName           = "uid";
   private String              edgeClass                = "E";
   private String              vertexClass              = "V";
-
   private ODatabaseDocumentTx db;
-
   private int                 averageEdgeNumberPerNode = -1;
+  private int                 estimatedEntries         = -1;
   private int                 bonsaiThreshold          = 1000;
-
   private int[]               clusterIds;
   private long[]              lastClusterIds;
-
-  Map<Long, List<Long>>       out                      = new HashMap<Long, List<Long>>();
-  Map<Long, List<Long>>       in                       = new HashMap<Long, List<Long>>();
-
   private long                last                     = 0;
+  private boolean             walActive;
 
   /**
-   * creates a new batch insert procedure. It's intended to be used only for a single batch cycle (begin, create..., end)
-   * 
+   * Creates a new batch insert procedure by using admin user. It's intended to be used only for a single batch cycle (begin,
+   * create..., end)
+   *
+   * @param iDbURL
+   *          db connection URL (plocal:/your/db/path)
+   */
+  public OGraphBatchInsertSimple(String iDbURL) {
+    this.dbUrl = iDbURL;
+    this.userName = "admin";
+    this.password = "admin";
+  }
+
+  /**
+   * Creates a new batch insert procedure. It's intended to be used only for a single batch cycle (begin, create..., end)
+   *
    * @param iDbURL
    *          db connection URL (plocal:/your/db/path)
    * @param iUserName
@@ -96,7 +105,9 @@ public class OGraphBatchInsertSimple {
    *
    */
   public void begin() {
-    OGlobalConfiguration.USE_WAL.setValue(false);
+    walActive = OGlobalConfiguration.USE_WAL.getValueAsBoolean();
+    if (walActive)
+      OGlobalConfiguration.USE_WAL.setValue(false);
     if (averageEdgeNumberPerNode > 0) {
       OGlobalConfiguration.RID_BAG_EMBEDDED_DEFAULT_SIZE.setValue(averageEdgeNumberPerNode);
       OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(bonsaiThreshold);
@@ -109,45 +120,48 @@ public class OGraphBatchInsertSimple {
       db.create();
     }
     createBaseSchema();
+
+    out = estimatedEntries > 0 ? new HashMap<Long, List<Long>>(estimatedEntries) : new HashMap<Long, List<Long>>();
+    in = estimatedEntries > 0 ? new HashMap<Long, List<Long>>(estimatedEntries) : new HashMap<Long, List<Long>>();
   }
 
   /**
    * Flushes data to db and closes the db. Call this once, after vertices and edges creation.
    */
   public void end() {
-    OClass vClass = db.getMetadata().getSchema().getClass(vertexClass);
+    final OClass vClass = db.getMetadata().getSchema().getClass(vertexClass);
     int clusterId = vClass.getDefaultClusterId();
 
     try {
       OCluster cluster = db.getStorage().getClusterById(clusterId);
       long firstAvailableClusterPosition = cluster.getLastPosition() + 1;
-      String clusterName = cluster.getName();
+      final String clusterName = cluster.getName();
 
-      String outField = "E".equals(this.edgeClass) ? "out_" : ("out_" + this.edgeClass);
-      String inField = "E".equals(this.edgeClass) ? "in_" : ("in_" + this.edgeClass);
+      final String outField = "E".equals(this.edgeClass) ? "out_" : ("out_" + this.edgeClass);
+      final String inField = "E".equals(this.edgeClass) ? "in_" : ("in_" + this.edgeClass);
 
       db.declareIntent(new OIntentMassiveInsert());
 
       for (long i = 0; i <= last; i++) {
-        List<Long> outIds = this.out.get(i);
-        List<Long> inIds = this.in.get(i);
-        ODocument doc = new ODocument(vClass);
+        final List<Long> outIds = this.out.get(i);
+        final List<Long> inIds = this.in.get(i);
+        final ODocument doc = new ODocument(vClass);
         if (outIds == null && inIds == null) {
           db.save(doc, clusterName).delete();
         } else {
           doc.field(idPropertyName, i);
           if (outIds != null) {
-            ORidBag outBag = new ORidBag();
+            final ORidBag outBag = new ORidBag();
             for (Long l : outIds) {
-              ORecordId rid = new ORecordId(clusterId, firstAvailableClusterPosition + l);
+              final ORecordId rid = new ORecordId(clusterId, firstAvailableClusterPosition + l);
               outBag.add(rid);
             }
             doc.field(outField, outBag);
           }
           if (inIds != null) {
-            ORidBag inBag = new ORidBag();
+            final ORidBag inBag = new ORidBag();
             for (Long l : inIds) {
-              ORecordId rid = new ORecordId(clusterId, firstAvailableClusterPosition + l);
+              final ORecordId rid = new ORecordId(clusterId, firstAvailableClusterPosition + l);
               inBag.add(rid);
             }
             doc.field(inField, inBag);
@@ -160,32 +174,35 @@ public class OGraphBatchInsertSimple {
     } finally {
       db.declareIntent(null);
       db.close();
+
+      if (walActive)
+        OGlobalConfiguration.USE_WAL.setValue(walActive);
     }
   }
 
   /**
-   * creates a new vertex
+   * Creates a new vertex
    * 
    * @param v
    *          the vertex ID
    */
-  public void createVertex(Long v) {
+  public void createVertex(final Long v) {
     last = last < v ? v : last;
-    List<Long> outList = out.get(v);
+    final List<Long> outList = out.get(v);
     if (outList == null) {
       out.put(v, new ArrayList<Long>(averageEdgeNumberPerNode <= 0 ? 4 : averageEdgeNumberPerNode));
     }
   }
 
   /**
-   * creates a new edge between two vertices. If vertices do not exist, they will be created
+   * Creates a new edge between two vertices. If vertices do not exist, they will be created
    * 
    * @param from
    *          id of the vertex that is starting point of the edge
    * @param to
    *          id of the vertex that is end point of the edge
    */
-  public void createEdge(Long from, Long to) {
+  public void createEdge(final Long from, final Long to) {
     if (from < 0) {
       throw new IllegalArgumentException(" Invalid vertex id: " + from);
     }
@@ -196,15 +213,6 @@ public class OGraphBatchInsertSimple {
     last = last < to ? to : last;
     putInList(from, out, to);
     putInList(to, in, from);
-  }
-
-  private void putInList(Long key, Map<Long, List<Long>> out, Long value) {
-    List<Long> list = out.get(key);
-    if (list == null) {
-      list = new ArrayList<Long>(averageEdgeNumberPerNode <= 0 ? 4 : averageEdgeNumberPerNode);
-      out.put(key, list);
-    }
-    list.add(value);
   }
 
   /**
@@ -220,12 +228,104 @@ public class OGraphBatchInsertSimple {
    * 
    * @param averageEdgeNumberPerNode
    */
-  public void setAverageEdgeNumberPerNode(int averageEdgeNumberPerNode) {
+  public void setAverageEdgeNumberPerNode(final int averageEdgeNumberPerNode) {
     this.averageEdgeNumberPerNode = averageEdgeNumberPerNode;
   }
 
+  /**
+   * @return the property name where ids are written on vertices
+   */
+  public String getIdPropertyName() {
+    return idPropertyName;
+  }
+
+  /**
+   * @param idPropertyName
+   *          the property name where ids are written on vertices
+   */
+  public void setIdPropertyName(final String idPropertyName) {
+    this.idPropertyName = idPropertyName;
+  }
+
+  /**
+   *
+   * @return the edge class name (E by default)
+   */
+  public String getEdgeClass() {
+    return edgeClass;
+  }
+
+  /**
+   *
+   * @param edgeClass
+   *          the edge class name
+   */
+  public void setEdgeClass(final String edgeClass) {
+    this.edgeClass = edgeClass;
+  }
+
+  /**
+   *
+   * @return the vertex class name (V by default)
+   */
+  public String getVertexClass() {
+    return vertexClass;
+  }
+
+  /**
+   *
+   * @param vertexClass
+   *          the vertex class name
+   */
+  public void setVertexClass(final String vertexClass) {
+    this.vertexClass = vertexClass;
+  }
+
+  /**
+   * @return the threshold for passing from emdedded RidBag to SBTreeBonsai (low level optimization).
+   */
+  public int getBonsaiThreshold() {
+    return bonsaiThreshold;
+  }
+
+  /**
+   * Sets the threshold for passing from emdedded RidBag to SBTreeBonsai implementation, in number of edges (low level
+   * optimization). High values speed up writes but slow down reads later. Set -1 (default) to use default database configuration.
+   *
+   * See OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD}
+   *
+   */
+  public void setBonsaiThreshold(final int bonsaiThreshold) {
+    this.bonsaiThreshold = bonsaiThreshold;
+  }
+
+  /**
+   * Returns the estimated number of entries. 0 for auto-resize.
+   */
+  public int getEstimatedEntries() {
+    return estimatedEntries;
+  }
+
+  /**
+   * Sets the estimated number of entries, 0 for auto-resize (default). This pre-allocate in memory structure avoiding resizing of
+   * them at run-time.
+   * 
+   */
+  public void setEstimatedEntries(final int estimatedEntries) {
+    this.estimatedEntries = estimatedEntries;
+  }
+
+  private void putInList(final Long key, final Map<Long, List<Long>> out, final Long value) {
+    List<Long> list = out.get(key);
+    if (list == null) {
+      list = new ArrayList<Long>(averageEdgeNumberPerNode <= 0 ? 4 : averageEdgeNumberPerNode);
+      out.put(key, list);
+    }
+    list.add(value);
+  }
+
   private void createBaseSchema() {
-    OSchema schema = db.getMetadata().getSchema();
+    final OSchema schema = db.getMetadata().getSchema();
     OClass v;
     OClass e;
     if (!schema.existsClass("V")) {
@@ -250,78 +350,11 @@ public class OGraphBatchInsertSimple {
     }
   }
 
-  private long getClusterPosition(long uid) {
+  private long getClusterPosition(final long uid) {
     return lastClusterIds[(int) (uid % clusterIds.length)] + (uid / clusterIds.length) + 1;
   }
 
-  private int getClusterId(long left) {
+  private int getClusterId(final long left) {
     return clusterIds[(int) (left % clusterIds.length)];
-  }
-
-  /**
-   * @return the property name where ids are written on vertices
-   */
-  public String getIdPropertyName() {
-    return idPropertyName;
-  }
-
-  /**
-   * @param idPropertyName
-   *          the property name where ids are written on vertices
-   */
-  public void setIdPropertyName(String idPropertyName) {
-    this.idPropertyName = idPropertyName;
-  }
-
-  /**
-   *
-   * @return the edge class name (E by default)
-   */
-  public String getEdgeClass() {
-    return edgeClass;
-  }
-
-  /**
-   *
-   * @param edgeClass
-   *          the edge class name
-   */
-  public void setEdgeClass(String edgeClass) {
-    this.edgeClass = edgeClass;
-  }
-
-  /**
-   *
-   * @return the vertex class name (V by default)
-   */
-  public String getVertexClass() {
-    return vertexClass;
-  }
-
-  /**
-   *
-   * @param vertexClass
-   *          the vertex class name
-   */
-  public void setVertexClass(String vertexClass) {
-    this.vertexClass = vertexClass;
-  }
-
-  /**
-   * @return the threshold for passing from emdedded RidBag to SBTreeBonsai (low level optimization).
-   */
-  public int getBonsaiThreshold() {
-    return bonsaiThreshold;
-  }
-
-  /**
-   * sets the threshold for passing from emdedded RidBag to SBTreeBonsai implementation, in number of edges (low level
-   * optimization). High values speed up writes but slow down reads later. Set -1 (default) to use default database configuration.
-   *
-   * See OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD}
-   *
-   */
-  public void setBonsaiThreshold(int bonsaiThreshold) {
-    this.bonsaiThreshold = bonsaiThreshold;
   }
 }
