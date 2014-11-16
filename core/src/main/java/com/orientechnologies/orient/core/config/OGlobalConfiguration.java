@@ -333,6 +333,11 @@ public enum OGlobalConfiguration {
       "How much free space should be in sbtreebonsai file before it will be reused during next allocation", Float.class, 0.5),
 
   // RIDBAG
+  RID_BAG_EMBEDDED_DEFAULT_SIZE(
+      "ridBag.embeddedDefaultSize",
+      "Size of embedded RidBag array when created (empty)",
+      Integer.class, 4),
+
   RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD(
       "ridBag.embeddedToSbtreeBonsaiThreshold",
       "Amount of values after which LINKBAG implementation will use sbtree as values container. Set to -1 to force always using it",
