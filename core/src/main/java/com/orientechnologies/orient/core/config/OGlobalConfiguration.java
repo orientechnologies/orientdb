@@ -608,16 +608,16 @@ public enum OGlobalConfiguration {
   private static void autoConfigDiskCacheSize() {
     final OperatingSystemMXBean mxBean = ManagementFactory.getOperatingSystemMXBean();
     try {
-      final Method memorySize = mxBean.getClass().getDeclaredMethod("getFreePhysicalMemorySize");
+      final Method memorySize = mxBean.getClass().getDeclaredMethod("getTotalPhysicalMemorySize");
       memorySize.setAccessible(true);
-      final long osFreeMemory = (Long) memorySize.invoke(mxBean);
-      final long jvmTotMemory = Runtime.getRuntime().totalMemory();
+
+      final long osMemory = (Long) memorySize.invoke(mxBean);
       final long jvmMaxMemory = Runtime.getRuntime().maxMemory();
 
-      final long result = (osFreeMemory + jvmTotMemory - jvmMaxMemory) / (1024 * 1024) * 70 / 100;
+      final long result = (osMemory - jvmMaxMemory) / (1024 * 1024) - 2 * 1024;
       if (result > 0) {
-        OLogManager.instance().info(null, "Auto-config DISKCACHE=%,dMB (heap=%,dMB osFreeMemory=%,dMB)", result,
-            jvmMaxMemory / 1024 / 1024, osFreeMemory / 1024 / 1024);
+        OLogManager.instance().info(null, "Auto-config DISKCACHE=%,dMB (heap=%,dMB osMemory=%,dMB)", result,
+            jvmMaxMemory / 1024 / 1024, osMemory / 1024 / 1024);
         DISK_CACHE_SIZE.setValue(result);
       } else {
         // LOW MEMORY: SET IT TO 64MB ONLY
@@ -625,8 +625,8 @@ public enum OGlobalConfiguration {
             .instance()
             .warn(
                 null,
-                "No enough free physical memory available: %,dMB (heap=%,dMB). Set lower Heap and restart OrientDB. Now running with DISKCACHE=64MB",
-                osFreeMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
+                "No enough physical memory available: %,dMB (heap=%,dMB). Set lower Heap and restart OrientDB. Now running with DISKCACHE=64MB",
+                osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
         DISK_CACHE_SIZE.setValue(OReadWriteDiskCache.MIN_CACHE_SIZE);
       }
 
