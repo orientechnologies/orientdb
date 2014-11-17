@@ -1,10 +1,10 @@
 package com.orientechnologies.orient.graph.batch;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -14,7 +14,6 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OCluster;
 
 /**
  *
@@ -50,6 +49,7 @@ import com.orientechnologies.orient.core.storage.OCluster;
  * batch.createVertex() is needed only if you want to create unconnected vertices.
  *
  * @since 2.0 M3
+ * @author Luigi Dell'Aquila (l.dellaquila-at-orientechnologies.com)
  */
 public class OGraphBatchInsertSimple {
 
@@ -66,9 +66,74 @@ public class OGraphBatchInsertSimple {
   private int                 estimatedEntries         = -1;
   private int                 bonsaiThreshold          = 1000;
   private int[]               clusterIds;
-  private long[]              lastClusterIds;
+  private long[]              lastClusterPositions;
   private long                last                     = 0;
   private boolean             walActive;
+
+  private int                 parallel                 = 4;
+  private AtomicInteger       runningThreads           = new AtomicInteger(0);
+
+  class BatchImporterJob extends Thread {
+
+    private final int mod;
+    OClass            vClass;
+
+    BatchImporterJob(int mod, OClass vertexClass) {
+      this.mod = mod;
+      this.vClass = vertexClass;
+    }
+
+    @Override
+    public void run() {
+      try {
+        ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
+        db.open(userName, password);
+        db.declareIntent(new OIntentMassiveInsert());
+        int clusterId = clusterIds[mod];
+
+        final String outField = "E".equals(edgeClass) ? "out_" : ("out_" + edgeClass);
+        final String inField = "E".equals(edgeClass) ? "in_" : ("in_" + edgeClass);
+
+        String clusterName = db.getStorage().getClusterById(clusterId).getName();
+        // long firstAvailableClusterPosition = lastClusterPositions[mod] + 1;
+
+        int step = clusterIds.length;
+        for (long i = mod; i <= last; i += step) {
+          final List<Long> outIds = out.get(i);
+          final List<Long> inIds = in.get(i);
+          final ODocument doc = new ODocument(vClass);
+          if (outIds == null && inIds == null) {
+            db.save(doc, clusterName).delete();
+          } else {
+            doc.field(idPropertyName, i);
+            if (outIds != null) {
+              final ORidBag outBag = new ORidBag();
+              for (Long l : outIds) {
+                final ORecordId rid = new ORecordId(getClusterId(l), getClusterPosition(l));
+                outBag.add(rid);
+              }
+              doc.field(outField, outBag);
+            }
+            if (inIds != null) {
+              final ORidBag inBag = new ORidBag();
+              for (Long l : inIds) {
+                final ORecordId rid = new ORecordId(getClusterId(l), getClusterPosition(l));
+                inBag.add(rid);
+              }
+              doc.field(inField, inBag);
+            }
+            db.save(doc, clusterName);
+          }
+        }
+      } finally {
+        runningThreads.decrementAndGet();
+        synchronized (runningThreads) {
+          runningThreads.notifyAll();
+        }
+        db.close();
+      }
+    }
+  }
 
   /**
    * Creates a new batch insert procedure by using admin user. It's intended to be used only for a single batch cycle (begin,
@@ -123,6 +188,23 @@ public class OGraphBatchInsertSimple {
 
     out = estimatedEntries > 0 ? new HashMap<Long, List<Long>>(estimatedEntries) : new HashMap<Long, List<Long>>();
     in = estimatedEntries > 0 ? new HashMap<Long, List<Long>>(estimatedEntries) : new HashMap<Long, List<Long>>();
+
+    OClass vClass = db.getMetadata().getSchema().getClass(this.vertexClass);
+    for (int c = 0; c < parallel - 1; c++) {
+      vClass.addCluster(vClass.getName() + "_" + c);
+    }
+
+    clusterIds = vClass.getClusterIds();
+
+    lastClusterPositions = new long[clusterIds.length];
+    for (int i = 0; i < clusterIds.length; i++) {
+      int clusterId = clusterIds[i];
+      try {
+        lastClusterPositions[i] = db.getStorage().getClusterById(clusterId).getLastPosition();
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 
   /**
@@ -130,51 +212,32 @@ public class OGraphBatchInsertSimple {
    */
   public void end() {
     final OClass vClass = db.getMetadata().getSchema().getClass(vertexClass);
-    int clusterId = vClass.getDefaultClusterId();
+
 
     try {
-      OCluster cluster = db.getStorage().getClusterById(clusterId);
-      long firstAvailableClusterPosition = cluster.getLastPosition() + 1;
-      final String clusterName = cluster.getName();
 
       final String outField = "E".equals(this.edgeClass) ? "out_" : ("out_" + this.edgeClass);
       final String inField = "E".equals(this.edgeClass) ? "in_" : ("in_" + this.edgeClass);
 
-      db.declareIntent(new OIntentMassiveInsert());
+      runningThreads = new AtomicInteger(parallel);
+      for (int i = 0; i < parallel - 1; i++) {
+        Thread t = new BatchImporterJob(i, vClass);
+        t.start();
+      }
+      Thread t = new BatchImporterJob(parallel - 1, vClass);
+      t.run();
 
-      for (long i = 0; i <= last; i++) {
-        final List<Long> outIds = this.out.get(i);
-        final List<Long> inIds = this.in.get(i);
-        final ODocument doc = new ODocument(vClass);
-        if (outIds == null && inIds == null) {
-          db.save(doc, clusterName).delete();
-        } else {
-          doc.field(idPropertyName, i);
-          if (outIds != null) {
-            final ORidBag outBag = new ORidBag();
-            for (Long l : outIds) {
-              final ORecordId rid = new ORecordId(clusterId, firstAvailableClusterPosition + l);
-              outBag.add(rid);
-            }
-            doc.field(outField, outBag);
+      synchronized (runningThreads) {
+        while (runningThreads.get() > 0) {
+          try {
+            runningThreads.wait();
+          } catch (InterruptedException e) {
           }
-          if (inIds != null) {
-            final ORidBag inBag = new ORidBag();
-            for (Long l : inIds) {
-              final ORecordId rid = new ORecordId(clusterId, firstAvailableClusterPosition + l);
-              inBag.add(rid);
-            }
-            doc.field(inField, inBag);
-          }
-          db.save(doc, clusterName);
         }
       }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    } finally {
-      db.declareIntent(null);
-      db.close();
 
+    } finally {
+      db.close();
       if (walActive)
         OGlobalConfiguration.USE_WAL.setValue(walActive);
     }
@@ -315,6 +378,23 @@ public class OGraphBatchInsertSimple {
     this.estimatedEntries = estimatedEntries;
   }
 
+  /**
+   *
+   * @return number of parallel threads used for batch import
+   */
+  public int getParallel() {
+    return parallel;
+  }
+
+  /**
+   * sets the number of parallel threads to be used for batch insert
+   * @param parallel number of threads (default 4)
+   */
+  public void setParallel(int parallel) {
+    this.parallel = parallel;
+  }
+
+
   private void putInList(final Long key, final Map<Long, List<Long>> out, final Long value) {
     List<Long> list = out.get(key);
     if (list == null) {
@@ -351,10 +431,12 @@ public class OGraphBatchInsertSimple {
   }
 
   private long getClusterPosition(final long uid) {
-    return lastClusterIds[(int) (uid % clusterIds.length)] + (uid / clusterIds.length) + 1;
+    return lastClusterPositions[(int) (uid % clusterIds.length)] + (uid / clusterIds.length) + 1;
   }
 
   private int getClusterId(final long left) {
     return clusterIds[(int) (left % clusterIds.length)];
   }
-}
+
+
+ }
