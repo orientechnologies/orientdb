@@ -97,8 +97,7 @@ public class OGraphBatchInsertSimple {
         String clusterName = db.getStorage().getClusterById(clusterId).getName();
         // long firstAvailableClusterPosition = lastClusterPositions[mod] + 1;
 
-        int step = clusterIds.length;
-        for (long i = mod; i <= last; i += step) {
+        for (long i = mod; i <= last; i += parallel) {
           final List<Long> outIds = out.get(i);
           final List<Long> inIds = in.get(i);
           final ODocument doc = new ODocument(vClass);
@@ -190,7 +189,8 @@ public class OGraphBatchInsertSimple {
     in = estimatedEntries > 0 ? new HashMap<Long, List<Long>>(estimatedEntries) : new HashMap<Long, List<Long>>();
 
     OClass vClass = db.getMetadata().getSchema().getClass(this.vertexClass);
-    for (int c = 0; c < parallel - 1; c++) {
+    int[] existingClusters = vClass.getClusterIds();
+    for (int c = existingClusters.length; c <= parallel; c++) {
       vClass.addCluster(vClass.getName() + "_" + c);
     }
 
@@ -433,11 +433,11 @@ public class OGraphBatchInsertSimple {
   }
 
   private long getClusterPosition(final long uid) {
-    return lastClusterPositions[(int) (uid % clusterIds.length)] + (uid / clusterIds.length) + 1;
+    return lastClusterPositions[(int) (uid % parallel)] + (uid / parallel) + 1;
   }
 
   private int getClusterId(final long left) {
-    return clusterIds[(int) (left % clusterIds.length)];
+    return clusterIds[(int) (left % parallel)];
   }
 
 }
