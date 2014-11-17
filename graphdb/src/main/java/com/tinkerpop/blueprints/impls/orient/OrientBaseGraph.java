@@ -79,7 +79,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   private String                                           password;
 
   private static final ThreadLocal<OrientBaseGraph>        currentGraph   = new ThreadLocal<OrientBaseGraph>();
-  private static final ThreadLocal<Deque<OrientBaseGraph>> initStack = new ThreadLocal<Deque<OrientBaseGraph>>() {
+  private static final ThreadLocal<Deque<OrientBaseGraph>> initStack      = new ThreadLocal<Deque<OrientBaseGraph>>() {
                                                                             @Override
                                                                             protected Deque<OrientBaseGraph> initialValue() {
                                                                               return new ArrayDeque<OrientBaseGraph>();
@@ -87,7 +87,17 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
                                                                           };
 
   public static OrientBaseGraph getActiveInstance() {
-    return currentGraph.get();
+    final OrientBaseGraph graph = currentGraph.get();
+
+    if (graph != null) {
+			final ODatabaseDocument tlDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+
+			if (graph.database != null && tlDb != graph.database)
+				// SET IT
+				ODatabaseRecordThreadLocal.INSTANCE.set(graph.database);
+		}
+
+    return graph;
   }
 
   /**
@@ -1062,8 +1072,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     final OrientBaseGraph graph = pollFromInitStack();
     currentGraph.set(graph);
-		if (graph != null)
-			graph.makeActive();
+    if (graph != null)
+      graph.makeActive();
 
     url = null;
     username = null;
