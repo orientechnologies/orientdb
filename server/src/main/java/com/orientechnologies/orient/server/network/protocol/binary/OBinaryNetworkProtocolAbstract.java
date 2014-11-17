@@ -79,6 +79,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   protected OChannelBinaryServer channel;
   protected int                  requestType;
   protected int                  clientTxId;
+  protected OToken               token;
   protected boolean              okSent;
   protected OTokenHandler        tokenHandler;
 
@@ -198,8 +199,10 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       clientTxId = channel.readInt();
       byte[] token = channel.readBytes();
       if (token != null && token.length > 0) {
-        OToken otoken = tokenHandler.parseBinaryToken(token);
-        // tokenHandler.validateToken(token, command, database)
+        this.token = tokenHandler.parseBinaryToken(token);
+        if (!this.token.getIsVerified()) {
+          // TODO: fail
+        }
       }
 
       timer = Orient.instance().getProfiler().startChrono();

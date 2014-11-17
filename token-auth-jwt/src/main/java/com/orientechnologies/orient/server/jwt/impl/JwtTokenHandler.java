@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.jwt.impl;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -17,14 +18,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OTokenHandler;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
-import com.orientechnologies.orient.core.metadata.security.jwt.OJwtKeyProvider;
+import com.orientechnologies.orient.core.metadata.security.jwt.OKeyProvider;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.jwt.mixin.OJwtHeaderMixin;
 import com.orientechnologies.orient.server.jwt.mixin.OJwtPayloadMixin;
@@ -41,6 +44,7 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
   private static final String           JWT_TOKEN_HANDLER = "JwtTokenHandler";
 
   private final ObjectMapper            mapper;
+  private OBinaryTokenSerializer        binarySerializer;
 
   protected static final int            JWT_DELIMITER     = '.';
 
@@ -55,7 +59,7 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
                                                             }
                                                           };
 
-  private OJwtKeyProvider               keyProvider;
+  private OKeyProvider                  keyProvider;
 
   public JwtTokenHandler() {
     mapper = new ObjectMapper().registerModule(new AfterburnerModule()).configure(
@@ -74,7 +78,9 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
         keyProvider = new DefaultJwtKeyProvider(secret);
       }
     }
-
+    String[] keys = keyProvider.getKeys();
+    this.binarySerializer = new OBinaryTokenSerializer(new String[] { "plocal", "memory" }, keys, new String[] { "HmacSHA256" },
+        new String[] { "OrientDB" });
   }
 
   @Override
@@ -139,8 +145,19 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
       return false;
     }
     OrientJwtPayload payload = (OrientJwtPayload) ((JsonWebToken) token).getPayload();
-    if (payload.getDbName().equalsIgnoreCase(database) && payload.getExpiry() > System.currentTimeMillis()
+    if (token.getDatabase().equalsIgnoreCase(database) && token.getExpiry() > System.currentTimeMillis()
         && payload.getNotBefore() < System.currentTimeMillis()) {
+      valid = true;
+    }
+    // TODO: Other validations... (e.g. check audience, etc.)
+    token.setIsValid(valid);
+    return valid;
+  }
+
+  @Override
+  public boolean validateBinaryToken(OToken token) {
+    boolean valid = false;
+    if (token.getExpiry() > System.currentTimeMillis() && token.getExpiry() - (60000 * 10) < System.currentTimeMillis()) {
       valid = true;
     }
     // TODO: Other validations... (e.g. check audience, etc.)
@@ -216,30 +233,39 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
   protected OJwtPayload createPayload(ODatabaseDocumentInternal db, OSecurityUser user) {
     OrientJwtPayload payload = new OrientJwtPayload();
     payload.setAudience("OrientDb");
-    payload.setDbName(db.getName());
+    payload.setDatabase(db.getName());
     payload.setUserRid(user.getDocument().getIdentity().toString());
 
     long expiryMinutes = 60000 * 10;
     long currTime = System.currentTimeMillis();
-    Date issueTime = new Date(currTime);
-    Date expDate = new Date(currTime + expiryMinutes);
-    payload.setIssuedAt(issueTime.getTime());
-    payload.setNotBefore(issueTime.getTime());
-    payload.setSubject(user.getName());
+    // Date issueTime = new Date(currTime);
+    // Date expDate = new Date(currTime + expiryMinutes);
+    payload.setIssuedAt(currTime);
+    payload.setNotBefore(currTime);
+    payload.setUserName(user.getName());
     payload.setTokenId(UUID.randomUUID().toString());
-    payload.setExpiry(expDate.getTime());
+    payload.setExpiry(currTime + expiryMinutes);
     return payload;
   }
 
   public byte[] getSignedBinaryToken(ODatabaseDocumentInternal db, OSecurityUser user) {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     try {
+      OBinaryToken token = new OBinaryToken();
+
+      long expiryMinutes = 60000 * 10;
+      long currTime = System.currentTimeMillis();
+
       OrientJwtHeader header = new OrientJwtHeader();
-      header.setAlgorithm("HS256");
-      header.setKeyId("");
-      serializeBinaryHeader(header, baos);
-      OJwtPayload payload = createPayload(db, user);
-      serializeBinaryPayload(payload, baos);
+      header.setAlgorithm("HmacSHA256");
+      header.setKeyId("HmacSHA256");
+      header.setType("OrientDB");
+      token.setHeader(header);
+      token.setDatabase(db.getName());
+      token.setDatabaseType(db.getStorage().getType());
+      token.setUserRid(user.getIdentity().getIdentity());
+      token.setExpiry(currTime + expiryMinutes);
+      binarySerializer.serialize(token, baos);
 
       byte[] signature = signToken(header, baos.toByteArray());
       baos.write(signature);
@@ -252,54 +278,25 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
     return baos.toByteArray();
   }
 
-  private void serializeBinaryPayload(OJwtPayload payload, OutputStream baos) throws Exception {
-    byte[] res = serializeWebPayload(payload);
-    baos.write(res.length);
-    baos.write(res);
-  }
-
-  private void serializeBinaryHeader(OrientJwtHeader header, OutputStream baos) throws Exception {
-    byte[] res = serializeWebHeader(header);
-    baos.write(res.length);
-    baos.write(res);
-  }
-
   public OToken parseBinaryToken(byte[] binaryToken) {
     try {
       ByteArrayInputStream bais = new ByteArrayInputStream(binaryToken);
 
-      OJwtHeader header = deserializeBinaryHeader(bais);
-      OJwtPayload payload = deserializeBinaryPayload(bais);
-
-      JsonWebToken token = new JsonWebToken(header, payload);
+      OBinaryToken token = deserializeBinaryToken(bais);
       int end = binaryToken.length - bais.available();
       byte[] decodedSignature = new byte[bais.available()];
       bais.read(decodedSignature);
 
-      token.setIsVerified(verifyTokenSignature(header, binaryToken, 0, end, decodedSignature));
+      token.setIsVerified(verifyTokenSignature(token.getHeader(), binaryToken, 0, end, decodedSignature));
       return token;
     } catch (IOException e) {
       throw new OException(e);
     }
   }
 
-  private OJwtPayload deserializeBinaryPayload(InputStream bais) {
+  private OBinaryToken deserializeBinaryToken(InputStream bais) {
     try {
-      int size = bais.read();
-      byte[] data = new byte[size];
-      bais.read(data);
-      return mapper.readValue(data, OrientJwtPayload.class);
-    } catch (Exception e) {
-      throw new OException(e);
-    }
-  }
-
-  private OJwtHeader deserializeBinaryHeader(InputStream bais) {
-    try {
-      int size = bais.read();
-      byte[] data = new byte[size];
-      bais.read(data);
-      return mapper.readValue(data, OrientJwtHeader.class);
+      return binarySerializer.deserialize(bais);
     } catch (Exception e) {
       throw new OException(e);
     }
@@ -314,7 +311,7 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
     return JWT_TOKEN_HANDLER;
   }
 
-  protected OJwtKeyProvider getKeyProvider() {
+  protected OKeyProvider getKeyProvider() {
     return keyProvider;
   }
 

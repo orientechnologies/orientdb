@@ -116,6 +116,7 @@ public class OClientConnectionManager {
     return connection;
   }
 
+  
   /**
    * Retrieves the connection by id.
    * 

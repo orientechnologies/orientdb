@@ -209,7 +209,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public void open(final OToken iToken, final Map<String, Object> iProperties) {
-    open(iToken.getSubject(), "", iProperties);
+    open(iToken.getUserName(), "", iProperties);
   }
 
   public void create(final Map<String, Object> iProperties) {

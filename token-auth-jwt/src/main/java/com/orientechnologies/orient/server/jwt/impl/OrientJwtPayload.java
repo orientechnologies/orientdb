@@ -17,9 +17,8 @@ public class OrientJwtPayload implements OJwtPayload {
   public long   iat;
   public long   nbf;
   public String userRid;
-  public String dbName;
-
-  // public ODocument userDoc;
+  public String database;
+  public String databaseType;
 
   @Override
   public String getIssuer() {
@@ -62,12 +61,12 @@ public class OrientJwtPayload implements OJwtPayload {
   }
 
   @Override
-  public String getSubject() {
+  public String getUserName() {
     return sub;
   }
 
   @Override
-  public void setSubject(String sub) {
+  public void setUserName(String sub) {
     this.sub = sub;
   }
 
@@ -102,13 +101,23 @@ public class OrientJwtPayload implements OJwtPayload {
   }
 
   @JsonProperty(value = "dbName")
-  public String getDbName() {
-    return dbName;
+  public String getDatabase() {
+    return database;
   }
 
   @JsonProperty(value = "dbName")
-  public void setDbName(String dbName) {
-    this.dbName = dbName;
+  public void setDatabase(String dbName) {
+    this.database = dbName;
+  }
+
+  @Override
+  public String getDatabaseType() {
+    return databaseType;
+  }
+
+  @Override
+  public void setDatabaseType(String databaseType) {
+    this.databaseType = databaseType;
   }
 
 }

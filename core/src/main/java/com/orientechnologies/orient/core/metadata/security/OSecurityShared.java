@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+
 /**
  * Shared security class. It's shared by all the database instances that point to the same storage.
  * 
@@ -61,7 +62,6 @@ public class OSecurityShared implements OSecurity, OCloseable {
   public static final String ALLOW_DELETE_FIELD     = "_allowDelete";
   public static final String ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
   public static final String ONCREATE_FIELD         = "onCreate.fields";
-  public static final String TOKEN_AUTH_USERNAME = "__TOKEN_AUTH__";
 
   public OSecurityShared() {
   }
@@ -155,17 +155,6 @@ public class OSecurityShared implements OSecurity, OCloseable {
 
   public OUser authenticate(final String iUserName, final String iUserPassword) {
     final String dbName = getDatabase().getName();
-    if (iUserName.equals(TOKEN_AUTH_USERNAME)) {
-      // Password should contain base64 encoded JWT token
-      /*
-      try {
-        return authenticate(SignedJWT.parse(iUserPassword));
-      } catch (ParseException pEx) {
-        throw new OSecurityAccessException(dbName, "Token not valid");
-      }
-      */
-    }
-
     final OUser user = getUser(iUserName);
     if (user == null)
       throw new OSecurityAccessException(dbName, "User or password not valid for database: '" + dbName + "'");
@@ -192,22 +181,21 @@ public class OSecurityShared implements OSecurity, OCloseable {
   // Token MUST be validated before being passed to this method.
   public OUser authenticate(final OToken authToken) {
     final String dbName = getDatabase().getName();
-    if ( authToken.getIsValid() != true ) {
+    if (authToken.getIsValid() != true) {
       throw new OSecurityAccessException(dbName, "Token not valid");
     }
 
     OUser user = authToken.getUser(getDatabase());
-    if ( user == null ) {
+    if (user == null && authToken.getUserName() != null) {
       // Token handler may not support returning an OUser so let's get username (subject) and query:
-      user = getUser(authToken.getSubject(), true);
+      user = getUser(authToken.getUserName(), true);
     }
 
-    if ( user == null ) {
+    if (user == null) {
       throw new OSecurityAccessException(dbName, "Authentication failed, could not load user from token");
     }
     if (user.getAccountStatus() != STATUSES.ACTIVE)
       throw new OSecurityAccessException(dbName, "User '" + user.getName() + "' is not active");
-
 
     return user;
   }
@@ -215,7 +203,6 @@ public class OSecurityShared implements OSecurity, OCloseable {
   public OUser getUser(final String iUserName) {
     return getUser(iUserName, true);
   }
-
 
   public OUser getUser(final ORID iRecordId) {
     ODocument result;

@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OTokenHandler;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -234,10 +235,10 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     if (localDatabase == null) {
       localDatabase = (ODatabaseDocumentTx) server.openDatabase("document", iRequest.databaseName, iRequest.bearerToken);
     } else {
-      String currentUserId = iRequest.bearerToken.getSubject();
-      if (currentUserId != null && currentUserId.length() > 0 && localDatabase != null && localDatabase.getUser() != null) {
+      ORID currentUserId = iRequest.bearerToken.getUserId();
+      if (currentUserId != null && localDatabase != null && localDatabase.getUser() != null) {
         if (!currentUserId.equals(localDatabase.getUser().getDocument().getIdentity().toString())) {
-          ODocument userDoc = localDatabase.load(new ORecordId(currentUserId));
+          ODocument userDoc = localDatabase.load(currentUserId);
           localDatabase.setUser(new OUser(userDoc));
         }
       }

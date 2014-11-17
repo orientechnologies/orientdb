@@ -155,19 +155,31 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void onBeforeRequest() throws IOException {
     waitNodeIsOnline();
 
-    connection = OClientConnectionManager.instance().getConnection(clientTxId, this);
+//    if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
+      connection = OClientConnectionManager.instance().getConnection(clientTxId, this);
+      if (clientTxId < 0) {
+        short protocolId = 0;
 
-    if (clientTxId < 0) {
-      short protocolId = 0;
+        if (connection != null)
+          protocolId = connection.data.protocolVersion;
 
-      if (connection != null)
-        protocolId = connection.data.protocolVersion;
+        connection = OClientConnectionManager.instance().connect(this);
 
-      connection = OClientConnectionManager.instance().connect(this);
-
-      if (connection != null)
-        connection.data.protocolVersion = protocolId;
-    }
+        if (connection != null)
+          connection.data.protocolVersion = protocolId;
+      }
+//    } else {
+//      if (token != null) {
+//        if (!tokenHandler.validateBinaryToken(token)) {
+//          // TODO: thrown na error and fail the connection.
+//        }
+//        String db = token.getDatabase();
+//        String type = token.getDatabaseType();
+//        final ODatabaseDocumentTx database = Orient.instance().getDatabaseFactory().createDatabase(type, db);
+//        database.open(token);
+//        connection.database = database;
+//      }
+//    }
 
     if (connection != null) {
       ODatabaseRecordThreadLocal.INSTANCE.set(connection.database);
@@ -200,9 +212,15 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     OServerPluginHelper.invokeHandlerCallbackOnAfterClientRequest(server, connection, (byte) requestType);
 
     if (connection != null) {
-      if (connection.database != null)
-        if (!connection.database.isClosed())
-          connection.database.getLocalCache().clear();
+//      if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_26 || token == null) {
+        if (connection.database != null)
+          if (!connection.database.isClosed())
+            connection.database.getLocalCache().clear();
+//      } else {
+//        if (connection.database != null && !connection.database.isClosed())
+//          connection.database.close();
+//        connection.database = null;
+//      }
 
       connection.data.lastCommandExecutionTime = System.currentTimeMillis() - connection.data.lastCommandReceived;
       connection.data.totalCommandExecutionTime += connection.data.lastCommandExecutionTime;
@@ -1455,6 +1473,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void sendOk(final int iClientTxId) throws IOException {
     channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_OK);
     channel.writeInt(iClientTxId);
+    if (connection.data.protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
+      // TODO: Check if the token is expiring and if it is send a new token
+      // if(token.)
+    }
   }
 
   @Override

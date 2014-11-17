@@ -85,7 +85,7 @@ public class JwtTokenHandlerTest {
     payload.setIssuedAt(2L);
     payload.setIssuer("orient");
     payload.setNotBefore(3L);
-    payload.setSubject("the subject");
+    payload.setUserName("the subject");
     payload.setTokenId("aaa");
 
     // payload.setKeyId("the_key");
@@ -147,7 +147,7 @@ public class JwtTokenHandlerTest {
 
       OUser user = tok.getUser(db);
       assertEquals(user.getName(), original.getName());
-      boolean boole = handler.validateToken(tok, "open", db.getName());
+      boolean boole = handler.validateBinaryToken(tok);
       assertTrue(boole);
       assertTrue(tok.getIsValid());
     } finally {

@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.jwt.impl;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -63,8 +64,28 @@ public class JsonWebToken implements OJsonWebToken, OToken {
   }
 
   @Override
-  public String getSubject() {
-    return payload.getSubject();
+  public String getUserName() {
+    return payload.getUserName();
+  }
+
+  @Override
+  public String getDatabase() {
+    return getPayload().getDatabase();
+  }
+
+  @Override
+  public long getExpiry() {
+    return getPayload().getExpiry();
+  }
+  
+  @Override
+  public ORID getUserId() {
+    return new ORecordId(((OrientJwtPayload) payload).getUserRid());
+  }
+
+  @Override
+  public String getDatabaseType() {
+    return getPayload().getDatabaseType();
   }
 
   @Override

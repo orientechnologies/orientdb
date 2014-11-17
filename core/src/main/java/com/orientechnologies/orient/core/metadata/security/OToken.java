@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.id.ORID;
 
 /**
  * Created by emrul on 25/10/2014.
@@ -17,8 +18,16 @@ public interface OToken {
 
   public void setIsValid(boolean valid);
 
-  public String getSubject();
+  public String getUserName();
 
   public OUser getUser(ODatabaseDocumentInternal db);
+
+  public String getDatabase();
+
+  public String getDatabaseType();
+
+  public ORID getUserId();
+
+  public long getExpiry();
 
 }
