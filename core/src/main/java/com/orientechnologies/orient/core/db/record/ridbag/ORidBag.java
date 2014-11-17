@@ -243,7 +243,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
     final int serializedSize = OByteSerializer.BYTE_SIZE + delegate.getSerializedSize()
         + ((hasUuid) ? OUUIDSerializer.UUID_SIZE : 0);
-    int pointer = bytesContainer.alloc((short) serializedSize);
+    int pointer = bytesContainer.alloc(serializedSize);
     int offset = pointer;
     final byte[] stream = bytesContainer.bytes;
 
