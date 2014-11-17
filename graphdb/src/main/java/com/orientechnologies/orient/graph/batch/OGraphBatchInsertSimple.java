@@ -213,7 +213,6 @@ public class OGraphBatchInsertSimple {
   public void end() {
     final OClass vClass = db.getMetadata().getSchema().getClass(vertexClass);
 
-
     try {
 
       final String outField = "E".equals(this.edgeClass) ? "out_" : ("out_" + this.edgeClass);
@@ -227,11 +226,13 @@ public class OGraphBatchInsertSimple {
       Thread t = new BatchImporterJob(parallel - 1, vClass);
       t.run();
 
-      synchronized (runningThreads) {
-        while (runningThreads.get() > 0) {
-          try {
-            runningThreads.wait();
-          } catch (InterruptedException e) {
+      if (runningThreads.get() > 0) {
+        synchronized (runningThreads) {
+          while (runningThreads.get() > 0) {
+            try {
+              runningThreads.wait();
+            } catch (InterruptedException e) {
+            }
           }
         }
       }
@@ -388,12 +389,13 @@ public class OGraphBatchInsertSimple {
 
   /**
    * sets the number of parallel threads to be used for batch insert
-   * @param parallel number of threads (default 4)
+   * 
+   * @param parallel
+   *          number of threads (default 4)
    */
   public void setParallel(int parallel) {
     this.parallel = parallel;
   }
-
 
   private void putInList(final Long key, final Map<Long, List<Long>> out, final Long value) {
     List<Long> list = out.get(key);
@@ -438,5 +440,4 @@ public class OGraphBatchInsertSimple {
     return clusterIds[(int) (left % clusterIds.length)];
   }
 
-
- }
+}
