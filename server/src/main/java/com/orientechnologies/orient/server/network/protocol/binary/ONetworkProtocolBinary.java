@@ -155,31 +155,31 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void onBeforeRequest() throws IOException {
     waitNodeIsOnline();
 
-//    if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
-      connection = OClientConnectionManager.instance().getConnection(clientTxId, this);
-      if (clientTxId < 0) {
-        short protocolId = 0;
+    // if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
+    connection = OClientConnectionManager.instance().getConnection(clientTxId, this);
+    if (clientTxId < 0) {
+      short protocolId = 0;
 
-        if (connection != null)
-          protocolId = connection.data.protocolVersion;
+      if (connection != null)
+        protocolId = connection.data.protocolVersion;
 
-        connection = OClientConnectionManager.instance().connect(this);
+      connection = OClientConnectionManager.instance().connect(this);
 
-        if (connection != null)
-          connection.data.protocolVersion = protocolId;
-      }
-//    } else {
-//      if (token != null) {
-//        if (!tokenHandler.validateBinaryToken(token)) {
-//          // TODO: thrown na error and fail the connection.
-//        }
-//        String db = token.getDatabase();
-//        String type = token.getDatabaseType();
-//        final ODatabaseDocumentTx database = Orient.instance().getDatabaseFactory().createDatabase(type, db);
-//        database.open(token);
-//        connection.database = database;
-//      }
-//    }
+      if (connection != null)
+        connection.data.protocolVersion = protocolId;
+    }
+    // } else {
+    // if (token != null) {
+    // if (!tokenHandler.validateBinaryToken(token)) {
+    // // TODO: thrown na error and fail the connection.
+    // }
+    // String db = token.getDatabase();
+    // String type = token.getDatabaseType();
+    // final ODatabaseDocumentTx database = Orient.instance().getDatabaseFactory().createDatabase(type, db);
+    // database.open(token);
+    // connection.database = database;
+    // }
+    // }
 
     if (connection != null) {
       ODatabaseRecordThreadLocal.INSTANCE.set(connection.database);
@@ -212,15 +212,15 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     OServerPluginHelper.invokeHandlerCallbackOnAfterClientRequest(server, connection, (byte) requestType);
 
     if (connection != null) {
-//      if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_26 || token == null) {
-        if (connection.database != null)
-          if (!connection.database.isClosed())
-            connection.database.getLocalCache().clear();
-//      } else {
-//        if (connection.database != null && !connection.database.isClosed())
-//          connection.database.close();
-//        connection.database = null;
-//      }
+      // if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_26 || token == null) {
+      if (connection.database != null)
+        if (!connection.database.isClosed())
+          connection.database.getLocalCache().clear();
+      // } else {
+      // if (connection.database != null && !connection.database.isClosed())
+      // connection.database.close();
+      // connection.database = null;
+      // }
 
       connection.data.lastCommandExecutionTime = System.currentTimeMillis() - connection.data.lastCommandReceived;
       connection.data.totalCommandExecutionTime += connection.data.lastCommandExecutionTime;
@@ -622,8 +622,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         sendOk(clientTxId);
         channel.writeInt(connection.id);
         if (connection.data.protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
-          byte[] token = tokenHandler.getSignedBinaryToken(connection.database, connection.database.getUser());
-          channel.writeBytes(token);
+          if (tokenHandler != null) {
+            byte[] token = tokenHandler.getSignedBinaryToken(connection.database, connection.database.getUser());
+            channel.writeBytes(token);
+          } else
+            channel.writeBytes(new byte[] {});
         }
 
         sendDatabaseInformation();

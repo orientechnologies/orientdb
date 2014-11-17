@@ -25,7 +25,7 @@
         </handler>
         <handler class="com.orientechnologies.orient.server.jwt.impl.JwtTokenHandler">
             <parameters>
-            <parameter value="testkey" name="oAuth2Key"/>
+            	<parameter value="testkey" name="oAuth2Key"/>
             </parameters>
         </handler>
     </handlers>

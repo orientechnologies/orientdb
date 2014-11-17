@@ -198,7 +198,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       requestType = channel.readByte();
       clientTxId = channel.readInt();
       byte[] token = channel.readBytes();
-      if (token != null && token.length > 0) {
+      if (token != null && token.length > 0 && tokenHandler != null) {
         this.token = tokenHandler.parseBinaryToken(token);
         if (!this.token.getIsVerified()) {
           // TODO: fail
