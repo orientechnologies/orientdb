@@ -861,11 +861,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       if (exporterVersion < 10) {
         OClass role = database.getMetadata().getSchema().getClass("ORole");
-        if (role != null) {
-          OProperty rules = role.getProperty("rules");
-          if (rules != null && !OType.EMBEDDEDSET.equals(rules.getType()))
-            role.dropProperty("rules");
-        }
+        role.dropProperty("rules");
       }
 
       listener.onMessage("OK (" + classImported + " classes)");
