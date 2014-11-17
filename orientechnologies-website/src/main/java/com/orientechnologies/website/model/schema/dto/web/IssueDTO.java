@@ -1,6 +1,7 @@
 package com.orientechnologies.website.model.schema.dto.web;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +43,7 @@ public class IssueDTO {
     return version;
   }
 
+  @JsonProperty
   public void setVersion(Integer version) {
     this.version = version;
   }
@@ -83,6 +85,7 @@ public class IssueDTO {
     return confidential;
   }
 
+  @JsonProperty
   public void setConfidential(Boolean confidential) {
     this.confidential = confidential;
   }

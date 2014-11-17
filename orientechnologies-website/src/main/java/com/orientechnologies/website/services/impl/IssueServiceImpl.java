@@ -91,7 +91,7 @@ public class IssueServiceImpl implements IssueService {
   }
 
   @Override
-  public void removeLabel(Issue issue, String label) {
+  public void removeLabel(Issue issue, String label, User actor) {
     Label l = repoRepository.findLabelsByRepoAndName(issue.getRepository().getName(), label);
     if (l != null) {
       removeLabelRelationship(issue, l);
@@ -99,7 +99,11 @@ public class IssueServiceImpl implements IssueService {
       e.setCreatedAt(new Date());
       e.setEvent("unlabeled");
       e.setLabel(l);
-      e.setActor(SecurityHelper.currentUser());
+      if (actor == null) {
+        e.setActor(SecurityHelper.currentUser());
+      } else {
+        e.setActor(actor);
+      }
       e = (IssueEvent) eventRepository.save(e);
       fireEvent(issue, e);
     }

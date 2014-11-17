@@ -19,7 +19,7 @@ public interface IssueService {
 
   public List<Label> addLabels(Issue issue, List<String> labels);
 
-  public void removeLabel(Issue issue, String label);
+  public void removeLabel(Issue issue, String label, User actor);
 
   public void fireEvent(Issue issueDto, Event e);
 

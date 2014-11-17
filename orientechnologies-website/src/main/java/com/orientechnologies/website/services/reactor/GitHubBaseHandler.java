@@ -2,6 +2,7 @@ package com.orientechnologies.website.services.reactor;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.services.reactor.event.GithubEvent;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +20,7 @@ public abstract class GitHubBaseHandler<T> implements GitHubHandler<T> {
     return events.keySet();
   }
 
+  @Transactional
   public void fireEvent(ODocument payload) {
 
     String action = payload.field("action");

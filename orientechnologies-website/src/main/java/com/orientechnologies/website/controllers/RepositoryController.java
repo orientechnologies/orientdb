@@ -100,7 +100,7 @@ public class RepositoryController {
     if (i == null) {
       return new ResponseEntity<List<Label>>(HttpStatus.NOT_FOUND);
     }
-    issueService.removeLabel(i, lname);
+    issueService.removeLabel(i, lname, null);
     return new ResponseEntity<List<Label>>(HttpStatus.OK);
   }
 

@@ -18,6 +18,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
@@ -67,6 +68,7 @@ public class RepositoryServiceImpl implements RepositoryService {
     createHasIssueRelationship(repository, issue);
   }
 
+  @Transactional
   @Override
   public Issue openIssue(Repository repository, IssueDTO issue) {
     if (Boolean.TRUE.equals(issue.getConfidential())) {
@@ -76,17 +78,19 @@ public class RepositoryServiceImpl implements RepositoryService {
     }
   }
 
+  @Transactional
   @Override
   public Issue patchIssue(Issue original, IssueDTO issue) {
 
     if (Boolean.TRUE.equals(original.getConfidential())) {
-      return patchPrivateIssue(original, issue);
+      return patchPrivateIssue(original, issue, true);
     } else {
+      patchPrivateIssue(original, issue, false);
       return githubService.patchIssue(original, issue);
     }
   }
 
-  private Issue patchPrivateIssue(Issue original, IssueDTO issue) {
+  private Issue patchPrivateIssue(Issue original, IssueDTO issue, boolean skipGithub) {
     Repository r = original.getRepository();
 
     if (issue.getVersion() != null) {
@@ -99,16 +103,18 @@ public class RepositoryServiceImpl implements RepositoryService {
         handleMilestone(r, original, issue.getMilestone());
       }
     }
-    if (issue.getState() != null) {
-      if (!original.getState().equals(issue.getState())) {
-        String evt = issue.getState().equals("open") ? "reopened" : "closed";
-        original = issueService.changeState(original, issue.getState());
-        IssueEvent e = new IssueEvent();
-        e.setCreatedAt(new Date());
-        e.setEvent(evt);
-        e.setActor(SecurityHelper.currentUser());
-        e = (IssueEvent) eventRepository.save(e);
-        issueService.fireEvent(original, e);
+    if (skipGithub) {
+      if (issue.getState() != null) {
+        if (!original.getState().equals(issue.getState())) {
+          String evt = issue.getState().equals("open") ? "reopened" : "closed";
+          original = issueService.changeState(original, issue.getState());
+          IssueEvent e = new IssueEvent();
+          e.setCreatedAt(new Date());
+          e.setEvent(evt);
+          e.setActor(SecurityHelper.currentUser());
+          e = (IssueEvent) eventRepository.save(e);
+          issueService.fireEvent(original, e);
+        }
       }
     }
     return original;
