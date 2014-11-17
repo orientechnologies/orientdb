@@ -51,7 +51,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @since 2.0 M3
  * @author Luigi Dell'Aquila (l.dellaquila-at-orientechnologies.com)
  */
-public class OGraphBatchInsertSimple {
+public class OGraphBatchInsertBasic {
 
   private final String        userName;
   private final String        dbUrl;
@@ -141,7 +141,7 @@ public class OGraphBatchInsertSimple {
    * @param iDbURL
    *          db connection URL (plocal:/your/db/path)
    */
-  public OGraphBatchInsertSimple(String iDbURL) {
+  public OGraphBatchInsertBasic(String iDbURL) {
     this.dbUrl = iDbURL;
     this.userName = "admin";
     this.password = "admin";
@@ -157,7 +157,7 @@ public class OGraphBatchInsertSimple {
    * @param iPassword
    *          db password (use admin for new db)
    */
-  public OGraphBatchInsertSimple(String iDbURL, String iUserName, String iPassword) {
+  public OGraphBatchInsertBasic(String iDbURL, String iUserName, String iPassword) {
     this.dbUrl = iDbURL;
     this.userName = iUserName;
     this.password = iPassword;
