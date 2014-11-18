@@ -14,6 +14,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @since 03/11/14
  */
 public class OImmutableRole implements OSecurityRole {
+  private static final long serialVersionUID = 1L;
   private final ALLOW_MODES                       mode;
   private final OSecurityRole                     parentRole;
 

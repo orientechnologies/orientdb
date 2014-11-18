@@ -15,6 +15,7 @@ import java.util.*;
  * @since 03/11/14
  */
 public class OImmutableUser implements OSecurityUser {
+  private static final long serialVersionUID = 1L;
   private final long                version;
 
   private final String              name;
