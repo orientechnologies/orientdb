@@ -195,14 +195,15 @@ public class OObjectEntitySerializer {
    *          and @Version fields it could procude data replication
    * @return the object serialized or with detached data
    */
-  public static <T> T detachAll(T o, ODatabaseObject db, boolean returnNonProxiedInstance) {
+  public static <T> T detachAll(T o, ODatabaseObject db, boolean returnNonProxiedInstance, Map<Object, Object> alreadyDetached) {
     if (o instanceof Proxy) {
       OObjectProxyMethodHandler handler = (OObjectProxyMethodHandler) ((ProxyObject) o).getHandler();
       try {
         if (returnNonProxiedInstance) {
           o = getNonProxiedInstance(o);
         }
-        handler.detachAll(o, returnNonProxiedInstance);
+        alreadyDetached.put(handler.getDoc().hashCode(), o);
+        handler.detachAll(o, returnNonProxiedInstance, alreadyDetached);
       } catch (IllegalArgumentException e) {
         throw new OSerializationException("Error detaching object of class " + o.getClass(), e);
       } catch (IllegalAccessException e) {
