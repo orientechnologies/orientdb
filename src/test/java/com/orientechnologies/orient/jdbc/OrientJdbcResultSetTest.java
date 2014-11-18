@@ -39,4 +39,19 @@ public class OrientJdbcResultSetTest extends OrientJdbcBaseTest {
     }
     assertEquals(count, 10);
   }
+
+  @Test
+  public void testDoubleConversion() throws Exception {
+    assertFalse(conn.isClosed());
+
+    Statement stmt = conn.createStatement();
+    ResultSet rs = stmt.executeQuery("SELECT * FROM Author limit 10");
+    int count = 0;
+    while (rs.next()) {
+      Double rating = rs.getDouble("uuid");
+      assertNotNull(rating);
+      count++;
+    }
+    assertEquals(count, 10);
+  }
 }
