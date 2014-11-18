@@ -2,20 +2,15 @@ package com.orientechnologies.orient.server.jwt.impl;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.UUID;
 
 import javax.crypto.Mac;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -23,14 +18,13 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OTokenHandler;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
-import com.orientechnologies.orient.core.metadata.security.jwt.OKeyProvider;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
+import com.orientechnologies.orient.core.metadata.security.jwt.OKeyProvider;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.jwt.mixin.OJwtHeaderMixin;
-import com.orientechnologies.orient.server.jwt.mixin.OJwtPayloadMixin;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 /**
@@ -43,7 +37,6 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
 
   private static final String           JWT_TOKEN_HANDLER = "JwtTokenHandler";
 
-  private final ObjectMapper            mapper;
   private OBinaryTokenSerializer        binarySerializer;
 
   protected static final int            JWT_DELIMITER     = '.';
@@ -60,14 +53,6 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
                                                           };
 
   private OKeyProvider                  keyProvider;
-
-  public JwtTokenHandler() {
-    mapper = new ObjectMapper().registerModule(new AfterburnerModule()).configure(
-        DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    mapper.addMixInAnnotations(OJwtHeader.class, OJwtHeaderMixin.class);
-    mapper.addMixInAnnotations(OJwtPayload.class, OJwtPayloadMixin.class);
-
-  }
 
   @Override
   public void config(final OServer iServer, final OServerParameterConfiguration[] iParams) {
@@ -166,22 +151,42 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
   }
 
   protected OrientJwtHeader deserializeWebHeader(byte[] decodedHeader) {
+    ODocument doc = new ODocument();
     try {
-      return mapper.readValue(decodedHeader, OrientJwtHeader.class);
-    } catch (Exception e) {
+      doc.fromJSON(new String(decodedHeader, "UTF-8"));
+    } catch (UnsupportedEncodingException e) {
       throw new OException(e);
     }
+    OrientJwtHeader header = new OrientJwtHeader();
+    header.setType((String) doc.field("typ"));
+    header.setAlgorithm((String) doc.field("alg"));
+    header.setKeyId((String) doc.field("kid"));
+    return header;
   }
 
   protected OJwtPayload deserializeWebPayload(String type, byte[] decodedPayload) {
     if (!"OrientDB".equals(type)) {
       throw new OException("Payload class not registered:" + type);
     }
+    ODocument doc = new ODocument();
     try {
-      return mapper.readValue(decodedPayload, OrientJwtPayload.class);
-    } catch (Exception e) {
+      doc.fromJSON(new String(decodedPayload, "UTF-8"));
+    } catch (UnsupportedEncodingException e) {
       throw new OException(e);
     }
+    OrientJwtPayload payload = new OrientJwtPayload();
+    payload.setIssuer((String) doc.field("iss"));
+    payload.setExpiry((Long) doc.field("exp"));
+    payload.setIssuedAt((Long) doc.field("iat"));
+    payload.setNotBefore((Long) doc.field("nbf"));
+    payload.setDatabase((String) doc.field("sub"));
+    payload.setAudience((String) doc.field("aud"));
+    payload.setTokenId((String) doc.field("jti"));
+    int cluster = (Integer) doc.field("uidc");
+    long pos = (Long) doc.field("uidp");
+    payload.setUserRid(new ORecordId(cluster, pos));
+    payload.setDatabaseType((String) doc.field("bdtyp"));
+    return payload;
   }
 
   public byte[] getSignedWebToken(ODatabaseDocumentInternal db, OSecurityUser user) {
@@ -223,23 +228,36 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
   }
 
   protected byte[] serializeWebHeader(OJwtHeader header) throws Exception {
-    return mapper.writeValueAsBytes(header);
+    ODocument doc = new ODocument();
+    doc.field("typ", header.getType());
+    doc.field("alg", header.getAlgorithm());
+    doc.field("kid", header.getKeyId());
+    return doc.toJSON().getBytes("UTF-8");
   }
 
   protected byte[] serializeWebPayload(OJwtPayload payload) throws Exception {
-    return mapper.writeValueAsBytes(payload);
+    ODocument doc = new ODocument();
+    doc.field("iss", payload.getIssuer());
+    doc.field("exp", payload.getExpiry());
+    doc.field("iat", payload.getIssuedAt());
+    doc.field("nbf", payload.getNotBefore());
+    doc.field("sub", payload.getDatabase());
+    doc.field("aud", payload.getAudience());
+    doc.field("jti", payload.getTokenId());
+    doc.field("uidc", ((OrientJwtPayload) payload).getUserRid().getClusterId());
+    doc.field("uidp", ((OrientJwtPayload) payload).getUserRid().getClusterPosition());
+    doc.field("bdtyp", ((OrientJwtPayload) payload).getDatabaseType());
+    return doc.toJSON().getBytes("UTF-8");
   }
 
   protected OJwtPayload createPayload(ODatabaseDocumentInternal db, OSecurityUser user) {
     OrientJwtPayload payload = new OrientJwtPayload();
     payload.setAudience("OrientDb");
     payload.setDatabase(db.getName());
-    payload.setUserRid(user.getDocument().getIdentity().toString());
+    payload.setUserRid(user.getDocument().getIdentity());
 
     long expiryMinutes = 60000 * 10;
     long currTime = System.currentTimeMillis();
-    // Date issueTime = new Date(currTime);
-    // Date expDate = new Date(currTime + expiryMinutes);
     payload.setIssuedAt(currTime);
     payload.setNotBefore(currTime);
     payload.setUserName(user.getName());

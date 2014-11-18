@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.server.jwt.impl;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
 
 /**
@@ -16,7 +16,7 @@ public class OrientJwtPayload implements OJwtPayload {
   public long   exp;
   public long   iat;
   public long   nbf;
-  public String userRid;
+  public ORID   userRid;
   public String database;
   public String databaseType;
 
@@ -90,22 +90,18 @@ public class OrientJwtPayload implements OJwtPayload {
     this.jti = jti;
   }
 
-  @JsonProperty(value = "userRid")
-  public String getUserRid() {
+  public ORID getUserRid() {
     return userRid;
   }
 
-  @JsonProperty(value = "userRid")
-  public void setUserRid(String userRid) {
+  public void setUserRid(ORID userRid) {
     this.userRid = userRid;
   }
 
-  @JsonProperty(value = "dbName")
   public String getDatabase() {
     return database;
   }
 
-  @JsonProperty(value = "dbName")
   public void setDatabase(String dbName) {
     this.database = dbName;
   }

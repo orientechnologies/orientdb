@@ -2,7 +2,6 @@ package com.orientechnologies.orient.server.jwt.impl;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJsonWebToken;
@@ -77,10 +76,10 @@ public class JsonWebToken implements OJsonWebToken, OToken {
   public long getExpiry() {
     return getPayload().getExpiry();
   }
-  
+
   @Override
   public ORID getUserId() {
-    return new ORecordId(((OrientJwtPayload) payload).getUserRid());
+    return ((OrientJwtPayload) payload).getUserRid();
   }
 
   @Override
@@ -90,9 +89,9 @@ public class JsonWebToken implements OJsonWebToken, OToken {
 
   @Override
   public OUser getUser(ODatabaseDocumentInternal db) {
-    String userRid = ((OrientJwtPayload) payload).getUserRid();
+    ORID userRid = ((OrientJwtPayload) payload).getUserRid();
     ODocument result;
-    result = db.load(new ORecordId(userRid), "roles:1");
+    result = db.load(userRid, "roles:1");
     if (!result.getClassName().equals(OUser.CLASS_NAME)) {
       result = null;
     }

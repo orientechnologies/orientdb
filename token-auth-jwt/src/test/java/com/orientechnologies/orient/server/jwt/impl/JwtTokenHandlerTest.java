@@ -12,6 +12,7 @@ import java.security.NoSuchAlgorithmException;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -78,7 +79,7 @@ public class JwtTokenHandlerTest {
 
   @Test
   public void testSerializeDeserializeWebPayload() throws Exception {
-    OJwtPayload payload = new OrientJwtPayload();
+    OrientJwtPayload payload = new OrientJwtPayload();
     String ptype = "OrientDB";
     payload.setAudience("audiance");
     payload.setExpiry(1L);
@@ -87,8 +88,8 @@ public class JwtTokenHandlerTest {
     payload.setNotBefore(3L);
     payload.setUserName("the subject");
     payload.setTokenId("aaa");
+    payload.setUserRid(new ORecordId(3, 4));
 
-    // payload.setKeyId("the_key");
     JwtTokenHandler handler = new JwtTokenHandler();
     byte[] payloadbytes = handler.serializeWebPayload(payload);
 
