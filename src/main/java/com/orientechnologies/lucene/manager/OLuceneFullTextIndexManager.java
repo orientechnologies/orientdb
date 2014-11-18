@@ -159,6 +159,7 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
       if (context != null) {
         sendLookupTime(context, docs, limit, startFetching);
       }
+//      return new LuceneResultSet(searcher,docs);
       return results;
     } catch (IOException e) {
       throw new OIndexException("Error reading from Lucene index", e);

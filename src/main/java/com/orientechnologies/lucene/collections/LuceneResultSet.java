@@ -18,11 +18,17 @@
 
 package com.orientechnologies.lucene.collections;
 
+import com.orientechnologies.lucene.manager.OLuceneIndexManagerAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.OContextualRecordId;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 
+import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -31,10 +37,14 @@ import java.util.Set;
  */
 public class LuceneResultSet implements Set<OIdentifiable> {
 
-  private final TopDocs docs;
+  private final TopDocs       docs;
+  private final IndexSearcher searcher;
+  private ScoreDoc[]          hits;
 
-  public LuceneResultSet(TopDocs docs) {
+  public LuceneResultSet(IndexSearcher searcher, TopDocs docs) {
+    this.searcher = searcher;
     this.docs = docs;
+    this.hits = docs.scoreDocs;
   }
 
   @Override
@@ -119,7 +129,22 @@ public class LuceneResultSet implements Set<OIdentifiable> {
 
     @Override
     public OIdentifiable next() {
-      return null;
+      final ScoreDoc score = hits[index++];
+      Document ret = null;
+      OContextualRecordId res = null;
+      try {
+        ret = searcher.doc(score.doc);
+        String rId = ret.get(OLuceneIndexManagerAbstract.RID);
+        res = new OContextualRecordId(rId).setContext(new HashMap<String, Object>() {
+          {
+            put("score", score.score);
+          }
+        });
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+
+      return res;
     }
 
     @Override
