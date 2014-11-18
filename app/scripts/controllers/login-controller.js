@@ -69,12 +69,13 @@ login.controller("LoginController", ['$scope', '$rootScope', '$routeParams', '$l
 
         function handleResponse(data) {
             var modalScope = $scope.$new(true);
-            modalScope.name = $scope.database;
+
             modalScope.databases = data;
             Object.keys(data).forEach(function (k) {
                 data[k].url = data[k].versions['02.00.00'].url;
             })
             modalScope.import = function (k, v, u, p) {
+                modalScope.name = k;
                 modalScope.creating = true;
                 DatabaseApi.install(v, u, p).then(function (data) {
                     var noti = "Database " + k + " imported.";

@@ -166,6 +166,9 @@ module.exports = function (grunt) {
           }
       },
       concat: {
+          options : {
+            sourceMap : true
+          },
           dist: {
               files: {
                   '<%= yeoman.dist %>/scripts/scripts.js': [
