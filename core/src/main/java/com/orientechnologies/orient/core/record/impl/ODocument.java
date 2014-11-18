@@ -910,6 +910,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       else if ((iFieldType == OType.EMBEDDEDMAP || iFieldType == OType.LINKMAP) && value instanceof Map)
         // CONVERT SET TO LIST
         newValue = Collections.unmodifiableMap((Map<?, ?>) ODocumentHelper.convertField(this, iFieldName, Map.class, value));
+      else
+        newValue = OType.convert(value, iFieldType.getDefaultJavaType());
 
       if (newValue != null)
         value = (RET) newValue;
