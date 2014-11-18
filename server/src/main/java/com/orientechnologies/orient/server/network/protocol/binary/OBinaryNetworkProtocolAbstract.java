@@ -43,7 +43,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OToken;
-import com.orientechnologies.orient.core.metadata.security.OTokenHandler;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -64,6 +63,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.OTokenHandler;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 

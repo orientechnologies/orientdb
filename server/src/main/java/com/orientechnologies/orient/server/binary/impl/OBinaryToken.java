@@ -17,6 +17,10 @@ public class OBinaryToken implements OToken {
   private long       expiry;
   private ORID       rid;
   private String     databaseType;
+  private short      protocolVersion;
+  private String     serializer;
+  private String     driverName;
+  private String     driverVersion;
   private OJwtHeader header;
 
   @Override
@@ -100,4 +104,37 @@ public class OBinaryToken implements OToken {
   public void setExpiry(long expiry) {
     this.expiry = expiry;
   }
+
+  public short getProtocolVersion() {
+    return protocolVersion;
+  }
+
+  public void setProtocolVersion(short protocolVersion) {
+    this.protocolVersion = protocolVersion;
+  }
+
+  public String getSerializer() {
+    return serializer;
+  }
+
+  public void setSerializer(String serializer) {
+    this.serializer = serializer;
+  }
+
+  public String getDriverName() {
+    return driverName;
+  }
+
+  public void setDriverName(String driverName) {
+    this.driverName = driverName;
+  }
+
+  public String getDriverVersion() {
+    return driverVersion;
+  }
+
+  public void setDriverVersion(String driverVersion) {
+    this.driverVersion = driverVersion;
+  }
+
 }

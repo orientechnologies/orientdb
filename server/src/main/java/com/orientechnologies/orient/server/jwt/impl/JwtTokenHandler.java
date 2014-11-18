@@ -16,15 +16,16 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OToken;
-import com.orientechnologies.orient.core.metadata.security.OTokenHandler;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
 import com.orientechnologies.orient.core.metadata.security.jwt.OKeyProvider;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.OTokenHandler;
 import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 /**
@@ -266,7 +267,7 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
     return payload;
   }
 
-  public byte[] getSignedBinaryToken(ODatabaseDocumentInternal db, OSecurityUser user) {
+  public byte[] getSignedBinaryToken(ODatabaseDocumentInternal db, OSecurityUser user, ONetworkProtocolData data) {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     try {
       OBinaryToken token = new OBinaryToken();
@@ -281,8 +282,13 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
       token.setHeader(header);
       token.setDatabase(db.getName());
       token.setDatabaseType(db.getStorage().getType());
+      // data.
       token.setUserRid(user.getIdentity().getIdentity());
       token.setExpiry(currTime + expiryMinutes);
+      token.setProtocolVersion(data.protocolVersion);
+      token.setSerializer(data.serializationImpl);
+      token.setDriverName(data.driverName);
+      token.setDriverVersion(data.driverVersion);
       binarySerializer.serialize(token, baos);
 
       byte[] signature = signToken(header, baos.toByteArray());
@@ -294,6 +300,20 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
       throw new OException(e);
     }
     return baos.toByteArray();
+  }
+
+  public ONetworkProtocolData getProtoclDataFromToken(OToken token) {
+    if (token instanceof OBinaryToken) {
+      OBinaryToken binary = (OBinaryToken) token;
+      ONetworkProtocolData data = new ONetworkProtocolData();
+      // data.clientId = binary.get;
+      data.protocolVersion = binary.getProtocolVersion();
+      data.serializationImpl = binary.getSerializer();
+      data.driverName = binary.getDriverName();
+      data.driverVersion = binary.getDriverVersion();
+      return data;
+    }
+    return null;
   }
 
   public OToken parseBinaryToken(byte[] binaryToken) {

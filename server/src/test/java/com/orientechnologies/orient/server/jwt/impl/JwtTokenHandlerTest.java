@@ -10,7 +10,6 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.Orient;
@@ -22,6 +21,7 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 
 public class JwtTokenHandlerTest {
 
@@ -31,7 +31,7 @@ public class JwtTokenHandlerTest {
   @BeforeMethod
   public void beforeTest() {
     if (Orient.instance().getEngine("memory") == null) {
-       Orient.instance().startup();
+      Orient.instance().startup();
     }
   }
 
@@ -146,8 +146,14 @@ public class JwtTokenHandlerTest {
     try {
       OSecurityUser original = db.getUser();
       JwtTokenHandler handler = new JwtTokenHandler();
+      ONetworkProtocolData data = new ONetworkProtocolData();
+      data.driverName = "aa";
+      data.driverVersion = "aa";
+      data.serializationImpl = "a";
+      data.protocolVersion = 2;
+
       handler.config(null, I_PARAMS);
-      byte[] token = handler.getSignedBinaryToken(db, original);
+      byte[] token = handler.getSignedBinaryToken(db, original, data);
 
       OToken tok = handler.parseBinaryToken(token);
 
@@ -164,5 +170,4 @@ public class JwtTokenHandlerTest {
       db.drop();
     }
   }
-
 }

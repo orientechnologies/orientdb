@@ -29,6 +29,10 @@ public class OBinaryTokenSerializerTest {
     header.setType("OrientDB");
     token.setHeader(header);
     token.setExpiry(20L);
+    token.setProtocolVersion((short) 2);
+    token.setSerializer("ser");
+    token.setDriverName("aa");
+    token.setDriverVersion("aa");
     ByteArrayOutputStream bas = new ByteArrayOutputStream();
     ser.serialize(token, bas);
     ByteArrayInputStream input = new ByteArrayInputStream(bas.toByteArray());
@@ -43,6 +47,11 @@ public class OBinaryTokenSerializerTest {
     assertEquals("OrientDB", tok.getHeader().getType());
     assertEquals("HmacSHA256", tok.getHeader().getAlgorithm());
     assertEquals("key", tok.getHeader().getKeyId());
+
+    assertEquals((short) 2, tok.getProtocolVersion());
+    assertEquals("ser", tok.getSerializer());
+    assertEquals("aa", tok.getDriverName());
+    assertEquals("aa", tok.getDriverVersion());
 
   }
 }

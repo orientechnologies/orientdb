@@ -1,10 +1,13 @@
-package com.orientechnologies.orient.core.metadata.security;
+package com.orientechnologies.orient.server;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+import com.orientechnologies.orient.core.metadata.security.OToken;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 
 /**
  * Created by emrul on 27/10/2014.
@@ -25,6 +28,6 @@ public interface OTokenHandler {
   // Return a byte array representing a signed token
   public byte[] getSignedWebToken(ODatabaseDocumentInternal db, OSecurityUser user);
 
-  public byte[] getSignedBinaryToken(ODatabaseDocumentInternal db, OSecurityUser user);
+  public byte[] getSignedBinaryToken(ODatabaseDocumentInternal db, OSecurityUser user, ONetworkProtocolData data);
 
 }

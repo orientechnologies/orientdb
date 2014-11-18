@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -59,6 +60,10 @@ public class OBinaryTokenSerializer {
     long position = input.readLong();
     token.setUserRid(new ORecordId(cluster, position));
     token.setExpiry(input.readLong());
+    token.setProtocolVersion(input.readShort());
+    token.setSerializer(readString(input));
+    token.setDriverName(readString(input));
+    token.setDriverVersion(readString(input));
 
     return token;
   }
@@ -78,14 +83,23 @@ public class OBinaryTokenSerializer {
     output.writeByte(associetedKeys.get(header.getKeyId()));// keys
     output.writeByte(associetedAlgorithms.get(header.getAlgorithm()));// algorithm
 
-    byte[] str = token.getDatabase().getBytes("UTF-8");
-    output.writeShort(str.length);
-    output.write(str);
+    String toWrite = token.getDatabase();
+    writeString(output, toWrite);
     output.writeByte(associetedDdTypes.get(token.getDatabaseType()));
     ORID id = token.getUserId();
     output.writeShort(id.getClusterId());
     output.writeLong(id.getClusterPosition());
     output.writeLong(token.getExpiry());
+    output.writeShort(token.getProtocolVersion());
+    writeString(output, token.getSerializer());
+    writeString(output, token.getDriverName());
+    writeString(output, token.getDriverVersion());
 
+  }
+
+  private void writeString(DataOutputStream output, String toWrite) throws UnsupportedEncodingException, IOException {
+    byte[] str = toWrite.getBytes("UTF-8");
+    output.writeShort(str.length);
+    output.write(str);
   }
 }
