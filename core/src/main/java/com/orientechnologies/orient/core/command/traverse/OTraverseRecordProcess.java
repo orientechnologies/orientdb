@@ -87,7 +87,7 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
         final int pos = cfgField.indexOf('.');
         if (pos > -1) {
           // FOUND <CLASS>.<FIELD>
-          final OClass cls = target.getSchemaClass();
+          final OClass cls = target.getImmutableSchemaClass();
           if (cls == null)
             // JUMP IT BECAUSE NO SCHEMA
             continue;

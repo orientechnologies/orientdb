@@ -13,11 +13,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.common.concur.lock.OLockManager;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -29,12 +33,6 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
 
 /**
  * @author Andrey Lomakin
@@ -59,35 +57,8 @@ public class LocalPaginatedStorageMixCrashRestore {
 
   private ConcurrentHashMap<Integer, Long> deletedIds      = new ConcurrentHashMap<Integer, Long>();
 
-  @BeforeClass
-  public void beforeClass() throws Exception {
-    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
-
-    String buildDirectory = System.getProperty("buildDirectory", ".");
-    buildDirectory += "/localPaginatedStorageMixCrashRestore";
-
-    buildDir = new File(buildDirectory);
-    if (buildDir.exists())
-      buildDir.delete();
-
-    buildDir.mkdir();
-
-    String javaExec = System.getProperty("java.home") + "/bin/java";
-    System.setProperty("ORIENTDB_HOME", buildDirectory);
-
-    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-classpath", System.getProperty("java.class.path"),
-        "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName());
-    processBuilder.inheritIO();
-
-    process = processBuilder.start();
-
-    Thread.sleep(5000);
-  }
-
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
-      OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
-
       OServer server = OServerMain.create();
       server.startup(RemoteDBRunner.class
           .getResourceAsStream("/com/orientechnologies/orient/core/storage/impl/local/paginated/db-mix-config.xml"));
@@ -95,210 +66,6 @@ public class LocalPaginatedStorageMixCrashRestore {
       while (true)
         ;
     }
-  }
-
-  @AfterClass
-  public void afterClass() {
-    testDocumentTx.drop();
-    baseDocumentTx.drop();
-
-    Assert.assertTrue(new File(buildDir, "plugins").delete());
-    Assert.assertTrue(buildDir.delete());
-  }
-
-  @BeforeMethod
-  public void beforeMethod() {
-    baseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath() + "/baseLocalPaginatedStorageMixCrashRestore");
-    if (baseDocumentTx.exists()) {
-      baseDocumentTx.open("admin", "admin");
-      baseDocumentTx.drop();
-    }
-
-    baseDocumentTx.create();
-
-    testDocumentTx = new ODatabaseDocumentTx("remote:localhost:3500/testLocalPaginatedStorageMixCrashRestore");
-    testDocumentTx.open("admin", "admin");
-  }
-
-  public void testDocumentChanges() throws Exception {
-    createSchema(baseDocumentTx);
-    createSchema(testDocumentTx);
-    System.out.println("Schema was created.");
-
-    System.out.println("Document creation was started.");
-    createDocuments();
-    System.out.println("Document creation was finished.");
-
-    System.out.println("Start data changes.");
-
-    List<Future> futures = new ArrayList<Future>();
-    for (int i = 0; i < 1; i++) {
-      futures.add(executorService.submit(new DataChangeTask(baseDocumentTx, testDocumentTx)));
-    }
-
-    Thread.sleep(600000);
-
-    long lastTs = System.currentTimeMillis();
-    System.out.println("Wait for process to destroy");
-    Process p = Runtime.getRuntime().exec("pkill -9 -f RemoteDBRunner");
-    p.waitFor();
-
-    process.waitFor();
-    System.out.println("Process was destroyed");
-
-    for (Future future : futures) {
-      try {
-        future.get();
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    }
-
-    System.out.println("Data changes were stopped.");
-    System.out.println(addedIds.size() + " records were added. " + updatedIds.size() + " were updated. " + deletedIds.size()
-        + " were deleted.");
-
-    testDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath() + "/testLocalPaginatedStorageMixCrashRestore");
-    testDocumentTx.open("admin", "admin");
-    testDocumentTx.close();
-
-    testDocumentTx.open("admin", "admin");
-
-    System.out.println("Start documents comparison.");
-    compareDocuments(lastTs);
-  }
-
-  private void createSchema(ODatabaseDocumentTx dbDocumentTx) {
-    ODatabaseRecordThreadLocal.INSTANCE.set(dbDocumentTx);
-
-    OSchema schema = dbDocumentTx.getMetadata().getSchema();
-    if (!schema.existsClass("TestClass")) {
-      OClass testClass = schema.createClass("TestClass");
-      testClass.createProperty("id", OType.INTEGER);
-      testClass.createProperty("timestamp", OType.LONG);
-      testClass.createProperty("stringValue", OType.STRING);
-
-      testClass.createIndex("idIndex", OClass.INDEX_TYPE.UNIQUE, "id");
-
-      schema.save();
-    }
-  }
-
-  private void createDocuments() {
-    Random random = new Random();
-
-    for (int i = 0; i < 1000000; i++) {
-      final ODocument document = new ODocument("TestClass");
-      document.field("id", idGen.getAndIncrement());
-      document.field("timestamp", System.currentTimeMillis());
-      document.field("stringValue", "sfe" + random.nextLong());
-
-      saveDoc(document, baseDocumentTx, testDocumentTx);
-      addedIds.add(document.<Integer> field("id"));
-
-      if (i % 10000 == 0)
-        System.out.println(i + " documents were created.");
-    }
-  }
-
-  private void saveDoc(ODocument document, ODatabaseDocumentTx baseDB, ODatabaseDocumentTx testDB) {
-    ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
-
-    ODocument testDoc = new ODocument();
-    document.copyTo(testDoc);
-    document.save();
-
-    ODatabaseRecordThreadLocal.INSTANCE.set(testDB);
-    testDoc.save();
-    ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
-  }
-
-  private void compareDocuments(long lastTs) {
-    long minTs = Long.MAX_VALUE;
-    int clusterId = baseDocumentTx.getClusterIdByName("TestClass");
-
-    OStorage baseStorage = baseDocumentTx.getStorage();
-
-    OPhysicalPosition[] physicalPositions = baseStorage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(
-        OClusterPositionFactory.INSTANCE.valueOf(0)));
-
-    int recordsRestored = 0;
-    int recordsTested = 0;
-
-    while (physicalPositions.length > 0) {
-      final ORecordId rid = new ORecordId(clusterId);
-
-      for (OPhysicalPosition physicalPosition : physicalPositions) {
-        rid.clusterPosition = physicalPosition.clusterPosition;
-
-        ODatabaseRecordThreadLocal.INSTANCE.set(baseDocumentTx);
-        ODocument baseDocument = baseDocumentTx.load(rid);
-
-        int id = baseDocument.<Integer> field("id");
-        if (addedIds.contains(id)) {
-          ODatabaseRecordThreadLocal.INSTANCE.set(testDocumentTx);
-          List<ODocument> testDocuments = testDocumentTx.query(new OSQLSynchQuery<ODocument>("select from TestClass where id  = "
-              + baseDocument.field("id")));
-          if (testDocuments.size() == 0) {
-            if (((Long) baseDocument.field("timestamp")) < minTs)
-              minTs = baseDocument.field("timestamp");
-          } else {
-            ODocument testDocument = testDocuments.get(0);
-            Assert.assertEquals(testDocument.field("id"), baseDocument.field("id"));
-            Assert.assertEquals(testDocument.field("timestamp"), baseDocument.field("timestamp"));
-            Assert.assertEquals(testDocument.field("stringValue"), baseDocument.field("stringValue"));
-            recordsRestored++;
-          }
-
-          recordsTested++;
-        } else if (updatedIds.contains(id)) {
-          ODatabaseRecordThreadLocal.INSTANCE.set(testDocumentTx);
-          List<ODocument> testDocuments = testDocumentTx.query(new OSQLSynchQuery<ODocument>("select from TestClass where id  = "
-              + baseDocument.field("id")));
-          if (testDocuments.size() == 0) {
-            if (((Long) baseDocument.field("timestamp")) < minTs)
-              minTs = baseDocument.field("timestamp");
-          } else {
-            ODocument testDocument = testDocuments.get(0);
-            if (testDocument.field("timestamp").equals(baseDocument.field("timestamp"))
-                && testDocument.field("stringValue").equals(baseDocument.field("stringValue"))) {
-              recordsRestored++;
-            } else {
-              if (((Long) baseDocument.field("timestamp")) < minTs)
-                minTs = baseDocument.field("timestamp");
-            }
-          }
-
-          recordsTested++;
-        }
-
-        if (recordsTested % 10000 == 0)
-          System.out.println(recordsTested + " were tested, " + recordsRestored + " were restored ...");
-      }
-
-      physicalPositions = baseStorage.higherPhysicalPositions(clusterId, physicalPositions[physicalPositions.length - 1]);
-    }
-
-    ODatabaseRecordThreadLocal.INSTANCE.set(testDocumentTx);
-    System.out.println("Check deleted records");
-    for (Map.Entry<Integer, Long> deletedEntry : deletedIds.entrySet()) {
-      int deletedId = deletedEntry.getKey();
-      List<ODocument> testDocuments = testDocumentTx.query(new OSQLSynchQuery<ODocument>("select from TestClass where id  = "
-          + deletedId));
-      if (!testDocuments.isEmpty()) {
-        if (deletedEntry.getValue() < minTs)
-          minTs = deletedEntry.getValue();
-      } else
-        recordsRestored++;
-
-      recordsTested++;
-    }
-
-    System.out.println("Deleted records were checked." + deletedIds.size() + " were verified.");
-
-    System.out.println(recordsRestored + " records were restored. Total records " + recordsTested
-        + ". Max interval for lost records " + (lastTs - minTs));
-
   }
 
   public class DataChangeTask implements Callable<Void> {
@@ -451,5 +218,231 @@ public class LocalPaginatedStorageMixCrashRestore {
 
       idLockManager.releaseLock(Thread.currentThread(), idToUpdate, OLockManager.LOCK.EXCLUSIVE);
     }
+  }
+
+  @BeforeClass
+  public void beforeClass() throws Exception {
+    String buildDirectory = System.getProperty("buildDirectory", ".");
+    buildDirectory += "/localPaginatedStorageMixCrashRestore";
+
+    buildDir = new File(buildDirectory);
+    if (buildDir.exists())
+      buildDir.delete();
+
+    buildDir.mkdir();
+
+    String javaExec = System.getProperty("java.home") + "/bin/java";
+    System.setProperty("ORIENTDB_HOME", buildDirectory);
+
+    ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-classpath", System.getProperty("java.class.path"),
+        "-DORIENTDB_HOME=" + buildDirectory, RemoteDBRunner.class.getName());
+    processBuilder.inheritIO();
+
+    process = processBuilder.start();
+
+    Thread.sleep(5000);
+  }
+
+  @AfterClass
+  public void afterClass() {
+    testDocumentTx.drop();
+    baseDocumentTx.drop();
+
+    Assert.assertTrue(new File(buildDir, "plugins").delete());
+    Assert.assertTrue(buildDir.delete());
+  }
+
+  @BeforeMethod
+  public void beforeMethod() {
+    baseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath() + "/baseLocalPaginatedStorageMixCrashRestore");
+    if (baseDocumentTx.exists()) {
+      baseDocumentTx.open("admin", "admin");
+      baseDocumentTx.drop();
+    }
+
+    baseDocumentTx.create();
+
+    testDocumentTx = new ODatabaseDocumentTx("remote:localhost:3500/testLocalPaginatedStorageMixCrashRestore");
+    testDocumentTx.open("admin", "admin");
+  }
+
+  public void testDocumentChanges() throws Exception {
+    createSchema(baseDocumentTx);
+    createSchema(testDocumentTx);
+    System.out.println("Schema was created.");
+
+    System.out.println("Document creation was started.");
+    createDocuments();
+    System.out.println("Document creation was finished.");
+
+    System.out.println("Start data changes.");
+
+    List<Future> futures = new ArrayList<Future>();
+    for (int i = 0; i < 1; i++) {
+      futures.add(executorService.submit(new DataChangeTask(baseDocumentTx, testDocumentTx)));
+    }
+
+    Thread.sleep(600000);
+
+    long lastTs = System.currentTimeMillis();
+    System.out.println("Wait for process to destroy");
+    Process p = Runtime.getRuntime().exec("pkill -9 -f RemoteDBRunner");
+    p.waitFor();
+
+    process.waitFor();
+    System.out.println("Process was destroyed");
+
+    for (Future future : futures) {
+      try {
+        future.get();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
+
+    System.out.println("Data changes were stopped.");
+    System.out.println(addedIds.size() + " records were added. " + updatedIds.size() + " were updated. " + deletedIds.size()
+        + " were deleted.");
+
+    testDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDir.getAbsolutePath() + "/testLocalPaginatedStorageMixCrashRestore");
+    testDocumentTx.open("admin", "admin");
+    testDocumentTx.close();
+
+    testDocumentTx.open("admin", "admin");
+
+    System.out.println("Start documents comparison.");
+    compareDocuments(lastTs);
+  }
+
+  private void createSchema(ODatabaseDocumentTx dbDocumentTx) {
+    ODatabaseRecordThreadLocal.INSTANCE.set(dbDocumentTx);
+
+    OSchema schema = dbDocumentTx.getMetadata().getSchema();
+    if (!schema.existsClass("TestClass")) {
+      OClass testClass = schema.createClass("TestClass");
+      testClass.createProperty("id", OType.INTEGER);
+      testClass.createProperty("timestamp", OType.LONG);
+      testClass.createProperty("stringValue", OType.STRING);
+
+      testClass.createIndex("idIndex", OClass.INDEX_TYPE.UNIQUE, "id");
+
+      schema.save();
+    }
+  }
+
+  private void createDocuments() {
+    Random random = new Random();
+
+    for (int i = 0; i < 1000000; i++) {
+      final ODocument document = new ODocument("TestClass");
+      document.field("id", idGen.getAndIncrement());
+      document.field("timestamp", System.currentTimeMillis());
+      document.field("stringValue", "sfe" + random.nextLong());
+
+      saveDoc(document, baseDocumentTx, testDocumentTx);
+      addedIds.add(document.<Integer> field("id"));
+
+      if (i % 10000 == 0)
+        System.out.println(i + " documents were created.");
+    }
+  }
+
+  private void saveDoc(ODocument document, ODatabaseDocumentTx baseDB, ODatabaseDocumentTx testDB) {
+    ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
+
+    ODocument testDoc = new ODocument();
+    document.copyTo(testDoc);
+    document.save();
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(testDB);
+    testDoc.save();
+    ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
+  }
+
+  private void compareDocuments(long lastTs) {
+    long minTs = Long.MAX_VALUE;
+    int clusterId = baseDocumentTx.getClusterIdByName("TestClass");
+
+    OStorage baseStorage = baseDocumentTx.getStorage();
+
+    OPhysicalPosition[] physicalPositions = baseStorage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(0));
+
+    int recordsRestored = 0;
+    int recordsTested = 0;
+
+    while (physicalPositions.length > 0) {
+      final ORecordId rid = new ORecordId(clusterId);
+
+      for (OPhysicalPosition physicalPosition : physicalPositions) {
+        rid.clusterPosition = physicalPosition.clusterPosition;
+
+        ODatabaseRecordThreadLocal.INSTANCE.set(baseDocumentTx);
+        ODocument baseDocument = baseDocumentTx.load(rid);
+
+        int id = baseDocument.<Integer> field("id");
+        if (addedIds.contains(id)) {
+          ODatabaseRecordThreadLocal.INSTANCE.set(testDocumentTx);
+          List<ODocument> testDocuments = testDocumentTx.query(new OSQLSynchQuery<ODocument>("select from TestClass where id  = "
+              + baseDocument.field("id")));
+          if (testDocuments.size() == 0) {
+            if (((Long) baseDocument.field("timestamp")) < minTs)
+              minTs = baseDocument.field("timestamp");
+          } else {
+            ODocument testDocument = testDocuments.get(0);
+            Assert.assertEquals(testDocument.field("id"), baseDocument.field("id"));
+            Assert.assertEquals(testDocument.field("timestamp"), baseDocument.field("timestamp"));
+            Assert.assertEquals(testDocument.field("stringValue"), baseDocument.field("stringValue"));
+            recordsRestored++;
+          }
+
+          recordsTested++;
+        } else if (updatedIds.contains(id)) {
+          ODatabaseRecordThreadLocal.INSTANCE.set(testDocumentTx);
+          List<ODocument> testDocuments = testDocumentTx.query(new OSQLSynchQuery<ODocument>("select from TestClass where id  = "
+              + baseDocument.field("id")));
+          if (testDocuments.size() == 0) {
+            if (((Long) baseDocument.field("timestamp")) < minTs)
+              minTs = baseDocument.field("timestamp");
+          } else {
+            ODocument testDocument = testDocuments.get(0);
+            if (testDocument.field("timestamp").equals(baseDocument.field("timestamp"))
+                && testDocument.field("stringValue").equals(baseDocument.field("stringValue"))) {
+              recordsRestored++;
+            } else {
+              if (((Long) baseDocument.field("timestamp")) < minTs)
+                minTs = baseDocument.field("timestamp");
+            }
+          }
+
+          recordsTested++;
+        }
+
+        if (recordsTested % 10000 == 0)
+          System.out.println(recordsTested + " were tested, " + recordsRestored + " were restored ...");
+      }
+
+      physicalPositions = baseStorage.higherPhysicalPositions(clusterId, physicalPositions[physicalPositions.length - 1]);
+    }
+
+    ODatabaseRecordThreadLocal.INSTANCE.set(testDocumentTx);
+    System.out.println("Check deleted records");
+    for (Map.Entry<Integer, Long> deletedEntry : deletedIds.entrySet()) {
+      int deletedId = deletedEntry.getKey();
+      List<ODocument> testDocuments = testDocumentTx.query(new OSQLSynchQuery<ODocument>("select from TestClass where id  = "
+          + deletedId));
+      if (!testDocuments.isEmpty()) {
+        if (deletedEntry.getValue() < minTs)
+          minTs = deletedEntry.getValue();
+      } else
+        recordsRestored++;
+
+      recordsTested++;
+    }
+
+    System.out.println("Deleted records were checked." + deletedIds.size() + " were verified.");
+
+    System.out.println(recordsRestored + " records were restored. Total records " + recordsTested
+        + ". Max interval for lost records " + (lastTs - minTs));
+
   }
 }

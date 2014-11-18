@@ -17,17 +17,17 @@ package com.orientechnologies.orient.test.database.auto;
 
 import java.io.IOException;
 
+import org.testng.Assert;
+import org.testng.annotations.*;
+
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
-import com.orientechnologies.orient.client.remote.OStorageRemoteThread;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
-import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
-
-import org.testng.Assert;
-import org.testng.annotations.*;
 
 /**
  * Tests the right calls of all the db's listener API.
@@ -37,17 +37,16 @@ import org.testng.annotations.*;
  */
 public class DbListenerTest extends DocumentDBBaseTest {
 
-  protected int                 onAfterTxCommit              = 0;
-  protected int                 onAfterTxRollback            = 0;
-  protected int                 onBeforeTxBegin              = 0;
-  protected int                 onBeforeTxCommit             = 0;
-  protected int                 onBeforeTxRollback           = 0;
-  protected int                 onClose                      = 0;
-  protected int                 onCreate                     = 0;
-  protected int                 onDelete                     = 0;
-  protected int                 onOpen                       = 0;
-  protected int                 onCorruption                 = 0;
-
+  protected int onAfterTxCommit    = 0;
+  protected int onAfterTxRollback  = 0;
+  protected int onBeforeTxBegin    = 0;
+  protected int onBeforeTxCommit   = 0;
+  protected int onBeforeTxRollback = 0;
+  protected int onClose            = 0;
+  protected int onCreate           = 0;
+  protected int onDelete           = 0;
+  protected int onOpen             = 0;
+  protected int onCorruption       = 0;
 
   public class DbListener implements ODatabaseListener {
     @Override
@@ -102,27 +101,27 @@ public class DbListenerTest extends DocumentDBBaseTest {
     }
   }
 
-	@Parameters(value = "url")
-	public DbListenerTest(@Optional String url) {
-		super(url);
-	}
+  @Parameters(value = "url")
+  public DbListenerTest(@Optional String url) {
+    super(url);
+  }
 
-	@AfterClass
-	@Override
-	public void afterClass() throws Exception {
-	}
+  @AfterClass
+  @Override
+  public void afterClass() throws Exception {
+  }
 
-	@BeforeMethod
-	@Override
-	public void beforeMethod() throws Exception {
-	}
+  @BeforeMethod
+  @Override
+  public void beforeMethod() throws Exception {
+  }
 
-	@AfterMethod
-	@Override
-	public void afterMethod() throws Exception {
-	}
+  @AfterMethod
+  @Override
+  public void afterMethod() throws Exception {
+  }
 
-	@Test
+  @Test
   public void testEmbeddedDbListeners() throws IOException {
     if (database.getURL().startsWith("remote:"))
       return;
@@ -138,8 +137,6 @@ public class DbListenerTest extends DocumentDBBaseTest {
 
     database.close();
     Assert.assertEquals(onClose, 1);
-
-    database.registerListener(new DbListener());
 
     database.open("admin", "admin");
     Assert.assertEquals(onOpen, 1);
@@ -164,7 +161,7 @@ public class DbListenerTest extends DocumentDBBaseTest {
     Assert.assertEquals(onClose, 2);
     Assert.assertEquals(onDelete, 1);
 
-		ODatabaseHelper.createDatabase(database, url, getStorageType());
+    ODatabaseHelper.createDatabase(database, url, getStorageType());
   }
 
   @Test
@@ -174,7 +171,7 @@ public class DbListenerTest extends DocumentDBBaseTest {
 
     database.close();
 
-		database.registerListener(new DbListener());
+    database.registerListener(new DbListener());
 
     database.open("admin", "admin");
     Assert.assertEquals(onOpen, 1);
@@ -197,5 +194,89 @@ public class DbListenerTest extends DocumentDBBaseTest {
 
     database.close();
     Assert.assertEquals(onClose, 1);
+  }
+
+  @Test
+  public void testEmbeddedDbListenersTxRecords() throws IOException {
+    if (database.getURL().startsWith("remote:"))
+      return;
+
+    if (database.exists())
+      ODatabaseHelper.deleteDatabase(database, getStorageType());
+    ODatabaseHelper.createDatabase(database, url, getStorageType());
+    database.close();
+
+    database.registerListener(new ODatabaseListener() {
+      @Override
+      public void onCreate(ODatabase iDatabase) {
+      }
+
+      @Override
+      public void onDelete(ODatabase iDatabase) {
+      }
+
+      @Override
+      public void onOpen(ODatabase iDatabase) {
+
+      }
+
+      @Override
+      public void onBeforeTxBegin(ODatabase iDatabase) {
+
+      }
+
+      @Override
+      public void onBeforeTxRollback(ODatabase iDatabase) {
+
+      }
+
+      @Override
+      public void onAfterTxRollback(ODatabase iDatabase) {
+
+      }
+
+      @Override
+      public void onBeforeTxCommit(ODatabase iDatabase) {
+        OTransaction tx = ((ODatabaseDocumentTx) iDatabase).getTransaction();
+        Iterable<? extends ORecordOperation> recs = tx.getCurrentRecordEntries();
+        for (ORecordOperation op : recs) {
+          ODocument doc = (ODocument) op.getRecord();
+          for (String f : doc.getDirtyFields()) {
+            final Object oldValue = doc.getOriginalValue(f);
+            final Object newValue = doc.field(f);
+
+            System.out.println("Old: " + oldValue + " -> " + newValue);
+          }
+        }
+      }
+
+      @Override
+      public void onAfterTxCommit(ODatabase iDatabase) {
+
+      }
+
+      @Override
+      public void onClose(ODatabase iDatabase) {
+
+      }
+
+      @Override
+      public boolean onCorruptionRepairDatabase(ODatabase iDatabase, String iReason, String iWhatWillbeFixed) {
+        return false;
+      }
+    });
+
+    database.open("admin", "admin");
+
+    database.begin(TXTYPE.OPTIMISTIC);
+    ODocument rec = database.newInstance().field("name", "Jay").save();
+    database.commit();
+
+    database.begin(TXTYPE.OPTIMISTIC);
+    rec.field("surname", "Miner").save();
+    database.commit();
+
+    ODatabaseHelper.deleteDatabase(database, getStorageType());
+    ODatabaseHelper.createDatabase(database, url, getStorageType());
   }
 }

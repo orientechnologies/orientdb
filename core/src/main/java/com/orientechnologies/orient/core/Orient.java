@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core;
 
 import com.orientechnologies.common.io.OFileUtils;
@@ -55,7 +55,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   public static final String                                                           ORIENTDB_HOME          = "ORIENTDB_HOME";
   public static final String                                                           URL_SYNTAX             = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
 
-  protected static final Orient                                                        instance               = new Orient();
+  protected static Orient                                                              instance               = new Orient();
   protected static boolean                                                             registerDatabaseByPath = false;
 
   protected final ConcurrentMap<String, OEngine>                                       engines                = new ConcurrentHashMap<String, OEngine>();
@@ -64,21 +64,28 @@ public class Orient extends OListenerManger<OOrientListener> {
   protected final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners   = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
   protected final ODatabaseFactory                                                     databaseFactory        = new ODatabaseFactory();
   protected final OScriptManager                                                       scriptManager          = new OScriptManager();
-  protected final Timer                                                                timer                  = new Timer(true);
-  protected final ThreadGroup                                                          threadGroup            = new ThreadGroup(
-                                                                                                                  "OrientDB");
+  protected final Timer                                                                timer;
+  protected final ThreadGroup                                                          threadGroup;
   protected final AtomicInteger                                                        serialId               = new AtomicInteger();
   private final ReadWriteLock                                                          engineLock             = new ReentrantReadWriteLock();
   protected ORecordFactoryManager                                                      recordFactoryManager   = new ORecordFactoryManager();
   protected ORecordConflictStrategyFactory                                             recordConflictStrategy = new ORecordConflictStrategyFactory();
   protected OrientShutdownHook                                                         shutdownHook;
-  protected OProfilerMBean                                                             profiler               = new OProfiler();
+  protected OProfilerMBean                                                             profiler;
   protected ODatabaseThreadLocalFactory                                                databaseThreadFactory;
   protected volatile boolean                                                           active                 = false;
   protected ThreadPoolExecutor                                                         workers;
+  protected OSignalHandler                                                             signalHandler;
 
   protected Orient() {
     super(true);
+
+    threadGroup = new ThreadGroup("OrientDB");
+    threadGroup.setDaemon(false);
+
+    instance = this;
+    timer = new Timer(true);
+    profiler = new OProfiler();
 
     startup();
   }
@@ -133,6 +140,10 @@ public class Orient extends OListenerManger<OOrientListener> {
         return this;
 
       shutdownHook = new OrientShutdownHook();
+      if (signalHandler == null) {
+        signalHandler = new OSignalHandler();
+        signalHandler.installDefaultSignals();
+      }
 
       final int cores = Runtime.getRuntime().availableProcessors();
 
@@ -179,6 +190,10 @@ public class Orient extends OListenerManger<OOrientListener> {
       active = false;
 
       workers.shutdown();
+      try {
+        workers.awaitTermination(2, TimeUnit.MINUTES);
+      } catch (InterruptedException e) {
+      }
 
       OLogManager.instance().debug(this, "Orient Engine is shutting down...");
 
@@ -252,6 +267,8 @@ public class Orient extends OListenerManger<OOrientListener> {
 
     if (iURL.endsWith("/"))
       iURL = iURL.substring(0, iURL.length() - 1);
+
+    iURL = iURL.replace("//", "/");
 
     // SEARCH FOR ENGINE
     int pos = iURL.indexOf(':');
@@ -415,6 +432,11 @@ public class Orient extends OListenerManger<OOrientListener> {
       for (String dbName : storagesToRemove)
         storages.remove(dbName);
 
+      // UNREGISTER STORAGE FROM ENGINES IN CASE IS CACHED
+      for( OEngine engine : engines.values() ){
+        engine.removeStorage( storage );
+      }
+
     } finally {
       engineLock.writeLock().unlock();
     }
@@ -435,7 +457,14 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   public void removeShutdownHook() {
     if (shutdownHook != null)
-      Runtime.getRuntime().removeShutdownHook(shutdownHook);
+    {
+      shutdownHook.cancel();
+      shutdownHook = null;
+    }
+  }
+  
+  public boolean isSelfManagedShutdown() {
+	  return shutdownHook != null;
   }
 
   public Iterator<ODatabaseLifecycleListener> getDbLifecycleListeners() {

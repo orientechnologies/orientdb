@@ -63,18 +63,18 @@ public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
   private Object getLabel(final OrientBaseGraph graph, final OIdentifiable iCurrentRecord) {
     final ODocument rec = iCurrentRecord.getRecord();
 
-    if (rec.getSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
+    if (rec.getImmutableSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
       // VERTEX
       final OrientVertex vertex = graph.getVertex(iCurrentRecord);
       return vertex.getLabel();
 
-    } else if (rec.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+    } else if (rec.getImmutableSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
       // EDGE
       final OrientEdge edge = graph.getEdge(iCurrentRecord);
       return edge.getLabel();
 
     } else
-      throw new OCommandExecutionException("Invalid record: is neither a vertex nor an edge. Found class: " + rec.getSchemaClass());
+      throw new OCommandExecutionException("Invalid record: is neither a vertex nor an edge. Found class: " + rec.getImmutableSchemaClass());
   }
 
   public String getSyntax() {

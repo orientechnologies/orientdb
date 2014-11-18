@@ -20,9 +20,6 @@
         <entry name="db.pool.min" value="1"/>
         <entry name="db.pool.max" value="20"/>
 
-        <!-- LOCAL CACHE: enable/disable -->
-        <entry name="cache.local.enabled" value="true"/>
-
         <!-- LOG: enable/Disable logging. Levels are: finer, fine, finest, info,
             warning -->
         <entry name="log.console.level" value="info"/>

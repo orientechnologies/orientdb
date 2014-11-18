@@ -1,14 +1,5 @@
 package com.orientechnologies.orient.test.database.speed;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
-
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -20,6 +11,15 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 /**
  * @author PatrickJMcCarty
@@ -85,6 +85,7 @@ public class GiantFileTest {
       System.out.printf("Finished storing giant file in %f seconds.\n", (float) storeFileMs / 1000);
     } finally {
       db.close();
+      OGlobalConfiguration.USE_WAL.setValue(true);
     }
   }
 

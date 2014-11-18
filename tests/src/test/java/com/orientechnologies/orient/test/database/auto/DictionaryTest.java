@@ -23,7 +23,6 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
@@ -40,49 +39,32 @@ public class DictionaryTest extends DocumentDBBaseTest {
 	}
 
 	public void testDictionaryCreate() throws IOException {
-    ODatabaseFlat database = new ODatabaseFlat(url);
-    database.open("admin", "admin");
-    ORecordFlat record = database.newInstance();
+    ORecordFlat record = new ORecordFlat();
 
     database.getDictionary().put("key1", record.value("Dictionary test!"));
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "testDictionaryCreate")
   public void testDictionaryLookup() throws IOException {
-    ODatabaseFlat database = new ODatabaseFlat(url);
-    database.open("admin", "admin");
-
     Assert.assertNotNull(database.getDictionary().get("key1"));
     Assert.assertTrue(((ORecordFlat) database.getDictionary().get("key1")).value().equals("Dictionary test!"));
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "testDictionaryLookup")
   public void testDictionaryUpdate() throws IOException {
-    ODatabaseFlat database = new ODatabaseFlat(url);
-    database.open("admin", "admin");
-
     final long originalSize = database.getDictionary().size();
 
-    database.getDictionary().put("key1", database.newInstance().value("Text changed"));
+    database.getDictionary().put("key1", new ORecordFlat().value("Text changed"));
 
     database.close();
     database.open("admin", "admin");
 
     Assert.assertEquals(((ORecordFlat) database.getDictionary().get("key1")).value(), "Text changed");
     Assert.assertEquals(database.getDictionary().size(), originalSize);
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "testDictionaryUpdate")
   public void testDictionaryDelete() throws IOException {
-    ODatabaseFlat database = new ODatabaseFlat(url);
-    database.open("admin", "admin");
-
     final long originalSize = database.getDictionary().size();
     Assert.assertNotNull(database.getDictionary().remove("key1"));
 
@@ -90,22 +72,17 @@ public class DictionaryTest extends DocumentDBBaseTest {
     database.open("admin", "admin");
 
     Assert.assertEquals(database.getDictionary().size(), originalSize - 1);
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "testDictionaryDelete")
   public void testDictionaryMassiveCreate() throws IOException {
-    ODatabaseFlat database = new ODatabaseFlat(url);
-    database.open("admin", "admin");
-
     final long originalSize = database.getDictionary().size();
 
     // ASSURE TO STORE THE PAGE-SIZE + 3 FORCING THE CREATION OF LEFT AND RIGHT
     final int total = 1000;
 
     for (int i = total; i > 0; --i) {
-      database.getDictionary().put("key-" + (originalSize + i), database.newInstance().value("test-dictionary-" + i));
+      database.getDictionary().put("key-" + (originalSize + i), new ORecordFlat().value("test-dictionary-" + i));
     }
 
     for (int i = total; i > 0; --i) {
@@ -114,22 +91,15 @@ public class DictionaryTest extends DocumentDBBaseTest {
     }
 
     Assert.assertEquals(database.getDictionary().size(), originalSize + total);
-
-    database.close();
   }
 
   @Test(dependsOnMethods = "testDictionaryMassiveCreate")
   public void testDictionaryInTx() throws IOException {
-    ODatabaseFlat database = new ODatabaseFlat(url);
-    database.open("admin", "admin");
-
     database.begin();
-    database.getDictionary().put("tx-key", database.newInstance().value("tx-test-dictionary"));
+    database.getDictionary().put("tx-key", new ORecordFlat().value("tx-test-dictionary"));
     database.commit();
 
     Assert.assertNotNull(database.getDictionary().get("tx-key"));
-
-    database.close();
   }
 
   public class ObjectDictionaryTest {

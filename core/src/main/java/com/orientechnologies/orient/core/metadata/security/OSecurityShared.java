@@ -1,46 +1,43 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.metadata.security;
 
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OClassTrigger;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.exception.OSecurityException;
-import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.ONullOutputListener;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.security.OUser.STATUSES;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -53,6 +50,8 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
  * 
  */
 public class OSecurityShared implements OSecurity, OCloseable {
+  private final AtomicLong   version                = new AtomicLong();
+
   public static final String RESTRICTED_CLASSNAME   = "ORestricted";
   public static final String IDENTITY_CLASSNAME     = "OIdentity";
   public static final String ALLOW_ALL_FIELD        = "_allow";
@@ -119,29 +118,29 @@ public class OSecurityShared implements OSecurity, OCloseable {
     if (iAllowAll == null || iAllowAll.isEmpty())
       return true;
 
-    final OUser currentUser = ODatabaseRecordThreadLocal.INSTANCE.get().getUser();
+    final OSecurityUser currentUser = ODatabaseRecordThreadLocal.INSTANCE.get().getUser();
     if (currentUser != null) {
       // CHECK IF CURRENT USER IS ENLISTED
-      if (!iAllowAll.contains(currentUser.getDocument().getIdentity())) {
+      if (!iAllowAll.contains(currentUser.getIdentity())) {
         // CHECK AGAINST SPECIFIC _ALLOW OPERATION
-        if (iAllowOperation != null && iAllowOperation.contains(currentUser.getDocument().getIdentity()))
+        if (iAllowOperation != null && iAllowOperation.contains(currentUser.getIdentity()))
           return true;
 
         // CHECK IF AT LEAST ONE OF THE USER'S ROLES IS ENLISTED
-        for (ORole r : currentUser.getRoles()) {
+        for (OSecurityRole r : currentUser.getRoles()) {
           // CHECK AGAINST GENERIC _ALLOW
-          if (iAllowAll.contains(r.getDocument().getIdentity()))
+          if (iAllowAll.contains(r.getIdentity()))
             return true;
           // CHECK AGAINST SPECIFIC _ALLOW OPERATION
-          if (iAllowOperation != null && iAllowOperation.contains(r.getDocument().getIdentity()))
+          if (iAllowOperation != null && iAllowOperation.contains(r.getIdentity()))
             return true;
           // CHECK inherited permissions from parent roles, fixes #1980: Record Level Security: permissions don't follow role's
           // inheritance
-          ORole parentRole = r.getParentRole();
+          OSecurityRole parentRole = r.getParentRole();
           while (parentRole != null) {
-            if (iAllowAll.contains(parentRole.getDocument().getIdentity()))
+            if (iAllowAll.contains(parentRole.getIdentity()))
               return true;
-            if (iAllowOperation != null && iAllowOperation.contains(parentRole.getDocument().getIdentity()))
+            if (iAllowOperation != null && iAllowOperation.contains(parentRole.getIdentity()))
               return true;
             parentRole = parentRole.getParentRole();
           }
@@ -159,7 +158,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
     if (user == null)
       throw new OSecurityAccessException(dbName, "User or password not valid for database: '" + dbName + "'");
 
-    if (user.getAccountStatus() != STATUSES.ACTIVE)
+    if (user.getAccountStatus() != OSecurityUser.STATUSES.ACTIVE)
       throw new OSecurityAccessException(dbName, "User '" + iUserName + "' is not active");
 
     if (!(getDatabase().getStorage() instanceof OStorageProxy)) {
@@ -224,25 +223,8 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public ORole getRole(final String roleName, final boolean allowRepair) {
-    List<ODocument> result;
-
-    try {
-      result = getDatabase().<OCommandRequest> command(
-          new OSQLSynchQuery<ODocument>("select from ORole where name = '" + roleName + "' limit 1")).execute();
-
-      if (roleName.equalsIgnoreCase("admin") && result.isEmpty()) {
-        if (allowRepair)
-          repair();
-        result = getDatabase().<OCommandRequest> command(
-            new OSQLSynchQuery<ODocument>("select from ORole where name = '" + roleName + "' limit 1")).execute();
-      }
-    } catch (Exception e) {
-      if (allowRepair)
-        repair();
-      result = getDatabase().<OCommandRequest> command(
-          new OSQLSynchQuery<ODocument>("select from ORole where name = '" + roleName + "' limit 1").setFetchPlan("roles:1"))
-          .execute();
-    }
+    List<ODocument> result = getDatabase().<OCommandRequest> command(
+        new OSQLSynchQuery<ODocument>("select from ORole where name = '" + roleName + "' limit 1")).execute();
 
     if (result != null && !result.isEmpty())
       return new ORole(result.get(0));
@@ -268,12 +250,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public List<ODocument> getAllUsers() {
-    try {
-      return getDatabase().<OCommandRequest> command(new OSQLSynchQuery<ODocument>("select from OUser")).execute();
-    } catch (Exception e) {
-      repair();
-      return getDatabase().<OCommandRequest> command(new OSQLSynchQuery<ODocument>("select from OUser")).execute();
-    }
+    return getDatabase().<OCommandRequest> command(new OSQLSynchQuery<ODocument>("select from OUser")).execute();
   }
 
   public List<ODocument> getAllRoles() {
@@ -287,32 +264,34 @@ public class OSecurityShared implements OSecurity, OCloseable {
     final OUser adminUser = createMetadata();
 
     final ORole readerRole = createRole("reader", ORole.ALLOW_MODES.DENY_ALL_BUT);
-    readerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
-    readerRole.addRule(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ);
-    readerRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + OMetadataDefault.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
-    readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_READ);
-    readerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_READ);
-    readerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_READ);
-    readerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_READ);
-    readerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_READ);
-    readerRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_READ);
-    readerRole.addRule(ODatabaseSecurityResources.FUNCTION + ".*", ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.CLUSTER, OMetadataDefault.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "orole", ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.CLUSTER, "ouser", ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.RECORD_HOOK, null, ORole.PERMISSION_READ);
+    readerRole.addRule(ORule.ResourceGeneric.FUNCTION, null, ORole.PERMISSION_READ);
     readerRole.save();
+
     createUser("reader", "reader", new String[] { readerRole.getName() });
 
     final ORole writerRole = createRole("writer", ORole.ALLOW_MODES.DENY_ALL_BUT);
-    writerRole.addRule(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
-    writerRole
-        .addRule(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_READ + ORole.PERMISSION_CREATE + ORole.PERMISSION_UPDATE);
-    writerRole.addRule(ODatabaseSecurityResources.CLUSTER + "." + OMetadataDefault.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
-    writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".orole", ORole.PERMISSION_READ);
-    writerRole.addRule(ODatabaseSecurityResources.CLUSTER + ".ouser", ORole.PERMISSION_READ);
-    writerRole.addRule(ODatabaseSecurityResources.ALL_CLASSES, ORole.PERMISSION_ALL);
-    writerRole.addRule(ODatabaseSecurityResources.ALL_CLUSTERS, ORole.PERMISSION_ALL);
-    writerRole.addRule(ODatabaseSecurityResources.COMMAND, ORole.PERMISSION_ALL);
-    writerRole.addRule(ODatabaseSecurityResources.RECORD_HOOK, ORole.PERMISSION_ALL);
-    readerRole.addRule(ODatabaseSecurityResources.FUNCTION + ".*", ORole.PERMISSION_READ);
+    writerRole.addRule(ORule.ResourceGeneric.DATABASE, null, ORole.PERMISSION_READ);
+    writerRole.addRule(ORule.ResourceGeneric.SCHEMA, null, ORole.PERMISSION_READ + ORole.PERMISSION_CREATE
+        + ORole.PERMISSION_UPDATE);
+    writerRole.addRule(ORule.ResourceGeneric.CLUSTER, OMetadataDefault.CLUSTER_INTERNAL_NAME, ORole.PERMISSION_READ);
+    writerRole.addRule(ORule.ResourceGeneric.CLUSTER, "orole", ORole.PERMISSION_READ);
+    writerRole.addRule(ORule.ResourceGeneric.CLUSTER, "ouser", ORole.PERMISSION_READ);
+    writerRole.addRule(ORule.ResourceGeneric.CLASS, null, ORole.PERMISSION_ALL);
+    writerRole.addRule(ORule.ResourceGeneric.CLUSTER, null, ORole.PERMISSION_ALL);
+    writerRole.addRule(ORule.ResourceGeneric.COMMAND, null, ORole.PERMISSION_ALL);
+    writerRole.addRule(ORule.ResourceGeneric.RECORD_HOOK, null, ORole.PERMISSION_ALL);
+    readerRole.addRule(ORule.ResourceGeneric.FUNCTION, null, ORole.PERMISSION_READ);
     writerRole.save();
+
     createUser("writer", "writer", new String[] { writerRole.getName() });
 
     return adminUser;
@@ -323,22 +302,9 @@ public class OSecurityShared implements OSecurity, OCloseable {
    * 
    * @return
    */
-  public OUser repair() {
-    OLogManager.instance().warn(this, "Repairing security structures...");
-
-    try {
-      getDatabase().getMetadata().getIndexManager().dropIndex("OUser.name");
-      getDatabase().getMetadata().getIndexManager().dropIndex("ORole.name");
-
-      return createMetadata();
-
-    } finally {
-      OLogManager.instance().warn(this, "Repair completed");
-    }
-  }
 
   public OUser createMetadata() {
-    final ODatabaseRecord database = getDatabase();
+    final ODatabaseDocument database = getDatabase();
 
     OClass identityClass = database.getMetadata().getSchema().getClass(IDENTITY_CLASSNAME); // SINCE 1.2.0
     if (identityClass == null)
@@ -355,15 +321,16 @@ public class OSecurityShared implements OSecurity, OCloseable {
       roleClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true).setCollate("ci");
       roleClass.createIndex("ORole.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
     } else {
-      final Set<OIndex<?>> indexes = roleClass.getInvolvedIndexes("name");
-      if (indexes.isEmpty())
+      final OProperty name = roleClass.getProperty("name");
+      if (name.getAllIndexes().isEmpty())
         roleClass.createIndex("ORole.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
     }
 
     if (!roleClass.existsProperty("mode"))
       roleClass.createProperty("mode", OType.BYTE);
+
     if (!roleClass.existsProperty("rules"))
-      roleClass.createProperty("rules", OType.EMBEDDEDMAP, OType.BYTE);
+      roleClass.createProperty("rules", OType.EMBEDDEDSET);
     if (!roleClass.existsProperty("inheritedRole"))
       roleClass.createProperty("inheritedRole", OType.LINK, roleClass);
 
@@ -377,6 +344,10 @@ public class OSecurityShared implements OSecurity, OCloseable {
     if (!userClass.existsProperty("name")) {
       userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true).setCollate("ci");
       userClass.createIndex("OUser.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
+    } else {
+      final OProperty name = userClass.getProperty("name");
+      if (name.getAllIndexes().isEmpty())
+        userClass.createIndex("OUser.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
     }
     if (!userClass.existsProperty("password"))
       userClass.createProperty("password", OType.STRING).setMandatory(true).setNotNull(true);
@@ -389,7 +360,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
     ORole adminRole = getRole(ORole.ADMIN, false);
     if (adminRole == null) {
       adminRole = createRole(ORole.ADMIN, ORole.ALLOW_MODES.ALLOW_ALL_BUT);
-      adminRole.addRule(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_ALL).save();
+      adminRole.addRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_ALL).save();
     }
 
     OUser adminUser = getUser(OUser.ADMIN, false);
@@ -436,6 +407,11 @@ public class OSecurityShared implements OSecurity, OCloseable {
       // ROLE
       final OClass roleClass = getDatabase().getMetadata().getSchema().getClass("ORole");
 
+      final OProperty rules = roleClass.getProperty("rules");
+      if (rules != null && !OType.EMBEDDEDSET.equals(rules.getType())) {
+        roleClass.dropProperty("rules");
+      }
+
       if (!roleClass.existsProperty("inheritedRole")) {
         roleClass.createProperty("inheritedRole", OType.LINK, roleClass);
       }
@@ -451,7 +427,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public void createClassTrigger() {
-    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
     OClass classTrigger = db.getMetadata().getSchema().getClass(OClassTrigger.CLASSNAME);
     if (classTrigger == null)
       classTrigger = db.getMetadata().getSchema().createAbstractClass(OClassTrigger.CLASSNAME);
@@ -466,28 +442,9 @@ public class OSecurityShared implements OSecurity, OCloseable {
     if (iUserName == null)
       return null;
 
-    List<ODocument> result;
-    try {
-      result = getDatabase().<OCommandRequest> command(
-          new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("roles:1"))
-          .execute();
-
-      if (iUserName.equalsIgnoreCase("admin") && result.isEmpty()) {
-        if (iAllowRepair)
-          repair();
-        result = getDatabase().<OCommandRequest> command(
-            new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("roles:1"))
-            .execute();
-      }
-    } catch (OSecurityException e) {
-      throw e;
-    } catch (Exception e) {
-      if (iAllowRepair)
-        repair();
-      result = getDatabase().<OCommandRequest> command(
-          new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("roles:1"))
-          .execute();
-    }
+    List<ODocument> result = getDatabase().<OCommandRequest> command(
+        new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("roles:1"))
+        .execute();
 
     if (result != null && !result.isEmpty())
       return new OUser(result.get(0));
@@ -495,7 +452,17 @@ public class OSecurityShared implements OSecurity, OCloseable {
     return null;
   }
 
-  private ODatabaseRecordInternal getDatabase() {
+  @Override
+  public long getVersion() {
+    return version.get();
+  }
+
+  @Override
+  public void incrementVersion() {
+    version.incrementAndGet();
+  }
+
+  private ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 }

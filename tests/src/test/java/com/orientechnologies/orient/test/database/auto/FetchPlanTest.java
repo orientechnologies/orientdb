@@ -57,8 +57,6 @@ public class FetchPlanTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "queryNoFetchPlan")
   public void queryWithFetchPlan() {
-    database.getLocalCache().setEnable(true);
-
     final long times = Orient.instance().getProfiler().getCounter("Cache.reused");
     List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>("select * from Profile").setFetchPlan("*:-1"));
     Assert.assertEquals(Orient.instance().getProfiler().getCounter("Cache.reused"), times);

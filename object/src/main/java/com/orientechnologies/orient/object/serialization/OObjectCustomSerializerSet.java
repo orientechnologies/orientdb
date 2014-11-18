@@ -19,6 +19,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import com.orientechnologies.orient.core.record.ORecord;
@@ -154,7 +155,7 @@ public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements O
     convertAll();
   }
 
-  public void detachAll(boolean nonProxiedInstance) {
+  public void detachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached) {
     convertAll();
   }
 

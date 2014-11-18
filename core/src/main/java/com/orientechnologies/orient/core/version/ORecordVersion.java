@@ -37,7 +37,6 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
  * 
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  * @see OSimpleVersion
- * @see ODistributedVersion
  */
 public interface ORecordVersion extends Comparable<ORecordVersion>, Externalizable {
   void increment();

@@ -261,30 +261,6 @@ public class OHttpResponseWrapper {
   }
 
   /**
-   * Sends the complete HTTP response in one call specifying additional headers.
-   * 
-   * @param iCode
-   *          HTTP response's Code
-   * @param iReason
-   *          Response's reason
-   * @param iContentType
-   *          Response's content type
-   * @param iContent
-   *          Content to send. Content can be a string for plain text, binary data to return directly binary information,
-   *          OIdentifiable for a single record and Collection<OIdentifiable> for a collection of records
-   * @param iHeaders
-   *          Response's additional headers
-   * @param iKeepAlive
-   *          Use the connection keep-alive
-   * @return The object itself for fluent chained calls
-   */
-  public OHttpResponseWrapper send(final int iCode, final String iReason, final String iContentType, final Object iContent,
-      final String iHeaders, final boolean iKeepAlive) throws IOException {
-    response.send(iCode, iReason, iContentType, iContent, iHeaders, iKeepAlive);
-    return this;
-  }
-
-  /**
    * Sends the complete HTTP response in one call specifying a stream as content.
    * 
    * @param iCode
@@ -344,5 +320,21 @@ public class OHttpResponseWrapper {
 
   public void setContentType(final String contentType) {
     response.setContentType(contentType);
+  }
+  
+  public String getContent() {
+    return response.getContent();
+  }
+
+  public void setContent(String content) {
+    response.setContent(content);
+  }
+
+  public int getCode() {
+    return response.getCode();
+  }
+
+  public void setCode(int code) {
+    response.setCode(code);
   }
 }

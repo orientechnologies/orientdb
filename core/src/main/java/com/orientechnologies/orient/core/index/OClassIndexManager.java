@@ -432,7 +432,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     // STORE THE RECORD IF NEW, OTHERWISE ITS RID
     final OIdentifiable rid = document.getIdentity().isPersistent() ? document.placeholder() : document;
 
-    final OClass cls = document.getSchemaClass();
+    final OClass cls = document.getImmutableSchemaClass();
     if (cls != null) {
       final Collection<OIndex<?>> indexes = cls.getIndexes();
       for (final OIndex<?> index : indexes) {
@@ -452,7 +452,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   private void updateIndexEntries(ODocument iDocument) {
     iDocument = checkForLoading(iDocument);
 
-    final OClass cls = iDocument.getSchemaClass();
+    final OClass cls = iDocument.getImmutableSchemaClass();
     if (cls == null)
       return;
 
@@ -478,7 +478,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   }
 
   private void deleteIndexEntries(ODocument iDocument) {
-    final OClass cls = iDocument.getSchemaClass();
+    final OClass cls = iDocument.getImmutableSchemaClass();
     if (cls == null)
       return;
 
@@ -523,7 +523,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
     ODocument replaced = null;
 
-    final OClass cls = document.getSchemaClass();
+    final OClass cls = document.getImmutableSchemaClass();
     if (cls != null) {
       final Collection<OIndex<?>> indexes = cls.getIndexes();
       switch (hookType) {

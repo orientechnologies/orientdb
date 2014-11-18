@@ -16,10 +16,8 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -48,10 +46,67 @@ public class LocalPaginatedStorageUpdateCrashRestore {
   private ExecutorService               executorService = Executors.newCachedThreadPool();
   private Process                       process;
 
+  public static final class RemoteDBRunner {
+    public static void main(String[] args) throws Exception {
+      OServer server = OServerMain.create();
+      server.startup(RemoteDBRunner.class
+          .getResourceAsStream("/com/orientechnologies/orient/core/storage/impl/local/paginated/db-update-config.xml"));
+      server.activate();
+      while (true)
+        ;
+    }
+  }
+
+  public class DataUpdateTask implements Callable<Void> {
+    private ODatabaseDocumentTx baseDB;
+    private ODatabaseDocumentTx testDB;
+
+    public DataUpdateTask(ODatabaseDocumentTx baseDB, ODatabaseDocumentTx testDocumentTx) {
+      this.baseDB = new ODatabaseDocumentTx(baseDB.getURL());
+      this.testDB = new ODatabaseDocumentTx(testDocumentTx.getURL());
+    }
+
+    @Override
+    public Void call() throws Exception {
+      Random random = new Random();
+      baseDB.open("admin", "admin");
+      testDB.open("admin", "admin");
+
+      int counter = 0;
+
+      try {
+        while (true) {
+          final int idToUpdate = random.nextInt(idGen);
+          idLockManager.acquireLock(Thread.currentThread(), idToUpdate, OLockManager.LOCK.EXCLUSIVE);
+          try {
+            OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from TestClass where id  = " + idToUpdate);
+            final List<ODocument> result = baseDB.query(query);
+
+            Assert.assertTrue(!result.isEmpty());
+
+            final ODocument document = result.get(0);
+            document.field("timestamp", System.currentTimeMillis());
+            document.field("stringValue", "vde" + random.nextLong());
+
+            saveDoc(document, baseDB, testDB);
+
+            counter++;
+
+            if (counter % 50000 == 0)
+              System.out.println(counter + " records were updated.");
+          } finally {
+            idLockManager.releaseLock(Thread.currentThread(), idToUpdate, OLockManager.LOCK.EXCLUSIVE);
+          }
+        }
+      } finally {
+        baseDB.close();
+        testDB.close();
+      }
+    }
+  }
+
   @BeforeClass
   public void beforeClass() throws Exception {
-    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
-
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/localPaginatedStorageUpdateCrashRestore";
 
@@ -71,19 +126,6 @@ public class LocalPaginatedStorageUpdateCrashRestore {
     process = processBuilder.start();
 
     Thread.sleep(5000);
-  }
-
-  public static final class RemoteDBRunner {
-    public static void main(String[] args) throws Exception {
-      OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
-
-      OServer server = OServerMain.create();
-      server.startup(RemoteDBRunner.class
-          .getResourceAsStream("/com/orientechnologies/orient/core/storage/impl/local/paginated/db-update-config.xml"));
-      server.activate();
-      while (true)
-        ;
-    }
   }
 
   @AfterClass
@@ -212,8 +254,7 @@ public class LocalPaginatedStorageUpdateCrashRestore {
 
     OStorage baseStorage = baseDocumentTx.getStorage();
 
-    OPhysicalPosition[] physicalPositions = baseStorage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(
-        OClusterPositionFactory.INSTANCE.valueOf(0)));
+    OPhysicalPosition[] physicalPositions = baseStorage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(0));
 
     int recordsRestored = 0;
     int recordsTested = 0;
@@ -251,54 +292,6 @@ public class LocalPaginatedStorageUpdateCrashRestore {
 
     System.out.println(recordsRestored + " records were restored. Total records " + recordsTested
         + ". Max interval for lost records " + (lastTs - minTs));
-  }
-
-  public class DataUpdateTask implements Callable<Void> {
-    private ODatabaseDocumentTx baseDB;
-    private ODatabaseDocumentTx testDB;
-
-    public DataUpdateTask(ODatabaseDocumentTx baseDB, ODatabaseDocumentTx testDocumentTx) {
-      this.baseDB = new ODatabaseDocumentTx(baseDB.getURL());
-      this.testDB = new ODatabaseDocumentTx(testDocumentTx.getURL());
-    }
-
-    @Override
-    public Void call() throws Exception {
-      Random random = new Random();
-      baseDB.open("admin", "admin");
-      testDB.open("admin", "admin");
-
-      int counter = 0;
-
-      try {
-        while (true) {
-          final int idToUpdate = random.nextInt(idGen);
-          idLockManager.acquireLock(Thread.currentThread(), idToUpdate, OLockManager.LOCK.EXCLUSIVE);
-          try {
-            OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from TestClass where id  = " + idToUpdate);
-            final List<ODocument> result = baseDB.query(query);
-
-            Assert.assertTrue(!result.isEmpty());
-
-            final ODocument document = result.get(0);
-            document.field("timestamp", System.currentTimeMillis());
-            document.field("stringValue", "vde" + random.nextLong());
-
-            saveDoc(document, baseDB, testDB);
-
-            counter++;
-
-            if (counter % 50000 == 0)
-              System.out.println(counter + " records were updated.");
-          } finally {
-            idLockManager.releaseLock(Thread.currentThread(), idToUpdate, OLockManager.LOCK.EXCLUSIVE);
-          }
-        }
-      } finally {
-        baseDB.close();
-        testDB.close();
-      }
-    }
   }
 
 }

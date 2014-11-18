@@ -19,8 +19,8 @@
    */
 package com.orientechnologies.orient.server.network.protocol.http.command.delete;
 
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
- import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
  import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
  import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
  import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -43,7 +43,7 @@ public class OServerCommandDeleteDatabase extends OServerCommandAuthenticatedSer
      ODatabaseDocumentTx db = null;
 
      try {
-       final ODatabaseComplex<?> database = server.openDatabase("document", urlParts[1], serverUser, serverPassword);
+       final ODatabase<?> database = server.openDatabase("document", urlParts[1], serverUser, serverPassword);
        database.drop();
 
      } finally {

@@ -20,11 +20,10 @@
 
 package com.orientechnologies.orient.core.intent;
 
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
 
 /**
  * Disable cache. This is helpful with operation like UPDATE/DELETE of many records.
@@ -34,15 +33,12 @@ public class OIntentNoCache implements OIntent {
   private boolean previousRetainRecords;
   private boolean previousRetainObjects;
 
-  public void begin(final ODatabaseRaw iDatabase) {
-    previousLocalCacheEnabled = iDatabase.getDatabaseOwner().getLocalCache().isEnabled();
-    iDatabase.getDatabaseOwner().getLocalCache().setEnable(false);
+  public void begin(final ODatabaseDocumentInternal iDatabase) {
+    ODatabaseInternal<?> ownerDb = iDatabase.getDatabaseOwner();
 
-    ODatabaseComplexInternal<?> ownerDb = iDatabase.getDatabaseOwner();
-
-    if (ownerDb instanceof ODatabaseRecord) {
-      previousRetainRecords = ((ODatabaseRecord) ownerDb).isRetainRecords();
-      ((ODatabaseRecord) ownerDb).setRetainRecords(false);
+    if (ownerDb instanceof ODatabaseDocument) {
+      previousRetainRecords = ((ODatabaseDocument) ownerDb).isRetainRecords();
+      ((ODatabaseDocument) ownerDb).setRetainRecords(false);
     }
 
     while (ownerDb.getDatabaseOwner() != ownerDb)
@@ -54,12 +50,11 @@ public class OIntentNoCache implements OIntent {
     }
   }
 
-  public void end(final ODatabaseRaw iDatabase) {
-    iDatabase.getDatabaseOwner().getLocalCache().setEnable(previousLocalCacheEnabled);
-    ODatabaseComplexInternal<?> ownerDb = iDatabase.getDatabaseOwner();
+  public void end(final ODatabaseDocumentInternal iDatabase) {
+    ODatabaseInternal<?> ownerDb = iDatabase.getDatabaseOwner();
 
-    if (ownerDb instanceof ODatabaseRecord) {
-      ((ODatabaseRecord) ownerDb).setRetainRecords(previousRetainRecords);
+    if (ownerDb instanceof ODatabaseDocument) {
+      ((ODatabaseDocument) ownerDb).setRetainRecords(previousRetainRecords);
     }
 
     while (ownerDb.getDatabaseOwner() != ownerDb)

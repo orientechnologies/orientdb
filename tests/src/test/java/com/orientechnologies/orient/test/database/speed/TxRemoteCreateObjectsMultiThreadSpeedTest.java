@@ -16,20 +16,19 @@
 package com.orientechnologies.orient.test.database.speed;
 
 import com.orientechnologies.common.test.SpeedTestMultiThreads;
-import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMultiThreadTest;
 import com.orientechnologies.orient.test.database.base.OrientThreadTest;
 
 public class TxRemoteCreateObjectsMultiThreadSpeedTest extends OrientMultiThreadTest {
-  protected ODatabaseFlat database;
-  protected long          foundObjects;
+  protected ODatabaseDocumentTx database;
+  protected long                foundObjects;
 
   public static class CreateObjectsThread extends OrientThreadTest {
-    protected ODatabaseFlat database;
-    protected ORecordFlat   record = new ORecordFlat();
+    protected ODatabaseDocumentTx database;
+    protected ORecordFlat         record = new ORecordFlat();
 
     public CreateObjectsThread(final SpeedTestMultiThreads parent, final int threadId) {
       super(parent, threadId);
@@ -37,8 +36,8 @@ public class TxRemoteCreateObjectsMultiThreadSpeedTest extends OrientMultiThread
 
     @Override
     public void init() {
-      database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
-      record = database.newInstance();
+      database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
+      record = new ORecordFlat();
 
       database.begin(TXTYPE.NOTX);
     }
@@ -69,7 +68,7 @@ public class TxRemoteCreateObjectsMultiThreadSpeedTest extends OrientMultiThread
 
   @Override
   public void init() {
-    database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
+    database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
 
     if (!database.getStorage().getClusterNames().contains("Animal"))
       database.addCluster("Animal");

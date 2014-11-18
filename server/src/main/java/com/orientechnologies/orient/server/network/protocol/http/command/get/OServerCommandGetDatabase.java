@@ -146,7 +146,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
      ODatabaseDocumentTx db = null;
      try {
        if (urlParts.length > 2) {
-         db = server.getDatabasePool().acquire(urlParts[1], urlParts[2], urlParts[3]);
+         db = server.getDatabasePoolFactory().get(urlParts[1], urlParts[2], urlParts[3]).acquire();
        } else
          db = getProfiledDatabaseInstance(iRequest);
 
@@ -165,7 +165,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
        json.writeAttribute("javaVersion", System.getProperty("java.vm.version"));
        json.endObject();
 
-       if (db.getMetadata().getSchema().getClasses() != null) {
+       if (db.getMetadata().getImmutableSchemaSnapshot().getClasses() != null) {
          json.beginCollection("classes");
          List<String> classNames = new ArrayList<String>();
 

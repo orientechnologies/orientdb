@@ -45,9 +45,9 @@ import java.util.Set;
 
 /**
  * Parses text in SQL format and build a tree of conditions.
- * 
+ *
  * @author Luca Garulli
- * 
+ *
  */
 public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
   protected Set<OProperty>                properties = new HashSet<OProperty>();
@@ -112,10 +112,12 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
     return rootCondition.evaluate(iRecord, iCurrentResult, iContext);
   }
 
-  private Object extractConditions(final OSQLFilterCondition iParentCondition) {
+  protected Object extractConditions(final OSQLFilterCondition iParentCondition) {
     final int oldPosition = parserGetCurrentPosition();
     parserNextWord(true, " )=><,\r\n");
     final String word = parserGetLastWord();
+
+    boolean inBraces = word.length() > 0 && word.charAt(0) == OStringSerializerHelper.EMBEDDED_BEGIN;
 
     if (word.length() > 0 && (word.equalsIgnoreCase("SELECT") || word.equalsIgnoreCase("TRAVERSE"))) {
       // SUB QUERY
@@ -150,11 +152,14 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
       }
     }
 
+    currentCondition.inBraces = inBraces;
+
     // END OF TEXT
     return currentCondition;
   }
 
   protected OSQLFilterCondition extractCondition() {
+
     if (!parserSkipWhiteSpaces())
       // END OF TEXT
       return null;
@@ -270,7 +275,9 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
           braces--;
           parserMoveCurrentPosition(+1);
         }
-
+        if(subCondition instanceof OSQLFilterCondition){
+          ((OSQLFilterCondition) subCondition).inBraces = true;
+        }
         result[i] = subCondition;
       } else if (word.charAt(0) == OStringSerializerHelper.LIST_BEGIN) {
         // COLLECTION OF ELEMENTS

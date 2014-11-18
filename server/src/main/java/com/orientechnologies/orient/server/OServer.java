@@ -19,6 +19,21 @@
  */
 package com.orientechnologies.orient.server;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.ReentrantLock;
+
+import javax.management.InstanceAlreadyExistsException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MalformedObjectNameException;
+import javax.management.NotCompliantMBeanException;
+
 import com.orientechnologies.common.console.DefaultConsoleReader;
 import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.io.OFileUtils;
@@ -32,14 +47,14 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.security.OSecurityManager;
@@ -47,6 +62,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
 import com.orientechnologies.orient.server.config.*;
+import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -55,26 +71,6 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
-
-import javax.management.InstanceAlreadyExistsException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
-import javax.management.NotCompliantMBeanException;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.locks.ReentrantLock;
 
 public class OServer {
   private static final String                              ROOT_PASSWORD_VAR      = "ORIENTDB_ROOT_PASSWORD";
@@ -94,7 +90,7 @@ public class OServer {
   protected OServerPluginManager                           pluginManager;
   protected OConfigurableHooksManager                      hookManager;
   protected ODistributedServerManager                      distributedManager;
-  private ODatabaseDocumentPool                            dbPool;
+  private OPartitionedDatabasePoolFactory                  dbPoolFactory;
   private Random                                           random                 = new Random();
   private Map<String, Object>                              variables              = new HashMap<String, Object>();
   private String                                           serverRootDirectory;
@@ -104,13 +100,12 @@ public class OServer {
       InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
     serverRootDirectory = OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME + "}", ".");
 
-    defaultSettings();
-
     OLogManager.installCustomFormatter();
+
+    defaultSettings();
 
     threadGroup = new ThreadGroup("OrientDB Server");
 
-    OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(true);
     System.setProperty("com.sun.management.jmxremote", "true");
 
     Orient.instance().startup();
@@ -197,11 +192,8 @@ public class OServer {
       OGlobalConfiguration.dumpConfiguration(System.out);
     }
 
-    dbPool = new ODatabaseDocumentPool();
-    dbPool.setup(contextConfiguration.getValueAsInteger(OGlobalConfiguration.DB_POOL_MIN),
-        contextConfiguration.getValueAsInteger(OGlobalConfiguration.DB_POOL_MAX),
-        contextConfiguration.getValueAsLong(OGlobalConfiguration.DB_POOL_IDLE_TIMEOUT),
-        contextConfiguration.getValueAsLong(OGlobalConfiguration.DB_POOL_IDLE_CHECK_DELAY));
+    dbPoolFactory = new OPartitionedDatabasePoolFactory();
+    dbPoolFactory.setMaxPoolSize(contextConfiguration.getValueAsInteger(OGlobalConfiguration.DB_POOL_MAX));
 
     databaseDirectory = contextConfiguration.getValue("server.database.path", serverRootDirectory + "/databases/");
     databaseDirectory = OFileUtils.getPath(OSystemVariableResolver.resolveSystemVariables(databaseDirectory));
@@ -256,6 +248,13 @@ public class OServer {
     startupLatch.countDown();
 
     return this;
+  }
+
+  public void removeShutdownHook() {
+    if (shutdownHook != null) {
+      shutdownHook.cancel();
+      shutdownHook = null;
+    }
   }
 
   public boolean shutdown() {
@@ -544,29 +543,60 @@ public class OServer {
     return this;
   }
 
-  public ODatabaseComplex<?> openDatabase(final String iDbType, final String iDbUrl, final String iUser, final String iPassword) {
+  public ODatabase<?> openDatabase(final String iDbType, final String iDbUrl, final String user, final String password) {
     final String path = getStoragePath(iDbUrl);
 
-    final ODatabaseComplexInternal<?> database = Orient.instance().getDatabaseFactory().createDatabase(iDbType, path);
+    final ODatabaseInternal<?> database = Orient.instance().getDatabaseFactory().createDatabase(iDbType, path);
 
-    if (database.isClosed())
-      if (database.getStorage() instanceof ODirectMemoryStorage)
-        database.create();
-      else {
+    final OStorage storage = database.getStorage();
+    if (database.isClosed()) {
+      if (database.getStorage() instanceof ODirectMemoryStorage) {
+        if (!storage.exists())
+          try {
+            database.create();
+          } catch (OStorageException e) {
+          }
+
+        if (database.isClosed())
+          database.open(user, password);
+      } else {
         try {
-          database.open(iUser, iPassword);
+          database.open(user, password);
         } catch (OSecurityException e) {
           // TRY WITH SERVER'S USER
           try {
-            serverLogin(iUser, iPassword, "database.passthrough");
+            serverLogin(user, password, "database.passthrough");
           } catch (OSecurityException ex) {
             throw e;
           }
 
           // SERVER AUTHENTICATED, BYPASS SECURITY
+          database.resetInitialization();
           database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
-          database.open(iUser, iPassword);
+          database.open(user, password);
         }
+      }
+    }
+
+    return database;
+  }
+
+  public ODatabaseInternal openDatabase(final ODatabaseInternal database) {
+    if (database.isClosed())
+      if (database.getStorage() instanceof ODirectMemoryStorage)
+        database.create();
+      else {
+        final OServerUserConfiguration replicatorUser = getUser(ODistributedAbstractPlugin.REPLICATOR_USER);
+        try {
+          serverLogin(replicatorUser.name, replicatorUser.password, "database.passthrough");
+        } catch (OSecurityException ex) {
+          throw ex;
+        }
+
+        // SERVER AUTHENTICATED, BYPASS SECURITY
+        database.resetInitialization();
+        database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
+        database.open(replicatorUser.name, replicatorUser.password);
       }
 
     return database;
@@ -576,8 +606,8 @@ public class OServer {
     return distributedManager;
   }
 
-  public ODatabaseDocumentPool getDatabasePool() {
-    return dbPool;
+  public OPartitionedDatabasePoolFactory getDatabasePoolFactory() {
+    return dbPoolFactory;
   }
 
   public void setServerRootDirectory(final String rootDirectory) {
@@ -676,6 +706,7 @@ public class OServer {
   }
 
   protected void createDefaultServerUsers() throws IOException {
+    // ORIENTDB_ROOT_PASSWORD ENV OR JVM SETTING
     String rootPassword = OSystemVariableResolver.resolveVariable(ROOT_PASSWORD_VAR);
 
     if (rootPassword != null) {
@@ -693,13 +724,16 @@ public class OServer {
 
       System.out.println();
       System.out.println();
-      System.out.println("+----------------------------------------------------+");
-      System.out.println("|          WARNING: FIRST RUN CONFIGURATION          |");
-      System.out.println("+----------------------------------------------------+");
-      System.out.println("| This is the first time the server is running.      |");
-      System.out.println("| Please type a password of your choice for the      |");
-      System.out.println("| 'root' user or leave it blank to auto-generate it. |");
-      System.out.println("+----------------------------------------------------+");
+      System.out.println("+---------------------------------------------------------------+");
+      System.out.println("|                WARNING: FIRST RUN CONFIGURATION               |");
+      System.out.println("+---------------------------------------------------------------+");
+      System.out.println("| This is the first time the server is running. Please type a   |");
+      System.out.println("| password of your choice for the 'root' user or leave it blank |");
+      System.out.println("| to auto-generate it.                                          |");
+      System.out.println("|                                                               |");
+      System.out.println("| To avoid this message set the environment variable or JVM     |");
+      System.out.println("| setting ORIENTDB_ROOT_PASSWORD to the root password to use.   |");
+      System.out.println("+---------------------------------------------------------------+");
       System.out.print("\nRoot password [BLANK=auto generate it]: ");
 
       OConsoleReader reader = new DefaultConsoleReader();

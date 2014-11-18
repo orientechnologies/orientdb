@@ -1,45 +1,23 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.command.script;
-
-import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
-import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-
-import javax.script.Bindings;
-import javax.script.Compilable;
-import javax.script.CompiledScript;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -48,6 +26,23 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.script.*;
+
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
+import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 
 /**
  * Executes Script Commands.
@@ -88,10 +83,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
   }
 
   protected Object executeJsr223Script(final String language, final OCommandContext iContext, final Map<Object, Object> iArgs) {
-    ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if (db != null && !(db instanceof ODatabaseRecordTx))
-      db = db.getUnderlying();
-
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     final OScriptManager scriptManager = Orient.instance().getScriptManager();
     CompiledScript compiledScript = request.getCompiledScript();
 
@@ -119,7 +111,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
     }
 
     final Bindings binding = scriptManager.bind(compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE),
-        (ODatabaseRecordTx) db, iContext, iArgs);
+        (ODatabaseDocumentTx) db, iContext, iArgs);
 
     try {
       final Object ob = compiledScript.eval(binding);
@@ -135,10 +127,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 
   // TODO: CREATE A REGULAR JSR223 SCRIPT IMPL
   protected Object executeSQL() {
-    ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if (db != null && !(db instanceof ODatabaseRecordTx))
-      db = db.getUnderlying();
-
+    ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     try {
 
       return executeSQLScript(db, parserText);
@@ -153,7 +142,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
     throw new OCommandScriptException("Error on execution of the script: " + iText, request.getText(), 0);
   }
 
-  protected Object executeSQLScript(ODatabaseRecord db, final String iText) throws IOException {
+  protected Object executeSQLScript(ODatabaseDocument db, final String iText) throws IOException {
     Object lastResult = null;
     int maxRetry = 1;
 
@@ -198,7 +187,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 
             // PUT THE RESULT INTO THE CONTEXT
             getContext().setVariable(variable, lastResult);
-          } else if (lastCommand.equalsIgnoreCase("begin")) {
+          } else if ("begin".equalsIgnoreCase(lastCommand)) {
 
             if (txBegun)
               throw new OCommandSQLParsingException("Transaction already begun");
@@ -209,7 +198,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 
             db.begin();
 
-          } else if (lastCommand.equalsIgnoreCase("rollback")) {
+          } else if ("rollback".equalsIgnoreCase(lastCommand)) {
 
             if (!txBegun)
               throw new OCommandSQLParsingException("Transaction not begun");

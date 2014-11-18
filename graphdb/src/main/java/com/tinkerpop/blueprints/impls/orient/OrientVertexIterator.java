@@ -56,13 +56,13 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
     final ODocument value = (ODocument) rec;
 
     final OrientVertex v;
-    if (value.getSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
+    if (value.getImmutableSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
       // DIRECT VERTEX
-      v = new OrientVertex(vertex.graph, value);
-    } else if (value.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+      v = new OrientVertex(value);
+    } else if (value.getImmutableSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
       // EDGE
       if (vertex.settings.useVertexFieldsForEdgeLabels || OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
-        v = new OrientVertex(vertex.graph, OrientEdge.getConnection(value, connection.getKey().opposite()));
+        v = new OrientVertex(OrientEdge.getConnection(value, connection.getKey().opposite()));
       else
         v = null;
     } else

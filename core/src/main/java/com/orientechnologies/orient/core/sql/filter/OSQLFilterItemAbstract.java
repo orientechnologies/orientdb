@@ -176,8 +176,8 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
   }
 
   protected OCollate getCollateForField(final ODocument doc, final String iFieldName) {
-    if (doc.getSchemaClass() != null) {
-      final OProperty p = doc.getSchemaClass().getProperty(iFieldName);
+    if (doc.getImmutableSchemaClass() != null) {
+      final OProperty p = doc.getImmutableSchemaClass().getProperty(iFieldName);
       if (p != null)
         return p.getCollate();
     }

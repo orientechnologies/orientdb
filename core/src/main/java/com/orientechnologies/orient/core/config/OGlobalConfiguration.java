@@ -1,30 +1,23 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.config;
-
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
@@ -36,6 +29,14 @@ import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
+
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -91,11 +92,25 @@ public enum OGlobalConfiguration {
   DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT("storage.diskCache.writeCacheFlushLockTimeout",
       "Maximum amount of time till write cache will be wait before page flush in ms.", Integer.class, -1),
 
+  DISK_CACHE_FREE_SPACE_LIMIT(
+      "storage.diskCache.diskFreeSpaceLimit",
+      "Minimum amount of space on disk after which database will "
+          + "work only in read mode, in megabytes. You need free space on disk which is sum of this parameter and maximum size of WAL on disk.",
+      Long.class, 100),
+
+  DISC_CACHE_FREE_SPACE_CHECK_INTERVAL("storage.diskCache.diskFreeSpaceCheckInterval",
+      "Interval, in seconds, after which storage periodically "
+          + "checks whether amount of free space enough to work in write mode", Integer.class, 5),
+
   STORAGE_CONFIGURATION_SYNC_ON_UPDATE("storage.configuration.syncOnUpdate",
       "Should we perform force sync of storage configuration for each update", Boolean.class, true),
 
   STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method is used in storage."
       + " Possible values : gzip, nothing, snappy, snappy-native. Default is snappy.", String.class, "nothing"),
+
+  @Deprecated
+  // DEPRECATED IN 2.0
+  STORAGE_KEEP_OPEN("storage.keepOpen", "Deprecated", Boolean.class, Boolean.TRUE),
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
@@ -151,15 +166,10 @@ public enum OGlobalConfiguration {
   STORAGE_USE_CRC32_FOR_EACH_RECORD("storage.cluster.usecrc32",
       "Indicates whether crc32 should be used for each record to check record integrity.", Boolean.class, false),
 
-  STORAGE_KEEP_OPEN(
-      "storage.keepOpen",
-      "Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process shuts down",
-      Boolean.class, Boolean.TRUE),
-
   STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 30000),
 
   STORAGE_RECORD_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record",
-      Integer.class, 30000),
+      Integer.class, 100),
 
   STORAGE_USE_TOMBSTONES("storage.useTombstones", "When record will be deleted its cluster"
       + " position will not be freed but tombstone will be placed instead", Boolean.class, false),
@@ -169,9 +179,6 @@ public enum OGlobalConfiguration {
       "record.downsizing.enabled",
       "On updates if the record size is lower than before, reduces the space taken accordlying. If enabled this could increase defragmentation, but it reduces the used space",
       Boolean.class, true),
-
-  // CACHE
-  CACHE_LOCAL_ENABLED("cache.local.enabled", "Use the local cache", Boolean.class, true),
 
   // DATABASE
   OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database only saves objects bound to dirty records", Boolean.class, false),
@@ -326,8 +333,15 @@ public enum OGlobalConfiguration {
       "How much free space should be in sbtreebonsai file before it will be reused during next allocation", Float.class, 0.5),
 
   // RIDBAG
-  RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD("ridBag.embeddedToSbtreeBonsaiThreshold",
-      "Amount of values after which LINKBAG implementation will use sbtree as values container", Integer.class, 40),
+  RID_BAG_EMBEDDED_DEFAULT_SIZE(
+      "ridBag.embeddedDefaultSize",
+      "Size of embedded RidBag array when created (empty)",
+      Integer.class, 4),
+
+  RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD(
+      "ridBag.embeddedToSbtreeBonsaiThreshold",
+      "Amount of values after which LINKBAG implementation will use sbtree as values container. Set to -1 to force always using it",
+      Integer.class, 40),
 
   RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD("ridBag.sbtreeBonsaiToEmbeddedToThreshold",
       "Amount of values after which LINKBAG implementation will use embedded values container (disabled by default)",
@@ -465,7 +479,7 @@ public enum OGlobalConfiguration {
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL(
       "server.log.dumpClientExceptionLevel",
       "Logs client exceptions. Use any level supported by Java java.util.logging.Level class: OFF, FINE, CONFIG, INFO, WARNING, SEVERE",
-      Level.class, Level.FINE),
+      Level.class, Level.SEVERE),
 
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE("server.log.dumpClientExceptionFullStackTrace",
       "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.TRUE),
@@ -601,25 +615,26 @@ public enum OGlobalConfiguration {
     try {
       final Method memorySize = mxBean.getClass().getDeclaredMethod("getTotalPhysicalMemorySize");
       memorySize.setAccessible(true);
-      final long totalMemory = (Long) memorySize.invoke(mxBean);
 
-      final long maxMemory = Runtime.getRuntime().maxMemory();
+      final long osMemory = (Long) memorySize.invoke(mxBean);
+      final long jvmMaxMemory = Runtime.getRuntime().maxMemory();
 
-      if (maxMemory > 512L * 1024 * 1024) {
+      final long result = (osMemory - jvmMaxMemory) / (1024 * 1024) - 2 * 1024;
+      if (result > 0) {
+        OLogManager.instance().info(null, "Auto-config DISKCACHE=%,dMB (heap=%,dMB osMemory=%,dMB)", result,
+            jvmMaxMemory / 1024 / 1024, osMemory / 1024 / 1024);
+        DISK_CACHE_SIZE.setValue(result);
+      } else {
+        // LOW MEMORY: SET IT TO 64MB ONLY
         OLogManager
             .instance()
             .warn(
                 null,
-                "Your maximum heap size is "
-                    + OFileUtils.getSizeAsString(maxMemory)
-                    + ", but OrientDB uses off-heap memory to avoid GC pauses. "
-                    + "In the case OrientDB is running as standalone, we recommend to use smaller amount of heap memory to let OrientDB using the rest as off-heap. "
-                    + "512 megabytes is recommended value of heap size.");
+                "No enough physical memory available: %,dMB (heap=%,dMB). Set lower Heap and restart OrientDB. Now running with DISKCACHE=64MB",
+                osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
+        DISK_CACHE_SIZE.setValue(OReadWriteDiskCache.MIN_CACHE_SIZE);
       }
 
-      final long result = (totalMemory - maxMemory - 2L * 1024 * 1024 * 1024) / (1024 * 1024);
-      if (result > DISK_CACHE_SIZE.getValueAsLong())
-        DISK_CACHE_SIZE.setValue(result);
     } catch (NoSuchMethodException e) {
     } catch (InvocationTargetException e) {
     } catch (IllegalAccessException e) {

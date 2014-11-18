@@ -1,326 +1,339 @@
 /*
-     *
-     *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-     *  *
-     *  *  Licensed under the Apache License, Version 2.0 (the "License");
-     *  *  you may not use this file except in compliance with the License.
-     *  *  You may obtain a copy of the License at
-     *  *
-     *  *       http://www.apache.org/licenses/LICENSE-2.0
-     *  *
-     *  *  Unless required by applicable law or agreed to in writing, software
-     *  *  distributed under the License is distributed on an "AS IS" BASIS,
-     *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-     *  *  See the License for the specific language governing permissions and
-     *  *  limitations under the License.
-     *  *
-     *  * For more information: http://www.orientechnologies.com
-     *
-     */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
- import com.orientechnologies.common.parser.OSystemVariableResolver;
- import com.orientechnologies.orient.core.Orient;
- import com.orientechnologies.orient.core.db.ODatabaseComplex;
- import com.orientechnologies.orient.core.db.ODatabaseInternal;
- import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
- import com.orientechnologies.orient.core.exception.OConfigurationException;
- import com.orientechnologies.orient.core.record.impl.ODocument;
- import com.orientechnologies.orient.core.storage.OStorage;
- import com.orientechnologies.orient.core.storage.OStorageEmbedded;
- import com.orientechnologies.orient.server.OServer;
- import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
- import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
- import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
- import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
+import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
- import java.io.File;
- import java.io.FileInputStream;
- import java.io.FileOutputStream;
- import java.io.IOException;
- import java.util.HashMap;
- import java.util.Map;
- import java.util.concurrent.ConcurrentHashMap;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
-  * Abstract plugin to manage the distributed environment.
-  *
-  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
-  *
-  */
- public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract implements ODistributedServerManager,
-     ODatabaseLifecycleListener {
-   public static final String                               REPLICATOR_USER             = "replicator";
-   protected static final String                            MASTER_AUTO                 = "$auto";
+ * Abstract plugin to manage the distributed environment.
+ *
+ * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ *
+ */
+public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract implements ODistributedServerManager,
+    ODatabaseLifecycleListener {
+  public static final String                               REPLICATOR_USER             = "replicator";
+  protected static final String                            MASTER_AUTO                 = "$auto";
 
-   protected static final String                            PAR_DEF_DISTRIB_DB_CONFIG   = "configuration.db.default";
-   protected static final String                            FILE_DISTRIBUTED_DB_CONFIG  = "distributed-config.json";
+  protected static final String                            PAR_DEF_DISTRIB_DB_CONFIG   = "configuration.db.default";
+  protected static final String                            FILE_DISTRIBUTED_DB_CONFIG  = "distributed-config.json";
 
-   protected OServer                                        serverInstance;
-   protected Map<String, ODocument>                         cachedDatabaseConfiguration = new HashMap<String, ODocument>();
+  protected OServer                                        serverInstance;
+  protected Map<String, ODocument>                         cachedDatabaseConfiguration = new HashMap<String, ODocument>();
 
-   protected boolean                                        enabled                     = true;
-   protected String                                         nodeName                    = null;
-   protected Class<? extends OReplicationConflictResolver>  confictResolverClass;
-   protected File                                           defaultDatabaseConfigFile;
-   protected ConcurrentHashMap<String, ODistributedStorage> storages                    = new ConcurrentHashMap<String, ODistributedStorage>();
+  protected boolean                                        enabled                     = true;
+  protected String                                         nodeName                    = null;
+  protected Class<? extends OReplicationConflictResolver>  confictResolverClass;
+  protected File                                           defaultDatabaseConfigFile;
+  protected ConcurrentHashMap<String, ODistributedStorage> storages                    = new ConcurrentHashMap<String, ODistributedStorage>();
 
-   @Override
-   public PRIORITY getPriority() {
-     return PRIORITY.LAST;
-   }
+  public static Object runInDistributedMode(Callable iCall) throws Exception {
+    final OScenarioThreadLocal.RUN_MODE currentRunningMode = OScenarioThreadLocal.INSTANCE.get();
+    if (currentRunningMode != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
+      OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
 
-   @SuppressWarnings("unchecked")
-   @Override
-   public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
-     serverInstance = oServer;
-     oServer.setVariable("ODistributedAbstractPlugin", this);
+    try {
+      return iCall.call();
+    } finally {
 
-     for (OServerParameterConfiguration param : iParams) {
-       if (param.name.equalsIgnoreCase("enabled")) {
-         if (!Boolean.parseBoolean(OSystemVariableResolver.resolveSystemVariables(param.value))) {
-           // DISABLE IT
-           enabled = false;
-           return;
-         }
-       } else if (param.name.equalsIgnoreCase("nodeName"))
-         nodeName = param.value;
-       else if (param.name.startsWith(PAR_DEF_DISTRIB_DB_CONFIG)) {
-         setDefaultDatabaseConfigFile(param.value);
-       } else if (param.name.equalsIgnoreCase("conflict.resolver.impl"))
-         try {
-           confictResolverClass = (Class<? extends OReplicationConflictResolver>) Class.forName(param.value);
-         } catch (ClassNotFoundException e) {
-           OLogManager.instance().error(this, "Cannot find the conflict resolver implementation '%s'", e, param.value);
-         }
-     }
+      if (currentRunningMode != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
+        OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
+    }
+  }
 
-     if (serverInstance.getUser(REPLICATOR_USER) == null)
-       // CREATE THE REPLICATOR USER
-       try {
-         serverInstance.addUser(REPLICATOR_USER, null, "database.passthrough");
-         serverInstance.saveConfiguration();
-       } catch (IOException e) {
-         throw new OConfigurationException("Error on creating 'replicator' user", e);
-       }
-   }
+  @Override
+  public PRIORITY getPriority() {
+    return PRIORITY.LAST;
+  }
 
-   public void setDefaultDatabaseConfigFile(final String iFile) {
-     defaultDatabaseConfigFile = new File(OSystemVariableResolver.resolveSystemVariables(iFile));
-     if (!defaultDatabaseConfigFile.exists())
-       throw new OConfigurationException("Cannot find distributed database config file: " + defaultDatabaseConfigFile);
-   }
+  @SuppressWarnings("unchecked")
+  @Override
+  public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
+    serverInstance = oServer;
+    oServer.setVariable("ODistributedAbstractPlugin", this);
 
-   @Override
-   public void startup() {
-     if (!enabled)
-       return;
+    for (OServerParameterConfiguration param : iParams) {
+      if (param.name.equalsIgnoreCase("enabled")) {
+        if (!Boolean.parseBoolean(OSystemVariableResolver.resolveSystemVariables(param.value))) {
+          // DISABLE IT
+          enabled = false;
+          return;
+        }
+      } else if (param.name.equalsIgnoreCase("nodeName"))
+        nodeName = param.value;
+      else if (param.name.startsWith(PAR_DEF_DISTRIB_DB_CONFIG)) {
+        setDefaultDatabaseConfigFile(param.value);
+      } else if (param.name.equalsIgnoreCase("conflict.resolver.impl"))
+        try {
+          confictResolverClass = (Class<? extends OReplicationConflictResolver>) Class.forName(param.value);
+        } catch (ClassNotFoundException e) {
+          OLogManager.instance().error(this, "Cannot find the conflict resolver implementation '%s'", e, param.value);
+        }
+    }
 
-     Orient.instance().addDbLifecycleListener(this);
-   }
+    if (serverInstance.getUser(REPLICATOR_USER) == null)
+      // CREATE THE REPLICATOR USER
+      try {
+        serverInstance.addUser(REPLICATOR_USER, null, "database.passthrough");
+        serverInstance.saveConfiguration();
+      } catch (IOException e) {
+        throw new OConfigurationException("Error on creating 'replicator' user", e);
+      }
+  }
 
-   @Override
-   public void shutdown() {
-     if (!enabled)
-       return;
+  public void setDefaultDatabaseConfigFile(final String iFile) {
+    defaultDatabaseConfigFile = new File(OSystemVariableResolver.resolveSystemVariables(iFile));
+    if (!defaultDatabaseConfigFile.exists())
+      throw new OConfigurationException("Cannot find distributed database config file: " + defaultDatabaseConfigFile);
+  }
 
-     // CLOSE AND FREE ALL THE STORAGES
-     for (ODistributedStorage s : storages.values())
-       try {
-         s.shutdownAsynchronousWorker();
-         s.close();
-       } catch (Exception e) {
-       }
-     storages.clear();
+  @Override
+  public void startup() {
+    if (!enabled)
+      return;
 
-     Orient.instance().removeDbLifecycleListener(this);
-   }
+    Orient.instance().addDbLifecycleListener(this);
+  }
 
-   /**
-    * Auto register myself as hook.
-    */
-   @Override
-   public void onOpen(final ODatabaseInternal iDatabase) {
-     final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
+  @Override
+  public void shutdown() {
+    if (!enabled)
+      return;
 
-     if (dbUrl.startsWith("plocal:")) {
-       // CHECK SPECIAL CASE WITH MULTIPLE SERVER INSTANCES ON THE SAME JVM
-       final String dbDirectory = serverInstance.getDatabaseDirectory();
-       if (!dbUrl.substring("plocal:".length()).startsWith(dbDirectory))
-         // SKIP IT: THIS HAPPENS ONLY ON MULTIPLE SERVER INSTANCES ON THE SAME JVM
-         return;
-     }
+    // CLOSE AND FREE ALL THE STORAGES
+    for (ODistributedStorage s : storages.values())
+      try {
+        s.shutdownAsynchronousWorker();
+        s.close();
+      } catch (Exception e) {
+      }
+    storages.clear();
 
-     synchronized (cachedDatabaseConfiguration) {
-       final ODistributedConfiguration cfg = getDatabaseConfiguration(iDatabase.getName());
-       if (cfg == null)
-         return;
+    Orient.instance().removeDbLifecycleListener(this);
+  }
 
-       final OStorage dbStorage = iDatabase.getStorage();
+  /**
+   * Auto register myself as hook.
+   */
+  @Override
+  public void onOpen(final ODatabaseInternal iDatabase) {
+    final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
 
-       if (iDatabase instanceof ODatabaseComplex<?> && dbStorage instanceof OStorageEmbedded) {
-         ODistributedStorage storage = storages.get(iDatabase.getURL());
-         if (storage == null) {
-           storage = new ODistributedStorage(serverInstance, (OStorageEmbedded) dbStorage);
-           final ODistributedStorage oldStorage = storages.putIfAbsent(iDatabase.getURL(), storage);
-           if (oldStorage != null)
-             storage = oldStorage;
-         }
+    if (dbUrl.startsWith("plocal:")) {
+      // CHECK SPECIAL CASE WITH MULTIPLE SERVER INSTANCES ON THE SAME JVM
+      final String dbDirectory = serverInstance.getDatabaseDirectory();
+      if (!dbUrl.substring("plocal:".length()).startsWith(dbDirectory))
+        // SKIP IT: THIS HAPPENS ONLY ON MULTIPLE SERVER INSTANCES ON THE SAME JVM
+        return;
+    }
 
-         iDatabase.replaceStorage(storage);
-       }
-     }
-   }
+    synchronized (cachedDatabaseConfiguration) {
+      final ODistributedConfiguration cfg = getDatabaseConfiguration(iDatabase.getName());
+      if (cfg == null)
+        return;
 
-   @Override
-   public void onCreate(ODatabaseInternal iDatabase) {
-     onOpen(iDatabase);
-   }
+      final OStorage dbStorage = iDatabase.getStorage();
 
-   /**
-    * Remove myself as hook.
-    */
-   @Override
-   public void onClose(final ODatabaseInternal iDatabase) {
-   }
+      if (iDatabase instanceof ODatabase<?> && dbStorage instanceof OStorageEmbedded) {
+        ODistributedStorage storage = storages.get(iDatabase.getURL());
+        if (storage == null) {
+          storage = new ODistributedStorage(serverInstance, (OStorageEmbedded) dbStorage);
+          final ODistributedStorage oldStorage = storages.putIfAbsent(iDatabase.getURL(), storage);
+          if (oldStorage != null)
+            storage = oldStorage;
+        }
 
-   @Override
-   public void sendShutdown() {
-     super.sendShutdown();
-   }
+        iDatabase.replaceStorage(storage);
+      }
+    }
+  }
 
-   @Override
-   public String getName() {
-     return "cluster";
-   }
+  @Override
+  public void onCreate(ODatabaseInternal iDatabase) {
+    onOpen(iDatabase);
+  }
 
-   public String getLocalNodeId() {
-     return nodeName;
-   }
+  /**
+   * Remove myself as hook.
+   */
+  @Override
+  public void onClose(final ODatabaseInternal iDatabase) {
+  }
 
-   public boolean updateCachedDatabaseConfiguration(final String iDatabaseName, final ODocument cfg, final boolean iSaveToDisk) {
-     synchronized (cachedDatabaseConfiguration) {
-       ODocument oldCfg = cachedDatabaseConfiguration.get(iDatabaseName);
-       Integer oldVersion = oldCfg != null ? (Integer) oldCfg.field("version") : null;
-       if (oldVersion == null)
-         oldVersion = 1;
+  @Override
+  public void sendShutdown() {
+    super.sendShutdown();
+  }
 
-       Integer currVersion = (Integer) cfg.field("version");
-       if (currVersion == null)
-         currVersion = 1;
+  @Override
+  public String getName() {
+    return "cluster";
+  }
 
-       if (oldCfg != null && oldVersion > currVersion) {
-         // NO CHANGE, SKIP IT
-         OLogManager.instance().debug(this,
-             "Skip saving of distributed configuration file for database '%s' because is unchanged (version %d)", iDatabaseName,
-             (Integer) cfg.field("version"));
-         return false;
-       }
+  public String getLocalNodeId() {
+    return nodeName;
+  }
 
-       // SAVE IN NODE'S LOCAL RAM
-       cachedDatabaseConfiguration.put(iDatabaseName, cfg);
+  public boolean updateCachedDatabaseConfiguration(final String iDatabaseName, final ODocument cfg, final boolean iSaveToDisk) {
+    synchronized (cachedDatabaseConfiguration) {
+      ODocument oldCfg = cachedDatabaseConfiguration.get(iDatabaseName);
+      Integer oldVersion = oldCfg != null ? (Integer) oldCfg.field("version") : null;
+      if (oldVersion == null)
+        oldVersion = 1;
 
-       // PRINT THE NEW CONFIGURATION
-       ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
-           "updated distributed configuration for database: %s:\n----------\n%s\n----------", iDatabaseName,
-           cfg.toJSON("prettyPrint"));
+      Integer currVersion = (Integer) cfg.field("version");
+      if (currVersion == null)
+        currVersion = 1;
 
-       if (iSaveToDisk) {
-         // SAVE THE CONFIGURATION TO DISK
-         FileOutputStream f = null;
-         try {
-           File file = getDistributedConfigFile(iDatabaseName);
+      if (oldCfg != null && oldVersion > currVersion) {
+        // NO CHANGE, SKIP IT
+        OLogManager.instance().debug(this,
+            "Skip saving of distributed configuration file for database '%s' because is unchanged (version %d)", iDatabaseName,
+            (Integer) cfg.field("version"));
+        return false;
+      }
 
-           ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
-               "Saving distributed configuration file for database '%s' to: %s", iDatabaseName, file);
+      // SAVE IN NODE'S LOCAL RAM
+      cachedDatabaseConfiguration.put(iDatabaseName, cfg);
 
-           if (!file.exists()) {
-             file.getParentFile().mkdirs();
-             file.createNewFile();
-           }
+      // PRINT THE NEW CONFIGURATION
+      ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+          "updated distributed configuration for database: %s:\n----------\n%s\n----------", iDatabaseName,
+          cfg.toJSON("prettyPrint"));
 
-           f = new FileOutputStream(file);
-           f.write(cfg.toJSON().getBytes());
-           f.flush();
-         } catch (Exception e) {
-           ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
-               "Error on saving distributed configuration file", e);
+      if (iSaveToDisk) {
+        // SAVE THE CONFIGURATION TO DISK
+        FileOutputStream f = null;
+        try {
+          File file = getDistributedConfigFile(iDatabaseName);
 
-         } finally {
-           if (f != null)
-             try {
-               f.close();
-             } catch (IOException e) {
-             }
-         }
-       }
-     }
-     return true;
-   }
+          ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
+              "Saving distributed configuration file for database '%s' to: %s", iDatabaseName, file);
 
-   public ODistributedConfiguration getDatabaseConfiguration(final String iDatabaseName) {
-     synchronized (cachedDatabaseConfiguration) {
-       ODocument cfg = cachedDatabaseConfiguration.get(iDatabaseName);
-       if (cfg == null) {
+          if (!file.exists()) {
+            file.getParentFile().mkdirs();
+            file.createNewFile();
+          }
 
-         // LOAD FILE IN DATABASE DIRECTORY IF ANY
-         final File specificDatabaseConfiguration = getDistributedConfigFile(iDatabaseName);
-         cfg = loadDatabaseConfiguration(iDatabaseName, specificDatabaseConfiguration);
+          f = new FileOutputStream(file);
+          f.write(cfg.toJSON().getBytes());
+          f.flush();
+        } catch (Exception e) {
+          ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
+              "Error on saving distributed configuration file", e);
 
-         if (cfg == null) {
-           // FIRST TIME RUNNING: GET DEFAULT CFG
-           cfg = loadDatabaseConfiguration(iDatabaseName, defaultDatabaseConfigFile);
-           if (cfg == null)
-             throw new OConfigurationException("Cannot load default distributed database config file: " + defaultDatabaseConfigFile);
-         }
+        } finally {
+          if (f != null)
+            try {
+              f.close();
+            } catch (IOException e) {
+            }
+        }
+      }
+    }
+    return true;
+  }
 
-         cachedDatabaseConfiguration.put(iDatabaseName, cfg);
-       }
+  public ODistributedConfiguration getDatabaseConfiguration(final String iDatabaseName) {
+    synchronized (cachedDatabaseConfiguration) {
+      ODocument cfg = cachedDatabaseConfiguration.get(iDatabaseName);
+      if (cfg == null) {
 
-       final ODistributedConfiguration dCfg = new ODistributedConfiguration(cfg);
-       if (dCfg.upgrade())
-         // UPGRADED, SAVE IT AGAIN
-         updateCachedDatabaseConfiguration(iDatabaseName, dCfg.serialize(), true);
-       return dCfg;
-     }
-   }
+        // LOAD FILE IN DATABASE DIRECTORY IF ANY
+        final File specificDatabaseConfiguration = getDistributedConfigFile(iDatabaseName);
+        cfg = loadDatabaseConfiguration(iDatabaseName, specificDatabaseConfiguration);
 
-   public File getDistributedConfigFile(final String iDatabaseName) {
-     return new File(serverInstance.getDatabaseDirectory() + iDatabaseName + "/" + FILE_DISTRIBUTED_DB_CONFIG);
-   }
+        if (cfg == null) {
+          // FIRST TIME RUNNING: GET DEFAULT CFG
+          cfg = loadDatabaseConfiguration(iDatabaseName, defaultDatabaseConfigFile);
+          if (cfg == null)
+            throw new OConfigurationException("Cannot load default distributed database config file: " + defaultDatabaseConfigFile);
+        }
 
-   public OServer getServerInstance() {
-     return serverInstance;
-   }
+        cachedDatabaseConfiguration.put(iDatabaseName, cfg);
+      }
 
-   protected ODocument loadDatabaseConfiguration(final String iDatabaseName, final File file) {
-     if (!file.exists() || file.length() == 0)
-       return null;
+      final ODistributedConfiguration dCfg = new ODistributedConfiguration(cfg);
+      if (dCfg.upgrade())
+        // UPGRADED, SAVE IT AGAIN
+        updateCachedDatabaseConfiguration(iDatabaseName, dCfg.serialize(), true);
+      return dCfg;
+    }
+  }
 
-     ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "loaded database configuration from disk: %s", file);
+  public File getDistributedConfigFile(final String iDatabaseName) {
+    return new File(serverInstance.getDatabaseDirectory() + iDatabaseName + "/" + FILE_DISTRIBUTED_DB_CONFIG);
+  }
 
-     FileInputStream f = null;
-     try {
-       f = new FileInputStream(file);
-       final byte[] buffer = new byte[(int) file.length()];
-       f.read(buffer);
+  public OServer getServerInstance() {
+    return serverInstance;
+  }
 
-       final ODocument doc = (ODocument) new ODocument().fromJSON(new String(buffer), "noMap");
-       doc.field("version", 0);
-       updateCachedDatabaseConfiguration(iDatabaseName, doc, false);
-       return doc;
+  protected ODocument loadDatabaseConfiguration(final String iDatabaseName, final File file) {
+    if (!file.exists() || file.length() == 0)
+      return null;
 
-     } catch (Exception e) {
-       ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
-           "Error on loading distributed configuration file in: %s", e, file.getAbsolutePath());
-     } finally {
-       if (f != null)
-         try {
-           f.close();
-         } catch (IOException e) {
-         }
-     }
-     return null;
-   }
- }
+    ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "loaded database configuration from disk: %s", file);
+
+    FileInputStream f = null;
+    try {
+      f = new FileInputStream(file);
+      final byte[] buffer = new byte[(int) file.length()];
+      f.read(buffer);
+
+      final ODocument doc = (ODocument) new ODocument().fromJSON(new String(buffer), "noMap");
+      doc.field("version", 0);
+      updateCachedDatabaseConfiguration(iDatabaseName, doc, false);
+      return doc;
+
+    } catch (Exception e) {
+      ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
+          "Error on loading distributed configuration file in: %s", e, file.getAbsolutePath());
+    } finally {
+      if (f != null)
+        try {
+          f.close();
+        } catch (IOException e) {
+        }
+    }
+    return null;
+  }
+}

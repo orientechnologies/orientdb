@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core;
 
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -61,47 +62,10 @@ public class TestExceptionNotOpen {
 
   @Test
   public void testExceptionNotOpenRemote() {
-
-    ODatabaseDocument db = new ODatabaseDocumentTx("remote:127.0.0.1:00");
     try {
-      db.save(new ODocument());
+      ODatabaseDocument db = new ODatabaseDocumentTx("remote:127.0.0.1:00");
       Assert.fail();
-    } catch (ODatabaseException ex) {
-    }
-    try {
-      db.delete(new ODocument());
-      Assert.fail();
-    } catch (ODatabaseException ex) {
-    }
-    try {
-      db.hide(new ORecordId());
-      Assert.fail();
-    } catch (ODatabaseException ex) {
-    }
-    try {
-      db.begin();
-      Assert.fail();
-    } catch (ODatabaseException ex) {
-    }
-    try {
-      db.begin(OTransaction.TXTYPE.NOTX);
-      Assert.fail();
-    } catch (ODatabaseException ex) {
-    }
-    try {
-      db.rollback();
-      Assert.fail();
-    } catch (ODatabaseException ex) {
-    }
-    try {
-      db.commit();
-      Assert.fail();
-    } catch (ODatabaseException ex) {
-    }
-    try {
-      db.getMetadata();
-      Assert.fail();
-    } catch (ODatabaseException ex) {
+    } catch (ODatabaseException e) {
     }
   }
 

@@ -19,12 +19,19 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import java.lang.reflect.Array;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
@@ -41,14 +48,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
-import com.orientechnologies.orient.core.version.ODistributedVersion;
-
-import java.lang.reflect.Array;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Helper class to manage documents.
@@ -56,18 +55,16 @@ import java.util.Map.Entry;
  * @author Luca Garulli
  */
 public class ODocumentHelper {
-  public static final String ATTRIBUTE_THIS               = "@this";
-  public static final String ATTRIBUTE_RID                = "@rid";
-  public static final String ATTRIBUTE_RID_ID             = "@rid_id";
-  public static final String ATTRIBUTE_RID_POS            = "@rid_pos";
-  public static final String ATTRIBUTE_VERSION            = "@version";
-  public static final String ATTRIBUTE_VERSION_TIMESTAMP  = "@version_time";
-  public static final String ATTRIBUTE_VERSION_MACADDRESS = "@version_mac";
-  public static final String ATTRIBUTE_CLASS              = "@class";
-  public static final String ATTRIBUTE_TYPE               = "@type";
-  public static final String ATTRIBUTE_SIZE               = "@size";
-  public static final String ATTRIBUTE_FIELDS             = "@fields";
-  public static final String ATTRIBUTE_RAW                = "@raw";
+  public static final String ATTRIBUTE_THIS    = "@this";
+  public static final String ATTRIBUTE_RID     = "@rid";
+  public static final String ATTRIBUTE_RID_ID  = "@rid_id";
+  public static final String ATTRIBUTE_RID_POS = "@rid_pos";
+  public static final String ATTRIBUTE_VERSION = "@version";
+  public static final String ATTRIBUTE_CLASS   = "@class";
+  public static final String ATTRIBUTE_TYPE    = "@type";
+  public static final String ATTRIBUTE_SIZE    = "@size";
+  public static final String ATTRIBUTE_FIELDS  = "@fields";
+  public static final String ATTRIBUTE_RAW     = "@raw";
 
   public static interface ODbRelatedCall<T> {
     public T call();
@@ -594,12 +591,6 @@ public class ODocumentHelper {
         return iCurrent.getIdentity().getClusterPosition();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_VERSION))
         return iCurrent.getRecord().getRecordVersion().getCounter();
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_VERSION_TIMESTAMP)
-          && OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean())
-        return ((ODistributedVersion) iCurrent.getRecord().getRecordVersion()).getTimestamp();
-      else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_VERSION_MACADDRESS)
-          && OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean())
-        return ((ODistributedVersion) iCurrent.getRecord().getRecordVersion()).getMacAddress();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_CLASS))
         return ((ODocument) iCurrent.getRecord()).getClassName();
       else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_TYPE))
@@ -800,15 +791,15 @@ public class ODocumentHelper {
         iCloned._fieldValues.put(iEntry.getKey(), new LinkedHashMap<String, Object>((Map<String, Object>) fieldValue));
       } else
         iCloned._fieldValues.put(iEntry.getKey(), fieldValue);
-    } else if (iCloned.getSchemaClass() != null) {
-      final OProperty prop = iCloned.getSchemaClass().getProperty(iEntry.getKey());
+    } else if (iCloned.getImmutableSchemaClass() != null) {
+      final OProperty prop = iCloned.getImmutableSchemaClass().getProperty(iEntry.getKey());
       if (prop != null && prop.isMandatory())
         iCloned._fieldValues.put(iEntry.getKey(), fieldValue);
     }
   }
 
-  public static boolean hasSameContentItem(final Object iCurrent, ODatabaseRecordInternal iMyDb, final Object iOther,
-      final ODatabaseRecordInternal iOtherDb, RIDMapper ridMapper) {
+  public static boolean hasSameContentItem(final Object iCurrent, ODatabaseDocumentInternal iMyDb, final Object iOther,
+      final ODatabaseDocumentInternal iOtherDb, RIDMapper ridMapper) {
     if (iCurrent instanceof ODocument) {
       final ODocument current = (ODocument) iCurrent;
       if (iOther instanceof ORID) {
@@ -837,8 +828,8 @@ public class ODocumentHelper {
    * @see #equals(Object)
    */
   @SuppressWarnings("unchecked")
-  public static boolean hasSameContentOf(final ODocument iCurrent, final ODatabaseRecordInternal iMyDb, final ODocument iOther,
-      final ODatabaseRecordInternal iOtherDb, RIDMapper ridMapper) {
+  public static boolean hasSameContentOf(final ODocument iCurrent, final ODatabaseDocumentInternal iMyDb, final ODocument iOther,
+      final ODatabaseDocumentInternal iOtherDb, RIDMapper ridMapper) {
     return hasSameContentOf(iCurrent, iMyDb, iOther, iOtherDb, ridMapper, true);
   }
 
@@ -852,8 +843,8 @@ public class ODocumentHelper {
    * @see #equals(Object)
    */
   @SuppressWarnings("unchecked")
-  public static boolean hasSameContentOf(final ODocument iCurrent, final ODatabaseRecordInternal iMyDb, final ODocument iOther,
-      final ODatabaseRecordInternal iOtherDb, RIDMapper ridMapper, final boolean iCheckAlsoIdentity) {
+  public static boolean hasSameContentOf(final ODocument iCurrent, final ODatabaseDocumentInternal iMyDb, final ODocument iOther,
+      final ODatabaseDocumentInternal iOtherDb, RIDMapper ridMapper, final boolean iCheckAlsoIdentity) {
     if (iOther == null)
       return false;
 
@@ -943,8 +934,8 @@ public class ODocumentHelper {
     return true;
   }
 
-  public static boolean compareMaps(ODatabaseRecordInternal iMyDb, Map<Object, Object> myFieldValue,
-      ODatabaseRecordInternal iOtherDb, Map<Object, Object> otherFieldValue, RIDMapper ridMapper) {
+  public static boolean compareMaps(ODatabaseDocumentInternal iMyDb, Map<Object, Object> myFieldValue,
+      ODatabaseDocumentInternal iOtherDb, Map<Object, Object> otherFieldValue, RIDMapper ridMapper) {
     // CHECK IF THE ORDER IS RESPECTED
     final Map<Object, Object> myMap = myFieldValue;
     final Map<Object, Object> otherMap = otherFieldValue;
@@ -1034,8 +1025,8 @@ public class ODocumentHelper {
     }
   }
 
-  public static boolean compareCollections(ODatabaseRecordInternal iMyDb, Collection<?> myFieldValue,
-      ODatabaseRecordInternal iOtherDb, Collection<?> otherFieldValue, RIDMapper ridMapper) {
+  public static boolean compareCollections(ODatabaseDocumentInternal iMyDb, Collection<?> myFieldValue,
+      ODatabaseDocumentInternal iOtherDb, Collection<?> otherFieldValue, RIDMapper ridMapper) {
     final Collection<?> myCollection = myFieldValue;
     final Collection<?> otherCollection = otherFieldValue;
 
@@ -1098,7 +1089,7 @@ public class ODocumentHelper {
     }
   }
 
-  public static boolean compareSets(ODatabaseRecordInternal iMyDb, Set<?> myFieldValue, ODatabaseRecordInternal iOtherDb,
+  public static boolean compareSets(ODatabaseDocumentInternal iMyDb, Set<?> myFieldValue, ODatabaseDocumentInternal iOtherDb,
       Set<?> otherFieldValue, RIDMapper ridMapper) {
     final Set<?> mySet = myFieldValue;
     final Set<?> otherSet = otherFieldValue;
@@ -1184,7 +1175,7 @@ public class ODocumentHelper {
     }
   }
 
-  public static boolean compareBags(ODatabaseRecordInternal iMyDb, ORidBag myFieldValue, ODatabaseRecordInternal iOtherDb,
+  public static boolean compareBags(ODatabaseDocumentInternal iMyDb, ORidBag myFieldValue, ODatabaseDocumentInternal iOtherDb,
       ORidBag otherFieldValue, RIDMapper ridMapper) {
     final ORidBag myBag = myFieldValue;
     final ORidBag otherBag = otherFieldValue;
@@ -1359,7 +1350,7 @@ public class ODocumentHelper {
     }
   }
 
-  public static <T> T makeDbCall(final ODatabaseRecordInternal databaseRecord, final ODbRelatedCall<T> function) {
+  public static <T> T makeDbCall(final ODatabaseDocumentInternal databaseRecord, final ODbRelatedCall<T> function) {
     ODatabaseRecordThreadLocal.INSTANCE.set(databaseRecord);
     return function.call();
   }

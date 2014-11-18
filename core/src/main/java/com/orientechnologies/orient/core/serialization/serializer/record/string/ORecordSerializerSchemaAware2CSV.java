@@ -1,41 +1,36 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
@@ -101,7 +96,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
     final ODocument record = (ODocument) iRecord;
 
     int pos;
-    final ODatabaseRecordInternal database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     final int posFirstValue = iContent.indexOf(OStringSerializerHelper.ENTRY_SEPARATOR);
     pos = iContent.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
     if (pos > -1 && (pos < posFirstValue || posFirstValue == -1)) {
@@ -159,7 +154,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
           boolean setFieldType = false;
 
           // SEARCH FOR A CONFIGURED PROPERTY
-          prop = record.getSchemaClass() != null ? record.getSchemaClass().getProperty(fieldName) : null;
+          prop = record.getImmutableSchemaClass() != null ? record.getImmutableSchemaClass().getProperty(fieldName) : null;
           if (prop != null && prop.getType() != OType.ANY) {
             // RECOGNIZED PROPERTY
             type = prop.getType();
@@ -294,8 +289,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
       } else
         iMarshalledRecords.add(record);
 
-    if (!iOnlyDelta && record.getSchemaClass() != null) {
-      iOutput.append(record.getSchemaClass().getStreamableName());
+    if (!iOnlyDelta && record.getImmutableSchemaClass() != null) {
+      iOutput.append(record.getImmutableSchemaClass().getStreamableName());
       iOutput.append(OStringSerializerHelper.CLASS_SEPARATOR);
     }
 
@@ -318,7 +313,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
         iOutput.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
       // SEARCH FOR A CONFIGURED PROPERTY
-      prop = record.getSchemaClass() != null ? record.getSchemaClass().getProperty(fieldName) : null;
+      prop = record.getImmutableSchemaClass() != null ? record.getImmutableSchemaClass().getProperty(fieldName) : null;
       fieldClassName = getClassName(fieldValue);
 
       type = record.fieldType(fieldName);
@@ -510,9 +505,9 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
     // GET THE OVERSIZE IF ANY
     final float overSize;
-    if (record.getSchemaClass() != null)
+    if (record.getImmutableSchemaClass() != null)
       // GET THE CONFIGURED OVERSIZE SETTED PER CLASS
-      overSize = record.getSchemaClass().getOverSize();
+      overSize = record.getImmutableSchemaClass().getOverSize();
     else
       overSize = 0;
 
@@ -550,11 +545,11 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
     return iValue != null ? iValue.getClass().getSimpleName() : null;
   }
 
-  private OClass getLinkInfo(final ODatabaseComplexInternal<?> iDatabase, final String iFieldClassName) {
+  private OClass getLinkInfo(final ODatabaseInternal<?> iDatabase, final String iFieldClassName) {
     if (iDatabase == null || iDatabase.isClosed() || iFieldClassName == null)
       return null;
 
-    OClass linkedClass = iDatabase.getMetadata().getSchema().getClass(iFieldClassName);
+    OClass linkedClass = iDatabase.getMetadata().getImmutableSchemaSnapshot().getClass(iFieldClassName);
 
     if (iDatabase.getDatabaseOwner() instanceof ODatabaseObject) {
       ODatabaseObject dbo = (ODatabaseObject) iDatabase.getDatabaseOwner();

@@ -84,7 +84,7 @@ public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstra
         if (o instanceof OTraverseRecordProcess) {
           final ODocument record = ((OTraverseRecordProcess) o).getTarget();
 
-          if (iClassName == null || record.getSchemaClass().isSubClassOf(iClassName)) {
+          if (iClassName == null || record.getImmutableSchemaClass().isSubClassOf(iClassName)) {
             if (i <= beginIndex) {
               if (items == 1)
                 return record;
@@ -105,7 +105,7 @@ public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstra
         if (o instanceof OTraverseRecordProcess) {
           final ODocument record = ((OTraverseRecordProcess) o).getTarget();
 
-          if (iClassName == null || record.getSchemaClass().isSubClassOf(iClassName)) {
+          if (iClassName == null || record.getImmutableSchemaClass().isSubClassOf(iClassName)) {
             if (i >= beginIndex) {
               if (items == 1)
                 return record;

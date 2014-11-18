@@ -1,17 +1,17 @@
 package com.orientechnologies.orient.core.record.impl;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.OClusterPositionLong;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import org.testng.annotations.Test;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
@@ -101,7 +101,7 @@ public class ODocumentTest {
   public void testKeepFieldTypeSerialization() throws Exception {
     ODocument doc = new ODocument();
     doc.field("integer", 10, OType.INTEGER);
-    doc.field("link", new ORecordId(1, new OClusterPositionLong(2)), OType.LINK);
+    doc.field("link", new ORecordId(1, 2), OType.LINK);
     doc.field("string", 20, OType.STRING);
     doc.field("binary", new byte[] { 30 }, OType.BINARY);
 
@@ -123,7 +123,7 @@ public class ODocumentTest {
   public void testKeepAutoFieldTypeSerialization() throws Exception {
     ODocument doc = new ODocument();
     doc.field("integer", 10);
-    doc.field("link", new ORecordId(1, new OClusterPositionLong(2)));
+    doc.field("link", new ORecordId(1, 2));
     doc.field("string", "string");
     doc.field("binary", new byte[] { 30 });
 
@@ -154,7 +154,7 @@ public class ODocumentTest {
       clazz.createProperty("binary", OType.BINARY);
       ODocument doc = new ODocument(clazz);
       doc.field("integer", 10);
-      doc.field("link", new ORecordId(1, new OClusterPositionLong(2)));
+      doc.field("link", new ORecordId(1, 2));
       doc.field("string", "string");
       doc.field("binary", new byte[] { 30 });
 
@@ -175,4 +175,18 @@ public class ODocumentTest {
       db.drop();
     }
   }
+
+  @Test
+  public void testChangeTypeOnValueSet() throws Exception {
+    ODocument doc = new ODocument();
+    doc.field("link", new ORecordId(1, 2));
+    ORecordSerializer ser = ODatabaseDocumentTx.getDefaultSerializer();
+    byte[] bytes = ser.toStream(doc, false);
+    doc = new ODocument();
+    ser.fromStream(bytes, doc, null);
+    assertEquals(doc.fieldType("link"), OType.LINK);
+    doc.field("link", new ORidBag());
+    assertNotEquals(doc.fieldType("link"), OType.LINK);
+  }
+
 }

@@ -15,23 +15,25 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.object.db.OObjectDatabasePool;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
+import com.orientechnologies.orient.test.database.base.SetupTest;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
-import com.orientechnologies.orient.object.db.OObjectDatabasePool;
-import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-import com.orientechnologies.orient.test.database.base.SetupTest;
-
 @Test(groups = "db")
 public class DbClosedTest extends DocumentDBBaseTest {
-	@Parameters(value = { "url" })
-	public DbClosedTest(@Optional String url) {
-		super(url);
-	}
+  @Parameters(value = { "url" })
+  public DbClosedTest(@Optional String url) {
+    super(url);
+  }
 
-	public void testDoubleDb() {
+  public void testDoubleDb() {
     OObjectDatabaseTx db = OObjectDatabasePool.global().acquire(url, "admin", "admin");
 
     // now I am getting another db instance
@@ -58,5 +60,17 @@ public class DbClosedTest extends DocumentDBBaseTest {
 
     ODatabaseDocumentPool.global().close();
     OObjectDatabasePool.global().close();
+  }
+
+  @Test
+  public void testRemoteConns() {
+    if (!url.startsWith("remote:"))
+      return;
+
+    final int max = OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS.getValueAsInteger();
+    for (int i = 0; i < max * 2; ++i) {
+      final ODatabase db = new ODatabaseDocumentTx(url).open("admin", "admin");
+      db.close();
+    }
   }
 }

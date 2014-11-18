@@ -1,45 +1,43 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.tx;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
-import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public abstract class OTransactionAbstract implements OTransaction {
-  protected final ODatabaseRecordTx                  database;
+  protected final ODatabaseDocumentTx                database;
   protected TXSTATUS                                 status = TXSTATUS.INVALID;
   protected HashMap<ORID, OStorage.LOCKING_STRATEGY> locks  = new HashMap<ORID, OStorage.LOCKING_STRATEGY>();
 
-  protected OTransactionAbstract(final ODatabaseRecordTx iDatabase) {
+  protected OTransactionAbstract(final ODatabaseDocumentTx iDatabase) {
     database = iDatabase;
   }
 
@@ -68,7 +66,7 @@ public abstract class OTransactionAbstract implements OTransaction {
     return status;
   }
 
-  public ODatabaseRecordTx getDatabase() {
+  public ODatabaseDocumentTx getDatabase() {
     return database;
   }
 
@@ -84,7 +82,7 @@ public abstract class OTransactionAbstract implements OTransaction {
         else if (lock.getValue().equals(OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK))
           ((OStorageEmbedded) getDatabase().getStorage()).releaseReadLock(lock.getKey());
       } catch (Exception e) {
-        OLogManager.instance().debug(this, "Error on releasing lock against record " + lock.getKey());
+        OLogManager.instance().debug(this, "Error on releasing lock against record " + lock.getKey(), e);
       }
     }
     locks.clear();
@@ -132,25 +130,5 @@ public abstract class OTransactionAbstract implements OTransaction {
   @Override
   public HashMap<ORID, OStorage.LOCKING_STRATEGY> getLockedRecords() {
     return locks;
-  }
-
-  protected void invokeCommitAgainstListeners() {
-    // WAKE UP LISTENERS
-    for (ODatabaseListener listener : ((ODatabaseRaw) database.getUnderlying()).browseListeners())
-      try {
-        listener.onBeforeTxCommit(database.getUnderlying());
-      } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error on commit callback against listener: " + listener, t);
-      }
-  }
-
-  protected void invokeRollbackAgainstListeners() {
-    // WAKE UP LISTENERS
-    for (ODatabaseListener listener : ((ODatabaseRaw) database.getUnderlying()).browseListeners())
-      try {
-        listener.onBeforeTxRollback(database.getUnderlying());
-      } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error on rollback callback against listener: " + listener, t);
-      }
   }
 }

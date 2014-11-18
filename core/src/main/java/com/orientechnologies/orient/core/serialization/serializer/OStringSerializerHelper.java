@@ -1,29 +1,32 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.serialization.serializer;
+
+import java.math.BigDecimal;
+import java.util.*;
 
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.types.OBinary;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -35,15 +38,6 @@ import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public abstract class OStringSerializerHelper {
   public static final char   RECORD_SEPARATOR        = ',';
@@ -536,13 +530,7 @@ public abstract class OStringSerializerHelper {
     if (iText == null)
       return false;
 
-    final int max = iText.length();
-    for (int i = 0; i < max; ++i) {
-      if (iText.charAt(i) == iSeparator)
-        return true;
-    }
-
-    return false;
+    return iText.indexOf(iSeparator) > -1;
   }
 
   public static int getCollection(final String iText, final int iStartPosition, final Collection<String> iCollection) {
@@ -784,9 +772,9 @@ public abstract class OStringSerializerHelper {
         -1);
     if (classSeparatorPos > -1) {
       final String className = iValue.substring(0, classSeparatorPos);
-      final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
+      final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
       if (className != null && database != null)
-        iLinkedClass = database.getMetadata().getSchema().getClass(className);
+        iLinkedClass = database.getMetadata().getImmutableSchemaSnapshot().getClass(className);
     }
     return iLinkedClass;
   }

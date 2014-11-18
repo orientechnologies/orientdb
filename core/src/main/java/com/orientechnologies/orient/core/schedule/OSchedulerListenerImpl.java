@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -33,59 +33,60 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
  * Author : henryzhao81@gmail.com Mar 28, 2013
  */
 public class OSchedulerListenerImpl implements OSchedulerListener {
-	private static Map<String, OScheduler> schedulers = new ConcurrentHashMap<String, OScheduler>();
-	
-	public OSchedulerListenerImpl() {
-	}
-	
-	public void addScheduler(OScheduler scheduler) {
-		if(!schedulers.containsKey(scheduler.getSchduleName())) {
-			schedulers.put(scheduler.getSchduleName(), scheduler);
-		}
-	}
-	
-	public void removeScheduler(OScheduler scheduler) {
-		if(scheduler.isRunning()) 
-			throw new OException("Cannot delete scheduler " + scheduler.getSchduleName() + " due to it is still running");
-		schedulers.remove(scheduler.getSchduleName());
-	}
-	
-	public Map<String, OScheduler> getSchedulers() {
-		return schedulers;
-	}
-	
-	public OScheduler getScheduler(String name) {
-		return schedulers.get(name);
-	}
-	
-	//loaded when open database
-	public void load() {
-		schedulers.clear();
-		final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
-		if (db.getMetadata().getSchema().existsClass(OScheduler.CLASSNAME)) {
-			List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from " + OScheduler.CLASSNAME + " order by name"));
-			for (ODocument d : result) {
-				d.reload();
-			    this.addScheduler(new OScheduler(d));
-			}
-		}
-	}
-	
-	public void close() {
-		schedulers.clear();
-	}
-	
-	public void create(){
-		final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
-	    if (db.getMetadata().getSchema().existsClass(OScheduler.CLASSNAME))
-	        return;
-		final OClass f = db.getMetadata().getSchema().createClass(OScheduler.CLASSNAME);
-		f.createProperty(OScheduler.PROP_NAME, OType.STRING).setMandatory(true).setNotNull(true);
-		f.createProperty(OScheduler.PROP_RULE, OType.STRING).setMandatory(true).setNotNull(true);
-		f.createProperty(OScheduler.PROP_ARGUMENTS, OType.EMBEDDEDMAP);
-		f.createProperty(OScheduler.PROP_STATUS, OType.STRING);
-		f.createProperty(OScheduler.PROP_FUNC, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME)).setMandatory(true).setNotNull(true);
-		f.createProperty(OScheduler.PROP_STARTTIME, OType.DATETIME);
-		f.createProperty(OScheduler.PROP_STARTED, OType.BOOLEAN);
-	}
+  private static Map<String, OScheduler> schedulers = new ConcurrentHashMap<String, OScheduler>();
+
+  public OSchedulerListenerImpl() {
+  }
+
+  public void addScheduler(OScheduler scheduler) {
+    if (!schedulers.containsKey(scheduler.getSchduleName())) {
+      schedulers.put(scheduler.getSchduleName(), scheduler);
+    }
+  }
+
+  public void removeScheduler(OScheduler scheduler) {
+    if (scheduler.isRunning())
+      throw new OException("Cannot delete scheduler " + scheduler.getSchduleName() + " due to it is still running");
+    schedulers.remove(scheduler.getSchduleName());
+  }
+
+  public Map<String, OScheduler> getSchedulers() {
+    return schedulers;
+  }
+
+  public OScheduler getScheduler(String name) {
+    return schedulers.get(name);
+  }
+
+  // loaded when open database
+  public void load() {
+    schedulers.clear();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    if (db.getMetadata().getSchema().existsClass(OScheduler.CLASSNAME)) {
+      List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from " + OScheduler.CLASSNAME + " order by name"));
+      for (ODocument d : result) {
+        d.reload();
+        this.addScheduler(new OScheduler(d));
+      }
+    }
+  }
+
+  public void close() {
+    schedulers.clear();
+  }
+
+  public void create() {
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    if (db.getMetadata().getSchema().existsClass(OScheduler.CLASSNAME))
+      return;
+    final OClass f = db.getMetadata().getSchema().createClass(OScheduler.CLASSNAME);
+    f.createProperty(OScheduler.PROP_NAME, OType.STRING).setMandatory(true).setNotNull(true);
+    f.createProperty(OScheduler.PROP_RULE, OType.STRING).setMandatory(true).setNotNull(true);
+    f.createProperty(OScheduler.PROP_ARGUMENTS, OType.EMBEDDEDMAP);
+    f.createProperty(OScheduler.PROP_STATUS, OType.STRING);
+    f.createProperty(OScheduler.PROP_FUNC, OType.LINK, db.getMetadata().getSchema().getClass(OFunction.CLASS_NAME))
+        .setMandatory(true).setNotNull(true);
+    f.createProperty(OScheduler.PROP_STARTTIME, OType.DATETIME);
+    f.createProperty(OScheduler.PROP_STARTED, OType.BOOLEAN);
+  }
 }

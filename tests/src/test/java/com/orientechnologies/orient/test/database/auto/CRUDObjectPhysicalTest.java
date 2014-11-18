@@ -15,17 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.util.*;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.object.OLazyObjectSetInterface;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
@@ -56,6 +45,16 @@ import com.orientechnologies.orient.test.domain.business.Child;
 import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.*;
 
 @Test(groups = { "crud", "object" })
 public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
@@ -134,7 +133,7 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     database.getMetadata().getSchema().dropClass(DummyForTestFreeze.class.getSimpleName());
 
-    Assert.assertNotNull(database.getMetadata().getSchema().getClass(DummyForTestFreeze.class.getSimpleName()));
+    Assert.assertNull(database.getMetadata().getSchema().getClass(DummyForTestFreeze.class.getSimpleName()));
   }
 
   @Test

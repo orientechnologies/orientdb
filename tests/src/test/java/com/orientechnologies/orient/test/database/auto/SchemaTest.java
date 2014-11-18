@@ -18,6 +18,7 @@ package com.orientechnologies.orient.test.database.auto;
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -27,7 +28,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
@@ -412,6 +413,8 @@ public class SchemaTest extends DocumentDBBaseTest {
 
     oClass.set(OClass.ATTRIBUTES.NAME, "RenameClassTest2");
 
+		databaseDocumentTx.getLocalCache().clear();
+
     result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select from RenameClassTest2"));
     Assert.assertEquals(result.size(), 2);
   }
@@ -482,6 +485,86 @@ public class SchemaTest extends DocumentDBBaseTest {
     }
   }
 
+  public void testOfflineCluster() {
+    database.command(new OCommandSQL("create class TestOffline")).execute();
+    database.command(new OCommandSQL("insert into TestOffline set status = 'offline'")).execute();
+
+    List<OIdentifiable> result = database.command(new OCommandSQL("select from TestOffline")).execute();
+    Assert.assertNotNull(result);
+    Assert.assertFalse(result.isEmpty());
+
+    ODocument record = result.get(0).getRecord();
+
+    // TEST NO EFFECTS
+    Boolean changed = database.command(new OCommandSQL("alter cluster TestOffline status online")).execute();
+    Assert.assertFalse(changed);
+
+    // PUT IT OFFLINE
+    changed = database.command(new OCommandSQL("alter cluster TestOffline status offline")).execute();
+    Assert.assertTrue(changed);
+
+    // NO DATA?
+    result = database.command(new OCommandSQL("select from TestOffline")).execute();
+    Assert.assertNotNull(result);
+    Assert.assertTrue(result.isEmpty());
+
+    // TEST NO EFFECTS
+    changed = database.command(new OCommandSQL("alter cluster TestOffline status offline")).execute();
+    Assert.assertFalse(changed);
+
+    // TEST SAVING OF OFFLINE STATUS
+    database.close();
+    database.open("admin", "admin");
+
+    // TEST UPDATE - NO EFFECT
+    Assert.assertEquals(database.command(new OCommandSQL("update TestOffline set name = 'yeah'")).execute(), 0);
+
+    // TEST DELETE - NO EFFECT
+    Assert.assertEquals(database.command(new OCommandSQL("delete from TestOffline")).execute(), 0);
+
+    // TEST CREATE -> EXCEPTION
+    try {
+      Object res = database.command(
+          new OCommandSQL("insert into TestOffline set name = 'offline', password = 'offline', status = 'ACTIVE'")).execute();
+      Assert.assertTrue(false);
+    } catch (OOfflineClusterException e) {
+      Assert.assertTrue(true);
+    }
+
+    // TEST UDPATE RECORD -> EXCEPTION
+    try {
+      record.field("status", "offline").save();
+      Assert.assertTrue(false);
+    } catch (OOfflineClusterException e) {
+      Assert.assertTrue(true);
+    }
+
+    // TEST DELETE RECORD -> EXCEPTION
+    try {
+      record.delete();
+      Assert.assertTrue(false);
+    } catch (OOfflineClusterException e) {
+      Assert.assertTrue(true);
+    }
+
+    // TEST DELETE RECORD -> EXCEPTION
+    try {
+      record.reload(null, true);
+      Assert.assertTrue(false);
+    } catch (OOfflineClusterException e) {
+      Assert.assertTrue(true);
+    }
+
+    // RESTORE IT ONLINE
+    changed = database.command(new OCommandSQL("alter cluster TestOffline status online")).execute();
+    Assert.assertTrue(changed);
+
+    result = database.command(new OCommandSQL("select from TestOffline")).execute();
+    Assert.assertNotNull(result);
+    Assert.assertFalse(result.isEmpty());
+
+  }
+
   private void swapClusters(ODatabaseDocumentTx databaseDocumentTx, int i) {
     databaseDocumentTx.command(new OCommandSQL("CREATE CLASS TestRenameClusterNew extends TestRenameClusterOriginal")).execute();
 
@@ -494,6 +577,8 @@ public class SchemaTest extends DocumentDBBaseTest {
     databaseDocumentTx.command(new OCommandSQL("ALTER CLASS TestRenameClusterOriginal addcluster TestRenameClusterNew")).execute();
     databaseDocumentTx.command(new OCommandSQL("DROP CLUSTER TestRenameClusterOriginal")).execute();
     databaseDocumentTx.command(new OCommandSQL("ALTER CLUSTER TestRenameClusterNew name TestRenameClusterOriginal")).execute();
+
+		databaseDocumentTx.getLocalCache().clear();
 
     List<ODocument> result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select * from TestRenameClusterOriginal"));
     Assert.assertEquals(result.size(), 1);

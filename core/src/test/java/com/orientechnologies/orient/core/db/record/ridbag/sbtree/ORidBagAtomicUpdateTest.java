@@ -89,6 +89,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     rootDoc.save();
     database.commit();
 
+		database.getLocalCache().clear();
     ODocument staleCMEDoc = database.load(cmeDoc.getIdentity());
     Assert.assertNotSame(staleCMEDoc, cmeDoc);
     cmeDoc.field("v", "v");
@@ -192,7 +193,9 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
+		database.getLocalCache().clear();
     ODocument staleCMEDoc = database.load(cmeDoc.getIdentity());
+
     Assert.assertNotSame(staleCMEDoc, cmeDoc);
     cmeDoc.field("v", "v");
     cmeDoc.save();
@@ -332,7 +335,9 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
+		database.getLocalCache().clear();
     ODocument staleCMEDoc = database.load(cmeDoc.getIdentity());
+
     Assert.assertNotSame(staleCMEDoc, cmeDoc);
     cmeDoc.field("v", "v");
     cmeDoc.save();
@@ -478,6 +483,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     rootDoc = database.load(rootDoc.getIdentity());
     ridBag = rootDoc.field("ridBag");
 
+		database.getLocalCache().clear();
     ODocument staleCMEDoc = database.load(cmeDoc.getIdentity());
     Assert.assertNotSame(staleCMEDoc, cmeDoc);
     cmeDoc.field("v", "v");
@@ -657,6 +663,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
 
       document.save();
 
+			database.getLocalCache().clear();
       ODocument staleDocument = database.load(document.getIdentity());
       ORidBag staleRidBag = staleDocument.field("ridBag");
 
@@ -717,6 +724,8 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     document.save();
 
     ODocument copyOne = database.load(document.getIdentity());
+
+		database.getLocalCache().clear();
     ODocument copyTwo = database.load(document.getIdentity());
 
     Assert.assertNotSame(copyOne, copyTwo);
@@ -789,6 +798,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
       amountOfDeletedDocsPerLevel.add(rnd.nextInt(5) + 5);
     }
 
+		database.getLocalCache().clear();
     ODocument staleCMEDoc = database.load(cmeDoc.getIdentity());
     Assert.assertNotSame(staleCMEDoc, cmeDoc);
     cmeDoc.field("v", "v");
@@ -907,6 +917,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     document = database.load(document.getIdentity());
     ridBag = document.field("ridBag");
 
+		database.getLocalCache().clear();
     ODocument staleDocument = database.load(cmeDocument.getIdentity());
     Assert.assertNotSame(staleDocument, cmeDocument);
 
@@ -969,6 +980,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     document = database.load(document.getIdentity());
     ridBag = document.field("ridBag");
 
+		database.getLocalCache().clear();
     ODocument cmeDocument = database.load(document.getIdentity());
     Assert.assertNotSame(cmeDocument, document);
     cmeDocument.field("v", "v1");
@@ -1085,6 +1097,7 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     document = database.load(document.getIdentity());
     ridBag = document.field("ridBag");
 
+		database.getLocalCache().clear();
     ODocument staleDoc = database.load(cmeDoc.getIdentity());
     Assert.assertNotSame(staleDoc, cmeDoc);
 

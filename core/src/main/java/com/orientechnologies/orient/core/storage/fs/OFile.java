@@ -99,7 +99,7 @@ public interface OFile {
 
   public abstract void writeByte(long iOffset, byte iValue) throws IOException;
 
-  public abstract void write(long iOffset, byte[] iSourceBuffer) throws IOException;
+  public abstract long write(long iOffset, byte[] iSourceBuffer) throws IOException;
 
   public abstract void setSoftlyClosed(boolean b) throws IOException;
 

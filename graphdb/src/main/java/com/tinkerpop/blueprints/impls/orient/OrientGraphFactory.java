@@ -1,59 +1,19 @@
-/*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
-
 package com.tinkerpop.blueprints.impls.orient;
-
-import com.orientechnologies.common.concur.resource.OResourcePool;
-import com.orientechnologies.common.concur.resource.OResourcePoolListener;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.intent.OIntent;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * A factory to create instances of {@link OrientGraph}. OrientGraph is a Blueprints implementation of the graph database OrientDB
- * (http://www.orientechnologies.com).
- * 
- * By default creates new connection for each graph, but could be configured to use database pool.
- * 
- * Thread safe after set up.
- * 
- * @author Luca Garulli (http://www.orientechnologies.com)
- */
-public class OrientGraphFactory extends OrientConfigurableGraph implements ODatabaseLifecycleListener {
-  protected final String                                    url;
-  protected final String                                    user;
-  protected final String                                    password;
-  protected volatile OResourcePool<String, OrientBaseGraph> pool;
-  protected volatile boolean                                transactional   = true;
-  protected boolean                                         leaveGraphsOpen = true;
-  protected OIntent                                         intent;
-  protected AtomicBoolean                                   used            = new AtomicBoolean(false);
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.intent.OIntent;
+
+public class OrientGraphFactory extends OrientConfigurableGraph {
+  protected final String                      url;
+  protected final String                      user;
+  protected final String                      password;
+  protected volatile OPartitionedDatabasePool pool;
+  protected OIntent                           intent;
+  protected AtomicBoolean                     used = new AtomicBoolean(false);
 
   /**
    * Creates a factory that use default admin credentials.
@@ -79,106 +39,72 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
     url = iURL;
     user = iUser;
     password = iPassword;
-    Orient.instance().addDbLifecycleListener(this);
-  }
-
-  public boolean isLeaveGraphsOpen() {
-    return leaveGraphsOpen;
-  }
-
-  public void setLeaveGraphsOpen(boolean leaveGraphsOpen) {
-    this.leaveGraphsOpen = leaveGraphsOpen;
   }
 
   /**
    * Closes all pooled databases and clear the pool.
    */
   public void close() {
-    closePool();
-    pool = null;
-    Orient.instance().removeDbLifecycleListener(this);
-  }
+		if (pool != null)
+			pool.close();
 
-  @Override
-  public PRIORITY getPriority() {
-    return PRIORITY.FIRST;
+    pool = null;
   }
 
   /**
    * Drops current database if such one exists.
    *
-   * @throws ODatabaseException
-   *           if there is no current database.
    */
   public void drop() {
     getDatabase(false, true).drop();
   }
 
   /**
-   * Depends of configuration work like {@link #getTx()} or {@link #getNoTx()}. By default the factory configured to return
-   * transactional graph. Use {@link #setTransactional(boolean)} to change the behaviour. The Graph instance inherits the factory's
-   * configuration.
-   *
-   * @return orient graph
-   */
-  public OrientBaseGraph get() {
-    return transactional ? getTx() : getNoTx();
-  }
-
-  /**
    * Gets transactional graph with the database from pool if pool is configured. Otherwise creates a graph with new db instance. The
    * Graph instance inherits the factory's configuration.
-   * 
+   *
    * @return transactional graph
    */
   public OrientGraph getTx() {
     final OrientGraph g;
     if (pool == null) {
-      g = (OrientGraph) new OrientGraph(getDatabase(), user, password, settings);
-      initGraph(g);
+      g = new OrientGraph(getDatabase(), user, password, settings);
     } else {
-      if (!transactional)
-        throw new IllegalStateException(
-            "Cannot create a transactional graph instance after the pool has been set as non-transactional");
-
       // USE THE POOL
-      return (OrientGraph) pool.getResource(url, 0, user, password);
+      g = new OrientGraph(pool, settings);
     }
 
+    initGraph(g);
     return g;
   }
 
   /**
    * Gets non transactional graph with the database from pool if pool is configured. Otherwise creates a graph with new db instance.
    * The Graph instance inherits the factory's configuration.
-   * 
+   *
    * @return non transactional graph
    */
   public OrientGraphNoTx getNoTx() {
     final OrientGraphNoTx g;
     if (pool == null) {
-      g = (OrientGraphNoTx) new OrientGraphNoTx(getDatabase(), user, password, settings);
-      initGraph(g);
+      g = new OrientGraphNoTx(getDatabase(), user, password, settings);
     } else {
-      if (transactional)
-        throw new IllegalStateException(
-            "Cannot create a non-transactional graph instance after the pool has been set as transactional");
-
       // USE THE POOL
-      return (OrientGraphNoTx) pool.getResource(url, 0, user, password);
+      g = new OrientGraphNoTx(pool, settings);
     }
 
+    initGraph(g);
     return g;
   }
 
   /**
    * Gives new connection to database. If current factory configured to use pool (see {@link #setupPool(int, int)} method),
    * retrieves connection from pool. Otherwise creates new connection each time.
-   * 
+   *
    * Automatically creates database if database with given URL does not exist
-   * 
+   *
    * Shortcut for {@code getDatabase(true)}
-   * 
+   *
    * @return database.
    */
   public ODatabaseDocumentTx getDatabase() {
@@ -188,7 +114,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
   /**
    * Gives new connection to database. If current factory configured to use pool (see {@link #setupPool(int, int)} method),
    * retrieves connection from pool. Otherwise creates new connection each time.
-   * 
+   *
    * @param iCreate
    *          if true automatically creates database if database with given URL does not exist
    * @param iOpen
@@ -210,7 +136,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
 
   /**
    * Check if the database with path given to the factory exists.
-   * 
+   *
    * @return true if database is exists
    */
   public boolean exists() {
@@ -224,7 +150,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
 
   /**
    * Setting up the factory to use database pool instead of creation a new instance of database connection each time.
-   * 
+   *
    * @param iMin
    *          minimum size of pool
    * @param iMax
@@ -232,75 +158,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
    * @return this
    */
   public OrientGraphFactory setupPool(final int iMin, final int iMax) {
-    // // ASSURE THE DB IS CREATED THE FIRST TIME
-    // final ODatabaseDocumentTx db = getDatabase();
-    // db.close();
-    //
-    // CLOSE ANY PREVIOUS POOL
-    closePool();
-
-    pool = new OResourcePool<String, OrientBaseGraph>(iMax, new OResourcePoolListener<String, OrientBaseGraph>() {
-      @Override
-      public OrientBaseGraph createNewResource(final String iKey, final Object... iAdditionalArgs) {
-        final OrientBaseGraph g;
-        if (transactional)
-          g = new OrientGraph(getDatabase(), user, password) {
-            @Override
-            public void shutdown() {
-              if (pool != null)
-                pool.returnResource(this);
-              else
-                super.shutdown();
-            }
-          }.configure(settings);
-        else
-          g = new OrientGraphNoTx(getDatabase(), user, password) {
-            @Override
-            public void shutdown() {
-              if (pool != null) {
-                pool.returnResource(this);
-                ODatabaseRecordThreadLocal.INSTANCE.remove();
-              } else
-                super.shutdown();
-            }
-          }.configure(settings);
-
-        initGraph(g);
-        return g;
-      }
-
-      @Override
-      public boolean reuseResource(final String iKey, final Object[] iAdditionalArgs, final OrientBaseGraph iValue) {
-        // LEAVE THE DATABASE OPEN
-        ODatabaseRecordThreadLocal.INSTANCE.set(iValue.getRawGraph());
-        return true;
-      }
-    });
-
-    return this;
-  }
-
-  /**
-   * @return true if current factory configured to create transactional graphs by default.
-   * @see #get()
-   */
-  public boolean isTransactional() {
-    return transactional;
-  }
-
-  /**
-   * Configure current factory to create transactional of non transactional graphs by default.
-   * 
-   * @param iTransactional
-   *          defines should the factory return transactional graph by default.
-   * @return this
-   * 
-   * @see #get()
-   */
-  public OrientGraphFactory setTransactional(final boolean iTransactional) {
-    if (pool != null && transactional != iTransactional)
-      throw new IllegalArgumentException("Cannot change transactional state after creating the pool");
-    this.transactional = iTransactional;
+    pool = new OPartitionedDatabasePool(url, user, password, iMax);
     return this;
   }
 
@@ -309,7 +167,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
    */
   public int getAvailableInstancesInPool() {
     if (pool != null)
-      return pool.getAvailableResources();
+      return pool.getAvailableConnections();
     return 0;
   }
 
@@ -318,55 +176,14 @@ public class OrientGraphFactory extends OrientConfigurableGraph implements OData
    */
   public int getCreatedInstancesInPool() {
     if (pool != null)
-      return pool.getCreatedInstancesInPool();
+      return pool.getCreatedInstances();
+
     return 0;
   }
 
   @Override
   public void declareIntent(final OIntent iIntent) {
     intent = iIntent;
-  }
-
-  @Override
-  public void onCreate(final ODatabaseInternal iDatabase) {
-    if (iDatabase instanceof ODatabaseRecordInternal) {
-      final ODatabaseComplex<?> db = ((ODatabaseRecordInternal) iDatabase).getDatabaseOwner();
-
-      if (db instanceof ODatabaseDocumentTx)
-        OrientBaseGraph.checkForGraphSchema((ODatabaseDocumentTx) db);
-    }
-  }
-
-  @Override
-  public void onOpen(final ODatabaseInternal iDatabase) {
-    if (iDatabase instanceof ODatabaseRecordInternal) {
-      final ODatabaseComplex<?> db = ((ODatabaseRecordInternal) iDatabase).getDatabaseOwner();
-      if (db instanceof ODatabaseDocumentTx)
-        OrientBaseGraph.checkForGraphSchema((ODatabaseDocumentTx) db);
-    }
-  }
-
-  @Override
-  public void onClose(final ODatabaseInternal iDatabase) {
-
-  }
-
-  protected void closePool() {
-    if (pool != null) {
-      final OResourcePool<String, OrientBaseGraph> closingPool = pool;
-      pool = null;
-
-      int usedResources = 0;
-      // CLOSE ALL THE INSTANCES
-      for (OrientExtendedGraph g : closingPool.getResources()) {
-        usedResources++;
-        g.shutdown();
-      }
-
-      OLogManager.instance().debug(this, "Maximum used resources: %d", usedResources);
-
-      closingPool.close();
-    }
   }
 
   protected void initGraph(final OrientBaseGraph g) {

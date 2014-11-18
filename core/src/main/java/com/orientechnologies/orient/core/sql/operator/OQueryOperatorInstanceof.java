@@ -46,7 +46,7 @@ public class OQueryOperatorInstanceof extends OQueryOperatorEqualityNotNulls {
 	protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight, OCommandContext iContext) {
 
-		final OSchema schema = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema();
+		final OSchema schema = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getImmutableSchemaSnapshot();
 
 		final String baseClassName = iRight.toString();
 		final OClass baseClass = schema.getClass(baseClassName);
@@ -58,7 +58,7 @@ public class OQueryOperatorInstanceof extends OQueryOperatorEqualityNotNulls {
 			// GET THE RECORD'S CLASS
 			final ORecord record = ((OIdentifiable) iLeft).getRecord();
 			if (record instanceof ODocument) {
-				cls = ((ODocument) record).getSchemaClass();
+				cls = ((ODocument) record).getImmutableSchemaClass();
 			}
 		} else if (iLeft instanceof String)
 			// GET THE CLASS BY NAME

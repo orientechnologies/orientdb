@@ -20,10 +20,17 @@ import com.orientechnologies.common.console.annotation.ConsoleCommand;
 import com.orientechnologies.common.console.annotation.ConsoleParameter;
 import com.orientechnologies.orient.console.OConsoleDatabaseApp;
 import com.orientechnologies.orient.core.command.OCommandExecutorNotFoundException;
+import com.orientechnologies.orient.core.db.tool.ODatabaseImportException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.graph.gremlin.OCommandGremlin;
 import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
 import com.orientechnologies.orient.graph.migration.OGraphMigration;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Gremlin specialized console.
@@ -63,20 +70,6 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
     System.exit(result);
   }
 
-  @Override
-  protected void onBefore() {
-    super.onBefore();
-
-    out.println("\nInstalling extensions for GREMLIN language v." + OGremlinHelper.getEngineVersion());
-
-    OGremlinHelper.global().create();
-  }
-
-  @Override
-  protected boolean isCollectingCommands(final String iLine) {
-    return super.isCollectingCommands(iLine) || iLine.startsWith("gremlin");
-  }
-
   @ConsoleCommand(splitInWords = false, description = "Execute a GREMLIN script")
   public void gremlin(@ConsoleParameter(name = "script-text", description = "The script text to execute") final String iScriptText) {
     checkForDatabase();
@@ -102,10 +95,53 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
     }
   }
 
+  @Override
+  @ConsoleCommand(description = "Import a database into the current one", splitInWords = false)
+  public void importDatabase(@ConsoleParameter(name = "options", description = "Import options") String text) throws IOException {
+    checkForDatabase();
+
+    final List<String> items = OStringSerializerHelper.smartSplit(text, ' ');
+    final String fileName = items.size() <= 0 || (items.get(1)).charAt(0) == '-' ? null : items.get(1);
+    final String options = fileName != null ? text.substring((items.get(0)).length() + (items.get(1)).length() + 1).trim() : text;
+
+    if (fileName != null && fileName.endsWith(".graphml")) {
+      message("\nImporting GRAPHML database from " + text + "...");
+
+      try {
+        final Map<String, List<String>> opts = parseOptions(options);
+
+        final OrientGraph g = new OrientGraph((com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx) currentDatabase);
+        g.setUseLog(false);
+        g.setWarnOnForceClosingTx(false);
+        new OGraphMLReader(g).setOptions(opts).inputGraph(g, fileName);
+        g.commit();
+        commit();
+
+      } catch (ODatabaseImportException e) {
+        printError(e);
+      }
+    } else
+      super.importDatabase(text);
+  }
+
   @ConsoleCommand(description = "Migrates graph from OMVRBTree to ORidBag")
   public void upgradeGraph() {
     OGraphMigration migration = new OGraphMigration(getCurrentDatabase(), this);
     migration.execute();
     message("Graph has been upgraded.");
+  }
+
+  @Override
+  protected void onBefore() {
+    super.onBefore();
+
+    out.println("\nInstalling extensions for GREMLIN language v." + OGremlinHelper.getEngineVersion());
+
+    OGremlinHelper.global().create();
+  }
+
+  @Override
+  protected boolean isCollectingCommands(final String iLine) {
+    return super.isCollectingCommands(iLine) || iLine.startsWith("gremlin");
   }
 }

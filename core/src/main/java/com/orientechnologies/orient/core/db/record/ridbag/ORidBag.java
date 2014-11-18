@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.orient.core.db.record.ridbag;
 
@@ -190,8 +190,8 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
     final ORecordSerializationContext context = ORecordSerializationContext.getContext();
     if (context != null) {
-      if (delegate.size() >= topThreshold && isEmbedded()
-          && ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager() != null) {
+      if (isEmbedded() && ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager() != null
+          && delegate.size() >= topThreshold) {
         ORidBagDelegate oldDelegate = delegate;
         delegate = new OSBTreeRidBag();
         boolean oldAutoConvert = oldDelegate.isAutoConvertToRecord();
@@ -202,12 +202,15 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
         final ORecord owner = oldDelegate.getOwner();
         delegate.setOwner(owner);
+
+        for (OMultiValueChangeListener<OIdentifiable, OIdentifiable> listener : oldDelegate.getChangeListeners())
+          delegate.addChangeListener(listener);
+
         owner.setDirty();
 
         oldDelegate.setAutoConvertToRecord(oldAutoConvert);
         oldDelegate.requestDelete();
-
-      } else if (delegate.size() <= bottomThreshold && !isEmbedded()) {
+      } else if (bottomThreshold >= 0 && !isEmbedded() && delegate.size() <= bottomThreshold) {
         ORidBagDelegate oldDelegate = delegate;
         boolean oldAutoConvert = oldDelegate.isAutoConvertToRecord();
         oldDelegate.setAutoConvertToRecord(false);
@@ -218,6 +221,10 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
         final ORecord owner = oldDelegate.getOwner();
         delegate.setOwner(owner);
+
+        for (OMultiValueChangeListener<OIdentifiable, OIdentifiable> listener : oldDelegate.getChangeListeners())
+          delegate.addChangeListener(listener);
+
         owner.setDirty();
 
         oldDelegate.setAutoConvertToRecord(oldAutoConvert);
@@ -236,7 +243,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
     final int serializedSize = OByteSerializer.BYTE_SIZE + delegate.getSerializedSize()
         + ((hasUuid) ? OUUIDSerializer.UUID_SIZE : 0);
-    int pointer = bytesContainer.alloc((short) serializedSize);
+    int pointer = bytesContainer.alloc(serializedSize);
     int offset = pointer;
     final byte[] stream = bytesContainer.bytes;
 

@@ -1,35 +1,26 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.metadata.schema;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.comparator.OCaseInsentiveComparator;
 import com.orientechnologies.common.log.OLogManager;
@@ -37,21 +28,17 @@ import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.collate.ODefaultCollate;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
@@ -136,9 +123,9 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   public OPropertyImpl setType(final OType type) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
-    final ODatabaseRecordInternal database = getDatabase();
+    final ODatabaseDocumentInternal database = getDatabase();
     acquireSchemaWriteLock();
     try {
       final OStorage storage = database.getStorage();
@@ -215,7 +202,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
    */
   @Deprecated
   public OPropertyImpl dropIndexes() {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_DELETE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_DELETE);
 
     acquireSchemaReadLock();
     try {
@@ -305,11 +292,11 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   public OProperty setName(final String name) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -350,11 +337,11 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   public OPropertyImpl setLinkedClass(final OClass linkedClass) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -379,7 +366,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   void setLinkedClassInternal(final OClass iLinkedClass) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
     try {
@@ -408,11 +395,11 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   public OProperty setLinkedType(final OType linkedType) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -437,7 +424,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   void setLinkedTypeInternal(final OType iLinkedType) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
     acquireSchemaWriteLock();
     try {
       checkEmbedded();
@@ -463,11 +450,11 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   public OPropertyImpl setNotNull(final boolean isNotNull) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -500,11 +487,11 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   public OPropertyImpl setMandatory(final boolean isMandatory) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -537,11 +524,11 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   public OPropertyImpl setReadonly(final boolean isReadonly) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -575,11 +562,11 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   public OPropertyImpl setMin(final String min) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -613,11 +600,11 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   public OPropertyImpl setMax(final String max) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -651,11 +638,11 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   public OPropertyImpl setRegexp(final String regexp) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -691,13 +678,13 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   public OPropertyImpl setCustom(final String name, final String value) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
     try {
       final String cmd = String.format("alter property %s custom %s=%s", getFullName(), name, value);
 
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       if (storage instanceof OStorageProxy) {
@@ -735,11 +722,11 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   public void clearCustom() {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       final String cmd = String.format("alter property %s custom clear", getFullName());
@@ -845,17 +832,19 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       setCollate(stringValue);
       break;
     case CUSTOM:
-      int indx = stringValue!=null?stringValue.indexOf('='):-1;
-      if (indx<0) {
+      int indx = stringValue != null ? stringValue.indexOf('=') : -1;
+      if (indx < 0) {
         if ("clear".equalsIgnoreCase(stringValue)) {
           clearCustom();
         } else
           throw new IllegalArgumentException("Syntax error: expected <name> = <value> or clear, instead found: " + iValue);
       } else {
         String customName = stringValue.substring(0, indx).trim();
-        String customValue = stringValue.substring(indx+1).trim();
-        if(customValue.isEmpty()) removeCustom(customName);
-        else setCustom(customName, customValue);
+        String customValue = stringValue.substring(indx + 1).trim();
+        if (customValue.isEmpty())
+          removeCustom(customName);
+        else
+          setCustom(customName, customValue);
       }
       break;
     }
@@ -879,11 +868,11 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     if (collate == null)
       collate = ODefaultCollate.NAME;
 
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
     try {
-      final ODatabaseRecordInternal database = getDatabase();
+      final ODatabaseDocumentInternal database = getDatabase();
       final OStorage storage = database.getStorage();
 
       final String cmd = String.format("alter property %s collate %s", getFullName(), collate);
@@ -1052,12 +1041,12 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       throw new OSchemaException("'Internal' schema modification methods can be used only inside of embedded database");
   }
 
-  protected ODatabaseRecordInternal getDatabase() {
+  protected ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
   private void setNameInternal(final String name) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     String oldName = this.globalRef.getName();
     acquireSchemaWriteLock();
@@ -1074,7 +1063,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   private void setNotNullInternal(final boolean isNotNull) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
     try {
@@ -1085,7 +1074,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   private void setMandatoryInternal(final boolean isMandatory) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
     try {
@@ -1098,7 +1087,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   private void setReadonlyInternal(final boolean isReadonly) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
     try {
@@ -1111,7 +1100,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   private void setMinInternal(final String min) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
     try {
@@ -1125,7 +1114,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   private void setMaxInternal(final String max) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
     try {
@@ -1139,7 +1128,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   private void setRegexpInternal(final String regexp) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
     try {
@@ -1183,7 +1172,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
    * @param iType
    */
   private void setTypeInternal(final OType iType) {
-    getDatabase().checkSecurity(ODatabaseSecurityResources.SCHEMA, ORole.PERMISSION_UPDATE);
+    getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
     acquireSchemaWriteLock();
     try {
@@ -1227,7 +1216,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
         if (!indexesToRecreate.isEmpty()) {
           OLogManager.instance().info(this, "Collate value was changed, following indexes will be rebuilt %s", indexesToRecreate);
 
-          final ODatabaseRecord database = getDatabase();
+          final ODatabaseDocument database = getDatabase();
           final OIndexManager indexManager = database.getMetadata().getIndexManager();
 
           for (OIndex<?> indexToRecreate : indexesToRecreate) {

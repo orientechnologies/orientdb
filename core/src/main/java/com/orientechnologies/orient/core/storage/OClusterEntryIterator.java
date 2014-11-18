@@ -24,13 +24,13 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.ORID;
 
 public class OClusterEntryIterator implements Iterator<OPhysicalPosition> {
   private final OCluster         cluster;
 
-  private final OClusterPosition max;
-  private final OClusterPosition min;
+  private final long max;
+  private final long min;
 
   private OPhysicalPosition[]    positionsToProcess;
   private int                    positionsIndex;
@@ -49,7 +49,7 @@ public class OClusterEntryIterator implements Iterator<OPhysicalPosition> {
   }
 
   public boolean hasNext() {
-    if (OClusterPosition.INVALID_POSITION.compareTo(min) == 0)
+    if (min == ORID.CLUSTER_POS_INVALID)
       return false;
 
     if (positionsToProcess == null)

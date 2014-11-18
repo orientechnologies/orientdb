@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.tinkerpop.blueprints.impls.orient;
 
@@ -47,6 +47,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -60,13 +61,14 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   public static final Object                   DEF_ORIGINAL_ID_FIELDNAME = "origId";
   private static final long                    serialVersionUID          = 1L;
   // TODO: CAN REMOVE THIS REF IN FAVOR OF CONTEXT INSTANCE?
-  protected transient OrientBaseGraph          graph;
+
   protected transient OrientBaseGraph.Settings settings;
   protected OIdentifiable                      rawElement;
 
-  protected OrientElement(final OrientBaseGraph rawGraph, final OIdentifiable iRawElement) {
-    graph = rawGraph;
+  protected OrientElement(final OIdentifiable iRawElement) {
     rawElement = iRawElement;
+
+    final OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
     if (graph != null)
       settings = graph.settings;
   }
@@ -86,8 +88,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   @Override
   public void remove() {
-    checkIfAttached();
-    graph.setCurrentGraphInThreadLocal();
+    final OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
     graph.autoStartTransaction();
 
     final ORecordOperation oper = graph.getRawGraph().getTransaction().getRecordEntry(getIdentity());
@@ -129,7 +130,8 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   public <T extends OrientElement> T setProperties(final Object... fields) {
     if (fields != null && fields.length > 0 && fields[0] != null) {
-      if (!isDetached())
+      final OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
+      if (graph != null)
         graph.autoStartTransaction();
 
       if (fields.length == 1) {
@@ -141,10 +143,16 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
         } else
           throw new IllegalArgumentException(
               "Invalid fields: expecting a pairs of fields as String,Object or a single Map<String,Object>, but found: " + f);
-      } else
+      } else {
+        if (fields.length % 2 != 0)
+          throw new IllegalArgumentException(
+              "Invalid fields: expecting a pairs of fields as String,Object or a single Map<String,Object>, but found: "
+                  + Arrays.toString(fields));
+
         // SET THE FIELDS
         for (int i = 0; i < fields.length; i += 2)
           setPropertyInternal(this, (ODocument) rawElement.getRecord(), fields[i].toString(), fields[i + 1]);
+      }
     }
     return (T) this;
   }
@@ -160,10 +168,13 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   @Override
   public void setProperty(final String key, final Object value) {
     validateProperty(this, key, value);
-    if (!isDetached())
+
+    final OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
+
+    if (graph != null)
       graph.autoStartTransaction();
     getRecord().field(key, value);
-    if (!isDetached())
+    if (graph != null)
       save();
   }
 
@@ -180,10 +191,13 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   public void setProperty(final String key, final Object value, final OType iType) {
     validateProperty(this, key, value);
-    if (!isDetached())
+
+    final OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
+
+    if (graph != null)
       graph.autoStartTransaction();
     getRecord().field(key, value, iType);
-    if (!isDetached())
+    if (graph != null)
       save();
   }
 
@@ -196,10 +210,12 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   @Override
   public <T> T removeProperty(final String key) {
-    if (!isDetached())
+    final OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
+
+    if (graph != null)
       graph.autoStartTransaction();
     final Object oldValue = getRecord().removeField(key);
-    if (!isDetached())
+    if (graph != null)
       save();
     return (T) oldValue;
   }
@@ -216,8 +232,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     if (key == null)
       return null;
 
+    final OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
     if (key.equals("_class"))
-      return (T) getRecord().getSchemaClass().getName();
+      return (T) getRecord().getImmutableSchemaClass().getName();
     else if (key.equals("_version"))
       return (T) new Integer(getRecord().getVersion());
     else if (key.equals("_rid"))
@@ -267,9 +284,6 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    *          Cluster name or null to use the default "E"
    */
   public void save(final String iClusterName) {
-    checkIfAttached();
-    graph.setCurrentGraphInThreadLocal();
-
     if (rawElement instanceof ODocument)
       if (iClusterName != null)
         rawElement = ((ODocument) rawElement).save(iClusterName);
@@ -349,9 +363,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
       return ORecordId.EMPTY_RECORD_ID;
 
     final ORID rid = rawElement.getIdentity();
-    if (!rid.isValid() && !isDetached()) {
-      // SAVE THE RECORD TO OBTAIN A VALID RID
-      graph.setCurrentGraphInThreadLocal();
+
+    final OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
+    if (!rid.isValid() && graph != null) {
       graph.autoStartTransaction();
       save();
     }
@@ -386,8 +400,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     getRecord().setLazyLoad(false);
     getRecord().fieldNames();
     // COPY GRAPH SETTINGS TO WORK OFFLINE
+
+    final OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
     settings = graph.settings.copy();
-    graph = null;
     return this;
   }
 
@@ -403,20 +418,14 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   public OrientElement attach(final OrientBaseGraph iNewGraph) {
     if (iNewGraph == null)
       throw new IllegalArgumentException("Graph is null");
-    graph = iNewGraph;
-    // LINK THE GRAPHS SETTINGS
-    settings = graph.settings;
-    return this;
-  }
 
-  /**
-   * (Blueprints Extension) Tells if the current element has been @detach ed.
-   * 
-   * @return True if detached, otherwise false
-   * @see #attach(OrientBaseGraph), #detach
-   */
-  public boolean isDetached() {
-    return graph == null;
+    final OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
+    if (graph != iNewGraph)
+      throw new IllegalStateException("New and attached graphs should match");
+
+    // LINK THE GRAPHS SETTINGS
+    settings = iNewGraph.settings;
+    return this;
   }
 
   public boolean equals(final Object object) {
@@ -436,9 +445,12 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     final ORID myRID = getIdentity();
     final ORID otherRID = iOther.getIdentity();
 
-    if (myRID == null && otherRID == null) return 0;
-    if (myRID == null) return -1;
-    if (otherRID == null) return 1;
+    if (myRID == null && otherRID == null)
+      return 0;
+    if (myRID == null)
+      return -1;
+    if (otherRID == null)
+      return 1;
 
     return myRID.compareTo(otherRID);
   }
@@ -448,7 +460,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    * 
    */
   public OrientBaseGraph getGraph() {
-    return graph;
+    return OrientBaseGraph.getActiveInstance();
   }
 
   /**
@@ -482,7 +494,6 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   }
 
   protected void copyTo(final OrientElement iCopy) {
-    iCopy.graph = graph;
     iCopy.settings = settings;
     if (rawElement instanceof ODocument) {
       iCopy.rawElement = new ODocument().fromStream(((ODocument) rawElement).toStream());
@@ -497,7 +508,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     final ODocument doc = getRecord();
     doc.deserializeFields();
 
-    final OClass cls = doc.getSchemaClass();
+    final OClass cls = doc.getImmutableSchemaClass();
 
     if (cls == null || !cls.isSubClassOf(getBaseClassName()))
       throw new IllegalArgumentException("The document received is not a " + getElementType() + ". Found class '" + cls + "'");
@@ -514,7 +525,8 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     if (className == null)
       return null;
 
-    if (isDetached())
+		final OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
+    if (graph == null)
       return className;
 
     final OSchema schema = graph.getRawGraph().getMetadata().getSchema();
@@ -551,15 +563,4 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     validateProperty(element, key, value);
     doc.field(key, value);
   }
-
-  protected void setCurrentGraphInThreadLocal() {
-    if (!isDetached())
-      graph.setCurrentGraphInThreadLocal();
-  }
-
-  protected void checkIfAttached() {
-    if (graph == null)
-      throw new IllegalStateException("Graph element has been detached. Attach it before");
-  }
-
 }

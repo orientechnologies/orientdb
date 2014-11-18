@@ -1,45 +1,35 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.command.script;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Scanner;
-import java.util.Set;
 
-import javax.script.Bindings;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineFactory;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
+import javax.script.*;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.script.formatter.*;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.function.OFunctionUtilWrapper;
@@ -94,7 +84,7 @@ public class OScriptManager {
     registerFormatter(OSQLScriptEngine.NAME, new OSQLScriptFormatter());
     registerFormatter(DEF_LANGUAGE, new OJSScriptFormatter());
     registerFormatter("ruby", new ORubyScriptFormatter());
-      registerFormatter("groovy", new OGroovyScriptFormatter());
+    registerFormatter("groovy", new OGroovyScriptFormatter());
   }
 
   public String getFunctionDefinition(final OFunction iFunction) {
@@ -122,7 +112,7 @@ public class OScriptManager {
    *          Language as filter
    * @return String containing all the functions
    */
-  public String getLibrary(final ODatabaseComplex<?> db, final String iLanguage) {
+  public String getLibrary(final ODatabase<?> db, final String iLanguage) {
     if (db == null)
       // NO DB = NO LIBRARY
       return null;
@@ -180,7 +170,7 @@ public class OScriptManager {
     return result;
   }
 
-  public Bindings bind(final Bindings binding, final ODatabaseRecordTx db, final OCommandContext iContext,
+  public Bindings bind(final Bindings binding, final ODatabaseDocumentTx db, final OCommandContext iContext,
       final Map<Object, Object> iArgs) {
     if (db != null) {
       // BIND FIXED VARIABLES

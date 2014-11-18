@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.storage;
 
 import com.orientechnologies.common.concur.lock.ONewLockManager;
@@ -47,7 +47,8 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
   protected final String                PROFILER_READ_RECORD;
   protected final String                PROFILER_UPDATE_RECORD;
   protected final String                PROFILER_DELETE_RECORD;
-  protected ORecordConflictStrategy recordConflictStrategy = Orient.instance().getRecordConflictStrategy().newInstanceOfDefaultClass();
+  protected ORecordConflictStrategy     recordConflictStrategy = Orient.instance().getRecordConflictStrategy()
+                                                                   .newInstanceOfDefaultClass();
 
   public OStorageEmbedded(final String iName, final String iFilePath, final String iMode) {
     super(iName, iFilePath, iMode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
@@ -92,7 +93,11 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
 
     } finally {
       if (Orient.instance().getProfiler().isRecording())
-        Orient.instance().getProfiler().stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(), "Command executed against the database", beginTime, "db.*.command.*");
+        Orient
+            .instance()
+            .getProfiler()
+            .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(),
+                "Command executed against the database", beginTime, "db.*.command.*");
     }
   }
 
@@ -171,18 +176,22 @@ public abstract class OStorageEmbedded extends OStorageAbstract {
   }
 
   public void acquireWriteLock(final ORID iRid) {
+    assert !lock.assertSharedLockHold() && !lock.assertExclusiveLockHold() : " a record lock should not be tacken inside a storage lock";
     lockManager.acquireExclusiveLock(iRid);
   }
 
   public void releaseWriteLock(final ORID iRid) {
+    assert !lock.assertSharedLockHold() && !lock.assertExclusiveLockHold() : " a record lock should not be released inside a storage lock";
     lockManager.releaseExclusiveLock(iRid);
   }
 
   public void acquireReadLock(final ORID iRid) {
+    assert !lock.assertSharedLockHold() && !lock.assertExclusiveLockHold() : " a record lock should not be tacken inside a storage lock";
     lockManager.acquireSharedLock(iRid);
   }
 
   public void releaseReadLock(final ORID iRid) {
+    assert !lock.assertSharedLockHold() && !lock.assertExclusiveLockHold() : " a record lock should not be released inside a storage lock";
     lockManager.releaseSharedLock(iRid);
   }
 

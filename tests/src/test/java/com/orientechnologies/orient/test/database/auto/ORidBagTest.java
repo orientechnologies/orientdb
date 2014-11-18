@@ -4,17 +4,9 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.testng.Assert;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
@@ -24,8 +16,6 @@ import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -147,6 +137,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     database.close();
     storage.close(true, false);
 
+		database = new ODatabaseDocumentTx(database.getURL());
     database.open("admin", "admin");
 
     doc = database.load(rid);
@@ -223,6 +214,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     database.close();
     storage.close(true, false);
 
+		database.resetInitialization();
     database.open("admin", "admin");
 
     doc = database.load(rid);
@@ -345,6 +337,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     database.close();
     storage.close(true, false);
 
+		database = new ODatabaseDocumentTx(database.getURL());
     database.open("admin", "admin");
 
     doc = database.load(rid);
@@ -463,6 +456,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     database.close();
     storage.close(true, false);
 
+		database = new ODatabaseDocumentTx(database.getURL());
     database.open("admin", "admin");
 
     doc = database.load(rid);
@@ -586,6 +580,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     database.close();
     storage.close(true, false);
 
+		database = new ODatabaseDocumentTx(database.getURL());
     database.open("admin", "admin");
 
     doc = database.load(rid);
@@ -773,6 +768,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     database.close();
     storage.close(true, false);
 
+		database = new ODatabaseDocumentTx(database.getURL());
     database.open("admin", "admin");
 
     doc = database.load(id);
@@ -1181,52 +1177,6 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     Assert.assertEquals(teamMates.iterator().next().getIdentity(), bob.getIdentity());
   }
 
-  private void massiveInsertionIteration(Random rnd, List<OIdentifiable> rids, ORidBag bag) {
-    Iterator<OIdentifiable> bagIterator = bag.iterator();
-
-    while (bagIterator.hasNext()) {
-      OIdentifiable bagValue = bagIterator.next();
-      Assert.assertTrue(rids.contains(bagValue));
-    }
-
-    Assert.assertEquals(bag.size(), rids.size());
-
-    for (int i = 0; i < 100; i++) {
-      if (rnd.nextDouble() < 0.2 & rids.size() > 5) {
-        final int index = rnd.nextInt(rids.size());
-        final OIdentifiable rid = rids.remove(index);
-        bag.remove(rid);
-      } else {
-        final int positionIndex = rnd.nextInt(300);
-        final OClusterPosition position = OClusterPositionFactory.INSTANCE.valueOf(positionIndex);
-
-        final ORecordId recordId = new ORecordId(1, position);
-        rids.add(recordId);
-        bag.add(recordId);
-      }
-    }
-
-    bagIterator = bag.iterator();
-
-    while (bagIterator.hasNext()) {
-      final OIdentifiable bagValue = bagIterator.next();
-      Assert.assertTrue(rids.contains(bagValue));
-
-      if (rnd.nextDouble() < 0.05) {
-        bagIterator.remove();
-        Assert.assertTrue(rids.remove(bagValue));
-      }
-    }
-
-    Assert.assertEquals(bag.size(), rids.size());
-    bagIterator = bag.iterator();
-
-    while (bagIterator.hasNext()) {
-      final OIdentifiable bagValue = bagIterator.next();
-      Assert.assertTrue(rids.contains(bagValue));
-    }
-  }
-
   public void testDocumentHelper() {
     ODocument document = new ODocument();
     ODocument embeddedDocument = new ODocument();
@@ -1459,4 +1409,50 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
   }
 
   protected abstract void assertEmbedded(boolean isEmbedded);
+
+  private void massiveInsertionIteration(Random rnd, List<OIdentifiable> rids, ORidBag bag) {
+    Iterator<OIdentifiable> bagIterator = bag.iterator();
+
+    while (bagIterator.hasNext()) {
+      OIdentifiable bagValue = bagIterator.next();
+      Assert.assertTrue(rids.contains(bagValue));
+    }
+
+    Assert.assertEquals(bag.size(), rids.size());
+
+    for (int i = 0; i < 100; i++) {
+      if (rnd.nextDouble() < 0.2 & rids.size() > 5) {
+        final int index = rnd.nextInt(rids.size());
+        final OIdentifiable rid = rids.remove(index);
+        bag.remove(rid);
+      } else {
+        final int positionIndex = rnd.nextInt(300);
+        final long position = positionIndex;
+
+        final ORecordId recordId = new ORecordId(1, position);
+        rids.add(recordId);
+        bag.add(recordId);
+      }
+    }
+
+    bagIterator = bag.iterator();
+
+    while (bagIterator.hasNext()) {
+      final OIdentifiable bagValue = bagIterator.next();
+      Assert.assertTrue(rids.contains(bagValue));
+
+      if (rnd.nextDouble() < 0.05) {
+        bagIterator.remove();
+        Assert.assertTrue(rids.remove(bagValue));
+      }
+    }
+
+    Assert.assertEquals(bag.size(), rids.size());
+    bagIterator = bag.iterator();
+
+    while (bagIterator.hasNext()) {
+      final OIdentifiable bagValue = bagIterator.next();
+      Assert.assertTrue(rids.contains(bagValue));
+    }
+  }
 }

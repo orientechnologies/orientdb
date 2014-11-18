@@ -72,19 +72,19 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
 
     final ODocument value = rec.getRecord();
 
-    if (value == null || value.getSchemaClass() == null)
+    if (value == null || value.getImmutableSchemaClass() == null)
       return null;
 
     final OrientEdge edge;
-    if (value.getSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
+    if (value.getImmutableSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
       // DIRECT VERTEX, CREATE DUMMY EDGE
       if (connection.getKey() == Direction.OUT)
-        edge = new OrientEdge(this.sourceVertex.graph, this.sourceVertex.getIdentity(), rec.getIdentity(), connection.getValue());
+        edge = new OrientEdge(this.sourceVertex.getIdentity(), rec.getIdentity(), connection.getValue());
       else
-        edge = new OrientEdge(this.sourceVertex.graph, rec.getIdentity(), this.sourceVertex.getIdentity(), connection.getValue());
-    } else if (value.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+        edge = new OrientEdge( rec.getIdentity(), this.sourceVertex.getIdentity(), connection.getValue());
+    } else if (value.getImmutableSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
       // EDGE
-      edge = new OrientEdge(this.sourceVertex.graph, rec.getIdentity());
+      edge = new OrientEdge(rec.getIdentity());
     } else
       throw new IllegalStateException("Invalid content found while iterating edges, value '" + value + "' is not an edge");
 

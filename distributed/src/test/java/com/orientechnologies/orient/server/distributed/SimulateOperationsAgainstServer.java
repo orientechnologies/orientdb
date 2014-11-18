@@ -22,7 +22,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -34,15 +34,18 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
  * Executes random operations against multiple servers
  */
 public class SimulateOperationsAgainstServer {
-  protected static final int delay           = 0;
-  private static final int   MAX_RETRY       = 30;
-  protected final AtomicLong totalOperations = new AtomicLong();
-  protected int              count           = 1000;
-  protected int              threads         = 20;
-  protected String[]         urls            = new String[] { "remote:localhost:2424/test", "remote:localhost:2425/test" };
-  protected String           className       = "Customer";
-  protected String           userName        = "admin";
-  protected String           userPassword    = "admin";
+  protected static final int                    delay           = 0;
+  private static final int                      MAX_RETRY       = 30;
+  protected final AtomicLong                    totalOperations = new AtomicLong();
+  protected int                                 count           = 1000;
+  protected int                                 threads         = 20;
+  protected String[]                            urls            = new String[] { "remote:localhost:2424/test",
+      "remote:localhost:2425/test"                             };
+  protected String                              className       = "Customer";
+  protected String                              userName        = "admin";
+  protected String                              userPassword    = "admin";
+
+  private final OPartitionedDatabasePoolFactory poolFactory     = new OPartitionedDatabasePoolFactory();
 
   public static void main(String[] args) {
     new SimulateOperationsAgainstServer().randomExecute();
@@ -50,7 +53,6 @@ public class SimulateOperationsAgainstServer {
 
   public SimulateOperationsAgainstServer() {
     OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.setValue(threads + 5);
-    OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(true);
   }
 
   public void randomExecute() {
@@ -216,7 +218,7 @@ public class SimulateOperationsAgainstServer {
   }
 
   protected ODatabaseDocumentTx getDatabase(final String dbUrl) {
-    return ODatabaseDocumentPool.global(threads, threads * 2).acquire(dbUrl, userName, userPassword);
+    return poolFactory.get(dbUrl, userName, userPassword).acquire();
   }
 
 }

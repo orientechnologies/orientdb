@@ -21,22 +21,14 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.script.Bindings;
-import javax.script.Invocable;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
+import javax.script.*;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.script.OCommandScriptException;
-import com.orientechnologies.orient.core.command.script.OScriptDocumentDatabaseWrapper;
-import com.orientechnologies.orient.core.command.script.OScriptInjection;
-import com.orientechnologies.orient.core.command.script.OScriptManager;
-import com.orientechnologies.orient.core.command.script.OScriptOrientWrapper;
+import com.orientechnologies.orient.core.command.script.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -47,26 +39,26 @@ import com.orientechnologies.orient.core.schedule.OSchedulerListener.SCHEDULER_S
  */
 
 public class OScheduler implements Runnable {
-  public final static String      CLASSNAME      = "OSchedule";
+  public final static String        CLASSNAME      = "OSchedule";
 
-  public static String            PROP_NAME      = "name";
-  public static String            PROP_RULE      = "rule";
-  public static String            PROP_ARGUMENTS = "arguments";
-  public static String            PROP_STATUS    = "status";
-  public static String            PROP_FUNC      = "function";
-  public static String            PROP_STARTTIME = "starttime";
-  public static String            PROP_STARTED   = "start";
+  public static String              PROP_NAME      = "name";
+  public static String              PROP_RULE      = "rule";
+  public static String              PROP_ARGUMENTS = "arguments";
+  public static String              PROP_STATUS    = "status";
+  public static String              PROP_FUNC      = "function";
+  public static String              PROP_STARTTIME = "starttime";
+  public static String              PROP_STARTED   = "start";
 
-  private String                  name;
-  private String                  rule;
-  private Map<Object, Object>     iArgs;
-  private String                  status;
-  private OFunction               function;
-  private Date                    startTime;
-  private ODocument               document;
-  private ODatabaseRecordInternal db;
-  private boolean                 started;
-  private boolean                 isRunning      = false;
+  private String                    name;
+  private String                    rule;
+  private Map<Object, Object>       iArgs;
+  private String                    status;
+  private OFunction                 function;
+  private Date                      startTime;
+  private ODocument                 document;
+  private ODatabaseDocumentInternal db;
+  private boolean                   started;
+  private boolean                   isRunning      = false;
 
   public OScheduler(ODocument doc) {
     this.name = doc.field(PROP_NAME);
@@ -162,8 +154,6 @@ public class OScheduler implements Runnable {
     try {
       if (this.function == null)
         return;
-      if (db != null && !(db instanceof ODatabaseRecordTx))
-        db = db.getUnderlying();
       scriptManager = Orient.instance().getScriptManager();
       final ScriptEngine scriptEngine = scriptManager.getEngine(this.function.getLanguage());
       binding = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE);
@@ -172,7 +162,7 @@ public class OScheduler implements Runnable {
         i.bind(binding);
       binding.put("doc", this.document);
       if (db != null)
-        binding.put("db", new OScriptDocumentDatabaseWrapper((ODatabaseRecordTx) db));
+        binding.put("db", new OScriptDocumentDatabaseWrapper((ODatabaseDocumentTx) db));
       binding.put("orient", new OScriptOrientWrapper(db));
       if (iArgs != null) {
         for (Entry<Object, Object> a : iArgs.entrySet()) {

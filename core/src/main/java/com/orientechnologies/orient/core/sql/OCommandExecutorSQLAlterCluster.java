@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.sql;
 
 import java.io.IOException;
@@ -29,11 +29,9 @@ import java.util.regex.Pattern;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -56,7 +54,7 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
   protected String           value;
 
   public OCommandExecutorSQLAlterCluster parse(final OCommandRequest iRequest) {
-    final ODatabaseRecord database = getDatabase();
+    final ODatabaseDocument database = getDatabase();
 
     init((OCommandRequestText) iRequest);
 
@@ -128,20 +126,21 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
       clusterId = cluster.getId();
     }
 
+    Object result;
     try {
-      cluster.set(attribute, value);
+      result = cluster.set(attribute, value);
       final OStorage storage = getDatabase().getStorage();
       if (storage instanceof OLocalPaginatedStorage)
-        ((OLocalPaginatedStorage) storage).makeFullCheckpoint();
+        ((OLocalPaginatedStorage) storage).synch();
     } catch (IOException ioe) {
       throw new OCommandExecutionException("Error altering cluster '" + clusterName + "'", ioe);
     }
 
-    return null;
+    return result;
   }
 
   protected OCluster getCluster() {
-    final ODatabaseRecordInternal database = getDatabase();
+    final ODatabaseDocumentInternal database = getDatabase();
     if (clusterId > -1) {
       return database.getStorage().getClusterById(clusterId);
     } else {

@@ -328,6 +328,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB,
         OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_TTL.getValueAsLong() * 1000,
         OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL.getValueAsInteger(), this, writeAheadLog, false, true);
+
+		diskCache.addLowDiskSpaceListener(this);
   }
 
   private boolean exists(String path) {

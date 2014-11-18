@@ -300,7 +300,7 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
     if (includeClasses == null && excludeClasses == null)
       return true;
 
-    final OClass clazz = iDocument.getSchemaClass();
+    final OClass clazz = iDocument.getImmutableSchemaClass();
     if (clazz == null)
       return false;
 

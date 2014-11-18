@@ -162,7 +162,6 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
     OrientGraphFactory factory = graphFactories.get(url);
     if (factory == null) {
       factory = new OrientGraphFactory(url);
-      factory.setTransactional(false);
       factory.setupPool(5, 256);
       graphFactories.put(url, factory);
     }

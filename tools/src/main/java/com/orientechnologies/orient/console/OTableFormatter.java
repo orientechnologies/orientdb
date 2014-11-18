@@ -1,44 +1,33 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.console;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.console.OConsoleApplication;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -47,11 +36,12 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 
 public class OTableFormatter {
   protected final static String       MORE            = "...";
-  protected final static Set<String>  prefixedColumns = new HashSet<String>(Arrays.asList(new String[] { "#", "@RID" }));
+  protected final static Set<String>  prefixedColumns = new LinkedHashSet<String>(Arrays.asList(new String[] { "#", "@RID",
+      "@CLASS"                                       }));
   protected final OConsoleApplication out;
   protected final SimpleDateFormat    DEF_DATEFORMAT  = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
   protected int                       minColumnSize   = 4;
-  protected int                       maxWidthSize    = 132;
+  protected int                       maxWidthSize    = 150;
 
   public OTableFormatter(final OConsoleApplication iConsole) {
     this.out = iConsole;
@@ -159,7 +149,7 @@ public class OTableFormatter {
         value = ((ORecord) value).getIdentity().toString();
       }
     } else if (value instanceof Date) {
-      final ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
       if (db != null)
         value = db.getStorage().getConfiguration().getDateTimeFormatInstance().format((Date) value);
       else {

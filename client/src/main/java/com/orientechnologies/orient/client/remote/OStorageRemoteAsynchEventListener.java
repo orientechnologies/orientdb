@@ -39,7 +39,7 @@ public class OStorageRemoteAsynchEventListener implements ORemoteServerEventList
       if (OLogManager.instance().isDebugEnabled()) {
         synchronized (storage.getClusterConfiguration()) {
           OLogManager.instance()
-              .debug(this, "Received new cluster configuration: %s", storage.getClusterConfiguration().toJSON(""));
+              .debug(this, "Received new cluster configuration: %s", storage.getClusterConfiguration().toJSON("prettyPrint"));
         }
       }
     }

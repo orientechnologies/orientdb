@@ -15,10 +15,23 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import org.junit.Test;
+
 /**
  * Insert records concurrently against the cluster using "local" protocol.
  */
 public class ServerClusterLocalInsertTest extends AbstractServerClusterInsertTest {
+  @Test
+  public void test() throws Exception {
+    init(3);
+    prepare(false);
+    execute();
+  }
+
+  @Override
+  public String getDatabaseName() {
+    return "distributed-insertnotx";
+  }
 
   protected String getDatabaseURL(final ServerRun server) {
     return "plocal:" + server.getDatabasePath(getDatabaseName());

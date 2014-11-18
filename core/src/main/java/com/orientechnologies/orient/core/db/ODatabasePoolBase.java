@@ -87,7 +87,7 @@ public abstract class ODatabasePoolBase<DB extends ODatabaseInternal> extends Th
                 if (iValue.getStorage().isClosed())
                   // STORAGE HAS BEEN CLOSED: REOPEN IT
                   iValue.getStorage().open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1], null);
-                else if (!((ODatabaseComplex<?>) iValue).getUser().checkPassword((String) iAdditionalArgs[1]))
+                else if (!iValue.getUser().checkPassword((String) iAdditionalArgs[1]))
                   throw new OSecurityAccessException(iValue.getName(), "User or password not valid for database: '"
                       + iValue.getName() + "'");
 
@@ -142,6 +142,11 @@ public abstract class ODatabasePoolBase<DB extends ODatabaseInternal> extends Th
     setup();
     return dbPool.getMaxConnections(name, userName);
   }
+
+	public int getCreatedInstances(final  String name, final String userName) {
+		setup();
+		return dbPool.getCreatedInstances(name, userName);
+	}
 
   /**
    * Acquires a connection from the pool specifying options. If the pool is empty, then the caller thread will wait for it.

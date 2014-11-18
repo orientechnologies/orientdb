@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core.sql.operator;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -75,7 +75,7 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
 
   @SuppressWarnings({ "unchecked", "deprecation" })
   @Override
-  public Collection<OIdentifiable> filterRecords(final ODatabaseComplex<?> iDatabase, final List<String> iTargetClasses,
+  public Collection<OIdentifiable> filterRecords(final ODatabase<?> iDatabase, final List<String> iTargetClasses,
       final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
 
     final String fieldName;
@@ -92,7 +92,7 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
 
     final String className = iTargetClasses.get(0);
 
-    final OProperty prop = iDatabase.getMetadata().getSchema().getClass(className).getProperty(fieldName);
+    final OProperty prop = iDatabase.getMetadata().getImmutableSchemaSnapshot().getClass(className).getProperty(fieldName);
     if (prop == null)
       // NO PROPERTY DEFINED
       return null;

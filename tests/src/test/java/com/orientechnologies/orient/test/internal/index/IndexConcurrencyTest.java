@@ -234,8 +234,6 @@ public class IndexConcurrencyTest {
   }
 
   public static void main(String[] args) {
-    OGlobalConfiguration.CACHE_LOCAL_ENABLED.setValue(false);
-
     int tries = 20;
     for (int cnt = 0; cnt < tries; cnt++) {
 

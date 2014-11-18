@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.method.misc.OSQLMethodField;
 import com.orientechnologies.orient.core.sql.methods.OSQLMethodRuntime;
 
@@ -99,7 +98,7 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
 
     // UNMARSHALL THE SINGLE FIELD
     if (doc.deserializeFields(preLoadedFieldsArray)) {
-      final Object v = ODocumentHelper.getFieldValue(doc, name);
+      final Object v = doc.rawField(name);
 
       collate = getCollateForField(doc, name);
 

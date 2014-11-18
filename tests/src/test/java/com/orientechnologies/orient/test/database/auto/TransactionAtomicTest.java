@@ -25,7 +25,6 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -45,13 +44,13 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
 
   @Test
   public void testTransactionAtomic() throws IOException {
-    ODatabaseFlat db1 = new ODatabaseFlat(url);
+    ODatabaseDocumentTx db1 = new ODatabaseDocumentTx(url);
     db1.open("admin", "admin");
 
-    ODatabaseFlat db2 = new ODatabaseFlat(url);
+    ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(url);
     db2.open("admin", "admin");
 
-    ORecordFlat record1 = new ORecordFlat(db1);
+    ORecordFlat record1 = new ORecordFlat();
     record1.value("This is the first version").save();
 
     // RE-READ THE RECORD
@@ -91,7 +90,7 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
 
   @Test(expectedExceptions = OTransactionException.class)
   public void testTransactionPreListenerRollback() throws IOException {
-    ODatabaseFlat db = new ODatabaseFlat(url);
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
     db.open("admin", "admin");
 
     ORecordFlat record1 = new ORecordFlat(db);

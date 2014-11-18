@@ -25,12 +25,11 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMultiThreadTest;
 import com.orientechnologies.orient.test.database.base.OrientThreadTest;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.Date;
 
-@Test(enabled = false)
+
 public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTest {
   private ODatabaseDocumentTx database;
   private long                foundObjects;
@@ -88,16 +87,18 @@ public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTe
     OGlobalConfiguration.USE_WAL.setValue(false);
     LocalCreateDocumentMultiThreadSpeedTest test = new LocalCreateDocumentMultiThreadSpeedTest();
     test.data.go(test);
+    OGlobalConfiguration.USE_WAL.setValue(true);
   }
 
   @Override
   public void init() {
     database = new ODatabaseDocumentTx(System.getProperty("url"));
     database.setSerializer(new ORecordSerializerBinary());
-    if (database.exists())
-      // database.open("admin", "admin");
+    if (database.exists()) {
+      database.open("admin", "admin");
       // else
       database.drop();
+    }
 
     database.create();
     database.set(ODatabase.ATTRIBUTES.MINIMUMCLUSTERS, 8);
@@ -110,11 +111,20 @@ public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTe
 
   @Override
   public void deinit() {
-    long total = database.countClusterElements("Account");
+    // long total = database.countClusterElements("Account");
+    //
+    // System.out.println("\nTotal objects in Account cluster after the test: " + total);
+    // System.out.println("Created " + (total - foundObjects));
+    // Assert.assertEquals(total - foundObjects, threadCycles);
 
-    System.out.println("\nTotal objects in Account cluster after the test: " + total);
-    System.out.println("Created " + (total - foundObjects));
-    Assert.assertEquals(total - foundObjects, threadCycles);
+    int counter = 0;
+    for (int i = 0; i < 1000000; i++) {
+      for (ODocument doc : database.browseClass("Account"))
+        if (doc != null)
+          counter++;
+    }
+
+    System.out.println(counter);
 
     if (database != null)
       database.close();

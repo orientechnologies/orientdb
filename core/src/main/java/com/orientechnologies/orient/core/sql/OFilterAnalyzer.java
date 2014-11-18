@@ -20,12 +20,6 @@
 
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -35,6 +29,8 @@ import com.orientechnologies.orient.core.sql.operator.OIndexReuseType;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
+
+import java.util.*;
 
 /**
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
@@ -57,23 +53,58 @@ public class OFilterAnalyzer {
     return result;
   }
 
+  public List<List<OIndexSearchResult>> analyzeMainCondition(OSQLFilterCondition condition, final OClass schemaClass,
+      OCommandContext context) {
+    return analyzeOrFilterBranch(schemaClass, condition, context);
+  }
+
+  private List<List<OIndexSearchResult>> analyzeOrFilterBranch(final OClass iSchemaClass, OSQLFilterCondition condition,
+      OCommandContext iContext) {
+    if (condition == null) {
+      return null;
+    }
+
+    OQueryOperator operator = condition.getOperator();
+
+    while (operator == null) {
+      if (condition.getRight() == null && condition.getLeft() instanceof OSQLFilterCondition) {
+        condition = (OSQLFilterCondition) condition.getLeft();
+        operator = condition.getOperator();
+      } else {
+        return null;
+      }
+    }
+
+    final OIndexReuseType indexReuseType = operator.getIndexReuseType(condition.getLeft(), condition.getRight());
+    if (OIndexReuseType.INDEX_UNION.equals(indexReuseType)) {
+      return analyzeUnion(iSchemaClass, condition, iContext);
+    }
+
+    List<List<OIndexSearchResult>> result = new ArrayList<List<OIndexSearchResult>>();
+    List<OIndexSearchResult> sub = analyzeCondition(condition, iSchemaClass, iContext);
+//    analyzeFilterBranch(iSchemaClass, condition, sub, iContext);
+    result.add(sub);
+    return result;
+  }
+
   /**
    * Analyzes a query filter for a possible indexation options. The results are sorted by amount of fields. So the most specific
    * items go first.
-   * 
-   * @param condition
-   *          to analyze
-   * @param schemaClass
-   *          the class that is scanned by query
-   * @param context
-   *          of the query
+   *
+   * @param condition   to analyze
+   * @param schemaClass the class that is scanned by query
+   * @param context     of the query
    * @return list of OIndexSearchResult items
    */
-  public List<OIndexSearchResult> analyzeCondition(OSQLFilterCondition condition, final OClass schemaClass, OCommandContext context) {
+  public List<OIndexSearchResult> analyzeCondition(OSQLFilterCondition condition, final OClass schemaClass,
+      OCommandContext context) {
 
     final List<OIndexSearchResult> indexSearchResults = new ArrayList<OIndexSearchResult>();
-    analyzeFilterBranch(schemaClass, condition, indexSearchResults, context);
+    OIndexSearchResult lastCondition = analyzeFilterBranch(schemaClass, condition, indexSearchResults, context);
 
+    if (indexSearchResults.isEmpty() && lastCondition != null) {
+      indexSearchResults.add(lastCondition);
+    }
     Collections.sort(indexSearchResults, new Comparator<OIndexSearchResult>() {
       public int compare(final OIndexSearchResult searchResultOne, final OIndexSearchResult searchResultTwo) {
         return searchResultTwo.getFieldCount() - searchResultOne.getFieldCount();
@@ -85,8 +116,9 @@ public class OFilterAnalyzer {
 
   private OIndexSearchResult analyzeFilterBranch(final OClass iSchemaClass, OSQLFilterCondition condition,
       final List<OIndexSearchResult> iIndexSearchResults, OCommandContext iContext) {
-    if (condition == null)
+    if (condition == null) {
       return null;
+    }
 
     OQueryOperator operator = condition.getOperator();
 
@@ -120,14 +152,17 @@ public class OFilterAnalyzer {
   private OIndexSearchResult analyzeIndexMethod(OClass iSchemaClass, OSQLFilterCondition condition,
       List<OIndexSearchResult> iIndexSearchResults) {
     OIndexSearchResult result = createIndexedProperty(condition, condition.getLeft());
-    if (result == null)
+    if (result == null) {
       result = createIndexedProperty(condition, condition.getRight());
+    }
 
-    if (result == null)
+    if (result == null) {
       return null;
+    }
 
-    if (checkIndexExistence(iSchemaClass, result))
+    if (checkIndexExistence(iSchemaClass, result)) {
       iIndexSearchResults.add(result);
+    }
 
     return result;
   }
@@ -142,8 +177,10 @@ public class OFilterAnalyzer {
     if (leftResult != null && rightResult != null) {
       if (leftResult.canBeMerged(rightResult)) {
         final OIndexSearchResult mergeResult = leftResult.merge(rightResult);
-        if (iSchemaClass.areIndexed(mergeResult.fields()))
+        if (iSchemaClass.areIndexed(mergeResult.fields())) {
           iIndexSearchResults.add(mergeResult);
+        }
+
         return leftResult.merge(rightResult);
       }
     }
@@ -151,26 +188,37 @@ public class OFilterAnalyzer {
     return null;
   }
 
+  private List<List<OIndexSearchResult>> analyzeUnion(OClass iSchemaClass, OSQLFilterCondition condition,
+      OCommandContext iContext) {
+    List<List<OIndexSearchResult>> result = new ArrayList<List<OIndexSearchResult>>();
+
+    result.addAll(analyzeOrFilterBranch(iSchemaClass, (OSQLFilterCondition) condition.getLeft(), iContext));
+    result.addAll(analyzeOrFilterBranch(iSchemaClass, (OSQLFilterCondition) condition.getRight(), iContext));
+
+    return result;
+  }
+
   /**
    * Add SQL filter field to the search candidate list.
-   * 
-   * @param iCondition
-   *          Condition item
-   * @param iItem
-   *          Value to search
+   *
+   * @param iCondition Condition item
+   * @param iItem      Value to search
    * @return true if the property was indexed and found, otherwise false
    */
   private OIndexSearchResult createIndexedProperty(final OSQLFilterCondition iCondition, final Object iItem) {
-    if (iItem == null || !(iItem instanceof OSQLFilterItemField))
+    if (iItem == null || !(iItem instanceof OSQLFilterItemField)) {
       return null;
+    }
 
-    if (iCondition.getLeft() instanceof OSQLFilterItemField && iCondition.getRight() instanceof OSQLFilterItemField)
+    if (iCondition.getLeft() instanceof OSQLFilterItemField && iCondition.getRight() instanceof OSQLFilterItemField) {
       return null;
+    }
 
     final OSQLFilterItemField item = (OSQLFilterItemField) iItem;
 
-    if (item.hasChainOperators() && !item.isFieldChain())
+    if (item.hasChainOperators() && !item.isFieldChain()) {
       return null;
+    }
 
     final Object origValue = iCondition.getLeft() == iItem ? iCondition.getRight() : iCondition.getLeft();
 

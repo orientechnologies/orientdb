@@ -1,34 +1,34 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Co
+ *  yright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.metadata.schema;
-
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
-import com.orientechnologies.orient.core.db.record.OProxedResource;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
-import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.record.OProxedResource;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
+import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 /**
  * Proxy class to use the shared OSchemaShared instance. Before to delegate each operations it sets the current database in the
@@ -39,8 +39,14 @@ import java.util.Set;
  */
 @SuppressWarnings("unchecked")
 public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSchema {
-  public OSchemaProxy(final OSchemaShared iDelegate, final ODatabaseRecordInternal iDatabase) {
+
+  public OSchemaProxy(final OSchemaShared iDelegate, final ODatabaseDocumentInternal iDatabase) {
     super(iDelegate, iDatabase);
+  }
+
+  @Override
+  public OImmutableSchema makeSnapshot() {
+    return delegate.makeSnapshot();
   }
 
   public void create() {
@@ -49,7 +55,6 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   }
 
   public int countClasses() {
-    setCurrentDatabaseInThreadLocal();
     return delegate.countClasses();
   }
 
@@ -69,13 +74,21 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   }
 
   public OClass getOrCreateClass(final String iClassName) {
-    setCurrentDatabaseInThreadLocal();
-    return delegate.getOrCreateClass(iClassName);
+    return getOrCreateClass(iClassName, null);
   }
 
   public OClass getOrCreateClass(final String iClassName, final OClass iSuperClass) {
+    if (iClassName == null)
+      return null;
+
+    OClass cls = delegate.getClass(iClassName.toLowerCase());
+    if (cls != null)
+      return cls;
+
     setCurrentDatabaseInThreadLocal();
-    return delegate.getOrCreateClass(iClassName, iSuperClass);
+    cls = delegate.getOrCreateClass(iClassName, iSuperClass);
+
+    return cls;
   }
 
   public OClass createClass(final String iClassName, final OClass iSuperClass) {
@@ -99,19 +112,19 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   }
 
   @Override
-  public OClass createAbstractClass(Class<?> iClass) {
+  public OClass createAbstractClass(final Class<?> iClass) {
     setCurrentDatabaseInThreadLocal();
     return delegate.createAbstractClass(iClass);
   }
 
   @Override
-  public OClass createAbstractClass(String iClassName) {
+  public OClass createAbstractClass(final String iClassName) {
     setCurrentDatabaseInThreadLocal();
     return delegate.createAbstractClass(iClassName);
   }
 
   @Override
-  public OClass createAbstractClass(String iClassName, OClass iSuperClass) {
+  public OClass createAbstractClass(final String iClassName, final OClass iSuperClass) {
     setCurrentDatabaseInThreadLocal();
     return delegate.createAbstractClass(iClassName, iSuperClass);
   }
@@ -122,33 +135,41 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   }
 
   public boolean existsClass(final String iClassName) {
-    setCurrentDatabaseInThreadLocal();
-    return delegate.existsClass(iClassName);
+    if (iClassName == null)
+      return false;
+
+    return delegate.existsClass(iClassName.toLowerCase());
   }
 
   public OClass getClass(final Class<?> iClass) {
-    setCurrentDatabaseInThreadLocal();
+    if (iClass == null)
+      return null;
+
     return delegate.getClass(iClass);
   }
 
   public OClass getClass(final String iClassName) {
-    setCurrentDatabaseInThreadLocal();
+    if (iClassName == null)
+      return null;
+
     return delegate.getClass(iClassName);
   }
 
   public Collection<OClass> getClasses() {
-    setCurrentDatabaseInThreadLocal();
     return delegate.getClasses();
   }
 
   public void load() {
     setCurrentDatabaseInThreadLocal();
     delegate.load();
+
   }
 
   public <RET extends ODocumentWrapper> RET reload() {
     setCurrentDatabaseInThreadLocal();
-    return (RET) delegate.reload();
+    delegate.reload();
+
+    return (RET) delegate;
   }
 
   public <RET extends ODocumentWrapper> RET save() {
@@ -170,6 +191,7 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   }
 
   public String toString() {
+    setCurrentDatabaseInThreadLocal();
     return delegate.toString();
   }
 
@@ -201,5 +223,4 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   public OClusterSelectionFactory getClusterSelectionFactory() {
     return delegate.getClusterSelectionFactory();
   }
-
 }

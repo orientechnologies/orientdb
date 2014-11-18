@@ -1,50 +1,40 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.text.ParseException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
+import com.orientechnologies.orient.core.fetch.OFetchPlan;
 import com.orientechnologies.orient.core.fetch.json.OJSONFetchContext;
 import com.orientechnologies.orient.core.fetch.json.OJSONFetchListener;
 import com.orientechnologies.orient.core.id.ORID;
@@ -63,7 +53,6 @@ import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.util.ODateHelper;
-import com.orientechnologies.orient.core.version.ODistributedVersion;
 
 @SuppressWarnings("serial")
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
@@ -233,18 +222,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           if (fieldName.equals(ODocumentHelper.ATTRIBUTE_RID))
             ORecordInternal.setIdentity(iRecord, new ORecordId(fieldValueAsString));
           else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_VERSION))
-            if (OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean())
-              recordVersion = Integer.parseInt(fieldValue);
-            else
-              iRecord.getRecordVersion().setCounter(Integer.parseInt(fieldValue));
-          else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_VERSION_TIMESTAMP)) {
-            if (OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean())
-              timestamp = Long.parseLong(fieldValue);
-          } else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_VERSION_MACADDRESS)) {
-            if (OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean())
-              macAddress = Long.parseLong(fieldValue);
-
-          } else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_TYPE)) {
+            iRecord.getRecordVersion().setCounter(Integer.parseInt(fieldValue));
+          else if (fieldName.equals(ODocumentHelper.ATTRIBUTE_TYPE)) {
             continue;
           } else if (fieldName.equals(ATTRIBUTE_FIELD_TYPES) && iRecord instanceof ODocument) {
             continue;
@@ -316,10 +295,6 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           }
 
         }
-        if (timestamp != 0 && OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean()) {
-          ((ODistributedVersion) iRecord.getRecordVersion()).update(recordVersion, timestamp, macAddress);
-        }
-
       } catch (Exception e) {
         if (iRecord.getIdentity().isValid())
           throw new OSerializationException("Error on unmarshalling JSON content for record " + iRecord.getIdentity(), e);
@@ -345,9 +320,9 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       context.writeSignature(json, iRecord);
 
       if (iRecord instanceof ODocument) {
+        final OFetchPlan fp = OFetchHelper.buildFetchPlan(settings.fetchPlan);
 
-        OFetchHelper.fetch(iRecord, null, OFetchHelper.buildFetchPlan(settings.fetchPlan), new OJSONFetchListener(), context,
-            iFormat);
+        OFetchHelper.fetch(iRecord, null, fp, new OJSONFetchListener(), context, iFormat);
       } else if (iRecord instanceof ORecordStringable) {
 
         // STRINGABLE
@@ -379,7 +354,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
   private OType determineType(ODocument doc, String fieldName) {
     OType type = null;
-    final OClass cls = doc.getSchemaClass();
+    final OClass cls = doc.getImmutableSchemaClass();
     if (cls != null) {
       final OProperty prop = cls.getProperty(fieldName);
       if (prop != null)
@@ -421,8 +396,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     if (iFieldValue.equals("null"))
       return null;
 
-    if (iFieldName != null && iRecord.getSchemaClass() != null) {
-      final OProperty p = iRecord.getSchemaClass().getProperty(iFieldName);
+    if (iFieldName != null && iRecord.getImmutableSchemaClass() != null) {
+      final OProperty p = iRecord.getImmutableSchemaClass().getProperty(iFieldName);
       if (p != null) {
         iType = p.getType();
         iLinkedType = p.getLinkedType();
@@ -620,7 +595,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     if (shouldBeDeserializedAsEmbedded(recordInternal, iType))
       ODocumentInternal.addOwner(recordInternal, iRecord);
     else {
-      ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
+      ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
 
       if (rid.isPersistent() && database != null) {
         ODocument documentToMerge = database.load(rid);

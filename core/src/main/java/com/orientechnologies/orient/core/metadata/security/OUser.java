@@ -41,16 +41,13 @@ import java.util.Set;
  * 
  * @see ORole
  */
-public class OUser extends ODocumentWrapper {
+public class OUser extends ODocumentWrapper implements  OSecurityUser {
   public static final String ADMIN            = "admin";
   public static final String CLASS_NAME       = "OUser";
   private static final long  serialVersionUID = 1L;
   // AVOID THE INVOCATION OF SETTER
   protected Set<ORole>       roles            = new HashSet<ORole>();
 
-  public enum STATUSES {
-    SUSPENDED, ACTIVE
-  }
 
   /**
    * Constructor used in unmarshalling.
@@ -98,7 +95,6 @@ public class OUser extends ODocumentWrapper {
         if (role == null) {
           OLogManager.instance().warn(this, "User '%s' declare to have the role '%s' but it does not exist in database, skipt it",
               getName(), d.field("name"));
-          document.getDatabase().getMetadata().getSecurity().repair();
         } else
           roles.add(role);
       }
@@ -107,14 +103,12 @@ public class OUser extends ODocumentWrapper {
   /**
    * Checks if the user has the permission to access to the requested resource for the requested operation.
    * 
-   * @param iResource
-   *          Requested resource
    * @param iOperation
    *          Requested operation
    * @return The role that has granted the permission if any, otherwise a OSecurityAccessException exception is raised
    * @exception OSecurityAccessException
    */
-  public ORole allow(final String iResource, final int iOperation) {
+  public ORole allow(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation) {
     if (roles == null || roles.isEmpty()) {
       if (document.field("roles") != null && !((Collection<OIdentifiable>) document.field("roles")).isEmpty()) {
         final ODocument doc = document;
@@ -125,12 +119,12 @@ public class OUser extends ODocumentWrapper {
             + "' has no role defined");
     }
 
-    final ORole role = checkIfAllowed(iResource, iOperation);
+    final ORole role = checkIfAllowed(resourceGeneric, resourceSpecific, iOperation);
 
     if (role == null)
       throw new OSecurityAccessException(document.getDatabase().getName(), "User '" + document.field("name")
           + "' has no the permission to execute the operation '" + ORole.permissionToString(iOperation)
-          + "' against the resource: " + iResource);
+          + "' against the resource: " + resourceGeneric  + "." + resourceSpecific);
 
     return role;
   }
@@ -138,37 +132,70 @@ public class OUser extends ODocumentWrapper {
   /**
    * Checks if the user has the permission to access to the requested resource for the requested operation.
    * 
-   * @param iResource
-   *          Requested resource
    * @param iOperation
    *          Requested operation
    * @return The role that has granted the permission if any, otherwise null
    */
-  public ORole checkIfAllowed(final String iResource, final int iOperation) {
+  public ORole checkIfAllowed(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation) {
     for (ORole r : roles) {
       if (r == null)
         OLogManager.instance().warn(this,
             "User '%s' has a null role, bypass it. Consider to fix this user roles before to continue", getName());
-      else if (r.allow(iResource, iOperation))
+      else if (r.allow(resourceGeneric, resourceSpecific, iOperation))
         return r;
     }
 
     return null;
   }
 
-  /**
+	@Override
+	@Deprecated
+	public OSecurityRole allow(String iResource, int iOperation) {
+		final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
+		final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
+
+		if (resourceSpecific == null || resourceSpecific.equals("*"))
+			return allow(resourceGeneric, null, iOperation);
+
+		return allow(resourceGeneric, resourceSpecific, iOperation);
+	}
+
+	@Override
+	@Deprecated
+	public OSecurityRole checkIfAllowed(String iResource, int iOperation) {
+		final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
+		final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
+
+		if (resourceSpecific == null || resourceSpecific.equals("*"))
+			return checkIfAllowed(resourceGeneric, null, iOperation);
+
+		return checkIfAllowed(resourceGeneric, resourceSpecific, iOperation);
+	}
+
+	@Override
+	@Deprecated
+	public boolean isRuleDefined(String iResource) {
+		final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
+		final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
+
+		if (resourceSpecific == null || resourceSpecific.equals("*"))
+			return isRuleDefined(resourceGeneric, null);
+
+		return isRuleDefined(resourceGeneric, resourceSpecific);
+	}
+
+
+	/**
    * Checks if a rule was defined for the user.
    * 
-   * @param iResource
-   *          Requested resource
    * @return True is a rule is defined, otherwise false
    */
-  public boolean isRuleDefined(final String iResource) {
+  public boolean isRuleDefined(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific) {
     for (ORole r : roles)
       if (r == null)
         OLogManager.instance().warn(this,
             "User '%s' has a null role, bypass it. Consider to fix this user roles before to continue", getName());
-      else if (r.hasRule(iResource))
+      else if (r.hasRule(resourceGeneric, resourceSpecific))
         return true;
 
     return false;
@@ -217,9 +244,9 @@ public class OUser extends ODocumentWrapper {
     return this;
   }
 
-  public OUser addRole(final ORole iRole) {
+  public OUser addRole(final OSecurityRole iRole) {
     if (iRole != null)
-      roles.add(iRole);
+      roles.add((ORole)iRole);
 
     final HashSet<ODocument> persistentRoles = new HashSet<ODocument>();
     for (ORole r : roles) {
@@ -268,4 +295,9 @@ public class OUser extends ODocumentWrapper {
   public String toString() {
     return getName();
   }
+
+	@Override
+	public OIdentifiable getIdentity() {
+		return document;
+	}
 }

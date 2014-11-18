@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.serialization.serializer;
 
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
@@ -137,6 +137,8 @@ public class OJSONWriter {
       buffer.append('{');
       buffer.append(writeValue(entry.getKey(), iFormat));
       buffer.append(":");
+      if (iFormat.contains("prettyPrint"))
+        buffer.append(' ');
       buffer.append(writeValue(entry.getValue(), iFormat));
       buffer.append('}');
     }
@@ -334,6 +336,8 @@ public class OJSONWriter {
     if (iName != null && !iName.isEmpty()) {
       out.append(writeValue(iName, format));
       out.append(":");
+      if (prettyPrint)
+        out.append(' ');
     }
     out.append("[");
 
@@ -386,9 +390,11 @@ public class OJSONWriter {
     if (iName != null) {
       out.append(writeValue(iName, iFormat));
       out.append(":");
+      if (prettyPrint)
+        out.append(' ');
     }
 
-    if (iFormat.contains("graph") && iName!=null && (iName.startsWith("in_") || iName.startsWith("out_"))
+    if (iFormat != null && iFormat.contains("graph") && iName != null && (iName.startsWith("in_") || iName.startsWith("out_"))
         && (iValue == null || iValue instanceof OIdentifiable)) {
       // FORCE THE OUTPUT AS COLLECTION
       out.append('[');

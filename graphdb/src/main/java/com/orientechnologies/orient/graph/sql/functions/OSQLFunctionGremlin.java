@@ -71,7 +71,7 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
               return false;
 
             final ODocument document = (ODocument) iCurrentRecord;
-            if (document.getSchemaClass() != null && document.getSchemaClass().isSubClassOf("E")) {
+            if (document.getImmutableSchemaClass() != null && document.getImmutableSchemaClass().isSubClassOf("E")) {
               // EDGE TYPE, CREATE THE BLUEPRINTS'S WRAPPER
               OrientEdge graphElement = (OrientEdge) new OrientElementIterable<OrientEdge>(iGraph, Arrays
                   .asList(new ODocument[] { document })).iterator().next();

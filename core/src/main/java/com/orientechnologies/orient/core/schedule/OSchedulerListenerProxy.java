@@ -18,50 +18,49 @@ package com.orientechnologies.orient.core.schedule;
 
 import java.util.Map;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 
 /**
  * Author : henryzhao81@gmail.com Mar 28, 2013
  */
 public class OSchedulerListenerProxy extends OProxedResource<OSchedulerListener> implements OSchedulerListener {
-	public OSchedulerListenerProxy(final OSchedulerListener iDelegate, final ODatabaseRecordInternal iDatabase) {
-		super(iDelegate, iDatabase);
-	}
-	
-	@Override
-	public void addScheduler(OScheduler scheduler) {
-		delegate.addScheduler(scheduler);
-	}
+  public OSchedulerListenerProxy(final OSchedulerListener iDelegate, final ODatabaseDocumentInternal iDatabase) {
+    super(iDelegate, iDatabase);
+  }
 
-	@Override
-	public void removeScheduler(OScheduler scheduler) {
-        delegate.removeScheduler(scheduler);
-	}
+  @Override
+  public void addScheduler(OScheduler scheduler) {
+    delegate.addScheduler(scheduler);
+  }
 
-	@Override
-	public Map<String, OScheduler> getSchedulers() {
-        return delegate.getSchedulers();
-	}
+  @Override
+  public void removeScheduler(OScheduler scheduler) {
+    delegate.removeScheduler(scheduler);
+  }
 
-	@Override
-	public OScheduler getScheduler(String name) {
-		return delegate.getScheduler(name);
-	}
+  @Override
+  public Map<String, OScheduler> getSchedulers() {
+    return delegate.getSchedulers();
+  }
 
-	@Override
-	public void load() {
-		delegate.load();
-	}
+  @Override
+  public OScheduler getScheduler(String name) {
+    return delegate.getScheduler(name);
+  }
 
-	@Override
-	public void close() {
-        delegate.close();
-	}
-	
-	@Override
-	public void create() {
-		delegate.create();
-	}
+  @Override
+  public void load() {
+    delegate.load();
+  }
+
+  @Override
+  public void close() {
+    delegate.close();
+  }
+
+  @Override
+  public void create() {
+    delegate.create();
+  }
 }
