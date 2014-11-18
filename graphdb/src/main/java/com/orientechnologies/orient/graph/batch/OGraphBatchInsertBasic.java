@@ -1,11 +1,5 @@
 package com.orientechnologies.orient.graph.batch;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -14,6 +8,12 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  *
@@ -129,6 +129,7 @@ public class OGraphBatchInsertBasic {
         synchronized (runningThreads) {
           runningThreads.notifyAll();
         }
+        db.declareIntent(null);
         db.close();
       }
     }
@@ -238,6 +239,7 @@ public class OGraphBatchInsertBasic {
       }
 
     } finally {
+      db.declareIntent(null);
       db.close();
       if (walActive)
         OGlobalConfiguration.USE_WAL.setValue(walActive);

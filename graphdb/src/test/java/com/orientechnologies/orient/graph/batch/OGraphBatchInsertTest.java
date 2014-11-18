@@ -1,18 +1,16 @@
 package com.orientechnologies.orient.graph.batch;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import junit.framework.TestCase;
-
-import org.junit.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import junit.framework.TestCase;
+import org.junit.Test;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-at-orientechnologies.com)
@@ -22,7 +20,7 @@ public class OGraphBatchInsertTest extends TestCase {
 
   @Test
   public void test1() {
-    String dbUrl = "memory:test1";
+    String dbUrl = "memory:batchinsert_test1";
     OGraphBatchInsertBasic batch = new OGraphBatchInsertBasic(dbUrl, "admin", "admin");
     batch.begin();
 
@@ -40,7 +38,7 @@ public class OGraphBatchInsertTest extends TestCase {
 
   @Test
   public void test2() {
-    String dbUrl = "memory:test2";
+    String dbUrl = "memory:batchinsert_test2";
     OGraphBatchInsert batch = new OGraphBatchInsert(dbUrl, "admin", "admin");
     batch.begin();
 
@@ -59,7 +57,7 @@ public class OGraphBatchInsertTest extends TestCase {
 
   @Test
   public void test3() {
-    String dbUrl = "memory:test3";
+    String dbUrl = "memory:batchinsert_test3";
     OGraphBatchInsert batch = new OGraphBatchInsert(dbUrl, "admin", "admin");
     batch.begin();
 
@@ -80,7 +78,7 @@ public class OGraphBatchInsertTest extends TestCase {
 
   @Test
   public void test4() {
-    String dbUrl = "memory:test4";
+    String dbUrl = "memory:batchinsert_test4";
     OGraphBatchInsert batch = new OGraphBatchInsert(dbUrl, "admin", "admin");
     batch.begin();
 
@@ -116,7 +114,7 @@ public class OGraphBatchInsertTest extends TestCase {
 
   @Test
   public void test5() {
-    String dbUrl = "memory:test5";
+    String dbUrl = "memory:batchinsert_test5";
     OGraphBatchInsert batch = new OGraphBatchInsert(dbUrl, "admin", "admin");
     batch.begin();
 
@@ -135,7 +133,7 @@ public class OGraphBatchInsertTest extends TestCase {
   }
   @Test
   public void testFail1() {
-    String dbUrl = "memory:testFail1";
+    String dbUrl = "memory:batchinsert_testFail1";
     OGraphBatchInsert batch = new OGraphBatchInsert(dbUrl, "admin", "admin");
     batch.begin();
 
@@ -153,7 +151,7 @@ public class OGraphBatchInsertTest extends TestCase {
 
   @Test
   public void testFail2() {
-    String dbUrl = "memory:testFail2";
+    String dbUrl = "memory:batchinsert_testFail2";
     OGraphBatchInsert batch = new OGraphBatchInsert(dbUrl, "admin", "admin");
     batch.begin();
 
@@ -171,7 +169,7 @@ public class OGraphBatchInsertTest extends TestCase {
 
   @Test
   public void testTraverse() {
-    String dbUrl = "memory:testFail2";
+    String dbUrl = "memory:batchinsert_testTraverse";
     OGraphBatchInsert batch = new OGraphBatchInsert(dbUrl, "admin", "admin");
     batch.begin();
 
