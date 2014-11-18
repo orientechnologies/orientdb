@@ -115,6 +115,25 @@ public class OGraphBatchInsertTest extends TestCase {
   }
 
   @Test
+  public void test5() {
+    String dbUrl = "memory:test5";
+    OGraphBatchInsert batch = new OGraphBatchInsert(dbUrl, "admin", "admin");
+    batch.begin();
+
+    batch.createEdge(0L, 1L, null);
+    batch.createEdge(4L, 5L, null);
+
+    batch.end();
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
+    db.open("admin", "admin");
+    List<?> result = db.query(new OSQLSynchQuery<Object>("select from V"));
+    for (Object o : result) {
+      System.out.println(o);
+    }
+    assertEquals(4, result.size());
+    db.close();
+  }
+  @Test
   public void testFail1() {
     String dbUrl = "memory:testFail1";
     OGraphBatchInsert batch = new OGraphBatchInsert(dbUrl, "admin", "admin");
