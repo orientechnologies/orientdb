@@ -30,8 +30,9 @@ public class LuceneInsertUpdateRemoteTest extends LuceneInsertUpdateTest {
   @Test
   @Override
   public void testInsertUpdateWithIndex() throws Exception {
-    databaseDocumentTx.close();
-    databaseDocumentTx.open("admin", "admin");
+//    databaseDocumentTx.close();
+    databaseDocumentTx.reload();
+//    databaseDocumentTx.open("admin", "admin");
     super.testInsertUpdateWithIndex();
   }
 }
