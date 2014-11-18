@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
@@ -209,7 +210,7 @@ public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OObjectLaz
     convertAll();
   }
 
-  public void detachAll(boolean nonProxiedInstance) {
+  public void detachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached) {
     convertAll();
   }
 

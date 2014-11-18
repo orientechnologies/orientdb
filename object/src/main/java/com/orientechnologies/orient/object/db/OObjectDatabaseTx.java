@@ -21,6 +21,7 @@ package com.orientechnologies.orient.object.db;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -298,7 +299,11 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    * @return the object serialized or with detached data
    */
   public <RET> RET detachAll(final Object iPojo, boolean returnNonProxiedInstance) {
-    return (RET) OObjectEntitySerializer.detachAll(iPojo, this, returnNonProxiedInstance);
+    return detachAll(iPojo, returnNonProxiedInstance, new HashMap<Object, Object>());
+  }
+
+  protected <RET> RET detachAll(final Object iPojo, boolean returnNonProxiedInstance, Map<Object, Object> alreadyDetached) {
+    return (RET) OObjectEntitySerializer.detachAll(iPojo, this, returnNonProxiedInstance, alreadyDetached);
   }
 
   public <RET> RET load(final Object iPojo, final String iFetchPlan, final boolean iIgnoreCache) {
