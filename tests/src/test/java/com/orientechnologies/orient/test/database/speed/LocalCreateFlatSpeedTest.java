@@ -35,6 +35,7 @@ public class LocalCreateFlatSpeedTest extends OrientMonoThreadTest {
     OGlobalConfiguration.USE_WAL.setValue(false);
     LocalCreateFlatSpeedTest test = new LocalCreateFlatSpeedTest();
     test.data.go(test);
+    OGlobalConfiguration.USE_WAL.setValue(true);
   }
 
   public LocalCreateFlatSpeedTest() throws InstantiationException, IllegalAccessException {

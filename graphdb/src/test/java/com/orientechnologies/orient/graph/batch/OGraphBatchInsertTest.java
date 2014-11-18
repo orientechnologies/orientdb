@@ -146,6 +146,8 @@ public class OGraphBatchInsertTest extends TestCase {
       batch.createVertex(3L);
       fail();
     } catch (IllegalStateException e) {
+    } finally{
+      batch.end();
     }
   }
 
@@ -164,6 +166,8 @@ public class OGraphBatchInsertTest extends TestCase {
       batch.createVertex(3L);
       fail();
     } catch (IllegalStateException e) {
+    } finally{
+      batch.end();
     }
   }
 

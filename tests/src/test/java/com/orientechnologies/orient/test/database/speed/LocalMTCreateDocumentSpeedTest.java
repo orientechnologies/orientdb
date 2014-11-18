@@ -86,6 +86,7 @@ public class LocalMTCreateDocumentSpeedTest {
   public void deinit() {
     if (database != null)
       database.drop();
+    OGlobalConfiguration.USE_WAL.setValue(true);
   }
 
   private final class Saver implements Callable<Void> {
