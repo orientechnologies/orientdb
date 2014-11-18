@@ -743,7 +743,6 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
   }
 
   public void testDetachAllWithCycles() {
-    database = new OObjectDatabaseTx(url).open("admin", "admin");
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.cycle");
 
     CycleParent parent = new CycleParent();
