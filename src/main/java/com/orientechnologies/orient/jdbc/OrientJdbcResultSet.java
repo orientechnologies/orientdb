@@ -184,7 +184,7 @@ public class OrientJdbcResultSet implements ResultSet {
     return column;
   }
 
-  private int getFieldIndex(int columnIndex) throws SQLException {
+  private int getFieldIndex(final int columnIndex) throws SQLException {
     if (columnIndex < 1)
       throw new SQLException("The column index cannot be less than 1");
     return columnIndex - 1;
@@ -217,7 +217,7 @@ public class OrientJdbcResultSet implements ResultSet {
     try {
       return (BigDecimal) document.field(columnLabel, OType.DECIMAL);
     } catch (Exception e) {
-      throw new SQLException("An error occured during the retrieval of the double value at column '" + columnLabel + "'", e);
+      throw new SQLException("An error occurred during the retrieval of the double value at column '" + columnLabel + "'", e);
     }
   }
 
@@ -229,7 +229,7 @@ public class OrientJdbcResultSet implements ResultSet {
     try {
       return ((BigDecimal) document.field(columnLabel, OType.DECIMAL)).setScale(scale);
     } catch (Exception e) {
-      throw new SQLException("An error occured during the retrieval of the double value at column '" + columnLabel + "'", e);
+      throw new SQLException("An error occurred during the retrieval of the double value at column '" + columnLabel + "'", e);
     }
   }
 
@@ -244,7 +244,7 @@ public class OrientJdbcResultSet implements ResultSet {
         return null;
       return blob.getBinaryStream();
     } catch (Exception e) {
-      throw new SQLException("An error occured during the retrieval of the binary stream at column '" + columnLabel + "'", e);
+      throw new SQLException("An error occurred during the retrieval of the binary stream at column '" + columnLabel + "'", e);
     }
   }
 
@@ -278,7 +278,7 @@ public class OrientJdbcResultSet implements ResultSet {
 
       return null;
     } catch (Exception e) {
-      throw new SQLException("An error occured during the retrieval of the BLOB at column '" + columnLabel + "'", e);
+      throw new SQLException("An error occurred during the retrieval of the BLOB at column '" + columnLabel + "'", e);
     }
 
   }
@@ -292,7 +292,7 @@ public class OrientJdbcResultSet implements ResultSet {
     try {
       return (Boolean) document.field(columnLabel, OType.BOOLEAN);
     } catch (Exception e) {
-      throw new SQLException("An error occured during the retrieval of the boolean value at column '" + columnLabel + "'", e);
+      throw new SQLException("An error occurred during the retrieval of the boolean value at column '" + columnLabel + "'", e);
     }
 
   }
@@ -306,7 +306,7 @@ public class OrientJdbcResultSet implements ResultSet {
     try {
       return (Byte) document.field(columnLabel, OType.BYTE);
     } catch (Exception e) {
-      throw new SQLException("An error occured during the retrieval of the byte value at column '" + columnLabel + "'", e);
+      throw new SQLException("An error occurred during the retrieval of the byte value at column '" + columnLabel + "'", e);
     }
   }
 
@@ -326,7 +326,7 @@ public class OrientJdbcResultSet implements ResultSet {
         return document.field(columnLabel, OType.BINARY);
       }
     } catch (Exception e) {
-      throw new SQLException("An error occured during the retrieval of the bytes value at column '" + columnLabel + "'", e);
+      throw new SQLException("An error occurred during the retrieval of the bytes value at column '" + columnLabel + "'", e);
     }
   }
 
@@ -370,7 +370,7 @@ public class OrientJdbcResultSet implements ResultSet {
       java.util.Date date = document.field(columnLabel, OType.DATETIME);
       return date != null ? new Date(date.getTime()) : null;
     } catch (Exception e) {
-      throw new SQLException("An error occured during the retrieval of the date value at column '" + columnLabel + "'", e);
+      throw new SQLException("An error occurred during the retrieval of the date value at column '" + columnLabel + "'", e);
     }
   }
 
@@ -390,22 +390,21 @@ public class OrientJdbcResultSet implements ResultSet {
       cal.setTimeInMillis(date.getTime());
       return new Date(cal.getTimeInMillis());
     } catch (Exception e) {
-      throw new SQLException("An error occured during the retrieval of the date value (calendar) " + "at column '" + columnLabel
+      throw new SQLException("An error occurred during the retrieval of the date value (calendar) " + "at column '" + columnLabel
           + "'", e);
     }
   }
 
-  public double getDouble(int columnIndex) throws SQLException {
-
+  public double getDouble(final int columnIndex) throws SQLException {
     return getDouble(fieldNames[getFieldIndex(columnIndex)]);
   }
 
-  public double getDouble(String columnLabel) throws SQLException {
+  public double getDouble(final String columnLabel) throws SQLException {
     try {
       final Double r = document.field(columnLabel, OType.DOUBLE);
       return r != null ? r : 0;
     } catch (Exception e) {
-      throw new SQLException("An error occured during the retrieval of the double value at column '" + columnLabel + "'", e);
+      throw new SQLException("An error occurred during the retrieval of the double value at column '" + columnLabel + "'", e);
     }
   }
 
@@ -429,7 +428,7 @@ public class OrientJdbcResultSet implements ResultSet {
       final Float r = document.field(columnLabel, OType.FLOAT);
       return r != null ? r : 0;
     } catch (Exception e) {
-      throw new SQLException("An error occured during the retrieval of the float value at column '" + columnLabel + "'", e);
+      throw new SQLException("An error occurred during the retrieval of the float value at column '" + columnLabel + "'", e);
     }
   }
 
@@ -450,7 +449,7 @@ public class OrientJdbcResultSet implements ResultSet {
       return r != null ? r : 0;
 
     } catch (Exception e) {
-      throw new SQLException("An error occured during the retrieval of the integer value at column '" + columnLabel + "'", e);
+      throw new SQLException("An error occurred during the retrieval of the integer value at column '" + columnLabel + "'", e);
     }
   }
 
@@ -463,7 +462,7 @@ public class OrientJdbcResultSet implements ResultSet {
       Long r = document.field(columnLabel, OType.LONG);
       return r != null ? r : 0;
     } catch (Exception e) {
-      throw new SQLException("An error occured during the retrieval of the long value at column '" + columnLabel + "'", e);
+      throw new SQLException("An error occurred during the retrieval of the long value at column '" + columnLabel + "'", e);
     }
   }
 
@@ -495,7 +494,7 @@ public class OrientJdbcResultSet implements ResultSet {
     try {
       return document.field(columnLabel, OType.STRING);
     } catch (Exception e) {
-      throw new SQLException("An error occured during the retrieval of the string value at column '" + columnLabel + "'", e);
+      throw new SQLException("An error occurred during the retrieval of the string value at column '" + columnLabel + "'", e);
     }
   }
 
@@ -519,7 +518,7 @@ public class OrientJdbcResultSet implements ResultSet {
           return value;
       }
     } catch (Exception e) {
-      throw new SQLException("An error occured during the retrieval of the Java Object at column '" + columnLabel + "'", e);
+      throw new SQLException("An error occurred during the retrieval of the Java Object at column '" + columnLabel + "'", e);
     }
   }
 
@@ -548,7 +547,7 @@ public class OrientJdbcResultSet implements ResultSet {
     try {
       return new OrientRowId(document.getIdentity());
     } catch (Exception e) {
-      throw new SQLException("An error occured during the retrieval of the rowid for record '" + document + "'", e);
+      throw new SQLException("An error occurred during the retrieval of the rowid for record '" + document + "'", e);
     }
   }
 
@@ -578,7 +577,7 @@ public class OrientJdbcResultSet implements ResultSet {
       return r != null ? r : 0;
 
     } catch (Exception e) {
-      throw new SQLException("An error occured during the retrieval of the short value at column '" + columnLabel + "'", e);
+      throw new SQLException("An error occurred during the retrieval of the short value at column '" + columnLabel + "'", e);
     }
   }
 
@@ -595,7 +594,7 @@ public class OrientJdbcResultSet implements ResultSet {
     try {
       return document.field(columnLabel, OType.STRING);
     } catch (Exception e) {
-      throw new SQLException("An error occured during the retrieval of the string value at column '" + columnLabel + "'", e);
+      throw new SQLException("An error occurred during the retrieval of the string value at column '" + columnLabel + "'", e);
     }
 
   }
@@ -611,7 +610,7 @@ public class OrientJdbcResultSet implements ResultSet {
         return null;
       return new Time(date.getTime());
     } catch (Exception e) {
-      throw new SQLException("An error occured during the retrieval of the time value at column '" + columnLabel + "'", e);
+      throw new SQLException("An error occurred during the retrieval of the time value at column '" + columnLabel + "'", e);
     }
   }
 

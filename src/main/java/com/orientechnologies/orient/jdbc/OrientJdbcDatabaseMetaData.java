@@ -17,18 +17,6 @@
  */
 package com.orientechnologies.orient.jdbc;
 
-import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexUnique;
-import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.metadata.function.OFunction;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -42,6 +30,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexUnique;
+import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.function.OFunction;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 /**
  * @author Roberto Franchini (CELI srl - franchini--at--celi.it)
  * @author Salvatore Piccione (TXT e-solutions SpA - salvo.picci@gmail.com)
@@ -51,10 +51,10 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   private final static Set<String>   SYSTEM_TABLES = new HashSet<String>(Arrays.asList(new String[] { "OUser", "ORole",
       "OIdentity", "ORIDs", "ORestricted", "OFunction", "OTriggered", "OSchedule" }));
   private final OrientJdbcConnection connection;
-  private final ODatabaseRecord      database;
+  private final ODatabaseDocument    database;
   private final OMetadata            metadata;
 
-  public OrientJdbcDatabaseMetaData(OrientJdbcConnection iConnection, ODatabaseRecord iDatabase) {
+  public OrientJdbcDatabaseMetaData(OrientJdbcConnection iConnection, ODatabaseDocument iDatabase) {
     connection = iConnection;
     database = iDatabase;
     metadata = database.getMetadata();
