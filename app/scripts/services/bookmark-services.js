@@ -1,7 +1,7 @@
 var breadcrumb = angular.module('bookmarks.services', []);
 
 
-breadcrumb.factory('Bookmarks', function ($resource, DocumentApi, $http, $q) {
+breadcrumb.factory('Bookmarks', function ($resource, DocumentApi, $http, $q,Database) {
 
     var resource = $resource(API + 'database/:database');
     var CLAZZ = "_studio"
@@ -11,7 +11,7 @@ breadcrumb.factory('Bookmarks', function ($resource, DocumentApi, $http, $q) {
     resource.getAll = function (database) {
         var deferred = $q.defer();
         var text = API + 'command/' + database + '/sql/-/-1?format=rid,type,version,class,graph';
-        var query = "select * from {{clazz}} where type = '{{type}}') order by name";
+        var query = "select * from {{clazz}} where type = '{{type}}' order by name";
         query = S(query).template({clazz: CLAZZ, type: TYPE}).s;
         $http.post(text, query).success(function (data) {
             deferred.resolve(data);
@@ -25,7 +25,11 @@ breadcrumb.factory('Bookmarks', function ($resource, DocumentApi, $http, $q) {
         var query = "CREATE CLASS {{clazz}}";
         query = S(query).template({clazz: CLAZZ}).s;
         $http.post(text, query).success(function (data) {
+          Database.refreshMetadata(database, function () {
             deferred.resolve(data);
+          });
+
+
         });
         return deferred.promise;
     }
@@ -98,7 +102,11 @@ breadcrumb.factory('GraphConfig', function ($resource, localStorageService, Docu
         var query = "CREATE CLASS {{clazz}}";
         query = S(query).template({clazz: CLAZZ}).s;
         $http.post(text, query).success(function (data) {
-            deferred.resolve(data);
+            Database.refreshMetadata(database, function () {
+              deferred.resolve(data);
+            });
+
+
         });
         return deferred.promise;
     }

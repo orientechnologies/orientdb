@@ -32,7 +32,7 @@ login.controller("LoginController", ['$scope', '$rootScope', '$routeParams', '$l
         modalScope.type = "graph";
         modalScope.username = "root";
         modalScope.types = ['document', 'graph']
-        modalScope.stypes = ['local', 'plocal', 'memory']
+        modalScope.stypes = ['plocal', 'memory']
         var modalPromise = $modal({template: 'views/database/newDatabase.html', scope: modalScope, show: false});
         modalScope.createNew = function () {
             modalScope.creating = true;

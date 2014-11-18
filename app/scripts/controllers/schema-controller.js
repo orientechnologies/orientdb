@@ -608,16 +608,19 @@ schemaModule.controller("PropertyController", ['$scope', '$routeParams', '$locat
         return true;
     }
 }]);
-schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', 'Notification', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, Notification) {
+schemaModule.controller("NewClassController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', '$modal', '$q', '$route', 'Notification','$translate', function ($scope, $routeParams, $location, Database, CommandApi, $modal, $q, $route, Notification,$translate) {
 
     $scope.property = {"name": "", "alias": null, "superclass": null, "abstract": false}
     $scope.database = Database;
     $scope.listClasses = $scope.database.listNameOfClasses();
-//    if ($scope.database.hasClass("V") && $scope.database.hasClass("E")) {
-//        $scope.listClasses.splice($scope.listClasses.indexOf("V"), 1)
-//        $scope.listClasses.splice($scope.listClasses.indexOf("E"), 1)
-//        $scope.isGraph = true;
-//    }
+
+    $scope.links = {
+      linkClusters: Database.getOWikiFor("Tutorial-Clusters.html")
+    }
+    $translate("class.clusters",$scope.links).then(function(data){
+      $scope.hint = data;
+    });
+
 
     $scope.saveNewClass = function () {
         var sql = 'CREATE CLASS ' + $scope.property['name'];

@@ -645,6 +645,7 @@ database.factory('CommandApi', function ($http, $resource, Notification, Spinner
 
         else {
             if (params.text) {
+
                 var query = params.text.trim();
                 var config = {headers: {"accept": contentType}};
                 $http.post(text, query, config).success(function (data) {

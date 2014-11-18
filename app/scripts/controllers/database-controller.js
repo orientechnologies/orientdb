@@ -176,6 +176,8 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         if (explain) {
             queryBuffer = "explain " + queryBuffer;
         }
+        if($scope.search)
+          delete $scope.search.query ;
         CommandApi.queryText({database: $routeParams.database, contentType: conttype, language: $scope.language, text: queryBuffer, limit: $scope.limit, shallow: $scope.shallow, verbose: false}, function (data) {
 
             if (data.result) {
@@ -252,6 +254,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
             }
             Notification.push({content: data, error: true, autoHide: true});
         });
+
 
     }
 
