@@ -1,16 +1,19 @@
 package com.orientechnologies.orient.server.jwt.impl;
 
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -19,12 +22,18 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.jwt.impl.JwtTokenHandler;
 
 public class JwtTokenHandlerTest {
 
   private static final OServerParameterConfiguration[] I_PARAMS = new OServerParameterConfiguration[] { new OServerParameterConfiguration(
                                                                     JwtTokenHandler.O_SIGN_KEY, "crappy key") };
+
+  @BeforeMethod
+  public void beforeTest() {
+    if (Orient.instance().getEngine("memory") == null) {
+       Orient.instance().startup();
+    }
+  }
 
   @Test
   public void testWebTokenCreationValidation() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
