@@ -67,24 +67,18 @@ import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public abstract class OrientBaseGraph extends OrientConfigurableGraph implements OrientExtendedGraph {
-  public static final String                               CONNECTION_OUT = "out";
-  public static final String                               CONNECTION_IN  = "in";
-  public static final String                               CLASS_PREFIX   = "class:";
-  public static final String                               CLUSTER_PREFIX = "cluster:";
-  public static final String                               ADMIN          = "admin";
-  private final OPartitionedDatabasePool                   pool;
-  protected ODatabaseDocumentTx                            database;
-  private String                                           url;
-  private String                                           username;
-  private String                                           password;
+  public static final String                        CONNECTION_OUT = "out";
+  public static final String                        CONNECTION_IN  = "in";
+  public static final String                        CLASS_PREFIX   = "class:";
+  public static final String                        CLUSTER_PREFIX = "cluster:";
+  public static final String                        ADMIN          = "admin";
+  private final OPartitionedDatabasePool            pool;
+  protected ODatabaseDocumentTx                     database;
+  private String                                    url;
+  private String                                    username;
+  private String                                    password;
 
-  private static final ThreadLocal<OrientBaseGraph>        currentGraph   = new ThreadLocal<OrientBaseGraph>();
-  private static final ThreadLocal<Deque<OrientBaseGraph>> initQueue      = new ThreadLocal<Deque<OrientBaseGraph>>() {
-                                                                            @Override
-                                                                            protected Deque<OrientBaseGraph> initialValue() {
-                                                                              return new ArrayDeque<OrientBaseGraph>();
-                                                                            }
-                                                                          };
+  private static final ThreadLocal<OrientBaseGraph> currentGraph   = new ThreadLocal<OrientBaseGraph>();
 
   public static OrientBaseGraph getActiveInstance() {
     final OrientBaseGraph graph = currentGraph.get();
@@ -101,13 +95,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   }
 
   /**
-   * Internal
-   */
-  public static void clearInitQueue() {
-    initQueue.get().clear();
-  }
-
-  /**
    * Constructs a new object using an existent database instance.
    *
    * @param iDatabase
@@ -120,34 +107,31 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     this.password = iUserPassword;
 
     database = iDatabase;
-    makeActive();
+		makeActive();
 
     readDatabaseConfiguration();
     configure(iConfiguration);
-    pushInInitQueue();
   }
 
   public OrientBaseGraph(final OPartitionedDatabasePool pool) {
     this.pool = pool;
 
     database = pool.acquire();
-    makeActive();
+		makeActive();
     this.username = database.getUser() != null ? database.getUser().getName() : null;
 
     readDatabaseConfiguration();
-    pushInInitQueue();
   }
 
   public OrientBaseGraph(final OPartitionedDatabasePool pool, final Settings iConfiguration) {
     this.pool = pool;
 
     database = pool.acquire();
-    this.username = database.getUser() != null ? database.getUser().getName() : null;
-    makeActive();
+		this.username = database.getUser() != null ? database.getUser().getName() : null;
+		makeActive();
 
-    readDatabaseConfiguration();
+		readDatabaseConfiguration();
     configure(iConfiguration);
-    pushInInitQueue();
   }
 
   public OrientBaseGraph(final String url) {
@@ -162,7 +146,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     this.openOrCreate();
 
     readDatabaseConfiguration();
-    pushInInitQueue();
   }
 
   /**
@@ -1070,10 +1053,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       }
     }
 
-    final OrientBaseGraph graph = pollFromInitQueue();
-    currentGraph.set(graph);
-		if (graph != null)
-			graph.makeActive();
+    currentGraph.set(null);
 
     url = null;
     username = null;
@@ -1084,6 +1064,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Returns the Graph URL.
    */
   public String toString() {
+    makeActive();
+
     return StringFactory.graphString(this, getRawGraph().getURL());
   }
 
@@ -1723,7 +1705,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       } else
         database = pool.acquire();
 
-      makeActive();
+			makeActive();
       checkForGraphSchema(database);
     }
   }
@@ -1745,17 +1727,5 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     return (metadata != null && metadata.field(OrientIndex.CONFIG_CLASSNAME) != null)
     // compatibility with versions earlier 1.6.3
         || idx.getConfiguration().field(OrientIndex.CONFIG_CLASSNAME) != null;
-  }
-
-  private void pushInInitQueue() {
-    final Deque<OrientBaseGraph> queue = initQueue.get();
-    queue.push(this);
-  }
-
-  private OrientBaseGraph pollFromInitQueue() {
-    final Deque<OrientBaseGraph> queue = initQueue.get();
-    queue.poll();
-
-    return queue.peek();
   }
 }

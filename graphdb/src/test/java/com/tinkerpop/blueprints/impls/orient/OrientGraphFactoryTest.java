@@ -2,15 +2,14 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
 
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTxPooled;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 
 /**
@@ -19,57 +18,13 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
  */
 @RunWith(JUnit4.class)
 public class OrientGraphFactoryTest {
-  @BeforeClass
-  public static void setUp() {
-    OrientBaseGraph.clearInitQueue();
-  }
-
   @Test
   public void createTx() {
     OrientGraphFactory factory = new OrientGraphFactory("memory:testPool");
     OrientBaseGraph g = factory.getTx();
     assertEquals(g.getClass(), OrientGraph.class);
     assertEquals(g.getRawGraph().getClass(), ODatabaseDocumentTx.class);
-    assertSame(g, OrientBaseGraph.getActiveInstance());
     g.shutdown();
-    assertNull(OrientBaseGraph.getActiveInstance());
-    factory.close();
-  }
-
-  @Test
-  public void createTxPool() {
-    OrientGraph graph = new OrientGraph("memory:testPool");
-    graph.shutdown();
-
-    OrientGraphFactory factory = new OrientGraphFactory("memory:testPool");
-    factory.setupPool(5, 10);
-    OrientBaseGraph g = factory.getTx();
-    assertEquals(g.getClass(), OrientGraph.class);
-    assertSame(g, OrientBaseGraph.getActiveInstance());
-    g.shutdown();
-    assertNull(OrientBaseGraph.getActiveInstance());
-    factory.close();
-  }
-
-  @Test
-  public void createTxPoolNestedCreations() {
-    OrientGraph graph = new OrientGraph("memory:testPool");
-    graph.shutdown();
-
-    OrientGraphFactory factory = new OrientGraphFactory("memory:testPool");
-    factory.setupPool(5, 10);
-
-    OrientBaseGraph g = factory.getTx();
-    assertEquals(g.getClass(), OrientGraph.class);
-    assertSame(g, OrientBaseGraph.getActiveInstance());
-    OrientBaseGraph g1 = factory.getTx();
-    assertSame(g1, OrientBaseGraph.getActiveInstance());
-    g1.shutdown();
-
-    assertSame(g, OrientBaseGraph.getActiveInstance());
-
-    g.shutdown();
-    assertNull(OrientBaseGraph.getActiveInstance());
     factory.close();
   }
 
@@ -77,26 +32,9 @@ public class OrientGraphFactoryTest {
   public void createNoTx() {
     OrientGraphFactory factory = new OrientGraphFactory("memory:testPool");
     OrientBaseGraph g = factory.getNoTx();
-    assertSame(g, OrientBaseGraph.getActiveInstance());
     assertEquals(g.getClass(), OrientGraphNoTx.class);
     assertEquals(g.getRawGraph().getClass(), ODatabaseDocumentTx.class);
     g.shutdown();
-    assertNull(OrientBaseGraph.getActiveInstance());
-    factory.close();
-  }
-
-  @Test
-  public void createNoTxPool() {
-    OrientGraph graph = new OrientGraph("memory:testPool");
-    graph.shutdown();
-
-    OrientGraphFactory factory = new OrientGraphFactory("memory:testPool");
-    factory.setupPool(5, 10);
-    OrientBaseGraph g = factory.getNoTx();
-    assertSame(g, OrientBaseGraph.getActiveInstance());
-    assertEquals(g.getClass(), OrientGraphNoTx.class);
-    g.shutdown();
-    assertNull(OrientBaseGraph.getActiveInstance());
     factory.close();
   }
 
