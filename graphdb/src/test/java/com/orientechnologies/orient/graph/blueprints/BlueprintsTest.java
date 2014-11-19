@@ -115,14 +115,14 @@ public class BlueprintsTest {
 
   @Test
   public void testInvalidVertexRID() {
-    OrientVertex v = new OrientVertex(new ORecordId("9:9999"));
+    OrientVertex v = new OrientVertex(graph, new ORecordId("9:9999"));
     System.out.println(v);
   }
 
   @Test
   public void testInvalidEdgeRID() {
     try {
-      OrientEdge e = graph.addEdge(null, new OrientVertex(new ORecordId("9:9999")), new OrientVertex(new ORecordId(
+      OrientEdge e = graph.addEdge(null, new OrientVertex(graph, new ORecordId("9:9999")), new OrientVertex(graph, new ORecordId(
           "9:99999")), "E");
       Assert.assertTrue(false);
     } catch (IllegalArgumentException e) {

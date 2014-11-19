@@ -50,7 +50,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   protected OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase, final String iUserName, final String iUserPasswd,
       final Settings iConfiguration) {
     super(iDatabase, iUserName, iUserPasswd, iConfiguration);
-    makeActive();
+    setCurrentGraphInThreadLocal();
     this.setAutoStartTx(settings.autoStartTx);
 
     if (settings.autoStartTx)
@@ -60,7 +60,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   protected OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase, final boolean iAutoStartTx, final String iUserName,
       final String iUserPasswd) {
     super(iDatabase, iUserName, iUserPasswd, null);
-    makeActive();
+    setCurrentGraphInThreadLocal();
     this.setAutoStartTx(iAutoStartTx);
 
     if (iAutoStartTx)
@@ -69,14 +69,14 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
 
   protected OrientTransactionalGraph(final OPartitionedDatabasePool pool) {
     super(pool);
-    makeActive();
+    setCurrentGraphInThreadLocal();
 
     begin();
   }
 
   protected OrientTransactionalGraph(final OPartitionedDatabasePool pool, final Settings configuration) {
     super(pool, configuration);
-    makeActive();
+    setCurrentGraphInThreadLocal();
 
     begin();
   }
@@ -87,7 +87,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
 
   protected OrientTransactionalGraph(final String url, final boolean iAutoStartTx) {
     super(url, ADMIN, ADMIN);
-    makeActive();
+    setCurrentGraphInThreadLocal();
     setAutoStartTx(iAutoStartTx);
 
     if (iAutoStartTx)
@@ -100,7 +100,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
 
   protected OrientTransactionalGraph(final String url, final String username, final String password, final boolean iAutoStartTx) {
     super(url, username, password);
-    makeActive();
+    setCurrentGraphInThreadLocal();
     this.setAutoStartTx(iAutoStartTx);
 
     if (iAutoStartTx)
@@ -147,8 +147,6 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
    * Commits the current active transaction.
    */
   public void commit() {
-		makeActive();
-
     if (database == null)
       return;
 
@@ -161,8 +159,6 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
    * Rollbacks the current active transaction. All the pending changes are rollbacked.
    */
   public void rollback() {
-		makeActive();
-
     if (database == null)
       return;
 
