@@ -1,16 +1,18 @@
 package com.orientechnologies.orient.graph.batch;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import junit.framework.TestCase;
+
+import org.junit.Test;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import junit.framework.TestCase;
-import org.junit.Test;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Luigi Dell'Aquila (l.dellaquila-at-orientechnologies.com)
@@ -131,6 +133,7 @@ public class OGraphBatchInsertTest extends TestCase {
     assertEquals(4, result.size());
     db.close();
   }
+
   @Test
   public void testFail1() {
     String dbUrl = "memory:batchinsert_testFail1";
@@ -146,7 +149,7 @@ public class OGraphBatchInsertTest extends TestCase {
       batch.createVertex(3L);
       fail();
     } catch (IllegalStateException e) {
-    } finally{
+    } finally {
       batch.end();
     }
   }
@@ -166,7 +169,7 @@ public class OGraphBatchInsertTest extends TestCase {
       batch.createVertex(3L);
       fail();
     } catch (IllegalStateException e) {
-    } finally{
+    } finally {
       batch.end();
     }
   }
@@ -194,7 +197,37 @@ public class OGraphBatchInsertTest extends TestCase {
     for (Vertex v : result) {
       assertEquals("bar", v.getProperty("foo"));
     }
+  }
 
+  public void testHoles() {
+    String dbUrl = "memory:batchinsert_testHoles";
+    OGraphBatchInsert batch = new OGraphBatchInsert(dbUrl, "admin", "admin");
+    batch.setParallel(1);
+    batch.begin();
+
+    batch.createEdge(0L, 1L, null);
+    batch.createEdge(1L, 3L, null);
+    batch.createEdge(3L, 4L, null);
+    Map<String, Object> vertexProps = new HashMap<String, Object>();
+    vertexProps.put("foo", "aa");
+    batch.setVertexProperties(3L, vertexProps);
+    vertexProps.put("foo", "bar");
+    batch.setVertexProperties(4L, vertexProps);
+
+    batch.end();
+
+    OrientGraph g = new OrientGraph(dbUrl, "admin", "admin");
+
+    Iterable<Vertex> result = g.command(
+        new OSQLSynchQuery<Vertex>("select expand(out().in().out().out().in().out().out().in().out()) from V where uid = ?")).execute(0L);
+
+    boolean found = false;
+    for (Vertex v : result) {
+      assertFalse(found);
+      assertEquals("bar", v.getProperty("foo"));
+      found = true;
+    }
+    assertTrue(found);
   }
 
 }

@@ -118,26 +118,30 @@ public class OGraphBatchInsert {
       try {
         ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
         db.open(userName, password);
-        db.declareIntent(new OIntentMassiveInsert());
-        int clusterId = clusterIds[mod];
-
-        final String outField = "E".equals(edgeClass) ? "out_" : ("out_" + edgeClass);
-        final String inField = "E".equals(edgeClass) ? "in_" : ("in_" + edgeClass);
-
-        String clusterName = db.getStorage().getClusterById(clusterId).getName();
-        // long firstAvailableClusterPosition = lastClusterPositions[mod] + 1;
-
-        for (long i = nextVerticesToCreate[mod]; i <= last; i += parallel) {
-          createVertex(db, i, inField, outField, clusterName, null);
-        }
+        run(db);
       } finally {
         runningThreads.decrementAndGet();
         synchronized (runningThreads) {
           runningThreads.notifyAll();
         }
-        db.declareIntent(null);
         db.close();
       }
+    }
+
+    private void run(ODatabaseDocumentTx db) {
+      db.declareIntent(new OIntentMassiveInsert());
+      int clusterId = clusterIds[mod];
+
+      final String outField = "E".equals(edgeClass) ? "out_" : ("out_" + edgeClass);
+      final String inField = "E".equals(edgeClass) ? "in_" : ("in_" + edgeClass);
+
+      String clusterName = db.getStorage().getClusterById(clusterId).getName();
+      // long firstAvailableClusterPosition = lastClusterPositions[mod] + 1;
+
+      for (long i = nextVerticesToCreate[mod]; i <= last; i += parallel) {
+        createVertex(db, i, inField, outField, clusterName, null);
+      }
+      db.declareIntent(null);
     }
 
     public void createVertex(ODatabaseDocumentTx db, long i, Map<String, Object> properties) {
@@ -189,8 +193,8 @@ public class OGraphBatchInsert {
 
         doc.fromMap(properties);
         db.save(doc, clusterName);
-        nextVerticesToCreate[mod] += parallel;
       }
+      nextVerticesToCreate[mod] += parallel;
     }
   }
 
@@ -380,7 +384,7 @@ public class OGraphBatchInsert {
         oVertexClass = db.getMetadata().getSchema().getClass(vertexClass);
       }
       if (nextVerticesToCreate[cluster] < id) {
-        new BatchImporterJob(cluster, oVertexClass, id - 1).run();
+        new BatchImporterJob(cluster, oVertexClass, id - 1).run(db);
       }
       new BatchImporterJob(cluster, oVertexClass, id).createVertex(db, id, properties);
     } else {
