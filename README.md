@@ -2,7 +2,7 @@
 
 <img src="http://www.orientechnologies.com/docs/last/orientdb-studio.wiki/images/Settings.png">
 
-## What is Orient?
+## What is OrientDB?
 
 **OrientDB** is an Open Source [NoSQL](http://en.wikipedia.org/wiki/NoSQL) DBMS with the features of both Document and Graph DBMSs. It's written in Java and it's amazingly fast: it can store 220,000 records per second on common hardware. Even for a Document based database the relationships are managed as in [Graph Databases](http://en.wikipedia.org/wiki/Graph_database) with direct connections among records. You can traverse parts of or entire trees and graphs of records in a few milliseconds. Supports schema-less, schema-full and schema-mixed modes. Has a strong security profiling system based on user and roles and supports [SQL](https://github.com/orientechnologies/orientdb/wiki/SQL) amongst the query languages. Thanks to the [SQL](https://github.com/orientechnologies/orientdb/wiki/SQL) layer it's straightforward to use for people skilled in the Relational world.
 
