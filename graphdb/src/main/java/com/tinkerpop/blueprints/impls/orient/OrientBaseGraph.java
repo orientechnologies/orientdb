@@ -362,7 +362,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         if (indexManager.getIndex(indexName) != null)
           throw ExceptionFactory.indexAlreadyExists(indexName);
 
-        final OrientIndex<? extends OrientElement> index = new OrientIndex<OrientElement>(indexName, indexClass, null);
+        final OrientIndex<? extends OrientElement> index = new OrientIndex<OrientElement>(g, indexName, indexClass, null);
 
         // SAVE THE CONFIGURATION INTO THE GLOBAL CONFIG
         saveIndexConfiguration();
@@ -391,7 +391,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (idx == null || !hasIndexClass(idx))
       return null;
 
-    final Index<? extends Element> index = new OrientIndex(idx);
+    final Index<? extends Element> index = new OrientIndex(this, idx);
 
     if (indexClass.isAssignableFrom(index.getIndexClass()))
       return (Index<T>) index;
@@ -1717,7 +1717,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     for (OIndex<?> idx : database.getMetadata().getIndexManager().getIndexes()) {
       if (hasIndexClass(idx))
         // LOAD THE INDEXES
-        result.add(new OrientIndex<OrientElement>(idx));
+        result.add(new OrientIndex<OrientElement>(this, idx));
     }
 
     return result;

@@ -54,20 +54,23 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
   protected static final String      EDGE                   = "Edge";
   protected static final String      SEPARATOR              = "!=!";
 
+  protected OrientBaseGraph          graph;
   protected OIndex<?>                underlying;
   protected OIndex<?>                recordKeyValueIndex;
 
   protected Class<? extends Element> indexClass;
 
-  protected OrientIndex(final String indexName, final Class<? extends Element> indexClass,
-												final OType iType) {
+  protected OrientIndex(final OrientBaseGraph graph, final String indexName, final Class<? extends Element> indexClass,
+      final OType iType) {
+    this.graph = graph;
     this.indexClass = indexClass;
     create(indexName, this.indexClass, iType);
   }
 
-  protected OrientIndex(final OIndex<?> rawIndex) {
+  protected OrientIndex(final OrientBaseGraph orientGraph, final OIndex<?> rawIndex) {
+    this.graph = orientGraph;
     this.underlying = rawIndex instanceof OIndexTxAwareMultiValue ? rawIndex : new OIndexTxAwareMultiValue(
-        OrientBaseGraph.getActiveInstance().getRawGraph(), (OIndex<Set<OIdentifiable>>) rawIndex);
+        orientGraph.getRawGraph(), (OIndex<Set<OIdentifiable>>) rawIndex);
 
     final ODocument metadata = rawIndex.getMetadata();
     if (metadata == null) {
@@ -91,8 +94,7 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
     if (!doc.getIdentity().isValid())
       doc.save();
 
-
-		OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
+    graph.makeActive();
     graph.autoStartTransaction();
     underlying.put(keyTemp, doc);
     recordKeyValueIndex.put(new OCompositeKey(doc.getIdentity(), keyTemp), doc.getIdentity());
@@ -106,7 +108,6 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
     if (records == null || records.isEmpty())
       return new WrappingCloseableIterable(Collections.emptySet());
 
-		OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
     return new OrientElementIterable<T>(graph, records);
   }
 
@@ -124,8 +125,7 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
 
   public void remove(final String key, final Object value, final T element) {
     final String keyTemp = key + SEPARATOR + value;
-
-		OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
+    graph.makeActive();
     graph.autoStartTransaction();
     try {
       underlying.remove(keyTemp, element.getRecord());
@@ -148,11 +148,11 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
       underlying.flush();
       underlying = null;
     }
+    graph = null;
   }
 
   protected void removeElement(final T element) {
-		OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
-
+    graph.makeActive();
     graph.autoStartTransaction();
 
     final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from index:" + recordKeyValueIndex.getName()
@@ -174,7 +174,6 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
     if (iKeyType == null)
       iKeyType = OType.STRING;
 
-		OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
     this.recordKeyValueIndex = new OIndexTxAwareOneValue(graph.getRawGraph(), (OIndex<OIdentifiable>) graph
         .getRawGraph()
         .getMetadata()
@@ -205,8 +204,6 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
   }
 
   private void load(final ODocument metadata) {
-		OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
-
     // LOAD TREEMAP
     final String indexClassName = metadata.field(CONFIG_CLASSNAME);
     final String recordKeyValueMap = metadata.field(CONFIG_RECORD_MAP_NAME);
@@ -231,8 +228,6 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
   }
 
   private OIndex<?> buildKeyValueIndex(ODocument metadata) {
-		OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
-
     OIndex<?> recordKeyValueIndex = new OIndexTxAwareOneValue(graph.getRawGraph(), (OIndex<OIdentifiable>) graph
         .getRawGraph()
         .getMetadata()
