@@ -1072,8 +1072,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     final OrientBaseGraph graph = pollFromInitQueue();
     currentGraph.set(graph);
-    if (graph != null)
-      graph.makeActive();
+		if (graph != null)
+			graph.makeActive();
 
     url = null;
     username = null;
