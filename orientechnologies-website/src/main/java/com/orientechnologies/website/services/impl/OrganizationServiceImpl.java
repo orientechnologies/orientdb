@@ -173,8 +173,8 @@ public class OrganizationServiceImpl implements OrganizationService {
   private void createMembership(Organization organization, User user) {
     OrientGraph graph = dbFactory.getGraph();
 
-    OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(organization.getId()));
-    OrientVertex devVertex = new OrientVertex(graph, new ORecordId(user.getRid()));
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(organization.getId()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(user.getRid()));
 
     orgVertex.addEdge(HasMember.class.getSimpleName(), devVertex);
 
@@ -184,8 +184,8 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     OrientGraph graph = dbFactory.getGraph();
 
-    OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(organization.getId()));
-    OrientVertex devVertex = new OrientVertex(graph, new ORecordId(repository.getId()));
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(organization.getId()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(repository.getId()));
     orgVertex.addEdge(HasRepo.class.getSimpleName(), devVertex);
   }
 }

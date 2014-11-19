@@ -44,6 +44,9 @@ angular.module('webappApp')
     });
 
 
+    $scope.getEventTpl = function (e) {
+      return 'views/issues/events/' + e + ".html";
+    }
     function refreshEvents() {
       $scope.comments = Repo.one(repo).all("issues").one(number).all("events").getList().$object;
     }

@@ -109,7 +109,7 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     OrientGraph db = dbFactory.getGraph();
     Issue issue = findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
 
-    OrientVertex vertex = new OrientVertex(db, new ORecordId(issue.getId()));
+    OrientVertex vertex = db.getVertex(new ORecordId(issue.getId()));
 
     List<Comment> comments = new ArrayList<Comment>();
     for (Vertex vertex1 : vertex.getVertices(Direction.OUT, HasEvent.class.getSimpleName())) {
@@ -128,7 +128,7 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     if (issue == null) {
       return null;
     }
-    OrientVertex vertex = new OrientVertex(db, new ORecordId(issue.getId()));
+    OrientVertex vertex = db.getVertex(new ORecordId(issue.getId()));
 
     List<Event> events = new ArrayList<Event>();
     for (Vertex vertex1 : vertex.getVertices(Direction.OUT, HasEvent.class.getSimpleName())) {

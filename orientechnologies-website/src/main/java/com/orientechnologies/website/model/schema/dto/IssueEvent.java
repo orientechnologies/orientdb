@@ -7,10 +7,10 @@ public class IssueEvent extends Event {
 
   private Integer   eventId;
   private String    event;
-  private User actor;
+  private User      actor;
   private String    commitId;
   private Label     label;
-  private User assegnee;
+  private User      assignee;
   private Milestone milestone;
 
   public void setEventId(Integer eventId) {
@@ -50,15 +50,17 @@ public class IssueEvent extends Event {
   }
 
   public void setLabel(Label label) {
+    if (label != null)
+      label.setId(null);
     this.label = label;
   }
 
-  public User getAssegnee() {
-    return assegnee;
+  public User getAssignee() {
+    return assignee;
   }
 
-  public void setAssegnee(User assegnee) {
-    this.assegnee = assegnee;
+  public void setAssignee(User assignee) {
+    this.assignee = assignee;
   }
 
   public Milestone getMilestone() {
@@ -66,6 +68,8 @@ public class IssueEvent extends Event {
   }
 
   public void setMilestone(Milestone milestone) {
+    if (milestone != null)
+      milestone.setId(null);
     this.milestone = milestone;
   }
 }

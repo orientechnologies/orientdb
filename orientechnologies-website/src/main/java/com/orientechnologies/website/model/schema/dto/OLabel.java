@@ -30,6 +30,9 @@ public enum OLabel implements OTypeHolder<Label> {
 
   @Override
   public Label fromDoc(ODocument doc, OrientBaseGraph graph) {
+    if (doc == null) {
+      return null;
+    }
     Label l = new Label();
     l.setId(doc.getIdentity().toString());
     l.setName((String) doc.field(NAME.toString()));

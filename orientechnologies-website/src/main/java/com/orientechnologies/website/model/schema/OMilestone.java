@@ -75,6 +75,9 @@ public enum OMilestone implements OTypeHolder<Milestone> {
   @Override
   public Milestone fromDoc(ODocument doc, OrientBaseGraph graph) {
 
+    if (doc == null) {
+      return null;
+    }
     Milestone milestone = new Milestone();
     milestone.setId(doc.getIdentity().toString());
     milestone.setNumber((Integer) doc.field(NUMBER.toString()));

@@ -3,7 +3,9 @@ package com.orientechnologies.website.services.reactor.event.issue;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.model.schema.OIssue;
 import com.orientechnologies.website.model.schema.ORepository;
-import com.orientechnologies.website.model.schema.dto.*;
+import com.orientechnologies.website.model.schema.dto.Issue;
+import com.orientechnologies.website.model.schema.dto.OLabel;
+import com.orientechnologies.website.model.schema.dto.User;
 import com.orientechnologies.website.repository.EventRepository;
 import com.orientechnologies.website.repository.RepositoryRepository;
 import com.orientechnologies.website.repository.UserRepository;
@@ -12,8 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 
 /**
  * Created by Enrico Risa on 14/11/14.
@@ -43,19 +43,15 @@ public class GithubLabelEvent implements GithubIssueEvent {
 
     String repoName = repository.field(ORepository.NAME.toString());
     Integer issueNumber = issue.field(OIssue.NUMBER.toString());
-    String labelName = label.field(OLabel.NAME.toString());
+    final String labelName = label.field(OLabel.NAME.toString());
     Issue issueDto = repositoryRepository.findIssueByRepoAndNumber(repoName, issueNumber);
 
-    IssueEvent e = new IssueEvent();
-    e.setCreatedAt(new Date());
-    e.setEvent(evt);
-    e.setActor(findUser(payload));
-    Label l = repositoryRepository.findLabelsByRepoAndName(repoName, labelName);
-    List<Label> labelsList = new ArrayList<Label>();
-    labelsList.add(l);
-    issueService.changeLabels(issueDto, labelsList, false);
-    e = (IssueEvent) eventRepository.save(e);
-    issueService.fireEvent(issueDto, e);
+    issueService.addLabels(issueDto, new ArrayList<String>() {
+      {
+        add(labelName);
+      }
+    }, findUser(payload), true);
+
   }
 
   @Override

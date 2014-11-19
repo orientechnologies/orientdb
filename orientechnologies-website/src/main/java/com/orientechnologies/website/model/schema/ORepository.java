@@ -51,7 +51,7 @@ public enum ORepository implements OTypeHolder<com.orientechnologies.website.mod
     repo.setDescription((String) doc.field(DESCRIPTION.toString()));
     repo.setId(doc.getIdentity().toString());
 
-    OrientVertex iss = new OrientVertex(graph, doc);
+    OrientVertex iss = graph.getVertex(doc);
     for (Vertex vertex : iss.getVertices(Direction.IN, HasRepo.class.getSimpleName())) {
       repo.setOrganization(OOrganization.NAME.fromDoc(((OrientVertex) vertex).getRecord(), graph));
       break;

@@ -54,7 +54,7 @@ public enum OUser implements OTypeHolder<User> {
   @Override
   public ODocument toDoc(User entity, OrientBaseGraph graph) {
     ODocument doc = null;
-    if (entity.getId() == null) {
+    if (entity.getRid() == null) {
       doc = new ODocument(OUser.class.getSimpleName());
     } else {
       doc = graph.getRawGraph().load(new ORecordId(entity.getRid()));

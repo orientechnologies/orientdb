@@ -89,7 +89,7 @@ public class RepositoryController {
       return new ResponseEntity<List<Label>>(HttpStatus.NOT_FOUND);
     }
 
-    return new ResponseEntity<List<Label>>(issueService.addLabels(i, labels), HttpStatus.OK);
+    return new ResponseEntity<List<Label>>(issueService.addLabels(i, labels, null, true), HttpStatus.OK);
   }
 
   @RequestMapping(value = "{owner}/{repo}/issues/{number}/labels/{lname}", method = RequestMethod.DELETE)

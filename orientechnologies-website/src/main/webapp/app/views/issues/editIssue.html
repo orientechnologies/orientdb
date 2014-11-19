@@ -58,9 +58,8 @@
               </div>
             </div>
             <div class="event" ng-if="comment.event">
-              <i class="fa fa-{{comment.event}}"></i>
-              <avatar dim="20" name="true" user="comment.actor"></avatar>
-              {{comment.event}}
+
+              <ng-include src="getEventTpl(comment.event)"></ng-include>
             </div>
           </div>
         </div>

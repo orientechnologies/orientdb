@@ -13,11 +13,11 @@ public interface IssueService {
 
   public Comment createNewCommentOnIssue(Issue issue, Comment comment);
 
-  public void changeMilestone(Issue issue, Milestone milestone);
+  public void changeMilestone(Issue issue, Milestone milestone,User actor, boolean fire);
 
   public void changeLabels(Issue issue, List<Label> labels, boolean replace);
 
-  public List<Label> addLabels(Issue issue, List<String> labels);
+  public List<Label> addLabels(Issue issue, List<String> labels, User actor, boolean fire);
 
   public void removeLabel(Issue issue, String label, User actor);
 
@@ -25,7 +25,7 @@ public interface IssueService {
 
   public void changeUser(Issue issue, User user);
 
-  public void changeAssignee(Issue issue, User user);
+  public void changeAssignee(Issue issue, User assignee, User actor, boolean fire);
 
   public void changeVersion(Issue issue, Milestone milestone);
 

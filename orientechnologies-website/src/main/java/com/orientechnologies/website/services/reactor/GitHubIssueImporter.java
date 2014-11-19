@@ -187,7 +187,7 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
   }
 
   private void importIssueAssignee(Issue issueDto, User user) {
-    issueService.changeAssignee(issueDto, user);
+    issueService.changeAssignee(issueDto, user, null, false);
   }
 
   private void importIssueUser(Issue issueDto, User user) {
@@ -204,10 +204,40 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
         e.setCreatedAt(event.getCreatedAt());
         e.setEventId(event.getId());
         e.setEvent(event.getEvent());
+
         GUser actor = event.getActor();
+
+        fillAdditionalInfo(e, event);
         e.setActor(userRepo.findUserOrCreateByLogin(actor.getLogin(), actor.getId()));
         e = (IssueEvent) eventRepository.save(e);
         createIssueEventAssociation(issueDto, e);
+      }
+    }
+  }
+
+  private void fillAdditionalInfo(IssueEvent e, GEvent event) {
+    if (event.getEvent().equals("labeled") || event.getEvent().equals("unlabeled")) {
+
+      GLabel label = event.getLabel();
+      if (label != null) {
+        Label l = new Label();
+        l.setColor(label.getColor());
+        l.setName(label.getName());
+        e.setLabel(l);
+      }
+    }
+    if (event.getEvent().equals("milestoned") || event.getEvent().equals("demilestoned")) {
+      GMilestone milestone = event.getMilestone();
+      if (milestone != null) {
+        Milestone l = new Milestone();
+        l.setTitle(milestone.getTitle());
+        e.setMilestone(l);
+      }
+    }
+    if (event.getEvent().equals("assigned") || event.getEvent().equals("unassigned")) {
+      GUser assignee = event.getAssignee();
+      if (assignee != null) {
+        e.setAssignee(userRepo.findUserOrCreateByLogin(assignee.getLogin(), assignee.getId()));
       }
     }
   }
@@ -248,7 +278,7 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
     }
 
     if (milestone != null)
-      issueService.changeMilestone(issueDto, milestone);
+      issueService.changeMilestone(issueDto, milestone, null, false);
   }
 
   private void importIssueLabels(Repository repoDtp, GIssue issue, Issue issueDto) {

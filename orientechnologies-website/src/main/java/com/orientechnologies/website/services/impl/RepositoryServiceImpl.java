@@ -173,13 +173,7 @@ public class RepositoryServiceImpl implements RepositoryService {
     if (milestone != null) {
       Milestone m = repositoryRepository.findMilestoneByRepoAndName(repository.getName(), milestone);
       if (m != null) {
-        issueService.changeMilestone(issue, m);
-        IssueEvent e = new IssueEvent();
-        e.setCreatedAt(new Date());
-        e.setEvent("milestoned");
-        e.setActor(SecurityHelper.currentUser());
-        e = (IssueEvent) eventRepository.save(e);
-        issueService.fireEvent(issue, e);
+        issueService.changeMilestone(issue, m, null, true);
       }
     }
   }
@@ -187,14 +181,7 @@ public class RepositoryServiceImpl implements RepositoryService {
   private void handleAssignee(Issue issue, String assigneeName) {
     User assignee = userRepo.findUserByLogin(assigneeName);
     if (assignee != null) {
-      issueService.changeAssignee(issue, assignee);
-      IssueEvent e = new IssueEvent();
-      e.setCreatedAt(new Date());
-      e.setEvent("assigned");
-      e.setAssegnee(assignee);
-      e.setActor(SecurityHelper.currentUser());
-      e = (IssueEvent) eventRepository.save(e);
-      issueService.fireEvent(issue, e);
+      issueService.changeAssignee(issue, assignee, null, true);
     }
   }
 
@@ -202,24 +189,25 @@ public class RepositoryServiceImpl implements RepositoryService {
   public void addLabel(Repository repo, Label label) {
 
     OrientGraph graph = dbFactory.getGraph();
-    OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(repo.getId()));
-    OrientVertex devVertex = new OrientVertex(graph, new ORecordId(label.getId()));
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(repo.getId()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(label.getId()));
     orgVertex.addEdge(HasLabel.class.getSimpleName(), devVertex);
   }
 
   @Override
   public void addMilestone(Repository repo, Milestone milestone) {
     OrientGraph graph = dbFactory.getGraph();
-    OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(repo.getId()));
-    OrientVertex devVertex = new OrientVertex(graph, new ORecordId(milestone.getId()));
+
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(repo.getId()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(milestone.getId()));
     orgVertex.addEdge(HasMilestone.class.getSimpleName(), devVertex);
   }
 
   private void createHasIssueRelationship(Repository repository, Issue issue) {
 
     OrientGraph graph = dbFactory.getGraph();
-    OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(repository.getId()));
-    OrientVertex devVertex = new OrientVertex(graph, new ORecordId(issue.getId()));
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(repository.getId()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(issue.getId()));
     orgVertex.addEdge(HasIssue.class.getSimpleName(), devVertex);
   }
 }

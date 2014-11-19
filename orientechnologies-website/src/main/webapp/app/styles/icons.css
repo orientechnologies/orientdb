@@ -9,8 +9,13 @@
 .fa-assigned:before {
   content: '\f007';
 }
-
+.fa-unassigned:before {
+  content: '\f007';
+}
 .fa-milestoned:before {
+  content: "\f091";
+}
+.fa-demilestoned:before {
   content: "\f091";
 }
 .fa-renamed:before {

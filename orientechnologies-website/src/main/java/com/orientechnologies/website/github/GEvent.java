@@ -21,6 +21,18 @@ public class GEvent extends GEntity {
     return toDate((String) get("created_at"));
   }
 
+  public GLabel getLabel() {
+
+    ODocument doc = get("label");
+    return doc != null ? new GLabel(github, this, doc.toJSON()) : null;
+  }
+
+  public GMilestone getMilestone() {
+
+    ODocument doc = get("milestone");
+    return doc != null ? new GMilestone(github, this, doc.toJSON()) : null;
+  }
+
   @Override
   protected String getBaseUrl() {
     return null;
@@ -32,5 +44,9 @@ public class GEvent extends GEntity {
 
   public GUser getActor() {
     return toUser((ODocument) get("actor"));
+  }
+
+  public GUser getAssignee() {
+    return toUser((ODocument) get("assignee"));
   }
 }

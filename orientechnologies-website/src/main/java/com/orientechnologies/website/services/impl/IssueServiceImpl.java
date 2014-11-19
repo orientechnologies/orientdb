@@ -58,8 +58,20 @@ public class IssueServiceImpl implements IssueService {
   }
 
   @Override
-  public void changeMilestone(Issue issue, Milestone milestone) {
+  public void changeMilestone(Issue issue, Milestone milestone, User actor, boolean fire) {
     createMilestoneRelationship(issue, milestone);
+    if (fire) {
+      IssueEvent e = new IssueEvent();
+      e.setCreatedAt(new Date());
+      e.setEvent("milestoned");
+      if (actor == null) {
+        e.setActor(SecurityHelper.currentUser());
+      } else {
+        e.setActor(actor);
+      }
+      e = (IssueEvent) eventRepository.save(e);
+      fireEvent(issue, e);
+    }
   }
 
   @Override
@@ -68,7 +80,7 @@ public class IssueServiceImpl implements IssueService {
   }
 
   @Override
-  public List<Label> addLabels(Issue issue, List<String> labels) {
+  public List<Label> addLabels(Issue issue, List<String> labels, User actor, boolean fire) {
 
     List<Label> lbs = new ArrayList<Label>();
 
@@ -78,14 +90,20 @@ public class IssueServiceImpl implements IssueService {
     }
     changeLabels(issue, lbs, false);
 
-    for (Label lb : lbs) {
-      IssueEvent e = new IssueEvent();
-      e.setCreatedAt(new Date());
-      e.setEvent("labeled");
-      e.setLabel(lb);
-      e.setActor(SecurityHelper.currentUser());
-      e = (IssueEvent) eventRepository.save(e);
-      fireEvent(issue, e);
+    if (fire) {
+      for (Label lb : lbs) {
+        IssueEvent e = new IssueEvent();
+        e.setCreatedAt(new Date());
+        e.setEvent("labeled");
+        e.setLabel(lb);
+        if (actor == null) {
+          e.setActor(SecurityHelper.currentUser());
+        } else {
+          e.setActor(actor);
+        }
+        e = (IssueEvent) eventRepository.save(e);
+        fireEvent(issue, e);
+      }
     }
     return lbs;
   }
@@ -113,8 +131,8 @@ public class IssueServiceImpl implements IssueService {
   public void fireEvent(Issue issue, Event e) {
 
     OrientGraph graph = dbFactory.getGraph();
-    OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(issue.getId()));
-    OrientVertex devVertex = new OrientVertex(graph, new ORecordId(e.getId()));
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(issue.getId()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(e.getId()));
 
     orgVertex.addEdge(HasEvent.class.getSimpleName(), devVertex);
   }
@@ -127,20 +145,31 @@ public class IssueServiceImpl implements IssueService {
 
   private void createUserRelationship(Issue issue, User user) {
     OrientGraph graph = dbFactory.getGraph();
-    OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(issue.getId()));
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(issue.getId()));
 
     for (Edge edge : orgVertex.getEdges(Direction.IN, HasOpened.class.getSimpleName())) {
       edge.remove();
     }
 
-    OrientVertex devVertex = new OrientVertex(graph, new ORecordId(user.getRid()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(user.getRid()));
     devVertex.addEdge(HasOpened.class.getSimpleName(), orgVertex);
   }
 
   @Override
-  public void changeAssignee(Issue issue, User user) {
-    createAssigneeRelationship(issue, user);
+  public void changeAssignee(Issue issue, User assignee, User actor, boolean fire) {
 
+    createAssigneeRelationship(issue, assignee);
+    IssueEvent e = new IssueEvent();
+    e.setCreatedAt(new Date());
+    e.setEvent("assigned");
+    e.setAssignee(assignee);
+    if (actor == null) {
+      e.setActor(SecurityHelper.currentUser());
+    } else {
+      e.setActor(actor);
+    }
+    e = (IssueEvent) eventRepository.save(e);
+    fireEvent(issue, e);
   }
 
   @Override
@@ -156,20 +185,20 @@ public class IssueServiceImpl implements IssueService {
 
   private void createAssigneeRelationship(Issue issue, User user) {
     OrientGraph graph = dbFactory.getGraph();
-    OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(issue.getId()));
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(issue.getId()));
 
     for (Edge edge : orgVertex.getEdges(Direction.OUT, IsAssigned.class.getSimpleName())) {
       edge.remove();
     }
 
-    OrientVertex devVertex = new OrientVertex(graph, new ORecordId(user.getRid()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(user.getRid()));
     orgVertex.addEdge(IsAssigned.class.getSimpleName(), devVertex);
   }
 
   private void removeLabelRelationship(Issue issue, Label label) {
 
     OrientGraph graph = dbFactory.getGraph();
-    OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(issue.getId()));
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(issue.getId()));
 
     for (Edge edge : orgVertex.getEdges(Direction.OUT, HasLabel.class.getSimpleName())) {
       Vertex v = edge.getVertex(Direction.IN);
@@ -184,7 +213,7 @@ public class IssueServiceImpl implements IssueService {
   private void createLabelsRelationship(Issue issue, List<Label> labels, boolean replace) {
 
     OrientGraph graph = dbFactory.getGraph();
-    OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(issue.getId()));
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(issue.getId()));
 
     if (replace) {
       for (Edge edge : orgVertex.getEdges(Direction.OUT, HasLabel.class.getSimpleName())) {
@@ -192,7 +221,7 @@ public class IssueServiceImpl implements IssueService {
       }
     }
     for (Label label : labels) {
-      OrientVertex devVertex = new OrientVertex(graph, new ORecordId(label.getId()));
+      OrientVertex devVertex = graph.getVertex(new ORecordId(label.getId()));
       orgVertex.addEdge(HasLabel.class.getSimpleName(), devVertex);
     }
 
@@ -201,8 +230,8 @@ public class IssueServiceImpl implements IssueService {
   private void createVersionRelationship(Issue issue, Milestone milestone) {
 
     OrientGraph graph = dbFactory.getGraph();
-    OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(issue.getId()));
-    OrientVertex devVertex = new OrientVertex(graph, new ORecordId(milestone.getId()));
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(issue.getId()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(milestone.getId()));
     for (Edge edge : orgVertex.getEdges(Direction.OUT, HasVersion.class.getSimpleName())) {
       edge.remove();
     }
@@ -213,8 +242,8 @@ public class IssueServiceImpl implements IssueService {
   private void createMilestoneRelationship(Issue issue, Milestone milestone) {
 
     OrientGraph graph = dbFactory.getGraph();
-    OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(issue.getId()));
-    OrientVertex devVertex = new OrientVertex(graph, new ORecordId(milestone.getId()));
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(issue.getId()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(milestone.getId()));
     for (Edge edge : orgVertex.getEdges(Direction.OUT, HasMilestone.class.getSimpleName())) {
       edge.remove();
     }
@@ -225,8 +254,8 @@ public class IssueServiceImpl implements IssueService {
   private void createCommentRelationship(Issue issue, Comment comment) {
 
     OrientGraph graph = dbFactory.getGraph();
-    OrientVertex orgVertex = new OrientVertex(graph, new ORecordId(issue.getId()));
-    OrientVertex devVertex = new OrientVertex(graph, new ORecordId(comment.getId()));
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(issue.getId()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(comment.getId()));
     orgVertex.addEdge(HasEvent.class.getSimpleName(), devVertex);
   }
 }

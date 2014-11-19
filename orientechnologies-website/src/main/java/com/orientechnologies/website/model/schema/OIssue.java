@@ -122,7 +122,7 @@ public enum OIssue implements OTypeHolder<Issue> {
     issue.setUuid((String) doc.field(UUID.toString()));
     issue.setNumber((Integer) doc.field(NUMBER.toString()));
 
-    OrientVertex iss = new OrientVertex(graph, doc);
+    OrientVertex iss = graph.getVertex(doc);
     for (Vertex vertex : iss.getVertices(Direction.IN, HasIssue.class.getSimpleName())) {
       issue.setRepository(ORepository.NAME.fromDoc(((OrientVertex) vertex).getRecord(), graph));
       break;
