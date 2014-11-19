@@ -1,6 +1,6 @@
 ## OrientDB
 
-<img src="http://www.orientdb.org/images/graphed-tutorial-graph_small.png">
+<img src="http://www.orientechnologies.com/docs/last/orientdb-studio.wiki/images/Settings.png">
 
 ## What is Orient?
 
