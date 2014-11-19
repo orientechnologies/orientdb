@@ -144,8 +144,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     this.username = username;
     this.password = password;
     this.openOrCreate();
-
     readDatabaseConfiguration();
+
+    makeActive();
   }
 
   /**
@@ -1705,7 +1706,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       } else
         database = pool.acquire();
 
-			makeActive();
       checkForGraphSchema(database);
     }
   }
