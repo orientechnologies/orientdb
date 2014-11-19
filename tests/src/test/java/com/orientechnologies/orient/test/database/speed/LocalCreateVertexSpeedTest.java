@@ -43,6 +43,7 @@ public class LocalCreateVertexSpeedTest extends OrientMonoThreadTest {
     OGlobalConfiguration.USE_WAL.setValue(false);
     LocalCreateVertexSpeedTest test = new LocalCreateVertexSpeedTest();
     test.data.go(test);
+    OGlobalConfiguration.USE_WAL.setValue(true);
   }
 
   @Override

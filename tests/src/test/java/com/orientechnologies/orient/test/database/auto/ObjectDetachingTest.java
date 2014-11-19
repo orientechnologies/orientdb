@@ -43,6 +43,9 @@ import com.orientechnologies.orient.test.domain.business.Address;
 import com.orientechnologies.orient.test.domain.business.Child;
 import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
+import com.orientechnologies.orient.test.domain.cycle.CycleChild;
+import com.orientechnologies.orient.test.domain.cycle.CycleParent;
+import com.orientechnologies.orient.test.domain.cycle.GrandChild;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
 
 @Test(groups = { "object" })
@@ -739,4 +742,36 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     database.delete(profile);
   }
 
+  public void testDetachAllWithCycles() {
+    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.cycle");
+
+    CycleParent parent = new CycleParent();
+    parent.setName("parent");
+    CycleChild cycleChild1 = new CycleChild();
+    cycleChild1.setParent(parent);
+    cycleChild1.setName("child1");
+    parent.getChildren().add(cycleChild1);
+    CycleChild cycleChild2 = new CycleChild();
+    cycleChild2.setName("child2");
+    cycleChild2.setParent(parent);
+    parent.getChildren().add(cycleChild2);
+    GrandChild grandChild = new GrandChild();
+    grandChild.setName("grandchild");
+    grandChild.setGrandParent(parent);
+    cycleChild1.getGrandChildren().add(grandChild);
+    CycleParent attached = database.save(parent);
+
+    CycleParent detachedParent = database.detachAll(attached, true);
+    Assert.assertEquals(detachedParent.getName(), parent.getName());
+    Assert.assertEquals(detachedParent.getChildren().getClass(), ArrayList.class);
+    CycleChild detachedCycleChild1 = detachedParent.getChildren().get(0);
+    CycleChild detachedCycleChild2 = detachedParent.getChildren().get(1);
+    Assert.assertEquals(detachedCycleChild1.getName(), cycleChild1.getName());
+    Assert.assertEquals(detachedCycleChild2.getName(), cycleChild2.getName());
+    Assert.assertEquals(detachedCycleChild1.getGrandChildren().getClass(), HashSet.class);
+    GrandChild detachedGrandChild = detachedCycleChild1.getGrandChildren().iterator().next();
+    Assert.assertEquals(detachedGrandChild.getName(), grandChild.getName());
+    Assert.assertSame(detachedGrandChild.getGrandParent(), detachedParent);
+
+  }
 }

@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.graph.batch;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -17,70 +19,98 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  *
- * this is and API for fast batch import of simple graphs, starting from an empty (or non existing) DB. This class allows import of
- * graphs with
+ * this is and API for fast batch import of graphs with only one class for edges and one class for vertices,
+ * starting from an empty (or non existing) DB. This class allows import of graphs with
  * <ul>
- * <li>no properties on edges</li>
- * <li>no properties on vertices</li>
+ * <li>properties on edges</li>
+ * <li>properties on vertices</li>
  * <li>Long values for vertex ids</li>
  * </ul>
- * These limitations are intended to have best performance on a very simple use case. If there limitations don't fit your
- * requirements you can rely on other implementations (at the time of writing this they are planned, but not implemented yet)
+ *
+ * This batch insert procedure is made of four phases, that have to be executed in the correct order:
+ * <ul>
+ * <li>begin(): initializes the database</li>
+ * <li>create edges (with or without properties) and vertices</li>
+ * <li>set properties on vertices</li>
+ * <li>end(): flushes data to db</li>
+ * </ul>
  *
  * Typical usage: <code>
- *   OGraphBatchInsertSimple batch = new OGraphBatchInsertSimple("plocal:your/db", "admin", "admin");
+ *   OGraphBatchInsert batch = new OGraphBatchInsert("plocal:your/db", "admin", "admin");
+ *
+ *   //phase 1: begin
  *   batch.begin();
- *   batch.createEdge(0L, 1L);
- *   batch.createEdge(0L, 2L);
+ *
+ *   //phase 2: create edges
+ *   Map&lt;String, Object&gt; edgeProps = new HashMap&lt;String, Object&gt;
+ *   edgeProps.put("foo", "bar");
+ *   batch.createEdge(0L, 1L, edgeProps);
+ *   batch.createVertex(2L);
+ *   batch.createEdge(3L, 4L, null);
  *   ...
+ *
+ *   //phase 3: set properties on vertices, THIS CAN BE DONE ONLY AFTER EDGE AND VERTEX CREATION
+ *   Map&lt;String, Object&gt; vertexProps = new HashMap&lt;String, Object&gt;
+ *   vertexProps.put("foo", "bar");
+ *   batch.setVertexProperties(0L, vertexProps)
+ *   ...
+ *
+ *   //phase 4: end
  *   batch.end();
  * </code>
  *
  * There is no need to create vertices before connecting them: <code>
  *   batch.createVertex(0L);
  *   batch.createVertex(1L);
- *   batch.createEdge(0L, 1L);
+ *   batch.createEdge(0L, 1L, props);
  * </code>
  *
  * is equivalent to (but less performing than) <code>
- *   batch.createEdge(0L, 1L);
+ *   batch.createEdge(0L, 1L, props);
  * </code>
  *
- * batch.createVertex() is needed only if you want to create unconnected vertices.
+ * batch.createVertex(Long) is needed only if you want to create unconnected vertices
  *
  * @since 2.0 M3
  * @author Luigi Dell'Aquila (l.dellaquila-at-orientechnologies.com)
  */
-public class OGraphBatchInsertBasic {
+public class OGraphBatchInsert {
 
   private final String        userName;
   private final String        dbUrl;
   private final String        password;
-  Map<Long, List<Long>>       out                      = new HashMap<Long, List<Long>>();
-  Map<Long, List<Long>>       in                       = new HashMap<Long, List<Long>>();
+  Map<Long, List<Object>>     out                      = new HashMap<Long, List<Object>>();
+  Map<Long, List<Object>>     in                       = new HashMap<Long, List<Object>>();
   private String              idPropertyName           = "uid";
   private String              edgeClass                = "E";
   private String              vertexClass              = "V";
+  private OClass              oVertexClass;
   private ODatabaseDocumentTx db;
   private int                 averageEdgeNumberPerNode = -1;
   private int                 estimatedEntries         = -1;
   private int                 bonsaiThreshold          = 1000;
   private int[]               clusterIds;
   private long[]              lastClusterPositions;
+  private long[]              nextVerticesToCreate;                                        // absolute value
   private long                last                     = 0;
   private boolean             walActive;
 
   private int                 parallel                 = 4;
-  private AtomicInteger       runningThreads           = new AtomicInteger(0);
+  private final AtomicInteger runningThreads           = new AtomicInteger(0);
+
+  boolean                     settingProperties        = false;
+  private Boolean             useLightWeigthEdges      = null;
 
   class BatchImporterJob extends Thread {
 
     private final int mod;
-    OClass            vClass;
+    private OClass    vClass;
+    private long      last;
 
-    BatchImporterJob(int mod, OClass vertexClass) {
+    BatchImporterJob(int mod, OClass vertexClass, long last) {
       this.mod = mod;
       this.vClass = vertexClass;
+      this.last = last;
     }
 
     @Override
@@ -88,50 +118,83 @@ public class OGraphBatchInsertBasic {
       try {
         ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbUrl);
         db.open(userName, password);
-        db.declareIntent(new OIntentMassiveInsert());
-        int clusterId = clusterIds[mod];
-
-        final String outField = "E".equals(edgeClass) ? "out_" : ("out_" + edgeClass);
-        final String inField = "E".equals(edgeClass) ? "in_" : ("in_" + edgeClass);
-
-        String clusterName = db.getStorage().getClusterById(clusterId).getName();
-        // long firstAvailableClusterPosition = lastClusterPositions[mod] + 1;
-
-        for (long i = mod; i <= last; i += parallel) {
-          final List<Long> outIds = out.get(i);
-          final List<Long> inIds = in.get(i);
-          final ODocument doc = new ODocument(vClass);
-          if (outIds == null && inIds == null) {
-            db.save(doc, clusterName).delete();
-          } else {
-            doc.field(idPropertyName, i);
-            if (outIds != null) {
-              final ORidBag outBag = new ORidBag();
-              for (Long l : outIds) {
-                final ORecordId rid = new ORecordId(getClusterId(l), getClusterPosition(l));
-                outBag.add(rid);
-              }
-              doc.field(outField, outBag);
-            }
-            if (inIds != null) {
-              final ORidBag inBag = new ORidBag();
-              for (Long l : inIds) {
-                final ORecordId rid = new ORecordId(getClusterId(l), getClusterPosition(l));
-                inBag.add(rid);
-              }
-              doc.field(inField, inBag);
-            }
-            db.save(doc, clusterName);
-          }
-        }
+        run(db);
       } finally {
         runningThreads.decrementAndGet();
         synchronized (runningThreads) {
           runningThreads.notifyAll();
         }
-        db.declareIntent(null);
         db.close();
       }
+    }
+
+    private void run(ODatabaseDocumentTx db) {
+      db.declareIntent(new OIntentMassiveInsert());
+      int clusterId = clusterIds[mod];
+
+      final String outField = "E".equals(edgeClass) ? "out_" : ("out_" + edgeClass);
+      final String inField = "E".equals(edgeClass) ? "in_" : ("in_" + edgeClass);
+
+      String clusterName = db.getStorage().getClusterById(clusterId).getName();
+      // long firstAvailableClusterPosition = lastClusterPositions[mod] + 1;
+
+      for (long i = nextVerticesToCreate[mod]; i <= last; i += parallel) {
+        createVertex(db, i, inField, outField, clusterName, null);
+      }
+      db.declareIntent(null);
+    }
+
+    public void createVertex(ODatabaseDocumentTx db, long i, Map<String, Object> properties) {
+      int clusterId = clusterIds[mod];
+
+      final String outField = "E".equals(edgeClass) ? "out_" : ("out_" + edgeClass);
+      final String inField = "E".equals(edgeClass) ? "in_" : ("in_" + edgeClass);
+      String clusterName = db.getStorage().getClusterById(clusterId).getName();
+
+      createVertex(db, i, inField, outField, clusterName, properties);
+    }
+
+    private void createVertex(ODatabaseDocumentTx db, long i, String inField, String outField, String clusterName,
+        Map<String, Object> properties) {
+      final List<Object> outIds = out.get(i);
+      final List<Object> inIds = in.get(i);
+      final ODocument doc = new ODocument(vClass);
+      if (outIds == null && inIds == null) {
+        db.save(doc, clusterName).delete();
+      } else {
+        doc.field(idPropertyName, i);
+        if (outIds != null) {
+          final ORidBag outBag = new ORidBag();
+          for (Object l : outIds) {
+
+            ORecordId rid;
+            if (l instanceof ORecordId) {
+              rid = (ORecordId) l;
+            } else {
+              rid = new ORecordId(getClusterId((Long) l), getClusterPosition((Long) l));
+            }
+            outBag.add(rid);
+          }
+          doc.field(outField, outBag);
+        }
+        if (inIds != null) {
+          final ORidBag inBag = new ORidBag();
+          for (Object l : inIds) {
+            ORecordId rid;
+            if (l instanceof ORecordId) {
+              rid = (ORecordId) l;
+            } else {
+              rid = new ORecordId(getClusterId((Long) l), getClusterPosition((Long) l));
+            }
+            inBag.add(rid);
+          }
+          doc.field(inField, inBag);
+        }
+
+        doc.fromMap(properties);
+        db.save(doc, clusterName);
+      }
+      nextVerticesToCreate[mod] += parallel;
     }
   }
 
@@ -142,7 +205,7 @@ public class OGraphBatchInsertBasic {
    * @param iDbURL
    *          db connection URL (plocal:/your/db/path)
    */
-  public OGraphBatchInsertBasic(String iDbURL) {
+  public OGraphBatchInsert(String iDbURL) {
     this.dbUrl = iDbURL;
     this.userName = "admin";
     this.password = "admin";
@@ -158,7 +221,7 @@ public class OGraphBatchInsertBasic {
    * @param iPassword
    *          db password (use admin for new db)
    */
-  public OGraphBatchInsertBasic(String iDbURL, String iUserName, String iPassword) {
+  public OGraphBatchInsert(String iDbURL, String iUserName, String iPassword) {
     this.dbUrl = iDbURL;
     this.userName = iUserName;
     this.password = iPassword;
@@ -184,10 +247,22 @@ public class OGraphBatchInsertBasic {
     } else {
       db.create();
     }
+    if (this.useLightWeigthEdges == null) {
+      final List<OStorageEntryConfiguration> custom = (List<OStorageEntryConfiguration>) db.get(ODatabase.ATTRIBUTES.CUSTOM);
+      for (OStorageEntryConfiguration c : custom) {
+        if (c.name.equals("useLightweightEdges")) {
+          this.useLightWeigthEdges = Boolean.parseBoolean(c.value);
+          break;
+        }
+      }
+      if (this.useLightWeigthEdges == null) {
+        this.useLightWeigthEdges = true;
+      }
+    }
     createBaseSchema();
 
-    out = estimatedEntries > 0 ? new HashMap<Long, List<Long>>(estimatedEntries) : new HashMap<Long, List<Long>>();
-    in = estimatedEntries > 0 ? new HashMap<Long, List<Long>>(estimatedEntries) : new HashMap<Long, List<Long>>();
+    out = estimatedEntries > 0 ? new HashMap<Long, List<Object>>(estimatedEntries) : new HashMap<Long, List<Object>>();
+    in = estimatedEntries > 0 ? new HashMap<Long, List<Object>>(estimatedEntries) : new HashMap<Long, List<Object>>();
 
     OClass vClass = db.getMetadata().getSchema().getClass(this.vertexClass);
     int[] existingClusters = vClass.getClusterIds();
@@ -198,9 +273,11 @@ public class OGraphBatchInsertBasic {
     clusterIds = vClass.getClusterIds();
 
     lastClusterPositions = new long[clusterIds.length];
+    nextVerticesToCreate = new long[clusterIds.length];
     for (int i = 0; i < clusterIds.length; i++) {
       int clusterId = clusterIds[i];
       try {
+        nextVerticesToCreate[i] = i;
         lastClusterPositions[i] = db.getStorage().getClusterById(clusterId).getLastPosition();
       } catch (Exception e) {
         throw new RuntimeException(e);
@@ -215,16 +292,12 @@ public class OGraphBatchInsertBasic {
     final OClass vClass = db.getMetadata().getSchema().getClass(vertexClass);
 
     try {
-
-      final String outField = "E".equals(this.edgeClass) ? "out_" : ("out_" + this.edgeClass);
-      final String inField = "E".equals(this.edgeClass) ? "in_" : ("in_" + this.edgeClass);
-
-      runningThreads = new AtomicInteger(parallel);
+      runningThreads.set(parallel);
       for (int i = 0; i < parallel - 1; i++) {
-        Thread t = new BatchImporterJob(i, vClass);
+        Thread t = new BatchImporterJob(i, vClass, last);
         t.start();
       }
-      Thread t = new BatchImporterJob(parallel - 1, vClass);
+      Thread t = new BatchImporterJob(parallel - 1, vClass, last);
       t.run();
 
       if (runningThreads.get() > 0) {
@@ -253,10 +326,14 @@ public class OGraphBatchInsertBasic {
    *          the vertex ID
    */
   public void createVertex(final Long v) {
+    if (settingProperties) {
+      throw new IllegalStateException("Cannot create new edges when already set properties on vertices");
+    }
+
     last = last < v ? v : last;
-    final List<Long> outList = out.get(v);
+    final List<Object> outList = out.get(v);
     if (outList == null) {
-      out.put(v, new ArrayList<Long>(averageEdgeNumberPerNode <= 0 ? 4 : averageEdgeNumberPerNode));
+      out.put(v, new ArrayList<Object>(averageEdgeNumberPerNode <= 0 ? 4 : averageEdgeNumberPerNode));
     }
   }
 
@@ -268,17 +345,56 @@ public class OGraphBatchInsertBasic {
    * @param to
    *          id of the vertex that is end point of the edge
    */
-  public void createEdge(final Long from, final Long to) {
+  public void createEdge(final Long from, final Long to, Map<String, Object> properties) {
+    if (settingProperties) {
+      throw new IllegalStateException("Cannot create new edges when already set properties on vertices");
+    }
     if (from < 0) {
       throw new IllegalArgumentException(" Invalid vertex id: " + from);
     }
     if (to < 0) {
       throw new IllegalArgumentException(" Invalid vertex id: " + to);
     }
-    last = last < from ? from : last;
-    last = last < to ? to : last;
-    putInList(from, out, to);
-    putInList(to, in, from);
+    if (useLightWeigthEdges && (properties == null || properties.size() == 0)) {
+      last = last < from ? from : last;
+      last = last < to ? to : last;
+      putInList(from, out, to);
+      putInList(to, in, from);
+    } else {
+      ODocument edgeDoc = new ODocument(edgeClass);
+
+      edgeDoc.fromMap(properties);
+      edgeDoc.field("out", new ORecordId(getClusterId(from), getClusterPosition(from)));
+      edgeDoc.field("in", new ORecordId(getClusterId(to), getClusterPosition(to)));
+      db.save(edgeDoc);
+      ORecordId rid = (ORecordId) edgeDoc.getIdentity();
+      putInList(from, out, rid);
+      putInList(to, in, rid);
+    }
+  }
+
+  public void setVertexProperties(Long id, Map<String, Object> properties) {
+    if (properties == null || properties.size() == 0) {
+      return;
+    }
+    settingProperties = true;
+    int cluster = (int) (id % parallel);
+    if (nextVerticesToCreate[cluster] <= id) {
+      if (oVertexClass == null) {
+        oVertexClass = db.getMetadata().getSchema().getClass(vertexClass);
+      }
+      if (nextVerticesToCreate[cluster] < id) {
+        new BatchImporterJob(cluster, oVertexClass, id - 1).run(db);
+      }
+      new BatchImporterJob(cluster, oVertexClass, id).createVertex(db, id, properties);
+    } else {
+      ODocument doc = (ODocument) db.load(new ORecordId(getClusterId(id), getClusterPosition(id)));
+      if (doc == null) {
+        throw new RuntimeException("trying to insert properties on non existing document");
+      }
+      doc.fromMap(properties);
+      db.save(doc);
+    }
   }
 
   /**
@@ -399,10 +515,10 @@ public class OGraphBatchInsertBasic {
     this.parallel = parallel;
   }
 
-  private void putInList(final Long key, final Map<Long, List<Long>> out, final Long value) {
-    List<Long> list = out.get(key);
+  private void putInList(final Long key, final Map<Long, List<Object>> out, final Object value) {
+    List<Object> list = out.get(key);
     if (list == null) {
-      list = new ArrayList<Long>(averageEdgeNumberPerNode <= 0 ? 4 : averageEdgeNumberPerNode);
+      list = new ArrayList<Object>(averageEdgeNumberPerNode <= 0 ? 4 : averageEdgeNumberPerNode);
       out.put(key, list);
     }
     list.add(value);

@@ -25,7 +25,6 @@ import com.orientechnologies.common.types.OModifiableInteger;
 import java.util.HashSet;
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.AbstractOwnableSynchronizer;

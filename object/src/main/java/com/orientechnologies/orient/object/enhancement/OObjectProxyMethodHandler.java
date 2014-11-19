@@ -141,8 +141,8 @@ public class OObjectProxyMethodHandler implements MethodHandler {
    * @throws IllegalAccessException
    * @throws NoSuchMethodException
    */
-  public void detachAll(final Object self, final boolean nonProxiedInstance) throws NoSuchMethodException, IllegalAccessException,
-      InvocationTargetException {
+  public void detachAll(final Object self, final boolean nonProxiedInstance, final Map<Object, Object> alreadyDetached)
+      throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
     final Class<?> selfClass = self.getClass();
 
     for (String fieldName : doc.fieldNames()) {
@@ -150,7 +150,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
       if (field != null) {
         Object value = getValue(self, fieldName, false, null, true);
         if (value instanceof OObjectLazyMultivalueElement) {
-          ((OObjectLazyMultivalueElement<?>) value).detachAll(nonProxiedInstance);
+          ((OObjectLazyMultivalueElement<?>) value).detachAll(nonProxiedInstance, alreadyDetached);
           if (nonProxiedInstance)
             value = ((OObjectLazyMultivalueElement<?>) value).getNonOrientInstance();
         } else if (value instanceof Proxy) {
@@ -158,7 +158,13 @@ public class OObjectProxyMethodHandler implements MethodHandler {
           if (nonProxiedInstance) {
             value = OObjectEntitySerializer.getNonProxiedInstance(value);
           }
-          handler.detachAll(value, nonProxiedInstance);
+          Object detachedValue = alreadyDetached.get(handler.doc.hashCode());
+          if (detachedValue != null) {
+            value = detachedValue;
+          } else {
+            alreadyDetached.put(handler.doc.hashCode(), value);
+            handler.detachAll(value, nonProxiedInstance, alreadyDetached);
+          }
         }
         OObjectEntitySerializer.setFieldValue(field, self, value);
       }

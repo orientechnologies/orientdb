@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata;
 
-import java.io.IOException;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicReference;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
@@ -48,6 +44,10 @@ import com.orientechnologies.orient.core.schedule.OSchedulerListener;
 import com.orientechnologies.orient.core.schedule.OSchedulerListenerImpl;
 import com.orientechnologies.orient.core.schedule.OSchedulerListenerProxy;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+
+import java.io.IOException;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class OMetadataDefault implements OMetadata {
   public static final String                           CLUSTER_INTERNAL_NAME     = "internal";
@@ -248,7 +248,7 @@ public class OMetadataDefault implements OMetadata {
     if (schema != null)
       schema.reload();
     if (indexManager != null)
-      indexManager.load();
+      indexManager.reload();
     if (security != null)
       security.load();
     if (functionLibrary != null)

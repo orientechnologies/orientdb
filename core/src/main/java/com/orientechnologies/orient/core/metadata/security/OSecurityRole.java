@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.metadata.security;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
 
@@ -10,7 +11,7 @@ import java.util.Set;
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 03/11/14
  */
-public interface OSecurityRole {
+public interface OSecurityRole extends Serializable {
   public enum ALLOW_MODES {
     DENY_ALL_BUT, ALLOW_ALL_BUT
   }

@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.metadata.security;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -9,12 +10,14 @@ import java.util.TreeSet;
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 08/11/14
  */
-public class ORule {
+public class ORule implements Serializable{
 
   public enum ResourceGeneric {
     FUNCTION, CLASS, CLUSTER, BYPASS_RESTRICTED, DATABASE, SCHEMA, COMMAND, RECORD_HOOK
   }
 
+  private static final long serialVersionUID  = 1L;
+  
   private static final TreeMap<String, ResourceGeneric> legacyToGenericMap;
   private static final Map<ResourceGeneric, String>     genericToLegacyMap = new HashMap<ResourceGeneric, String>();
 
