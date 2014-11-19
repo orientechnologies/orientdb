@@ -21,7 +21,7 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 public class OrientGraphFactoryTest {
   @BeforeClass
   public static void setUp() {
-    OrientBaseGraph.clearInitStack();
+    OrientBaseGraph.clearInitQueue();
   }
 
   @Test
