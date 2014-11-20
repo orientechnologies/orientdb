@@ -9,7 +9,7 @@ import java.util.Collection;
 /**
  * Created by Enrico Risa on 20/10/14.
  */
-public class User implements UserDetails {
+public class OUser implements UserDetails {
 
   @JsonIgnore
   private String rid;
@@ -20,13 +20,13 @@ public class User implements UserDetails {
   @JsonIgnore
   private String email;
 
-  public User(String name, String token, String email) {
+  public OUser(String name, String token, String email) {
     this.name = name;
     this.token = token;
     this.email = email;
   }
 
-  public User() {
+  public OUser() {
   }
 
   public void setId(Long id) {

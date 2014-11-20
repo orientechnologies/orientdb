@@ -7,10 +7,10 @@ public class IssueEvent extends Event {
 
   private Integer   eventId;
   private String    event;
-  private User      actor;
+  private OUser actor;
   private String    commitId;
   private Label     label;
-  private User      assignee;
+  private OUser assignee;
   private Milestone milestone;
 
   public void setEventId(Integer eventId) {
@@ -29,11 +29,11 @@ public class IssueEvent extends Event {
     this.event = event;
   }
 
-  public User getActor() {
+  public OUser getActor() {
     return actor;
   }
 
-  public void setActor(User actor) {
+  public void setActor(OUser actor) {
     this.actor = actor;
   }
 
@@ -55,11 +55,11 @@ public class IssueEvent extends Event {
     this.label = label;
   }
 
-  public User getAssignee() {
+  public OUser getAssignee() {
     return assignee;
   }
 
-  public void setAssignee(User assignee) {
+  public void setAssignee(OUser assignee) {
     this.assignee = assignee;
   }
 

@@ -10,7 +10,7 @@ public class Comment extends Event {
   private String  id;
   private Integer commentId;
   private String  body;
-  private User user;
+  private OUser user;
 
   private Date    updatedAt;
 
@@ -38,11 +38,11 @@ public class Comment extends Event {
     this.id = id;
   }
 
-  public User getUser() {
+  public OUser getUser() {
     return user;
   }
 
-  public void setUser(User user) {
+  public void setUser(OUser user) {
     this.user = user;
   }
 

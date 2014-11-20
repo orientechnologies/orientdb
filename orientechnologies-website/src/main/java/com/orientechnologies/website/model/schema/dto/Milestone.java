@@ -12,7 +12,7 @@ public class Milestone {
   private String  state;
   private String  title;
   private String  description;
-  private User creator;
+  private OUser creator;
   private Date    createdAt;
   private Date    updatedAt;
 
@@ -65,11 +65,11 @@ public class Milestone {
     this.description = description;
   }
 
-  public User getCreator() {
+  public OUser getCreator() {
     return creator;
   }
 
-  public void setCreator(User creator) {
+  public void setCreator(OUser creator) {
     this.creator = creator;
   }
 

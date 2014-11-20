@@ -1,6 +1,6 @@
 package com.orientechnologies.website.security;
 
-import com.orientechnologies.website.model.schema.dto.User;
+import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.model.schema.dto.UserAuthority;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -13,10 +13,10 @@ import java.util.HashSet;
  */
 public class DeveloperAuthentication implements Authentication {
 
-  private final User user;
+  private final OUser user;
   private boolean         authenticated = true;
 
-  public DeveloperAuthentication(User user) {
+  public DeveloperAuthentication(OUser user) {
     this.user = user;
   }
 
@@ -63,7 +63,7 @@ public class DeveloperAuthentication implements Authentication {
     return user.getName();
   }
 
-  public User getUser() {
+  public OUser getUser() {
     return user;
   }
 }

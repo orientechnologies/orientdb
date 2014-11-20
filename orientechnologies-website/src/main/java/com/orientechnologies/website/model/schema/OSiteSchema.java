@@ -21,6 +21,7 @@ public class OSiteSchema {
     addVertexClass(OLabel.class, Label.class.getSimpleName());
     addVertexClass(OEvent.class, Event.class.getSimpleName());
     addVertexClass(OComment.class, Comment.class.getSimpleName(), OEvent.class);
+    addVertexClass(OIssueEvent.class, IssueEvent.class.getSimpleName(), OEvent.class);
     addVertexClass(OIssue.class, Issue.class.getSimpleName());
     addVertexClass(OClient.class, Client.class.getSimpleName());
     addVertexClass(ORepository.class, Repository.class.getSimpleName());
@@ -75,7 +76,8 @@ public class OSiteSchema {
 
     OClass v = schema.getClass("V");
     OClass e = schema.getClass("E");
-
+    OClass identity = schema.getClass("OIdentity");
+    identity.setSuperClass(v);
     Map<Class, OClass> created = new HashMap<Class, OClass>();
     for (Class<?> clazz : schemas.keySet()) {
       OClass cls;

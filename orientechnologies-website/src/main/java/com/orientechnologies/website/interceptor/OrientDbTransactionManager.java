@@ -27,6 +27,7 @@ public class OrientDbTransactionManager extends AbstractPlatformTransactionManag
     OrientTransaction transaction = new OrientTransaction();
 
     transaction.setGraph(factory.getGraph());
+
     return transaction;
   }
 

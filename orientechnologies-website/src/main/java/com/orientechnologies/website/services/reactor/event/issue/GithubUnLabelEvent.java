@@ -5,7 +5,7 @@ import com.orientechnologies.website.model.schema.OIssue;
 import com.orientechnologies.website.model.schema.ORepository;
 import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.model.schema.dto.OLabel;
-import com.orientechnologies.website.model.schema.dto.User;
+import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.repository.EventRepository;
 import com.orientechnologies.website.repository.RepositoryRepository;
 import com.orientechnologies.website.repository.UserRepository;
@@ -53,7 +53,7 @@ public class GithubUnLabelEvent implements GithubIssueEvent {
     return "unlabeled";
   }
 
-  protected User findUser(ODocument payload) {
+  protected OUser findUser(ODocument payload) {
     ODocument sender = payload.field("sender");
     String login = sender.field("login");
     Integer id = sender.field("id");

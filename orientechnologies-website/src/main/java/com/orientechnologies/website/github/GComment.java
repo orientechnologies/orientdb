@@ -37,4 +37,8 @@ public class GComment extends GEntity {
   public Date getUpdatedAt() {
     return toDate((String) get("updated_at"));
   }
+
+  public static GComment fromDoc(ODocument comment) {
+    return new GComment(null, null, comment.toJSON());
+  }
 }

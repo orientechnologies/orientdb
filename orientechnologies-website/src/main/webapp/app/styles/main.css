@@ -347,3 +347,6 @@ body {
 .edit-issue .state h3 {
   margin: 0px;
 }
+.inline-block {
+  display: inline-block;
+}

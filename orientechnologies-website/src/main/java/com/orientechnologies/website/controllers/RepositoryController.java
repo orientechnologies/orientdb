@@ -115,8 +115,8 @@ public class RepositoryController {
   }
 
   @RequestMapping(value = "{owner}/{repo}/teams", method = RequestMethod.GET)
-  public ResponseEntity<List<User>> getRepositoryTeams(@PathVariable("owner") String owner, @PathVariable("repo") String repo) {
-    return new ResponseEntity<List<User>>(organizationRepository.findTeamMembers(owner, repo), HttpStatus.OK);
+  public ResponseEntity<List<OUser>> getRepositoryTeams(@PathVariable("owner") String owner, @PathVariable("repo") String repo) {
+    return new ResponseEntity<List<OUser>>(organizationRepository.findTeamMembers(owner, repo), HttpStatus.OK);
   }
 
   @RequestMapping(value = "{owner}/{repo}/labels", method = RequestMethod.GET)

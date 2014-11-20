@@ -5,6 +5,7 @@ import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.helper.SecurityHelper;
 import com.orientechnologies.website.model.schema.*;
 import com.orientechnologies.website.model.schema.dto.*;
+import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.repository.CommentRepository;
 import com.orientechnologies.website.repository.EventRepository;
 import com.orientechnologies.website.repository.IssueRepository;
@@ -58,7 +59,7 @@ public class IssueServiceImpl implements IssueService {
   }
 
   @Override
-  public void changeMilestone(Issue issue, Milestone milestone, User actor, boolean fire) {
+  public void changeMilestone(Issue issue, Milestone milestone, OUser actor, boolean fire) {
     createMilestoneRelationship(issue, milestone);
     if (fire) {
       IssueEvent e = new IssueEvent();
@@ -80,7 +81,7 @@ public class IssueServiceImpl implements IssueService {
   }
 
   @Override
-  public List<Label> addLabels(Issue issue, List<String> labels, User actor, boolean fire) {
+  public List<Label> addLabels(Issue issue, List<String> labels, OUser actor, boolean fire) {
 
     List<Label> lbs = new ArrayList<Label>();
 
@@ -109,7 +110,7 @@ public class IssueServiceImpl implements IssueService {
   }
 
   @Override
-  public void removeLabel(Issue issue, String label, User actor) {
+  public void removeLabel(Issue issue, String label, OUser actor) {
     Label l = repoRepository.findLabelsByRepoAndName(issue.getRepository().getName(), label);
     if (l != null) {
       removeLabelRelationship(issue, l);
@@ -138,12 +139,12 @@ public class IssueServiceImpl implements IssueService {
   }
 
   @Override
-  public void changeUser(Issue issue, User user) {
+  public void changeUser(Issue issue, OUser user) {
     createUserRelationship(issue, user);
 
   }
 
-  private void createUserRelationship(Issue issue, User user) {
+  private void createUserRelationship(Issue issue, OUser user) {
     OrientGraph graph = dbFactory.getGraph();
     OrientVertex orgVertex = graph.getVertex(new ORecordId(issue.getId()));
 
@@ -156,20 +157,41 @@ public class IssueServiceImpl implements IssueService {
   }
 
   @Override
-  public void changeAssignee(Issue issue, User assignee, User actor, boolean fire) {
+  public void assign(Issue issue, OUser assignee, OUser actor, boolean fire) {
 
     createAssigneeRelationship(issue, assignee);
-    IssueEvent e = new IssueEvent();
-    e.setCreatedAt(new Date());
-    e.setEvent("assigned");
-    e.setAssignee(assignee);
-    if (actor == null) {
-      e.setActor(SecurityHelper.currentUser());
-    } else {
-      e.setActor(actor);
+
+    if (fire) {
+      IssueEvent e = new IssueEvent();
+      e.setCreatedAt(new Date());
+      e.setEvent("assigned");
+      e.setAssignee(assignee);
+      if (actor == null) {
+        e.setActor(SecurityHelper.currentUser());
+      } else {
+        e.setActor(actor);
+      }
+      e = (IssueEvent) eventRepository.save(e);
+      fireEvent(issue, e);
     }
-    e = (IssueEvent) eventRepository.save(e);
-    fireEvent(issue, e);
+  }
+
+  @Override
+  public void unassign(Issue issue, OUser assignee, OUser actor, boolean fire) {
+    removeAssigneeRelationship(issue, assignee);
+    if (fire) {
+      IssueEvent e = new IssueEvent();
+      e.setCreatedAt(new Date());
+      e.setEvent("unassigned");
+      e.setAssignee(assignee);
+      if (actor == null) {
+        e.setActor(SecurityHelper.currentUser());
+      } else {
+        e.setActor(actor);
+      }
+      e = (IssueEvent) eventRepository.save(e);
+      fireEvent(issue, e);
+    }
   }
 
   @Override
@@ -178,21 +200,50 @@ public class IssueServiceImpl implements IssueService {
   }
 
   @Override
-  public Issue changeState(Issue issue, String state) {
+  public Issue changeState(Issue issue, String state, OUser actor, boolean fire) {
     issue.setState(state);
+    if (fire) {
+      String evt = issue.getState().equalsIgnoreCase("open") ? "reopened" : "closed";
+      IssueEvent e = new IssueEvent();
+      e.setCreatedAt(new Date());
+      e.setEvent(evt);
+      if (actor == null) {
+        e.setActor(SecurityHelper.currentUser());
+      } else {
+        e.setActor(actor);
+      }
+      e = (IssueEvent) eventRepository.save(e);
+      fireEvent(issue, e);
+    }
+
     return issueRepository.save(issue);
   }
 
-  private void createAssigneeRelationship(Issue issue, User user) {
+  private void createAssigneeRelationship(Issue issue, OUser user) {
+    OrientGraph graph = dbFactory.getGraph();
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(issue.getId()));
+
+    // for (Edge edge : orgVertex.getEdges(Direction.OUT, IsAssigned.class.getSimpleName())) {
+    // edge.remove();
+    // }
+
+    if (user != null) {
+      OrientVertex devVertex = graph.getVertex(new ORecordId(user.getRid()));
+      orgVertex.addEdge(IsAssigned.class.getSimpleName(), devVertex);
+    }
+  }
+
+  private void removeAssigneeRelationship(Issue issue, OUser user) {
     OrientGraph graph = dbFactory.getGraph();
     OrientVertex orgVertex = graph.getVertex(new ORecordId(issue.getId()));
 
     for (Edge edge : orgVertex.getEdges(Direction.OUT, IsAssigned.class.getSimpleName())) {
-      edge.remove();
+      Vertex in = edge.getVertex(Direction.IN);
+      if (in.getProperty(com.orientechnologies.website.model.schema.OUser.NAME.toString()).equals(user.getName())) {
+        edge.remove();
+      }
     }
 
-    OrientVertex devVertex = graph.getVertex(new ORecordId(user.getRid()));
-    orgVertex.addEdge(IsAssigned.class.getSimpleName(), devVertex);
   }
 
   private void removeLabelRelationship(Issue issue, Label label) {

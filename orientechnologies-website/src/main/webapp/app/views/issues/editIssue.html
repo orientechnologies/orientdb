@@ -46,7 +46,9 @@
       <div class="row events-list">
         <div ng-repeat="comment in comments">
           <div class="col-md-1">
-            <avatar dim="50" user="comment.user"></avatar>
+            <div ng-if="!comment.event">
+              <avatar dim="50" user="comment.user"></avatar>
+            </div>
           </div>
           <div class="col-md-11">
 
@@ -149,8 +151,10 @@
           <button class="btn btn-transparent">Assignee <i class="fa fa-gear pull-right"></i></button>
         </div>
         <div class="col-md-12">
-          <avatar class="issue-assignee-avatar" name="true" dim="20" user="issue.assignee">
-          </avatar>
+          <div ng-if="issue.assignee">
+            <avatar class="issue-assignee-avatar" name="true" dim="20" user="issue.assignee">
+            </avatar>
+          </div>
         </div>
 
         <div class="col-md-12">

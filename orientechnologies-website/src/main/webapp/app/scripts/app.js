@@ -54,12 +54,22 @@ angular
     $httpProvider.interceptors.push('oauthHttpInterceptor');
     RestangularProvider.setBaseUrl('/api/v1');
 
+    $httpProvider.interceptors.push(function ($q, $location) {
+      return {
+        responseError: function (rejection) {
 
+          if (rejection.status == 401 || rejection.status == 403) {
+            $location.path("/login")
+          }
+          return $q.reject(rejection);
+        }
+      };
+    });
   });
 angular.module('webappApp').factory('oauthHttpInterceptor', function () {
   return {
     request: function (config) {
-      config.headers['X-AUTH-TOKEN'] = 'ea05530bd2e36f2caf082c0a8815a7125445fc4b';
+      config.headers['X-AUTH-TOKEN'] = '712269688bc391fba83280bd498da00bc0dc7507';
       return config;
     }
   };
@@ -67,4 +77,4 @@ angular.module('webappApp').factory('oauthHttpInterceptor', function () {
 
 
 var API = "v1/"
-var ORGANIZATION = 'romeshell';
+var ORGANIZATION = 'organizationwolf';

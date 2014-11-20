@@ -50,6 +50,9 @@ angular.module('webappApp').directive('avatar', function ($timeout) {
       dim: "=dim",
       name: "=name"
     },
+    controller  : function($scope){
+
+    },
     templateUrl: 'views/avatar.html'
   }
 });

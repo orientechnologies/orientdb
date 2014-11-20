@@ -8,7 +8,7 @@ import com.orientechnologies.website.github.GRepo;
 import com.orientechnologies.website.github.GitHub;
 import com.orientechnologies.website.model.schema.HasMember;
 import com.orientechnologies.website.model.schema.HasRepo;
-import com.orientechnologies.website.model.schema.dto.User;
+import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.model.schema.dto.Organization;
 import com.orientechnologies.website.model.schema.dto.Repository;
 import com.orientechnologies.website.repository.OrganizationRepository;
@@ -26,6 +26,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.Reactor;
 import reactor.event.Event;
 
@@ -72,9 +73,9 @@ public class OrganizationServiceImpl implements OrganizationService {
 
         boolean isMember = gOrganization.hasMember(username);
         if (isMember) {
-          User developer = userRepository.findUserByLogin(username);
+          OUser developer = userRepository.findUserByLogin(username);
           if (developer == null) {
-            developer = new User(username, null, null);
+            developer = new OUser(username, null, null);
             developer = userRepository.save(developer);
           }
           createMembership(organization, developer);
@@ -93,6 +94,7 @@ public class OrganizationServiceImpl implements OrganizationService {
 
   }
 
+  @Transactional
   @Override
   public void registerOrganization(String name) throws ServiceException {
 
@@ -170,7 +172,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     return organizationRepository.save(org);
   }
 
-  private void createMembership(Organization organization, User user) {
+  private void createMembership(Organization organization, OUser user) {
     OrientGraph graph = dbFactory.getGraph();
 
     OrientVertex orgVertex = graph.getVertex(new ORecordId(organization.getId()));
@@ -180,7 +182,7 @@ public class OrganizationServiceImpl implements OrganizationService {
 
   }
 
-  private void createHasRepoRelationship(Organization organization, Repository repository) {
+  public void createHasRepoRelationship(Organization organization, Repository repository) {
 
     OrientGraph graph = dbFactory.getGraph();
 

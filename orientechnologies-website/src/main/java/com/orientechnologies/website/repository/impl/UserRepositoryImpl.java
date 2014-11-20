@@ -3,7 +3,7 @@ package com.orientechnologies.website.repository.impl;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.website.model.schema.OTypeHolder;
-import com.orientechnologies.website.model.schema.dto.User;
+import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.repository.UserRepository;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -16,10 +16,10 @@ import java.util.NoSuchElementException;
  */
 
 @Repository
-public class UserRepositoryImpl extends OrientBaseRepository<User> implements UserRepository {
+public class UserRepositoryImpl extends OrientBaseRepository<OUser> implements UserRepository {
 
   @Override
-  public User findUserByLogin(String login) {
+  public OUser findUserByLogin(String login) {
 
     OrientGraph db = dbFactory.getGraph();
     String query = String.format("select from %s where name = '%s'", getEntityClass().getSimpleName(), login);
@@ -35,11 +35,11 @@ public class UserRepositoryImpl extends OrientBaseRepository<User> implements Us
   }
 
   @Override
-  public User findUserOrCreateByLogin(String login, Long id) {
+  public OUser findUserOrCreateByLogin(String login, Long id) {
 
-    User user = findUserByLogin(login);
+    OUser user = findUserByLogin(login);
     if (user == null) {
-      user = new User(login, null, null);
+      user = new OUser(login, null, null);
       user.setId(id);
       user = save(user);
     }
@@ -47,7 +47,7 @@ public class UserRepositoryImpl extends OrientBaseRepository<User> implements Us
   }
 
   @Override
-  public User findByGithubToken(String token) {
+  public OUser findByGithubToken(String token) {
     OrientGraph db = dbFactory.getGraph();
     String query = String.format("select from %s where token = '%s'", getEntityClass().getSimpleName(), token);
     Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
@@ -61,12 +61,12 @@ public class UserRepositoryImpl extends OrientBaseRepository<User> implements Us
   }
 
   @Override
-  public Class<User> getEntityClass() {
-    return User.class;
+  public Class<OUser> getEntityClass() {
+    return OUser.class;
   }
 
   @Override
-  public OTypeHolder<User> getHolder() {
+  public OTypeHolder<OUser> getHolder() {
     return com.orientechnologies.website.model.schema.OUser.EMAIL;
   }
 }

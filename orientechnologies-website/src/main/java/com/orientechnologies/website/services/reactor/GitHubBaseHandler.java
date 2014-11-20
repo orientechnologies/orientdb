@@ -1,8 +1,9 @@
 package com.orientechnologies.website.services.reactor;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.services.reactor.event.GithubEvent;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,13 +21,20 @@ public abstract class GitHubBaseHandler<T> implements GitHubHandler<T> {
     return events.keySet();
   }
 
-  @Transactional
   public void fireEvent(ODocument payload) {
 
     String action = payload.field("action");
     GithubEvent evt = events.get(action);
     if (evt != null) {
-      evt.handle(action, payload);
+
+      for (int r = 0; r < 10; ++r) {
+        try {
+          evt.handle(action, payload);
+          break;
+        } catch (ONeedRetryException retry) {
+          OLogManager.instance().error(this, " Retried");
+        }
+      }
     }
   }
 }

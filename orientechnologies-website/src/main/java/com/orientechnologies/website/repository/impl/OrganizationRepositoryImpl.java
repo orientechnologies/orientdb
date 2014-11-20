@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.model.schema.*;
 import com.orientechnologies.website.model.schema.dto.*;
-import com.orientechnologies.website.model.schema.dto.User;
+import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
@@ -139,14 +139,14 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   }
 
   @Override
-  public List<User> findTeamMembers(String owner, String repo) {
+  public List<OUser> findTeamMembers(String owner, String repo) {
 
     // Todo Change the query when the team concept is introduced to repository
     OrientGraph db = dbFactory.getGraph();
     String query = String.format("select expand(out('HasMember')) from Organization where name = '%s'", owner);
     Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
 
-    List<User> users = new ArrayList<User>();
+    List<OUser> users = new ArrayList<OUser>();
     for (OrientVertex vertice : vertices) {
       ODocument doc = vertice.getRecord();
       users.add(com.orientechnologies.website.model.schema.OUser.NAME.fromDoc(doc, db));

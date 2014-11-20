@@ -160,7 +160,7 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
     importIssueLabels(repoDtp, issue, issueDto);
 
     GUser user1 = issue.getUser();
-    User user = userRepo.findUserOrCreateByLogin(user1.getLogin(), user1.getId());
+    OUser user = userRepo.findUserOrCreateByLogin(user1.getLogin(), user1.getId());
 
     // IMPORT ISSUE CREATOR
     importIssueUser(issueDto, user);
@@ -170,7 +170,7 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
     GUser assignee1 = issue.getAssignee();
     String login = assignee1 != null ? assignee1.getLogin() : null;
     if (login != null) {
-      User assignee = userRepo.findUserOrCreateByLogin(login, assignee1.getId());
+      OUser assignee = userRepo.findUserOrCreateByLogin(login, assignee1.getId());
       importIssueAssignee(issueDto, user);
     }
     // IMPORT COMMENTS
@@ -186,11 +186,11 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
       repositoryService.createIssue(repoDtp, issueDto);
   }
 
-  private void importIssueAssignee(Issue issueDto, User user) {
-    issueService.changeAssignee(issueDto, user, null, false);
+  private void importIssueAssignee(Issue issueDto, OUser user) {
+    issueService.assign(issueDto, user, null, false);
   }
 
-  private void importIssueUser(Issue issueDto, User user) {
+  private void importIssueUser(Issue issueDto, OUser user) {
     issueService.changeUser(issueDto, user);
   }
 

@@ -106,14 +106,7 @@ public class RepositoryServiceImpl implements RepositoryService {
     if (skipGithub) {
       if (issue.getState() != null) {
         if (!original.getState().equals(issue.getState())) {
-          String evt = issue.getState().equals("open") ? "reopened" : "closed";
-          original = issueService.changeState(original, issue.getState());
-          IssueEvent e = new IssueEvent();
-          e.setCreatedAt(new Date());
-          e.setEvent(evt);
-          e.setActor(SecurityHelper.currentUser());
-          e = (IssueEvent) eventRepository.save(e);
-          issueService.fireEvent(original, e);
+          original = issueService.changeState(original, issue.getState(), null, true);
         }
       }
     }
@@ -131,7 +124,7 @@ public class RepositoryServiceImpl implements RepositoryService {
     issueDomain.setState("open");
     issueDomain = issueRepository.save(issueDomain);
     createIssue(repository, issueDomain);
-    User user = SecurityHelper.currentUser();
+    OUser user = SecurityHelper.currentUser();
     issueService.changeUser(issueDomain, user);
     handleAssignee(issueDomain, assignee);
     handleMilestone(repository, issueDomain, milestoneId);
@@ -179,9 +172,9 @@ public class RepositoryServiceImpl implements RepositoryService {
   }
 
   private void handleAssignee(Issue issue, String assigneeName) {
-    User assignee = userRepo.findUserByLogin(assigneeName);
+    OUser assignee = userRepo.findUserByLogin(assigneeName);
     if (assignee != null) {
-      issueService.changeAssignee(issue, assignee, null, true);
+      issueService.assign(issue, assignee, null, true);
     }
   }
 

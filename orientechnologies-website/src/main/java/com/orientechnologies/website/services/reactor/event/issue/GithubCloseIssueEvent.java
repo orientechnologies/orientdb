@@ -1,7 +1,7 @@
 package com.orientechnologies.website.services.reactor.event.issue;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.website.model.schema.OIssue;
+import com.orientechnologies.website.github.GIssue;
 import com.orientechnologies.website.model.schema.ORepository;
 import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.model.schema.dto.OUser;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
  */
 
 @Component
-public class GithubAssignedEvent implements GithubIssueEvent {
+public class GithubCloseIssueEvent implements GithubIssueEvent {
 
   @Autowired
   private RepositoryRepository repositoryRepository;
@@ -36,23 +36,17 @@ public class GithubAssignedEvent implements GithubIssueEvent {
 
     ODocument issue = payload.field("issue");
     ODocument repository = payload.field("repository");
-
     OUser sender = findUser(payload, "sender");
-    OUser assignee = findUser(payload, "assignee");
+    GIssue gIssue = GIssue.fromDoc(issue);
     String repoName = repository.field(ORepository.NAME.toString());
-    Integer issueNumber = issue.field(OIssue.NUMBER.toString());
-    try {
-      Thread.sleep(1000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
-    }
-    Issue issueDto = repositoryRepository.findIssueByRepoAndNumber(repoName, issueNumber);
-    issueService.assign(issueDto, assignee, sender, true);
+    Issue issueDto = repositoryRepository.findIssueByRepoAndNumber(repoName, gIssue.getNumber());
+    issueService.changeState(issueDto, gIssue.getState().name(), sender, true);
+
   }
 
   @Override
   public String handleWhat() {
-    return "assigned";
+    return "closed";
   }
 
   protected OUser findUser(ODocument payload, String field) {

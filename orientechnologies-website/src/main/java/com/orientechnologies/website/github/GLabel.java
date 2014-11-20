@@ -1,5 +1,7 @@
 package com.orientechnologies.website.github;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 /**
  * Created by Enrico Risa on 05/11/14.
  */
@@ -20,5 +22,9 @@ public class GLabel extends GEntity {
   @Override
   protected String getBaseUrl() {
     return null;
+  }
+
+  public static GLabel fromDoc(ODocument label) {
+    return new GLabel(null, null, label.toJSON());
   }
 }

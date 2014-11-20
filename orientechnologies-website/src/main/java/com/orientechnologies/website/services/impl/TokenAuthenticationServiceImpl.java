@@ -1,6 +1,6 @@
 package com.orientechnologies.website.services.impl;
 
-import com.orientechnologies.website.model.schema.dto.User;
+import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.repository.UserRepository;
 import com.orientechnologies.website.security.DeveloperAuthentication;
 import com.orientechnologies.website.services.TokenAuthenticationService;
@@ -25,7 +25,7 @@ public class TokenAuthenticationServiceImpl implements TokenAuthenticationServic
   public Authentication getAuthentication(HttpServletRequest request) {
     final String token = request.getHeader(AUTH_HEADER_NAME);
     if (token != null) {
-      final User user = userRepository.findByGithubToken(token);
+      final OUser user = userRepository.findByGithubToken(token);
       if (user != null) {
         return new DeveloperAuthentication(user);
       }

@@ -1,10 +1,11 @@
 package com.orientechnologies.website.controller;
 
-import static com.jayway.restassured.RestAssured.when;
-
+import com.jayway.restassured.RestAssured;
+import com.orientechnologies.website.Application;
 import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.model.schema.OSiteSchema;
 import com.orientechnologies.website.model.schema.dto.Organization;
+import com.orientechnologies.website.repository.OrganizationRepository;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
@@ -19,9 +20,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 
-import com.jayway.restassured.RestAssured;
-import com.orientechnologies.website.Application;
-import com.orientechnologies.website.repository.OrganizationRepository;
+import static com.jayway.restassured.RestAssured.when;
 
 /**
  * Created by Enrico Risa on 17/10/14.
@@ -42,7 +41,7 @@ public class OrganizationControllerTest {
   @Value("${local.server.port}")
   int                    port;
 
-  Organization test;
+  Organization           test;
 
   @Before
   public void setUp() {
@@ -51,7 +50,6 @@ public class OrganizationControllerTest {
 
     test = new Organization();
     test.setName("Organization Test");
-    test.setCodename("orgtest");
 
     repository.save(test);
     dbFactory.getGraph().commit();
@@ -66,9 +64,8 @@ public class OrganizationControllerTest {
   @Test
   public void testFetchOrganization() {
 
-    when().get("/org/{name}", test.getCodename()).then().statusCode(HttpStatus.OK.value())
-        .body("name", Matchers.is(test.getName())).body("id", Matchers.not(Matchers.isEmptyOrNullString()))
-        .body("codename", Matchers.is(test.getCodename()));
+    when().get("/org/{name}", test.getName()).then().statusCode(HttpStatus.OK.value()).body("name", Matchers.is(test.getName()))
+        .body("id", Matchers.not(Matchers.isEmptyOrNullString())).body("codename", Matchers.is(test.getId()));
 
   }
 

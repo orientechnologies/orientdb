@@ -18,6 +18,10 @@ public class GIssue extends GEntity {
     super(github, owner, content);
   }
 
+  public static GIssue fromDoc(ODocument doc) {
+    return new GIssue(null, null, doc.toJSON());
+  }
+
   public Integer getNumber() {
     return get("number");
   }

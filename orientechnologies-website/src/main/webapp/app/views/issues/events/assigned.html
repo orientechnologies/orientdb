@@ -1,9 +1,9 @@
 <i class="fa fa-{{comment.event}}"></i>
-<div ng-if="comment.actor.name == comment.assignee.name">
+<div  class="inline-block" ng-if="comment.actor.name == comment.assignee.name">
   <avatar dim="20" name="true" user="comment.actor"></avatar>
   self assigned this issue {{ comment.createdAt | fromNow}}
 </div>
-<div ng-if="comment.actor.name != comment.assignee.name">
+<div class="inline-block" ng-if="comment.actor.name != comment.assignee.name">
   <avatar dim="20" name="true" user="comment.assignee"></avatar>
   was assigned by
   <avatar dim="20" name="true" user="comment.actor"></avatar>

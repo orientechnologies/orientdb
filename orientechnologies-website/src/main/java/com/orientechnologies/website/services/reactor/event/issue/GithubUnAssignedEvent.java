@@ -4,7 +4,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.model.schema.OIssue;
 import com.orientechnologies.website.model.schema.ORepository;
 import com.orientechnologies.website.model.schema.dto.Issue;
-import com.orientechnologies.website.model.schema.dto.User;
+import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.repository.EventRepository;
 import com.orientechnologies.website.repository.RepositoryRepository;
 import com.orientechnologies.website.repository.UserRepository;
@@ -36,12 +36,12 @@ public class GithubUnAssignedEvent implements GithubIssueEvent {
     ODocument issue = payload.field("issue");
     ODocument repository = payload.field("repository");
 
-    User sender = findUser(payload, "sender");
-    User assignee = findUser(payload, "assignee");
+    OUser sender = findUser(payload, "sender");
+    OUser assignee = findUser(payload, "assignee");
     String repoName = repository.field(ORepository.NAME.toString());
     Integer issueNumber = issue.field(OIssue.NUMBER.toString());
     Issue issueDto = repositoryRepository.findIssueByRepoAndNumber(repoName, issueNumber);
-    issueService.changeAssignee(issueDto, assignee, sender, true);
+    issueService.unassign(issueDto, assignee, sender, true);
 
   }
 
@@ -50,7 +50,7 @@ public class GithubUnAssignedEvent implements GithubIssueEvent {
     return "unassigned";
   }
 
-  protected User findUser(ODocument payload, String field) {
+  protected OUser findUser(ODocument payload, String field) {
     ODocument sender = payload.field(field);
     String login = sender.field("login");
     Integer id = sender.field("id");

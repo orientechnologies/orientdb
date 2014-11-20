@@ -20,7 +20,7 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
 
   public List<Event> findEventsByOwnerRepoAndIssueNumber(String owner, String repo, String number);
 
-  public List<User> findTeamMembers(String owner, String repo);
+  public List<OUser> findTeamMembers(String owner, String repo);
 
   public Milestone findMilestoneByOwnerRepoAndNumberIssueAndNumberMilestone(String owner, String repo, Integer iNumber,
       Integer mNumber);

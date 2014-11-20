@@ -32,4 +32,5 @@ public class OrientDbConfiguration {
     transactionManager = new OrientDbTransactionManager();
     return transactionManager;
   }
+
 }
