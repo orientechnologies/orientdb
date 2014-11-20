@@ -3,6 +3,7 @@ package com.tinkerpop.blueprints.impls.orient;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -18,6 +19,12 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
  */
 @RunWith(JUnit4.class)
 public class OrientGraphFactoryTest {
+
+	@BeforeClass
+  public static void setUp() {
+    OrientBaseGraph.clearInitStack();
+  }
+
   @Test
   public void createTx() {
     OrientGraphFactory factory = new OrientGraphFactory("memory:testPool");

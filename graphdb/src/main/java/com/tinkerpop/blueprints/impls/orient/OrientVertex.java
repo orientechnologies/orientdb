@@ -540,8 +540,10 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     final ODocument doc = getRecord();
 
     final Set<String> result = new HashSet<String>();
+    final OrientBaseGraph graph = getGraph();
+
     for (String field : doc.fieldNames())
-      if (!isDetached() && settings.useVertexFieldsForEdgeLabels) {
+      if (graph != null && settings.useVertexFieldsForEdgeLabels) {
         if (!field.startsWith(CONNECTION_OUT_PREFIX) && !field.startsWith(CONNECTION_IN_PREFIX))
           result.add(field);
       } else if (!field.equals(OrientBaseGraph.CONNECTION_OUT) && !field.equals(OrientBaseGraph.CONNECTION_IN))
@@ -631,6 +633,8 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     checkClass();
 
     checkIfAttached();
+
+    final OrientBaseGraph graph = getGraph();
     setCurrentGraphInThreadLocal();
     graph.autoStartTransaction();
 
@@ -714,6 +718,8 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    * @see #moveToCluster(String)
    */
   public ORID moveTo(final String iClassName, final String iClusterName) {
+		final OrientBaseGraph graph = getGraph();
+
     final ORID oldIdentity = getIdentity().copy();
 
     final ODocument doc = ((ODocument) rawElement.getRecord()).copy();
@@ -855,6 +861,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     if (inVertex == null)
       throw new IllegalArgumentException("destination vertex is null");
 
+		final OrientBaseGraph graph = getGraph();
     if (graph != null) {
       setCurrentGraphInThreadLocal();
       graph.autoStartTransaction();
@@ -1093,6 +1100,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    */
   @Override
   public OrientVertexType getType() {
+		final OrientBaseGraph graph = getGraph();
     return new OrientVertexType(graph, getRecord().getSchemaClass());
   }
 
@@ -1100,6 +1108,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    * Returns a string representation of the vertex.
    */
   public String toString() {
+		final OrientBaseGraph graph = getGraph();
     if (graph != null)
       graph.setCurrentGraphInThreadLocal();
 
@@ -1147,6 +1156,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    * @return The found direction if any
    */
   protected OPair<Direction, String> getConnection(final Direction iDirection, final String iFieldName, final String... iClassNames) {
+		final OrientBaseGraph graph = getGraph();
     if (iDirection == Direction.OUT || iDirection == Direction.BOTH) {
       if (settings.useVertexFieldsForEdgeLabels) {
         // FIELDS THAT STARTS WITH "out_"
@@ -1214,6 +1224,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
   protected void addSingleEdge(final ODocument doc, final OMultiCollectionIterator<Edge> iterable, String fieldName,
       final OPair<Direction, String> connection, final Object fieldValue, final OIdentifiable iTargetVertex, final String[] iLabels) {
+		final OrientBaseGraph graph = getGraph();
     final OrientEdge toAdd = getEdge(graph, doc, fieldName, connection, fieldValue, iTargetVertex, iLabels);
 
     if (settings.useVertexFieldsForEdgeLabels || toAdd.isLabeled(iLabels))
@@ -1226,6 +1237,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
     checkIfAttached();
 
+		final OrientBaseGraph graph = getGraph();
     if (!settings.useVertexFieldsForEdgeLabels && label != null)
       return false;
 
@@ -1269,6 +1281,8 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
   private void addSingleVertex(final ODocument doc, final OMultiCollectionIterator<Vertex> iterable, String fieldName,
       final OPair<Direction, String> connection, final Object fieldValue, final String[] iLabels) {
+		final OrientBaseGraph graph = getGraph();
+
     final OrientVertex toAdd;
 
     final ODocument fieldRecord = ((OIdentifiable) fieldValue).getRecord();

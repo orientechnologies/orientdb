@@ -116,10 +116,14 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   }
 
   public boolean isUseLog() {
+		makeActive();
+
     return useLog;
   }
 
   public OrientTransactionalGraph setUseLog(final boolean useLog) {
+		makeActive();
+
     this.useLog = useLog;
     return this;
   }
@@ -133,6 +137,8 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   @SuppressWarnings("deprecation")
   @Override
   public void stopTransaction(final Conclusion conclusion) {
+		makeActive();
+
     if (database.isClosed() || database.getTransaction() instanceof OTransactionNoTx
         || database.getTransaction().getStatus() != TXSTATUS.BEGUN)
       return;
@@ -147,6 +153,8 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
    * Commits the current active transaction.
    */
   public void commit() {
+		makeActive();
+
     if (database == null)
       return;
 
@@ -159,6 +167,8 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
    * Rollbacks the current active transaction. All the pending changes are rollbacked.
    */
   public void rollback() {
+		makeActive();
+
     if (database == null)
       return;
 
@@ -168,6 +178,8 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   }
 
   public void begin() {
+		makeActive();
+
     final boolean txBegun = database.getTransaction().isActive();
     if (!txBegun) {
       database.begin();

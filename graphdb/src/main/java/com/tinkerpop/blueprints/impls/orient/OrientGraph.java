@@ -223,6 +223,8 @@ public class OrientGraph extends OrientTransactionalGraph {
    * @return Features object
    */
   public Features getFeatures() {
+		makeActive();
+
     if (!featuresInitialized) {
       FEATURES.supportsDuplicateEdges = true;
       FEATURES.supportsSelfLoops = true;
