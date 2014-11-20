@@ -1,13 +1,15 @@
 package com.orientechnologies.orient.jdbc;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.Statement;
+import java.util.Properties;
 
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-
 import static java.sql.ResultSet.CONCUR_READ_ONLY;
 import static java.sql.ResultSet.HOLD_CURSORS_OVER_COMMIT;
 import static java.sql.ResultSet.TYPE_FORWARD_ONLY;
@@ -47,5 +49,17 @@ public class OrientJdbcConnectionTest extends OrientJdbcBaseTest {
 		assertNotNull(stmt);
 
 	}
+	
+  @Test
+  public void connectUsingPool() throws Exception {
+    String dbUrl = "memory:test";
+    Properties p = new Properties();
+    p.setProperty("db.usePool", "TRUE");
+
+    Connection connection = DriverManager.getConnection(dbUrl, p);
+    assertNotNull(connection);
+    
+    connection.close();
+  }
 
 }
