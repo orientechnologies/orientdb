@@ -80,7 +80,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
   private Thread                       rebuildThread    = null;
 
-  private ThreadLocal<IndexTxSnapshot> txSnapshot       = new ThreadLocal<IndexTxSnapshot>() {
+  private final ThreadLocal<IndexTxSnapshot> txSnapshot       = new ThreadLocal<IndexTxSnapshot>() {
                                                           @Override
                                                           protected IndexTxSnapshot initialValue() {
                                                             return new IndexTxSnapshot();

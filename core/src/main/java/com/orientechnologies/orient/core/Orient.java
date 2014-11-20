@@ -64,7 +64,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   protected final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners   = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
   protected final ODatabaseFactory                                                     databaseFactory        = new ODatabaseFactory();
   protected final OScriptManager                                                       scriptManager          = new OScriptManager();
-  protected final Timer                                                                timer;
+  protected volatile Timer                                                             timer                  = new Timer(true);
   protected final ThreadGroup                                                          threadGroup;
   protected final AtomicInteger                                                        serialId               = new AtomicInteger();
   private final ReadWriteLock                                                          engineLock             = new ReentrantReadWriteLock();
@@ -77,6 +77,9 @@ public class Orient extends OListenerManger<OOrientListener> {
   protected ThreadPoolExecutor                                                         workers;
   protected OSignalHandler                                                             signalHandler;
 
+  private final Set<OShutdownListener>                                                 shutdownListeners      = Collections
+                                                                                                                  .newSetFromMap(new WeakHashMap<OShutdownListener, Boolean>());
+
   protected Orient() {
     super(true);
 
@@ -84,7 +87,6 @@ public class Orient extends OListenerManger<OOrientListener> {
     threadGroup.setDaemon(false);
 
     instance = this;
-    timer = new Timer(true);
     profiler = new OProfiler();
 
     startup();
@@ -132,12 +134,19 @@ public class Orient extends OListenerManger<OOrientListener> {
     return recordConflictStrategy;
   }
 
+  public void addShutdownListener(OShutdownListener listener) {
+    shutdownListeners.add(listener);
+  }
+
   public Orient startup() {
     engineLock.writeLock().lock();
     try {
       if (active)
         // ALREADY ACTIVE
         return this;
+
+      if (timer == null)
+        timer = new Timer();
 
       shutdownHook = new OrientShutdownHook();
       if (signalHandler == null) {
@@ -225,9 +234,17 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       resetListeners();
 
-      timer.purge();
+      timer.cancel();
+      timer = null;
 
       profiler.shutdown();
+
+      for (OShutdownListener listener : shutdownListeners)
+        try {
+          listener.onShutdown();
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error on shutdown", e);
+        }
 
       OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
       OLogManager.instance().flush();
@@ -433,8 +450,8 @@ public class Orient extends OListenerManger<OOrientListener> {
         storages.remove(dbName);
 
       // UNREGISTER STORAGE FROM ENGINES IN CASE IS CACHED
-      for( OEngine engine : engines.values() ){
-        engine.removeStorage( storage );
+      for (OEngine engine : engines.values()) {
+        engine.removeStorage(storage);
       }
 
     } finally {
@@ -456,15 +473,14 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   public void removeShutdownHook() {
-    if (shutdownHook != null)
-    {
+    if (shutdownHook != null) {
       shutdownHook.cancel();
       shutdownHook = null;
     }
   }
-  
+
   public boolean isSelfManagedShutdown() {
-	  return shutdownHook != null;
+    return shutdownHook != null;
   }
 
   public Iterator<ODatabaseLifecycleListener> getDbLifecycleListeners() {

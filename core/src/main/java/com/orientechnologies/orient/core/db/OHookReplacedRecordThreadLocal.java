@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.orient.core.OShutdownListener;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.ORecord;
 
 /**
@@ -27,7 +29,17 @@ import com.orientechnologies.orient.core.record.ORecord;
  */
 public class OHookReplacedRecordThreadLocal extends ThreadLocal<ORecord> {
 
-  public static OHookReplacedRecordThreadLocal INSTANCE = new OHookReplacedRecordThreadLocal();
+  public static volatile OHookReplacedRecordThreadLocal INSTANCE = new OHookReplacedRecordThreadLocal();
+
+	static {
+		Orient.instance().addShutdownListener(new OShutdownListener() {
+			@Override
+			public void onShutdown() {
+				INSTANCE = null;
+			}
+		});
+	}
+
 
   public ORecord getIfDefined() {
     return super.get();

@@ -21,6 +21,8 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations;
 
 import com.orientechnologies.common.concur.lock.ONewLockManager;
+import com.orientechnologies.orient.core.OShutdownListener;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 
 import java.io.IOException;
@@ -30,7 +32,17 @@ import java.io.IOException;
  * @since 12/3/13
  */
 public class OAtomicOperationsManager {
-  private static final ThreadLocal<OAtomicOperation> currentOperation = new ThreadLocal<OAtomicOperation>();
+  private static volatile ThreadLocal<OAtomicOperation> currentOperation = new ThreadLocal<OAtomicOperation>();
+
+	static {
+		Orient.instance().addShutdownListener(new OShutdownListener() {
+			@Override
+			public void onShutdown() {
+				currentOperation = null;
+			}
+		});
+	}
+
   private final OWriteAheadLog                       writeAheadLog;
   private final ONewLockManager<Object>              lockManager      = new ONewLockManager<Object>();
 

@@ -48,7 +48,7 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
   private final OCollectionNetworkSerializer             networkSerializer;
   private boolean                                        remoteCreationAllowed = false;
 
-  private ThreadLocal<Map<UUID, WeakReference<ORidBag>>> pendingCollections    = new ThreadLocal<Map<UUID, WeakReference<ORidBag>>>() {
+  private final ThreadLocal<Map<UUID, WeakReference<ORidBag>>> pendingCollections    = new ThreadLocal<Map<UUID, WeakReference<ORidBag>>>() {
                                                                                  @Override
                                                                                  protected Map<UUID, WeakReference<ORidBag>> initialValue() {
                                                                                    return new HashMap<UUID, WeakReference<ORidBag>>();

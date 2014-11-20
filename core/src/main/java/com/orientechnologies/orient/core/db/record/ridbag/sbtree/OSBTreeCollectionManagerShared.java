@@ -37,7 +37,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbstract {
-  private ThreadLocal<Map<UUID, OBonsaiCollectionPointer>> collectionPointerChanges = new ThreadLocal<Map<UUID, OBonsaiCollectionPointer>>() {
+  private final ThreadLocal<Map<UUID, OBonsaiCollectionPointer>> collectionPointerChanges = new ThreadLocal<Map<UUID, OBonsaiCollectionPointer>>() {
                                                                                       @Override
                                                                                       protected Map<UUID, OBonsaiCollectionPointer> initialValue() {
                                                                                         return new HashMap<UUID, OBonsaiCollectionPointer>();

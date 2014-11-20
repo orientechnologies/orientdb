@@ -20,6 +20,8 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import com.orientechnologies.orient.core.OShutdownListener;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
@@ -32,12 +34,21 @@ import java.util.Deque;
  */
 public class ORecordSerializationContext {
 
-  private static final ThreadLocal<Deque<ORecordSerializationContext>> SERIALIZATION_CONTEXT_STACK = new ThreadLocal<Deque<ORecordSerializationContext>>() {
-                                                                                                     @Override
-                                                                                                     protected Deque<ORecordSerializationContext> initialValue() {
-                                                                                                       return new ArrayDeque<ORecordSerializationContext>();
-                                                                                                     }
-                                                                                                   };
+  private static volatile ThreadLocal<Deque<ORecordSerializationContext>> SERIALIZATION_CONTEXT_STACK = new ThreadLocal<Deque<ORecordSerializationContext>>() {
+                                                                                                        @Override
+                                                                                                        protected Deque<ORecordSerializationContext> initialValue() {
+                                                                                                          return new ArrayDeque<ORecordSerializationContext>();
+                                                                                                        }
+                                                                                                      };
+
+  static {
+    Orient.instance().addShutdownListener(new OShutdownListener() {
+      @Override
+      public void onShutdown() {
+        SERIALIZATION_CONTEXT_STACK = null;
+      }
+    });
+  }
 
   public static int getDepth() {
     return ORecordSerializationContext.SERIALIZATION_CONTEXT_STACK.get().size();

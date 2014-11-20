@@ -20,9 +20,20 @@
 package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.orient.client.remote.OStorageRemoteThreadLocal.OStorageRemoteSession;
+import com.orientechnologies.orient.core.OShutdownListener;
+import com.orientechnologies.orient.core.Orient;
 
 public class OStorageRemoteThreadLocal extends ThreadLocal<OStorageRemoteSession> {
-  public static OStorageRemoteThreadLocal INSTANCE = new OStorageRemoteThreadLocal();
+  public static volatile OStorageRemoteThreadLocal INSTANCE = new OStorageRemoteThreadLocal();
+
+	static {
+		Orient.instance().addShutdownListener(new OShutdownListener() {
+			@Override
+			public void onShutdown() {
+				INSTANCE = null;
+			}
+		});
+	}
 
   public class OStorageRemoteSession {
     public boolean commandExecuting = false;

@@ -25,6 +25,7 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.*;
 
+import com.orientechnologies.orient.core.OShutdownListener;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.storage.OStorage;
 import org.apache.commons.configuration.Configuration;
@@ -69,26 +70,36 @@ import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public abstract class OrientBaseGraph extends OrientConfigurableGraph implements OrientExtendedGraph {
-  public static final String                               CONNECTION_OUT      = "out";
-  public static final String                               CONNECTION_IN       = "in";
-  public static final String                               CLASS_PREFIX        = "class:";
-  public static final String                               CLUSTER_PREFIX      = "cluster:";
-  public static final String                               ADMIN               = "admin";
-  private final OPartitionedDatabasePool                   pool;
-  protected ODatabaseDocumentTx                            database;
-  private String                                           url;
-  private String                                           username;
-  private String                                           password;
+  public static final String                                  CONNECTION_OUT      = "out";
+  public static final String                                  CONNECTION_IN       = "in";
+  public static final String                                  CLASS_PREFIX        = "class:";
+  public static final String                                  CLUSTER_PREFIX      = "cluster:";
+  public static final String                                  ADMIN               = "admin";
+  private final OPartitionedDatabasePool                      pool;
+  protected ODatabaseDocumentTx                               database;
+  private String                                              url;
+  private String                                              username;
+  private String                                              password;
 
-  protected boolean                                        classicDetachMode   = false;
+  protected boolean                                           classicDetachMode   = false;
 
-  private static final ThreadLocal<OrientBaseGraph>        activeGraph         = new ThreadLocal<OrientBaseGraph>();
-  private static final ThreadLocal<Deque<OrientBaseGraph>> initializationStack = new ThreadLocal<Deque<OrientBaseGraph>>() {
-                                                                                 @Override
-                                                                                 protected Deque<OrientBaseGraph> initialValue() {
-                                                                                   return new LinkedList<OrientBaseGraph>();
-                                                                                 }
-                                                                               };
+  private static volatile ThreadLocal<OrientBaseGraph>        activeGraph         = new ThreadLocal<OrientBaseGraph>();
+  private static volatile ThreadLocal<Deque<OrientBaseGraph>> initializationStack = new ThreadLocal<Deque<OrientBaseGraph>>() {
+                                                                                    @Override
+                                                                                    protected Deque<OrientBaseGraph> initialValue() {
+                                                                                      return new LinkedList<OrientBaseGraph>();
+                                                                                    }
+                                                                                  };
+
+  static {
+    Orient.instance().addShutdownListener(new OShutdownListener() {
+      @Override
+      public void onShutdown() {
+        activeGraph = null;
+        initializationStack = null;
+      }
+    });
+  }
 
   public static OrientBaseGraph getActiveGraph() {
     return activeGraph.get();
