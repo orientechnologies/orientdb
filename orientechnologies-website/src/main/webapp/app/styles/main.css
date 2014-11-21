@@ -156,16 +156,23 @@ body {
 }
 
 .issues-panel .issue-open {
-  color: #6cc644;
+  color: #5cb85c;
+}
+.issues-panel .issue-closed {
+  color: #d9534f;
 }
 
 .issues-panel .list-group-item .issue-info {
-  color: #999;
-}
+   color: #999;
+ }
 
 .issues-panel .list-group-item-heading a {
   color: #000000;
 
+}
+.issues-panel .list-group-item-heading span.label {
+  margin-left: 2px;
+  margin-right: 2px;
 }
 
 .issues-panel .list-group-item-heading a:hover {

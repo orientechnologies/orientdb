@@ -44,9 +44,28 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   }
 
   @Override
-  public List<Issue> findOrganizationIssues(String name) {
+  public List<Issue> findOrganizationIssues(String name, String q) {
     OrientGraph db = dbFactory.getGraph();
-    String query = String.format("select expand(out('HasRepo').out('HasIssue')) from Organization where name = '%s'", name);
+
+    String query = String.format(
+        "select from (select expand(out('HasRepo').out('HasIssue')) from Organization where name = '%s') ", name);
+    int idx = 0;
+    String fullText = "";
+    if (q != null && !q.isEmpty()) {
+      String[] queries = q.split(" (?=(([^'\"]*['\"]){2})*[^'\"]*$)");
+      for (String s : queries) {
+        String[] values = s.split(":");
+        if (values.length == 1) {
+          if (values[0].isEmpty())
+            continue;
+          fullText += " " + values[0];
+        } else {
+          query = applyParam(query, values[0], values[1].replace("\"", ""), idx++);
+        }
+      }
+    }
+    if (!fullText.isEmpty())
+      query = applyParam(query, "title", fullText, idx++);
     Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
 
     List<Issue> issues = new ArrayList<Issue>();
@@ -55,6 +74,68 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
       issues.add(OIssue.NUMBER.fromDoc(doc, db));
     }
     return issues;
+  }
+
+  private String applyParam(String incominQuery, String name, String value, int idx) {
+
+    // LITTLE UGLY BUT WORKS :D
+
+    // query += (idx > 0 ? " and " : " where ");
+    Object val = null;
+
+    String parsed = parseParam(name, value);
+    if (!parsed.isEmpty()) {
+      incominQuery = incominQuery + (idx > 0 ? " and " : " where ") + parsed;
+    }
+    return incominQuery;
+  }
+
+  private String parseParam(String name, String value) {
+    Object val = null;
+    String query = "";
+    if ("is".equals(name)) {
+      val = value.toUpperCase();
+      query = query + " state = '%s'";
+    }
+    if ("label".equals(name)) {
+      val = value.replace("\"", "");
+      query = query + " out('HasLabel').name CONTAINS '%s'";
+    }
+    if ("milestone".equals(name)) {
+      val = value;
+      query = query + " out('HasMilestone').title CONTAINS '%s'";
+    }
+    if ("version".equals(name)) {
+      val = value;
+      query = query + " out('HasVersion').title CONTAINS '%s'";
+    }
+    if ("author".equals(name)) {
+      val = value;
+      query = query + " in('HasOpened').name CONTAINS '%s'";
+    }
+    if ("assignee".equals(name)) {
+      val = value;
+      query = query + " out('IsAssigned').name CONTAINS '%s'";
+    }
+    if ("title".equals(name)) {
+      val = value.toLowerCase().trim();
+      query = query + "title.toLowerCase() containsText '%s'";
+    }
+    if ("no".equals(name)) {
+      if ("label".equals(value)) {
+        query = query + " out('HasLabel').size() = 0";
+      }
+      if ("milestone".equals(value)) {
+        query = query + " out('HasMilestone').size() = 0";
+      }
+      if ("assignee".equals(value)) {
+        query = query + " out('IsAssigned').size() = 0";
+      }
+      if ("version".equals(value)) {
+        query = query + " out('HasVersion').size() = 0";
+      }
+    }
+    return val != null ? String.format(query, val) : query;
   }
 
   @Override

@@ -1,9 +1,9 @@
 <div class="container-fluid">
   <div class="row">
     <div class="col-md-6">
-      <form>
+      <form ng-submit="search()">
         <div class="form-group">
-          <input type="text" class="form-control" placeholder="Search">
+          <input type="text" class="form-control" placeholder="Search" ng-model="query">
         </div>
       </form>
     </div>
@@ -24,13 +24,19 @@
                 <input type="checkbox">
               </div>
               <div class="col-md-6">
-                <i class="fa fa-check-circle-o" ng-class="'issue-' + issue.state"></i>
+                <i class="fa fa-check-circle-o" ng-class="'issue-' + issue.state.toLowerCase()"></i>
               </div>
             </div>
             <div class="col-md-9">
               <h5 class="list-group-item-heading"><a href="#issues/{{issue.repository.name}}@{{issue.uuid}}">
-                {{issue.title}}</a></h5>
-              <p class="issue-info">#{{issue.number}} opened {{issue.createdAt | fromNow}} by {{issue.user.name}}</p>
+                {{issue.title}}</a>
+                <span class="label" ng-repeat="label in issue.labels" style="background-color: #{{label.color}}">{{label.name}}</span>
+              </h5>
+
+              <p class="issue-info">#{{issue.number}} opened {{issue.createdAt | fromNow}} by {{issue.user.name}}
+                <i ng-show="issue.milestone" class="fa fa-milestoned"> {{ issue.milestone.title }}</i>
+                <i ng-show="issue.version" class="fa fa-versioned"> {{ issue.version.title }}</i>
+              </p>
             </div>
             <div class="col-md-2">
               <div class="col-md-6">

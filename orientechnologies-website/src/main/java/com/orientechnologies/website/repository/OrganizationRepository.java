@@ -8,7 +8,7 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
 
   public Organization findOneByName(String name);
 
-  public List<Issue> findOrganizationIssues(String name);
+  public List<Issue> findOrganizationIssues(String name, String q);
 
   public List<Repository> findOrganizationRepositories(String name);
 

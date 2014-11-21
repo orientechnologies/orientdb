@@ -39,8 +39,8 @@ public class OrganizationController {
   }
 
   @RequestMapping(value = "{name}/issues", method = RequestMethod.GET)
-  public ResponseEntity<List<Issue>> getOrganizationIssues(@PathVariable("name") String name) {
-    return new ResponseEntity<List<Issue>>(orgRepository.findOrganizationIssues(name), HttpStatus.OK);
+  public ResponseEntity<List<Issue>> getOrganizationIssues(@PathVariable("name") String name, @RequestParam(value = "q") String q) {
+    return new ResponseEntity<List<Issue>>(orgRepository.findOrganizationIssues(name, q), HttpStatus.OK);
   }
 
   @RequestMapping(value = "{name}/repos", method = RequestMethod.GET)

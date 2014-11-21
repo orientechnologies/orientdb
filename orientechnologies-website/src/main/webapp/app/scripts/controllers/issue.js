@@ -1,9 +1,17 @@
 'use strict';
 angular.module('webappApp')
-  .controller('IssueCtrl', function ($scope, Organization) {
+  .controller('IssueCtrl', function ($scope, Organization, $routeParams) {
 
+    $scope.query = 'is:open'
+    if ($routeParams.q) {
+      $scope.query = $routeParams.q;
+    }
 
-    $scope.issues = Organization.all('issues').getList().$object;
+    $scope.issues = Organization.all('issues').getList({q: $scope.query}).$object;
+
+    $scope.search = function () {
+      $scope.issues = Organization.all('issues').getList({q: $scope.query}).$object;
+    }
 
   });
 
