@@ -19,6 +19,14 @@
  */
 package com.orientechnologies.orient.core.config;
 
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
+
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
@@ -29,14 +37,6 @@ import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
-
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -237,7 +237,7 @@ public enum OGlobalConfiguration {
       "Amount of values after which index implementation will use sbtree as values container. Set to -1 to force always using it",
       Integer.class, 40),
 
-  INDEX_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD("index.sbtreeBonsaiToEmbeddedToThreshold",
+  INDEX_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD("index.sbtreeBonsaiToEmbeddedThreshold",
       "Amount of values after which index implementation will use embedded values container (disabled by default)", Integer.class,
       -1),
 
