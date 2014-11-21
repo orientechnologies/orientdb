@@ -14,7 +14,7 @@ import static org.junit.Assert.assertEquals;
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 @RunWith(JUnit4.class)
-public class OrientGraphFactoryTest  {
+public class OrientGraphFactoryTest {
   @Test
   public void createTx() {
     OrientGraphFactory factory = new OrientGraphFactory("memory:testPool");
@@ -52,7 +52,6 @@ public class OrientGraphFactoryTest  {
     OrientGraphFactory factory = new OrientGraphFactory("memory:testPool").setupPool(1, 10);
     for (int i = 0; i < 100; ++i) {
       OrientGraph g = factory.getTx();
-      assertEquals(g.getRawGraph().getClass(), ODatabaseDocumentTxPooled.class);
       g.shutdown();
     }
   }

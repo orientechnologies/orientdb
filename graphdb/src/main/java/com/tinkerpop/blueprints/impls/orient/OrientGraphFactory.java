@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseComplex;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -20,12 +21,12 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public class OrientGraphFactory implements ODatabaseLifecycleListener {
-  protected final String                   url;
-  protected final String                   user;
-  protected final String                   password;
+  protected final String                      url;
+  protected final String                      user;
+  protected final String                      password;
 
-  protected volatile ODatabaseDocumentPool pool;
-  protected volatile boolean               transactional = true;
+  protected volatile OPartitionedDatabasePool pool;
+  protected volatile boolean                  transactional = true;
 
   /**
    * Creates a factory that use default admin credentials.
@@ -189,8 +190,7 @@ public class OrientGraphFactory implements ODatabaseLifecycleListener {
       pool.close();
     }
 
-    pool = new ODatabaseDocumentPool(url, user, password);
-    pool.setup(iMin, iMax);
+    pool = new OPartitionedDatabasePool(url, user, password);
     return this;
   }
 
@@ -221,7 +221,7 @@ public class OrientGraphFactory implements ODatabaseLifecycleListener {
    */
   public int getAvailableInstancesInPool() {
     if (pool != null)
-      return pool.getAvailableConnections(url, user);
+      return pool.getAvailableConnections();
     return 0;
   }
 

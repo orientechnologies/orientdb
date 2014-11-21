@@ -24,7 +24,7 @@
     <parent>
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-parent</artifactId>
-        <version>1.7.10</version>
+        <version>1.7.11-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
 

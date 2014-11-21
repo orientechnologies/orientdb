@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase.ATTRIBUTES;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
@@ -63,7 +64,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
   private static final Object                   manualIndexLock = new Object();
   private final ThreadLocal<OrientGraphContext> threadContext   = new ThreadLocal<OrientGraphContext>();
   private final Set<OrientGraphContext>         contexts        = new HashSet<OrientGraphContext>();
-  private final ODatabaseDocumentPool           pool;
+  private final OPartitionedDatabasePool        pool;
   protected Settings                            settings        = new Settings();
   private String                                url;
   private String                                username;
@@ -114,7 +115,7 @@ public abstract class OrientBaseGraph implements IndexableGraph, MetaGraph<OData
     readDatabaseConfiguration();
   }
 
-  public OrientBaseGraph(final ODatabaseDocumentPool pool) {
+  public OrientBaseGraph(final OPartitionedDatabasePool pool) {
     this.pool = pool;
 
     final ODatabaseDocumentTx db = pool.acquire();

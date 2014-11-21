@@ -1,5 +1,6 @@
 package com.tinkerpop.blueprints.impls.orient;
 
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import org.apache.commons.configuration.Configuration;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
@@ -104,7 +105,7 @@ public class OrientGraph extends OrientTransactionalGraph {
    * @param pool
    *          Database pool where to acquire a database instance
    */
-  public OrientGraph(ODatabaseDocumentPool pool) {
+  public OrientGraph(OPartitionedDatabasePool pool) {
     super(pool);
     config();
   }
