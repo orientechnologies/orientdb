@@ -32,7 +32,7 @@ angular.module('webappApp')
     });
   });
 angular.module('webappApp')
-  .controller('IssueEditCtrl', function ($scope, $routeParams, Repo, $popover) {
+  .controller('IssueEditCtrl', function ($scope, $routeParams, Repo, $popover, $route) {
 
     var id = $routeParams.id.split("@");
 
@@ -53,12 +53,21 @@ angular.module('webappApp')
 
     refreshEvents();
 
+
     $scope.labels = Repo.one(repo).all("labels").getList().$object;
 
     Repo.one(repo).all("milestones").getList().then(function (data) {
       $scope.versions = data.plain();
       $scope.milestones = data.plain();
     });
+    Repo.one(repo).all("teams").getList().then(function (data) {
+      $scope.assignees = data.plain();
+    })
+    $scope.sync = function () {
+      Repo.one(repo).all("issues").one(number).all("sync").post().then(function (data) {
+        $route.reload();
+      });
+    }
     $scope.comment = function () {
 
       Repo.one(repo).all("issues").one(number).all("comments").post($scope.newComment).then(function (data) {
@@ -109,7 +118,7 @@ angular.module('webappApp')
       })
 
 
-    })
+    });
     // CHANGE MILESTONE EVENT
     $scope.$on("milestone:changed", function (e, milestone) {
 
@@ -119,7 +128,16 @@ angular.module('webappApp')
       })
 
 
-    })
+    });
+
+    $scope.$on("assignee:changed", function (e, assignee) {
+      Repo.one(repo).all("issues").one(number).patch({assignee: assignee.name}).then(function (data) {
+        $scope.issue.assignee = assignee;
+        refreshEvents();
+      })
+
+
+    });
   });
 
 angular.module('webappApp')
@@ -170,4 +188,16 @@ angular.module('webappApp')
       }
     }
   });
+angular.module('webappApp')
+  .controller('ChangeAssigneeCtrl', function ($scope, $routeParams, Repo, $popover) {
+    $scope.isAssigneeSelected = function (assignee) {
+      return $scope.issue.assignee ? assignee.name == $scope.issue.assignee.name : false;
+    }
+    $scope.toggleAssignee = function (assignee) {
+      if (!$scope.isAssigneeSelected(assignee)) {
+        $scope.$emit("assignee:changed", assignee);
+        $scope.$hide();
+      }
+    }
 
+  });

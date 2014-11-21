@@ -77,7 +77,7 @@ public class GithubLabelEvent implements GithubIssueEvent {
       {
         add(label1.getName());
       }
-    }, findUser(payload), true);
+    }, findUser(payload), true, false);
 
   }
 

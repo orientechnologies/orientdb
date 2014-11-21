@@ -22,6 +22,7 @@ public class OSiteSchema {
     addVertexClass(OEvent.class, Event.class.getSimpleName());
     addVertexClass(OComment.class, Comment.class.getSimpleName(), OEvent.class);
     addVertexClass(OIssueEvent.class, IssueEvent.class.getSimpleName(), OEvent.class);
+    addVertexClass(OIssueEventInternal.class, IssueEventInternal.class.getSimpleName(), OIssueEvent.class);
     addVertexClass(OIssue.class, Issue.class.getSimpleName());
     addVertexClass(OClient.class, Client.class.getSimpleName());
     addVertexClass(ORepository.class, Repository.class.getSimpleName());

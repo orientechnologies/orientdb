@@ -121,7 +121,7 @@ public class RepositoryServiceImpl implements RepositoryService {
     issueDomain.setTitle(issue.getTitle());
     issueDomain.setBody(issue.getBody());
     issueDomain.setCreatedAt(new Date());
-    issueDomain.setState("open");
+    issueDomain.setState(Issue.IssueState.OPEN.toString());
     issueDomain = issueRepository.save(issueDomain);
     createIssue(repository, issueDomain);
     OUser user = SecurityHelper.currentUser();
@@ -133,18 +133,11 @@ public class RepositoryServiceImpl implements RepositoryService {
     return issueDomain;
   }
 
-  private void handleVersion(Repository repository, Issue issue, Integer milestone) {
+  protected void handleVersion(Repository repository, Issue issue, Integer milestone) {
     if (milestone != null) {
       Milestone m = repositoryRepository.findMilestoneByRepoAndName(repository.getName(), milestone);
       if (m != null) {
         issueService.changeVersion(issue, m);
-        IssueEvent e = new IssueEvent();
-        e.setCreatedAt(new Date());
-        e.setEvent("versioned");
-        e.setMilestone(m);
-        e.setActor(SecurityHelper.currentUser());
-        e = (IssueEvent) eventRepository.save(e);
-        issueService.fireEvent(issue, e);
       }
     }
   }
@@ -161,7 +154,7 @@ public class RepositoryServiceImpl implements RepositoryService {
     issueService.changeLabels(issue, labels, false);
   }
 
-  private void handleMilestone(Repository repository, Issue issue, Integer milestone) {
+  protected void handleMilestone(Repository repository, Issue issue, Integer milestone) {
 
     if (milestone != null) {
       Milestone m = repositoryRepository.findMilestoneByRepoAndName(repository.getName(), milestone);

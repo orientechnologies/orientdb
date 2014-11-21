@@ -17,9 +17,9 @@ public interface IssueService {
 
   public void changeLabels(Issue issue, List<Label> labels, boolean replace);
 
-  public List<Label> addLabels(Issue issue, List<String> labels, OUser actor, boolean fire);
+  public List<Label> addLabels(Issue issue, List<String> labels, OUser actor, boolean fire, boolean remote);
 
-  public void removeLabel(Issue issue, String label, OUser actor);
+  public void removeLabel(Issue issue, String label, OUser actor, boolean remote);
 
   public void fireEvent(Issue issueDto, Event e);
 
@@ -32,4 +32,8 @@ public interface IssueService {
   public void changeVersion(Issue issue, Milestone milestone);
 
   public Issue changeState(Issue issue, String state, OUser actor, boolean fire);
+
+  public Issue synchIssue(Issue issue);
+
+  public void clearEvents(Issue issue);
 }

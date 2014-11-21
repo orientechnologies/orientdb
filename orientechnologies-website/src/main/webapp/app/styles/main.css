@@ -302,6 +302,43 @@ body {
 }
 
 /*----*/
+
+/*Assignee popover change*/
+.assignees-group {
+  padding: 0px;
+  margin-bottom: 0px;
+}
+
+.assignees-group .milestone-item:last-child {
+  border-bottom: none;
+}
+
+.assignee-popover .popover-content {
+  padding: 0px;
+}
+
+.assignee-popover .popover-content .label {
+  width: 100%;
+  display: inline-block;
+}
+
+.assignee-popover .popover-content ul {
+  list-style-type: none;
+}
+
+.assignees-group .assignee-item {
+  width: 100%;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+
+.assignees-group li.assignee-selected {
+  background-color: rgb(66, 139, 202);
+  background-color: rgba(66, 139, 202, 0.4);
+}
+/*----*/
 .text-center {
   text-align: center;
 }

@@ -26,6 +26,7 @@ public class IssueDTO {
     return state;
   }
 
+  @JsonProperty
   public void setState(String state) {
     this.state = state;
   }

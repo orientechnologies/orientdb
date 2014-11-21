@@ -45,6 +45,16 @@ public class RepositoryController {
     return issue != null ? new ResponseEntity<Issue>(issue, HttpStatus.OK) : new ResponseEntity<Issue>(HttpStatus.NOT_FOUND);
   }
 
+  @RequestMapping(value = "{owner}/{repo}/issues/{number}/sync", method = RequestMethod.POST)
+  public ResponseEntity<Issue> syncIssue(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
+      @PathVariable("number") String number) {
+
+    Issue issue = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
+
+    return issue != null ? new ResponseEntity<Issue>(issueService.synchIssue(issue), HttpStatus.OK) : new ResponseEntity<Issue>(
+        HttpStatus.NOT_FOUND);
+  }
+
   @RequestMapping(value = "{owner}/{repo}/issues/{number}/comments", method = RequestMethod.GET)
   public ResponseEntity<List<Comment>> getSingleIssueComments(@PathVariable("owner") String owner,
       @PathVariable("repo") String repo, @PathVariable("number") String number) {
@@ -89,7 +99,8 @@ public class RepositoryController {
       return new ResponseEntity<List<Label>>(HttpStatus.NOT_FOUND);
     }
 
-    return new ResponseEntity<List<Label>>(issueService.addLabels(i, labels, null, true), HttpStatus.OK);
+    return new ResponseEntity<List<Label>>(
+        issueService.addLabels(i, labels, null, true, !Boolean.TRUE.equals(i.getConfidential())), HttpStatus.OK);
   }
 
   @RequestMapping(value = "{owner}/{repo}/issues/{number}/labels/{lname}", method = RequestMethod.DELETE)
@@ -100,7 +111,7 @@ public class RepositoryController {
     if (i == null) {
       return new ResponseEntity<List<Label>>(HttpStatus.NOT_FOUND);
     }
-    issueService.removeLabel(i, lname, null);
+    issueService.removeLabel(i, lname, null, !Boolean.TRUE.equals(i.getConfidential()));
     return new ResponseEntity<List<Label>>(HttpStatus.OK);
   }
 

@@ -63,8 +63,8 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
 
       Repository repoDtp = repoRepository.findByOrgAndName(message.org, message.repo);
 
-      importLabels(message, repoDtp);
-      importMilestones(message, repoDtp);
+      importLabels(message.repository.getLabels(), repoDtp);
+      importMilestones(message.repository.getMilestones(), repoDtp);
       importIssue(message, repoDtp, GIssueState.CLOSED);
 
       dbFactory.getGraph().commit();
@@ -73,9 +73,7 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
     }
   }
 
-  private void importLabels(GitHubIssueMessage message, Repository repoDtp) throws IOException {
-
-    List<GLabel> labels = message.repository.getLabels();
+  public void importLabels(List<GLabel> labels, Repository repoDtp) throws IOException {
 
     boolean labelNew = false;
     for (GLabel label : labels) {
@@ -101,8 +99,7 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
     repositoryService.addLabel(repoDtp, l);
   }
 
-  private void importMilestones(GitHubIssueMessage message, Repository repoDtp) throws IOException {
-    List<GMilestone> milestones = message.repository.getMilestones();
+  public void importMilestones(List<GMilestone> milestones, Repository repoDtp) throws IOException {
 
     boolean milestoneNew = false;
     for (GMilestone milestone : milestones) {
@@ -130,13 +127,13 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
     int i = 0;
     for (GIssue issue : issues) {
 
-      importSingleIssue(message, repoDtp, issue);
+      importSingleIssue(repoDtp, issue);
       i++;
       log.info("Imported %d issues", i);
     }
   }
 
-  private void importSingleIssue(GitHubIssueMessage message, Repository repoDtp, GIssue issue) throws IOException {
+  public void importSingleIssue(Repository repoDtp, GIssue issue) throws IOException {
     Issue issueDto = repoRepository.findIssueByRepoAndNumber(repoDtp.getName(), issue.getNumber());
 
     boolean isNew = false;
@@ -196,6 +193,7 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
 
   private void importIssueEvents(Repository repoDtp, GIssue issue, Issue issueDto) throws IOException {
 
+    issueService.clearEvents(issueDto);
     for (GEvent event : issue.getEvents()) {
       IssueEvent e = (IssueEvent) repoRepository.findIssueEventByRepoAndNumberAndEventNumber(repoDtp.getName(),
           issueDto.getNumber(), event.getId());

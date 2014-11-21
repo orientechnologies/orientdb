@@ -1,7 +1,11 @@
 package com.orientechnologies.website.services.impl;
 
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.OrientDBFactory;
+import com.orientechnologies.website.github.GIssue;
+import com.orientechnologies.website.github.GRepo;
+import com.orientechnologies.website.github.GitHub;
 import com.orientechnologies.website.helper.SecurityHelper;
 import com.orientechnologies.website.model.schema.*;
 import com.orientechnologies.website.model.schema.dto.*;
@@ -11,6 +15,7 @@ import com.orientechnologies.website.repository.EventRepository;
 import com.orientechnologies.website.repository.IssueRepository;
 import com.orientechnologies.website.repository.RepositoryRepository;
 import com.orientechnologies.website.services.IssueService;
+import com.orientechnologies.website.services.reactor.GitHubIssueImporter;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
@@ -18,7 +23,10 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.PostConstruct;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -42,6 +50,16 @@ public class IssueServiceImpl implements IssueService {
   @Autowired
   private IssueRepository      issueRepository;
 
+  @Autowired
+  private GitHubIssueImporter  issueImporter;
+
+  private IssueService         githubIssueService;
+
+  @PostConstruct
+  protected void init() {
+    githubIssueService = new IssueServiceGithub(this);
+  }
+
   @Override
   public void commentIssue(Issue issue, Comment comment) {
     createCommentRelationship(issue, comment);
@@ -50,12 +68,16 @@ public class IssueServiceImpl implements IssueService {
   @Override
   public Comment createNewCommentOnIssue(Issue issue, Comment comment) {
 
-    comment.setUser(SecurityHelper.currentUser());
-    comment.setCreatedAt(new Date());
+    if (Boolean.TRUE.equals(issue.getConfidential())) {
+      comment.setUser(SecurityHelper.currentUser());
+      comment.setCreatedAt(new Date());
 
-    comment = commentRepository.save(comment);
-    commentIssue(issue, comment);
-    return comment;
+      comment = commentRepository.save(comment);
+      commentIssue(issue, comment);
+      return comment;
+    } else {
+      return githubIssueService.createNewCommentOnIssue(issue, comment);
+    }
   }
 
   @Override
@@ -65,6 +87,7 @@ public class IssueServiceImpl implements IssueService {
       IssueEvent e = new IssueEvent();
       e.setCreatedAt(new Date());
       e.setEvent("milestoned");
+      e.setMilestone(milestone);
       if (actor == null) {
         e.setActor(SecurityHelper.currentUser());
       } else {
@@ -80,9 +103,19 @@ public class IssueServiceImpl implements IssueService {
     createLabelsRelationship(issue, labels, replace);
   }
 
+  @Transactional
   @Override
-  public List<Label> addLabels(Issue issue, List<String> labels, OUser actor, boolean fire) {
+  public List<Label> addLabels(Issue issue, List<String> labels, OUser actor, boolean fire, boolean remote) {
 
+    if (!remote) {
+      return labelIssue(issue, labels, actor, fire);
+    } else {
+      return githubIssueService.addLabels(issue, labels, actor, fire, remote);
+    }
+
+  }
+
+  private List<Label> labelIssue(Issue issue, List<String> labels, OUser actor, boolean fire) {
     List<Label> lbs = new ArrayList<Label>();
 
     for (String label : labels) {
@@ -109,22 +142,27 @@ public class IssueServiceImpl implements IssueService {
     return lbs;
   }
 
+  @Transactional
   @Override
-  public void removeLabel(Issue issue, String label, OUser actor) {
-    Label l = repoRepository.findLabelsByRepoAndName(issue.getRepository().getName(), label);
-    if (l != null) {
-      removeLabelRelationship(issue, l);
-      IssueEvent e = new IssueEvent();
-      e.setCreatedAt(new Date());
-      e.setEvent("unlabeled");
-      e.setLabel(l);
-      if (actor == null) {
-        e.setActor(SecurityHelper.currentUser());
-      } else {
-        e.setActor(actor);
+  public void removeLabel(Issue issue, String label, OUser actor, boolean remote) {
+    if (!remote) {
+      Label l = repoRepository.findLabelsByRepoAndName(issue.getRepository().getName(), label);
+      if (l != null) {
+        removeLabelRelationship(issue, l);
+        IssueEvent e = new IssueEvent();
+        e.setCreatedAt(new Date());
+        e.setEvent("unlabeled");
+        e.setLabel(l);
+        if (actor == null) {
+          e.setActor(SecurityHelper.currentUser());
+        } else {
+          e.setActor(actor);
+        }
+        e = (IssueEvent) eventRepository.save(e);
+        fireEvent(issue, e);
       }
-      e = (IssueEvent) eventRepository.save(e);
-      fireEvent(issue, e);
+    } else {
+      githubIssueService.removeLabel(issue, label, actor, remote);
     }
   }
 
@@ -196,14 +234,31 @@ public class IssueServiceImpl implements IssueService {
 
   @Override
   public void changeVersion(Issue issue, Milestone milestone) {
+    Milestone oldVersion = issue.getVersion();
     createVersionRelationship(issue, milestone);
+    IssueEventInternal e = new IssueEventInternal();
+    e.setCreatedAt(new Date());
+    e.setEvent("versioned");
+    e.setVersion(milestone);
+    e.setActor(SecurityHelper.currentUser());
+    e = (IssueEventInternal) eventRepository.save(e);
+    fireEvent(issue, e);
+    if (oldVersion != null) {
+      e = new IssueEventInternal();
+      e.setCreatedAt(new Date());
+      e.setEvent("unversioned");
+      e.setVersion(milestone);
+      e.setActor(SecurityHelper.currentUser());
+      e = (IssueEventInternal) eventRepository.save(e);
+      fireEvent(issue, e);
+    }
   }
 
   @Override
   public Issue changeState(Issue issue, String state, OUser actor, boolean fire) {
     issue.setState(state);
     if (fire) {
-      String evt = issue.getState().equalsIgnoreCase("open") ? "reopened" : "closed";
+      String evt = issue.getState().equalsIgnoreCase(Issue.IssueState.OPEN.toString()) ? "reopened" : "closed";
       IssueEvent e = new IssueEvent();
       e.setCreatedAt(new Date());
       e.setEvent(evt);
@@ -217,6 +272,45 @@ public class IssueServiceImpl implements IssueService {
     }
 
     return issueRepository.save(issue);
+  }
+
+  @Transactional
+  @Override
+  public Issue synchIssue(Issue issue) {
+
+    GitHub github = new GitHub(SecurityHelper.currentToken());
+
+    ODocument doc = new ODocument();
+    String iPropertyValue = issue.getRepository().getOrganization().getName() + "/" + issue.getRepository().getName();
+    doc.field("full_name", iPropertyValue);
+
+    try {
+      GRepo repo = github.repo(iPropertyValue, doc.toJSON());
+      GIssue is = repo.getIssue(issue.getNumber());
+      issueImporter.importLabels(repo.getLabels(), issue.getRepository());
+      issueImporter.importMilestones(repo.getMilestones(), issue.getRepository());
+      issueImporter.importSingleIssue(issue.getRepository(), is);
+
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  @Override
+  public void clearEvents(Issue issue) {
+
+    OrientGraph graph = dbFactory.getGraph();
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(issue.getId()));
+
+    for (Vertex v : orgVertex.getVertices(Direction.OUT, HasEvent.class.getSimpleName())) {
+      OrientVertex ov = (OrientVertex) v;
+      String type = ov.getType().getName();
+      if (IssueEvent.class.getSimpleName().equalsIgnoreCase(type)) {
+        v.remove();
+      }
+    }
+
   }
 
   private void createAssigneeRelationship(Issue issue, OUser user) {

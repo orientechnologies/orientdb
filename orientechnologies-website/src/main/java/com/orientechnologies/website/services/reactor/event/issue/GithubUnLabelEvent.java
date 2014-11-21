@@ -44,7 +44,7 @@ public class GithubUnLabelEvent implements GithubIssueEvent {
     String labelName = label.field(OLabel.NAME.toString());
     Issue issueDto = repositoryRepository.findIssueByRepoAndNumber(repoName, issueNumber);
 
-    issueService.removeLabel(issueDto, labelName, findUser(payload));
+    issueService.removeLabel(issueDto, labelName, findUser(payload), false);
 
   }
 

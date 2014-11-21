@@ -3,9 +3,14 @@
     <div class="col-md-8">
       <h3>{{ issue.title}}</h3>
     </div>
-    <div class="col-md-2">
+    <div class="col-md-3">
       <div class="btn-group">
         <a href="#/issues/new" class="btn btn-sm btn-default">Edit</a>
+      </div>
+
+      <div class="btn-group">
+        <a href="javascript:void(0)" ng-show="issue.number" ng-click="sync()" class="btn btn-sm btn-default">Sync
+          Issue</a>
       </div>
       <div class="btn-group">
         <a href="#/issues/new" class="btn btn-sm btn-success">New Issue</a>
@@ -83,10 +88,10 @@
                 </button>
               </div>
               <div class="btn-group pull-right">
-                <button class="btn btn-sm btn-default" ng-show="issue.state == 'open'" ng-click="close()">
+                <button class="btn btn-sm btn-default" ng-show="issue.state == 'OPEN'" ng-click="close()">
                   Close
                 </button>
-                <button class="btn btn-sm btn-default" ng-show="issue.state == 'closed'" ng-click="reopen()">
+                <button class="btn btn-sm btn-default" ng-show="issue.state == 'CLOSED'" ng-click="reopen()">
                   Reopen Issue
                 </button>
               </div>
@@ -148,7 +153,10 @@
       </div>
       <div class="row issue-assignee">
         <div class="col-md-12">
-          <button class="btn btn-transparent">Assignee <i class="fa fa-gear pull-right"></i></button>
+          <button class="btn btn-transparent" data-placement="bottom-right" data-animation="am-fade-and-scale"
+                  data-template="views/issues/popover/assignee.html" title="{{popover.title}}"
+                  data-content="{{popover.content}}" data-trigger="click" bs-popover>Assignee <i class="fa fa-gear pull-right"></i>
+          </button>
         </div>
         <div class="col-md-12">
           <div ng-if="issue.assignee">

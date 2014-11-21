@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.model.schema.dto.Comment;
 import com.orientechnologies.website.model.schema.dto.Event;
 import com.orientechnologies.website.model.schema.dto.IssueEvent;
+import com.orientechnologies.website.model.schema.dto.IssueEventInternal;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 
 /**
@@ -33,6 +34,8 @@ public enum OEvent implements OTypeHolder<Event> {
       return OComment.COMMENT_ID.fromDoc(doc, graph);
     } else if (IssueEvent.class.getSimpleName().equals(doc.getClassName())) {
       return OIssueEvent.EVENT_ID.fromDoc(doc, graph);
+    } else if (IssueEventInternal.class.getSimpleName().equals(doc.getClassName())) {
+      return OIssueEventInternal.VERSION.fromDoc(doc, graph);
     }
     return null;
   }
@@ -41,7 +44,9 @@ public enum OEvent implements OTypeHolder<Event> {
   public ODocument toDoc(Event event, OrientBaseGraph graph) {
 
     ODocument doc = null;
-    if (event instanceof IssueEvent) {
+    if (event instanceof IssueEventInternal) {
+      doc = OIssueEventInternal.VERSION.toDoc((IssueEventInternal) event, graph);
+    } else if (event instanceof IssueEvent) {
       doc = OIssueEvent.EVENT_ID.toDoc((IssueEvent) event, graph);
     } else if (event instanceof Comment) {
       doc = OComment.COMMENT_ID.toDoc((Comment) event, graph);

@@ -101,12 +101,8 @@ public enum OIssue implements OTypeHolder<Issue> {
     doc.field(CREATED_AT.toString(), entity.getCreatedAt());
     doc.field(CLOSED_AT.toString(), entity.getClosedAt());
     doc.field(TITLE.toString(), entity.getTitle());
-//    doc.field(LABELS.toString(), entity.getLabels());
     doc.field(NUMBER.toString(), entity.getNumber());
-    doc.field(STATE.toString(), entity.getState());
-    // MOVED TO EDGES
-    // doc.field(ASSIGNEE.toString(), (entity.getAssignee() != null ? new ORecordId(entity.getAssignee().getId()) : null));
-    // doc.field(USER.toString(), (entity.getUser() != null ? new ORecordId(entity.getUser().getId()) : null));
+    doc.field(STATE.toString(), entity.getState().toUpperCase());
     return doc;
   }
 
@@ -116,7 +112,7 @@ public enum OIssue implements OTypeHolder<Issue> {
     issue.setId(doc.getIdentity().toString());
     issue.setTitle((String) doc.field(TITLE.toString()));
     issue.setBody((String) doc.field(BODY.toString()));
-    issue.setState((String) doc.field(STATE.toString()));
+    issue.setState(((String) doc.field(STATE.toString())).toUpperCase());
     issue.setClosedAt((Date) doc.field(CLOSED_AT.toString()));
     issue.setCreatedAt((Date) doc.field(CREATED_AT.toString()));
     issue.setUuid((String) doc.field(UUID.toString()));

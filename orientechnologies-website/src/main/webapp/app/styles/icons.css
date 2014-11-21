@@ -31,3 +31,6 @@
 .fa-versioned:before {
   content: "\f188";
 }
+.fa-unversioned:before {
+  content: "\f188";
+}

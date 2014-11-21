@@ -1,6 +1,7 @@
 package com.orientechnologies.website.services.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.github.GIssue;
 import com.orientechnologies.website.github.GRepo;
@@ -61,7 +62,10 @@ public class RepositoryServiceGithub implements RepositoryService {
       i.setConfidential(false);
       i.setState(gIssue.getState().name());
       i = repositoryService.issueRepository.save(i);
+      repositoryService.issueService.changeUser(i, SecurityHelper.currentUser());
       repositoryService.createIssue(repository, i);
+      repositoryService.handleMilestone(repository, i, issue.getMilestone());
+      repositoryService.handleVersion(repository, i, issue.getVersion());
       return i;
     } catch (IOException e) {
       e.printStackTrace();
@@ -72,7 +76,32 @@ public class RepositoryServiceGithub implements RepositoryService {
   @Override
   public Issue patchIssue(Issue original, IssueDTO patch) {
     GitHub github = new GitHub(SecurityHelper.currentToken());
-    return null;
+    ODocument doc = new ODocument();
+
+    String iPropertyValue = original.getRepository().getOrganization().getName() + "/" + original.getRepository().getName();
+    doc.field("full_name", iPropertyValue);
+    try {
+      GRepo repo = github.repo(iPropertyValue, doc.toJSON());
+      ObjectMapper mapper = new ObjectMapper();
+      ObjectNode node = mapper.createObjectNode();
+      if (patch.getMilestone() != null) {
+        node.put("milestone", patch.getMilestone());
+      }
+      if (patch.getState() != null) {
+        node.put("state", patch.getState());
+      }
+      if (patch.getAssignee() != null) {
+        node.put("assignee", patch.getAssignee());
+      }
+      if (node.size() > 0) {
+        String value = mapper.writeValueAsString(node);
+        repo.patchIssue(original.getNumber(), value);
+      }
+
+    } catch (IOException e) {
+
+    }
+    return original;
   }
 
   @Override

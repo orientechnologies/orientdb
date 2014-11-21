@@ -26,8 +26,8 @@ public class Issue {
   private Date              createdAt;
   private Date              closedAt;
   private Long              comments;
-  private OUser user;
-  private OUser assignee;
+  private OUser             user;
+  private OUser             assignee;
   private Boolean           confidential;
 
   public String getId() {
@@ -160,5 +160,20 @@ public class Issue {
 
   public void setUuid(String uid) {
     this.uuid = uid;
+  }
+
+  public enum IssueState {
+    OPEN("OPEN"), CLOSED("CLOSED");
+    private String state;
+
+    IssueState(String state) {
+
+      this.state = state;
+    }
+
+    @Override
+    public String toString() {
+      return state;
+    }
   }
 }

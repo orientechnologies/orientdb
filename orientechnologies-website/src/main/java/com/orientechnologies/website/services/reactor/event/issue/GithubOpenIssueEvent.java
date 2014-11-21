@@ -47,6 +47,11 @@ public class GithubOpenIssueEvent implements GithubIssueEvent {
   @Override
   public void handle(String evt, ODocument payload) {
 
+    try {
+      Thread.sleep(1000);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
     ODocument issue = payload.field("issue");
     ODocument repository = payload.field("repository");
     ODocument organization = payload.field("organization");
@@ -54,8 +59,12 @@ public class GithubOpenIssueEvent implements GithubIssueEvent {
     String repoName = repository.field(ORepository.NAME.toString());
     String organizationName = organization.field("login");
 
-    Repository r = orgRepository.findOrganizationRepository(organizationName, repoName);
     GIssue gIssue = GIssue.fromDoc(issue);
+    Issue issue1 = repositoryRepository.findIssueByRepoAndNumber(repoName, gIssue.getNumber());
+    if (issue1 != null) {
+      return;
+    }
+    Repository r = orgRepository.findOrganizationRepository(organizationName, repoName);
     GMilestone m = gIssue.getMilestone();
     Milestone milestone = null;
     if (m != null) {
