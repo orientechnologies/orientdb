@@ -1,5 +1,6 @@
 package com.orientechnologies.website.model.schema;
 
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.model.schema.dto.Client;
@@ -14,8 +15,13 @@ public enum OClient implements OTypeHolder<Client> {
     public OType getType() {
       return OType.STRING;
     }
+  },
+  CLIENT_ID("clientId") {
+    @Override
+    public OType getType() {
+      return OType.INTEGER;
+    }
   };
-
   private final String description;
 
   OClient(String description) {
@@ -23,13 +29,30 @@ public enum OClient implements OTypeHolder<Client> {
   }
 
   @Override
-  public ODocument toDoc(Client doc, OrientBaseGraph graph) {
-    return null;
+  public ODocument toDoc(Client entity, OrientBaseGraph graph) {
+
+    ODocument doc;
+    if (entity.getId() == null) {
+      doc = new ODocument(entity.getClass().getSimpleName());
+    } else {
+      doc = graph.getRawGraph().load(new ORecordId(entity.getId()));
+    }
+    doc.field(NAME.toString(), entity.getName());
+    doc.field(CLIENT_ID.toString(), entity.getClientId());
+    return doc;
   }
 
   @Override
   public Client fromDoc(ODocument doc, OrientBaseGraph graph) {
-    return null;
+
+    if (doc == null) {
+      return null;
+    }
+    Client l = new Client();
+    l.setId(doc.getIdentity().toString());
+    l.setName((String) doc.field(NAME.toString()));
+    l.setClientId((Integer) doc.field(CLIENT_ID.toString()));
+    return l;
   }
 
   @Override

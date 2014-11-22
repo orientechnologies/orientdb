@@ -47,6 +47,18 @@ angular
         templateUrl: 'views/issues/editIssue.html',
         controller: 'IssueEditCtrl'
       })
+      .when('/clients', {
+        templateUrl: 'views/clients.html',
+        controller: 'ClientCtrl'
+      })
+      .when('/clients/new', {
+        templateUrl: 'views/clients/newClient.html',
+        controller: 'ClientNewCtrl'
+      })
+      .when('/clients/:id', {
+        templateUrl: 'views/clients/editClient.html',
+        controller: 'ClientEditCtrl'
+      })
       .otherwise({
         redirectTo: '/'
       });

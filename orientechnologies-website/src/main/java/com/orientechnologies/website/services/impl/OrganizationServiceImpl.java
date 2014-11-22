@@ -6,11 +6,14 @@ import com.orientechnologies.website.exception.ServiceException;
 import com.orientechnologies.website.github.GOrganization;
 import com.orientechnologies.website.github.GRepo;
 import com.orientechnologies.website.github.GitHub;
+import com.orientechnologies.website.model.schema.HasClient;
 import com.orientechnologies.website.model.schema.HasMember;
 import com.orientechnologies.website.model.schema.HasRepo;
+import com.orientechnologies.website.model.schema.dto.Client;
 import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.model.schema.dto.Organization;
 import com.orientechnologies.website.model.schema.dto.Repository;
+import com.orientechnologies.website.repository.ClientRepository;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import com.orientechnologies.website.repository.RepositoryRepository;
 import com.orientechnologies.website.repository.UserRepository;
@@ -53,6 +56,8 @@ public class OrganizationServiceImpl implements OrganizationService {
   @Autowired
   private RepositoryRepository   repoRepository;
 
+  @Autowired
+  private ClientRepository       clientRepository;
   @Autowired
   private Reactor                reactor;
 
@@ -122,6 +127,36 @@ public class OrganizationServiceImpl implements OrganizationService {
 
   }
 
+  @Transactional
+  @Override
+  public Client registerClient(String org, Client client) {
+    Organization organization = organizationRepository.findOneByName(org);
+    if (organization != null) {
+      client = clientRepository.save(client);
+      createClientRelationship(organization, client);
+      return client;
+    } else {
+      throw ServiceException.create(HttpStatus.NOT_FOUND.value()).withMessage("Organization not Found");
+    }
+  }
+
+  @Override
+  public OUser addMemberClient(String org, Integer clientId, String username) {
+    Client client = organizationRepository.findClient(org, clientId);
+
+    if (client != null) {
+      OUser developer = userRepository.findUserByLogin(username);
+      if (developer == null) {
+        developer = new OUser(username, null, null);
+        developer = userRepository.save(developer);
+      }
+      createClientMembership(client, developer);
+      return developer;
+    } else {
+      throw ServiceException.create(HttpStatus.NOT_FOUND.value()).withMessage("Client not Found");
+    }
+  }
+
   @Override
   public Repository registerRepository(String org, String repo) {
 
@@ -176,6 +211,26 @@ public class OrganizationServiceImpl implements OrganizationService {
     OrientGraph graph = dbFactory.getGraph();
 
     OrientVertex orgVertex = graph.getVertex(new ORecordId(organization.getId()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(user.getRid()));
+
+    orgVertex.addEdge(HasMember.class.getSimpleName(), devVertex);
+
+  }
+
+  private void createClientRelationship(Organization organization, Client client) {
+    OrientGraph graph = dbFactory.getGraph();
+
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(organization.getId()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(client.getId()));
+
+    orgVertex.addEdge(HasClient.class.getSimpleName(), devVertex);
+
+  }
+
+  private void createClientMembership(Client client, OUser user) {
+    OrientGraph graph = dbFactory.getGraph();
+
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(client.getId()));
     OrientVertex devVertex = graph.getVertex(new ORecordId(user.getRid()));
 
     orgVertex.addEdge(HasMember.class.getSimpleName(), devVertex);

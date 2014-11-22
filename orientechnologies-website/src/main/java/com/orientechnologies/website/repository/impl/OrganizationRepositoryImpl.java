@@ -144,12 +144,41 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     String query = String.format("select expand(out('HasRepo')) from Organization where name = '%s'", name);
     Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
 
-    List<com.orientechnologies.website.model.schema.dto.Repository> issues = new ArrayList<com.orientechnologies.website.model.schema.dto.Repository>();
+    List<com.orientechnologies.website.model.schema.dto.Repository> repositories = new ArrayList<com.orientechnologies.website.model.schema.dto.Repository>();
     for (OrientVertex vertice : vertices) {
       ODocument doc = vertice.getRecord();
-      issues.add(ORepository.NAME.fromDoc(doc, db));
+      repositories.add(ORepository.NAME.fromDoc(doc, db));
     }
-    return issues;
+    return repositories;
+  }
+
+  @Override
+  public List<Client> findClients(String name) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format("select expand(out('HasClient')) from Organization where name = '%s'", name);
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+
+    List<Client> clients = new ArrayList<Client>();
+    for (OrientVertex vertice : vertices) {
+      ODocument doc = vertice.getRecord();
+      clients.add(OClient.NAME.fromDoc(doc, db));
+    }
+    return clients;
+  }
+
+  @Override
+  public Client findClient(String name, Integer clientId) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format("select expand(out('HasClient')[clientId = %d]) from Organization where name = '%s'", clientId,
+        name);
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+
+    try {
+      ODocument doc = vertices.iterator().next().getRecord();
+      return OClient.NAME.fromDoc(doc, db);
+    } catch (NoSuchElementException e) {
+      return null;
+    }
   }
 
   @Override
@@ -217,6 +246,21 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
       events.add(OEvent.CREATED_AT.fromDoc(v.getRecord(), db));
     }
     return events;
+  }
+
+  @Override
+  public List<OUser> findClientMembers(String org, Integer clientId) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format(
+        "select expand(out('HasClient')[clientId = %d].out('HasMember')) from Organization where name = '%s'", clientId, org);
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+
+    List<OUser> users = new ArrayList<OUser>();
+    for (OrientVertex vertice : vertices) {
+      ODocument doc = vertice.getRecord();
+      users.add(com.orientechnologies.website.model.schema.OUser.NAME.fromDoc(doc, db));
+    }
+    return users;
   }
 
   @Override

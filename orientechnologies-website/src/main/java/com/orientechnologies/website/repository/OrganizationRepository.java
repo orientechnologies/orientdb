@@ -12,6 +12,10 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
 
   public List<Repository> findOrganizationRepositories(String name);
 
+  public List<Client> findClients(String name);
+
+  public Client findClient(String name, Integer clientId);
+
   public Repository findOrganizationRepository(String name, String repo);
 
   public Issue findSingleOrganizationIssueByRepoAndNumber(String name, String repo, String number);
@@ -19,6 +23,8 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
   public List<Comment> findSingleOrganizationIssueCommentByRepoAndNumber(String owner, String repo, String number);
 
   public List<Event> findEventsByOwnerRepoAndIssueNumber(String owner, String repo, String number);
+
+  public List<OUser> findClientMembers(String org, Integer clientId);
 
   public List<OUser> findTeamMembers(String owner, String repo);
 
