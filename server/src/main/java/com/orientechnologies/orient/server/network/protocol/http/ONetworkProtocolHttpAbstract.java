@@ -559,7 +559,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
           channel.read();
 
           request.httpMethod = words[0].toUpperCase();
-          request.url = URLDecoder.decode(words[1].trim(), "UTF-8");
+          request.url = words[1].trim();
 
           final int parametersPos = request.url.indexOf('?');
           if (parametersPos > -1) {
