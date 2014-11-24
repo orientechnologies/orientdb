@@ -99,6 +99,7 @@ import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OTokenHandler;
 import com.orientechnologies.orient.server.ShutdownHelper;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
@@ -155,31 +156,44 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void onBeforeRequest() throws IOException {
     waitNodeIsOnline();
 
-    // if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
-    connection = OClientConnectionManager.instance().getConnection(clientTxId, this);
-    if (clientTxId < 0) {
-      short protocolId = 0;
+    if (connection.data.protocolVersion >= 0 && connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
+      connection = OClientConnectionManager.instance().getConnection(clientTxId, this);
+      if (clientTxId < 0) {
+        short protocolId = 0;
 
-      if (connection != null)
-        protocolId = connection.data.protocolVersion;
+        if (connection != null)
+          protocolId = connection.data.protocolVersion;
 
-      connection = OClientConnectionManager.instance().connect(this);
+        connection = OClientConnectionManager.instance().connect(this);
 
-      if (connection != null)
-        connection.data.protocolVersion = protocolId;
+        if (connection != null)
+          connection.data.protocolVersion = protocolId;
+      }
+    } else {
+      if (token != null) {
+        if (!tokenHandler.validateBinaryToken(token)) {
+          // TODO: thrown na error and fail the connection.
+        }
+        connection = new OClientConnection(clientTxId, this);
+        if (tokenHandler != null)
+          connection.data = tokenHandler.getProtocolDataFromToken(token);
+        String db = token.getDatabase();
+        String type = token.getDatabaseType();
+        if (db != null && type != null) {
+          final ODatabaseDocumentTx database = new ODatabaseDocumentTx(type + ":" + db);
+          if (connection.data.serverUser) {
+            database.resetInitialization();
+            database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
+            database.open(connection.data.serverUsername, null);
+          } else
+            database.open(token);
+          connection.database = database;
+        }
+        if (connection.data.serverUser) {
+          connection.serverUser = server.serverLogin(connection.data.serverUsername, null, null);
+        }
+      }
     }
-    // } else {
-    // if (token != null) {
-    // if (!tokenHandler.validateBinaryToken(token)) {
-    // // TODO: thrown na error and fail the connection.
-    // }
-    // String db = token.getDatabase();
-    // String type = token.getDatabaseType();
-    // final ODatabaseDocumentTx database = Orient.instance().getDatabaseFactory().createDatabase(type, db);
-    // database.open(token);
-    // connection.database = database;
-    // }
-    // }
 
     if (connection != null) {
       ODatabaseRecordThreadLocal.INSTANCE.set(connection.database);
@@ -212,15 +226,15 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     OServerPluginHelper.invokeHandlerCallbackOnAfterClientRequest(server, connection, (byte) requestType);
 
     if (connection != null) {
-      // if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_26 || token == null) {
-      if (connection.database != null)
-        if (!connection.database.isClosed())
-          connection.database.getLocalCache().clear();
-      // } else {
-      // if (connection.database != null && !connection.database.isClosed())
-      // connection.database.close();
-      // connection.database = null;
-      // }
+      if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_26 || token == null) {
+        if (connection.database != null)
+          if (!connection.database.isClosed())
+            connection.database.getLocalCache().clear();
+      } else {
+        if (connection.database != null && !connection.database.isClosed())
+          connection.database.close();
+        connection.database = null;
+      }
 
       connection.data.lastCommandExecutionTime = System.currentTimeMillis() - connection.data.lastCommandReceived;
       connection.data.totalCommandExecutionTime += connection.data.lastCommandExecutionTime;
@@ -430,12 +444,21 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   }
 
   protected void checkServerAccess(final String iResource) {
-    if (connection.serverUser == null)
-      throw new OSecurityAccessException("Server user not authenticated.");
+    if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
+      if (connection.serverUser == null)
+        throw new OSecurityAccessException("Server user not authenticated.");
 
-    if (!server.authenticate(connection.serverUser.name, null, iResource))
-      throw new OSecurityAccessException("User '" + connection.serverUser.name + "' cannot access to the resource [" + iResource
-          + "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
+      if (!server.authenticate(connection.serverUser.name, null, iResource))
+        throw new OSecurityAccessException("User '" + connection.serverUser.name + "' cannot access to the resource [" + iResource
+            + "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
+    } else {
+      if (!connection.data.serverUser)
+        throw new OSecurityAccessException("Server user not authenticated.");
+
+      if (!server.authenticate(connection.data.serverUsername, null, iResource))
+        throw new OSecurityAccessException("User '" + connection.data.serverUsername + "' cannot access to the resource ["
+            + iResource + "]. Use another server user or change permission in the file config/orientdb-server-config.xml");
+    }
   }
 
   protected ODatabase<?> openDatabase(final ODatabaseInternal<?> database, final String iUser, final String iPassword) {
@@ -610,7 +633,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     final String user = channel.readString();
     final String passwd = channel.readString();
 
-    connection.database = (ODatabaseDocumentTx) server.openDatabase(dbType, dbURL, user, passwd);
+    connection.database = (ODatabaseDocumentTx) server.openDatabase(dbType, dbURL, user, passwd, connection.data);
 
     if (connection.database.getStorage() instanceof OStorageProxy && !loadUserFromSchema(user, passwd)) {
       sendErrorOrDropConnection(clientTxId, new OSecurityAccessException(connection.database.getName(),
@@ -657,8 +680,13 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       sendOk(clientTxId);
       channel.writeInt(connection.id);
       if (connection.data.protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
-        // if(connection.database > null)
-        byte[] token = new byte[] {}; // tokenHandler.getSignedBinaryToken(connection.database, connection.serverUser);
+        connection.data.serverUsername = connection.serverUser.name;
+        connection.data.serverUser = true;
+        byte[] token;
+        if (tokenHandler != null) {
+          token = tokenHandler.getSignedBinaryToken(null, null, connection.data);
+        } else
+          token = new byte[] {};
         channel.writeBytes(token);
       }
 

@@ -25,6 +25,8 @@ public interface OTokenHandler {
 
   public boolean validateBinaryToken(OToken token);
 
+  public ONetworkProtocolData getProtocolDataFromToken(OToken token);
+
   // Return a byte array representing a signed token
   public byte[] getSignedWebToken(ODatabaseDocumentInternal db, OSecurityUser user);
 

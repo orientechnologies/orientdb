@@ -55,11 +55,20 @@ public class OBinaryTokenSerializer {
     token.setHeader(header);
 
     token.setDatabase(readString(input));
-    token.setDatabaseType(dbTypes[input.readByte()]);
+    byte pos = input.readByte();
+    if (pos >= 0)
+      token.setDatabaseType(dbTypes[pos]);
+
     short cluster = input.readShort();
     long position = input.readLong();
-    token.setUserRid(new ORecordId(cluster, position));
+    if (cluster != -1 && position != -1)
+      token.setUserRid(new ORecordId(cluster, position));
     token.setExpiry(input.readLong());
+    token.setServerUser(input.readBoolean());
+    if (token.isServerUser()) {
+      token.setUserName(readString(input));
+    }
+
     token.setProtocolVersion(input.readShort());
     token.setSerializer(readString(input));
     token.setDriverName(readString(input));
@@ -70,9 +79,12 @@ public class OBinaryTokenSerializer {
 
   private String readString(DataInputStream input) throws IOException {
     short s = input.readShort();
-    byte[] str = new byte[s];
-    input.readFully(str);
-    return new String(str, "UTF-8");
+    if (s >= 0) {
+      byte[] str = new byte[s];
+      input.readFully(str);
+      return new String(str, "UTF-8");
+    }
+    return null;
   }
 
   public void serialize(OBinaryToken token, OutputStream stream) throws IOException {
@@ -85,11 +97,23 @@ public class OBinaryTokenSerializer {
 
     String toWrite = token.getDatabase();
     writeString(output, toWrite);
-    output.writeByte(associetedDdTypes.get(token.getDatabaseType()));
+    if (token.getDatabaseType() == null)
+      output.writeByte(-1);
+    else
+      output.writeByte(associetedDdTypes.get(token.getDatabaseType()));
     ORID id = token.getUserId();
-    output.writeShort(id.getClusterId());
-    output.writeLong(id.getClusterPosition());
+    if (id == null) {
+      output.writeShort(-1);
+      output.writeLong(-1);
+    } else {
+      output.writeShort(id.getClusterId());
+      output.writeLong(id.getClusterPosition());
+    }
     output.writeLong(token.getExpiry());
+    output.writeBoolean(token.isServerUser());
+    if (token.isServerUser()) {
+      writeString(output, token.getUserName());
+    }
     output.writeShort(token.getProtocolVersion());
     writeString(output, token.getSerializer());
     writeString(output, token.getDriverName());
@@ -98,8 +122,12 @@ public class OBinaryTokenSerializer {
   }
 
   private void writeString(DataOutputStream output, String toWrite) throws UnsupportedEncodingException, IOException {
-    byte[] str = toWrite.getBytes("UTF-8");
-    output.writeShort(str.length);
-    output.write(str);
+    if (toWrite == null)
+      output.writeShort(-1);
+    else {
+      byte[] str = toWrite.getBytes("UTF-8");
+      output.writeShort(str.length);
+      output.write(str);
+    }
   }
 }

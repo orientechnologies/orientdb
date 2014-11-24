@@ -1,23 +1,28 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.metadata.security;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.annotation.OAfterDeserialization;
@@ -28,11 +33,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-
 /**
  * Contains the user settings about security and permissions. Each user has one or more roles associated. Roles contains the
  * permission rules that define what the user can access and what he cannot.
@@ -41,13 +41,12 @@ import java.util.Set;
  * 
  * @see ORole
  */
-public class OUser extends ODocumentWrapper implements  OSecurityUser {
+public class OUser extends ODocumentWrapper implements OSecurityUser {
   public static final String ADMIN            = "admin";
   public static final String CLASS_NAME       = "OUser";
   private static final long  serialVersionUID = 1L;
   // AVOID THE INVOCATION OF SETTER
   protected Set<ORole>       roles            = new HashSet<ORole>();
-
 
   /**
    * Constructor used in unmarshalling.
@@ -91,12 +90,12 @@ public class OUser extends ODocumentWrapper implements  OSecurityUser {
     final Collection<ODocument> loadedRoles = iSource.field("roles");
     if (loadedRoles != null)
       for (final ODocument d : loadedRoles) {
-        final ORole role = document.getDatabase().getMetadata().getSecurity().getRole((String) d.field("name"));
-        if (role == null) {
-          OLogManager.instance().warn(this, "User '%s' declare to have the role '%s' but it does not exist in database, skipt it",
-              getName(), d.field("name"));
+        if (d != null) {
+          roles.add(new ORole(d));
         } else
-          roles.add(role);
+          OLogManager.instance()
+              .warn(this, "User '%s' declare to have a role that does not exist in database, skipt it", getName());
+
       }
   }
 
@@ -124,7 +123,7 @@ public class OUser extends ODocumentWrapper implements  OSecurityUser {
     if (role == null)
       throw new OSecurityAccessException(document.getDatabase().getName(), "User '" + document.field("name")
           + "' has no the permission to execute the operation '" + ORole.permissionToString(iOperation)
-          + "' against the resource: " + resourceGeneric  + "." + resourceSpecific);
+          + "' against the resource: " + resourceGeneric + "." + resourceSpecific);
 
     return role;
   }
@@ -148,44 +147,43 @@ public class OUser extends ODocumentWrapper implements  OSecurityUser {
     return null;
   }
 
-	@Override
-	@Deprecated
-	public OSecurityRole allow(String iResource, int iOperation) {
-		final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
-		final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
+  @Override
+  @Deprecated
+  public OSecurityRole allow(String iResource, int iOperation) {
+    final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
+    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
 
-		if (resourceSpecific == null || resourceSpecific.equals("*"))
-			return allow(resourceGeneric, null, iOperation);
+    if (resourceSpecific == null || resourceSpecific.equals("*"))
+      return allow(resourceGeneric, null, iOperation);
 
-		return allow(resourceGeneric, resourceSpecific, iOperation);
-	}
+    return allow(resourceGeneric, resourceSpecific, iOperation);
+  }
 
-	@Override
-	@Deprecated
-	public OSecurityRole checkIfAllowed(String iResource, int iOperation) {
-		final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
-		final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
+  @Override
+  @Deprecated
+  public OSecurityRole checkIfAllowed(String iResource, int iOperation) {
+    final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
+    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
 
-		if (resourceSpecific == null || resourceSpecific.equals("*"))
-			return checkIfAllowed(resourceGeneric, null, iOperation);
+    if (resourceSpecific == null || resourceSpecific.equals("*"))
+      return checkIfAllowed(resourceGeneric, null, iOperation);
 
-		return checkIfAllowed(resourceGeneric, resourceSpecific, iOperation);
-	}
+    return checkIfAllowed(resourceGeneric, resourceSpecific, iOperation);
+  }
 
-	@Override
-	@Deprecated
-	public boolean isRuleDefined(String iResource) {
-		final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
-		final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
+  @Override
+  @Deprecated
+  public boolean isRuleDefined(String iResource) {
+    final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
+    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
 
-		if (resourceSpecific == null || resourceSpecific.equals("*"))
-			return isRuleDefined(resourceGeneric, null);
+    if (resourceSpecific == null || resourceSpecific.equals("*"))
+      return isRuleDefined(resourceGeneric, null);
 
-		return isRuleDefined(resourceGeneric, resourceSpecific);
-	}
+    return isRuleDefined(resourceGeneric, resourceSpecific);
+  }
 
-
-	/**
+  /**
    * Checks if a rule was defined for the user.
    * 
    * @return True is a rule is defined, otherwise false
@@ -246,7 +244,7 @@ public class OUser extends ODocumentWrapper implements  OSecurityUser {
 
   public OUser addRole(final OSecurityRole iRole) {
     if (iRole != null)
-      roles.add((ORole)iRole);
+      roles.add((ORole) iRole);
 
     final HashSet<ODocument> persistentRoles = new HashSet<ODocument>();
     for (ORole r : roles) {
@@ -296,8 +294,8 @@ public class OUser extends ODocumentWrapper implements  OSecurityUser {
     return getName();
   }
 
-	@Override
-	public OIdentifiable getIdentity() {
-		return document;
-	}
+  @Override
+  public OIdentifiable getIdentity() {
+    return document;
+  }
 }

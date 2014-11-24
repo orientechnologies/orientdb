@@ -603,7 +603,7 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   public boolean isClosed() {
-    return sessionId < 0 || delegate.isClosed();
+    return (sessionId < 0 && token == null) || delegate.isClosed();
   }
 
   public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
@@ -721,6 +721,6 @@ public class OStorageRemoteThread implements OStorageProxy {
     serverURL = delegate.getServerURL();
     sessionId = delegate.getSessionId();
     token = delegate.getSessionToken();
-//    delegate.clearSession();
+    // delegate.clearSession();
   }
 }

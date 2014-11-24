@@ -96,7 +96,6 @@ import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
 import com.orientechnologies.orient.core.metadata.security.ORestrictedAccessHook;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -308,59 +307,38 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    */
   @Override
   public <DB extends ODatabase> DB open(final OToken iToken) {
-    setCurrentDatabaseinThreadLocal();
+    setCurrentDatabaseInThreadLocal();
+
     try {
-      ORecordSerializerFactory serializerFactory = ORecordSerializerFactory.instance();
-      String serializeName = getStorage().getConfiguration().getRecordSerializer();
-      if (serializeName == null)
-        serializeName = ORecordSerializerSchemaAware2CSV.NAME;
-      serializer = serializerFactory.getFormat(serializeName);
-      if (serializer == null)
-        throw new ODatabaseException("RecordSerializer with name '" + serializeName + "' not found ");
-      if (getStorage().getConfiguration().getRecordSerializerVersion() > serializer.getMinSupportedVersion())
-        // TODO: I need a better message!
-        throw new ODatabaseException("Persistent record serializer version is not support by the current implementation");
-      componentsFactory = getStorage().getComponentsFactory();
-      final OSBTreeCollectionManager sbTreeCM = getStorage().getResource(OSBTreeCollectionManager.class.getSimpleName(),
-          new Callable<OSBTreeCollectionManager>() {
-            @Override
-            public OSBTreeCollectionManager call() throws Exception {
-              Class<? extends OSBTreeCollectionManager> managerClass = getStorage().getCollectionManagerClass();
-              if (managerClass == null) {
-                OLogManager.instance().warn(this, "Current implementation of storage does not support sbtree collections");
-                return null;
-              } else {
-                return managerClass.newInstance();
-              }
-            }
-          });
-      sbTreeCollectionManager = sbTreeCM != null ? new OSBTreeCollectionManagerProxy(this, sbTreeCM) : null;
-      localCache.startup();
-      metadata = new OMetadataDefault();
-      metadata.load();
-      recordFormat = DEF_RECORD_FORMAT;
-      if (!(getStorage() instanceof OStorageProxy)) {
-        if (metadata.getIndexManager().autoRecreateIndexesAfterCrash()) {
-          metadata.getIndexManager().recreateIndexes();
-          setCurrentDatabaseinThreadLocal();
-          user = null;
-        }
-        installHooks();
+      if (status == STATUS.OPEN)
+        throw new IllegalStateException("Database " + getName() + " is already open");
+
+      if (user != null && !user.getIdentity().equals(iToken.getUserId()))
+        initialized = false;
+
+      if (storage instanceof OStorageProxy) {
+        throw new ODatabaseException("Cannot use a token open on remote database");
+      }
+      if (storage.isClosed()) {
+        // i don't have username and password at this level, anyway the storage embedded don't really need it
+        storage.open("", "", properties);
+      }
+
+      status = STATUS.OPEN;
+
+      initAtFirstOpen(null, null);
+
+      final OSecurity security = metadata.getSecurity();
+      if (user == null || user.getVersion() != security.getVersion()) {
         final OUser usr = metadata.getSecurity().authenticate(iToken);
         if (usr != null)
-          user = new OImmutableUser(metadata.getSchema().getVersion(), usr);
+          user = new OImmutableUser(security.getVersion(), usr);
         else
           user = null;
-      } else
-        /*
-         * --- FOR ORIENT STAFF - Is the following applicable for token auth? // REMOTE CREATE DUMMY USER user = new
-         * OUser(iUserName, OUser.encryptPassword(iUserPassword)).addRole(new ORole("passthrough", null,
-         * ORole.ALLOW_MODES.ALLOW_ALL_BUT));
-         */
-        checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_READ);
-      if (!metadata.getSchema().existsClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME))
-        // @COMPATIBILITY 1.0RC9
-        metadata.getSchema().createClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
+
+        checkSecurity(ORule.ResourceGeneric.DATABASE, ORole.PERMISSION_READ);
+      }
+
       // WAKE UP LISTENERS
       callOnOpenListeners();
     } catch (OException e) {
@@ -2624,11 +2602,12 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       registerHook(new OSecurityTrackerHook(metadata.getSecurity()), ORecordHook.HOOK_POSITION.LAST);
 
       user = null;
-    } else
+    } else if (iUserName != null && iUserPassword != null)
       user = new OImmutableUser(-1, new OUser(iUserName, OUser.encryptPassword(iUserPassword)).addRole(new ORole("passthrough",
           null, ORole.ALLOW_MODES.ALLOW_ALL_BUT)));
 
-    if (!metadata.getSchema().existsClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME))
+    if (ORecordSerializerSchemaAware2CSV.NAME.equals(serializeName)
+        && !metadata.getSchema().existsClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME))
       // @COMPATIBILITY 1.0RC9
       metadata.getSchema().createClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
 

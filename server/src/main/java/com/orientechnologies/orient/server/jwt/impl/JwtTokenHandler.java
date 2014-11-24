@@ -42,6 +42,8 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
 
   protected static final int            JWT_DELIMITER     = '.';
 
+  private int                           sessionInMills    = 1000 * 60 * 60;
+
   private static final ThreadLocal<Mac> threadLocalMac    = new ThreadLocal<Mac>() {
                                                             @Override
                                                             protected Mac initialValue() {
@@ -143,7 +145,8 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
   @Override
   public boolean validateBinaryToken(OToken token) {
     boolean valid = false;
-    if (token.getExpiry() > System.currentTimeMillis() && token.getExpiry() - (60000 * 10) < System.currentTimeMillis()) {
+    long curTime = System.currentTimeMillis();
+    if (token.getExpiry() > curTime && (token.getExpiry() - (sessionInMills + 1)) < curTime) {
       valid = true;
     }
     // TODO: Other validations... (e.g. check audience, etc.)
@@ -257,7 +260,7 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
     payload.setDatabase(db.getName());
     payload.setUserRid(user.getDocument().getIdentity());
 
-    long expiryMinutes = 60000 * 10;
+    long expiryMinutes = sessionInMills;
     long currTime = System.currentTimeMillis();
     payload.setIssuedAt(currTime);
     payload.setNotBefore(currTime);
@@ -272,7 +275,7 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
     try {
       OBinaryToken token = new OBinaryToken();
 
-      long expiryMinutes = 60000 * 10;
+      long expiryMinutes = sessionInMills;
       long currTime = System.currentTimeMillis();
 
       OrientJwtHeader header = new OrientJwtHeader();
@@ -280,15 +283,22 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
       header.setKeyId("HmacSHA256");
       header.setType("OrientDB");
       token.setHeader(header);
-      token.setDatabase(db.getName());
-      token.setDatabaseType(db.getStorage().getType());
-      // data.
-      token.setUserRid(user.getIdentity().getIdentity());
+      if (db != null) {
+        token.setDatabase(db.getName());
+        token.setDatabaseType(db.getStorage().getType());
+      }
+      if (data.serverUser) {
+        token.setServerUser(true);
+        token.setUserName(data.serverUsername);
+      }
+      if (user != null)
+        token.setUserRid(user.getIdentity().getIdentity());
       token.setExpiry(currTime + expiryMinutes);
       token.setProtocolVersion(data.protocolVersion);
       token.setSerializer(data.serializationImpl);
       token.setDriverName(data.driverName);
       token.setDriverVersion(data.driverVersion);
+
       binarySerializer.serialize(token, baos);
 
       byte[] signature = signToken(header, baos.toByteArray());
@@ -302,7 +312,7 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
     return baos.toByteArray();
   }
 
-  public ONetworkProtocolData getProtoclDataFromToken(OToken token) {
+  public ONetworkProtocolData getProtocolDataFromToken(OToken token) {
     if (token instanceof OBinaryToken) {
       OBinaryToken binary = (OBinaryToken) token;
       ONetworkProtocolData data = new ONetworkProtocolData();
@@ -311,6 +321,8 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
       data.serializationImpl = binary.getSerializer();
       data.driverName = binary.getDriverName();
       data.driverVersion = binary.getDriverVersion();
+      data.serverUser = binary.isServerUser();
+      data.serverUsername = binary.getUserName();
       return data;
     }
     return null;

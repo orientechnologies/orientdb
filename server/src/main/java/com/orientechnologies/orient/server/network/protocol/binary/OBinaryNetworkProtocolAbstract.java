@@ -20,6 +20,9 @@
 package com.orientechnologies.orient.server.network.protocol.binary;
 
 import java.io.IOException;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.Socket;
 import java.util.logging.Level;
 
@@ -206,8 +209,13 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       }
 
       timer = Orient.instance().getProfiler().startChrono();
-
-      onBeforeRequest();
+      try {
+        onBeforeRequest();
+      } catch (Exception e) {
+        handleConnectionError(channel, e);
+        sendShutdown();
+        return;
+      }
 
       try {
         if (!executeRequest()) {
@@ -247,6 +255,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       handleConnectionError(channel, t);
       sendShutdown();
     } else {
+      okSent = true;
       sendError(iClientTxId, t);
     }
   }

@@ -131,7 +131,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     parseServerURLs();
 
     asynchExecutor = Executors.newSingleThreadScheduledExecutor();
-
+    
     engine = (OEngineRemote) Orient.instance().getEngine(OEngineRemote.NAME);
   }
 

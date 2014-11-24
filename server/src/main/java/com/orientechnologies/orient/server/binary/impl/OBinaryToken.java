@@ -22,6 +22,7 @@ public class OBinaryToken implements OToken {
   private String     driverName;
   private String     driverVersion;
   private OJwtHeader header;
+  private boolean    serverUser;
 
   @Override
   public boolean getIsVerified() {
@@ -54,11 +55,14 @@ public class OBinaryToken implements OToken {
 
   @Override
   public OUser getUser(ODatabaseDocumentInternal db) {
-    ODocument result = db.load(new ORecordId(this.rid), "roles:1");
-    if (!result.getClassName().equals(OUser.CLASS_NAME)) {
-      result = null;
+    if (this.rid != null) {
+      ODocument result = db.load(new ORecordId(this.rid), "roles:1");
+      if (result != null && result.getClassName().equals(OUser.CLASS_NAME)) {
+        return new OUser(result);
+      }
     }
-    return new OUser(result);
+    return null;
+
   }
 
   @Override
@@ -135,6 +139,14 @@ public class OBinaryToken implements OToken {
 
   public void setDriverVersion(String driverVersion) {
     this.driverVersion = driverVersion;
+  }
+
+  public void setServerUser(boolean b) {
+    this.serverUser = b;
+  }
+
+  public boolean isServerUser() {
+    return serverUser;
   }
 
 }

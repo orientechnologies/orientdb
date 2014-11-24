@@ -62,8 +62,8 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -86,6 +86,7 @@ import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.OServerSocketFactory;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
@@ -578,24 +579,29 @@ public class OServer {
   }
 
   public ODatabase<?> openDatabase(final String iDbType, final String iDbUrl, final String user, final String password) {
+    return openDatabase(iDbType, iDbUrl, user, password, null);
+  }
+
+  public ODatabase<?> openDatabase(final String iDbType, final String iDbUrl, final String user, final String password,
+      ONetworkProtocolData data) {
     final String path = getStoragePath(iDbUrl);
 
     final ODatabaseInternal<?> database = Orient.instance().getDatabaseFactory().createDatabase(iDbType, path);
 
     final OStorage storage = database.getStorage();
     if (database.isClosed()) {
-      if (database.getStorage() instanceof ODirectMemoryStorage) {
-        if (!storage.exists())
-          try {
-            database.create();
-          } catch (OStorageException e) {
-          }
-
-        if (database.isClosed())
-          database.open(user, password);
+      if (database.getStorage() instanceof ODirectMemoryStorage && !storage.exists()) {
+        try {
+          database.create();
+        } catch (OStorageException e) {
+        }
       } else {
         try {
           database.open(user, password);
+          if (data != null) {
+            data.serverUser = false;
+            data.serverUsername = null;
+          }
         } catch (OSecurityException e) {
           // TRY WITH SERVER'S USER
           try {
@@ -608,6 +614,10 @@ public class OServer {
           database.resetInitialization();
           database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
           database.open(user, password);
+          if (data != null) {
+            data.serverUser = true;
+            data.serverUsername = user;
+          }
         }
       }
     }
