@@ -95,6 +95,12 @@ public class OrganizationController {
     }
   }
 
+  @RequestMapping(value = "{name}/priorities", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public List<Priority> findPriorities(@PathVariable("name") String name) {
+    return orgRepository.findPriorities(name);
+  }
+
   @RequestMapping(value = "{name}/repos/{repo}", method = RequestMethod.POST)
   public ResponseEntity<Repository> registerRepository(@PathVariable("name") String name, @PathVariable("repo") String repo) {
 

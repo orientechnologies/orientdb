@@ -31,6 +31,8 @@ public interface IssueService {
 
   public void changeVersion(Issue issue, Milestone milestone);
 
+  public void changePriority(Issue issue, Priority priority);
+
   public Issue changeState(Issue issue, String state, OUser actor, boolean fire);
 
   public Issue synchIssue(Issue issue);

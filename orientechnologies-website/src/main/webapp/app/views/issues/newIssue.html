@@ -21,6 +21,11 @@
                           ng-options="repo.name for repo in repositories"></select>
                 </div>
                 <div class="col-md-3">
+                  <label>Priority</label>
+                  <select class="form-control" required ng-model="issue.priority"
+                          ng-options="p.number as p.name for p in priorities"></select>
+                </div>
+                <div class="col-md-3">
                   <label>Assignee</label>
                   <select class="form-control" ng-model="issue.assignee"
                           ng-options="a.name as a.name for a in assignees"></select>
@@ -35,6 +40,7 @@
                   <select class="form-control" required ng-model="issue.milestone"
                           ng-options="m.number as m.title for m in milestones"></select>
                 </div>
+
               </div>
               <div class="row">
 

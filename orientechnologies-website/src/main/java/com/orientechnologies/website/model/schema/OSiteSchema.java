@@ -24,6 +24,7 @@ public class OSiteSchema {
     addVertexClass(OIssueEvent.class, IssueEvent.class.getSimpleName(), OEvent.class);
     addVertexClass(OIssueEventInternal.class, IssueEventInternal.class.getSimpleName(), OIssueEvent.class);
     addVertexClass(OIssue.class, Issue.class.getSimpleName());
+    addVertexClass(OPriority.class, Priority.class.getSimpleName());
     addVertexClass(OClient.class, Client.class.getSimpleName());
     addVertexClass(ORepository.class, Repository.class.getSimpleName());
     addVertexClass(OMilestone.class, Milestone.class.getSimpleName());
@@ -35,6 +36,7 @@ public class OSiteSchema {
     addEdgeClass(HasMember.class);
     addEdgeClass(HasRepo.class);
     addEdgeClass(HasClient.class);
+    addEdgeClass(HasPriority.class);
   }
 
   public static void addVertexClass(Class cls, String name, Class superClass) {

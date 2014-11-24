@@ -19,6 +19,13 @@ public enum OIssueEventInternal implements OTypeHolder<IssueEventInternal> {
       return OType.EMBEDDED;
     }
 
+  },
+  PRIORITY("priority") {
+    @Override
+    public OType getType() {
+      return OType.EMBEDDED;
+    }
+
   };
 
   private String name;
@@ -39,6 +46,7 @@ public enum OIssueEventInternal implements OTypeHolder<IssueEventInternal> {
     event.setLabel(OLabel.NAME.fromDoc((ODocument) doc.field(OIssueEvent.LABEL.toString()), graph));
     event.setMilestone(OMilestone.TITLE.fromDoc((ODocument) doc.field(OIssueEvent.MILESTONE.toString()), graph));
     event.setVersion(OMilestone.TITLE.fromDoc((ODocument) doc.field(VERSION.toString()), graph));
+    event.setPriority(OPriority.NAME.fromDoc((ODocument) doc.field(PRIORITY.toString()), graph));
     return event;
   }
 
@@ -61,6 +69,7 @@ public enum OIssueEventInternal implements OTypeHolder<IssueEventInternal> {
     doc.field(OIssueEvent.MILESTONE.toString(),
         (entity.getMilestone() != null ? OMilestone.TITLE.toDoc(entity.getMilestone(), graph) : null));
     doc.field(VERSION.toString(), (entity.getVersion() != null ? OMilestone.TITLE.toDoc(entity.getVersion(), graph) : null));
+    doc.field(PRIORITY.toString(), (entity.getPriority() != null ? OPriority.NAME.toDoc(entity.getPriority(), graph) : null));
     return doc;
   }
 

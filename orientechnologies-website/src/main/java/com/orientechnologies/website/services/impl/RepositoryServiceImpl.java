@@ -8,10 +8,7 @@ import com.orientechnologies.website.model.schema.HasLabel;
 import com.orientechnologies.website.model.schema.HasMilestone;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.web.IssueDTO;
-import com.orientechnologies.website.repository.EventRepository;
-import com.orientechnologies.website.repository.IssueRepository;
-import com.orientechnologies.website.repository.RepositoryRepository;
-import com.orientechnologies.website.repository.UserRepository;
+import com.orientechnologies.website.repository.*;
 import com.orientechnologies.website.services.IssueService;
 import com.orientechnologies.website.services.RepositoryService;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -32,23 +29,26 @@ import java.util.List;
 public class RepositoryServiceImpl implements RepositoryService {
 
   @Autowired
-  private OrientDBFactory        dbFactory;
+  private OrientDBFactory          dbFactory;
   @Autowired
-  protected RepositoryRepository repositoryRepository;
+  protected RepositoryRepository   repositoryRepository;
 
   @Autowired
-  protected IssueRepository      issueRepository;
+  protected IssueRepository        issueRepository;
 
   @Autowired
-  protected IssueService         issueService;
+  protected IssueService           issueService;
 
   @Autowired
-  protected UserRepository       userRepo;
+  protected UserRepository         userRepo;
 
   @Autowired
-  protected EventRepository      eventRepository;
+  protected EventRepository        eventRepository;
 
-  protected RepositoryService    githubService;
+  protected RepositoryService      githubService;
+
+  @Autowired
+  protected OrganizationRepository organizationRepo;
 
   @PostConstruct
   protected void init() {
@@ -103,6 +103,11 @@ public class RepositoryServiceImpl implements RepositoryService {
         handleMilestone(r, original, issue.getMilestone());
       }
     }
+    if (issue.getPriority() != null) {
+      if (original.getPriority() == null || original.getPriority().getNumber() != issue.getPriority()) {
+        handlePriority(r, original, issue.getPriority());
+      }
+    }
     if (skipGithub) {
       if (issue.getState() != null) {
         if (!original.getState().equals(issue.getState())) {
@@ -117,7 +122,9 @@ public class RepositoryServiceImpl implements RepositoryService {
     String assignee = issue.getAssignee();
     Integer milestoneId = issue.getMilestone();
     Integer versionId = issue.getVersion();
+    Integer priorityId = issue.getPriority();
     Issue issueDomain = new Issue();
+    issueDomain.setConfidential(true);
     issueDomain.setTitle(issue.getTitle());
     issueDomain.setBody(issue.getBody());
     issueDomain.setCreatedAt(new Date());
@@ -129,8 +136,18 @@ public class RepositoryServiceImpl implements RepositoryService {
     handleAssignee(issueDomain, assignee);
     handleMilestone(repository, issueDomain, milestoneId);
     handleVersion(repository, issueDomain, versionId);
+    handlePriority(repository, issueDomain, priorityId);
     handleLabels(repository, issueDomain, issue.getLabels());
     return issueDomain;
+  }
+
+  protected void handlePriority(Repository repository, Issue issue, Integer priority) {
+    if (priority != null) {
+      Priority p = organizationRepo.findPriorityByNumber(repository.getOrganization().getName(), priority);
+      if (p != null) {
+        issueService.changePriority(issue, p);
+      }
+    }
   }
 
   protected void handleVersion(Repository repository, Issue issue, Integer milestone) {

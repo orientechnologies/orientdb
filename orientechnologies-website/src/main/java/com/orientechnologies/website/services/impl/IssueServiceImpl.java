@@ -247,7 +247,29 @@ public class IssueServiceImpl implements IssueService {
       e = new IssueEventInternal();
       e.setCreatedAt(new Date());
       e.setEvent("unversioned");
-      e.setVersion(milestone);
+      e.setVersion(oldVersion);
+      e.setActor(SecurityHelper.currentUser());
+      e = (IssueEventInternal) eventRepository.save(e);
+      fireEvent(issue, e);
+    }
+  }
+
+  @Override
+  public void changePriority(Issue issue, Priority priority) {
+    Priority oldPriority = issue.getPriority();
+    createPriorityRelationship(issue, priority);
+    IssueEventInternal e = new IssueEventInternal();
+    e.setCreatedAt(new Date());
+    e.setEvent("prioritized");
+    e.setPriority(priority);
+    e.setActor(SecurityHelper.currentUser());
+    e = (IssueEventInternal) eventRepository.save(e);
+    fireEvent(issue, e);
+    if (oldPriority != null) {
+      e = new IssueEventInternal();
+      e.setCreatedAt(new Date());
+      e.setEvent("unprioritized");
+      e.setPriority(oldPriority);
       e.setActor(SecurityHelper.currentUser());
       e = (IssueEventInternal) eventRepository.save(e);
       fireEvent(issue, e);
@@ -382,6 +404,18 @@ public class IssueServiceImpl implements IssueService {
     }
 
     orgVertex.addEdge(HasVersion.class.getSimpleName(), devVertex);
+  }
+
+  private void createPriorityRelationship(Issue issue, Priority priority) {
+
+    OrientGraph graph = dbFactory.getGraph();
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(issue.getId()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(priority.getId()));
+    for (Edge edge : orgVertex.getEdges(Direction.OUT, HasPriority.class.getSimpleName())) {
+      edge.remove();
+    }
+
+    orgVertex.addEdge(HasPriority.class.getSimpleName(), devVertex);
   }
 
   private void createMilestoneRelationship(Issue issue, Milestone milestone) {

@@ -9,9 +9,15 @@
 .milestone-popover {
   width: 300px;
 }
+
 .assignee-popover {
   width: 300px;
 }
+
+.priority-popover {
+  width: 300px;
+}
+
 .version-popover .form-group {
   margin-top: 15px;
   padding-left: 15px;
@@ -23,6 +29,7 @@
   padding-left: 15px;
   padding-right: 15px;
 }
+
 .assignee-popover .form-group {
   margin-top: 15px;
   padding-left: 15px;
@@ -30,6 +37,12 @@
 }
 
 .label-popover .form-group {
+  margin-top: 15px;
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+.priority-popover .form-group {
   margin-top: 15px;
   padding-left: 15px;
   padding-right: 15px;
@@ -49,7 +62,13 @@
   margin-top: 0px;
   margin-bottom: 0px;
 }
+
 .assignee-popover-divider {
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
+
+.priority-popover-divider {
   margin-top: 0px;
   margin-bottom: 0px;
 }

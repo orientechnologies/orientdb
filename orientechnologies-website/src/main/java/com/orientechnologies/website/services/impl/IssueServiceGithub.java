@@ -123,6 +123,11 @@ public class IssueServiceGithub implements IssueService {
   }
 
   @Override
+  public void changePriority(Issue issue, Priority priority) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public Issue changeState(Issue issue, String state, OUser actor, boolean fire) {
     throw new UnsupportedOperationException();
   }

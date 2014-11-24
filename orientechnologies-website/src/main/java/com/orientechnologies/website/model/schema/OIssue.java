@@ -45,6 +45,12 @@ public enum OIssue implements OTypeHolder<Issue> {
       return OType.INTEGER;
     }
   },
+  CONFIDENTIAL("confidential") {
+    @Override
+    public OType getType() {
+      return OType.BOOLEAN;
+    }
+  },
   STATE("state") {
     @Override
     public OType getType() {
@@ -103,6 +109,7 @@ public enum OIssue implements OTypeHolder<Issue> {
     doc.field(TITLE.toString(), entity.getTitle());
     doc.field(NUMBER.toString(), entity.getNumber());
     doc.field(STATE.toString(), entity.getState().toUpperCase());
+    doc.field(CONFIDENTIAL.toString(), entity.getConfidential());
     return doc;
   }
 
@@ -117,7 +124,7 @@ public enum OIssue implements OTypeHolder<Issue> {
     issue.setCreatedAt((Date) doc.field(CREATED_AT.toString()));
     issue.setUuid((String) doc.field(UUID.toString()));
     issue.setNumber((Integer) doc.field(NUMBER.toString()));
-
+    issue.setConfidential((Boolean) doc.field(CONFIDENTIAL.toString()));
     OrientVertex iss = graph.getVertex(doc);
     for (Vertex vertex : iss.getVertices(Direction.IN, HasIssue.class.getSimpleName())) {
       issue.setRepository(ORepository.NAME.fromDoc(((OrientVertex) vertex).getRecord(), graph));
@@ -129,6 +136,10 @@ public enum OIssue implements OTypeHolder<Issue> {
     }
     for (Vertex vertex : iss.getVertices(Direction.OUT, HasVersion.class.getSimpleName())) {
       issue.setVersion(OMilestone.NUMBER.fromDoc(((OrientVertex) vertex).getRecord(), graph));
+      break;
+    }
+    for (Vertex vertex : iss.getVertices(Direction.OUT, HasPriority.class.getSimpleName())) {
+      issue.setPriority(OPriority.NAME.fromDoc(((OrientVertex) vertex).getRecord(), graph));
       break;
     }
     List<Label> labelList = new ArrayList<Label>();

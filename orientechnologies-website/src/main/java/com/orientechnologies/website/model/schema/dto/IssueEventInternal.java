@@ -6,6 +6,7 @@ package com.orientechnologies.website.model.schema.dto;
 public class IssueEventInternal extends IssueEvent {
 
   protected Milestone version;
+  protected Priority  priority;
 
   public Milestone getVersion() {
     return version;
@@ -17,4 +18,14 @@ public class IssueEventInternal extends IssueEvent {
     this.version = version;
   }
 
+  public Priority getPriority() {
+    return priority;
+  }
+
+  public void setPriority(Priority priority) {
+    if (priority != null) {
+      priority.setId(null);
+    }
+    this.priority = priority;
+  }
 }

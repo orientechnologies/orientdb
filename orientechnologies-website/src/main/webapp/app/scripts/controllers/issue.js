@@ -27,7 +27,9 @@ angular.module('webappApp')
     Organization.all("repos").getList().then(function (data) {
       $scope.repositories = data.plain();
     })
-
+    Organization.all("priorities").getList().then(function (data) {
+      $scope.priorities = data.plain();
+    })
     $scope.$watch("repo", function (val) {
       if (val) {
         Repo.one(val.name).all("teams").getList().then(function (data) {
@@ -40,7 +42,7 @@ angular.module('webappApp')
     });
   });
 angular.module('webappApp')
-  .controller('IssueEditCtrl', function ($scope, $routeParams, Repo, $popover, $route) {
+  .controller('IssueEditCtrl', function ($scope, $routeParams,Organization, Repo, $popover, $route) {
 
     var id = $routeParams.id.split("@");
 
@@ -50,8 +52,9 @@ angular.module('webappApp')
     Repo.one(repo).all("issues").one(number).get().then(function (data) {
       $scope.issue = data.plain();
     });
-
-
+    Organization.all("priorities").getList().then(function (data) {
+      $scope.priorities = data.plain();
+    })
     $scope.getEventTpl = function (e) {
       return 'views/issues/events/' + e + ".html";
     }
@@ -146,6 +149,12 @@ angular.module('webappApp')
 
 
     });
+    $scope.$on("priority:changed", function (e, priority) {
+      Repo.one(repo).all("issues").one(number).patch({priority: priority.number}).then(function (data) {
+        $scope.issue.priority = priority;
+        refreshEvents();
+      })
+    });
   });
 
 angular.module('webappApp')
@@ -184,7 +193,7 @@ angular.module('webappApp')
 
   });
 angular.module('webappApp')
-  .controller('ChangeVersionCtrl', function ($scope, $routeParams, Repo, $popover) {
+  .controller('ChangeVersionCtrl', function ($scope) {
 
     $scope.isVersionSelected = function (version) {
       return $scope.issue.version ? version.number == $scope.issue.version.number : false;
@@ -197,7 +206,7 @@ angular.module('webappApp')
     }
   });
 angular.module('webappApp')
-  .controller('ChangeAssigneeCtrl', function ($scope, $routeParams, Repo, $popover) {
+  .controller('ChangeAssigneeCtrl', function ($scope) {
     $scope.isAssigneeSelected = function (assignee) {
       return $scope.issue.assignee ? assignee.name == $scope.issue.assignee.name : false;
     }
@@ -209,3 +218,19 @@ angular.module('webappApp')
     }
 
   });
+
+angular.module('webappApp')
+  .controller('ChangePriorityCtrl', function ($scope) {
+
+    $scope.isPrioritized = function (priority) {
+      return $scope.issue.priority ? priority.name == $scope.issue.priority.name : false;
+    }
+    $scope.togglePriority = function (priority) {
+      if (!$scope.isPrioritized(priority)) {
+        $scope.$emit("priority:changed", priority);
+        $scope.$hide();
+      }
+    }
+
+  });
+

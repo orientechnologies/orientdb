@@ -106,6 +106,20 @@
     <div class="col-md-2 issue-sidebar">
       <div class="row">
         <div class="col-md-12">
+          <button class="btn btn-transparent " data-placement="bottom-right" data-animation="am-fade-and-scale"
+                  data-template="views/issues/popover/priorities.html" title="{{popover.title}}"
+                  data-content="{{popover.content}}" data-trigger="click" bs-popover>Priority <i
+            class="fa fa-gear pull-right"></i></button>
+        </div>
+        <div class="col-md-12 milestone">
+          <span ng-show="issue.priority" style="background-color: #{{issue.priority.color}}" class="label label-primary">{{issue.priority.name}}</span>
+        </div>
+        <div class="col-md-12">
+          <hr>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
           <button class="btn btn-transparent" class="btn btn-lg btn-primary" data-placement="bottom-right"
                   data-animation="am-fade-and-scale" data-template="views/issues/popover/labels.html"
                   title="{{popover.title}}" data-content="{{popover.content}}" data-trigger="click" bs-popover>Labels <i
@@ -122,6 +136,7 @@
           <hr>
         </div>
       </div>
+
       <div class="row">
         <div class="col-md-12">
           <button class="btn btn-transparent " data-placement="bottom-right" data-animation="am-fade-and-scale"

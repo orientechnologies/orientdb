@@ -167,6 +167,36 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   }
 
   @Override
+  public List<Priority> findPriorities(String name) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format("select expand(out('HasPriority')) from Organization where name = '%s'", name);
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+
+    List<Priority> priorities = new ArrayList<Priority>();
+    for (OrientVertex vertice : vertices) {
+      ODocument doc = vertice.getRecord();
+      priorities.add(OPriority.NAME.fromDoc(doc, db));
+    }
+    return priorities;
+  }
+
+  @Override
+  public Priority findPriorityByNumber(String name, Integer number) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format("select expand(out('HasPriority')[number = %d]) from Organization where name = '%s'", number,
+        name);
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+
+    try {
+      ODocument doc = vertices.iterator().next().getRecord();
+      return OPriority.NAME.fromDoc(doc, db);
+    } catch (NoSuchElementException e) {
+      return null;
+    }
+
+  }
+
+  @Override
   public Client findClient(String name, Integer clientId) {
     OrientGraph db = dbFactory.getGraph();
     String query = String.format("select expand(out('HasClient')[clientId = %d]) from Organization where name = '%s'", clientId,

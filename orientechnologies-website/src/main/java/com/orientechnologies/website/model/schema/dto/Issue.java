@@ -23,6 +23,7 @@ public class Issue {
   private Repository        repository;
   private Milestone         milestone;
   private Milestone         version;
+  private Priority          priority;
   private Date              createdAt;
   private Date              closedAt;
   private Long              comments;
@@ -48,6 +49,14 @@ public class Issue {
 
   public void setMilestone(Milestone milestone) {
     this.milestone = milestone;
+  }
+
+  public Priority getPriority() {
+    return priority;
+  }
+
+  public void setPriority(Priority priority) {
+    this.priority = priority;
   }
 
   public void setNumber(Integer number) {

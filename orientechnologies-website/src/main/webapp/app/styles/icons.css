@@ -18,6 +18,13 @@
 .fa-demilestoned:before {
   content: "\f091";
 }
+.fa-prioritized:before {
+  content: "\f06e";
+}
+.fa-unprioritized:before {
+  content: "\f06e";
+}
+
 .fa-renamed:before {
   content: "\f044";
 }

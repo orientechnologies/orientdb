@@ -66,6 +66,7 @@ public class RepositoryServiceGithub implements RepositoryService {
       repositoryService.createIssue(repository, i);
       repositoryService.handleMilestone(repository, i, issue.getMilestone());
       repositoryService.handleVersion(repository, i, issue.getVersion());
+      repositoryService.handlePriority(repository, i, issue.getPriority());
       return i;
     } catch (IOException e) {
       e.printStackTrace();

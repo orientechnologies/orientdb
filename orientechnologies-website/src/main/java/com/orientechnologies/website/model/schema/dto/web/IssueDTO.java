@@ -17,7 +17,7 @@ public class IssueDTO {
   private List<String> labels = new ArrayList<String>();
   private Integer      milestone;
   private Integer      version;
-
+  private Integer      priority;
   private String       assignee;
   private Boolean      confidential;
 
@@ -91,4 +91,11 @@ public class IssueDTO {
     this.confidential = confidential;
   }
 
+  public Integer getPriority() {
+    return priority;
+  }
+
+  public void setPriority(Integer priority) {
+    this.priority = priority;
+  }
 }
