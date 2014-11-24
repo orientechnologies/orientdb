@@ -108,10 +108,6 @@ public enum OGlobalConfiguration {
   STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method is used in storage."
       + " Possible values : gzip, nothing, snappy, snappy-native. Default is snappy.", String.class, "nothing"),
 
-  @Deprecated
-  // DEPRECATED IN 2.0
-  STORAGE_KEEP_OPEN("storage.keepOpen", "Deprecated", Boolean.class, Boolean.TRUE),
-
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
   WAL_SYNC_ON_PAGE_FLUSH("storage.wal.syncOnPageFlush", "Should we perform force sync during WAL page flush", Boolean.class, true),
@@ -192,19 +188,12 @@ public enum OGlobalConfiguration {
 
   DB_POOL_IDLE_CHECK_DELAY("db.pool.idleCheckDelay", "Delay time on checking for idle databases", Integer.class, 0),
 
-  @Deprecated
-  DB_MVCC("db.mvcc", "Enables or disables MVCC (Multi-Version Concurrency Control) even outside transactions", Boolean.class, true),
-
   DB_MVCC_THROWFAST(
       "db.mvcc.throwfast",
       "Use fast-thrown exceptions for MVCC OConcurrentModificationExceptions. No context information will be available, use where these exceptions are handled and the detail is not neccessary",
       Boolean.class, false),
 
   DB_VALIDATION("db.validation", "Enables or disables validation of records", Boolean.class, true),
-
-  @Deprecated
-  DB_USE_DISTRIBUTED_VERSION("db.use.distributedVersion", "Use extended version that is safe in distributed environment",
-      Boolean.class, Boolean.FALSE),
 
   // SETTINGS OF NON-TRANSACTIONAL MODE
   NON_TX_RECORD_UPDATE_SYNCH("nonTX.recordUpdate.synch",
@@ -272,53 +261,6 @@ public enum OGlobalConfiguration {
 
   INDEX_CURSOR_PREFETCH_SIZE("index.cursor.prefetchSize", "Default prefetch size of index cursor", Integer.class, 500000),
 
-  // TREEMAP
-  @Deprecated
-  MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 5000),
-
-  @Deprecated
-  MVRBTREE_NODE_PAGE_SIZE("mvrbtree.nodePageSize",
-      "Page size of each node. 256 means that 256 entries can be stored inside each node", Integer.class, 256),
-
-  @Deprecated
-  MVRBTREE_LOAD_FACTOR("mvrbtree.loadFactor", "HashMap load factor", Float.class, 0.7f),
-
-  @Deprecated
-  MVRBTREE_OPTIMIZE_THRESHOLD(
-      "mvrbtree.optimizeThreshold",
-      "Auto optimize the TreeMap every X tree rotations. This forces the optimization of the tree after many changes to recompute entry points. -1 means never",
-      Integer.class, 100000),
-
-  @Deprecated
-  MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Number of entry points to start searching entries", Integer.class, 64),
-
-  @Deprecated
-  MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR("mvrbtree.optimizeEntryPointsFactor",
-      "Multiplicand factor to apply to entry-points list (parameter mvrbtree.entrypoints) to determine optimization is needed",
-      Float.class, 1.0f),
-
-  @Deprecated
-  MVRBTREE_ENTRY_KEYS_IN_MEMORY("mvrbtree.entryKeysInMemory", "Keep unserialized keys in memory", Boolean.class, Boolean.FALSE),
-
-  @Deprecated
-  MVRBTREE_ENTRY_VALUES_IN_MEMORY("mvrbtree.entryValuesInMemory", "Keep unserialized values in memory", Boolean.class,
-      Boolean.FALSE),
-
-  // TREEMAP OF RIDS
-  @Deprecated
-  MVRBTREE_RID_BINARY_THRESHOLD(
-      "mvrbtree.ridBinaryThreshold",
-      "Valid for set of rids. It's the threshold as number of entries to use the binary streaming instead of classic string streaming. -1 means never use binary streaming",
-      Integer.class, -1),
-
-  @Deprecated
-  MVRBTREE_RID_NODE_PAGE_SIZE("mvrbtree.ridNodePageSize",
-      "Page size of each treeset node. 16 means that 16 entries can be stored inside each node", Integer.class, 64),
-
-  @Deprecated
-  MVRBTREE_RID_NODE_SAVE_MEMORY("mvrbtree.ridNodeSaveMemory",
-      "Save memory usage by avoid keeping RIDs in memory but creating them at every access", Boolean.class, Boolean.FALSE),
-
   // SBTREE
   SBTREE_MAX_KEY_SIZE("sbtree.maxKeySize", "Maximum size of key which can be put in SBTree in bytes (10240 by default)",
       Integer.class, 10240),
@@ -354,9 +296,6 @@ public enum OGlobalConfiguration {
       Integer.class, -1),
 
   // COLLECTIONS
-  @Deprecated
-  LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid unmarshalling set", Boolean.class, true),
-
   PREFER_SBTREE_SET("collections.preferSBTreeSet", "This config is experimental.", Boolean.class, false),
 
   // FILE
@@ -516,7 +455,71 @@ public enum OGlobalConfiguration {
       "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l),
 
   DB_DOCUMENT_SERIALIZER("db.document.serializer", "The default record serializer used by the document database", String.class,
-      ORecordSerializerBinary.NAME);
+      ORecordSerializerBinary.NAME),
+
+  @Deprecated
+  LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Deprecated, now BINARY serialization is used in place of CSV", Boolean.class,
+      true),
+
+  @Deprecated
+  DB_MVCC("db.mvcc", "Deprecated, MVCC cannot be disabled anymore", Boolean.class, true),
+
+  @Deprecated
+  DB_USE_DISTRIBUTED_VERSION("db.use.distributedVersion", "Deprecated, distributed version is not used anymore", Boolean.class,
+      Boolean.FALSE),
+
+  @Deprecated
+  MVRBTREE_TIMEOUT("mvrbtree.timeout", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class,
+      5000),
+
+  @Deprecated
+  MVRBTREE_NODE_PAGE_SIZE("mvrbtree.nodePageSize", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX",
+      Integer.class, 256),
+
+  @Deprecated
+  MVRBTREE_LOAD_FACTOR("mvrbtree.loadFactor", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX",
+      Float.class, 0.7f),
+
+  @Deprecated
+  MVRBTREE_OPTIMIZE_THRESHOLD("mvrbtree.optimizeThreshold",
+      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, 100000),
+
+  @Deprecated
+  MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX",
+      Integer.class, 64),
+
+  @Deprecated
+  MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR("mvrbtree.optimizeEntryPointsFactor",
+      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Float.class, 1.0f),
+
+  @Deprecated
+  MVRBTREE_ENTRY_KEYS_IN_MEMORY("mvrbtree.entryKeysInMemory",
+      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Boolean.class, Boolean.FALSE),
+
+  @Deprecated
+  MVRBTREE_ENTRY_VALUES_IN_MEMORY("mvrbtree.entryValuesInMemory",
+      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Boolean.class, Boolean.FALSE),
+
+  // TREEMAP OF RIDS
+  @Deprecated
+  MVRBTREE_RID_BINARY_THRESHOLD("mvrbtree.ridBinaryThreshold",
+      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, -1),
+
+  @Deprecated
+  MVRBTREE_RID_NODE_PAGE_SIZE("mvrbtree.ridNodePageSize",
+      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, 64),
+
+  @Deprecated
+  MVRBTREE_RID_NODE_SAVE_MEMORY("mvrbtree.ridNodeSaveMemory",
+      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Boolean.class, Boolean.FALSE),
+
+  @Deprecated
+  // DEPRECATED IN 2.0
+  STORAGE_KEEP_OPEN("storage.keepOpen", "Deprecated", Boolean.class, Boolean.TRUE),
+
+  // DEPRECATED IN 2.0, LEVEL1 CACHE CANNOT BE DISABLED ANYMORE
+  @Deprecated
+  CACHE_LOCAL_ENABLED("cache.local.enabled", "Deprecated, Level1 cache cannot be disabled anymore", Boolean.class, true);
 
   private final String                 key;
   private final Object                 defValue;
