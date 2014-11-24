@@ -24,6 +24,7 @@ import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
@@ -72,6 +73,7 @@ public class ODatabaseScriptManager {
   }
 
   public void releaseEngine(final ScriptEngine iEngine) {
+    iEngine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
     pooledEngines.returnResource(iEngine);
   }
 
