@@ -42,4 +42,10 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
   public List<Milestone> findRepoMilestones(String owner, String repo);
 
   public List<Label> findRepoLabels(String owner, String repo);
+
+  List<OUser> findMembers(String name);
+
+  List<Milestone> findMilestones(String name);
+
+  List<Label> findLabels(String name);
 }

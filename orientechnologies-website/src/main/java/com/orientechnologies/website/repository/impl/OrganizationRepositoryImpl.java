@@ -117,6 +117,14 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
       val = value;
       query = query + " out('IsAssigned').name CONTAINS '%s'";
     }
+    if ("area".equals(name)) {
+      val = value;
+      query = query + " out('HasScope').name CONTAINS '%s'";
+    }
+    if ("priority".equals(name)) {
+      val = value;
+      query = query + " out('HasPriority').name CONTAINS '%s'";
+    }
     if ("title".equals(name)) {
       val = value.toLowerCase().trim();
       query = query + "title.toLowerCase() containsText '%s'";
@@ -379,6 +387,48 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
         "select expand(out('HasRepo')[name = '%s'].out('HasLabel'))   from Organization  where name = '%s')", repo, owner);
 
     Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+    List<Label> labels = new ArrayList<Label>();
+    for (OrientVertex vertice : vertices) {
+      ODocument doc = vertice.getRecord();
+      labels.add(OLabel.NAME.fromDoc(doc, db));
+    }
+    return labels;
+  }
+
+  @Override
+  public List<OUser> findMembers(String name) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format("select expand(out('HasRepo').out('HasMember')) from Organization where name = '%s'", name);
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+
+    List<OUser> users = new ArrayList<OUser>();
+    for (OrientVertex vertice : vertices) {
+      ODocument doc = vertice.getRecord();
+      users.add(com.orientechnologies.website.model.schema.OUser.NAME.fromDoc(doc, db));
+    }
+    return users;
+  }
+
+  @Override
+  public List<Milestone> findMilestones(String name) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format("select expand(out('HasRepo').out('HasMilestone')) from Organization where name = '%s'", name);
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+
+    List<Milestone> milestones = new ArrayList<Milestone>();
+    for (OrientVertex vertice : vertices) {
+      ODocument doc = vertice.getRecord();
+      milestones.add(OMilestone.TITLE.fromDoc(doc, db));
+    }
+    return milestones;
+  }
+
+  @Override
+  public List<Label> findLabels(String name) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format("select expand(out('HasRepo').out('HasLabel')) from Organization where name = '%s'", name);
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+
     List<Label> labels = new ArrayList<Label>();
     for (OrientVertex vertice : vertices) {
       ODocument doc = vertice.getRecord();

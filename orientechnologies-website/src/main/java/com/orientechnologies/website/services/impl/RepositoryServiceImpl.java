@@ -108,6 +108,11 @@ public class RepositoryServiceImpl implements RepositoryService {
         handlePriority(r, original, issue.getPriority());
       }
     }
+    if (issue.getScope() != null) {
+      if (original.getScope() == null || original.getScope().getNumber() != issue.getScope()) {
+        handleScope(r, original, issue.getScope());
+      }
+    }
     if (skipGithub) {
       if (issue.getState() != null) {
         if (!original.getState().equals(issue.getState())) {

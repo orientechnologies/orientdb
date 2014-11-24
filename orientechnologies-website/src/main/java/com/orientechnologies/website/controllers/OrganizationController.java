@@ -61,6 +61,24 @@ public class OrganizationController {
     organizationService.addMember(name, username);
   }
 
+  @RequestMapping(value = "{name}/members", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public List<OUser> findMembers(@PathVariable("name") String name) {
+    return orgRepository.findMembers(name);
+  }
+
+  @RequestMapping(value = "{name}/milestones", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public List<Milestone> findMilestones(@PathVariable("name") String name) {
+    return orgRepository.findMilestones(name);
+  }
+
+  @RequestMapping(value = "{name}/labels", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public List<Label> findLabels(@PathVariable("name") String name) {
+    return orgRepository.findLabels(name);
+  }
+
   @RequestMapping(value = "{name}/clients", method = RequestMethod.POST)
   @ResponseStatus(HttpStatus.OK)
   public Client addClientToOrg(@PathVariable("name") String name, @RequestBody Client client) {

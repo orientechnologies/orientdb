@@ -17,7 +17,9 @@
 .priority-popover {
   width: 300px;
 }
-
+.scope-popover {
+  width: 300px;
+}
 .version-popover .form-group {
   margin-top: 15px;
   padding-left: 15px;
@@ -43,6 +45,11 @@
 }
 
 .priority-popover .form-group {
+   margin-top: 15px;
+   padding-left: 15px;
+   padding-right: 15px;
+ }
+.scope-popover .form-group {
   margin-top: 15px;
   padding-left: 15px;
   padding-right: 15px;
@@ -69,6 +76,10 @@
 }
 
 .priority-popover-divider {
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
+.scope-popover-divider {
   margin-top: 0px;
   margin-bottom: 0px;
 }

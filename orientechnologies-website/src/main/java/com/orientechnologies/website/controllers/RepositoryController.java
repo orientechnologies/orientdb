@@ -143,4 +143,10 @@ public class RepositoryController {
       @PathVariable("repo") String repo) {
     return new ResponseEntity<List<Milestone>>(organizationRepository.findRepoMilestones(owner, repo), HttpStatus.OK);
   }
+
+  @RequestMapping(value = "{owner}/{repo}/scopes", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public List<Scope> findScopes(@PathVariable("repo") String repo) {
+    return repoRepository.findScopes(repo);
+  }
 }

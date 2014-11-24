@@ -130,6 +130,20 @@ public class RepositoryRepositoryImpl extends OrientBaseRepository<Repository> i
   }
 
   @Override
+  public List<Scope> findScopes(String name) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format("select expand(out('HasScope')) from Repository  where name = '%s'", name);
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+
+    List<Scope> priorities = new ArrayList<Scope>();
+    for (OrientVertex vertice : vertices) {
+      ODocument doc = vertice.getRecord();
+      priorities.add(OScope.NAME.fromDoc(doc, db));
+    }
+    return priorities;
+  }
+
+  @Override
   public Scope findScope(String name, Integer scope) {
     OrientGraph db = dbFactory.getGraph();
     String query = String.format("select expand(out('HasScope')[number = %d]) from Repository  where name = '%s')", scope, name);

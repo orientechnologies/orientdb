@@ -142,6 +142,10 @@ public enum OIssue implements OTypeHolder<Issue> {
       issue.setPriority(OPriority.NAME.fromDoc(((OrientVertex) vertex).getRecord(), graph));
       break;
     }
+    for (Vertex vertex : iss.getVertices(Direction.OUT, HasScope.class.getSimpleName())) {
+      issue.setScope(OScope.NAME.fromDoc(((OrientVertex) vertex).getRecord(), graph));
+      break;
+    }
     List<Label> labelList = new ArrayList<Label>();
     for (Vertex vertex : iss.getVertices(Direction.OUT, HasLabel.class.getSimpleName())) {
       Label l = OLabel.NAME.fromDoc(((OrientVertex) vertex).getRecord(), graph);

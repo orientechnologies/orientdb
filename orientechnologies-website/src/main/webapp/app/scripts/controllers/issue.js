@@ -3,16 +3,112 @@ angular.module('webappApp')
   .controller('IssueCtrl', function ($scope, Organization, $routeParams) {
 
     $scope.query = 'is:open'
+    // Query By Example
+    $scope.issue = {};
     if ($routeParams.q) {
       $scope.query = $routeParams.q;
     }
 
+    $scope.labelPopover = {
+      close: true
+    }
     $scope.issues = Organization.all('issues').getList({q: $scope.query}).$object;
 
     $scope.search = function () {
       $scope.issues = Organization.all('issues').getList({q: $scope.query}).$object;
     }
 
+    Organization.all("scopes").getList().then(function (data) {
+      $scope.scopes = data.plain();
+    })
+    Organization.all("members").getList().then(function (data) {
+      $scope.assignees = data.plain();
+    })
+    Organization.all("priorities").getList().then(function (data) {
+      $scope.priorities = data.plain();
+    })
+    Organization.all("milestones").getList().then(function (data) {
+      $scope.milestones = data.plain();
+      $scope.versions = data.plain();
+    })
+    Organization.all("labels").getList().then(function (data) {
+      $scope.labels = data.plain();
+    })
+
+    var addCondition = function (input, name, val) {
+      return input += " " + name + ":\"" + val + "\"";
+    }
+    var removeCondition = function (input, name, val) {
+      return input.replace(" " + name + ":\"" + val + "\"", "");
+    }
+    $scope.$on("scope:changed", function (e, scope) {
+      if (scope) {
+        if ($scope.issue.scope) {
+          $scope.query = removeCondition($scope.query, "area", $scope.issue.scope.name);
+        }
+        $scope.query = addCondition($scope.query, "area", scope.name)
+        $scope.issue.scope = scope;
+        $scope.search();
+      }
+    });
+    $scope.$on("priority:changed", function (e, priority) {
+      if (priority) {
+        if ($scope.issue.priority) {
+          $scope.query = removeCondition($scope.query, "priority", $scope.issue.priority.name);
+        }
+        $scope.query = addCondition($scope.query, "priority", priority.name);
+        $scope.issue.priority = priority;
+        $scope.search();
+      }
+    });
+    $scope.$on("assignee:changed", function (e, assignee) {
+      if (assignee) {
+        if ($scope.issue.assignee) {
+          $scope.query = removeCondition($scope.query, "assignee", $scope.issue.assignee.name);
+        }
+        $scope.query = addCondition($scope.query, "assignee", assignee.name);
+        $scope.issue.assignee = assignee;
+        $scope.search();
+      }
+    });
+    $scope.$on("milestone:changed", function (e, milestone) {
+      if (milestone) {
+        if ($scope.issue.milestone) {
+          $scope.query = removeCondition($scope.query, "milestone", $scope.issue.milestone.title);
+        }
+        $scope.query = addCondition($scope.query, "milestone", milestone.title);
+        $scope.issue.milestone = milestone;
+        $scope.search();
+      }
+    });
+    $scope.$on("version:changed", function (e, version) {
+      if (version) {
+        if ($scope.issue.version) {
+          $scope.query = removeCondition($scope.query, "version", $scope.issue.version.title);
+        }
+        $scope.query = addCondition($scope.query, "version", version.title);
+        $scope.issue.version = version;
+        $scope.search();
+      }
+    });
+    $scope.$on("label:added", function (e, label) {
+      if (label) {
+        $scope.query = addCondition($scope.query, "label", label.name);
+        if (!$scope.issue.labels) {
+          $scope.issue.labels = [];
+        }
+        $scope.issue.labels.push(label)
+        $scope.search();
+      }
+    });
+    $scope.$on("label:removed", function (e, label) {
+      if (label) {
+        $scope.query = removeCondition($scope.query, "label", label.name);
+        var idx = $scope.issue.labels.indexOf(label);
+        $scope.issue.labels.splice(idx, 1);
+        $scope.search();
+      }
+    });
   });
 
 angular.module('webappApp')
@@ -74,6 +170,9 @@ angular.module('webappApp')
     Repo.one(repo).all("milestones").getList().then(function (data) {
       $scope.versions = data.plain();
       $scope.milestones = data.plain();
+    });
+    Repo.one(repo).all("scopes").getList().then(function (data) {
+      $scope.scopes = data.plain();
     });
     Repo.one(repo).all("teams").getList().then(function (data) {
       $scope.assignees = data.plain();
@@ -159,10 +258,16 @@ angular.module('webappApp')
         refreshEvents();
       })
     });
+    $scope.$on("scope:changed", function (e, scope) {
+      Repo.one(repo).all("issues").one(number).patch({scope: scope.number}).then(function (data) {
+        $scope.issue.scope = scope;
+        refreshEvents();
+      })
+    });
   });
 
 angular.module('webappApp')
-  .controller('ChangeLabelCtrl', function ($scope, $routeParams, Repo, $popover) {
+  .controller('ChangeLabelCtrl', function ($scope) {
 
     $scope.isLabeled = function (label) {
 
@@ -178,6 +283,9 @@ angular.module('webappApp')
         $scope.$emit("label:added", label);
       } else {
         $scope.$emit("label:removed", label);
+      }
+      if ($scope.labelPopover && $scope.labelPopover) {
+        $scope.$hide();
       }
     }
 
@@ -212,7 +320,8 @@ angular.module('webappApp')
 angular.module('webappApp')
   .controller('ChangeAssigneeCtrl', function ($scope) {
     $scope.isAssigneeSelected = function (assignee) {
-      return $scope.issue.assignee ? assignee.name == $scope.issue.assignee.name : false;
+
+      return ($scope.issue.assignee && assignee) ? assignee.name == $scope.issue.assignee.name : false;
     }
     $scope.toggleAssignee = function (assignee) {
       if (!$scope.isAssigneeSelected(assignee)) {
@@ -237,4 +346,20 @@ angular.module('webappApp')
     }
 
   });
+
+angular.module('webappApp')
+  .controller('ChangeScopeCtrl', function ($scope) {
+
+    $scope.isScoped = function (scope) {
+      return $scope.issue.scope ? scope.name == $scope.issue.scope.name : false;
+    }
+    $scope.toggleScope = function (scope) {
+      if (!$scope.isScoped(scope)) {
+        $scope.$emit("scope:changed", scope);
+      }
+      $scope.$hide();
+    }
+
+  });
+
 

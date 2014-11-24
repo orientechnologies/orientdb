@@ -205,3 +205,50 @@
 }
 
 /*----*/
+
+/*----*/
+
+/*Priority popover change*/
+.scopes-group {
+  padding: 0px;
+  margin-bottom: 0px;
+}
+
+.scopes-group .scope-item:last-child {
+  border-bottom: none;
+}
+
+.scope-popover .popover-content {
+  padding: 0px;
+}
+
+.scope-popover .popover-content .label {
+  width: 100%;
+  display: inline-block;
+}
+
+.scope-popover .popover-content ul {
+  list-style-type: none;
+}
+
+.scopes-group .scope-item {
+  width: 100%;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+
+.scope-unselected:hover {
+  background-color: #f4f4f4 !important;
+}
+
+.scope-unselected {
+  background-color: white !important;
+}
+.scopes-group li.scope-selected {
+  background-color: rgb(119, 119, 119);
+  background-color: rgba(119, 119, 119, 0.4);
+}
+
+/*----*/

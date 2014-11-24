@@ -13,7 +13,52 @@
   </div>
   <div class="row">
     <div class="panel panel-default issues-panel">
-      <div class="panel-heading">Panel heading</div>
+      <div class="panel-heading">
+        <div class="row">
+          <div class="col-md-6">
+          </div>
+          <div class="col-md-6">
+            <div class="btn-group">
+              <button class="btn btn-transparent dropdown-toggle" data-placement="bottom-right" data-animation="none"
+                      data-template="views/issues/popover/scopes.html" title="{{popover.title}}"
+                      data-content="{{popover.content}}" data-trigger="click" bs-popover>Area <i
+                class="fa fa-caret-square-o-down"></i></button>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-transparent " data-placement="bottom-right" data-animation="none"
+                      data-template="views/issues/popover/priorities.html" title="{{popover.title}}"
+                      data-content="{{popover.content}}" data-trigger="click" bs-popover>Priority <i
+                class="fa fa-caret-square-o-down"></i></button>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-transparent" class="btn btn-lg btn-primary" data-placement="bottom-right"
+                      data-animation="none" data-template="views/issues/popover/labels.html"
+                      title="{{popover.title}}" data-content="{{popover.content}}" data-trigger="click" bs-popover="labelPopover">
+                Labels <i
+                class="fa fa-caret-square-o-down"></i></button>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-transparent " data-placement="bottom-right" data-animation="none"
+                      data-template="views/issues/popover/versions.html" title="{{popover.title}}"
+                      data-content="{{popover.content}}" data-trigger="click" bs-popover>Version <i
+                class="fa fa-caret-square-o-down"></i></button>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-transparent " data-placement="bottom-right" data-animation="none"
+                      data-template="views/issues/popover/milestones.html" title="{{popover.title}}"
+                      data-content="{{popover.content}}" data-trigger="click" bs-popover>Milestone <i
+                class="fa fa-caret-square-o-down"></i></button>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-transparent" data-placement="bottom-right" data-animation="none"
+                      data-template="views/issues/popover/assignee.html" title="{{popover.title}}"
+                      data-content="{{popover.content}}" data-trigger="click" bs-popover>Assignee <i
+                class="fa fa-caret-square-o-down"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="list-group">
         <div class="list-group-item" ng-repeat="issue in issues">
           <!--<a href="#issues/{{issue.repository.name}}@{{issue.number}}" class="list-group-item" ng-repeat="issue in issues"> -->
@@ -27,10 +72,12 @@
                 <i class="fa fa-check-circle-o" ng-class="'issue-' + issue.state.toLowerCase()"></i>
               </div>
             </div>
-            <div class="col-md-9">
+            <div class="col-md-6">
               <h5 class="list-group-item-heading"><a href="#issues/{{issue.repository.name}}@{{issue.uuid}}">
                 {{issue.title}}</a>
-                <span class="label" ng-repeat="label in issue.labels" style="background-color: #{{label.color}}">{{label.name}}</span>
+                <!--<span class="label" ng-repeat="label in issue.labels" style="background-color: #{{label.color}}">{{label.name}}</span>-->
+                <span class="label" style="background-color: #{{issue.priority.color}}">{{issue.priority.name}}</span>
+                <span class="label label-default">{{issue.scope.name}}</span>
               </h5>
 
               <p class="issue-info">#{{issue.number}} opened {{issue.createdAt | fromNow}} by {{issue.user.name}}
@@ -38,11 +85,16 @@
                 <i ng-show="issue.version" class="fa fa-versioned"> {{ issue.version.title }}</i>
               </p>
             </div>
+            <div class="col-md-3 label-column">
+              <span class="label" ng-repeat="label in issue.labels" style="background-color: #{{label.color}}">{{label.name}}</span>
+            </div>
             <div class="col-md-2">
-              <div class="col-md-6">
-                {{issue.assignee.name}}
+              <div class="col-md-10">
+                <div ng-if="issue.assignee">
+                  <avatar dim="20" name="true" user="issue.assignee"></avatar>
+                </div>
               </div>
-              <div class="col-md-6">
+              <div class="col-md-2">
                 <span class="badge">{{issue.comments}}</span>
               </div>
             </div>

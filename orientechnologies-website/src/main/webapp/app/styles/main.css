@@ -174,7 +174,10 @@ body {
   margin-left: 2px;
   margin-right: 2px;
 }
-
+.issues-panel .label-column span.label {
+  margin-left: 2px;
+  margin-right: 2px;
+}
 .issues-panel .list-group-item-heading a:hover {
   color: #428bca;
   text-decoration: none;
