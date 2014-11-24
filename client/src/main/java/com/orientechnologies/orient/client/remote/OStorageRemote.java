@@ -23,7 +23,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -64,7 +68,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorageAbstract;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
@@ -1421,6 +1432,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return engine;
   }
 
+  @Override
+  public String getUserName() {
+    return connectionUserName;
+  }
+
   /**
    * Handles exceptions. In case of IO errors retries to reconnect until the configured retry times has reached.
    * 
@@ -1453,7 +1469,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     if (iNetwork != null) {
       OLogManager.instance().warn(this, "Caught I/O errors from %s (local socket=%s), trying to reconnect (error: %s)", iNetwork,
-          iNetwork.getLocalSocketAddress(), exception);
+          iNetwork.getLocalSocketAddress(), exception.toString());
 
       try {
         engine.getConnectionManager().remove(iNetwork);
@@ -1461,7 +1477,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         // IGNORE ANY EXCEPTION
       }
     } else
-      OLogManager.instance().warn(this, "Caught I/O errors, trying to reconnect (error: %s)", exception);
+      OLogManager.instance().warn(this, "Caught I/O errors, trying to reconnect (error: %s)", exception.toString());
 
     final long lostConnectionTime = System.currentTimeMillis();
 
@@ -2011,10 +2027,5 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       }
     }
     return false;
-  }
-
-  @Override
-  public String getUserName() {
-    return connectionUserName;
   }
 }
