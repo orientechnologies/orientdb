@@ -4,7 +4,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.io.Serializable;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -51,7 +50,7 @@ public interface OSecurityRole extends Serializable {
 
   public OSecurityRole setParentRole(final OSecurityRole iParent);
 
-  public Set<ORule> getRules();
+  public Set<ORule> getRuleSet();
 
   public OIdentifiable getIdentity();
 

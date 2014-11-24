@@ -19,8 +19,11 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.annotation.OBeforeDeserialization;
@@ -168,25 +171,6 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
       addRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_ALL).save();
   }
 
-  private void loadOldVersionOfRules(final Map<String, Number> storedRules) {
-    if (storedRules != null)
-      for (Entry<String, Number> a : storedRules.entrySet()) {
-        ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(a.getKey());
-        ORule rule = rules.get(resourceGeneric);
-        if (rule == null) {
-          rule = new ORule(resourceGeneric, null, null);
-          rules.put(resourceGeneric, rule);
-        }
-
-        String specificResource = ORule.mapLegacyResourceToSpecificResource(a.getKey());
-        if (specificResource == null || specificResource.equals("*")) {
-          rule.grantAccess(null, a.getValue().intValue());
-        } else {
-          rule.grantAccess(specificResource, a.getValue().intValue());
-        }
-      }
-  }
-
   public boolean allow(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iCRUDOperation) {
     final ORule rule = rules.get(resourceGeneric);
     if (rule != null) {
@@ -291,22 +275,6 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
     return revoke(resourceGeneric, specificResource, iOperation);
   }
 
-  private ODocument updateRolesDocumentContent() {
-    final Set<ODocument> storedRules = new HashSet<ODocument>();
-
-    for (ORule rule : rules.values()) {
-      final ODocument doc = new ODocument();
-
-      doc.field("resourceGeneric", rule.getResourceGeneric().name());
-      doc.field("specificResources", rule.getSpecificResources());
-      doc.field("access", rule.getAccess());
-
-      storedRules.add(doc);
-    }
-
-    return document.field("rules", storedRules);
-  }
-
   /**
    * Grant a permission to the resource.
    * 
@@ -379,12 +347,12 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
     return this;
   }
 
-  public Set<ORule> getRules() {
+  public Set<ORule> getRuleSet() {
     return new HashSet<ORule>(rules.values());
   }
 
   @Deprecated
-  public Map<String, Byte> getStringRules() {
+  public Map<String, Byte> getRules() {
     final Map<String, Byte> result = new HashMap<String, Byte>();
 
     for (ORule rule : rules.values()) {
@@ -408,5 +376,40 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
   @Override
   public OIdentifiable getIdentity() {
     return document;
+  }
+
+  private void loadOldVersionOfRules(final Map<String, Number> storedRules) {
+    if (storedRules != null)
+      for (Entry<String, Number> a : storedRules.entrySet()) {
+        ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(a.getKey());
+        ORule rule = rules.get(resourceGeneric);
+        if (rule == null) {
+          rule = new ORule(resourceGeneric, null, null);
+          rules.put(resourceGeneric, rule);
+        }
+
+        String specificResource = ORule.mapLegacyResourceToSpecificResource(a.getKey());
+        if (specificResource == null || specificResource.equals("*")) {
+          rule.grantAccess(null, a.getValue().intValue());
+        } else {
+          rule.grantAccess(specificResource, a.getValue().intValue());
+        }
+      }
+  }
+
+  private ODocument updateRolesDocumentContent() {
+    final Set<ODocument> storedRules = new HashSet<ODocument>();
+
+    for (ORule rule : rules.values()) {
+      final ODocument doc = new ODocument();
+
+      doc.field("resourceGeneric", rule.getResourceGeneric().name());
+      doc.field("specificResources", rule.getSpecificResources());
+      doc.field("access", rule.getAccess());
+
+      storedRules.add(doc);
+    }
+
+    return document.field("rules", storedRules);
   }
 }

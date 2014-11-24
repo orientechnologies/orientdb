@@ -22,7 +22,6 @@ package com.orientechnologies.orient.server.network.protocol.http.command.post;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
@@ -49,7 +48,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Map.Entry;
 import java.util.Set;
 
 public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServerAbstract {
@@ -169,7 +167,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
       json.writeAttribute(3, false, "mode", role.getMode().toString());
 
       json.beginCollection(3, true, "rules");
-      for (ORule rule : role.getRules()) {
+      for (ORule rule : role.getRuleSet()) {
         if (rule.getAccess() != null) {
           json.beginObject(4);
           json.writeAttribute(4, true, "name", rule.getResourceGeneric());
