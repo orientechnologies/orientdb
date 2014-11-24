@@ -419,10 +419,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    * @return Current object to allow chained calls.
    * @see #attach(OrientBaseGraph), #isDetached
    */
-	@Deprecated
   public OrientElement detach() {
-    checkClassicDetachMode();
-
     // EARLY UNMARSHALL FIELDS
     getRecord().setLazyLoad(false);
     getRecord().fieldNames();
@@ -446,28 +443,21 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    * @return Current object to allow chained calls.
    * @see #detach(), #isDetached
    */
-	@Deprecated
   public OrientElement attach(final OrientBaseGraph iNewGraph) {
-    checkClassicDetachMode();
-
     if (iNewGraph == null)
       throw new IllegalArgumentException("Graph is null");
+
     graph = iNewGraph;
+
     // LINK THE GRAPHS SETTINGS
     settings = graph.settings;
     return this;
   }
 
-  private void checkClassicDetachMode() {
-    if (!classicDetachMode)
-      throw new IllegalStateException(
-          "We do not support explicit elements attachment/detachment. In order to make it possible please set custom database parameter classicDetachMode to true value");
-  }
-
   /**
    * (Blueprints Extension) Tells if the current element has been @detach ed.
    *
-   * This methods works only in "classic detach/attach mode" when dettachment/attachment is done manually, by default it is done
+   * This methods works only in "classic detach/attach mode" when detachment/attachment is done manually, by default it is done
    * automatically, and currently active graph connection will be used as graph elements owner.
    * 
    * To set "classic detach/attach mode" please set custom database parameter <code>classicDetachMode</code> to <code>true</code>.
@@ -475,10 +465,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    * @return True if detached, otherwise false
    * @see #attach(OrientBaseGraph), #detach
    */
-	@Deprecated
   public boolean isDetached() {
-    checkClassicDetachMode();
-
     return graph == null;
   }
 
