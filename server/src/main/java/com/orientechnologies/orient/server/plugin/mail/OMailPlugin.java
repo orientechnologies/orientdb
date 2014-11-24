@@ -184,12 +184,12 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
    }
 
    @Override
-   public void bind(Bindings binding) {
+   public void bind(final Bindings binding) {
      binding.put("mail", this);
    }
 
    @Override
-   public void unbind(Bindings binding) {
+   public void unbind(final Bindings binding) {
      binding.remove("mail");
    }
 

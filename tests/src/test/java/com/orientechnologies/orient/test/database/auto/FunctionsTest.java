@@ -15,16 +15,16 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.List;
-
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OResultSet;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
+import java.util.List;
 
 @Test(groups = "function")
 public class FunctionsTest extends DocumentDBBaseTest {
@@ -47,6 +47,36 @@ public class FunctionsTest extends DocumentDBBaseTest {
 
     Assert.assertNotNull(parameters);
     Assert.assertEquals(parameters.size(), 2);
+  }
+
+  @Test
+  public void testFunctionDefinitionAndCall() {
+    database.command(new OCommandSQL("create function testCall \"return 0;\" LANGUAGE Javascript")).execute();
+
+    OResultSet<OIdentifiable> res1 = database.command(new OCommandSQL("select testCall()")).execute();
+    Assert.assertNotNull(res1);
+    Assert.assertNotNull(res1.get(0));
+    Assert.assertEquals(((ODocument) res1.get(0)).field("testCall"), 0);
+  }
+
+  @Test
+  public void testFunctionCacheAndReload() {
+    OIdentifiable f = database.command(new OCommandSQL("create function testCache \"return 1;\" LANGUAGE Javascript")).execute();
+    Assert.assertNotNull(f);
+
+    OResultSet<OIdentifiable> res1 = database.command(new OCommandSQL("select testCache()")).execute();
+    Assert.assertNotNull(res1);
+    Assert.assertNotNull(res1.get(0));
+    Assert.assertEquals(((ODocument) res1.get(0)).field("testCache"), 1);
+
+    ODocument func = f.getRecord();
+    func.field("code", "return 2;");
+    func.save();
+
+    OResultSet<OIdentifiable>  res2 = database.command(new OCommandSQL("select testCache()")).execute();
+    Assert.assertNotNull(res2);
+    Assert.assertNotNull(res2.get(0));
+    Assert.assertEquals(((ODocument) res2.get(0)).field("testCache"), 2);
   }
 
 }
