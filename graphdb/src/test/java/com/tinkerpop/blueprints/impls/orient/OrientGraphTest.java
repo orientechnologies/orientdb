@@ -8,6 +8,7 @@ import com.tinkerpop.blueprints.util.io.graphml.GraphMLReaderTestSuite;
 import com.tinkerpop.blueprints.util.io.graphson.GraphSONReaderTestSuite;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -51,6 +52,7 @@ public abstract class OrientGraphTest extends GraphTest {
   }
 
   @Test
+	@Ignore
   public void testGraphTestSuite() throws Exception {
     this.stopWatch();
     doTestSuite(new GraphTestSuite(this));
