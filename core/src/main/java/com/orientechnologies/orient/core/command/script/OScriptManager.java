@@ -58,15 +58,15 @@ import java.util.concurrent.ConcurrentHashMap;
  * 
  */
 public class OScriptManager {
-  protected static final Object[]               EMPTY_PARAMS       = new Object[] {};
-  protected static final int                    LINES_AROUND_ERROR = 5;
-  protected final String                        DEF_LANGUAGE       = "javascript";
-  protected String                              defaultLanguage    = DEF_LANGUAGE;
-  protected ScriptEngineManager                 scriptEngineManager;
-  protected Map<String, ScriptEngineFactory>    engines            = new HashMap<String, ScriptEngineFactory>();
-  protected Map<String, OScriptFormatter>       formatters         = new HashMap<String, OScriptFormatter>();
-  protected List<OScriptInjection>              injections         = new ArrayList<OScriptInjection>();
-  protected Map<String, ODatabaseScriptManager> dbManagers         = new ConcurrentHashMap<String, ODatabaseScriptManager>();
+  protected static final Object[]                             EMPTY_PARAMS       = new Object[] {};
+  protected static final int                                  LINES_AROUND_ERROR = 5;
+  protected final String                                      DEF_LANGUAGE       = "javascript";
+  protected String                                            defaultLanguage    = DEF_LANGUAGE;
+  protected ScriptEngineManager                               scriptEngineManager;
+  protected Map<String, ScriptEngineFactory>                  engines            = new HashMap<String, ScriptEngineFactory>();
+  protected Map<String, OScriptFormatter>                     formatters         = new HashMap<String, OScriptFormatter>();
+  protected List<OScriptInjection>                            injections         = new ArrayList<OScriptInjection>();
+  protected ConcurrentHashMap<String, ODatabaseScriptManager> dbManagers         = new ConcurrentHashMap<String, ODatabaseScriptManager>();
 
   public OScriptManager() {
     scriptEngineManager = new ScriptEngineManager();
@@ -354,5 +354,5 @@ public class OScriptManager {
     final ODatabaseScriptManager dbPool = dbManagers.remove(iDatabaseName);
     if (dbPool != null)
       dbPool.close();
-    }
+  }
 }
