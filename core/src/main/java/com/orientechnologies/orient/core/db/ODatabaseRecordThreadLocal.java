@@ -19,7 +19,7 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.orient.core.OShutdownListener;
+import com.orientechnologies.orient.core.OrientListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
@@ -28,10 +28,16 @@ public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseDocumentInt
   public static volatile ODatabaseRecordThreadLocal INSTANCE = new ODatabaseRecordThreadLocal();
 
   static {
-    Orient.instance().addShutdownListener(new OShutdownListener() {
+    Orient.instance().addOrientListener(new OrientListener() {
       @Override
       public void onShutdown() {
         INSTANCE = null;
+      }
+
+      @Override
+      public void onStartup() {
+        if (INSTANCE == null)
+          INSTANCE = new ODatabaseRecordThreadLocal();
       }
     });
   }

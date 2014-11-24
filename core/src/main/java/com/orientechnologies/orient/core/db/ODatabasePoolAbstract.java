@@ -29,13 +29,13 @@ import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OOrientListener;
-import com.orientechnologies.orient.core.OShutdownListener;
+import com.orientechnologies.orient.core.OrientListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extends OAdaptiveLock implements
-    OResourcePoolListener<String, DB>, OOrientListener, OShutdownListener {
+    OResourcePoolListener<String, DB>, OOrientListener, OrientListener {
 
   private final HashMap<String, OReentrantResourcePool<String, DB>> pools = new HashMap<String, OReentrantResourcePool<String, DB>>();
   protected Object                                                  owner;
@@ -116,7 +116,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.STORAGE_LOCK_TIMEOUT
         .getValueAsInteger(), true);
 
-    Orient.instance().addShutdownListener(this);
+    Orient.instance().addOrientListener(this);
     maxSize = iMaxSize;
     timeout = iTimeout;
     owner = iOwner;
@@ -351,7 +351,11 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
     close();
   }
 
-  private void notifyEvictor(final String poolName, final DB iDatabase) {
+	@Override
+	public void onStartup() {
+	}
+
+	private void notifyEvictor(final String poolName, final DB iDatabase) {
     if (this.evictor != null) {
       this.evictor.updateIdleTime(poolName, iDatabase);
     }

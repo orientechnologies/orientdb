@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.OShutdownListener;
+import com.orientechnologies.orient.core.OrientListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -37,10 +37,16 @@ public class OSerializationSetThreadLocal extends ThreadLocal<Set<ODocument>> {
   public static volatile OSerializationSetThreadLocal INSTANCE = new OSerializationSetThreadLocal();
 
   static {
-    Orient.instance().addShutdownListener(new OShutdownListener() {
+    Orient.instance().addOrientListener(new OrientListener() {
       @Override
       public void onShutdown() {
         INSTANCE = null;
+      }
+
+      @Override
+      public void onStartup() {
+        if (INSTANCE == null)
+          INSTANCE = new OSerializationSetThreadLocal();
       }
     });
   }

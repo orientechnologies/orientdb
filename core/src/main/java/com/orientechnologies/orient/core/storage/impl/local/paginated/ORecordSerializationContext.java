@@ -20,9 +20,8 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.orient.core.OShutdownListener;
+import com.orientechnologies.orient.core.OrientListener;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.util.ArrayDeque;
@@ -42,10 +41,21 @@ public class ORecordSerializationContext {
                                                                                                       };
 
   static {
-    Orient.instance().addShutdownListener(new OShutdownListener() {
+    Orient.instance().addOrientListener(new OrientListener() {
       @Override
       public void onShutdown() {
         SERIALIZATION_CONTEXT_STACK = null;
+      }
+
+      @Override
+      public void onStartup() {
+        if (SERIALIZATION_CONTEXT_STACK == null)
+          SERIALIZATION_CONTEXT_STACK = new ThreadLocal<Deque<ORecordSerializationContext>>() {
+            @Override
+            protected Deque<ORecordSerializationContext> initialValue() {
+              return new ArrayDeque<ORecordSerializationContext>();
+            }
+          };
       }
     });
   }

@@ -22,7 +22,7 @@ package com.orientechnologies.orient.core.hook;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.OShutdownListener;
+import com.orientechnologies.orient.core.OrientListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
@@ -36,10 +36,16 @@ public class OHookThreadLocal extends ThreadLocal<Set<OIdentifiable>> {
   public static volatile OHookThreadLocal INSTANCE = new OHookThreadLocal();
 
   static {
-    Orient.instance().addShutdownListener(new OShutdownListener() {
+    Orient.instance().addOrientListener(new OrientListener() {
       @Override
       public void onShutdown() {
         INSTANCE = null;
+      }
+
+      @Override
+      public void onStartup() {
+        if (INSTANCE == null)
+          INSTANCE = new OHookThreadLocal();
       }
     });
   }

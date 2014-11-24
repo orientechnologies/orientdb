@@ -25,9 +25,7 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.*;
 
-import com.orientechnologies.orient.core.OShutdownListener;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.OrientListener;
 import org.apache.commons.configuration.Configuration;
 
 import com.orientechnologies.common.exception.OException;
@@ -90,11 +88,24 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
                                                                                   };
 
   static {
-    Orient.instance().addShutdownListener(new OShutdownListener() {
+    Orient.instance().addOrientListener(new OrientListener() {
       @Override
       public void onShutdown() {
         activeGraph = null;
         initializationStack = null;
+      }
+
+      @Override
+      public void onStartup() {
+        if (activeGraph == null)
+          activeGraph = new ThreadLocal<OrientBaseGraph>();
+        if (initializationStack == null)
+          initializationStack = new ThreadLocal<Deque<OrientBaseGraph>>() {
+            @Override
+            protected Deque<OrientBaseGraph> initialValue() {
+              return new LinkedList<OrientBaseGraph>();
+            }
+          };
       }
     });
   }

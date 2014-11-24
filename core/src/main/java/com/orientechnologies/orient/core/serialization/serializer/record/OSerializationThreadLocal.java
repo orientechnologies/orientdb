@@ -19,7 +19,7 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record;
 
-import com.orientechnologies.orient.core.OShutdownListener;
+import com.orientechnologies.orient.core.OrientListener;
 import com.orientechnologies.orient.core.Orient;
 
 import java.util.HashSet;
@@ -29,10 +29,16 @@ public class OSerializationThreadLocal extends ThreadLocal<Set<Integer>> {
   public static volatile OSerializationThreadLocal INSTANCE = new OSerializationThreadLocal();
 
   static {
-    Orient.instance().addShutdownListener(new OShutdownListener() {
+    Orient.instance().addOrientListener(new OrientListener() {
       @Override
       public void onShutdown() {
         INSTANCE = null;
+      }
+
+      @Override
+      public void onStartup() {
+        if (INSTANCE == null)
+          INSTANCE = new OSerializationThreadLocal();
       }
     });
   }

@@ -77,8 +77,8 @@ public class Orient extends OListenerManger<OOrientListener> {
   protected ThreadPoolExecutor                                                         workers;
   protected OSignalHandler                                                             signalHandler;
 
-  private final Set<OShutdownListener>                                                 shutdownListeners      = Collections
-                                                                                                                  .newSetFromMap(new WeakHashMap<OShutdownListener, Boolean>());
+  private final Set<OrientListener>                                                    shutdownListeners      = Collections
+                                                                                                                  .newSetFromMap(new WeakHashMap<OrientListener, Boolean>());
 
   protected Orient() {
     super(true);
@@ -134,7 +134,7 @@ public class Orient extends OListenerManger<OOrientListener> {
     return recordConflictStrategy;
   }
 
-  public void addShutdownListener(OShutdownListener listener) {
+  public void addOrientListener(OrientListener listener) {
     shutdownListeners.add(listener);
   }
 
@@ -183,11 +183,18 @@ public class Orient extends OListenerManger<OOrientListener> {
         OGlobalConfiguration.dumpConfiguration(System.out);
 
       active = true;
-      return this;
-
     } finally {
       engineLock.writeLock().unlock();
     }
+
+    for (OrientListener listener : shutdownListeners)
+      try {
+        listener.onStartup();
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error on startup", e);
+      }
+
+    return this;
   }
 
   public Orient shutdown() {
@@ -239,7 +246,7 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       profiler.shutdown();
 
-      for (OShutdownListener listener : shutdownListeners)
+      for (OrientListener listener : shutdownListeners)
         try {
           listener.onShutdown();
         } catch (Exception e) {

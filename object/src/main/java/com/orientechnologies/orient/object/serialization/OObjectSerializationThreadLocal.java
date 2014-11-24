@@ -19,7 +19,7 @@
  */
 package com.orientechnologies.orient.object.serialization;
 
-import com.orientechnologies.orient.core.OShutdownListener;
+import com.orientechnologies.orient.core.OrientListener;
 import com.orientechnologies.orient.core.Orient;
 
 import java.util.HashMap;
@@ -29,10 +29,16 @@ public class OObjectSerializationThreadLocal extends ThreadLocal<Map<Integer, Ob
   public static volatile OObjectSerializationThreadLocal INSTANCE = new OObjectSerializationThreadLocal();
 
   static {
-    Orient.instance().addShutdownListener(new OShutdownListener() {
+    Orient.instance().addOrientListener(new OrientListener() {
       @Override
       public void onShutdown() {
         INSTANCE = null;
+      }
+
+      @Override
+      public void onStartup() {
+        if (INSTANCE == null)
+          INSTANCE = new OObjectSerializationThreadLocal();
       }
     });
   }
