@@ -20,13 +20,13 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record;
 
+import com.orientechnologies.orient.core.OOrientListenerAbstract;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Set;
-
-import com.orientechnologies.orient.core.OrientListener;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Thread local set of serialized documents. Used to prevent infinite recursion during serialization of records.
@@ -37,7 +37,7 @@ public class OSerializationSetThreadLocal extends ThreadLocal<Set<ODocument>> {
   public static volatile OSerializationSetThreadLocal INSTANCE = new OSerializationSetThreadLocal();
 
   static {
-    Orient.instance().addOrientListener(new OrientListener() {
+    Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onShutdown() {
         INSTANCE = null;
@@ -49,11 +49,6 @@ public class OSerializationSetThreadLocal extends ThreadLocal<Set<ODocument>> {
           INSTANCE = new OSerializationSetThreadLocal();
       }
     });
-  }
-
-  @Override
-  protected Set<ODocument> initialValue() {
-    return Collections.newSetFromMap(new IdentityHashMap<ODocument, Boolean>());
   }
 
   public static boolean check(final ODocument document) {
@@ -72,6 +67,11 @@ public class OSerializationSetThreadLocal extends ThreadLocal<Set<ODocument>> {
 
   public static void removeCheck(ODocument document) {
     INSTANCE.get().remove(document);
+  }
+
+  @Override
+  protected Set<ODocument> initialValue() {
+    return Collections.newSetFromMap(new IdentityHashMap<ODocument, Boolean>());
   }
 
 }

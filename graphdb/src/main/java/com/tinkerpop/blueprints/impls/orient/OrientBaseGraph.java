@@ -23,15 +23,22 @@ package com.tinkerpop.blueprints.impls.orient;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
-import com.orientechnologies.orient.core.OrientListener;
 import org.apache.commons.configuration.Configuration;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
@@ -57,7 +64,12 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
-import com.tinkerpop.blueprints.*;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.GraphQuery;
+import com.tinkerpop.blueprints.Index;
+import com.tinkerpop.blueprints.Parameter;
+import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
@@ -73,12 +85,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public static final String                                  CLASS_PREFIX        = "class:";
   public static final String                                  CLUSTER_PREFIX      = "cluster:";
   public static final String                                  ADMIN               = "admin";
-  private final OPartitionedDatabasePool                      pool;
-  protected ODatabaseDocumentTx                               database;
-  private String                                              url;
-  private String                                              username;
-  private String                                              password;
-
   private static volatile ThreadLocal<OrientBaseGraph>        activeGraph         = new ThreadLocal<OrientBaseGraph>();
   private static volatile ThreadLocal<Deque<OrientBaseGraph>> initializationStack = new ThreadLocal<Deque<OrientBaseGraph>>() {
                                                                                     @Override
@@ -86,9 +92,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
                                                                                       return new LinkedList<OrientBaseGraph>();
                                                                                     }
                                                                                   };
-
   static {
-    Orient.instance().addOrientListener(new OrientListener() {
+    Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onShutdown() {
         activeGraph = null;
@@ -109,19 +114,11 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       }
     });
   }
-
-  public static OrientBaseGraph getActiveGraph() {
-    return activeGraph.get();
-  }
-
-  /**
-   * Internal use only.
-   */
-  public static void clearInitStack() {
-    initializationStack.get().clear();
-    activeGraph.set(null);
-    ODatabaseRecordThreadLocal.INSTANCE.set(null);
-  }
+  private final OPartitionedDatabasePool                      pool;
+  protected ODatabaseDocumentTx                               database;
+  private String                                              url;
+  private String                                              username;
+  private String                                              password;
 
   /**
    * Constructs a new object using an existent database instance.
@@ -142,19 +139,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     readDatabaseConfiguration();
     configure(iConfiguration);
-  }
-
-  private void putInInitializationStack() {
-    Deque<OrientBaseGraph> stack = initializationStack.get();
-    stack.push(this);
-  }
-
-  public void makeActive() {
-    activeGraph.set(this);
-
-    final ODatabaseDocument tlDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if (database != null && tlDb != database)
-      ODatabaseRecordThreadLocal.INSTANCE.set(database);
   }
 
   public OrientBaseGraph(final OPartitionedDatabasePool pool) {
@@ -278,6 +262,19 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     super.init(configuration);
   }
 
+  public static OrientBaseGraph getActiveGraph() {
+    return activeGraph.get();
+  }
+
+  /**
+   * Internal use only.
+   */
+  public static void clearInitStack() {
+    initializationStack.get().clear();
+    activeGraph.set(null);
+    ODatabaseRecordThreadLocal.INSTANCE.set(null);
+  }
+
   /**
    * (Internal)
    */
@@ -366,6 +363,14 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         warn = true;
       }
     }
+  }
+
+  public void makeActive() {
+    activeGraph.set(this);
+
+    final ODatabaseDocument tlDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    if (database != null && tlDb != database)
+      ODatabaseRecordThreadLocal.INSTANCE.set(database);
   }
 
   /**
@@ -505,17 +510,17 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     return database.getStorage().getConflictStrategy();
   }
 
-  public OrientBaseGraph setConflictStrategy(final String iStrategyName) {
-    makeActive();
-
-    database.setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
-    return this;
-  }
-
   public OrientBaseGraph setConflictStrategy(final ORecordConflictStrategy iResolver) {
     makeActive();
 
     database.setConflictStrategy(iResolver);
+    return this;
+  }
+
+  public OrientBaseGraph setConflictStrategy(final String iStrategyName) {
+    makeActive();
+
+    database.setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
     return this;
   }
 
@@ -1127,22 +1132,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     pollGraphFromStack();
   }
 
-  private void pollGraphFromStack() {
-    final Deque<OrientBaseGraph> stack = initializationStack.get();
-    stack.poll();
-
-    final OrientBaseGraph prevGraph = stack.peek();
-
-    if (prevGraph != null) {
-      activeGraph.set(prevGraph);
-      prevGraph.makeActive();
-    } else {
-      activeGraph.set(null);
-      ODatabaseRecordThreadLocal.INSTANCE.set(null);
-    }
-
-  }
-
   /**
    * Returns the Graph URL.
    */
@@ -1752,6 +1741,27 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         // SET IT
         ODatabaseRecordThreadLocal.INSTANCE.set(database);
     }
+  }
+
+  private void putInInitializationStack() {
+    Deque<OrientBaseGraph> stack = initializationStack.get();
+    stack.push(this);
+  }
+
+  private void pollGraphFromStack() {
+    final Deque<OrientBaseGraph> stack = initializationStack.get();
+    stack.poll();
+
+    final OrientBaseGraph prevGraph = stack.peek();
+
+    if (prevGraph != null) {
+      activeGraph.set(prevGraph);
+      prevGraph.makeActive();
+    } else {
+      activeGraph.set(null);
+      ODatabaseRecordThreadLocal.INSTANCE.set(null);
+    }
+
   }
 
   @SuppressWarnings("unchecked")
