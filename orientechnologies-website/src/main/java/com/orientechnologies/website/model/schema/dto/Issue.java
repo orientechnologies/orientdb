@@ -24,6 +24,7 @@ public class Issue {
   private Milestone         milestone;
   private Milestone         version;
   private Priority          priority;
+  private Scope             scope;
   private Date              createdAt;
   private Date              closedAt;
   private Long              comments;
@@ -57,6 +58,14 @@ public class Issue {
 
   public void setPriority(Priority priority) {
     this.priority = priority;
+  }
+
+  public Scope getScope() {
+    return scope;
+  }
+
+  public void setScope(Scope scope) {
+    this.scope = scope;
   }
 
   public void setNumber(Integer number) {

@@ -277,6 +277,28 @@ public class IssueServiceImpl implements IssueService {
   }
 
   @Override
+  public void changeScope(Issue issue, Scope scope) {
+    Scope oldScope = issue.getScope();
+    createScopeRelationshipt(issue, scope);
+    IssueEventInternal e = new IssueEventInternal();
+    e.setCreatedAt(new Date());
+    e.setEvent("scoped");
+    e.setScope(scope);
+    e.setActor(SecurityHelper.currentUser());
+    e = (IssueEventInternal) eventRepository.save(e);
+    fireEvent(issue, e);
+    if (oldScope != null) {
+      e = new IssueEventInternal();
+      e.setCreatedAt(new Date());
+      e.setEvent("unscoped");
+      e.setScope(oldScope);
+      e.setActor(SecurityHelper.currentUser());
+      e = (IssueEventInternal) eventRepository.save(e);
+      fireEvent(issue, e);
+    }
+  }
+
+  @Override
   public Issue changeState(Issue issue, String state, OUser actor, boolean fire) {
     issue.setState(state);
     if (fire) {
@@ -416,6 +438,17 @@ public class IssueServiceImpl implements IssueService {
     }
 
     orgVertex.addEdge(HasPriority.class.getSimpleName(), devVertex);
+  }
+
+  private void createScopeRelationshipt(Issue issue, Scope scope) {
+    OrientGraph graph = dbFactory.getGraph();
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(issue.getId()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(scope.getId()));
+    for (Edge edge : orgVertex.getEdges(Direction.OUT, HasScope.class.getSimpleName())) {
+      edge.remove();
+    }
+
+    orgVertex.addEdge(HasScope.class.getSimpleName(), devVertex);
   }
 
   private void createMilestoneRelationship(Issue issue, Milestone milestone) {

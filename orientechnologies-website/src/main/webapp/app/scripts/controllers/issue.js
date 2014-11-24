@@ -20,29 +20,33 @@ angular.module('webappApp')
 
 
     $scope.save = function () {
-      Repo.one($scope.repo.name).all("issues").post($scope.issue).then(function (data) {
-        $location.path("/issues/" + $scope.repo.name + "@" + data.uuid);
+      $scope.issue.scope = $scope.scope.number;
+      Organization.all("issues").post($scope.issue).then(function (data) {
+        $location.path("/issues/" + $scope.scope.repository.name + "@" + data.uuid);
       });
+      //Repo.one($scope.repo.name).all("issues").post($scope.issue).then(function (data) {
+      //  $location.path("/issues/" + $scope.repo.name + "@" + data.uuid);
+      //});
     }
-    Organization.all("repos").getList().then(function (data) {
-      $scope.repositories = data.plain();
+    Organization.all("scopes").getList().then(function (data) {
+      $scope.scopes = data.plain();
     })
     Organization.all("priorities").getList().then(function (data) {
       $scope.priorities = data.plain();
     })
-    $scope.$watch("repo", function (val) {
-      if (val) {
-        Repo.one(val.name).all("teams").getList().then(function (data) {
+    $scope.$watch("scope", function (val) {
+      if (val && val.repository) {
+        Repo.one(val.repository.name).all("teams").getList().then(function (data) {
           $scope.assignees = data.plain();
         })
-        Repo.one(val.name).all("milestones").getList().then(function (data) {
+        Repo.one(val.repository.name).all("milestones").getList().then(function (data) {
           $scope.milestones = data.plain();
         });
       }
     });
   });
 angular.module('webappApp')
-  .controller('IssueEditCtrl', function ($scope, $routeParams,Organization, Repo, $popover, $route) {
+  .controller('IssueEditCtrl', function ($scope, $routeParams, Organization, Repo, $popover, $route) {
 
     var id = $routeParams.id.split("@");
 

@@ -38,4 +38,6 @@ public interface IssueService {
   public Issue synchIssue(Issue issue);
 
   public void clearEvents(Issue issue);
+
+  public void changeScope(Issue issue, Scope scope);
 }

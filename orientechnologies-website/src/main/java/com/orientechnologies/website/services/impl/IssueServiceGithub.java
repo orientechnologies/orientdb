@@ -141,4 +141,9 @@ public class IssueServiceGithub implements IssueService {
   public void clearEvents(Issue issue) {
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  public void changeScope(Issue issue, Scope scope) {
+    throw new UnsupportedOperationException();
+  }
 }

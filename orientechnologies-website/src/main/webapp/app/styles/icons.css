@@ -19,12 +19,17 @@
   content: "\f091";
 }
 .fa-prioritized:before {
-  content: "\f06e";
-}
+   content: "\f06e";
+ }
 .fa-unprioritized:before {
   content: "\f06e";
 }
-
+.fa-scoped:before {
+  content: "\f114";
+}
+.fa-unscoped:before {
+  content: "\f114";
+}
 .fa-renamed:before {
   content: "\f044";
 }

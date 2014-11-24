@@ -7,6 +7,7 @@ public class IssueEventInternal extends IssueEvent {
 
   protected Milestone version;
   protected Priority  priority;
+  protected Scope     scope;
 
   public Milestone getVersion() {
     return version;
@@ -27,5 +28,13 @@ public class IssueEventInternal extends IssueEvent {
       priority.setId(null);
     }
     this.priority = priority;
+  }
+
+  public Scope getScope() {
+    return scope;
+  }
+
+  public void setScope(Scope scope) {
+    this.scope = scope;
   }
 }

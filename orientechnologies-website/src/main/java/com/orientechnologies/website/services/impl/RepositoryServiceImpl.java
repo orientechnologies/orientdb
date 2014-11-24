@@ -123,6 +123,8 @@ public class RepositoryServiceImpl implements RepositoryService {
     Integer milestoneId = issue.getMilestone();
     Integer versionId = issue.getVersion();
     Integer priorityId = issue.getPriority();
+    Integer scope = issue.getScope();
+
     Issue issueDomain = new Issue();
     issueDomain.setConfidential(true);
     issueDomain.setTitle(issue.getTitle());
@@ -137,8 +139,18 @@ public class RepositoryServiceImpl implements RepositoryService {
     handleMilestone(repository, issueDomain, milestoneId);
     handleVersion(repository, issueDomain, versionId);
     handlePriority(repository, issueDomain, priorityId);
+    handleScope(repository, issueDomain, scope);
     handleLabels(repository, issueDomain, issue.getLabels());
     return issueDomain;
+  }
+
+  private void handleScope(Repository repository, Issue issue, Integer scope) {
+    if (scope != null) {
+      Scope p = repositoryRepository.findScope(repository.getName(), scope);
+      if (p != null) {
+        issueService.changeScope(issue, p);
+      }
+    }
   }
 
   protected void handlePriority(Repository repository, Issue issue, Integer priority) {

@@ -18,9 +18,13 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
 
   public Priority findPriorityByNumber(String name, Integer number);
 
+  public List<Scope> findScopes(String name);
+
   public Client findClient(String name, Integer clientId);
 
   public Repository findOrganizationRepository(String name, String repo);
+
+  public Repository findOrganizationRepositoryByScope(String name, Integer scope);
 
   public Issue findSingleOrganizationIssueByRepoAndNumber(String name, String repo, String number);
 

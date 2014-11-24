@@ -70,14 +70,17 @@ public class RepositoryController {
         HttpStatus.NOT_FOUND);
   }
 
+  @Deprecated
   @RequestMapping(value = "{owner}/{repo}/issues", method = RequestMethod.POST)
   public ResponseEntity<Issue> createIssue(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
       @RequestBody IssueDTO issue) {
 
     Repository r = organizationRepository.findOrganizationRepository(owner, repo);
 
-    return r != null ? new ResponseEntity<Issue>(repositoryService.openIssue(r, issue), HttpStatus.OK) : new ResponseEntity<Issue>(
-        HttpStatus.NOT_FOUND);
+    // return r != null ? new ResponseEntity<Issue>(repositoryService.openIssue(r, issue), HttpStatus.OK) : new
+    // ResponseEntity<Issue>(
+    // HttpStatus.NOT_FOUND);
+    return new ResponseEntity<Issue>(HttpStatus.NOT_FOUND);
   }
 
   @RequestMapping(value = "{owner}/{repo}/issues/{number}", method = RequestMethod.PATCH)

@@ -23,5 +23,5 @@ public interface RepositoryRepository extends BaseRepository<Repository> {
 
   public Milestone findMilestoneByRepoAndName(String repo, Integer number);
 
-
+  public Scope findScope(String name, Integer scope);
 }

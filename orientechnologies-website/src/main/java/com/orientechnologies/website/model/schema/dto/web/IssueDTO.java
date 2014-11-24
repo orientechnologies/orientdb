@@ -19,6 +19,7 @@ public class IssueDTO {
   private Integer      version;
   private Integer      priority;
   private String       assignee;
+  private Integer      scope;
   private Boolean      confidential;
 
   @JsonIgnore
@@ -97,5 +98,13 @@ public class IssueDTO {
 
   public void setPriority(Integer priority) {
     this.priority = priority;
+  }
+
+  public Integer getScope() {
+    return scope;
+  }
+
+  public void setScope(Integer scope) {
+    this.scope = scope;
   }
 }

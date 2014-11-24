@@ -128,4 +128,17 @@ public class RepositoryRepositoryImpl extends OrientBaseRepository<Repository> i
       return null;
     }
   }
+
+  @Override
+  public Scope findScope(String name, Integer scope) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format("select expand(out('HasScope')[number = %d]) from Repository  where name = '%s')", scope, name);
+
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+    try {
+      return OScope.NAME.fromDoc(vertices.iterator().next().getRecord(), db);
+    } catch (NoSuchElementException e) {
+      return null;
+    }
+  }
 }

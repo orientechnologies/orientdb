@@ -2,8 +2,11 @@ package com.orientechnologies.website.controllers;
 
 import com.orientechnologies.website.configuration.ApiVersion;
 import com.orientechnologies.website.model.schema.dto.*;
+import com.orientechnologies.website.model.schema.dto.web.IssueDTO;
 import com.orientechnologies.website.repository.OrganizationRepository;
+import com.orientechnologies.website.repository.RepositoryRepository;
 import com.orientechnologies.website.services.OrganizationService;
+import com.orientechnologies.website.services.RepositoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.http.HttpStatus;
@@ -23,6 +26,12 @@ public class OrganizationController {
 
   @Autowired
   private OrganizationService    organizationService;
+
+  @Autowired
+  private RepositoryRepository   repoRepository;
+
+  @Autowired
+  private RepositoryService      repositoryService;
 
   @RequestMapping(value = "{name}", method = RequestMethod.GET)
   public ResponseEntity<Organization> getOrganizationInfo(@PathVariable("name") String name) {
@@ -99,6 +108,21 @@ public class OrganizationController {
   @ResponseStatus(HttpStatus.OK)
   public List<Priority> findPriorities(@PathVariable("name") String name) {
     return orgRepository.findPriorities(name);
+  }
+
+  @RequestMapping(value = "{name}/issues", method = RequestMethod.POST)
+  public ResponseEntity<Issue> createIssue(@PathVariable("name") String owner, @RequestBody IssueDTO issue) {
+
+    Repository r = orgRepository.findOrganizationRepositoryByScope(owner, issue.getScope());
+
+    return r != null ? new ResponseEntity<Issue>(repositoryService.openIssue(r, issue), HttpStatus.OK) : new ResponseEntity<Issue>(
+        HttpStatus.NOT_FOUND);
+  }
+
+  @RequestMapping(value = "{name}/scopes", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public List<Scope> findScopes(@PathVariable("name") String name) {
+    return orgRepository.findScopes(name);
   }
 
   @RequestMapping(value = "{name}/repos/{repo}", method = RequestMethod.POST)

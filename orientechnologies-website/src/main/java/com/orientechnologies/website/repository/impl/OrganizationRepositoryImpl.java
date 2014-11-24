@@ -183,8 +183,8 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   @Override
   public Priority findPriorityByNumber(String name, Integer number) {
     OrientGraph db = dbFactory.getGraph();
-    String query = String.format("select expand(out('HasPriority')[number = %d]) from Organization where name = '%s'", number,
-        name);
+    String query = String
+        .format("select expand(out('HasPriority')[number = %d]) from Organization where name = '%s'", number, name);
     Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
 
     try {
@@ -194,6 +194,20 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
       return null;
     }
 
+  }
+
+  @Override
+  public List<Scope> findScopes(String name) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format("select expand(out('HasRepo').out('HasScope')) from Organization where name = '%s'", name);
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+
+    List<Scope> priorities = new ArrayList<Scope>();
+    for (OrientVertex vertice : vertices) {
+      ODocument doc = vertice.getRecord();
+      priorities.add(OScope.NAME.fromDoc(doc, db));
+    }
+    return priorities;
   }
 
   @Override
@@ -224,6 +238,22 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
       return null;
     }
 
+  }
+
+  @Override
+  public com.orientechnologies.website.model.schema.dto.Repository findOrganizationRepositoryByScope(String name, Integer scope) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format(
+        "select from (select expand(out('HasRepo')) from Organization where name = '%s') where out('HasScope').number CONTAINS %d",
+        name, scope);
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+
+    try {
+      ODocument doc = vertices.iterator().next().getRecord();
+      return ORepository.NAME.fromDoc(doc, db);
+    } catch (NoSuchElementException e) {
+      return null;
+    }
   }
 
   @Override
