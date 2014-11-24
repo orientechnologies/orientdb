@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -55,9 +56,12 @@ public class OVertexTransformer extends OAbstractTransformer {
     if (graph == null)
       graph = pipeline.getGraphDatabase();
 
+    if (graph == null)
+      throw new OETLProcessHaltedException("Graph instance not found. Assure you have configured it in the Loader");
+
     vertexClass = (String) resolve(vertexClass);
     if (vertexClass != null) {
-      OClass cls = graph.getVertexType(vertexClass);
+      final OClass cls = graph.getVertexType(vertexClass);
       if (cls == null)
         try {
           graph.createVertexType(vertexClass);

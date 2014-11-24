@@ -81,6 +81,9 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
 
   @Override
   public Object executeTransform(final Object input) {
+    if (graph == null)
+      throw new OETLProcessHaltedException("Graph instance not found. Assure you have configured it in the Loader");
+
     // GET JOIN VALUE
     final OrientVertex vertex;
     if (input instanceof OIdentifiable)
