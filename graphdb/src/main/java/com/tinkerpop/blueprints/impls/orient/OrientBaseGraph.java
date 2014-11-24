@@ -656,9 +656,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       // WRAPPED: GET THE BASE VERTEX
       inVertex = ((PartitionVertex) inVertex).getBaseVertex();
 
-    ((OrientExtendedVertex) outVertex).attach(this);
-    ((OrientExtendedVertex) inVertex).attach(this);
-
     return ((OrientVertex) outVertex).addEdge(label, (OrientVertex) inVertex, className, clusterName, fields);
 
   }
