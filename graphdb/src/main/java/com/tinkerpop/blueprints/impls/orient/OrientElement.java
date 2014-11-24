@@ -68,9 +68,6 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   protected OIdentifiable                      rawElement;
 
   protected OrientElement(final OrientBaseGraph rawGraph, final OIdentifiable iRawElement) {
-    if (rawGraph != null)
-      classicDetachMode = rawGraph.classicDetachMode;
-
     if (classicDetachMode)
       graph = rawGraph;
     else
@@ -414,8 +411,6 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    * This methods works only in "classic detach/attach mode" when dettachment/attachment is done manually, by default it is done
    * automatically, and currently active graph connection will be used as graph elements owner.
    *
-   * To set "classic detach/attach mode" please set custom database parameter <code>classicDetachMode</code> to <code>true</code>.
-   * 
    * @return Current object to allow chained calls.
    * @see #attach(OrientBaseGraph), #isDetached
    */
@@ -426,7 +421,23 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     // COPY GRAPH SETTINGS TO WORK OFFLINE
     settings = graph.settings.copy();
     graph = null;
+    classicDetachMode = true;
     return this;
+  }
+
+  /**
+   * Switches to auto attachment mode, when graph element is automatically attached to currently open graph instance.
+   */
+  public void switchToAutoAttachmentMode() {
+    graph = null;
+    classicDetachMode = false;
+  }
+
+  /**
+   * Behavior is the same as for {@link #attach(OrientBaseGraph)} method.
+   */
+  public void switchToManualAttachmentMode(final OrientBaseGraph iNewGraph) {
+    attach(iNewGraph);
   }
 
   /**
@@ -447,6 +458,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     if (iNewGraph == null)
       throw new IllegalArgumentException("Graph is null");
 
+    classicDetachMode = true;
     graph = iNewGraph;
 
     // LINK THE GRAPHS SETTINGS
@@ -466,7 +478,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    * @see #attach(OrientBaseGraph), #detach
    */
   public boolean isDetached() {
-    return graph == null;
+    return getGraph() == null;
   }
 
   public boolean equals(final Object object) {

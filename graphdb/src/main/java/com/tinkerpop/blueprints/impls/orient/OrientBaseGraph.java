@@ -81,8 +81,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   private String                                              username;
   private String                                              password;
 
-  protected boolean                                           classicDetachMode   = false;
-
   private static volatile ThreadLocal<OrientBaseGraph>        activeGraph         = new ThreadLocal<OrientBaseGraph>();
   private static volatile ThreadLocal<Deque<OrientBaseGraph>> initializationStack = new ThreadLocal<Deque<OrientBaseGraph>>() {
                                                                                     @Override
@@ -1751,10 +1749,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   @SuppressWarnings("unchecked")
   private void readDatabaseConfiguration() {
     final ODatabaseDocumentTx databaseDocumentTx = getRawGraph();
-    final OStorage storage = databaseDocumentTx.getStorage();
-    final OStorageConfiguration configuration = storage.getConfiguration();
-    if (configuration.version < 14)
-      classicDetachMode = true;
 
     final List<OStorageEntryConfiguration> custom = (List<OStorageEntryConfiguration>) databaseDocumentTx.get(ATTRIBUTES.CUSTOM);
     for (OStorageEntryConfiguration c : custom) {
@@ -1766,8 +1760,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         setUseClassForVertexLabel(Boolean.parseBoolean(c.value));
       else if (c.name.equals("useVertexFieldsForEdgeLabels"))
         setUseVertexFieldsForEdgeLabels(Boolean.parseBoolean(c.value));
-      else if (c.name.equals("classicDetachMode"))
-        classicDetachMode = Boolean.parseBoolean(c.value);
     }
 
   }
