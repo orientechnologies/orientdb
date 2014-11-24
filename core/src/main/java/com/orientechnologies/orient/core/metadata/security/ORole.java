@@ -291,7 +291,7 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
     return revoke(resourceGeneric, specificResource, iOperation);
   }
 
-	private ODocument updateRolesDocumentContent() {
+  private ODocument updateRolesDocumentContent() {
     final Set<ODocument> storedRules = new HashSet<ODocument>();
 
     for (ORule rule : rules.values()) {
@@ -381,6 +381,23 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
 
   public Set<ORule> getRules() {
     return new HashSet<ORule>(rules.values());
+  }
+
+  @Deprecated
+  public Map<String, Byte> getStringRules() {
+    final Map<String, Byte> result = new HashMap<String, Byte>();
+
+    for (ORule rule : rules.values()) {
+      if (rule.getAccess() != null) {
+        result.put(rule.getResourceGeneric().name(), rule.getAccess());
+      }
+
+      for (Map.Entry<String, Byte> specificResource : rule.getSpecificResources().entrySet()) {
+        result.put(rule.getResourceGeneric().name() + "." + specificResource.getKey(), specificResource.getValue());
+      }
+    }
+
+    return result;
   }
 
   @Override
