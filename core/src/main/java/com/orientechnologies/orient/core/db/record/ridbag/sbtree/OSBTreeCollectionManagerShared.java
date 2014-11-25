@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OL
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 /**
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OSBTreeCollectionManagerShared extends OSBTreeCollectionManagerAbstract {
   private final ThreadLocal<Map<UUID, OBonsaiCollectionPointer>> collectionPointerChanges = new ThreadLocal<Map<UUID, OBonsaiCollectionPointer>>() {

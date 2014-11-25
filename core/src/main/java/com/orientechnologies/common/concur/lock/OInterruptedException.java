@@ -22,7 +22,7 @@ package com.orientechnologies.common.concur.lock;
 import com.orientechnologies.common.exception.OException;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 3/6/14
  */
 public class OInterruptedException extends OException {

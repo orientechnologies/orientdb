@@ -59,7 +59,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * how much application is loaded. The amount of connections which may be hold by single partition is defined by user, but we
  * suggest to use default parameters if your application load is not extremely high.
  *
- * @author Andrey Lomakin <a href="mailto:a.lomakin@orientechnologies.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 06/11/14
  */
 public class OPartitionedDatabasePool extends OOrientListenerAbstract {

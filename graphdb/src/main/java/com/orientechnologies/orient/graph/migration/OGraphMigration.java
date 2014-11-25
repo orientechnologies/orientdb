@@ -42,7 +42,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
  * 
  * Structure of manual indexes was changed too. This class is used to upgrade structure of manual indexes.
  * 
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OGraphMigration {
   private final ODatabaseDocument      database;

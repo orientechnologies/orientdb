@@ -31,7 +31,7 @@ import java.util.Set;
 /**
  * Thread local set of serialized documents. Used to prevent infinite recursion during serialization of records.
  * 
- * @author Artem Loginov (logart2007@gmail.com), Artem Orobets (enisher@gmail.com)
+ * @author Artem Loginov (logart2007-at-gmail.com), Artem Orobets (enisher-at-gmail.com)
  */
 public class OSerializationSetThreadLocal extends ThreadLocal<Set<ODocument>> {
   public static volatile OSerializationSetThreadLocal INSTANCE = new OSerializationSetThreadLocal();

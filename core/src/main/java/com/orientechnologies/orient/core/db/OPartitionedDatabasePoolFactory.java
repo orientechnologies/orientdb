@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.Orient;
  * storage you should close pool factory at the end of it's usage, it also may be closed on application shutdown but you should not
  * rely on this behaviour.
  * 
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 06/11/14
  */
 public class OPartitionedDatabasePoolFactory extends OOrientListenerAbstract {

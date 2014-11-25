@@ -24,7 +24,7 @@ import org.testng.annotations.Test;
 import java.util.Random;
 
 /**
- * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
+ * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
  * @since 19.01.12
  */
 @Test

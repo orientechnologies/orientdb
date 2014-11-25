@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
 
 /**
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> {
   private LinkedList<Map.Entry<K, V>> preFetchedValues;

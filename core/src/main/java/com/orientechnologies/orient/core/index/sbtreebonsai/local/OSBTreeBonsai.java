@@ -46,7 +46,7 @@ import com.orientechnologies.orient.core.index.sbtree.local.OSBTree;
  * +--------------------------------------------------------------------------------------------+<br>
  * </code>
  * 
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  * @since 1.7rc1
  */
 public interface OSBTreeBonsai<K, V> extends OTreeInternal<K, V> {

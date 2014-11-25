@@ -23,7 +23,7 @@ package com.orientechnologies.nio;
 import com.sun.jna.Platform;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 11/20/13
  */
 public class OCLibraryFactory {

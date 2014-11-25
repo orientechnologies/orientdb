@@ -26,7 +26,8 @@ package com.orientechnologies.nio;
 /**
  * This class is used to lock memory and prevent swapping to provide fast mmap working.
  * 
- * @author Artem Loginov (logart) logart2007@gmail.com Date: 5/29/12 Time: 11:31 PM
+ * @author Artem Loginov (logart2007-at-gmail.com)
+ * @since 5/29/12 11:31 PM
  */
 public class MemoryLocker {
 

@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 4/15/14
  */
 @Test

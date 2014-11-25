@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.orientechnologies.orient.core.id.ORID;
 
 /**
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public abstract class OAbstractMapCache<T extends Map<ORID, ?>> implements OCache {
   protected final T cache;
