@@ -25,7 +25,7 @@ import com.orientechnologies.orient.etl.OETLComponent;
  * ETL Generic Block.
  */
 public interface OBlock extends OETLComponent {
-  void execute();
+  Object execute();
 
   void setContext(OBasicCommandContext context);
 }

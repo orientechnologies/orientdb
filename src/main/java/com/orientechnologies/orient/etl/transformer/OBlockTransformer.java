@@ -41,8 +41,6 @@ public class OBlockTransformer extends OAbstractTransformer {
   public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, OBasicCommandContext iContext) {
     super.configure(iProcessor, iConfiguration, iContext);
     final String[] fieldNames = iConfiguration.fieldNames();
-    if (fieldNames.length != 1)
-      throw new OConfigurationException("[Block transformer] Only one block can be declared inside 'block' transformer");
 
     try {
       block = processor.getFactory().getBlock(fieldNames[0]);
@@ -67,8 +65,6 @@ public class OBlockTransformer extends OAbstractTransformer {
   protected Object executeTransform(final Object input) {
     context.setVariable("input", input);
 
-    block.execute();
-
-    return input;
+    return block.execute();
   }
 }

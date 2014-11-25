@@ -65,7 +65,7 @@ public class OConsoleBlock extends OAbstractBlock {
   }
 
   @Override
-  public void executeBlock() {
-    console.run();
+  public Object executeBlock() {
+    return console.run();
   }
 }

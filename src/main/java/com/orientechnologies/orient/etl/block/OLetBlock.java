@@ -55,10 +55,9 @@ public class OLetBlock extends OAbstractBlock {
   }
 
   @Override
-  public void executeBlock() {
-    if (expression != null)
-      context.setVariable(name, expression.evaluate(null, null, context));
-    else
-      context.setVariable(name, resolve(value));
+  public Object executeBlock() {
+    final Object v = expression != null ? expression.evaluate(null, null, context) : resolve(value);
+    context.setVariable(name, v);
+    return v;
   }
 }

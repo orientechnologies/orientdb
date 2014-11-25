@@ -26,9 +26,10 @@ import com.orientechnologies.orient.etl.OAbstractETLComponent;
  */
 public abstract class OAbstractBlock extends OAbstractETLComponent implements OBlock {
   @Override
-  public void execute() {
+  public Object execute() {
     if (!skip(null))
-      executeBlock();
+      return executeBlock();
+    return null;
   }
 
   @Override
@@ -36,5 +37,5 @@ public abstract class OAbstractBlock extends OAbstractETLComponent implements OB
     context = iContext;
   }
 
-  protected abstract void executeBlock();
+  protected abstract Object executeBlock();
 }

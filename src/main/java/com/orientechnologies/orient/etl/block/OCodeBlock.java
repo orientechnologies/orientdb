@@ -62,7 +62,7 @@ public class OCodeBlock extends OAbstractBlock {
   }
 
   @Override
-  public void executeBlock() {
-    cmd.executeInContext(context, params);
+  public Object executeBlock() {
+    return cmd.executeInContext(context, params);
   }
 }
