@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.List;
 
 import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Optional;
@@ -119,24 +120,24 @@ public class SecurityTest extends DocumentDBBaseTest {
     ORole writerChild = security.createRole("writerChild", writer, OSecurityRole.ALLOW_MODES.ALLOW_ALL_BUT);
     writerChild.save();
 
-		ORole writerGrandChild = security.createRole("writerGrandChild", writerChild, OSecurityRole.ALLOW_MODES.ALLOW_ALL_BUT);
-		writerGrandChild.save();
-
+    ORole writerGrandChild = security.createRole("writerGrandChild", writerChild, OSecurityRole.ALLOW_MODES.ALLOW_ALL_BUT);
+    writerGrandChild.save();
 
     OUser child = security.createUser("writerChild", "writerChild", writerGrandChild);
     child.save();
 
     Assert.assertTrue(child.hasRole("writer", true));
-		Assert.assertFalse(child.hasRole("wrter", true));
+    Assert.assertFalse(child.hasRole("wrter", true));
 
     database.close();
-		database.open("writerChild", "writerChild");
+    if (!(database.getStorage() instanceof OStorageProxy)) {
+			database.open("writerChild", "writerChild");
 
-		OSecurityUser user = database.getUser();
-		Assert.assertTrue(user.hasRole("writer", true));
-		Assert.assertFalse(user.hasRole("wrter", true));
+			OSecurityUser user = database.getUser();
+			Assert.assertTrue(user.hasRole("writer", true));
+			Assert.assertFalse(user.hasRole("wrter", true));
 
-		database.close();
-
+			database.close();
+		}
   }
 }
