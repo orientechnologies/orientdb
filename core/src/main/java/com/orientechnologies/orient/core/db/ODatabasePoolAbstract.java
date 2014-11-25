@@ -19,8 +19,15 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import com.orientechnologies.common.concur.lock.OAdaptiveLock;
 import com.orientechnologies.common.concur.lock.OLockException;
@@ -29,13 +36,12 @@ import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OOrientListener;
-import com.orientechnologies.orient.core.OrientListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extends OAdaptiveLock implements
-    OResourcePoolListener<String, DB>, OOrientListener, OrientListener {
+    OResourcePoolListener<String, DB>, OOrientListener {
 
   private final HashMap<String, OReentrantResourcePool<String, DB>> pools = new HashMap<String, OReentrantResourcePool<String, DB>>();
   protected Object                                                  owner;
@@ -116,7 +122,6 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.STORAGE_LOCK_TIMEOUT
         .getValueAsInteger(), true);
 
-    Orient.instance().addOrientListener(this);
     maxSize = iMaxSize;
     timeout = iTimeout;
     owner = iOwner;
@@ -351,11 +356,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
     close();
   }
 
-	@Override
-	public void onStartup() {
-	}
-
-	private void notifyEvictor(final String poolName, final DB iDatabase) {
+  private void notifyEvictor(final String poolName, final DB iDatabase) {
     if (this.evictor != null) {
       this.evictor.updateIdleTime(poolName, iDatabase);
     }

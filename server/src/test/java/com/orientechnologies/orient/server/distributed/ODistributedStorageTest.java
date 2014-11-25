@@ -1,8 +1,11 @@
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
+
 import org.mockito.Mockito;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.server.OServer;
@@ -11,6 +14,13 @@ import com.orientechnologies.orient.server.OServer;
  * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
  */
 public class ODistributedStorageTest {
+
+  @BeforeMethod
+  public void before() {
+    if (Orient.instance().getTimer() == null)
+      Orient.instance().startup();
+  }
+
   @Test
   public void testSupportedFreezeTrue() {
     OLocalPaginatedStorage storage = Mockito.mock(OLocalPaginatedStorage.class);

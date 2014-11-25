@@ -19,12 +19,12 @@
  */
 package com.orientechnologies.orient.core.hook;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import com.orientechnologies.orient.core.OrientListener;
+import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Avoid recursion when hooks call themselves on the same record instances.
@@ -36,7 +36,7 @@ public class OHookThreadLocal extends ThreadLocal<Set<OIdentifiable>> {
   public static volatile OHookThreadLocal INSTANCE = new OHookThreadLocal();
 
   static {
-    Orient.instance().addOrientListener(new OrientListener() {
+    Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onShutdown() {
         INSTANCE = null;
@@ -50,11 +50,6 @@ public class OHookThreadLocal extends ThreadLocal<Set<OIdentifiable>> {
     });
   }
 
-  @Override
-  protected Set<OIdentifiable> initialValue() {
-    return new HashSet<OIdentifiable>();
-  }
-
   public boolean push(final OIdentifiable iRecord) {
     final Set<OIdentifiable> set = get();
     if (set.contains(iRecord))
@@ -66,5 +61,10 @@ public class OHookThreadLocal extends ThreadLocal<Set<OIdentifiable>> {
 
   public boolean pop(final OIdentifiable iRecord) {
     return get().remove(iRecord);
+  }
+
+  @Override
+  protected Set<OIdentifiable> initialValue() {
+    return new HashSet<OIdentifiable>();
   }
 }

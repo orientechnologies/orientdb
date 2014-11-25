@@ -19,11 +19,6 @@
  */
 package com.orientechnologies.orient.core.command.script;
 
-import java.util.Map;
-import java.util.Map.Entry;
-
-import javax.script.*;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
@@ -32,9 +27,16 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
+
+import javax.script.Bindings;
+import javax.script.Invocable;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Executes Script Commands.
@@ -63,58 +65,54 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
 
     parserText = request.getText();
 
-    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
     final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(parserText);
 
     db.checkSecurity(ORule.ResourceGeneric.FUNCTION, ORole.PERMISSION_READ, f.getName());
 
     final OScriptManager scriptManager = Orient.instance().getScriptManager();
-    final ScriptEngine scriptEngine = scriptManager.getEngine(f.getLanguage());
-    final Bindings binding = scriptManager.bind(scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE), (ODatabaseDocumentTx) db,
-        iContext, iArgs);
 
+    final ScriptEngine scriptEngine = scriptManager.acquireDatabaseEngine(db.getName(), f.getLanguage());
     try {
-      // COMPILE FUNCTION LIBRARY
-      final String lib = scriptManager.getLibrary(db, f.getLanguage());
-      if (lib != null)
-        try {
-          scriptEngine.eval(lib);
-        } catch (ScriptException e) {
-          scriptManager.getErrorMessage(e, lib);
+      final Bindings binding = scriptManager.bind(scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE), (ODatabaseDocumentTx) db,
+          iContext, iArgs);
+
+      try {
+        final Object result;
+
+        if (scriptEngine instanceof Invocable) {
+          // INVOKE AS FUNCTION. PARAMS ARE PASSED BY POSITION
+          final Invocable invocableEngine = (Invocable) scriptEngine;
+          Object[] args = null;
+          if (iArgs != null) {
+            args = new Object[iArgs.size()];
+            int i = 0;
+            for (Entry<Object, Object> arg : iArgs.entrySet())
+              args[i++] = arg.getValue();
+          }
+          result = invocableEngine.invokeFunction(parserText, args);
+
+        } else {
+          // INVOKE THE CODE SNIPPET
+          final Object[] args = iArgs == null ? null : iArgs.values().toArray();
+          result = scriptEngine.eval(scriptManager.getFunctionInvoke(f, args), binding);
         }
 
-      final Object result;
+        return OCommandExecutorUtility.transformResult(result);
 
-      if (scriptEngine instanceof Invocable) {
-        // INVOKE AS FUNCTION. PARAMS ARE PASSED BY POSITION
-        final Invocable invocableEngine = (Invocable) scriptEngine;
-        Object[] args = null;
-        if (iArgs != null) {
-          args = new Object[iArgs.size()];
-          int i = 0;
-          for (Entry<Object, Object> arg : iArgs.entrySet())
-            args[i++] = arg.getValue();
-        }
-        result = invocableEngine.invokeFunction(parserText, args);
+      } catch (ScriptException e) {
+        throw new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber(), e);
+      } catch (NoSuchMethodException e) {
+        throw new OCommandScriptException("Error on execution of the script", request.getText(), 0, e);
+      } catch (OCommandScriptException e) {
+        // PASS THROUGH
+        throw e;
 
-      } else {
-        // INVOKE THE CODE SNIPPET
-        final Object[] args = iArgs == null ? null : iArgs.values().toArray();
-        result = scriptEngine.eval(scriptManager.getFunctionInvoke(f, args), binding);
+      } finally {
+        scriptManager.unbind(binding);
       }
-
-      return OCommandExecutorUtility.transformResult(result);
-
-    } catch (ScriptException e) {
-      throw new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber(), e);
-    } catch (NoSuchMethodException e) {
-      throw new OCommandScriptException("Error on execution of the script", request.getText(), 0, e);
-    } catch (OCommandScriptException e) {
-      // PASS THROUGH
-      throw e;
-
     } finally {
-      scriptManager.unbind(binding);
+      scriptManager.releaseDatabaseEngine(db.getName(), scriptEngine);
     }
   }
 

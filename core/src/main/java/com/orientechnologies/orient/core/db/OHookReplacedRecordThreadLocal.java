@@ -19,7 +19,7 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.orient.core.OrientListener;
+import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.ORecord;
 
@@ -32,7 +32,7 @@ public class OHookReplacedRecordThreadLocal extends ThreadLocal<ORecord> {
   public static volatile OHookReplacedRecordThreadLocal INSTANCE = new OHookReplacedRecordThreadLocal();
 
   static {
-    Orient.instance().addOrientListener(new OrientListener() {
+    Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onShutdown() {
         INSTANCE = null;

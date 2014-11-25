@@ -64,10 +64,10 @@ public class Orient extends OListenerManger<OOrientListener> {
   protected final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners   = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
   protected final ODatabaseFactory                                                     databaseFactory        = new ODatabaseFactory();
   protected final OScriptManager                                                       scriptManager          = new OScriptManager();
-  protected volatile Timer                                                             timer                  = new Timer(true);
   protected final ThreadGroup                                                          threadGroup;
   protected final AtomicInteger                                                        serialId               = new AtomicInteger();
   private final ReadWriteLock                                                          engineLock             = new ReentrantReadWriteLock();
+  protected volatile Timer                                                             timer                  = new Timer(true);
   protected ORecordFactoryManager                                                      recordFactoryManager   = new ORecordFactoryManager();
   protected ORecordConflictStrategyFactory                                             recordConflictStrategy = new ORecordConflictStrategyFactory();
   protected OrientShutdownHook                                                         shutdownHook;
@@ -76,9 +76,6 @@ public class Orient extends OListenerManger<OOrientListener> {
   protected volatile boolean                                                           active                 = false;
   protected ThreadPoolExecutor                                                         workers;
   protected OSignalHandler                                                             signalHandler;
-
-  private final Set<OrientListener>                                                    shutdownListeners      = Collections
-                                                                                                                  .newSetFromMap(new WeakHashMap<OrientListener, Boolean>());
 
   protected Orient() {
     super(true);
@@ -134,10 +131,6 @@ public class Orient extends OListenerManger<OOrientListener> {
     return recordConflictStrategy;
   }
 
-  public void addOrientListener(OrientListener listener) {
-    shutdownListeners.add(listener);
-  }
-
   public Orient startup() {
     engineLock.writeLock().lock();
     try {
@@ -187,9 +180,10 @@ public class Orient extends OListenerManger<OOrientListener> {
       engineLock.writeLock().unlock();
     }
 
-    for (OrientListener listener : shutdownListeners)
+    for (OOrientListener l : browseListeners())
       try {
-        listener.onStartup();
+        if (l != null && l instanceof OOrientStartupListener)
+          ((OOrientStartupListener)l).onStartup();
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error on startup", e);
       }
@@ -245,13 +239,6 @@ public class Orient extends OListenerManger<OOrientListener> {
       timer = null;
 
       profiler.shutdown();
-
-      for (OrientListener listener : shutdownListeners)
-        try {
-          listener.onShutdown();
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on shutdown", e);
-        }
 
       OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
       OLogManager.instance().flush();

@@ -16,16 +16,13 @@
 
 package com.orientechnologies.orient.core.schedule;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import javax.script.*;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.script.*;
+import com.orientechnologies.orient.core.command.script.OCommandScriptException;
+import com.orientechnologies.orient.core.command.script.OScriptDocumentDatabaseWrapper;
+import com.orientechnologies.orient.core.command.script.OScriptInjection;
+import com.orientechnologies.orient.core.command.script.OScriptManager;
+import com.orientechnologies.orient.core.command.script.OScriptOrientWrapper;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -33,6 +30,16 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OSchedulerListener.SCHEDULER_STATUS;
+
+import javax.script.Bindings;
+import javax.script.Invocable;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Author : henryzhao81@gmail.com Mar 28, 2013
@@ -97,6 +104,10 @@ public class OScheduler implements Runnable {
     return status;
   }
 
+  public void setStatus(String status) {
+    this.status = status;
+  }
+
   public Map<Object, Object> arguments() {
     return this.iArgs;
   }
@@ -107,10 +118,6 @@ public class OScheduler implements Runnable {
 
   public Date getStartTime() {
     return this.startTime;
-  }
-
-  public void setStatus(String status) {
-    this.status = status;
   }
 
   public boolean isRunning() {
@@ -141,21 +148,24 @@ public class OScheduler implements Runnable {
 
   @Override
   public void run() {
+    if (this.function == null)
+      return;
+
     isRunning = true;
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
-    Date date = new Date(System.currentTimeMillis());
+    final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
+    final Date date = new Date(System.currentTimeMillis());
     OLogManager.instance().warn(this, "execute : " + this.toString() + " at " + sdf.format(date));
     ODatabaseRecordThreadLocal.INSTANCE.set(db);
+
     this.document.field(PROP_STATUS, SCHEDULER_STATUS.RUNNING);
     this.document.field(PROP_STARTTIME, System.currentTimeMillis());
     this.document.save();
     OScriptManager scriptManager = null;
     Bindings binding = null;
+
+    scriptManager = Orient.instance().getScriptManager();
+    final ScriptEngine scriptEngine = scriptManager.acquireDatabaseEngine(db.getName(), function.getLanguage());
     try {
-      if (this.function == null)
-        return;
-      scriptManager = Orient.instance().getScriptManager();
-      final ScriptEngine scriptEngine = scriptManager.getEngine(this.function.getLanguage());
       binding = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE);
 
       for (OScriptInjection i : scriptManager.getInjections())
@@ -180,7 +190,7 @@ public class OScheduler implements Runnable {
         try {
           scriptEngine.eval(funcStr);
         } catch (ScriptException e) {
-          scriptManager.getErrorMessage(e, funcStr);
+          scriptManager.throwErrorMessage(e, funcStr);
         }
       }
       if (scriptEngine instanceof Invocable) {
@@ -205,6 +215,9 @@ public class OScheduler implements Runnable {
     } finally {
       if (scriptManager != null && binding != null)
         scriptManager.unbind(binding);
+
+      scriptManager.releaseDatabaseEngine(db.getName(), scriptEngine);
+
       OLogManager.instance().warn(this, "Job : " + this.toString() + " Finished!");
       isRunning = false;
       this.document.field(PROP_STATUS, SCHEDULER_STATUS.WAITING);
