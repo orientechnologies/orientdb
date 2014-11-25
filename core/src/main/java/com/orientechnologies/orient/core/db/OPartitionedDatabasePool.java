@@ -30,34 +30,41 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Lock free implementation of database pool which has good multicore scalability characteristics.
+ * <p>Lock free implementation of database pool which has good multicore scalability characteristics.</p>
  *
+ * <p>
  * Because pool is lock free it means that if connection pool exhausted it does not wait till free connections are released but
  * throws exception instead (this is going to be fixed in next versions, by using version of pool with 3 parameters, minimum pool
  * size, maximum pool size, maximum pool size under load, so pool will keep amount records from minimum to maxmimum value but under
  * high load it will be allowed to extend amount of connections which it keeps
  * till maximum size under load value and then amount of records in pool will be decreased).
+ * </p>
  *
+ * <p>
  * But increase in consumption of JVM resources because of addition of new more database instance with
  * the same url and the same user is very small.
+ * </p>
  *
+ * <p>
  * To acquire connection from the pool call {@link #acquire()} method but to release connection you just need to call
  * {@link com.orientechnologies.orient.core.db.document.ODatabaseDocument#close()} method.
+ * </p>
  *
+ * <p>
  * In case of remote storage database pool will keep connections to the remote storage till you close pool. So in case of remote
  * storage you should close pool at the end of it's usage, it also may be closed on application shutdown but you should not rely on
- * this behaviour.
+ * this behaviour.</p>
  *
- * This pool has one noticeable difference from other pools. If you perform several subsequent acquire calls in the same thread
+ * <p></p>This pool has one noticeable difference from other pools. If you perform several subsequent acquire calls in the same thread
  * the <b>same</b> instance of database will be returned, but amount of calls to close method should match to amount of acquire calls
  * to release database back in the pool. It will allow you to use such feature as transaction propagation when you perform call of one service
- * from another one.
+ * from another one.</p>
  *
- * Given pool has only one parameter now, amount of maximum connections for single partition.
+ * <p></p>Given pool has only one parameter now, amount of maximum connections for single partition.
  * When you start to use pool it will automatically split by several partitions, each partition is independent from other
  * which gives us very good multicore scalability. Amount of partitions will be close to amount of cores but it is not mandatory and
  * depends how much application is loaded. Amount of connections which may be hold by single partition is defined by user but we suggest to use
- * default parameters if your application load is not extremely high.
+ * default parameters if your application load is not extremely high.</p>
  *
  * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
  * @since 06/11/14

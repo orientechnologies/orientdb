@@ -48,6 +48,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServerAbstract {
@@ -166,28 +167,12 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
       json.writeAttribute(3, false, "name", role.getName());
       json.writeAttribute(3, false, "mode", role.getMode().toString());
 
-      json.beginCollection(3, true, "rules");
-      for (ORule rule : role.getRuleSet()) {
-        if (rule.getAccess() != null) {
-          json.beginObject(4);
-          json.writeAttribute(4, true, "name", rule.getResourceGeneric());
-          json.writeAttribute(4, false, "create", role.allow(rule.getResourceGeneric(), null, ORole.PERMISSION_CREATE));
-          json.writeAttribute(4, false, "read", role.allow(rule.getResourceGeneric(), null, ORole.PERMISSION_READ));
-          json.writeAttribute(4, false, "update", role.allow(rule.getResourceGeneric(), null, ORole.PERMISSION_UPDATE));
-          json.writeAttribute(4, false, "delete", role.allow(rule.getResourceGeneric(), null, ORole.PERMISSION_DELETE));
-          json.endObject(4, true);
-        }
-        for (String specificResource : rule.getSpecificResources().keySet()) {
-          json.beginObject(4);
-          json.writeAttribute(4, true, "name", rule.getResourceGeneric() + "." + specificResource);
-          json.writeAttribute(4, false, "create", role.allow(rule.getResourceGeneric(), specificResource, ORole.PERMISSION_CREATE));
-          json.writeAttribute(4, false, "read", role.allow(rule.getResourceGeneric(), specificResource, ORole.PERMISSION_READ));
-          json.writeAttribute(4, false, "update", role.allow(rule.getResourceGeneric(), specificResource, ORole.PERMISSION_UPDATE));
-          json.writeAttribute(4, false, "delete", role.allow(rule.getResourceGeneric(), specificResource, ORole.PERMISSION_DELETE));
-          json.endObject(4, true);
-        }
+      json.beginObject(3, true, "rules");
+      if (role.getRules() != null) {
+        for (Map.Entry<String, Byte> rule : role.getRules().entrySet())
+          json.writeAttribute(rule.getKey(), rule.getValue());
       }
-      json.endCollection(3, false);
+      json.endObject(3, true);
 
       json.endObject(2, true);
     }

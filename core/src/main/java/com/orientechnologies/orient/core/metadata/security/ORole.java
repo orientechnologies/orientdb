@@ -356,12 +356,14 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
     final Map<String, Byte> result = new HashMap<String, Byte>();
 
     for (ORule rule : rules.values()) {
+      String name = ORule.mapResourceGenericToLegacyResource(rule.getResourceGeneric());
+
       if (rule.getAccess() != null) {
-        result.put(rule.getResourceGeneric().name(), rule.getAccess());
+        result.put(name, rule.getAccess());
       }
 
       for (Map.Entry<String, Byte> specificResource : rule.getSpecificResources().entrySet()) {
-        result.put(rule.getResourceGeneric().name() + "." + specificResource.getKey(), specificResource.getValue());
+        result.put(name + "." + specificResource.getKey(), specificResource.getValue());
       }
     }
 

@@ -183,7 +183,7 @@ public class Orient extends OListenerManger<OOrientListener> {
     for (OOrientListener l : browseListeners())
       try {
         if (l != null && l instanceof OOrientStartupListener)
-          ((OOrientStartupListener)l).onStartup();
+          ((OOrientStartupListener) l).onStartup();
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error on startup", e);
       }
@@ -206,12 +206,6 @@ public class Orient extends OListenerManger<OOrientListener> {
       }
 
       OLogManager.instance().debug(this, "Orient Engine is shutting down...");
-
-      // CALL THE SHUTDOWN ON ALL THE LISTENERS
-      for (OOrientListener l : browseListeners()) {
-        if (l != null)
-          l.onShutdown();
-      }
 
       closeAllStorages();
 
@@ -240,12 +234,24 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       profiler.shutdown();
 
-      OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
-      OLogManager.instance().flush();
-
     } finally {
       engineLock.writeLock().unlock();
     }
+
+    // CALL THE SHUTDOWN ON ALL THE LISTENERS
+    for (OOrientListener l : browseListeners()) {
+      if (l != null)
+        try {
+          l.onShutdown();
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error during orient shutdown.");
+        }
+
+    }
+
+    OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
+    OLogManager.instance().flush();
+
     return this;
   }
 
