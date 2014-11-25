@@ -16,6 +16,9 @@
       <div class="panel-heading">
         <div class="row">
           <div class="col-md-6">
+            <h5>
+              Total issues {{pager.totalElements}}
+            </h5>
           </div>
           <div class="col-md-6">
             <div class="btn-group">
@@ -33,7 +36,8 @@
             <div class="btn-group">
               <button class="btn btn-transparent" class="btn btn-lg btn-primary" data-placement="bottom-right"
                       data-animation="none" data-template="views/issues/popover/labels.html"
-                      title="{{popover.title}}" data-content="{{popover.content}}" data-trigger="click" bs-popover="labelPopover">
+                      title="{{popover.title}}" data-content="{{popover.content}}" data-trigger="click"
+                      bs-popover="labelPopover">
                 Labels <i
                 class="fa fa-caret-square-o-down"></i></button>
             </div>
@@ -61,8 +65,6 @@
       </div>
       <div class="list-group">
         <div class="list-group-item" ng-repeat="issue in issues">
-          <!--<a href="#issues/{{issue.repository.name}}@{{issue.number}}" class="list-group-item" ng-repeat="issue in issues"> -->
-
           <div class="row">
             <div class="col-md-1">
               <div class="col-md-6">
@@ -100,7 +102,21 @@
             </div>
           </div>
         </div>
-        <!--</a>-->
+        <nav class="text-center">
+          <ul class="pagination ">
+
+            <li ng-class="{'disabled' : pager.number == 1}">
+              <a href="javascript:void(0)" ng-disabled="pager.number == 1" ng-click="changePage(pager.number-1)"><span
+                aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></a></li>
+            <li ng-class="{'active' : $index+1 == pager.number }"
+                ng-repeat="n in getNumber(pager.totalPages) track by $index"><a
+              href="javascript:void(0)" ng-click="changePage($index+1)">{{$index+1}}</a>
+            </li>
+            <li ng-class="{'disabled' : pager.number == pager.totalPages}"><a href="javascript:void(0)"
+                                                                              ng-click="changePage(pager.number+1)"><span
+              aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></a></li>
+          </ul>
+        </nav>
       </div>
     </div>
   </div>

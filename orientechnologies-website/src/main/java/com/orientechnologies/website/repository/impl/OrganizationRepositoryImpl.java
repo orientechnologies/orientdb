@@ -4,12 +4,14 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.website.OrientDBFactory;
+import com.orientechnologies.website.hateoas.Page;
 import com.orientechnologies.website.model.schema.*;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientElement;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,11 +46,36 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   }
 
   @Override
-  public List<Issue> findOrganizationIssues(String name, String q) {
+  public List<Issue> findOrganizationIssues(String name, String q, String page, String perPage) {
     OrientGraph db = dbFactory.getGraph();
 
     String query = String.format(
         "select from (select expand(out('HasRepo').out('HasIssue')) from Organization where name = '%s') ", name);
+    query = addParams(q, query);
+    Integer limit = new Integer(perPage);
+    Integer skip = limit * (new Integer(page) - 1);
+    query += " SKIP " + skip + " LIMIT " + limit;
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+
+    List<Issue> issues = new ArrayList<Issue>();
+    for (OrientVertex vertice : vertices) {
+      ODocument doc = vertice.getRecord();
+      issues.add(OIssue.NUMBER.fromDoc(doc, db));
+    }
+    return issues;
+  }
+
+  public long countOrganizationIssues(String name, String q, String page, String perPage) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format(
+        "select count(*) from (select expand(out('HasRepo').out('HasIssue')) from Organization where name = '%s') ", name);
+    query = addParams(q, query);
+    Iterable<OrientElement> documents = db.command(new OCommandSQL(query)).execute();
+    return documents.iterator().next().getRecord().field("count");
+
+  }
+
+  private String addParams(String q, String query) {
     int idx = 0;
     String fullText = "";
     if (q != null && !q.isEmpty()) {
@@ -66,14 +93,17 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     }
     if (!fullText.isEmpty())
       query = applyParam(query, "title", fullText, idx++);
-    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+    return query;
+  }
 
-    List<Issue> issues = new ArrayList<Issue>();
-    for (OrientVertex vertice : vertices) {
-      ODocument doc = vertice.getRecord();
-      issues.add(OIssue.NUMBER.fromDoc(doc, db));
-    }
-    return issues;
+  @Override
+  public Page<Issue> findOrganizationIssuesPaged(String name, String q, String page, String perPage) {
+
+    List<Issue> issues = findOrganizationIssues(name, q, page, perPage);
+    long count = countOrganizationIssues(name, q, page, perPage);
+    long p = new Long(page);
+    long pP = new Long(perPage);
+    return new Page<Issue>(p, pP, count, issues);
   }
 
   private String applyParam(String incominQuery, String name, String value, int idx) {

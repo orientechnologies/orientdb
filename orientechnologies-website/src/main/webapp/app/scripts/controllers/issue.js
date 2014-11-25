@@ -3,19 +3,25 @@ angular.module('webappApp')
   .controller('IssueCtrl', function ($scope, Organization, $routeParams) {
 
     $scope.query = 'is:open'
+    $scope.page = 1;
     // Query By Example
     $scope.issue = {};
     if ($routeParams.q) {
       $scope.query = $routeParams.q;
     }
+    if ($routeParams.page) {
+      $scope.page = $routeParams.page;
+    }
 
     $scope.labelPopover = {
       close: true
     }
-    $scope.issues = Organization.all('issues').getList({q: $scope.query}).$object;
 
     $scope.search = function () {
-      $scope.issues = Organization.all('issues').getList({q: $scope.query}).$object;
+      Organization.all('issues').customGET("", {q: $scope.query, page: $scope.page}).then(function (data) {
+        $scope.issues = data.content;
+        $scope.pager = data.page;
+      });
     }
 
     Organization.all("scopes").getList().then(function (data) {
@@ -109,6 +115,16 @@ angular.module('webappApp')
         $scope.search();
       }
     });
+    $scope.getNumber = function (number) {
+      return new Array(number);
+    }
+    $scope.changePage = function (val) {
+      if (val > 0 && val <= $scope.pager.totalPages) {
+        $scope.page = val;
+        $scope.search();
+      }
+    }
+    $scope.search();
   });
 
 angular.module('webappApp')

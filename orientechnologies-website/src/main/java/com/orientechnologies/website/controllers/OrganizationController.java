@@ -1,14 +1,19 @@
 package com.orientechnologies.website.controllers;
 
 import com.orientechnologies.website.configuration.ApiVersion;
+import com.orientechnologies.website.hateoas.assembler.IssueAssembler;
+import com.orientechnologies.website.hateoas.Page;
+import com.orientechnologies.website.hateoas.assembler.PagedResourceAssembler;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.web.IssueDTO;
+import com.orientechnologies.website.model.schema.dto.web.hateoas.IssueResource;
 import com.orientechnologies.website.repository.OrganizationRepository;
 import com.orientechnologies.website.repository.RepositoryRepository;
 import com.orientechnologies.website.services.OrganizationService;
 import com.orientechnologies.website.services.RepositoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.hateoas.PagedResources;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -33,6 +38,12 @@ public class OrganizationController {
   @Autowired
   private RepositoryService      repositoryService;
 
+  @Autowired
+  private IssueAssembler         issueAssembler;
+
+  @Autowired
+  private PagedResourceAssembler pagedResourceAssembler;
+
   @RequestMapping(value = "{name}", method = RequestMethod.GET)
   public ResponseEntity<Organization> getOrganizationInfo(@PathVariable("name") String name) {
 
@@ -44,9 +55,21 @@ public class OrganizationController {
     }
   }
 
+  // @RequestMapping(value = "{name}/issues", method = RequestMethod.GET)
+  // public ResponseEntity<List<Issue>> getOrganizationIssues(@PathVariable("name") String name,
+  // @RequestParam(value = "q", defaultValue = "") String q, @RequestParam(value = "page", defaultValue = "1") String page,
+  // @RequestParam(value = "per_page", defaultValue = "10") String perPage) {
+  // return new ResponseEntity<List<Issue>>(orgRepository.findOrganizationIssues(name, q, page, perPage), HttpStatus.OK);
+  // }
+
   @RequestMapping(value = "{name}/issues", method = RequestMethod.GET)
-  public ResponseEntity<List<Issue>> getOrganizationIssues(@PathVariable("name") String name, @RequestParam(value = "q") String q) {
-    return new ResponseEntity<List<Issue>>(orgRepository.findOrganizationIssues(name, q), HttpStatus.OK);
+  public ResponseEntity<PagedResources<IssueResource>> getOrganizationIssuesPaged(@PathVariable("name") String name,
+      @RequestParam(value = "q", defaultValue = "") String q, @RequestParam(value = "page", defaultValue = "1") String page,
+      @RequestParam(value = "per_page", defaultValue = "10") String perPage) {
+
+    Page<Issue> issues = orgRepository.findOrganizationIssuesPaged(name, q, page, perPage);
+    return new ResponseEntity<PagedResources<IssueResource>>(pagedResourceAssembler.toResource(issues, issueAssembler),
+        HttpStatus.OK);
   }
 
   @RequestMapping(value = "{name}/repos", method = RequestMethod.GET)

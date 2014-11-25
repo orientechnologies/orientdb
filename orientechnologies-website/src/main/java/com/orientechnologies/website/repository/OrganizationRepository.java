@@ -1,5 +1,6 @@
 package com.orientechnologies.website.repository;
 
+import com.orientechnologies.website.hateoas.Page;
 import com.orientechnologies.website.model.schema.dto.*;
 
 import java.util.List;
@@ -8,7 +9,9 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
 
   public Organization findOneByName(String name);
 
-  public List<Issue> findOrganizationIssues(String name, String q);
+  public List<Issue> findOrganizationIssues(String name, String q, String page, String perPage);
+
+  public Page<Issue> findOrganizationIssuesPaged(String name, String q, String page, String perPage);
 
   public List<Repository> findOrganizationRepositories(String name);
 
