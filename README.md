@@ -48,7 +48,7 @@ Start learning OrientDB by following the first  [Tutorial](https://github.com/or
 - [Professional Support](www.orientechnologies.com/support/).
 
 
-[![](http://mac.softpedia.com/base_img/softpedia_free_award_f.gif)](http://mac.softpedia.com/get/Developer-Tools/Orient.shtml)
+[![](http://www.softpedia.com/_img/softpedia_100_free.png)](http://mac.softpedia.com/get/Developer-Tools/Orient.shtml)
 
 [![githalytics.com alpha](https://cruel-carlota.pagodabox.com/56a16d9c5e47a25019e0be3a52d8a366 "githalytics.com")](http://githalytics.com/orientechnologies/orientdb)
 
