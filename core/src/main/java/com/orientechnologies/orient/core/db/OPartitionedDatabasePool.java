@@ -30,67 +30,101 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Lock free implementation of database pool which has good multicore scalability characteristics.
+ * Lock free implementation of database pool which has good multi-core scalability characteristics.
  *
- * Because pool is lock free it means that if connection pool exhausted it does not wait till free connections are released but
- * throws exception instead (this is going to be fixed in next versions, by using version of pool with 3 parameters, minimum pool
- * size, maximum pool size, maximum pool size under load, so pool will keep amount records from minimum to maxmimum value but under
- * high load it will be allowed to extend amount of connections which it keeps
- * till maximum size under load value and then amount of records in pool will be decreased).
+ * When connection pool is exhausted it does not wait till free connections are released, but rather throws exception (this is going
+ * to be fixed in next versions, by using version of pool with 3 parameters, minimum pool size, maximum pool size, maximum pool size
+ * under load, so pool will keep amount of records from minimum to maximum value. Under high load it will be allowed to extend the
+ * amount of connections which it keeps on till the maximum size is under load value and then amount of records in pool will be
+ * decreased).
  *
- * But increase in consumption of JVM resources because of addition of new more database instance with
- * the same url and the same user is very small.
+ * It consumes more JVM resources because the addition of new more database instances with the same url and the same user is very
+ * small.
  *
- * To acquire connection from the pool call {@link #acquire()} method but to release connection you just need to call
- * {@link com.orientechnologies.orient.core.db.document.ODatabaseDocument#close()} method.
+ * To acquire a new connection from the pool use the {@link #acquire()} method. To release the connection back to the pool you just
+ * need to call the {@link com.orientechnologies.orient.core.db.document.ODatabaseDocument#close()} method.
  *
- * In case of remote storage database pool will keep connections to the remote storage till you close pool. So in case of remote
- * storage you should close pool at the end of it's usage, it also may be closed on application shutdown but you should not rely on
- * this behaviour.
+ * In case of remote storage database the pool will keep connections to the remote storage till you close the pool. So in case of
+ * remote storage you should close the pool at the end of the usage. It also may be closed on application shutdown, but you should
+ * not rely on this behaviour, but rather assure to close it once finished to work with remote servers.
  *
- * This pool has one noticeable difference from other pools. If you perform several subsequent acquire calls in the same thread
- * the <b>same</b> instance of database will be returned, but amount of calls to close method should match to amount of acquire calls
- * to release database back in the pool. It will allow you to use such feature as transaction propagation when you perform call of one service
- * from another one.
+ * This pool has one noticeable difference from other pools. If you perform several subsequent acquire calls in the same thread the
+ * <b>same</b> instance of database will be returned, but amount of calls to close method should match to amount of acquire calls to
+ * release database back in the pool. It will allow you to use such feature as transaction propagation when you perform call of one
+ * service from another one.
  *
- * Given pool has only one parameter now, amount of maximum connections for single partition.
- * When you start to use pool it will automatically split by several partitions, each partition is independent from other
- * which gives us very good multicore scalability. Amount of partitions will be close to amount of cores but it is not mandatory and
- * depends how much application is loaded. Amount of connections which may be hold by single partition is defined by user but we suggest to use
- * default parameters if your application load is not extremely high.
+ * Given pool has only one parameter now: amount of maximum connections for single partition. When you start using the pool it will
+ * automatically split the list of connections in several partitions, each partition is independent from others which gives us very
+ * good multi-core scalability. The amount of partitions will be close to the amount of cores, but it is not mandatory and depends
+ * how much application is loaded. The amount of connections which may be hold by single partition is defined by user, but we
+ * suggest to use default parameters if your application load is not extremely high.
  *
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin <a href="mailto:a.lomakin@orientechnologies.com">Andrey Lomakin</a>
  * @since 06/11/14
  */
 public class OPartitionedDatabasePool extends OOrientListenerAbstract {
-  private final String         url;
-  private final String         userName;
-  private final String         password;
+  private static final int            HASH_INCREMENT = 0x61c88647;
+  private static final int            MIN_POOL_SIZE  = 2;
+  private static AtomicInteger        nextHashCode   = new AtomicInteger();
+  private final String                url;
+  private final String                userName;
+  private final String                password;
+  private final int                   maxSize;
+  private final ThreadLocal<PoolData> poolData       = new ThreadLocal<PoolData>() {
+                                                       @Override
+                                                       protected PoolData initialValue() {
+                                                         return new PoolData();
+                                                       }
+                                                     };
+  private final AtomicBoolean         poolBusy       = new AtomicBoolean();
+  private final int                   maxPartitions  = Runtime.getRuntime().availableProcessors() << 3;
+  private volatile PoolPartition[]    partitions;
+  private volatile boolean            closed         = false;
 
-  private final int            maxSize;
+  private static final class PoolData {
+    private final int                hashCode;
+    private int                      acquireCount;
+    private DatabaseDocumentTxPolled acquiredDatabase;
 
-  private static final int     HASH_INCREMENT = 0x61c88647;
-  private static final int     MIN_POOL_SIZE  = 2;
-
-  private static AtomicInteger nextHashCode   = new AtomicInteger();
-
-  private static int nextHashCode() {
-    return nextHashCode.getAndAdd(HASH_INCREMENT);
+    private PoolData() {
+      hashCode = nextHashCode();
+    }
   }
 
-  private final ThreadLocal<PoolData> poolData      = new ThreadLocal<PoolData>() {
-                                                      @Override
-                                                      protected PoolData initialValue() {
-                                                        return new PoolData();
-                                                      }
-                                                    };
+  private static final class PoolPartition {
+    private final AtomicInteger                                   currentSize         = new AtomicInteger();
+    private final AtomicInteger                                   acquiredConnections = new AtomicInteger();
+    private final ConcurrentLinkedQueue<DatabaseDocumentTxPolled> queue               = new ConcurrentLinkedQueue<DatabaseDocumentTxPolled>();
+  }
 
-  private final AtomicBoolean         poolBusy      = new AtomicBoolean();
-  private final int                   maxPartitions = Runtime.getRuntime().availableProcessors() << 3;
+  private final class DatabaseDocumentTxPolled extends ODatabaseDocumentTx {
+    private PoolPartition partition;
 
-  private volatile PoolPartition[]    partitions;
+    private DatabaseDocumentTxPolled(String iURL) {
+      super(iURL, true);
+    }
 
-  private volatile boolean            closed        = false;
+    @Override
+    public void close() {
+      final PoolData data = poolData.get();
+      if (data.acquireCount == 0)
+        return;
+
+      data.acquireCount--;
+
+      if (data.acquireCount > 0)
+        return;
+
+      PoolPartition p = partition;
+      partition = null;
+
+      super.close();
+      data.acquiredDatabase = null;
+
+      p.queue.offer(this);
+      p.acquiredConnections.decrementAndGet();
+    }
+  }
 
   public OPartitionedDatabasePool(String url, String userName, String password) {
     this(url, userName, password, 64);
@@ -113,8 +147,12 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
 
     partitions = pts;
 
-		Orient.instance().registerListener(this);
+    Orient.instance().registerListener(this);
 
+  }
+
+  private static int nextHashCode() {
+    return nextHashCode.getAndAdd(HASH_INCREMENT);
   }
 
   public String getUrl() {
@@ -123,17 +161,6 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
 
   public String getUserName() {
     return userName;
-  }
-
-  private void initQueue(String url, PoolPartition partition) {
-    ConcurrentLinkedQueue<DatabaseDocumentTxPolled> queue = partition.queue;
-
-    for (int n = 0; n < MIN_POOL_SIZE; n++) {
-      final DatabaseDocumentTxPolled db = new DatabaseDocumentTxPolled(url);
-      queue.add(db);
-    }
-
-    partition.currentSize.addAndGet(MIN_POOL_SIZE);
   }
 
   public int getMaxSize() {
@@ -259,11 +286,6 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
     close();
   }
 
-  private void checkForClose() {
-    if (closed)
-      throw new IllegalStateException("Pool is closed");
-  }
-
   public void close() {
     if (closed)
       return;
@@ -285,49 +307,19 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
     }
   }
 
-  private final class DatabaseDocumentTxPolled extends ODatabaseDocumentTx {
-    private PoolPartition partition;
+  private void initQueue(String url, PoolPartition partition) {
+    ConcurrentLinkedQueue<DatabaseDocumentTxPolled> queue = partition.queue;
 
-    private DatabaseDocumentTxPolled(String iURL) {
-      super(iURL, true);
+    for (int n = 0; n < MIN_POOL_SIZE; n++) {
+      final DatabaseDocumentTxPolled db = new DatabaseDocumentTxPolled(url);
+      queue.add(db);
     }
 
-    @Override
-    public void close() {
-      final PoolData data = poolData.get();
-      if (data.acquireCount == 0)
-        return;
-
-      data.acquireCount--;
-
-      if (data.acquireCount > 0)
-        return;
-
-      PoolPartition p = partition;
-      partition = null;
-
-      super.close();
-      data.acquiredDatabase = null;
-
-      p.queue.offer(this);
-      p.acquiredConnections.decrementAndGet();
-    }
+    partition.currentSize.addAndGet(MIN_POOL_SIZE);
   }
 
-  private static final class PoolData {
-    private final int hashCode;
-
-    private PoolData() {
-      hashCode = nextHashCode();
-    }
-
-    private int                      acquireCount;
-    private DatabaseDocumentTxPolled acquiredDatabase;
-  }
-
-  private static final class PoolPartition {
-    private final AtomicInteger                                   currentSize         = new AtomicInteger();
-    private final AtomicInteger                                   acquiredConnections = new AtomicInteger();
-    private final ConcurrentLinkedQueue<DatabaseDocumentTxPolled> queue               = new ConcurrentLinkedQueue<DatabaseDocumentTxPolled>();
+  private void checkForClose() {
+    if (closed)
+      throw new IllegalStateException("Pool is closed");
   }
 }
