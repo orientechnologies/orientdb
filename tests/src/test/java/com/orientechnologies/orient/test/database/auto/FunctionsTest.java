@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -25,6 +26,7 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Test(groups = "function")
 public class FunctionsTest extends DocumentDBBaseTest {
@@ -73,10 +75,56 @@ public class FunctionsTest extends DocumentDBBaseTest {
     func.field("code", "return 2;");
     func.save();
 
-    OResultSet<OIdentifiable>  res2 = database.command(new OCommandSQL("select testCache()")).execute();
+    OResultSet<OIdentifiable> res2 = database.command(new OCommandSQL("select testCache()")).execute();
     Assert.assertNotNull(res2);
     Assert.assertNotNull(res2.get(0));
     Assert.assertEquals(((ODocument) res2.get(0)).field("testCache"), 2);
   }
 
+  @Test
+  public void testMultiThreadsFunctionCallMoreThanPool() {
+    final OIdentifiable f = database.command(new OCommandSQL("create function testMTCall \"return 3;\" LANGUAGE Javascript"))
+        .execute();
+    Assert.assertNotNull(f);
+
+    final int TOT = 1000;
+    final int threadNum = OGlobalConfiguration.SCRIPT_POOL.getValueAsInteger() * 3;
+    System.out.println("Starting " + threadNum + " concurrent threads with scriptPool="
+        + OGlobalConfiguration.SCRIPT_POOL.getValueAsInteger() + " executing function for " + TOT + " times");
+
+    final long startTime = System.currentTimeMillis();
+
+    final AtomicLong counter = new AtomicLong();
+
+    final Thread[] threads = new Thread[threadNum];
+    for (int i = 0; i < threadNum; ++i) {
+      threads[i] = new Thread() {
+        public void run() {
+          for (int cycle = 0; cycle < TOT; ++cycle) {
+            OResultSet<OIdentifiable> res1 = database.command(new OCommandSQL("select testMTCall()")).execute();
+            Assert.assertNotNull(res1);
+            Assert.assertNotNull(res1.get(0));
+            Assert.assertEquals(((ODocument) res1.get(0)).field("testMTCall"), 3);
+
+            counter.incrementAndGet();
+          }
+        }
+      };
+      threads[i].start();
+    }
+
+    for (int i = 0; i < threadNum; ++i)
+      try {
+        threads[i].join();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+
+    Assert.assertEquals(counter.get(), (long) threadNum * TOT);
+
+    final long totalTime = System.currentTimeMillis() - startTime;
+    System.out.println("Executed in " + totalTime + "ms: select+fun()=" + (totalTime / ((float) threadNum * TOT))
+        + " select+fun()/sec=" + (1000 / (totalTime / ((float) threadNum * TOT))));
+
+  }
 }
