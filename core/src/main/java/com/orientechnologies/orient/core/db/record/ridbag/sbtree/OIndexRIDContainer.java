@@ -35,7 +35,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 /**
  * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent way.
  * 
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OIndexRIDContainer implements Set<OIdentifiable> {
   public static final String INDEX_FILE_EXTENSION = ".irs";

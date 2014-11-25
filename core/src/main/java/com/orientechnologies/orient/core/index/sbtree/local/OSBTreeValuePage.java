@@ -42,7 +42,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
  * !!! This functionality should be removed after new sbtree based ridbag will be implemented, because it doest not make any sense
  * to keep it, it will provide performance degradation only !!!!!!
  * 
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 9/27/13
  */
 public class OSBTreeValuePage extends ODurablePage {

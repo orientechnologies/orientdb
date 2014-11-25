@@ -26,7 +26,8 @@ import java.nio.ByteBuffer;
  * This class is utility class for split primitive types to separate byte buffers and vice versa. This class is used because we use
  * many byte buffers for mmap and there is situation when we need to write value on border of two buffers.
  * 
- * @author Artem Loginov (logart) logart2007@gmail.com Date: 5/25/12 Time: 6:37 AM
+ * @author Artem Loginov (logart2007@gmail.com)
+ * @since 5/25/12 6:37 AM
  */
 public class OByteBufferUtils {
   public static final int  SIZE_OF_SHORT        = 2;

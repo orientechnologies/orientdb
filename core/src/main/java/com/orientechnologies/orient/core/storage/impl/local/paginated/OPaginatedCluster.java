@@ -52,7 +52,7 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 10/7/13
  */
 public class OPaginatedCluster extends ODurableComponent implements OCluster {

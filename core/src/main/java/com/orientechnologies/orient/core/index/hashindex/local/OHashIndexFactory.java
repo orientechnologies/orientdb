@@ -37,7 +37,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
 /**
  * 
  * 
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OHashIndexFactory implements OIndexFactory {
 

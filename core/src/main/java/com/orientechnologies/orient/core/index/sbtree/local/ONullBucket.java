@@ -37,7 +37,7 @@ import java.io.IOException;
  * <li>The rest is serialized value whether link or passed in value.</li>
  * </ol>
  * 
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 4/15/14
  */
 public class ONullBucket<V> extends ODurablePage {

@@ -19,7 +19,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 /**
  * Tests that {@link ODocument} is serializable.
  * 
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  * @since 12/20/12
  */
 public class ODocumentSerializationPersistentTest {

@@ -23,7 +23,7 @@ package com.orientechnologies.common.serialization.types;
 import java.util.Map;
 
 /**
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OSerializationHelper {
   public static final OSerializationHelper INSTANCE = new OSerializationHelper();

@@ -66,38 +66,72 @@ import java.util.concurrent.atomic.AtomicInteger;
  * depends how much application is loaded. Amount of connections which may be hold by single partition is defined by user but we suggest to use
  * default parameters if your application load is not extremely high.</p>
  *
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 06/11/14
  */
 public class OPartitionedDatabasePool extends OOrientListenerAbstract {
-  private final String         url;
-  private final String         userName;
-  private final String         password;
+  private static final int            HASH_INCREMENT = 0x61c88647;
+  private static final int            MIN_POOL_SIZE  = 2;
+  private static AtomicInteger        nextHashCode   = new AtomicInteger();
+  private final String                url;
+  private final String                userName;
+  private final String                password;
+  private final int                   maxSize;
+  private final ThreadLocal<PoolData> poolData       = new ThreadLocal<PoolData>() {
+                                                       @Override
+                                                       protected PoolData initialValue() {
+                                                         return new PoolData();
+                                                       }
+                                                     };
+  private final AtomicBoolean         poolBusy       = new AtomicBoolean();
+  private final int                   maxPartitions  = Runtime.getRuntime().availableProcessors() << 3;
+  private volatile PoolPartition[]    partitions;
+  private volatile boolean            closed         = false;
 
-  private final int            maxSize;
+  private static final class PoolData {
+    private final int                hashCode;
+    private int                      acquireCount;
+    private DatabaseDocumentTxPolled acquiredDatabase;
 
-  private static final int     HASH_INCREMENT = 0x61c88647;
-  private static final int     MIN_POOL_SIZE  = 2;
-
-  private static AtomicInteger nextHashCode   = new AtomicInteger();
-
-  private static int nextHashCode() {
-    return nextHashCode.getAndAdd(HASH_INCREMENT);
+    private PoolData() {
+      hashCode = nextHashCode();
+    }
   }
 
-  private final ThreadLocal<PoolData> poolData      = new ThreadLocal<PoolData>() {
-                                                      @Override
-                                                      protected PoolData initialValue() {
-                                                        return new PoolData();
-                                                      }
-                                                    };
+  private static final class PoolPartition {
+    private final AtomicInteger                                   currentSize         = new AtomicInteger();
+    private final AtomicInteger                                   acquiredConnections = new AtomicInteger();
+    private final ConcurrentLinkedQueue<DatabaseDocumentTxPolled> queue               = new ConcurrentLinkedQueue<DatabaseDocumentTxPolled>();
+  }
 
-  private final AtomicBoolean         poolBusy      = new AtomicBoolean();
-  private final int                   maxPartitions = Runtime.getRuntime().availableProcessors() << 3;
+  private final class DatabaseDocumentTxPolled extends ODatabaseDocumentTx {
+    private PoolPartition partition;
 
-  private volatile PoolPartition[]    partitions;
+    private DatabaseDocumentTxPolled(String iURL) {
+      super(iURL, true);
+    }
 
-  private volatile boolean            closed        = false;
+    @Override
+    public void close() {
+      final PoolData data = poolData.get();
+      if (data.acquireCount == 0)
+        return;
+
+      data.acquireCount--;
+
+      if (data.acquireCount > 0)
+        return;
+
+      PoolPartition p = partition;
+      partition = null;
+
+      super.close();
+      data.acquiredDatabase = null;
+
+      p.queue.offer(this);
+      p.acquiredConnections.decrementAndGet();
+    }
+  }
 
   public OPartitionedDatabasePool(String url, String userName, String password) {
     this(url, userName, password, 64);
@@ -120,8 +154,12 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
 
     partitions = pts;
 
-		Orient.instance().registerListener(this);
+    Orient.instance().registerListener(this);
 
+  }
+
+  private static int nextHashCode() {
+    return nextHashCode.getAndAdd(HASH_INCREMENT);
   }
 
   public String getUrl() {
@@ -130,17 +168,6 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
 
   public String getUserName() {
     return userName;
-  }
-
-  private void initQueue(String url, PoolPartition partition) {
-    ConcurrentLinkedQueue<DatabaseDocumentTxPolled> queue = partition.queue;
-
-    for (int n = 0; n < MIN_POOL_SIZE; n++) {
-      final DatabaseDocumentTxPolled db = new DatabaseDocumentTxPolled(url);
-      queue.add(db);
-    }
-
-    partition.currentSize.addAndGet(MIN_POOL_SIZE);
   }
 
   public int getMaxSize() {
@@ -266,11 +293,6 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
     close();
   }
 
-  private void checkForClose() {
-    if (closed)
-      throw new IllegalStateException("Pool is closed");
-  }
-
   public void close() {
     if (closed)
       return;
@@ -292,49 +314,19 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
     }
   }
 
-  private final class DatabaseDocumentTxPolled extends ODatabaseDocumentTx {
-    private PoolPartition partition;
+  private void initQueue(String url, PoolPartition partition) {
+    ConcurrentLinkedQueue<DatabaseDocumentTxPolled> queue = partition.queue;
 
-    private DatabaseDocumentTxPolled(String iURL) {
-      super(iURL, true);
+    for (int n = 0; n < MIN_POOL_SIZE; n++) {
+      final DatabaseDocumentTxPolled db = new DatabaseDocumentTxPolled(url);
+      queue.add(db);
     }
 
-    @Override
-    public void close() {
-      final PoolData data = poolData.get();
-      if (data.acquireCount == 0)
-        return;
-
-      data.acquireCount--;
-
-      if (data.acquireCount > 0)
-        return;
-
-      PoolPartition p = partition;
-      partition = null;
-
-      super.close();
-      data.acquiredDatabase = null;
-
-      p.queue.offer(this);
-      p.acquiredConnections.decrementAndGet();
-    }
+    partition.currentSize.addAndGet(MIN_POOL_SIZE);
   }
 
-  private static final class PoolData {
-    private final int hashCode;
-
-    private PoolData() {
-      hashCode = nextHashCode();
-    }
-
-    private int                      acquireCount;
-    private DatabaseDocumentTxPolled acquiredDatabase;
-  }
-
-  private static final class PoolPartition {
-    private final AtomicInteger                                   currentSize         = new AtomicInteger();
-    private final AtomicInteger                                   acquiredConnections = new AtomicInteger();
-    private final ConcurrentLinkedQueue<DatabaseDocumentTxPolled> queue               = new ConcurrentLinkedQueue<DatabaseDocumentTxPolled>();
+  private void checkForClose() {
+    if (closed)
+      throw new IllegalStateException("Pool is closed");
   }
 }

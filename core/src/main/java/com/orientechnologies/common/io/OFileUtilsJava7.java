@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.nio.file.*;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 7/22/14
  */
 public class OFileUtilsJava7 {

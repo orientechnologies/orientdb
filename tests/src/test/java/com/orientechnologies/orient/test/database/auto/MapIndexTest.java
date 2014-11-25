@@ -17,7 +17,7 @@ import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.domain.whiz.Mapper;
 
 /**
- * @author LomakiA <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author LomakiA <a href="mailto:a.lomakin@orientechnologies.com">Andrey Lomakin</a>
  * @since 21.12.11
  */
 @Test(groups = { "index" })

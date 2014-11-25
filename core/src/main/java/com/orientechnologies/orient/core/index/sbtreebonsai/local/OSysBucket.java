@@ -40,7 +40,7 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry
  * <li>pointer to free space</li>
  * </ul>
  * 
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OSysBucket extends OBonsaiBucketAbstract {
   private static final int  SYS_MAGIC_OFFSET        = WAL_POSITION_OFFSET + OLongSerializer.LONG_SIZE;

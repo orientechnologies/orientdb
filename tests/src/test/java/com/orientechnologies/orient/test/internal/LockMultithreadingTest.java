@@ -21,7 +21,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 /**
- * @author Artem Loginov (logart2007@gmail.com)
+ * @author Artem Loginov (logart2007-at-gmail.com)
  */
 @Test
 public class LockMultithreadingTest {

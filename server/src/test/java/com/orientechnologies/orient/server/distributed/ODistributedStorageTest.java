@@ -11,7 +11,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.server.OServer;
 
 /**
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class ODistributedStorageTest {
 

@@ -43,7 +43,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  * but usually you will work with disk based data structures which work using disk cache so you will not allocate direct memory by
  * yourself.
  *
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 10/19/13
  */
 public class ODirectMemoryPointer {

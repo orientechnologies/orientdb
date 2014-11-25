@@ -30,7 +30,7 @@ import java.util.Arrays;
 /**
  * Serializer for byte arrays .
  *
- * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
+ * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
  * @since 20.01.12
  */
 public class OBinaryTypeSerializer implements OBinarySerializer<byte[]> {

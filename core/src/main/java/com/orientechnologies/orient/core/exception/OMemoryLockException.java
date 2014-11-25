@@ -23,7 +23,8 @@ package com.orientechnologies.orient.core.exception;
 /**
  * This exception is thrown when error on locking memory occurred. For example when JNA library can not satisfy native dependency.
  * 
- * @author Artem Loginov (logart) logart2007@gmail.com Date: 6/4/12 Time: 4:05 PM
+ * @author Artem Loginov (logart2007-atgmail.com)
+ * @since 6/4/12 4:05 PM
  */
 public class OMemoryLockException extends ODatabaseException {
   private static final long serialVersionUID = 1L;

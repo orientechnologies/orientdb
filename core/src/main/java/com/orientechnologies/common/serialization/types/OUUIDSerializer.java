@@ -25,7 +25,7 @@ import java.util.UUID;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 
 /**
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OUUIDSerializer implements OBinarySerializer<UUID> {
   public static final OUUIDSerializer INSTANCE  = new OUUIDSerializer();

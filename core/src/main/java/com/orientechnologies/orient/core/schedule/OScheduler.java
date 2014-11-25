@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 henryzhao81@gmail.com
+ * Copyright 2010-2012 henryzhao81-at-gmail.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 /**
- * Author : henryzhao81@gmail.com Mar 28, 2013
+ * @author henryzhao81-at-gmail.com
+ * @since Mar 28, 2013
  */
 
 public class OScheduler implements Runnable {
