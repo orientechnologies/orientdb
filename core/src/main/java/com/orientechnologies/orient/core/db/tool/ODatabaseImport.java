@@ -859,7 +859,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
       database.getMetadata().getSchema().save();
 
-      if (exporterVersion < 10) {
+      if (exporterVersion < 11 ) {
         OClass role = database.getMetadata().getSchema().getClass("ORole");
         role.dropProperty("rules");
       }

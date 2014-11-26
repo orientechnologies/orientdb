@@ -400,18 +400,6 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
   }
 
   private ODocument updateRolesDocumentContent() {
-    final Set<ODocument> storedRules = new HashSet<ODocument>();
-
-    for (ORule rule : rules.values()) {
-      final ODocument doc = new ODocument();
-
-      doc.field("resourceGeneric", rule.getResourceGeneric().name());
-      doc.field("specificResources", rule.getSpecificResources());
-      doc.field("access", rule.getAccess());
-
-      storedRules.add(doc);
-    }
-
-    return document.field("rules", storedRules);
+    return document.field("rules", getRules());
   }
 }

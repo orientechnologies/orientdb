@@ -330,7 +330,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
       roleClass.createProperty("mode", OType.BYTE);
 
     if (!roleClass.existsProperty("rules"))
-      roleClass.createProperty("rules", OType.EMBEDDEDSET);
+      roleClass.createProperty("rules", OType.EMBEDDEDMAP, OType.BYTE);
     if (!roleClass.existsProperty("inheritedRole"))
       roleClass.createProperty("inheritedRole", OType.LINK, roleClass);
 
@@ -408,7 +408,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
       final OClass roleClass = getDatabase().getMetadata().getSchema().getClass("ORole");
 
       final OProperty rules = roleClass.getProperty("rules");
-      if (rules != null && !OType.EMBEDDEDSET.equals(rules.getType())) {
+      if (rules != null && !OType.EMBEDDEDMAP.equals(rules.getType())) {
         roleClass.dropProperty("rules");
       }
 

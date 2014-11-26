@@ -167,12 +167,17 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
       json.writeAttribute(3, false, "name", role.getName());
       json.writeAttribute(3, false, "mode", role.getMode().toString());
 
-      json.beginObject(3, true, "rules");
-      if (role.getRules() != null) {
-        for (Map.Entry<String, Byte> rule : role.getRules().entrySet())
-          json.writeAttribute(rule.getKey(), rule.getValue());
+      json.beginCollection(3, true, "rules");
+      for (Map.Entry<String, Byte> rule : role.getRules().entrySet()) {
+        json.beginObject(4);
+        json.writeAttribute(4, true, "name", rule.getKey());
+        json.writeAttribute(4, false, "create", role.allow(rule.getKey(), ORole.PERMISSION_CREATE));
+        json.writeAttribute(4, false, "read", role.allow(rule.getKey(), ORole.PERMISSION_READ));
+        json.writeAttribute(4, false, "update", role.allow(rule.getKey(), ORole.PERMISSION_UPDATE));
+        json.writeAttribute(4, false, "delete", role.allow(rule.getKey(), ORole.PERMISSION_DELETE));
+        json.endObject(4, true);
       }
-      json.endObject(3, true);
+      json.endCollection(3, false);
 
       json.endObject(2, true);
     }

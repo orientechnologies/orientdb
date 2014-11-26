@@ -237,18 +237,24 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
           json.writeAttribute("name", role.getName());
           json.writeAttribute("mode", role.getMode().toString());
 
-          json.beginObject("rules");
+          json.beginCollection("rules");
           if (role.getRules() != null) {
-            for (Map.Entry<String, Byte> rule : role.getRules().entrySet())
-              json.writeAttribute(rule.getKey(), rule.getValue());
+            for (Map.Entry<String, Byte> rule : role.getRules().entrySet()) {
+              json.beginObject();
+              json.writeAttribute("name", rule.getKey());
+              json.writeAttribute("create", role.allow(rule.getKey(), ORole.PERMISSION_CREATE));
+              json.writeAttribute("read", role.allow(rule.getKey(), ORole.PERMISSION_READ));
+              json.writeAttribute("update", role.allow(rule.getKey(), ORole.PERMISSION_UPDATE));
+              json.writeAttribute("delete", role.allow(rule.getKey(), ORole.PERMISSION_DELETE));
+              json.endObject();
+            }
           }
-          json.endObject();
+          json.endCollection();
 
           json.endObject();
         }
         json.endCollection();
       }
-
       final OIndexManagerProxy idxManager = db.getMetadata().getIndexManager();
       json.beginCollection("indexes");
       for (OIndex<?> index : idxManager.getIndexes()) {

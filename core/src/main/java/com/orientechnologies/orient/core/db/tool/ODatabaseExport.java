@@ -52,7 +52,7 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODatabaseExport extends ODatabaseImpExpAbstract {
-  public static final int VERSION           = 10;
+  public static final int VERSION           = 11;
 
   protected OJSONWriter   writer;
   protected long          recordExported;
