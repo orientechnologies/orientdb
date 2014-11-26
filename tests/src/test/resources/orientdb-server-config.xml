@@ -23,11 +23,11 @@
                 <parameter value="SQL" name="allowedLanguages"/>
             </parameters>
         </handler>
-        <handler class="com.orientechnologies.orient.server.jwt.impl.OrientTokenHandler">
-            <parameters>
-            	<parameter value="testkey" name="oAuth2Key"/>
-            </parameters>
-        </handler>
+<!--         <handler class="com.orientechnologies.orient.server.jwt.impl.OrientTokenHandler"> -->
+<!--             <parameters> -->
+<!--             	<parameter value="testkey" name="oAuth2Key"/> -->
+<!--             </parameters> -->
+<!--         </handler> -->
     </handlers>
     <network>
         <protocols>

@@ -150,7 +150,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     parseServerURLs();
 
     asynchExecutor = Executors.newSingleThreadScheduledExecutor();
-    
+
     engine = (OEngineRemote) Orient.instance().getEngine(OEngineRemote.NAME);
   }
 
@@ -1592,6 +1592,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             beginResponse(network);
             sessionId = network.readInt();
             byte[] token = network.readBytes();
+            if (token.length == 0)
+              token = null;
             setSessionId(network.getServerURL(), sessionId, token);
 
             OLogManager.instance().debug(this, "Client connected to %s with session id=%d", network.getServerURL(), sessionId);
@@ -1669,7 +1671,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
     if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_21)
       network.writeString(ODatabaseDocumentTx.getDefaultSerializer().toString());
-    if(network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_26)
+    if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_26)
       network.writeBoolean(true);
   }
 
