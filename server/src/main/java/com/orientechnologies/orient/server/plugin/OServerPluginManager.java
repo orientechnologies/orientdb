@@ -168,6 +168,10 @@ public class OServerPluginManager implements OService {
       // SKIP IT
       return null;
 
+    if( pluginFile.isHidden())
+      // HIDDEN FILE, SKIP IT
+      return null;
+
     OServerPluginInfo currentPluginData = getPluginByFile(pluginFileName);
 
     final long fileLastModified = pluginFile.lastModified();
