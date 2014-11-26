@@ -28,10 +28,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
-import com.orientechnologies.orient.core.command.script.OScriptDocumentDatabaseWrapper;
-import com.orientechnologies.orient.core.command.script.OScriptInjection;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
-import com.orientechnologies.orient.core.command.script.OScriptOrientWrapper;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -282,16 +279,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
     try {
       final Bindings binding = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE);
 
-      for (OScriptInjection i : scriptManager.getInjections())
-        i.bind(binding);
-      binding.put("doc", iDocument);
-      if (db != null) {
-        binding.put("db", new OScriptDocumentDatabaseWrapper((ODatabaseDocumentTx) db));
-        binding.put("orient", new OScriptOrientWrapper(db));
-      } else
-        binding.put("orient", new OScriptOrientWrapper());
-
-      // scriptEngine.setBindings(binding, ScriptContext.ENGINE_SCOPE);
+      scriptManager.bind(binding, (ODatabaseDocumentTx) db, null, null);
 
       String result = null;
       try {
@@ -319,7 +307,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
         throw e;
 
       } finally {
-        scriptManager.unbind(binding);
+        scriptManager.unbind(binding, null, null);
       }
       if (result == null) {
         return RESULT.RECORD_NOT_CHANGED;

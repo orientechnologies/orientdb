@@ -19,14 +19,16 @@
  */
 package com.orientechnologies.orient.core.command.script;
 
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.script.*;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.script.formatter.OGroovyScriptFormatter;
-import com.orientechnologies.orient.core.command.script.formatter.OJSScriptFormatter;
-import com.orientechnologies.orient.core.command.script.formatter.ORubyScriptFormatter;
-import com.orientechnologies.orient.core.command.script.formatter.OSQLScriptFormatter;
-import com.orientechnologies.orient.core.command.script.formatter.OScriptFormatter;
+import com.orientechnologies.orient.core.command.script.formatter.*;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -34,21 +36,6 @@ import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.function.OFunctionUtilWrapper;
 import com.orientechnologies.orient.core.sql.OSQLScriptEngine;
 import com.orientechnologies.orient.core.sql.OSQLScriptEngineFactory;
-
-import javax.script.Bindings;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineFactory;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Scanner;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Executes Script Commands.
@@ -303,14 +290,38 @@ public class OScriptManager {
     }
   }
 
+  @Deprecated
+  public void unbind(Bindings binding) {
+    unbind(binding, null, null);
+  }
+
   /**
    * Unbinds variables
    * 
    * @param binding
    */
-  public void unbind(Bindings binding) {
+  public void unbind(Bindings binding, OCommandContext iContext, Map<Object, Object> iArgs) {
     for (OScriptInjection i : injections)
       i.unbind(binding);
+
+    binding.put("db", null);
+    binding.put("orient", null);
+
+    binding.put("util", null);
+
+    binding.put("ctx", null);
+    if(iContext!=null) {
+      for (Entry<String, Object> a : iContext.getVariables().entrySet())
+        binding.put(a.getKey(), null);
+    }
+
+    if (iArgs != null) {
+      for (Entry<Object, Object> a : iArgs.entrySet())
+        binding.put(a.getKey().toString(), null);
+
+    }
+    binding.put("params", null);
+
   }
 
   public void registerInjection(final OScriptInjection iInj) {
