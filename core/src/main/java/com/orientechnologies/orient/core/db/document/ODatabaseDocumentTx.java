@@ -125,6 +125,14 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   @Deprecated
   private static final String                               DEF_RECORD_FORMAT = "csv";
+  protected static ORecordSerializer                        defaultSerializer;
+  static {
+    defaultSerializer = ORecordSerializerFactory.instance().getFormat(
+        OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString());
+    if (defaultSerializer == null)
+      throw new ODatabaseException("Impossible to find serializer with name "
+          + OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString());
+  }
   private final Map<String, Object>                         properties        = new HashMap<String, Object>();
   private final Map<ORecordHook, ORecordHook.HOOK_POSITION> unmodifiableHooks;
   protected ORecordSerializer                               serializer;
@@ -147,17 +155,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   private OCurrentStorageComponentsFactory                  componentsFactory;
   private boolean                                           initialized       = false;
   private OTransaction                                      currentTx;
-
   private boolean                                           keepStorageOpen   = false;
-
-  protected static ORecordSerializer                        defaultSerializer;
-  static {
-    defaultSerializer = ORecordSerializerFactory.instance().getFormat(
-        OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString());
-    if (defaultSerializer == null)
-      throw new ODatabaseException("Impossible to find serializer with name "
-          + OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString());
-  }
 
   /**
    * Creates a new connection to the database.
@@ -223,19 +221,19 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     defaultSerializer = iDefaultSerializer;
   }
 
-	/**
-	 * Opens connection to the storage with given user and password.
-	 *
-	 * But we do suggest {@link com.orientechnologies.orient.core.db.OPartitionedDatabasePool#acquire()}  instead.
-	 * It will make work faster even with embedded database.
-	 *
-	 * @param iUserName
-	 *          Username to login
-	 * @param iUserPassword
-	 *          Password associated to the user
-	 *
-	 * @return Current database instance.
-	 */
+  /**
+   * Opens connection to the storage with given user and password.
+   *
+   * But we do suggest {@link com.orientechnologies.orient.core.db.OPartitionedDatabasePool#acquire()} instead. It will make work
+   * faster even with embedded database.
+   *
+   * @param iUserName
+   *          Username to login
+   * @param iUserPassword
+   *          Password associated to the user
+   *
+   * @return Current database instance.
+   */
   @Override
   public <DB extends ODatabase> DB open(final String iUserName, final String iUserPassword) {
     setCurrentDatabaseInThreadLocal();
@@ -1606,6 +1604,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
             final ORecordHook.TYPE triggerType = wasNew ? ORecordHook.TYPE.BEFORE_CREATE : ORecordHook.TYPE.BEFORE_UPDATE;
 
             final ORecordHook.RESULT hookResult = callbackHooks(triggerType, record);
+
             if (hookResult == ORecordHook.RESULT.RECORD_CHANGED)
               stream = updateStream(record);
             else if (hookResult == ORecordHook.RESULT.SKIP_IO)
@@ -2428,7 +2427,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-	@Deprecated
+  @Deprecated
   public <DB extends ODatabaseDocument> DB checkSecurity(String iResource, int iOperation) {
     final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
     final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
@@ -2440,7 +2439,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-	@Deprecated
+  @Deprecated
   public <DB extends ODatabaseDocument> DB checkSecurity(String iResourceGeneric, int iOperation, Object iResourceSpecific) {
     final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResourceGeneric);
     if (iResourceSpecific == null || iResourceSpecific.equals("*"))
@@ -2450,10 +2449,14 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-	@Deprecated
+  @Deprecated
   public <DB extends ODatabaseDocument> DB checkSecurity(String iResourceGeneric, int iOperation, Object... iResourcesSpecific) {
     final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResourceGeneric);
     return checkSecurity(resourceGeneric, iOperation, iResourcesSpecific);
+  }
+
+  public void setCurrentDatabaseInThreadLocal() {
+    ODatabaseRecordThreadLocal.INSTANCE.set(this);
   }
 
   protected void checkTransaction() {
@@ -2615,6 +2618,12 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         hookType = wasNew ? ORecordHook.TYPE.CREATE_REPLICATED : ORecordHook.TYPE.UPDATE_REPLICATED;
       }
       callbackHooks(hookType, record);
+
+      if (hookType == ORecordHook.TYPE.AFTER_UPDATE)
+        if (record instanceof ODocument && ((ODocument) record).isTrackingChanges()) {
+          ((ODocument) record).setTrackingChanges(false);
+          ((ODocument) record).setTrackingChanges(true);
+        }
     }
   }
 
@@ -2675,10 +2684,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         }
       }
     }
-  }
-
-  public void setCurrentDatabaseInThreadLocal() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(this);
   }
 
   private void init() {

@@ -16,6 +16,14 @@
 
 package com.orientechnologies.orient.core.db.record;
 
+import java.lang.reflect.Method;
+
+import javax.script.Bindings;
+import javax.script.Invocable;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -38,13 +46,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-
-import javax.script.Bindings;
-import javax.script.Invocable;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-import java.lang.reflect.Method;
 
 /**
  * Author : henryzhao81@gmail.com Feb 19, 2013
@@ -184,6 +185,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
     final ODocument document = (ODocument) iRecord;
     if (document.getImmutableSchemaClass() != null && document.getImmutableSchemaClass().isSubClassOf(CLASSNAME))
       return super.onTrigger(iType, iRecord);
+
     return RESULT.RECORD_NOT_CHANGED;
   }
 
