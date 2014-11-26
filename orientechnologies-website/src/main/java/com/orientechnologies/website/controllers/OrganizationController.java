@@ -22,7 +22,7 @@ import java.util.List;
 
 @RestController
 @EnableAutoConfiguration
-@RequestMapping("orgs")
+@RequestMapping(ApiUrls.ORGS_V1)
 @ApiVersion(1)
 public class OrganizationController {
 

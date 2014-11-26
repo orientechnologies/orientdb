@@ -1,5 +1,8 @@
 package com.orientechnologies.website;
 
+import com.orientechnologies.common.io.OIOUtils;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.io.*;
 import java.util.Calendar;
 import java.util.Collection;
@@ -9,23 +12,20 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
-import com.orientechnologies.common.io.OIOUtils;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
 /**
  * Created by enricorisa on 26/06/14.
  */
 public class OLicenseMassiveCreator {
 
-  public static void main(final String args[]) throws IOException {
-
-    System.out
-        .println("OrientDB License Massive Creator. Copyright (c) 2009-2013 Orient Technologies LTD. All rights reserved. This sw can be used only by Orient Technologies dev team");
-    if (args.length < 3)
-      syntaxError();
-
-    generatAllLicense(args[0], args[1], args[2]);
-  }
+//  public static void main(final String args[]) throws IOException {
+//
+//    System.out
+//        .println("OrientDB License Massive Creator. Copyright (c) 2009-2013 Orient Technologies LTD. All rights reserved. This sw can be used only by Orient Technologies dev team");
+//    if (args.length < 3)
+//      syntaxError();
+//
+//    generatAllLicense(args[0], args[1], args[2]);
+//  }
 
   private static void generatAllLicense(String agentFile, String clientFile, String dstFolder) throws IOException {
     File agent = new File(agentFile);

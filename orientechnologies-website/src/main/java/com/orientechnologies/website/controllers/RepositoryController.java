@@ -18,7 +18,7 @@ import java.util.List;
 
 @RestController
 @EnableAutoConfiguration
-@RequestMapping("repos")
+@RequestMapping(ApiUrls.REPOS_V1)
 @ApiVersion(1)
 public class RepositoryController {
 

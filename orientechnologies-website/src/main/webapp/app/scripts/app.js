@@ -19,8 +19,7 @@ angular
     'restangular',
     'ngMoment',
     'mgcrea.ngStrap',
-    'ngUtilFilters',
-    'angular-repeat-n'
+    'ngUtilFilters'
   ])
   .config(function ($routeProvider, $httpProvider, RestangularProvider) {
     $routeProvider

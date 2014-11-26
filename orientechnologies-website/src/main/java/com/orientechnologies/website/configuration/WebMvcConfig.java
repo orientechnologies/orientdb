@@ -2,7 +2,6 @@ package com.orientechnologies.website.configuration;
 
 import com.orientechnologies.website.interceptor.OrientDBFactoryInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
@@ -11,7 +10,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
  * Created by Enrico Risa on 21/10/14.
  */
 
-@Configuration
+//@Configuration
 public class WebMvcConfig extends WebMvcConfigurationSupport {
 
   @Autowired

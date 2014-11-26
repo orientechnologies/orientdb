@@ -26,7 +26,7 @@ import java.net.URL;
  */
 @RestController
 @EnableAutoConfiguration
-@RequestMapping("github")
+@RequestMapping(value = ApiUrls.GITHUB_V1)
 @ApiVersion(1)
 public class GithubController {
 
@@ -39,7 +39,7 @@ public class GithubController {
   @Autowired
   private Reactor             reactor;
 
-  @RequestMapping(value = "/login", method = RequestMethod.GET)
+  @RequestMapping(value = ApiUrls.LOGIN, method = RequestMethod.GET)
   public RedirectView login() {
 
     String baseUrl = gitHubConfiguration.getLoginUrl() + "/authorize?";
@@ -50,7 +50,7 @@ public class GithubController {
     return view;
   }
 
-  @RequestMapping(value = "/authorize", method = RequestMethod.GET, params = { "code" })
+  @RequestMapping(value = ApiUrls.AUTHORIZE, method = RequestMethod.GET, params = { "code" })
   public RedirectView authorize(@RequestParam("code") String code) {
 
     String locationUrl = gitHubConfiguration.getLoginUrl() + "/access_token?client_id=" + gitHubConfiguration.getClientId()
@@ -83,7 +83,7 @@ public class GithubController {
     return view;
   }
 
-  @RequestMapping(value = "/events", method = RequestMethod.POST)
+  @RequestMapping(value = ApiUrls.EVENTS, method = RequestMethod.POST)
   @ResponseStatus(HttpStatus.OK)
   public void handleEvent(HttpServletRequest req) {
     try {

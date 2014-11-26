@@ -298,6 +298,7 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   public Issue findSingleOrganizationIssueByRepoAndNumber(String name, String repo, String number) {
 
     OrientGraph db = dbFactory.getGraph();
+    System.out.println(System.identityHashCode(db));
     String query = String.format(
         "select expand(out('HasRepo')[name = '%s'].out('HasIssue')[uuid = '%s'])  from Organization where name = '%s') ", repo,
         number, name);
