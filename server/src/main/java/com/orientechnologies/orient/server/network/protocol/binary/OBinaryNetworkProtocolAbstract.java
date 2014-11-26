@@ -409,7 +409,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       // TODO: This Logic should not be here provide an api in the Serializer for ask for trimmed content.
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
       if (db != null && db instanceof ODatabaseDocument) {
-        if (db.getSerializer() instanceof ORecordSerializerSchemaAware2CSV) {
+        if (ORecordSerializerSchemaAware2CSV.NAME.equals(getRecordSerializerName())) {
           // TRIM TAILING SPACES (DUE TO OVERSIZE)
           for (int i = stream.length - 1; i > -1; --i) {
             if (stream[i] == 32)
