@@ -30,11 +30,7 @@ import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 
-import javax.script.Bindings;
-import javax.script.Invocable;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
+import javax.script.*;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -109,7 +105,7 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
         throw e;
 
       } finally {
-        scriptManager.unbind(binding);
+        scriptManager.unbind(binding, iContext, iArgs);
       }
     } finally {
       scriptManager.releaseDatabaseEngine(db.getName(), scriptEngine);

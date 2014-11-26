@@ -19,14 +19,18 @@
  */
 package com.orientechnologies.orient.core.command.script;
 
+import java.util.Iterator;
+import java.util.Map;
+
+import javax.script.Bindings;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
 
 /**
  * Manages Script engines per database. Parsing of function library is done only the first time and when changes.
@@ -73,11 +77,11 @@ public class ODatabaseScriptManager {
   }
 
   public void releaseEngine(final ScriptEngine iEngine) {
-    iEngine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
+
     pooledEngines.returnResource(iEngine);
   }
 
-  public void close(){
+  public void close() {
     pooledEngines.close();
   }
 }

@@ -16,13 +16,17 @@
 
 package com.orientechnologies.orient.core.schedule;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import javax.script.*;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
-import com.orientechnologies.orient.core.command.script.OScriptDocumentDatabaseWrapper;
-import com.orientechnologies.orient.core.command.script.OScriptInjection;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
-import com.orientechnologies.orient.core.command.script.OScriptOrientWrapper;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -30,16 +34,6 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OSchedulerListener.SCHEDULER_STATUS;
-
-import javax.script.Bindings;
-import javax.script.Invocable;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Map;
-import java.util.Map.Entry;
 
 /**
  * @author henryzhao81-at-gmail.com
@@ -169,20 +163,7 @@ public class OScheduler implements Runnable {
     try {
       binding = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE);
 
-      for (OScriptInjection i : scriptManager.getInjections())
-        i.bind(binding);
-      binding.put("doc", this.document);
-      if (db != null)
-        binding.put("db", new OScriptDocumentDatabaseWrapper((ODatabaseDocumentTx) db));
-      binding.put("orient", new OScriptOrientWrapper(db));
-      if (iArgs != null) {
-        for (Entry<Object, Object> a : iArgs.entrySet()) {
-          binding.put(a.getKey().toString(), a.getValue());
-        }
-        binding.put("params", iArgs.values().toArray());
-      } else {
-        binding.put("params", new Object[0]);
-      }
+      scriptManager.bind(binding, (ODatabaseDocumentTx) db, null, iArgs);
 
       if (this.function.getLanguage() == null)
         throw new OConfigurationException("Database function '" + this.function.getName() + "' has no language");
@@ -215,7 +196,7 @@ public class OScheduler implements Runnable {
       throw new OCommandScriptException("Unknown Exception", this.function.getName(), 0, ex);
     } finally {
       if (scriptManager != null && binding != null)
-        scriptManager.unbind(binding);
+        scriptManager.unbind(binding, null, iArgs);
 
       scriptManager.releaseDatabaseEngine(db.getName(), scriptEngine);
 

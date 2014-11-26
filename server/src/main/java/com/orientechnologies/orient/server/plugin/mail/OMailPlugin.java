@@ -190,7 +190,7 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
 
    @Override
    public void unbind(final Bindings binding) {
-     binding.remove("mail");
+     binding.put("mail", null);
    }
 
    @Override

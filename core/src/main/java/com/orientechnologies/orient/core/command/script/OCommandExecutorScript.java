@@ -120,7 +120,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
         throw new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber(), e);
 
       } finally {
-        scriptManager.unbind(binding);
+        scriptManager.unbind(binding, iContext, iArgs);
       }
     } finally {
       scriptManager.releaseDatabaseEngine(db.getName(), scriptEngine);
