@@ -79,7 +79,7 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
     while (wNode.locked) {
       threadCountersHashTable.decrement();
 
-      while (wNode.locked) {
+      while (wNode.locked && wNode == tail.get()) {
         wNode.waitingReaders.add(Thread.currentThread());
 
         if (wNode.locked && wNode == tail.get())
