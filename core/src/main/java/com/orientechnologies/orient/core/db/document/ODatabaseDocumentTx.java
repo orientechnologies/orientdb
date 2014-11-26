@@ -223,6 +223,19 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     defaultSerializer = iDefaultSerializer;
   }
 
+	/**
+	 * Opens connection to the storage with given user and password.
+	 *
+	 * But we do suggest {@link com.orientechnologies.orient.core.db.OPartitionedDatabasePool#acquire()}  instead.
+	 * It will make work faster even with embedded database.
+	 *
+	 * @param iUserName
+	 *          Username to login
+	 * @param iUserPassword
+	 *          Password associated to the user
+	 *
+	 * @return Current database instance.
+	 */
   @Override
   public <DB extends ODatabase> DB open(final String iUserName, final String iUserPassword) {
     setCurrentDatabaseInThreadLocal();
