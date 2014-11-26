@@ -82,7 +82,7 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
       while (wNode.locked) {
         wNode.waitingReaders.add(Thread.currentThread());
 
-        if (wNode == tail.get() && wNode.locked)
+        if (wNode.locked && wNode == tail.get())
           LockSupport.park(this);
 
         wNode = tail.get();
