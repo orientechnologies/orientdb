@@ -74,7 +74,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
   @Override
   public void configure(OServer server) {
     super.configure(server);
-    handler = server.getPlugin("JwtTokenHandler");
+    handler = server.getPlugin(OTokenHandler.TOKEN_HANDLER_NAME);
   }
 
   @Override

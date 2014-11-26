@@ -33,6 +33,7 @@ import java.util.UUID;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -97,9 +98,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServ
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OTokenHandler;
 import com.orientechnologies.orient.server.ShutdownHelper;
-import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
@@ -108,6 +107,7 @@ import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
+  protected Boolean           tokenBased;
 
   public ONetworkProtocolBinary() {
     super("OrientDB <- BinaryClient/?");
@@ -156,7 +156,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void onBeforeRequest() throws IOException {
     waitNodeIsOnline();
 
-    if (connection.data.protocolVersion >= 0 && connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
+    if (connection.data.protocolVersion >= 0 && connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_26
+        && Boolean.FALSE.equals(tokenBased)) {
       connection = OClientConnectionManager.instance().getConnection(clientTxId, this);
       if (clientTxId < 0) {
         short protocolId = 0;
@@ -170,9 +171,22 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           connection.data.protocolVersion = protocolId;
       }
     } else {
+      if (requestType != OChannelBinaryProtocol.REQUEST_CONNECT && requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN) {
+        byte[] token = channel.readBytes();
+        if (token != null && token.length > 0 && tokenHandler != null) {
+          try {
+            this.token = tokenHandler.parseBinaryToken(token);
+          } catch (Exception e) {
+            throw new OException("error on token parse", e);
+          }
+          if (!this.token.getIsVerified()) {
+            throw new OSecurityException("The token provided is not a valid token, signature doesn't match");
+          }
+        }
+      }
       if (token != null) {
         if (!tokenHandler.validateBinaryToken(token)) {
-          // TODO: thrown na error and fail the connection.
+          throw new OSecurityException("The token provided is expired");
         }
         connection = new OClientConnection(clientTxId, this);
         if (tokenHandler != null)
@@ -226,7 +240,8 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     OServerPluginHelper.invokeHandlerCallbackOnAfterClientRequest(server, connection, (byte) requestType);
 
     if (connection != null) {
-      if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_26 || token == null) {
+      if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_26 || token == null
+          && Boolean.FALSE.equals(tokenBased)) {
         if (connection.database != null)
           if (!connection.database.isClosed())
             connection.database.getLocalCache().clear();
@@ -1499,6 +1514,21 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       connection.data.serializationImpl = channel.readString();
     else
       connection.data.serializationImpl = ORecordSerializerSchemaAware2CSV.NAME;
+    if (tokenBased == null) {
+      if (connection.data.protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26)
+        tokenBased = channel.readBoolean();
+      else
+        tokenBased = false;
+    } else {
+      if (connection.data.protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26)
+        if (channel.readBoolean() != tokenBased) {
+          throw new OException("Not supported mixed connection managment");
+        }
+    }
+    if (tokenBased && tokenHandler == null) {
+      // this is not the way
+      throw new OException("The server doesn't support the token based authentication");
+    }
   }
 
   protected void sendOk(final int iClientTxId) throws IOException {

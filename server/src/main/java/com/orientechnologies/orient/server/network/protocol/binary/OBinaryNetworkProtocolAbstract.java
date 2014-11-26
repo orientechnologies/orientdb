@@ -97,7 +97,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       final OContextConfiguration iConfig) throws IOException {
     server = iServer;
     channel = new OChannelBinaryServer(iSocket, iConfig);
-    tokenHandler = server.getPlugin("JwtTokenHandler");
+    tokenHandler = server.getPlugin(OTokenHandler.TOKEN_HANDLER_NAME);
   }
 
   @Override
@@ -200,13 +200,6 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     try {
       requestType = channel.readByte();
       clientTxId = channel.readInt();
-      byte[] token = channel.readBytes();
-      if (token != null && token.length > 0 && tokenHandler != null) {
-        this.token = tokenHandler.parseBinaryToken(token);
-        if (!this.token.getIsVerified()) {
-          // TODO: fail
-        }
-      }
 
       timer = Orient.instance().getProfiler().startChrono();
       try {

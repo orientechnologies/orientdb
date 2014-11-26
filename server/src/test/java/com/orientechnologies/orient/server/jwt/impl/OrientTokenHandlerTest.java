@@ -23,10 +23,10 @@ import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 
-public class JwtTokenHandlerTest {
+public class OrientTokenHandlerTest {
 
   private static final OServerParameterConfiguration[] I_PARAMS = new OServerParameterConfiguration[] { new OServerParameterConfiguration(
-                                                                    JwtTokenHandler.O_SIGN_KEY, "crappy key") };
+                                                                    OrientTokenHandler.O_SIGN_KEY, "crappy key") };
 
   @BeforeMethod
   public void beforeTest() {
@@ -37,11 +37,11 @@ public class JwtTokenHandlerTest {
 
   @Test
   public void testWebTokenCreationValidation() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + JwtTokenHandlerTest.class.getSimpleName());
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OrientTokenHandlerTest.class.getSimpleName());
     db.create();
     try {
       OSecurityUser original = db.getUser();
-      JwtTokenHandler handler = new JwtTokenHandler();
+      OrientTokenHandler handler = new OrientTokenHandler();
       handler.config(null, I_PARAMS);
       byte[] token = handler.getSignedWebToken(db, original);
 
@@ -63,7 +63,7 @@ public class JwtTokenHandlerTest {
 
   @Test(expectedExceptions = Exception.class)
   public void testInvalidToken() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
-    JwtTokenHandler handler = new JwtTokenHandler();
+    OrientTokenHandler handler = new OrientTokenHandler();
     handler.config(null, I_PARAMS);
     handler.parseWebToken("random".getBytes());
   }
@@ -74,7 +74,7 @@ public class JwtTokenHandlerTest {
     header.setType("Orient");
     header.setAlgorithm("some");
     header.setKeyId("the_key");
-    JwtTokenHandler handler = new JwtTokenHandler();
+    OrientTokenHandler handler = new OrientTokenHandler();
     byte[] headerbytes = handler.serializeWebHeader(header);
 
     OJwtHeader des = handler.deserializeWebHeader(headerbytes);
@@ -99,7 +99,7 @@ public class JwtTokenHandlerTest {
     payload.setTokenId("aaa");
     payload.setUserRid(new ORecordId(3, 4));
 
-    JwtTokenHandler handler = new JwtTokenHandler();
+    OrientTokenHandler handler = new OrientTokenHandler();
     byte[] payloadbytes = handler.serializeWebPayload(payload);
 
     OJwtPayload des = handler.deserializeWebPayload(ptype, payloadbytes);
@@ -115,11 +115,11 @@ public class JwtTokenHandlerTest {
 
   @Test
   public void testTokenForge() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + JwtTokenHandlerTest.class.getSimpleName());
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OrientTokenHandlerTest.class.getSimpleName());
     db.create();
     try {
       OSecurityUser original = db.getUser();
-      JwtTokenHandler handler = new JwtTokenHandler();
+      OrientTokenHandler handler = new OrientTokenHandler();
 
       handler.config(null, I_PARAMS);
       byte[] token = handler.getSignedWebToken(db, original);
@@ -141,11 +141,11 @@ public class JwtTokenHandlerTest {
 
   @Test
   public void testBinartTokenCreationValidation() throws InvalidKeyException, NoSuchAlgorithmException, IOException {
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + JwtTokenHandlerTest.class.getSimpleName());
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OrientTokenHandlerTest.class.getSimpleName());
     db.create();
     try {
       OSecurityUser original = db.getUser();
-      JwtTokenHandler handler = new JwtTokenHandler();
+      OrientTokenHandler handler = new OrientTokenHandler();
       ONetworkProtocolData data = new ONetworkProtocolData();
       data.driverName = "aa";
       data.driverVersion = "aa";

@@ -22,8 +22,21 @@ package com.orientechnologies.orient.client.remote;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -58,14 +71,20 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorageAbstract;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
@@ -200,10 +219,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     } finally {
       lock.releaseExclusiveLock();
     }
-  }
-
-  public void open(final OToken iToken, final Map<String, Object> iOptions) {
-    // TODO: Token auth for remote client
   }
 
   public void reload() {
@@ -1555,7 +1570,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           try {
             network.writeByte(OChannelBinaryProtocol.REQUEST_DB_OPEN);
             network.writeInt(getSessionId());
-            network.writeBytes(new byte[] {});
 
             // @SINCE 1.0rc8
             sendClientInfo(network);
@@ -1655,6 +1669,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     }
     if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_21)
       network.writeString(ODatabaseDocumentTx.getDefaultSerializer().toString());
+    if(network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_26)
+      network.writeBoolean(true);
   }
 
   /**
@@ -1757,9 +1773,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     network.writeByte(iCommand);
     network.writeInt(getSessionId());
     byte[] token = getSessionToken();
-    if (token == null) {
-      network.writeBytes(new byte[] {});
-    } else {
+    if (token != null) {
       network.writeBytes(token);
     }
 

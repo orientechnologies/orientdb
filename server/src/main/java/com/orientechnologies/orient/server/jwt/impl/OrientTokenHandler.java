@@ -33,10 +33,8 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
  *
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
-public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHandler {
+public class OrientTokenHandler extends OServerPluginAbstract implements OTokenHandler {
   public static final String            O_SIGN_KEY        = "oAuth2Key";
-
-  private static final String           JWT_TOKEN_HANDLER = "JwtTokenHandler";
 
   private OBinaryTokenSerializer        binarySerializer;
 
@@ -358,7 +356,7 @@ public class JwtTokenHandler extends OServerPluginAbstract implements OTokenHand
 
   @Override
   public String getName() {
-    return JWT_TOKEN_HANDLER;
+    return OTokenHandler.TOKEN_HANDLER_NAME;
   }
 
   protected OKeyProvider getKeyProvider() {

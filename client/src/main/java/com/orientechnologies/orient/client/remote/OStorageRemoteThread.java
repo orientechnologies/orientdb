@@ -38,7 +38,6 @@ import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFact
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -86,15 +85,6 @@ public class OStorageRemoteThread implements OStorageProxy {
     pushSession();
     try {
       delegate.open(iUserName, iUserPassword, iOptions);
-    } finally {
-      popSession();
-    }
-  }
-
-  public void open(final OToken iToken, final Map<String, Object> iOptions) {
-    pushSession();
-    try {
-      delegate.open(iToken, iOptions);
     } finally {
       popSession();
     }

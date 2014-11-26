@@ -6,6 +6,7 @@ import java.util.Map;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -35,7 +36,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
   @Override
   public void configure(OServer server) {
     super.configure(server);
-    handler = server.getPlugin("JwtTokenHandler");
+    handler = server.getPlugin(OTokenHandler.TOKEN_HANDLER_NAME);
   }
 
   @Override
