@@ -27,6 +27,7 @@ import java.util.NoSuchElementException;
 
 public class ORowExtractor extends OAbstractSourceExtractor {
   protected BufferedReader bReader;
+  protected OExtractedItem next;
 
   @Override
   public String getName() {
@@ -35,11 +36,15 @@ public class ORowExtractor extends OAbstractSourceExtractor {
 
   @Override
   public boolean hasNext() {
+    if (next != null)
+      return true;
+
     if (bReader == null)
       return false;
 
     try {
-      return bReader.ready();
+      next = fetchNext();
+      return next != null;
     } catch (IOException e) {
       throw new OExtractorException(e);
     }
@@ -47,14 +52,17 @@ public class ORowExtractor extends OAbstractSourceExtractor {
 
   @Override
   public OExtractedItem next() {
+    if (next != null) {
+      final OExtractedItem ret = next;
+      next = null;
+      return ret;
+    }
+
     if (!hasNext())
       throw new NoSuchElementException("EOF");
 
     try {
-      final String line = bReader.readLine();
-
-      return new OExtractedItem(current++, line);
-
+      return fetchNext();
     } catch (IOException e) {
       throw new OExtractorException(e);
     }
@@ -79,5 +87,17 @@ public class ORowExtractor extends OAbstractSourceExtractor {
   @Override
   public String getUnit() {
     return "rows";
+  }
+
+  protected OExtractedItem fetchNext() throws IOException {
+    if (!reader.ready())
+      return null;
+
+    final String line = bReader.readLine();
+
+    if( line == null )
+      return null;
+
+    return new OExtractedItem(current++, line);
   }
 }

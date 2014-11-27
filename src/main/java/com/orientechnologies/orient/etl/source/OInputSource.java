@@ -28,7 +28,7 @@ import java.io.Reader;
  * ETL Source that reads from System.in
  */
 public class OInputSource extends OAbstractSource {
-  protected BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+  protected final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
   @Override
   public ODocument getConfiguration() {
@@ -39,6 +39,7 @@ public class OInputSource extends OAbstractSource {
   public String getUnit() {
     return "bytes";
   }
+
   @Override
   public String getName() {
     return "input";

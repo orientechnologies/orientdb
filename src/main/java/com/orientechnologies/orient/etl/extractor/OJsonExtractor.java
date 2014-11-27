@@ -22,12 +22,15 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONReader;
 import com.orientechnologies.orient.etl.OExtractedItem;
 
+import java.io.IOException;
 import java.io.Reader;
+import java.text.ParseException;
 import java.util.NoSuchElementException;
 
 public class OJsonExtractor extends OAbstractSourceExtractor {
-  protected OJSONReader jsonReader;
-  protected Character   first = null;
+  protected OJSONReader    jsonReader;
+  protected Character      first = null;
+  protected OExtractedItem next;
 
   @Override
   public String getName() {
@@ -36,36 +39,33 @@ public class OJsonExtractor extends OAbstractSourceExtractor {
 
   @Override
   public boolean hasNext() {
+    if (next != null)
+      return true;
+
     if (jsonReader == null)
       return false;
 
-    if (total == 1 && jsonReader.lastChar() == ']') {
-      jsonReader = null;
-      return false;
-    }
-
     try {
-      return jsonReader.hasNext();
+      next = fetchNext();
+      return next != null;
     } catch (Exception e) {
-      throw new OExtractorException("[JSON extractor] error on parsing next element", e);
+      throw new OExtractorException("[JSON extractor] error on extract json", e);
     }
   }
 
   @Override
   public OExtractedItem next() {
+    if (next != null) {
+      final OExtractedItem ret = next;
+      next = null;
+      return ret;
+    }
+
     if (!hasNext())
       throw new NoSuchElementException("EOF");
 
     try {
-      String value = jsonReader.readString(OJSONReader.END_OBJECT, true);
-      if (first != null) {
-        // USE THE FIRST CHAR READ
-        value = first + value;
-        first = null;
-      }
-      jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
-
-      return new OExtractedItem(current++, new ODocument().fromJSON(value));
+      return fetchNext();
 
     } catch (Exception e) {
       throw new OExtractorException("[JSON extractor] error on extract json", e);
@@ -74,15 +74,20 @@ public class OJsonExtractor extends OAbstractSourceExtractor {
 
   public void extract(final Reader iReader) {
     super.extract(iReader);
-    jsonReader = new OJSONReader(reader);
     try {
-      first = (char) reader.read();
+      final int read = reader.read();
+      if (read == -1)
+        return;
+
+      first = (char) read;
       if (first == '[')
         first = null;
       else if (first == '{')
         total = 1;
       else
         throw new OExtractorException("[JSON extractor] found unexpected character '" + first + "' at the beginning of input");
+
+      jsonReader = new OJSONReader(reader);
 
     } catch (Exception e) {
       throw new OExtractorException(e);
@@ -97,5 +102,36 @@ public class OJsonExtractor extends OAbstractSourceExtractor {
   @Override
   public String getUnit() {
     return "entries";
+  }
+
+  protected OExtractedItem fetchNext() throws IOException, ParseException {
+    if (!reader.ready())
+      return null;
+
+    String value = jsonReader.readString(new char[] { '}', ']' }, true);
+    if (first != null) {
+      // USE THE FIRST CHAR READ
+      value = first + value;
+      first = null;
+    }
+
+    if (total == 1 && jsonReader.lastChar() == '}') {
+      jsonReader = null;
+    } else if (total != 1 && jsonReader.lastChar() == ']') {
+      if (!value.isEmpty())
+        value = value.substring(0, value.length() - 1);
+      jsonReader = null;
+    } else {
+      jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+      if (jsonReader.lastChar() == ']')
+        jsonReader = null;
+    }
+
+    value = value.trim();
+
+    if (value.isEmpty())
+      return null;
+
+    return new OExtractedItem(current++, new ODocument().fromJSON(value));
   }
 }

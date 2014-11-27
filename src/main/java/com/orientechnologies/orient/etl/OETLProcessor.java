@@ -49,15 +49,15 @@ import java.util.concurrent.atomic.AtomicLong;
  * 
  * @author Luca Garulli (l.garulli-at-orientechnologies.com)
  */
-public class OETLProcessor implements OETLComponent {
-  protected final List<OBlock>         beginBlocks;
-  protected final List<OBlock>         endBlocks;
-  protected final OSource              source;
-  protected final OExtractor           extractor;
-  protected final OLoader              loader;
-  protected final List<OTransformer>   transformers;
+public class OETLProcessor {
   protected final OETLComponentFactory factory    = new OETLComponentFactory();
-  protected final OBasicCommandContext context;
+  protected List<OBlock>               beginBlocks;
+  protected List<OBlock>               endBlocks;
+  protected OSource                    source;
+  protected OExtractor                 extractor;
+  protected OLoader                    loader;
+  protected List<OTransformer>         transformers;
+  protected OBasicCommandContext       context;
   protected long                       startTime;
   protected long                       elapsed;
   protected OETLProcessorStats         stats      = new OETLProcessorStats();
@@ -87,6 +87,24 @@ public class OETLProcessor implements OETLComponent {
     }
   }
 
+  /**
+   * Creates an ETL processor by setting all the components on construction.
+   * 
+   * @param iBeginBlocks
+   *          List of Blocks to execute at the beginning of processing
+   * @param iSource
+   *          Source component
+   * @param iExtractor
+   *          Extractor component
+   * @param iTransformers
+   *          List of Transformers
+   * @param iLoader
+   *          Loader component
+   * @param iEndBlocks
+   *          List of Blocks to execute at the end of processing
+   * @param iContext
+   *          Execution Context
+   */
   public OETLProcessor(final List<OBlock> iBeginBlocks, final OSource iSource, final OExtractor iExtractor,
       final List<OTransformer> iTransformers, final OLoader iLoader, final List<OBlock> iEndBlocks,
       final OBasicCommandContext iContext) {
@@ -100,10 +118,103 @@ public class OETLProcessor implements OETLComponent {
     init();
   }
 
-  public OETLProcessor(final Collection<ODocument> iBeginBlocks, final ODocument iSource, final ODocument iExtractor,
+  public OETLProcessor() {
+  }
+
+  public static void main(final String[] args) {
+    ODocument cfgGlobal = null;
+
+    System.out.println("OrientDB etl v." + OConstants.getVersion() + " " + OConstants.ORIENT_URL);
+    if (args.length == 0) {
+      System.out.println("Syntax error, missing configuration file.");
+      System.out.println("Use: oetl.sh <json-file>");
+      System.exit(1);
+    }
+
+    final OBasicCommandContext context = createDefaultContext();
+
+    ODocument configuration = null;
+
+    for (int i = 0; i < args.length; ++i) {
+      final String arg = args[i];
+
+      if (arg.charAt(0) == '-') {
+        final String[] parts = arg.substring(1).split("=");
+        context.setVariable(parts[0].toUpperCase(), parts[1]);
+      } else {
+        try {
+          final String config = OIOUtils.readFileAsString(new File(arg));
+          configuration = new ODocument().fromJSON(config, "noMap");
+          cfgGlobal = configuration.field("config");
+
+        } catch (IOException e) {
+          throw new OConfigurationException("Error on loading config file: " + arg);
+        }
+      }
+    }
+
+    if (cfgGlobal != null) {
+      // INIT ThE CONTEXT WITH GLOBAL CONFIGURATION
+      for (String f : cfgGlobal.fieldNames()) {
+        context.setVariable(f, cfgGlobal.field(f));
+      }
+    }
+
+    new OETLProcessor().parse(configuration, context).execute();
+  }
+
+  protected static OBasicCommandContext createDefaultContext() {
+    final OBasicCommandContext context = new OBasicCommandContext();
+    context.setVariable("dumpEveryMs", 1000);
+    return context;
+  }
+
+  protected static Collection<ODocument> parseTransformers(final String value) {
+    final ArrayList<ODocument> cfgTransformers = new ArrayList<ODocument>();
+    if (!value.isEmpty()) {
+      if (value.charAt(0) == '{') {
+        cfgTransformers.add((ODocument) new ODocument().fromJSON(value, "noMap"));
+      } else if (value.charAt(0) == '[') {
+        final ArrayList<String> items = new ArrayList<String>();
+        OStringSerializerHelper.getCollection(value, 0, items);
+        for (String item : items)
+          cfgTransformers.add((ODocument) new ODocument().fromJSON(item, "noMap"));
+      }
+    }
+    return cfgTransformers;
+  }
+
+  public OETLProcessor parse(final ODocument cfg, final OBasicCommandContext iContext) {
+    return parse((Collection<ODocument>) cfg.field("begin"), (ODocument) cfg.field("source"), (ODocument) cfg.field("extractor"),
+        (Collection<ODocument>) cfg.field("transformers"), (ODocument) cfg.field("loader"),
+        (Collection<ODocument>) cfg.field("end"), iContext);
+  }
+
+  /**
+   * Creates an ETL processor by setting the configuration of each component.
+   *
+   * @param iBeginBlocks
+   *          List of Block configurations to execute at the beginning of processing
+   * @param iSource
+   *          Source component configuration
+   * @param iExtractor
+   *          Extractor component configuration
+   * @param iTransformers
+   *          List of Transformer configurations
+   * @param iLoader
+   *          Loader component configuration
+   * @param iEndBlocks
+   *          List of Block configurations to execute at the end of processing
+   * @param iContext
+   *          Execution Context
+   **/
+  public OETLProcessor parse(final Collection<ODocument> iBeginBlocks, final ODocument iSource, final ODocument iExtractor,
       final Collection<ODocument> iTransformers, final ODocument iLoader, final Collection<ODocument> iEndBlocks,
       final OBasicCommandContext iContext) {
-    context = iContext;
+    if (iExtractor == null)
+      throw new IllegalArgumentException("No Extractor configured");
+
+    context = iContext != null ? iContext : createDefaultContext();
     init();
 
     try {
@@ -166,98 +277,51 @@ public class OETLProcessor implements OETLComponent {
     } catch (Exception e) {
       throw new OConfigurationException("Error on creating ETL processor", e);
     }
-  }
-
-  public static void main(final String[] args) {
-    ODocument cfgGlobal = null;
-    Collection<ODocument> cfgBegin = null;
-    ODocument cfgSource = null;
-    ODocument cfgExtract = null;
-    Collection<ODocument> cfgTransformers = null;
-    ODocument cfgLoader = null;
-    Collection<ODocument> cfgEnd = null;
-
-    System.out.println("OrientDB etl v." + OConstants.getVersion() + " " + OConstants.ORIENT_URL);
-    if (args.length == 0) {
-      System.out.println("Syntax error, missing configuration file.");
-      System.out.println("Use: oetl.sh <json-file>");
-      System.exit(1);
-    }
-
-    final OBasicCommandContext context = createDefaultContext();
-
-    for (int i = 0; i < args.length; ++i) {
-      final String arg = args[i];
-
-      if (arg.charAt(0) == '-') {
-        final String[] parts = arg.substring(1).split("=");
-        context.setVariable(parts[0].toUpperCase(), parts[1]);
-      } else {
-        try {
-          final String config = OIOUtils.readFileAsString(new File(arg));
-          final ODocument cfg = new ODocument().fromJSON(config, "noMap");
-
-          cfgGlobal = cfg.field("config");
-          cfgBegin = cfg.field("begin");
-          cfgSource = cfg.field("source");
-          cfgExtract = cfg.field("extractor");
-          cfgTransformers = cfg.field("transformers");
-          cfgLoader = cfg.field("loader");
-          cfgEnd = cfg.field("end");
-
-        } catch (IOException e) {
-          throw new OConfigurationException("Error on loading config file: " + arg);
-        }
-      }
-    }
-
-    if (cfgExtract == null)
-      throw new IllegalArgumentException("No Extractor configured");
-
-    if (cfgGlobal != null) {
-      // INIT ThE CONTEXT WITH GLOBAL CONFIGURATION
-      for (String f : cfgGlobal.fieldNames()) {
-        context.setVariable(f, cfgGlobal.field(f));
-      }
-    }
-
-    final OETLProcessor processor = new OETLProcessor(cfgBegin, cfgSource, cfgExtract, cfgTransformers, cfgLoader, cfgEnd, context);
-    processor.execute();
-  }
-
-  protected static OBasicCommandContext createDefaultContext() {
-    final OBasicCommandContext context = new OBasicCommandContext();
-    context.setVariable("dumpEveryMs", 1000);
-    return context;
-  }
-
-  protected static Collection<ODocument> parseTransformers(final String value) {
-    final ArrayList<ODocument> cfgTransformers = new ArrayList<ODocument>();
-    if (!value.isEmpty()) {
-      if (value.charAt(0) == '{') {
-        cfgTransformers.add((ODocument) new ODocument().fromJSON(value, "noMap"));
-      } else if (value.charAt(0) == '[') {
-        final ArrayList<String> items = new ArrayList<String>();
-        OStringSerializerHelper.getCollection(value, 0, items);
-        for (String item : items)
-          cfgTransformers.add((ODocument) new ODocument().fromJSON(item, "noMap"));
-      }
-    }
-    return cfgTransformers;
+    return this;
   }
 
   public OETLComponentFactory getFactory() {
     return factory;
   }
 
-  public void execute() {
+  public OETLProcessor execute() {
     if (parallel)
       executeParallel();
     else
       executeSequentially();
+    return this;
   }
 
-  public void executeParallel() {
+  public void out(final LOG_LEVELS iLogLevel, final String iText, final Object... iArgs) {
+    if (logLevel.ordinal() >= iLogLevel.ordinal())
+      System.out.println(String.format(iText, iArgs));
+  }
+
+  public OETLProcessorStats getStats() {
+    return stats;
+  }
+
+  public OExtractor getExtractor() {
+    return extractor;
+  }
+
+  public OLoader getLoader() {
+    return loader;
+  }
+
+  public List<OTransformer> getTransformers() {
+    return transformers;
+  }
+
+  public LOG_LEVELS getLogLevel() {
+    return logLevel;
+  }
+
+  public OBasicCommandContext getContext() {
+    return context;
+  }
+
+  protected void executeParallel() {
     try {
       begin();
 
@@ -340,17 +404,7 @@ public class OETLProcessor implements OETLComponent {
     }
   }
 
-  @Override
-  public ODocument getConfiguration() {
-    return null;
-  }
-
-  @Override
-  public void configure(OETLProcessor iProcessor, final ODocument iConfiguration, OBasicCommandContext iSettings) {
-  }
-
-  @Override
-  public void begin() {
+  protected void begin() {
     out(LOG_LEVELS.INFO, "BEGIN ETL PROCESSOR");
 
     final Integer cfgMaxRetries = (Integer) context.getVariable("maxRetries");
@@ -382,8 +436,7 @@ public class OETLProcessor implements OETLComponent {
     extractor.begin();
   }
 
-  @Override
-  public void end() {
+  protected void end() {
     for (OTransformer t : transformers)
       t.end();
 
@@ -406,40 +459,6 @@ public class OETLProcessor implements OETLComponent {
     out(LOG_LEVELS.INFO, "END ETL PROCESSOR");
 
     dumpProgress();
-  }
-
-  @Override
-  public String getName() {
-    return "Processor";
-  }
-
-  public void out(final LOG_LEVELS iLogLevel, final String iText, final Object... iArgs) {
-    if (logLevel.ordinal() >= iLogLevel.ordinal())
-      System.out.println(String.format(iText, iArgs));
-  }
-
-  public OETLProcessorStats getStats() {
-    return stats;
-  }
-
-  public OExtractor getExtractor() {
-    return extractor;
-  }
-
-  public OLoader getLoader() {
-    return loader;
-  }
-
-  public List<OTransformer> getTransformers() {
-    return transformers;
-  }
-
-  public LOG_LEVELS getLogLevel() {
-    return logLevel;
-  }
-
-  public OBasicCommandContext getContext() {
-    return context;
   }
 
   protected void executeSequentially() {

@@ -30,6 +30,7 @@ import com.orientechnologies.orient.etl.extractor.ORowExtractor;
 import com.orientechnologies.orient.etl.loader.OLoader;
 import com.orientechnologies.orient.etl.loader.OOrientDBLoader;
 import com.orientechnologies.orient.etl.loader.OOutputLoader;
+import com.orientechnologies.orient.etl.source.OContentSource;
 import com.orientechnologies.orient.etl.source.OFileSource;
 import com.orientechnologies.orient.etl.source.OHttpSource;
 import com.orientechnologies.orient.etl.source.OInputSource;
@@ -55,6 +56,7 @@ public class OETLComponentFactory {
     registerSource(OFileSource.class);
     registerSource(OHttpSource.class);
     registerSource(OInputSource.class);
+    registerSource(OContentSource.class);
 
     registerBlock(OCodeBlock.class);
     registerBlock(OLetBlock.class);
