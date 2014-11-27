@@ -947,13 +947,13 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     return getStorage().getConflictStrategy();
   }
 
-  public ODatabaseDocumentTx setConflictStrategy(final String iStrategyName) {
-    getStorage().setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
+  public ODatabaseDocumentTx setConflictStrategy(final ORecordConflictStrategy iResolver) {
+    getStorage().setConflictStrategy(iResolver);
     return this;
   }
 
-  public ODatabaseDocumentTx setConflictStrategy(final ORecordConflictStrategy iResolver) {
-    getStorage().setConflictStrategy(iResolver);
+  public ODatabaseDocumentTx setConflictStrategy(final String iStrategyName) {
+    getStorage().setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
     return this;
   }
 
@@ -1747,6 +1747,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
             callbackHooks(ORecordHook.TYPE.DELETE_FAILED, rec);
           throw t;
         }
+
+        clearDocumentTracking(rec);
 
         // REMOVE THE RECORD FROM 1 AND 2 LEVEL CACHES
         if (!operationResult.isMoved()) {
@@ -2608,8 +2610,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       callbackHooks(wasNew ? ORecordHook.TYPE.CREATE_FAILED : ORecordHook.TYPE.UPDATE_FAILED, record);
   }
 
-  private void callbackHookSuccess(ORecord record, boolean iCallTriggers, boolean wasNew, byte[] stream,
-      OStorageOperationResult<ORecordVersion> operationResult) {
+  private void callbackHookSuccess(final ORecord record, final boolean iCallTriggers, final boolean wasNew, final byte[] stream,
+      final OStorageOperationResult<ORecordVersion> operationResult) {
     if (iCallTriggers && stream != null && stream.length > 0) {
       final ORecordHook.TYPE hookType;
       if (!operationResult.isMoved()) {
@@ -2619,11 +2621,14 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       }
       callbackHooks(hookType, record);
 
-      if (hookType == ORecordHook.TYPE.AFTER_UPDATE)
-        if (record instanceof ODocument && ((ODocument) record).isTrackingChanges()) {
-          ((ODocument) record).setTrackingChanges(false);
-          ((ODocument) record).setTrackingChanges(true);
-        }
+      clearDocumentTracking(record);
+    }
+  }
+
+  private void clearDocumentTracking(final ORecord record) {
+    if (record instanceof ODocument && ((ODocument) record).isTrackingChanges()) {
+      ((ODocument) record).setTrackingChanges(false);
+      ((ODocument) record).setTrackingChanges(true);
     }
   }
 
