@@ -313,6 +313,8 @@ public class OPartitionedDatabasePool {
 
       getLevel1Cache().clear();
 
+      ODatabaseRecordThreadLocal.INSTANCE.set(null);
+
       PoolPartition p = partition;
       partition = null;
 
