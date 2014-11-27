@@ -32,6 +32,15 @@ import java.util.Set;
  * 
  */
 public interface OSecurity {
+  public static final String RESTRICTED_CLASSNAME   = "ORestricted";
+  public static final String IDENTITY_CLASSNAME     = "OIdentity";
+  public static final String ALLOW_ALL_FIELD        = "_allow";
+  public static final String ALLOW_READ_FIELD       = "_allowRead";
+  public static final String ALLOW_UPDATE_FIELD     = "_allowUpdate";
+  public static final String ALLOW_DELETE_FIELD     = "_allowDelete";
+  public static final String ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
+  public static final String ONCREATE_FIELD         = "onCreate.fields";
+
   public OUser create();
 
   public void load();
