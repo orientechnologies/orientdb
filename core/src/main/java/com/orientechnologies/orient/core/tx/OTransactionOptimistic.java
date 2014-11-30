@@ -414,6 +414,13 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         database.callbackHooks(TYPE.AFTER_DELETE, iRecord);
         break;
       }
+
+      // RESET TRACKING
+      if (iRecord instanceof ODocument && ((ODocument) iRecord).isTrackingChanges()) {
+        ((ODocument) iRecord).setTrackingChanges(false);
+        ((ODocument) iRecord).setTrackingChanges(true);
+      }
+
     } catch (Throwable t) {
       switch (iStatus) {
       case ORecordOperation.CREATED:
