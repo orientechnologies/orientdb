@@ -11,7 +11,7 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
 
   public List<Issue> findOrganizationIssues(String name, String q, String page, String perPage);
 
-  public Page<Issue> findOrganizationIssuesPaged(String name, String q, String page, String perPage);
+  public Page<Issue> findOrganizationIssuesPagedProfiled(String name, String q, String page, String perPage);
 
   public List<Repository> findOrganizationRepositories(String name);
 

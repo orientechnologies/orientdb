@@ -144,7 +144,7 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
     issueDto.setNumber(issue.getNumber());
     issueDto.setBody(issue.getBody());
     issueDto.setTitle(issue.getTitle());
-    issueDto.setConfidential(true);
+    issueDto.setConfidential(false);
     issueDto.setState(issue.getState().toString());
     // import labels
 

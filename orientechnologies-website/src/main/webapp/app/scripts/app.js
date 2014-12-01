@@ -18,6 +18,7 @@ angular
     'ngTouch',
     'restangular',
     'ngMoment',
+    'ngCookies',
     'mgcrea.ngStrap',
     'ngUtilFilters'
   ])
@@ -78,10 +79,13 @@ angular
       };
     });
   });
-angular.module('webappApp').factory('oauthHttpInterceptor', function () {
+angular.module('webappApp').factory('oauthHttpInterceptor', function ($cookies) {
   return {
     request: function (config) {
-      config.headers['X-AUTH-TOKEN'] = '712269688bc391fba83280bd498da00bc0dc7507';
+      if ($cookies.prjhub_token) {
+        config.headers['X-AUTH-TOKEN'] = $cookies.prjhub_token;
+      }
+      //
       return config;
     }
   };

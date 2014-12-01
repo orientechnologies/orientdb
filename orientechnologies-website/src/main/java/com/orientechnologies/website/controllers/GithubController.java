@@ -13,7 +13,9 @@ import org.springframework.web.servlet.view.RedirectView;
 import reactor.core.Reactor;
 import reactor.event.Event;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,7 +53,7 @@ public class GithubController {
   }
 
   @RequestMapping(value = ApiUrls.AUTHORIZE, method = RequestMethod.GET, params = { "code" })
-  public RedirectView authorize(@RequestParam("code") String code) {
+  public RedirectView authorize(@RequestParam("code") String code, HttpServletResponse res) {
 
     String locationUrl = gitHubConfiguration.getLoginUrl() + "/access_token?client_id=" + gitHubConfiguration.getClientId()
         + "&client_secret=" + gitHubConfiguration.getClientSecret() + "&code=" + code;
@@ -74,11 +76,17 @@ public class GithubController {
       String response = sb.toString();
       String authKey = response.split("&")[0].split("=")[1];
       userService.initUser(authKey);
+      Cookie cookie = new Cookie("prjhub_token", authKey);
+      cookie.setMaxAge(2000);
+      cookie.setPath("/");
+      res.addCookie(cookie);
+
     } catch (java.io.IOException e) {
       e.printStackTrace();
     }
 
     RedirectView view = new RedirectView();
+
     view.setUrl("/");
     return view;
   }

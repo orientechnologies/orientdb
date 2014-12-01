@@ -16,7 +16,8 @@
     "restangular": "1.4.0",
     "moment": "2.8.3",
     "bootstrap-markdown": "2.7.0",
-    "angular-strap": "2.1.3"
+    "angular-strap": "2.1.3",
+    "string" : "2.2.0"
 
   },
   "devDependencies": {

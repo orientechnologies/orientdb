@@ -67,7 +67,7 @@ public class OrganizationController {
       @RequestParam(value = "q", defaultValue = "") String q, @RequestParam(value = "page", defaultValue = "1") String page,
       @RequestParam(value = "per_page", defaultValue = "10") String perPage) {
 
-    Page<Issue> issues = orgRepository.findOrganizationIssuesPaged(name, q, page, perPage);
+    Page<Issue> issues = orgRepository.findOrganizationIssuesPagedProfiled(name, q, page, perPage);
     return new ResponseEntity<PagedResources<IssueResource>>(pagedResourceAssembler.toResource(issues, issueAssembler),
         HttpStatus.OK);
   }

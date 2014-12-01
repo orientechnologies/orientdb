@@ -13,6 +13,8 @@
     </div>
   </nav>
   <a href="javascript:void(0)" class="settings-button" ng-click="toggleMenu()">
+    <avatar  name="true" dim="20" user="user">
+    </avatar>
     <i class="fa fa-fw fa-2x fa-cog"></i>
   </a>
 
@@ -31,7 +33,6 @@
           <a href="#"><i class="fa fa-fw fa-question-circle"></i></a>
           <a href="#"><i class="fa fa-fw fa-power-off"></i></a>
         </div>
-        <div class="profile"><img src="img/user1.png" alt="Matthew Greenberg"/><span>Matthew Greenberg</span></div>
       </nav>
     </div>
   </div>
@@ -42,12 +43,12 @@
           <i class="fa fa-2x fa-home"></i>
         </a>
       </li>
-      <li>
+      <li >
         <a href="#/issues">
           <i class="fa fa-2x fa-bug"></i>
         </a>
       </li>
-      <li>
+      <li ng-show="member">
         <a href="#/clients">
           <i class="fa fa-2x fa-money"></i>
         </a>

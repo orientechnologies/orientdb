@@ -5,10 +5,12 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.hateoas.Page;
+import com.orientechnologies.website.helper.SecurityHelper;
 import com.orientechnologies.website.model.schema.*;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.repository.OrganizationRepository;
+import com.orientechnologies.website.services.UserService;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientElement;
@@ -25,6 +27,8 @@ import java.util.NoSuchElementException;
 @Repository
 public class OrganizationRepositoryImpl extends OrientBaseRepository<Organization> implements OrganizationRepository {
 
+  @Autowired
+  private UserService     userService;
   @Autowired
   private OrientDBFactory dbFactory;
 
@@ -51,7 +55,7 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
 
     String query = String.format(
         "select from (select expand(out('HasRepo').out('HasIssue')) from Organization where name = '%s') ", name);
-    query = addParams(q, query);
+    query = addParams(name, q, query);
     Integer limit = new Integer(perPage);
     Integer skip = limit * (new Integer(page) - 1);
     query += " SKIP " + skip + " LIMIT " + limit;
@@ -69,13 +73,13 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     OrientGraph db = dbFactory.getGraph();
     String query = String.format(
         "select count(*) from (select expand(out('HasRepo').out('HasIssue')) from Organization where name = '%s') ", name);
-    query = addParams(q, query);
+    query = addParams(name, q, query);
     Iterable<OrientElement> documents = db.command(new OCommandSQL(query)).execute();
     return documents.iterator().next().getRecord().field("count");
 
   }
 
-  private String addParams(String q, String query) {
+  private String addParams(String orgName, String q, String query) {
     int idx = 0;
     String fullText = "";
     if (q != null && !q.isEmpty()) {
@@ -93,11 +97,30 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     }
     if (!fullText.isEmpty())
       query = applyParam(query, "title", fullText, idx++);
+
+    query = addProfilation(orgName, query, idx++);
     return query;
   }
 
+  private String addProfilation(String orgName, String query, int idx) {
+    OUser user = SecurityHelper.currentUser();
+
+    boolean isMember = userService.isMember(user, orgName);
+    if (isMember) {
+      return query;
+    }
+    Client client = userService.getClient(user, orgName);
+    if (client != null) {
+      return query + (idx > 0 ? " and " : " where ")
+          + "  (confidential <> true or (in('HasOpened').in('HasMember')[@class = 'Client'].clientId contains "
+          + client.getClientId() + "))";
+    }
+    return query + (idx > 0 ? " and " : " where ") + " confidential <> true";
+
+  }
+
   @Override
-  public Page<Issue> findOrganizationIssuesPaged(String name, String q, String page, String perPage) {
+  public Page<Issue> findOrganizationIssuesPagedProfiled(String name, String q, String page, String perPage) {
 
     List<Issue> issues = findOrganizationIssues(name, q, page, perPage);
     long count = countOrganizationIssues(name, q, page, perPage);
@@ -158,6 +181,10 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     if ("title".equals(name)) {
       val = value.toLowerCase().trim();
       query = query + "title.toLowerCase() containsText '%s'";
+    }
+    if ("client".equals(name)) {
+      val = value;
+      query = query + "in('HasOpened').in('HasMember')[@class = 'Client'].name  CONTAINS '%s'";
     }
     if ("no".equals(name)) {
       if ("label".equals(value)) {
@@ -298,7 +325,6 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   public Issue findSingleOrganizationIssueByRepoAndNumber(String name, String repo, String number) {
 
     OrientGraph db = dbFactory.getGraph();
-    System.out.println(System.identityHashCode(db));
     String query = String.format(
         "select expand(out('HasRepo')[name = '%s'].out('HasIssue')[uuid = '%s'])  from Organization where name = '%s') ", repo,
         number, name);

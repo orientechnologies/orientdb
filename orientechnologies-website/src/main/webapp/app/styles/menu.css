@@ -28,19 +28,24 @@
   right: 0;
   margin: 1em;
   padding: 0;
-  width: 2.5em;
   height: 2.25em;
   color: #777;
+}
+.settings-button .avatar-container {
+  vertical-align: top;
+  margin-top: 2px;
 }
 .profile {
   display: inline-block;
   line-height: 42px;
   font-weight: 700;
   padding: 1em;
-}
 
+}
+.menu .profile {
+  text-align: left;
+}
 .profile img {
-  float: right;
   border-radius: 50%;
   margin-left: 10px;
 }
