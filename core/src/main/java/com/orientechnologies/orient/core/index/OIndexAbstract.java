@@ -376,7 +376,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
         removeValuesContainer();
 
-        int documentNum = 0;
+        long documentNum = 0;
         long documentTotal = 0;
 
         for (final String cluster : clustersToIndex)
@@ -883,7 +883,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
         documentNum++;
 
         if (iProgressListener != null)
-          iProgressListener.onProgress(this, documentNum, documentNum * 100f / documentTotal);
+          iProgressListener.onProgress(this, documentNum, (float) (documentNum * 100.0 / documentTotal));
       }
     } catch (NoSuchElementException e) {
       // END OF CLUSTER REACHED, IGNORE IT
