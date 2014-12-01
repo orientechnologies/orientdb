@@ -49,6 +49,7 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorEquals;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNotEquals;
+import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -387,6 +388,11 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
           subQuery.getContext().setParent(context);
           subQuery.getContext().setVariable("current", iRecord);
           varValue = ODatabaseRecordThreadLocal.INSTANCE.get().query(subQuery);
+          if(varValue instanceof OResultSet){
+            varValue = ((OResultSet) varValue).copy();
+            ((OResultSet) varValue).setCompleted();
+          }
+
         } else if (letValue instanceof OSQLFunctionRuntime) {
           final OSQLFunctionRuntime f = (OSQLFunctionRuntime) letValue;
           if (f.getFunction().aggregateResults()) {
