@@ -34,24 +34,24 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
 public class OrientTokenHandler extends OServerPluginAbstract implements OTokenHandler {
-  public static final String            O_SIGN_KEY        = "oAuth2Key";
+  public static final String            O_SIGN_KEY     = "oAuth2Key";
 
   private OBinaryTokenSerializer        binarySerializer;
 
-  protected static final int            JWT_DELIMITER     = '.';
+  protected static final int            JWT_DELIMITER  = '.';
 
-  private int                           sessionInMills    = 1000 * 60 * 60;
+  private int                           sessionInMills = 1000 * 60 * 60;
 
-  private static final ThreadLocal<Mac> threadLocalMac    = new ThreadLocal<Mac>() {
-                                                            @Override
-                                                            protected Mac initialValue() {
-                                                              try {
-                                                                return Mac.getInstance("HmacSHA256");
-                                                              } catch (NoSuchAlgorithmException nsa) {
-                                                                throw new IllegalArgumentException("Can't find algorithm.");
-                                                              }
-                                                            }
-                                                          };
+  private static final ThreadLocal<Mac> threadLocalMac = new ThreadLocal<Mac>() {
+                                                         @Override
+                                                         protected Mac initialValue() {
+                                                           try {
+                                                             return Mac.getInstance("HmacSHA256");
+                                                           } catch (NoSuchAlgorithmException nsa) {
+                                                             throw new IllegalArgumentException("Can't find algorithm.");
+                                                           }
+                                                         }
+                                                       };
 
   private OKeyProvider                  keyProvider;
 
@@ -361,6 +361,11 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
 
   protected OKeyProvider getKeyProvider() {
     return keyProvider;
+  }
+
+  @Override
+  public byte[] renewIfNeeded(OToken token) {
+    return new byte[] {};
   }
 
 }

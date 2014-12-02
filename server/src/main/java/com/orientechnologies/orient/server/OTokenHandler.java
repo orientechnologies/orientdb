@@ -34,4 +34,6 @@ public interface OTokenHandler {
 
   public byte[] getSignedBinaryToken(ODatabaseDocumentInternal db, OSecurityUser user, ONetworkProtocolData data);
 
+  public byte[] renewIfNeeded(OToken token);
+
 }

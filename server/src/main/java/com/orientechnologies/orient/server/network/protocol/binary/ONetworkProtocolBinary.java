@@ -73,6 +73,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.sbtree.OTreeInternal;
 import com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -156,8 +157,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void onBeforeRequest() throws IOException {
     waitNodeIsOnline();
 
-    if (Boolean.FALSE.equals(tokenBased)
-        || (tokenBased == null && clientTxId > 0 && OClientConnectionManager.instance().has(clientTxId))) {
+    if (Boolean.FALSE.equals(tokenBased) || (tokenHandler == null)) {
       connection = OClientConnectionManager.instance().getConnection(clientTxId, this);
       if (clientTxId < 0) {
         short protocolId = 0;
@@ -241,8 +241,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     OServerPluginHelper.invokeHandlerCallbackOnAfterClientRequest(server, connection, (byte) requestType);
 
     if (connection != null) {
-      if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_26 || token == null
-          && Boolean.FALSE.equals(tokenBased)) {
+      if (!Boolean.TRUE.equals(tokenBased)) {
         if (connection.database != null)
           if (!connection.database.isClosed())
             connection.database.getLocalCache().clear();
@@ -717,6 +716,11 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
       channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
       channel.writeInt(iClientTxId);
+      if (Boolean.TRUE.equals(tokenBased)) {
+        // TODO: Check if the token is expiring and if it is send a new token
+        byte[] renewedToken = tokenHandler.renewIfNeeded(token);
+        channel.writeBytes(renewedToken);
+      }
 
       final Throwable current;
       if (t instanceof OLockException && t.getCause() instanceof ODatabaseException)
@@ -1536,9 +1540,10 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void sendOk(final int iClientTxId) throws IOException {
     channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_OK);
     channel.writeInt(iClientTxId);
-    if (connection.data.protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
+    if (Boolean.TRUE.equals(tokenBased)) {
       // TODO: Check if the token is expiring and if it is send a new token
-      // if(token.)
+      byte[] renewedToken = tokenHandler.renewIfNeeded(token);
+      channel.writeBytes(renewedToken);
     }
   }
 

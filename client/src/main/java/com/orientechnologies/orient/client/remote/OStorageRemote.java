@@ -375,6 +375,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           // ASYNCHRONOUS
           if (iCallback != null) {
             final int sessionId = getSessionId();
+            final byte[] token = getSessionToken();
             final OSBTreeCollectionManager collectionManager = ODatabaseRecordThreadLocal.INSTANCE.get()
                 .getSbTreeCollectionManager();
             Callable<Object> response = new Callable<Object>() {
@@ -383,6 +384,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
                 try {
                   OStorageRemoteThreadLocal.INSTANCE.get().sessionId = sessionId;
+                  OStorageRemoteThreadLocal.INSTANCE.get().token = token;
                   beginResponse(network);
                   if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_25)
                     iRid.clusterId = network.readShort();
@@ -392,9 +394,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
                   if (network.getSrvProtocolVersion() >= 20)
                     readCollectionChanges(network, collectionManager);
+                } catch (Exception e) {
+                  OLogManager.instance().error(this, "Exception on async query", e);
+                  throw e;
                 } finally {
                   endResponse(network);
                   OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
+                  OStorageRemoteThreadLocal.INSTANCE.get().token = null;
                 }
                 iCallback.call(iRid, result);
                 return null;
@@ -1592,8 +1598,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             beginResponse(network);
             sessionId = network.readInt();
             byte[] token = network.readBytes();
-            if (token.length == 0)
+            if (token.length == 0) {
               token = null;
+              network.getServiceThread().setTokenBased(true);
+            }
             setSessionId(network.getServerURL(), sessionId, token);
 
             OLogManager.instance().debug(this, "Client connected to %s with session id=%d", network.getServerURL(), sessionId);
@@ -1831,6 +1839,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
    */
   protected void beginResponse(final OChannelBinaryAsynchClient iNetwork) throws IOException {
     iNetwork.beginResponse(getSessionId());
+    if (getSessionToken() != null) {
+      byte[] newToken = iNetwork.readBytes();
+      if (newToken.length > 0) {
+        setSessionId(getServerURL(), getSessionId(), newToken);
+      }
+    }
   }
 
   protected void getResponse(final OChannelBinaryAsynchClient iNetwork) throws IOException {
