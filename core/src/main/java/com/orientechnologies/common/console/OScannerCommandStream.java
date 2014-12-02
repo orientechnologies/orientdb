@@ -25,7 +25,7 @@ import java.io.FileNotFoundException;
 import java.util.Scanner;
 
 /**
- * @author <a href='mailto:enisher@gmail.com'> Artem Orobets </a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OScannerCommandStream implements OCommandStream {
   private Scanner scanner;

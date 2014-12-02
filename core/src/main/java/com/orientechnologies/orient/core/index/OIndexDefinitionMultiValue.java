@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 /**
  * Interface that indicates that index definition is based on collection of values but not on single value.
  * 
- * @author <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author <a href="mailto:a.lomakin@orientechnologies.com">Andrey Lomakin</a>
  * @since 20.12.11
  */
 public interface OIndexDefinitionMultiValue extends OIndexDefinition {

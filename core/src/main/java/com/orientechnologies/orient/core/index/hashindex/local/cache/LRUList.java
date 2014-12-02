@@ -23,7 +23,7 @@ package com.orientechnologies.orient.core.index.hashindex.local.cache;
 import java.util.Iterator;
 
 /**
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public interface LRUList extends Iterable<OCacheEntry> {
   OCacheEntry get(long fileId, long pageIndex);

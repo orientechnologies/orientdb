@@ -113,8 +113,13 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
 
   private static Collection<OIndex<?>> prepareLastIndexVariants(OClass iSchemaClass, OSQLFilterItemField.FieldChain fieldChain) {
     OClass oClass = iSchemaClass;
+    final Collection<OIndex<?>> result = new ArrayList<OIndex<?>>();
+
     for (int i = 0; i < fieldChain.getItemCount() - 1; i++) {
       oClass = oClass.getProperty(fieldChain.getItemName(i)).getLinkedClass();
+      if(oClass == null){
+        return result;
+      }
     }
 
     final Set<OIndex<?>> involvedIndexes = new TreeSet<OIndex<?>>(new Comparator<OIndex<?>>() {
@@ -123,9 +128,9 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
       }
     });
 
+
     involvedIndexes.addAll(oClass.getInvolvedIndexes(fieldChain.getItemName(fieldChain.getItemCount() - 1)));
     final Collection<Class<? extends OIndex>> indexTypes = new HashSet<Class<? extends OIndex>>(3);
-    final Collection<OIndex<?>> result = new ArrayList<OIndex<?>>();
 
     for (OIndex<?> involvedIndex : involvedIndexes) {
       if (!indexTypes.contains(involvedIndex.getInternal().getClass())) {

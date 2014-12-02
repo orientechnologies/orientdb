@@ -34,9 +34,12 @@ import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.ORestrictedAccessHook;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -348,8 +351,19 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     boolean updated = false;
     if (content != null) {
       // REPLACE ALL THE CONTENT
+
+      final OClass restricted = getDatabase().getMetadata().getSchema().getClass(OSecurity.RESTRICTED_CLASSNAME);
+      final ODocument restrictedFields = new ODocument();
+      if (restricted != null) {
+        for (OProperty prop : restricted.properties()) {
+          restrictedFields.field(prop.getName(), record.field(prop.getName()));
+        }
+      }
+
       record.clear();
-      record.merge(content, false, false);
+
+      record.merge(restrictedFields, false, false);
+      record.merge(content, true, false);
       updated = true;
     }
     return updated;

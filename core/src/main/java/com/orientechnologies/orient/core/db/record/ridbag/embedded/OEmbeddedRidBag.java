@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.db.record.ridbag.embedded;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
@@ -428,9 +429,10 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
   private void addEntry(OIdentifiable identifiable) {
     if (entries.length == entriesLength) {
-      if (entriesLength == 0)
-        entries = new Object[4];
-      else {
+      if (entriesLength == 0) {
+        int defaultSize = (Integer) OGlobalConfiguration.RID_BAG_EMBEDDED_DEFAULT_SIZE.getValue();
+        entries = new Object[defaultSize > 0 ? defaultSize : 4];
+      }else {
         final Object[] oldEntries = entries;
         entries = new Object[entries.length << 1];
         System.arraycopy(oldEntries, 0, entries, 0, oldEntries.length);

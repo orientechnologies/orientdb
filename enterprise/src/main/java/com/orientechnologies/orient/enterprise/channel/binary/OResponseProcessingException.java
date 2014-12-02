@@ -24,7 +24,7 @@ package com.orientechnologies.orient.enterprise.channel.binary;
 import com.orientechnologies.common.exception.OException;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 11/8/13
  */
 public class OResponseProcessingException extends OException {

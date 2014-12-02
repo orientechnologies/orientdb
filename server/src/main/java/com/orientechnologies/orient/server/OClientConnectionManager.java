@@ -258,6 +258,9 @@ public class OClientConnectionManager {
    * Pushes the distributed configuration to all the connected clients.
    */
   public void pushDistribCfg2Clients(final ODocument iConfig) {
+    if( iConfig == null )
+      return;
+
     final byte[] content = iConfig.toStream();
 
     final Set<String> pushed = new HashSet<String>();

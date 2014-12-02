@@ -19,6 +19,17 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import java.io.ByteArrayOutputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.lang.ref.WeakReference;
+import java.text.ParseException;
+import java.util.*;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -50,17 +61,6 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.lang.ref.WeakReference;
-import java.text.ParseException;
-import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -910,6 +910,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       else if ((iFieldType == OType.EMBEDDEDMAP || iFieldType == OType.LINKMAP) && value instanceof Map)
         // CONVERT SET TO LIST
         newValue = Collections.unmodifiableMap((Map<?, ?>) ODocumentHelper.convertField(this, iFieldName, Map.class, value));
+      else
+        newValue = OType.convert(value, iFieldType.getDefaultJavaType());
 
       if (newValue != null)
         value = (RET) newValue;
@@ -1604,6 +1606,26 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     checkForLoading();
     checkForFields();
     return _fieldValues == null || _fieldValues.isEmpty();
+  }
+
+  @Override
+  public ODocument fromJSON(final String iSource, final String iOptions) {
+    return (ODocument) super.fromJSON(iSource, iOptions);
+  }
+
+  @Override
+  public ODocument fromJSON(final String iSource) {
+    return (ODocument) super.fromJSON(iSource);
+  }
+
+  @Override
+  public ODocument fromJSON(final InputStream iContentResult) throws IOException {
+    return (ODocument) super.fromJSON(iContentResult);
+  }
+
+  @Override
+  public ODocument fromJSON(final String iSource, final boolean needReload) {
+    return (ODocument) super.fromJSON(iSource, needReload);
   }
 
   public boolean isEmbedded() {

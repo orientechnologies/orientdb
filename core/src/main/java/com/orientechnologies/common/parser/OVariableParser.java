@@ -54,7 +54,7 @@ public class OVariableParser {
 
     if (resolved == null) {
       if (iDefaultValue == null)
-        OLogManager.instance().warn(null, "[OVariableParser.resolveVariables] Error on resolving property: %s", var);
+        OLogManager.instance().info(null, "[OVariableParser.resolveVariables] Error on resolving property: %s", var);
       else
         resolved = iDefaultValue;
     }

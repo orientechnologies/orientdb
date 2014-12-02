@@ -82,6 +82,8 @@ public class OrientGraphNoTx extends OrientBaseGraph {
   }
 
   public Features getFeatures() {
+    makeActive();
+
     // DYNAMIC FEATURES BASED ON CONFIGURATION
     FEATURES.supportsEdgeIndex = !settings.useLightweightEdges;
     FEATURES.supportsEdgeKeyIndex = !settings.useLightweightEdges;

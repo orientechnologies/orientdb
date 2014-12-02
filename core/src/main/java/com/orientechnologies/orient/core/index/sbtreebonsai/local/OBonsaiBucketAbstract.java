@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODura
  * @see com.orientechnologies.orient.core.index.sbtreebonsai.local.OBonsaiBucketPointer
  * @see com.orientechnologies.orient.core.index.sbtreebonsai.local.OSBTreeBonsai
  * 
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OBonsaiBucketAbstract extends ODurablePage {
   public OBonsaiBucketAbstract(OCacheEntry cacheEntry, TrackMode trackMode) {

@@ -70,9 +70,9 @@ class OrientElementIterator<T extends Element> implements Iterator<T> {
             "Cannot determine the graph element type because the document class is null. Probably this is a projection, use the EXPAND() function");
 
       if (currentDocument.getImmutableSchemaClass().isSubClassOf(graph.getEdgeBaseType()))
-        currentElement = new OrientEdge(currentDocument);
+        currentElement = new OrientEdge(graph, currentDocument);
       else
-        currentElement = new OrientVertex(currentDocument);
+        currentElement = new OrientVertex(graph, currentDocument);
     }
 
     return (T) currentElement;

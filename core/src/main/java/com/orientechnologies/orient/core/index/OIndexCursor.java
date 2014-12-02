@@ -36,7 +36,7 @@ import java.util.Set;
  * {@link com.orientechnologies.orient.core.index.OIndex#iterateEntriesBetween(Object, boolean, Object, boolean, boolean)} cursor
  * instance can not be used at several threads simultaneously.
  * 
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 4/4/14
  */
 public interface OIndexCursor extends Iterator<OIdentifiable> {

@@ -27,13 +27,12 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
-import java.nio.CharBuffer;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * @author <a href='mailto:enisher@gmail.com'> Artem Orobets </a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class ODFACommandStream implements OCommandStream {
   public static final int      BUFFER_SIZE = 1024;

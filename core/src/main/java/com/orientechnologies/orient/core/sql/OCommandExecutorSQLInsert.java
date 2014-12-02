@@ -160,11 +160,14 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
         throw new OCommandExecutionException("Target index '" + indexName + "' not found");
 
       // BIND VALUES
-      Map<String, Object> result = null;
+      Map<String, Object> result = new HashMap<String, Object>();
 
       for (Map<String, Object> candidate : newRecords) {
-        index.put(getIndexKeyValue(commandParameters, candidate), getIndexValue(commandParameters, candidate));
-        result = candidate;
+        Object indexKey = getIndexKeyValue(commandParameters, candidate);
+        OIdentifiable indexValue = getIndexValue(commandParameters, candidate);
+        index.put(indexKey, indexValue);
+        result.put(KEYWORD_KEY, indexKey);
+        result.put(KEYWORD_RID, indexValue);
       }
 
       // RETURN LAST ENTRY

@@ -1,5 +1,10 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.client.db.ODatabaseHelper;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -7,12 +12,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.client.db.ODatabaseHelper;
-import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 
 import java.io.IOException;
 
@@ -76,8 +75,9 @@ public abstract class BaseTest<T extends ODatabase> {
       }
 
       createDatabase();
-    } else
-      database.open("admin", "admin");
+    }
+
+    database.open("admin", "admin");
   }
 
   @AfterClass

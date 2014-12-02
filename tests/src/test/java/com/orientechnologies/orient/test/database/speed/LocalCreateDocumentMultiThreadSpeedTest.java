@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMultiThreadTest;
 import com.orientechnologies.orient.test.database.base.OrientThreadTest;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.Date;
@@ -88,6 +87,7 @@ public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTe
     OGlobalConfiguration.USE_WAL.setValue(false);
     LocalCreateDocumentMultiThreadSpeedTest test = new LocalCreateDocumentMultiThreadSpeedTest();
     test.data.go(test);
+    OGlobalConfiguration.USE_WAL.setValue(true);
   }
 
   @Override

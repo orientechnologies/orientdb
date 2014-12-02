@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public interface OTreeInternal<K, V> {
   long size();
@@ -37,7 +37,7 @@ public interface OTreeInternal<K, V> {
   V remove(K key);
 
   /**
-   * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+   * @author Artem Orobets (enisher-at-gmail.com)
    */
   interface RangeResultListener<K, V> {
     /**

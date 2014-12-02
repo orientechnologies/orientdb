@@ -20,11 +20,6 @@
 
 package com.orientechnologies.orient.core.tx;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -45,8 +40,8 @@ import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -54,6 +49,15 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class OTransactionOptimistic extends OTransactionRealAbstract {
   private static AtomicInteger txSerial = new AtomicInteger();
@@ -265,7 +269,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     switch (iStatus) {
     case ORecordOperation.CREATED:
-      database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
+      database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
       database.callbackHooks(TYPE.BEFORE_CREATE, iRecord);
       break;
     case ORecordOperation.LOADED:
@@ -274,11 +278,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
        */
       break;
     case ORecordOperation.UPDATED:
-      database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
+      database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
       database.callbackHooks(TYPE.BEFORE_UPDATE, iRecord);
       break;
     case ORecordOperation.DELETED:
-      database.checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_DELETE, iClusterName);
+      database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, iClusterName);
       database.callbackHooks(TYPE.BEFORE_DELETE, iRecord);
       break;
     }
@@ -410,6 +414,13 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         database.callbackHooks(TYPE.AFTER_DELETE, iRecord);
         break;
       }
+
+      // RESET TRACKING
+      if (iRecord instanceof ODocument && ((ODocument) iRecord).isTrackingChanges()) {
+        ((ODocument) iRecord).setTrackingChanges(false);
+        ((ODocument) iRecord).setTrackingChanges(true);
+      }
+
     } catch (Throwable t) {
       switch (iStatus) {
       case ORecordOperation.CREATED:
@@ -461,7 +472,6 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
             }
           }, true);
         }
-
       } finally {
         releaseIndexLocks(lockedIndexes);
       }

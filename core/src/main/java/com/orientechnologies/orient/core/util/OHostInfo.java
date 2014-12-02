@@ -28,7 +28,7 @@ import java.util.Enumeration;
 /**
  * Contains information about current host.
  * 
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OHostInfo {
   /**

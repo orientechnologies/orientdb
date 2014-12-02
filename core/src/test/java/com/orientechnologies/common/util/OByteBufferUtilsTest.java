@@ -16,15 +16,16 @@
 
 package com.orientechnologies.common.util;
 
-import static org.testng.Assert.assertEquals;
-
-import java.nio.ByteBuffer;
-
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.nio.ByteBuffer;
+
+import static org.testng.Assert.assertEquals;
+
 /**
- * @author Artem Loginov (logart) logart2007@gmail.com Date: 5/25/12 Time: 6:40 AM
+ * @author Artem Loginov (logart2007-at-gmail.com)
+ * @since 5/25/12 6:40 AM
  */
 public class OByteBufferUtilsTest {
 

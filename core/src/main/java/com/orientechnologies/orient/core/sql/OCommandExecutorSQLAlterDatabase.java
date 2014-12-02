@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
 
 /**
  * SQL ALTER DATABASE command: Changes an attribute of the current database.
@@ -95,7 +96,7 @@ public class OCommandExecutorSQLAlterDatabase extends OCommandExecutorSQLAbstrac
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
     final ODatabaseDocumentInternal database = getDatabase();
-    database.checkSecurity(ODatabaseSecurityResources.DATABASE, ORole.PERMISSION_UPDATE);
+    database.checkSecurity(ORule.ResourceGeneric.DATABASE, ORole.PERMISSION_UPDATE);
 
     database.setInternal(attribute, value);
     return null;

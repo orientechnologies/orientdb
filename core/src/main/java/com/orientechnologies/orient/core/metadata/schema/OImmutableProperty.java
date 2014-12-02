@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import java.util.*;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 10/21/14
  */
 public class OImmutableProperty implements OProperty {

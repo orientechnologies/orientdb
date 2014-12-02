@@ -38,7 +38,7 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
  * Implementation of standard version. This implementation contains only one integer number to hold state of version.
  * 
  * @see OVersionFactory
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public final class OSimpleVersion implements ORecordVersion {
   public static final OBinaryConverter CONVERTER = OBinaryConverterFactory.getConverter();

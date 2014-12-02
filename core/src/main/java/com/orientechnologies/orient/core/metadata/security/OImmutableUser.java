@@ -11,16 +11,17 @@ import com.orientechnologies.orient.core.security.OSecurityManager;
 import java.util.*;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 03/11/14
  */
 public class OImmutableUser implements OSecurityUser {
+  private static final long         serialVersionUID = 1L;
   private final long                version;
 
   private final String              name;
   private final String              password;
 
-  private final Set<OImmutableRole> roles = new HashSet<OImmutableRole>();
+  private final Set<OImmutableRole> roles            = new HashSet<OImmutableRole>();
 
   private final STATUSES            status;
   private final ORID                rid;
@@ -39,40 +40,76 @@ public class OImmutableUser implements OSecurityUser {
     }
   }
 
-  public OSecurityRole allow(final String iResource, final int iOperation) {
+  public OSecurityRole allow(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation) {
     if (roles.isEmpty())
       throw new OSecurityAccessException(getName(), "User '" + getName() + "' has no role defined");
 
-    final OSecurityRole role = checkIfAllowed(iResource, iOperation);
+    final OSecurityRole role = checkIfAllowed(resourceGeneric, resourceSpecific, iOperation);
 
     if (role == null)
       throw new OSecurityAccessException(getName(), "User '" + getName() + "' has no the permission to execute the operation '"
-          + ORole.permissionToString(iOperation) + "' against the resource: " + iResource);
+          + ORole.permissionToString(iOperation) + "' against the resource: " + resourceGeneric + "." + resourceSpecific);
 
     return role;
   }
 
-  public OSecurityRole checkIfAllowed(final String iResource, final int iOperation) {
+  public OSecurityRole checkIfAllowed(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation) {
     for (OImmutableRole r : roles) {
       if (r == null)
         OLogManager.instance().warn(this,
             "User '%s' has a null role, bypass it. Consider to fix this user roles before to continue", getName());
-      else if (r.allow(iResource, iOperation))
+      else if (r.allow(resourceGeneric, resourceSpecific, iOperation))
         return r;
     }
 
     return null;
   }
 
-  public boolean isRuleDefined(final String iResource) {
+  public boolean isRuleDefined(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific) {
     for (OImmutableRole r : roles)
       if (r == null)
         OLogManager.instance().warn(this,
             "User '%s' has a null role, bypass it. Consider to fix this user roles before to continue", getName());
-      else if (r.hasRule(iResource))
+      else if (r.hasRule(resourceGeneric, resourceSpecific))
         return true;
 
     return false;
+  }
+
+  @Override
+  @Deprecated
+  public OSecurityRole allow(String iResource, int iOperation) {
+    final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
+    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
+
+    if (resourceSpecific == null || resourceSpecific.equals("*"))
+      return allow(resourceGeneric, null, iOperation);
+
+    return allow(resourceGeneric, resourceSpecific, iOperation);
+  }
+
+  @Override
+  @Deprecated
+  public OSecurityRole checkIfAllowed(String iResource, int iOperation) {
+    final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
+    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
+
+    if (resourceSpecific == null || resourceSpecific.equals("*"))
+      return checkIfAllowed(resourceGeneric, null, iOperation);
+
+    return checkIfAllowed(resourceGeneric, resourceSpecific, iOperation);
+  }
+
+  @Override
+  @Deprecated
+  public boolean isRuleDefined(String iResource) {
+    final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
+    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
+
+    if (resourceSpecific == null || resourceSpecific.equals("*"))
+      return isRuleDefined(resourceGeneric, null);
+
+    return isRuleDefined(resourceGeneric, resourceSpecific);
   }
 
   public boolean checkPassword(final String iPassword) {
@@ -130,7 +167,7 @@ public class OImmutableUser implements OSecurityUser {
         while (r != null) {
           if (r.getName().equals(iRoleName))
             return true;
-          r = role.getParentRole();
+          r = r.getParentRole();
         }
       }
     }
@@ -149,12 +186,12 @@ public class OImmutableUser implements OSecurityUser {
 
   @Override
   public OIdentifiable getIdentity() {
-	return rid;
+    return rid;
   }
-  
+
   @Override
   public ODocument getDocument() {
     return user.getDocument();
   }
-	
+
 }

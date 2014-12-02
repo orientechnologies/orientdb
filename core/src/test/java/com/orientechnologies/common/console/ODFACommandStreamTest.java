@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * @author <a href='mailto:enisher@gmail.com'> Artem Orobets </a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class ODFACommandStreamTest {
   @Test

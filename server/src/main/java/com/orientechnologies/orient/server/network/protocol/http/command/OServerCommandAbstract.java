@@ -20,7 +20,9 @@
 package com.orientechnologies.orient.server.network.protocol.http.command;
 
 import java.io.IOException;
- import java.util.List;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.List;
 
  import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
  import com.orientechnologies.orient.server.OServer;
@@ -52,7 +54,15 @@ public abstract class OServerCommandAbstract implements OServerCommand {
    protected String[] checkSyntax(final String iURL, final int iArgumentCount, final String iSyntax) {
      final List<String> parts = OStringSerializerHelper.smartSplit(iURL, OHttpResponse.URL_SEPARATOR, 1, -1, true, true, false,
          false);
-     if (parts.size() < iArgumentCount)
+      try {
+        for (int i = 0; i < parts.size(); i++) {
+          parts.set(i, URLDecoder.decode(parts.get(i), "UTF-8"));
+        }
+      }
+      catch ( UnsupportedEncodingException e ) {
+        throw new OHttpRequestException(e);
+      }
+      if (parts.size() < iArgumentCount)
        throw new OHttpRequestException(iSyntax);
 
      return parts.toArray(new String[parts.size()]);

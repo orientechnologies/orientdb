@@ -16,7 +16,7 @@
 package com.orientechnologies.orient.core.exception;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 10/6/14
  */
 public class OLowDiskSpaceException extends OStorageException {

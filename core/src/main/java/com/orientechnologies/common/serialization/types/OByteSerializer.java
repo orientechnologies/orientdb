@@ -25,7 +25,7 @@ import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 /**
  * Serializer for byte type .
  *
- * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
+ * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
  * @since 18.01.12
  */
 public class OByteSerializer implements OBinarySerializer<Byte> {

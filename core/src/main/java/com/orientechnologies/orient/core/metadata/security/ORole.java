@@ -19,11 +19,11 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.annotation.OBeforeDeserialization;
@@ -44,23 +44,24 @@ import com.orientechnologies.orient.core.type.ODocumentWrapper;
  */
 @SuppressWarnings("unchecked")
 public class ORole extends ODocumentWrapper implements OSecurityRole {
-  public static final String          ADMIN             = "admin";
-  public static final String          CLASS_NAME        = "ORole";
-  public final static int             PERMISSION_NONE   = 0;
-  public final static int             PERMISSION_CREATE = registerPermissionBit(0, "Create");
-  public final static int             PERMISSION_READ   = registerPermissionBit(1, "Read");
-  public final static int             PERMISSION_UPDATE = registerPermissionBit(2, "Update");
-  public final static int             PERMISSION_DELETE = registerPermissionBit(3, "Delete");
-  public final static int             PERMISSION_ALL    = PERMISSION_CREATE + PERMISSION_READ + PERMISSION_UPDATE
-                                                            + PERMISSION_DELETE;
-  protected final static byte         STREAM_DENY       = 0;
-  protected final static byte         STREAM_ALLOW      = 1;
-  private static final long           serialVersionUID  = 1L;
+  public static final String                ADMIN             = "admin";
+  public static final String                CLASS_NAME        = "ORole";
+  public final static int                   PERMISSION_NONE   = 0;
+  public final static int                   PERMISSION_CREATE = registerPermissionBit(0, "Create");
+  public final static int                   PERMISSION_READ   = registerPermissionBit(1, "Read");
+  public final static int                   PERMISSION_UPDATE = registerPermissionBit(2, "Update");
+  public final static int                   PERMISSION_DELETE = registerPermissionBit(3, "Delete");
+  public final static int                   PERMISSION_ALL    = PERMISSION_CREATE + PERMISSION_READ + PERMISSION_UPDATE
+                                                                  + PERMISSION_DELETE;
+  protected final static byte               STREAM_DENY       = 0;
+  protected final static byte               STREAM_ALLOW      = 1;
+  private static final long                 serialVersionUID  = 1L;
   // CRUD OPERATIONS
-  private static Map<Integer, String> PERMISSION_BIT_NAMES;
-  protected ALLOW_MODES               mode              = ALLOW_MODES.DENY_ALL_BUT;
-  protected ORole                     parentRole;
-  protected Map<String, Byte>         rules             = new LinkedHashMap<String, Byte>();
+  private static Map<Integer, String>       PERMISSION_BIT_NAMES;
+  protected ALLOW_MODES                     mode              = ALLOW_MODES.DENY_ALL_BUT;
+  protected ORole                           parentRole;
+
+  private Map<ORule.ResourceGeneric, ORule> rules             = new HashMap<ORule.ResourceGeneric, ORule>();
 
   /**
    * Constructor used in unmarshalling.
@@ -71,10 +72,12 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
   public ORole(final String iName, final ORole iParent, final ALLOW_MODES iAllowMode) {
     super(CLASS_NAME);
     document.field("name", iName);
+
     parentRole = iParent;
     document.field("inheritedRole", iParent != null ? iParent.getDocument() : null);
     setMode(iAllowMode);
-    document.field("rules", new HashMap<String, Number>());
+
+    updateRolesDocumentContent();
   }
 
   /**
@@ -147,85 +150,170 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
     final OIdentifiable role = document.field("inheritedRole");
     parentRole = role != null ? document.getDatabase().getMetadata().getSecurity().getRole(role) : null;
 
-    final Map<String, Number> storedRules = document.field("rules");
-    if (storedRules != null)
-      for (Entry<String, Number> a : storedRules.entrySet()) {
-        rules.put(a.getKey().toLowerCase(), a.getValue().byteValue());
-      }
+    Object loadedRules = document.field("rules");
+    if (loadedRules instanceof Map) {
+      loadOldVersionOfRules((Map<String, Number>) loadedRules);
+    } else {
+      final Set<ODocument> storedRules = (Set<ODocument>) loadedRules;
+      if (storedRules != null)
+        for (ODocument ruleDoc : storedRules) {
+          final ORule.ResourceGeneric resourceGeneric = ORule.ResourceGeneric.valueOf(ruleDoc.<String> field("resourceGeneric"));
+          final Map<String, Byte> specificResources = ruleDoc.field("specificResources");
+          final Byte access = ruleDoc.field("access");
 
-    if (getName().equals("admin") && !hasRule(ODatabaseSecurityResources.BYPASS_RESTRICTED))
+          final ORule rule = new ORule(resourceGeneric, specificResources, access);
+          rules.put(resourceGeneric, rule);
+        }
+    }
+
+    if (getName().equals("admin") && !hasRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null))
       // FIX 1.5.1 TO ASSIGN database.bypassRestricted rule to the role
-      addRule(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_ALL).save();
+      addRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_ALL).save();
   }
 
-  public boolean allow(final String iResource, final int iCRUDOperation) {
-    // CHECK FOR SECURITY AS DIRECT RESOURCE
-    final Byte access = rules.get(iResource.toLowerCase());
-    if (access != null) {
-      final byte mask = (byte) iCRUDOperation;
+  public boolean allow(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iCRUDOperation) {
+    final ORule rule = rules.get(resourceGeneric);
+    if (rule != null) {
+      final Boolean allowed = rule.isAllowed(resourceSpecific, iCRUDOperation);
+      if (allowed != null)
+        return allowed;
+    }
 
-      return (access.byteValue() & mask) == mask;
-    } else if (parentRole != null)
+    if (parentRole != null)
       // DELEGATE TO THE PARENT ROLE IF ANY
-      return parentRole.allow(iResource, iCRUDOperation);
+      return parentRole.allow(resourceGeneric, resourceSpecific, iCRUDOperation);
 
     return mode == ALLOW_MODES.ALLOW_ALL_BUT;
   }
 
-  public boolean hasRule(final String iResource) {
-    return rules.containsKey(iResource.toLowerCase());
+  public boolean hasRule(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific) {
+    ORule rule = rules.get(resourceGeneric);
+
+    if (rule == null)
+      return false;
+
+    if (resourceSpecific != null && !rule.containsSpecificResource(resourceSpecific))
+      return false;
+
+    return true;
   }
 
-  public ORole addRule(final String iResource, final int iOperation) {
-    rules.put(iResource.toLowerCase(), (byte) iOperation);
-    document.field("rules", rules);
+  public ORole addRule(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation) {
+    ORule rule = rules.get(resourceGeneric);
+
+    if (rule == null) {
+      rule = new ORule(resourceGeneric, null, null);
+      rules.put(resourceGeneric, rule);
+    }
+
+    rule.grantAccess(resourceSpecific, iOperation);
+
+    rules.put(resourceGeneric, rule);
+
+    updateRolesDocumentContent();
+
     return this;
+  }
+
+  @Deprecated
+  @Override
+  public boolean allow(String iResource, int iCRUDOperation) {
+    final String specificResource = ORule.mapLegacyResourceToSpecificResource(iResource);
+    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
+
+    if (specificResource == null || specificResource.equals("*"))
+      return allow(resourceGeneric, null, iCRUDOperation);
+
+    return allow(resourceGeneric, specificResource, iCRUDOperation);
+  }
+
+  @Deprecated
+  @Override
+  public boolean hasRule(String iResource) {
+    final String specificResource = ORule.mapLegacyResourceToSpecificResource(iResource);
+    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
+
+    if (specificResource == null || specificResource.equals("*"))
+      return hasRule(resourceGeneric, null);
+
+    return hasRule(resourceGeneric, specificResource);
+  }
+
+  @Deprecated
+  @Override
+  public OSecurityRole addRule(String iResource, int iOperation) {
+    final String specificResource = ORule.mapLegacyResourceToSpecificResource(iResource);
+    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
+
+    if (specificResource == null || specificResource.equals("*"))
+      return addRule(resourceGeneric, null, iOperation);
+
+    return addRule(resourceGeneric, specificResource, iOperation);
+  }
+
+  @Deprecated
+  @Override
+  public OSecurityRole grant(String iResource, int iOperation) {
+    final String specificResource = ORule.mapLegacyResourceToSpecificResource(iResource);
+    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
+
+    if (specificResource == null || specificResource.equals("*"))
+      return grant(resourceGeneric, null, iOperation);
+
+    return grant(resourceGeneric, specificResource, iOperation);
+  }
+
+  @Deprecated
+  @Override
+  public OSecurityRole revoke(String iResource, int iOperation) {
+    final String specificResource = ORule.mapLegacyResourceToSpecificResource(iResource);
+    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
+
+    if (specificResource == null || specificResource.equals("*"))
+      return revoke(resourceGeneric, null, iOperation);
+
+    return revoke(resourceGeneric, specificResource, iOperation);
   }
 
   /**
    * Grant a permission to the resource.
    * 
-   * @param iResource
-   *          Requested resource
-   * @param iOperation
-   *          Permission to grant/add
    * @return
    */
-  public ORole grant(final String iResource, final int iOperation) {
-    final Byte current = rules.get(iResource.toLowerCase());
-    byte currentValue = current == null ? PERMISSION_NONE : current.byteValue();
+  public ORole grant(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation) {
+    ORule rule = rules.get(resourceGeneric);
 
-    currentValue |= (byte) iOperation;
+    if (rule == null) {
+      rule = new ORule(resourceGeneric, null, null);
+      rules.put(resourceGeneric, rule);
+    }
 
-    rules.put(iResource.toLowerCase(), currentValue);
-    document.field("rules", rules);
+    rule.grantAccess(resourceSpecific, iOperation);
+
+    rules.put(resourceGeneric, rule);
+    updateRolesDocumentContent();
     return this;
   }
 
   /**
    * Revoke a permission to the resource.
-   * 
-   * @param iResource
-   *          Requested resource
-   * @param iOperation
-   *          Permission to grant/remove
    */
-  public ORole revoke(final String iResource, final int iOperation) {
+  public ORole revoke(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation) {
     if (iOperation == PERMISSION_NONE)
       return this;
 
-    final Byte current = rules.get(iResource.toLowerCase());
+    ORule rule = rules.get(resourceGeneric);
 
-    byte currentValue;
-    if (current == null)
-      currentValue = PERMISSION_NONE;
-    else {
-      currentValue = current.byteValue();
-      currentValue &= ~(byte) iOperation;
+    if (rule == null) {
+      rule = new ORule(resourceGeneric, null, null);
+      rules.put(resourceGeneric, rule);
     }
 
-    rules.put(iResource.toLowerCase(), currentValue);
-    document.field("rules", rules);
+    rule.revokeAccess(resourceSpecific, iOperation);
+    rules.put(resourceGeneric, rule);
+
+    updateRolesDocumentContent();
+
     return this;
   }
 
@@ -259,8 +347,27 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
     return this;
   }
 
+  public Set<ORule> getRuleSet() {
+    return new HashSet<ORule>(rules.values());
+  }
+
+  @Deprecated
   public Map<String, Byte> getRules() {
-    return Collections.unmodifiableMap(rules);
+    final Map<String, Byte> result = new HashMap<String, Byte>();
+
+    for (ORule rule : rules.values()) {
+      String name = ORule.mapResourceGenericToLegacyResource(rule.getResourceGeneric());
+
+      if (rule.getAccess() != null) {
+        result.put(name, rule.getAccess());
+      }
+
+      for (Map.Entry<String, Byte> specificResource : rule.getSpecificResources().entrySet()) {
+        result.put(name + "." + specificResource.getKey(), specificResource.getValue());
+      }
+    }
+
+    return result;
   }
 
   @Override
@@ -271,5 +378,28 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
   @Override
   public OIdentifiable getIdentity() {
     return document;
+  }
+
+  private void loadOldVersionOfRules(final Map<String, Number> storedRules) {
+    if (storedRules != null)
+      for (Entry<String, Number> a : storedRules.entrySet()) {
+        ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(a.getKey());
+        ORule rule = rules.get(resourceGeneric);
+        if (rule == null) {
+          rule = new ORule(resourceGeneric, null, null);
+          rules.put(resourceGeneric, rule);
+        }
+
+        String specificResource = ORule.mapLegacyResourceToSpecificResource(a.getKey());
+        if (specificResource == null || specificResource.equals("*")) {
+          rule.grantAccess(null, a.getValue().intValue());
+        } else {
+          rule.grantAccess(specificResource, a.getValue().intValue());
+        }
+      }
+  }
+
+  private ODocument updateRolesDocumentContent() {
+    return document.field("rules", getRules());
   }
 }

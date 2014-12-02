@@ -32,11 +32,11 @@ public class OStringSerializerHelperTest {
     @Test
     public void testSmartTrim()
     {
-    	String input = "   test   ";
-    	assertEquals(smartTrim(input, true, true), "test");
-    	assertEquals(smartTrim(input, false, true), " test");
-    	assertEquals(smartTrim(input, true, false), "test ");
-    	assertEquals(smartTrim(input, false, false), " test ");
+    	String input = "   t  est   ";
+    	assertEquals(smartTrim(input, true, true), "t  est");
+    	assertEquals(smartTrim(input, false, true), " t  est");
+    	assertEquals(smartTrim(input, true, false), "t  est ");
+    	assertEquals(smartTrim(input, false, false), " t  est ");
     }
     
     @Test

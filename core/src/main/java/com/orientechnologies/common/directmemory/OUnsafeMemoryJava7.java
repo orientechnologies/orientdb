@@ -20,7 +20,7 @@
 package com.orientechnologies.common.directmemory;
 
 /**
- * @author logart (logart2007@gmail.com)
+ * @author logart (logart2007-at-gmail.com)
  * @since 15.04.2013
  */
 public class OUnsafeMemoryJava7 extends OUnsafeMemory {

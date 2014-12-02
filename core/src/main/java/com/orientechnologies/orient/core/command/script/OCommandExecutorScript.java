@@ -19,16 +19,6 @@
  */
 package com.orientechnologies.orient.core.command.script;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.script.*;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -43,6 +33,20 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+
+import javax.script.Bindings;
+import javax.script.Compilable;
+import javax.script.CompiledScript;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Executes Script Commands.
@@ -83,45 +87,43 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
   }
 
   protected Object executeJsr223Script(final String language, final OCommandContext iContext, final Map<Object, Object> iArgs) {
-    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+
     final OScriptManager scriptManager = Orient.instance().getScriptManager();
     CompiledScript compiledScript = request.getCompiledScript();
 
-    if (compiledScript == null) {
-      ScriptEngine scriptEngine = scriptManager.getEngine(language);
+    final ScriptEngine scriptEngine = scriptManager.acquireDatabaseEngine(db.getName(), language);
+    try {
 
-      if (!(scriptEngine instanceof Compilable))
-        throw new OCommandExecutionException("Language '" + language + "' does not support compilation");
+      if (compiledScript == null) {
+        if (!(scriptEngine instanceof Compilable))
+          throw new OCommandExecutionException("Language '" + language + "' does not support compilation");
 
-      // COMPILE FUNCTION LIBRARY
-      String lib = scriptManager.getLibrary(db, language);
-      if (lib == null)
-        lib = "";
+        final Compilable c = (Compilable) scriptEngine;
+        try {
+          compiledScript = c.compile(parserText);
+        } catch (ScriptException e) {
+          scriptManager.throwErrorMessage(e, parserText);
+        }
 
-      parserText = lib + parserText;
-
-      Compilable c = (Compilable) scriptEngine;
-      try {
-        compiledScript = c.compile(parserText);
-      } catch (ScriptException e) {
-        scriptManager.getErrorMessage(e, parserText);
+        request.setCompiledScript(compiledScript);
       }
 
-      request.setCompiledScript(compiledScript);
-    }
+      final Bindings binding = scriptManager.bind(compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE),
+          (ODatabaseDocumentTx) db, iContext, iArgs);
 
-    final Bindings binding = scriptManager.bind(compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE),
-        (ODatabaseDocumentTx) db, iContext, iArgs);
+      try {
+        final Object ob = compiledScript.eval(binding);
 
-    try {
-      final Object ob = compiledScript.eval(binding);
+        return OCommandExecutorUtility.transformResult(ob);
+      } catch (ScriptException e) {
+        throw new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber(), e);
 
-      return OCommandExecutorUtility.transformResult(ob);
-    } catch (ScriptException e) {
-      throw new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber(), e);
-
+      } finally {
+        scriptManager.unbind(binding, iContext, iArgs);
+      }
     } finally {
-      scriptManager.unbind(binding);
+      scriptManager.releaseDatabaseEngine(db.getName(), scriptEngine);
     }
   }
 

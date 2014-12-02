@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 /**
  * 
  * 
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  * @since 10/25/12
  */
 public class OVersionFactory {

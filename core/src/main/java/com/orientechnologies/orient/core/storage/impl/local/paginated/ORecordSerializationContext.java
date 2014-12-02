@@ -20,24 +20,45 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
+import com.orientechnologies.orient.core.OOrientListenerAbstract;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 11/26/13
  */
 public class ORecordSerializationContext {
 
-  private static final ThreadLocal<Deque<ORecordSerializationContext>> SERIALIZATION_CONTEXT_STACK = new ThreadLocal<Deque<ORecordSerializationContext>>() {
-                                                                                                     @Override
-                                                                                                     protected Deque<ORecordSerializationContext> initialValue() {
-                                                                                                       return new ArrayDeque<ORecordSerializationContext>();
-                                                                                                     }
-                                                                                                   };
+  private static volatile ThreadLocal<Deque<ORecordSerializationContext>> SERIALIZATION_CONTEXT_STACK = new ThreadLocal<Deque<ORecordSerializationContext>>() {
+                                                                                                        @Override
+                                                                                                        protected Deque<ORecordSerializationContext> initialValue() {
+                                                                                                          return new ArrayDeque<ORecordSerializationContext>();
+                                                                                                        }
+                                                                                                      };
+  static {
+    Orient.instance().registerListener(new OOrientListenerAbstract() {
+      @Override
+      public void onShutdown() {
+        SERIALIZATION_CONTEXT_STACK = null;
+      }
+
+      @Override
+      public void onStartup() {
+        if (SERIALIZATION_CONTEXT_STACK == null)
+          SERIALIZATION_CONTEXT_STACK = new ThreadLocal<Deque<ORecordSerializationContext>>() {
+            @Override
+            protected Deque<ORecordSerializationContext> initialValue() {
+              return new ArrayDeque<ORecordSerializationContext>();
+            }
+          };
+      }
+    });
+  }
+  private final Deque<ORecordSerializationOperation>                      operations                  = new ArrayDeque<ORecordSerializationOperation>();
 
   public static int getDepth() {
     return ORecordSerializationContext.SERIALIZATION_CONTEXT_STACK.get().size();
@@ -66,8 +87,6 @@ public class ORecordSerializationContext {
 
     return stack.poll();
   }
-
-  private final Deque<ORecordSerializationOperation> operations = new ArrayDeque<ORecordSerializationOperation>();
 
   public void push(ORecordSerializationOperation operation) {
     operations.push(operation);

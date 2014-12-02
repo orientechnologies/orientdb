@@ -16,7 +16,7 @@ import com.orientechnologies.orient.test.ConcurrentTestHelper;
 /**
  * Concurrent test for {@link ConcurrentLRUList}.
  *
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class ConcurrentLRUListConcurrentTest {
   private static final int AMOUNT_OF_OPERATIONS = 100000;

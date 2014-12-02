@@ -43,7 +43,7 @@ import com.orientechnologies.orient.core.storage.impl.local.eh.OPhysicalPosition
  * This class is responsible for obtaining OBinarySerializer realization, by it's id of type of object that should be serialized.
  * 
  * 
- * @author <a href="mailto:gmandnepr@gmail.com">Evgeniy Degtiarenko</a>
+ * @author Evgeniy Degtiarenko (gmandnepr-at-gmail.com)
  */
 public class OBinarySerializerFactory {
 
