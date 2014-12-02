@@ -33,7 +33,7 @@ import java.util.Map;
 /**
  * Index definition for index which is bound to field with type {@link OType#LINKBAG} .
  * 
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 1/30/14
  */
 public class OPropertyRidBagIndexDefinition extends OAbstractIndexDefinitionMultiValue implements OIndexDefinitionMultiValue {

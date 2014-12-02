@@ -19,14 +19,6 @@
  */
 package com.orientechnologies.orient.object.db;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
-import javassist.util.proxy.Proxy;
-import javassist.util.proxy.ProxyObject;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -68,6 +60,14 @@ import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.object.metadata.OMetadataObject;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
+import javassist.util.proxy.Proxy;
+import javassist.util.proxy.ProxyObject;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Object Database instance. It's a wrapper to the class ODatabaseDocumentTx that handles conversion between ODocument instances and
@@ -143,6 +143,8 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    */
   public <RET extends Object> RET newInstance(final String iClassName, final Object iEnclosingClass, Object... iArgs) {
     checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_CREATE, iClassName);
+
+    ((ODatabaseDocumentTx) underlying).setCurrentDatabaseInThreadLocal();
 
     try {
       Class<?> entityClass = entityManager.getEntityClass(iClassName);
@@ -298,7 +300,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    * @return the object serialized or with detached data
    */
   public <RET> RET detachAll(final Object iPojo, boolean returnNonProxiedInstance) {
-    return (RET) OObjectEntitySerializer.detachAll(iPojo, this, returnNonProxiedInstance);
+    return detachAll(iPojo, returnNonProxiedInstance, new HashMap<Object, Object>());
   }
 
   public <RET> RET load(final Object iPojo, final String iFetchPlan, final boolean iIgnoreCache) {
@@ -714,14 +716,14 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   @Override
-  public OObjectDatabaseTx setConflictStrategy(final String iStrategyName) {
-    getStorage().setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
+  public OObjectDatabaseTx setConflictStrategy(final ORecordConflictStrategy iResolver) {
+    underlying.setConflictStrategy(iResolver);
     return this;
   }
 
   @Override
-  public OObjectDatabaseTx setConflictStrategy(final ORecordConflictStrategy iResolver) {
-    underlying.setConflictStrategy(iResolver);
+  public OObjectDatabaseTx setConflictStrategy(final String iStrategyName) {
+    getStorage().setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
     return this;
   }
 
@@ -756,6 +758,15 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   public void deregisterClassMethodFilter(final Class<?> iClass) {
     OObjectEntityEnhancer.getInstance().deregisterClassMethodFilter(iClass);
+  }
+
+  @Override
+  public void resetInitialization() {
+    underlying.resetInitialization();
+  }
+
+  protected <RET> RET detachAll(final Object iPojo, boolean returnNonProxiedInstance, Map<Object, Object> alreadyDetached) {
+    return (RET) OObjectEntitySerializer.detachAll(iPojo, this, returnNonProxiedInstance, alreadyDetached);
   }
 
   protected void deleteCascade(final ODocument record) {
@@ -826,10 +837,5 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
     }
     return false;
-  }
-
-  @Override
-  public void resetInitialization() {
-    underlying.resetInitialization();
   }
 }

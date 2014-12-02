@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * Class which implements this interface should have public no-arguments constructor.
  * 
  * 
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 3/27/14
  */
 public interface ODocumentSerializable {

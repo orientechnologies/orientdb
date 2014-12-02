@@ -52,14 +52,6 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 public class OSecurityShared implements OSecurity, OCloseable {
   private final AtomicLong   version                = new AtomicLong();
 
-  public static final String RESTRICTED_CLASSNAME   = "ORestricted";
-  public static final String IDENTITY_CLASSNAME     = "OIdentity";
-  public static final String ALLOW_ALL_FIELD        = "_allow";
-  public static final String ALLOW_READ_FIELD       = "_allowRead";
-  public static final String ALLOW_UPDATE_FIELD     = "_allowUpdate";
-  public static final String ALLOW_DELETE_FIELD     = "_allowDelete";
-  public static final String ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
-  public static final String ONCREATE_FIELD         = "onCreate.fields";
 
   public OSecurityShared() {
   }
@@ -330,7 +322,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
       roleClass.createProperty("mode", OType.BYTE);
 
     if (!roleClass.existsProperty("rules"))
-      roleClass.createProperty("rules", OType.EMBEDDEDSET);
+      roleClass.createProperty("rules", OType.EMBEDDEDMAP, OType.BYTE);
     if (!roleClass.existsProperty("inheritedRole"))
       roleClass.createProperty("inheritedRole", OType.LINK, roleClass);
 
@@ -408,7 +400,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
       final OClass roleClass = getDatabase().getMetadata().getSchema().getClass("ORole");
 
       final OProperty rules = roleClass.getProperty("rules");
-      if (rules != null && !OType.EMBEDDEDSET.equals(rules.getType())) {
+      if (rules != null && !OType.EMBEDDEDMAP.equals(rules.getType())) {
         roleClass.dropProperty("rules");
       }
 

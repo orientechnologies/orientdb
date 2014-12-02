@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 henryzhao81@gmail.com
+ * Copyright 2010-2012 henryzhao81-at-gmail.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.OBinary
  * if you open a database create with old version of OrientDB it defines a components that should be used to provide backward
  * compatibility with that version of database.
  * 
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 2/14/14
  */
 public class OCurrentStorageComponentsFactory {

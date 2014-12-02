@@ -32,7 +32,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 15.06.12
  */
 @Test

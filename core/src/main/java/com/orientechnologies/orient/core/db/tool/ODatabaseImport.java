@@ -43,11 +43,7 @@ import com.orientechnologies.orient.core.index.hashindex.local.OMurmurHash3HashF
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
-import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OUser;
@@ -862,6 +858,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       }
 
       database.getMetadata().getSchema().save();
+
+      if (exporterVersion < 11 ) {
+        OClass role = database.getMetadata().getSchema().getClass("ORole");
+        role.dropProperty("rules");
+      }
 
       listener.onMessage("OK (" + classImported + " classes)");
       schemaImported = true;

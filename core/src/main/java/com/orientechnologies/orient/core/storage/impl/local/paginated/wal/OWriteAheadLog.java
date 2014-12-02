@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.util.Set;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 6/25/14
  */
 public interface OWriteAheadLog {

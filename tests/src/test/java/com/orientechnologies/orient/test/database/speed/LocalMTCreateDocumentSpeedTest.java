@@ -20,7 +20,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 8/19/14
  */
 @Test
@@ -86,6 +86,7 @@ public class LocalMTCreateDocumentSpeedTest {
   public void deinit() {
     if (database != null)
       database.drop();
+    OGlobalConfiguration.USE_WAL.setValue(true);
   }
 
   private final class Saver implements Callable<Void> {

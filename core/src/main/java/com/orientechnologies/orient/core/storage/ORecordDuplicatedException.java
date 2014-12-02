@@ -24,7 +24,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.id.ORID;
 
 /**
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  * @since 9/5/12
  */
 public class ORecordDuplicatedException extends OException {

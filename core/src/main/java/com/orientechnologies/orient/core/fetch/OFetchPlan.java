@@ -35,7 +35,7 @@ public class OFetchPlan {
   public OFetchPlan(final String iFetchPlan) {
     fetchPlan.put(ROOT_FETCH, 0);
 
-    if (iFetchPlan != null) {
+    if (iFetchPlan != null && !iFetchPlan.isEmpty()) {
       // CHECK IF THERE IS SOME FETCH-DEPTH
       final List<String> planParts = OStringSerializerHelper.split(iFetchPlan, ' ');
       if (!planParts.isEmpty()) {

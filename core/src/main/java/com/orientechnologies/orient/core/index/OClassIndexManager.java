@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.orient.core.index;
 
@@ -355,7 +355,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   }
 
   @Override
-  public RESULT onRecordBeforeCreate(ODocument iDocument) {
+  public RESULT onRecordBeforeCreate(final ODocument iDocument) {
     final ODocument replaced = checkIndexes(iDocument, BEFORE_CREATE);
     if (replaced != null) {
       OHookReplacedRecordThreadLocal.INSTANCE.set(replaced);
@@ -365,35 +365,54 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   }
 
   @Override
-  public void onRecordAfterCreate(ODocument iDocument) {
+  public void onRecordAfterCreate(final ODocument iDocument) {
     addIndexesEntries(iDocument);
   }
 
   @Override
-  public void onRecordCreateFailed(ODocument iDocument) {
+  public void onRecordCreateFailed(final ODocument iDocument) {
   }
 
   @Override
-  public void onRecordCreateReplicated(ODocument iDocument) {
+  public void onRecordCreateReplicated(final ODocument iDocument) {
   }
 
   @Override
-  public RESULT onRecordBeforeUpdate(ODocument iDocument) {
+  public RESULT onRecordBeforeUpdate(final ODocument iDocument) {
     checkIndexes(iDocument, BEFORE_UPDATE);
     return RESULT.RECORD_NOT_CHANGED;
   }
 
   @Override
   public void onRecordAfterUpdate(ODocument iDocument) {
-    updateIndexEntries(iDocument);
+    iDocument = checkForLoading(iDocument);
+
+    final OClass cls = iDocument.getImmutableSchemaClass();
+    if (cls == null)
+      return;
+
+    final Collection<OIndex<?>> indexes = cls.getIndexes();
+
+    if (!indexes.isEmpty()) {
+      final Set<String> dirtyFields = new HashSet<String>(Arrays.asList(iDocument.getDirtyFields()));
+
+      if (!dirtyFields.isEmpty()) {
+        for (final OIndex<?> index : indexes) {
+          if (index.getDefinition() instanceof OCompositeIndexDefinition)
+            processCompositeIndexUpdate(index, dirtyFields, iDocument);
+          else
+            processSingleIndexUpdate(index, dirtyFields, iDocument);
+        }
+      }
+    }
   }
 
   @Override
-  public void onRecordUpdateFailed(ODocument iDocument) {
+  public void onRecordUpdateFailed(final ODocument iDocument) {
   }
 
   @Override
-  public void onRecordUpdateReplicated(ODocument iDocument) {
+  public void onRecordUpdateReplicated(final ODocument iDocument) {
   }
 
   @Override
@@ -419,11 +438,11 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   }
 
   @Override
-  public void onRecordDeleteFailed(ODocument iDocument) {
+  public void onRecordDeleteFailed(final ODocument iDocument) {
   }
 
   @Override
-  public void onRecordDeleteReplicated(ODocument iDocument) {
+  public void onRecordDeleteReplicated(final ODocument iDocument) {
   }
 
   private void addIndexesEntries(ODocument document) {
@@ -446,34 +465,6 @@ public class OClassIndexManager extends ODocumentHookAbstract {
           index.put(key, rid);
       }
 
-    }
-  }
-
-  private void updateIndexEntries(ODocument iDocument) {
-    iDocument = checkForLoading(iDocument);
-
-    final OClass cls = iDocument.getImmutableSchemaClass();
-    if (cls == null)
-      return;
-
-    final Collection<OIndex<?>> indexes = cls.getIndexes();
-
-    if (!indexes.isEmpty()) {
-      final Set<String> dirtyFields = new HashSet<String>(Arrays.asList(iDocument.getDirtyFields()));
-
-      if (!dirtyFields.isEmpty()) {
-        for (final OIndex<?> index : indexes) {
-          if (index.getDefinition() instanceof OCompositeIndexDefinition)
-            processCompositeIndexUpdate(index, dirtyFields, iDocument);
-          else
-            processSingleIndexUpdate(index, dirtyFields, iDocument);
-        }
-      }
-    }
-
-    if (iDocument.isTrackingChanges()) {
-      iDocument.setTrackingChanges(false);
-      iDocument.setTrackingChanges(true);
     }
   }
 
@@ -510,11 +501,6 @@ public class OClassIndexManager extends ODocumentHookAbstract {
         final Object key = index.getDefinition().getDocumentValueToIndex(iDocument);
         deleteIndexKey(index, iDocument, key);
       }
-    }
-
-    if (iDocument.isTrackingChanges()) {
-      iDocument.setTrackingChanges(false);
-      iDocument.setTrackingChanges(true);
     }
   }
 

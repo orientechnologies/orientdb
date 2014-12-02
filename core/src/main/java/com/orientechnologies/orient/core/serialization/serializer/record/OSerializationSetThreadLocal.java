@@ -20,15 +20,17 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record;
 
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.util.IdentityHashMap;
 import java.util.Map;
+
+import com.orientechnologies.orient.core.OOrientListenerAbstract;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Thread local set of serialized documents. Used to prevent infinite recursion during serialization of records.
  * 
- * @author Artem Loginov (logart2007@gmail.com), Artem Orobets (enisher@gmail.com)
+ * @author Artem Loginov (logart2007-at-gmail.com), Artem Orobets (enisher-at-gmail.com)
  */
 public class OSerializationSetThreadLocal extends ThreadLocal<Map<ODocument, Boolean>> {
   public static OSerializationSetThreadLocal INSTANCE = new OSerializationSetThreadLocal();
@@ -37,12 +39,27 @@ public class OSerializationSetThreadLocal extends ThreadLocal<Map<ODocument, Boo
     return INSTANCE.get().containsKey(document);
   }
 
+  static {
+    Orient.instance().registerListener(new OOrientListenerAbstract() {
+      @Override
+      public void onShutdown() {
+        INSTANCE = null;
+      }
+
+      @Override
+      public void onStartup() {
+        if (INSTANCE == null)
+          INSTANCE = new OSerializationSetThreadLocal();
+      }
+    });
+  }
+
   public static boolean checkIfPartial(final ODocument document) {
     final Boolean partial = INSTANCE.get().get(document);
     if (partial != null) {
-//      if (partial)
-//        // REMOVE FROM SET TO LET SERIALIZE IT AT UPPER LEVEL
-//        INSTANCE.get().remove(document);
+      // if (partial)
+      // // REMOVE FROM SET TO LET SERIALIZE IT AT UPPER LEVEL
+      // INSTANCE.get().remove(document);
       return partial;
     }
     return false;

@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import java.util.ArrayDeque;
 
 /**
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OTraversePath {
   private static final OTraversePath EMPTY_PATH = new OTraversePath(new FirstPathItem());

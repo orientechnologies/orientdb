@@ -73,7 +73,7 @@ import java.util.UUID;
  * Does not implement {@link Collection} interface because some operations could not be efficiently implemented and that's why
  * should be avoided.<br>
  * 
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  * @author Andrey Lomakin
  * @since 1.7rc1
  */
@@ -243,7 +243,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
     final int serializedSize = OByteSerializer.BYTE_SIZE + delegate.getSerializedSize()
         + ((hasUuid) ? OUUIDSerializer.UUID_SIZE : 0);
-    int pointer = bytesContainer.alloc((short) serializedSize);
+    int pointer = bytesContainer.alloc(serializedSize);
     int offset = pointer;
     final byte[] stream = bytesContainer.bytes;
 

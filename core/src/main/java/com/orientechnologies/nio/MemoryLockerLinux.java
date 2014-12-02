@@ -24,7 +24,7 @@ import com.sun.jna.Library;
 import com.sun.jna.Native;
 
 /**
- * @author Artem Loginov (logart) logart2007@gmail.com
+ * @author Artem Loginov (logart2007-at-gmail.com)
  */
 public interface MemoryLockerLinux extends Library {
 

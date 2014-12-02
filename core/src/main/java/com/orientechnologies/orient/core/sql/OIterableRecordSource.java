@@ -26,7 +26,7 @@ import java.util.Map;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 /**
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public interface OIterableRecordSource {
   Iterator<OIdentifiable> iterator(final Map<Object, Object> iArgs);

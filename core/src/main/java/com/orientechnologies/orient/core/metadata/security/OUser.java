@@ -276,7 +276,7 @@ public class OUser extends ODocumentWrapper implements  OSecurityUser {
         while (r != null) {
           if (r.getName().equals(iRoleName))
             return true;
-          r = role.getParentRole();
+          r = r.getParentRole();
         }
       }
     }

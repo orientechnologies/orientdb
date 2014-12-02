@@ -61,31 +61,31 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
  * 
  */
 public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal implements OIndexInternal<T> {
-  protected static final String        CONFIG_MAP_RID   = "mapRid";
-  protected static final String        CONFIG_CLUSTERS  = "clusters";
-  protected final OModificationLock    modificationLock = new OModificationLock();
-  protected final OIndexEngine<T>      indexEngine;
-  private final String                 databaseName;
-  protected String                     type;
-  protected String                     valueContainerAlgorithm;
+  protected static final String              CONFIG_MAP_RID   = "mapRid";
+  protected static final String              CONFIG_CLUSTERS  = "clusters";
+  protected final OModificationLock          modificationLock = new OModificationLock();
+  protected final OIndexEngine<T>            indexEngine;
+  private final String                       databaseName;
+  protected String                           type;
+  protected String                           valueContainerAlgorithm;
   @ODocumentInstance
-  protected ODocument                  configuration;
-  protected ODocument                  metadata;
-  private String                       name;
-  private String                       algorithm;
-  private Set<String>                  clustersToIndex  = new HashSet<String>();
+  protected ODocument                        configuration;
+  protected ODocument                        metadata;
+  private String                             name;
+  private String                             algorithm;
+  private Set<String>                        clustersToIndex  = new HashSet<String>();
 
-  private volatile OIndexDefinition    indexDefinition;
-  private volatile boolean             rebuilding       = false;
+  private volatile OIndexDefinition          indexDefinition;
+  private volatile boolean                   rebuilding       = false;
 
-  private Thread                       rebuildThread    = null;
+  private Thread                             rebuildThread    = null;
 
-  private ThreadLocal<IndexTxSnapshot> txSnapshot       = new ThreadLocal<IndexTxSnapshot>() {
-                                                          @Override
-                                                          protected IndexTxSnapshot initialValue() {
-                                                            return new IndexTxSnapshot();
-                                                          }
-                                                        };
+  private final ThreadLocal<IndexTxSnapshot> txSnapshot       = new ThreadLocal<IndexTxSnapshot>() {
+                                                                @Override
+                                                                protected IndexTxSnapshot initialValue() {
+                                                                  return new IndexTxSnapshot();
+                                                                }
+                                                              };
 
   protected static final class RemovedValue {
     public static final RemovedValue INSTANCE = new RemovedValue();
@@ -224,7 +224,13 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
       updateConfiguration();
     } catch (Exception e) {
-      indexEngine.delete();
+      OLogManager.instance().error(this, "Exception during index %s creation.", e, name);
+
+      try {
+        indexEngine.delete();
+      } catch (Exception ex) {
+        OLogManager.instance().error(this, "Exception during index %s deletion.", ex, name);
+      }
 
       if (e instanceof OIndexException)
         throw (OIndexException) e;
@@ -370,7 +376,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
         removeValuesContainer();
 
-        int documentNum = 0;
+        long documentNum = 0;
         long documentTotal = 0;
 
         for (final String cluster : clustersToIndex)
@@ -877,7 +883,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
         documentNum++;
 
         if (iProgressListener != null)
-          iProgressListener.onProgress(this, documentNum, documentNum * 100f / documentTotal);
+          iProgressListener.onProgress(this, documentNum, (float) (documentNum * 100.0 / documentTotal));
       }
     } catch (NoSuchElementException e) {
       // END OF CLUSTER REACHED, IGNORE IT

@@ -22,7 +22,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.common.test.SpeedTestMonoThread;
 
 public class ThreadLocalSpeedTest extends SpeedTestMonoThread {
-	private ThreadLocal<Object>	INSTANCE	= new ThreadLocal<Object>() {
+	private final ThreadLocal<Object>	INSTANCE	= new ThreadLocal<Object>() {
 																				};
 
 	public ThreadLocalSpeedTest() throws SecurityException, NoSuchFieldException {

@@ -240,9 +240,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (!enabled)
       return null;
 
-    final ODocument cluster = new ODocument();
-
     final HazelcastInstance instance = getHazelcastInstance();
+    if (instance == null)
+      return null;
+
+    final ODocument cluster = new ODocument();
 
     cluster.field("localName", instance.getName());
     cluster.field("localId", instance.getCluster().getLocalMember().getUuid());

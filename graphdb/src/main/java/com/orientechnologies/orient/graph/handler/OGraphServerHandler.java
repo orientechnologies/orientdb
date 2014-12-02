@@ -82,6 +82,6 @@ public class OGraphServerHandler extends OServerPluginAbstract implements OScrip
 
   @Override
   public void unbind(Bindings binding) {
-    binding.remove("orient");
+    binding.put("orient", null);
   }
 }

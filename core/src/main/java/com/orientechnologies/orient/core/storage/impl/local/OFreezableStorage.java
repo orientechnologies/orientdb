@@ -22,7 +22,7 @@ package com.orientechnologies.orient.core.storage.impl.local;
 /**
  * Storage that supports freeze operation.
  * 
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  * @since 1.5.1
  */
 public interface OFreezableStorage {

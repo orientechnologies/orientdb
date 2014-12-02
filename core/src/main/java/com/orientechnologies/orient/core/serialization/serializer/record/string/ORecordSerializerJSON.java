@@ -115,35 +115,37 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         indentLevel = 1;
         keepTypes = false;
 
-        final String[] format = iFormat.split(",");
-        for (String f : format)
-          if (f.equals("type"))
-            includeType = true;
-          else if (f.equals("rid"))
-            includeId = true;
-          else if (f.equals("version"))
-            includeVer = true;
-          else if (f.equals("class"))
-            includeClazz = true;
-          else if (f.equals("attribSameRow"))
-            attribSameRow = true;
-          else if (f.startsWith("indent"))
-            indentLevel = Integer.parseInt(f.substring(f.indexOf(':') + 1));
-          else if (f.startsWith("fetchPlan"))
-            fetchPlan = f.substring(f.indexOf(':') + 1);
-          else if (f.startsWith("keepTypes"))
-            keepTypes = true;
-          else if (f.startsWith("alwaysFetchEmbedded"))
-            alwaysFetchEmbeddedDocuments = true;
-          else if (f.startsWith("dateAsLong"))
-            dateAsLong = true;
-          else if (f.startsWith("prettyPrint"))
-            prettyPrint = true;
-          else if (f.startsWith("graph") || f.startsWith("shallow"))
-            // SUPPORTED IN OTHER PARTS
-            ;
-          else
-            throw new IllegalArgumentException("Unrecognized JSON formatting option: " + f);
+        if (iFormat != null && !iFormat.isEmpty()) {
+          final String[] format = iFormat.split(",");
+          for (String f : format)
+            if (f.equals("type"))
+              includeType = true;
+            else if (f.equals("rid"))
+              includeId = true;
+            else if (f.equals("version"))
+              includeVer = true;
+            else if (f.equals("class"))
+              includeClazz = true;
+            else if (f.equals("attribSameRow"))
+              attribSameRow = true;
+            else if (f.startsWith("indent"))
+              indentLevel = Integer.parseInt(f.substring(f.indexOf(':') + 1));
+            else if (f.startsWith("fetchPlan"))
+              fetchPlan = f.substring(f.indexOf(':') + 1);
+            else if (f.startsWith("keepTypes"))
+              keepTypes = true;
+            else if (f.startsWith("alwaysFetchEmbedded"))
+              alwaysFetchEmbeddedDocuments = true;
+            else if (f.startsWith("dateAsLong"))
+              dateAsLong = true;
+            else if (f.startsWith("prettyPrint"))
+              prettyPrint = true;
+            else if (f.startsWith("graph") || f.startsWith("shallow"))
+              // SUPPORTED IN OTHER PARTS
+              ;
+            else
+              throw new IllegalArgumentException("Unrecognized JSON formatting option: " + f);
+        }
       }
     }
   }

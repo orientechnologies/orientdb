@@ -593,6 +593,8 @@ public class OReadWriteDiskCache implements ODiskCache {
     try {
       clear();
       writeCache.close();
+
+      deinitProfiler();
     } finally {
       cacheLock.releaseWriteLock();
     }
@@ -883,6 +885,8 @@ public class OReadWriteDiskCache implements ODiskCache {
       writeCache.delete();
 
       clearCacheContent();
+
+      deinitProfiler();
     } finally {
       cacheLock.releaseWriteLock();
     }
@@ -892,12 +896,12 @@ public class OReadWriteDiskCache implements ODiskCache {
     return maxSize;
   }
 
-	@Override
-	public long getUsedMemory() {
-		return (am.size() + a1in.size() + writeCache.getAllocatedPages()) * (2 * ODurablePage.PAGE_PADDING + pageSize);
-	}
+  @Override
+  public long getUsedMemory() {
+    return (am.size() + a1in.size() + writeCache.getAllocatedPages()) * (2 * ODurablePage.PAGE_PADDING + pageSize);
+  }
 
-	private OCacheEntry get(long fileId, long pageIndex, boolean useOutQueue) {
+  private OCacheEntry get(long fileId, long pageIndex, boolean useOutQueue) {
     OCacheEntry cacheEntry = am.get(fileId, pageIndex);
 
     if (cacheEntry != null)
@@ -995,31 +999,35 @@ public class OReadWriteDiskCache implements ODiskCache {
     }
   }
 
-  public void initProfiler() {
-    if (storageName != null) {
-      final OProfilerMBean profiler = Orient.instance().getProfiler();
+  private void initProfiler() {
+    final OProfilerMBean profiler = Orient.instance().getProfiler();
 
-      METRIC_HITS = profiler.getDatabaseMetric(storageName, "diskCache.hits");
-      METRIC_HITS_METADATA = profiler.getDatabaseMetric(null, "diskCache.hits");
-      METRIC_MISSED = profiler.getDatabaseMetric(storageName, "diskCache.missed");
-      METRIC_MISSED_METADATA = profiler.getDatabaseMetric(null, "diskCache.missed");
+    METRIC_HITS = profiler.getDatabaseMetric(storageName, "diskCache.hits");
+    METRIC_HITS_METADATA = profiler.getDatabaseMetric(null, "diskCache.hits");
+    METRIC_MISSED = profiler.getDatabaseMetric(storageName, "diskCache.missed");
+    METRIC_MISSED_METADATA = profiler.getDatabaseMetric(null, "diskCache.missed");
 
-      profiler.registerHookValue(profiler.getDatabaseMetric(storageName, "diskCache.totalMemory"),
-          "Total memory used by Disk Cache", METRIC_TYPE.SIZE, new OProfilerHookValue() {
-            @Override
-            public Object getValue() {
-              return (am.size() + a1in.size()) * pageSize;
-            }
-          }, profiler.getDatabaseMetric(null, "diskCache.totalMemory"));
+    profiler.registerHookValue(profiler.getDatabaseMetric(storageName, "diskCache.totalMemory"), "Total memory used by Disk Cache",
+        METRIC_TYPE.SIZE, new OProfilerHookValue() {
+          @Override
+          public Object getValue() {
+            return (am.size() + a1in.size()) * pageSize;
+          }
+        }, profiler.getDatabaseMetric(null, "diskCache.totalMemory"));
 
-      profiler.registerHookValue(profiler.getDatabaseMetric(storageName, "diskCache.maxMemory"),
-          "Maximum memory used by Disk Cache", METRIC_TYPE.SIZE, new OProfilerHookValue() {
-            @Override
-            public Object getValue() {
-              return maxSize * pageSize;
-            }
-          }, profiler.getDatabaseMetric(null, "diskCache.maxMemory"));
-    }
+    profiler.registerHookValue(profiler.getDatabaseMetric(storageName, "diskCache.maxMemory"), "Maximum memory used by Disk Cache",
+        METRIC_TYPE.SIZE, new OProfilerHookValue() {
+          @Override
+          public Object getValue() {
+            return maxSize * pageSize;
+          }
+        }, profiler.getDatabaseMetric(null, "diskCache.maxMemory"));
+  }
+
+  private void deinitProfiler() {
+    final OProfilerMBean profiler = Orient.instance().getProfiler();
+    profiler.unregisterHookValue(profiler.getDatabaseMetric(storageName, "diskCache.totalMemory"));
+    profiler.unregisterHookValue(profiler.getDatabaseMetric(storageName, "diskCache.maxMemory"));
   }
 
   private static final class PageKey {

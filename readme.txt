@@ -17,23 +17,23 @@
       ...,::,,,,::.. `:  .,,  :,    :   :     :   .:    :::::::::::   :::     :::
            ,::::,,,. `:   ,,   :::::    :     :   .:    :::::::::     ::::::::::
            ,,:` `,,.                                  
-          ,,,    .,`                                  
-         ,,.     `,                                          GRAPH DATABASE   
-       ``        `.                                   
-                 ``                                   
-                 `                                    
-*******************************************************************************
-                                 ORIENT DATABASE
-                        http://www.orientechnologies.com
-*******************************************************************************
+          ,,,    .,`                                           MULTI  MODEL
+         ,,.     `,                                       GRAPH DOCUMENT DATABASE
+       ``        `.                                         
+                 ``                                         COMMUNITY  EDITION
+                 `                                           www.orientdb.org
+
+*********************************************************************************
 
  QUICK START
 ---------------
 1) Start the server by executing “server.sh” (or “server.bat” if you’re using
    Windows) under the “bin” directory. On most of OS you can just double click
    on it.
+2) Type in the terminal the password you want to assign to the “root” user. This
+   is needed only the first time.
 2) To Open Studio Web Tool, open a browser and point it to the URL:
-   “http://localhost:2480”
+   http://localhost:2480
 3) You can also use the console, it’s in “bin” directory. Launch “console.sh”
    (or “console.bat” if you’re using Windows)
 
