@@ -192,14 +192,16 @@ public class OWOWCache {
     if (ts - lastSpaceCheck > diskSizeCheckInterval) {
       final File storageDir = new File(storagePath);
       final long freeSpace = storageDir.getFreeSpace();
-      if (freeSpace - allocatedSpace.get() < freeSpaceLimit)
-        callLowSpaceListeners();
+      final long effectiveFreeSpace = freeSpace - allocatedSpace.get();
+      if (effectiveFreeSpace < freeSpaceLimit) {
+        callLowSpaceListeners(new LowDiskSpaceInformation(effectiveFreeSpace, freeSpaceLimit));
+      }
 
       lastDiskSpaceCheck.lazySet(ts);
     }
   }
 
-  private void callLowSpaceListeners() {
+  private void callLowSpaceListeners(final LowDiskSpaceInformation information) {
     lowSpaceEventsPublisher.submit(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
@@ -207,7 +209,7 @@ public class OWOWCache {
           final LowDiskSpaceListener listener = lowDiskSpaceListenerWeakReference.get();
           if (listener != null)
             try {
-              listener.lowDiskSpace();
+              listener.lowDiskSpace(information);
             } catch (Exception e) {
               OLogManager.instance().error(this,
                   "Error during notification of low disk space for storage " + storageLocal.getName(), e);
@@ -1270,6 +1272,16 @@ public class OWOWCache {
   }
 
   public interface LowDiskSpaceListener {
-    void lowDiskSpace();
+    void lowDiskSpace(LowDiskSpaceInformation information);
+  }
+
+  public class LowDiskSpaceInformation {
+    public long freeSpace;
+    public long requiredSpace;
+
+    public LowDiskSpaceInformation(long freeSpace, long requiredSpace) {
+      this.freeSpace = freeSpace;
+      this.requiredSpace = requiredSpace;
+    }
   }
 }

@@ -97,27 +97,27 @@ import java.util.concurrent.locks.Lock;
  * @since 28.03.13
  */
 public abstract class OAbstractPaginatedStorage extends OStorageEmbedded implements OWOWCache.LowDiskSpaceListener {
-  private static final int                       TX_RECORD_LOCK_TIMEOUT               = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT
-                                                                                          .getValueAsInteger();
-  protected static String[]                      ALL_FILE_EXTENSIONS                  = { ".ocf", ".pls", ".pcl", ".oda", ".odh",
-      ".otx", ".ocs", ".oef", ".oem", ".oet", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION, ODiskWriteAheadLog.MASTER_RECORD_EXTENSION,
-      OHashTableIndexEngine.BUCKET_FILE_EXTENSION, OHashTableIndexEngine.METADATA_FILE_EXTENSION,
-      OHashTableIndexEngine.TREE_FILE_EXTENSION, OHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION,
-      OClusterPositionMap.DEF_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION, OWOWCache.NAME_ID_MAP_EXTENSION,
-      OIndexRIDContainer.INDEX_FILE_EXTENSION, OSBTreeCollectionManagerShared.DEFAULT_EXTENSION,
-      OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION                                  };
-  private final ConcurrentMap<String, OCluster>  clusterMap                           = new ConcurrentHashMap<String, OCluster>();
-  private final ThreadLocal<OStorageTransaction> transaction                          = new ThreadLocal<OStorageTransaction>();
-  private final OModificationLock                modificationLock                     = new OModificationLock();
-  protected volatile OWriteAheadLog              writeAheadLog;
-  protected volatile ODiskCache                  diskCache;
-  private CopyOnWriteArrayList<OCluster>         clusters                             = new CopyOnWriteArrayList<OCluster>();
-  private volatile int                           defaultClusterId                     = -1;
-  private volatile OAtomicOperationsManager      atomicOperationsManager;
-  private volatile boolean                       wereDataRestoredAfterOpen            = false;
-  private boolean                                makeFullCheckPointAfterClusterCreate = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE
-                                                                                          .getValueAsBoolean();
-  private volatile boolean                       lowDiskSpace                         = false;
+  private static final int                           TX_RECORD_LOCK_TIMEOUT               = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT
+                                                                                              .getValueAsInteger();
+  protected static String[]                          ALL_FILE_EXTENSIONS                  = { ".ocf", ".pls", ".pcl", ".oda",
+      ".odh", ".otx", ".ocs", ".oef", ".oem", ".oet", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION,
+      ODiskWriteAheadLog.MASTER_RECORD_EXTENSION, OHashTableIndexEngine.BUCKET_FILE_EXTENSION,
+      OHashTableIndexEngine.METADATA_FILE_EXTENSION, OHashTableIndexEngine.TREE_FILE_EXTENSION,
+      OHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION, OClusterPositionMap.DEF_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION,
+      OWOWCache.NAME_ID_MAP_EXTENSION, OIndexRIDContainer.INDEX_FILE_EXTENSION, OSBTreeCollectionManagerShared.DEFAULT_EXTENSION,
+      OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION                                      };
+  private final ConcurrentMap<String, OCluster>      clusterMap                           = new ConcurrentHashMap<String, OCluster>();
+  private final ThreadLocal<OStorageTransaction>     transaction                          = new ThreadLocal<OStorageTransaction>();
+  private final OModificationLock                    modificationLock                     = new OModificationLock();
+  protected volatile OWriteAheadLog                  writeAheadLog;
+  protected volatile ODiskCache                      diskCache;
+  private CopyOnWriteArrayList<OCluster>             clusters                             = new CopyOnWriteArrayList<OCluster>();
+  private volatile int                               defaultClusterId                     = -1;
+  private volatile OAtomicOperationsManager          atomicOperationsManager;
+  private volatile boolean                           wereDataRestoredAfterOpen            = false;
+  private boolean                                    makeFullCheckPointAfterClusterCreate = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE
+                                                                                              .getValueAsBoolean();
+  private volatile OWOWCache.LowDiskSpaceInformation lowDiskSpace                         = null;
 
   public OAbstractPaginatedStorage(String name, String filePath, String mode) {
     super(name, filePath, mode);
@@ -1117,8 +1117,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
   }
 
   @Override
-  public void lowDiskSpace() {
-    lowDiskSpace = true;
+  public void lowDiskSpace(OWOWCache.LowDiskSpaceInformation information) {
+    lowDiskSpace = information;
   }
 
   protected void makeFullCheckpoint() throws IOException {
@@ -2262,9 +2262,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
   }
 
   private void checkLowDiskSpace() {
-    if (lowDiskSpace)
-      throw new OLowDiskSpaceException(
-          "You have very limited amount of free space, as result all data modification operations are prohibited."
-              + " Please stop database, make room for additional data files on your disk and start it again. Meanwhile storage will work in read only mode.");
+    if (lowDiskSpace != null)
+      throw new OLowDiskSpaceException("Error occurred while executing a write operation to database '" + name
+          + "' due to limited free space on the disk (" + (lowDiskSpace.freeSpace / (1024 * 1024))
+          + " MB). The database is now working in read-only mode."
+          + " Please close the database (or stop OrientDB), make room on your hard drive and then reopen the database. "
+          + "The minimal required space is (" + (lowDiskSpace.requiredSpace / (1024 * 1024)) + " MB). "
+          + "Required space is calculated as sum of disk space required by WAL (may be set using parameter "
+          + OGlobalConfiguration.WAL_MAX_SIZE.getKey() + ") and space required for data.");
   }
 }
