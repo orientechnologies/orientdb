@@ -73,10 +73,10 @@ import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
 import com.orientechnologies.orient.core.metadata.security.ORestrictedAccessHook;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OSecurityTrackerHook;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -92,6 +92,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -371,7 +372,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         }
 
     } catch (Exception e) {
-      throw new ODatabaseException("Cannot create database", e);
+      throw new ODatabaseException("Cannot create database '" + getName() + "'", e);
     }
     return (DB) this;
   }
@@ -1573,7 +1574,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           // NOTIFY IDENTITY HAS CHANGED
           ORecordInternal.onBeforeIdentityChanged(record);
         else if (stream == null || stream.length == 0)
-          // ALREADY CREATED AND WAITING FOR THE RIGHT UPDATE (WE'RE IN A GRAPH)
+          // ALREADY CREATED AND WAITING FOR THE RIGHT UPDATE (WE'RE IN A TREE/GRAPH)
           return (RET) record;
 
         if (isNew && rid.clusterId < 0)
@@ -1586,7 +1587,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
         checkSecurity(ORule.ResourceGeneric.CLUSTER, wasNew ? ORole.PERMISSION_CREATE : ORole.PERMISSION_UPDATE, iClusterName);
 
-        if (stream != null && stream.length > 0) {
+        final boolean partialMarshalling = record instanceof ODocument
+            && OSerializationSetThreadLocal.INSTANCE.checkIfPartial((ODocument) record);
+
+        if (stream != null && stream.length > 0 && !partialMarshalling) {
           if (iCallTriggers) {
             final ORecordHook.TYPE triggerType = wasNew ? ORecordHook.TYPE.BEFORE_CREATE : ORecordHook.TYPE.BEFORE_UPDATE;
 
@@ -1601,7 +1605,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           }
         }
 
-        if (!record.isDirty())
+        if (wasNew && !isNew)
+          // UPDATE RECORD PREVIOUSLY SERIALIZED AS EMPTY
+          record.setDirty();
+        else if (!record.isDirty())
           return (RET) record;
 
         // CHECK IF ENABLE THE MVCC OR BYPASS IT
@@ -1642,7 +1649,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           if (operationResult.getModifiedRecordContent() != null)
             stream = operationResult.getModifiedRecordContent();
 
-          ORecordInternal.fill(record, rid, version, stream, stream == null || stream.length == 0);
+          ORecordInternal.fill(record, rid, version, stream, partialMarshalling);
 
           callbackHookSuccess(record, iCallTriggers, wasNew, stream, operationResult);
         } catch (Throwable t) {
@@ -2413,7 +2420,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-	@Deprecated
+  @Deprecated
   public <DB extends ODatabaseDocument> DB checkSecurity(String iResource, int iOperation) {
     final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
     final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
@@ -2425,7 +2432,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-	@Deprecated
+  @Deprecated
   public <DB extends ODatabaseDocument> DB checkSecurity(String iResourceGeneric, int iOperation, Object iResourceSpecific) {
     final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResourceGeneric);
     if (iResourceSpecific == null || iResourceSpecific.equals("*"))
@@ -2435,7 +2442,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-	@Deprecated
+  @Deprecated
   public <DB extends ODatabaseDocument> DB checkSecurity(String iResourceGeneric, int iOperation, Object... iResourcesSpecific) {
     final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResourceGeneric);
     return checkSecurity(resourceGeneric, iOperation, iResourcesSpecific);

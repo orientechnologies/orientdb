@@ -71,15 +71,28 @@ public class ORecordSerializerBinary implements ORecordSerializer {
   @Override
   public byte[] toStream(final ORecord iSource, final boolean iOnlyDelta) {
     checkTypeODocument(iSource);
-    if (!OSerializationSetThreadLocal.checkAndAdd((ODocument) iSource))
-      return null;
-    BytesContainer container = new BytesContainer();
+
+    final BytesContainer container = new BytesContainer();
+
+    // WRITE SERIALIZER VERSION
     int pos = container.alloc(1);
     container.bytes[pos] = CURRENT_RECORD_VERSION;
-    serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container);
+
+    if (!OSerializationSetThreadLocal.checkAndAdd((ODocument) iSource)) {
+      // SERIALIZE CLASS ONLY
+      serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, true);
+
+      // SET SERIALIZATION AS PARTIAL
+      OSerializationSetThreadLocal.setPartial((ODocument) iSource);
+
+      return container.fitBytes();
+    }
+
+    // SERIALIZE RECORD
+    serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, false);
+
     OSerializationSetThreadLocal.removeCheck((ODocument) iSource);
-    return container.fitBytes();
-  }
+    return container.fitBytes();  }
 
   private void checkTypeODocument(final ORecord iRecord) {
     if (!(iRecord instanceof ODocument)) {

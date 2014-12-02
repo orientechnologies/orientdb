@@ -20,15 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.locks.Lock;
-
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -44,18 +35,36 @@ import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFact
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
-import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.OLowDiskSpaceException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.engine.OHashTableIndexEngine;
 import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.*;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OPageDataVerificationError;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.*;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPositionMap;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineCluster;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -66,6 +75,22 @@ import com.orientechnologies.orient.core.tx.OTxListener;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.Lock;
 
 /**
  * @author Andrey Lomakin
@@ -1816,7 +1841,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
       case ORecordOperation.CREATED: {
         // CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
 
-        byte[] stream = rec.toStream();
+        final byte[] stream = rec.toStream();
         if (stream == null) {
           OLogManager.instance().warn(this, "Null serialization on committing new record %s in transaction", rid);
           break;
@@ -1837,6 +1862,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
 
           clientTx.updateIdentityAfterCommit(oldRID, rid);
         } else {
+//          ORecordInternal.setContentChanged(rec, true);
           rec.getRecordVersion().copyFrom(
               updateRecord(rid, ORecordInternal.isContentChanged(rec), stream, rec.getRecordVersion(),
                   ORecordInternal.getRecordType(rec), -1, null).getResult());
@@ -1846,7 +1872,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
       }
 
       case ORecordOperation.UPDATED: {
-        byte[] stream = rec.toStream();
+        final byte[] stream = rec.toStream();
         if (stream == null) {
           OLogManager.instance().warn(this, "Null serialization on committing updated record %s in transaction", rid);
           break;

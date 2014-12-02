@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -43,6 +42,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.server.OClientConnectionManager;
@@ -85,7 +85,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -1226,18 +1225,23 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "class %s, creation of new local cluster '%s' (id=%d)",
               iClass, newClusterName, iDatabase.getClusterIdByName(newClusterName));
 
-          if (OScenarioThreadLocal.INSTANCE.get() == OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED) {
-            final Future<?> result = Orient.instance().getWorkers().submit(new Runnable() {
-              @Override
-              public void run() {
-                ODatabaseRecordThreadLocal.INSTANCE.set((com.orientechnologies.orient.core.db.ODatabaseDocumentInternal) iDatabase);
-                iClass.addCluster(newClusterName);
-                ODatabaseRecordThreadLocal.INSTANCE.remove();
-              }
-            });
-
-          } else
-            iClass.addCluster(newClusterName);
+//          if (OScenarioThreadLocal.INSTANCE.get() == OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED) {
+//            final Future<?> result = Orient.instance().getWorkers().submit(new Runnable() {
+//              @Override
+//              public void run() {
+//                ODatabaseRecordThreadLocal.INSTANCE.set((com.orientechnologies.orient.core.db.ODatabaseDocumentInternal) iDatabase);
+//                iClass.addCluster(newClusterName);
+//                ODatabaseRecordThreadLocal.INSTANCE.remove();
+//              }
+//            });
+//
+//          } else
+            try {
+              iClass.addCluster(newClusterName);
+            } catch (OCommandSQLParsingException e) {
+              if (!e.getMessage().endsWith("already exists"))
+                throw e;
+            }
 
           // if (OScenarioThreadLocal.INSTANCE.get() == OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED) {
           // final Set<String> nodes = getRemoteNodeIds();

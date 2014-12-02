@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.*;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -44,6 +40,15 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstract {
   public static final String                           NAME             = "ORecordDocument2csv";
@@ -272,7 +277,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
   @Override
   protected StringBuilder toString(ORecord iRecord, final StringBuilder iOutput, final String iFormat,
-      OUserObject2RecordHandler iObjHandler, final Set<ODocument> iMarshalledRecords, final boolean iOnlyDelta,
+      OUserObject2RecordHandler iObjHandler, final Map<ODocument,Boolean> iMarshalledRecords, final boolean iOnlyDelta,
       final boolean autoDetectCollectionType) {
     if (iRecord == null)
       throw new OSerializationException("Expected a record but was null");
@@ -284,10 +289,10 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
     // CHECK IF THE RECORD IS PENDING TO BE MARSHALLED
     if (iMarshalledRecords != null)
-      if (iMarshalledRecords.contains(record)) {
+      if (iMarshalledRecords.containsKey(record)) {
         return iOutput;
       } else
-        iMarshalledRecords.add(record);
+        iMarshalledRecords.put(record, Boolean.TRUE);
 
     if (!iOnlyDelta && record.getImmutableSchemaClass() != null) {
       iOutput.append(record.getImmutableSchemaClass().getStreamableName());
