@@ -67,6 +67,13 @@ public class ODatabaseScriptManager {
 
           @Override
           public boolean reuseResource(final String iKey, final Object[] iAdditionalArgs, final ScriptEngine iValue) {
+            if(iKey.equals("sql")) {
+              if(!iKey.equals(iValue.getFactory().getLanguageName()))
+                return false;
+            } else {
+              if((iValue.getFactory().getLanguageName()).equals("sql"))
+                return false;
+            }
             return true;
           }
         });
