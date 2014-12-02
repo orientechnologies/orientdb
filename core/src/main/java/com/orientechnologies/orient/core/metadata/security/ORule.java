@@ -12,35 +12,65 @@ import java.util.TreeSet;
  */
 public class ORule implements Serializable{
 
-  public enum ResourceGeneric {
-    FUNCTION, CLASS, CLUSTER, BYPASS_RESTRICTED, DATABASE, SCHEMA, COMMAND, RECORD_HOOK
+  public static abstract class ResourceGeneric implements Serializable{
+	private static final long serialVersionUID = 1L;
+	private static final TreeMap<String, ResourceGeneric> nameToGenericMap = new TreeMap<String, ResourceGeneric>();
+	private static final TreeMap<String, ResourceGeneric> legacyToGenericMap = new TreeMap<String, ResourceGeneric>();
+	private static final Map<ResourceGeneric, String>     genericToLegacyMap = new HashMap<ResourceGeneric, String>();
+	
+    public static ResourceGeneric FUNCTION = new ResourceGeneric("FUNCTION", ODatabaseSecurityResources.FUNCTION){private static final long serialVersionUID = 1L;}; 
+    public static ResourceGeneric CLASS = new ResourceGeneric("CLASS", ODatabaseSecurityResources.CLASS){private static final long serialVersionUID = 1L;}; 
+    public static ResourceGeneric CLUSTER = new ResourceGeneric("CLUSTER", ODatabaseSecurityResources.CLUSTER){private static final long serialVersionUID = 1L;};  
+    public static ResourceGeneric BYPASS_RESTRICTED = new ResourceGeneric("BYPASS_RESTRICTED", ODatabaseSecurityResources.BYPASS_RESTRICTED){private static final long serialVersionUID = 1L;};  
+    public static ResourceGeneric DATABASE = new ResourceGeneric("DATABASE", ODatabaseSecurityResources.DATABASE){private static final long serialVersionUID = 1L;};  
+    public static ResourceGeneric SCHEMA = new ResourceGeneric("SCHEMA", ODatabaseSecurityResources.SCHEMA){private static final long serialVersionUID = 1L;};  
+    public static ResourceGeneric COMMAND = new ResourceGeneric("COMMAND", ODatabaseSecurityResources.COMMAND){private static final long serialVersionUID = 1L;};  
+    public static ResourceGeneric RECORD_HOOK = new ResourceGeneric("RECORD_HOOK", ODatabaseSecurityResources.RECORD_HOOK){private static final long serialVersionUID = 1L;}; 
+    
+    private final String name;
+    private final String legacyName;
+    protected ResourceGeneric(String name, String legacyName)
+    {
+    	this.name = name;
+    	this.legacyName = legacyName!=null?legacyName:name;
+    	register(this);
+    }
+    
+    public String getName() {
+		return name;
+	}
+
+	public String getLegacyName() {
+		return legacyName;
+	}
+
+	private static void register(ResourceGeneric resource)
+    {
+		String legacyNameLowCase = resource.legacyName.toLowerCase();
+		if(nameToGenericMap.containsKey(resource.name) 
+				|| legacyToGenericMap.containsKey(resource.legacyName.toLowerCase())
+				|| genericToLegacyMap.containsKey(resource))
+		{
+			throw new IllegalArgumentException(resource+" already registered");
+		}
+    	nameToGenericMap.put(resource.name, resource);
+    	legacyToGenericMap.put(legacyNameLowCase, resource);
+    	genericToLegacyMap.put(resource, resource.legacyName);
+    }
+    
+    public static ResourceGeneric valueOf(String name)
+    {
+    	return nameToGenericMap.get(name);
+    }
+
+	@Override
+	public String toString() {
+		return ResourceGeneric.class.getSimpleName()+" [name="+name+", legacyName="+legacyName+"]";
+	}
+    
   }
 
   private static final long serialVersionUID  = 1L;
-  
-  private static final TreeMap<String, ResourceGeneric> legacyToGenericMap;
-  private static final Map<ResourceGeneric, String>     genericToLegacyMap = new HashMap<ResourceGeneric, String>();
-
-  static {
-    legacyToGenericMap = new TreeMap<String, ResourceGeneric>();
-    legacyToGenericMap.put(ODatabaseSecurityResources.CLASS.toLowerCase(), ResourceGeneric.CLASS);
-    legacyToGenericMap.put(ODatabaseSecurityResources.BYPASS_RESTRICTED.toLowerCase(), ResourceGeneric.BYPASS_RESTRICTED);
-    legacyToGenericMap.put(ODatabaseSecurityResources.CLUSTER.toLowerCase(), ResourceGeneric.CLUSTER);
-    legacyToGenericMap.put(ODatabaseSecurityResources.COMMAND.toLowerCase(), ResourceGeneric.COMMAND);
-    legacyToGenericMap.put(ODatabaseSecurityResources.DATABASE.toLowerCase(), ResourceGeneric.DATABASE);
-    legacyToGenericMap.put(ODatabaseSecurityResources.FUNCTION.toLowerCase(), ResourceGeneric.FUNCTION);
-    legacyToGenericMap.put(ODatabaseSecurityResources.RECORD_HOOK.toLowerCase(), ResourceGeneric.RECORD_HOOK);
-    legacyToGenericMap.put(ODatabaseSecurityResources.SCHEMA.toLowerCase(), ResourceGeneric.SCHEMA);
-
-    genericToLegacyMap.put(ResourceGeneric.CLASS, ODatabaseSecurityResources.CLASS);
-    genericToLegacyMap.put(ResourceGeneric.BYPASS_RESTRICTED, ODatabaseSecurityResources.BYPASS_RESTRICTED);
-    genericToLegacyMap.put(ResourceGeneric.CLUSTER, ODatabaseSecurityResources.CLUSTER);
-    genericToLegacyMap.put(ResourceGeneric.COMMAND, ODatabaseSecurityResources.COMMAND);
-    genericToLegacyMap.put(ResourceGeneric.DATABASE, ODatabaseSecurityResources.DATABASE);
-    genericToLegacyMap.put(ResourceGeneric.FUNCTION, ODatabaseSecurityResources.FUNCTION);
-    genericToLegacyMap.put(ResourceGeneric.RECORD_HOOK, ODatabaseSecurityResources.RECORD_HOOK);
-    genericToLegacyMap.put(ResourceGeneric.SCHEMA, ODatabaseSecurityResources.SCHEMA);
-  }
 
   private final ResourceGeneric                         resourceGeneric;
   private final Map<String, Byte>                       specificResources  = new HashMap<String, Byte>();
@@ -55,7 +85,7 @@ public class ORule implements Serializable{
   }
 
   public static ResourceGeneric mapLegacyResourceToGenericResource(String resource) {
-    Map.Entry<String, ResourceGeneric> found = legacyToGenericMap.floorEntry(resource.toLowerCase());
+    Map.Entry<String, ResourceGeneric> found = ResourceGeneric.legacyToGenericMap.floorEntry(resource.toLowerCase());
     if (found == null)
       return null;
 
@@ -69,11 +99,11 @@ public class ORule implements Serializable{
   }
 
   public static String mapResourceGenericToLegacyResource(ResourceGeneric resourceGeneric) {
-    return genericToLegacyMap.get(resourceGeneric);
+    return ResourceGeneric.genericToLegacyMap.get(resourceGeneric);
   }
 
 	public static String mapLegacyResourceToSpecificResource(String resource) {
-		Map.Entry<String, ResourceGeneric> found = legacyToGenericMap.floorEntry(resource.toLowerCase());
+		Map.Entry<String, ResourceGeneric> found = ResourceGeneric.legacyToGenericMap.floorEntry(resource.toLowerCase());
 
 		if (found == null)
 			return resource;
