@@ -20,11 +20,16 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OModificationLock;
+import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandExecutor;
+import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
@@ -33,17 +38,10 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
-import com.orientechnologies.orient.core.exception.OLowDiskSpaceException;
-import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.exception.*;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.engine.OHashTableIndexEngine;
-import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
@@ -53,14 +51,7 @@ import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OPhysicalPosition;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.ORecordCallback;
-import com.orientechnologies.orient.core.storage.ORecordMetadata;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPositionMap;
+import com.orientechnologies.orient.core.storage.*;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
@@ -96,16 +87,19 @@ import java.util.concurrent.locks.Lock;
  * @author Andrey Lomakin
  * @since 28.03.13
  */
-public abstract class OAbstractPaginatedStorage extends OStorageEmbedded implements OWOWCache.LowDiskSpaceListener {
-  private static final int                           TX_RECORD_LOCK_TIMEOUT               = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT
+public abstract class OAbstractPaginatedStorage extends OStorageAbstract implements OWOWCache.LowDiskSpaceListener {
+  private static final int                           RECORD_LOCK_TIMEOUT                  = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT
                                                                                               .getValueAsInteger();
-  protected static String[]                          ALL_FILE_EXTENSIONS                  = { ".ocf", ".pls", ".pcl", ".oda",
-      ".odh", ".otx", ".ocs", ".oef", ".oem", ".oet", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION,
-      ODiskWriteAheadLog.MASTER_RECORD_EXTENSION, OHashTableIndexEngine.BUCKET_FILE_EXTENSION,
-      OHashTableIndexEngine.METADATA_FILE_EXTENSION, OHashTableIndexEngine.TREE_FILE_EXTENSION,
-      OHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION, OClusterPositionMap.DEF_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION,
-      OWOWCache.NAME_ID_MAP_EXTENSION, OIndexRIDContainer.INDEX_FILE_EXTENSION, OSBTreeCollectionManagerShared.DEFAULT_EXTENSION,
-      OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION                                      };
+
+  private final ONewLockManager<ORID>                lockManager;
+  private final String                               PROFILER_CREATE_RECORD;
+  private final String                               PROFILER_READ_RECORD;
+  private final String                               PROFILER_UPDATE_RECORD;
+  private final String                               PROFILER_DELETE_RECORD;
+  private ORecordConflictStrategy                    recordConflictStrategy               = Orient.instance()
+                                                                                              .getRecordConflictStrategy()
+                                                                                              .newInstanceOfDefaultClass();
+
   private final ConcurrentMap<String, OCluster>      clusterMap                           = new ConcurrentHashMap<String, OCluster>();
   private final ThreadLocal<OStorageTransaction>     transaction                          = new ThreadLocal<OStorageTransaction>();
   private final OModificationLock                    modificationLock                     = new OModificationLock();
@@ -120,7 +114,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
   private volatile OWOWCache.LowDiskSpaceInformation lowDiskSpace                         = null;
 
   public OAbstractPaginatedStorage(String name, String filePath, String mode) {
-    super(name, filePath, mode);
+    super(name, filePath, mode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
+    lockManager = new ONewLockManager<ORID>();
+
+    PROFILER_CREATE_RECORD = "db." + name + ".createRecord";
+    PROFILER_READ_RECORD = "db." + name + ".readRecord";
+    PROFILER_UPDATE_RECORD = "db." + name + ".updateRecord";
+    PROFILER_DELETE_RECORD = "db." + name + ".deleteRecord";
   }
 
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
@@ -1121,6 +1121,178 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
     lowDiskSpace = information;
   }
 
+  /**
+   * Executes the command request and return the result back.
+   */
+  public Object command(final OCommandRequestText iCommand) {
+    final OCommandExecutor executor = OCommandManager.instance().getExecutor(iCommand);
+
+    // COPY THE CONTEXT FROM THE REQUEST
+    executor.setContext(iCommand.getContext());
+
+    executor.setProgressListener(iCommand.getProgressListener());
+    executor.parse(iCommand);
+
+    return executeCommand(iCommand, executor);
+  }
+
+  public Object executeCommand(final OCommandRequestText iCommand, final OCommandExecutor executor) {
+    if (iCommand.isIdempotent() && !executor.isIdempotent())
+      throw new OCommandExecutionException("Cannot execute non idempotent command");
+
+    long beginTime = Orient.instance().getProfiler().startChrono();
+
+    try {
+
+      return executor.execute(iCommand.getParameters());
+
+    } catch (OException e) {
+      // PASS THROUGH
+      throw e;
+    } catch (Exception e) {
+      throw new OCommandExecutionException("Error on execution of command: " + iCommand, e);
+
+    } finally {
+      if (Orient.instance().getProfiler().isRecording())
+        Orient
+            .instance()
+            .getProfiler()
+            .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".command." + iCommand.toString(),
+                "Command executed against the database", beginTime, "db.*.command.*");
+    }
+  }
+
+  @Override
+  public OPhysicalPosition[] higherPhysicalPositions(int currentClusterId, OPhysicalPosition physicalPosition) {
+    if (currentClusterId == -1)
+      return null;
+
+    checkOpeness();
+
+    lock.acquireSharedLock();
+    try {
+      final OCluster cluster = getClusterById(currentClusterId);
+      return cluster.higherPositions(physicalPosition);
+    } catch (IOException ioe) {
+      throw new OStorageException("Cluster Id " + currentClusterId + " is invalid in storage '" + name + '\'', ioe);
+    } finally {
+      lock.releaseSharedLock();
+    }
+  }
+
+  @Override
+  public OPhysicalPosition[] ceilingPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+    if (clusterId == -1)
+      return null;
+
+    checkOpeness();
+
+    lock.acquireSharedLock();
+    try {
+      final OCluster cluster = getClusterById(clusterId);
+      return cluster.ceilingPositions(physicalPosition);
+    } catch (IOException ioe) {
+      throw new OStorageException("Cluster Id " + clusterId + " is invalid in storage '" + name + '\'', ioe);
+    } finally {
+      lock.releaseSharedLock();
+    }
+  }
+
+  @Override
+  public OPhysicalPosition[] lowerPhysicalPositions(int currentClusterId, OPhysicalPosition physicalPosition) {
+    if (currentClusterId == -1)
+      return null;
+
+    checkOpeness();
+
+    lock.acquireSharedLock();
+    try {
+      final OCluster cluster = getClusterById(currentClusterId);
+
+      return cluster.lowerPositions(physicalPosition);
+    } catch (IOException ioe) {
+      throw new OStorageException("Cluster Id " + currentClusterId + " is invalid in storage '" + name + '\'', ioe);
+    } finally {
+      lock.releaseSharedLock();
+    }
+  }
+
+  @Override
+  public OPhysicalPosition[] floorPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition) {
+    if (clusterId == -1)
+      return null;
+
+    checkOpeness();
+
+    lock.acquireSharedLock();
+    try {
+      final OCluster cluster = getClusterById(clusterId);
+
+      return cluster.floorPositions(physicalPosition);
+    } catch (IOException ioe) {
+      throw new OStorageException("Cluster Id " + clusterId + " is invalid in storage '" + name + '\'', ioe);
+    } finally {
+      lock.releaseSharedLock();
+    }
+  }
+
+  public void acquireWriteLock(final ORID rid) {
+    assert !lock.assertSharedLockHold() && !lock.assertExclusiveLockHold() : " a record lock should not be tacken inside a storage lock";
+
+    boolean result;
+    try {
+      result = lockManager.tryAcquireExclusiveLock(rid, RECORD_LOCK_TIMEOUT);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new OTimeoutException("Thread was interrupted during record lock", e);
+    }
+
+    if (!result)
+      throw new OTimeoutException("Can not lock record for " + RECORD_LOCK_TIMEOUT
+          + " ms. seems record is deadlocked by other record");
+  }
+
+  public void releaseWriteLock(final ORID rid) {
+    assert !lock.assertSharedLockHold() && !lock.assertExclusiveLockHold() : " a record lock should not be released inside a storage lock";
+    lockManager.releaseExclusiveLock(rid);
+  }
+
+  public void acquireReadLock(final ORID rid) {
+    assert !lock.assertSharedLockHold() && !lock.assertExclusiveLockHold() : " a record lock should not be tacken inside a storage lock";
+    boolean result;
+    try {
+      result = lockManager.tryAcquireSharedLock(rid, RECORD_LOCK_TIMEOUT);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new OTimeoutException("Thread was interrupted during record lock", e);
+    }
+
+    if (!result)
+      throw new OTimeoutException("Can not lock record for " + RECORD_LOCK_TIMEOUT
+          + " ms. seems record is deadlocked by other record");
+  }
+
+  public void releaseReadLock(final ORID iRid) {
+    assert !lock.assertSharedLockHold() && !lock.assertExclusiveLockHold() : " a record lock should not be released inside a storage lock";
+    lockManager.releaseSharedLock(iRid);
+  }
+
+  public ORecordConflictStrategy getConflictStrategy() {
+    return recordConflictStrategy;
+  }
+
+  public void setConflictStrategy(final ORecordConflictStrategy conflictResolver) {
+    this.recordConflictStrategy = conflictResolver;
+  }
+
+  /**
+   * Checks if the storage is open. If it's closed an exception is raised.
+   */
+  protected void checkOpeness() {
+    if (status != STATUS.OPEN)
+      throw new OStorageException("Storage " + name + " is not opened.");
+  }
+
   protected void makeFullCheckpoint() throws IOException {
     if (writeAheadLog == null)
       return;
@@ -1195,8 +1367,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
     diskCache.unlock();
   }
 
-  @Override
-  protected ORawBuffer readRecord(final OCluster clusterSegment, final ORecordId rid, boolean atomicLock, boolean loadTombstones,
+  private ORawBuffer readRecord(final OCluster clusterSegment, final ORecordId rid, boolean atomicLock, boolean loadTombstones,
       LOCKING_STRATEGY iLockingStrategy) {
     checkOpeness();
 
@@ -1238,7 +1409,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
     }
   }
 
-  protected void undoOperation(List<OLogSequenceNumber> operationUnit) throws IOException {
+  private void undoOperation(List<OLogSequenceNumber> operationUnit) throws IOException {
     for (int i = operationUnit.size() - 1; i >= 0; i--) {
       OWALRecord record = writeAheadLog.read(operationUnit.get(i));
       if (checkFirstAtomicUnitRecord(i, record)) {
@@ -1286,7 +1457,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
     }
   }
 
-  protected boolean checkFirstAtomicUnitRecord(int index, OWALRecord record) {
+  private boolean checkFirstAtomicUnitRecord(int index, OWALRecord record) {
     boolean isAtomicUnitStartRecord = record instanceof OAtomicUnitStartRecord;
     if (isAtomicUnitStartRecord && index != 0) {
       OLogManager.instance().error(this, "Record %s should be the first record in WAL record list.",
@@ -1303,7 +1474,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
     return isAtomicUnitStartRecord;
   }
 
-  protected boolean checkLastAtomicUnitRecord(int index, OWALRecord record, int size) {
+  private boolean checkLastAtomicUnitRecord(int index, OWALRecord record, int size) {
     boolean isAtomicUnitEndRecord = record instanceof OAtomicUnitEndRecord;
     if (isAtomicUnitEndRecord && index != size - 1) {
       OLogManager.instance().error(this, "Record %s should be the last record in WAL record list.",
@@ -1320,13 +1491,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
     return isAtomicUnitEndRecord;
   }
 
-  protected void endStorageTx() throws IOException {
+  private void endStorageTx() throws IOException {
     atomicOperationsManager.endAtomicOperation(false);
 
     assert atomicOperationsManager.getCurrentOperation() == null;
   }
 
-  protected void startStorageTx(OTransaction clientTx) throws IOException {
+  private void startStorageTx(OTransaction clientTx) throws IOException {
     if (writeAheadLog == null)
       return;
 
@@ -1340,7 +1511,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
     transaction.set(new OStorageTransaction(clientTx));
   }
 
-  protected void rollbackStorageTx() throws IOException {
+  private void rollbackStorageTx() throws IOException {
     if (writeAheadLog == null || transaction.get() == null)
       return;
 
@@ -1352,7 +1523,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageEmbedded impleme
     undoOperation(operationUnit);
   }
 
-  protected void restoreIfNeeded() throws Exception {
+  private void restoreIfNeeded() throws Exception {
     if (isDirty()) {
       OLogManager.instance().warn(this, "Storage " + name + " was not closed properly. Will try to restore from write ahead log.");
       try {

@@ -41,7 +41,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 /**
  * SQL UPDATE command.
@@ -247,7 +247,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
       return false;
     } finally {
       if (lockStrategy.equalsIgnoreCase("RECORD"))
-        ((OStorageEmbedded) getDatabase().getStorage()).releaseWriteLock(record.getIdentity());
+        ((OAbstractPaginatedStorage) getDatabase().getStorage()).releaseWriteLock(record.getIdentity());
     }
   }
 

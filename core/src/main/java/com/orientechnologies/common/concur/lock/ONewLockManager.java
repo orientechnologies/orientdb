@@ -20,6 +20,10 @@
 
 package com.orientechnologies.common.concur.lock;
 
+import sun.misc.Sort;
+
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -119,19 +123,40 @@ public class ONewLockManager<T> {
     return lock;
   }
 
-  public Lock tryAcquireExclusiveLock(T value, long timeOut) throws InterruptedException {
+  public boolean tryAcquireExclusiveLock(T value, long timeout) throws InterruptedException {
     final int index = index(value.hashCode());
 
     if (useSpinLock)
-      throw new UnsupportedOperationException();
+      throw new IllegalStateException("Spin lock does not support try lock mode");
 
     final ReadWriteLock rwLock = locks[index];
 
     final Lock lock = rwLock.writeLock();
-    if (lock.tryLock(timeOut, TimeUnit.MILLISECONDS))
-      return lock;
+    return lock.tryLock(timeout, TimeUnit.MILLISECONDS);
+  }
 
-    return null;
+  public void acquireExclusiveLockInBatch(T... value) {
+    final T[] values = Arrays.copyOf(value, value.length);
+
+    Arrays.sort(values, 0, values.length, new Comparator<T>() {
+      @Override
+      public int compare(T one, T two) {
+        final int indexOne = index(one.hashCode());
+        final int indexTwo = index(two.hashCode());
+
+        if (indexOne > indexTwo)
+          return 1;
+
+        if (indexOne < indexTwo)
+          return -1;
+
+        return 0;
+      }
+    });
+
+    for (T val : values) {
+      acquireExclusiveLock(val);
+    }
   }
 
   public Lock acquireSharedLock(long value) {
@@ -152,6 +177,18 @@ public class ONewLockManager<T> {
 
     return lock;
 
+  }
+
+  public boolean tryAcquireSharedLock(T value, long timeout) throws InterruptedException {
+    final int index = index(value.hashCode());
+
+    if (useSpinLock)
+      throw new IllegalStateException("Spin lock does not support try lock mode");
+
+    final ReadWriteLock rwLock = locks[index];
+
+    final Lock lock = rwLock.readLock();
+    return lock.tryLock(timeout, TimeUnit.MILLISECONDS);
   }
 
   public Lock acquireSharedLock(int value) {

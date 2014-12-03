@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -214,7 +215,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 
       final int remainingUsers = getUsers() > 0 ? removeUser() : 0;
 
-      return force || (!(this instanceof OStorageEmbedded) && remainingUsers == 0);
+      return force || (!(this instanceof OAbstractPaginatedStorage) && remainingUsers == 0);
     } finally {
       lock.releaseSharedLock();
     }

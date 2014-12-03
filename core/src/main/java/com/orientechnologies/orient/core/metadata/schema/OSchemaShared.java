@@ -49,6 +49,7 @@ import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
@@ -325,7 +326,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   }
 
   public void checkEmbedded(OStorage storage) {
-    if (!(storage.getUnderlying() instanceof OStorageEmbedded))
+    if (!(storage.getUnderlying() instanceof OAbstractPaginatedStorage))
       throw new OSchemaException("'Internal' schema modification methods can be used only inside of embedded database");
   }
 
@@ -527,7 +528,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         // if it is embedded storage modification of schema is done by internal methods otherwise it is done by
         // by sql commands and we need to reload local replica
 
-        if (getDatabase().getStorage().getUnderlying() instanceof OStorageEmbedded)
+        if (getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
           saveInternal();
         else
           reload();
@@ -648,7 +649,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       }
 
       if (!hasGlobalProperties) {
-        if (getDatabase().getStorage().getUnderlying() instanceof OStorageEmbedded)
+        if (getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
           saveInternal();
       }
 
