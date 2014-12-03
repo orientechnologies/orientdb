@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -424,7 +425,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   @Override
-  public void onCreateClass(ODatabaseInternal iDatabase, OClass iClass) {
+  public void onCreateClass(final ODatabaseInternal iDatabase, final OClass iClass) {
     final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
 
     if (dbUrl.startsWith("plocal:")) {
@@ -440,7 +441,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (cfg == null)
       return;
 
-    installLocalClusterPerClass(iDatabase, cfg, getLocalNodeName(), iClass);
+    Orient.instance().getWorkers().submit(new Runnable() {
+      @Override
+      public void run() {
+        installLocalClusterPerClass(iDatabase, cfg, getLocalNodeName(), iClass);
+      }
+    });
   }
 
   @Override
@@ -1227,30 +1233,21 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "class %s, creation of new local cluster '%s' (id=%d)",
               iClass, newClusterName, iDatabase.getClusterIdByName(newClusterName));
 
-//          if (OScenarioThreadLocal.INSTANCE.get() == OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED) {
-//            final Future<?> result = Orient.instance().getWorkers().submit(new Runnable() {
-//              @Override
-//              public void run() {
-//                ODatabaseRecordThreadLocal.INSTANCE.set((com.orientechnologies.orient.core.db.ODatabaseDocumentInternal) iDatabase);
-//                iClass.addCluster(newClusterName);
-//                ODatabaseRecordThreadLocal.INSTANCE.remove();
-//              }
-//            });
-//
-//          } else
-            try {
-              iClass.addCluster(newClusterName);
-            } catch (OCommandSQLParsingException e) {
-              if (!e.getMessage().endsWith("already exists"))
-                throw e;
-            }
+          final OScenarioThreadLocal.RUN_MODE currentDistributedMode = OScenarioThreadLocal.INSTANCE.get();
+          if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
+            OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
 
-          // if (OScenarioThreadLocal.INSTANCE.get() == OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED) {
-          // final Set<String> nodes = getRemoteNodeIds();
-          // nodes.remove(getLocalNodeName());
-          //
-          // sendRequest(iDatabase.getName(), null, nodes, new OSQLCommandTask(""), EXECUTION_MODE.RESPONSE);
-          // }
+          try {
+            iClass.addCluster(newClusterName);
+          } catch (OCommandSQLParsingException e) {
+            if (!e.getMessage().endsWith("already exists"))
+              throw e;
+          } finally {
+
+            if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
+              // RESTORE PREVIOUS MODE
+              OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
+          }
 
           ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
               "class %s, set mastership of cluster '%s' (id=%d) to '%s'", iClass, newClusterName,

@@ -50,6 +50,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -925,20 +926,22 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   @Override
   public int addCluster(final String iClusterName, boolean forceListBased, final Object... iParameters) {
-    final int clId = wrapped.addCluster(iClusterName, false, iParameters);
-//
-//    if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.DEFAULT) {
-//      final StringBuilder cmd = new StringBuilder("create cluster ");
-//      cmd.append(iClusterName);
-//
-//      // EXECUTE THIS OUTSIDE LCK TO AVOID DEADLOCKS
-//      OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
-////      commandSQL.addExcludedNode(getNodeId());
-//
-//      final Object res = command(commandSQL);
-//      System.out.println(res);
-//    }
-//
+    final int clId;
+
+    clId = wrapped.addCluster(iClusterName, false, iParameters);
+
+    if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.DEFAULT) {
+
+      final StringBuilder cmd = new StringBuilder("create cluster ");
+      cmd.append(iClusterName);
+
+      // EXECUTE THIS OUTSIDE LCK TO AVOID DEADLOCKS
+      OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
+      commandSQL.addExcludedNode(getNodeId());
+
+      command(commandSQL);
+    }
+
     return clId;
   }
 

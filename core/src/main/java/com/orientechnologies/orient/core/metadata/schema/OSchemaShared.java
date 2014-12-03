@@ -859,11 +859,11 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     try {
 
       final String key = className.toLowerCase();
-      if (classes.containsKey(key) && retry == 0 )
+      if (classes.containsKey(key) && retry == 0)
         throw new OSchemaException("Class " + className + " already exists in current database");
 
       if (!isDistributedCommand())
-      checkClustersAreAbsent(clusterIds);
+        checkClustersAreAbsent(clusterIds);
 
       cmd = new StringBuilder("create class ");
       cmd.append(className);
