@@ -2012,7 +2012,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       case ORecordOperation.CREATED: {
         // CHECK 2 TIMES TO ASSURE THAT IT'S A CREATE OR AN UPDATE BASED ON RECURSIVE TO-STREAM METHOD
 
-        byte[] stream = rec.toStream();
+        final byte[] stream = rec.toStream();
         if (stream == null) {
           OLogManager.instance().warn(this, "Null serialization on committing new record %s in transaction", rid);
           break;
@@ -2032,6 +2032,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           rec.getRecordVersion().copyFrom(ppos.recordVersion);
           clientTx.updateIdentityAfterCommit(oldRID, rid);
         } else {
+//          ORecordInternal.setContentChanged(rec, true);
           rec.getRecordVersion().copyFrom(
               updateRecord(rid, ORecordInternal.isContentChanged(rec), stream, rec.getRecordVersion(),
                   ORecordInternal.getRecordType(rec), -1, null).getResult());
@@ -2040,7 +2041,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       }
 
       case ORecordOperation.UPDATED: {
-        byte[] stream = rec.toStream();
+        final byte[] stream = rec.toStream();
         if (stream == null) {
           OLogManager.instance().warn(this, "Null serialization on committing updated record %s in transaction", rid);
           break;

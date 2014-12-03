@@ -19,6 +19,16 @@
  */
 package com.orientechnologies.orient.core.db.record.ridbag.embedded;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.UUID;
+import java.util.WeakHashMap;
+
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
@@ -30,16 +40,6 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBagDelegate;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.UUID;
-import java.util.WeakHashMap;
 
 public class OEmbeddedRidBag implements ORidBagDelegate {
   private byte[]                                                       serializedContent = null;
@@ -111,9 +111,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       size--;
       contentWasChanged = true;
 
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-          OMultiValueChangeEvent.OChangeType.REMOVE, nextValue, null, nextValue));
-
+      if (!changeListeners.isEmpty())
+        fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.REMOVE, nextValue, null, nextValue));
     }
 
     @Override
@@ -169,8 +169,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     size++;
     contentWasChanged = true;
 
-    fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
-        identifiable, identifiable));
+    if (!changeListeners.isEmpty())
+      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
+          identifiable, identifiable));
   }
 
   public OEmbeddedRidBag copy() {
@@ -195,8 +196,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       size--;
       contentWasChanged = true;
 
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-          OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable));
+      if (!changeListeners.isEmpty())
+        fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+            OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable));
     }
   }
 
@@ -383,7 +385,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       offset += OIntegerSerializer.INT_SIZE;
     }
 
-    for (Object entry : entries) {
+    final int totEntries = entries.length;
+    for (int i = 0; i < totEntries; ++i) {
+      final Object entry = entries[i];
       if (entry instanceof OIdentifiable) {
         OLinkSerializer.INSTANCE.serialize((OIdentifiable) entry, stream, offset);
         offset += OLinkSerializer.RID_SIZE;
@@ -427,12 +431,12 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     }
   }
 
-  private void addEntry(OIdentifiable identifiable) {
+  private void addEntry(final OIdentifiable identifiable) {
     if (entries.length == entriesLength) {
       if (entriesLength == 0) {
-        int defaultSize = (Integer) OGlobalConfiguration.RID_BAG_EMBEDDED_DEFAULT_SIZE.getValue();
-        entries = new Object[defaultSize > 0 ? defaultSize : 4];
-      }else {
+        final int cfgValue = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+        entries = new Object[cfgValue > 0 ? Math.min(cfgValue, 40) : 40];
+      } else {
         final Object[] oldEntries = entries;
         entries = new Object[entries.length << 1];
         System.arraycopy(oldEntries, 0, entries, 0, oldEntries.length);

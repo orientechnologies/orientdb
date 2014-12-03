@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -31,6 +27,10 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.ATTRIBUTES;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
+
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * SQL ALTER PROPERTY command: Changes an attribute of an existent property in the target class.
@@ -108,7 +108,7 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
 
     final OClassImpl cls = (OClassImpl) database.getMetadata().getSchema().getClass(className);
     if (cls == null)
-      throw new OCommandExecutionException("Source class '" + className + "' not found");
+      throw new OCommandExecutionException("Cannot alter class '" + className + "' because not found");
 
     cls.set(attribute, value);
 
