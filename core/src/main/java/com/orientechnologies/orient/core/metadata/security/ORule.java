@@ -62,6 +62,11 @@ public class ORule implements Serializable{
     {
     	return nameToGenericMap.get(name);
     }
+    
+    public static ResourceGeneric[] values()
+    {
+    	return genericToLegacyMap.keySet().toArray(new ResourceGeneric[genericToLegacyMap.size()]);
+    }
 
 	@Override
 	public String toString() {
