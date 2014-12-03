@@ -39,7 +39,12 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
-import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.OLowDiskSpaceException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
@@ -51,7 +56,13 @@ import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.ORecordCallback;
+import com.orientechnologies.orient.core.storage.ORecordMetadata;
+import com.orientechnologies.orient.core.storage.OStorageAbstract;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
@@ -96,15 +107,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   private final String                               PROFILER_READ_RECORD;
   private final String                               PROFILER_UPDATE_RECORD;
   private final String                               PROFILER_DELETE_RECORD;
-  private ORecordConflictStrategy                    recordConflictStrategy               = Orient.instance()
-                                                                                              .getRecordConflictStrategy()
-                                                                                              .newInstanceOfDefaultClass();
-
   private final ConcurrentMap<String, OCluster>      clusterMap                           = new ConcurrentHashMap<String, OCluster>();
   private final ThreadLocal<OStorageTransaction>     transaction                          = new ThreadLocal<OStorageTransaction>();
   private final OModificationLock                    modificationLock                     = new OModificationLock();
   protected volatile OWriteAheadLog                  writeAheadLog;
   protected volatile ODiskCache                      diskCache;
+  private ORecordConflictStrategy                    recordConflictStrategy               = Orient.instance()
+                                                                                              .getRecordConflictStrategy()
+                                                                                              .newInstanceOfDefaultClass();
   private CopyOnWriteArrayList<OCluster>             clusters                             = new CopyOnWriteArrayList<OCluster>();
   private volatile int                               defaultClusterId                     = -1;
   private volatile OAtomicOperationsManager          atomicOperationsManager;
@@ -2032,7 +2042,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           rec.getRecordVersion().copyFrom(ppos.recordVersion);
           clientTx.updateIdentityAfterCommit(oldRID, rid);
         } else {
-//          ORecordInternal.setContentChanged(rec, true);
+          // ORecordInternal.setContentChanged(rec, true);
           rec.getRecordVersion().copyFrom(
               updateRecord(rid, ORecordInternal.isContentChanged(rec), stream, rec.getRecordVersion(),
                   ORecordInternal.getRecordType(rec), -1, null).getResult());
@@ -2440,7 +2450,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           + " MB). The database is now working in read-only mode."
           + " Please close the database (or stop OrientDB), make room on your hard drive and then reopen the database. "
           + "The minimal required space is (" + (lowDiskSpace.requiredSpace / (1024 * 1024)) + " MB). "
-          + "Required space is calculated as sum of disk space required by WAL (may be set using parameter "
+          + "Required space is calculated as sum of disk space required by WAL (you can change it by setting parameter "
           + OGlobalConfiguration.WAL_MAX_SIZE.getKey() + ") and space required for data.");
   }
 }

@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteD
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 
+import java.io.File;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
@@ -631,19 +632,23 @@ public enum OGlobalConfiguration {
       final long osMemory = (Long) memorySize.invoke(mxBean);
       final long jvmMaxMemory = Runtime.getRuntime().maxMemory();
 
-      final long result = (osMemory - jvmMaxMemory) / (1024 * 1024) - 2 * 1024;
-      if (result > 0) {
-        OLogManager.instance().info(null, "OrientDB auto-config DISKCACHE=%,dMB (heap=%,dMB osMemory=%,dMB)", result,
-            jvmMaxMemory / 1024 / 1024, osMemory / 1024 / 1024);
-        DISK_CACHE_SIZE.setValue(result);
+      long diskCacheInMB = (osMemory - jvmMaxMemory) / (1024 * 1024) - 2 * 1024;
+      if (diskCacheInMB > 0) {
+        final long freeSpaceInMB = new File(".").getFreeSpace() / 1024 / 1024;
+
+        if (diskCacheInMB > freeSpaceInMB * 80 / 100)
+          // LOW DISK SPACE: REDUCE DISK CACHE SIZE
+          diskCacheInMB = freeSpaceInMB * 50 / 100;
+
+        OLogManager.instance().info(null, "OrientDB auto-config DISKCACHE=%,dMB (heap=%,dMB os=%,dMB disk=%,dMB)", diskCacheInMB,
+            jvmMaxMemory / 1024 / 1024, osMemory / 1024 / 1024, freeSpaceInMB);
+        DISK_CACHE_SIZE.setValue(diskCacheInMB);
       } else {
         // LOW MEMORY: SET IT TO 64MB ONLY
-        OLogManager
-            .instance()
-            .warn(
-                null,
-                "No enough physical memory available: %,dMB (heap=%,dMB). Set lower Heap and restart OrientDB. Now running with DISKCACHE=64MB",
-                osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
+        OLogManager.instance().warn(
+            null,
+            "No enough physical memory available: %,dMB (heap=%,dMB). Set lower Heap and restart OrientDB. Now running with DISKCACHE="
+                + OReadWriteDiskCache.MIN_CACHE_SIZE + "MB", osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
         DISK_CACHE_SIZE.setValue(OReadWriteDiskCache.MIN_CACHE_SIZE);
       }
 
