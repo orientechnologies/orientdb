@@ -47,3 +47,18 @@ angular.module('webappApp').factory("User", function (Restangular, $q) {
     }
   }
 });
+
+angular.module('webappApp').service("AccessToken", function ($localStorage) {
+
+  return {
+    get: function () {
+      return $localStorage.token;
+    },
+    set: function (token) {
+      $localStorage.token = token;
+    },
+    delete: function () {
+      delete  $localStorage.token;
+    }
+  }
+});

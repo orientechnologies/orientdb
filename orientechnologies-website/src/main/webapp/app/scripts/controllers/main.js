@@ -14,11 +14,10 @@ angular.module('webappApp')
     User.whoami().then(function (data) {
       $scope.member = data;
       if (User.isMember(ORGANIZATION)) {
-        $scope.query = 'is:open ' + 'assignee:' + $scope.member.name;
+        $scope.query = 'is:open ' + 'assignee:' + $scope.member.name + " sort:priority-desc";
       } else if (User.isClient(ORGANIZATION)) {
         var client = User.getClient(ORGANIZATION);
-        console.log(client);
-        $scope.query = 'is:open client:\"' + client.name + "\"";
+        $scope.query = 'is:open client:\"' + client.name + "\" sort:priority-desc";
       } else {
         $scope.query = 'is:open ';
       }

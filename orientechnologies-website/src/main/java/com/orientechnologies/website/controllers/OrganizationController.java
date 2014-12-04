@@ -64,7 +64,8 @@ public class OrganizationController {
 
   @RequestMapping(value = "{name}/issues", method = RequestMethod.GET)
   public ResponseEntity<PagedResources<IssueResource>> getOrganizationIssuesPaged(@PathVariable("name") String name,
-      @RequestParam(value = "q", defaultValue = "") String q, @RequestParam(value = "page", defaultValue = "1") String page,
+      @RequestParam(value = "q", defaultValue = "") String q,
+      @RequestParam(value = "page", defaultValue = "1") String page,
       @RequestParam(value = "per_page", defaultValue = "10") String perPage) {
 
     Page<Issue> issues = orgRepository.findOrganizationIssuesPagedProfiled(name, q, page, perPage);

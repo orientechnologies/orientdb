@@ -20,6 +20,9 @@
 .scope-popover {
   width: 300px;
 }
+.client-popover {
+  width: 300px;
+}
 .version-popover .form-group {
   margin-top: 15px;
   padding-left: 15px;
@@ -54,6 +57,11 @@
   padding-left: 15px;
   padding-right: 15px;
 }
+.client-popover .form-group {
+  margin-top: 15px;
+  padding-left: 15px;
+  padding-right: 15px;
+}
 
 .label-popover-divider {
   margin-top: 0px;
@@ -80,6 +88,10 @@
   margin-bottom: 0px;
 }
 .scope-popover-divider {
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
+.client-popover-divider {
   margin-top: 0px;
   margin-bottom: 0px;
 }

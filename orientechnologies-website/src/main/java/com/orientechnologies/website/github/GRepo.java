@@ -1,5 +1,6 @@
 package com.orientechnologies.website.github;
 
+import com.jcabi.http.Response;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -34,17 +35,22 @@ public class GRepo extends GEntity {
     return _local.field("full_name");
   }
 
-  public List<GIssue> getIssues(GIssueState state) throws IOException {
-    String content = github.REQUEST.uri().path(getBaseUrl() + "/issues").back().method("GET")
-        .header("Authorization", String.format("token %s", github.token)).fetch().body();
-    JSONArray array = new JSONArray(content);
+  public Iterable<GIssue> getIssues() throws IOException {
+
+    String page = "1";
+    String state = "open";
+    Response response = github.REQUEST.uri().path(getBaseUrl() + "/issues").queryParam("page", page).queryParam("per_page", "100")
+        .queryParam("state", state).back().method("GET").header("Authorization", String.format("token %s", github.token)).fetch();
+
+    String body = response.body();
+
+    JSONArray array = new JSONArray(body);
 
     List<GIssue> issues = new ArrayList<GIssue>();
     String tmp;
     for (int i = 0; i < array.length(); i++) {
       JSONObject obj = array.getJSONObject(i);
       tmp = obj.toString();
-      ODocument document = new ODocument().fromJSON(tmp, "noMap");
       GIssue g = new GIssue(github, this, tmp);
       issues.add(g);
     }

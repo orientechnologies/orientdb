@@ -122,7 +122,7 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
   }
 
   private void importIssue(GitHubIssueMessage message, Repository repoDtp, GIssueState state) throws IOException {
-    List<GIssue> issues = message.repository.getIssues(state);
+    Iterable<GIssue> issues = message.repository.getIssues();
 
     int i = 0;
     for (GIssue issue : issues) {

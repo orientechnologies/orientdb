@@ -30,6 +30,7 @@ public class OSiteSchema {
     addVertexClass(ORepository.class, Repository.class.getSimpleName());
     addVertexClass(OMilestone.class, Milestone.class.getSimpleName());
     addVertexClass(OOrganization.class, Organization.class.getSimpleName());
+    addVertexClass(OEnvironment.class, Environment.class.getSimpleName());
 
     addEdgeClass(HasLabel.class);
     addEdgeClass(HasEvent.class);
@@ -39,6 +40,9 @@ public class OSiteSchema {
     addEdgeClass(HasClient.class);
     addEdgeClass(HasPriority.class);
     addEdgeClass(HasScope.class);
+    addEdgeClass(HasEnvironment.class);
+    addEdgeClass(HasSla.class);
+
   }
 
   public static void addVertexClass(Class cls, String name, Class superClass) {

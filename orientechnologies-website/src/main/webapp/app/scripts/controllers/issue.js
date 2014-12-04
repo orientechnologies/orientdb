@@ -1,6 +1,6 @@
 'use strict';
 angular.module('webappApp')
-  .controller('IssueCtrl', function ($scope, Organization, $routeParams) {
+  .controller('IssueCtrl', function ($scope, Organization, User, $routeParams) {
 
     $scope.query = 'is:open'
     $scope.page = 1;
@@ -24,6 +24,15 @@ angular.module('webappApp')
       });
     }
 
+    User.whoami().then(function (data) {
+      $scope.isMember = User.isMember(ORGANIZATION);
+
+      if ($scope.isMember) {
+        Organization.all("clients").getList().then(function (data) {
+          $scope.clients = data.plain();
+        })
+      }
+    });
     Organization.all("scopes").getList().then(function (data) {
       $scope.scopes = data.plain();
     })
@@ -54,6 +63,16 @@ angular.module('webappApp')
         }
         $scope.query = addCondition($scope.query, "area", scope.name)
         $scope.issue.scope = scope;
+        $scope.search();
+      }
+    });
+    $scope.$on("client:changed", function (e, client) {
+      if (client) {
+        if ($scope.issue.client) {
+          $scope.query = removeCondition($scope.query, "client", $scope.issue.client.name);
+        }
+        $scope.query = addCondition($scope.query, "client", client.name)
+        $scope.issue.client = client;
         $scope.search();
       }
     });
@@ -372,6 +391,20 @@ angular.module('webappApp')
     $scope.toggleScope = function (scope) {
       if (!$scope.isScoped(scope)) {
         $scope.$emit("scope:changed", scope);
+      }
+      $scope.$hide();
+    }
+
+  });
+angular.module('webappApp')
+  .controller('ChangeClientCtrl', function ($scope) {
+
+    $scope.isClientSelected = function (client) {
+      return $scope.issue.client ? client.name == $scope.issue.client.name : false;
+    }
+    $scope.toggleClient = function (client) {
+      if (!$scope.isClientSelected(client)) {
+        $scope.$emit("client:changed", client);
       }
       $scope.$hide();
     }

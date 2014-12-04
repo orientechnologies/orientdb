@@ -53,8 +53,10 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   public List<Issue> findOrganizationIssues(String name, String q, String page, String perPage) {
     OrientGraph db = dbFactory.getGraph();
 
-    String query = String.format(
-        "select from (select expand(out('HasRepo').out('HasIssue')) from Organization where name = '%s') ", name);
+    String query = String
+        .format(
+            "select *,$priority from (select expand(out('HasRepo').out('HasIssue')) from Organization where name = '%s') let $priority = out('HasPriority')[0].number ",
+            name);
     query = addParams(name, q, query);
     Integer limit = new Integer(perPage);
     Integer skip = limit * (new Integer(page) - 1);
@@ -82,6 +84,7 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   private String addParams(String orgName, String q, String query) {
     int idx = 0;
     String fullText = "";
+    String sort = "";
     if (q != null && !q.isEmpty()) {
       String[] queries = q.split(" (?=(([^'\"]*['\"]){2})*[^'\"]*$)");
       for (String s : queries) {
@@ -91,7 +94,12 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
             continue;
           fullText += " " + values[0];
         } else {
-          query = applyParam(query, values[0], values[1].replace("\"", ""), idx++);
+          if (values[0].equalsIgnoreCase("sort")) {
+            sort = applySort(values[1].replace("\"", ""));
+          } else {
+            query = applyParam(query, values[0], values[1].replace("\"", ""), idx++);
+
+          }
         }
       }
     }
@@ -99,7 +107,17 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
       query = applyParam(query, "title", fullText, idx++);
 
     query = addProfilation(orgName, query, idx++);
+    if (!sort.isEmpty())
+      query += " " + sort;
     return query;
+  }
+
+  private String applySort(String field) {
+    String[] values = field.split("-");
+    if ("priority".equalsIgnoreCase(values[0])) {
+      return "order by $priority " + values[1];
+    }
+    return "";
   }
 
   private String addProfilation(String orgName, String query, int idx) {

@@ -20,7 +20,8 @@ angular
     'ngMoment',
     'ngCookies',
     'mgcrea.ngStrap',
-    'ngUtilFilters'
+    'ngUtilFilters',
+    'ngStorage'
   ])
   .config(function ($routeProvider, $httpProvider, RestangularProvider) {
     $routeProvider
@@ -79,13 +80,18 @@ angular
       };
     });
   });
-angular.module('webappApp').factory('oauthHttpInterceptor', function ($cookies) {
+angular.module('webappApp').factory('oauthHttpInterceptor', function ($cookies, AccessToken) {
   return {
     request: function (config) {
       if ($cookies.prjhub_token) {
-        config.headers['X-AUTH-TOKEN'] = $cookies.prjhub_token;
+        AccessToken.set($cookies.prjhub_token);
+        delete $cookies.prjhub_token;
       }
-      //
+      var token = AccessToken.get();
+
+      if (token) {
+        config.headers['X-AUTH-TOKEN'] = token;
+      }
       return config;
     }
   };
@@ -93,4 +99,4 @@ angular.module('webappApp').factory('oauthHttpInterceptor', function ($cookies) 
 
 
 var API = "v1/"
-var ORGANIZATION = 'organizationwolf';
+var ORGANIZATION = 'orientechnologies';
