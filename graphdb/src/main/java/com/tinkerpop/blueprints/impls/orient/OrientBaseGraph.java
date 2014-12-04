@@ -133,6 +133,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     this.password = iUserPassword;
 
     database = iDatabase;
+		checkForGraphSchema(database);
 
     makeActive();
     putInInitializationStack();

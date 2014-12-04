@@ -1852,23 +1852,22 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     return _className;
   }
 
-  public void setClassName(final String iClassName) {
+  public void setClassName(final String className) {
     _immutableClazz = null;
     _immutableSchemaVersion = -1;
 
-    if (iClassName == null) {
+    if (className == null) {
       _className = null;
       return;
     }
 
-    OClass _clazz = getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(_className);
-    if (_clazz != null)
-      _className = _clazz.getName();
+    OClass clazz = getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(className);
+    if (clazz != null)
+      _className = clazz.getName();
 
-    _clazz = getDatabase().getMetadata().getSchema().getOrCreateClass(iClassName);
-    _className = _clazz.getName();
-    convertFieldsToClass(_clazz);
-
+    clazz = getDatabase().getMetadata().getSchema().getOrCreateClass(className);
+    _className = clazz.getName();
+    convertFieldsToClass(clazz);
   }
 
   /**
