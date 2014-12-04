@@ -20,8 +20,6 @@
 
 package com.orientechnologies.common.concur.lock;
 
-import sun.misc.Sort;
-
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.concurrent.TimeUnit;
@@ -43,8 +41,47 @@ public class ONewLockManager<T> {
 
   private final boolean                  useSpinLock;
 
-  private static int closestInteger(int value) {
-    return 1 << (32 - Integer.numberOfLeadingZeros(value - 1));
+  private static final class SpinLockWrapper implements Lock {
+    private final boolean                readLock;
+    private final OReadersWriterSpinLock spinLock;
+
+    private SpinLockWrapper(boolean readLock, OReadersWriterSpinLock spinLock) {
+      this.readLock = readLock;
+      this.spinLock = spinLock;
+    }
+
+    @Override
+    public void lock() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void lockInterruptibly() throws InterruptedException {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean tryLock() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean tryLock(long time, TimeUnit unit) throws InterruptedException {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void unlock() {
+      if (readLock)
+        spinLock.releaseReadLock();
+      else
+        spinLock.releaseWriteLock();
+    }
+
+    @Override
+    public Condition newCondition() {
+      throw new UnsupportedOperationException();
+    }
   }
 
   public ONewLockManager() {
@@ -69,6 +106,18 @@ public class ONewLockManager<T> {
       locks = lcks;
       spinLocks = null;
     }
+  }
+
+  private static int closestInteger(int value) {
+    return 1 << (32 - Integer.numberOfLeadingZeros(value - 1));
+  }
+
+  private static int longHashCode(long value) {
+    return (int) (value ^ (value >>> 32));
+  }
+
+  private static int index(int hashCode) {
+    return hashCode & MASK;
   }
 
   public Lock acquireExclusiveLock(long value) {
@@ -314,57 +363,6 @@ public class ONewLockManager<T> {
 
   public void releaseLock(Lock lock) {
     lock.unlock();
-  }
-
-  private static int longHashCode(long value) {
-    return (int) (value ^ (value >>> 32));
-  }
-
-  private static int index(int hashCode) {
-    return hashCode & MASK;
-  }
-
-  private static final class SpinLockWrapper implements Lock {
-    private final boolean                readLock;
-    private final OReadersWriterSpinLock spinLock;
-
-    private SpinLockWrapper(boolean readLock, OReadersWriterSpinLock spinLock) {
-      this.readLock = readLock;
-      this.spinLock = spinLock;
-    }
-
-    @Override
-    public void lock() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void lockInterruptibly() throws InterruptedException {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean tryLock() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean tryLock(long time, TimeUnit unit) throws InterruptedException {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void unlock() {
-      if (readLock)
-        spinLock.releaseReadLock();
-      else
-        spinLock.releaseWriteLock();
-    }
-
-    @Override
-    public Condition newCondition() {
-      throw new UnsupportedOperationException();
-    }
   }
 
 }

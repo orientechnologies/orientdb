@@ -20,24 +20,21 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
-import java.math.BigDecimal;
-import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -53,6 +50,14 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.util.ODateHelper;
+
+import java.math.BigDecimal;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
@@ -151,17 +156,15 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   @SuppressWarnings("unchecked")
   @Override
-  public void serialize(final ODocument document, final BytesContainer bytes) {
+  public void serialize(final ODocument document, final BytesContainer bytes, final boolean iClassOnly) {
 
-    final Map<String, OProperty> props;
-    final OClass clazz = document.getImmutableSchemaClass();
-    if (clazz != null) {
-      writeString(bytes, clazz.getName());
-      props = clazz.propertiesMap();
-    } else {
+    final OClass clazz = serializeClass(document, bytes);
+    if (iClassOnly) {
       writeEmptyString(bytes);
-      props = null;
+      return;
     }
+
+    final Map<String, OProperty> props = clazz != null ? clazz.propertiesMap() : null;
 
     final String[] fields = document.fieldNames();
 
@@ -195,10 +198,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       final Object value = values[i].getValue();
       if (value != null) {
         final OType type = getFieldType(document, values[i].getKey(), value, props);
-        if (type == null) {
-          throw new OSerializationException("Impossible serialize value of type " + value.getClass()
-              + " with the ODocument binary serializer");
-        }
+        // temporary skip serialization skip of unknown types
+        if (type == null)
+          continue;
 
         pointer = writeSingleValue(bytes, value, type, getLinkedType(document, type, values[i].getKey()));
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
@@ -207,6 +209,15 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       }
     }
 
+  }
+
+  protected OClass serializeClass(final ODocument document, final BytesContainer bytes) {
+    final OClass clazz = document.getImmutableSchemaClass();
+    if (clazz != null)
+      writeString(bytes, clazz.getName());
+    else
+      writeEmptyString(bytes);
+    return clazz;
   }
 
   private OType readOType(final BytesContainer bytes) {
@@ -467,9 +478,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       if (value instanceof ODocumentSerializable) {
         ODocument cur = ((ODocumentSerializable) value).toDocument();
         cur.field(ODocumentSerializable.CLASS_NAME, value.getClass().getName());
-        serialize(cur, bytes);
+        serialize(cur, bytes, false);
       } else {
-        serialize((ODocument) value, bytes);
+        serialize((ODocument) value, bytes, false);
       }
       break;
     case EMBEDDEDSET:
@@ -562,10 +573,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       Object value = values[i].getValue();
       if (value != null) {
         OType type = getTypeFromValueEmbedded(value);
-        if (type == null) {
-          throw new OSerializationException("Impossible serialize value of type " + value.getClass()
-              + " with the ODocument binary serializer");
-        }
+        // temporary skip serialization of unknown types
+        if (type == null)
+          continue;
         pointer = writeSingleValue(bytes, value, type, null);
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
         writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
@@ -640,9 +650,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       if (type != null) {
         writeOType(bytes, bytes.alloc(1), type);
         writeSingleValue(bytes, itemValue, type, null);
-      } else {
-        throw new OSerializationException("Impossible serialize value of type " + value.getClass()
-            + " with the ODocument binary serializer");
       }
     }
     return pos;

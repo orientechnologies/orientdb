@@ -92,6 +92,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -384,7 +385,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         }
 
     } catch (Exception e) {
-      throw new ODatabaseException("Cannot create database", e);
+      throw new ODatabaseException("Cannot create database '" + getName() + "'", e);
     }
     return (DB) this;
   }
@@ -1586,7 +1587,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           // NOTIFY IDENTITY HAS CHANGED
           ORecordInternal.onBeforeIdentityChanged(record);
         else if (stream == null || stream.length == 0)
-          // ALREADY CREATED AND WAITING FOR THE RIGHT UPDATE (WE'RE IN A GRAPH)
+          // ALREADY CREATED AND WAITING FOR THE RIGHT UPDATE (WE'RE IN A TREE/GRAPH)
           return (RET) record;
 
         if (isNew && rid.clusterId < 0)
@@ -1599,7 +1600,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
         checkSecurity(ORule.ResourceGeneric.CLUSTER, wasNew ? ORole.PERMISSION_CREATE : ORole.PERMISSION_UPDATE, iClusterName);
 
-        if (stream != null && stream.length > 0) {
+        final boolean partialMarshalling = record instanceof ODocument
+            && OSerializationSetThreadLocal.INSTANCE.checkIfPartial((ODocument) record);
+
+        if (stream != null && stream.length > 0 && !partialMarshalling) {
           if (iCallTriggers) {
             final ORecordHook.TYPE triggerType = wasNew ? ORecordHook.TYPE.BEFORE_CREATE : ORecordHook.TYPE.BEFORE_UPDATE;
 
@@ -1615,7 +1619,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           }
         }
 
-        if (!record.isDirty())
+        if (wasNew && !isNew)
+          // UPDATE RECORD PREVIOUSLY SERIALIZED AS EMPTY
+          record.setDirty();
+        else if (!record.isDirty())
           return (RET) record;
 
         // CHECK IF ENABLE THE MVCC OR BYPASS IT
@@ -1656,7 +1663,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           if (operationResult.getModifiedRecordContent() != null)
             stream = operationResult.getModifiedRecordContent();
 
-          ORecordInternal.fill(record, rid, version, stream, stream == null || stream.length == 0);
+          ORecordInternal.fill(record, rid, version, stream, partialMarshalling);
 
           callbackHookSuccess(record, iCallTriggers, wasNew, stream, operationResult);
         } catch (Throwable t) {
@@ -2164,8 +2171,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
             break;
 
         if (i == clusterIds.length)
-          throw new IllegalArgumentException("Cluster name " + iClusterName + " is not configured to store the class "
-              + doc.getClassName());
+          throw new IllegalArgumentException("Cluster name " + iClusterName + " (id=" + clusterId
+              + ") is not configured to store the class " + doc.getClassName() + ", valid are " + Arrays.toString(clusterIds));
       }
     } else {
       // UPDATE: CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)

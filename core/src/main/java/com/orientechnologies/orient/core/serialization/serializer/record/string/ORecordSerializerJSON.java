@@ -19,6 +19,16 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
+import java.io.IOException;
+import java.io.StringWriter;
+import java.text.ParseException;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.Orient;
@@ -53,16 +63,6 @@ import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.util.ODateHelper;
-
-import java.io.IOException;
-import java.io.StringWriter;
-import java.text.ParseException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 @SuppressWarnings("serial")
 public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
@@ -320,7 +320,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
   @Override
   public StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat,
-      final OUserObject2RecordHandler iObjHandler, final Set<ODocument> iMarshalledRecords, boolean iOnlyDelta,
+      final OUserObject2RecordHandler iObjHandler, final Map<ODocument, Boolean> iMarshalledRecords, boolean iOnlyDelta,
       boolean autoDetectCollectionType) {
     try {
       final StringWriter buffer = new StringWriter(INITIAL_SIZE);

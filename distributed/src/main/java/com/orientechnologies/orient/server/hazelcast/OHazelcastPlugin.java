@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -42,6 +43,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.server.OClientConnectionManager;
@@ -423,7 +425,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   @Override
-  public void onCreateClass(ODatabaseInternal iDatabase, OClass iClass) {
+  public void onCreateClass(final ODatabaseInternal iDatabase, final OClass iClass) {
     final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
 
     if (dbUrl.startsWith("plocal:")) {
@@ -439,7 +441,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (cfg == null)
       return;
 
-    installLocalClusterPerClass(iDatabase, cfg, getLocalNodeName(), iClass);
+    Orient.instance().getWorkers().submit(new Runnable() {
+      @Override
+      public void run() {
+        installLocalClusterPerClass(iDatabase, cfg, getLocalNodeName(), iClass);
+      }
+    });
   }
 
   @Override
@@ -1216,19 +1223,33 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
         if (cfgClusterNames.contains(newClusterName)) {
           // FOUND A CLUSTER PREVIOUSLY ASSIGNED TO THE LOCAL ONE: CHANGE ASSIGNMENT TO LOCAL NODE AGAIN
-          ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE,
+          ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
               "class %s, change mastership of cluster '%s' (id=%d) to local node '%s'", iClass, newClusterName,
               iDatabase.getClusterIdByName(newClusterName), nodeName);
           cfg.setMasterServer(newClusterName, nodeName);
         } else {
 
           // CREATE A NEW CLUSTER WHERE LOCAL NODE IS THE MASTER
-          ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE, "class %s, creation of new local cluster '%s' (id=%d)",
+          ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "class %s, creation of new local cluster '%s' (id=%d)",
               iClass, newClusterName, iDatabase.getClusterIdByName(newClusterName));
 
-          iClass.addCluster(newClusterName);
+          final OScenarioThreadLocal.RUN_MODE currentDistributedMode = OScenarioThreadLocal.INSTANCE.get();
+          if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
+            OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
 
-          ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE,
+          try {
+            iClass.addCluster(newClusterName);
+          } catch (OCommandSQLParsingException e) {
+            if (!e.getMessage().endsWith("already exists"))
+              throw e;
+          } finally {
+
+            if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
+              // RESTORE PREVIOUS MODE
+              OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
+          }
+
+          ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
               "class %s, set mastership of cluster '%s' (id=%d) to '%s'", iClass, newClusterName,
               iDatabase.getClusterIdByName(newClusterName), nodeName);
           cfg.setMasterServer(newClusterName, nodeName);

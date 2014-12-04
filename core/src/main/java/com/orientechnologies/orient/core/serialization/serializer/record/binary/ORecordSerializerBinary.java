@@ -20,10 +20,8 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 
@@ -66,28 +64,35 @@ public class ORecordSerializerBinary implements ORecordSerializer {
 
     BytesContainer container = new BytesContainer(iSource);
     container.skip(1);
-    try {
-      serializerByVersion[iSource[0]].deserialize((ODocument) iRecord, container, iFields);
-    } catch (IndexOutOfBoundsException e) {
-      OLogManager.instance().warn(this, "Error deserializing record %s send this data for debugging",
-          OBase64Utils.encodeBytes(iSource));
-      throw e;
-    }
+    serializerByVersion[iSource[0]].deserialize((ODocument) iRecord, container, iFields);
     return iRecord;
   }
 
   @Override
   public byte[] toStream(final ORecord iSource, final boolean iOnlyDelta) {
     checkTypeODocument(iSource);
-    if (!OSerializationSetThreadLocal.checkAndAdd((ODocument) iSource))
-      return null;
-    BytesContainer container = new BytesContainer();
+
+    final BytesContainer container = new BytesContainer();
+
+    // WRITE SERIALIZER VERSION
     int pos = container.alloc(1);
     container.bytes[pos] = CURRENT_RECORD_VERSION;
-    serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container);
+
+    if (!OSerializationSetThreadLocal.checkAndAdd((ODocument) iSource)) {
+      // SERIALIZE CLASS ONLY
+      serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, true);
+
+      // SET SERIALIZATION AS PARTIAL
+      OSerializationSetThreadLocal.setPartial((ODocument) iSource);
+
+      return container.fitBytes();
+    }
+
+    // SERIALIZE RECORD
+    serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, false);
+
     OSerializationSetThreadLocal.removeCheck((ODocument) iSource);
-    return container.fitBytes();
-  }
+    return container.fitBytes();  }
 
   private void checkTypeODocument(final ORecord iRecord) {
     if (!(iRecord instanceof ODocument)) {
