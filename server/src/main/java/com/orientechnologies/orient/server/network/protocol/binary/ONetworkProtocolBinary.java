@@ -157,7 +157,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected void onBeforeRequest() throws IOException {
     waitNodeIsOnline();
 
-    if (Boolean.FALSE.equals(tokenBased) || (tokenHandler == null)) {
+    if (!Boolean.TRUE.equals(tokenBased) || (tokenHandler == null)) {
       connection = OClientConnectionManager.instance().getConnection(clientTxId, this);
       if (clientTxId < 0) {
         short protocolId = 0;
