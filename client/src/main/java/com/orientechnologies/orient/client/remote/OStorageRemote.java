@@ -1680,7 +1680,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_21)
       network.writeString(ODatabaseDocumentTx.getDefaultSerializer().toString());
     if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_26)
-      network.writeBoolean(true);
+      network.writeBoolean(OGlobalConfiguration.CLIENT_SESSION_TOKEN_BASED.getValueAsBoolean());
   }
 
   /**

@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-//import com.nimbusds.jwt.SignedJWT;
 import java.util.List;
 import java.util.Set;
 

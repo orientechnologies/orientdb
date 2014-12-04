@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-//import com.nimbusds.jwt.SignedJWT;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
