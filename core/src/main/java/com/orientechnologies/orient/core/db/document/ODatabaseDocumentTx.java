@@ -876,13 +876,13 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   /**
    * Callback the registeted hooks if any.
    *
-   * @param iType
+   * @param type
    *          Hook type. Define when hook is called.
    * @param id
    *          Record received in the callback
    * @return True if the input record is changed, otherwise false
    */
-  public ORecordHook.RESULT callbackHooks(final ORecordHook.TYPE iType, final OIdentifiable id) {
+  public ORecordHook.RESULT callbackHooks(final ORecordHook.TYPE type, final OIdentifiable id) {
     if (id == null || !OHookThreadLocal.INSTANCE.push(id))
       return ORecordHook.RESULT.RECORD_NOT_CHANGED;
 
@@ -908,7 +908,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
             continue;
         }
 
-        final ORecordHook.RESULT res = hook.onTrigger(iType, rec);
+        final ORecordHook.RESULT res = hook.onTrigger(type, rec);
 
         if (res == ORecordHook.RESULT.RECORD_CHANGED)
           recordChanged = true;
@@ -1546,9 +1546,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
   }
 
-  public <RET extends ORecord> RET executeSaveRecord(final ORecord record, String iClusterName, final ORecordVersion iVersion,
-      boolean iCallTriggers, final OPERATION_MODE iMode, boolean iForceCreate,
-      final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
+  public <RET extends ORecord> RET executeSaveRecord(final ORecord record, String clusterName, final ORecordVersion ver,
+      boolean callTriggers, final OPERATION_MODE mode, boolean forceCreate,
+      final ORecordCallback<? extends Number> recordCreatedCallback, ORecordCallback<ORecordVersion> recordUpdatedCallback) {
     checkOpeness();
     setCurrentDatabaseInThreadLocal();
 
@@ -1567,11 +1567,11 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       if (record instanceof ODocument)
         acquireIndexModificationLock((ODocument) record, lockedIndexes);
 
-      final boolean wasNew = iForceCreate || rid.isNew();
+      final boolean wasNew = forceCreate || rid.isNew();
 
       if (wasNew && rid.clusterId == -1)
         // ASSIGN THE CLUSTER ID
-        rid.clusterId = iClusterName != null ? getClusterIdByName(iClusterName) : getDefaultClusterId();
+        rid.clusterId = clusterName != null ? getClusterIdByName(clusterName) : getDefaultClusterId();
 
       byte[] stream;
       final OStorageOperationResult<ORecordVersion> operationResult;
@@ -1582,7 +1582,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         // STREAM.LENGTH == 0 -> RECORD IN STACK: WILL BE SAVED AFTER
         stream = record.toStream();
 
-        final boolean isNew = iForceCreate || rid.isNew();
+        final boolean isNew = forceCreate || rid.isNew();
         if (isNew)
           // NOTIFY IDENTITY HAS CHANGED
           ORecordInternal.onBeforeIdentityChanged(record);
@@ -1591,20 +1591,20 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           return (RET) record;
 
         if (isNew && rid.clusterId < 0)
-          rid.clusterId = iClusterName != null ? getClusterIdByName(iClusterName) : getDefaultClusterId();
+          rid.clusterId = clusterName != null ? getClusterIdByName(clusterName) : getDefaultClusterId();
 
-        if (rid.clusterId > -1 && iClusterName == null)
-          iClusterName = getClusterNameById(rid.clusterId);
+        if (rid.clusterId > -1 && clusterName == null)
+          clusterName = getClusterNameById(rid.clusterId);
 
-        checkRecordClass(record, iClusterName, rid, isNew);
+        checkRecordClass(record, clusterName, rid, isNew);
 
-        checkSecurity(ORule.ResourceGeneric.CLUSTER, wasNew ? ORole.PERMISSION_CREATE : ORole.PERMISSION_UPDATE, iClusterName);
+        checkSecurity(ORule.ResourceGeneric.CLUSTER, wasNew ? ORole.PERMISSION_CREATE : ORole.PERMISSION_UPDATE, clusterName);
 
         final boolean partialMarshalling = record instanceof ODocument
             && OSerializationSetThreadLocal.INSTANCE.checkIfPartial((ODocument) record);
 
         if (stream != null && stream.length > 0 && !partialMarshalling) {
-          if (iCallTriggers) {
+          if (callTriggers) {
             final ORecordHook.TYPE triggerType = wasNew ? ORecordHook.TYPE.BEFORE_CREATE : ORecordHook.TYPE.BEFORE_UPDATE;
 
             final ORecordHook.RESULT hookResult = callbackHooks(triggerType, record);
@@ -1625,29 +1625,25 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         else if (!record.isDirty())
           return (RET) record;
 
-        // CHECK IF ENABLE THE MVCC OR BYPASS IT
-        final ORecordVersion realVersion = !mvcc || iVersion.isUntracked() ? OVersionFactory.instance().createUntrackedVersion()
-            : record.getRecordVersion();
-
         try {
           // SAVE IT
           boolean updateContent = ORecordInternal.isContentChanged(record);
           byte[] content = (stream == null) ? new byte[0] : stream;
           byte recordType = ORecordInternal.getRecordType(record);
-          int mode = iMode.ordinal();
+          final int modeIndex = mode.ordinal();
 
           // CHECK IF RECORD TYPE IS SUPPORTED
           Orient.instance().getRecordFactoryManager().getRecordTypeClass(recordType);
 
-          if (iForceCreate || ORecordId.isNew(rid.clusterPosition)) {
+          if (forceCreate || ORecordId.isNew(rid.clusterPosition)) {
             // CREATE
-            final OStorageOperationResult<OPhysicalPosition> ppos = storage.createRecord(rid, content, iVersion, recordType, mode,
-                (ORecordCallback<Long>) iRecordCreatedCallback);
+            final OStorageOperationResult<OPhysicalPosition> ppos = storage.createRecord(rid, content, ver, recordType, modeIndex,
+                (ORecordCallback<Long>) recordCreatedCallback);
             operationResult = new OStorageOperationResult<ORecordVersion>(ppos.getResult().recordVersion, ppos.isMoved());
 
           } else {
             // UPDATE
-            operationResult = storage.updateRecord(rid, updateContent, content, iVersion, recordType, mode, iRecordUpdatedCallback);
+            operationResult = storage.updateRecord(rid, updateContent, content, ver, recordType, modeIndex, recordUpdatedCallback);
           }
 
           final ORecordVersion version = operationResult.getResult();
@@ -1665,9 +1661,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
           ORecordInternal.fill(record, rid, version, stream, partialMarshalling);
 
-          callbackHookSuccess(record, iCallTriggers, wasNew, stream, operationResult);
+          callbackHookSuccess(record, callTriggers, wasNew, stream, operationResult);
         } catch (Throwable t) {
-          callbackHookFailure(record, iCallTriggers, wasNew, stream);
+          callbackHookFailure(record, callTriggers, wasNew, stream);
           throw t;
         }
       } finally {

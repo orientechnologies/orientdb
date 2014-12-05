@@ -24,6 +24,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 import com.orientechnologies.common.concur.lock.OModificationLock;
+import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
@@ -67,6 +68,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   private final String                       databaseName;
   protected String                           type;
   protected String                           valueContainerAlgorithm;
+  protected final ONewLockManager<Object>    keyLockManager   = new ONewLockManager<Object>();
   @ODocumentInstance
   protected ODocument                        configuration;
   protected ODocument                        metadata;
@@ -431,17 +433,57 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
     key = getCollatingValue(key);
 
-    modificationLock.requestModificationLock();
+    final ODatabase database = getDatabase();
+    final boolean txIsActive = database.getTransaction().isActive();
+
+    if (txIsActive)
+      keyLockManager.acquireSharedLock(key);
     try {
-      acquireSharedLock();
+      modificationLock.requestModificationLock();
       try {
-        markStorageDirty();
-        return indexEngine.remove(key);
+        acquireSharedLock();
+        try {
+          markStorageDirty();
+          return indexEngine.remove(key);
+        } finally {
+          releaseSharedLock();
+        }
       } finally {
-        releaseSharedLock();
+        modificationLock.releaseModificationLock();
       }
     } finally {
-      modificationLock.releaseModificationLock();
+      if (txIsActive)
+        keyLockManager.releaseSharedLock(key);
+    }
+  }
+
+  @Override
+  public void lockKeysForUpdate(Object... key) {
+    keyLockManager.acquireExclusiveLocksInBatch(key);
+  }
+
+  @Override
+  public void lockKeysForUpdate(Collection<Object> keys) {
+    keyLockManager.acquireExclusiveLocksInBatch(keys);
+  }
+
+  @Override
+  public void releaseKeysForUpdate(Object... key) {
+    if (key == null)
+      return;
+
+    for (Object k : key) {
+      keyLockManager.releaseExclusiveLock(k);
+    }
+  }
+
+  @Override
+  public void releaseKeysForUpdate(Collection<Object> keys) {
+    if (keys == null)
+      return;
+
+    for (Object k : keys) {
+      keyLockManager.releaseExclusiveLock(k);
     }
   }
 
@@ -821,6 +863,12 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
   protected abstract void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot);
 
   protected abstract void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot);
+
+  @Override
+  public int compareTo(OIndex<T> index) {
+    final String name = index.getName();
+    return this.name.compareTo(name);
+  }
 
   protected void removeFromSnapshot(Object key, Map<Object, Object> snapshot) {
     key = getCollatingValue(key);

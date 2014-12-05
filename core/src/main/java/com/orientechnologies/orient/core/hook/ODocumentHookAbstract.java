@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.hook;
 
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
@@ -194,6 +194,12 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
   public void onRecordDeleteReplicated(final ODocument iDocument) {
   }
 
+  public void onRecordFinalizeUpdate(final ODocument document) {
+  }
+
+  public void onRecordFinalizeCreation(final ODocument document) {
+  }
+
   public RESULT onTrigger(final TYPE iType, final ORecord iRecord) {
     if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && ODatabaseRecordThreadLocal.INSTANCE.get().getStatus() != STATUS.OPEN)
       return RESULT.RECORD_NOT_CHANGED;
@@ -265,6 +271,14 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
 
     case DELETE_REPLICATED:
       onRecordDeleteReplicated(document);
+      break;
+
+    case FINALIZE_CREATION:
+      onRecordFinalizeCreation(document);
+      break;
+
+    case FINALIZE_UPDATE:
+      onRecordFinalizeUpdate(document);
       break;
 
     default:
