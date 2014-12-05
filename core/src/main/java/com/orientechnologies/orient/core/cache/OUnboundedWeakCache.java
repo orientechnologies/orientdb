@@ -20,34 +20,64 @@
 
 package com.orientechnologies.orient.core.cache;
 
-import java.lang.ref.WeakReference;
-import java.util.WeakHashMap;
-
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
+
+import java.lang.ref.WeakReference;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TimerTask;
+import java.util.WeakHashMap;
 
 /**
  * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OUnboundedWeakCache extends OAbstractMapCache<WeakHashMap<ORID, WeakReference<ORecord>>> implements OCache {
+  public static final int CLEAN_WEAK_ENTRIES_DELAY = 10000;
+  private Object          lock                     = new Object();
 
   public OUnboundedWeakCache() {
     super(new WeakHashMap<ORID, WeakReference<ORecord>>());
+    Orient.instance().getTimer().schedule(new TimerTask() {
+      @Override
+      public void run() {
+        synchronized (lock) {
+          final Iterator<Map.Entry<ORID, WeakReference<ORecord>>> it = cache.entrySet().iterator();
+          while (it.hasNext()) {
+            if (it.next().getValue().get() == null)
+              it.remove();
+          }
+        }
+      }
+    }, CLEAN_WEAK_ENTRIES_DELAY, CLEAN_WEAK_ENTRIES_DELAY);
   }
 
   @Override
-  public ORecord get(final ORID id) {
-    return get(cache.get(id));
+  public ORecord get(final ORID rid) {
+    final WeakReference<ORecord> value;
+    synchronized (lock) {
+      value = cache.get(rid);
+    }
+    return get(value);
   }
 
   @Override
   public ORecord put(final ORecord record) {
-    return get(cache.put(record.getIdentity(), new WeakReference<ORecord>(record)));
+    final WeakReference<ORecord> value;
+    synchronized (lock) {
+      value = cache.put(record.getIdentity(), new WeakReference<ORecord>(record));
+    }
+    return get(value);
   }
 
   @Override
-  public ORecord remove(final ORID id) {
-    return get(cache.remove(id));
+  public ORecord remove(final ORID rid) {
+    final WeakReference<ORecord> value;
+    synchronized (lock) {
+      value = cache.remove(rid);
+    }
+    return get(value);
   }
 
   private ORecord get(WeakReference<ORecord> value) {
