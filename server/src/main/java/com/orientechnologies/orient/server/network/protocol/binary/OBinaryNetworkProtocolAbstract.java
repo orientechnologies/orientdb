@@ -405,21 +405,8 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     try {
       final byte[] stream = getRecordBytes(iRecord);
 
-      int realLength = stream.length;
-      // TODO: This Logic should not be here provide an api in the Serializer for ask for trimmed content.
-      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-      if (db != null && db instanceof ODatabaseDocument) {
-        if (ORecordSerializerSchemaAware2CSV.NAME.equals(getRecordSerializerName())) {
-          // TRIM TAILING SPACES (DUE TO OVERSIZE)
-          for (int i = stream.length - 1; i > -1; --i) {
-            if (stream[i] == 32)
-              --realLength;
-            else
-              break;
-          }
-
-        }
-      }
+      // TODO: This Logic should not be here provide an api in the Serializer if asked for trimmed content.
+      int realLength = trimCsvSerializedContent(stream);
 
       channel.writeBytes(stream, realLength);
     } catch (Exception e) {
@@ -429,6 +416,24 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 
       throw new OSerializationException(message, e);
     }
+  }
+
+  protected int trimCsvSerializedContent(final byte[] stream) {
+    int realLength = stream.length;
+    final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    if (db != null && db instanceof ODatabaseDocument) {
+      if (ORecordSerializerSchemaAware2CSV.NAME.equals(getRecordSerializerName())) {
+        // TRIM TAILING SPACES (DUE TO OVERSIZE)
+        for (int i = stream.length - 1; i > -1; --i) {
+          if (stream[i] == 32)
+            --realLength;
+          else
+            break;
+        }
+
+      }
+    }
+    return realLength;
   }
 
 }
