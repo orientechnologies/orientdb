@@ -6,17 +6,10 @@ import com.orientechnologies.website.exception.ServiceException;
 import com.orientechnologies.website.github.GOrganization;
 import com.orientechnologies.website.github.GRepo;
 import com.orientechnologies.website.github.GitHub;
-import com.orientechnologies.website.model.schema.HasClient;
-import com.orientechnologies.website.model.schema.HasMember;
-import com.orientechnologies.website.model.schema.HasRepo;
-import com.orientechnologies.website.model.schema.dto.Client;
+import com.orientechnologies.website.model.schema.*;
+import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.OUser;
-import com.orientechnologies.website.model.schema.dto.Organization;
-import com.orientechnologies.website.model.schema.dto.Repository;
-import com.orientechnologies.website.repository.ClientRepository;
-import com.orientechnologies.website.repository.OrganizationRepository;
-import com.orientechnologies.website.repository.RepositoryRepository;
-import com.orientechnologies.website.repository.UserRepository;
+import com.orientechnologies.website.repository.*;
 import com.orientechnologies.website.security.DeveloperAuthentication;
 import com.orientechnologies.website.services.OrganizationService;
 import com.orientechnologies.website.services.RepositoryService;
@@ -58,6 +51,13 @@ public class OrganizationServiceImpl implements OrganizationService {
 
   @Autowired
   private ClientRepository       clientRepository;
+
+  @Autowired
+  private EnvironmentRepository  environmentRepository;
+
+  @Autowired
+  private SlaRepository          slaRepository;
+
   @Autowired
   private Reactor                reactor;
 
@@ -205,6 +205,50 @@ public class OrganizationServiceImpl implements OrganizationService {
     Organization org = new Organization();
     org.setName(name);
     return organizationRepository.save(org);
+  }
+
+  @Override
+  public Environment registerClientEnvironment(String name, Integer id, Environment environment) {
+    Organization organization = organizationRepository.findOneByName(name);
+    Client client = organizationRepository.findClient(name, id);
+    if (organization != null) {
+      environment = environmentRepository.save(environment);
+      createClientEnvironmentRelationship(client, environment);
+      return environment;
+    } else {
+      throw ServiceException.create(HttpStatus.NOT_FOUND.value()).withMessage("Organization not Found");
+    }
+  }
+
+  @Override
+  public Sla registerClientSlaToEnvironment(String name, Integer id, String env, Sla sla) {
+    Organization organization = organizationRepository.findOneByName(name);
+    Client client = organizationRepository.findClient(name, id);
+    Environment e = organizationRepository.findClientEnvironmentById(name, id, env);
+    if (organization != null && client != null && e != null) {
+      sla = slaRepository.save(sla);
+      createEnvironmentSlaRelationship(e, sla);
+      return sla;
+    } else {
+      throw ServiceException.create(HttpStatus.NOT_FOUND.value()).withMessage("Organization not Found");
+    }
+  }
+
+  private void createEnvironmentSlaRelationship(Environment environment, Sla sla) {
+    OrientGraph graph = dbFactory.getGraph();
+
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(environment.getId()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(sla.getId()));
+    orgVertex.addEdge(HasSla.class.getSimpleName(), devVertex);
+  }
+
+  private void createClientEnvironmentRelationship(Client client, Environment environment) {
+
+    OrientGraph graph = dbFactory.getGraph();
+
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(client.getId()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(environment.getId()));
+    orgVertex.addEdge(HasEnvironment.class.getSimpleName(), devVertex);
   }
 
   private void createMembership(Organization organization, OUser user) {

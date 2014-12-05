@@ -63,10 +63,24 @@ public class GIssue extends GEntity {
 
   }
 
+  public Date getUpdatedAt() {
+    return toDate((String) get("updated_at"));
+
+  }
+
+  public GUser getClosedBy() {
+    ODocument doc = get("closed_by");
+    return doc != null ? new GUser(github, this, doc.toJSON()) : null;
+  }
+
   public GUser getAssignee() {
     ODocument doc = get("assignee");
 
     return doc != null ? new GUser(github, this, doc.toJSON()) : null;
+  }
+
+  boolean isPullRequest() {
+    return get("pull_request") != null;
   }
 
   public List<GComment> getComments() throws IOException {

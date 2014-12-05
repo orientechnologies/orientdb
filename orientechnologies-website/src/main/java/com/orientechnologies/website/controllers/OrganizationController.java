@@ -55,17 +55,9 @@ public class OrganizationController {
     }
   }
 
-  // @RequestMapping(value = "{name}/issues", method = RequestMethod.GET)
-  // public ResponseEntity<List<Issue>> getOrganizationIssues(@PathVariable("name") String name,
-  // @RequestParam(value = "q", defaultValue = "") String q, @RequestParam(value = "page", defaultValue = "1") String page,
-  // @RequestParam(value = "per_page", defaultValue = "10") String perPage) {
-  // return new ResponseEntity<List<Issue>>(orgRepository.findOrganizationIssues(name, q, page, perPage), HttpStatus.OK);
-  // }
-
   @RequestMapping(value = "{name}/issues", method = RequestMethod.GET)
   public ResponseEntity<PagedResources<IssueResource>> getOrganizationIssuesPaged(@PathVariable("name") String name,
-      @RequestParam(value = "q", defaultValue = "") String q,
-      @RequestParam(value = "page", defaultValue = "1") String page,
+      @RequestParam(value = "q", defaultValue = "") String q, @RequestParam(value = "page", defaultValue = "1") String page,
       @RequestParam(value = "per_page", defaultValue = "10") String perPage) {
 
     Page<Issue> issues = orgRepository.findOrganizationIssuesPagedProfiled(name, q, page, perPage);
@@ -132,6 +124,33 @@ public class OrganizationController {
   @ResponseStatus(HttpStatus.OK)
   public List<OUser> findClientMembers(@PathVariable("name") String name, @PathVariable("id") Integer id) {
     return orgRepository.findClientMembers(name, id);
+  }
+
+  @RequestMapping(value = "{name}/clients/{id}/environments", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public List<Environment> findClientEnvironments(@PathVariable("name") String name, @PathVariable("id") Integer id) {
+    return orgRepository.findClientEnvironments(name, id);
+  }
+
+  @RequestMapping(value = "{name}/clients/{id}/environments", method = RequestMethod.POST)
+  @ResponseStatus(HttpStatus.OK)
+  public Environment addClientEnvironment(@PathVariable("name") String name, @PathVariable("id") Integer id,
+      @RequestBody Environment environment) {
+    return organizationService.registerClientEnvironment(name, id, environment);
+  }
+
+  @RequestMapping(value = "{name}/clients/{id}/environments/{env}/sla", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public List<Sla> findClientEnvironmentSla(@PathVariable("name") String name, @PathVariable("id") Integer id,
+      @PathVariable("env") String env) {
+    return orgRepository.findClientEnvironmentSla(name, id, env);
+  }
+
+  @RequestMapping(value = "{name}/clients/{id}/environments/{env}/sla", method = RequestMethod.POST)
+  @ResponseStatus(HttpStatus.OK)
+  public Sla addClientSlaToEnvironment(@PathVariable("name") String name, @PathVariable("id") Integer id,
+      @PathVariable("env") String env, @RequestBody Sla sla) {
+    return organizationService.registerClientSlaToEnvironment(name, id, env, sla);
   }
 
   @RequestMapping(value = "{name}", method = RequestMethod.POST)

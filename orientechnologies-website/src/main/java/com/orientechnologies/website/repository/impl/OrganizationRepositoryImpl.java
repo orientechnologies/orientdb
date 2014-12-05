@@ -109,6 +109,9 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     query = addProfilation(orgName, query, idx++);
     if (!sort.isEmpty())
       query += " " + sort;
+    else {
+      query += " order by createdAt desc";
+    }
     return query;
   }
 
@@ -402,6 +405,31 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     for (OrientVertex vertice : vertices) {
       ODocument doc = vertice.getRecord();
       users.add(com.orientechnologies.website.model.schema.OUser.NAME.fromDoc(doc, db));
+    }
+    return users;
+  }
+
+  @Override
+  public Environment findClientEnvironmentById(String org, Integer clientId, String env) {
+    return null;
+  }
+
+  @Override
+  public List<Sla> findClientEnvironmentSla(String organizationName, Integer clientId, String env) {
+    return null;
+  }
+
+  @Override
+  public List<Environment> findClientEnvironments(String org, Integer clientId) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format(
+        "select expand(out('HasClient')[clientId = %d].out('HasEnvironment')) from Organization where name = '%s'", clientId, org);
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+
+    List<Environment> users = new ArrayList<Environment>();
+    for (OrientVertex vertice : vertices) {
+      ODocument doc = vertice.getRecord();
+      users.add(OEnvironment.NAME.fromDoc(doc, db));
     }
     return users;
   }

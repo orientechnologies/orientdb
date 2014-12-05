@@ -1,12 +1,8 @@
 package com.orientechnologies.website.services;
 
-import org.springframework.transaction.annotation.Transactional;
-
 import com.orientechnologies.website.exception.ServiceException;
-import com.orientechnologies.website.model.schema.dto.Client;
-import com.orientechnologies.website.model.schema.dto.OUser;
-import com.orientechnologies.website.model.schema.dto.Organization;
-import com.orientechnologies.website.model.schema.dto.Repository;
+import com.orientechnologies.website.model.schema.dto.*;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface OrganizationService {
 
@@ -22,4 +18,11 @@ public interface OrganizationService {
   public Repository registerRepository(String org, String repo);
 
   public Organization createOrganization(String name, String description);
+
+  @Transactional
+  Environment registerClientEnvironment(String name, Integer id, Environment environment);
+
+  @Transactional
+  Sla registerClientSlaToEnvironment(String name, Integer id, String env, Sla sla);
+
 }

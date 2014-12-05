@@ -103,18 +103,24 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
 
     boolean milestoneNew = false;
     for (GMilestone milestone : milestones) {
-      Milestone m = repoRepository.findMilestoneByRepoAndName(repoDtp.getName(), milestone.getNumber());
-      milestoneNew = false;
-      if (m == null) {
-        m = new Milestone();
-        milestoneNew = true;
-      }
-      m = fillMilestone(milestone, m);
-      if (milestoneNew) {
-        createRepositoryMilestoneAssociation(repoDtp, m);
-      }
+      getOrCreateMilestone(repoDtp, milestone);
     }
 
+  }
+
+  private Milestone getOrCreateMilestone(Repository repoDtp, GMilestone milestone) {
+    boolean milestoneNew;
+    Milestone m = repoRepository.findMilestoneByRepoAndName(repoDtp.getName(), milestone.getNumber());
+    milestoneNew = false;
+    if (m == null) {
+      m = new Milestone();
+      milestoneNew = true;
+    }
+    m = fillMilestone(milestone, m);
+    if (milestoneNew) {
+      createRepositoryMilestoneAssociation(repoDtp, m);
+    }
+    return m;
   }
 
   private void createRepositoryMilestoneAssociation(Repository repoDtp, Milestone m) {
@@ -151,6 +157,7 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
     GMilestone m = issue.getMilestone();
 
     issueDto.setCreatedAt(issue.getCreatedAt());
+    issueDto.setUpdatedAt(issue.getUpdatedAt());
     issueDto.setClosedAt(issue.getClosedAt());
 
     issueDto = issueRepo.save(issueDto);
@@ -273,7 +280,7 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
     Milestone milestone = null;
 
     if (m != null) {
-      milestone = repoRepository.findMilestoneByRepoAndName(repoDtp.getName(), m.getNumber());
+      milestone = getOrCreateMilestone(repoDtp, m);
     }
 
     if (milestone != null)

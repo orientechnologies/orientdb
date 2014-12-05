@@ -26,6 +26,7 @@ public class Issue {
   private Priority          priority;
   private Scope             scope;
   private Date              createdAt;
+  private Date              updatedAt;
   private Date              closedAt;
   private Long              comments;
   private OUser             user;
@@ -114,6 +115,14 @@ public class Issue {
 
   public Date getClosedAt() {
     return closedAt;
+  }
+
+  public Date getUpdatedAt() {
+    return updatedAt;
+  }
+
+  public void setUpdatedAt(Date updatedAt) {
+    this.updatedAt = updatedAt;
   }
 
   public void setClosedAt(Date closedAt) {

@@ -6,8 +6,13 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URL;
+import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Enrico Risa on 05/11/14.
@@ -39,22 +44,63 @@ public class GRepo extends GEntity {
 
     String page = "1";
     String state = "open";
+    List<GIssue> issues = new ArrayList<GIssue>();
+
+    while (page != null) {
+      page = fillIssue(page, state, issues);
+    }
+    page = "1";
+    state = "closed";
+    while (page != null) {
+      page = fillIssue(page, state, issues);
+    }
+    return issues;
+  }
+
+  private String fillIssue(String page, String state, List<GIssue> issues) throws IOException {
     Response response = github.REQUEST.uri().path(getBaseUrl() + "/issues").queryParam("page", page).queryParam("per_page", "100")
         .queryParam("state", state).back().method("GET").header("Authorization", String.format("token %s", github.token)).fetch();
 
     String body = response.body();
 
+    Map<String, List<String>> headers = response.headers();
+
+    String next = null;
+    if (headers.get("Link") != null) {
+      String link = headers.get("Link").get(0);
+      for (String token : link.split(", ")) {
+        if (token.endsWith("rel=\"next\"")) {
+          // found the next page. This should look something like
+          // <https://api.github.com/repos?page=3&per_page=100>; rel="next"
+          int idx = token.indexOf('>');
+          Map<String, String> stringMap = splitQuery(new URL(token.substring(1, idx)));
+          next = stringMap.get("page");
+        }
+      }
+    }
     JSONArray array = new JSONArray(body);
 
-    List<GIssue> issues = new ArrayList<GIssue>();
     String tmp;
     for (int i = 0; i < array.length(); i++) {
       JSONObject obj = array.getJSONObject(i);
       tmp = obj.toString();
       GIssue g = new GIssue(github, this, tmp);
-      issues.add(g);
+      if (!g.isPullRequest())
+        issues.add(g);
     }
-    return issues;
+
+    return next;
+  }
+
+  public static Map<String, String> splitQuery(URL url) throws UnsupportedEncodingException {
+    Map<String, String> query_pairs = new LinkedHashMap<String, String>();
+    String query = url.getQuery();
+    String[] pairs = query.split("&");
+    for (String pair : pairs) {
+      int idx = pair.indexOf("=");
+      query_pairs.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"), URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
+    }
+    return query_pairs;
   }
 
   public GIssue getIssue(Integer number) throws IOException {

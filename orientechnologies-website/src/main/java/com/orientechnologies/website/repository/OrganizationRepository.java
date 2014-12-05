@@ -37,6 +37,10 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
 
   public List<OUser> findClientMembers(String org, Integer clientId);
 
+  public Environment findClientEnvironmentById(String org, Integer clientId, String env);
+
+  public List<Environment> findClientEnvironments(String org, Integer clientId);
+
   public List<OUser> findTeamMembers(String owner, String repo);
 
   public Milestone findMilestoneByOwnerRepoAndNumberIssueAndNumberMilestone(String owner, String repo, Integer iNumber,
@@ -51,4 +55,7 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
   List<Milestone> findMilestones(String name);
 
   List<Label> findLabels(String name);
+
+  List<Sla> findClientEnvironmentSla(String organizationName, Integer clientId, String env);
+
 }

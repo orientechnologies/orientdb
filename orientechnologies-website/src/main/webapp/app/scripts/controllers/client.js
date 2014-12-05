@@ -35,6 +35,9 @@ angular.module('webappApp')
     Organization.all("clients").one($routeParams.id).all("members").getList().then(function (data) {
       $scope.members = data.plain();
     })
+    Organization.all("clients").one($routeParams.id).all("environments").getList().then(function (data) {
+      $scope.environments = data.plain();
+    })
     $scope.save = function () {
 
     }
