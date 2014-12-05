@@ -613,24 +613,27 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     final List<ODocument> records = new ArrayList<ODocument>();
 
     for (OClass cls : classes) {
-      final ODocument doc = new ODocument();
-      doc.field("TABLE_CAT", (Object) null);
-      doc.field("TABLE_SCHEM", (Object) null);
+      final String className = cls.getName();
+      if (tableNamePattern == null || tableNamePattern.equalsIgnoreCase(className)) {
+        final ODocument doc = new ODocument();
+        doc.field("TABLE_CAT", (Object) null);
+        doc.field("TABLE_SCHEM", (Object) null);
 
-      String type;
-      if (SYSTEM_TABLES.contains(cls.getName()))
-        type = "SYSTEM TABLE";
-      // else if ("memory".equals(database.getClusterType(database.getClusterNameById(cls.getDefaultClusterId()))))
-      // type = "VIEW";
-      else
-        type = "TABLE";
+        String type;
+        if (SYSTEM_TABLES.contains(cls.getName()))
+          type = "SYSTEM TABLE";
+          // else if ("memory".equals(database.getClusterType(database.getClusterNameById(cls.getDefaultClusterId()))))
+          // type = "VIEW";
+        else
+          type = "TABLE";
 
-      doc.field("TABLE_TYPE", type);
-      doc.field("TABLE_NAME", cls.getName());
-      doc.field("REMARKS", (Object) null);
-      doc.field("TYPE_NAME", (Object) null);
-      doc.field("REF_GENERATION", (Object) null);
-      records.add(doc);
+        doc.field("TABLE_TYPE", type);
+        doc.field("TABLE_NAME", className);
+        doc.field("REMARKS", (Object) null);
+        doc.field("TYPE_NAME", (Object) null);
+        doc.field("REF_GENERATION", (Object) null);
+        records.add(doc);
+      }
 
     }
 

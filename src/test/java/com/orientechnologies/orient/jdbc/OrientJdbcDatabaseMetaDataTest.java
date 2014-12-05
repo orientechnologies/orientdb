@@ -110,4 +110,26 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     }
   }
 
+  @Test
+  public void getAllTables() throws SQLException {
+    ResultSet rs = this.metaData.getTables(null, null, null, null);
+    int tableCount = 0;
+
+    while(rs.next()){
+      tableCount = tableCount + 1;
+    }
+    assertTrue(tableCount > 1);
+  }
+
+  @Test
+  public void getSingleTables() throws SQLException {
+    ResultSet rs = this.metaData.getTables(null, null, "ouser", null);
+    int tableCount = 0;
+
+    while(rs.next()){
+      tableCount = tableCount + 1;
+    }
+    assertEquals(1, tableCount);
+  }
+
 }
