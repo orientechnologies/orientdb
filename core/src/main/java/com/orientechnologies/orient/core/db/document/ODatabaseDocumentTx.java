@@ -1573,7 +1573,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         // ASSIGN THE CLUSTER ID
         rid.clusterId = clusterName != null ? getClusterIdByName(clusterName) : getDefaultClusterId();
 
-      byte[] stream;
+      byte[] stream = null;
       final OStorageOperationResult<ORecordVersion> operationResult;
 
       getMetadata().makeThreadLocalSchemaSnapshot();
@@ -1667,6 +1667,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           throw t;
         }
       } finally {
+        callbackHookFinalize(record, callTriggers, wasNew, stream);
         ORecordSerializationContext.pullContext();
         getMetadata().clearThreadLocalSchemaSnapshot();
       }
@@ -2625,6 +2626,14 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       callbackHooks(hookType, record);
 
       clearDocumentTracking(record);
+    }
+  }
+
+  private void callbackHookFinalize(final ORecord record, final boolean callTriggers, final boolean wasNew, final byte[] stream) {
+    if (callTriggers && stream != null && stream.length > 0) {
+      final ORecordHook.TYPE hookType;
+      hookType = wasNew ? ORecordHook.TYPE.FINALIZE_CREATION : ORecordHook.TYPE.FINALIZE_UPDATE;
+      callbackHooks(hookType, record);
     }
   }
 

@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -287,12 +288,12 @@ public class OClassIndexManager extends ODocumentHookAbstract {
       if (key instanceof Collection) {
         for (final Object keyItem : (Collection<?>) key) {
           if (!indexDefinition.isNullValuesIgnored() || keyItem != null) {
-            keys.add(keyItem);
+            keys.add(copyKeyIfNeeded(keyItem));
           }
         }
       } else {
         if (!indexDefinition.isNullValuesIgnored() || key != null) {
-          keys.add(key);
+          keys.add(copyKeyIfNeeded(key));
         }
       }
 
@@ -341,12 +342,12 @@ public class OClassIndexManager extends ODocumentHookAbstract {
           if (key instanceof Collection) {
             for (final Object keyItem : (Collection<?>) key) {
               if (!indexDefinition.isNullValuesIgnored() || keyItem != null) {
-                keys.add(keyItem);
+                keys.add(copyKeyIfNeeded(keyItem));
               }
             }
           } else {
             if (!indexDefinition.isNullValuesIgnored() || key != null) {
-              keys.add(key);
+              keys.add(copyKeyIfNeeded(key));
             }
 
           }
@@ -371,6 +372,21 @@ public class OClassIndexManager extends ODocumentHookAbstract {
         index.checkEntry(record, keyItem);
       }
     }
+  }
+
+  private Object copyKeyIfNeeded(Object object) {
+    if (object instanceof ORecordId)
+      return new ORecordId((ORecordId) object);
+    else if (object instanceof OCompositeKey) {
+      final OCompositeKey copy = new OCompositeKey();
+      for (Object key : ((OCompositeKey) object).getKeys()) {
+        copy.addKey(copyKeyIfNeeded(key));
+      }
+
+      return copy;
+    }
+
+    return object;
   }
 
   private static ODocument checkForLoading(final ODocument iRecord) {
