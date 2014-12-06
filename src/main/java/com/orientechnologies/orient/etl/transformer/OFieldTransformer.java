@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
-import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.orientechnologies.orient.etl.OETLProcessor;
 
 public class OFieldTransformer extends OAbstractTransformer {
@@ -57,7 +56,7 @@ public class OFieldTransformer extends OAbstractTransformer {
       throw new IllegalArgumentException("Field transformer cannot specify both 'expression' and 'value'");
 
     if (iConfiguration.containsField("save"))
-      save = iConfiguration.field("save");
+      save = (Boolean) iConfiguration.field("save");
 
     if (iConfiguration.containsField("operation"))
       setOperation = "set".equalsIgnoreCase((String) iConfiguration.field("operation"));
