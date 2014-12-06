@@ -19,24 +19,30 @@
 package com.orientechnologies.orient.etl.transformer;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
+import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.orientechnologies.orient.etl.OETLProcessor;
 
 public class OFieldTransformer extends OAbstractTransformer {
   protected String     fieldName;
   protected String     expression;
+  protected Object     value;
   protected boolean    setOperation = true;
   protected OSQLFilter sqlFilter;
+  protected boolean    save         = false;
 
   @Override
   public ODocument getConfiguration() {
     return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
         + "{fieldName:{optional:false,description:'field name to apply the result'}},"
         + "{expression:{optional:true,description:'expression to evaluate. Mandatory with operation=set (default)'}}"
-        + "{operation:{optional:false,description:'operation to execute against the field: set, remove. Default is set'}}" + "],"
+        + "{value:{optional:true,description:'value to set'}}"
+        + "{operation:{optional:false,description:'operation to execute against the field: set, remove. Default is set'}}"
+        + "{save:{optional:true,description:'save the vertex/edge/document right after the setting of the field'}}" + "],"
         + "input:['ODocument'],output:'ODocument'}");
   }
 
@@ -45,6 +51,13 @@ public class OFieldTransformer extends OAbstractTransformer {
     super.configure(iProcessor, iConfiguration, iContext);
     fieldName = (String) resolve(iConfiguration.field("fieldName"));
     expression = iConfiguration.field("expression");
+    value = iConfiguration.field("value");
+
+    if (expression != null && value != null)
+      throw new IllegalArgumentException("Field transformer cannot specify both 'expression' and 'value'");
+
+    if (iConfiguration.containsField("save"))
+      save = iConfiguration.field("save");
 
     if (iConfiguration.containsField("operation"))
       setOperation = "set".equalsIgnoreCase((String) iConfiguration.field("operation"));
@@ -64,11 +77,15 @@ public class OFieldTransformer extends OAbstractTransformer {
         final ODocument doc = (ODocument) rec;
 
         if (setOperation) {
-          if (sqlFilter == null)
-            // ONLY THE FIRST TIME
-            sqlFilter = new OSQLFilter(expression, context, null);
+          final Object newValue;
+          if (expression != null) {
+            if (sqlFilter == null)
+              // ONLY THE FIRST TIME
+              sqlFilter = new OSQLFilter(expression, context, null);
 
-          final Object newValue = sqlFilter.evaluate(doc, null, context);
+            newValue = sqlFilter.evaluate(doc, null, context);
+          } else
+            newValue = value;
 
           // SET THE TRANSFORMED FIELD BACK
           doc.field(fieldName, newValue);
@@ -78,6 +95,14 @@ public class OFieldTransformer extends OAbstractTransformer {
           final Object prev = doc.removeField(fieldName);
 
           log(OETLProcessor.LOG_LEVELS.DEBUG, "removed %s (value=%s) from document=%s", fieldName, prev, doc);
+        }
+
+        if (save) {
+          final ODatabaseDocumentTx db = super.pipeline.getDocumentDatabase();
+          if (db == null)
+            throw new OETLProcessHaltedException("Database instance not found in pipeline");
+
+          db.save(doc);
         }
       }
     }
