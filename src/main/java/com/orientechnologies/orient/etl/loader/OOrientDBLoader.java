@@ -55,6 +55,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   protected boolean         dbAutoCreate           = true;
   protected boolean         dbAutoDropIfExists     = false;
   protected boolean         dbAutoCreateProperties = false;
+  protected boolean         useLightweightEdges    = true;
   protected boolean         tx                     = false;
   protected int             batchCommit            = 0;
   protected long            batchCounter           = 0;
@@ -192,7 +193,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         + "{dbAutoCreateProperties:{optional:true,description:'Auto create properties in schema'}},"
         + "{dbAutoDropIfExists:{optional:true,description:'Auto drop the database if already exists. Default is false.'}},"
         + "{wal:{optional:true,description:'Use the WAL (Write Ahead Log)'}},"
-        + "{wal:{optional:true,description:'Use the WAL (Write Ahead Log)'}},"
+        + "{useLightweightEdges:{optional:true,description:'Enable/Disable LightweightEdges in Graphs. Default is false'}},"
         + "{cluster:{optional:true,description:'Cluster name where to store the new record'}},"
         + "{classes:{optional:true,description:'Classes used. It assure the classes exist or in case create them'}},"
         + "{indexes:{optional:true,description:'Indexes used. It assure the indexes exist or in case create them'}}],"
@@ -223,6 +224,8 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       dbAutoDropIfExists = (Boolean) iConfiguration.field("dbAutoDropIfExists");
     if (iConfiguration.containsField("dbAutoCreateProperties"))
       dbAutoCreateProperties = (Boolean) iConfiguration.field("dbAutoCreateProperties");
+    if (iConfiguration.containsField("useLightweightEdges"))
+      useLightweightEdges = (Boolean) iConfiguration.field("useLightweightEdges");
 
     clusterName = iConfiguration.field("cluster");
     className = iConfiguration.field("class");
@@ -279,8 +282,9 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       case GRAPH:
         final OrientGraphFactory factory = new OrientGraphFactory(dbURL);
         final OrientBaseGraph graphDatabase = tx ? factory.getTx() : factory.getNoTx();
-        documentDatabase = graphDatabase.getRawGraph();
+        graphDatabase.setUseLightweightEdges(useLightweightEdges);
 
+        documentDatabase = graphDatabase.getRawGraph();
         pipeline.setGraphDatabase(graphDatabase);
         break;
       }
@@ -344,8 +348,10 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       case GRAPH:
         final OrientGraphFactory factory = new OrientGraphFactory(dbURL);
         graphDatabase = factory.getNoTx();
-        documentDatabase = graphDatabase.getRawGraph();
+        graphDatabase.setUseLightweightEdges(useLightweightEdges);
         pipeline.setGraphDatabase(graphDatabase);
+
+        documentDatabase = graphDatabase.getRawGraph();
         break;
       }
       pipeline.setDocumentDatabase(documentDatabase);

@@ -71,6 +71,10 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
   public void begin() {
     if (graph == null) {
       graph = pipeline.getGraphDatabase();
+
+      if (graph == null)
+        throw new OTransformException(getName() + ": graph instance not set");
+
       final OClass cls = graph.getEdgeType(edgeClass);
       if (cls == null)
         graph.createEdgeType(edgeClass);

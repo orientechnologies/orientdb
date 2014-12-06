@@ -68,10 +68,10 @@ public class FieldTransformerTest extends ETLBaseTest {
 
   public void testSave() {
     OETLProcessor proc = getProcessor(
-                                       "{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }, {field:{fieldName:'@class', value:'Test'}}, {field:{ fieldName:'test', value: 33, save: true}}], loader: { orientdb: { dbURL: 'memory:test' } } }")
+                                       "{source: { content: { value: 'name,surname\nJay,Miner' } }, extractor : { row: {} }, transformers: [{ csv: {} }, {field:{fieldName:'@class', value:'Test'}}, {field:{ fieldName:'test', value: 33, save: true}}], loader: { orientdb: { dbURL: 'memory:FieldTransformerTest' } } }")
         .execute();
 
-    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:test").open("admin", "admin");
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:FieldTransformerTest").open("admin", "admin");
     assertEquals(db.countClass("Test"), 1);
   }
 }
