@@ -341,7 +341,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       if (index.getName().equals(ODatabaseImport.EXPORT_IMPORT_MAP_NAME))
         continue;
 
-      final String clsName = index.getDefinition().getClassName();
+      final String clsName = index.getDefinition() != null ? index.getDefinition().getClassName() : null;
 
       // CHECK TO FILTER CLASS
       if (includeClasses != null) {
