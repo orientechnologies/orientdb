@@ -19,11 +19,6 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
-import java.io.*;
-import java.util.*;
-import java.util.zip.Deflater;
-import java.util.zip.GZIPOutputStream;
-
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
@@ -45,6 +40,21 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeMapProvider;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.zip.Deflater;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Export data from a database to a file.
@@ -331,6 +341,17 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       if (index.getName().equals(ODatabaseImport.EXPORT_IMPORT_MAP_NAME))
         continue;
 
+      final String clsName = index.getDefinition() != null ? index.getDefinition().getClassName() : null;
+
+      // CHECK TO FILTER CLASS
+      if (includeClasses != null) {
+        if (!includeClasses.contains(clsName))
+          continue;
+      } else if (excludeClasses != null) {
+        if (excludeClasses.contains(clsName))
+          continue;
+      }
+
       listener.onMessage("\n- Index " + index.getName() + "...");
       writer.beginObject(2, true, null);
       writer.writeAttribute(3, true, "name", index.getName());
@@ -452,6 +473,15 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
       Collections.sort(classes);
 
       for (OClass cls : classes) {
+        // CHECK TO FILTER CLASS
+        if (includeClasses != null) {
+          if (!includeClasses.contains(cls.getName()))
+            continue;
+        } else if (excludeClasses != null) {
+          if (excludeClasses.contains(cls.getName()))
+            continue;
+        }
+
         writer.beginObject(3, true, null);
         writer.writeAttribute(0, false, "name", cls.getName());
         writer.writeAttribute(0, false, "default-cluster-id", cls.getDefaultClusterId());
