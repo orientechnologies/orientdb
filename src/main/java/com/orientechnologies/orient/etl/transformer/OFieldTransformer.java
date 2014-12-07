@@ -101,6 +101,7 @@ public class OFieldTransformer extends OAbstractTransformer {
           if (db == null)
             throw new OTransformException("Database instance not found in pipeline");
 
+          log(OETLProcessor.LOG_LEVELS.DEBUG, "saving record %s", doc);
           db.save(doc);
         }
       }
