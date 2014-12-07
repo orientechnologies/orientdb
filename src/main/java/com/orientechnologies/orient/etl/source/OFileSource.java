@@ -162,6 +162,8 @@ public class OFileSource extends OAbstractSource {
         OLogManager.instance().error(this, "Error on locking file: %s", e, fileName);
       }
 
+    log(OETLProcessor.LOG_LEVELS.DEBUG, "Reading from file " + path);
+
     final long startTime = System.currentTimeMillis();
   }
 
