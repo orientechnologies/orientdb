@@ -267,139 +267,11 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
   protected void addRecord(final ORecord iRecord, final byte iStatus, final String iClusterName) {
     checkTransaction();
 
-    switch (iStatus) {
-    case ORecordOperation.CREATED:
-      database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
-      database.callbackHooks(TYPE.BEFORE_CREATE, iRecord);
-      break;
-    case ORecordOperation.LOADED:
-      /**
-       * Read hooks already invoked in {@link com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx#executeReadRecord} .
-       */
-      break;
-    case ORecordOperation.UPDATED:
-      database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
-      database.callbackHooks(TYPE.BEFORE_UPDATE, iRecord);
-      break;
-    case ORecordOperation.DELETED:
-      database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, iClusterName);
-      database.callbackHooks(TYPE.BEFORE_DELETE, iRecord);
-      break;
-    }
-
     try {
-      if (iRecord.getIdentity().isTemporary())
-        temp2persistent.put(iRecord.getIdentity().copy(), iRecord);
-
-      if ((status == OTransaction.TXSTATUS.COMMITTING) && database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
-
-        // I'M COMMITTING: BYPASS LOCAL BUFFER
-        switch (iStatus) {
-        case ORecordOperation.CREATED:
-        case ORecordOperation.UPDATED:
-          final ORID oldRid = iRecord.getIdentity().copy();
-          database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), false, OPERATION_MODE.SYNCHRONOUS, false,
-              null, null);
-          updateIdentityAfterCommit(oldRid, iRecord.getIdentity());
-          break;
-        case ORecordOperation.DELETED:
-          database.executeDeleteRecord(iRecord, iRecord.getRecordVersion(), false, false, OPERATION_MODE.SYNCHRONOUS, false);
-          break;
-        }
-
-        final ORecordOperation txRecord = getRecordEntry(iRecord.getIdentity());
-
-        if (txRecord == null) {
-          // NOT IN TX, SAVE IT ANYWAY
-          allEntries.put(iRecord.getIdentity(), new ORecordOperation(iRecord, iStatus));
-        } else if (txRecord.record != iRecord) {
-          // UPDATE LOCAL RECORDS TO AVOID MISMATCH OF VERSION/CONTENT
-          final String clusterName = getDatabase().getClusterNameById(iRecord.getIdentity().getClusterId());
-          if (!clusterName.equals(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME)
-              && !clusterName.equals(OMetadataDefault.CLUSTER_INDEX_NAME))
-            OLogManager
-                .instance()
-                .warn(
-                    this,
-                    "Found record in transaction with the same RID %s but different instance. Probably the record has been loaded from another transaction and reused on the current one: reload it from current transaction before to update or delete it",
-                    iRecord.getIdentity());
-
-          txRecord.record = iRecord;
-          txRecord.type = iStatus;
-        }
-
-      } else {
-        final ORecordId rid = (ORecordId) iRecord.getIdentity();
-
-        if (!rid.isValid()) {
-          ORecordInternal.onBeforeIdentityChanged(iRecord);
-
-          // ASSIGN A UNIQUE SERIAL TEMPORARY ID
-          if (rid.clusterId == ORID.CLUSTER_ID_INVALID)
-            rid.clusterId = iClusterName != null ? database.getClusterIdByName(iClusterName) : database.getDefaultClusterId();
-
-          if (database.getStorageVersions().classesAreDetectedByClusterId() && iRecord instanceof ODocument) {
-            final ODocument recordSchemaAware = (ODocument) iRecord;
-            final OClass recordClass = recordSchemaAware.getImmutableSchemaClass();
-            final OClass clusterIdClass = database.getMetadata().getImmutableSchemaSnapshot().getClassByClusterId(rid.clusterId);
-            if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
-                || (recordClass != null && !recordClass.equals(clusterIdClass)))
-              throw new OSchemaException("Record saved into cluster " + iClusterName + " should be saved with class "
-                  + clusterIdClass + " but saved with class " + recordClass);
-          }
-
-          rid.clusterPosition = newObjectCounter--;
-
-          ORecordInternal.onAfterIdentityChanged(iRecord);
-        }
-
-        ORecordOperation txEntry = getRecordEntry(rid);
-
-        if (txEntry == null) {
-          if (!(rid.isTemporary() && iStatus != ORecordOperation.CREATED)) {
-            // NEW ENTRY: JUST REGISTER IT
-            txEntry = new ORecordOperation(iRecord, iStatus);
-            recordEntries.put(rid, txEntry);
-          }
-        } else {
-          // UPDATE PREVIOUS STATUS
-          txEntry.record = iRecord;
-
-          switch (txEntry.type) {
-          case ORecordOperation.LOADED:
-            switch (iStatus) {
-            case ORecordOperation.UPDATED:
-              txEntry.type = ORecordOperation.UPDATED;
-              break;
-            case ORecordOperation.DELETED:
-              txEntry.type = ORecordOperation.DELETED;
-              break;
-            }
-            break;
-          case ORecordOperation.UPDATED:
-            switch (iStatus) {
-            case ORecordOperation.DELETED:
-              txEntry.type = ORecordOperation.DELETED;
-              break;
-            }
-            break;
-          case ORecordOperation.DELETED:
-            break;
-          case ORecordOperation.CREATED:
-            switch (iStatus) {
-            case ORecordOperation.DELETED:
-              recordEntries.remove(rid);
-              // txEntry.type = ORecordOperation.DELETED;
-              break;
-            }
-            break;
-          }
-        }
-      }
-
       switch (iStatus) {
       case ORecordOperation.CREATED:
-        database.callbackHooks(TYPE.AFTER_CREATE, iRecord);
+        database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_CREATE, iClusterName);
+        database.callbackHooks(TYPE.BEFORE_CREATE, iRecord);
         break;
       case ORecordOperation.LOADED:
         /**
@@ -408,36 +280,177 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
          */
         break;
       case ORecordOperation.UPDATED:
-        database.callbackHooks(TYPE.AFTER_UPDATE, iRecord);
+        database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_UPDATE, iClusterName);
+        database.callbackHooks(TYPE.BEFORE_UPDATE, iRecord);
         break;
       case ORecordOperation.DELETED:
-        database.callbackHooks(TYPE.AFTER_DELETE, iRecord);
+        database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, iClusterName);
+        database.callbackHooks(TYPE.BEFORE_DELETE, iRecord);
         break;
       }
 
-      // RESET TRACKING
-      if (iRecord instanceof ODocument && ((ODocument) iRecord).isTrackingChanges()) {
-        ((ODocument) iRecord).setTrackingChanges(false);
-        ((ODocument) iRecord).setTrackingChanges(true);
-      }
+      try {
+        if (iRecord.getIdentity().isTemporary())
+          temp2persistent.put(iRecord.getIdentity().copy(), iRecord);
 
-    } catch (Throwable t) {
+        if ((status == OTransaction.TXSTATUS.COMMITTING)
+            && database.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
+
+          // I'M COMMITTING: BYPASS LOCAL BUFFER
+          switch (iStatus) {
+          case ORecordOperation.CREATED:
+          case ORecordOperation.UPDATED:
+            final ORID oldRid = iRecord.getIdentity().copy();
+            database.executeSaveRecord(iRecord, iClusterName, iRecord.getRecordVersion(), false, OPERATION_MODE.SYNCHRONOUS, false,
+                null, null);
+            updateIdentityAfterCommit(oldRid, iRecord.getIdentity());
+            break;
+          case ORecordOperation.DELETED:
+            database.executeDeleteRecord(iRecord, iRecord.getRecordVersion(), false, false, OPERATION_MODE.SYNCHRONOUS, false);
+            break;
+          }
+
+          final ORecordOperation txRecord = getRecordEntry(iRecord.getIdentity());
+
+          if (txRecord == null) {
+            // NOT IN TX, SAVE IT ANYWAY
+            allEntries.put(iRecord.getIdentity(), new ORecordOperation(iRecord, iStatus));
+          } else if (txRecord.record != iRecord) {
+            // UPDATE LOCAL RECORDS TO AVOID MISMATCH OF VERSION/CONTENT
+            final String clusterName = getDatabase().getClusterNameById(iRecord.getIdentity().getClusterId());
+            if (!clusterName.equals(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME)
+                && !clusterName.equals(OMetadataDefault.CLUSTER_INDEX_NAME))
+              OLogManager
+                  .instance()
+                  .warn(
+                      this,
+                      "Found record in transaction with the same RID %s but different instance. Probably the record has been loaded from another transaction and reused on the current one: reload it from current transaction before to update or delete it",
+                      iRecord.getIdentity());
+
+            txRecord.record = iRecord;
+            txRecord.type = iStatus;
+          }
+
+        } else {
+          final ORecordId rid = (ORecordId) iRecord.getIdentity();
+
+          if (!rid.isValid()) {
+            ORecordInternal.onBeforeIdentityChanged(iRecord);
+
+            // ASSIGN A UNIQUE SERIAL TEMPORARY ID
+            if (rid.clusterId == ORID.CLUSTER_ID_INVALID)
+              rid.clusterId = iClusterName != null ? database.getClusterIdByName(iClusterName) : database.getDefaultClusterId();
+
+            if (database.getStorageVersions().classesAreDetectedByClusterId() && iRecord instanceof ODocument) {
+              final ODocument recordSchemaAware = (ODocument) iRecord;
+              final OClass recordClass = recordSchemaAware.getImmutableSchemaClass();
+              final OClass clusterIdClass = database.getMetadata().getImmutableSchemaSnapshot().getClassByClusterId(rid.clusterId);
+              if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
+                  || (recordClass != null && !recordClass.equals(clusterIdClass)))
+                throw new OSchemaException("Record saved into cluster " + iClusterName + " should be saved with class "
+                    + clusterIdClass + " but saved with class " + recordClass);
+            }
+
+            rid.clusterPosition = newObjectCounter--;
+
+            ORecordInternal.onAfterIdentityChanged(iRecord);
+          }
+
+          ORecordOperation txEntry = getRecordEntry(rid);
+
+          if (txEntry == null) {
+            if (!(rid.isTemporary() && iStatus != ORecordOperation.CREATED)) {
+              // NEW ENTRY: JUST REGISTER IT
+              txEntry = new ORecordOperation(iRecord, iStatus);
+              recordEntries.put(rid, txEntry);
+            }
+          } else {
+            // UPDATE PREVIOUS STATUS
+            txEntry.record = iRecord;
+
+            switch (txEntry.type) {
+            case ORecordOperation.LOADED:
+              switch (iStatus) {
+              case ORecordOperation.UPDATED:
+                txEntry.type = ORecordOperation.UPDATED;
+                break;
+              case ORecordOperation.DELETED:
+                txEntry.type = ORecordOperation.DELETED;
+                break;
+              }
+              break;
+            case ORecordOperation.UPDATED:
+              switch (iStatus) {
+              case ORecordOperation.DELETED:
+                txEntry.type = ORecordOperation.DELETED;
+                break;
+              }
+              break;
+            case ORecordOperation.DELETED:
+              break;
+            case ORecordOperation.CREATED:
+              switch (iStatus) {
+              case ORecordOperation.DELETED:
+                recordEntries.remove(rid);
+                // txEntry.type = ORecordOperation.DELETED;
+                break;
+              }
+              break;
+            }
+          }
+        }
+
+        switch (iStatus) {
+        case ORecordOperation.CREATED:
+          database.callbackHooks(TYPE.AFTER_CREATE, iRecord);
+          break;
+        case ORecordOperation.LOADED:
+          /**
+           * Read hooks already invoked in
+           * {@link com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx#executeReadRecord} .
+           */
+          break;
+        case ORecordOperation.UPDATED:
+          database.callbackHooks(TYPE.AFTER_UPDATE, iRecord);
+          break;
+        case ORecordOperation.DELETED:
+          database.callbackHooks(TYPE.AFTER_DELETE, iRecord);
+          break;
+        }
+
+        // RESET TRACKING
+        if (iRecord instanceof ODocument && ((ODocument) iRecord).isTrackingChanges()) {
+          ((ODocument) iRecord).setTrackingChanges(false);
+          ((ODocument) iRecord).setTrackingChanges(true);
+        }
+
+      } catch (Throwable t) {
+        switch (iStatus) {
+        case ORecordOperation.CREATED:
+          database.callbackHooks(TYPE.CREATE_FAILED, iRecord);
+          break;
+        case ORecordOperation.UPDATED:
+          database.callbackHooks(TYPE.UPDATE_FAILED, iRecord);
+          break;
+        case ORecordOperation.DELETED:
+          database.callbackHooks(TYPE.DELETE_FAILED, iRecord);
+          break;
+        }
+
+        if (t instanceof RuntimeException)
+          throw (RuntimeException) t;
+        else
+          throw new ODatabaseException("Error on saving record " + iRecord.getIdentity(), t);
+      }
+    } finally {
       switch (iStatus) {
       case ORecordOperation.CREATED:
-        database.callbackHooks(TYPE.CREATE_FAILED, iRecord);
+        database.callbackHooks(TYPE.FINALIZE_CREATION, iRecord);
         break;
       case ORecordOperation.UPDATED:
-        database.callbackHooks(TYPE.UPDATE_FAILED, iRecord);
-        break;
-      case ORecordOperation.DELETED:
-        database.callbackHooks(TYPE.DELETE_FAILED, iRecord);
+        database.callbackHooks(TYPE.FINALIZE_UPDATE, iRecord);
         break;
       }
-
-      if (t instanceof RuntimeException)
-        throw (RuntimeException) t;
-      else
-        throw new ODatabaseException("Error on saving record " + iRecord.getIdentity(), t);
     }
   }
 
