@@ -706,11 +706,15 @@ public enum OType {
 
   public boolean isMultiValue() {
     return this == EMBEDDEDLIST || this == EMBEDDEDMAP || this == EMBEDDEDSET || this == LINKLIST || this == LINKMAP
-        || this == LINKSET;
+        || this == LINKSET || this == LINKBAG;
   }
 
   public boolean isLink() {
-    return this == LINK || this == LINKSET || this == LINKLIST || this == LINKMAP;
+    return this == LINK || this == LINKSET || this == LINKLIST || this == LINKMAP || this == LINKBAG;
+  }
+  
+  public boolean isEmbedded() {
+	  return this == EMBEDDED || this == EMBEDDEDLIST || this == EMBEDDEDMAP || this == EMBEDDEDSET;
   }
 
   public Class<?> getDefaultJavaType() {
