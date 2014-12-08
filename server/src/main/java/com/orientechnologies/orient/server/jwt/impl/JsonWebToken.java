@@ -98,4 +98,9 @@ public class JsonWebToken implements OJsonWebToken, OToken {
     return new OUser(result);
 
   }
+
+  @Override
+  public void setExpiry(long expiry) {
+    this.payload.setExpiry(expiry);
+  }
 }

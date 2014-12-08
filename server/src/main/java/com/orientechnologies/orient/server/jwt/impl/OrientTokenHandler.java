@@ -34,24 +34,25 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
 public class OrientTokenHandler extends OServerPluginAbstract implements OTokenHandler {
-  public static final String            O_SIGN_KEY     = "oAuth2Key";
+  public static final String            O_SIGN_KEY       = "oAuth2Key";
+  public static final String            O_SESSION_LENGHT = "sessionLength";
 
   private OBinaryTokenSerializer        binarySerializer;
 
-  protected static final int            JWT_DELIMITER  = '.';
+  protected static final int            JWT_DELIMITER    = '.';
 
-  private int                           sessionInMills = 1000 * 60 * 60;
+  private int                           sessionInMills   = 1000 * 60 * 60;
 
-  private static final ThreadLocal<Mac> threadLocalMac = new ThreadLocal<Mac>() {
-                                                         @Override
-                                                         protected Mac initialValue() {
-                                                           try {
-                                                             return Mac.getInstance("HmacSHA256");
-                                                           } catch (NoSuchAlgorithmException nsa) {
-                                                             throw new IllegalArgumentException("Can't find algorithm.");
+  private static final ThreadLocal<Mac> threadLocalMac   = new ThreadLocal<Mac>() {
+                                                           @Override
+                                                           protected Mac initialValue() {
+                                                             try {
+                                                               return Mac.getInstance("HmacSHA256");
+                                                             } catch (NoSuchAlgorithmException nsa) {
+                                                               throw new IllegalArgumentException("Can't find algorithm.");
+                                                             }
                                                            }
-                                                         }
-                                                       };
+                                                         };
 
   private OKeyProvider                  keyProvider;
 
@@ -63,6 +64,10 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
         byte secret[] = OBase64Utils.decode(param.value, OBase64Utils.URL_SAFE);
         keyProvider = new DefaultJwtKeyProvider(secret);
       }
+      if (param.name.equalsIgnoreCase(O_SESSION_LENGHT)) {
+        sessionInMills = Integer.parseInt(param.value) * 3600;
+      }
+
     }
     String[] keys = keyProvider.getKeys();
     this.binarySerializer = new OBinaryTokenSerializer(new String[] { "plocal", "memory" }, keys, new String[] { "HmacSHA256" },
@@ -365,7 +370,17 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
 
   @Override
   public byte[] renewIfNeeded(OToken token) {
+    long curTime = System.currentTimeMillis();
+    if (token.getExpiry() + (sessionInMills / 2) > curTime && (token.getExpiry() - (sessionInMills + 1)) < curTime) {
+      long expiryMinutes = sessionInMills;
+      long currTime = System.currentTimeMillis();
+      token.setExpiry(currTime + expiryMinutes);
+    }
     return new byte[] {};
+  }
+
+  public int getSessionInMills() {
+    return sessionInMills;
   }
 
 }

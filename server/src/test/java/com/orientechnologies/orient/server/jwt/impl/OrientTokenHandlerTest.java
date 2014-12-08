@@ -170,4 +170,56 @@ public class OrientTokenHandlerTest {
       db.drop();
     }
   }
+
+  public void testTokenNotRenew() {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OrientTokenHandlerTest.class.getSimpleName());
+    db.create();
+    try {
+      OSecurityUser original = db.getUser();
+      OrientTokenHandler handler = new OrientTokenHandler();
+      ONetworkProtocolData data = new ONetworkProtocolData();
+      data.driverName = "aa";
+      data.driverVersion = "aa";
+      data.serializationImpl = "a";
+      data.protocolVersion = 2;
+
+      handler.config(null, I_PARAMS);
+      byte[] token = handler.getSignedBinaryToken(db, original, data);
+
+      OToken tok = handler.parseBinaryToken(token);
+      token = handler.renewIfNeeded(tok);
+
+      assertEquals(token.length, 0);
+
+    } finally {
+      db.drop();
+    }
+  }
+
+  public void testTokenRenew() {
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:" + OrientTokenHandlerTest.class.getSimpleName());
+    db.create();
+    try {
+      OSecurityUser original = db.getUser();
+      OrientTokenHandler handler = new OrientTokenHandler();
+      ONetworkProtocolData data = new ONetworkProtocolData();
+      data.driverName = "aa";
+      data.driverVersion = "aa";
+      data.serializationImpl = "a";
+      data.protocolVersion = 2;
+
+      handler.config(null, I_PARAMS);
+      byte[] token = handler.getSignedBinaryToken(db, original, data);
+
+      OToken tok = handler.parseBinaryToken(token);
+      tok.setExpiry(System.currentTimeMillis() + (handler.getSessionInMills() / 2 - 1));
+      token = handler.renewIfNeeded(tok);
+
+      assertTrue(token.length != 0);
+
+    } finally {
+      db.drop();
+    }
+  }
+
 }

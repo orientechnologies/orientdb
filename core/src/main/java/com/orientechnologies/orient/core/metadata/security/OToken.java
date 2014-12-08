@@ -30,4 +30,6 @@ public interface OToken {
 
   public long getExpiry();
 
+  public void setExpiry(long expiry);
+
 }
