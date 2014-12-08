@@ -90,12 +90,12 @@ public class ORowExtractor extends OAbstractSourceExtractor {
   }
 
   protected OExtractedItem fetchNext() throws IOException {
-    if (!reader.ready())
+    if (!bReader.ready())
       return null;
 
     final String line = bReader.readLine();
 
-    if( line == null )
+    if( line == null || line.isEmpty())
       return null;
 
     return new OExtractedItem(current++, line);

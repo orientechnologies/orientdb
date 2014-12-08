@@ -465,7 +465,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
     } else {
       // GRAPH
       final OrientBaseGraph graphDatabase = pipeline.getGraphDatabase();
-      cls = graphDatabase.getVertexType(iClassName);
+      cls = graphDatabase.getRawGraph().getMetadata().getSchema().getClass(iClassName);
       if (cls == null) {
 
         if (iSuperClass != null) {
