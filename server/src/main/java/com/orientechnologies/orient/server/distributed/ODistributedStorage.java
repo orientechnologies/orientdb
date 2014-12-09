@@ -456,7 +456,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       });
 
       // ASYNCHRONOUSLY REPLICATE IT TO ALL THE OTHER NODES
-      nodes.remove(getName());
+      nodes.remove(dManager.getLocalNodeName());
       if (!nodes.isEmpty()) {
         asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes,
             new OCreateRecordTask(iRecordId, iContent, iRecordVersion, iRecordType)));
@@ -580,7 +580,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         }
       });
 
-      nodes.remove(0);
+      nodes.remove(dManager.getLocalNodeName());
       if (!nodes.isEmpty()) {
         // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
         final OStorageOperationResult<ORawBuffer> previousContent = readRecord(iRecordId, null, false, null, false,
@@ -651,7 +651,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         }
       });
 
-      nodes.remove(0);
+      nodes.remove(dManager.getLocalNodeName());
       if (!nodes.isEmpty())
         asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes,
             new ODeleteRecordTask(iRecordId, iVersion)));

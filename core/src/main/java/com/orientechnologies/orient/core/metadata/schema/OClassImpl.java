@@ -91,6 +91,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private boolean                            abstractClass           = false;                           // @SINCE v1.2.0
   private Map<String, String>                customFields;
   private volatile OClusterSelectionStrategy clusterSelection;                                          // @SINCE 1.7
+  private volatile int                       hashCode;
 
   /**
    * Constructor used in unmarshalling.
@@ -1084,20 +1085,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   @Override
-  public int hashCode() {
-    acquireSchemaReadLock();
-    try {
-      final int prime = 31;
-      int result = super.hashCode();
-      result = prime * result;
-      return result;
-    } finally {
-      releaseSchemaReadLock();
-    }
-  }
-
-  @Override
-  public boolean equals(final Object obj) {
+  public boolean equals(Object obj) {
     acquireSchemaReadLock();
     try {
       if (this == obj)
@@ -1112,10 +1100,36 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
           return false;
       } else if (!name.equals(other.getName()))
         return false;
+
       return true;
     } finally {
       releaseSchemaReadLock();
     }
+  }
+
+  @Override
+  public int hashCode() {
+    int sh = hashCode;
+    if (sh != 0)
+      return sh;
+
+    acquireSchemaReadLock();
+    try {
+      sh = hashCode;
+      if (sh != 0)
+        return sh;
+
+      calculateHashCode();
+      return hashCode;
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
+
+  private void calculateHashCode() {
+    int result = super.hashCode();
+    result = 31 * result + (name != null ? name.hashCode() : 0);
+    hashCode = result;
   }
 
   public int compareTo(final OClass o) {
@@ -1523,6 +1537,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public void releaseSchemaWriteLock() {
+		calculateHashCode();
     owner.releaseSchemaWriteLock();
   }
 
