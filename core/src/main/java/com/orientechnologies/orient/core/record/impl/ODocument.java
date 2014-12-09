@@ -561,7 +561,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   public ORecord placeholder() {
     final ODocument cloned = new ODocument();
     cloned._source = null;
-    cloned._recordId = _recordId.copy();
+    cloned._recordId = _recordId;
     cloned._status = STATUS.NOT_LOADED;
     cloned._dirty = false;
     cloned._contentChanged = false;

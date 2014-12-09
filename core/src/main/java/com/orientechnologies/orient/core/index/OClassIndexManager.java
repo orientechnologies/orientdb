@@ -79,7 +79,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
             index.remove(origValue, iRecord);
 
           if (!indexDefinition.isNullValuesIgnored() || newValue != null)
-            index.put(newValue, iRecord.placeholder());
+            index.put(newValue, iRecord.getIdentity());
         } else {
           final OMultiValueChangeTimeLine<?, ?> multiValueChangeTimeLine = iRecord.getCollectionTimeLine(multiValueField);
           if (multiValueChangeTimeLine == null) {
@@ -105,7 +105,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
                 index.remove(keyToRemove, iRecord);
 
               for (final Object keyToAdd : keysToAdd.keySet())
-                index.put(keyToAdd, iRecord.placeholder());
+                index.put(keyToAdd, iRecord.getIdentity());
             } else {
               final OTrackedMultiValue fieldValue = iRecord.field(multiValueField);
               final Object restoredMultiValue = fieldValue
@@ -150,7 +150,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
         index.remove(keyToRemove, iRecord);
 
       for (final Object keyToAdd : keysToAdd.keySet())
-        index.put(keyToAdd, iRecord.placeholder());
+        index.put(keyToAdd, iRecord.getIdentity());
 
     } else {
       final Object origValue = indexDefinition.createValue(iRecord.getOriginalValue(indexField));
@@ -187,10 +187,10 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
       if (newValue instanceof Collection) {
         for (final Object newValueItem : (Collection<?>) newValue) {
-          index.put(newValueItem, iRecord.placeholder());
+          index.put(newValueItem, iRecord.getIdentity());
         }
       } else if (!indexDefinition.isNullValuesIgnored() || newValue != null) {
-        index.put(newValue, iRecord.placeholder());
+        index.put(newValue, iRecord.getIdentity());
       }
     }
   }
@@ -499,7 +499,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     document = checkForLoading(document);
 
     // STORE THE RECORD IF NEW, OTHERWISE ITS RID
-    final OIdentifiable rid = document.getIdentity().isPersistent() ? document.placeholder() : document;
+    final OIdentifiable rid = document.getIdentity();
 
     final OClass cls = document.getImmutableSchemaClass();
     if (cls != null) {
