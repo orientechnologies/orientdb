@@ -20,6 +20,29 @@
 
 package com.orientechnologies.orient.core.db.document;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TimeZone;
+import java.util.TreeSet;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
@@ -80,6 +103,7 @@ import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.metadata.security.OSecurityTrackerHook;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.security.OUserTrigger;
 import com.orientechnologies.orient.core.query.OQuery;
@@ -113,13 +137,6 @@ import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
@@ -283,6 +300,59 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       throw new ODatabaseException("Cannot open database", e);
     }
     return (DB) this;
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public <DB extends ODatabase> DB open(final OToken iToken) {
+    setCurrentDatabaseInThreadLocal();
+
+    try {
+      if (status == STATUS.OPEN)
+        throw new IllegalStateException("Database " + getName() + " is already open");
+
+      if (user != null && !user.getIdentity().equals(iToken.getUserId()))
+        initialized = false;
+
+      if (storage instanceof OStorageProxy) {
+        throw new ODatabaseException("Cannot use a token open on remote database");
+      }
+      if (storage.isClosed()) {
+        // i don't have username and password at this level, anyway the storage embedded don't really need it
+        storage.open("", "", properties);
+      }
+
+      status = STATUS.OPEN;
+
+      initAtFirstOpen(null, null);
+
+      final OSecurity security = metadata.getSecurity();
+      if (user == null || user.getVersion() != security.getVersion()) {
+        final OUser usr = metadata.getSecurity().authenticate(iToken);
+        if (usr != null)
+          user = new OImmutableUser(security.getVersion(), usr);
+        else
+          user = null;
+
+        checkSecurity(ORule.ResourceGeneric.DATABASE, ORole.PERMISSION_READ);
+      }
+
+      // WAKE UP LISTENERS
+      callOnOpenListeners();
+    } catch (OException e) {
+      close();
+      throw e;
+    } catch (Exception e) {
+      close();
+      throw new ODatabaseException("Cannot open database", e);
+    }
+    return (DB) this;
+  }
+
+  private void setCurrentDatabaseinThreadLocal() {
+    ODatabaseRecordThreadLocal.INSTANCE.set(this);
   }
 
   public void callOnOpenListeners() {
@@ -2532,11 +2602,12 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       registerHook(new OSecurityTrackerHook(metadata.getSecurity()), ORecordHook.HOOK_POSITION.LAST);
 
       user = null;
-    } else
+    } else if (iUserName != null && iUserPassword != null)
       user = new OImmutableUser(-1, new OUser(iUserName, OUser.encryptPassword(iUserPassword)).addRole(new ORole("passthrough",
           null, ORole.ALLOW_MODES.ALLOW_ALL_BUT)));
 
-    if (!metadata.getSchema().existsClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME))
+    if (ORecordSerializerSchemaAware2CSV.NAME.equals(serializeName)
+        && !metadata.getSchema().existsClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME))
       // @COMPATIBILITY 1.0RC9
       metadata.getSchema().createClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
 

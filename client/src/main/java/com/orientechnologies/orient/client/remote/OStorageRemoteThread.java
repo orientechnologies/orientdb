@@ -19,6 +19,15 @@
  */
 package com.orientechnologies.orient.client.remote;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -44,15 +53,6 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
  * Wrapper of OStorageRemote that maintains the sessionId. It's bound to the ODatabase and allow to use the shared OStorageRemote.
  */
@@ -63,6 +63,7 @@ public class OStorageRemoteThread implements OStorageProxy {
   private final OStorageRemote delegate;
   private String               serverURL;
   private int                  sessionId;
+  private byte[]               token;
 
   public OStorageRemoteThread(final OStorageRemote iSharedStorage) {
     delegate = iSharedStorage;
@@ -154,10 +155,11 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  public void setSessionId(final String iServerURL, final int iSessionId) {
+  public void setSessionId(final String iServerURL, final int iSessionId, byte[] iToken) {
     serverURL = iServerURL;
     sessionId = iSessionId;
-    delegate.setSessionId(serverURL, iSessionId);
+    token = iToken;
+    delegate.setSessionId(serverURL, iSessionId, iToken);
   }
 
   public void reload() {
@@ -591,7 +593,7 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   public boolean isClosed() {
-    return sessionId < 0 || delegate.isClosed();
+    return (sessionId < 0 && token == null) || delegate.isClosed();
   }
 
   public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
@@ -702,11 +704,13 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   protected void pushSession() {
-    delegate.setSessionId(serverURL, sessionId);
+    delegate.setSessionId(serverURL, sessionId, token);
   }
 
   protected void popSession() {
     serverURL = delegate.getServerURL();
     sessionId = delegate.getSessionId();
+    token = delegate.getSessionToken();
+    // delegate.clearSession();
   }
 }

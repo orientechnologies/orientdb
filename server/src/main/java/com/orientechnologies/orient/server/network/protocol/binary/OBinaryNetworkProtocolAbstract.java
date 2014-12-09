@@ -20,6 +20,9 @@
 package com.orientechnologies.orient.server.network.protocol.binary;
 
 import java.io.IOException;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.Socket;
 import java.util.logging.Level;
 
@@ -42,6 +45,7 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -62,6 +66,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryServer;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.OTokenHandler;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 
@@ -77,7 +82,9 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   protected OChannelBinaryServer channel;
   protected int                  requestType;
   protected int                  clientTxId;
+  protected OToken               token;
   protected boolean              okSent;
+  protected OTokenHandler        tokenHandler;
 
   public OBinaryNetworkProtocolAbstract(final String iThreadName) {
     super(Orient.instance().getThreadGroup(), iThreadName);
@@ -90,6 +97,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       final OContextConfiguration iConfig) throws IOException {
     server = iServer;
     channel = new OChannelBinaryServer(iSocket, iConfig);
+    tokenHandler = server.getPlugin(OTokenHandler.TOKEN_HANDLER_NAME);
   }
 
   @Override
@@ -194,8 +202,13 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       clientTxId = channel.readInt();
 
       timer = Orient.instance().getProfiler().startChrono();
-
-      onBeforeRequest();
+      try {
+        onBeforeRequest();
+      } catch (Exception e) {
+        handleConnectionError(channel, e);
+        sendShutdown();
+        return;
+      }
 
       try {
         if (!executeRequest()) {
@@ -235,6 +248,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       handleConnectionError(channel, t);
       sendShutdown();
     } else {
+      okSent = true;
       sendError(iClientTxId, t);
     }
   }

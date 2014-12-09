@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.List;
@@ -61,7 +62,11 @@ public interface OSecurity {
 
   public OUser authenticate(String iUsername, String iUserPassword);
 
+  public OUser authenticate(final OToken authToken);
+
   public OUser getUser(String iUserName);
+
+  public OUser getUser(final ORID iUserId);
 
   public OUser createUser(String iUserName, String iUserPassword, String... iRoles);
 

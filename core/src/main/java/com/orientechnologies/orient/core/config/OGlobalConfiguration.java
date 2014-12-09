@@ -348,8 +348,9 @@ public enum OGlobalConfiguration {
 
   NETWORK_HTTP_CONTENT_CHARSET("network.http.charset", "Http response charset", String.class, "utf-8"),
 
-  NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT("network.http.sessionExpireTimeout",
-      "Timeout after which an http session is considered tp have expired (seconds)", Integer.class, 300),
+  OAUTH2_SECRETKEY("oauth2.secretkey", "Http OAuth2 secret key", String.class, "utf-8"), NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT(
+      "network.http.sessionExpireTimeout", "Timeout after which an http session is considered tp have expired (seconds)",
+      Integer.class, 300),
 
   // PROFILER
   PROFILER_ENABLED("profiler.enabled", "Enable the recording of statistics and counters", Boolean.class, false,
@@ -413,6 +414,8 @@ public enum OGlobalConfiguration {
   CLIENT_SSL_TRUSTSTORE("client.ssl.trustStore", "Use SSL for client connections", String.class, null),
 
   CLIENT_SSL_TRUSTSTORE_PASSWORD("client.ssl.trustStorePass", "Use SSL for client connections", String.class, null),
+
+  CLIENT_SESSION_TOKEN_BASED("client.session.tokenBased", "Request a token based session to the server", Boolean.class, false),
 
   // SERVER
   SERVER_CHANNEL_CLEAN_DELAY("server.channel.cleanDelay", "Time in ms of delay to check pending closed connections", Integer.class,

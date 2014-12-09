@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -121,6 +122,16 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   @Override
   public <THISDB extends ODatabase> THISDB open(String iUserName, String iUserPassword) {
     super.open(iUserName, iUserPassword);
+    entityManager.registerEntityClass(OUser.class);
+    entityManager.registerEntityClass(ORole.class);
+    metadata = new OMetadataObject(underlying.getMetadata());
+    return (THISDB) this;
+  }
+
+
+  @Override
+  public <THISDB extends ODatabase> THISDB open(OToken iToken) {
+    super.open(iToken);
     entityManager.registerEntityClass(OUser.class);
     entityManager.registerEntityClass(ORole.class);
     metadata = new OMetadataObject(underlying.getMetadata());

@@ -437,4 +437,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
               + (throwable != null ? throwable.getClass().getName() : "null"));
   }
 
+  public OAsynchChannelServiceThread getServiceThread() {
+    return serviceThread;
+  }
+
 }
