@@ -639,12 +639,15 @@ public class OWOWCache {
   public void close(long fileId, boolean flush) throws IOException {
     filesLock.acquireWriteLock();
     try {
+			if (!isOpen(fileId))
+				return;
+
       if (flush)
         flush(fileId);
       else
         removeCachedPages(fileId);
 
-      files.get(fileId).close();
+			files.get(fileId).close();
     } finally {
       filesLock.releaseWriteLock();
     }
