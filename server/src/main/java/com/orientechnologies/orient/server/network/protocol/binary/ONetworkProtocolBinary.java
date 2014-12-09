@@ -1371,7 +1371,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
         if (record != null) {
           channel.writeByte((byte) 1); // HAS RECORD
-          channel.writeBytes(getRecordBytes(record));
+          byte[] bytes = getRecordBytes(record);
+          int length = trimCsvSerializedContent(bytes);
+          channel.writeBytes(bytes, length);
           channel.writeVersion(record.getRecordVersion());
           channel.writeByte(ORecordInternal.getRecordType(record));
 
