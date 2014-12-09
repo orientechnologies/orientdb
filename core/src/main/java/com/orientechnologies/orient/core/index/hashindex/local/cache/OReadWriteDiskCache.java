@@ -408,6 +408,9 @@ public class OReadWriteDiskCache implements ODiskCache {
 
   @Override
   public void closeFile(long fileId, boolean flush) throws IOException {
+		if (!isOpen(fileId))
+			return;
+
     Lock fileLock;
     cacheLock.acquireReadLock();
     try {
@@ -416,6 +419,8 @@ public class OReadWriteDiskCache implements ODiskCache {
         writeCache.close(fileId, flush);
 
         final Set<Long> pageIndexes = filePages.get(fileId);
+				if (pageIndexes == null)
+					return;
 
         for (Long pageIndex : pageIndexes) {
           OCacheEntry cacheEntry = get(fileId, pageIndex, true);
