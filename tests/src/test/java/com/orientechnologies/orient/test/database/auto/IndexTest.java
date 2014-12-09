@@ -24,6 +24,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
@@ -1677,6 +1680,60 @@ public class IndexTest extends ObjectDBBaseTest {
     database.command(new OCommandSQL("drop index ValuesContainerIsRemovedIfIndexIsRemovedIndex")).execute();
 
     Assert.assertTrue(!diskCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
+  }
+
+  public void testPreservingIdentityInIndexTx() {
+    OrientGraph graph = new OrientGraph((ODatabaseDocumentTx) database.getUnderlying(), true);
+    graph.setAutoScaleEdgeType(true);
+
+    OrientVertexType fieldClass = graph.getVertexType("PreservingIdentityInIndexTxChild");
+    if (fieldClass == null) {
+      fieldClass = graph.createVertexType("PreservingIdentityInIndexTxChild");
+      fieldClass.createProperty("name", OType.STRING);
+      fieldClass.createProperty("in_field", OType.LINK);
+      fieldClass.createIndex("nameParentIndex", OClass.INDEX_TYPE.NOTUNIQUE, "in_field", "name");
+    }
+
+    Vertex parent = graph.addVertex("class:PreservingIdentityInIndexTxParent");
+    Vertex child = graph.addVertex("class:PreservingIdentityInIndexTxChild");
+    parent.addEdge("preservingIdentityInIndexTxEdge", child);
+    child.setProperty("name", "pokus");
+
+    Vertex parent2 = graph.addVertex("class:PreservingIdentityInIndexTxParent");
+    Vertex child2 = graph.addVertex("class:PreservingIdentityInIndexTxChild");
+    parent2.addEdge("preservingIdentityInIndexTxEdge", child2);
+    child2.setProperty("name", "pokus2");
+    graph.commit();
+
+    {
+      fieldClass = graph.getVertexType("PreservingIdentityInIndexTxChild");
+      OIndex<?> index = fieldClass.getClassIndex("nameParentIndex");
+      OCompositeKey key = new OCompositeKey(parent.getId(), "pokus");
+
+      Set<ORecordId> h = (Set<ORecordId>) index.get(key);
+      for (ORecordId o : h) {
+        Assert.assertNotNull(graph.getVertex(o));
+      }
+    }
+
+    {
+      fieldClass = graph.getVertexType("PreservingIdentityInIndexTxChild");
+      OIndex<?> index = fieldClass.getClassIndex("nameParentIndex");
+      OCompositeKey key = new OCompositeKey(parent2.getId(), "pokus2");
+
+      Set<ORecordId> h = (Set<ORecordId>) index.get(key);
+      for (ORecordId o : h) {
+        Assert.assertNotNull(graph.getVertex(o));
+      }
+    }
+
+		parent.remove();
+		child.remove();
+
+		parent2.remove();
+		child2.remove();
+
+    graph.shutdown();
   }
 
   private List<Long> getValidPositions(int clusterId) {

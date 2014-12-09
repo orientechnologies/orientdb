@@ -19,10 +19,8 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
-import java.util.*;
-
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -42,6 +40,7 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -62,6 +61,9 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
+
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Schema Class implementation.
@@ -1471,7 +1473,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public Set<OIndex<?>> getClassIndexes() {
     acquireSchemaReadLock();
     try {
-      return getDatabase().getMetadata().getIndexManager().getClassIndexes(name);
+      final OIndexManagerProxy idxManager = getDatabase().getMetadata().getIndexManager();
+      if (idxManager == null)
+        return new HashSet<OIndex<?>>();
+
+      return idxManager.getClassIndexes(name);
     } finally {
       releaseSchemaReadLock();
     }
@@ -1481,7 +1487,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public void getClassIndexes(final Collection<OIndex<?>> indexes) {
     acquireSchemaReadLock();
     try {
-      getDatabase().getMetadata().getIndexManager().getClassIndexes(name, indexes);
+      final OIndexManagerProxy idxManager = getDatabase().getMetadata().getIndexManager();
+      if (idxManager == null)
+        return;
+
+      idxManager.getClassIndexes(name, indexes);
     } finally {
       releaseSchemaReadLock();
     }
@@ -2013,10 +2023,24 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     baseClasses.add(iBaseClass);
 
+    final Set<String> browsedClasses = new HashSet<String>();
+
     // ADD CLUSTER IDS OF BASE CLASS TO THIS CLASS AND ALL SUPER-CLASSES
     OClassImpl currentClass = this;
     while (currentClass != null) {
+      browsedClasses.add(currentClass.getName());
+
       currentClass.addPolymorphicClusterIds((OClassImpl) iBaseClass);
+
+      final OClass s = currentClass.getSuperClass();
+
+      if (s != null && browsedClasses.contains(s.getName())) {
+        OLogManager.instance().error(this, "Error in schema: class '%s' has a recursive dependency. Resetting superclass to null",
+            currentClass.getName());
+        currentClass.superClass = null;
+        break;
+      }
+
       currentClass = (OClassImpl) currentClass.getSuperClass();
     }
 
