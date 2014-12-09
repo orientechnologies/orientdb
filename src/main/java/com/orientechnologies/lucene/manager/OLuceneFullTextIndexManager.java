@@ -17,6 +17,7 @@
 package com.orientechnologies.lucene.manager;
 
 import com.orientechnologies.lucene.OLuceneIndexType;
+import com.orientechnologies.lucene.collections.LuceneResultSet;
 import com.orientechnologies.lucene.collections.OFullTextCompositeKey;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -159,8 +160,8 @@ public class OLuceneFullTextIndexManager extends OLuceneIndexManagerAbstract {
       if (context != null) {
         sendLookupTime(context, docs, limit, startFetching);
       }
-//      return new LuceneResultSet(searcher,docs);
-      return results;
+      return new LuceneResultSet(searcher,docs);
+//      return results;
     } catch (IOException e) {
       throw new OIndexException("Error reading from Lucene index", e);
     }
