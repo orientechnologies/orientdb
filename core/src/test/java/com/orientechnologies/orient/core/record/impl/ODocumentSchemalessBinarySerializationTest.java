@@ -748,4 +748,21 @@ public class ODocumentSchemalessBinarySerializationTest {
     }
     assertTrue(ok, "not found record in the set after serilize");
   }
+
+  @Test
+  public void testSerializableValue() {
+    ODocument document = new ODocument();
+    SimpleSerializableClass ser = new SimpleSerializableClass();
+    ser.name = "testName";
+    document.field("seri", ser);
+    byte[] res = serializer.toStream(document, false);
+    ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});
+
+    assertNotNull(extr.field("seri"));
+    assertEquals(extr.fieldType("seri"), OType.CUSTOM);
+    SimpleSerializableClass newser = extr.field("seri");
+    assertEquals(newser.name, ser.name);
+
+  }
+
 }

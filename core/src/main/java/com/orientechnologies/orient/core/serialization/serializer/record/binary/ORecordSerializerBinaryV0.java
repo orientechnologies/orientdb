@@ -20,6 +20,15 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -50,14 +59,6 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.util.ODateHelper;
-
-import java.math.BigDecimal;
-import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
-import java.util.Map.Entry;
 
 public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
@@ -346,13 +347,17 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         Class<?> clazz = Class.forName(className);
         OSerializableStream stream = (OSerializableStream) clazz.newInstance();
         stream.fromStream(readBinary(bytes));
-        value = stream;
+        if (stream instanceof OSerializableWrapper)
+          value = ((OSerializableWrapper) stream).getSerializable();
+        else
+          value = stream;
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
       break;
     case ANY:
       break;
+
     }
     return value;
   }
@@ -540,6 +545,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       pointer = ((ORidBag) value).toStream(bytes);
       break;
     case CUSTOM:
+      if (!(value instanceof OSerializableStream))
+        value = new OSerializableWrapper((Serializable) value);
       pointer = writeString(bytes, value.getClass().getName());
       writeBinary(bytes, ((OSerializableStream) value).toStream());
       break;

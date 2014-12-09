@@ -2,6 +2,11 @@ package com.orientechnologies.orient.core.metadata.schema;
 
 import static org.testng.AssertJUnit.assertEquals;
 
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -60,6 +65,11 @@ public class TestOTypeDetection {
       // TODO Auto-generated method stub
 
     }
+
+  }
+
+  public class ClassSerializable implements Serializable {
+    private String aaa;
 
   }
 
@@ -158,6 +168,8 @@ public class TestOTypeDetection {
 
     assertEquals(OType.EMBEDDED, OType.getTypeByClass(DocumentSer.class));
 
+    assertEquals(OType.CUSTOM, OType.getTypeByClass(ClassSerializable.class));
+
   }
 
   @Test
@@ -216,6 +228,8 @@ public class TestOTypeDetection {
     assertEquals(OType.EMBEDDEDLIST, OType.getTypeByValue(new String[] {}));
 
     assertEquals(OType.EMBEDDED, OType.getTypeByValue(new DocumentSer()));
+
+    assertEquals(OType.CUSTOM, OType.getTypeByValue(new ClassSerializable()));
   }
 
   @Test
