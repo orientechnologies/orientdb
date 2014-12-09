@@ -43,7 +43,7 @@ public class OMergeTransformer extends OAbstractLookupTransformer {
   @Override
   public Object executeTransform(final Object input) {
     Object joinValue = ((ODocument) input).field(joinFieldName);
-    final Object result = lookup(joinValue);
+    final Object result = lookup(joinValue, false);
 
     log(OETLProcessor.LOG_LEVELS.DEBUG, "joinValue=%s, lookupResult=%s", joinValue, result);
 

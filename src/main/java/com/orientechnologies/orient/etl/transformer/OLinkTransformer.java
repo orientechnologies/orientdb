@@ -93,11 +93,11 @@ public class OLinkTransformer extends OAbstractLookupTransformer {
       // RESOLVE SINGLE JOINS
       result = new ArrayList<Object>();
       for (Object o : OMultiValue.getMultiValueIterable(joinRuntimeValue)) {
-        final Object r = lookup(o);
+        final Object r = lookup(o, true);
         ((List<Object>) result).add(r);
       }
     } else
-      result = lookup(joinRuntimeValue);
+      result = lookup(joinRuntimeValue, true);
 
     log(OETLProcessor.LOG_LEVELS.DEBUG, "joinRuntimeValue=%s, lookupResult=%s", joinRuntimeValue, result);
 

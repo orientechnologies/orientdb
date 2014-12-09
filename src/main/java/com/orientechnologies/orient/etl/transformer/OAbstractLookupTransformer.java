@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -67,7 +68,7 @@ public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
     }
   }
 
-  protected Object lookup(Object joinValue) {
+  protected Object lookup(Object joinValue, final boolean iReturnRIDS) {
     Object result = null;
 
     if (joinValue != null) {
@@ -100,7 +101,12 @@ public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
             result = null;
         } else if (result instanceof OIdentifiable)
           result = ((OIdentifiable) result).getRecord();
+
+      if (iReturnRIDS && result instanceof ORecord)
+        result = ((ORecord) result).getIdentity();
+
     }
+
     return result;
   }
 }

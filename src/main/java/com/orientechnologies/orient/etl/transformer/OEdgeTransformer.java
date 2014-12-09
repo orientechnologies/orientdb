@@ -99,7 +99,7 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
 
     Object joinValue = vertex.getProperty(joinFieldName);
 
-    Object result = lookup(joinValue);
+    Object result = lookup(joinValue, false);
 
     log(OETLProcessor.LOG_LEVELS.DEBUG, "joinValue=%s, lookupResult=%s", joinValue, result);
 
