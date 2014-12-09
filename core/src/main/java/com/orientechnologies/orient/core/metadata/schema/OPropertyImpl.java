@@ -72,6 +72,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   private OCollate            collate = new ODefaultCollate();
   private OGlobalProperty     globalRef;
 
+  private volatile int        hashCode;
+
   @Deprecated
   OPropertyImpl(final OClassImpl owner, final String name, final OType type) {
     this(owner);
@@ -906,15 +908,28 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
   @Override
   public int hashCode() {
+		int sh = hashCode;
+		if (sh != 0)
+			return sh;
+
     acquireSchemaReadLock();
     try {
-      final int prime = 31;
-      int result = super.hashCode();
-      result = prime * result + ((owner == null) ? 0 : owner.hashCode());
-      return result;
+			sh = hashCode;
+      if (sh != 0)
+        return  sh;
+
+			calculateHashCode();
+      return hashCode;
     } finally {
       releaseSchemaReadLock();
     }
+  }
+
+  private void calculateHashCode() {
+    final int prime = 31;
+    int result = super.hashCode();
+    result = prime * result + ((owner == null) ? 0 : owner.hashCode());
+    hashCode = result;
   }
 
   @Override
@@ -1032,6 +1047,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   public void releaseSchemaWriteLock() {
+		calculateHashCode();
     owner.releaseSchemaWriteLock();
   }
 
