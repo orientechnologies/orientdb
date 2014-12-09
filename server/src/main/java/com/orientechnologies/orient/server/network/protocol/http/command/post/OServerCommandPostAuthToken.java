@@ -24,23 +24,23 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
 public class OServerCommandPostAuthToken extends OServerCommandAbstract {
-  private static final String[] NAMES           = { "POST|token/*" };
-  private static final String   RESPONSE_FORMAT = "indent:-1,attribSameRow";
-  private OTokenHandler         handler;
+  private static final String[]  NAMES           = { "POST|token/*" };
+  private static final String    RESPONSE_FORMAT = "indent:-1,attribSameRow";
+  private volatile OTokenHandler handler;
 
   @Override
   public String[] getNames() {
     return NAMES;
   }
 
-  @Override
-  public void configure(OServer server) {
-    super.configure(server);
-    handler = server.getPlugin(OTokenHandler.TOKEN_HANDLER_NAME);
+  private void init() {
+    if (handler == null)
+      handler = (OTokenHandler) server.getPlugin(OTokenHandler.TOKEN_HANDLER_NAME);
   }
 
   @Override
   public boolean execute(OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+    init();
     String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: token/<database>");
     iRequest.databaseName = urlParts[1];
 

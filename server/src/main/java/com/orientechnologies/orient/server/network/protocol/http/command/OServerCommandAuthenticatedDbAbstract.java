@@ -42,16 +42,6 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import java.io.IOException;
 import java.util.List;
 
-/*
- import com.nimbusds.jose.JOSEException;
- import com.nimbusds.jose.JWSSigner;
- import com.nimbusds.jose.JWSVerifier;
- import com.nimbusds.jose.crypto.MACSigner;
- import com.nimbusds.jose.crypto.MACVerifier;
- import com.nimbusds.jwt.ReadOnlyJWTClaimsSet;
- import com.nimbusds.jwt.SignedJWT;
- */
-
 /**
  * Database based authenticated command. Authenticates against the database taken as second parameter of the URL. The URL must be in
  * this format:
