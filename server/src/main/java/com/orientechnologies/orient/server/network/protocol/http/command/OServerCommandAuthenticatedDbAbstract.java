@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.command;
 
-import java.io.IOException;
-import java.util.List;
-
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -34,7 +31,6 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OTokenHandler;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequestException;
@@ -42,6 +38,9 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpSession;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
+
+import java.io.IOException;
+import java.util.List;
 
 /*
  import com.nimbusds.jose.JOSEException;
@@ -66,20 +65,16 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
  */
 public abstract class OServerCommandAuthenticatedDbAbstract extends OServerCommandAbstract {
 
-  public static final char   DBNAME_DIR_SEPARATOR   = '$';
-  public static final String SESSIONID_UNAUTHORIZED = "-";
-  public static final String SESSIONID_LOGOUT       = "!";
-  private OTokenHandler      handler;
-
-  @Override
-  public void configure(OServer server) {
-    super.configure(server);
-    handler = server.getPlugin(OTokenHandler.TOKEN_HANDLER_NAME);
-  }
+  public static final char       DBNAME_DIR_SEPARATOR   = '$';
+  public static final String     SESSIONID_UNAUTHORIZED = "-";
+  public static final String     SESSIONID_LOGOUT       = "!";
+  private volatile OTokenHandler handler;
 
   @Override
   public boolean beforeExecute(final OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
     super.beforeExecute(iRequest, iResponse);
+
+    init();
 
     final String[] urlParts = iRequest.url.substring(1).split("/");
     if (urlParts.length < 2)
@@ -275,5 +270,10 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     iRequest.data.lastDatabase = localDatabase.getName();
     iRequest.data.lastUser = localDatabase.getUser() != null ? localDatabase.getUser().getName() : null;
     return (ODatabaseDocumentTx) localDatabase.getDatabaseOwner();
+  }
+
+  private void init() {
+    if (handler == null)
+      handler = (OTokenHandler) server.getPlugin(OTokenHandler.TOKEN_HANDLER_NAME);
   }
 }
