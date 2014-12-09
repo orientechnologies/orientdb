@@ -59,7 +59,7 @@ public class OrientVertexType extends OrientElementType {
       throw new IllegalArgumentException("Vertex class is null");
 
     if (!iType.isSubClassOf(CLASS_NAME))
-      throw new IllegalArgumentException("Type error. The class " + iType + " does not extend class '" + CLASS_NAME
+      throw new IllegalArgumentException("Type error. The class '" + iType + "' does not extend class '" + CLASS_NAME
           + "' and therefore cannot be considered a Vertex");
   }
 
