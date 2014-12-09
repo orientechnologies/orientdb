@@ -16,11 +16,6 @@
 
 package com.orientechnologies.lucene.index;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.lucene.OLuceneIndex;
 import com.orientechnologies.lucene.OLuceneIndexEngine;
@@ -30,10 +25,14 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.index.ODefaultIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexFullText;
 import com.orientechnologies.orient.core.index.OIndexMultiValues;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class OLuceneFullTextIndex extends OIndexMultiValues implements OLuceneIndex {
 
@@ -184,7 +183,12 @@ public class OLuceneFullTextIndex extends OIndexMultiValues implements OLuceneIn
     snapshot.put(key, values);
   }
 
-  @Override
+    @Override
+    protected void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
+        super.removeFromSnapshot(key, value, snapshot);
+    }
+
+    @Override
   public long rebuild(OProgressListener iProgressListener) {
 
     long size = 0;

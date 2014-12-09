@@ -18,14 +18,13 @@
 
 package com.orientechnologies.test;
 
-import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerMain;
-import org.apache.tools.ant.taskdefs.Classloader;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.OServerMain;
 
 /**
  * Created by enricorisa on 19/09/14.
