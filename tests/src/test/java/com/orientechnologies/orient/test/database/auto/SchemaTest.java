@@ -413,7 +413,7 @@ public class SchemaTest extends DocumentDBBaseTest {
 
     oClass.set(OClass.ATTRIBUTES.NAME, "RenameClassTest2");
 
-		databaseDocumentTx.getLocalCache().clear();
+    databaseDocumentTx.getLocalCache().clear();
 
     result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select from RenameClassTest2"));
     Assert.assertEquals(result.size(), 2);
@@ -565,6 +565,24 @@ public class SchemaTest extends DocumentDBBaseTest {
 
   }
 
+  public void testExistsProperty() {
+    OSchema schema = database.getMetadata().getSchema();
+    OClass classA = schema.createClass("TestExistsA");
+    classA.createProperty("property", OType.STRING);
+    Assert.assertTrue(classA.existsProperty("property"));
+    Assert.assertNotNull(classA.getProperty("property"));
+    OClass classB = schema.createClass("TestExistsB", classA);
+
+		Assert.assertNotNull(classB.getProperty("property"));
+		Assert.assertTrue(classB.existsProperty("property"));
+
+		schema = database.getMetadata().getImmutableSchemaSnapshot();
+    classB = schema.getClass("TestExistsB");
+
+    Assert.assertNotNull(classB.getProperty("property"));
+    Assert.assertTrue(classB.existsProperty("property"));
+  }
+
   private void swapClusters(ODatabaseDocumentTx databaseDocumentTx, int i) {
     databaseDocumentTx.command(new OCommandSQL("CREATE CLASS TestRenameClusterNew extends TestRenameClusterOriginal")).execute();
 
@@ -578,7 +596,7 @@ public class SchemaTest extends DocumentDBBaseTest {
     databaseDocumentTx.command(new OCommandSQL("DROP CLUSTER TestRenameClusterOriginal")).execute();
     databaseDocumentTx.command(new OCommandSQL("ALTER CLUSTER TestRenameClusterNew name TestRenameClusterOriginal")).execute();
 
-		databaseDocumentTx.getLocalCache().clear();
+    databaseDocumentTx.getLocalCache().clear();
 
     List<ODocument> result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select * from TestRenameClusterOriginal"));
     Assert.assertEquals(result.size(), 1);
