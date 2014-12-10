@@ -19,11 +19,6 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.concur.resource.OSharedContainer;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -36,6 +31,11 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.util.OBackupable;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * This is the gateway interface between the Database side and the storage. Provided implementations are: Local, Remote and Memory.
@@ -229,6 +229,8 @@ public interface OStorage extends OBackupable, OSharedContainer {
   public OStorage getUnderlying();
 
   public boolean isDistributed();
+
+  public boolean isAssigningClusterIds();
 
   public Class<? extends OSBTreeCollectionManager> getCollectionManagerClass();
 

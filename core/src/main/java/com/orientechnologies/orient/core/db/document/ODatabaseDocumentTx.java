@@ -20,29 +20,6 @@
 
 package com.orientechnologies.orient.core.db.document;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.TimeZone;
-import java.util.TreeSet;
-import java.util.concurrent.Callable;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
@@ -96,16 +73,7 @@ import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
-import com.orientechnologies.orient.core.metadata.security.ORestrictedAccessHook;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.metadata.security.OSecurity;
-import com.orientechnologies.orient.core.metadata.security.OSecurityTrackerHook;
-import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
-import com.orientechnologies.orient.core.metadata.security.OToken;
-import com.orientechnologies.orient.core.metadata.security.OUser;
-import com.orientechnologies.orient.core.metadata.security.OUserTrigger;
+import com.orientechnologies.orient.core.metadata.security.*;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -137,6 +105,13 @@ import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
@@ -349,10 +324,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       throw new ODatabaseException("Cannot open database", e);
     }
     return (DB) this;
-  }
-
-  private void setCurrentDatabaseinThreadLocal() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(this);
   }
 
   public void callOnOpenListeners() {
@@ -1639,9 +1610,15 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
       final boolean wasNew = forceCreate || rid.isNew();
 
-      if (wasNew && rid.clusterId == -1)
+      if (wasNew && rid.clusterId == -1 && (clusterName != null || storage.isAssigningClusterIds())) {
         // ASSIGN THE CLUSTER ID
-        rid.clusterId = clusterName != null ? getClusterIdByName(clusterName) : getDefaultClusterId();
+        if (clusterName != null)
+          rid.clusterId = getClusterIdByName(clusterName);
+        else if (record instanceof ODocument && ((ODocument) record).getImmutableSchemaClass() != null)
+          rid.clusterId = ((ODocument) record).getImmutableSchemaClass().getClusterForNewInstance((ODocument) record);
+        else
+          getDefaultClusterId();
+      }
 
       byte[] stream = null;
       final OStorageOperationResult<ORecordVersion> operationResult;
@@ -1660,13 +1637,14 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           // ALREADY CREATED AND WAITING FOR THE RIGHT UPDATE (WE'RE IN A TREE/GRAPH)
           return (RET) record;
 
-        if (isNew && rid.clusterId < 0)
+        if (isNew && rid.clusterId < 0 && storage.isAssigningClusterIds())
           rid.clusterId = clusterName != null ? getClusterIdByName(clusterName) : getDefaultClusterId();
 
         if (rid.clusterId > -1 && clusterName == null)
           clusterName = getClusterNameById(rid.clusterId);
 
-        checkRecordClass(record, clusterName, rid, isNew);
+        if (storage.isAssigningClusterIds())
+          checkRecordClass(record, clusterName, rid, isNew);
 
         checkSecurity(ORule.ResourceGeneric.CLUSTER, wasNew ? ORole.PERMISSION_CREATE : ORole.PERMISSION_UPDATE, clusterName);
 
@@ -2212,24 +2190,28 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       if (clusterId == ORID.CLUSTER_ID_INVALID) {
         // COMPUTE THE CLUSTER ID
         if (iClusterName == null) {
-          if (schemaClass != null) {
-            // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
-            if (schemaClass.isAbstract())
-              throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and can not be saved");
+          if (storage.isAssigningClusterIds()) {
+            if (schemaClass != null) {
+              // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
+              if (schemaClass.isAbstract())
+                throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and can not be saved");
 
-            iClusterName = getClusterNameById(schemaClass.getClusterForNewInstance(doc));
-          } else {
-            iClusterName = getClusterNameById(storage.getDefaultClusterId());
+              iClusterName = getClusterNameById(schemaClass.getClusterForNewInstance(doc));
+            } else {
+              iClusterName = getClusterNameById(storage.getDefaultClusterId());
+            }
           }
         }
 
-        clusterId = getClusterIdByName(iClusterName);
-        if (clusterId == -1)
-          throw new IllegalArgumentException("Cluster name " + iClusterName + " is not configured");
+        if (iClusterName != null) {
+          clusterId = getClusterIdByName(iClusterName);
+          if (clusterId == -1)
+            throw new IllegalArgumentException("Cluster name '" + iClusterName + "' is not configured");
+        }
       }
 
       final int[] clusterIds;
-      if (schemaClass != null) {
+      if (schemaClass != null && clusterId > -1) {
         // CHECK IF THE CLUSTER IS PART OF THE CONFIGURED CLUSTERS
         clusterIds = schemaClass.getClusterIds();
         int i = 0;
@@ -2238,9 +2220,13 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
             break;
 
         if (i == clusterIds.length)
-          throw new IllegalArgumentException("Cluster name " + iClusterName + " (id=" + clusterId
-              + ") is not configured to store the class " + doc.getClassName() + ", valid are " + Arrays.toString(clusterIds));
+          throw new IllegalArgumentException("Cluster name '" + iClusterName + "' (id=" + clusterId
+              + ") is not configured to store the class '" + doc.getClassName() + "', valid are " + Arrays.toString(clusterIds));
       }
+
+      // SET BACK THE CLUSTER ID
+      ((ORecordId) iRecord.getIdentity()).clusterId = clusterId;
+
     } else {
       // UPDATE: CHECK ACCESS ON SCHEMA CLASS NAME (IF ANY)
       if (doc.getClassName() != null)
@@ -2548,6 +2534,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   protected void checkOpeness() {
     if (isClosed())
       throw new ODatabaseException("Database '" + getURL() + "' is closed");
+  }
+
+  private void setCurrentDatabaseinThreadLocal() {
+    ODatabaseRecordThreadLocal.INSTANCE.set(this);
   }
 
   private void initAtFirstOpen(String iUserName, String iUserPassword) {

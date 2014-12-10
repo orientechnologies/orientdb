@@ -195,6 +195,11 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
   }
 
   @Override
+  public boolean isAssigningClusterIds() {
+    return true;
+  }
+
+  @Override
   public OCurrentStorageComponentsFactory getComponentsFactory() {
     return componentsFactory;
   }
