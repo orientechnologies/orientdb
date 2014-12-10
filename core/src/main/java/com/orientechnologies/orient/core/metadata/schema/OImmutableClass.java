@@ -244,8 +244,21 @@ public class OImmutableClass implements OClass {
   }
 
   @Override
-  public boolean existsProperty(String iPropertyName) {
-    return properties.containsKey(iPropertyName.toLowerCase());
+  public boolean existsProperty(String propertyName) {
+    propertyName = propertyName.toLowerCase();
+
+    OImmutableClass currentClass = this;
+    do {
+      final boolean result = currentClass.properties.containsKey(propertyName);
+
+      if (result)
+        return true;
+
+      currentClass = (OImmutableClass) currentClass.getSuperClass();
+
+    } while (currentClass != null);
+
+    return false;
   }
 
   @Override
