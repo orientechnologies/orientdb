@@ -102,16 +102,16 @@
                             <fieldset>
                                 <div class="form-group">
                                     <label>Content Type</label>
-                                    <select ng-model="selectedContentType" class="form-control input-sm"
+                                    <select ng-model="config.selectedContentType" class="form-control input-sm"
                                             ng-options="q for q in contentType"></select>
                                 </div>
                                 <div class="form-group">
                                     <label>Limit</label>
-                                    <input type="text" class="form-control input-sm" ng-model="limit"/>
+                                    <input type="text" class="form-control input-sm" ng-model="config.limit"/>
                                 </div>
                                 <div class="checkbox">
                                     <label>
-                                        <input type="checkbox" class="" ng-model="hideSettings"/> Hide settings
+                                        <input type="checkbox" class="" ng-model="config.hideSettings"/> Hide settings
                                     </label>
                                 </div>
                                 <a href="{{ database.getWiki() }}" class="btn btn-sm btn-trasparent"
