@@ -24,12 +24,12 @@ schemaModule.controller("UsersController", ['$scope', '$routeParams', '$location
         users: Database.getOWikiFor("Security.html#users")
     }
     var selectAllUsers = 'select * from oUser fetchPlan *:1 order by name  ';
-    var selectAllRoles = 'select * from oRole fetchPlan *:1 order by name  ';
-
+    var selectAllRoles = 'select * from oRole fetchPlan *:1 order by name ';
     $scope.getListUsers = function () {
         $scope.functions = new Array;
         CommandApi.queryText({database: $routeParams.database, language: 'sql', verbose: false, text: selectAllUsers, limit: $scope.limit, shallow: false}, function (data) {
             $scope.usersResult = data.result;
+
 
             $scope.tableParams = new ngTableParams({
                 page: 1,            // show first page
@@ -168,7 +168,8 @@ schemaModule.controller("RolesController", ['$scope', '$routeParams', '$location
 
     $scope.links = {
         resources: Database.getOWikiFor("Security.html#resources"),
-        roles: Database.getOWikiFor("Security.html#roles")
+        roles: Database.getOWikiFor("Security.html#roles"),
+        roles_error: Database.getOWikiFor("Security.html#roles_error")
     }
     $scope.usersResult = new Array;
     $scope.selectedRole = null;
@@ -210,7 +211,12 @@ schemaModule.controller("RolesController", ['$scope', '$routeParams', '$location
         if (!selectedRole['rules']) {
             selectedRole['rules'] = {};
         }
-        $scope.rules = Object.keys(selectedRole['rules']).sort();
+
+        if((selectedRole['rules'] instanceof Array)){
+          $scope.disabledSecurity = true;
+        }else {
+          $scope.rules = Object.keys(selectedRole['rules']).sort();
+        }
     }
 
     $scope.dropRule = function (rule) {

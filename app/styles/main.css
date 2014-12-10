@@ -982,6 +982,10 @@ span.badge-edge {
     padding: 2px 10px;
 }
 
+.vertex-fields p {
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
 
 
 

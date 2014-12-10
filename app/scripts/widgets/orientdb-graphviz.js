@@ -149,7 +149,6 @@ var OrientGraph = (function () {
         }
         this.fullScreen = function (full) {
             if (full) {
-                console.log($(this.originElement).offset());
                 var start = $(this.originElement).offset().top;
                 var wHeight = $(document).height();
                 var height = wHeight - start;
@@ -1607,7 +1606,6 @@ var OrientGraph = (function () {
                         }
                         inspectVertex(elem, v);
                     } else if (elem['in'] && elem['out']) {
-                        console.log(elem);
                         var v1 = self.get(elem['in']);
                         if (!v1) {
                             v1 = new OVertex(self, elem['in']);
