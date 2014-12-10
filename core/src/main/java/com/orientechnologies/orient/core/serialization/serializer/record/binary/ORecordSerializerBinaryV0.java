@@ -278,7 +278,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       value = readByte(bytes);
       break;
     case BOOLEAN:
-      value = readByte(bytes) == 1 ? true : false;
+      value = readByte(bytes) == 1;
       break;
     case DATETIME:
       value = new Date(OVarIntSerializer.readAsLong(bytes));
@@ -644,7 +644,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   private int writeOptimizedLink(BytesContainer bytes, OIdentifiable link) {
     link = recursiveLinkSave(link);
-    assert link.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Inpossible to serialize invalid link";
+    assert link.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link";
     int pos = OVarIntSerializer.write(bytes, link.getIdentity().getClusterId());
     OVarIntSerializer.write(bytes, link.getIdentity().getClusterPosition());
     return pos;
@@ -665,7 +665,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   private int writeEmbeddedCollection(BytesContainer bytes, Collection<?> value, OType linkedType) {
     int pos = OVarIntSerializer.write(bytes, value.size());
-    // TODO manage embedded type from schema and autodeterminated.
+    // TODO manage embedded type from schema and auto-determined.
     writeOType(bytes, bytes.alloc(1), OType.ANY);
     for (Object itemValue : value) {
       // TODO:manage in a better way null entry
