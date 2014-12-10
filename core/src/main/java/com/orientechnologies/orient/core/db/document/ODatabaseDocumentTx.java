@@ -182,7 +182,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    *          of the database
    */
   public ODatabaseDocumentTx(final String iURL) {
-    this(iURL, true);
+    this(iURL, false);
   }
 
   public ODatabaseDocumentTx(final String iURL, boolean keepStorageOpen) {
@@ -458,6 +458,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       throw new ODatabaseException("Cannot create database '" + getName() + "'", e);
     }
     return (DB) this;
+  }
+
+  public boolean isKeepStorageOpen() {
+    return keepStorageOpen;
   }
 
   @Override

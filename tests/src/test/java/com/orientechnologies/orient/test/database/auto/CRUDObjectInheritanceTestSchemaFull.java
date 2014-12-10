@@ -135,6 +135,7 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
 
   @Test
   public void create() {
+		database.getMetadata().getSchema().reload();
     database.getMetadata().getSchema().synchronizeSchema();
     database.setAutomaticSchemaGeneration(true);
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");
