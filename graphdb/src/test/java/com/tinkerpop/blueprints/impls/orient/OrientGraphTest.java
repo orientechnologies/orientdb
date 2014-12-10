@@ -52,7 +52,6 @@ public abstract class OrientGraphTest extends GraphTest {
   }
 
   @Test
-	@Ignore
   public void testGraphTestSuite() throws Exception {
     this.stopWatch();
     doTestSuite(new GraphTestSuite(this));
