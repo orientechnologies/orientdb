@@ -200,7 +200,7 @@ public abstract class ORecordAbstract implements ORecord {
   }
 
   public int getVersion() {
-    checkForLoading();
+//    checkForLoading();
     return _recordVersion.getCounter();
   }
 
@@ -209,7 +209,7 @@ public abstract class ORecordAbstract implements ORecord {
   }
 
   public ORecordVersion getRecordVersion() {
-    checkForLoading();
+//    checkForLoading();
     return _recordVersion;
   }
 

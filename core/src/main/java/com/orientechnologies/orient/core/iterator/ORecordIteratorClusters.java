@@ -19,14 +19,14 @@
  */
 package com.orientechnologies.orient.core.iterator;
 
-import java.util.Arrays;
-import java.util.NoSuchElementException;
-
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.Arrays;
+import java.util.NoSuchElementException;
 
 /**
  * Iterator to browse multiple clusters forward and backward. Once browsed in a direction, the iterator cannot change it. This
@@ -390,7 +390,7 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
     if (txEntries != null)
       // ADJUST TOTAL ELEMENT BASED ON CURRENT TRANSACTION'S ENTRIES
       for (ORecordOperation entry : txEntries) {
-        if (entry.getRecord().getIdentity().isTemporary() && entry.type != ORecordOperation.DELETED)
+        if (!entry.getRecord().getIdentity().isPersistent() && entry.type != ORecordOperation.DELETED)
           totalAvailableRecords++;
         else if (entry.type == ORecordOperation.DELETED)
           totalAvailableRecords--;

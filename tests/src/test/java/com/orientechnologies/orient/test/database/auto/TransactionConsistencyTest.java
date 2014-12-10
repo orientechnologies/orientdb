@@ -15,16 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-import java.util.*;
-
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -34,7 +24,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
@@ -42,6 +31,18 @@ import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessin
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.business.Address;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.Vector;
 
 @Test
 public class TransactionConsistencyTest extends DocumentDBBaseTest {
@@ -375,16 +376,9 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     int profileClusterId = database.getClusterIdByName("Profile");
 
     jack.save();
-    Assert.assertEquals(jack.getIdentity().getClusterId(), profileClusterId);
-
     kim.save();
-    Assert.assertEquals(kim.getIdentity().getClusterId(), profileClusterId);
-
     teri.save();
-    Assert.assertEquals(teri.getIdentity().getClusterId(), profileClusterId);
-
     chloe.save();
-    Assert.assertEquals(chloe.getIdentity().getClusterId(), profileClusterId);
 
     database.commit();
 

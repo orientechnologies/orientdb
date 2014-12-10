@@ -16,8 +16,6 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -27,7 +25,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -55,10 +52,10 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
 
     for (ODocument d : result) {
       String[] colNames = d.fieldNames();
-      Assert.assertEquals(colNames.length, 3);
-      Assert.assertEquals(colNames[0], "nick");
-      Assert.assertEquals(colNames[1], "followings");
-      Assert.assertEquals(colNames[2], "followers");
+      Assert.assertEquals(colNames.length, 3, "document: " + d);
+      Assert.assertEquals(colNames[0], "nick", "document: " + d);
+      Assert.assertEquals(colNames[1], "followings", "document: " + d);
+      Assert.assertEquals(colNames[2], "followers", "document: " + d);
 
       Assert.assertNull(d.getClassName());
       Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);

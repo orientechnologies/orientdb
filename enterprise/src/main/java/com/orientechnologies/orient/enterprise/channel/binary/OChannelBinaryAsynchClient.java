@@ -284,16 +284,6 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     }
   }
 
-  private void setReadResponseTimeout() throws SocketException {
-    if (socket != null)
-      socket.setSoTimeout(socketTimeout);
-  }
-
-  private void setWaitResponseTimeout() throws SocketException {
-    if (socket != null)
-      socket.setSoTimeout(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT.getValueAsInteger());
-  }
-
   public void endResponse() {
     channelRead = false;
 
@@ -373,6 +363,10 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     getLockWrite().unlock();
   }
 
+  public OAsynchChannelServiceThread getServiceThread() {
+    return serviceThread;
+  }
+
   protected int handleStatus(final byte iResult, final int iClientTxId) throws IOException {
     if (iResult == OChannelBinaryProtocol.RESPONSE_STATUS_OK || iResult == OChannelBinaryProtocol.PUSH_DATA) {
       return iClientTxId;
@@ -412,6 +406,16 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     }
   }
 
+  private void setReadResponseTimeout() throws SocketException {
+    if (socket != null && socket.isConnected() && !socket.isClosed())
+      socket.setSoTimeout(socketTimeout);
+  }
+
+  private void setWaitResponseTimeout() throws SocketException {
+    if (socket != null)
+      socket.setSoTimeout(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT.getValueAsInteger());
+  }
+
   private void throwSerializedException(final byte[] serializedException) throws IOException {
     final OMemoryInputStream inputStream = new OMemoryInputStream(serializedException);
     final ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
@@ -435,10 +439,6 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
           this,
           "Error during exception serialization, serialized exception is not Throwable, exception type is "
               + (throwable != null ? throwable.getClass().getName() : "null"));
-  }
-
-  public OAsynchChannelServiceThread getServiceThread() {
-    return serviceThread;
   }
 
 }
