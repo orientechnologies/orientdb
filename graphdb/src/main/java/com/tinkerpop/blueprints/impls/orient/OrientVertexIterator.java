@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.iterator.OLazyWrapperIterator;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
 
@@ -56,10 +57,10 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
     final ODocument value = (ODocument) rec;
 
     final OrientVertex v;
-    if (value.getImmutableSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
+    if (ODocumentInternal.getImmutableSchemaClass(value).isSubClassOf(OrientVertexType.CLASS_NAME)) {
       // DIRECT VERTEX
       v = new OrientVertex(vertex.getGraph(), value);
-    } else if (value.getImmutableSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+    } else if (ODocumentInternal.getImmutableSchemaClass(value).isSubClassOf(OrientEdgeType.CLASS_NAME)) {
       // EDGE
       if (vertex.settings.useVertexFieldsForEdgeLabels || OrientEdge.isLabeled(OrientEdge.getRecordLabel(value), iLabels))
         v = new OrientVertex(vertex.getGraph(), OrientEdge.getConnection(value, connection.getKey().opposite()));

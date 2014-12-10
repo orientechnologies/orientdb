@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 /**
  * Checks the access against restricted resources. Restricted resources are those documents of classes that implement ORestricted
@@ -46,7 +47,7 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
 
   @Override
   public RESULT onRecordBeforeCreate(final ODocument iDocument) {
-    final OClass cls = iDocument.getImmutableSchemaClass();
+    final OClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
     if (cls != null && cls.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME)) {
       String fieldNames = cls.getCustom(OSecurityShared.ONCREATE_FIELD);
       if (fieldNames == null)
@@ -101,7 +102,7 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
 
   @SuppressWarnings("unchecked")
   protected boolean isAllowed(final ODocument iDocument, final String iAllowOperation, final boolean iReadOriginal) {
-    final OClass cls = iDocument.getImmutableSchemaClass();
+    final OClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
     if (cls != null && cls.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME)) {
 
       final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();

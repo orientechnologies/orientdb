@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -343,7 +344,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
             if (database.getStorageVersions().classesAreDetectedByClusterId() && iRecord instanceof ODocument) {
               final ODocument recordSchemaAware = (ODocument) iRecord;
-              final OClass recordClass = recordSchemaAware.getImmutableSchemaClass();
+              final OClass recordClass = ODocumentInternal.getImmutableSchemaClass(recordSchemaAware);
               final OClass clusterIdClass = database.getMetadata().getImmutableSchemaSnapshot().getClassByClusterId(rid.clusterId);
               if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
                   || (recordClass != null && !recordClass.equals(clusterIdClass)))

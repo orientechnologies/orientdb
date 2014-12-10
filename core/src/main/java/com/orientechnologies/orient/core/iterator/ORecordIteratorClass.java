@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 /**
@@ -100,7 +101,7 @@ public class ORecordIteratorClass<REC extends ORecord> extends ORecordIteratorCl
 
   @Override
   protected boolean include(final ORecord record) {
-    return record instanceof ODocument && targetClass.isSuperClassOf(((ODocument) record).getImmutableSchemaClass());
+    return record instanceof ODocument && targetClass.isSuperClassOf(ODocumentInternal.getImmutableSchemaClass(((ODocument) record)));
   }
 
   public boolean isPolymorphic() {

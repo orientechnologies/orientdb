@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 /**
  * Hook abstract class that calls separate methods for ODocument records.
@@ -314,7 +315,7 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
     if (includeClasses == null && excludeClasses == null)
       return true;
 
-    final OClass clazz = iDocument.getImmutableSchemaClass();
+    final OClass clazz = ODocumentInternal.getImmutableSchemaClass(iDocument);
     if (clazz == null)
       return false;
 

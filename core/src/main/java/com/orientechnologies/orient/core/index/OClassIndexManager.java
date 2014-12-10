@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 import java.util.*;
@@ -437,7 +438,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   public void onRecordAfterUpdate(ODocument iDocument) {
     iDocument = checkForLoading(iDocument);
 
-    final OClass cls = iDocument.getImmutableSchemaClass();
+    final OClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
     if (cls == null)
       return;
 
@@ -501,7 +502,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     // STORE THE RECORD IF NEW, OTHERWISE ITS RID
     final OIdentifiable rid = document.getIdentity();
 
-    final OClass cls = document.getImmutableSchemaClass();
+    final OClass cls = ODocumentInternal.getImmutableSchemaClass(document);
     if (cls != null) {
       final Collection<OIndex<?>> indexes = cls.getIndexes();
       for (final OIndex<?> index : indexes) {
@@ -519,7 +520,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   }
 
   private void deleteIndexEntries(ODocument iDocument) {
-    final OClass cls = iDocument.getImmutableSchemaClass();
+    final OClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
     if (cls == null)
       return;
 
@@ -559,7 +560,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
     ODocument replaced = null;
 
-    final OClass cls = document.getImmutableSchemaClass();
+    final OClass cls = ODocumentInternal.getImmutableSchemaClass(document);
     if (cls != null) {
       final Collection<OIndex<?>> indexes = cls.getIndexes();
       switch (hookType) {

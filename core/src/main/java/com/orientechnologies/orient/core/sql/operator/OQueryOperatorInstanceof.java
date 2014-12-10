@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
 /**
@@ -58,7 +59,7 @@ public class OQueryOperatorInstanceof extends OQueryOperatorEqualityNotNulls {
 			// GET THE RECORD'S CLASS
 			final ORecord record = ((OIdentifiable) iLeft).getRecord();
 			if (record instanceof ODocument) {
-				cls = ((ODocument) record).getImmutableSchemaClass();
+				cls = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
 			}
 		} else if (iLeft instanceof String)
 			// GET THE CLASS BY NAME

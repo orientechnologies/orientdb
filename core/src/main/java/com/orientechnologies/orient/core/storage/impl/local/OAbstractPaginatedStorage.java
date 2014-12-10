@@ -57,6 +57,7 @@ import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -2005,9 +2006,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     ORecordSerializationContext.pushContext();
     try {
       if (rid.clusterId == ORID.CLUSTER_ID_INVALID && rec instanceof ODocument
-          && ((ODocument) rec).getImmutableSchemaClass() != null) {
+          && ODocumentInternal.getImmutableSchemaClass(((ODocument) rec)) != null) {
         // TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
-        rid.clusterId = ((ODocument) rec).getImmutableSchemaClass().getDefaultClusterId();
+        rid.clusterId = ODocumentInternal.getImmutableSchemaClass(((ODocument) rec)).getDefaultClusterId();
       }
 
       final OCluster cluster = getClusterById(rid.clusterId);

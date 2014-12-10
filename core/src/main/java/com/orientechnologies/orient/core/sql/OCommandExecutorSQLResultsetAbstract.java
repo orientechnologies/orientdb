@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -350,7 +351,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       // check only classes that specified in query will go to result set
       if ((targetClasses != null) && (!targetClasses.isEmpty())) {
         for (OClass targetClass : targetClasses.keySet()) {
-          if (!targetClass.isSuperClassOf(recordSchemaAware.getImmutableSchemaClass()))
+          if (!targetClass.isSuperClassOf(ODocumentInternal.getImmutableSchemaClass(recordSchemaAware)))
             return false;
         }
         context.updateMetric("documentAnalyzedCompatibleClass", +1);

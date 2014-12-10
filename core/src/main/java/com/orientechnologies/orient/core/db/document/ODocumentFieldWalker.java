@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 import java.util.*;
 
@@ -60,7 +61,7 @@ public class ODocumentFieldWalker {
 
     final boolean updateMode = fieldWalker.updateMode();
 
-    final OClass clazz = document.getImmutableSchemaClass();
+    final OClass clazz = ODocumentInternal.getImmutableSchemaClass(document);
     for (String fieldName : document.fieldNames()) {
 
       final OType concreteType = document.fieldType(fieldName);

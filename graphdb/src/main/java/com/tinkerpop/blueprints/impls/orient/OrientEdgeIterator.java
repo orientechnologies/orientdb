@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.iterator.OLazyWrapperIterator;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.tinkerpop.blueprints.Direction;
 
 import java.util.Iterator;
@@ -72,17 +73,17 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
 
     final ODocument value = rec.getRecord();
 
-    if (value == null || value.getImmutableSchemaClass() == null)
+    if (value == null || ODocumentInternal.getImmutableSchemaClass(value) == null)
       return null;
 
     final OrientEdge edge;
-    if (value.getImmutableSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
+    if (ODocumentInternal.getImmutableSchemaClass(value).isSubClassOf(OrientVertexType.CLASS_NAME)) {
       // DIRECT VERTEX, CREATE DUMMY EDGE
       if (connection.getKey() == Direction.OUT)
         edge = new OrientEdge(this.sourceVertex.getGraph(), this.sourceVertex.getIdentity(), rec.getIdentity(), connection.getValue());
       else
         edge = new OrientEdge(this.sourceVertex.getGraph(), rec.getIdentity(), this.sourceVertex.getIdentity(), connection.getValue());
-    } else if (value.getImmutableSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+    } else if (ODocumentInternal.getImmutableSchemaClass(value).isSubClassOf(OrientEdgeType.CLASS_NAME)) {
       // EDGE
       edge = new OrientEdge(this.sourceVertex.getGraph(), rec.getIdentity());
     } else

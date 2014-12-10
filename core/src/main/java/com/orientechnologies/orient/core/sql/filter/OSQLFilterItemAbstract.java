@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
@@ -176,8 +177,8 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
   }
 
   protected OCollate getCollateForField(final ODocument doc, final String iFieldName) {
-    if (doc.getImmutableSchemaClass() != null) {
-      final OProperty p = doc.getImmutableSchemaClass().getProperty(iFieldName);
+    if (ODocumentInternal.getImmutableSchemaClass(doc) != null) {
+      final OProperty p = ODocumentInternal.getImmutableSchemaClass(doc).getProperty(iFieldName);
       if (p != null)
         return p.getCollate();
     }

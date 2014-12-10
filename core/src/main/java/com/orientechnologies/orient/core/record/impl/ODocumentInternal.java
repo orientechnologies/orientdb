@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
 public class ODocumentInternal {
@@ -43,5 +44,9 @@ public class ODocumentInternal {
 
   public static boolean rawContainsField(final ODocument oDocument, final String iFiledName) {
     return oDocument.rawContainsField(iFiledName);
+  }
+
+  public static OClass getImmutableSchemaClass(final ODocument oDocument) {
+    return oDocument.getImmutableSchemaClass();
   }
 }

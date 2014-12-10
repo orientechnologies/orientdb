@@ -303,9 +303,12 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   /**
-   * {@inheritDoc}
+   * Opens a database using an authentication token received as an argument.
+   *
+   * @param iToken
+   *          Authentication token
+   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
-  @Override
   public <DB extends ODatabase> DB open(final OToken iToken) {
     setCurrentDatabaseInThreadLocal();
 
@@ -2210,7 +2213,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       if (doc.getClassName() != null)
         checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_CREATE, doc.getClassName());
 
-      final OClass schemaClass = doc.getImmutableSchemaClass();
+      final OClass schemaClass = ODocumentInternal.getImmutableSchemaClass(doc);
 
       int clusterId = iRecord.getIdentity().getClusterId();
       if (clusterId == ORID.CLUSTER_ID_INVALID) {
@@ -2722,7 +2725,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   private void checkRecordClass(ORecord record, String iClusterName, ORecordId rid, boolean isNew) {
     if (rid.clusterId > -1 && getStorageVersions().classesAreDetectedByClusterId() && isNew && record instanceof ODocument) {
       final ODocument recordSchemaAware = (ODocument) record;
-      final OClass recordClass = recordSchemaAware.getImmutableSchemaClass();
+      final OClass recordClass = ODocumentInternal.getImmutableSchemaClass(recordSchemaAware);
       final OClass clusterIdClass = metadata.getImmutableSchemaSnapshot().getClassByClusterId(rid.clusterId);
       if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
           || (recordClass != null && !recordClass.equals(clusterIdClass)))
@@ -2757,7 +2760,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   private void acquireIndexModificationLock(ODocument doc, Set<OIndex<?>> lockedIndexes) {
     if (getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
-      final OClass cls = doc.getImmutableSchemaClass();
+      final OClass cls = ODocumentInternal.getImmutableSchemaClass(doc);
       if (cls != null) {
         final Collection<OIndex<?>> indexes = cls.getIndexes();
         if (indexes != null) {

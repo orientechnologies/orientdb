@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
@@ -417,8 +418,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       ORidBag bag = null;
       if (!record.containsField(entry.getKey())) {
         // GET THE TYPE IF ANY
-        if (record.getImmutableSchemaClass() != null) {
-          OProperty prop = record.getImmutableSchemaClass().getProperty(entry.getKey());
+        if (ODocumentInternal.getImmutableSchemaClass(record) != null) {
+          OProperty prop = ODocumentInternal.getImmutableSchemaClass(record).getProperty(entry.getKey());
           if (prop != null && prop.getType() == OType.LINKSET)
             // SET TYPE
             coll = new HashSet<Object>();
@@ -479,8 +480,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
         Object fieldValue = record.field(entry.getKey());
 
         if (fieldValue == null) {
-          if (record.getImmutableSchemaClass() != null) {
-            final OProperty property = record.getImmutableSchemaClass().getProperty(entry.getKey());
+          if (ODocumentInternal.getImmutableSchemaClass(record) != null) {
+            final OProperty property = ODocumentInternal.getImmutableSchemaClass(record).getProperty(entry.getKey());
             if (property != null
                 && (property.getType() != null && (!property.getType().equals(OType.EMBEDDEDMAP) && !property.getType().equals(
                     OType.LINKMAP)))) {

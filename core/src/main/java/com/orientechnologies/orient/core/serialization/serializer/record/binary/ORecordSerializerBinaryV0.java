@@ -243,7 +243,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
 
   protected OClass serializeClass(final ODocument document, final BytesContainer bytes) {
-    final OClass clazz = document.getImmutableSchemaClass();
+    final OClass clazz = ODocumentInternal.getImmutableSchemaClass(document);
     if (clazz != null)
       writeString(bytes, clazz.getName());
     else
@@ -453,7 +453,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   private OType getLinkedType(ODocument document, OType type, String key) {
     if (type != OType.EMBEDDEDLIST && type != OType.EMBEDDEDSET && type != OType.EMBEDDEDMAP)
       return null;
-    OClass clazz = document.getImmutableSchemaClass();
+    OClass clazz = ODocumentInternal.getImmutableSchemaClass(document);
     if (clazz != null) {
       OProperty prop = clazz.getProperty(key);
       if (prop != null) {
