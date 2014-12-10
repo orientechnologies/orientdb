@@ -135,6 +135,12 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         if (db == null || db.isClosed())
           throw new ODatabaseException("Cannot unmarshall the document because no database is active");
         prop = db.getMetadata().getImmutableSchemaSnapshot().getGlobalPropertyById((len * -1) - 1);
+        if (prop == null) {
+          db.getMetadata().clearThreadLocalSchemaSnapshot();
+          db.getMetadata().reload();
+          db.getMetadata().makeThreadLocalSchemaSnapshot();
+          prop = db.getMetadata().getImmutableSchemaSnapshot().getGlobalPropertyById((len * -1) - 1);
+        }
         fieldName = prop.getName();
       }
 
