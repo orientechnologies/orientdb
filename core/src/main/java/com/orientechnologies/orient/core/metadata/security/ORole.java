@@ -150,12 +150,13 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
     final OIdentifiable role = document.field("inheritedRole");
     parentRole = role != null ? document.getDatabase().getMetadata().getSecurity().getRole(role) : null;
 
+    boolean rolesNeedToBeUpdated = false;
     Object loadedRules = document.field("rules");
     if (loadedRules instanceof Map) {
       loadOldVersionOfRules((Map<String, Number>) loadedRules);
     } else {
       final Set<ODocument> storedRules = (Set<ODocument>) loadedRules;
-      if (storedRules != null)
+      if (storedRules != null) {
         for (ODocument ruleDoc : storedRules) {
           final ORule.ResourceGeneric resourceGeneric = ORule.ResourceGeneric.valueOf(ruleDoc.<String> field("resourceGeneric"));
           final Map<String, Byte> specificResources = ruleDoc.field("specificResources");
@@ -164,11 +165,20 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
           final ORule rule = new ORule(resourceGeneric, specificResources, access);
           rules.put(resourceGeneric, rule);
         }
+      }
+
+      // convert the format of roles presentation to classic one
+      rolesNeedToBeUpdated = true;
     }
 
     if (getName().equals("admin") && !hasRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null))
       // FIX 1.5.1 TO ASSIGN database.bypassRestricted rule to the role
       addRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_ALL).save();
+
+    if (rolesNeedToBeUpdated) {
+      updateRolesDocumentContent();
+      save();
+    }
   }
 
   public boolean allow(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iCRUDOperation) {

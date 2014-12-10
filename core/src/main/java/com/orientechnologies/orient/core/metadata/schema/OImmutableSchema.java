@@ -206,6 +206,8 @@ public class OImmutableSchema implements OSchema {
 
   @Override
   public OGlobalProperty getGlobalPropertyById(int id) {
+    if (id >= properties.size())
+      return null;
     return properties.get(id);
   }
 

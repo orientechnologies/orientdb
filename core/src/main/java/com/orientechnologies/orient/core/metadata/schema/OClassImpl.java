@@ -598,10 +598,23 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return addProperty(iPropertyName, iType, iLinkedType, null);
   }
 
-  public boolean existsProperty(final String iPropertyName) {
+  public boolean existsProperty(String propertyName) {
     acquireSchemaReadLock();
     try {
-      return properties.containsKey(iPropertyName.toLowerCase());
+      propertyName = propertyName.toLowerCase();
+
+      OClassImpl currentClass = this;
+      do {
+        final boolean result = currentClass.properties.containsKey(propertyName);
+
+        if (result)
+          return true;
+
+        currentClass = (OClassImpl) currentClass.getSuperClass();
+
+      } while (currentClass != null);
+
+      return false;
     } finally {
       releaseSchemaReadLock();
     }
@@ -1537,7 +1550,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public void releaseSchemaWriteLock() {
-		calculateHashCode();
+    calculateHashCode();
     owner.releaseSchemaWriteLock();
   }
 
