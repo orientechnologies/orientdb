@@ -19,16 +19,17 @@
  */
 package com.orientechnologies.orient.core.iterator;
 
-import java.util.Arrays;
-
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.Arrays;
 
 /**
  * Iterator class to browse forward and backward the records of a cluster. Once browsed in a direction, the iterator cannot change
@@ -98,11 +99,6 @@ public class ORecordIteratorClass<REC extends ORecord> extends ORecordIteratorCl
     return (REC) rec.getRecord();
   }
 
-  @Override
-  protected boolean include(final ORecord record) {
-    return record instanceof ODocument && targetClass.isSuperClassOf(((ODocument) record).getImmutableSchemaClass());
-  }
-
   public boolean isPolymorphic() {
     return polymorphic;
   }
@@ -110,5 +106,32 @@ public class ORecordIteratorClass<REC extends ORecord> extends ORecordIteratorCl
   @Override
   public String toString() {
     return String.format("ORecordIteratorClass.targetClass(%s).polymorphic(%s)", targetClass, polymorphic);
+  }
+
+  @Override
+  protected boolean include(final ORecord record) {
+    return record instanceof ODocument && targetClass.isSuperClassOf(((ODocument) record).getImmutableSchemaClass());
+  }
+
+  @Override
+  protected void config() {
+    currentClusterIdx = 0; // START FROM THE FIRST CLUSTER
+
+    updateClusterRange();
+
+    totalAvailableRecords = database.countClusterElements(clusterIds, isIterateThroughTombstones());
+
+    txEntries = database.getTransaction().getNewRecordEntriesByClass(targetClass, polymorphic);
+
+    if (txEntries != null)
+      // ADJUST TOTAL ELEMENT BASED ON CURRENT TRANSACTION'S ENTRIES
+      for (ORecordOperation entry : txEntries) {
+        if (!entry.getRecord().getIdentity().isPersistent() && entry.type != ORecordOperation.DELETED)
+          totalAvailableRecords++;
+        else if (entry.type == ORecordOperation.DELETED)
+          totalAvailableRecords--;
+      }
+
+    begin();
   }
 }
