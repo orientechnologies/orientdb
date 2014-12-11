@@ -8,16 +8,14 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
+import static org.hamcrest.Matchers.hasItem;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 
 public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
 
@@ -68,9 +66,19 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     ResultSet tableTypes = metaData.getTableTypes();
     assertTrue(tableTypes.next());
     assertEquals("TABLE", tableTypes.getString(1));
+    assertTrue(tableTypes.next());
+    assertEquals("SYSTEM TABLE", tableTypes.getString(1));
 
     assertFalse(tableTypes.next());
 
+  }
+
+  @Test
+  public void shouldRetrieveKeywords() throws SQLException {
+
+    final String keywordsStr = metaData.getSQLKeywords();
+    assertNotNull(keywordsStr);
+    assertThat(Arrays.asList(keywordsStr.toUpperCase().split(",\\s*")), hasItem("TRAVERSE"));
   }
 
   @Test
@@ -119,6 +127,33 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
       tableCount = tableCount + 1;
     }
     assertTrue(tableCount > 1);
+  }
+
+  @Test
+  public void getAllTablesFilteredByAllTypes() throws SQLException {
+    ResultSet rs = this.metaData.getTableTypes();
+    List<String> tableTypes = new ArrayList<String>(2);
+    while (rs.next()){
+      tableTypes.add(rs.getString(1));
+    }
+    rs = this.metaData.getTables(null, null, null, tableTypes.toArray(new String[2]));
+    int tableCount = 0;
+
+    while(rs.next()){
+      tableCount = tableCount + 1;
+    }
+    assertTrue(tableCount > 1);
+  }
+
+  @Test
+  public void getNoTablesFilteredByEmptySetOfTypes() throws SQLException {
+    final ResultSet rs = this.metaData.getTables(null, null, null, new String[0]);
+    int tableCount = 0;
+
+    while(rs.next()){
+      tableCount = tableCount + 1;
+    }
+    assertEquals(0, tableCount);
   }
 
   @Test

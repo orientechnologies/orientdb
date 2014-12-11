@@ -23,12 +23,7 @@ import java.sql.ResultSet;
 import java.sql.RowIdLifetime;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -50,6 +45,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   private final static Set<String>   SYSTEM_TABLES = new HashSet<String>(Arrays.asList(new String[] { "OUser", "ORole",
       "OIdentity", "ORIDs", "ORestricted", "OFunction", "OTriggered", "OSchedule" }));
+  protected final static List<String> TABLE_TYPES = Arrays.asList("TABLE", "SYSTEM TABLE");
   private final OrientJdbcConnection connection;
   private final ODatabaseDocument    database;
   private final OMetadata            metadata;
@@ -514,7 +510,8 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
   public String getSQLKeywords() throws SQLException {
 
-    return null;
+    return "@rid,@class,@version,@size,@type,@this,CONTAINS,CONTAINSALL,CONTAINSKEY," +
+            "CONTAINSVALUE,CONTAINSTEXT,MATCHES,TRAVERSE";
   }
 
   public int getSQLStateType() throws SQLException {
@@ -600,7 +597,9 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     OrientJdbcStatement stmt = new OrientJdbcStatement(connection);
 
     List<ODocument> records = new ArrayList<ODocument>();
-    records.add(new ODocument().field("TABLE_TYPE", "TABLE"));
+    for (String tableType : TABLE_TYPES){
+      records.add(new ODocument().field("TABLE_TYPE", tableType));
+    }
 
     ResultSet result = new OrientJdbcResultSet(stmt, records, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY,
         ResultSet.HOLD_CURSORS_OVER_COMMIT);
@@ -612,21 +611,18 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     final Collection<OClass> classes = database.getMetadata().getSchema().getClasses();
     final List<ODocument> records = new ArrayList<ODocument>();
 
+    final List tableTypes = types != null ? Arrays.asList(types) : TABLE_TYPES;
     for (OClass cls : classes) {
       final String className = cls.getName();
-      if (tableNamePattern == null || tableNamePattern.equalsIgnoreCase(className)) {
+      final String type;
+      if (SYSTEM_TABLES.contains(cls.getName()))
+        type = "SYSTEM TABLE";
+      else
+        type = "TABLE";
+      if (tableTypes.contains(type) && (tableNamePattern == null || tableNamePattern.equalsIgnoreCase(className))) {
         final ODocument doc = new ODocument();
         doc.field("TABLE_CAT", (Object) null);
         doc.field("TABLE_SCHEM", (Object) null);
-
-        String type;
-        if (SYSTEM_TABLES.contains(cls.getName()))
-          type = "SYSTEM TABLE";
-          // else if ("memory".equals(database.getClusterType(database.getClusterNameById(cls.getDefaultClusterId()))))
-          // type = "VIEW";
-        else
-          type = "TABLE";
-
         doc.field("TABLE_TYPE", type);
         doc.field("TABLE_NAME", className);
         doc.field("REMARKS", (Object) null);
