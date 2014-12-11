@@ -174,6 +174,15 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
     convert((String) iKey);
     return super.get(iKey);
   }
+  
+  public Object getOrDefault(Object key, Object defaultValue) 
+  {
+	 String keyAsString = String.valueOf(key);
+	 Object valueToReturn;
+     return (((valueToReturn = this.get(keyAsString)) != null) || this.containsKey(keyAsString))
+			  ? valueToReturn
+			  : defaultValue;
+  }
 
   @Override
   public Set<Object> keySet() {
