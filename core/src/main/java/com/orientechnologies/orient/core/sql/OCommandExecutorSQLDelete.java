@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -31,7 +27,12 @@ import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
@@ -43,6 +44,10 @@ import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 /**
  * SQL UPDATE command.
  * 
@@ -53,6 +58,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
     OCommandResultListener {
   public static final String   NAME            = "DELETE FROM";
   public static final String   KEYWORD_DELETE  = "DELETE";
+  public static final String   KEYWORD_UNSAFE  = "UNSAFE";
   private static final String  VALUE_NOT_FOUND = "_not_found_";
 
   private OSQLQuery<ODocument> query;
@@ -63,6 +69,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
   private List<ORecord>        allDeletedRecords;
 
   private OSQLFilter           compiledFilter;
+  private boolean              unsafe          = false;
 
   public OCommandExecutorSQLDelete() {
   }
@@ -75,6 +82,12 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 
     query = null;
     recordCount = 0;
+
+    if (parserTextUpperCase.endsWith(KEYWORD_UNSAFE)) {
+      unsafe = true;
+      parserText = parserText.substring(0, parserText.length() - KEYWORD_UNSAFE.length() - 1);
+      parserTextUpperCase = parserTextUpperCase.substring(0, parserTextUpperCase.length() - KEYWORD_UNSAFE.length() - 1);
+    }
 
     parserRequiredKeyword(OCommandExecutorSQLDelete.KEYWORD_DELETE);
     parserRequiredKeyword(OCommandExecutorSQLDelete.KEYWORD_FROM);
@@ -95,6 +108,8 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
             lockStrategy = parseLock();
           else if (word.equals(KEYWORD_RETURN))
             returning = parseReturn();
+          else if (word.equals(KEYWORD_UNSAFE))
+            unsafe = true;
           else if (word.equalsIgnoreCase(KEYWORD_WHERE))
             compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition()),
                 getContext(), KEYWORD_WHERE);
@@ -228,7 +243,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
   }
 
   /**
-   * Delete the current record.
+   * Deletes the current record.
    */
   public boolean result(final Object iRecord) {
     final ORecordAbstract record = (ORecordAbstract) iRecord;
@@ -240,7 +255,26 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 
         // RESET VERSION TO DISABLE MVCC AVOIDING THE CONCURRENT EXCEPTION IF LOCAL CACHE IS NOT UPDATED
         record.getRecordVersion().disable();
-        record.delete();
+
+        if (!unsafe && record instanceof ODocument) {
+          // CHECK IF ARE VERTICES OR EDGES
+          final OClass cls = ((ODocument) record).getSchemaClass();
+          if (cls != null) {
+            if (cls.isSubClassOf("V"))
+              // FOUND VERTEX
+              throw new OCommandExecutionException(
+                  "'DELETE' command cannot delete Vertices. Use 'DELETE VERTEX' command instead, or apply the 'UNSAFE' keyword to force it");
+            else if (cls.isSubClassOf("E"))
+              // FOUND EDGE
+              throw new OCommandExecutionException(
+                  "'DELETE' command cannot delete Edges. Use 'DELETE EDGE' command instead, or apply the 'UNSAFE' keyword to force it");
+            else
+              record.delete();
+          } else
+            record.delete();
+        } else
+          record.delete();
+
         recordCount++;
         return true;
       }
@@ -257,7 +291,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
   }
 
   public String getSyntax() {
-    return "DELETE FROM <Class>|RID|cluster:<cluster> [LOCK <NONE|RECORD>] [RETURNING <COUNT|BEFORE>] [WHERE <condition>*]";
+    return "DELETE FROM <Class>|RID|cluster:<cluster> [UNSAFE] [LOCK <NONE|RECORD>] [RETURNING <COUNT|BEFORE>] [WHERE <condition>*]";
   }
 
   @Override
