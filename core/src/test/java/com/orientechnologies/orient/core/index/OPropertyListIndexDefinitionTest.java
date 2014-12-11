@@ -15,7 +15,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * @author LomakiA <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author LomakiA <a href="mailto:a.lomakin@orientechnologies.com">Andrey Lomakin</a>
  * @since 20.12.11
  */
 @Test

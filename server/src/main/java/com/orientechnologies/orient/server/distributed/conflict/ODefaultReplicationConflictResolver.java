@@ -1,26 +1,30 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.server.distributed.conflict;
 
 import java.util.Date;
 import java.util.List;
 
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -45,7 +49,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 
 /**
  * Default conflict resolver.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODefaultReplicationConflictResolver implements OReplicationConflictResolver {
@@ -64,7 +68,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
   private boolean                   ignoreIfMergeOk;
   private boolean                   latestAlwaysWin;
 
-  private ODatabaseComplex<?>       database;
+  private ODatabase<?>              database;
   private OIndex<?>                 index                      = null;
   private OServer                   serverInstance;
   private ODistributedServerManager cluster;
@@ -82,7 +86,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
 
       final OServerUserConfiguration replicatorUser = serverInstance.getUser(ODistributedAbstractPlugin.REPLICATOR_USER);
 
-      final ODatabaseRecordInternal threadDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      final ODatabaseDocumentInternal threadDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
       if (threadDb != null && !threadDb.isClosed() && threadDb.getStorage().getName().equals(iDatabaseName))
         database = threadDb;
       else
@@ -206,7 +210,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
 
   @Override
   public ODocument getAllConflicts() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) database);
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseDocumentInternal) database);
     final List<OIdentifiable> entries = database.query(new OSQLSynchQuery<OIdentifiable>("select from "
         + DISTRIBUTED_CONFLICT_CLASS));
 
@@ -228,7 +232,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
 
   @Override
   public ODocument reset() {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) database);
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseDocumentInternal) database);
     final int deleted = (Integer) database.command(new OSQLSynchQuery<OIdentifiable>("delete from " + DISTRIBUTED_CONFLICT_CLASS))
         .execute();
     return new ODocument().field("result", deleted);
@@ -236,12 +240,12 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
 
   /**
    * Searches for a conflict by RID.
-   * 
+   *
    * @param iRID
    *          RID to search
    */
   public boolean existConflictsForRecord(final ORecordId iRID) {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) database);
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseDocumentInternal) database);
     if (index == null) {
       ODistributedServerLog.warn(this, cluster.getLocalNodeName(), null, DIRECTION.NONE,
           "Index against %s is not available right now, searches will be slower", DISTRIBUTED_CONFLICT_CLASS);
@@ -260,7 +264,7 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
   }
 
   protected ODocument createConflictDocument(final byte iOperation, final ORecordId iRid, final String iServerNode) {
-    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseRecordInternal) database);
+    ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseDocumentInternal) database);
 
     final ODocument doc = new ODocument(DISTRIBUTED_CONFLICT_CLASS);
     doc.field(FIELD_OPERATION, iOperation);

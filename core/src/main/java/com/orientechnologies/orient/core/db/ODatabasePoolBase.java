@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.concur.resource.OReentrantResourcePool;
@@ -83,7 +87,7 @@ public abstract class ODatabasePoolBase<DB extends ODatabaseInternal> extends Th
                 if (iValue.getStorage().isClosed())
                   // STORAGE HAS BEEN CLOSED: REOPEN IT
                   iValue.getStorage().open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1], null);
-                else if (!((ODatabaseComplex<?>) iValue).getUser().checkPassword((String) iAdditionalArgs[1]))
+                else if (!iValue.getUser().checkPassword((String) iAdditionalArgs[1]))
                   throw new OSecurityAccessException(iValue.getName(), "User or password not valid for database: '"
                       + iValue.getName() + "'");
 
@@ -138,6 +142,11 @@ public abstract class ODatabasePoolBase<DB extends ODatabaseInternal> extends Th
     setup();
     return dbPool.getMaxConnections(name, userName);
   }
+
+	public int getCreatedInstances(final  String name, final String userName) {
+		setup();
+		return dbPool.getCreatedInstances(name, userName);
+	}
 
   /**
    * Acquires a connection from the pool specifying options. If the pool is empty, then the caller thread will wait for it.

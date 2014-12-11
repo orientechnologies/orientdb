@@ -35,15 +35,15 @@ import java.util.Set;
 
 @Test(groups = "security")
 public class RestrictedTest extends DocumentDBBaseTest {
-  private ODocument           adminRecord;
-  private ODocument           writerRecord;
+  private ODocument adminRecord;
+  private ODocument writerRecord;
 
-	@Parameters(value = "url")
-	public RestrictedTest(@Optional String url) {
-		super(url);
-	}
+  @Parameters(value = "url")
+  public RestrictedTest(@Optional String url) {
+    super(url);
+  }
 
-	@Test
+  @Test
   public void testCreateRestrictedClass() {
     database.open("admin", "admin");
     database.getMetadata().getSchema().createClass("CMSDocument", database.getMetadata().getSchema().getClass("ORestricted"));
@@ -263,6 +263,35 @@ public class RestrictedTest extends DocumentDBBaseTest {
 
     }
 
+  }
+
+  public void testUpdateRestricted() {
+    database.open("admin", "admin");
+    database.getMetadata().getSchema()
+        .createClass("TestUpdateRestricted", database.getMetadata().getSchema().getClass("ORestricted"));
+    adminRecord = new ODocument("TestUpdateRestricted").field("user", "admin").save();
+
+    database.close();
+
+    database.open("writer", "writer");
+    List<ODocument> result = database.query(new OSQLSynchQuery<Object>("select from TestUpdateRestricted"));
+    Assert.assertTrue(result.isEmpty());
+
+    database.close();
+
+    database.open("admin", "admin");
+    database.command(new OCommandSQL("update TestUpdateRestricted content {\"data\":\"My Test\"}")).execute();
+    result = database.query(new OSQLSynchQuery<ODocument>("select from TestUpdateRestricted"));
+
+    Assert.assertEquals(result.size(), 1);
+
+    final ODocument doc = result.get(0);
+    Assert.assertEquals(doc.field("data"), "My Test");
+    database.close();
+
+    database.open("writer", "writer");
+    result = database.query(new OSQLSynchQuery<Object>("select from TestUpdateRestricted"));
+    Assert.assertTrue(result.isEmpty());
   }
 
   @BeforeMethod

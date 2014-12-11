@@ -22,7 +22,7 @@
 
     <groupId>com.orientechnologies</groupId>
     <artifactId>orientdb-parent</artifactId>
-    <version>2.0-M2-SNAPSHOT</version>
+    <version>2.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>OrientDB</name>
@@ -189,9 +189,10 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>2.8</version>
-                    <configuration>I
-                        <maxmemory>1G</maxmemory>
+                    <version>2.9.1</version>
+                    <configuration>
+                        <additionalparam>-Xdoclint:none</additionalparam>
+                        <maxmemory>2G</maxmemory>
                     </configuration>
                 </plugin>
 
@@ -284,6 +285,13 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefire.version}</version>
+                <configuration>
+                  <systemPropertyVariables>
+                    <!-- SET THIS TO AVOID ASKING FOR PASSWORD DURING TESTS -->
+                    <propertyName>ORIENTDB_ROOT_PASSWORD</propertyName>
+                    <propertyName>ORIENTDB_NODE_NAME</propertyName>
+                  </systemPropertyVariables>
+                </configuration>
             </plugin>
 
             <plugin>
@@ -453,6 +461,7 @@
                         <artifactId>maven-compiler-plugin</artifactId>
                         <version>2.3.2</version>
                         <configuration>
+                            <compilerArgument>-XDignore.symbol.file</compilerArgument>
                             <source>${maven.compiler.source}</source>
                             <target>${maven.compiler.target}</target>
                             <showDeprecation>true</showDeprecation>
@@ -503,7 +512,8 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <executions>
+                            <version>1.4</version>
+                            <executions>
                             <execution>
                                 <id>sign-artifacts</id>
                                 <phase>verify</phase>

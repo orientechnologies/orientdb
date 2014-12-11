@@ -16,8 +16,9 @@
 package com.orientechnologies.orient.core.metadata.schema.clusterselection;
 
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Returns the cluster selecting the most empty between all configured clusters.
@@ -30,13 +31,13 @@ public class OBalancedClusterSelectionStrategy implements OClusterSelectionStrat
   protected long              lastCount        = -1;
   protected int               smallerClusterId = -1;
 
-  public int getCluster(final OClass iClass) {
+  public int getCluster(final OClass iClass, final ODocument doc) {
     final int[] clusters = iClass.getClusterIds();
     if (clusters.length == 1)
       // ONLY ONE: RETURN THE FIRST ONE
       return clusters[0];
 
-    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     if (db == null)
       return clusters[0];
 

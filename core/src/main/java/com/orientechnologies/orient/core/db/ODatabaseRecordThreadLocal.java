@@ -1,31 +1,50 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
-public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseRecordInternal> {
+public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseDocumentInternal> {
 
-  public static ODatabaseRecordThreadLocal INSTANCE = new ODatabaseRecordThreadLocal();
+  public static volatile ODatabaseRecordThreadLocal INSTANCE = new ODatabaseRecordThreadLocal();
+
+  static {
+    Orient.instance().registerListener(new OOrientListenerAbstract() {
+      @Override
+      public void onShutdown() {
+        INSTANCE = null;
+      }
+
+      @Override
+      public void onStartup() {
+        if (INSTANCE == null)
+          INSTANCE = new ODatabaseRecordThreadLocal();
+      }
+    });
+  }
 
   @Override
-  public ODatabaseRecordInternal get() {
-    ODatabaseRecordInternal db = super.get();
+  public ODatabaseDocumentInternal get() {
+    ODatabaseDocumentInternal db = super.get();
     if (db == null) {
       if (Orient.instance().getDatabaseThreadFactory() == null) {
         throw new ODatabaseException(
@@ -49,11 +68,11 @@ public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseRecordInter
   }
 
   @Override
-  public void set(final ODatabaseRecordInternal value) {
+  public void set(final ODatabaseDocumentInternal value) {
     super.set(value);
   }
 
-  public ODatabaseRecordInternal getIfDefined() {
+  public ODatabaseDocumentInternal getIfDefined() {
     return super.get();
   }
 

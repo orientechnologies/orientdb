@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.cache;
 
 import java.util.HashSet;
@@ -46,27 +50,6 @@ public abstract class OAbstractRecordCache {
     underlying = impl;
   }
 
-  /**
-   * Tell whether cache is enabled
-   * 
-   * @return {@code true} if cache enabled at call time, otherwise - {@code false}
-   */
-  public boolean isEnabled() {
-    return underlying.isEnabled();
-  }
-
-  /**
-   * Switch cache state between enabled and disabled
-   * 
-   * @param enable
-   *          pass {@code true} to enable, otherwise - {@code false}
-   */
-  public void setEnable(final boolean enable) {
-    if (enable)
-      underlying.enable();
-    else
-      underlying.disable();
-  }
 
   /**
    * Remove record with specified identifier
@@ -123,14 +106,6 @@ public abstract class OAbstractRecordCache {
     return underlying.size();
   }
 
-  /**
-   * Maximum number of items cache should keep
-   * 
-   * @return non-negative integer
-   */
-  public int getMaxSize() {
-    return underlying.limit();
-  }
 
   /**
    * All operations running at cache initialization stage
@@ -139,28 +114,12 @@ public abstract class OAbstractRecordCache {
     underlying.startup();
 
     Orient.instance().getProfiler()
-        .registerHookValue(profilerPrefix + "enabled", "Cache enabled", METRIC_TYPE.ENABLED, new OProfilerHookValue() {
-          public Object getValue() {
-            return isEnabled();
-          }
-        }, profilerMetadataPrefix + "enabled");
-
-    Orient.instance().getProfiler()
         .registerHookValue(profilerPrefix + "current", "Number of entries in cache", METRIC_TYPE.SIZE, new OProfilerHookValue() {
           public Object getValue() {
             return getSize();
           }
         }, profilerMetadataPrefix + "current");
 
-    Orient
-        .instance()
-        .getProfiler()
-        .registerHookValue(profilerPrefix + "max", "Maximum number of entries in cache", METRIC_TYPE.SIZE,
-            new OProfilerHookValue() {
-              public Object getValue() {
-                return getMaxSize();
-              }
-            }, profilerMetadataPrefix + "max");
   }
 
   /**

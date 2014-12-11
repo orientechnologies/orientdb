@@ -1,19 +1,28 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.sql.filter;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.regex.Pattern;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.collate.OCollate;
@@ -34,27 +43,17 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
-
 /**
  * Run-time query condition evaluator.
- * 
+ *
  * @author Luca Garulli
- * 
  */
 public class OSQLFilterCondition {
   private static final String NULL_VALUE = "null";
-  protected Object            left;
-  protected OQueryOperator    operator;
-  protected Object            right;
+  protected Object         left;
+  protected OQueryOperator operator;
+  protected Object         right;
+  protected boolean inBraces = false;
 
   public OSQLFilterCondition(final Object iLeft, final OQueryOperator iOperator) {
     this.left = iLeft;
@@ -69,11 +68,13 @@ public class OSQLFilterCondition {
 
   public Object evaluate(final OIdentifiable iCurrentRecord, final ODocument iCurrentResult, final OCommandContext iContext) {
     // EXECUTE SUB QUERIES ONCE
-    if (left instanceof OSQLQuery<?>)
+    if (left instanceof OSQLQuery<?>) {
       left = ((OSQLQuery<?>) left).setContext(iContext).execute();
+    }
 
-    if (right instanceof OSQLQuery<?>)
+    if (right instanceof OSQLQuery<?>) {
       right = ((OSQLQuery<?>) right).setContext(iContext).execute();
+    }
 
     Object l = evaluate(iCurrentRecord, iCurrentResult, left, iContext);
     Object r = evaluate(iCurrentRecord, iCurrentResult, right, iContext);
@@ -88,8 +89,10 @@ public class OSQLFilterCondition {
 
     if (operator == null) {
       if (l == null)
-        // THE LEFT RETURNED NULL
+      // THE LEFT RETURNED NULL
+      {
         return Boolean.FALSE;
+      }
 
       // UNITARY OPERATOR: JUST RETURN LEFT RESULT
       return l;
@@ -106,29 +109,34 @@ public class OSQLFilterCondition {
   }
 
   public OCollate getCollate() {
-    if (left instanceof OSQLFilterItemField)
+    if (left instanceof OSQLFilterItemField) {
       return ((OSQLFilterItemField) left).getCollate();
-    else if (right instanceof OSQLFilterItemField)
+    } else if (right instanceof OSQLFilterItemField) {
       return ((OSQLFilterItemField) right).getCollate();
+    }
     return null;
   }
 
   public ORID getBeginRidRange() {
-    if (operator == null)
-      if (left instanceof OSQLFilterCondition)
+    if (operator == null) {
+      if (left instanceof OSQLFilterCondition) {
         return ((OSQLFilterCondition) left).getBeginRidRange();
-      else
+      } else {
         return null;
+      }
+    }
 
     return operator.getBeginRidRange(left, right);
   }
 
   public ORID getEndRidRange() {
-    if (operator == null)
-      if (left instanceof OSQLFilterCondition)
+    if (operator == null) {
+      if (left instanceof OSQLFilterCondition) {
         return ((OSQLFilterCondition) left).getEndRidRange();
-      else
+      } else {
         return null;
+      }
+    }
 
     return operator.getEndRidRange(left, right);
   }
@@ -141,13 +149,16 @@ public class OSQLFilterCondition {
   }
 
   private void extractInvolvedFields(Object left, List<String> list) {
-    if (left != null)
+    if (left != null) {
       if (left instanceof OSQLFilterItemField) {
-        if (((OSQLFilterItemField) left).isFieldChain())
+        if (((OSQLFilterItemField) left).isFieldChain()) {
           list.add(((OSQLFilterItemField) left).getFieldChain().getItemName(
               ((OSQLFilterItemField) left).getFieldChain().getItemCount() - 1));
-      } else if (left instanceof OSQLFilterCondition)
+        }
+      } else if (left instanceof OSQLFilterCondition) {
         ((OSQLFilterCondition) left).getInvolvedFields(list);
+      }
+    }
   }
 
   @Override
@@ -160,11 +171,13 @@ public class OSQLFilterCondition {
       buffer.append(' ');
       buffer.append(operator);
       buffer.append(' ');
-      if (right instanceof String)
+      if (right instanceof String) {
         buffer.append('\'');
+      }
       buffer.append(right);
-      if (right instanceof String)
+      if (right instanceof String) {
         buffer.append('\'');
+      }
       buffer.append(')');
     }
 
@@ -192,37 +205,44 @@ public class OSQLFilterCondition {
   }
 
   protected Integer getInteger(Object iValue) {
-    if (iValue == null)
+    if (iValue == null) {
       return null;
+    }
 
     final String stringValue = iValue.toString();
 
-    if (NULL_VALUE.equals(stringValue))
+    if (NULL_VALUE.equals(stringValue)) {
       return null;
-    if (OSQLHelper.DEFINED.equals(stringValue))
+    }
+    if (OSQLHelper.DEFINED.equals(stringValue)) {
       return null;
+    }
 
-    if (OStringSerializerHelper.contains(stringValue, '.') || OStringSerializerHelper.contains(stringValue, ','))
+    if (OStringSerializerHelper.contains(stringValue, '.') || OStringSerializerHelper.contains(stringValue, ',')) {
       return (int) Float.parseFloat(stringValue);
-    else
+    } else {
       return stringValue.length() > 0 ? new Integer(stringValue) : new Integer(0);
+    }
   }
 
   protected Float getFloat(final Object iValue) {
-    if (iValue == null)
+    if (iValue == null) {
       return null;
+    }
 
     final String stringValue = iValue.toString();
 
-    if (NULL_VALUE.equals(stringValue))
+    if (NULL_VALUE.equals(stringValue)) {
       return null;
+    }
 
     return stringValue.length() > 0 ? new Float(stringValue) : new Float(0);
   }
 
   protected Date getDate(final Object value) {
-    if (value == null)
+    if (value == null) {
       return null;
+    }
 
     final OStorageConfiguration config = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration();
 
@@ -234,20 +254,25 @@ public class OSQLFilterCondition {
 
     String stringValue = value.toString();
 
-    if (NULL_VALUE.equals(stringValue))
+    if (NULL_VALUE.equals(stringValue)) {
       return null;
+    }
 
-    if (stringValue.length() <= 0)
+    if (stringValue.length() <= 0) {
       return null;
+    }
 
-    if (Pattern.matches("^\\d+$", stringValue))
+    if (Pattern.matches("^\\d+$", stringValue)) {
       return new Date(Long.valueOf(stringValue).longValue());
+    }
 
     SimpleDateFormat formatter = config.getDateFormatInstance();
 
     if (stringValue.length() > config.dateFormat.length())
-      // ASSUMES YOU'RE USING THE DATE-TIME FORMATTE
+    // ASSUMES YOU'RE USING THE DATE-TIME FORMATTE
+    {
       formatter = config.getDateTimeFormatInstance();
+    }
 
     try {
       return formatter.parse(stringValue);
@@ -274,16 +299,19 @@ public class OSQLFilterCondition {
     if (iValue instanceof OSQLFilterItem) {
       if (iCurrentResult != null) {
         final Object v = ((OSQLFilterItem) iValue).getValue(iCurrentResult, iCurrentResult, iContext);
-        if (v != null)
+        if (v != null) {
           return v;
+        }
       }
 
       return ((OSQLFilterItem) iValue).getValue(iCurrentRecord, iCurrentResult, iContext);
     }
 
     if (iValue instanceof OSQLFilterCondition)
-      // NESTED CONDITION: EVALUATE IT RECURSIVELY
+    // NESTED CONDITION: EVALUATE IT RECURSIVELY
+    {
       return ((OSQLFilterCondition) iValue).evaluate(iCurrentRecord, iCurrentResult, iContext);
+    }
 
     if (iValue instanceof OSQLFunctionRuntime) {
       // STATELESS FUNCTION: EXECUTE IT
@@ -298,10 +326,11 @@ public class OSQLFilterCondition {
       final ArrayList<Object> result = new ArrayList<Object>(OMultiValue.getSize(iValue));
 
       for (final Object value : multiValue) {
-        if (value instanceof OSQLFilterItem)
+        if (value instanceof OSQLFilterItem) {
           result.add(((OSQLFilterItem) value).getValue(iCurrentRecord, iCurrentResult, iContext));
-        else
+        } else {
           result.add(value);
+        }
       }
       return result;
     }
@@ -321,8 +350,10 @@ public class OSQLFilterCondition {
       r = collate.transform(r);
 
       if (l != oldL || r != oldR)
-        // CHANGED
+      // CHANGED
+      {
         result = new Object[] { l, r };
+      }
     }
 
     try {
@@ -334,27 +365,28 @@ public class OSQLFilterCondition {
       // NOT_NULL OPERATOR
       else if ((r instanceof String && r.equals(OSQLHelper.NOT_NULL)) || (l instanceof String && l.equals(OSQLHelper.NOT_NULL))) {
         result = null;
-      }
-
-      else if (l != null && r != null && !l.getClass().isAssignableFrom(r.getClass())
+      } else if (l != null && r != null && !l.getClass().isAssignableFrom(r.getClass())
           && !r.getClass().isAssignableFrom(l.getClass()))
-        // INTEGERS
+      // INTEGERS
+      {
         if (r instanceof Integer && !(l instanceof Number || l instanceof Collection)) {
-          if (l instanceof String && ((String) l).indexOf('.') > -1)
+          if (l instanceof String && ((String) l).indexOf('.') > -1) {
             result = new Object[] { new Float((String) l).intValue(), r };
-          else if (l instanceof Date)
+          } else if (l instanceof Date) {
             result = new Object[] { ((Date) l).getTime(), r };
-          else if (!(l instanceof OQueryRuntimeValueMulti) && !(l instanceof Collection<?>) && !l.getClass().isArray()
-              && !(l instanceof Map))
+          } else if (!(l instanceof OQueryRuntimeValueMulti) && !(l instanceof Collection<?>) && !l.getClass().isArray()
+              && !(l instanceof Map)) {
             result = new Object[] { getInteger(l), r };
+          }
         } else if (l instanceof Integer && !(r instanceof Number || r instanceof Collection)) {
-          if (r instanceof String && ((String) r).indexOf('.') > -1)
+          if (r instanceof String && ((String) r).indexOf('.') > -1) {
             result = new Object[] { l, new Float((String) r).intValue() };
-          else if (r instanceof Date)
+          } else if (r instanceof Date) {
             result = new Object[] { l, ((Date) r).getTime() };
-          else if (!(r instanceof OQueryRuntimeValueMulti) && !(r instanceof Collection<?>) && !r.getClass().isArray()
-              && !(r instanceof Map))
+          } else if (!(r instanceof OQueryRuntimeValueMulti) && !(r instanceof Collection<?>) && !r.getClass().isArray()
+              && !(r instanceof Map)) {
             result = new Object[] { l, getInteger(r) };
+          }
         }
 
         // DATES
@@ -365,10 +397,11 @@ public class OSQLFilterCondition {
         }
 
         // FLOATS
-        else if (r instanceof Float && !(l instanceof Float || l instanceof Collection))
+        else if (r instanceof Float && !(l instanceof Float || l instanceof Collection)) {
           result = new Object[] { getFloat(l), r };
-        else if (l instanceof Float && !(r instanceof Float || r instanceof Collection))
+        } else if (l instanceof Float && !(r instanceof Float || r instanceof Collection)) {
           result = new Object[] { l, getFloat(r) };
+        }
 
         // RIDS
         else if (r instanceof ORID && l instanceof String && !l.equals(OSQLHelper.NOT_NULL)) {
@@ -376,6 +409,7 @@ public class OSQLFilterCondition {
         } else if (l instanceof ORID && r instanceof String && !r.equals(OSQLHelper.NOT_NULL)) {
           result = new Object[] { l, new ORecordId((String) r) };
         }
+      }
     } catch (Exception e) {
       // JUST IGNORE CONVERSION ERRORS
     }

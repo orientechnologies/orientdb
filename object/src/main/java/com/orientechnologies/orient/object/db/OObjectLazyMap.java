@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.object.db;
 
 import java.io.Serializable;
@@ -24,7 +28,6 @@ import java.util.Set;
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.object.OLazyObjectMapInterface;
 import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -234,8 +237,8 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
     convertAll();
   }
 
-  public void detachAll(boolean nonProxiedInstance) {
-    convertAndDetachAll(nonProxiedInstance);
+  public void detachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached) {
+    convertAndDetachAll(nonProxiedInstance, alreadyDetached);
 
   }
 
@@ -261,13 +264,13 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
     converted = true;
   }
 
-  protected void convertAndDetachAll(boolean nonProxiedInstance) {
+  protected void convertAndDetachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached) {
     if (converted || !convertToRecord)
       return;
 
     for (java.util.Map.Entry<Object, OIdentifiable> e : underlying.entrySet()) {
       Object o = getDatabase().getUserObjectByRecord((ORecord) ((OIdentifiable) e.getValue()).getRecord(), null);
-      o = ((OObjectDatabaseTx) getDatabase()).detachAll(o, nonProxiedInstance);
+      o = ((OObjectDatabaseTx) getDatabase()).detachAll(o, nonProxiedInstance, alreadyDetached);
       super.put(e.getKey(), o);
     }
 
@@ -276,6 +279,6 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
 
   @SuppressWarnings("unchecked")
   protected ODatabasePojoAbstract<TYPE> getDatabase() {
-    return (ODatabasePojoAbstract<TYPE>) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner();
+    return OLazyCollectionUtil.getDatabase();
   }
 }

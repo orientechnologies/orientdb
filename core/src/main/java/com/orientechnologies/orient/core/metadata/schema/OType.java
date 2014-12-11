@@ -1,20 +1,25 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.ParseException;
@@ -42,7 +47,6 @@ import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -50,7 +54,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
 /**
- * Generic representation of a type.<br/>
+ * Generic representation of a type.<br>
  * allowAssignmentFrom accepts any class, but Array.class means that the type accepts generic Arrays.
  * 
  * @author Luca Garulli
@@ -75,7 +79,7 @@ public enum OType {
 
   BINARY("Binary", 8, byte[].class, new Class<?>[] { byte[].class }),
 
-  EMBEDDED("Embedded", 9, Object.class, new Class<?>[] { OSerializableStream.class, ODocumentSerializable.class }),
+  EMBEDDED("Embedded", 9, Object.class, new Class<?>[] { ODocumentSerializable.class, OSerializableStream.class }),
 
   EMBEDDEDLIST("EmbeddedList", 10, List.class, new Class<?>[] { List.class, OMultiCollectionIterator.class }),
 
@@ -97,7 +101,7 @@ public enum OType {
 
   DATE("Date", 19, Date.class, new Class<?>[] { Number.class }),
 
-  CUSTOM("Custom", 20, OSerializableStream.class, new Class<?>[] { OSerializableStream.class }),
+  CUSTOM("Custom", 20, OSerializableStream.class, new Class<?>[] { OSerializableStream.class, Serializable.class }),
 
   DECIMAL("Decimal", 21, BigDecimal.class, new Class<?>[] { BigDecimal.class, Number.class }),
 
@@ -702,11 +706,15 @@ public enum OType {
 
   public boolean isMultiValue() {
     return this == EMBEDDEDLIST || this == EMBEDDEDMAP || this == EMBEDDEDSET || this == LINKLIST || this == LINKMAP
-        || this == LINKSET;
+        || this == LINKSET || this == LINKBAG;
   }
 
   public boolean isLink() {
-    return this == LINK || this == LINKSET || this == LINKLIST || this == LINKMAP;
+    return this == LINK || this == LINKSET || this == LINKLIST || this == LINKMAP || this == LINKBAG;
+  }
+  
+  public boolean isEmbedded() {
+	  return this == EMBEDDED || this == EMBEDDEDLIST || this == EMBEDDEDMAP || this == EMBEDDEDSET;
   }
 
   public Class<?> getDefaultJavaType() {

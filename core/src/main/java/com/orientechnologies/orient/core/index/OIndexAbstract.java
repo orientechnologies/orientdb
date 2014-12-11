@@ -1,29 +1,38 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.core.index;
 
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+
 import com.orientechnologies.common.concur.lock.OModificationLock;
+import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
@@ -42,21 +51,8 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
-
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
 
 /**
  * Handles indexing when records change.
@@ -65,31 +61,32 @@ import java.util.Set;
  * 
  */
 public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal implements OIndexInternal<T> {
-  protected static final String        CONFIG_MAP_RID   = "mapRid";
-  protected static final String        CONFIG_CLUSTERS  = "clusters";
-  protected final OModificationLock    modificationLock = new OModificationLock();
-  protected final OIndexEngine<T>      indexEngine;
-  private final String                 databaseName;
-  protected String                     type;
-  protected String                     valueContainerAlgorithm;
+  protected static final String              CONFIG_MAP_RID   = "mapRid";
+  protected static final String              CONFIG_CLUSTERS  = "clusters";
+  protected final OModificationLock          modificationLock = new OModificationLock();
+  protected final OIndexEngine<T>            indexEngine;
+  private final String                       databaseName;
+  protected String                           type;
+  protected String                           valueContainerAlgorithm;
+  protected final ONewLockManager<Object>    keyLockManager   = new ONewLockManager<Object>();
   @ODocumentInstance
-  protected ODocument                  configuration;
-  protected ODocument                  metadata;
-  private String                       name;
-  private String                       algorithm;
-  private Set<String>                  clustersToIndex  = new HashSet<String>();
+  protected ODocument                        configuration;
+  protected ODocument                        metadata;
+  private String                             name;
+  private String                             algorithm;
+  private Set<String>                        clustersToIndex  = new HashSet<String>();
 
-  private volatile OIndexDefinition    indexDefinition;
-  private volatile boolean             rebuilding       = false;
+  private volatile OIndexDefinition          indexDefinition;
+  private volatile boolean                   rebuilding       = false;
 
-  private Thread                       rebuildThread    = null;
+  private Thread                             rebuildThread    = null;
 
-  private ThreadLocal<IndexTxSnapshot> txSnapshot       = new ThreadLocal<IndexTxSnapshot>() {
-                                                          @Override
-                                                          protected IndexTxSnapshot initialValue() {
-                                                            return new IndexTxSnapshot();
-                                                          }
-                                                        };
+  private final ThreadLocal<IndexTxSnapshot> txSnapshot       = new ThreadLocal<IndexTxSnapshot>() {
+                                                                @Override
+                                                                protected IndexTxSnapshot initialValue() {
+                                                                  return new IndexTxSnapshot();
+                                                                }
+                                                              };
 
   protected static final class RemovedValue {
     public static final RemovedValue INSTANCE = new RemovedValue();
@@ -228,7 +225,13 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
       updateConfiguration();
     } catch (Exception e) {
-      indexEngine.delete();
+      OLogManager.instance().error(this, "Exception during index %s creation.", e, name);
+
+      try {
+        indexEngine.delete();
+      } catch (Exception ex) {
+        OLogManager.instance().error(this, "Exception during index %s deletion.", ex, name);
+      }
 
       if (e instanceof OIndexException)
         throw (OIndexException) e;
@@ -261,7 +264,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
         indexEngine.load(rid, name, indexDefinition, determineValueSerializer(), isAutomatic());
       } catch (Exception e) {
         if (onCorruptionRepairDatabase(null, "load", "Index will be rebuilt")) {
-          if (isAutomatic() && getStorage() instanceof OStorageEmbedded)
+          if (isAutomatic() && getStorage() instanceof OAbstractPaginatedStorage)
             // AUTOMATIC REBUILD IT
             OLogManager.instance().warn(this, "Cannot load index '%s' from storage (rid=%s): rebuilt it from scratch", getName(),
                 rid);
@@ -374,7 +377,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
         removeValuesContainer();
 
-        int documentNum = 0;
+        long documentNum = 0;
         long documentTotal = 0;
 
         for (final String cluster : clustersToIndex)
@@ -430,17 +433,57 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
     key = getCollatingValue(key);
 
-    modificationLock.requestModificationLock();
+    final ODatabase database = getDatabase();
+    final boolean txIsActive = database.getTransaction().isActive();
+
+    if (txIsActive)
+      keyLockManager.acquireSharedLock(key);
     try {
-      acquireSharedLock();
+      modificationLock.requestModificationLock();
       try {
-        markStorageDirty();
-        return indexEngine.remove(key);
+        acquireSharedLock();
+        try {
+          markStorageDirty();
+          return indexEngine.remove(key);
+        } finally {
+          releaseSharedLock();
+        }
       } finally {
-        releaseSharedLock();
+        modificationLock.releaseModificationLock();
       }
     } finally {
-      modificationLock.releaseModificationLock();
+      if (txIsActive)
+        keyLockManager.releaseSharedLock(key);
+    }
+  }
+
+  @Override
+  public void lockKeysForUpdate(Object... key) {
+    keyLockManager.acquireExclusiveLocksInBatch(key);
+  }
+
+  @Override
+  public void lockKeysForUpdate(Collection<Object> keys) {
+    keyLockManager.acquireExclusiveLocksInBatch(keys);
+  }
+
+  @Override
+  public void releaseKeysForUpdate(Object... key) {
+    if (key == null)
+      return;
+
+    for (Object k : key) {
+      keyLockManager.releaseExclusiveLock(k);
+    }
+  }
+
+  @Override
+  public void releaseKeysForUpdate(Collection<Object> keys) {
+    if (keys == null)
+      return;
+
+    for (Object k : keys) {
+      keyLockManager.releaseExclusiveLock(k);
     }
   }
 
@@ -821,6 +864,12 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
   protected abstract void removeFromSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot);
 
+  @Override
+  public int compareTo(OIndex<T> index) {
+    final String name = index.getName();
+    return this.name.compareTo(name);
+  }
+
   protected void removeFromSnapshot(Object key, Map<Object, Object> snapshot) {
     key = getCollatingValue(key);
     snapshot.put(key, RemovedValue.INSTANCE);
@@ -839,7 +888,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     }
   }
 
-  protected ODatabaseRecordInternal getDatabase() {
+  protected ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
@@ -881,7 +930,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
         documentNum++;
 
         if (iProgressListener != null)
-          iProgressListener.onProgress(this, documentNum, documentNum * 100f / documentTotal);
+          iProgressListener.onProgress(this, documentNum, (float) (documentNum * 100.0 / documentTotal));
       }
     } catch (NoSuchElementException e) {
       // END OF CLUSTER REACHED, IGNORE IT
@@ -944,8 +993,9 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
     final List<ODocument> operations = entry.field("ops");
     if (operations != null) {
       for (final ODocument op : operations) {
+        op.setLazyLoad(false);
         final int operation = (Integer) op.rawField("o");
-        final OIdentifiable value = op.field("v", OType.LINK);
+        final OIdentifiable value = op.field("v");
 
         if (operation == OPERATION.PUT.ordinal())
           putInSnapshot(key, value, snapshot);

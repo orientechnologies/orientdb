@@ -1,17 +1,21 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.core.storage.fs;
 
@@ -21,7 +25,6 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -36,14 +39,14 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * 
- * Header structure:<br/>
- * <br/>
- * +-----------+--------------+---------------+---------------+---------------+<br/>
- * | FILE SIZE | FILLED UP TO | SOFTLY CLOSED | SECURITY CODE | VERSION |<br/>
- * | 8 bytes . | 8 bytes .... | 1 byte ...... | 32 bytes .... | 1 byte....... |<br/>
- * +-----------+--------------+---------------+---------------+---------------+<br/>
- * = 1024 bytes<br/>
- * <br/>
+ * Header structure:<br>
+ * <br>
+ * +-----------+--------------+---------------+---------------+---------------+<br>
+ * | FILE SIZE | FILLED UP TO | SOFTLY CLOSED | SECURITY CODE | VERSION |<br>
+ * | 8 bytes . | 8 bytes .... | 1 byte ...... | 32 bytes .... | 1 byte....... |<br>
+ * +-----------+--------------+---------------+---------------+---------------+<br>
+ * = 1024 bytes<br>
+ * <br>
  */
 public abstract class OAbstractFile implements OFile {
   private FileLock            fileLock;
@@ -119,7 +122,7 @@ public abstract class OAbstractFile implements OFile {
 
   public abstract void writeByte(long iOffset, byte iValue) throws IOException;
 
-  public abstract void write(long iOffset, byte[] iSourceBuffer) throws IOException;
+  public abstract long write(long iOffset, byte[] iSourceBuffer) throws IOException;
 
   protected abstract void init() throws IOException;
 
@@ -138,7 +141,7 @@ public abstract class OAbstractFile implements OFile {
       if (!osFile.exists())
         throw new FileNotFoundException("File: " + osFile.getAbsolutePath());
 
-      openChannel(osFile.length());
+      openChannel(-1);
 
       OLogManager.instance().debug(this, "Checking file integrity of " + osFile.getName() + "...");
 
@@ -245,6 +248,9 @@ public abstract class OAbstractFile implements OFile {
     acquireWriteLock();
     try {
       try {
+        if (accessFile != null && (accessFile.length() - HEADER_SIZE) < getFileSize())
+          accessFile.setLength(getFileSize() + HEADER_SIZE);
+
         setSoftlyClosed(true);
 
         if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean())
@@ -309,7 +315,6 @@ public abstract class OAbstractFile implements OFile {
         int retryCount = 0;
 
         while (!deleted) {
-          OMemoryWatchDog.freeMemoryForResourceCleanup(100);
           deleted = OFileUtils.delete(osFile);
           retryCount++;
 
@@ -372,9 +377,6 @@ public abstract class OAbstractFile implements OFile {
           OLogManager.instance().debug(this,
               "Cannot open file '" + osFile.getAbsolutePath() + "' because it is locked. Waiting %d ms and retrying %d/%d...",
               LOCK_WAIT_TIME, i, LOCK_MAX_RETRIES);
-
-          // FORCE FINALIZATION TO COLLECT ALL THE PENDING BUFFERS
-          OMemoryWatchDog.freeMemoryForResourceCleanup(LOCK_WAIT_TIME);
         }
 
         if (fileLock == null)
@@ -487,19 +489,16 @@ public abstract class OAbstractFile implements OFile {
           newFileSize = DEFAULT_SIZE;
 
         // GET THE STEP SIZE IN BYTES
-        long stepSizeInBytes = incrementSize > 0 ? incrementSize : -1 * size / 100 * incrementSize;
+        long stepSizeInBytes = Math.max(1024, incrementSize > 0 ? incrementSize : -1 * size / 100 * incrementSize);
 
         // FIND THE BEST SIZE TO ALLOCATE (BASED ON INCREMENT-SIZE)
         while (newFileSize - offset <= iSize) {
           newFileSize += stepSizeInBytes;
-
-          if (newFileSize == 0)
-            // EMPTY FILE: ALLOCATE REQUESTED SIZE ONLY
-            newFileSize = iSize;
-          if (newFileSize > maxSize && maxSize > 0)
-            // TOO BIG: ROUND TO THE MAXIMUM FILE SIZE
-            newFileSize = maxSize;
         }
+
+        if (newFileSize > maxSize && maxSize > 0)
+          // TOO BIG: ROUND TO THE MAXIMUM FILE SIZE
+          newFileSize = maxSize;
 
         setSize(newFileSize);
       }
@@ -635,7 +634,7 @@ public abstract class OAbstractFile implements OFile {
       if (accessFile == null)
         throw new FileNotFoundException(osFile.getAbsolutePath());
 
-      if (accessFile.length() != newSize)
+      if (newSize > -1 && accessFile.length() != newSize)
         accessFile.setLength(newSize);
 
       accessFile.seek(VERSION_OFFSET);
@@ -823,7 +822,7 @@ public abstract class OAbstractFile implements OFile {
 
       final boolean renamed = OFileUtils.renameFile(osFile, newFile);
       if (renamed)
-        osFile = newFile;
+        osFile = new File(newFile.getAbsolutePath());
 
       open();
 

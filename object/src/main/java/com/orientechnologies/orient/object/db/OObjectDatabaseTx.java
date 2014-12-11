@@ -1,27 +1,23 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.object.db;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
-import javassist.util.proxy.Proxy;
-import javassist.util.proxy.ProxyObject;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
@@ -29,14 +25,11 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -47,8 +40,9 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -67,6 +61,14 @@ import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.object.metadata.OMetadataObject;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
+import javassist.util.proxy.Proxy;
+import javassist.util.proxy.ProxyObject;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Object Database instance. It's a wrapper to the class ODatabaseDocumentTx that handles conversion between ODocument instances and
@@ -76,7 +78,7 @@ import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper
  * @author Luca Molino
  */
 @SuppressWarnings("unchecked")
-public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements ODatabaseObject, ODatabaseComplexInternal<Object>,
+public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements ODatabaseObject, ODatabaseInternal<Object>,
     OUserObject2RecordHandler {
 
   public static final String    TYPE = "object";
@@ -89,6 +91,18 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   public OObjectDatabaseTx(final String iURL) {
     super(new ODatabaseDocumentTx(iURL));
+    underlying.setDatabaseOwner(this);
+    init();
+  }
+
+  /**
+   * Constructor to wrap an existing database connect for object connections
+   * 
+   * @param iDatabase
+   *          an open database connection
+   */
+  public OObjectDatabaseTx(ODatabaseDocumentTx iDatabase) {
+    super(iDatabase);
     underlying.setDatabaseOwner(this);
     init();
   }
@@ -114,6 +128,16 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     return (THISDB) this;
   }
 
+
+  @Override
+  public <THISDB extends ODatabase> THISDB open(OToken iToken) {
+    super.open(iToken);
+    entityManager.registerEntityClass(OUser.class);
+    entityManager.registerEntityClass(ORole.class);
+    metadata = new OMetadataObject(underlying.getMetadata());
+    return (THISDB) this;
+  }
+
   @Override
   public OMetadataObject getMetadata() {
     checkOpeness();
@@ -129,7 +153,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    * @see OEntityManager#registerEntityClasses(String)
    */
   public <RET extends Object> RET newInstance(final String iClassName, final Object iEnclosingClass, Object... iArgs) {
-    checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, iClassName);
+    checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_CREATE, iClassName);
+
+    ((ODatabaseDocumentTx) underlying).setCurrentDatabaseInThreadLocal();
 
     try {
       Class<?> entityClass = entityManager.getEntityClass(iClassName);
@@ -155,7 +181,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    */
   public <RET extends Object> RET newInstance(final String iClassName, final Object iEnclosingClass, ODocument iDocument,
       Object... iArgs) {
-    checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_CREATE, iClassName);
+    checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_CREATE, iClassName);
 
     try {
       Class<?> entityClass = entityManager.getEntityClass(iClassName);
@@ -190,17 +216,17 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   public <RET> OObjectIteratorClass<RET> browseClass(final String iClassName, final boolean iPolymorphic) {
     checkOpeness();
-    checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, iClassName);
+    checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iClassName);
 
-    return new OObjectIteratorClass<RET>(this, (ODatabaseRecordAbstract) getUnderlying().getUnderlying(), iClassName, iPolymorphic);
+    return new OObjectIteratorClass<RET>(this, (ODatabaseDocumentTx) getUnderlying(), iClassName, iPolymorphic);
   }
 
   public <RET> OObjectIteratorCluster<RET> browseCluster(final String iClusterName) {
     checkOpeness();
-    checkSecurity(ODatabaseSecurityResources.CLUSTER, ORole.PERMISSION_READ, iClusterName);
+    checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, iClusterName);
 
-    return (OObjectIteratorCluster<RET>) new OObjectIteratorCluster<Object>(this, (ODatabaseRecordAbstract) getUnderlying()
-        .getUnderlying(), getClusterIdByName(iClusterName));
+    return (OObjectIteratorCluster<RET>) new OObjectIteratorCluster<Object>(this, (ODatabaseDocumentTx) getUnderlying(),
+        getClusterIdByName(iClusterName));
   }
 
   public <RET> RET load(final Object iPojo) {
@@ -285,7 +311,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
    * @return the object serialized or with detached data
    */
   public <RET> RET detachAll(final Object iPojo, boolean returnNonProxiedInstance) {
-    return (RET) OObjectEntitySerializer.detachAll(iPojo, this, returnNonProxiedInstance);
+    return detachAll(iPojo, returnNonProxiedInstance, new HashMap<Object, Object>());
   }
 
   public <RET> RET load(final Object iPojo, final String iFetchPlan, final boolean iIgnoreCache) {
@@ -343,7 +369,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   /**
    * Saves an object to the databasein synchronous mode . First checks if the object is new or not. In case it's new a new ODocument
    * is created and bound to the object, otherwise the ODocument is retrieved and updated. The object is introspected using the Java
-   * Reflection to extract the field values. <br/>
+   * Reflection to extract the field values. <br>
    * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
    */
   public <RET> RET save(final Object iContent) {
@@ -353,7 +379,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   /**
    * Saves an object to the database specifying the mode. First checks if the object is new or not. In case it's new a new ODocument
    * is created and bound to the object, otherwise the ODocument is retrieved and updated. The object is introspected using the Java
-   * Reflection to extract the field values. <br/>
+   * Reflection to extract the field values. <br>
    * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
    */
   public <RET> RET save(final Object iContent, OPERATION_MODE iMode, boolean iForceCreate,
@@ -364,7 +390,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   /**
    * Saves an object in synchronous mode to the database forcing a record cluster where to store it. First checks if the object is
    * new or not. In case it's new a new ODocument is created and bound to the object, otherwise the ODocument is retrieved and
-   * updated. The object is introspected using the Java Reflection to extract the field values. <br/>
+   * updated. The object is introspected using the Java Reflection to extract the field values. <br>
    * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
    * 
    * Before to use the specified cluster a check is made to know if is allowed and figures in the configured and the record is valid
@@ -379,7 +405,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   /**
    * Saves an object to the database forcing a record cluster where to store it. First checks if the object is new or not. In case
    * it's new a new ODocument is created and bound to the object, otherwise the ODocument is retrieved and updated. The object is
-   * introspected using the Java Reflection to extract the field values. <br/>
+   * introspected using the Java Reflection to extract the field values. <br>
    * If a multi value (array, collection or map of objects) is passed, then each single object is stored separately.
    * 
    * Before to use the specified cluster a check is made to know if is allowed and figures in the configured and the record is valid
@@ -485,7 +511,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   @Override
-  public ODatabaseComplex<Object> cleanOutRecord(ORID iRID, ORecordVersion iVersion) {
+  public ODatabase<Object> cleanOutRecord(ORID iRID, ORecordVersion iVersion) {
     deleteRecord(iRID, iVersion, true);
     return this;
   }
@@ -521,7 +547,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   @Override
   public ODatabasePojoAbstract<Object> commit(boolean force) throws OTransactionException {
-    ((ODatabaseRecordTx) underlying.getUnderlying()).commit(force);
+    underlying.commit(force);
 
     if (getTransaction().isActive())
       return this;
@@ -555,7 +581,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   @Override
   public ODatabasePojoAbstract<Object> rollback(boolean force) throws OTransactionException {
     // BY PASS DOCUMENT DB
-    ((ODatabaseRecordTx) underlying.getUnderlying()).rollback(force);
+    underlying.rollback(force);
 
     if (!underlying.getTransaction().isActive()) {
       // COPY ALL TX ENTRIES
@@ -635,15 +661,18 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     return new ODocument();
   }
 
-  public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final byte iOperation) {
-    return (DBTYPE) underlying.checkSecurity(iResource, iOperation);
+  public <DBTYPE extends ODatabase> DBTYPE checkSecurity(ORule.ResourceGeneric resourceGeneric, String resourceSpecific,
+      final byte iOperation) {
+    return (DBTYPE) underlying.checkSecurity(resourceGeneric, resourceSpecific, iOperation);
   }
 
-  public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final int iOperation, Object iResourceSpecific) {
+  public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final ORule.ResourceGeneric iResource, final int iOperation,
+      Object iResourceSpecific) {
     return (DBTYPE) underlying.checkSecurity(iResource, iOperation, iResourceSpecific);
   }
 
-  public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final String iResource, final int iOperation, Object... iResourcesSpecific) {
+  public <DBTYPE extends ODatabase> DBTYPE checkSecurity(final ORule.ResourceGeneric iResource, final int iOperation,
+      Object... iResourcesSpecific) {
     return (DBTYPE) underlying.checkSecurity(iResource, iOperation, iResourcesSpecific);
   }
 
@@ -698,14 +727,14 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   @Override
-  public OObjectDatabaseTx setConflictStrategy(final String iStrategyName) {
-    getStorage().setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
+  public OObjectDatabaseTx setConflictStrategy(final ORecordConflictStrategy iResolver) {
+    underlying.setConflictStrategy(iResolver);
     return this;
   }
 
   @Override
-  public OObjectDatabaseTx setConflictStrategy(final ORecordConflictStrategy iResolver) {
-    underlying.setConflictStrategy(iResolver);
+  public OObjectDatabaseTx setConflictStrategy(final String iStrategyName) {
+    getStorage().setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
     return this;
   }
 
@@ -740,6 +769,15 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   public void deregisterClassMethodFilter(final Class<?> iClass) {
     OObjectEntityEnhancer.getInstance().deregisterClassMethodFilter(iClass);
+  }
+
+  @Override
+  public void resetInitialization() {
+    underlying.resetInitialization();
+  }
+
+  protected <RET> RET detachAll(final Object iPojo, boolean returnNonProxiedInstance, Map<Object, Object> alreadyDetached) {
+    return (RET) OObjectEntitySerializer.detachAll(iPojo, this, returnNonProxiedInstance, alreadyDetached);
   }
 
   protected void deleteCascade(final ODocument record) {
@@ -811,5 +849,4 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     }
     return false;
   }
-
 }

@@ -1,17 +1,21 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
@@ -47,7 +51,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 /**
  * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent way.
  * 
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OSBTreeRidBag implements ORidBagDelegate {
   private final OSBTreeCollectionManager                               collectionManager   = ODatabaseRecordThreadLocal.INSTANCE
@@ -363,7 +367,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
         }
       }
 
-      if (updateOwner)
+      if (updateOwner && !changeListeners.isEmpty())
         fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
             OMultiValueChangeEvent.OChangeType.REMOVE, currentValue, null, currentValue, false));
       currentRemoved = true;
@@ -610,7 +614,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     }
   }
 
-  public void add(OIdentifiable identifiable) {
+  public void add(final OIdentifiable identifiable) {
     if (identifiable.getIdentity().isValid()) {
       Change counter = changes.get(identifiable);
       if (counter == null)
@@ -623,7 +627,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
         counter.increment();
       }
     } else {
-      OModifiableInteger counter = newEntries.get(identifiable);
+      final OModifiableInteger counter = newEntries.get(identifiable);
       if (counter == null)
         newEntries.put(identifiable, new OModifiableInteger(1));
       else
@@ -633,7 +637,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     if (size >= 0)
       size++;
 
-    if (updateOwner)
+    if (updateOwner && !changeListeners.isEmpty())
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
           identifiable, identifiable, null, false));
   }
@@ -663,7 +667,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       }
     }
 
-    if (updateOwner)
+    if (updateOwner && !changeListeners.isEmpty())
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
           OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable, false));
   }
@@ -866,6 +870,11 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   public void setCollectionPointer(OBonsaiCollectionPointer collectionPointer) {
     this.collectionPointer = collectionPointer;
+  }
+
+  @Override
+  public Set<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> getChangeListeners() {
+    return Collections.unmodifiableSet(changeListeners);
   }
 
   protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {

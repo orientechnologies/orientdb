@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 
 package com.orientechnologies.orient.core.index.sbtree.local;
 
@@ -73,39 +77,41 @@ import java.util.Map;
  * @since 8/7/13
  */
 public class OSBTree<K, V> extends ODurableComponent {
-  private static final int                    MAX_KEY_SIZE            = OGlobalConfiguration.SBTREE_MAX_KEY_SIZE
-                                                                          .getValueAsInteger();
-  private static final int                    MAX_EMBEDDED_VALUE_SIZE = OGlobalConfiguration.SBTREE_MAX_EMBEDDED_VALUE_SIZE
-                                                                          .getValueAsInteger();
-  private static final OAlwaysLessKey         ALWAYS_LESS_KEY         = new OAlwaysLessKey();
-  private static final OAlwaysGreaterKey      ALWAYS_GREATER_KEY      = new OAlwaysGreaterKey();
+  private static final int               MAX_KEY_SIZE            = OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger();
+  private static final int               MAX_EMBEDDED_VALUE_SIZE = OGlobalConfiguration.SBTREE_MAX_EMBEDDED_VALUE_SIZE
+                                                                     .getValueAsInteger();
+  private static final OAlwaysLessKey    ALWAYS_LESS_KEY         = new OAlwaysLessKey();
+  private static final OAlwaysGreaterKey ALWAYS_GREATER_KEY      = new OAlwaysGreaterKey();
 
-  private final static long                   ROOT_INDEX              = 0;
-  private static final ODurablePage.TrackMode txTrackMode             = ODurablePage.TrackMode
-                                                                          .valueOf(OGlobalConfiguration.INDEX_TX_MODE
-                                                                              .getValueAsString().toUpperCase());
-  private final Comparator<? super K>         comparator              = ODefaultComparator.INSTANCE;
-  private final String                        dataFileExtension;
-  private final String                        nullFileExtension;
-  private final boolean                       durableInNonTxMode;
-  private OAbstractPaginatedStorage           storage;
-  private String                              name;
-  private ODiskCache                          diskCache;
-  private long                                fileId;
-  private long                                nullBucketFileId        = -1;
-  private int                                 keySize;
-  private OBinarySerializer<K>                keySerializer;
-  private OType[]                             keyTypes;
-  private OBinarySerializer<V>                valueSerializer;
-  private boolean                             nullPointerSupport;
+  private final static long              ROOT_INDEX              = 0;
+  private final ODurablePage.TrackMode   trackMode;
+  private final Comparator<? super K>    comparator              = ODefaultComparator.INSTANCE;
+  private final String                   dataFileExtension;
+  private final String                   nullFileExtension;
+  private final boolean                  durableInNonTxMode;
+  private OAbstractPaginatedStorage      storage;
+  private String                         name;
+  private ODiskCache                     diskCache;
+  private long                           fileId;
+  private long                           nullBucketFileId        = -1;
+  private int                            keySize;
+  private OBinarySerializer<K>           keySerializer;
+  private OType[]                        keyTypes;
+  private OBinarySerializer<V>           valueSerializer;
+  private boolean                        nullPointerSupport;
 
-  public OSBTree(String dataFileExtension, boolean durableInNonTxMode, String nullFileExtension) {
+  public OSBTree(String dataFileExtension, boolean durableInNonTxMode, String nullFileExtension, ODurablePage.TrackMode trackMode) {
     super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean());
     acquireExclusiveLock();
     try {
       this.dataFileExtension = dataFileExtension;
       this.nullFileExtension = nullFileExtension;
       this.durableInNonTxMode = durableInNonTxMode;
+      if (trackMode == null)
+        this.trackMode = ODurablePage.TrackMode.valueOf(OGlobalConfiguration.INDEX_TX_MODE.getValueAsString().toUpperCase());
+      else
+        this.trackMode = trackMode;
+
     } finally {
       releaseExclusiveLock();
     }
@@ -742,7 +748,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
     final ODurablePage.TrackMode trackMode = super.getTrackMode();
     if (!trackMode.equals(ODurablePage.TrackMode.NONE))
-      return txTrackMode;
+      return this.trackMode;
 
     return trackMode;
   }

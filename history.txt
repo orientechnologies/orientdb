@@ -1,4 +1,4 @@
-           .                                          
+I           .                                          
           .`        `                                 
           ,      `:.                                  
          `,`    ,:`                                   
@@ -17,15 +17,52 @@
       ...,::,,,,::.. `:  .,,  :,    :   :     :   .:    :::::::::::   :::     :::
            ,::::,,,. `:   ,,   :::::    :     :   .:    :::::::::     ::::::::::
            ,,:` `,,.                                  
-          ,,,    .,`                                  
-         ,,.     `,                                          GRAPH DATABASE
-       ``        `.                                        COMMUNITY  EDITION
-                 ``                                         www.orientdb.org
-                 `                                    
+          ,,,    .,`                                           MULTI  MODEL
+         ,,.     `,                                       GRAPH DOCUMENT DATABASE
+       ``        `.                                         
+                 ``                                         COMMUNITY  EDITION
+                 `                                           www.orientdb.org
 
 ***************************************************************************************************
 This document contains the last changes to OrientDB Community Edition.
 
+---------------------------------------------------------------------------------------------------
+VERSION 2.0-M3 - (November, 18th 2014)
+- Core: Cluster selection strategy now can decide on the input document content
+        Better automatic alloc of Heap and Disk-Cache
+        Clusters can be detached (offline) and re-attached (online)
+        FetchPlan: support for wildcards
+        Improved pools
+        Using SIGTRAP (kill -5) to dump OrientDB information
+        Fixed connection pool problem on high usage
+        Cache is always ON and can’t be disabled anymore. This avoids many common issues with users
+- Schema: used immutable instances to reduce locking contention
+- Graph API: New OGraphBatchInsertBasic and OGraphBatchInsert API for massive insertion on graphs:
+             13x faster than Blueprints
+- Document API: Removed a couple of internal layers to speedup and simplify implementation
+- Studio: Simplified database creation (graph - no lightweight edges by default)
+- Console: Displayed also @class
+- Bug fixing: 115 total issues from 2.0-M2.
+
+Full list: https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.0-M3+is%3Aclosed
+---------------------------------------------------------------------------------------------------
+VERSION 2.0-M2 - (September, 29th 2014)
+
+- Studio: Improved Graph Editor, fixed many bugs to improve UX
+- Server: On first run ask for root password. Blank means auto-generate (like before)
+- Core: Added ODocument.fromMap() and ODocument.toMap()
+        Removed memory OWatchDog thread
+        Pool, new methods to get internal information
+        Merged in core commons and native-os modules
+        Auto configure of Off-Heap memory used by DiskCache
+- Graph API: new requireTransaction setting to check TX is begun on graph changes
+- Distributed: Supported asynchronous replication via API and Configuration
+               On first run ask for node name. Blank means auto-generate (like before)
+               Unified script and config with stand-alone server
+
+- Bug fixing: 40 from 2.0-M1.
+
+Full list: https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.0-M2+is%3Aclosed
 ---------------------------------------------------------------------------------------------------
 VERSION 2.0-M1 - (September, 17th 2014)
 

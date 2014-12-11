@@ -1,3 +1,23 @@
+/*
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
+
 package com.tinkerpop.blueprints.impls.orient;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -6,6 +26,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.iterator.OLazyWrapperIterator;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.tinkerpop.blueprints.Direction;
 
 import java.util.Iterator;
@@ -52,19 +73,19 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
 
     final ODocument value = rec.getRecord();
 
-    if (value == null || value.getSchemaClass() == null)
+    if (value == null || ODocumentInternal.getImmutableSchemaClass(value) == null)
       return null;
 
     final OrientEdge edge;
-    if (value.getSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
+    if (ODocumentInternal.getImmutableSchemaClass(value).isSubClassOf(OrientVertexType.CLASS_NAME)) {
       // DIRECT VERTEX, CREATE DUMMY EDGE
       if (connection.getKey() == Direction.OUT)
-        edge = new OrientEdge(this.sourceVertex.graph, this.sourceVertex.getIdentity(), rec.getIdentity(), connection.getValue());
+        edge = new OrientEdge(this.sourceVertex.getGraph(), this.sourceVertex.getIdentity(), rec.getIdentity(), connection.getValue());
       else
-        edge = new OrientEdge(this.sourceVertex.graph, rec.getIdentity(), this.sourceVertex.getIdentity(), connection.getValue());
-    } else if (value.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+        edge = new OrientEdge(this.sourceVertex.getGraph(), rec.getIdentity(), this.sourceVertex.getIdentity(), connection.getValue());
+    } else if (ODocumentInternal.getImmutableSchemaClass(value).isSubClassOf(OrientEdgeType.CLASS_NAME)) {
       // EDGE
-      edge = new OrientEdge(this.sourceVertex.graph, rec.getIdentity());
+      edge = new OrientEdge(this.sourceVertex.getGraph(), rec.getIdentity());
     } else
       throw new IllegalStateException("Invalid content found while iterating edges, value '" + value + "' is not an edge");
 

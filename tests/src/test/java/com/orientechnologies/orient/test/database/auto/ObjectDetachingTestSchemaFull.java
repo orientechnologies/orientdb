@@ -15,19 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javassist.util.proxy.Proxy;
-
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -44,6 +31,21 @@ import com.orientechnologies.orient.test.domain.business.Child;
 import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
+import javassist.util.proxy.Proxy;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Test(groups = { "object", "detachingSchemaFull" }, dependsOnGroups = "treeSchemaFull")
 public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
@@ -208,8 +210,8 @@ public class ObjectDetachingTestSchemaFull extends ObjectDBBaseTest {
     database.rollback();
 
     Assert.assertEquals(database.countClass(Country.class), initCount);
-    Assert.assertTrue(country.getId() == null || ((ORID) country.getId()).isTemporary());
-    Assert.assertNull(country.getVersion());
+    Assert.assertTrue(country.getId() == null || ((ORID) country.getId()).isNew(), "id=" + country.getId());
+//    Assert.assertNull(country.getVersion());
   }
 
   @Test(dependsOnMethods = "testInsertRollback")

@@ -1,12 +1,30 @@
+/*
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
+
 package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 
 public class ODocumentInternal {
-
-  public static void clearSource(ODocument document) {
-    document.clearSource();
-  }
 
   public static void convertAllMultiValuesToTrackedVersions(ODocument document) {
     document.convertAllMultiValuesToTrackedVersions();
@@ -20,4 +38,15 @@ public class ODocumentInternal {
     oDocument.removeOwner(iOwner);
   }
 
+  public static void rawField(final ODocument oDocument, final String iFieldName, final Object iFieldValue, final OType iFieldType) {
+    oDocument.rawField(iFieldName, iFieldValue, iFieldType);
+  }
+
+  public static boolean rawContainsField(final ODocument oDocument, final String iFiledName) {
+    return oDocument.rawContainsField(iFiledName);
+  }
+
+  public static OClass getImmutableSchemaClass(final ODocument oDocument) {
+    return oDocument.getImmutableSchemaClass();
+  }
 }

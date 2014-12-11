@@ -10,8 +10,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 public class MassiveConnectDisconnectTest {
 
   public static void main(String[] args) {
-    OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
-
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx("remote:localhost/demo");
     for (int i = 0; i < 1000; ++i) {
       System.out.println("Connecting " + i + "...");

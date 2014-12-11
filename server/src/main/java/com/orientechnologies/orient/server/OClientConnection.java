@@ -1,38 +1,39 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.server;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 
 public class OClientConnection {
   public final int                         id;
-  public volatile ONetworkProtocol         protocol;
   public final long                        since;
+  public volatile ONetworkProtocol         protocol;
   public volatile ODatabaseDocumentTx      database;
-  public volatile ODatabaseRaw             rawDatabase;
   public volatile OServerUserConfiguration serverUser;
 
   public ONetworkProtocolData              data = new ONetworkProtocolData();
@@ -65,8 +66,12 @@ public class OClientConnection {
    * Returns the remote network address in the format <ip>:<port>.
    */
   public String getRemoteAddress() {
-    final InetSocketAddress remoteAddress = (InetSocketAddress) protocol.getChannel().socket.getRemoteSocketAddress();
-    return remoteAddress.getAddress().getHostAddress() + ":" + remoteAddress.getPort();
+    final Socket socket = protocol.getChannel().socket;
+    if (socket != null) {
+      final InetSocketAddress remoteAddress = (InetSocketAddress) socket.getRemoteSocketAddress();
+      return remoteAddress.getAddress().getHostAddress() + ":" + remoteAddress.getPort();
+    }
+    return null;
   }
 
   @Override

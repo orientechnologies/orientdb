@@ -1,17 +1,21 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.core.serialization.serializer;
 
@@ -22,14 +26,6 @@ import java.text.ParseException;
 import java.util.Arrays;
 
 public class OJSONReader {
-  private BufferedReader     in;
-  private int                cursor            = 0;
-  private int                lineNumber        = 0;
-  private int                columnNumber      = 0;
-  private StringBuilder      buffer            = new StringBuilder(16384); //16KB
-  private String             value;
-  private char               c;
-  private Character          missedChar;
   public static final char   NEW_LINE          = '\n';
   public static final char[] DEFAULT_JUMP      = new char[] { ' ', '\r', '\n', '\t' };
   public static final char[] DEFAULT_SKIP      = new char[] { '\r', '\n', '\t' };
@@ -44,6 +40,15 @@ public class OJSONReader {
   public static final char[] ANY_NUMBER        = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
   public static final char[] BEGIN_COLLECTION  = new char[] { '[' };
   public static final char[] END_COLLECTION    = new char[] { ']' };
+  private BufferedReader     in;
+  private int                cursor            = 0;
+  private int                lineNumber        = 0;
+  private int                columnNumber      = 0;
+  private StringBuilder      buffer            = new StringBuilder(16384);                                       // 16KB
+  private String             value;
+  private char               c;
+  private char               lastCharacter;
+  private Character          missedChar;
 
   public OJSONReader(Reader iIn) {
     this.in = new BufferedReader(iIn);
@@ -166,8 +171,12 @@ public class OJSONReader {
         encodeMode = false;
 
       if (!found) {
+        final int read = nextChar();
+        if (read == -1)
+          break;
+
         // APPEND IT
-        c = nextChar();
+        c = (char) read;
 
         boolean skip = false;
         if (iSkipChars != null)
@@ -178,8 +187,10 @@ public class OJSONReader {
             }
           }
 
-        if (!skip)
+        if (!skip) {
+          lastCharacter = c;
           buffer.append(c);
+        }
       }
 
     } while (!found && in.ready());
@@ -194,7 +205,7 @@ public class OJSONReader {
     return this;
   }
 
-  public char jump(final char[] iJumpChars) throws IOException, ParseException {
+  public int jump(final char[] iJumpChars) throws IOException, ParseException {
     buffer.setLength(0);
 
     if (!in.ready())
@@ -203,7 +214,9 @@ public class OJSONReader {
     // READ WHILE THERE IS SOMETHING OF AVAILABLE
     boolean go = true;
     while (go && in.ready()) {
-      c = nextChar();
+      int read = nextChar();
+      if (read == -1)
+        return -1;
 
       go = false;
       for (char j : iJumpChars) {
@@ -213,29 +226,47 @@ public class OJSONReader {
         }
       }
     }
-    buffer.append(c);
+
+    if (!go) {
+      lastCharacter = c;
+      buffer.append(c);
+    }
+
     return c;
   }
 
   /**
    * Returns the next character from the input stream. Handles Unicode decoding.
    */
-  public char nextChar() throws IOException {
+  public int nextChar() throws IOException {
     if (missedChar != null) {
       // RETURNS THE PREVIOUS PARSED CHAR
       c = missedChar.charValue();
       missedChar = null;
 
     } else {
-      c = (char) in.read();
+      int read = in.read();
+      if (read == -1)
+        return -1;
+
+      c = (char) read;
 
       if (c == '\\') {
-        char c2 = (char) in.read();
+        read = in.read();
+        if (read == -1)
+          return -1;
+
+        char c2 = (char) read;
         if (c2 == 'u') {
           // DECODE UNICODE CHAR
           final StringBuilder buff = new StringBuilder(8);
-          for (int i = 0; i < 4; ++i)
-            buff.append((char) in.read());
+          for (int i = 0; i < 4; ++i) {
+            read = in.read();
+            if (read == -1)
+              return -1;
+
+            buff.append((char) read);
+          }
 
           cursor += 6;
 
@@ -255,11 +286,11 @@ public class OJSONReader {
     } else
       ++columnNumber;
 
-    return c;
+    return (char) c;
   }
 
   public char lastChar() {
-    return c;
+    return lastCharacter;
   }
 
   public String getValue() {

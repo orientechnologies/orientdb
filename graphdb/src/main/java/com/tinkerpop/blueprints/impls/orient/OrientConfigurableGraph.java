@@ -49,6 +49,7 @@ public abstract class OrientConfigurableGraph {
     protected int         edgeContainerEmbedded2TreeThreshold = -1;
     protected int         edgeContainerTree2EmbeddedThreshold = -1;
     protected THREAD_MODE threadMode                          = THREAD_MODE.AUTOSET_IFNULL;
+    protected boolean     autoStartTx                         = true;
     protected boolean     requireTransaction                  = false;
 
     public Settings copy() {
@@ -65,6 +66,7 @@ public abstract class OrientConfigurableGraph {
       copy.edgeContainerEmbedded2TreeThreshold = edgeContainerEmbedded2TreeThreshold;
       copy.edgeContainerTree2EmbeddedThreshold = edgeContainerTree2EmbeddedThreshold;
       copy.threadMode = threadMode;
+      copy.autoStartTx = autoStartTx;
       copy.requireTransaction = requireTransaction;
       return copy;
     }
@@ -135,6 +137,26 @@ public abstract class OrientConfigurableGraph {
   public OrientConfigurableGraph setEdgeContainerTree2EmbeddedThreshold(final int edgeContainerTree2EmbeddedThreshold) {
     this.settings.edgeContainerTree2EmbeddedThreshold = edgeContainerTree2EmbeddedThreshold;
     return this;
+  }
+
+  /**
+   * Tells if a transaction is started automatically when the graph is changed. This affects only when a transaction hasn't been
+   * started. Default is true.
+   *
+   * @return
+   */
+  public boolean isAutoStartTx() {
+    return settings.autoStartTx;
+  }
+
+  /**
+   * If enabled auto starts a new transaction right before the graph is changed. This affects only when a transaction hasn't been
+   * started. Default is true.
+   *
+   * @param autoStartTx
+   */
+  public void setAutoStartTx(final boolean autoStartTx) {
+    this.settings.autoStartTx = autoStartTx;
   }
 
   public boolean isRequireTransaction() {

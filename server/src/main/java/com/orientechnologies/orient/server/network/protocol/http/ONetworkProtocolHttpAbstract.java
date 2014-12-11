@@ -1,17 +1,21 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
@@ -23,7 +27,11 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.IllegalFormatException;
+import java.util.InputMismatchException;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 import com.orientechnologies.common.concur.lock.OLockException;
@@ -31,7 +39,11 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.*;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -47,16 +59,45 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 import com.orientechnologies.orient.server.network.protocol.http.command.all.OServerCommandAction;
 import com.orientechnologies.orient.server.network.protocol.http.command.all.OServerCommandFunction;
-import com.orientechnologies.orient.server.network.protocol.http.command.delete.*;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.*;
+import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteClass;
+import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDatabase;
+import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDocument;
+import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteIndex;
+import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteProperty;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetClass;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetCluster;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetConnect;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetConnections;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDatabase;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDictionary;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDisconnect;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDocument;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDocumentByClass;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetExportDatabase;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetFileDownload;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetIndex;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetListDatabases;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetQuery;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetServer;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStorageAllocation;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetSupportedLanguages;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandKillDbConnection;
 import com.orientechnologies.orient.server.network.protocol.http.command.options.OServerCommandOptions;
 import com.orientechnologies.orient.server.network.protocol.http.command.patch.OServerCommandPatchDocument;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.*;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostAuthToken;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostBatch;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostClass;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostCommand;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostDatabase;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostDocument;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostImportRecords;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostInstallDatabase;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostProperty;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostStudio;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPostConnection;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutIndex;
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
-
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   private static final String          COMMAND_SEPARATOR = "|";
@@ -119,7 +160,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       callbackF = null;
 
     response = new OHttpResponse(channel.outStream, request.httpVersion, additionalResponseHeaders, responseCharSet,
-        connection.data.serverInfo, request.sessionId, callbackF);
+        connection.data.serverInfo, request.sessionId, callbackF, request.keepAlive);
     if (request.contentEncoding != null && request.contentEncoding.equals(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED)) {
       response.setContentEncoding(OHttpUtils.CONTENT_ACCEPT_GZIP_ENCODED);
     }
@@ -172,7 +213,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
                   + URLDecoder.decode(command, "UTF-8"));
 
           sendTextContent(OHttpUtils.STATUS_INVALIDMETHOD_CODE, OHttpUtils.STATUS_INVALIDMETHOD_DESCRIPTION, null,
-              OHttpUtils.CONTENT_TEXT_PLAIN, "Command not found: " + command);
+              OHttpUtils.CONTENT_TEXT_PLAIN, "Command not found: " + command, request.keepAlive);
         } catch (IOException e1) {
           sendShutdown();
         }
@@ -315,18 +356,19 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     }
 
     try {
-      sendTextContent(errorCode, errorReason, responseHeaders, OHttpUtils.CONTENT_TEXT_PLAIN, errorMessage);
+      sendTextContent(errorCode, errorReason, responseHeaders, OHttpUtils.CONTENT_TEXT_PLAIN, errorMessage, request.keepAlive);
     } catch (IOException e1) {
       sendShutdown();
     }
   }
 
   protected void sendTextContent(final int iCode, final String iReason, String iHeaders, final String iContentType,
-      final String iContent) throws IOException {
+      final String iContent, final boolean iKeepAlive) throws IOException {
     final boolean empty = iContent == null || iContent.length() == 0;
 
     sendStatus(empty && iCode == 200 ? 204 : iCode, iReason);
-    sendResponseHeaders(iContentType);
+    sendResponseHeaders(iContentType, iKeepAlive);
+
     if (iHeaders != null)
       writeLine(iHeaders);
 
@@ -351,13 +393,13 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     writeLine(request.httpVersion + " " + iStatus + " " + iReason);
   }
 
-  protected void sendResponseHeaders(final String iContentType) throws IOException {
+  protected void sendResponseHeaders(final String iContentType, final boolean iKeepAlive) throws IOException {
     writeLine("Cache-Control: no-cache, no-store, max-age=0, must-revalidate");
     writeLine("Pragma: no-cache");
     writeLine("Date: " + new Date());
     writeLine("Content-Type: " + iContentType + "; charset=" + responseCharSet);
     writeLine("Server: " + connection.data.serverInfo);
-    writeLine("Connection: Keep-Alive");
+    writeLine("Connection: " + (iKeepAlive ? "Keep-Alive" : "close"));
     if (getAdditionalResponseHeaders() != null)
       for (String h : getAdditionalResponseHeaders())
         writeLine(h);
@@ -386,13 +428,16 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
           if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_AUTHORIZATION)) {
             // STORE AUTHORIZATION INFORMATION INTO THE REQUEST
             final String auth = line.substring(OHttpUtils.HEADER_AUTHORIZATION.length());
-            if (!OStringSerializerHelper.startsWithIgnoreCase(auth, OHttpUtils.AUTHORIZATION_BASIC))
-              throw new IllegalArgumentException("Only HTTP Basic authorization is supported");
-
-            iRequest.authorization = auth.substring(OHttpUtils.AUTHORIZATION_BASIC.length() + 1);
-
-            iRequest.authorization = new String(OBase64Utils.decode(iRequest.authorization));
-
+            if (OStringSerializerHelper.startsWithIgnoreCase(auth, OHttpUtils.AUTHORIZATION_BASIC)) {
+              iRequest.authorization = auth.substring(OHttpUtils.AUTHORIZATION_BASIC.length() + 1);
+              iRequest.authorization = new String(OBase64Utils.decode(iRequest.authorization));
+            } else if (OStringSerializerHelper.startsWithIgnoreCase(auth, OHttpUtils.AUTHORIZATION_BEARER)) {
+              iRequest.bearerTokenRaw = auth.substring(OHttpUtils.AUTHORIZATION_BEARER.length() + 1);
+            } else {
+              throw new IllegalArgumentException("Only HTTP Basic and Bearer authorization are supported");
+            }
+          } else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_CONNECTION)) {
+            iRequest.keepAlive = line.substring(OHttpUtils.HEADER_CONNECTION.length()).equalsIgnoreCase("Keep-Alive");
           } else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_COOKIE)) {
             final String sessionPair = line.substring(OHttpUtils.HEADER_COOKIE.length());
 
@@ -430,7 +475,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
             iRequest.authentication = line.substring(OHttpUtils.HEADER_AUTHENTICATION.length());
           else if (OStringSerializerHelper.startsWithIgnoreCase(line, "Expect: 100-continue"))
             // SUPPORT THE CONTINUE TO AUTHORIZE THE CLIENT TO SEND THE CONTENT WITHOUT WAITING THE DELAY
-            sendTextContent(100, null, null, null, null);
+            sendTextContent(100, null, null, null, null, iRequest.keepAlive);
           else if (OStringSerializerHelper.startsWithIgnoreCase(line, OHttpUtils.HEADER_CONTENT_ENCODING))
             iRequest.contentEncoding = line.substring(OHttpUtils.HEADER_CONTENT_ENCODING.length());
 
@@ -533,7 +578,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
           channel.read();
 
           request.httpMethod = words[0].toUpperCase();
-          request.url = URLDecoder.decode(words[1].trim(), "UTF-8");
+          request.url = words[1].trim();
 
           final int parametersPos = request.url.indexOf('?');
           if (parametersPos > -1) {
@@ -572,11 +617,11 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
       if (request.httpMethod != null && request.url != null) {
         try {
           sendTextContent(505, "Error on executing of " + request.httpMethod + " for the resource: " + request.url, null,
-              "text/plain", t.toString());
+              "text/plain", t.toString(), request.keepAlive);
         } catch (IOException e) {
         }
       } else
-        sendTextContent(505, "Error on executing request", null, "text/plain", t.toString());
+        sendTextContent(505, "Error on executing request", null, "text/plain", t.toString(), request.keepAlive);
 
       readAllContent(request);
     } finally {
@@ -681,6 +726,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     cmdManager.registerCommand(new OServerCommandFunction());
     cmdManager.registerCommand(new OServerCommandAction());
     cmdManager.registerCommand(new OServerCommandKillDbConnection());
+    cmdManager.registerCommand(new OServerCommandGetSupportedLanguages());
+    cmdManager.registerCommand(new OServerCommandPostAuthToken());
 
     for (OServerCommandConfiguration c : iListener.getStatefulCommands())
       try {

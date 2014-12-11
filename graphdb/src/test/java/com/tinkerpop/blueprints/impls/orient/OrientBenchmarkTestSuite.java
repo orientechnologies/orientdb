@@ -23,7 +23,6 @@ public class OrientBenchmarkTestSuite extends TestSuite {
 
   public OrientBenchmarkTestSuite(final GraphTest graphTest) {
     super(graphTest);
-    OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(true);
   }
 
   @Test

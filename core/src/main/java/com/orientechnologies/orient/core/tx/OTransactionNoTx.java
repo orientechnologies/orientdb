@@ -1,37 +1,42 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.core.tx;
 
-import java.util.Collection;
-import java.util.List;
-
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * No operation transaction.
@@ -40,7 +45,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  * 
  */
 public class OTransactionNoTx extends OTransactionAbstract {
-  public OTransactionNoTx(final ODatabaseRecordTx iDatabase) {
+  public OTransactionNoTx(final ODatabaseDocumentTx iDatabase) {
     super(iDatabase);
   }
 
@@ -53,6 +58,11 @@ public class OTransactionNoTx extends OTransactionAbstract {
   @Override
   public int getEntryCount() {
     return 0;
+  }
+
+  @Override
+  public boolean hasRecordCreation() {
+    return false;
   }
 
   @Override
@@ -124,11 +134,11 @@ public class OTransactionNoTx extends OTransactionAbstract {
     return null;
   }
 
-  public List<ORecordOperation> getRecordEntriesByClass(String iClassName) {
+  public List<ORecordOperation> getNewRecordEntriesByClass(final OClass iClass, final boolean iPolymorphic) {
     return null;
   }
 
-  public List<ORecordOperation> getNewRecordEntriesByClusterIds(int[] iIds) {
+  public List<ORecordOperation> getNewRecordEntriesByClusterIds(final int[] iIds) {
     return null;
   }
 

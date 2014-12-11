@@ -1,17 +1,21 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.server.hazelcast;
 
@@ -40,6 +44,7 @@ import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -150,8 +155,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     final long timeout = OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong();
 
-//    try {
-//      requestLock.lock();
+    try {
+      requestLock.lock();
       try {
         // LOCK = ASSURE MESSAGES IN THE QUEUE ARE INSERTED SEQUENTIALLY AT CLUSTER LEVEL
         // BROADCAST THE REQUEST TO ALL THE NODE QUEUES
@@ -170,9 +175,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
             queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
         }
 
-//      } finally {
-//        requestLock.unlock();
-//      }
+      } finally {
+        requestLock.unlock();
+      }
 
       if (ODistributedServerLog.isDebugEnabled())
         ODistributedServerLog.debug(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT, "sent request %s", iRequest);
@@ -195,7 +200,8 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     return restoringMessages;
   }
 
-  public OHazelcastDistributedDatabase configureDatabase(final boolean iRestoreMessages, final boolean iUnqueuePendingMessages) {
+  public OHazelcastDistributedDatabase configureDatabase(final boolean iRestoreMessages, final boolean iUnqueuePendingMessages,
+      Callable<Void> iCallback) {
     // CREATE A QUEUE PER DATABASE REQUESTS
     final String queueName = OHazelcastDistributedMessageService.getRequestQueueName(getLocalNodeName(), databaseName);
     final IQueue<ODistributedRequest> requestQueue = msgService.getQueue(queueName);
@@ -207,6 +213,13 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     final IQueue<ODistributedRequest> insertQueue = msgService.getQueue(insertQueueName);
 
     unqueuePendingMessages(iRestoreMessages, iUnqueuePendingMessages, insertQueueName, insertQueue);
+
+    if (iCallback != null)
+      try {
+        iCallback.call();
+      } catch (Exception e) {
+        throw new ODistributedException(e);
+      }
 
     setOnline();
 

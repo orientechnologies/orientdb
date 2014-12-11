@@ -1,19 +1,39 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.core.type.tree;
+
+import com.orientechnologies.common.collection.OLimitedMap;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeEntry;
+import com.orientechnologies.orient.core.memory.OLowMemoryException;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -23,23 +43,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-
-import com.orientechnologies.common.collection.OLimitedMap;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.profiler.OProfilerMBean;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
-import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
-import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeEntry;
-import com.orientechnologies.orient.core.memory.OLowMemoryException;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
-import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
 
 /**
  * Persistent based MVRB-Tree implementation. The difference with the class OMVRBTreePersistent is the level. In facts this class
@@ -255,8 +258,8 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
       recordsToCommit.clear();
       root = null;
 
-      final ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-      if (db != null && !db.isClosed() && db.getStorage().getUnderlying() instanceof OStorageEmbedded) {
+      final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      if (db != null && !db.isClosed() && db.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
         // RELOAD IT
         try {
           load();
@@ -375,13 +378,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
       if (OLogManager.instance().isDebugEnabled())
         OLogManager.instance().debug(this, "After optimization: %d items on disk, threshold=%f, entryPoints=%d, nodesInCache=%d",
             size(), (entryPointsSize * optimizeEntryPointsFactor), entryPoints.size(), cache.size());
-
-      if (debug) {
-        int i = 0;
-        System.out.println();
-        for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints.values())
-          System.out.println("- Entrypoint " + ++i + "/" + entryPoints.size() + ": " + entryPoint);
-      }
 
       return totalDisconnected;
     } finally {
@@ -992,6 +988,5 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
   protected void freeMemory(final int i) {
     // LOW MEMORY DURING LOAD: THIS MEANS DEEP LOADING OF NODES. EXECUTE THE OPTIMIZATION AND RETRY IT
     optimize(true);
-    OMemoryWatchDog.freeMemoryForOptimization(300 * i);
   }
 }

@@ -1,29 +1,38 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.core.db.record;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.record.OIdentityChangeListener;
+import com.orientechnologies.orient.core.record.OIdentityChangeListener;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
@@ -44,8 +53,10 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiable>, ORecordLazyMultiValue, ORecordElement {
-  protected boolean autoConvertToRecord = true;
+public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiable>, ORecordLazyMultiValue, ORecordElement,
+    OIdentityChangeListener {
+  protected boolean                     autoConvertToRecord = true;
+  protected Map<OIdentifiable, ORecord> recordCache;
 
   public ORecordLazySet(final ODocument iSourceRecord) {
     super(iSourceRecord);
@@ -72,6 +83,7 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
           iter = ORecordLazySet.super.map.entrySet().iterator();
       }
       private Iterator<Entry<OIdentifiable, Object>> iter;
+      private Entry<OIdentifiable, Object>           last;
 
       @Override
       public boolean hasNext() {
@@ -81,6 +93,7 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
       @Override
       public OIdentifiable next() {
         Entry<OIdentifiable, Object> entry = iter.next();
+        last = entry;
         if (entry.getValue() != ENTRY_REMOVAL)
           return (OIdentifiable) entry.getValue();
         return entry.getKey();
@@ -89,6 +102,8 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
       @Override
       public void remove() {
         iter.remove();
+        if (last.getKey() instanceof ORecord)
+          ORecordInternal.removeIdentityChangeListener((ORecord) last.getKey(), ORecordLazySet.this);
       }
 
       @Override
@@ -109,14 +124,13 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
   public boolean add(OIdentifiable e) {
     if (map.containsKey(e))
       return false;
-    if (e instanceof ORecord)
+    if (e instanceof ORecord && e.getIdentity().isNew()) {
+      ORecordInternal.addIdentityChangeListener((ORecord) e, this);
       map.put(e, e);
-    else
+    } else
       map.put(e, ENTRY_REMOVAL);
     setDirty();
 
-    if (e instanceof ODocument)
-      ODocumentInternal.addOwner((ODocument) e, this);
     fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, e,
         e));
 
@@ -139,16 +153,32 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
   }
 
   @Override
-  public void onAfterIdentityChanged(ORecord iRecord) {
-    if (iRecord instanceof ORecord)
-      map.put(iRecord, iRecord);
-    else
-      map.put(iRecord, ENTRY_REMOVAL);
+  public void onAfterIdentityChange(ORecord record) {
+    map.put(record, record);
+  }
+
+  @Override
+  public void onBeforeIdentityChange(ORecord record) {
+    map.remove(record);
   }
 
   @Override
   public boolean convertRecords2Links() {
     return true;
+  }
+
+  public boolean remove(Object o) {
+    final Object old = map.remove(o);
+    if (old != null) {
+      if (o instanceof ORecord)
+        ORecordInternal.removeIdentityChangeListener((ORecord) o, this);
+
+      setDirty();
+      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+          OMultiValueChangeEvent.OChangeType.REMOVE, (OIdentifiable) o, null, (OIdentifiable) o));
+      return true;
+    }
+    return false;
   }
 
   @Override

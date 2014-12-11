@@ -43,6 +43,7 @@ public class LocalCreateDocumentSpeedTest extends OrientMonoThreadTest {
     OGlobalConfiguration.USE_WAL.setValue(false);
     LocalCreateDocumentSpeedTest test = new LocalCreateDocumentSpeedTest();
     test.data.go(test);
+    OGlobalConfiguration.USE_WAL.setValue(true);
   }
 
   @Override

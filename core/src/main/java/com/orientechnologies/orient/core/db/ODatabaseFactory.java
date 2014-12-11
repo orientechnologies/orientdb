@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.log.OLogManager;
@@ -33,11 +37,11 @@ import java.util.WeakHashMap;
  * 
  */
 public class ODatabaseFactory {
-  final WeakHashMap<ODatabaseComplexInternal<?>, Thread> instances = new WeakHashMap<ODatabaseComplexInternal<?>, Thread>();
+  final WeakHashMap<ODatabaseInternal<?>, Thread> instances = new WeakHashMap<ODatabaseInternal<?>, Thread>();
 
-  public synchronized List<ODatabaseComplex<?>> getInstances(final String iDatabaseName) {
-    final List<ODatabaseComplex<?>> result = new ArrayList<ODatabaseComplex<?>>();
-    for (ODatabaseComplex<?> i : instances.keySet()) {
+  public synchronized List<ODatabase<?>> getInstances(final String iDatabaseName) {
+    final List<ODatabase<?>> result = new ArrayList<ODatabase<?>>();
+    for (ODatabase<?> i : instances.keySet()) {
       if (i != null && i.getName().equals(iDatabaseName))
         result.add(i);
     }
@@ -51,7 +55,7 @@ public class ODatabaseFactory {
    * @param db
    * @return
    */
-  public synchronized ODatabaseComplex<?> register(final ODatabaseComplexInternal<?> db) {
+  public synchronized ODatabase<?> register(final ODatabaseInternal<?> db) {
     instances.put(db, Thread.currentThread());
     return db;
   }
@@ -61,7 +65,7 @@ public class ODatabaseFactory {
    * 
    * @param db
    */
-  public synchronized void unregister(final ODatabaseComplexInternal<?> db) {
+  public synchronized void unregister(final ODatabaseInternal<?> db) {
     instances.remove(db);
   }
 
@@ -71,7 +75,7 @@ public class ODatabaseFactory {
    * @param iStorage
    */
   public synchronized void unregister(final OStorage iStorage) {
-    for (ODatabaseComplexInternal<?> db : new HashSet<ODatabaseComplexInternal<?>>(instances.keySet())) {
+    for (ODatabaseInternal<?> db : new HashSet<ODatabaseInternal<?>>(instances.keySet())) {
       if (db != null && db.getStorage() == iStorage) {
         db.close();
         instances.remove(db);
@@ -88,7 +92,7 @@ public class ODatabaseFactory {
           "Found %d databases opened during OrientDB shutdown. Assure to always close database instances after usage",
           instances.size());
 
-      for (ODatabaseComplex<?> db : new HashSet<ODatabaseComplex<?>>(instances.keySet())) {
+      for (ODatabase<?> db : new HashSet<ODatabase<?>>(instances.keySet())) {
         if (db != null && !db.isClosed()) {
           db.close();
         }
@@ -103,7 +107,7 @@ public class ODatabaseFactory {
         public <THISDB extends ODatabase> THISDB create() {
           final THISDB db = super.create();
 
-          checkSchema((ODatabaseComplex<?>) db);
+          checkSchema((ODatabase<?>) db);
 
           return db;
         }
@@ -113,7 +117,7 @@ public class ODatabaseFactory {
     return new ODatabaseDocumentTx(url);
   }
 
-  public void checkSchema(final ODatabaseComplex<?> iDatabase) {
+  public void checkSchema(final ODatabase<?> iDatabase) {
     // FORCE NON DISTRIBUTION ON CREATION
     OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
     try {

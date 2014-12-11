@@ -1,8 +1,28 @@
+/*
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
+
 package com.tinkerpop.blueprints.impls.orient;
 
 import org.apache.commons.configuration.Configuration;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.tinkerpop.blueprints.Features;
 
@@ -21,12 +41,17 @@ public class OrientGraphNoTx extends OrientBaseGraph {
    *          Underlying database object to attach
    */
   public OrientGraphNoTx(final ODatabaseDocumentTx iDatabase) {
-    super(iDatabase, null, null);
+    super(iDatabase, null, null, null);
     config();
   }
 
-  public OrientGraphNoTx(ODatabaseDocumentPool pool) {
+  public OrientGraphNoTx(OPartitionedDatabasePool pool) {
     super(pool);
+    config();
+  }
+
+  public OrientGraphNoTx(OPartitionedDatabasePool pool, final Settings configuration) {
+    super(pool, configuration);
     config();
   }
 
@@ -45,12 +70,20 @@ public class OrientGraphNoTx extends OrientBaseGraph {
     config();
   }
 
-  public OrientGraphNoTx(final ODatabaseDocumentTx iDatabase, final String user,final  String password) {
-    super(iDatabase, user, password);
+  public OrientGraphNoTx(final ODatabaseDocumentTx iDatabase, final String user, final String password) {
+    super(iDatabase, user, password, null);
+    config();
+  }
+
+  public OrientGraphNoTx(final ODatabaseDocumentTx iDatabase, final String user, final String password,
+      final Settings iConfiguration) {
+    super(iDatabase, user, password, iConfiguration);
     config();
   }
 
   public Features getFeatures() {
+    makeActive();
+
     // DYNAMIC FEATURES BASED ON CONFIGURATION
     FEATURES.supportsEdgeIndex = !settings.useLightweightEdges;
     FEATURES.supportsEdgeKeyIndex = !settings.useLightweightEdges;

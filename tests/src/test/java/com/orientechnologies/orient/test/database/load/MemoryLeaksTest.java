@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
 /**
  * Check the system as for memory leaks.
  * 
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class MemoryLeaksTest {
 

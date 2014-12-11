@@ -119,6 +119,7 @@ public class LocalPaginatedStorageRestoreFromWAL {
             System.out.println(text);
           }
         });
+		databaseCompare.setCompareIndexMetadata(true);
 
     Assert.assertTrue(databaseCompare.compare());
   }

@@ -1,11 +1,42 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+   ~ /*
+   ~  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+   ~  *
+   ~  *  Licensed under the Apache License, Version 2.0 (the "License");
+   ~  *  you may not use this file except in compliance with the License.
+   ~  *  You may obtain a copy of the License at
+   ~  *
+   ~  *       http://www.apache.org/licenses/LICENSE-2.0
+   ~  *
+   ~  *  Unless required by applicable law or agreed to in writing, software
+   ~  *  distributed under the License is distributed on an "AS IS" BASIS,
+   ~  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   ~  *  See the License for the specific language governing permissions and
+   ~  *  limitations under the License.
+   ~  *
+   ~  * For more information: http://www.orientechnologies.com
+   ~  */
+   -->
+
 <orient-server>
     <handlers>
-        <handler
-                class="com.orientechnologies.orient.graph.handler.OGraphServerHandler">
+        <handler class="com.orientechnologies.orient.graph.handler.OGraphServerHandler">
             <parameters>
                 <parameter name="enabled" value="true"/>
                 <parameter name="graph.pool.max" value="50"/>
+            </parameters>
+        </handler>
+        <!-- CLUSTER PLUGIN, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
+        <handler class="com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin">
+            <parameters>
+                <!-- <parameter name="nodeName" value="europe1" /> -->
+                <parameter name="enabled" value="${distributed}"/>
+                <parameter name="configuration.db.default"
+                           value="${ORIENTDB_HOME}/config/default-distributed-db-config.json"/>
+                <parameter name="configuration.hazelcast" value="${ORIENTDB_HOME}/config/hazelcast.xml"/>
+                <parameter name="conflict.resolver.impl"
+                           value="com.orientechnologies.orient.server.distributed.conflict.ODefaultReplicationConflictResolver"/>
             </parameters>
         </handler>
         <!-- JMX SERVER, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
@@ -16,13 +47,12 @@
             </parameters>
         </handler>
         <!-- AUTOMATIC BACKUP, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
-        <handler
-                class="com.orientechnologies.orient.server.handler.OAutomaticBackup">
+        <handler class="com.orientechnologies.orient.server.handler.OAutomaticBackup">
             <parameters>
                 <parameter name="enabled" value="false"/>
                 <parameter name="delay" value="4h"/>
                 <parameter name="target.directory" value="backup"/>
-                <parameter name="target.fileName" value="${DBNAME}-${DATE:yyyyMMddHHmmss}.json"/>
+                <parameter name="target.fileName" value="${DBNAME}-${DATE:yyyyMMddHHmmss}.zip"/>
                 <parameter name="compressionLevel" value="9"/>
                 <parameter name="bufferSize" value="1048576"/>
                 <!--${DBNAME} AND ${DATE:} VARIABLES ARE SUPPORTED -->
@@ -98,8 +128,7 @@
                             <entry name="http.cache:default" value="Cache-Control: max-age=120"/>
                         </parameters>
                     </command>
-                    <command pattern="GET|gephi/*"
-                             implementation="com.orientechnologies.orient.graph.server.command.OServerCommandGetGephi"/>
+                    <command pattern="GET|gephi/*" implementation="com.orientechnologies.orient.graph.server.command.OServerCommandGetGephi"/>
                 </commands>
             </listener>
         </listeners>
@@ -114,9 +143,6 @@
         <!-- DATABASE POOL: size min/max -->
         <entry name="db.pool.min" value="1"/>
         <entry name="db.pool.max" value="50"/>
-
-        <!-- LOCAL CACHE: enable/disable-->
-        <entry name="cache.local.enabled" value="true"/>
 
         <!-- PROFILER: configures the profiler as <seconds-for-snapshot>,<archive-snapshot-size>,<summary-size> -->
         <entry name="profiler.enabled" value="true"/>

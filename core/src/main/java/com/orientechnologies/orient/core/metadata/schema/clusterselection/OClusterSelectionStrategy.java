@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.core.metadata.schema.clusterselection;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Strategy to select the cluster to use. Instances are stateful, so can't be reused on multiple classes.
@@ -23,7 +24,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public interface OClusterSelectionStrategy {
-  public int getCluster(final OClass iClass);
+  public int getCluster(final OClass iClass, final ODocument doc);
 
   String getName();
 }

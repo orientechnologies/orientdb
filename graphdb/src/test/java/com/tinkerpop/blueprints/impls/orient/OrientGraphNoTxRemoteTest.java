@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 2/6/14
  */
 @RunWith(JUnit4.class)
@@ -162,7 +162,6 @@ public class OrientGraphNoTxRemoteTest extends GraphTest {
     OrientGraphFactory factory = graphFactories.get(url);
     if (factory == null) {
       factory = new OrientGraphFactory(url);
-      factory.setTransactional(false);
       factory.setupPool(5, 256);
       graphFactories.put(url, factory);
     }

@@ -1,4 +1,7 @@
 #!/bin/sh
+# OrientDB Backup script
+#
+# Copyright (c) Orient Technologies LTD (http://www.orientechnologies.com)
 
 DB=$1
 USER=$2

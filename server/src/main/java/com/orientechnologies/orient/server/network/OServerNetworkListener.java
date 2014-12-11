@@ -1,17 +1,21 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.server.network;
 
@@ -27,6 +31,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.ShutdownHelper;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 
@@ -53,7 +58,6 @@ public class OServerNetworkListener extends Thread {
   private int                               socketBufferSize;
   private OContextConfiguration             configuration;
   private OServer                           server;
-  private ONetworkProtocol                  protocol;
   private int                               protocolVersion   = -1;
 
   public OServerNetworkListener(final OServer iServer, final OServerSocketFactory iSocketFactory, final String iHostName,
@@ -70,8 +74,7 @@ public class OServerNetworkListener extends Thread {
     try {
       protocolVersion = iProtocol.newInstance().getVersion();
     } catch (Exception e) {
-      OLogManager.instance().error(this, "Error on reading protocol version for %s", e, ONetworkProtocolException.class,
-          iProtocol);
+      OLogManager.instance().error(this, "Error on reading protocol version for %s", e, ONetworkProtocolException.class, iProtocol);
     }
 
     listen(iHostName, iHostPortRange, iProtocolName);
@@ -168,11 +171,6 @@ public class OServerNetworkListener extends Thread {
   public void shutdown() {
     this.active = false;
 
-    if (protocol != null) {
-      protocol.sendShutdown();
-      protocol = null;
-    }
-
     if (serverSocket != null)
       try {
         serverSocket.close();
@@ -192,6 +190,20 @@ public class OServerNetworkListener extends Thread {
           // listen for and accept a client connection to serverSocket
           final Socket socket = serverSocket.accept();
 
+          if (server.getDistributedManager() != null) {
+            final ODistributedServerManager.NODE_STATUS nodeStatus = server.getDistributedManager().getNodeStatus();
+            if (nodeStatus != ODistributedServerManager.NODE_STATUS.ONLINE) {
+              OLogManager.instance().warn(this,
+                  "Distributed server is not yet ONLINE (status=%s), reject incoming connection from %s", nodeStatus,
+                  socket.getRemoteSocketAddress());
+              socket.close();
+
+              // PAUSE CURRENT THREAD TO SLOW DOWN ANY POSSIBLE ATTACK
+              Thread.sleep(100);
+              continue;
+            }
+          }
+
           final int conns = OClientConnectionManager.instance().getTotal();
           if (conns >= OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS.getValueAsInteger()) {
             // MAXIMUM OF CONNECTIONS EXCEEDED
@@ -210,7 +222,7 @@ public class OServerNetworkListener extends Thread {
           socket.setReceiveBufferSize(socketBufferSize);
 
           // CREATE A NEW PROTOCOL INSTANCE
-          protocol = protocolType.newInstance();
+          ONetworkProtocol protocol = protocolType.newInstance();
 
           // CONFIGURE THE PROTOCOL FOR THE INCOMING CONNECTION
           protocol.config(this, server, socket, configuration);
@@ -225,7 +237,6 @@ public class OServerNetworkListener extends Thread {
       try {
         if (serverSocket != null && !serverSocket.isClosed())
           serverSocket.close();
-        protocol = null;
       } catch (IOException ioe) {
       }
     }
@@ -260,10 +271,6 @@ public class OServerNetworkListener extends Thread {
     return builder.toString();
   }
 
-  public ONetworkProtocol getProtocol() {
-    return protocol;
-  }
-
   public Object getCommand(final Class<?> iCommandClass) {
     // SEARCH IN STATELESS COMMANDS
     for (OServerCommand cmd : statelessCommands) {
@@ -282,7 +289,7 @@ public class OServerNetworkListener extends Thread {
 
   /**
    * Initialize a server socket for communicating with the client.
-   * 
+   *
    * @param iHostPortRange
    * @param iHostName
    */
@@ -321,7 +328,7 @@ public class OServerNetworkListener extends Thread {
   /**
    * Initializes connection parameters by the reading XML configuration. If not specified, get the parameters defined as global
    * configuration.
-   * 
+   *
    * @param iServerConfig
    */
   private void readParameters(final OContextConfiguration iServerConfig, final OServerParameterConfiguration[] iParameters) {

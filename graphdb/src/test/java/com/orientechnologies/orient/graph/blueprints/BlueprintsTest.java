@@ -5,6 +5,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.Edge;
@@ -110,6 +111,33 @@ public class BlueprintsTest {
     Assert.assertTrue(graph.getVertices("name", "Jay").iterator().hasNext());
     Assert.assertTrue(graph.getVertices("name", "Smith's").iterator().hasNext());
     Assert.assertTrue(graph.getVertices("name", "Smith\"s").iterator().hasNext());
+  }
+
+  @Test
+  public void testInvalidVertexRID() {
+    OrientVertex v = new OrientVertex(graph, new ORecordId("9:9999"));
+    System.out.println(v);
+  }
+
+  @Test
+  public void testInvalidEdgeRID() {
+    try {
+      OrientEdge e = graph.addEdge(null, new OrientVertex(graph, new ORecordId("9:9999")), new OrientVertex(graph, new ORecordId(
+          "9:99999")), "E");
+      Assert.assertTrue(false);
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(true);
+    }
+  }
+
+  @Test
+  public void testSetEvenParams() {
+    try {
+      graph.addVertex(null, "name", "Luca", "surname");
+      Assert.assertTrue(false);
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(true);
+    }
   }
 
 }

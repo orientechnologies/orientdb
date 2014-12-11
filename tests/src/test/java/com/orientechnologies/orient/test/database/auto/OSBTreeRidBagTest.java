@@ -47,7 +47,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 
 /**
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 @Test
 public class OSBTreeRidBagTest extends ORidBagTest {
@@ -154,7 +154,6 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     Assert.assertTrue(ridBagFourFile.exists());
   }
 
-  @Test
   public void testIteratorOverAfterRemove() {
     ODocument scuti = new ODocument().field("name", "UY Scuti").save();
     ODocument cygni = new ODocument().field("name", "NML Cygni").save();
@@ -180,6 +179,68 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     }
 
     Assert.assertEquals(result, expectedResult);
+  }
+
+  public void testRidBagConversion() {
+    final int oldThreshold = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(5);
+
+    ODocument doc_1 = new ODocument();
+    doc_1.save();
+
+    ODocument doc_2 = new ODocument();
+    doc_2.save();
+
+    ODocument doc_3 = new ODocument();
+    doc_3.save();
+
+    ODocument doc_4 = new ODocument();
+    doc_4.save();
+
+    ODocument doc = new ODocument();
+
+    ORidBag bag = new ORidBag();
+    bag.add(doc_1);
+    bag.add(doc_2);
+    bag.add(doc_3);
+    bag.add(doc_4);
+
+    doc.field("ridBag", bag);
+    doc.save();
+
+    doc.reload();
+
+    ODocument doc_5 = new ODocument();
+    doc_5.save();
+
+    ODocument doc_6 = new ODocument();
+    doc_6.save();
+
+    bag = doc.field("ridBag");
+    bag.add(doc_5);
+    bag.add(doc_6);
+
+    doc.save();
+    doc.reload();
+
+    bag = doc.field("ridBag");
+    Assert.assertEquals(bag.size(), 6);
+
+    List<OIdentifiable> docs = new ArrayList<OIdentifiable>();
+
+    docs.add(doc_1.getIdentity());
+    docs.add(doc_2.getIdentity());
+    docs.add(doc_3.getIdentity());
+    docs.add(doc_4.getIdentity());
+    docs.add(doc_5.getIdentity());
+    docs.add(doc_6.getIdentity());
+
+    for (OIdentifiable rid : bag)
+      Assert.assertTrue(docs.remove(rid));
+
+    Assert.assertTrue(docs.isEmpty());
+
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(oldThreshold);
   }
 
   public void testRidBagDelete() {

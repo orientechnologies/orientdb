@@ -8,10 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -27,7 +24,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 @Test(groups = { "index" })
 public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
   @Parameters(value = "url")
-  public SQLSelectHashIndexReuseTest(final String iURL) {
+  public SQLSelectHashIndexReuseTest(@Optional final String iURL) {
     super(iURL);
   }
 
@@ -2477,7 +2474,7 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
 
     final List<ODocument> result = database.command(
         new OSQLSynchQuery<ODocument>(
-            "select * from sqlSelectHashIndexReuseTestClass where (prop1 = 1 and prop2  = 2) and ( prop4 = 3 or prop4 = 1 )"))
+            "select * from sqlSelectHashIndexReuseTestClass where (prop1 = 1 and prop2  = 2) and (prop4 = 3 or prop4 = 1)"))
         .execute();
 
     Assert.assertEquals(result.size(), 1);

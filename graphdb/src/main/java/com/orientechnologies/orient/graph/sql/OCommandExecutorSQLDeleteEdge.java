@@ -1,24 +1,23 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.graph.sql;
-
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -44,6 +43,11 @@ import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * SQL DELETE EDGE command.
  * 
@@ -59,6 +63,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
   private OCommandRequest    query;
   private OSQLFilter         compiledFilter;
   private OrientGraph        graph;
+  private String             label;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDeleteEdge parse(final OCommandRequest iRequest) {
@@ -71,6 +76,10 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
     String where = null;
 
     String temp = parseOptionalWord(true);
+    String originalTemp = null;
+
+    if (temp != null && !parserIsEnded())
+      originalTemp = parserText.substring(parserGetPreviousPosition(), parserGetCurrentPosition()).trim();
 
     final OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
     while (temp != null) {
@@ -104,6 +113,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
         parseRetry();
       } else if (temp.length() > 0) {
         // GET/CHECK CLASS NAME
+        label = originalTemp;
         clazz = graph.getEdgeType(temp);
         if (clazz == null)
           throw new OCommandSQLParsingException("Class '" + temp + " was not found");
@@ -174,6 +184,9 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
                     final OrientVertex v = graph.getVertex(fromId);
                     if (v != null)
                       for (Edge e : v.getEdges(Direction.OUT)) {
+                        if (label != null && !label.equals(e.getLabel()))
+                          continue;
+
                         final OIdentifiable inV = ((OrientEdge) e).getInVertex();
                         if (inV != null && toIds.contains(inV.getIdentity()))
                           edges.add((OrientEdge) e);
@@ -183,15 +196,34 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
                   // REMOVE ALL THE EDGES THAT START FROM A VERTEXES
                   for (OIdentifiable fromId : fromIds) {
                     final OrientVertex v = graph.getVertex(fromId);
-                    if (v != null)
-                      edges.add((OrientEdge) v.getEdges(Direction.OUT));
+                    if (v != null) {
+                      if (label == null) {
+                        edges.add((OrientEdge) v.getEdges(Direction.OUT));
+                      } else {
+                        for (Edge e : v.getEdges(Direction.OUT)) {
+                          if (label != null && !label.equals(e.getLabel()))
+                            continue;
+
+                          edges.add((OrientEdge) e);
+                        }
+                      }
+                    }
                   }
                 } else if (toIds != null) {
                   // REMOVE ALL THE EDGES THAT ARRIVE TO A VERTEXES
                   for (OIdentifiable toId : toIds) {
                     final OrientVertex v = graph.getVertex(toId);
                     if (v != null) {
-                      edges.add((OrientEdge) v.getEdges(Direction.IN));
+                      if (label == null) {
+                        edges.add((OrientEdge) v.getEdges(Direction.IN));
+                      } else {
+                        for (Edge e : v.getEdges(Direction.IN)) {
+                          if (label != null && !label.equals(e.getLabel()))
+                            continue;
+
+                          edges.add((OrientEdge) e);
+                        }
+                      }
                     }
                   }
                 } else

@@ -1,17 +1,21 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
@@ -25,9 +29,9 @@ import com.orientechnologies.common.exception.OException;
 
 /**
  * Contains HTTP utilities static methods and constants.
- * 
+ *
  * @author Luca Garulli
- * 
+ *
  */
 public class OHttpUtils {
 
@@ -44,6 +48,7 @@ public class OHttpUtils {
   public static final String HEADER_CONTENT_LENGTH               = "Content-Length: ";
   public static final String HEADER_CONTENT_TYPE                 = "Content-Type: ";
   public static final String HEADER_COOKIE                       = "Cookie: ";
+  public static final String HEADER_CONNECTION                   = "Connection: ";
   public static final String HEADER_AUTHORIZATION                = "Authorization: ";
   public static final String HEADER_IF_MATCH                     = "If-Match: ";
   public static final String HEADER_X_FORWARDED_FOR              = "X-Forwarded-For: ";
@@ -51,6 +56,7 @@ public class OHttpUtils {
   public static final String HEADER_CONTENT_ENCODING             = "Accept-Encoding: ";
   public static final String HEADER_ETAG                         = "ETag: ";
 
+  public static final String AUTHORIZATION_BEARER                = "Bearer";
   public static final String AUTHORIZATION_BASIC                 = "Basic";
   public static final String OSESSIONID                          = "OSESSIONID";
 

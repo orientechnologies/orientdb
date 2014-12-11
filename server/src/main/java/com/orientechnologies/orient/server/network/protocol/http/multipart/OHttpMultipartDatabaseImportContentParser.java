@@ -20,7 +20,7 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
@@ -32,7 +32,7 @@ public class OHttpMultipartDatabaseImportContentParser implements OHttpMultipart
 
   @Override
   public InputStream parse(final OHttpRequest iRequest, final Map<String, String> headers,
-      final OHttpMultipartContentInputStream in, ODatabaseRecord database) throws IOException {
+      final OHttpMultipartContentInputStream in, ODatabaseDocument database) throws IOException {
     final String fileName = headers.get(OHttpUtils.MULTIPART_CONTENT_FILENAME);
 
     if (fileName.endsWith(".gz") || fileName.endsWith(".gzip"))

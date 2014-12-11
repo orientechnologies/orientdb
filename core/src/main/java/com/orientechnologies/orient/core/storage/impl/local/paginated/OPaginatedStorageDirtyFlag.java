@@ -1,17 +1,33 @@
-package com.orientechnologies.orient.core.storage.impl.local.paginated;
+/*
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
+package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 5/6/14
  */
 public class OPaginatedStorageDirtyFlag {
@@ -105,7 +121,6 @@ public class OPaginatedStorageDirtyFlag {
 
         boolean deleted = dirtyFile.delete();
         while (!deleted) {
-          OMemoryWatchDog.freeMemoryForResourceCleanup(100);
           deleted = !dirtyFile.exists() || dirtyFile.delete();
         }
       }

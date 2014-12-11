@@ -1,27 +1,23 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.core.db.tool;
-
-import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -29,8 +25,6 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
@@ -49,6 +43,14 @@ import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
+
+import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
+
 public class ODatabaseCompare extends ODatabaseImpExpAbstract {
   private OStorage              storage1;
   private OStorage              storage2;
@@ -61,6 +63,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
   private OIndex<OIdentifiable> exportImportHashTable             = null;
   private int                   differences                       = 0;
+  private boolean               compareIndexMetadata              = false;
 
   public ODatabaseCompare(String iDb1URL, String iDb2URL, final OCommandOutputListener iListener) throws IOException {
     super(null, null, iListener);
@@ -94,6 +97,10 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     excludeClusters.add("orids");
     excludeClusters.add(OMetadataDefault.CLUSTER_INDEX_NAME);
     excludeClusters.add(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME);
+  }
+
+  public void setCompareIndexMetadata(boolean compareIndexMetadata) {
+    this.compareIndexMetadata = compareIndexMetadata;
   }
 
   public boolean isCompareEntriesForAutomaticIndexes() {
@@ -177,8 +184,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
   }
 
   private void compareSchama() {
-    OSchema schema1 = databaseDocumentTxOne.getMetadata().getSchema();
-    OSchema schema2 = databaseDocumentTxTwo.getMetadata().getSchema();
+    OSchema schema1 = databaseDocumentTxOne.getMetadata().getImmutableSchemaSnapshot();
+    OSchema schema2 = databaseDocumentTxTwo.getMetadata().getImmutableSchemaSnapshot();
     boolean ok = true;
     for (OClass clazz : schema1.getClasses()) {
       OClass clazz2 = schema2.getClass(clazz.getName());
@@ -229,6 +236,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
           listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as missed property " + prop.getName()
               + "in DB2.");
           ok = false;
+          continue;
         }
         if (prop.getType() != prop2.getType()) {
           listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same type for property "
@@ -445,39 +453,41 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
         ++differences;
       }
 
-      final ODocument metadataOne = indexOne.getMetadata();
-      final ODocument metadataTwo = indexTwo.getMetadata();
+      if (compareIndexMetadata) {
+        final ODocument metadataOne = indexOne.getMetadata();
+        final ODocument metadataTwo = indexTwo.getMetadata();
 
-      if (metadataOne == null && metadataTwo != null) {
-        ok = false;
-        listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 is null but for DB2 is not.");
-        listener.onMessage("\n");
-        ++differences;
-      } else if (metadataOne != null && metadataTwo == null) {
-        ok = false;
-        listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 is not null but for DB2 is null.");
-        listener.onMessage("\n");
-        ++differences;
-      } else if (metadataOne != null && metadataTwo != null
-          && !ODocumentHelper.hasSameContentOf(metadataOne, databaseDocumentTxOne, metadataTwo, databaseDocumentTxTwo, ridMapper)) {
-        ok = false;
-        listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 and for DB2 are different.");
-        makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<Object>() {
-          @Override
-          public Object call() {
-            listener.onMessage("\n--- M1: " + metadataOne);
-            return null;
-          }
-        });
-        makeDbCall(databaseDocumentTxTwo, new ODbRelatedCall<Object>() {
-          @Override
-          public Object call() {
-            listener.onMessage("\n--- M2: " + metadataTwo);
-            return null;
-          }
-        });
-        listener.onMessage("\n");
-        ++differences;
+        if (metadataOne == null && metadataTwo != null) {
+          ok = false;
+          listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 is null but for DB2 is not.");
+          listener.onMessage("\n");
+          ++differences;
+        } else if (metadataOne != null && metadataTwo == null) {
+          ok = false;
+          listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 is not null but for DB2 is null.");
+          listener.onMessage("\n");
+          ++differences;
+        } else if (metadataOne != null && metadataTwo != null
+            && !ODocumentHelper.hasSameContentOf(metadataOne, databaseDocumentTxOne, metadataTwo, databaseDocumentTxTwo, ridMapper)) {
+          ok = false;
+          listener.onMessage("\n- ERR: Metadata for index " + indexOne.getName() + " for DB1 and for DB2 are different.");
+          makeDbCall(databaseDocumentTxOne, new ODbRelatedCall<Object>() {
+            @Override
+            public Object call() {
+              listener.onMessage("\n--- M1: " + metadataOne);
+              return null;
+            }
+          });
+          makeDbCall(databaseDocumentTxTwo, new ODbRelatedCall<Object>() {
+            @Override
+            public Object call() {
+              listener.onMessage("\n--- M2: " + metadataTwo);
+              return null;
+            }
+          });
+          listener.onMessage("\n");
+          ++differences;
+        }
       }
 
       if (((compareEntriesForAutomaticIndexes && !indexOne.getType().equals("DICTIONARY")) || !indexOne.isAutomatic())) {
@@ -626,11 +636,11 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
       clusterId = storage1.getClusterIdByName(clusterName);
 
-      OClusterPosition[] db1Range = storage1.getClusterDataRange(clusterId);
-      OClusterPosition[] db2Range = storage2.getClusterDataRange(clusterId);
+      final long[] db1Range = storage1.getClusterDataRange(clusterId);
+      final long[] db2Range = storage2.getClusterDataRange(clusterId);
 
-      final OClusterPosition db1Max = db1Range[1];
-      final OClusterPosition db2Max = db2Range[1];
+      final long db1Max = db1Range[1];
+      final long db2Max = db2Range[1];
 
       ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocumentTxOne);
       final ODocument doc1 = new ODocument();
@@ -640,24 +650,24 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       final ORecordId rid = new ORecordId(clusterId);
 
       // TODO why this maximums can be different?
-      final OClusterPosition clusterMax = db1Max.compareTo(db2Max) > 0 ? db1Max : db2Max;
+      final long clusterMax = Math.max(db1Max, db2Max);
 
       final OStorage storage;
 
-      if (clusterMax.equals(db1Max))
+      if (clusterMax==db1Max)
         storage = storage1;
       else
         storage = storage2;
 
       OPhysicalPosition[] physicalPositions = storage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(
-          OClusterPositionFactory.INSTANCE.valueOf(0)));
+          0));
 
       long recordsCounter = 0;
       while (physicalPositions.length > 0) {
         for (OPhysicalPosition physicalPosition : physicalPositions) {
           recordsCounter++;
 
-          final OClusterPosition position = physicalPosition.clusterPosition;
+          final long position = physicalPosition.clusterPosition;
           rid.clusterPosition = position;
 
           if (isDocumentDatabases() && rid.equals(new ORecordId(storage1.getConfiguration().indexMgrRecordId))

@@ -1,17 +1,21 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.server.distributed;
 
@@ -129,13 +133,35 @@ public class ODistributedResponseManager {
 
       // PUT THE RESPONSE IN THE RIGHT RESPONSE GROUP
       if (groupResponsesByResult) {
+        // TODO: AVOID TO KEEP ALL THE RESULT FOR THE SAME RESP GROUP, BUT RATHER THE FIRST ONE + COUNTER
         boolean foundBucket = false;
         for (int i = 0; i < responseGroups.size(); ++i) {
-          final List<ODistributedResponse> sameResponse = responseGroups.get(i);
-          if (sameResponse.isEmpty() || (sameResponse.get(0).getPayload() == null && response.getPayload() == null)
-              || sameResponse.get(0).getPayload().equals(response.getPayload())) {
-            sameResponse.add(response);
+          final List<ODistributedResponse> responseGroup = responseGroups.get(i);
+
+          if (responseGroup.isEmpty())
+            // ABSENT
             foundBucket = true;
+          else {
+            final Object rgPayload = responseGroup.get(0).getPayload();
+            final Object responsePayload = response.getPayload();
+
+            if (rgPayload == null && responsePayload == null)
+              // BOTH NULL
+              foundBucket = true;
+            else if (rgPayload != null) {
+              if (rgPayload.equals(responsePayload))
+                // SAME RESULT
+                foundBucket = true;
+              else if (rgPayload instanceof Collection && responsePayload instanceof Collection) {
+                if (OMultiValue.equals((Collection) rgPayload, (Collection) responsePayload))
+                  // COLLECTIONS WITH THE SAME VALUES
+                  foundBucket = true;
+              }
+            }
+          }
+
+          if (foundBucket) {
+            responseGroup.add(response);
             break;
           }
         }
@@ -307,7 +333,7 @@ public class ODistributedResponseManager {
           if (entry.getValue() != NO_RESPONSE)
             payloads.put(entry.getKey(), ((ODistributedResponse) entry.getValue()).getPayload());
 
-        final ODistributedResponse response = (ODistributedResponse) responses.values().iterator().next();
+        final ODistributedResponse response = (ODistributedResponse) getReceivedResponses().iterator().next();
         response.setExecutorNodeName(responses.keySet().toString());
         response.setPayload(payloads);
         return response;
@@ -509,7 +535,8 @@ public class ODistributedResponseManager {
       undoRequest();
 
       final StringBuilder msg = new StringBuilder(256);
-      msg.append("Quorum " + getQuorum() + " not reached for request (" + request + ").");
+      msg.append("Quorum " + getQuorum() + " not reached for request (" + request + "). Timeout="
+          + (System.currentTimeMillis() - sentOn) + "ms");
       final List<ODistributedResponse> res = getConflictResponses();
       if (res.isEmpty())
         msg.append(" No server in conflict. ");

@@ -1,17 +1,21 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.core.command.script;
 
@@ -20,10 +24,10 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -36,7 +40,6 @@ import javax.script.CompiledScript;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -84,57 +87,49 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
   }
 
   protected Object executeJsr223Script(final String language, final OCommandContext iContext, final Map<Object, Object> iArgs) {
-    ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if (db != null && !(db instanceof ODatabaseRecordTx))
-      db = db.getUnderlying();
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
     final OScriptManager scriptManager = Orient.instance().getScriptManager();
     CompiledScript compiledScript = request.getCompiledScript();
 
-    if (compiledScript == null) {
-      ScriptEngine scriptEngine = scriptManager.getEngine(language);
+    final ScriptEngine scriptEngine = scriptManager.acquireDatabaseEngine(db.getName(), language);
+    try {
 
-      if (!(scriptEngine instanceof Compilable))
-        throw new OCommandExecutionException("Language '" + language + "' does not support compilation");
+      if (compiledScript == null) {
+        if (!(scriptEngine instanceof Compilable))
+          throw new OCommandExecutionException("Language '" + language + "' does not support compilation");
 
-      // COMPILE FUNCTION LIBRARY
-      String lib = scriptManager.getLibrary(db, language);
-      if (lib == null)
-        lib = "";
+        final Compilable c = (Compilable) scriptEngine;
+        try {
+          compiledScript = c.compile(parserText);
+        } catch (ScriptException e) {
+          scriptManager.throwErrorMessage(e, parserText);
+        }
 
-      parserText = lib + parserText;
-
-      Compilable c = (Compilable) scriptEngine;
-      try {
-        compiledScript = c.compile(parserText);
-      } catch (ScriptException e) {
-        scriptManager.getErrorMessage(e, parserText);
+        request.setCompiledScript(compiledScript);
       }
 
-      request.setCompiledScript(compiledScript);
-    }
+      final Bindings binding = scriptManager.bind(compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE),
+          (ODatabaseDocumentTx) db, iContext, iArgs);
 
-    final Bindings binding = scriptManager.bind(compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE),
-        (ODatabaseRecordTx) db, iContext, iArgs);
+      try {
+        final Object ob = compiledScript.eval(binding);
 
-    try {
-      final Object ob = compiledScript.eval(binding);
+        return OCommandExecutorUtility.transformResult(ob);
+      } catch (ScriptException e) {
+        throw new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber(), e);
 
-      return OCommandExecutorUtility.transformResult(ob);
-    } catch (ScriptException e) {
-      throw new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber(), e);
-
+      } finally {
+        scriptManager.unbind(binding, iContext, iArgs);
+      }
     } finally {
-      scriptManager.unbind(binding);
+      scriptManager.releaseDatabaseEngine(db.getName(), scriptEngine);
     }
   }
 
   // TODO: CREATE A REGULAR JSR223 SCRIPT IMPL
   protected Object executeSQL() {
-    ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if (db != null && !(db instanceof ODatabaseRecordTx))
-      db = db.getUnderlying();
-
+    ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     try {
 
       return executeSQLScript(db, parserText);
@@ -149,7 +144,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
     throw new OCommandScriptException("Error on execution of the script: " + iText, request.getText(), 0);
   }
 
-  protected Object executeSQLScript(ODatabaseRecord db, final String iText) throws IOException {
+  protected Object executeSQLScript(ODatabaseDocument db, final String iText) throws IOException {
     Object lastResult = null;
     int maxRetry = 1;
 
@@ -194,7 +189,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 
             // PUT THE RESULT INTO THE CONTEXT
             getContext().setVariable(variable, lastResult);
-          } else if (lastCommand.equalsIgnoreCase("begin")) {
+          } else if ("begin".equalsIgnoreCase(lastCommand)) {
 
             if (txBegun)
               throw new OCommandSQLParsingException("Transaction already begun");
@@ -205,7 +200,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 
             db.begin();
 
-          } else if (lastCommand.equalsIgnoreCase("rollback")) {
+          } else if ("rollback".equalsIgnoreCase(lastCommand)) {
 
             if (!txBegun)
               throw new OCommandSQLParsingException("Transaction not begun");

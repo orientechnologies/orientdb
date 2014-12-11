@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 10/2/13
  */
 @Test
@@ -128,7 +128,7 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
 
     when(actualStorageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
-    sbTree = new OSBTree<Integer, byte[]>(".sbt", true, ".nbt");
+    sbTree = new OSBTree<Integer, byte[]>(".sbt", true, ".nbt", null);
     sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, null, actualStorage, 1, false);
   }
 
@@ -162,7 +162,7 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
 
     when(expectedStorageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
 
-    expectedSBTree = new OSBTree<Integer, byte[]>(".sbt", true, ".nbt");
+    expectedSBTree = new OSBTree<Integer, byte[]>(".sbt", true, ".nbt", null);
     expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, null, expectedStorage, 1,
         false);
   }

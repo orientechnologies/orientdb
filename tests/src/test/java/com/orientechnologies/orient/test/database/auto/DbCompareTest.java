@@ -42,6 +42,7 @@ public class DbCompareTest extends DocumentDBBaseTest implements OCommandOutputL
     final ODatabaseCompare databaseCompare = new ODatabaseCompare(url, urlPrefix + testPath + "/" + DbImportExportTest.NEW_DB_URL,
         "admin", "admin", this);
     databaseCompare.setCompareEntriesForAutomaticIndexes(true);
+		databaseCompare.setCompareIndexMetadata(true);
     Assert.assertTrue(databaseCompare.compare());
   }
 

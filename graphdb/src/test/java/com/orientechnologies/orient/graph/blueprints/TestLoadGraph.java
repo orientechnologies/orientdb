@@ -42,8 +42,6 @@ public class TestLoadGraph {
     if (dbURL == null)
       dbURL = storageType + ":" + "target/databases/GratefulDeadConcerts";
 
-    final boolean oldKeepOpen = OGlobalConfiguration.STORAGE_KEEP_OPEN.getValueAsBoolean();
-    OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
 
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbURL);
     ODatabaseHelper.deleteDatabase(db, storageType);
@@ -62,7 +60,6 @@ public class TestLoadGraph {
     g.command(new OCommandSQL("alter database LOCALECOUNTRY UK")).execute();
     g.command(new OCommandSQL("alter database LOCALELANGUAGE EN")).execute();
 
-    OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(oldKeepOpen);
     // g.drop();
   }
 }

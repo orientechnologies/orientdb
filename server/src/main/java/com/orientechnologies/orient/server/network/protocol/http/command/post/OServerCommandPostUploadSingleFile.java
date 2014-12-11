@@ -21,7 +21,7 @@ import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
@@ -38,16 +38,16 @@ import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttp
  */
 public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCommand<String, ORID> {
 
-  private static final String[]     NAMES = { "POST|uploadSingleFile/*" };
+  private static final String[]       NAMES = { "POST|uploadSingleFile/*" };
 
-  protected StringWriter            buffer;
-  protected OJSONWriter             writer;
-  protected ORID                    fileRID;
-  protected String                  fileDocument;
-  protected String                  fileName;
-  protected String                  fileType;
-  protected long                    now;
-  protected ODatabaseRecordInternal database;
+  protected StringWriter              buffer;
+  protected OJSONWriter               writer;
+  protected ORID                      fileRID;
+  protected String                    fileDocument;
+  protected String                    fileName;
+  protected String                    fileType;
+  protected long                      now;
+  protected ODatabaseDocumentInternal database;
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {

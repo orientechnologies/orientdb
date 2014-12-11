@@ -1,26 +1,23 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
-
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import com.orientechnologies.common.collection.OLazyIterator;
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
@@ -29,13 +26,13 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.annotation.OAfterSerialization;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.object.OLazyObjectMapInterface;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordElement.STATUS;
@@ -61,6 +58,13 @@ import com.orientechnologies.orient.core.serialization.serializer.object.OObject
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerEmbedded;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStringAbstract {
@@ -92,16 +96,12 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
         // SAVE AT THE FLY AND STORE THE NEW RID
         final ORecord record = rid.getRecord();
 
-        final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
-        if (database.getTransaction().isActive()) {
-          // USE THE DEFAULT CLUSTER
+        final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
+        if (record != null) {
           database.save((ORecord) record);
-
-        } else
-          database.save((ORecord) record);
-
-        if (record != null)
           rid = record.getIdentity();
+        }
+
         resultRid = rid;
       }
     } else {
@@ -123,25 +123,26 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       rid = iLinkedRecord.getIdentity();
 
       if ((rid.isNew() && !rid.isTemporary()) || iLinkedRecord.isDirty()) {
-        final ODatabaseRecordInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
+        final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
         if (iLinkedRecord instanceof ODocument) {
-          final OClass schemaClass = ((ODocument) iLinkedRecord).getSchemaClass();
-          database.save(iLinkedRecord, schemaClass != null ? database.getClusterNameById(schemaClass.getClusterForNewInstance())
-              : null);
+          final OClass schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) iLinkedRecord));
+          database.save(
+              iLinkedRecord,
+              schemaClass != null && database.getStorage().isAssigningClusterIds() ? database.getClusterNameById(schemaClass
+                  .getClusterForNewInstance((ODocument) iLinkedRecord)) : null);
         } else
           // STORE THE TRAVERSED OBJECT TO KNOW THE RECORD ID. CALL THIS VERSION TO AVOID CLEAR OF STACK IN THREAD-LOCAL
           database.save(iLinkedRecord);
 
-        final ODatabaseComplex<?> dbOwner = database.getDatabaseOwner();
+        final ODatabase<?> dbOwner = database.getDatabaseOwner();
         dbOwner.registerUserObjectAfterLinkSave(iLinkedRecord);
 
         resultRid = iLinkedRecord;
       }
 
-      final ODatabaseRecord database = ODatabaseRecordThreadLocal.INSTANCE.get();
-      if (iParentRecord != null && database instanceof ODatabaseRecord) {
-        final ODatabaseRecord db = database;
-        if (!db.isRetainRecords())
+      final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
+      if (iParentRecord != null) {
+        if (!database.isRetainRecords())
           // REPLACE CURRENT RECORD WITH ITS ID: THIS SAVES A LOT OF MEMORY
           resultRid = iLinkedRecord.getIdentity();
       }
@@ -214,7 +215,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
       if (iValue.length() > 1) {
         int pos = iValue.indexOf(OStringSerializerHelper.CLASS_SEPARATOR);
         if (pos > -1)
-          ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema().getClass(iValue.substring(1, pos));
+          ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getImmutableSchemaSnapshot().getClass(iValue.substring(1, pos));
         else
           pos = 0;
 
@@ -332,7 +333,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
 
   public void fieldToStream(final ODocument iRecord, final StringBuilder iOutput, OUserObject2RecordHandler iObjHandler,
       final OType iType, final OClass iLinkedClass, final OType iLinkedType, final String iName, final Object iValue,
-      final Set<ODocument> iMarshalledRecords, final boolean iSaveOnlyDirty) {
+      final Map<ODocument, Boolean> iMarshalledRecords, final boolean iSaveOnlyDirty) {
     if (iValue == null)
       return;
 
@@ -553,9 +554,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     }
   }
 
-  public void embeddedMapToStream(ODatabaseComplex<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
-      final StringBuilder iOutput, final OClass iLinkedClass, OType iLinkedType, final Object iValue,
-      final Set<ODocument> iMarshalledRecords, final boolean iSaveOnlyDirty) {
+  public void embeddedMapToStream(ODatabase<?> iDatabase, final OUserObject2RecordHandler iObjHandler, final StringBuilder iOutput,
+      final OClass iLinkedClass, OType iLinkedType, final Object iValue, final Map<ODocument, Boolean> iMarshalledRecords,
+      final boolean iSaveOnlyDirty) {
     iOutput.append(OStringSerializerHelper.MAP_BEGIN);
 
     if (iValue != null) {
@@ -726,9 +727,9 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
     return coll;
   }
 
-  public StringBuilder embeddedCollectionToStream(ODatabaseComplex<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
+  public StringBuilder embeddedCollectionToStream(ODatabase<?> iDatabase, final OUserObject2RecordHandler iObjHandler,
       final StringBuilder iOutput, final OClass iLinkedClass, final OType iLinkedType, final Object iValue,
-      final Set<ODocument> iMarshalledRecords, final boolean iSaveOnlyDirty, final boolean iSet) {
+      final Map<ODocument, Boolean> iMarshalledRecords, final boolean iSaveOnlyDirty, final boolean iSet) {
     iOutput.append(iSet ? OStringSerializerHelper.SET_BEGIN : OStringSerializerHelper.LIST_BEGIN);
 
     final Iterator<Object> iterator = OMultiValue.getMultiValueIterator(iValue);
@@ -777,7 +778,7 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
           if (id.getIdentity().isTemporary())
             doc.save();
 
-          linkedClass = doc.getSchemaClass();
+          linkedClass = ODocumentInternal.getImmutableSchemaClass(doc);
         } else
           linkedClass = null;
       }

@@ -1,17 +1,21 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.core.sql;
 
@@ -20,7 +24,7 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
@@ -28,6 +32,7 @@ import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
@@ -37,7 +42,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,6 +58,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
     OCommandResultListener {
   public static final String   NAME            = "DELETE FROM";
   public static final String   KEYWORD_DELETE  = "DELETE";
+  public static final String   KEYWORD_UNSAFE  = "UNSAFE";
   private static final String  VALUE_NOT_FOUND = "_not_found_";
 
   private OSQLQuery<ODocument> query;
@@ -60,21 +66,28 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
   private int                  recordCount     = 0;
   private String               lockStrategy    = "NONE";
   private String               returning       = "COUNT";
-  private List<ORecord>     allDeletedRecords;
+  private List<ORecord>        allDeletedRecords;
 
   private OSQLFilter           compiledFilter;
+  private boolean              unsafe          = false;
 
   public OCommandExecutorSQLDelete() {
   }
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDelete parse(final OCommandRequest iRequest) {
-    final ODatabaseRecord database = getDatabase();
+    final ODatabaseDocument database = getDatabase();
 
     init((OCommandRequestText) iRequest);
 
     query = null;
     recordCount = 0;
+
+    if (parserTextUpperCase.endsWith(KEYWORD_UNSAFE)) {
+      unsafe = true;
+      parserText = parserText.substring(0, parserText.length() - KEYWORD_UNSAFE.length() - 1);
+      parserTextUpperCase = parserTextUpperCase.substring(0, parserTextUpperCase.length() - KEYWORD_UNSAFE.length() - 1);
+    }
 
     parserRequiredKeyword(OCommandExecutorSQLDelete.KEYWORD_DELETE);
     parserRequiredKeyword(OCommandExecutorSQLDelete.KEYWORD_FROM);
@@ -95,6 +108,8 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
             lockStrategy = parseLock();
           else if (word.equals(KEYWORD_RETURN))
             returning = parseReturn();
+          else if (word.equals(KEYWORD_UNSAFE))
+            unsafe = true;
           else if (word.equalsIgnoreCase(KEYWORD_WHERE))
             compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition()),
                 getContext(), KEYWORD_WHERE);
@@ -178,7 +193,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
           OIndexCursor cursor = index.cursor();
           Map.Entry<Object, OIdentifiable> entry;
 
-          while ((entry=cursor.nextEntry()) != null) {
+          while ((entry = cursor.nextEntry()) != null) {
             OIdentifiable rec = entry.getValue();
             rec = rec.getRecord();
             if (rec != null)
@@ -228,7 +243,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
   }
 
   /**
-   * Delete the current record.
+   * Deletes the current record.
    */
   public boolean result(final Object iRecord) {
     final ORecordAbstract record = (ORecordAbstract) iRecord;
@@ -240,23 +255,43 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 
         // RESET VERSION TO DISABLE MVCC AVOIDING THE CONCURRENT EXCEPTION IF LOCAL CACHE IS NOT UPDATED
         record.getRecordVersion().disable();
-        record.delete();
+
+        if (!unsafe && record instanceof ODocument) {
+          // CHECK IF ARE VERTICES OR EDGES
+          final OClass cls = ((ODocument) record).getSchemaClass();
+          if (cls != null) {
+            if (cls.isSubClassOf("V"))
+              // FOUND VERTEX
+              throw new OCommandExecutionException(
+                  "'DELETE' command cannot delete Vertices. Use 'DELETE VERTEX' command instead, or apply the 'UNSAFE' keyword to force it");
+            else if (cls.isSubClassOf("E"))
+              // FOUND EDGE
+              throw new OCommandExecutionException(
+                  "'DELETE' command cannot delete Edges. Use 'DELETE EDGE' command instead, or apply the 'UNSAFE' keyword to force it");
+            else
+              record.delete();
+          } else
+            record.delete();
+        } else
+          record.delete();
+
         recordCount++;
         return true;
       }
       return false;
     } finally {
       if (lockStrategy.equalsIgnoreCase("RECORD"))
-        ((OStorageEmbedded) getDatabase().getStorage()).releaseWriteLock(record.getIdentity());
+        ((OAbstractPaginatedStorage) getDatabase().getStorage()).releaseWriteLock(record.getIdentity());
     }
   }
 
-  public boolean isReplicated() {
-    return indexName != null;
+  @Override
+  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return indexName != null ? DISTRIBUTED_EXECUTION_MODE.REPLICATE : DISTRIBUTED_EXECUTION_MODE.LOCAL;
   }
 
   public String getSyntax() {
-    return "DELETE FROM <Class>|RID|cluster:<cluster> [LOCK <NONE|RECORD>] [RETURNING <COUNT|BEFORE>] [WHERE <condition>*]";
+    return "DELETE FROM <Class>|RID|cluster:<cluster> [UNSAFE] [LOCK <NONE|RECORD>] [RETURNING <COUNT|BEFORE>] [WHERE <condition>*]";
   }
 
   @Override

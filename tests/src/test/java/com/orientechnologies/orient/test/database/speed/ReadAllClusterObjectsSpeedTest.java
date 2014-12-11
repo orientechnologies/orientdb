@@ -16,50 +16,53 @@
 package com.orientechnologies.orient.test.database.speed;
 
 import com.orientechnologies.common.test.SpeedTestMonoThread;
-import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.storage.ORawBuffer;
-import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
 public class ReadAllClusterObjectsSpeedTest extends SpeedTestMonoThread {
-  private static final String CLUSTER_NAME = "Animal";
-  private final static int    RECORDS      = 1;
-  private ODatabaseRaw        db;
+  private static final String CLASS_NAME = "Account";
+  private ODatabaseDocumentTx db;
   private int                 objectsRead;
+  private String              url;
 
   public ReadAllClusterObjectsSpeedTest() {
-    super(RECORDS);
+    super(5);
+    url = System.getProperty("url");
+    if (url == null)
+      throw new IllegalArgumentException("URL missing");
   }
 
   @Override
+  @Test(enabled = false)
   public void init() throws IOException {
-    db = new ODatabaseRaw("embedded:database/test");
+    db = new ODatabaseDocumentTx(url);
+    db.open("admin", "admin");
   }
 
   @Override
+  @Test(enabled = false)
   public void cycle() throws UnsupportedEncodingException {
-    ORawBuffer buffer;
     objectsRead = 0;
 
-    int clusterId = db.getClusterIdByName(CLUSTER_NAME);
-
-    final ORecordId rid = new ORecordId(clusterId);
-    for (int i = 0; i < db.countClusterElements(CLUSTER_NAME); ++i) {
-      rid.clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(i);
-
-      buffer = db.read(rid, null, false, false, OStorage.LOCKING_STRATEGY.DEFAULT).getResult();
-      if (buffer != null)
-        ++objectsRead;
+    for (ODocument rec : db.browseClass(CLASS_NAME)) {
+      ++objectsRead;
     }
   }
 
   @Override
+  public void afterCycle() throws Exception {
+    System.out.println(data.getCyclesDone() + "-> Read " + objectsRead + " objects in the cluster " + CLASS_NAME + "="
+        + data().takeTimer());
+  }
+
+  @Override
+  @Test(enabled = false)
   public void deinit() throws IOException {
-    System.out.println("Read " + objectsRead + " objects in the cluster " + CLUSTER_NAME);
+    System.out.println("Read " + objectsRead + " objects in the cluster " + CLASS_NAME);
     db.close();
   }
 }

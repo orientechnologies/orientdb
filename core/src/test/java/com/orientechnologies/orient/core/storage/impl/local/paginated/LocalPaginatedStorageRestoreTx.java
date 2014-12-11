@@ -118,6 +118,7 @@ public class LocalPaginatedStorageRestoreTx {
             System.out.println(text);
           }
         });
+		databaseCompare.setCompareIndexMetadata(true);
 
     Assert.assertTrue(databaseCompare.compare());
   }

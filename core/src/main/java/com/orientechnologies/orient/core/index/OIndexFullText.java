@@ -1,21 +1,26 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
@@ -78,48 +83,62 @@ public class OIndexFullText extends OIndexMultiValues {
 
     key = getCollatingValue(key);
 
-    modificationLock.requestModificationLock();
+    final ODatabase database = getDatabase();
+    final boolean txIsActive = database.getTransaction().isActive();
 
+    if (txIsActive)
+      keyLockManager.acquireSharedLock(key);
     try {
-      final Set<String> words = splitIntoWords(key.toString());
+      modificationLock.requestModificationLock();
 
-      // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
-      for (final String word : words) {
-        acquireExclusiveLock();
-        startStorageAtomicOperation();
-        try {
-          Set<OIdentifiable> refs;
+      try {
+        final Set<String> words = splitIntoWords(key.toString());
 
-          // SEARCH FOR THE WORD
-          refs = indexEngine.get(word);
+        // FOREACH WORD CREATE THE LINK TO THE CURRENT DOCUMENT
+        for (final String word : words) {
+          acquireExclusiveLock();
+          startStorageAtomicOperation();
+          try {
+            Set<OIdentifiable> refs;
 
-          if (refs == null) {
-            // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
-            if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-              refs = new OIndexRIDContainer(getName());
-            } else {
-              refs = new OMVRBTreeRIDSet();
-              ((OMVRBTreeRIDSet) refs).setAutoConvertToRecord(false);
+            // SEARCH FOR THE WORD
+            refs = indexEngine.get(word);
+
+            if (refs == null) {
+              // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
+              if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
+                boolean durable = false;
+                if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
+                  durable = true;
+
+                refs = new OIndexRIDContainer(getName(), durable);
+              } else {
+                refs = new OMVRBTreeRIDSet();
+                ((OMVRBTreeRIDSet) refs).setAutoConvertToRecord(false);
+              }
             }
+
+            // ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
+            refs.add(iSingleValue);
+
+            // SAVE THE INDEX ENTRY
+            indexEngine.put(word, refs);
+
+            commitStorageAtomicOperation();
+          } catch (RuntimeException e) {
+            rollbackStorageAtomicOperation();
+            throw new OIndexException("Error during put of key - value entry", e);
+          } finally {
+            releaseExclusiveLock();
           }
-
-          // ADD THE CURRENT DOCUMENT AS REF FOR THAT WORD
-          refs.add(iSingleValue);
-
-          // SAVE THE INDEX ENTRY
-          indexEngine.put(word, refs);
-
-          commitStorageAtomicOperation();
-        } catch (RuntimeException e) {
-          rollbackStorageAtomicOperation();
-          throw new OIndexException("Error during put of key - value entry", e);
-        } finally {
-          releaseExclusiveLock();
         }
+        return this;
+      } finally {
+        modificationLock.releaseModificationLock();
       }
-      return this;
     } finally {
-      modificationLock.releaseModificationLock();
+      if (txIsActive)
+        keyLockManager.releaseSharedLock(key);
     }
   }
 
@@ -139,39 +158,49 @@ public class OIndexFullText extends OIndexMultiValues {
 
     key = getCollatingValue(key);
 
-    modificationLock.requestModificationLock();
+    final ODatabase database = getDatabase();
+    final boolean txIsActive = database.getTransaction().isActive();
 
+    if (txIsActive)
+      keyLockManager.acquireSharedLock(key);
     try {
-      final Set<String> words = splitIntoWords(key.toString());
-      boolean removed = false;
+      modificationLock.requestModificationLock();
 
-      for (final String word : words) {
-        acquireExclusiveLock();
-				startStorageAtomicOperation();
-        try {
+      try {
+        final Set<String> words = splitIntoWords(key.toString());
+        boolean removed = false;
 
-          final Set<OIdentifiable> recs = indexEngine.get(word);
-          if (recs != null && !recs.isEmpty()) {
-            if (recs.remove(value)) {
-              if (recs.isEmpty())
-                indexEngine.remove(word);
-              else
-                indexEngine.put(word, recs);
-              removed = true;
+        for (final String word : words) {
+          acquireExclusiveLock();
+          startStorageAtomicOperation();
+          try {
+
+            final Set<OIdentifiable> recs = indexEngine.get(word);
+            if (recs != null && !recs.isEmpty()) {
+              if (recs.remove(value)) {
+                if (recs.isEmpty())
+                  indexEngine.remove(word);
+                else
+                  indexEngine.put(word, recs);
+                removed = true;
+              }
             }
+            commitStorageAtomicOperation();
+          } catch (RuntimeException e) {
+            rollbackStorageAtomicOperation();
+            throw new OIndexException("Error during removal of entry by key and value", e);
+          } finally {
+            releaseExclusiveLock();
           }
-					commitStorageAtomicOperation();
-        } catch (RuntimeException e) {
-					rollbackStorageAtomicOperation();
-					throw new OIndexException("Error during removal of entry by key and value", e);
-				} finally {
-          releaseExclusiveLock();
         }
-      }
 
-      return removed;
+        return removed;
+      } finally {
+        modificationLock.releaseModificationLock();
+      }
     } finally {
-      modificationLock.releaseModificationLock();
+      if (txIsActive)
+        keyLockManager.releaseSharedLock(key);
     }
   }
 
@@ -273,7 +302,11 @@ public class OIndexFullText extends OIndexMultiValues {
       if (refs == null) {
         // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
         if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
-          refs = new OIndexRIDContainer(getName());
+          boolean durable = false;
+          if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
+            durable = true;
+
+          refs = new OIndexRIDContainer(getName(), durable);
         } else {
           refs = new OMVRBTreeRIDSet();
           ((OMVRBTreeRIDSet) refs).setAutoConvertToRecord(false);

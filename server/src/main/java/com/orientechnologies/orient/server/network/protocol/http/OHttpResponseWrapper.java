@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -257,30 +261,6 @@ public class OHttpResponseWrapper {
   }
 
   /**
-   * Sends the complete HTTP response in one call specifying additional headers.
-   * 
-   * @param iCode
-   *          HTTP response's Code
-   * @param iReason
-   *          Response's reason
-   * @param iContentType
-   *          Response's content type
-   * @param iContent
-   *          Content to send. Content can be a string for plain text, binary data to return directly binary information,
-   *          OIdentifiable for a single record and Collection<OIdentifiable> for a collection of records
-   * @param iHeaders
-   *          Response's additional headers
-   * @param iKeepAlive
-   *          Use the connection keep-alive
-   * @return The object itself for fluent chained calls
-   */
-  public OHttpResponseWrapper send(final int iCode, final String iReason, final String iContentType, final Object iContent,
-      final String iHeaders, final boolean iKeepAlive) throws IOException {
-    response.send(iCode, iReason, iContentType, iContent, iHeaders, iKeepAlive);
-    return this;
-  }
-
-  /**
    * Sends the complete HTTP response in one call specifying a stream as content.
    * 
    * @param iCode
@@ -340,5 +320,21 @@ public class OHttpResponseWrapper {
 
   public void setContentType(final String contentType) {
     response.setContentType(contentType);
+  }
+  
+  public String getContent() {
+    return response.getContent();
+  }
+
+  public void setContent(String content) {
+    response.setContent(content);
+  }
+
+  public int getCode() {
+    return response.getCode();
+  }
+
+  public void setCode(int code) {
+    response.setCode(code);
   }
 }

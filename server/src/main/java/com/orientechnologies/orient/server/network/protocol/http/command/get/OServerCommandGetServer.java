@@ -1,32 +1,32 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Collection;
-import java.util.Map;
-import java.util.Map.Entry;
 
-import com.orientechnologies.common.concur.resource.OReentrantResourcePool;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -90,7 +90,6 @@ public class OServerCommandGetServer extends OServerCommandGetConnections {
       writeField(json, 2, "type", s.getClass().getSimpleName());
       writeField(json, 2, "path",
           s instanceof OLocalPaginatedStorage ? ((OLocalPaginatedStorage) s).getStoragePath().replace('\\', '/') : "");
-      writeField(json, 2, "activeUsers", s.getUsers());
       json.endObject(2);
     }
     json.endCollection(1, false);
@@ -98,18 +97,11 @@ public class OServerCommandGetServer extends OServerCommandGetConnections {
 
   protected void writeDatabases(final OJSONWriter json) throws IOException {
     json.beginCollection(1, true, "dbs");
-    Map<String, OReentrantResourcePool<String, ODatabaseDocumentTx>> dbPool = server.getDatabasePool().getPools();
-    for (Entry<String, OReentrantResourcePool<String, ODatabaseDocumentTx>> entry : dbPool.entrySet()) {
-      for (ODatabaseDocumentTx db : entry.getValue().getResources()) {
-
-        json.beginObject(2);
-        writeField(json, 2, "db", db.getName());
-        writeField(json, 2, "user", db.getUser() != null ? db.getUser().getName() : "-");
-        writeField(json, 2, "status", db.isClosed() ? "closed" : "open");
-        writeField(json, 2, "type", db.getType());
-        writeField(json, 2, "storageType", db.getStorage().getType());
-        json.endObject(2);
-      }
+    Collection<OPartitionedDatabasePool> dbPools = server.getDatabasePoolFactory().getPools();
+    for (OPartitionedDatabasePool pool : dbPools) {
+      writeField(json, 2, "db", pool.getUrl());
+      writeField(json, 2, "user", pool.getUserName());
+      json.endObject(2);
     }
     json.endCollection(1, false);
   }

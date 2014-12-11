@@ -789,7 +789,7 @@ public class ReadWriteDiskCacheTest {
   }
 
   public void testLogDirtyTables() throws Exception {
-    ODatabaseRecordThreadLocal.INSTANCE.set(null);
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
     closeBufferAndDeleteFile();
 
     File file = new File(storageLocal.getConfiguration().getDirectory());

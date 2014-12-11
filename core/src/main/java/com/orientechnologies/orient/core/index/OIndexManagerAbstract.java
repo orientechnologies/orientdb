@@ -1,43 +1,40 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.core.index;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.util.OMultiKey;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -63,7 +60,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
   protected ReadWriteLock                                     lock               = new ReentrantReadWriteLock();
 
-  public OIndexManagerAbstract(final ODatabaseRecord iDatabase) {
+  public OIndexManagerAbstract(final ODatabaseDocument iDatabase) {
     super(new ODocument());
   }
 
@@ -121,7 +118,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
         save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
       } catch (Exception e) {
         // RESET RID TO ALLOCATE A NEW ONE
-        if (document.getIdentity().getClusterPosition().isPersistent()) {
+        if (ORecordId.isPersistent(document.getIdentity().getClusterPosition())) {
           document.getIdentity().reset();
           save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
         }
@@ -362,14 +359,29 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
   protected void releaseSharedLock() {
     lock.readLock().unlock();
+
   }
 
   protected void acquireExclusiveLock() {
+    final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
+    if (databaseRecord != null && !databaseRecord.isClosed()) {
+      final OMetadata metadata = databaseRecord.getMetadata();
+      if (metadata != null)
+        metadata.makeThreadLocalSchemaSnapshot();
+    }
+
     lock.writeLock().lock();
   }
 
   protected void releaseExclusiveLock() {
     lock.writeLock().unlock();
+
+    final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
+    if (databaseRecord != null && !databaseRecord.isClosed()) {
+      final OMetadata metadata = databaseRecord.getMetadata();
+      if (metadata != null)
+        metadata.clearThreadLocalSchemaSnapshot();
+    }
   }
 
   protected void clearMetadata() {
@@ -382,8 +394,12 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     }
   }
 
-  protected ODatabaseRecordInternal getDatabase() {
+  protected ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
+  }
+
+  protected ODatabaseDocumentInternal getDatabaseIfDefined() {
+    return ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
   }
 
   protected void addIndexInternal(final OIndex<?> index) {

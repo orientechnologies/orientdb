@@ -18,7 +18,7 @@ import org.testng.annotations.Test;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 /*
  * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)

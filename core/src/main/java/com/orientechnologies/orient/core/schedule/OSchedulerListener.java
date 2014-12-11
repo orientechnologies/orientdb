@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 henryzhao81@gmail.com
+ * Copyright 2010-2012 henryzhao81-at-gmail.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,8 @@ package com.orientechnologies.orient.core.schedule;
 import java.util.Map;
 
 /**
- * Author : henryzhao81@gmail.com Mar 28, 2013
+ * @author henryzhao81-at-gmail.com
+ * @since Mar 28, 2013
  */
 
 public interface OSchedulerListener {

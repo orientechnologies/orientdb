@@ -16,7 +16,7 @@ import java.util.NavigableSet;
 import java.util.TreeSet;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 10/1/13
  */
 @Test
@@ -42,7 +42,7 @@ public class SBTreeTestBigValues {
 
     databaseDocumentTx.create();
 
-    sbTree = new OSBTree<Integer, byte[]>(".sbt", false, ".nbt");
+    sbTree = new OSBTree<Integer, byte[]>(".sbt", false, ".nbt", null);
     sbTree.create("sbTree", OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, null,
         (OAbstractPaginatedStorage) databaseDocumentTx.getStorage().getUnderlying(), 1, false);
   }

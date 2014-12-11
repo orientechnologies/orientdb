@@ -60,7 +60,7 @@
 
 
     <target name="test-embedded" depends="test-init">
-        <echo>REMOVE FIlES OF PREVIOUS INSTANCE OF TEST DATABASE</echo>
+        <echo>REMOVE FILES OF PREVIOUS INSTANCE OF TEST DATABASE</echo>
         <delete failonerror="false">
             <fileset dir="${test.db.path}" includes="**/*"/>
         </delete>
@@ -74,6 +74,8 @@
         <testng outputDir="target/test-output" haltOnFailure="true" verbose="2">
             <jvmarg value="-Xmx2G"/>
             <jvmarg value="-XX:+HeapDumpOnOutOfMemoryError"/>
+            <jvmarg value="-DORIENTDB_ROOT_PASSWORD="/>
+            <jvmarg value="-DORIENTDB_NODE_NAME="/>
             <jvmarg value="-Dstorage.lockTimeout=60000"/>
             <jvmarg value="-Dstorage.makeFullCheckpointAfterCreate=false"/>
             <jvmarg value="-Dstorage.makeFullCheckpointAfterClusterCreate=false"/>

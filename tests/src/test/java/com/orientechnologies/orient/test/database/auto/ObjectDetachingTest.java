@@ -15,20 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
-import javassist.util.proxy.Proxy;
-
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -44,7 +30,25 @@ import com.orientechnologies.orient.test.domain.business.Address;
 import com.orientechnologies.orient.test.domain.business.Child;
 import com.orientechnologies.orient.test.domain.business.City;
 import com.orientechnologies.orient.test.domain.business.Country;
+import com.orientechnologies.orient.test.domain.cycle.CycleChild;
+import com.orientechnologies.orient.test.domain.cycle.CycleParent;
+import com.orientechnologies.orient.test.domain.cycle.GrandChild;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
+import javassist.util.proxy.Proxy;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Test(groups = { "object" })
 public class ObjectDetachingTest extends ObjectDBBaseTest {
@@ -208,8 +212,8 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     database.rollback();
 
     Assert.assertEquals(database.countClass(Country.class), initCount);
-    Assert.assertTrue(country.getId() == null || ((ORID) country.getId()).isTemporary());
-    Assert.assertNull(country.getVersion());
+    Assert.assertTrue(country.getId() == null || ((ORID) country.getId()).isNew(), "id=" + country.getId());
+//    Assert.assertNull(country.getVersion());
   }
 
   @Test(dependsOnMethods = "testInsertRollback")
@@ -740,4 +744,36 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     database.delete(profile);
   }
 
+  public void testDetachAllWithCycles() {
+    database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.cycle");
+
+    CycleParent parent = new CycleParent();
+    parent.setName("parent");
+    CycleChild cycleChild1 = new CycleChild();
+    cycleChild1.setParent(parent);
+    cycleChild1.setName("child1");
+    parent.getChildren().add(cycleChild1);
+    CycleChild cycleChild2 = new CycleChild();
+    cycleChild2.setName("child2");
+    cycleChild2.setParent(parent);
+    parent.getChildren().add(cycleChild2);
+    GrandChild grandChild = new GrandChild();
+    grandChild.setName("grandchild");
+    grandChild.setGrandParent(parent);
+    cycleChild1.getGrandChildren().add(grandChild);
+    CycleParent attached = database.save(parent);
+
+    CycleParent detachedParent = database.detachAll(attached, true);
+    Assert.assertEquals(detachedParent.getName(), parent.getName());
+    Assert.assertEquals(detachedParent.getChildren().getClass(), ArrayList.class);
+    CycleChild detachedCycleChild1 = detachedParent.getChildren().get(0);
+    CycleChild detachedCycleChild2 = detachedParent.getChildren().get(1);
+    Assert.assertEquals(detachedCycleChild1.getName(), cycleChild1.getName());
+    Assert.assertEquals(detachedCycleChild2.getName(), cycleChild2.getName());
+    Assert.assertEquals(detachedCycleChild1.getGrandChildren().getClass(), HashSet.class);
+    GrandChild detachedGrandChild = detachedCycleChild1.getGrandChildren().iterator().next();
+    Assert.assertEquals(detachedGrandChild.getName(), grandChild.getName());
+    Assert.assertSame(detachedGrandChild.getGrandParent(), detachedParent);
+
+  }
 }

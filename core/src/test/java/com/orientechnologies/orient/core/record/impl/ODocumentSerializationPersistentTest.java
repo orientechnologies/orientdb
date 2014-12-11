@@ -19,7 +19,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 /**
  * Tests that {@link ODocument} is serializable.
  * 
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  * @since 12/20/12
  */
 public class ODocumentSerializationPersistentTest {
@@ -62,7 +62,7 @@ public class ODocumentSerializationPersistentTest {
     Assert.assertEquals(loadedDoc.getIdentity(), docId);
     Assert.assertEquals(loadedDoc.getRecordVersion(), doc.getRecordVersion());
     Assert.assertEquals(loadedDoc.field("name"), "Artem");
-    Assert.assertEquals(loadedDoc.field("country", OType.LINK), linkedId);
+    Assert.assertEquals(loadedDoc.field("country"), linkedId);
 
     final List<Integer> numbers = loadedDoc.field("numbers");
     for (int i = 0; i < numbers.size(); i++) {

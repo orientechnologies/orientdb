@@ -1,19 +1,33 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.core.db;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import com.orientechnologies.common.concur.lock.OAdaptiveLock;
 import com.orientechnologies.common.concur.lock.OLockException;
@@ -26,16 +40,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
-
 public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extends OAdaptiveLock implements
     OResourcePoolListener<String, DB>, OOrientListener {
 
@@ -43,7 +47,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
   protected Object                                                  owner;
   private int                                                       maxSize;
   private int                                                       timeout;
-  private Timer                                                     evictionTask;
+  private volatile Timer                                            evictionTask;
   private Evictor                                                   evictor;
 
   /**
@@ -137,35 +141,48 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
   public DB acquire(final String iURL, final String iUserName, final String iUserPassword, final Map<String, Object> iOptionalParams)
       throws OLockException {
     final String dbPooledName = OIOUtils.getUnixFileName(iUserName + "@" + iURL);
-
+    OReentrantResourcePool<String, DB> pool;
     lock();
     try {
-
-      OReentrantResourcePool<String, DB> pool = pools.get(dbPooledName);
+      pool = pools.get(dbPooledName);
       if (pool == null)
         // CREATE A NEW ONE
         pool = new OReentrantResourcePool<String, DB>(maxSize, this);
 
-      final DB db = pool.getResource(iURL, timeout, iUserName, iUserPassword, iOptionalParams);
-
       // PUT IN THE POOL MAP ONLY IF AUTHENTICATION SUCCEED
       pools.put(dbPooledName, pool);
-      return db;
 
     } finally {
       unlock();
     }
+    final DB db = pool.getResource(iURL, timeout, iUserName, iUserPassword, iOptionalParams);
+    return db;
   }
 
   public int getMaxConnections(final String url, final String userName) {
+    final String dbPooledName = OIOUtils.getUnixFileName(userName + "@" + url);
+    final OReentrantResourcePool<String, DB> pool;
+    lock();
+    try {
+      pool = pools.get(dbPooledName);
+    } finally {
+      unlock();
+    }
+    if (pool == null)
+      return maxSize;
+
+    return pool.getMaxResources();
+  }
+
+  public int getCreatedInstances(String url, String userName) {
     final String dbPooledName = OIOUtils.getUnixFileName(userName + "@" + url);
     lock();
     try {
       final OReentrantResourcePool<String, DB> pool = pools.get(dbPooledName);
       if (pool == null)
-        return maxSize;
+        return 0;
 
-      return pool.getMaxResources();
+      return pool.getCreatedInstances();
     } finally {
       unlock();
     }
@@ -173,49 +190,53 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
 
   public int getAvailableConnections(final String url, final String userName) {
     final String dbPooledName = OIOUtils.getUnixFileName(userName + "@" + url);
+    final OReentrantResourcePool<String, DB> pool;
     lock();
     try {
-      final OReentrantResourcePool<String, DB> pool = pools.get(dbPooledName);
-      if (pool == null)
-        return 0;
-
-      return pool.getAvailableResources();
+      pool = pools.get(dbPooledName);
     } finally {
       unlock();
     }
+    if (pool == null)
+      return 0;
+
+    return pool.getAvailableResources();
   }
 
   public int getConnectionsInCurrentThread(final String url, final String userName) {
     final String dbPooledName = OIOUtils.getUnixFileName(userName + "@" + url);
+    final OReentrantResourcePool<String, DB> pool;
     lock();
     try {
-      final OReentrantResourcePool<String, DB> pool = pools.get(dbPooledName);
-      if (pool == null)
-        return 0;
-
-      return pool.getConnectionsInCurrentThread(url);
+      pool = pools.get(dbPooledName);
     } finally {
       unlock();
     }
+    if (pool == null)
+      return 0;
+
+    return pool.getConnectionsInCurrentThread(url);
   }
 
   public void release(final DB iDatabase) {
-    final String dbPooledName = iDatabase instanceof ODatabaseComplex ? ((ODatabaseComplex<?>) iDatabase).getUser().getName() + "@"
-        + iDatabase.getURL() : iDatabase.getURL();
+    // REMOVE ANY INTENT BEFORE. THIS RESTORE ANYTHING BEFORE THE CLOSE, LIKE THE USER NAME IN CASE OF MASSIVE INSERT
+    iDatabase.declareIntent(null);
 
+    final String dbPooledName = iDatabase.getUser().getName() + "@" + iDatabase.getURL();
+    final OReentrantResourcePool<String, DB> pool;
     lock();
     try {
 
-      final OReentrantResourcePool<String, DB> pool = pools.get(dbPooledName);
-      if (pool == null)
-        throw new OLockException("Cannot release a database URL not acquired before. URL: " + iDatabase.getName());
-
-      if (pool.returnResource(iDatabase))
-        this.notifyEvictor(dbPooledName, iDatabase);
+      pool = pools.get(dbPooledName);
 
     } finally {
       unlock();
     }
+    if (pool == null)
+      throw new OLockException("Cannot release a database URL not acquired before. URL: " + iDatabase.getName());
+
+    if (pool.returnResource(iDatabase))
+      this.notifyEvictor(dbPooledName, iDatabase);
   }
 
   public DB reuseResource(final String iKey, final DB iValue) {
@@ -270,7 +291,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
     lock();
     try {
 
-      final OReentrantResourcePool<String, DB> pool = pools.get(iPoolName);
+      final OReentrantResourcePool<String, DB> pool = pools.remove(iPoolName);
 
       if (pool != null) {
         for (DB db : pool.getResources()) {
@@ -286,7 +307,6 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
 
         }
         pool.close();
-        pools.remove(iPoolName);
       }
 
     } finally {
@@ -329,6 +349,11 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
     } finally {
       unlock();
     }
+  }
+
+  @Override
+  public void onShutdown() {
+    close();
   }
 
   private void notifyEvictor(final String poolName, final DB iDatabase) {

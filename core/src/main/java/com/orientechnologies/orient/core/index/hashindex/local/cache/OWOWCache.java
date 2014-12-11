@@ -1,25 +1,29 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
-import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -28,11 +32,9 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.memory.OMemoryWatchDog;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
@@ -43,6 +45,7 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -51,17 +54,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.zip.CRC32;
 
@@ -71,45 +66,72 @@ import java.util.zip.CRC32;
  */
 public class OWOWCache {
   // we add 8 bytes before and after cache pages to prevent word tearing in mt case.
-  public static final int                                   PAGE_PADDING          = 8;
+  public static final int                                   PAGE_PADDING            = 8;
 
-  public static final String                                NAME_ID_MAP_EXTENSION = ".cm";
+  public static final String                                NAME_ID_MAP_EXTENSION   = ".cm";
 
-  private static final String                               NAME_ID_MAP           = "name_id_map" + NAME_ID_MAP_EXTENSION;
+  private static final String                               NAME_ID_MAP             = "name_id_map" + NAME_ID_MAP_EXTENSION;
 
-  public static final int                                   MIN_CACHE_SIZE        = 16;
+  public static final int                                   MIN_CACHE_SIZE          = 16;
 
-  public static final long                                  MAGIC_NUMBER          = 0xFACB03FEL;
+  public static final long                                  MAGIC_NUMBER            = 0xFACB03FEL;
 
-  private final ConcurrentSkipListMap<GroupKey, WriteGroup> writeGroups           = new ConcurrentSkipListMap<GroupKey, WriteGroup>();
+  private final long                                        freeSpaceLimit          = (OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT
+                                                                                        .getValueAsLong() + OGlobalConfiguration.WAL_MAX_SIZE
+                                                                                        .getValueAsLong()) * 1024L * 1024L;
+
+  private final long                                        diskSizeCheckInterval   = OGlobalConfiguration.DISC_CACHE_FREE_SPACE_CHECK_INTERVAL
+                                                                                        .getValueAsInteger() * 1000;
+  private final List<WeakReference<LowDiskSpaceListener>>   listeners               = new CopyOnWriteArrayList<WeakReference<LowDiskSpaceListener>>();
+
+  private final AtomicLong                                  lastDiskSpaceCheck      = new AtomicLong(System.currentTimeMillis());
+  private final String                                      storagePath;
+
+  private final ConcurrentSkipListMap<GroupKey, WriteGroup> writeGroups             = new ConcurrentSkipListMap<GroupKey, WriteGroup>();
   private final OBinarySerializer<String>                   stringSerializer;
   private final Map<Long, OFileClassic>                     files;
   private final boolean                                     syncOnPageFlush;
   private final int                                         pageSize;
   private final long                                        groupTTL;
   private final OWriteAheadLog                              writeAheadLog;
-  private final AtomicInteger                               cacheSize             = new AtomicInteger();
-  private final ONewLockManager<GroupKey>                   lockManager           = new ONewLockManager<GroupKey>();
+  private final AtomicInteger                               cacheSize               = new AtomicInteger();
+  private final ONewLockManager<GroupKey>                   lockManager             = new ONewLockManager<GroupKey>();
   private final OLocalPaginatedStorage                      storageLocal;
-  private final OReadersWriterSpinLock                      filesLock             = new OReadersWriterSpinLock();
-  private final ScheduledExecutorService                    commitExecutor        = Executors
-                                                                                      .newSingleThreadScheduledExecutor(new ThreadFactory() {
-                                                                                        @Override
-                                                                                        public Thread newThread(Runnable r) {
-                                                                                          Thread thread = new Thread(r);
-                                                                                          thread.setDaemon(true);
-                                                                                          thread
-                                                                                              .setName("OrientDB Write Cache Flush Task ("
-                                                                                                  + storageLocal.getName() + ")");
-                                                                                          return thread;
-                                                                                        }
-                                                                                      });
+  private final OReadersWriterSpinLock                      filesLock               = new OReadersWriterSpinLock();
+  private final ScheduledExecutorService                    commitExecutor          = Executors
+                                                                                        .newSingleThreadScheduledExecutor(new ThreadFactory() {
+                                                                                          @Override
+                                                                                          public Thread newThread(Runnable r) {
+                                                                                            Thread thread = new Thread(r);
+                                                                                            thread.setDaemon(true);
+                                                                                            thread
+                                                                                                .setName("OrientDB Write Cache Flush Task ("
+                                                                                                    + storageLocal.getName() + ")");
+                                                                                            return thread;
+                                                                                          }
+                                                                                        });
+
+  private final ExecutorService                             lowSpaceEventsPublisher = Executors
+                                                                                        .newCachedThreadPool(new ThreadFactory() {
+                                                                                          @Override
+                                                                                          public Thread newThread(Runnable r) {
+                                                                                            Thread thread = new Thread(r);
+                                                                                            thread.setDaemon(true);
+                                                                                            thread
+                                                                                                .setName("OrientDB Low Disk Space Publisher ("
+                                                                                                    + storageLocal.getName() + ")");
+                                                                                            return thread;
+                                                                                          }
+                                                                                        });
+
   private Map<String, Long>                                 nameIdMap;
   private RandomAccessFile                                  nameIdMapHolder;
   private volatile int                                      cacheMaxSize;
-  private long                                              fileCounter           = 0;
-  private GroupKey                                          lastGroupKey          = new GroupKey(0, -1);
+  private long                                              fileCounter             = 0;
+  private GroupKey                                          lastGroupKey            = new GroupKey(0, -1);
   private File                                              nameIdMapHolderFile;
+
+  private final AtomicLong                                  allocatedSpace          = new AtomicLong();
 
   public OWOWCache(boolean syncOnPageFlush, int pageSize, long groupTTL, OWriteAheadLog writeAheadLog, long pageFlushInterval,
       int cacheMaxSize, OLocalPaginatedStorage storageLocal, boolean checkMinSize) {
@@ -124,6 +146,8 @@ public class OWOWCache {
       this.cacheMaxSize = cacheMaxSize;
       this.storageLocal = storageLocal;
 
+      this.storagePath = storageLocal.getVariableParser().resolveVariables(storageLocal.getStoragePath());
+
       final OBinarySerializerFactory binarySerializerFactory = storageLocal.getComponentsFactory().binarySerializerFactory;
       this.stringSerializer = binarySerializerFactory.getObjectSerializer(OType.STRING);
 
@@ -135,6 +159,66 @@ public class OWOWCache {
     } finally {
       filesLock.releaseWriteLock();
     }
+  }
+
+  public void addLowDiskSpaceListener(LowDiskSpaceListener listener) {
+    listeners.add(new WeakReference<LowDiskSpaceListener>(listener));
+  }
+
+  public void removeLowDiskSpaceListener(LowDiskSpaceListener listener) {
+    final Iterator<WeakReference<LowDiskSpaceListener>> iterator = listeners.iterator();
+    List<WeakReference<LowDiskSpaceListener>> itemsToRemove = new ArrayList<WeakReference<LowDiskSpaceListener>>();
+
+    for (WeakReference<LowDiskSpaceListener> ref : listeners) {
+      final LowDiskSpaceListener lowDiskSpaceListener = ref.get();
+
+      if (lowDiskSpaceListener == null || lowDiskSpaceListener.equals(listener))
+        itemsToRemove.add(ref);
+    }
+
+    for (WeakReference<LowDiskSpaceListener> ref : itemsToRemove)
+      listeners.remove(ref);
+  }
+
+  private void addAllocatedSpace(long diff) {
+    if (diff == 0)
+      return;
+
+    allocatedSpace.addAndGet(diff);
+
+    final long ts = System.currentTimeMillis();
+    final long lastSpaceCheck = lastDiskSpaceCheck.get();
+
+    if (ts - lastSpaceCheck > diskSizeCheckInterval) {
+      final File storageDir = new File(storagePath);
+      final long freeSpace = storageDir.getFreeSpace();
+      final long effectiveFreeSpace = freeSpace - allocatedSpace.get();
+      if (effectiveFreeSpace < freeSpaceLimit) {
+        callLowSpaceListeners(new LowDiskSpaceInformation(effectiveFreeSpace, freeSpaceLimit));
+      }
+
+      lastDiskSpaceCheck.lazySet(ts);
+    }
+  }
+
+  private void callLowSpaceListeners(final LowDiskSpaceInformation information) {
+    lowSpaceEventsPublisher.submit(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        for (WeakReference<LowDiskSpaceListener> lowDiskSpaceListenerWeakReference : listeners) {
+          final LowDiskSpaceListener listener = lowDiskSpaceListenerWeakReference.get();
+          if (listener != null)
+            try {
+              listener.lowDiskSpace(information);
+            } catch (Exception e) {
+              OLogManager.instance().error(this,
+                  "Error during notification of low disk space for storage " + storageLocal.getName(), e);
+            }
+        }
+
+        return null;
+      }
+    });
   }
 
   private static int calculatePageCrc(byte[] pageData) {
@@ -367,6 +451,10 @@ public class OWOWCache {
     }
   }
 
+  public long getAllocatedPages() {
+    return cacheSize.get();
+  }
+
   public boolean isOpen(long fileId) {
     filesLock.acquireReadLock();
     try {
@@ -469,7 +557,6 @@ public class OWOWCache {
             + osFileName.substring(osFileName.lastIndexOf(oldFileName) + oldFileName.length()));
         boolean renamed = file.renameTo(newFile);
         while (!renamed) {
-          OMemoryWatchDog.freeMemoryForResourceCleanup(100);
           renamed = file.renameTo(newFile);
         }
       }
@@ -552,12 +639,15 @@ public class OWOWCache {
   public void close(long fileId, boolean flush) throws IOException {
     filesLock.acquireWriteLock();
     try {
+			if (!isOpen(fileId))
+				return;
+
       if (flush)
         flush(fileId);
       else
         removeCachedPages(fileId);
 
-      files.get(fileId).close();
+			files.get(fileId).close();
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -833,7 +923,10 @@ public class OWOWCache {
       final OLogSequenceNumber storedLSN = ODurablePage.getLogSequenceNumberFromPage(pointer);
       dataPointer = new OCachePointer(pointer, storedLSN);
     } else {
-      fileClassic.allocateSpace((int) (endPosition - fileClassic.getFilledUpTo()));
+      final int space = (int) (endPosition - fileClassic.getFilledUpTo());
+      fileClassic.allocateSpace(space);
+
+      addAllocatedSpace(space);
 
       final ODirectMemoryPointer pointer = new ODirectMemoryPointer(content);
       dataPointer = new OCachePointer(pointer, new OLogSequenceNumber(0, -1));
@@ -857,7 +950,12 @@ public class OWOWCache {
     OIntegerSerializer.INSTANCE.serializeNative(crc32, content, OLongSerializer.LONG_SIZE);
 
     final OFileClassic fileClassic = files.get(fileId);
-    fileClassic.write(pageIndex * pageSize, content);
+
+    final long spaceDiff = fileClassic.write(pageIndex * pageSize, content);
+
+    assert spaceDiff >= 0;
+
+    addAllocatedSpace(-spaceDiff);
 
     if (syncOnPageFlush)
       fileClassic.synch();
@@ -1173,6 +1271,20 @@ public class OWOWCache {
       }
 
       return null;
+    }
+  }
+
+  public interface LowDiskSpaceListener {
+    void lowDiskSpace(LowDiskSpaceInformation information);
+  }
+
+  public class LowDiskSpaceInformation {
+    public long freeSpace;
+    public long requiredSpace;
+
+    public LowDiskSpaceInformation(long freeSpace, long requiredSpace) {
+      this.freeSpace = freeSpace;
+      this.requiredSpace = requiredSpace;
     }
   }
 }

@@ -17,36 +17,36 @@ package com.orientechnologies.orient.graph.sql;
 
 import java.util.List;
 
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.script.OCommandScript;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 @RunWith(JUnit4.class)
 public class SQLCreateVertexAndEdgeTest {
   private ODatabaseDocumentTx database;
-  private String         url;
+  private String              url;
 
   public SQLCreateVertexAndEdgeTest() {
     url = "memory:" + SQLCreateVertexAndEdgeTest.class.getSimpleName();
 
     database = Orient.instance().getDatabaseFactory().createDatabase("graph", url);
-		if (database.exists())
-			database.open("admin", "admin");
-		else
-		  database.create();
+    if (database.exists())
+      database.open("admin", "admin");
+    else
+      database.create();
   }
 
   @After
@@ -56,14 +56,14 @@ public class SQLCreateVertexAndEdgeTest {
 
   @Test
   public void testCreateEdgeDefaultClass() {
-		int vclusterId = database.addCluster("vdefault");
-		int eclusterId = database.addCluster("edefault");
+    int vclusterId = database.addCluster("vdefault");
+    int eclusterId = database.addCluster("edefault");
 
     database.command(new OCommandSQL("create class V1 extends V")).execute();
     database.command(new OCommandSQL("alter class V1 addcluster vdefault")).execute();
 
     database.command(new OCommandSQL("create class E1 extends E")).execute();
-		database.command(new OCommandSQL("alter class E1 addcluster edefault")).execute();
+    database.command(new OCommandSQL("alter class E1 addcluster edefault")).execute();
 
     database.getMetadata().getSchema().reload();
 
@@ -121,5 +121,38 @@ public class SQLCreateVertexAndEdgeTest {
     ODocument e5 = ((OIdentifiable) edges.get(0)).getRecord();
     Assert.assertEquals(e5.getClassName(), "E1");
     Assert.assertEquals(e5.getIdentity().getClusterId(), eclusterId);
+  }
+
+  /**
+   * from issue #2925
+   */
+  @Test
+  public void testSqlScriptThatCreatesEdge() {
+    long start = System.currentTimeMillis();
+
+    try {
+      String cmd = "begin\n";
+      cmd += "let a = create vertex set script = true\n";
+      cmd += "let b = select from v limit 1\n";
+      cmd += "let e = create edge from $a to $b\n";
+      cmd += "commit retry 100\n";
+      cmd += "return $e";
+
+      List<Vertex> result = database.query(new OSQLSynchQuery<Vertex>("select from V"));
+
+      int before = result.size();
+
+      database.command(new OCommandScript("sql", cmd)).execute();
+
+      result = database.query(new OSQLSynchQuery<Vertex>("select from V"));
+
+      Assert.assertEquals(result.size(), before + 1);
+    } catch (Exception ex) {
+      System.err.println("commit exception! " + ex);
+      ex.printStackTrace(System.err);
+    }
+
+    System.out.println("done in " + (System.currentTimeMillis() - start) + "ms");
+
   }
 }

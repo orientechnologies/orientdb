@@ -15,11 +15,18 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
@@ -30,16 +37,6 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-import com.orientechnologies.orient.core.storage.OStorage;
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 /**
  * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be because the order of clusters could
@@ -61,7 +58,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
     int addressId = database.getMetadata().getSchema().getClass("Address").getDefaultClusterId();
 
-    List<OClusterPosition> positions = getValidPositions(addressId);
+    List<Long> positions = getValidPositions(addressId);
 
     ODocument doc = (ODocument) database.command(
         new OCommandSQL("insert into Profile (name, surname, salary, location, dummy) values ('Luca','Smith', 109.9, #" + addressId
@@ -71,7 +68,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     Assert.assertEquals(doc.field("name"), "Luca");
     Assert.assertEquals(doc.field("surname"), "Smith");
     Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 109.9f);
-    Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, positions.get(3)));
+    Assert.assertEquals(doc.field("location"), new ORecordId(addressId, positions.get(3)));
     Assert.assertEquals(doc.field("dummy"), "hooray");
 
     doc = (ODocument) database.command(
@@ -92,7 +89,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
   public void insertWithWildcards() {
     int addressId = database.getMetadata().getSchema().getClass("Address").getDefaultClusterId();
 
-    List<OClusterPosition> positions = getValidPositions(addressId);
+    List<Long> positions = getValidPositions(addressId);
 
     ODocument doc = (ODocument) database.command(
         new OCommandSQL("insert into Profile (name, surname, salary, location, dummy) values (?,?,?,?,?)")).execute("Marc",
@@ -102,7 +99,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     Assert.assertEquals(doc.field("name"), "Marc");
     Assert.assertEquals(doc.field("surname"), "Smith");
     Assert.assertEquals(((Number) doc.field("salary")).floatValue(), 120.0f);
-    Assert.assertEquals(doc.field("location", OType.LINK), new ORecordId(addressId, positions.get(3)));
+    Assert.assertEquals(doc.field("location"), new ORecordId(addressId, positions.get(3)));
     Assert.assertEquals(doc.field("dummy"), "hooray");
 
     database.delete(doc);
@@ -239,16 +236,19 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     if (schema.getClass("test") == null)
       schema.createClass("test");
 
+    final List<ODocument> usersCount = database.query(new OSQLSynchQuery<ODocument>("select count(*) from OUser"));
+    final long uCount = usersCount.get(0).field("count");
+
     ODocument doc = (ODocument) database.command(new OCommandSQL("INSERT INTO test SET names = (select name from OUser)"))
         .execute();
 
     Assert.assertTrue(doc != null);
     Assert.assertNotNull(doc.field("names"));
     Assert.assertTrue(doc.field("names") instanceof Collection);
-    Assert.assertEquals(((Collection<?>) doc.field("names")).size(), 3);
+    Assert.assertEquals(((Collection<?>) doc.field("names")).size(), uCount);
   }
 
-  @Test
+  @Test(dependsOnMethods = "insertOperator")
   public void insertCluster() {
     ODocument doc = database.command(
         new OCommandSQL("insert into Account cluster anotherdefault (id, title) values (10, 'NoSQL movement')")).execute();
@@ -259,7 +259,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
   }
 
   public void updateMultipleFields() {
-    List<OClusterPosition> positions = getValidPositions(3);
+    List<Long> positions = getValidPositions(3);
 
     OIdentifiable result = database.command(
         new OCommandSQL("  INSERT INTO Account SET id= 3232,name= 'my name',map= {\"key\":\"value\"},dir= '',user= #3:"
@@ -273,7 +273,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     Map<String, String> map = record.field("map");
     Assert.assertTrue(map.get("key").equals("value"));
     Assert.assertEquals(record.field("dir"), "");
-    Assert.assertEquals(record.field("user", OType.LINK), new ORecordId(3, positions.get(0)));
+    Assert.assertEquals(record.field("user"), new ORecordId(3, positions.get(0)));
   }
 
   public void insertSelect() {
@@ -290,20 +290,6 @@ public class SQLInsertTest extends DocumentDBBaseTest {
       Assert.assertEquals(((ODocument) r.getRecord()).getClassName(), "UserCopy");
       Assert.assertNotSame(((ODocument) r.getRecord()).field("name"), "admin");
     }
-  }
-
-  private List<OClusterPosition> getValidPositions(int clusterId) {
-    final List<OClusterPosition> positions = new ArrayList<OClusterPosition>();
-
-    final ORecordIteratorCluster<?> iteratorCluster = database.browseCluster(database.getClusterNameById(clusterId));
-
-    for (int i = 0; i < 100; i++) {
-      if (!iteratorCluster.hasNext())
-        break;
-      ORecord doc = iteratorCluster.next();
-      positions.add(doc.getIdentity().getClusterPosition());
-    }
-    return positions;
   }
 
   public void insertWithReturn() {
@@ -361,6 +347,20 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     final ODocument sql3doc = (ODocument) (((List) res_sql3).get(0));
     Assert.assertEquals(sql3doc.field("Bingo"), 1);
     Assert.assertEquals(sql3doc.field("Name"), "Bingo owner");
+  }
+
+  private List<Long> getValidPositions(int clusterId) {
+    final List<Long> positions = new ArrayList<Long>();
+
+    final ORecordIteratorCluster<?> iteratorCluster = database.browseCluster(database.getClusterNameById(clusterId));
+
+    for (int i = 0; i < 100; i++) {
+      if (!iteratorCluster.hasNext())
+        break;
+      ORecord doc = iteratorCluster.next();
+      positions.add(doc.getIdentity().getClusterPosition());
+    }
+    return positions;
   }
 
 }

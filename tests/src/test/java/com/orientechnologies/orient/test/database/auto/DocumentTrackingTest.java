@@ -9,11 +9,13 @@ import java.util.Map;
 import java.util.Set;
 
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
@@ -26,14 +28,14 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 @Test
 public class DocumentTrackingTest extends DocumentDBBaseTest {
 
-	@Parameters(value = "url")
-	public DocumentTrackingTest(@Optional String url) {
-		super(url);
-	}
+  @Parameters(value = "url")
+  public DocumentTrackingTest(@Optional String url) {
+    super(url);
+  }
 
-	@BeforeClass
+  @BeforeClass
   public void beforeClass() throws Exception {
-		super.beforeClass();
+    super.beforeClass();
 
     if (!database.getMetadata().getSchema().existsClass("DocumentTrackingTestClass")) {
       final OClass trackedClass = database.getMetadata().getSchema().createClass("DocumentTrackingTestClass");
@@ -232,8 +234,6 @@ public class DocumentTrackingTest extends DocumentDBBaseTest {
   public void testDocumentEmbeddedListTrackingAfterSaveCacheDisabled() {
     database.getLocalCache().clear();
 
-    database.getLocalCache().setEnable(false);
-
     final ODocument document = new ODocument();
 
     final List<String> list = new ArrayList<String>();
@@ -262,14 +262,10 @@ public class DocumentTrackingTest extends DocumentDBBaseTest {
     Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
 
     Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedlist" });
-
-    database.getLocalCache().setEnable(true);
   }
 
   public void testDocumentEmbeddedMapTrackingAfterSaveCacheDisabled() {
     database.getLocalCache().clear();
-
-    database.getLocalCache().setEnable(false);
 
     final ODocument document = new ODocument();
 
@@ -299,14 +295,10 @@ public class DocumentTrackingTest extends DocumentDBBaseTest {
     Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
 
     Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedmap" });
-
-    database.getLocalCache().setEnable(true);
   }
 
   public void testDocumentEmbeddedSetTrackingAfterSaveCacheDisabled() {
     database.getLocalCache().clear();
-
-    database.getLocalCache().setEnable(false);
 
     final ODocument document = new ODocument();
 
@@ -337,13 +329,10 @@ public class DocumentTrackingTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedset" });
 
-    database.getLocalCache().setEnable(true);
   }
 
   public void testDocumentLinkSetTrackingAfterSaveCacheDisabled() {
     database.getLocalCache().clear();
-
-    database.getLocalCache().setEnable(false);
 
     final ODocument docOne = new ODocument();
     docOne.save();
@@ -372,14 +361,10 @@ public class DocumentTrackingTest extends DocumentDBBaseTest {
     Assert.assertNotNull(timeLine);
 
     Assert.assertEquals(document.getDirtyFields(), new String[] { "linkset" });
-
-    database.getLocalCache().setEnable(true);
   }
 
   public void testDocumentLinkListTrackingAfterSaveCacheDisabled() {
     database.getLocalCache().clear();
-
-    database.getLocalCache().setEnable(false);
 
     final ODocument docOne = new ODocument();
     docOne.save();
@@ -408,14 +393,10 @@ public class DocumentTrackingTest extends DocumentDBBaseTest {
     Assert.assertNotNull(timeLine);
 
     Assert.assertEquals(document.getDirtyFields(), new String[] { "linklist" });
-
-    database.getLocalCache().setEnable(true);
   }
 
   public void testDocumentLinkMapTrackingAfterSaveCacheDisabled() {
     database.getLocalCache().clear();
-
-    database.getLocalCache().setEnable(false);
 
     final ODocument docOne = new ODocument();
     docOne.save();
@@ -442,8 +423,6 @@ public class DocumentTrackingTest extends DocumentDBBaseTest {
     Assert.assertNotNull(timeLine);
 
     Assert.assertEquals(document.getDirtyFields(), new String[] { "linkmap" });
-
-    database.getLocalCache().setEnable(true);
   }
 
   public void testDocumentEmbeddedListTrackingAfterSaveWitClass() {
@@ -626,6 +605,7 @@ public class DocumentTrackingTest extends DocumentDBBaseTest {
     Assert.assertEquals(document.getDirtyFields(), new String[] { "linkmap" });
   }
 
+  @Test(expectedExceptions = UnsupportedOperationException.class)
   public void testDocumentEmbeddedListTrackingAfterConversion() {
     final ODocument document = new ODocument();
 
@@ -642,22 +622,10 @@ public class DocumentTrackingTest extends DocumentDBBaseTest {
     final List<String> trackedList = document.field("embeddedlist", OType.EMBEDDEDLIST);
     trackedList.add("value2");
 
-    Assert.assertTrue(document.isDirty());
-
-    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedlist");
-    Assert.assertNotNull(timeLine);
-
-    Assert.assertNotNull(timeLine.getMultiValueChangeEvents());
-
-    final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
-    firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, 1, "value2"));
-
-    Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
-
-    Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedlist" });
   }
 
-  public void testDocumentEmbeddedSetTrackingAfterConversion() {
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testDocumentEmbeddedSetTrackingFailAfterConversion() {
     final ODocument document = new ODocument();
 
     final List<String> list = new ArrayList<String>();
@@ -673,22 +641,9 @@ public class DocumentTrackingTest extends DocumentDBBaseTest {
     final Set<String> trackedSet = document.field("embeddedset", OType.EMBEDDEDSET);
     trackedSet.add("value2");
 
-    Assert.assertTrue(document.isDirty());
-
-    final OMultiValueChangeTimeLine timeLine = document.getCollectionTimeLine("embeddedset");
-    Assert.assertNotNull(timeLine);
-
-    Assert.assertNotNull(timeLine.getMultiValueChangeEvents());
-
-    final List<OMultiValueChangeEvent> firedEvents = new ArrayList<OMultiValueChangeEvent>();
-    firedEvents.add(new OMultiValueChangeEvent(OMultiValueChangeEvent.OChangeType.ADD, "value2", "value2"));
-
-    Assert.assertEquals(timeLine.getMultiValueChangeEvents(), firedEvents);
-
-    Assert.assertEquals(document.getDirtyFields(), new String[] { "embeddedset" });
   }
 
-  public void testDocumentEmbeddedListTrackingAfterReplace() {
+  public void testDocumentEmbeddedListTrackingFailAfterReplace() {
     final ODocument document = new ODocument("DocumentTrackingTestClass");
 
     final List<String> list = new ArrayList<String>();

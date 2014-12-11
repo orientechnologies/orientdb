@@ -1,18 +1,22 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli(at)orientechnologies.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
 
 package com.orientechnologies.orient.core.db.record.ridbag.sbtree;
 
@@ -38,7 +42,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 /**
  * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent way.
  * 
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
   public static final String                         INDEX_FILE_EXTENSION = ".irs";
@@ -46,19 +50,20 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
 
   protected static final OProfilerMBean              PROFILER             = Orient.instance().getProfiler();
 
-  public OIndexRIDContainerSBTree(long fileId) {
-    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, false);
+  public OIndexRIDContainerSBTree(long fileId, boolean durableMode) {
+    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, durableMode);
 
     tree.create(fileId, OLinkSerializer.INSTANCE, OBooleanSerializer.INSTANCE);
   }
 
-  public OIndexRIDContainerSBTree(long fileId, OBonsaiBucketPointer rootPointer) {
-    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, false);
-    tree.load(fileId, rootPointer, (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getUnderlying());
+  public OIndexRIDContainerSBTree(long fileId, OBonsaiBucketPointer rootPointer, boolean durableMode) {
+    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, durableMode);
+    tree.load(fileId, rootPointer, (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
+        .getUnderlying());
   }
 
-  public OIndexRIDContainerSBTree(String file, OBonsaiBucketPointer rootPointer) {
-    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, false);
+  public OIndexRIDContainerSBTree(String file, OBonsaiBucketPointer rootPointer, boolean durableMode) {
+    tree = new OSBTreeBonsaiLocal<OIdentifiable, Boolean>(INDEX_FILE_EXTENSION, durableMode);
 
     final OAbstractPaginatedStorage storage = (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
         .getUnderlying();

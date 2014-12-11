@@ -16,19 +16,15 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import org.testng.Assert;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseThreadLocalFactory;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 /**
@@ -36,23 +32,25 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
  * 
  */
 @Test
-public class DatabaseThreadFactoryTest  extends DocumentDBBaseTest {
-	@Parameters(value = "url")
-	public DatabaseThreadFactoryTest(@Optional String url) {
-		super(url);
-	}
+public class DatabaseThreadFactoryTest extends DocumentDBBaseTest {
+	private final OPartitionedDatabasePoolFactory poolFactory = new OPartitionedDatabasePoolFactory();
 
-	@BeforeMethod
-	@Override
-	public void beforeMethod() throws Exception {
-	}
+  @Parameters(value = "url")
+  public DatabaseThreadFactoryTest(@Optional String url) {
+    super(url);
+  }
 
-	@BeforeClass
+  @BeforeMethod
+  @Override
+  public void beforeMethod() throws Exception {
+  }
+
+  @BeforeClass
   public void init() {
     try {
-      ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+      ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
       db.close();
-      ODatabaseRecordThreadLocal.INSTANCE.set(null);
+      ODatabaseRecordThreadLocal.INSTANCE.remove();
     } catch (ODatabaseException ode) {
     }
   }
@@ -68,11 +66,11 @@ public class DatabaseThreadFactoryTest  extends DocumentDBBaseTest {
     Orient.instance().registerThreadDatabaseFactory(new ODatabaseThreadLocalFactory() {
 
       @Override
-      public ODatabaseRecordInternal getThreadDatabase() {
-        return ODatabaseDocumentPool.global().acquire(url, "admin", "admin");
+      public ODatabaseDocumentInternal getThreadDatabase() {
+        return poolFactory.get(url, "admin", "admin").acquire();
       }
     });
-    ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
     Assert.assertNotNull(db);
     db.close();
   }

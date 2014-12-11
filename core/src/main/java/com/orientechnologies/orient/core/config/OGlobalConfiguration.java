@@ -1,17 +1,21 @@
 /*
- * Copyright 2010-2012 Luca Garulli (l.garulli--at--orientechnologies.com)
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 package com.orientechnologies.orient.core.config;
 
@@ -19,9 +23,11 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 
+import java.io.File;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
@@ -51,20 +57,21 @@ public enum OGlobalConfiguration {
   ENVIRONMENT_ALLOW_JVM_SHUTDOWN("environment.allowJVMShutdown", "Allows to shutdown the JVM if needed/requested", Boolean.class,
       true),
 
+  // SCRIPT
+  SCRIPT_POOL("script.pool.maxSize", "Maximum number of instaces in the pool of Scrit engines", Integer.class, 20),
+
   // MEMORY
   MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used if it is present", Boolean.class, true),
-
-  MEMORY_AUTOFREE_CHECK_EVERY("memory.autoFreeCheckEvery", "Time to check if memory resources are low", Long.class, 10000),
-
-  MEMORY_AUTOFREE_HEAP_THRESHOLD(
-      "memory.autoFreeHeapThreshold",
-      "Maximum size of used heap to let caches to keep records in RAM. Can be expressed in terms of absolute bytes or percentage in comparison to the maximum heap. For example 80% means that caches stop collecting records in RAM when free heap is lower than 20%",
-      String.class, "70%"),
 
   DIRECT_MEMORY_SAFE_MODE(
       "memory.directMemory.safeMode",
       "Indicates whether to do perform range check before each direct memory update, it is true by default, "
           + "but usually it can be safely put to false. It is needed to set to true only after dramatic changes in storage structures.",
+      Boolean.class, true),
+
+  DIRECT_MEMORY_ONLY_ALIGNED_ACCESS(
+      "memory.directMemory.onlyAlignedMemoryAccess",
+      "Some architectures does not allow unaligned memory access or suffer from speed degradation, on this platforms flag should be set to true",
       Boolean.class, true),
 
   JVM_GC_DELAY_FOR_OPTIMIZE("jvm.gc.delayForOptimize",
@@ -88,6 +95,16 @@ public enum OGlobalConfiguration {
 
   DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT("storage.diskCache.writeCacheFlushLockTimeout",
       "Maximum amount of time till write cache will be wait before page flush in ms.", Integer.class, -1),
+
+  DISK_CACHE_FREE_SPACE_LIMIT(
+      "storage.diskCache.diskFreeSpaceLimit",
+      "Minimum amount of space on disk after which database will "
+          + "work only in read mode, in megabytes. You need free space on disk which is sum of this parameter and maximum size of WAL on disk.",
+      Long.class, 100),
+
+  DISC_CACHE_FREE_SPACE_CHECK_INTERVAL("storage.diskCache.diskFreeSpaceCheckInterval",
+      "Interval, in seconds, after which storage periodically "
+          + "checks whether amount of free space enough to work in write mode", Integer.class, 5),
 
   STORAGE_CONFIGURATION_SYNC_ON_UPDATE("storage.configuration.syncOnUpdate",
       "Should we perform force sync of storage configuration for each update", Boolean.class, true),
@@ -120,6 +137,9 @@ public enum OGlobalConfiguration {
       "Amount of processed log operations, after which status of data restore procedure will be printed 0 or negative value, means that status will not be printed",
       Integer.class, 10000),
 
+  WAL_RESTORE_BATCH_SIZE("storage.wal.restore.batchSize",
+      "Amount of wal records are read at once in single batch during restore procedure", Integer.class, 1000),
+
   WAL_READ_CACHE_SIZE("storage.wal.readCacheSize", "Size of WAL read cache in amount of pages", Integer.class, 1000),
 
   WAL_FUZZY_CHECKPOINT_SHUTDOWN_TIMEOUT("storage.wal.fuzzyCheckpointShutdownWait",
@@ -146,15 +166,10 @@ public enum OGlobalConfiguration {
   STORAGE_USE_CRC32_FOR_EACH_RECORD("storage.cluster.usecrc32",
       "Indicates whether crc32 should be used for each record to check record integrity.", Boolean.class, false),
 
-  STORAGE_KEEP_OPEN(
-      "storage.keepOpen",
-      "Tells to the engine to not close the storage when a database is closed. Storages will be closed when the process shuts down",
-      Boolean.class, Boolean.TRUE),
-
   STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 30000),
 
   STORAGE_RECORD_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record",
-      Integer.class, 30000),
+      Integer.class, 100),
 
   STORAGE_USE_TOMBSTONES("storage.useTombstones", "When record will be deleted its cluster"
       + " position will not be freed but tombstone will be placed instead", Boolean.class, false),
@@ -164,9 +179,6 @@ public enum OGlobalConfiguration {
       "record.downsizing.enabled",
       "On updates if the record size is lower than before, reduces the space taken accordlying. If enabled this could increase defragmentation, but it reduces the used space",
       Boolean.class, true),
-
-  // CACHE
-  CACHE_LOCAL_ENABLED("cache.local.enabled", "Use the local cache", Boolean.class, true),
 
   // DATABASE
   OBJECT_SAVE_ONLY_DIRTY("object.saveOnlyDirty", "Object Database only saves objects bound to dirty records", Boolean.class, false),
@@ -180,19 +192,12 @@ public enum OGlobalConfiguration {
 
   DB_POOL_IDLE_CHECK_DELAY("db.pool.idleCheckDelay", "Delay time on checking for idle databases", Integer.class, 0),
 
-  @Deprecated
-  DB_MVCC("db.mvcc", "Enables or disables MVCC (Multi-Version Concurrency Control) even outside transactions", Boolean.class, true),
-
   DB_MVCC_THROWFAST(
       "db.mvcc.throwfast",
       "Use fast-thrown exceptions for MVCC OConcurrentModificationExceptions. No context information will be available, use where these exceptions are handled and the detail is not neccessary",
       Boolean.class, false),
 
   DB_VALIDATION("db.validation", "Enables or disables validation of records", Boolean.class, true),
-
-  @Deprecated
-  DB_USE_DISTRIBUTED_VERSION("db.use.distributedVersion", "Use extended version that is safe in distributed environment",
-      Boolean.class, Boolean.FALSE),
 
   // SETTINGS OF NON-TRANSACTIONAL MODE
   NON_TX_RECORD_UPDATE_SYNCH("nonTX.recordUpdate.synch",
@@ -221,6 +226,14 @@ public enum OGlobalConfiguration {
   TX_COMMIT_SYNCH("tx.commit.synch", "Synchronizes the storage after transaction commit", Boolean.class, false),
 
   // INDEX
+  INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD("index.embeddedToSbtreeBonsaiThreshold",
+      "Amount of values after which index implementation will use sbtree as values container. Set to -1 to force always using it",
+      Integer.class, 40),
+
+  INDEX_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD("index.sbtreeBonsaiToEmbeddedThreshold",
+      "Amount of values after which index implementation will use embedded values container (disabled by default)", Integer.class,
+      -1),
+
   HASH_TABLE_SPLIT_BUCKETS_BUFFER_LENGTH("hashTable.slitBucketsBuffer.length", "Length of buffer (in pages) where buckets "
       + "that were splited but not flushed to the disk are kept. This buffer is used to minimize random IO overhead.",
       Integer.class, 1500),
@@ -252,53 +265,6 @@ public enum OGlobalConfiguration {
 
   INDEX_CURSOR_PREFETCH_SIZE("index.cursor.prefetchSize", "Default prefetch size of index cursor", Integer.class, 500000),
 
-  // TREEMAP
-  @Deprecated
-  MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 5000),
-
-  @Deprecated
-  MVRBTREE_NODE_PAGE_SIZE("mvrbtree.nodePageSize",
-      "Page size of each node. 256 means that 256 entries can be stored inside each node", Integer.class, 256),
-
-  @Deprecated
-  MVRBTREE_LOAD_FACTOR("mvrbtree.loadFactor", "HashMap load factor", Float.class, 0.7f),
-
-  @Deprecated
-  MVRBTREE_OPTIMIZE_THRESHOLD(
-      "mvrbtree.optimizeThreshold",
-      "Auto optimize the TreeMap every X tree rotations. This forces the optimization of the tree after many changes to recompute entry points. -1 means never",
-      Integer.class, 100000),
-
-  @Deprecated
-  MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Number of entry points to start searching entries", Integer.class, 64),
-
-  @Deprecated
-  MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR("mvrbtree.optimizeEntryPointsFactor",
-      "Multiplicand factor to apply to entry-points list (parameter mvrbtree.entrypoints) to determine optimization is needed",
-      Float.class, 1.0f),
-
-  @Deprecated
-  MVRBTREE_ENTRY_KEYS_IN_MEMORY("mvrbtree.entryKeysInMemory", "Keep unserialized keys in memory", Boolean.class, Boolean.FALSE),
-
-  @Deprecated
-  MVRBTREE_ENTRY_VALUES_IN_MEMORY("mvrbtree.entryValuesInMemory", "Keep unserialized values in memory", Boolean.class,
-      Boolean.FALSE),
-
-  // TREEMAP OF RIDS
-  @Deprecated
-  MVRBTREE_RID_BINARY_THRESHOLD(
-      "mvrbtree.ridBinaryThreshold",
-      "Valid for set of rids. It's the threshold as number of entries to use the binary streaming instead of classic string streaming. -1 means never use binary streaming",
-      Integer.class, -1),
-
-  @Deprecated
-  MVRBTREE_RID_NODE_PAGE_SIZE("mvrbtree.ridNodePageSize",
-      "Page size of each treeset node. 16 means that 16 entries can be stored inside each node", Integer.class, 64),
-
-  @Deprecated
-  MVRBTREE_RID_NODE_SAVE_MEMORY("mvrbtree.ridNodeSaveMemory",
-      "Save memory usage by avoid keeping RIDs in memory but creating them at every access", Boolean.class, Boolean.FALSE),
-
   // SBTREE
   SBTREE_MAX_KEY_SIZE("sbtree.maxKeySize", "Maximum size of key which can be put in SBTree in bytes (10240 by default)",
       Integer.class, 10240),
@@ -321,17 +287,19 @@ public enum OGlobalConfiguration {
       "How much free space should be in sbtreebonsai file before it will be reused during next allocation", Float.class, 0.5),
 
   // RIDBAG
-  RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD("ridBag.embeddedToSbtreeBonsaiThreshold",
-      "Amount of values after which LINKBAG implementation will use sbtree as values container", Integer.class, 40),
+  RID_BAG_EMBEDDED_DEFAULT_SIZE("ridBag.embeddedDefaultSize", "Size of embedded RidBag array when created (empty)", Integer.class,
+      4),
+
+  RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD(
+      "ridBag.embeddedToSbtreeBonsaiThreshold",
+      "Amount of values after which LINKBAG implementation will use sbtree as values container. Set to -1 to force always using it",
+      Integer.class, 40),
 
   RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD("ridBag.sbtreeBonsaiToEmbeddedToThreshold",
       "Amount of values after which LINKBAG implementation will use embedded values container (disabled by default)",
       Integer.class, -1),
 
   // COLLECTIONS
-  @Deprecated
-  LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid unmarshalling set", Boolean.class, true),
-
   PREFER_SBTREE_SET("collections.preferSBTreeSet", "This config is experimental.", Boolean.class, false),
 
   // FILE
@@ -352,6 +320,8 @@ public enum OGlobalConfiguration {
   NETWORK_LOCK_TIMEOUT("network.lockTimeout", "Timeout in ms to acquire a lock against a channel", Integer.class, 15000),
 
   NETWORK_SOCKET_TIMEOUT("network.socketTimeout", "TCP/IP Socket timeout in ms", Integer.class, 15000),
+
+  NETWORK_REQUEST_TIMEOUT("network.requestTimeout", "Request completion timeout in ms ", Integer.class, 3600000 /* one hour */),
 
   NETWORK_SOCKET_RETRY("network.retry", "Number of times the client retries its connection to the server on failure",
       Integer.class, 5),
@@ -378,8 +348,9 @@ public enum OGlobalConfiguration {
 
   NETWORK_HTTP_CONTENT_CHARSET("network.http.charset", "Http response charset", String.class, "utf-8"),
 
-  NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT("network.http.sessionExpireTimeout",
-      "Timeout after which an http session is considered tp have expired (seconds)", Integer.class, 300),
+  OAUTH2_SECRETKEY("oauth2.secretkey", "Http OAuth2 secret key", String.class, "utf-8"), NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT(
+      "network.http.sessionExpireTimeout", "Timeout after which an http session is considered tp have expired (seconds)",
+      Integer.class, 300),
 
   // PROFILER
   PROFILER_ENABLED("profiler.enabled", "Enable the recording of statistics and counters", Boolean.class, false,
@@ -426,7 +397,7 @@ public enum OGlobalConfiguration {
   // CLIENT
   CLIENT_CHANNEL_MIN_POOL("client.channel.minPool", "Minimum pool size", Integer.class, 1),
 
-  CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool", "Maximum channel pool size", Integer.class, 20),
+  CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool", "Maximum channel pool size", Integer.class, 100),
 
   CLIENT_CONNECT_POOL_WAIT_TIMEOUT("client.connectionPool.waitTimeout",
       "Maximum time which client should wait connection from the pool", Integer.class, 5000),
@@ -444,6 +415,8 @@ public enum OGlobalConfiguration {
 
   CLIENT_SSL_TRUSTSTORE_PASSWORD("client.ssl.trustStorePass", "Use SSL for client connections", String.class, null),
 
+  CLIENT_SESSION_TOKEN_BASED("client.session.tokenBased", "Request a token based session to the server", Boolean.class, false),
+
   // SERVER
   SERVER_CHANNEL_CLEAN_DELAY("server.channel.cleanDelay", "Time in ms of delay to check pending closed connections", Integer.class,
       5000),
@@ -458,7 +431,7 @@ public enum OGlobalConfiguration {
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL(
       "server.log.dumpClientExceptionLevel",
       "Logs client exceptions. Use any level supported by Java java.util.logging.Level class: OFF, FINE, CONFIG, INFO, WARNING, SEVERE",
-      Level.class, Level.FINE),
+      Level.class, Level.SEVERE),
 
   SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE("server.log.dumpClientExceptionFullStackTrace",
       "Dumps the full stack trace of the exception to sent to the client", Level.class, Boolean.TRUE),
@@ -489,7 +462,71 @@ public enum OGlobalConfiguration {
       "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l),
 
   DB_DOCUMENT_SERIALIZER("db.document.serializer", "The default record serializer used by the document database", String.class,
-      ORecordSerializerBinary.NAME);
+      ORecordSerializerBinary.NAME),
+
+  @Deprecated
+  LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Deprecated, now BINARY serialization is used in place of CSV", Boolean.class,
+      true),
+
+  @Deprecated
+  DB_MVCC("db.mvcc", "Deprecated, MVCC cannot be disabled anymore", Boolean.class, true),
+
+  @Deprecated
+  DB_USE_DISTRIBUTED_VERSION("db.use.distributedVersion", "Deprecated, distributed version is not used anymore", Boolean.class,
+      Boolean.FALSE),
+
+  @Deprecated
+  MVRBTREE_TIMEOUT("mvrbtree.timeout", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class,
+      5000),
+
+  @Deprecated
+  MVRBTREE_NODE_PAGE_SIZE("mvrbtree.nodePageSize", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX",
+      Integer.class, 256),
+
+  @Deprecated
+  MVRBTREE_LOAD_FACTOR("mvrbtree.loadFactor", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX",
+      Float.class, 0.7f),
+
+  @Deprecated
+  MVRBTREE_OPTIMIZE_THRESHOLD("mvrbtree.optimizeThreshold",
+      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, 100000),
+
+  @Deprecated
+  MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX",
+      Integer.class, 64),
+
+  @Deprecated
+  MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR("mvrbtree.optimizeEntryPointsFactor",
+      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Float.class, 1.0f),
+
+  @Deprecated
+  MVRBTREE_ENTRY_KEYS_IN_MEMORY("mvrbtree.entryKeysInMemory",
+      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Boolean.class, Boolean.FALSE),
+
+  @Deprecated
+  MVRBTREE_ENTRY_VALUES_IN_MEMORY("mvrbtree.entryValuesInMemory",
+      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Boolean.class, Boolean.FALSE),
+
+  // TREEMAP OF RIDS
+  @Deprecated
+  MVRBTREE_RID_BINARY_THRESHOLD("mvrbtree.ridBinaryThreshold",
+      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, -1),
+
+  @Deprecated
+  MVRBTREE_RID_NODE_PAGE_SIZE("mvrbtree.ridNodePageSize",
+      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, 64),
+
+  @Deprecated
+  MVRBTREE_RID_NODE_SAVE_MEMORY("mvrbtree.ridNodeSaveMemory",
+      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Boolean.class, Boolean.FALSE),
+
+  @Deprecated
+  // DEPRECATED IN 2.0
+  STORAGE_KEEP_OPEN("storage.keepOpen", "Deprecated", Boolean.class, Boolean.TRUE),
+
+  // DEPRECATED IN 2.0, LEVEL1 CACHE CANNOT BE DISABLED ANYMORE
+  @Deprecated
+  CACHE_LOCAL_ENABLED("cache.local.enabled", "Deprecated, Level1 cache cannot be disabled anymore", Boolean.class, true);
 
   private final String                 key;
   private final Object                 defValue;
@@ -594,22 +631,30 @@ public enum OGlobalConfiguration {
     try {
       final Method memorySize = mxBean.getClass().getDeclaredMethod("getTotalPhysicalMemorySize");
       memorySize.setAccessible(true);
-      final long totalMemory = (Long) memorySize.invoke(mxBean);
 
-      final long maxMemory = Runtime.getRuntime().maxMemory();
+      final long osMemory = (Long) memorySize.invoke(mxBean);
+      final long jvmMaxMemory = Runtime.getRuntime().maxMemory();
 
-      if (maxMemory > 512L * 1024 * 1024) {
+      long diskCacheInMB = (osMemory - jvmMaxMemory) / (1024 * 1024) - 2 * 1024;
+      if (diskCacheInMB > 0) {
+        final long freeSpaceInMB = new File(".").getFreeSpace() / 1024 / 1024;
+
+        if (diskCacheInMB > freeSpaceInMB * 80 / 100)
+          // LOW DISK SPACE: REDUCE DISK CACHE SIZE
+          diskCacheInMB = freeSpaceInMB * 50 / 100;
+
+        OLogManager.instance().info(null, "OrientDB auto-config DISKCACHE=%,dMB (heap=%,dMB os=%,dMB disk=%,dMB)", diskCacheInMB,
+            jvmMaxMemory / 1024 / 1024, osMemory / 1024 / 1024, freeSpaceInMB);
+        DISK_CACHE_SIZE.setValue(diskCacheInMB);
+      } else {
+        // LOW MEMORY: SET IT TO 64MB ONLY
         OLogManager.instance().warn(
             null,
-            "Your maximum heap size is : " + maxMemory
-                + " bytes but we do not use heap memory intensively to avoid GC pauses OrientDB uses direct memory. "
-                + "We recommend to use smaller amount of heap memory, 512 megabytes is recommended value of heap size. "
-                + "The rest of memory will be automatically used by direct memory.");
+            "No enough physical memory available: %,dMB (heap=%,dMB). Set lower Heap and restart OrientDB. Now running with DISKCACHE="
+                + OReadWriteDiskCache.MIN_CACHE_SIZE + "MB", osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
+        DISK_CACHE_SIZE.setValue(OReadWriteDiskCache.MIN_CACHE_SIZE);
       }
 
-      final long result = (totalMemory - maxMemory - 2L * 1024 * 1024 * 1024) / (1024 * 1024);
-      if (result > DISK_CACHE_SIZE.getValueAsLong())
-        DISK_CACHE_SIZE.setValue(result);
     } catch (NoSuchMethodException e) {
     } catch (InvocationTargetException e) {
     } catch (IllegalAccessException e) {

@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexCursor;
@@ -49,8 +48,8 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
     final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
-    index.put(2, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(2)));
+    index.put(1, new ORecordId(clusterId, 1));
+    index.put(2, new ORecordId(clusterId, 2));
     database.commit();
 
     Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
@@ -61,7 +60,7 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
 
     database.begin();
 
-    index.put(3, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(3)));
+    index.put(3, new ORecordId(clusterId, 3));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
     Set<OIdentifiable> resultTwo = new HashSet<OIdentifiable>();
@@ -86,8 +85,8 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
     final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
-    index.put(2, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(2)));
+    index.put(1, new ORecordId(clusterId, 1));
+    index.put(2, new ORecordId(clusterId, 2));
     database.commit();
 
     Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
@@ -124,8 +123,8 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
     final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
-    index.put(2, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(2)));
+    index.put(1, new ORecordId(clusterId, 1));
+    index.put(2, new ORecordId(clusterId, 2));
     database.commit();
 
     Assert.assertNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
@@ -137,7 +136,7 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
     database.begin();
 
     index.clear();
-    index.put(2, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(2)));
+    index.put(2, new ORecordId(clusterId, 2));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
     Set<OIdentifiable> resultTwo = new HashSet<OIdentifiable>();
@@ -161,8 +160,8 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
     final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
-    index.put(2, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(2)));
+    index.put(1, new ORecordId(clusterId, 1));
+    index.put(2, new ORecordId(clusterId, 2));
 
     database.commit();
 
@@ -198,8 +197,8 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
     final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
-    index.put(2, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(2)));
+    index.put(1, new ORecordId(clusterId, 1));
+    index.put(2, new ORecordId(clusterId, 2));
 
     database.commit();
 
@@ -212,7 +211,7 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
     database.begin();
 
     index.remove(1);
-    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
+    index.put(1, new ORecordId(clusterId, 1));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
     Set<OIdentifiable> resultTwo = new HashSet<OIdentifiable>();
@@ -231,9 +230,9 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
     final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
-    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
-    index.put(2, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(2)));
+    index.put(1, new ORecordId(clusterId, 1));
+    index.put(1, new ORecordId(clusterId, 1));
+    index.put(2, new ORecordId(clusterId, 2));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
     Set<OIdentifiable> result = new HashSet<OIdentifiable>();
@@ -257,8 +256,8 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
     final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
-    index.put(2, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(2)));
+    index.put(1, new ORecordId(clusterId, 1));
+    index.put(2, new ORecordId(clusterId, 2));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
     Set<OIdentifiable> result = new HashSet<OIdentifiable>();
@@ -268,7 +267,7 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 2);
     database.commit();
 
-    index.put(3, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(3)));
+    index.put(3, new ORecordId(clusterId, 3));
 
     cursor = index.iterateEntries(Arrays.asList(1, 2, 3), true);
     cursorToSet(cursor, result);
@@ -283,8 +282,8 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
     final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
-    index.put(2, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(2)));
+    index.put(1, new ORecordId(clusterId, 1));
+    index.put(2, new ORecordId(clusterId, 2));
 
     index.remove(1);
 
@@ -309,8 +308,8 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
     final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
-    index.put(2, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(2)));
+    index.put(1, new ORecordId(clusterId, 1));
+    index.put(2, new ORecordId(clusterId, 2));
 
     index.remove(1, null);
 
@@ -335,11 +334,11 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
     Assert.assertTrue(index instanceof OIndexTxAwareOneValue);
 
     final int clusterId = database.getDefaultClusterId();
-    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
-    index.put(2, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(2)));
+    index.put(1, new ORecordId(clusterId, 1));
+    index.put(2, new ORecordId(clusterId, 2));
 
-    index.remove(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
-    index.put(1, new ORecordId(clusterId, OClusterPositionFactory.INSTANCE.valueOf(1)));
+    index.remove(1, new ORecordId(clusterId, 1));
+    index.put(1, new ORecordId(clusterId, 1));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges("idxTxAwareOneValueGetEntriesTest"));
     Set<OIdentifiable> result = new HashSet<OIdentifiable>();
