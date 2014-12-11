@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.index.OIndexAbstract;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -345,7 +346,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
               if (database.getStorageVersions().classesAreDetectedByClusterId() && iRecord instanceof ODocument) {
                 final ODocument recordSchemaAware = (ODocument) iRecord;
                 final OClass recordClass = ODocumentInternal.getImmutableSchemaClass(recordSchemaAware);
-                final OClass clusterIdClass = database.getMetadata().getImmutableSchemaSnapshot()
+                final OClass clusterIdClass = ((OMetadataInternal)database.getMetadata()).getImmutableSchemaSnapshot()
                     .getClassByClusterId(rid.clusterId);
                 if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
                     || (recordClass != null && !recordClass.equals(clusterIdClass)))

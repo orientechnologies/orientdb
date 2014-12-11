@@ -126,25 +126,10 @@ public class OClusterRemote implements OCluster {
   public void truncate() throws IOException {
   }
 
-  public boolean addPhysicalPosition(OPhysicalPosition iPPosition) throws IOException {
-    return false;
-  }
-
   public OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException {
     return null;
   }
 
-  public void updateDataSegmentPosition(long iPosition, int iDataSegmentId, long iDataPosition) throws IOException {
-  }
-
-  public void removePhysicalPosition(long iPosition) throws IOException {
-  }
-
-  public void updateRecordType(long iPosition, byte iRecordType) throws IOException {
-  }
-
-  public void updateVersion(long iPosition, ORecordVersion iVersion) throws IOException {
-  }
 
   public long getEntries() {
     return 0;

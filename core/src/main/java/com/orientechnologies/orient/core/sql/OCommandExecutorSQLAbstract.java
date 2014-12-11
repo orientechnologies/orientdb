@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -146,7 +147,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     final Set<String> clusters = new HashSet<String>();
 
     for (String clazz : iClassNames) {
-      final OClass cls = db.getMetadata().getImmutableSchemaSnapshot().getClass(clazz);
+      final OClass cls = ((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().getClass(clazz);
       if (cls != null)
         for (int clId : cls.getClusterIds()) {
           // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
@@ -178,12 +179,13 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
     final Set<String> clusters = new HashSet<String>();
 
-    final OIndex<?> idx = db.getMetadata().getIndexManager().getIndex(iIndexName);
+    final OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
+    final OIndex<?> idx = metadata.getIndexManager().getIndex(iIndexName);
     if (idx != null) {
       final String clazz = idx.getDefinition().getClassName();
 
       if (clazz != null) {
-        final OClass cls = db.getMetadata().getImmutableSchemaSnapshot().getClass(clazz);
+        final OClass cls = metadata.getImmutableSchemaSnapshot().getClass(clazz);
         if (cls != null)
           for (int clId : cls.getClusterIds()) {
             clusters.add(db.getClusterNameById(clId).toLowerCase());

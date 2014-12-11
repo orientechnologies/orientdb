@@ -71,6 +71,7 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.*;
@@ -1204,7 +1205,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     case DEFAULTCLUSTERID:
       return getDefaultClusterId();
     case TYPE:
-      return getMetadata().getImmutableSchemaSnapshot().existsClass("V") ? "graph" : "document";
+      return ((OMetadataInternal) getMetadata()).getImmutableSchemaSnapshot().existsClass("V") ? "graph" : "document";
     case DATEFORMAT:
       return storage.getConfiguration().dateFormat;
 
@@ -1511,7 +1512,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       final boolean iIgnoreCache, final boolean loadTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     checkOpeness();
 
-    getMetadata().makeThreadLocalSchemaSnapshot();
+    ((OMetadataInternal) getMetadata()).makeThreadLocalSchemaSnapshot();
     ORecordSerializationContext.pushContext();
     try {
       checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, getClusterNameById(rid.getClusterId()));
@@ -1590,7 +1591,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
             + storage.getPhysicalClusterNameById(rid.clusterId) + ")", t);
     } finally {
       ORecordSerializationContext.pullContext();
-      getMetadata().clearThreadLocalSchemaSnapshot();
+      ((OMetadataInternal) getMetadata()).clearThreadLocalSchemaSnapshot();
     }
   }
 
@@ -1622,7 +1623,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         if (clusterName != null)
           rid.clusterId = getClusterIdByName(clusterName);
         else if (record instanceof ODocument && ODocumentInternal.getImmutableSchemaClass(((ODocument) record)) != null)
-          rid.clusterId = ODocumentInternal.getImmutableSchemaClass(((ODocument) record)).getClusterForNewInstance((ODocument) record);
+          rid.clusterId = ODocumentInternal.getImmutableSchemaClass(((ODocument) record)).getClusterForNewInstance(
+              (ODocument) record);
         else
           getDefaultClusterId();
       }
@@ -1630,7 +1632,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       byte[] stream = null;
       final OStorageOperationResult<ORecordVersion> operationResult;
 
-      getMetadata().makeThreadLocalSchemaSnapshot();
+      ((OMetadataInternal) getMetadata()).makeThreadLocalSchemaSnapshot();
       ORecordSerializationContext.pushContext();
       try {
         // STREAM.LENGTH == 0 -> RECORD IN STACK: WILL BE SAVED AFTER
@@ -1724,7 +1726,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       } finally {
         callbackHookFinalize(record, callTriggers, wasNew, stream);
         ORecordSerializationContext.pullContext();
-        getMetadata().clearThreadLocalSchemaSnapshot();
+        ((OMetadataInternal) getMetadata()).clearThreadLocalSchemaSnapshot();
       }
 
       if (stream != null && stream.length > 0 && !operationResult.isMoved())
@@ -1767,7 +1769,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     setCurrentDatabaseInThreadLocal();
 
     ORecordSerializationContext.pushContext();
-    getMetadata().makeThreadLocalSchemaSnapshot();
+    ((OMetadataInternal) getMetadata()).makeThreadLocalSchemaSnapshot();
     try {
       if (record instanceof ODocument)
         acquireIndexModificationLock((ODocument) record, lockedIndexes);
@@ -1825,7 +1827,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     } finally {
       releaseIndexModificationLock(lockedIndexes);
       ORecordSerializationContext.pullContext();
-      getMetadata().clearThreadLocalSchemaSnapshot();
+      ((OMetadataInternal) getMetadata()).clearThreadLocalSchemaSnapshot();
     }
   }
 
@@ -1843,7 +1845,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.clusterId));
 
     setCurrentDatabaseInThreadLocal();
-    getMetadata().makeThreadLocalSchemaSnapshot();
+    ((OMetadataInternal) getMetadata()).makeThreadLocalSchemaSnapshot();
     ORecordSerializationContext.pushContext();
     try {
 
@@ -1857,7 +1859,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       return operationResult.getResult();
     } finally {
       ORecordSerializationContext.pullContext();
-      getMetadata().clearThreadLocalSchemaSnapshot();
+      ((OMetadataInternal) getMetadata()).clearThreadLocalSchemaSnapshot();
     }
   }
 
@@ -2024,7 +2026,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
    * {@inheritDoc}
    */
   public ORecordIteratorClass<ODocument> browseClass(final String iClassName, final boolean iPolymorphic) {
-    if (getMetadata().getImmutableSchemaSnapshot().getClass(iClassName) == null)
+    if (((OMetadataInternal) getMetadata()).getImmutableSchemaSnapshot().getClass(iClassName) == null)
       throw new IllegalArgumentException("Class '" + iClassName + "' not found in current database");
 
     checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iClassName);
@@ -2296,7 +2298,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   public long countClass(final String iClassName, final boolean iPolymorphic) {
     ODatabaseRecordThreadLocal.INSTANCE.set(this);
 
-    final OClass cls = getMetadata().getImmutableSchemaSnapshot().getClass(iClassName);
+    final OClass cls = ((OMetadataInternal) getMetadata()).getImmutableSchemaSnapshot().getClass(iClassName);
 
     if (cls == null)
       throw new IllegalArgumentException("Class '" + iClassName + "' not found in database");
@@ -2716,7 +2718,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     if (rid.clusterId > -1 && getStorageVersions().classesAreDetectedByClusterId() && isNew && record instanceof ODocument) {
       final ODocument recordSchemaAware = (ODocument) record;
       final OClass recordClass = ODocumentInternal.getImmutableSchemaClass(recordSchemaAware);
-      final OClass clusterIdClass = metadata.getImmutableSchemaSnapshot().getClassByClusterId(rid.clusterId);
+      final OClass clusterIdClass = ((OMetadataInternal) metadata).getImmutableSchemaSnapshot().getClassByClusterId(rid.clusterId);
       if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
           || (recordClass != null && !recordClass.equals(clusterIdClass)))
         throw new OSchemaException("Record saved into cluster '" + iClusterName + "' should be saved with class '" + clusterIdClass

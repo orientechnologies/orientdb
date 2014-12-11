@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -68,7 +69,7 @@ public class ORecordIteratorClass<REC extends ORecord> extends ORecordIteratorCl
       final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
 
-    targetClass = database.getMetadata().getImmutableSchemaSnapshot().getClass(iClassName);
+    targetClass = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(iClassName);
     if (targetClass == null)
       throw new IllegalArgumentException("Class '" + iClassName + "' was not found in database schema");
 
@@ -111,7 +112,8 @@ public class ORecordIteratorClass<REC extends ORecord> extends ORecordIteratorCl
 
   @Override
   protected boolean include(final ORecord record) {
-    return record instanceof ODocument && targetClass.isSuperClassOf(ODocumentInternal.getImmutableSchemaClass(((ODocument) record)));
+    return record instanceof ODocument
+        && targetClass.isSuperClassOf(ODocumentInternal.getImmutableSchemaClass(((ODocument) record)));
   }
 
   @Override

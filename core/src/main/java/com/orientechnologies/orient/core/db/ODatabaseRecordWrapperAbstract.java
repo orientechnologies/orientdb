@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -511,7 +512,7 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseDocumen
     if (iClusterId == -1)
       return;
 
-    for (OClass clazz : getMetadata().getImmutableSchemaSnapshot().getClasses()) {
+    for (OClass clazz : ((OMetadataInternal)getMetadata()).getImmutableSchemaSnapshot().getClasses()) {
       if (clazz.getDefaultClusterId() == iClusterId)
         throw new OSchemaException("Cannot drop the cluster '" + getClusterNameById(iClusterId) + "' because the classes ['"
             + clazz.getName() + "'] are bound to it. Drop these classes before dropping the cluster");

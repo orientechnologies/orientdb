@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OValidationException;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -30,6 +31,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
+
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -573,10 +575,10 @@ public class SchemaTest extends DocumentDBBaseTest {
     Assert.assertNotNull(classA.getProperty("property"));
     OClass classB = schema.createClass("TestExistsB", classA);
 
-		Assert.assertNotNull(classB.getProperty("property"));
-		Assert.assertTrue(classB.existsProperty("property"));
+    Assert.assertNotNull(classB.getProperty("property"));
+    Assert.assertTrue(classB.existsProperty("property"));
 
-		schema = database.getMetadata().getImmutableSchemaSnapshot();
+    schema = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
     classB = schema.getClass("TestExistsB");
 
     Assert.assertNotNull(classB.getProperty("property"));
