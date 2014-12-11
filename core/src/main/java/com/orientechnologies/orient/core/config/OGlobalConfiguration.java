@@ -266,6 +266,10 @@ public enum OGlobalConfiguration {
   INDEX_CURSOR_PREFETCH_SIZE("index.cursor.prefetchSize", "Default prefetch size of index cursor", Integer.class, 500000),
 
   // SBTREE
+  SBTREE_MAX_DEPTH("sbtree.maxDepth",
+      "Maximum depth of sbtree which will be traversed during key look up till it will be treated like broken (64 by default)",
+      Integer.class, 64),
+
   SBTREE_MAX_KEY_SIZE("sbtree.maxKeySize", "Maximum size of key which can be put in SBTree in bytes (10240 by default)",
       Integer.class, 10240),
 
