@@ -1508,6 +1508,11 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
+  /**
+   * This method is internal, it can be subject to signature change or be removed, do not use.
+   * 
+   * @Internal
+   */
   public <RET extends ORecord> RET executeReadRecord(final ORecordId rid, ORecord iRecord, final String iFetchPlan,
       final boolean iIgnoreCache, final boolean loadTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     checkOpeness();
@@ -1595,6 +1600,11 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
   }
 
+  /**
+   * This method is internal, it can be subject to signature change or be removed, do not use.
+   * 
+   * @Internal
+   */
   public <RET extends ORecord> RET executeSaveRecord(final ORecord record, String clusterName, final ORecordVersion ver,
       boolean callTriggers, final OPERATION_MODE mode, boolean forceCreate,
       final ORecordCallback<? extends Number> recordCreatedCallback, ORecordCallback<ORecordVersion> recordUpdatedCallback) {
@@ -1747,6 +1757,11 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     return (RET) record;
   }
 
+  /**
+   * This method is internal, it can be subject to signature change or be removed, do not use.
+   * 
+   * @Internal
+   */
   public void executeDeleteRecord(OIdentifiable record, final ORecordVersion iVersion, final boolean iRequired,
       boolean iCallTriggers, final OPERATION_MODE iMode, boolean prohibitTombstones) {
     checkOpeness();
@@ -1831,6 +1846,11 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
   }
 
+  /**
+   * This method is internal, it can be subject to signature change or be removed, do not use.
+   * 
+   * @Internal
+   */
   public boolean executeHideRecord(OIdentifiable record, final OPERATION_MODE iMode) {
     checkOpeness();
     final ORecordId rid = (ORecordId) record.getIdentity();
@@ -2422,16 +2442,31 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     return this;
   }
 
+  /**
+   * This method is internal, it can be subject to signature change or be removed, do not use.
+   * 
+   * @Internal
+   */
   @Override
   public <DB extends ODatabase> DB getUnderlying() {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * This method is internal, it can be subject to signature change or be removed, do not use.
+   * 
+   * @Internal
+   */
   @Override
   public OStorage getStorage() {
     return storage;
   }
 
+  /**
+   * This method is internal, it can be subject to signature change or be removed, do not use.
+   * 
+   * @Internal
+   */
   @Override
   public void replaceStorage(OStorage iNewStorage) {
     storage = iNewStorage;
