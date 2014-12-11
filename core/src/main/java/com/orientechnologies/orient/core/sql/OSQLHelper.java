@@ -291,8 +291,8 @@ public class OSQLHelper {
           fieldValue = ODatabaseRecordThreadLocal.INSTANCE.get().command(cmd).execute();
 
           // CHECK FOR CONVERSIONS
-          if (iDocument.getImmutableSchemaClass() != null) {
-            final OProperty prop = iDocument.getImmutableSchemaClass().getProperty(fieldName);
+          if (ODocumentInternal.getImmutableSchemaClass(iDocument) != null) {
+            final OProperty prop = ODocumentInternal.getImmutableSchemaClass(iDocument).getProperty(fieldName);
             if (prop != null) {
               if (prop.getType() == OType.LINK) {
                 if (OMultiValue.isMultiValue(fieldValue)) {

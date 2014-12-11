@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 /**
@@ -180,14 +181,14 @@ public class OClassTrigger extends ODocumentHookAbstract {
       return RESULT.RECORD_NOT_CHANGED;
 
     final ODocument document = (ODocument) iRecord;
-    if (document.getImmutableSchemaClass() != null && document.getImmutableSchemaClass().isSubClassOf(CLASSNAME))
+    if (ODocumentInternal.getImmutableSchemaClass(document) != null && ODocumentInternal.getImmutableSchemaClass(document).isSubClassOf(CLASSNAME))
       return super.onTrigger(iType, iRecord);
 
     return RESULT.RECORD_NOT_CHANGED;
   }
 
   private Object checkClzAttribute(final ODocument iDocument, String attr) {
-    final OClass clz = iDocument.getImmutableSchemaClass();
+    final OClass clz = ODocumentInternal.getImmutableSchemaClass(iDocument);
     if (clz != null && clz.isSubClassOf(CLASSNAME)) {
       OFunction func = null;
       String fieldName = ((OClassImpl) clz).getCustom(attr);

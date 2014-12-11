@@ -135,6 +135,12 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         if (db == null || db.isClosed())
           throw new ODatabaseException("Cannot unmarshall the document because no database is active");
         prop = db.getMetadata().getImmutableSchemaSnapshot().getGlobalPropertyById((len * -1) - 1);
+        if (prop == null) {
+          db.getMetadata().clearThreadLocalSchemaSnapshot();
+          db.getMetadata().reload();
+          db.getMetadata().makeThreadLocalSchemaSnapshot();
+          prop = db.getMetadata().getImmutableSchemaSnapshot().getGlobalPropertyById((len * -1) - 1);
+        }
         fieldName = prop.getName();
       }
 
@@ -237,7 +243,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
 
   protected OClass serializeClass(final ODocument document, final BytesContainer bytes) {
-    final OClass clazz = document.getImmutableSchemaClass();
+    final OClass clazz = ODocumentInternal.getImmutableSchemaClass(document);
     if (clazz != null)
       writeString(bytes, clazz.getName());
     else
@@ -278,7 +284,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       value = readByte(bytes);
       break;
     case BOOLEAN:
-      value = readByte(bytes) == 1 ? true : false;
+      value = readByte(bytes) == 1;
       break;
     case DATETIME:
       value = new Date(OVarIntSerializer.readAsLong(bytes));
@@ -447,7 +453,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   private OType getLinkedType(ODocument document, OType type, String key) {
     if (type != OType.EMBEDDEDLIST && type != OType.EMBEDDEDSET && type != OType.EMBEDDEDMAP)
       return null;
-    OClass clazz = document.getImmutableSchemaClass();
+    OClass clazz = ODocumentInternal.getImmutableSchemaClass(document);
     if (clazz != null) {
       OProperty prop = clazz.getProperty(key);
       if (prop != null) {
@@ -644,7 +650,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   private int writeOptimizedLink(BytesContainer bytes, OIdentifiable link) {
     link = recursiveLinkSave(link);
-    assert link.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Inpossible to serialize invalid link";
+    assert link.getIdentity().isValid() || (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy) : "Impossible to serialize invalid link";
     int pos = OVarIntSerializer.write(bytes, link.getIdentity().getClusterId());
     OVarIntSerializer.write(bytes, link.getIdentity().getClusterPosition());
     return pos;
@@ -665,7 +671,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   private int writeEmbeddedCollection(BytesContainer bytes, Collection<?> value, OType linkedType) {
     int pos = OVarIntSerializer.write(bytes, value.size());
-    // TODO manage embedded type from schema and autodeterminated.
+    // TODO manage embedded type from schema and auto-determined.
     writeOType(bytes, bytes.alloc(1), OType.ANY);
     for (Object itemValue : value) {
       // TODO:manage in a better way null entry

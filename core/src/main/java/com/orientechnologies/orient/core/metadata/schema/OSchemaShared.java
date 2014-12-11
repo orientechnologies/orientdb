@@ -813,6 +813,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   }
 
   public OGlobalProperty getGlobalPropertyById(int id) {
+    if (id >= properties.size())
+      return null;
     return properties.get(id);
   }
 

@@ -1820,7 +1820,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     return null;
   }
 
-  public OClass getImmutableSchemaClass() {
+  protected OClass getImmutableSchemaClass() {
     if (_className == null)
       fetchClassName();
 

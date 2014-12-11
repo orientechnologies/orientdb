@@ -53,10 +53,12 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OPageDataVerificationError;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
@@ -2004,13 +2006,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     ORecordSerializationContext.pushContext();
     try {
+      int clusterId = rid.clusterId;
       if (rid.clusterId == ORID.CLUSTER_ID_INVALID && rec instanceof ODocument
-          && ((ODocument) rec).getImmutableSchemaClass() != null) {
+          && ODocumentInternal.getImmutableSchemaClass(((ODocument) rec)) != null) {
         // TRY TO FIX CLUSTER ID TO THE DEFAULT CLUSTER ID DEFINED IN SCHEMA CLASS
-        rid.clusterId = ((ODocument) rec).getImmutableSchemaClass().getDefaultClusterId();
+
+        final OClass schemaClass = ODocumentInternal.getImmutableSchemaClass(((ODocument) rec));
+        clusterId = schemaClass.getClusterForNewInstance((ODocument) rec);
       }
 
-      final OCluster cluster = getClusterById(rid.clusterId);
+      final OCluster cluster = getClusterById(clusterId);
 
       if (cluster.getName().equals(OMetadataDefault.CLUSTER_INDEX_NAME)
           || cluster.getName().equals(OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME))

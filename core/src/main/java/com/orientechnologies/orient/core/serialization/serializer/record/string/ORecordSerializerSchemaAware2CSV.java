@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 
@@ -159,7 +160,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
           boolean setFieldType = false;
 
           // SEARCH FOR A CONFIGURED PROPERTY
-          prop = record.getImmutableSchemaClass() != null ? record.getImmutableSchemaClass().getProperty(fieldName) : null;
+          prop = ODocumentInternal.getImmutableSchemaClass(record) != null ? ODocumentInternal.getImmutableSchemaClass(record).getProperty(fieldName) : null;
           if (prop != null && prop.getType() != OType.ANY) {
             // RECOGNIZED PROPERTY
             type = prop.getType();
@@ -294,8 +295,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
       } else
         iMarshalledRecords.put(record, Boolean.TRUE);
 
-    if (!iOnlyDelta && record.getImmutableSchemaClass() != null) {
-      iOutput.append(record.getImmutableSchemaClass().getStreamableName());
+    if (!iOnlyDelta && ODocumentInternal.getImmutableSchemaClass(record) != null) {
+      iOutput.append(ODocumentInternal.getImmutableSchemaClass(record).getStreamableName());
       iOutput.append(OStringSerializerHelper.CLASS_SEPARATOR);
     }
 
@@ -318,7 +319,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
         iOutput.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
       // SEARCH FOR A CONFIGURED PROPERTY
-      prop = record.getImmutableSchemaClass() != null ? record.getImmutableSchemaClass().getProperty(fieldName) : null;
+      prop = ODocumentInternal.getImmutableSchemaClass(record) != null ? ODocumentInternal.getImmutableSchemaClass(record).getProperty(fieldName) : null;
       fieldClassName = getClassName(fieldValue);
 
       type = record.fieldType(fieldName);
@@ -510,9 +511,9 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
     // GET THE OVERSIZE IF ANY
     final float overSize;
-    if (record.getImmutableSchemaClass() != null)
+    if (ODocumentInternal.getImmutableSchemaClass(record) != null)
       // GET THE CONFIGURED OVERSIZE SETTED PER CLASS
-      overSize = record.getImmutableSchemaClass().getOverSize();
+      overSize = ODocumentInternal.getImmutableSchemaClass(record).getOverSize();
     else
       overSize = 0;
 

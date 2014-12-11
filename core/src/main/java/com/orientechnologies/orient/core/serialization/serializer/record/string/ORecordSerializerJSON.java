@@ -366,7 +366,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
   private OType determineType(ODocument doc, String fieldName) {
     OType type = null;
-    final OClass cls = doc.getImmutableSchemaClass();
+    final OClass cls = ODocumentInternal.getImmutableSchemaClass(doc);
     if (cls != null) {
       final OProperty prop = cls.getProperty(fieldName);
       if (prop != null)
@@ -408,8 +408,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     if (iFieldValue.equals("null"))
       return null;
 
-    if (iFieldName != null && iRecord.getImmutableSchemaClass() != null) {
-      final OProperty p = iRecord.getImmutableSchemaClass().getProperty(iFieldName);
+    if (iFieldName != null && ODocumentInternal.getImmutableSchemaClass(iRecord) != null) {
+      final OProperty p = ODocumentInternal.getImmutableSchemaClass(iRecord).getProperty(iFieldName);
       if (p != null) {
         iType = p.getType();
         iLinkedType = p.getLinkedType();

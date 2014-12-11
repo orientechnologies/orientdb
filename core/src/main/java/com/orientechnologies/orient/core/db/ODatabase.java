@@ -86,16 +86,6 @@ public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2Record
    */
   public <DB extends ODatabase> DB open(final String iUserName, final String iUserPassword);
 
-
-  /**
-   * Opens a database using an authentication token received as an argument.
-   *
-   * @param iToken
-   *          Authentication token
-   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
-   */
-  public <DB extends ODatabase> DB open(final OToken iToken);
-
   /**
    * Creates a new database.
    *

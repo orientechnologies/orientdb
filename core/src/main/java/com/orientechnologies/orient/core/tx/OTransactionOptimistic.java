@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -336,19 +337,21 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
           if (!rid.isValid()) {
             ORecordInternal.onBeforeIdentityChanged(iRecord);
+            if (database.getStorage().isAssigningClusterIds() || iClusterName != null) {
+              // ASSIGN A UNIQUE SERIAL TEMPORARY ID
+              if (rid.clusterId == ORID.CLUSTER_ID_INVALID)
+                rid.clusterId = iClusterName != null ? database.getClusterIdByName(iClusterName) : database.getDefaultClusterId();
 
-            // ASSIGN A UNIQUE SERIAL TEMPORARY ID
-            if (rid.clusterId == ORID.CLUSTER_ID_INVALID)
-              rid.clusterId = iClusterName != null ? database.getClusterIdByName(iClusterName) : database.getDefaultClusterId();
-
-            if (database.getStorageVersions().classesAreDetectedByClusterId() && iRecord instanceof ODocument) {
-              final ODocument recordSchemaAware = (ODocument) iRecord;
-              final OClass recordClass = recordSchemaAware.getImmutableSchemaClass();
-              final OClass clusterIdClass = database.getMetadata().getImmutableSchemaSnapshot().getClassByClusterId(rid.clusterId);
-              if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
-                  || (recordClass != null && !recordClass.equals(clusterIdClass)))
-                throw new OSchemaException("Record saved into cluster " + iClusterName + " should be saved with class "
-                    + clusterIdClass + " but saved with class " + recordClass);
+              if (database.getStorageVersions().classesAreDetectedByClusterId() && iRecord instanceof ODocument) {
+                final ODocument recordSchemaAware = (ODocument) iRecord;
+                final OClass recordClass = ODocumentInternal.getImmutableSchemaClass(recordSchemaAware);
+                final OClass clusterIdClass = database.getMetadata().getImmutableSchemaSnapshot()
+                    .getClassByClusterId(rid.clusterId);
+                if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
+                    || (recordClass != null && !recordClass.equals(clusterIdClass)))
+                  throw new OSchemaException("Record saved into cluster " + iClusterName + " should be saved with class "
+                      + clusterIdClass + " but saved with class " + recordClass);
+              }
             }
 
             rid.clusterPosition = newObjectCounter--;

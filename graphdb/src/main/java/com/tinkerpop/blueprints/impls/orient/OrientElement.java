@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -243,7 +244,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
 
     final OrientBaseGraph graph = getGraph();
     if (key.equals("_class"))
-      return (T) getRecord().getImmutableSchemaClass().getName();
+      return (T) ODocumentInternal.getImmutableSchemaClass(getRecord()).getName();
     else if (key.equals("_version"))
       return (T) new Integer(getRecord().getVersion());
     else if (key.equals("_rid"))
@@ -565,7 +566,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     final ODocument doc = getRecord();
     doc.deserializeFields();
 
-    final OClass cls = doc.getImmutableSchemaClass();
+    final OClass cls = ODocumentInternal.getImmutableSchemaClass(doc);
 
     if (cls == null || !cls.isSubClassOf(getBaseClassName()))
       throw new IllegalArgumentException("The document received is not a " + getElementType() + ". Found class '" + cls + "'");

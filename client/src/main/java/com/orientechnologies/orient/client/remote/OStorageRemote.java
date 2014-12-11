@@ -19,31 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
-
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -93,6 +68,21 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
+
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 
 /**
  * This object is bound to each remote ODatabase instances.
@@ -152,6 +142,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     asynchExecutor = Executors.newSingleThreadScheduledExecutor();
 
     engine = (OEngineRemote) Orient.instance().getEngine(OEngineRemote.NAME);
+  }
+
+  @Override
+  public boolean isAssigningClusterIds() {
+    return false;
   }
 
   public int getSessionId() {
@@ -1374,7 +1369,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   @SuppressWarnings("unchecked")
-  public void updateClusterConfiguration(final byte[] obj) {
+  public void updateClusterConfiguration(final String iConnectedURL, final byte[] obj) {
     if (obj == null)
       return;
 
@@ -1385,6 +1380,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       final List<ODocument> members = clusterConfiguration.field("members");
       if (members != null) {
         serverURLs.clear();
+
+        // ADD CURRENT SERVER AS FIRST
+        addHost(iConnectedURL);
 
         // parseServerURLs();
 
@@ -1541,11 +1539,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         setSessionId(null, -1, null);
 
         // REACQUIRE DB SESSION ID
-        openRemoteDatabase();
+        final String currentURL = openRemoteDatabase();
 
-        OLogManager.instance().warn(this,
-            "Connection re-acquired transparently after %dms and %d retries: no errors will be thrown at application level",
-            System.currentTimeMillis() - lostConnectionTime, retry + 1);
+        OLogManager
+            .instance()
+            .warn(
+                this,
+                "Connection re-acquired transparently after %dms and %d retries to server '%s': no errors will be thrown at application level",
+                System.currentTimeMillis() - lostConnectionTime, retry + 1, currentURL);
 
         // RECONNECTED!
         return;
@@ -1559,7 +1560,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     throw new OStorageException(message, exception);
   }
 
-  protected void openRemoteDatabase() throws IOException {
+  protected String openRemoteDatabase() throws IOException {
     connectionDbType = ODatabaseDocument.TYPE;
 
     if (connectionOptions != null && connectionOptions.size() > 0) {
@@ -1609,7 +1610,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             readDatabaseInformation(network);
 
             // READ CLUSTER CONFIGURATION
-            updateClusterConfiguration(network.readBytes());
+            updateClusterConfiguration(network.getServerURL(), network.readBytes());
 
             // read OrientDB release info
             if (network.getSrvProtocolVersion() >= 14)
@@ -1617,7 +1618,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
             status = STATUS.OPEN;
 
-            return;
+            return currentURL;
 
           } finally {
             endResponse(network);
@@ -1751,6 +1752,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     if (!host.contains(":"))
       host += ":"
           + (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL) ? getDefaultSSLPort() : getDefaultPort());
+
+    if (host.contains("/"))
+      host = host.substring(0, host.indexOf("/"));
 
     if (!serverURLs.contains(host))
       serverURLs.add(host);

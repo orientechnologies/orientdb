@@ -54,6 +54,7 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONReader;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
@@ -1286,7 +1287,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         record.setDirty();
         ORecordInternal.setIdentity(record, new ORecordId());
 
-        if (!preserveRids && record instanceof ODocument && ((ODocument) record).getImmutableSchemaClass() != null)
+        if (!preserveRids && record instanceof ODocument && ODocumentInternal.getImmutableSchemaClass(((ODocument) record)) != null)
           record.save();
         else
           record.save(database.getClusterNameById(clusterId));
