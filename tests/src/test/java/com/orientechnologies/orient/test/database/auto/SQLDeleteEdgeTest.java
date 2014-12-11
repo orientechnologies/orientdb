@@ -48,9 +48,9 @@ public class SQLDeleteEdgeTest extends DocumentDBBaseTest {
     resultTwo = database.query(new OSQLSynchQuery<ODocument>("select expand(outE()) from " + result.get(1).getIdentity()));
     Assert.assertEquals(resultTwo.size(), 1);
 
-    database.command(new OCommandSQL("DELETE FROM testFromToOneE")).execute();
-    database.command(new OCommandSQL("DELETE FROM testFromToTwoE")).execute();
-    database.command(new OCommandSQL("DELETE FROM testFromToV")).execute();
+    database.command(new OCommandSQL("DELETE FROM testFromToOneE unsafe")).execute();
+    database.command(new OCommandSQL("DELETE FROM testFromToTwoE unsafe")).execute();
+    database.command(new OCommandSQL("DELETE VERTEX testFromToV")).execute();
   }
 
   public void testDeleteFrom() {
@@ -79,9 +79,9 @@ public class SQLDeleteEdgeTest extends DocumentDBBaseTest {
     resultTwo = database.query(new OSQLSynchQuery<ODocument>("select expand(outE()) from " + result.get(1).getIdentity()));
     Assert.assertEquals(resultTwo.size(), 1);
 
-    database.command(new OCommandSQL("DELETE FROM testFromOneE")).execute();
-    database.command(new OCommandSQL("DELETE FROM testFromTwoE")).execute();
-    database.command(new OCommandSQL("DELETE FROM testFromV")).execute();
+    database.command(new OCommandSQL("DELETE FROM testFromOneE unsafe")).execute();
+    database.command(new OCommandSQL("DELETE FROM testFromTwoE unsafe")).execute();
+    database.command(new OCommandSQL("DELETE VERTEX testFromV")).execute();
   }
 
   public void testDeleteTo() {
@@ -110,8 +110,8 @@ public class SQLDeleteEdgeTest extends DocumentDBBaseTest {
     resultTwo = database.query(new OSQLSynchQuery<ODocument>("select expand(outE()) from " + result.get(1).getIdentity()));
     Assert.assertEquals(resultTwo.size(), 1);
 
-    database.command(new OCommandSQL("DELETE FROM testToOneE")).execute();
-    database.command(new OCommandSQL("DELETE FROM testToTwoE")).execute();
-    database.command(new OCommandSQL("DELETE FROM testToV")).execute();
+    database.command(new OCommandSQL("DELETE FROM testToOneE unsafe")).execute();
+    database.command(new OCommandSQL("DELETE FROM testToTwoE unsafe")).execute();
+    database.command(new OCommandSQL("DELETE VERTEX testToV")).execute();
   }
 }
