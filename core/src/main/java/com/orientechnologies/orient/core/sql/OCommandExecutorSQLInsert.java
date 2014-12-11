@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -37,6 +34,15 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+
 /**
  * SQL INSERT command.
  * 
@@ -48,6 +54,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
   public static final String             KEYWORD_INSERT   = "INSERT";
   protected static final String          KEYWORD_RETURN   = "RETURN";
   private static final String            KEYWORD_VALUES   = "VALUES";
+  private static final String            KEYWORD_UNSAFE   = "UNSAFE";
   private String                         className        = null;
   private String                         clusterName      = null;
   private String                         indexName        = null;
@@ -56,6 +63,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
   private AtomicLong                     saved            = new AtomicLong(0);
   private Object                         returnExpression = null;
   private List<ODocument>                queryResult      = null;
+  private boolean                        unsafe           = false;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLInsert parse(final OCommandRequest iRequest) {
@@ -66,6 +74,12 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     className = null;
     newRecords = null;
     content = null;
+
+    if (parserTextUpperCase.endsWith(KEYWORD_UNSAFE)) {
+      unsafe = true;
+      parserText = parserText.substring(0, parserText.length() - KEYWORD_UNSAFE.length() - 1);
+      parserTextUpperCase = parserTextUpperCase.substring(0, parserTextUpperCase.length() - KEYWORD_UNSAFE.length() - 1);
+    }
 
     parserRequiredKeyword("INSERT");
     parserRequiredKeyword("INTO");
@@ -87,6 +101,11 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
       final OClass cls = database.getMetadata().getImmutableSchemaSnapshot().getClass(subjectName);
       if (cls == null)
         throwParsingException("Class " + subjectName + " not found in database");
+
+      if (!unsafe && cls.isSubClassOf("E"))
+        // FOUND EDGE
+        throw new OCommandExecutionException(
+            "'INSERT' command cannot create Edges. Use 'CREATE EDGE' command instead, or apply the 'UNSAFE' keyword to force it");
 
       className = cls.getName();
     }
@@ -173,7 +192,6 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
       // RETURN LAST ENTRY
       return prepareReturnItem(new ODocument(result));
     } else {
-
       // CREATE NEW DOCUMENTS
       final List<ODocument> docs = new ArrayList<ODocument>();
       if (newRecords != null) {

@@ -290,4 +290,23 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
 
   }
 
+  public void testInsertOfEdgeWithInsertCommand() {
+    try {
+      database.command(new OCommandSQL("insert into E set a = 33")).execute();
+      Assert.assertTrue(false);
+    } catch (OCommandExecutionException e) {
+      Assert.assertTrue(true);
+    }
+
+  }
+
+  public void testInsertOfEdgeWithInsertCommandUnsafe() {
+
+    OrientEdge insertedEdge = database.command(new OCommandSQL("insert into E set in = #9:0, out = #9:1, a = 33 unsafe")).execute();
+    Assert.assertNotNull(insertedEdge);
+
+    Integer confirmDeleted = database.command(new OCommandSQL("delete from " + insertedEdge.getIdentity() + " unsafe")).execute();
+    Assert.assertEquals(confirmDeleted.intValue(), 1);
+  }
+
 }
