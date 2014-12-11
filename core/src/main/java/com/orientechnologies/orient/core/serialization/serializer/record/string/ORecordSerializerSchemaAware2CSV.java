@@ -290,17 +290,17 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
     final ODocument record = (ODocument) iRecord;
 
+    if (!iOnlyDelta && ODocumentInternal.getImmutableSchemaClass(record) != null) {
+      iOutput.append(ODocumentInternal.getImmutableSchemaClass(record).getStreamableName());
+      iOutput.append(OStringSerializerHelper.CLASS_SEPARATOR);
+    }
+
     // CHECK IF THE RECORD IS PENDING TO BE MARSHALLED
     if (iMarshalledRecords != null)
       if (iMarshalledRecords.containsKey(record)) {
         return iOutput;
       } else
         iMarshalledRecords.put(record, Boolean.TRUE);
-
-    if (!iOnlyDelta && ODocumentInternal.getImmutableSchemaClass(record) != null) {
-      iOutput.append(ODocumentInternal.getImmutableSchemaClass(record).getStreamableName());
-      iOutput.append(OStringSerializerHelper.CLASS_SEPARATOR);
-    }
 
     OProperty prop;
     OType type;
@@ -503,7 +503,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
       iOutput.append(fieldName);
       iOutput.append(FIELD_VALUE_SEPARATOR);
-      fieldToStream((ODocument) iRecord, iOutput, iObjHandler, type, linkedClass, linkedType, fieldName, fieldValue,
+      fieldToStream(record, iOutput, iObjHandler, type, linkedClass, linkedType, fieldName, fieldValue,
           iMarshalledRecords, true);
 
       i++;
