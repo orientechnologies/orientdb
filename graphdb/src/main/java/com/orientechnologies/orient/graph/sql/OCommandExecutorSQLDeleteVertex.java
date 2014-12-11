@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -43,12 +40,16 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * SQL DELETE VERTEX command.
  * 
  * @author Luca Garulli
  */
-public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest,
+public class
+  OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest,
     OCommandResultListener {
   public static final String NAME      = "DELETE VERTEX";
   private ORecordId          rid;
