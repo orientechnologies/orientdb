@@ -1727,13 +1727,33 @@ public class IndexTest extends ObjectDBBaseTest {
       }
     }
 
-		parent.remove();
-		child.remove();
+    parent.remove();
+    child.remove();
 
-		parent2.remove();
-		child2.remove();
+    parent2.remove();
+    child2.remove();
 
     graph.shutdown();
+  }
+
+  public void testEmptyNotUniqueIndex() {
+    OClass emptyNotUniqueIndexClazz = database.getMetadata().getSchema().createClass("EmptyNotUniqueIndexTest");
+    emptyNotUniqueIndexClazz.createProperty("prop", OType.STRING);
+
+    final OIndex notUniqueIndex = emptyNotUniqueIndexClazz.createIndex("EmptyNotUniqueIndexTestIndex", INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "prop");
+    ODocument document = new ODocument("EmptyNotUniqueIndexTest");
+    document.field("prop", "keyOne");
+    document.save();
+
+    document = new ODocument("EmptyNotUniqueIndexTest");
+    document.field("prop", "keyTwo");
+    document.save();
+
+    Assert.assertFalse(notUniqueIndex.contains("RandomKeyOne"));
+    Assert.assertTrue(notUniqueIndex.contains("keyOne"));
+
+    Assert.assertFalse(notUniqueIndex.contains("RandomKeyTwo"));
+    Assert.assertTrue(notUniqueIndex.contains("keyTwo"));
   }
 
   private List<Long> getValidPositions(int clusterId) {

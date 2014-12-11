@@ -176,7 +176,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     if (OGlobalConfiguration.INDEX_FLUSH_AFTER_CREATE.getValueAsBoolean())
       storage.synch();
 
-    return index;
+    return preProcessBeforeReturn(index);
   }
 
   private Set<String> findClustersByIds(int[] clusterIdsToIndex, ODatabase database) {
