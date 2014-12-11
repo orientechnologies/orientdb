@@ -181,7 +181,8 @@ public class OClassTrigger extends ODocumentHookAbstract {
       return RESULT.RECORD_NOT_CHANGED;
 
     final ODocument document = (ODocument) iRecord;
-    if (ODocumentInternal.getImmutableSchemaClass(document) != null && ODocumentInternal.getImmutableSchemaClass(document).isSubClassOf(CLASSNAME))
+    if (ODocumentInternal.getImmutableSchemaClass(document) != null
+        && ODocumentInternal.getImmutableSchemaClass(document).isSubClassOf(CLASSNAME))
       return super.onTrigger(iType, iRecord);
 
     return RESULT.RECORD_NOT_CHANGED;
@@ -191,12 +192,12 @@ public class OClassTrigger extends ODocumentHookAbstract {
     final OClass clz = ODocumentInternal.getImmutableSchemaClass(iDocument);
     if (clz != null && clz.isSubClassOf(CLASSNAME)) {
       OFunction func = null;
-      String fieldName = ((OClassImpl) clz).getCustom(attr);
+      String fieldName = clz.getCustom(attr);
       OClass superClz = clz.getSuperClass();
       while (fieldName == null || fieldName.length() == 0) {
         if (superClz == null || superClz.getName().equals(CLASSNAME))
           break;
-        fieldName = ((OClassImpl) superClz).getCustom(attr);
+        fieldName = superClz.getCustom(attr);
         superClz = superClz.getSuperClass();
       }
       if (fieldName != null && fieldName.length() > 0) {
