@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -30,6 +31,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+
 import junit.framework.Assert;
 
 import java.util.ArrayList;
@@ -401,7 +403,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
       System.out.println("\nReader " + name + " sql count: " + result.get(0) + " counting class: " + database.countClass("Person")
           + " counting cluster: " + database.countClusterElements("Person"));
 
-      if (database.getMetadata().getImmutableSchemaSnapshot().existsClass("ODistributedConflict"))
+      if (((OMetadataInternal)database.getMetadata()).getImmutableSchemaSnapshot().existsClass("ODistributedConflict"))
         try {
           List<ODocument> conflicts = database
               .query(new OSQLSynchQuery<OIdentifiable>("select count(*) from ODistributedConflict"));

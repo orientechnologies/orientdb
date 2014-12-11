@@ -292,7 +292,7 @@ public class OObjectEntitySerializer {
   public static List<String> getCascadeDeleteFields(String iClassName) {
     if (iClassName == null || iClassName.isEmpty())
       return null;
-    for (Class<?> iClass : cascadeDeleteFields.keySet()) {
+    for (Class<?> iClass : classes) {
       if (iClass.getSimpleName().equals(iClassName))
         return getCascadeDeleteFields(iClass);
     }

@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
  * using the reset() at every re-use.
  */
 @SuppressWarnings({ "unchecked" })
+@Deprecated
 public class ORecordFlat extends ORecordAbstract implements ORecordStringable {
   private static final long serialVersionUID = 1L;
   public static final byte  RECORD_TYPE      = 'f';

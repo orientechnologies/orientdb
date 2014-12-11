@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -134,12 +135,13 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         ODatabaseDocument db = document.getDatabase();
         if (db == null || db.isClosed())
           throw new ODatabaseException("Cannot unmarshall the document because no database is active");
-        prop = db.getMetadata().getImmutableSchemaSnapshot().getGlobalPropertyById((len * -1) - 1);
+        OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
+        prop = metadata.getImmutableSchemaSnapshot().getGlobalPropertyById((len * -1) - 1);
         if (prop == null) {
-          db.getMetadata().clearThreadLocalSchemaSnapshot();
-          db.getMetadata().reload();
-          db.getMetadata().makeThreadLocalSchemaSnapshot();
-          prop = db.getMetadata().getImmutableSchemaSnapshot().getGlobalPropertyById((len * -1) - 1);
+          metadata.clearThreadLocalSchemaSnapshot();
+          metadata.reload();
+          metadata.makeThreadLocalSchemaSnapshot();
+          prop = metadata.getImmutableSchemaSnapshot().getGlobalPropertyById((len * -1) - 1);
         }
         fieldName = prop.getName();
       }

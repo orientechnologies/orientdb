@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OToken;
@@ -61,6 +62,7 @@ import com.orientechnologies.orient.object.iterator.OObjectIteratorClass;
 import com.orientechnologies.orient.object.iterator.OObjectIteratorCluster;
 import com.orientechnologies.orient.object.metadata.OMetadataObject;
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
+
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
@@ -124,17 +126,16 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
     super.open(iUserName, iUserPassword);
     entityManager.registerEntityClass(OUser.class);
     entityManager.registerEntityClass(ORole.class);
-    metadata = new OMetadataObject(underlying.getMetadata());
+    metadata = new OMetadataObject((OMetadataInternal) underlying.getMetadata());
     return (THISDB) this;
   }
-
 
   @Override
   public <THISDB extends ODatabase> THISDB open(OToken iToken) {
     super.open(iToken);
     entityManager.registerEntityClass(OUser.class);
     entityManager.registerEntityClass(ORole.class);
-    metadata = new OMetadataObject(underlying.getMetadata());
+    metadata = new OMetadataObject((OMetadataInternal) underlying.getMetadata());
     return (THISDB) this;
   }
 
@@ -142,7 +143,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   public OMetadataObject getMetadata() {
     checkOpeness();
     if (metadata == null)
-      metadata = new OMetadataObject(underlying.getMetadata());
+      metadata = new OMetadataObject((OMetadataInternal) underlying.getMetadata());
     return metadata;
   }
 

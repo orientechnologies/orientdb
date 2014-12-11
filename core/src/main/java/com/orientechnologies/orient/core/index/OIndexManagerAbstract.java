@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -365,7 +366,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   protected void acquireExclusiveLock() {
     final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
     if (databaseRecord != null && !databaseRecord.isClosed()) {
-      final OMetadata metadata = databaseRecord.getMetadata();
+      final OMetadataInternal metadata = (OMetadataInternal)databaseRecord.getMetadata();
       if (metadata != null)
         metadata.makeThreadLocalSchemaSnapshot();
     }
@@ -380,7 +381,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     if (databaseRecord != null && !databaseRecord.isClosed()) {
       final OMetadata metadata = databaseRecord.getMetadata();
       if (metadata != null)
-        metadata.clearThreadLocalSchemaSnapshot();
+        ((OMetadataInternal)metadata).clearThreadLocalSchemaSnapshot();
     }
   }
 

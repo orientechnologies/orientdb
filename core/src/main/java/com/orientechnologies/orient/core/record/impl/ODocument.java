@@ -48,6 +48,8 @@ import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
+import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -156,7 +158,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     final ODatabaseDocumentInternal database = getDatabaseInternal();
     if (_recordId.clusterId > -1 && database.getStorageVersions().classesAreDetectedByClusterId()) {
-      final OSchema schema = database.getMetadata().getImmutableSchemaSnapshot();
+      final OSchema schema = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
       final OClass cls = schema.getClassByClusterId(_recordId.clusterId);
       if (cls != null && !cls.getName().equals(iClassName))
         throw new IllegalArgumentException("Cluster id does not correspond class name should be " + iClassName + " but found "
@@ -1799,7 +1801,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       return;
     }
 
-    final OClass _clazz = getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(iClassName);
+    final OClass _clazz = ((OMetadataInternal) getDatabase().getMetadata()).getImmutableSchemaSnapshot().getClass(iClassName);
     if (_clazz != null) {
       _className = _clazz.getName();
       convertFieldsToClass(_clazz);
@@ -1827,7 +1829,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
 
     if (databaseRecord != null) {
-      final OSchema immutableSchema = databaseRecord.getMetadata().getImmutableSchemaSnapshot();
+      final OSchema immutableSchema = ((OMetadataInternal) databaseRecord.getMetadata()).getImmutableSchemaSnapshot();
       if (immutableSchema == null)
         return null;
 
@@ -1861,11 +1863,12 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       return;
     }
 
-    OClass clazz = getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(className);
+    OMetadataInternal metadata = (OMetadataInternal) getDatabase().getMetadata();
+    OClass clazz = metadata.getImmutableSchemaSnapshot().getClass(className);
     if (clazz != null)
       _className = clazz.getName();
 
-    clazz = getDatabase().getMetadata().getSchema().getOrCreateClass(className);
+    clazz = metadata.getSchema().getOrCreateClass(className);
     _className = clazz.getName();
     convertFieldsToClass(clazz);
   }
@@ -2154,7 +2157,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         checkForLoading();
         checkForFields("@class");
       } else {
-        final OSchema schema = database.getMetadata().getImmutableSchemaSnapshot();
+        final OSchema schema = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
         if (schema != null) {
           OClass _clazz = schema.getClassByClusterId(_recordId.clusterId);
           if (_clazz != null)

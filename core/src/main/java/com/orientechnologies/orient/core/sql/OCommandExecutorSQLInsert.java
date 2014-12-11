@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -98,7 +99,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
       if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
         subjectName = subjectName.substring(OCommandExecutorSQLAbstract.CLASS_PREFIX.length());
 
-      final OClass cls = database.getMetadata().getImmutableSchemaSnapshot().getClass(subjectName);
+      final OClass cls = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(subjectName);
       if (cls == null)
         throwParsingException("Class " + subjectName + " not found in database");
 
@@ -231,7 +232,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
   @Override
   public Set<String> getInvolvedClusters() {
     if (className != null) {
-      final OClass clazz = getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(className);
+      final OClass clazz = ((OMetadataInternal) getDatabase().getMetadata()).getImmutableSchemaSnapshot().getClass(className);
       return Collections.singleton(getDatabase().getClusterNameById(clazz.getClusterSelection().getCluster(clazz, null)));
     } else if (clusterName != null)
       return getInvolvedClustersOfClusters(Collections.singleton(clusterName));

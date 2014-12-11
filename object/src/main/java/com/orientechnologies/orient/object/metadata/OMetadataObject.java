@@ -20,6 +20,7 @@ import java.io.IOException;
 
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibrary;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -31,16 +32,16 @@ import com.orientechnologies.orient.object.metadata.schema.OSchemaProxyObject;
  * @author luca.molino
  * 
  */
-public class OMetadataObject implements OMetadata {
+public class OMetadataObject implements OMetadataInternal {
 
-  protected OMetadata          underlying;
+  protected OMetadataInternal          underlying;
   protected OSchemaProxyObject schema;
 
-  public OMetadataObject(OMetadata iUnderlying) {
+  public OMetadataObject(OMetadataInternal iUnderlying) {
     underlying = iUnderlying;
   }
 
-  public OMetadataObject(OMetadata iUnderlying, OSchemaProxyObject iSchema) {
+  public OMetadataObject(OMetadataInternal iUnderlying, OSchemaProxyObject iSchema) {
     underlying = iUnderlying;
     schema = iSchema;
   }

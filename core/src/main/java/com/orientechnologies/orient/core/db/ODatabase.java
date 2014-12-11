@@ -752,7 +752,8 @@ public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2Record
   public ODatabase<T> rollback(boolean force) throws OTransactionException;
 
   /**
-   * Execute a query against the database.
+   * Execute a query against the database. If the OStorage used is remote (OStorageRemote) then the command will be executed
+   * remotely and the result returned back to the calling client.
    *
    * @param iCommand
    *          Query command

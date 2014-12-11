@@ -1424,13 +1424,6 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     return clientId;
   }
 
-  public int getDataSegmentIdByName(final String iName) {
-    if (iName == null)
-      return 0;
-
-    throw new UnsupportedOperationException("getDataSegmentIdByName()");
-  }
-
   public int getClusters() {
     lock.acquireSharedLock();
     try {
