@@ -87,12 +87,16 @@ public class LocalPaginatedStorageCreateCrashRestore {
     private void saveDoc(ODocument document) {
       ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
 
+			baseDB.begin();
       ODocument testDoc = new ODocument();
       document.copyTo(testDoc);
       document.save();
+			baseDB.commit();
 
       ODatabaseRecordThreadLocal.INSTANCE.set(testDB);
+			testDB.begin();
       testDoc.save();
+			testDB.commit();
       ODatabaseRecordThreadLocal.INSTANCE.set(baseDB);
     }
   }
