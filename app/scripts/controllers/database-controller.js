@@ -56,7 +56,6 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
 
   $scope.countPageOptions = [5, 10, 20, 50, 100, 500, 1000, 2000, 5000];
   var dbTime = localStorageService.get("Timeline");
-  console.log(dbTime);
   if (!dbTime || dbTime instanceof  Array) {
     dbTime = new Object;
     localStorageService.add("Timeline", dbTime);
