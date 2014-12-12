@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.jwt.impl;
+package com.orientechnologies.orient.server.token;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;

@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.jwt.impl;
+package com.orientechnologies.orient.server.token;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;

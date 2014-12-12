@@ -58,7 +58,8 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
   public static final char       DBNAME_DIR_SEPARATOR   = '$';
   public static final String     SESSIONID_UNAUTHORIZED = "-";
   public static final String     SESSIONID_LOGOUT       = "!";
-  private volatile OTokenHandler handler;
+  private volatile OTokenHandler tokenHandler;
+  private boolean                hasToken               = true;
 
   @Override
   public boolean beforeExecute(final OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
@@ -74,7 +75,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     if (iRequest.bearerTokenRaw != null) {
       // Bearer authentication
       try {
-        iRequest.bearerToken = handler.parseWebToken(iRequest.bearerTokenRaw.getBytes());
+        iRequest.bearerToken = tokenHandler.parseWebToken(iRequest.bearerTokenRaw.getBytes());
       } catch (Exception e) {
         // TODO: Catch all expected exceptions correctly!
         OLogManager.instance().warn(this, "Bearer token parsing failed", e);
@@ -87,7 +88,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       }
 
       // CHECK THE REQUEST VALIDITY
-      handler.validateToken(iRequest.bearerToken, urlParts[0], urlParts[1]);
+      tokenHandler.validateToken(iRequest.bearerToken, urlParts[0], urlParts[1]);
       if (iRequest.bearerToken.getIsValid() == false) {
 
         // SECURITY PROBLEM: CROSS DATABASE REQUEST!
@@ -263,7 +264,12 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
   }
 
   private void init() {
-    if (handler == null)
-      handler = (OTokenHandler) server.getPlugin(OTokenHandler.TOKEN_HANDLER_NAME);
+    if (tokenHandler == null && hasToken) {
+      tokenHandler = (OTokenHandler) server.getPlugin(OTokenHandler.TOKEN_HANDLER_NAME);
+      if (tokenHandler != null && !tokenHandler.isEnabled()) {
+        tokenHandler = null;
+        hasToken = false;
+      }
+    }
   }
 }

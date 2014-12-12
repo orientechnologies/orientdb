@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.jwt.impl;
+package com.orientechnologies.orient.server.token;
 
 import static org.testng.AssertJUnit.assertNull;
 import static org.testng.AssertJUnit.assertEquals;
@@ -13,6 +13,8 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
+import com.orientechnologies.orient.server.token.OBinaryTokenSerializer;
+import com.orientechnologies.orient.server.token.OrientJwtHeader;
 
 public class OBinaryTokenSerializerTest {
 

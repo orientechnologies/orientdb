@@ -98,6 +98,8 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     server = iServer;
     channel = new OChannelBinaryServer(iSocket, iConfig);
     tokenHandler = server.getPlugin(OTokenHandler.TOKEN_HANDLER_NAME);
+    if (tokenHandler != null && !tokenHandler.isEnabled())
+      tokenHandler = null;
   }
 
   @Override
