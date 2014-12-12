@@ -1431,9 +1431,15 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       try {
         sendOk(clientTxId);
         channel.writeByte((byte) 1);
-        channel.writeBytes(connection.database.getStorage().getConfiguration().toStream(connection.data.protocolVersion));
-        channel.writeVersion(OVersionFactory.instance().createVersion());
-        channel.writeByte(ORecordBytes.RECORD_TYPE);
+        if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_27) {
+          channel.writeBytes(connection.database.getStorage().getConfiguration().toStream(connection.data.protocolVersion));
+          channel.writeVersion(OVersionFactory.instance().createVersion());
+          channel.writeByte(ORecordBytes.RECORD_TYPE);
+        } else {
+          channel.writeByte(ORecordBytes.RECORD_TYPE);
+          channel.writeVersion(OVersionFactory.instance().createVersion());
+          channel.writeBytes(connection.database.getStorage().getConfiguration().toStream(connection.data.protocolVersion));
+        }
         channel.writeByte((byte) 0); // NO MORE RECORDS
       } finally {
         endResponse();
@@ -1451,9 +1457,15 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
           channel.writeByte((byte) 1); // HAS RECORD
           byte[] bytes = getRecordBytes(record);
           int length = trimCsvSerializedContent(bytes);
-          channel.writeBytes(bytes, length);
-          channel.writeVersion(record.getRecordVersion());
-          channel.writeByte(ORecordInternal.getRecordType(record));
+          if (connection.data.protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_27) {
+            channel.writeBytes(bytes, length);
+            channel.writeVersion(record.getRecordVersion());
+            channel.writeByte(ORecordInternal.getRecordType(record));
+          } else {
+            channel.writeByte(ORecordInternal.getRecordType(record));
+            channel.writeVersion(record.getRecordVersion());
+            channel.writeBytes(bytes, length);
+          }
 
           if (fetchPlanString.length() > 0) {
             // BUILD THE SERVER SIDE RECORD TO ACCES TO THE FETCH

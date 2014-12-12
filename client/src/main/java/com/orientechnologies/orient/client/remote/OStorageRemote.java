@@ -474,7 +474,15 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           if (network.readByte() == 0)
             return new OStorageOperationResult<ORawBuffer>(null);
 
-          final ORawBuffer buffer = new ORawBuffer(network.readBytes(), network.readVersion(), network.readByte());
+          final ORawBuffer buffer;
+          if (network.getSrvProtocolVersion() <= 27)
+            buffer = new ORawBuffer(network.readBytes(), network.readVersion(), network.readByte());
+          else {
+            byte type = network.readByte();
+            ORecordVersion recVersion = network.readVersion();
+            byte[] bytes = network.readBytes();
+            buffer = new ORawBuffer(bytes, recVersion, type);
+          }
 
           final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
           ORecord record;

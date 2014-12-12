@@ -227,6 +227,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
               db.commit();
             } catch (OConcurrentModificationException e) {
               context.setVariable("transactionRetries", retry);
+              getDatabase().getLocalCache().clear();
               break;
             }
 
