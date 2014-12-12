@@ -100,12 +100,18 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     try {
       for (int retry = 0; retry < 10; retry++)
         try {
-          return (RET) super.save();
+
+          super.save();
+          getDatabase().getStorage().synch();
+          return (RET) this;
         } catch (OConcurrentModificationException e) {
           reload(null, true);
         }
 
-      return (RET) super.save();
+      super.save();
+      getDatabase().getStorage().synch();
+
+      return (RET) this;
 
     } finally {
       releaseExclusiveLock();
@@ -366,7 +372,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   protected void acquireExclusiveLock() {
     final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
     if (databaseRecord != null && !databaseRecord.isClosed()) {
-      final OMetadataInternal metadata = (OMetadataInternal)databaseRecord.getMetadata();
+      final OMetadataInternal metadata = (OMetadataInternal) databaseRecord.getMetadata();
       if (metadata != null)
         metadata.makeThreadLocalSchemaSnapshot();
     }
@@ -381,7 +387,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     if (databaseRecord != null && !databaseRecord.isClosed()) {
       final OMetadata metadata = databaseRecord.getMetadata();
       if (metadata != null)
-        ((OMetadataInternal)metadata).clearThreadLocalSchemaSnapshot();
+        ((OMetadataInternal) metadata).clearThreadLocalSchemaSnapshot();
     }
   }
 

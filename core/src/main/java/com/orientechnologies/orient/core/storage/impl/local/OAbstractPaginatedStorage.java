@@ -103,33 +103,32 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
  * @since 28.03.13
  */
 public abstract class OAbstractPaginatedStorage extends OStorageAbstract implements OWOWCache.LowDiskSpaceListener {
-  private static final int                           RECORD_LOCK_TIMEOUT                            = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT
-                                                                                                        .getValueAsInteger();
+  private static final int                           RECORD_LOCK_TIMEOUT                        = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT
+                                                                                                    .getValueAsInteger();
 
   private final ONewLockManager<ORID>                lockManager;
   private final String                               PROFILER_CREATE_RECORD;
   private final String                               PROFILER_READ_RECORD;
   private final String                               PROFILER_UPDATE_RECORD;
   private final String                               PROFILER_DELETE_RECORD;
-  private final ConcurrentMap<String, OCluster>      clusterMap                                     = new ConcurrentHashMap<String, OCluster>();
-  private final ThreadLocal<OStorageTransaction>     transaction                                    = new ThreadLocal<OStorageTransaction>();
-  private final OModificationLock                    modificationLock                               = new OModificationLock();
+  private final ConcurrentMap<String, OCluster>      clusterMap                                 = new ConcurrentHashMap<String, OCluster>();
+  private final ThreadLocal<OStorageTransaction>     transaction                                = new ThreadLocal<OStorageTransaction>();
+  private final OModificationLock                    modificationLock                           = new OModificationLock();
   protected volatile OWriteAheadLog                  writeAheadLog;
   protected volatile ODiskCache                      diskCache;
-  private ORecordConflictStrategy                    recordConflictStrategy                         = Orient
-                                                                                                        .instance()
-                                                                                                        .getRecordConflictStrategy()
-                                                                                                        .newInstanceOfDefaultClass();
-  private CopyOnWriteArrayList<OCluster>             clusters                                       = new CopyOnWriteArrayList<OCluster>();
-  private volatile int                               defaultClusterId                               = -1;
+  private ORecordConflictStrategy                    recordConflictStrategy                     = Orient.instance()
+                                                                                                    .getRecordConflictStrategy()
+                                                                                                    .newInstanceOfDefaultClass();
+  private CopyOnWriteArrayList<OCluster>             clusters                                   = new CopyOnWriteArrayList<OCluster>();
+  private volatile int                               defaultClusterId                           = -1;
   private volatile OAtomicOperationsManager          atomicOperationsManager;
 
-  private volatile boolean                           wereDataRestoredAfterOpen                      = false;
-  private volatile boolean                           wereNonTxOperationsWerePerformedInPreviousOpen = false;
+  private volatile boolean                           wereDataRestoredAfterOpen                  = false;
+  private volatile boolean                           wereNonTxOperationsPerformedInPreviousOpen = false;
 
-  private boolean                                    makeFullCheckPointAfterClusterCreate           = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE
-                                                                                                        .getValueAsBoolean();
-  private volatile OWOWCache.LowDiskSpaceInformation lowDiskSpace                                   = null;
+  private boolean                                    makeFullCheckPointAfterClusterCreate       = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE
+                                                                                                    .getValueAsBoolean();
+  private volatile OWOWCache.LowDiskSpaceInformation lowDiskSpace                               = null;
 
   public OAbstractPaginatedStorage(String name, String filePath, String mode) {
     super(name, filePath, mode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
@@ -1131,8 +1130,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     return wereDataRestoredAfterOpen;
   }
 
-  public boolean wereNonTxOperationsWerePerformedInPreviousOpen() {
-    return wereNonTxOperationsWerePerformedInPreviousOpen;
+  public boolean wereNonTxOperationsPerformedInPreviousOpen() {
+    return wereNonTxOperationsPerformedInPreviousOpen;
   }
 
   public void reload() {
@@ -1533,8 +1532,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     assert atomicOperationsManager.getCurrentOperation() == null;
 
-    atomicOperationsManager.startAtomicOperation();
     transaction.set(new OStorageTransaction(clientTx));
+    try {
+      atomicOperationsManager.startAtomicOperation();
+    } catch (RuntimeException e) {
+      transaction.set(null);
+      throw e;
+    }
   }
 
   private void rollbackStorageTx() throws IOException {
@@ -2429,9 +2433,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           if (atomicUnitEndRecord.isRollback())
             undoOperation(records);
           else {
-            if (nonTxOperationWasUsed && !wereNonTxOperationsWerePerformedInPreviousOpen) {
+            if (nonTxOperationWasUsed && !wereNonTxOperationsPerformedInPreviousOpen) {
               OLogManager.instance().warn(this, "Non tx operation was used during data modification we will need index rebuild.");
-              wereNonTxOperationsWerePerformedInPreviousOpen = true;
+              wereNonTxOperationsPerformedInPreviousOpen = true;
             }
           }
 

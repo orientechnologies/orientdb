@@ -1074,6 +1074,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
     try {
       super.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
+      getDatabase().getStorage().synch();
     } catch (OConcurrentModificationException e) {
       reload(null, true);
       throw e;
