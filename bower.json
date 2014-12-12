@@ -15,7 +15,7 @@
     "js-base64": "~2.1.2",
     "angular-ui-codemirror": "~0.1.0",
     "codemirror": "4.5.0",
-    "angular-local-storage": "0.0.5",
+    "angular-local-storage": "0.1.5",
     "moment": "latest",
     "moment-jdateformatparser": "latest",
     "angular-ui-bootstrap-bower": "0.10.0",
