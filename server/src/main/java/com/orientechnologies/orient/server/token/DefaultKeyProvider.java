@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.jwt.impl;
+package com.orientechnologies.orient.server.token;
 
 import java.security.Key;
 
@@ -12,11 +12,11 @@ import com.orientechnologies.orient.core.metadata.security.jwt.OKeyProvider;
  *
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
-public class DefaultJwtKeyProvider implements OKeyProvider {
+public class DefaultKeyProvider implements OKeyProvider {
 
   private SecretKeySpec secret_key;
 
-  public DefaultJwtKeyProvider(byte[] secret) {
+  public DefaultKeyProvider(byte[] secret) {
     secret_key = new SecretKeySpec(secret, "HmacSHA256");
   }
 

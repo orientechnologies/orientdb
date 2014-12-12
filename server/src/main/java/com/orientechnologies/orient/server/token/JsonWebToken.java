@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.jwt.impl;
+package com.orientechnologies.orient.server.token;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;

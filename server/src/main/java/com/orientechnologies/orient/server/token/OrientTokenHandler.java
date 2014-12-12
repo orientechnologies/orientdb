@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.jwt.impl;
+package com.orientechnologies.orient.server.token;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -38,6 +38,7 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
   public static final String            O_SESSION_LENGHT = "sessionLength";
 
   private OBinaryTokenSerializer        binarySerializer;
+  protected boolean                     enabled          = false;
 
   protected static final int            JWT_DELIMITER    = '.';
 
@@ -60,11 +61,14 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
   public void config(final OServer iServer, final OServerParameterConfiguration[] iParams) {
 
     for (OServerParameterConfiguration param : iParams) {
-      if (param.name.equalsIgnoreCase(O_SIGN_KEY)) {
+      if (param.name.equalsIgnoreCase("enabled")) {
+        if (Boolean.parseBoolean(param.value))
+          // ENABLE IT
+          enabled = true;
+      } else if (param.name.equalsIgnoreCase(O_SIGN_KEY)) {
         byte secret[] = OBase64Utils.decode(param.value, OBase64Utils.URL_SAFE);
-        keyProvider = new DefaultJwtKeyProvider(secret);
-      }
-      if (param.name.equalsIgnoreCase(O_SESSION_LENGHT)) {
+        keyProvider = new DefaultKeyProvider(secret);
+      } else if (param.name.equalsIgnoreCase(O_SESSION_LENGHT)) {
         sessionInMills = Integer.parseInt(param.value) * 3600;
       }
 
@@ -381,6 +385,10 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
 
   public int getSessionInMills() {
     return sessionInMills;
+  }
+
+  public boolean isEnabled() {
+    return enabled;
   }
 
 }

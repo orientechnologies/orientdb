@@ -26,7 +26,8 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 public class OServerCommandPostAuthToken extends OServerCommandAbstract {
   private static final String[]  NAMES           = { "POST|token/*" };
   private static final String    RESPONSE_FORMAT = "indent:-1,attribSameRow";
-  private volatile OTokenHandler handler;
+  private volatile OTokenHandler tokenHandler;
+  private volatile boolean       hasToken        = true;
 
   @Override
   public String[] getNames() {
@@ -34,8 +35,13 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
   }
 
   private void init() {
-    if (handler == null)
-      handler = (OTokenHandler) server.getPlugin(OTokenHandler.TOKEN_HANDLER_NAME);
+    if (hasToken && tokenHandler == null) {
+      tokenHandler = (OTokenHandler) server.getPlugin(OTokenHandler.TOKEN_HANDLER_NAME);
+      if (tokenHandler != null && !tokenHandler.isEnabled()) {
+        tokenHandler = null;
+        hasToken = false;
+      }
+    }
   }
 
   @Override
@@ -70,7 +76,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
           user = db.getUser();
 
           if (user != null) {
-            byte[] tokenBytes = handler.getSignedWebToken(db, user);
+            byte[] tokenBytes = tokenHandler.getSignedWebToken(db, user);
             signedToken = new String(tokenBytes);
           } else {
             // Server user (not supported yet!)

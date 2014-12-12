@@ -37,4 +37,6 @@ public interface OTokenHandler extends OServerPlugin {
 
   public byte[] renewIfNeeded(OToken token);
 
+  public boolean isEnabled();
+
 }
