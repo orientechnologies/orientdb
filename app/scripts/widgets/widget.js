@@ -632,3 +632,4 @@ Widget.directive('fontpicker', function ($timeout) {
 
     }
 });
+

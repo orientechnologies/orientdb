@@ -1,5 +1,5 @@
 var dbModule = angular.module('database.controller', ['database.services', 'bookmarks.services']);
-dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', '$modal', '$q', '$window', 'Bookmarks', 'Notification', 'Aside','BrowseConfig', function ($scope, $routeParams, $location, Database, CommandApi, localStorageService, Spinner, $modal, $q, $window, Bookmarks, Notification, Aside,BrowseConfig) {
+dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', '$modal', '$q', '$window', 'Bookmarks', 'Notification', 'Aside', 'BrowseConfig','$timeout', function ($scope, $routeParams, $location, Database, CommandApi, localStorageService, Spinner, $modal, $q, $window, Bookmarks, Notification, Aside, BrowseConfig,$timeout) {
 
   $scope.database = Database;
   $scope.limit = 20;
@@ -56,6 +56,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
 
   $scope.countPageOptions = [5, 10, 20, 50, 100, 500, 1000, 2000, 5000];
   var dbTime = localStorageService.get("Timeline");
+  console.log(dbTime);
   if (!dbTime || dbTime instanceof  Array) {
     dbTime = new Object;
     localStorageService.add("Timeline", dbTime);
@@ -71,9 +72,11 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
   }
   $scope.timeline = dbTime[Database.getName()][Database.currentUser()];
 
+
   if (!$scope.timeline) {
     $scope.timeline = new Array;
     var localTime = localStorageService.get("Timeline");
+
     if (!localTime[Database.getName()][Database.currentUser()]) {
       localTime[Database.getName()][Database.currentUser()] = new Array;
     }
@@ -233,10 +236,12 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         item.countPage = 5;
         item.countPageOptions = [5, 10, 20, 50, 100, 500, 1000, 2000, 5000];
         item.notification = data.notification;
+
         $scope.timeline.unshift(item);
         if ($scope.timeline.length > $scope.keepLimit) {
           $scope.timeline.splice($scope.timeline.length - 1, 1);
         }
+
         var dbTime = localStorageService.get("Timeline");
         dbTime[Database.getName()][[Database.currentUser()]] = $scope.timeline;
         localStorageService.add("Timeline", dbTime);
@@ -248,7 +253,6 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
       } else {
         Notification.push({content: "The command has been executed", autoHide: true});
       }
-      Spinner.stopSpinner();
     }, function (data) {
       Spinner.stopSpinner();
       $scope.headers = undefined;
@@ -437,7 +441,7 @@ dbModule.controller("QueryController", ['$scope', '$routeParams', '$filter', '$l
 
 
 }]);
-dbModule.controller("QueryConfigController", ['$scope', '$routeParams', 'localStorageService','BrowseConfig', function ($scope, $routeParams, localStorageService, BrowseConfig) {
+dbModule.controller("QueryConfigController", ['$scope', '$routeParams', 'localStorageService', 'BrowseConfig', function ($scope, $routeParams, localStorageService, BrowseConfig) {
 
   var config = BrowseConfig;
 
@@ -463,7 +467,7 @@ dbModule.controller("QueryConfigController", ['$scope', '$routeParams', 'localSt
   });
   $scope.$watch("hideSettings", function (data) {
     config.set('hideSettings', data);
-    if(!data){
+    if (!data) {
       $scope.$parent.$hide();
     }
   });
@@ -520,15 +524,6 @@ dbModule.controller("BookmarkEditController", ['$scope', '$rootScope', 'Bookmark
 }]);
 dbModule.controller("BookmarkController", ['$scope', 'Bookmarks', 'DocumentApi', 'Database', 'scroller', 'Aside', function ($scope, Bookmarks, DocumentApi, Database, scroller, Aside) {
 
-
-//    $(document).bind("keydown", function (e) {
-//
-//        if ($scope.$parent.bookmarksClass == "show") {
-//            $scope.$apply(function () {
-//                $scope.closeIfReturn(e);
-//            });
-//        }
-//    });
 
   $scope.closeIfReturn = function (e) {
     if (e.keyCode == '27') {
