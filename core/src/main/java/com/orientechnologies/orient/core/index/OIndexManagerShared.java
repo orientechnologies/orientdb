@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 /**
@@ -318,12 +319,11 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
       return false;
 
     final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
-    if (!OGlobalConfiguration.INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE.getValueAsBoolean())
-      return false;
-
     final OStorage storage = database.getStorage().getUnderlying();
-    if (storage instanceof OLocalPaginatedStorage)
-      return ((OLocalPaginatedStorage) storage).wereDataRestoredAfterOpen();
+    if (storage instanceof OAbstractPaginatedStorage) {
+      OAbstractPaginatedStorage paginatedStorage = (OAbstractPaginatedStorage) storage;
+      return paginatedStorage.wereDataRestoredAfterOpen() && paginatedStorage.wereNonTxOperationsWerePerformedInPreviousOpen();
+    }
 
     return false;
   }

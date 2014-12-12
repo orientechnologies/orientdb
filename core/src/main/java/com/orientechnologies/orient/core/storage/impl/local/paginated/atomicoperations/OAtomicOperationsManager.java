@@ -20,14 +20,12 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations;
 
+import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitEndRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OAtomicUnitStartRecord;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OOperationUnitId;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
 
 import java.io.IOException;
 
@@ -36,7 +34,7 @@ import java.io.IOException;
  * @since 12/3/13
  */
 public class OAtomicOperationsManager {
-  private static volatile ThreadLocal<OAtomicOperation> currentOperation = new ThreadLocal<OAtomicOperation>();
+  private static volatile ThreadLocal<OAtomicOperation>        currentOperation = new ThreadLocal<OAtomicOperation>();
 
   static {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
@@ -53,11 +51,14 @@ public class OAtomicOperationsManager {
     });
   }
 
-  private final OWriteAheadLog                          writeAheadLog;
-  private final ONewLockManager<Object>                 lockManager      = new ONewLockManager<Object>();
+  private final OAbstractPaginatedStorage                      storage;
+  private final OWriteAheadLog                                 writeAheadLog;
+  private final OLockManager<Object, OAtomicOperationsManager> lockManager      = new OLockManager<Object, OAtomicOperationsManager>(
+                                                                                    true, -1);
 
-  public OAtomicOperationsManager(OWriteAheadLog writeAheadLog) {
-    this.writeAheadLog = writeAheadLog;
+  public OAtomicOperationsManager(OAbstractPaginatedStorage storage) {
+    this.storage = storage;
+    this.writeAheadLog = storage.getWALInstance();
   }
 
   public OAtomicOperation startAtomicOperation() throws IOException {
@@ -75,6 +76,9 @@ public class OAtomicOperationsManager {
 
     operation = new OAtomicOperation(lsn, unitId);
     currentOperation.set(operation);
+
+    if (storage.getStorageTransaction() == null)
+      writeAheadLog.log(new ONonTxOperationPerformedWALRecord());
 
     return operation;
   }
@@ -101,7 +105,7 @@ public class OAtomicOperationsManager {
 
     if (counter == 0) {
       for (Object lockObject : operation.lockedObjects())
-        lockManager.releaseExclusiveLock(lockObject);
+        lockManager.releaseLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
 
       writeAheadLog.log(new OAtomicUnitEndRecord(operation.getOperationUnitId(), rollback));
       currentOperation.set(null);
@@ -118,7 +122,7 @@ public class OAtomicOperationsManager {
     if (operation.containsInLockedObjects(lockObject))
       return;
 
-    lockManager.acquireExclusiveLock(lockObject);
+    lockManager.acquireLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
     operation.addLockedObject(lockObject);
   }
 }

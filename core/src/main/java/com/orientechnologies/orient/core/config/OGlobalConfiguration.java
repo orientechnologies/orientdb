@@ -238,6 +238,7 @@ public enum OGlobalConfiguration {
       + "that were splited but not flushed to the disk are kept. This buffer is used to minimize random IO overhead.",
       Integer.class, 1500),
 
+	@Deprecated
   INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE("index.auto.rebuildAfterNotSoftClose",
       "Auto rebuild all automatic indexes after upon database open when wasn't closed properly", Boolean.class, true),
 
@@ -261,7 +262,7 @@ public enum OGlobalConfiguration {
 
   INDEX_TX_MODE("index.txMode",
       "Indicates index durability level in TX mode. Can be ROLLBACK_ONLY or FULL (ROLLBACK_ONLY by default)", String.class,
-      "ROLLBACK_ONLY"),
+      "FULL"),
 
   INDEX_CURSOR_PREFETCH_SIZE("index.cursor.prefetchSize", "Default prefetch size of index cursor", Integer.class, 500000),
 

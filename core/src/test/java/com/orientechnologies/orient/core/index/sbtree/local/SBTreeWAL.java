@@ -125,7 +125,6 @@ public class SBTreeWAL extends SBTreeTest {
 
     actualDiskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 1648L * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, actualStorage, null, false, false);
-    actualAtomicOperationsManager = new OAtomicOperationsManager(writeAheadLog);
 
     when(actualStorage.getStorageTransaction()).thenReturn(null);
     when(actualStorage.getDiskCache()).thenReturn(actualDiskCache);
@@ -133,6 +132,8 @@ public class SBTreeWAL extends SBTreeTest {
     when(actualStorage.getAtomicOperationsManager()).thenReturn(actualAtomicOperationsManager);
     when(actualStorage.getConfiguration()).thenReturn(actualStorageConfiguration);
     when(actualStorage.getMode()).thenReturn("rw");
+
+    actualAtomicOperationsManager = new OAtomicOperationsManager(actualStorage);
 
     when(actualStorageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
