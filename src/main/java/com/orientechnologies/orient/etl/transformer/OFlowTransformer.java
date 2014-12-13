@@ -42,7 +42,7 @@ public class OFlowTransformer extends OAbstractTransformer {
     operation = iConfiguration.field("operation");
     if (operation == null)
       throw new OConfigurationException("Flow transformer has not mandatory 'operation' field");
-    if (!operation.equalsIgnoreCase("halt") && !operation.equalsIgnoreCase("halt"))
+    if (!operation.equalsIgnoreCase("halt") && !operation.equalsIgnoreCase("skip"))
       throw new OConfigurationException("Flow transformer has invalid 'operation' field='" + operation
           + "', while supported are: 'skip' and 'halt'");
   }

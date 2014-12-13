@@ -73,7 +73,7 @@ public class OVertexTransformer extends OAbstractTransformer {
     if (v == null)
       return null;
 
-    if (vertexClass != null)
+    if (vertexClass != null && !vertexClass.equals(v.getRecord().getClassName()))
       v.setProperty("@class", vertexClass);
     return v;
   }
