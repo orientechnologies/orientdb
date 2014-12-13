@@ -18,6 +18,7 @@
 
 package com.orientechnologies.test;
 
+import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -66,7 +67,7 @@ public class LuceneMassiveInsertDeleteTest extends BaseLuceneTest {
   public void loadCloseDelete() {
 
     ODocument city = new ODocument("City");
-    int size = 10000;
+    int size = 100000;
     for (int i = 0; i < size; i++) {
       city.field("name", "Rome " + i);
       databaseDocumentTx.save(city);
@@ -82,7 +83,7 @@ public class LuceneMassiveInsertDeleteTest extends BaseLuceneTest {
     docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(docs.size(), size);
 
-    databaseDocumentTx.command(new OCommandSQL("delete from City")).execute();
+    databaseDocumentTx.command(new OCommandSQL("delete vertex City")).execute();
 
     docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(docs.size(), 0);
@@ -91,6 +92,11 @@ public class LuceneMassiveInsertDeleteTest extends BaseLuceneTest {
     databaseDocumentTx.open("admin", "admin");
     docs = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(docs.size(), 0);
+
+    databaseDocumentTx.getMetadata().reload();
+    OIndex idx = databaseDocumentTx.getMetadata().getSchema().getClass("City").getClassIndex("City.name");
+    idx.flush();
+    Assert.assertEquals(idx.getSize(), 0);
   }
 
   @AfterClass

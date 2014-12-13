@@ -27,12 +27,11 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import java.util.Collection;
 
 /**
  * Created by enricorisa on 28/06/14.
@@ -108,7 +107,7 @@ public class LuceneInsertReadMultithreadTest extends BaseLuceneTest {
 
       for (int i = 0; i < cycle; i++) {
 
-        Collection<?> coll = (Collection<?>) idx.get("Rome");
+        databaseDocumentTx.command(new OSQLSynchQuery<ODocument>("select from city where name LUCENE 'Rome'")).execute();
 
       }
 
