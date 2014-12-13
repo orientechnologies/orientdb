@@ -22,6 +22,7 @@ public class OrientGraphDefaultRemoteTest extends OrientGraphRemoteTest {
 
   public Graph generateGraph(final String graphDirectoryName) {
     OrientGraph graph = (OrientGraph) super.generateGraph(graphDirectoryName);
+    graph.setUseLightweightEdges(true);
 
     if (graph.getEdgeType("friend") == null)
       graph.createEdgeType("friend");

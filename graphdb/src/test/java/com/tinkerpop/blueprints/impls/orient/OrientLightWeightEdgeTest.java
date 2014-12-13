@@ -7,6 +7,7 @@ public class OrientLightWeightEdgeTest {
   @Test
   public void testLiteweightToEavyMigration() throws Exception {
     OrientGraph graph = new OrientGraph("memory:" + OrientLightWeightEdgeTest.class.getSimpleName());
+    graph.setUseLightweightEdges(true);
     graph.setAutoScaleEdgeType(true);
     OrientVertex vertex = graph.addVertex(null);
     OrientVertex vertex2 = graph.addVertex(null);

@@ -20,6 +20,7 @@ public class EdgeIndexingTest {
 		graph.drop();
 
 		graph = new OrientGraph(url);
+    graph.setUseLightweightEdges(true);
 		graph.createEdgeType("link");
 		graph.setAutoStartTx(false);
 
