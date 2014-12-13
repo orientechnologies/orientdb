@@ -197,15 +197,11 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
                   for (OIdentifiable fromId : fromIds) {
                     final OrientVertex v = graph.getVertex(fromId);
                     if (v != null) {
-                      if (label == null) {
-                        edges.add((OrientEdge) v.getEdges(Direction.OUT));
-                      } else {
-                        for (Edge e : v.getEdges(Direction.OUT)) {
-                          if (label != null && !label.equals(e.getLabel()))
-                            continue;
+                      for (Edge e : v.getEdges(Direction.OUT)) {
+                        if (label != null && !label.equals(e.getLabel()))
+                          continue;
 
-                          edges.add((OrientEdge) e);
-                        }
+                        edges.add((OrientEdge) e);
                       }
                     }
                   }
@@ -214,15 +210,11 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
                   for (OIdentifiable toId : toIds) {
                     final OrientVertex v = graph.getVertex(toId);
                     if (v != null) {
-                      if (label == null) {
-                        edges.add((OrientEdge) v.getEdges(Direction.IN));
-                      } else {
-                        for (Edge e : v.getEdges(Direction.IN)) {
-                          if (label != null && !label.equals(e.getLabel()))
-                            continue;
+                      for (Edge e : v.getEdges(Direction.IN)) {
+                        if (label != null && !label.equals(e.getLabel()))
+                          continue;
 
-                          edges.add((OrientEdge) e);
-                        }
+                        edges.add((OrientEdge) e);
                       }
                     }
                   }
