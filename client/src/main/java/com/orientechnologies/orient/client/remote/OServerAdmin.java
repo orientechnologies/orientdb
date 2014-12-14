@@ -101,8 +101,10 @@ public class OServerAdmin {
         storage.beginResponse(network);
         sessionId = network.readInt();
         sessionToken = network.readBytes();
-        if (sessionToken.length == 0)
+        if (sessionToken.length == 0) {
           sessionToken = null;
+          network.getServiceThread().setTokenBased(true);
+        }
         storage.setSessionId(network.getServerURL(), sessionId, sessionToken);
       } finally {
         storage.endResponse(network);

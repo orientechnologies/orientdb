@@ -168,6 +168,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     tl.token = token;
   }
 
+  public void clearToken() {
+    final OStorageRemoteSession tl = OStorageRemoteThreadLocal.INSTANCE.get();
+    tl.token = null;
+  }
+
   public void clearSession() {
     OStorageRemoteThreadLocal.INSTANCE.remove();
   }
@@ -1574,6 +1579,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     do {
       do {
         try {
+          clearToken();
           network = getAvailableNetwork(currentURL);
           try {
             network.writeByte(OChannelBinaryProtocol.REQUEST_DB_OPEN);
@@ -1843,12 +1849,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
    * Starts listening the response.
    */
   protected void beginResponse(final OChannelBinaryAsynchClient iNetwork) throws IOException {
-    iNetwork.beginResponse(getSessionId());
-    if (getSessionToken() != null) {
-      byte[] newToken = iNetwork.readBytes();
-      if (newToken.length > 0) {
-        setSessionId(getServerURL(), getSessionId(), newToken);
-      }
+    byte[] newToken = iNetwork.beginResponse(getSessionId(), getSessionToken() != null);
+    if (newToken != null && newToken.length > 0) {
+      setSessionId(getServerURL(), getSessionId(), newToken);
     }
   }
 

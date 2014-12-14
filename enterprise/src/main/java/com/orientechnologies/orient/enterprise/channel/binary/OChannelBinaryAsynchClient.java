@@ -167,11 +167,11 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     releaseWriteLock();
   }
 
-  public void beginResponse(final int iRequesterId) throws IOException {
-    beginResponse(iRequesterId, timeout);
+  public byte[] beginResponse(final int iRequesterId, boolean token) throws IOException {
+    return beginResponse(iRequesterId, timeout, token);
   }
 
-  public void beginResponse(final int iRequesterId, final long iTimeout) throws IOException {
+  public byte[] beginResponse(final int iRequesterId, final long iTimeout, boolean token) throws IOException {
     try {
       int unreadResponse = 0;
       final long startClock = iTimeout > 0 ? System.currentTimeMillis() : 0;
@@ -276,12 +276,17 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       if (debug)
         OLogManager.instance().debug(this, "%s - Session %d handle response", socket.getLocalAddress(), iRequesterId);
 
+      byte[] renew = null;
+      if (token)
+        renew = this.readBytes();
       handleStatus(currentStatus, currentSessionId);
+      return renew;
     } catch (OLockException e) {
       Thread.currentThread().interrupt();
       // NEVER HAPPENS?
       OLogManager.instance().error(this, "Unexpected error on reading response from channel", e);
     }
+    return null;
   }
 
   public void endResponse() {

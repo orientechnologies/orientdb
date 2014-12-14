@@ -47,14 +47,9 @@ public class OAsynchChannelServiceThread extends OSoftThread {
   @Override
   protected void execute() throws Exception {
     try {
-      network.beginResponse(sessionId, 0);
-      final byte request = network.readByte();
-      if (tokenBased) {
-        // read the token needed in the protocol but don't related to any session.
-        network.readBytes();
-      }
+      network.beginResponse(sessionId, 0, tokenBased);
       Object obj = null;
-
+      final byte request = network.readByte();
       switch (request) {
       case OChannelBinaryProtocol.REQUEST_PUSH_DISTRIB_CONFIG:
         obj = network.readBytes();
