@@ -20,22 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.locks.Lock;
-
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
@@ -97,6 +81,22 @@ import com.orientechnologies.orient.core.tx.OTxListener;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.Lock;
 
 /**
  * @author Andrey Lomakin
@@ -1007,7 +1007,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   public String getPhysicalClusterNameById(final int iClusterId) {
     checkOpeness();
 
-    if (iClusterId >= clusters.size())
+    if (iClusterId < 0 || iClusterId >= clusters.size())
       return null;
 
     return clusters.get(iClusterId) != null ? clusters.get(iClusterId).getName() : null;
@@ -2108,7 +2108,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   private void checkClusterSegmentIndexRange(final int iClusterId) {
-    if (iClusterId > clusters.size() - 1)
+    if (iClusterId < 0 || iClusterId > clusters.size() - 1)
       throw new IllegalArgumentException("Cluster segment #" + iClusterId + " does not exist in database '" + name + "'");
   }
 
