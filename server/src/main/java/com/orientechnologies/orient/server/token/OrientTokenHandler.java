@@ -1,16 +1,5 @@
 package com.orientechnologies.orient.server.token;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.UUID;
-
-import javax.crypto.Mac;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -28,33 +17,44 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
+import javax.crypto.Mac;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.UUID;
+
 /**
  * Created by emrul on 27/10/2014.
  *
  * @author Emrul Islam <emrul@emrul.com> Copyright 2014 Emrul Islam
  */
 public class OrientTokenHandler extends OServerPluginAbstract implements OTokenHandler {
-  public static final String            O_SIGN_KEY       = "oAuth2Key";
-  public static final String            O_SESSION_LENGHT = "sessionLength";
+  public static final String            SIGN_KEY_PAR                 = "oAuth2Key";
+  public static final String            SESSION_LENGHT_PAR           = "sessionLength";
+  public static final String            ENCRYPTION_ALGORITHM_PAR     = "encryptionAlgorithm";
+  public static final String            ENCRYPTION_ALGORITHM_DEFAULT = "HmacSHA256";
 
+  private static String                 algorithm                    = ENCRYPTION_ALGORITHM_DEFAULT;
+  private static final ThreadLocal<Mac> threadLocalMac               = new ThreadLocal<Mac>() {
+                                                                       @Override
+                                                                       protected Mac initialValue() {
+                                                                         try {
+                                                                           return Mac.getInstance(algorithm);
+                                                                         } catch (NoSuchAlgorithmException nsa) {
+                                                                           throw new IllegalArgumentException(
+                                                                               "Can't find encryption algorithm '" + algorithm + "'");
+                                                                         }
+                                                                       }
+                                                                     };
+
+  protected static final int            JWT_DELIMITER                = '.';
+  private boolean                       enabled                      = false;
   private OBinaryTokenSerializer        binarySerializer;
-  protected boolean                     enabled          = false;
-
-  protected static final int            JWT_DELIMITER    = '.';
-
-  private int                           sessionInMills   = 1000 * 60 * 60;
-
-  private static final ThreadLocal<Mac> threadLocalMac   = new ThreadLocal<Mac>() {
-                                                           @Override
-                                                           protected Mac initialValue() {
-                                                             try {
-                                                               return Mac.getInstance("HmacSHA256");
-                                                             } catch (NoSuchAlgorithmException nsa) {
-                                                               throw new IllegalArgumentException("Can't find algorithm.");
-                                                             }
-                                                           }
-                                                         };
-
+  private int                           sessionInMills               = 1000 * 60 * 60;              // 1 HOUR
   private OKeyProvider                  keyProvider;
 
   @Override
@@ -65,16 +65,23 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
         if (Boolean.parseBoolean(param.value))
           // ENABLE IT
           enabled = true;
-      } else if (param.name.equalsIgnoreCase(O_SIGN_KEY)) {
+      } else if (param.name.equalsIgnoreCase(SIGN_KEY_PAR)) {
         byte secret[] = OBase64Utils.decode(param.value, OBase64Utils.URL_SAFE);
         keyProvider = new DefaultKeyProvider(secret);
-      } else if (param.name.equalsIgnoreCase(O_SESSION_LENGHT)) {
-        sessionInMills = Integer.parseInt(param.value) * 3600;
+      } else if (param.name.equalsIgnoreCase(SESSION_LENGHT_PAR)) {
+        sessionInMills = Integer.parseInt(param.value) * 1000;
+      } else if (param.name.equalsIgnoreCase(ENCRYPTION_ALGORITHM_PAR)) {
+        algorithm = param.value;
+        try {
+          Mac.getInstance(algorithm);
+        } catch (NoSuchAlgorithmException nsa) {
+          throw new IllegalArgumentException("Can't find encryption algorithm '" + algorithm + "'");
+        }
       }
 
     }
     String[] keys = keyProvider.getKeys();
-    this.binarySerializer = new OBinaryTokenSerializer(new String[] { "plocal", "memory" }, keys, new String[] { "HmacSHA256" },
+    this.binarySerializer = new OBinaryTokenSerializer(new String[] { "plocal", "memory" }, keys, new String[] { algorithm },
         new String[] { "OrientDB" });
   }
 
@@ -96,50 +103,31 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
     }
 
     if (firstDot == -1)
-      throw new RuntimeException("Token data too short missed header");
+      throw new RuntimeException("Token data too short: missed header");
 
     if (secondDot == -1)
-      throw new RuntimeException("Token data too short missed signature");
+      throw new RuntimeException("Token data too short: missed signature");
 
-    byte[] decodedHeader = OBase64Utils.decode(tokenBytes, 0, firstDot, OBase64Utils.URL_SAFE);
-    byte[] decodedPayload = OBase64Utils.decode(tokenBytes, firstDot + 1, secondDot - (firstDot + 1), OBase64Utils.URL_SAFE);
-    byte[] decodedSignature = OBase64Utils.decode(tokenBytes, secondDot + 1, tokenBytes.length - (secondDot + 1),
+    final byte[] decodedHeader = OBase64Utils.decode(tokenBytes, 0, firstDot, OBase64Utils.URL_SAFE);
+    final byte[] decodedPayload = OBase64Utils.decode(tokenBytes, firstDot + 1, secondDot - (firstDot + 1), OBase64Utils.URL_SAFE);
+    final byte[] decodedSignature = OBase64Utils.decode(tokenBytes, secondDot + 1, tokenBytes.length - (secondDot + 1),
         OBase64Utils.URL_SAFE);
 
-    OrientJwtHeader header = deserializeWebHeader(decodedHeader);
-    OJwtPayload deserializeWebPayload = deserializeWebPayload(header.getType(), decodedPayload);
+    final OrientJwtHeader header = deserializeWebHeader(decodedHeader);
+    final OJwtPayload deserializeWebPayload = deserializeWebPayload(header.getType(), decodedPayload);
     token = new JsonWebToken(header, deserializeWebPayload);
 
     token.setIsVerified(verifyTokenSignature(header, tokenBytes, 0, secondDot, decodedSignature));
     return token;
   }
 
-  private boolean verifyTokenSignature(OJwtHeader header, byte[] base, int baseOffset, int baseLength, byte[] signature) {
-    Mac mac = threadLocalMac.get();
-
-    try {
-      mac.init(getKeyProvider().getKey(header));
-      mac.update(base, baseOffset, baseLength);
-      byte[] calculatedSignature = mac.doFinal();
-
-      return Arrays.equals(calculatedSignature, signature);
-
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new OException(e);
-    } finally {
-      mac.reset();
-    }
-  }
-
   @Override
-  public boolean validateToken(OToken token, String command, String database) {
+  public boolean validateToken(final OToken token, final String command, final String database) {
     boolean valid = false;
     if (!(token instanceof JsonWebToken)) {
       return false;
     }
-    OrientJwtPayload payload = (OrientJwtPayload) ((JsonWebToken) token).getPayload();
+    final OrientJwtPayload payload = (OrientJwtPayload) ((JsonWebToken) token).getPayload();
     if (token.getDatabase().equalsIgnoreCase(database) && token.getExpiry() > System.currentTimeMillis()
         && payload.getNotBefore() < System.currentTimeMillis()) {
       valid = true;
@@ -150,9 +138,9 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
   }
 
   @Override
-  public boolean validateBinaryToken(OToken token) {
+  public boolean validateBinaryToken(final OToken token) {
     boolean valid = false;
-    long curTime = System.currentTimeMillis();
+    final long curTime = System.currentTimeMillis();
     if (token.getExpiry() > curTime && (token.getExpiry() - (sessionInMills + 1)) < curTime) {
       valid = true;
     }
@@ -161,52 +149,13 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
     return valid;
   }
 
-  protected OrientJwtHeader deserializeWebHeader(byte[] decodedHeader) {
-    ODocument doc = new ODocument();
-    try {
-      doc.fromJSON(new String(decodedHeader, "UTF-8"));
-    } catch (UnsupportedEncodingException e) {
-      throw new OException(e);
-    }
-    OrientJwtHeader header = new OrientJwtHeader();
-    header.setType((String) doc.field("typ"));
-    header.setAlgorithm((String) doc.field("alg"));
-    header.setKeyId((String) doc.field("kid"));
-    return header;
-  }
-
-  protected OJwtPayload deserializeWebPayload(String type, byte[] decodedPayload) {
-    if (!"OrientDB".equals(type)) {
-      throw new OException("Payload class not registered:" + type);
-    }
-    ODocument doc = new ODocument();
-    try {
-      doc.fromJSON(new String(decodedPayload, "UTF-8"));
-    } catch (UnsupportedEncodingException e) {
-      throw new OException(e);
-    }
-    OrientJwtPayload payload = new OrientJwtPayload();
-    payload.setIssuer((String) doc.field("iss"));
-    payload.setExpiry((Long) doc.field("exp"));
-    payload.setIssuedAt((Long) doc.field("iat"));
-    payload.setNotBefore((Long) doc.field("nbf"));
-    payload.setDatabase((String) doc.field("sub"));
-    payload.setAudience((String) doc.field("aud"));
-    payload.setTokenId((String) doc.field("jti"));
-    int cluster = (Integer) doc.field("uidc");
-    long pos = (Long) doc.field("uidp");
-    payload.setUserRid(new ORecordId(cluster, pos));
-    payload.setDatabaseType((String) doc.field("bdtyp"));
-    return payload;
-  }
-
-  public byte[] getSignedWebToken(ODatabaseDocumentInternal db, OSecurityUser user) {
-    ByteArrayOutputStream tokenByteOS = new ByteArrayOutputStream(1024);
-    OrientJwtHeader header = new OrientJwtHeader();
+  public byte[] getSignedWebToken(final ODatabaseDocumentInternal db, final OSecurityUser user) {
+    final ByteArrayOutputStream tokenByteOS = new ByteArrayOutputStream(1024);
+    final OrientJwtHeader header = new OrientJwtHeader();
     header.setAlgorithm("HS256");
     header.setKeyId("");
 
-    OJwtPayload payload = createPayload(db, user);
+    final OJwtPayload payload = createPayload(db, user);
     header.setType(getPayloadType(payload));
     try {
       byte[] bytes = serializeWebHeader(header);
@@ -226,68 +175,17 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
     return tokenByteOS.toByteArray();
   }
 
-  private byte[] signToken(OrientJwtHeader header, byte[] unsignedToken) {
-    Mac mac = threadLocalMac.get();
-    try {
-      mac.init(getKeyProvider().getKey(header));
-      return mac.doFinal(unsignedToken);
-    } catch (Exception ex) {
-      throw new OException("Error on token parsing", ex);
-    } finally {
-      mac.reset();
-    }
-  }
-
-  protected byte[] serializeWebHeader(OJwtHeader header) throws Exception {
-    ODocument doc = new ODocument();
-    doc.field("typ", header.getType());
-    doc.field("alg", header.getAlgorithm());
-    doc.field("kid", header.getKeyId());
-    return doc.toJSON().getBytes("UTF-8");
-  }
-
-  protected byte[] serializeWebPayload(OJwtPayload payload) throws Exception {
-    ODocument doc = new ODocument();
-    doc.field("iss", payload.getIssuer());
-    doc.field("exp", payload.getExpiry());
-    doc.field("iat", payload.getIssuedAt());
-    doc.field("nbf", payload.getNotBefore());
-    doc.field("sub", payload.getDatabase());
-    doc.field("aud", payload.getAudience());
-    doc.field("jti", payload.getTokenId());
-    doc.field("uidc", ((OrientJwtPayload) payload).getUserRid().getClusterId());
-    doc.field("uidp", ((OrientJwtPayload) payload).getUserRid().getClusterPosition());
-    doc.field("bdtyp", ((OrientJwtPayload) payload).getDatabaseType());
-    return doc.toJSON().getBytes("UTF-8");
-  }
-
-  protected OJwtPayload createPayload(ODatabaseDocumentInternal db, OSecurityUser user) {
-    OrientJwtPayload payload = new OrientJwtPayload();
-    payload.setAudience("OrientDb");
-    payload.setDatabase(db.getName());
-    payload.setUserRid(user.getDocument().getIdentity());
-
-    long expiryMinutes = sessionInMills;
-    long currTime = System.currentTimeMillis();
-    payload.setIssuedAt(currTime);
-    payload.setNotBefore(currTime);
-    payload.setUserName(user.getName());
-    payload.setTokenId(UUID.randomUUID().toString());
-    payload.setExpiry(currTime + expiryMinutes);
-    return payload;
-  }
-
-  public byte[] getSignedBinaryToken(ODatabaseDocumentInternal db, OSecurityUser user, ONetworkProtocolData data) {
+  public byte[] getSignedBinaryToken(final ODatabaseDocumentInternal db, final OSecurityUser user, final ONetworkProtocolData data) {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     try {
-      OBinaryToken token = new OBinaryToken();
+      final OBinaryToken token = new OBinaryToken();
 
       long expiryMinutes = sessionInMills;
       long currTime = System.currentTimeMillis();
 
-      OrientJwtHeader header = new OrientJwtHeader();
-      header.setAlgorithm("HmacSHA256");
-      header.setKeyId("HmacSHA256");
+      final OrientJwtHeader header = new OrientJwtHeader();
+      header.setAlgorithm(algorithm);
+      header.setKeyId(algorithm);
       header.setType("OrientDB");
       token.setHeader(header);
       if (db != null) {
@@ -308,7 +206,7 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
 
       binarySerializer.serialize(token, baos);
 
-      byte[] signature = signToken(header, baos.toByteArray());
+      final byte[] signature = signToken(header, baos.toByteArray());
       baos.write(signature);
 
     } catch (RuntimeException e) {
@@ -319,10 +217,10 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
     return baos.toByteArray();
   }
 
-  public ONetworkProtocolData getProtocolDataFromToken(OToken token) {
+  public ONetworkProtocolData getProtocolDataFromToken(final OToken token) {
     if (token instanceof OBinaryToken) {
-      OBinaryToken binary = (OBinaryToken) token;
-      ONetworkProtocolData data = new ONetworkProtocolData();
+      final OBinaryToken binary = (OBinaryToken) token;
+      final ONetworkProtocolData data = new ONetworkProtocolData();
       // data.clientId = binary.get;
       data.protocolVersion = binary.getProtocolVersion();
       data.serializationImpl = binary.getSerializer();
@@ -335,13 +233,13 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
     return null;
   }
 
-  public OToken parseBinaryToken(byte[] binaryToken) {
+  public OToken parseBinaryToken(final byte[] binaryToken) {
     try {
-      ByteArrayInputStream bais = new ByteArrayInputStream(binaryToken);
+      final ByteArrayInputStream bais = new ByteArrayInputStream(binaryToken);
 
-      OBinaryToken token = deserializeBinaryToken(bais);
-      int end = binaryToken.length - bais.available();
-      byte[] decodedSignature = new byte[bais.available()];
+      final OBinaryToken token = deserializeBinaryToken(bais);
+      final int end = binaryToken.length - bais.available();
+      final byte[] decodedSignature = new byte[bais.available()];
       bais.read(decodedSignature);
 
       token.setIsVerified(verifyTokenSignature(token.getHeader(), binaryToken, 0, end, decodedSignature));
@@ -351,33 +249,17 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
     }
   }
 
-  private OBinaryToken deserializeBinaryToken(InputStream bais) {
-    try {
-      return binarySerializer.deserialize(bais);
-    } catch (Exception e) {
-      throw new OException(e);
-    }
-  }
-
-  protected String getPayloadType(OJwtPayload payload) {
-    return "OrientDB";
-  }
-
   @Override
   public String getName() {
     return OTokenHandler.TOKEN_HANDLER_NAME;
   }
 
-  protected OKeyProvider getKeyProvider() {
-    return keyProvider;
-  }
-
   @Override
-  public byte[] renewIfNeeded(OToken token) {
-    long curTime = System.currentTimeMillis();
+  public byte[] renewIfNeeded(final OToken token) {
+    final long curTime = System.currentTimeMillis();
     if (token.getExpiry() + (sessionInMills / 2) > curTime && (token.getExpiry() - (sessionInMills + 1)) < curTime) {
-      long expiryMinutes = sessionInMills;
-      long currTime = System.currentTimeMillis();
+      final long expiryMinutes = sessionInMills;
+      final long currTime = System.currentTimeMillis();
       token.setExpiry(currTime + expiryMinutes);
     }
     return new byte[] {};
@@ -389,6 +271,132 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
 
   public boolean isEnabled() {
     return enabled;
+  }
+
+  protected OrientJwtHeader deserializeWebHeader(final byte[] decodedHeader) {
+    final ODocument doc = new ODocument();
+    try {
+      doc.fromJSON(new String(decodedHeader, "UTF-8"));
+    } catch (UnsupportedEncodingException e) {
+      throw new OException(e);
+    }
+    final OrientJwtHeader header = new OrientJwtHeader();
+    header.setType((String) doc.field("typ"));
+    header.setAlgorithm((String) doc.field("alg"));
+    header.setKeyId((String) doc.field("kid"));
+    return header;
+  }
+
+  protected OJwtPayload deserializeWebPayload(final String type, final byte[] decodedPayload) {
+    if (!"OrientDB".equals(type)) {
+      throw new OException("Payload class not registered:" + type);
+    }
+    final ODocument doc = new ODocument();
+    try {
+      doc.fromJSON(new String(decodedPayload, "UTF-8"));
+    } catch (UnsupportedEncodingException e) {
+      throw new OException(e);
+    }
+    final OrientJwtPayload payload = new OrientJwtPayload();
+    payload.setIssuer((String) doc.field("iss"));
+    payload.setExpiry((Long) doc.field("exp"));
+    payload.setIssuedAt((Long) doc.field("iat"));
+    payload.setNotBefore((Long) doc.field("nbf"));
+    payload.setDatabase((String) doc.field("sub"));
+    payload.setAudience((String) doc.field("aud"));
+    payload.setTokenId((String) doc.field("jti"));
+    final int cluster = (Integer) doc.field("uidc");
+    final long pos = (Long) doc.field("uidp");
+    payload.setUserRid(new ORecordId(cluster, pos));
+    payload.setDatabaseType((String) doc.field("bdtyp"));
+    return payload;
+  }
+
+  protected byte[] serializeWebHeader(final OJwtHeader header) throws Exception {
+    ODocument doc = new ODocument();
+    doc.field("typ", header.getType());
+    doc.field("alg", header.getAlgorithm());
+    doc.field("kid", header.getKeyId());
+    return doc.toJSON().getBytes("UTF-8");
+  }
+
+  protected byte[] serializeWebPayload(final OJwtPayload payload) throws Exception {
+    final ODocument doc = new ODocument();
+    doc.field("iss", payload.getIssuer());
+    doc.field("exp", payload.getExpiry());
+    doc.field("iat", payload.getIssuedAt());
+    doc.field("nbf", payload.getNotBefore());
+    doc.field("sub", payload.getDatabase());
+    doc.field("aud", payload.getAudience());
+    doc.field("jti", payload.getTokenId());
+    doc.field("uidc", ((OrientJwtPayload) payload).getUserRid().getClusterId());
+    doc.field("uidp", ((OrientJwtPayload) payload).getUserRid().getClusterPosition());
+    doc.field("bdtyp", ((OrientJwtPayload) payload).getDatabaseType());
+    return doc.toJSON().getBytes("UTF-8");
+  }
+
+  protected OJwtPayload createPayload(final ODatabaseDocumentInternal db, final OSecurityUser user) {
+    final OrientJwtPayload payload = new OrientJwtPayload();
+    payload.setAudience("OrientDB");
+    payload.setDatabase(db.getName());
+    payload.setUserRid(user.getDocument().getIdentity());
+
+    final long expiryMinutes = sessionInMills;
+    final long currTime = System.currentTimeMillis();
+    payload.setIssuedAt(currTime);
+    payload.setNotBefore(currTime);
+    payload.setUserName(user.getName());
+    payload.setTokenId(UUID.randomUUID().toString());
+    payload.setExpiry(currTime + expiryMinutes);
+    return payload;
+  }
+
+  protected String getPayloadType(final OJwtPayload payload) {
+    return "OrientDB";
+  }
+
+  protected OKeyProvider getKeyProvider() {
+    return keyProvider;
+  }
+
+  private boolean verifyTokenSignature(final OJwtHeader header, final byte[] base, final int baseOffset, final int baseLength,
+      final byte[] signature) {
+    final Mac mac = threadLocalMac.get();
+
+    try {
+      mac.init(getKeyProvider().getKey(header));
+      mac.update(base, baseOffset, baseLength);
+      final byte[] calculatedSignature = mac.doFinal();
+
+      return Arrays.equals(calculatedSignature, signature);
+
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new OException(e);
+    } finally {
+      mac.reset();
+    }
+  }
+
+  private byte[] signToken(final OrientJwtHeader header, final byte[] unsignedToken) {
+    final Mac mac = threadLocalMac.get();
+    try {
+      mac.init(getKeyProvider().getKey(header));
+      return mac.doFinal(unsignedToken);
+    } catch (Exception ex) {
+      throw new OException("Error on token parsing", ex);
+    } finally {
+      mac.reset();
+    }
+  }
+
+  private OBinaryToken deserializeBinaryToken(final InputStream bais) {
+    try {
+      return binarySerializer.deserialize(bais);
+    } catch (Exception e) {
+      throw new OException(e);
+    }
   }
 
 }

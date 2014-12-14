@@ -1,17 +1,5 @@
 package com.orientechnologies.orient.server.token;
 
-import static org.testng.AssertJUnit.assertEquals;
-import static org.testng.AssertJUnit.assertFalse;
-import static org.testng.AssertJUnit.assertNotNull;
-import static org.testng.AssertJUnit.assertTrue;
-
-import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -22,14 +10,21 @@ import com.orientechnologies.orient.core.metadata.security.jwt.OJwtHeader;
 import com.orientechnologies.orient.core.metadata.security.jwt.OJwtPayload;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
-import com.orientechnologies.orient.server.token.OrientJwtHeader;
-import com.orientechnologies.orient.server.token.OrientJwtPayload;
-import com.orientechnologies.orient.server.token.OrientTokenHandler;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+
+import static org.testng.AssertJUnit.assertEquals;
+import static org.testng.AssertJUnit.assertFalse;
+import static org.testng.AssertJUnit.assertNotNull;
+import static org.testng.AssertJUnit.assertTrue;
 
 public class OrientTokenHandlerTest {
 
-  private static final OServerParameterConfiguration[] I_PARAMS = new OServerParameterConfiguration[] { new OServerParameterConfiguration(
-                                                                    OrientTokenHandler.O_SIGN_KEY, "crappy key") };
+  private static final OServerParameterConfiguration[] I_PARAMS = new OServerParameterConfiguration[] { new OServerParameterConfiguration(OrientTokenHandler.SIGN_KEY_PAR, "any key") };
 
   @BeforeMethod
   public void beforeTest() {
