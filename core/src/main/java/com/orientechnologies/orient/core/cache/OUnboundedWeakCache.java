@@ -22,12 +22,9 @@ package com.orientechnologies.orient.core.cache;
 
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
 
 import java.lang.ref.WeakReference;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.TimerTask;
 import java.util.WeakHashMap;
 
@@ -42,7 +39,10 @@ public class OUnboundedWeakCache extends OAbstractMapCache<WeakHashMap<ORID, Wea
     Orient.instance().getTimer().schedule(new TimerTask() {
       @Override
       public void run() {
-        cache.get(new ORecordId(0, 0));
+        try {
+          cache.size();
+        } catch (Throwable e) {
+        }
       }
     }, CLEAN_WEAK_ENTRIES_DELAY, CLEAN_WEAK_ENTRIES_DELAY);
   }

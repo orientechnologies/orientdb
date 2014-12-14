@@ -58,7 +58,7 @@ public enum OGlobalConfiguration {
       true),
 
   // SCRIPT
-  SCRIPT_POOL("script.pool.maxSize", "Maximum number of instaces in the pool of Scrit engines", Integer.class, 20),
+  SCRIPT_POOL("script.pool.maxSize", "Maximum number of instances in the pool of script engines", Integer.class, 20),
 
   // MEMORY
   MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used if it is present", Boolean.class, true),
@@ -169,7 +169,7 @@ public enum OGlobalConfiguration {
   STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 30000),
 
   STORAGE_RECORD_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record",
-      Integer.class, 100),
+      Integer.class, 2000),
 
   STORAGE_USE_TOMBSTONES("storage.useTombstones", "When record will be deleted its cluster"
       + " position will not be freed but tombstone will be placed instead", Boolean.class, false),
@@ -177,7 +177,7 @@ public enum OGlobalConfiguration {
   // RECORDS
   RECORD_DOWNSIZING_ENABLED(
       "record.downsizing.enabled",
-      "On updates if the record size is lower than before, reduces the space taken accordlying. If enabled this could increase defragmentation, but it reduces the used space",
+      "On updates if the record size is lower than before, reduces the space taken accordingly. If enabled this could increase defragmentation, but it reduces the used space",
       Boolean.class, true),
 
   // DATABASE
