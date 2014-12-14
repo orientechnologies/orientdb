@@ -1,5 +1,16 @@
 package com.orientechnologies.orient.server.token;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.UUID;
+
+import javax.crypto.Mac;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -16,16 +27,6 @@ import com.orientechnologies.orient.server.binary.impl.OBinaryToken;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
-
-import javax.crypto.Mac;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.UUID;
 
 /**
  * Created by emrul on 27/10/2014.
@@ -46,7 +47,8 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
                                                                            return Mac.getInstance(algorithm);
                                                                          } catch (NoSuchAlgorithmException nsa) {
                                                                            throw new IllegalArgumentException(
-                                                                               "Can't find encryption algorithm '" + algorithm + "'");
+                                                                               "Can't find encryption algorithm '" + algorithm
+                                                                                   + "'");
                                                                          }
                                                                        }
                                                                      };
@@ -256,6 +258,9 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
 
   @Override
   public byte[] renewIfNeeded(final OToken token) {
+    if (token == null)
+      throw new IllegalArgumentException("Token is null");
+
     final long curTime = System.currentTimeMillis();
     if (token.getExpiry() + (sessionInMills / 2) > curTime && (token.getExpiry() - (sessionInMills + 1)) < curTime) {
       final long expiryMinutes = sessionInMills;
@@ -313,6 +318,9 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
   }
 
   protected byte[] serializeWebHeader(final OJwtHeader header) throws Exception {
+    if (header == null)
+      throw new IllegalArgumentException("Token header is null");
+
     ODocument doc = new ODocument();
     doc.field("typ", header.getType());
     doc.field("alg", header.getAlgorithm());
@@ -321,6 +329,9 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
   }
 
   protected byte[] serializeWebPayload(final OJwtPayload payload) throws Exception {
+    if (payload == null)
+      throw new IllegalArgumentException("Token payload is null");
+
     final ODocument doc = new ODocument();
     doc.field("iss", payload.getIssuer());
     doc.field("exp", payload.getExpiry());
@@ -336,6 +347,9 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
   }
 
   protected OJwtPayload createPayload(final ODatabaseDocumentInternal db, final OSecurityUser user) {
+    if (user == null)
+      throw new IllegalArgumentException("User is null");
+
     final OrientJwtPayload payload = new OrientJwtPayload();
     payload.setAudience("OrientDB");
     payload.setDatabase(db.getName());
