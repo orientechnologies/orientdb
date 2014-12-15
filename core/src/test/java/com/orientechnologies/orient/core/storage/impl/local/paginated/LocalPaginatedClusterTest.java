@@ -84,7 +84,7 @@ public class LocalPaginatedClusterTest {
 
     diskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 2648L * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, storage, null, false, false);
-    atomicOperationsManager = new OAtomicOperationsManager(null);
+    atomicOperationsManager = new OAtomicOperationsManager(storage);
 
     when(storage.getDiskCache()).thenReturn(diskCache);
     when(storage.getAtomicOperationsManager()).thenReturn(atomicOperationsManager);

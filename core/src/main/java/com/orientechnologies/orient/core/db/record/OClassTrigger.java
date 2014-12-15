@@ -24,6 +24,7 @@ import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
+import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -277,7 +278,9 @@ public class OClassTrigger extends ODocumentHookAbstract {
 
     final OScriptManager scriptManager = Orient.instance().getScriptManager();
 
-    final ScriptEngine scriptEngine = scriptManager.acquireDatabaseEngine(db.getName(), func.getLanguage());
+    final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = scriptManager.acquireDatabaseEngine(db.getName(),
+        func.getLanguage());
+    final ScriptEngine scriptEngine = entry.object;
     try {
       final Bindings binding = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE);
 
@@ -317,7 +320,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
       return RESULT.valueOf(result);
 
     } finally {
-      scriptManager.releaseDatabaseEngine(db.getName(), scriptEngine);
+      scriptManager.releaseDatabaseEngine(func.getLanguage(), db.getName(), entry);
     }
   }
 }

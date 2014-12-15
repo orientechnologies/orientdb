@@ -263,17 +263,15 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
             if (cls.isSubClassOf("V"))
               // FOUND VERTEX
               throw new OCommandExecutionException(
-                  "'DELETE' command cannot delete Vertices. Use 'DELETE VERTEX' command instead, or apply the 'UNSAFE' keyword to force it");
+                  "'DELETE' command cannot delete vertices. Use 'DELETE VERTEX' command instead, or apply the 'UNSAFE' keyword to force it");
             else if (cls.isSubClassOf("E"))
               // FOUND EDGE
               throw new OCommandExecutionException(
-                  "'DELETE' command cannot delete Edges. Use 'DELETE EDGE' command instead, or apply the 'UNSAFE' keyword to force it");
-            else
-              record.delete();
-          } else
-            record.delete();
-        } else
-          record.delete();
+                  "'DELETE' command cannot delete edges. Use 'DELETE EDGE' command instead, or apply the 'UNSAFE' keyword to force it");
+          }
+        }
+
+        record.delete();
 
         recordCount++;
         return true;

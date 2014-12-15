@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.command.script;
 
+import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
@@ -68,7 +69,8 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
 
     final OScriptManager scriptManager = Orient.instance().getScriptManager();
 
-    final ScriptEngine scriptEngine = scriptManager.acquireDatabaseEngine(db.getName(), f.getLanguage());
+    final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = scriptManager.acquireDatabaseEngine(db.getName(), f.getLanguage());
+    final ScriptEngine scriptEngine = entry.object;
     try {
       final Bindings binding = scriptManager.bind(scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE), (ODatabaseDocumentTx) db,
           iContext, iArgs);
@@ -108,7 +110,7 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
         scriptManager.unbind(binding, iContext, iArgs);
       }
     } finally {
-      scriptManager.releaseDatabaseEngine(db.getName(), scriptEngine);
+      scriptManager.releaseDatabaseEngine(f.getLanguage(), db.getName(), entry);
     }
   }
 

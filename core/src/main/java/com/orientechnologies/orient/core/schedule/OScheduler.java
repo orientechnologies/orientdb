@@ -23,6 +23,7 @@ import java.util.Map.Entry;
 
 import javax.script.*;
 
+import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
@@ -159,7 +160,9 @@ public class OScheduler implements Runnable {
     Bindings binding = null;
 
     scriptManager = Orient.instance().getScriptManager();
-    final ScriptEngine scriptEngine = scriptManager.acquireDatabaseEngine(db.getName(), function.getLanguage());
+    final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = scriptManager.acquireDatabaseEngine(db.getName(),
+        function.getLanguage());
+    final ScriptEngine scriptEngine = entry.object;
     try {
       binding = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE);
 
@@ -198,7 +201,7 @@ public class OScheduler implements Runnable {
       if (scriptManager != null && binding != null)
         scriptManager.unbind(binding, null, iArgs);
 
-      scriptManager.releaseDatabaseEngine(db.getName(), scriptEngine);
+      scriptManager.releaseDatabaseEngine(function.getLanguage(), db.getName(), entry);
 
       OLogManager.instance().warn(this, "Job : " + this.toString() + " Finished!");
       isRunning = false;

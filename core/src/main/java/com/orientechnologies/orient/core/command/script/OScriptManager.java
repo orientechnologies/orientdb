@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.script.*;
 
+import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -161,25 +162,25 @@ public class OScriptManager {
    * Acquires a database engine from the pool. Once finished using it, the instance MUST be returned in the pool by calling the
    * method #releaseDatabaseEngine(String, ScriptEngine).
    * 
-   * @param iDatabaseName
+   * @param databaseName
    *          Database name
-   * @param iLanguage
+   * @param language
    *          Script language
    * @return ScriptEngine instance with the function library already parsed
    * @see #releaseDatabaseEngine(String, ScriptEngine)
    */
-  public ScriptEngine acquireDatabaseEngine(final String iDatabaseName, final String iLanguage) {
-    ODatabaseScriptManager dbManager = dbManagers.get(iDatabaseName);
+  public OPartitionedObjectPool.PoolEntry<ScriptEngine> acquireDatabaseEngine(final String databaseName, final String language) {
+    ODatabaseScriptManager dbManager = dbManagers.get(databaseName);
     if (dbManager == null) {
       // CREATE A NEW DATABASE SCRIPT MANAGER
-      dbManager = new ODatabaseScriptManager(this, iDatabaseName);
-      final ODatabaseScriptManager prev = dbManagers.putIfAbsent(iDatabaseName, dbManager);
+      dbManager = new ODatabaseScriptManager(this, databaseName);
+      final ODatabaseScriptManager prev = dbManagers.putIfAbsent(databaseName, dbManager);
       if (prev != null)
         // GET PREVIOUS ONE
         dbManager = prev;
     }
 
-    return dbManager.acquireEngine(iLanguage);
+    return dbManager.acquireEngine(language);
   }
 
   /**
@@ -192,12 +193,13 @@ public class OScriptManager {
    *          Script engine to release
    * @see #acquireDatabaseEngine(String, String)
    */
-  public void releaseDatabaseEngine(final String iDatabaseName, final ScriptEngine iEngine) {
+  public void releaseDatabaseEngine(final String language, final String iDatabaseName,
+      final OPartitionedObjectPool.PoolEntry<ScriptEngine> poolEntry) {
     final ODatabaseScriptManager dbManager = dbManagers.get(iDatabaseName);
     if (dbManager == null)
       throw new IllegalArgumentException("Script pool for database '" + iDatabaseName + "' is not configured");
 
-    dbManager.releaseEngine(iEngine);
+    dbManager.releaseEngine(language, poolEntry);
   }
 
   public Iterable<String> getSupportedLanguages() {
@@ -310,7 +312,7 @@ public class OScriptManager {
     binding.put("util", null);
 
     binding.put("ctx", null);
-    if(iContext!=null) {
+    if (iContext != null) {
       for (Entry<String, Object> a : iContext.getVariables().entrySet())
         binding.put(a.getKey(), null);
     }
