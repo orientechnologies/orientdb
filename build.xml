@@ -104,6 +104,7 @@
             </classpath>
             <fileset dir="." defaultexcludes="yes">
                 <include name="core/src/main/java/**/*.java"/>
+                <include name="client/src/main/java/**/*.java"/>
                 <include name="object/src/main/java/**/*.java"/>
                 <include name="../../os/tinkerpop/blueprints/blueprints-core/src/main/java/**/*.java"/>
                 <include name="graphdb/src/main/java/**/*.java"/>
