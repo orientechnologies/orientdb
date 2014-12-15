@@ -19,16 +19,11 @@
  */
 package com.orientechnologies.orient.core.command.script;
 
-import java.util.Iterator;
-import java.util.Map;
-
-import javax.script.Bindings;
-import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
 
-import com.orientechnologies.common.concur.resource.OResourcePool;
-import com.orientechnologies.common.concur.resource.OResourcePoolListener;
+import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
+import com.orientechnologies.common.concur.resource.OPartitionedObjectPoolFactory;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 
@@ -40,52 +35,62 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
  * 
  */
 public class ODatabaseScriptManager {
-  private final String                          name;
-  private final OScriptManager                  scriptManager;
-  protected OResourcePool<String, ScriptEngine> pooledEngines;
+  private final OScriptManager                                  scriptManager;
+  protected OPartitionedObjectPoolFactory<String, ScriptEngine> pooledEngines;
 
   public ODatabaseScriptManager(final OScriptManager iScriptManager, final String iDatabaseName) {
     scriptManager = iScriptManager;
-    name = iDatabaseName;
 
-    pooledEngines = new OResourcePool<String, ScriptEngine>(OGlobalConfiguration.SCRIPT_POOL.getValueAsInteger(),
-        new OResourcePoolListener<String, ScriptEngine>() {
+    pooledEngines = new OPartitionedObjectPoolFactory<String, ScriptEngine>(
+        new OPartitionedObjectPoolFactory.ObjectFactoryFactory<String, ScriptEngine>() {
           @Override
-          public ScriptEngine createNewResource(final String iLanguage, final Object... iAdditionalArgs) {
-            final ScriptEngine scriptEngine = scriptManager.getEngine(iLanguage);
-            final String library = scriptManager.getLibrary(ODatabaseRecordThreadLocal.INSTANCE.get(), iLanguage);
+          public OPartitionedObjectPool.ObjectFactory<ScriptEngine> create(final String language) {
+            return new OPartitionedObjectPool.ObjectFactory<ScriptEngine>() {
+              @Override
+              public ScriptEngine create() {
+                final ScriptEngine scriptEngine = scriptManager.getEngine(language);
+                final String library = scriptManager.getLibrary(ODatabaseRecordThreadLocal.INSTANCE.get(), language);
 
-            if (library != null)
-              try {
-                scriptEngine.eval(library);
-              } catch (ScriptException e) {
-                scriptManager.throwErrorMessage(e, library);
+                if (library != null)
+                  try {
+                    scriptEngine.eval(library);
+                  } catch (ScriptException e) {
+                    scriptManager.throwErrorMessage(e, library);
+                  }
+
+                return scriptEngine;
               }
 
-            return scriptEngine;
-          }
+              @Override
+              public void init(ScriptEngine object) {
+              }
 
-          @Override
-          public boolean reuseResource(final String iKey, final Object[] iAdditionalArgs, final ScriptEngine iValue) {
-            if(iKey.equals("sql")) {
-              if(!iKey.equals(iValue.getFactory().getLanguageName()))
-                return false;
-            } else {
-              if((iValue.getFactory().getLanguageName()).equals("sql"))
-                return false;
-            }
-            return true;
+              @Override
+              public void close(ScriptEngine object) {
+              }
+
+              @Override
+              public boolean isValid(ScriptEngine object) {
+                if (language.equals("sql")) {
+                  if (!language.equals(object.getFactory().getLanguageName()))
+                    return false;
+                } else {
+                  if ((object.getFactory().getLanguageName()).equals("sql"))
+                    return false;
+                }
+                return true;
+              }
+            };
           }
-        });
+        }, OGlobalConfiguration.SCRIPT_POOL.getValueAsInteger());
   }
 
-  public ScriptEngine acquireEngine(final String iLanguage) {
-    return pooledEngines.getResource(iLanguage, Long.MAX_VALUE);
+  public OPartitionedObjectPool.PoolEntry<ScriptEngine> acquireEngine(final String language) {
+    return pooledEngines.get(language).acquire();
   }
 
-  public void releaseEngine(final ScriptEngine iEngine) {
-
-    pooledEngines.returnResource(iEngine);
+  public void releaseEngine(final String language, final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry) {
+    pooledEngines.get(language).release(entry);
   }
 
   public void close() {

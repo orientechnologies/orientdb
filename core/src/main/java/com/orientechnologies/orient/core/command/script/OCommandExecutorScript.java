@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.command.script;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
@@ -92,7 +93,8 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
     final OScriptManager scriptManager = Orient.instance().getScriptManager();
     CompiledScript compiledScript = request.getCompiledScript();
 
-    final ScriptEngine scriptEngine = scriptManager.acquireDatabaseEngine(db.getName(), language);
+    final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = scriptManager.acquireDatabaseEngine(db.getName(), language);
+    final ScriptEngine scriptEngine = entry.object;
     try {
 
       if (compiledScript == null) {
@@ -123,7 +125,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
         scriptManager.unbind(binding, iContext, iArgs);
       }
     } finally {
-      scriptManager.releaseDatabaseEngine(db.getName(), scriptEngine);
+      scriptManager.releaseDatabaseEngine(language, db.getName(), entry);
     }
   }
 
