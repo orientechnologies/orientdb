@@ -78,8 +78,8 @@
                 <parameter name="enabled" value="false"/>
                 <!-- PRIVATE KEY -->
                 <parameter name="oAuth2Key" value=""/>
-                <!-- SESSION LENGTH IN SECONDS, DEFAULT=1 HOUR -->
-                <parameter name="sessionLength" value="3600000"/>
+                <!-- SESSION LENGTH IN MINUTES, DEFAULT=1 HOUR -->
+                <parameter name="sessionLength" value="60"/>
                 <!-- ENCRYPTION ALGORITHM, DEFAULT=HmacSHA256 -->
                 <parameter name="encryptionAlgorithm" value="HmacSHA256"/>
             </parameters>

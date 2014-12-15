@@ -56,7 +56,7 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
   protected static final int            JWT_DELIMITER                = '.';
   private boolean                       enabled                      = false;
   private OBinaryTokenSerializer        binarySerializer;
-  private int                           sessionInMills               = 1000 * 60 * 60;              // 1 HOUR
+  private long                          sessionInMills               = 1000 * 60 * 60;              // 1 HOUR
   private OKeyProvider                  keyProvider;
 
   @Override
@@ -71,7 +71,7 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
         byte secret[] = OBase64Utils.decode(param.value, OBase64Utils.URL_SAFE);
         keyProvider = new DefaultKeyProvider(secret);
       } else if (param.name.equalsIgnoreCase(SESSION_LENGHT_PAR)) {
-        sessionInMills = Integer.parseInt(param.value) * 1000;
+        sessionInMills = Long.parseLong(param.value) * 1000 * 60;
       } else if (param.name.equalsIgnoreCase(ENCRYPTION_ALGORITHM_PAR)) {
         algorithm = param.value;
         try {
