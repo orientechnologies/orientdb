@@ -270,7 +270,7 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
     return new byte[] {};
   }
 
-  public int getSessionInMills() {
+  public long getSessionInMills() {
     return sessionInMills;
   }
 
