@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -113,5 +114,81 @@ public class SQLDeleteEdgeTest extends DocumentDBBaseTest {
     database.command(new OCommandSQL("DELETE FROM testToOneE unsafe")).execute();
     database.command(new OCommandSQL("DELETE FROM testToTwoE unsafe")).execute();
     database.command(new OCommandSQL("DELETE VERTEX testToV")).execute();
+  }
+
+  public void testDropClassVandEwithUnsafe() {
+    database.command(new OCommandSQL("CREATE CLASS SuperE extends E")).execute();
+    database.command(new OCommandSQL("CREATE CLASS SuperV extends V")).execute();
+
+    OIdentifiable v1 = database.command(new OCommandSQL("create vertex SuperV set name = 'Luca'")).execute();
+    OIdentifiable v2 = database.command(new OCommandSQL("create vertex SuperV set name = 'Mark'")).execute();
+    database.command(new OCommandSQL("CREATE EDGE SuperE from " + v1.getIdentity() + " to " + v2.getIdentity())).execute();
+
+    try {
+      database.command(new OCommandSQL("DROP CLASS SuperV")).execute();
+      Assert.assertTrue(false);
+    } catch (OCommandExecutionException e) {
+      Assert.assertTrue(true);
+    }
+
+    try {
+      database.command(new OCommandSQL("DROP CLASS SuperE")).execute();
+      Assert.assertTrue(false);
+    } catch (OCommandExecutionException e) {
+      Assert.assertTrue(true);
+    }
+
+    try {
+      database.command(new OCommandSQL("DROP CLASS SuperV unsafe")).execute();
+      Assert.assertTrue(true);
+    } catch (OCommandExecutionException e) {
+      Assert.assertTrue(false);
+    }
+
+    try {
+      database.command(new OCommandSQL("DROP CLASS SuperE UNSAFE")).execute();
+      Assert.assertTrue(true);
+    } catch (OCommandExecutionException e) {
+      Assert.assertTrue(false);
+    }
+  }
+
+  public void testDropClassVandEwithDeleteElements() {
+    database.command(new OCommandSQL("CREATE CLASS SuperE extends E")).execute();
+    database.command(new OCommandSQL("CREATE CLASS SuperV extends V")).execute();
+
+    OIdentifiable v1 = database.command(new OCommandSQL("create vertex SuperV set name = 'Luca'")).execute();
+    OIdentifiable v2 = database.command(new OCommandSQL("create vertex SuperV set name = 'Mark'")).execute();
+    database.command(new OCommandSQL("CREATE EDGE SuperE from " + v1.getIdentity() + " to " + v2.getIdentity())).execute();
+
+    try {
+      database.command(new OCommandSQL("DROP CLASS SuperV")).execute();
+      Assert.assertTrue(false);
+    } catch (OCommandExecutionException e) {
+      Assert.assertTrue(true);
+    }
+
+    try {
+      database.command(new OCommandSQL("DROP CLASS SuperE")).execute();
+      Assert.assertTrue(false);
+    } catch (OCommandExecutionException e) {
+      Assert.assertTrue(true);
+    }
+
+    database.command(new OCommandSQL("DELETE VERTEX SuperV")).execute();
+
+    try {
+      database.command(new OCommandSQL("DROP CLASS SuperV")).execute();
+      Assert.assertTrue(true);
+    } catch (OCommandExecutionException e) {
+      Assert.assertTrue(false);
+    }
+
+    try {
+      database.command(new OCommandSQL("DROP CLASS SuperE")).execute();
+      Assert.assertTrue(true);
+    } catch (OCommandExecutionException e) {
+      Assert.assertTrue(false);
+    }
   }
 }
