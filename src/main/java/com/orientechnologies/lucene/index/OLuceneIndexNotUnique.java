@@ -81,6 +81,13 @@ public class OLuceneIndexNotUnique extends OIndexNotUnique implements OLuceneInd
       for (OIdentifiable oIdentifiable : operations.removed) {
         ((OLuceneIndexEngine) indexEngine).remove(key, oIdentifiable);
       }
+
+    }
+    for (Map.Entry<Object, Object> snapshotEntry : snapshot.entrySet()) {
+      Object key = snapshotEntry.getKey();
+      LuceneTxOperations operations = (LuceneTxOperations) snapshotEntry.getValue();
+      checkForKeyType(key);
+
       indexEngine.put(key, operations.added);
 
     }
