@@ -21,13 +21,11 @@ package com.orientechnologies.orient.etl.transformer;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.etl.OETLProcessHaltedException;
 import com.orientechnologies.orient.etl.OETLProcessor;
 
 public class OFlowTransformer extends OAbstractTransformer {
-  protected String     operation;
-  protected OSQLFilter sqlFilter;
+  protected String operation;
 
   @Override
   public ODocument getConfiguration() {
