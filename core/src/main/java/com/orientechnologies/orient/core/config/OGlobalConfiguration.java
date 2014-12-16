@@ -166,7 +166,7 @@ public enum OGlobalConfiguration {
   STORAGE_USE_CRC32_FOR_EACH_RECORD("storage.cluster.usecrc32",
       "Indicates whether crc32 should be used for each record to check record integrity.", Boolean.class, false),
 
-  STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 30000),
+  STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 0),
 
   STORAGE_RECORD_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record",
       Integer.class, 2000),
@@ -238,7 +238,7 @@ public enum OGlobalConfiguration {
       + "that were splited but not flushed to the disk are kept. This buffer is used to minimize random IO overhead.",
       Integer.class, 1500),
 
-	@Deprecated
+  @Deprecated
   INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE("index.auto.rebuildAfterNotSoftClose",
       "Auto rebuild all automatic indexes after upon database open when wasn't closed properly", Boolean.class, true),
 
@@ -261,8 +261,7 @@ public enum OGlobalConfiguration {
       false),
 
   INDEX_TX_MODE("index.txMode",
-      "Indicates index durability level in TX mode. Can be ROLLBACK_ONLY or FULL (ROLLBACK_ONLY by default)", String.class,
-      "FULL"),
+      "Indicates index durability level in TX mode. Can be ROLLBACK_ONLY or FULL (ROLLBACK_ONLY by default)", String.class, "FULL"),
 
   INDEX_CURSOR_PREFETCH_SIZE("index.cursor.prefetchSize", "Default prefetch size of index cursor", Integer.class, 500000),
 
