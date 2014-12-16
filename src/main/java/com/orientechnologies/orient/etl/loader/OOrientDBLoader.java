@@ -55,7 +55,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   protected boolean         dbAutoCreate           = true;
   protected boolean         dbAutoDropIfExists     = false;
   protected boolean         dbAutoCreateProperties = false;
-  protected boolean         useLightweightEdges    = true;
+  protected boolean         useLightweightEdges    = false;
   protected boolean         tx                     = false;
   protected int             batchCommit            = 0;
   protected long            batchCounter           = 0;
