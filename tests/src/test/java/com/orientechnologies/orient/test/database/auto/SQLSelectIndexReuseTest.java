@@ -9,15 +9,21 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Test(groups = { "index" })
 public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
   @Parameters(value = "url")
-  public SQLSelectIndexReuseTest(final String iURL) {
+  public SQLSelectIndexReuseTest(@Optional final String iURL) {
     super(iURL);
   }
 
@@ -2419,6 +2425,8 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
   @Test
   public void testIndexUsedOnOrClause() {
     long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
+    if( oldIndexUsage < 0)
+      oldIndexUsage = 0;
 
     final List<ODocument> result = database.command(
         new OSQLSynchQuery<ODocument>(
@@ -2434,23 +2442,6 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
     Assert.assertEquals(document.<Integer> field("prop6").intValue(), 2);
 
     Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 2);
-  }
-
-  private int containsDocument(final List<ODocument> docList, final ODocument document) {
-    int count = 0;
-    for (final ODocument docItem : docList) {
-      boolean containsAllFields = true;
-      for (final String fieldName : document.fieldNames()) {
-        if (!document.<Object> field(fieldName).equals(docItem.<Object> field(fieldName))) {
-          containsAllFields = false;
-          break;
-        }
-      }
-      if (containsAllFields) {
-        count++;
-      }
-    }
-    return count;
   }
 
   @Test
@@ -2564,5 +2555,22 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
 
     Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
     Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed"), oldcompositeIndexUsed);
+  }
+
+  private int containsDocument(final List<ODocument> docList, final ODocument document) {
+    int count = 0;
+    for (final ODocument docItem : docList) {
+      boolean containsAllFields = true;
+      for (final String fieldName : document.fieldNames()) {
+        if (!document.<Object> field(fieldName).equals(docItem.<Object> field(fieldName))) {
+          containsAllFields = false;
+          break;
+        }
+      }
+      if (containsAllFields) {
+        count++;
+      }
+    }
+    return count;
   }
 }

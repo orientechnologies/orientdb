@@ -125,7 +125,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private boolean                     parallel             = false;
   private Lock                        parallelLock         = new ReentrantLock();
 
-  private Set<ORID>                   foundResults         = new HashSet<ORID>();
+  private Set<ORID>                   uniqueResult;
 
   private final class IndexUsageLog {
     OIndex<?>        index;
@@ -1272,11 +1272,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
           final ORID identity = next.getIdentity();
 
-          if (foundResults.contains(identity))
-            continue;
+          if (uniqueResult != null) {
+            if (uniqueResult.contains(identity))
+              continue;
 
-          if (!identity.toString().equals("#-1:-1"))
-            foundResults.add(identity);
+            if (identity.isValid())
+              uniqueResult.add(identity);
+          }
 
           if (!executeSearchRecord(next)) {
             break;
@@ -1399,7 +1401,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   @SuppressWarnings("rawtypes")
   private boolean searchForIndexes(final OClass iSchemaClass) {
-    this.foundResults.clear();
+    if (uniqueResult != null)
+      uniqueResult.clear();
+
     final ODatabaseDocument database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iSchemaClass.getName().toLowerCase());
 
@@ -1526,9 +1530,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (cursors.size() == 1 && canOptimize(conditionHierarchy)) {
         filterOptimizer.optimize(compiledFilter, lastSearchResult);
       }
+
+      uniqueResult = new HashSet<ORID>();
       for (OIndexCursor cursor : cursors) {
         fetchValuesFromIndexCursor(cursor);
       }
+      uniqueResult.clear();
+      uniqueResult = null;
 
       metricRecorder.recordOrderByOptimizationMetric(indexIsUsedInOrderBy, this.fullySortedByIndex);
 
