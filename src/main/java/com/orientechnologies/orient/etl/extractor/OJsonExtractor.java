@@ -105,7 +105,7 @@ public class OJsonExtractor extends OAbstractSourceExtractor {
   }
 
   protected OExtractedItem fetchNext() throws IOException, ParseException {
-    if (!reader.ready())
+    if (!jsonReader.hasNext())
       return null;
 
     String value = jsonReader.readString(new char[] { '}', ']' }, true);
