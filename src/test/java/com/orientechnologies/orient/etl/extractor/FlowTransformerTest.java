@@ -18,9 +18,12 @@
 
 package com.orientechnologies.orient.etl.extractor;
 
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.etl.OETLProcessor;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+
+import java.util.Iterator;
 
 /**
  * Tests ETL Flow Transformer.
@@ -32,28 +35,44 @@ public class FlowTransformerTest extends ETLBaseTest {
 
   public void testSkip() {
     OETLProcessor proc = getProcessor(
-        "{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca' } }, extractor : { row: {} },"
+        "{source: { content: { value: 'name,surname\nJay,Miner\nJay,Test' } }, extractor : { row: {} },"
             + " transformers: [{csv: {}}, {vertex: {class:'V'}}, {flow:{operation:'skip',if: 'name <> \'Jay\''}},{field:{fieldName:'name', value:'3'}}"
             + "], loader: { orientdb: { dbURL: 'memory:FlowTransformerTest', dbType:'graph' } } }").execute();
 
-    assertEquals(graph.countVertices("V"), 1);
-    Vertex v = graph.getVertices().iterator().next();
+    assertEquals(graph.countVertices("V"), 2);
 
-    Object value = v.getProperty("name");
-    assertEquals(value, "3");
+    Iterator<Vertex> it = graph.getVertices().iterator();
+
+    Vertex v1 = it.next();
+    Object value1 = v1.getProperty("name");
+    assertEquals(value1, "3");
+
+    Vertex v2 = it.next();
+    Object value2 = v2.getProperty("name");
+    assertEquals(value2, "3");
+
+    graph.command(new OCommandSQL("delete vertex V")).execute();
   }
 
   public void testSkipNever() {
     OETLProcessor proc = getProcessor(
-        "{source: { content: { value: 'name,surname,friend\nJay,Miner,Luca' } }, extractor : { row: {} },"
+        "{source: { content: { value: 'name,surname\nJay,Miner\nTest,Test' } }, extractor : { row: {} },"
             + " transformers: [{csv: {}}, {vertex: {class:'V'}}, {flow:{operation:'skip',if: 'name = \'Jay\''}},{field:{fieldName:'name', value:'3'}}"
             + "], loader: { orientdb: { dbURL: 'memory:FlowTransformerTest', dbType:'graph'} } }").execute();
 
-    assertEquals(graph.countVertices("V"), 1);
-    Vertex v = graph.getVertices().iterator().next();
+    assertEquals(graph.countVertices("V"), 2);
 
-    Object value = v.getProperty("name");
-    assertEquals(value, "Jay");
+    Iterator<Vertex> it = graph.getVertices().iterator();
+
+    Vertex v1 = it.next();
+    Object value1 = v1.getProperty("name");
+    assertEquals(value1, "Jay");
+
+    Vertex v2 = it.next();
+    Object value2 = v2.getProperty("name");
+    assertEquals(value2, "3");
+
+    graph.command(new OCommandSQL("delete vertex V")).execute();
   }
 
   public void setUp() {
