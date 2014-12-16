@@ -56,8 +56,9 @@ public class OStringParser {
     for (int i = 0; i < iText.length(); ++i) {
       c = iText.charAt(i);
 
-      if (!escape && c == '\\' && ((i + 1) < iText.length())) {
-        // ESCAPE CHARS
+
+      if (openBraket == 0 && openGraph == 0 && !escape && c == '\\' && ((i + 1) < iText.length())) {
+        // ESCAPE CHARS - ONLY FIRST HIERARCHY LEVEL
         final char nextChar = iText.charAt(i + 1);
 
         if (nextChar == 'u') {
