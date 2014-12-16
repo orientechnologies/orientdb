@@ -1047,6 +1047,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   @Override
   public void close() {
+    localCache.shutdown();
+
     if (isClosed())
       return;
 
@@ -2525,8 +2527,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       h.onUnregister();
 
     hooks.clear();
-
-    localCache.shutdown();
 
     close();
 
