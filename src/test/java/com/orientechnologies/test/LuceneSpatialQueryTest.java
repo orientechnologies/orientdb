@@ -21,18 +21,16 @@ package com.orientechnologies.test;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
-import junit.framework.Assert;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.index.OIndexEngineException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import junit.framework.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.InputStream;
@@ -43,7 +41,6 @@ import java.util.List;
 import java.util.TimerTask;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipInputStream;
 
 /**
  * Created by enricorisa on 02/10/14.
@@ -129,12 +126,16 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
             }
             i++;
           }
+          lnr.close();
+          stream.close();
           databaseDocumentTx.commit();
         }
         databaseDocumentTx.declareIntent(null);
       }
 
     } catch (Exception e) {
+
+    } finally {
 
     }
 
