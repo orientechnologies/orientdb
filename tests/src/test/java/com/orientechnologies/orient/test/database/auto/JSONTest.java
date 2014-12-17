@@ -609,6 +609,82 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertTrue(res.contains("\"quotes\":\"\\\"\\\",\\\"oops\\\":\\\"123\\\"\""));
   }
 
+  public void testEscapingDoubleQuotes(){
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+
+    builder.append(" {\n"
+        + "    \"foo\":{\n"
+        + "            \"bar\":{\n"
+        + "                \"P357\":[\n"
+        + "                            {\n"
+        + "\n"
+        + "                                \"datavalue\":{\n"
+        + "                                    \"value\":\"\\\"\\\"\",\n"
+        + "\n"
+        + "                                }\n"
+        + "                        }\n"
+        + "                ]   \n"
+        + "            },\n"
+        + "            \"three\": \"a\"\n"
+        + "        }\n"
+        + "} ");
+    doc.fromJSON(builder.toString());
+    Assert.assertEquals(doc.field("foo.three"), "a");
+    //TODO complete this
+  }
+
+  public void testEscapingDoubleQuotes2(){
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+
+    builder.append(" {\n"
+        + "    \"foo\":{\n"
+        + "            \"bar\":{\n"
+        + "                \"P357\":[\n"
+        + "                            {\n"
+        + "\n"
+        + "                                \"datavalue\":{\n"
+        + "                                    \"value\":\"\\\"\",\n"
+        + "\n"
+        + "                                }\n"
+        + "                        }\n"
+        + "                ]   \n"
+        + "            },\n"
+        + "            \"three\": \"a\"\n"
+        + "        }\n"
+        + "} ");
+
+    doc.fromJSON(builder.toString());
+    Assert.assertEquals(doc.field("foo.three"), "a");
+    //TODO complete this
+  }
+
+  public void testEscapingDoubleQuotes3(){
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+
+    builder.append(" {\n"
+        + "    \"foo\":{\n"
+        + "            \"bar\":{\n"
+        + "                \"P357\":[\n"
+        + "                            {\n"
+        + "\n"
+        + "                                \"datavalue\":{\n"
+        + "                                    \"value\":\"\\\"\",\n"
+        + "\n"
+        + "                                }\n"
+        + "                        }\n"
+        + "                ]   \n"
+        + "            }\n"
+        + "        }\n"
+        + "} ");
+
+    doc.fromJSON(builder.toString());
+    //TODO complete this
+  }
+
+
   public void testDates() {
     Date now = new Date(1350518475000l);
 
