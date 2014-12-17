@@ -59,6 +59,7 @@ import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -225,46 +226,61 @@ public class OServer {
 
   @SuppressWarnings("unchecked")
   public OServer activate() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-    for (OServerLifecycleListener l : lifecycleListeners)
-      l.onBeforeActivate();
+    try {
+      for (OServerLifecycleListener l : lifecycleListeners)
+        l.onBeforeActivate();
 
-    // REGISTER/CREATE SOCKET FACTORIES
-    if (configuration.network.sockets != null) {
-      for (OServerSocketFactoryConfiguration f : configuration.network.sockets) {
-        Class<? extends OServerSocketFactory> fClass = (Class<? extends OServerSocketFactory>) Class.forName(f.implementation);
-        OServerSocketFactory factory = fClass.newInstance();
-        try {
-          factory.config(f.name, f.parameters);
-          networkSocketFactories.put(f.name, factory);
-        } catch (OConfigurationException e) {
-          OLogManager.instance().error(this, "Error creating socket factory", e);
+      // REGISTER/CREATE SOCKET FACTORIES
+      if (configuration.network.sockets != null) {
+        for (OServerSocketFactoryConfiguration f : configuration.network.sockets) {
+          Class<? extends OServerSocketFactory> fClass = (Class<? extends OServerSocketFactory>) Class.forName(f.implementation);
+          OServerSocketFactory factory = fClass.newInstance();
+          try {
+            factory.config(f.name, f.parameters);
+            networkSocketFactories.put(f.name, factory);
+          } catch (OConfigurationException e) {
+            OLogManager.instance().error(this, "Error creating socket factory", e);
+          }
         }
       }
+
+      // REGISTER PROTOCOLS
+      for (OServerNetworkProtocolConfiguration p : configuration.network.protocols)
+        networkProtocols.put(p.name, (Class<? extends ONetworkProtocol>) Class.forName(p.implementation));
+
+      // STARTUP LISTENERS
+      for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
+        networkListeners.add(new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange,
+            l.protocol, networkProtocols.get(l.protocol), l.parameters, l.commands));
+
+      registerPlugins();
+
+      for (OServerLifecycleListener l : lifecycleListeners)
+        l.onAfterActivate();
+
+      try {
+        loadStorages();
+        loadUsers();
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Error on reading server configuration", e, OConfigurationException.class);
+      }
+
+      OLogManager.instance().info(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " is active.");
+    } catch (ClassNotFoundException e) {
+      running = false;
+      throw e;
+    } catch (InstantiationException e) {
+      running = false;
+      throw e;
+    } catch (IllegalAccessException e) {
+      running = false;
+      throw e;
+    } catch (RuntimeException e) {
+      running = false;
+      throw e;
+    } finally {
+      startupLatch.countDown();
     }
-
-    // REGISTER PROTOCOLS
-    for (OServerNetworkProtocolConfiguration p : configuration.network.protocols)
-      networkProtocols.put(p.name, (Class<? extends ONetworkProtocol>) Class.forName(p.implementation));
-
-    // STARTUP LISTENERS
-    for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
-      networkListeners.add(new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange,
-          l.protocol, networkProtocols.get(l.protocol), l.parameters, l.commands));
-
-    registerPlugins();
-
-    for (OServerLifecycleListener l : lifecycleListeners)
-      l.onAfterActivate();
-
-    try {
-      loadStorages();
-      loadUsers();
-    } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on reading server configuration", e, OConfigurationException.class);
-    }
-
-    OLogManager.instance().info(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " is active.");
-    startupLatch.countDown();
 
     return this;
   }
@@ -498,6 +514,8 @@ public class OServer {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
+    if (!running)
+      throw new ODatabaseException("Error on plugin lookup the server didn't start correcty.");
 
     for (OServerPluginInfo h : getPlugins())
       if (h.getInstance() != null && h.getInstance().getClass().equals(iPluginClass))
@@ -513,6 +531,8 @@ public class OServer {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
+    if (!running)
+      throw new ODatabaseException("Error on plugin lookup the server didn't start correcty.");
 
     final OServerPluginInfo p = pluginManager.getPluginByName(iName);
     if (p != null)
