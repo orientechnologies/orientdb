@@ -71,6 +71,7 @@ public class LuceneInsertDeleteTest extends BaseLuceneTest {
   @Test
   public void testInsertUpdateWithIndex() throws Exception {
 
+    databaseDocumentTx.getMetadata().reload();
     OSchema schema = databaseDocumentTx.getMetadata().getSchema();
 
     ODocument doc = new ODocument("City");
