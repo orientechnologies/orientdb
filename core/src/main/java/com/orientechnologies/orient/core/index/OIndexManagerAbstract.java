@@ -52,17 +52,27 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  */
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass implements OIndexManager, OCloseable {
-  public static final String                                  CONFIG_INDEXES     = "indexes";
-  public static final String                                  DICTIONARY_NAME    = "dictionary";
-  protected final Map<String, Map<OMultiKey, Set<OIndex<?>>>> classPropertyIndex = new HashMap<String, Map<OMultiKey, Set<OIndex<?>>>>();
-  protected Map<String, OIndex<?>>                            indexes            = new ConcurrentHashMap<String, OIndex<?>>();
-  protected String                                            defaultClusterName = OMetadataDefault.CLUSTER_INDEX_NAME;
-  protected String                                            manualClusterName  = OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME;
+  public static final String                                  CONFIG_INDEXES         = "indexes";
+  public static final String                                  DICTIONARY_NAME        = "dictionary";
+  protected final Map<String, Map<OMultiKey, Set<OIndex<?>>>> classPropertyIndex     = new HashMap<String, Map<OMultiKey, Set<OIndex<?>>>>();
+  protected Map<String, OIndex<?>>                            indexes                = new ConcurrentHashMap<String, OIndex<?>>();
+  protected String                                            defaultClusterName     = OMetadataDefault.CLUSTER_INDEX_NAME;
+  protected String                                            manualClusterName      = OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME;
 
-  protected ReadWriteLock                                     lock               = new ReentrantReadWriteLock();
+  protected ReadWriteLock                                     lock                   = new ReentrantReadWriteLock();
+
+  private volatile boolean                                    fullCheckpointOnChange = false;
 
   public OIndexManagerAbstract(final ODatabaseDocument iDatabase) {
     super(new ODocument());
+  }
+
+  public boolean isFullCheckpointOnChange() {
+    return fullCheckpointOnChange;
+  }
+
+  public void setFullCheckpointOnChange(boolean fullCheckpointOnChange) {
+    this.fullCheckpointOnChange = fullCheckpointOnChange;
   }
 
   @Override

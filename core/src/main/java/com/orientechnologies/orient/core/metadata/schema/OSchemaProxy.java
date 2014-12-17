@@ -220,6 +220,16 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   }
 
   @Override
+  public boolean isFullCheckpointOnChange() {
+    return delegate.isFullCheckpointOnChange();
+  }
+
+  @Override
+  public void setFullCheckpointOnChange(boolean fullCheckpointOnChange) {
+    delegate.setFullCheckpointOnChange(fullCheckpointOnChange);
+  }
+
+  @Override
   public OClusterSelectionFactory getClusterSelectionFactory() {
     return delegate.getClusterSelectionFactory();
   }

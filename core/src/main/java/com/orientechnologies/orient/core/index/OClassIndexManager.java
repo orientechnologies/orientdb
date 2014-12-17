@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
@@ -48,7 +49,7 @@ import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_UPD
  * @author Andrey Lomakin, Artem Orobets
  */
 public class OClassIndexManager extends ODocumentHookAbstract {
-  private final ThreadLocal<TreeMap<OIndex<?>, List<Object>>> lockedKeys = new ThreadLocal<TreeMap<OIndex<?>, List<Object>>>();
+  private final ThreadLocal<Deque<TreeMap<OIndex<?>, List<Object>>>> lockedKeys = new ThreadLocal<Deque<TreeMap<OIndex<?>, List<Object>>>>();
 
   public OClassIndexManager() {
   }
@@ -279,6 +280,12 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   private ODocument checkIndexedPropertiesOnCreation(final ODocument record, final Collection<OIndex<?>> indexes) {
     ODocument replaced = null;
 
+    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys.get();
+    if (indexKeysMapQueue == null) {
+      indexKeysMapQueue = new ArrayDeque<TreeMap<OIndex<?>, List<Object>>>();
+      lockedKeys.set(indexKeysMapQueue);
+    }
+
     final TreeMap<OIndex<?>, List<Object>> indexKeysMap = new TreeMap<OIndex<?>, List<Object>>();
 
     for (final OIndex<?> index : indexes) {
@@ -306,7 +313,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
       index.lockKeysForUpdate(entry.getValue());
     }
 
-    lockedKeys.set(indexKeysMap);
+    indexKeysMapQueue.push(indexKeysMap);
 
     for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
       final OIndex<?> index = entry.getKey();
@@ -326,6 +333,12 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   }
 
   private void checkIndexedPropertiesOnUpdate(final ODocument record, final Collection<OIndex<?>> indexes) {
+    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys.get();
+    if (indexKeysMapQueue == null) {
+      indexKeysMapQueue = new ArrayDeque<TreeMap<OIndex<?>, List<Object>>>();
+      lockedKeys.set(indexKeysMapQueue);
+    }
+
     final TreeMap<OIndex<?>, List<Object>> indexKeysMap = new TreeMap<OIndex<?>, List<Object>>();
 
     final Set<String> dirtyFields = new HashSet<String>(Arrays.asList(record.getDirtyFields()));
@@ -364,7 +377,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
       index.lockKeysForUpdate(entry.getValue());
     }
 
-    lockedKeys.set(indexKeysMap);
+    indexKeysMapQueue.push(indexKeysMap);
 
     for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeysMap.entrySet()) {
       final OIndex<?> index = entry.getKey();
@@ -589,15 +602,21 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   }
 
   private void unlockKeys() {
-    final TreeMap<OIndex<?>, List<Object>> indexKeyMap = lockedKeys.get();
+    Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys.get();
+    if (indexKeysMapQueue == null)
+      return;
+
+    final TreeMap<OIndex<?>, List<Object>> indexKeyMap = indexKeysMapQueue.poll();
     if (indexKeyMap == null)
       return;
 
     for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeyMap.entrySet()) {
       final OIndexInternal<?> index = entry.getKey().getInternal();
-      index.releaseKeysForUpdate(entry.getValue());
+      try {
+        index.releaseKeysForUpdate(entry.getValue());
+      } catch (RuntimeException e) {
+        OLogManager.instance().error(this, "Error during unlock of keys for index %s", e, index.getName());
+      }
     }
-
-    lockedKeys.set(null);
   }
 }

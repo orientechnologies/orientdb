@@ -95,6 +95,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   private final List<OGlobalProperty>           properties              = new ArrayList<OGlobalProperty>();
   private final Map<String, OGlobalProperty>    propertiesByNameType    = new HashMap<String, OGlobalProperty>();
   private volatile int                          version                 = 0;
+  private volatile boolean                      fullCheckpointOnChange  = false;
 
   private static final class ClusterIdsAreEmptyException extends Exception {
   }
@@ -125,7 +126,15 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     return null;
   }
 
-  @Override
+	public boolean isFullCheckpointOnChange() {
+		return fullCheckpointOnChange;
+	}
+
+	public void setFullCheckpointOnChange(boolean fullCheckpointOnChange) {
+		this.fullCheckpointOnChange = fullCheckpointOnChange;
+	}
+
+	@Override
   public OImmutableSchema makeSnapshot() {
     acquireSchemaReadLock();
     try {
@@ -1074,7 +1083,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
     try {
       super.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
-      getDatabase().getStorage().synch();
+      if (fullCheckpointOnChange)
+        getDatabase().getStorage().synch();
     } catch (OConcurrentModificationException e) {
       reload(null, true);
       throw e;
