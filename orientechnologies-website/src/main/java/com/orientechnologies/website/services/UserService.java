@@ -3,6 +3,7 @@ package com.orientechnologies.website.services;
 import com.orientechnologies.website.exception.ServiceException;
 import com.orientechnologies.website.model.schema.dto.Client;
 import com.orientechnologies.website.model.schema.dto.OUser;
+import com.orientechnologies.website.model.schema.dto.Repository;
 import com.orientechnologies.website.model.schema.dto.web.UserDTO;
 
 /**
@@ -14,6 +15,8 @@ public interface UserService {
   public UserDTO forWeb(OUser user);
 
   boolean isMember(OUser user, String orgName);
+
+  boolean isTeamMember(OUser user, Repository repo);
 
   Client getClient(OUser user, String orgName);
 }

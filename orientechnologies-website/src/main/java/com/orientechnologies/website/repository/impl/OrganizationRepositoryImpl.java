@@ -19,10 +19,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 @Repository
 public class OrganizationRepositoryImpl extends OrientBaseRepository<Organization> implements OrganizationRepository {
@@ -386,11 +383,17 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     }
     OrientVertex vertex = db.getVertex(new ORecordId(issue.getId()));
 
-    List<Event> events = new ArrayList<Event>();
+    final List<Event> events = new ArrayList<Event>();
     for (Vertex vertex1 : vertex.getVertices(Direction.OUT, HasEvent.class.getSimpleName())) {
       OrientVertex v = (OrientVertex) vertex1;
       events.add(OEvent.CREATED_AT.fromDoc(v.getRecord(), db));
     }
+    Collections.sort(events, new Comparator<Event>() {
+      @Override
+      public int compare(Event o1, Event o2) {
+        return o1.getCreatedAt().after(o2.getCreatedAt()) ? 1 : -1;
+      }
+    });
     return events;
   }
 

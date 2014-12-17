@@ -35,6 +35,9 @@ public class IssueEventInternal extends IssueEvent {
   }
 
   public void setScope(Scope scope) {
+    if (scope != null) {
+      scope.setId(null);
+    }
     this.scope = scope;
   }
 }

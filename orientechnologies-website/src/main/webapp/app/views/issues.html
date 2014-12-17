@@ -84,7 +84,7 @@
                 <i class="fa fa-check-circle-o" ng-class="'issue-' + issue.state.toLowerCase()"></i>
               </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-7">
               <h5 class="list-group-item-heading"><a href="#issues/{{issue.repository.name}}@{{issue.uuid}}">
                 {{issue.title}}</a>
                 <!--<span class="label" ng-repeat="label in issue.labels" style="background-color: #{{label.color}}">{{label.name}}</span>-->
@@ -100,13 +100,13 @@
             <div class="col-md-3 label-column">
               <span class="label" ng-repeat="label in issue.labels" style="background-color: #{{label.color}}">{{label.name}}</span>
             </div>
-            <div class="col-md-2">
-              <div class="col-md-10">
+            <div class="col-md-1">
+              <div class="col-md-6">
                 <div ng-if="issue.assignee">
-                  <avatar dim="20" name="true" user="issue.assignee"></avatar>
+                  <avatar dim="20"  user="issue.assignee"></avatar>
                 </div>
               </div>
-              <div class="col-md-2">
+              <div class="col-md-6">
                 <span class="badge">{{issue.comments}}</span>
               </div>
             </div>

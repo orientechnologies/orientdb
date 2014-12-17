@@ -77,6 +77,11 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
+  public boolean isTeamMember(OUser user, Repository repo) {
+    return isMember(user, repo.getOrganization().getName());
+  }
+
+  @Override
   public Client getClient(OUser user, String orgName) {
     return userRepository.findMyClientMember(user.getUsername(), orgName);
   }

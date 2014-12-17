@@ -177,13 +177,17 @@ angular.module('webappApp')
     });
   });
 angular.module('webappApp')
-  .controller('IssueEditCtrl', function ($scope, $routeParams, Organization, Repo, $popover, $route) {
+  .controller('IssueEditCtrl', function ($scope, $routeParams, Organization, Repo, $popover, $route, User) {
 
     var id = $routeParams.id.split("@");
 
     var repo = id[0];
     var number = id[1];
 
+
+    User.whoami().then(function (data) {
+      $scope.isMember = User.isMember(ORGANIZATION);
+    });
     Repo.one(repo).all("issues").one(number).get().then(function (data) {
       $scope.issue = data.plain();
     });

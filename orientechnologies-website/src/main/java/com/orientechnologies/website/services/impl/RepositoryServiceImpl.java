@@ -11,6 +11,7 @@ import com.orientechnologies.website.model.schema.dto.web.IssueDTO;
 import com.orientechnologies.website.repository.*;
 import com.orientechnologies.website.services.IssueService;
 import com.orientechnologies.website.services.RepositoryService;
+import com.orientechnologies.website.services.UserService;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,9 @@ public class RepositoryServiceImpl implements RepositoryService {
 
   @Autowired
   protected UserRepository         userRepo;
+
+  @Autowired
+  protected UserService            userService;
 
   @Autowired
   protected EventRepository        eventRepository;
@@ -149,7 +153,7 @@ public class RepositoryServiceImpl implements RepositoryService {
     return issueDomain;
   }
 
-  private void handleScope(Repository repository, Issue issue, Integer scope) {
+  protected void handleScope(Repository repository, Issue issue, Integer scope) {
     if (scope != null) {
       Scope p = repositoryRepository.findScope(repository.getName(), scope);
       if (p != null) {

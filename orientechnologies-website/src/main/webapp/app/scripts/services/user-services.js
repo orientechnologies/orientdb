@@ -30,7 +30,13 @@ angular.module('webappApp').factory("User", function (Restangular, $q) {
       return null;
     },
     isMember: function (repo) {
-      return this.current.repositories.length > 0;
+      var found = false
+      this.current.repositories.forEach(function (e) {
+        if (e.organization.name == repo) {
+          found = true;
+        }
+      })
+      return found;
     },
     whoami: function () {
       var deferred = $q.defer();
