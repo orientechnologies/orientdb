@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.index;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
@@ -279,7 +280,9 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   private ODocument checkIndexedPropertiesOnCreation(final ODocument record, final Collection<OIndex<?>> indexes) {
     ODocument replaced = null;
 
-    final TreeMap<OIndex<?>, List<Object>> indexKeysMap = new TreeMap<OIndex<?>, List<Object>>();
+    TreeMap<OIndex<?>, List<Object>> indexKeysMap = lockedKeys.get();
+    if (indexKeysMap == null)
+      indexKeysMap = new TreeMap<OIndex<?>, List<Object>>();
 
     for (final OIndex<?> index : indexes) {
       final List<Object> keys = new ArrayList<Object>();
@@ -326,7 +329,9 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   }
 
   private void checkIndexedPropertiesOnUpdate(final ODocument record, final Collection<OIndex<?>> indexes) {
-    final TreeMap<OIndex<?>, List<Object>> indexKeysMap = new TreeMap<OIndex<?>, List<Object>>();
+    TreeMap<OIndex<?>, List<Object>> indexKeysMap = lockedKeys.get();
+    if (indexKeysMap == null)
+      indexKeysMap = new TreeMap<OIndex<?>, List<Object>>();
 
     final Set<String> dirtyFields = new HashSet<String>(Arrays.asList(record.getDirtyFields()));
     if (dirtyFields.isEmpty())
@@ -595,7 +600,11 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
     for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeyMap.entrySet()) {
       final OIndexInternal<?> index = entry.getKey().getInternal();
-      index.releaseKeysForUpdate(entry.getValue());
+      try {
+        index.releaseKeysForUpdate(entry.getValue());
+      } catch (RuntimeException e) {
+        OLogManager.instance().error(this, "Error during unlock of keys for index %s", e, index.getName());
+      }
     }
 
     lockedKeys.set(null);
