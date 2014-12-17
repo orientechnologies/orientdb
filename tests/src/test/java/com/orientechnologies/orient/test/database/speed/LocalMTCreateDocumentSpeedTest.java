@@ -20,7 +20,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 8/19/14
  */
 @Test

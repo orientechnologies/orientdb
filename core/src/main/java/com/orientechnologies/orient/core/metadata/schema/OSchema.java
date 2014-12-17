@@ -113,4 +113,14 @@ public interface OSchema {
   public OClusterSelectionFactory getClusterSelectionFactory();
 
   public OImmutableSchema makeSnapshot();
+
+  /**
+   * IMPORTANT! Only for internal usage.
+   */
+  boolean isFullCheckpointOnChange();
+
+  /**
+   * IMPORTANT! Only for internal usage.
+   */
+  void setFullCheckpointOnChange(boolean fullCheckpointOnChange);
 }

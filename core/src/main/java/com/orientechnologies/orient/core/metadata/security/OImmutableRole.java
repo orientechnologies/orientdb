@@ -10,15 +10,15 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 03/11/14
  */
 public class OImmutableRole implements OSecurityRole {
-  private static final long serialVersionUID = 1L;
+  private static final long                       serialVersionUID = 1L;
   private final ALLOW_MODES                       mode;
   private final OSecurityRole                     parentRole;
 
-  private final Map<ORule.ResourceGeneric, ORule> rules = new HashMap<ORule.ResourceGeneric, ORule>();
+  private final Map<ORule.ResourceGeneric, ORule> rules            = new HashMap<ORule.ResourceGeneric, ORule>();
   private final String                            name;
   private final ORID                              rid;
   private final ORole                             role;
@@ -34,7 +34,7 @@ public class OImmutableRole implements OSecurityRole {
     this.rid = role.getIdentity().getIdentity();
     this.role = role;
 
-    for (ORule rule : role.getRules())
+    for (ORule rule : role.getRuleSet())
       rules.put(rule.getResourceGeneric(), rule);
 
   }
@@ -78,46 +78,46 @@ public class OImmutableRole implements OSecurityRole {
     throw new UnsupportedOperationException();
   }
 
-	@Deprecated
-	@Override
-	public boolean allow(String iResource, int iCRUDOperation) {
-		final String specificResource = ORule.mapLegacyResourceToSpecificResource(iResource);
-		final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
+  @Deprecated
+  @Override
+  public boolean allow(String iResource, int iCRUDOperation) {
+    final String specificResource = ORule.mapLegacyResourceToSpecificResource(iResource);
+    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
 
-		if (specificResource == null || specificResource.equals("*"))
-			return allow(resourceGeneric, null, iCRUDOperation);
+    if (specificResource == null || specificResource.equals("*"))
+      return allow(resourceGeneric, null, iCRUDOperation);
 
-		return allow(resourceGeneric, specificResource, iCRUDOperation);
-	}
+    return allow(resourceGeneric, specificResource, iCRUDOperation);
+  }
 
-	@Deprecated
-	@Override
-	public boolean hasRule(String iResource) {
-		final String specificResource = ORule.mapLegacyResourceToSpecificResource(iResource);
-		final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
+  @Deprecated
+  @Override
+  public boolean hasRule(String iResource) {
+    final String specificResource = ORule.mapLegacyResourceToSpecificResource(iResource);
+    final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
 
-		if (specificResource == null || specificResource.equals("*"))
-			return hasRule(resourceGeneric, null);
+    if (specificResource == null || specificResource.equals("*"))
+      return hasRule(resourceGeneric, null);
 
-		return hasRule(resourceGeneric, specificResource);
-	}
+    return hasRule(resourceGeneric, specificResource);
+  }
 
-	@Override
-	public OSecurityRole addRule(String iResource, int iOperation) {
-		throw new UnsupportedOperationException();
-	}
+  @Override
+  public OSecurityRole addRule(String iResource, int iOperation) {
+    throw new UnsupportedOperationException();
+  }
 
-	@Override
-	public OSecurityRole grant(String iResource, int iOperation) {
-		throw new UnsupportedOperationException();
-	}
+  @Override
+  public OSecurityRole grant(String iResource, int iOperation) {
+    throw new UnsupportedOperationException();
+  }
 
-	@Override
-	public OSecurityRole revoke(String iResource, int iOperation) {
-		throw new UnsupportedOperationException();
-	}
+  @Override
+  public OSecurityRole revoke(String iResource, int iOperation) {
+    throw new UnsupportedOperationException();
+  }
 
-	public String getName() {
+  public String getName() {
     return name;
   }
 
@@ -137,7 +137,7 @@ public class OImmutableRole implements OSecurityRole {
     throw new UnsupportedOperationException();
   }
 
-  public Set<ORule> getRules() {
+  public Set<ORule> getRuleSet() {
     return new HashSet<ORule>(rules.values());
   }
 

@@ -19,6 +19,17 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import java.io.ByteArrayOutputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.lang.ref.WeakReference;
+import java.text.ParseException;
+import java.util.*;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -37,6 +48,8 @@ import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
+import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -50,17 +63,6 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
-
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.lang.ref.WeakReference;
-import java.text.ParseException;
-import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -156,7 +158,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     final ODatabaseDocumentInternal database = getDatabaseInternal();
     if (_recordId.clusterId > -1 && database.getStorageVersions().classesAreDetectedByClusterId()) {
-      final OSchema schema = database.getMetadata().getImmutableSchemaSnapshot();
+      final OSchema schema = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
       final OClass cls = schema.getClassByClusterId(_recordId.clusterId);
       if (cls != null && !cls.getName().equals(iClassName))
         throw new IllegalArgumentException("Cluster id does not correspond class name should be " + iClassName + " but found "
@@ -561,7 +563,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   public ORecord placeholder() {
     final ODocument cloned = new ODocument();
     cloned._source = null;
-    cloned._recordId = _recordId.copy();
+    cloned._recordId = _recordId;
     cloned._status = STATUS.NOT_LOADED;
     cloned._dirty = false;
     cloned._contentChanged = false;
@@ -1608,6 +1610,26 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     return _fieldValues == null || _fieldValues.isEmpty();
   }
 
+  @Override
+  public ODocument fromJSON(final String iSource, final String iOptions) {
+    return (ODocument) super.fromJSON(iSource, iOptions);
+  }
+
+  @Override
+  public ODocument fromJSON(final String iSource) {
+    return (ODocument) super.fromJSON(iSource);
+  }
+
+  @Override
+  public ODocument fromJSON(final InputStream iContentResult) throws IOException {
+    return (ODocument) super.fromJSON(iContentResult);
+  }
+
+  @Override
+  public ODocument fromJSON(final String iSource, final boolean needReload) {
+    return (ODocument) super.fromJSON(iSource, needReload);
+  }
+
   public boolean isEmbedded() {
     return _owners != null && !_owners.isEmpty();
   }
@@ -1779,7 +1801,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       return;
     }
 
-    final OClass _clazz = getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(iClassName);
+    final OClass _clazz = ((OMetadataInternal) getDatabase().getMetadata()).getImmutableSchemaSnapshot().getClass(iClassName);
     if (_clazz != null) {
       _className = _clazz.getName();
       convertFieldsToClass(_clazz);
@@ -1800,14 +1822,14 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     return null;
   }
 
-  public OClass getImmutableSchemaClass() {
+  protected OClass getImmutableSchemaClass() {
     if (_className == null)
       fetchClassName();
 
     final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
 
     if (databaseRecord != null) {
-      final OSchema immutableSchema = databaseRecord.getMetadata().getImmutableSchemaSnapshot();
+      final OSchema immutableSchema = ((OMetadataInternal) databaseRecord.getMetadata()).getImmutableSchemaSnapshot();
       if (immutableSchema == null)
         return null;
 
@@ -1832,23 +1854,23 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     return _className;
   }
 
-  public void setClassName(final String iClassName) {
+  public void setClassName(final String className) {
     _immutableClazz = null;
     _immutableSchemaVersion = -1;
 
-    if (iClassName == null) {
+    if (className == null) {
       _className = null;
       return;
     }
 
-    OClass _clazz = getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(_className);
-    if (_clazz != null)
-      _className = _clazz.getName();
+    OMetadataInternal metadata = (OMetadataInternal) getDatabase().getMetadata();
+    OClass clazz = metadata.getImmutableSchemaSnapshot().getClass(className);
+    if (clazz != null)
+      _className = clazz.getName();
 
-    _clazz = getDatabase().getMetadata().getSchema().getOrCreateClass(iClassName);
-    _className = _clazz.getName();
-    convertFieldsToClass(_clazz);
-
+    clazz = metadata.getSchema().getOrCreateClass(className);
+    _className = clazz.getName();
+    convertFieldsToClass(clazz);
   }
 
   /**
@@ -2135,7 +2157,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         checkForLoading();
         checkForFields("@class");
       } else {
-        final OSchema schema = database.getMetadata().getImmutableSchemaSnapshot();
+        final OSchema schema = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
         if (schema != null) {
           OClass _clazz = schema.getClassByClusterId(_recordId.clusterId);
           if (_clazz != null)

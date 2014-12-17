@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.*;
@@ -83,7 +84,7 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
 
         className = temp.substring("CLASS:".length());
 
-        if (!database.getMetadata().getImmutableSchemaSnapshot().existsClass(className))
+        if (!((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().existsClass(className))
           throw new OCommandSQLParsingException("Class " + className + " was not found");
 
       } else if (temp.equals(KEYWORD_SET)) {

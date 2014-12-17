@@ -23,7 +23,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 
 /**
- * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
+ * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
  * @since 18.01.12
  */
 @Test

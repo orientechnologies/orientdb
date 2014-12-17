@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.db.*;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
@@ -172,10 +172,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
 
       final OStorage dbStorage = iDatabase.getStorage();
 
-      if (iDatabase instanceof ODatabase<?> && dbStorage instanceof OStorageEmbedded) {
+      if (iDatabase instanceof ODatabase<?> && dbStorage instanceof OAbstractPaginatedStorage) {
         ODistributedStorage storage = storages.get(iDatabase.getURL());
         if (storage == null) {
-          storage = new ODistributedStorage(serverInstance, (OStorageEmbedded) dbStorage);
+          storage = new ODistributedStorage(serverInstance, (OAbstractPaginatedStorage) dbStorage);
           final ODistributedStorage oldStorage = storages.putIfAbsent(iDatabase.getURL(), storage);
           if (oldStorage != null)
             storage = oldStorage;

@@ -20,15 +20,6 @@
 
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
-
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.exception.OException;
@@ -45,6 +36,17 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.NavigableMap;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
 
 /**
  * @author Andrey Lomakin
@@ -406,6 +408,9 @@ public class OReadWriteDiskCache implements ODiskCache {
 
   @Override
   public void closeFile(long fileId, boolean flush) throws IOException {
+		if (!isOpen(fileId))
+			return;
+
     Lock fileLock;
     cacheLock.acquireReadLock();
     try {
@@ -414,6 +419,8 @@ public class OReadWriteDiskCache implements ODiskCache {
         writeCache.close(fileId, flush);
 
         final Set<Long> pageIndexes = filePages.get(fileId);
+				if (pageIndexes == null)
+					return;
 
         for (Long pageIndex : pageIndexes) {
           OCacheEntry cacheEntry = get(fileId, pageIndex, true);
@@ -593,6 +600,8 @@ public class OReadWriteDiskCache implements ODiskCache {
     try {
       clear();
       writeCache.close();
+
+      deinitProfiler();
     } finally {
       cacheLock.releaseWriteLock();
     }
@@ -708,8 +717,6 @@ public class OReadWriteDiskCache implements ODiskCache {
   }
 
   private void removeColdPagesWithCacheLock() {
-    System.out.println("lock pages removal !!!");
-
     while (am.size() + a1in.size() > maxSize) {
       if (a1in.size() > K_IN) {
         OCacheEntry removedFromAInEntry = a1in.removeLRU();
@@ -883,6 +890,8 @@ public class OReadWriteDiskCache implements ODiskCache {
       writeCache.delete();
 
       clearCacheContent();
+
+      deinitProfiler();
     } finally {
       cacheLock.releaseWriteLock();
     }
@@ -892,12 +901,12 @@ public class OReadWriteDiskCache implements ODiskCache {
     return maxSize;
   }
 
-	@Override
-	public long getUsedMemory() {
-		return (am.size() + a1in.size() + writeCache.getAllocatedPages()) * (2 * ODurablePage.PAGE_PADDING + pageSize);
-	}
+  @Override
+  public long getUsedMemory() {
+    return (am.size() + a1in.size() + writeCache.getAllocatedPages()) * (2 * ODurablePage.PAGE_PADDING + pageSize);
+  }
 
-	private OCacheEntry get(long fileId, long pageIndex, boolean useOutQueue) {
+  private OCacheEntry get(long fileId, long pageIndex, boolean useOutQueue) {
     OCacheEntry cacheEntry = am.get(fileId, pageIndex);
 
     if (cacheEntry != null)
@@ -995,31 +1004,35 @@ public class OReadWriteDiskCache implements ODiskCache {
     }
   }
 
-  public void initProfiler() {
-    if (storageName != null) {
-      final OProfilerMBean profiler = Orient.instance().getProfiler();
+  private void initProfiler() {
+    final OProfilerMBean profiler = Orient.instance().getProfiler();
 
-      METRIC_HITS = profiler.getDatabaseMetric(storageName, "diskCache.hits");
-      METRIC_HITS_METADATA = profiler.getDatabaseMetric(null, "diskCache.hits");
-      METRIC_MISSED = profiler.getDatabaseMetric(storageName, "diskCache.missed");
-      METRIC_MISSED_METADATA = profiler.getDatabaseMetric(null, "diskCache.missed");
+    METRIC_HITS = profiler.getDatabaseMetric(storageName, "diskCache.hits");
+    METRIC_HITS_METADATA = profiler.getDatabaseMetric(null, "diskCache.hits");
+    METRIC_MISSED = profiler.getDatabaseMetric(storageName, "diskCache.missed");
+    METRIC_MISSED_METADATA = profiler.getDatabaseMetric(null, "diskCache.missed");
 
-      profiler.registerHookValue(profiler.getDatabaseMetric(storageName, "diskCache.totalMemory"),
-          "Total memory used by Disk Cache", METRIC_TYPE.SIZE, new OProfilerHookValue() {
-            @Override
-            public Object getValue() {
-              return (am.size() + a1in.size()) * pageSize;
-            }
-          }, profiler.getDatabaseMetric(null, "diskCache.totalMemory"));
+    profiler.registerHookValue(profiler.getDatabaseMetric(storageName, "diskCache.totalMemory"), "Total memory used by Disk Cache",
+        METRIC_TYPE.SIZE, new OProfilerHookValue() {
+          @Override
+          public Object getValue() {
+            return (am.size() + a1in.size()) * pageSize;
+          }
+        }, profiler.getDatabaseMetric(null, "diskCache.totalMemory"));
 
-      profiler.registerHookValue(profiler.getDatabaseMetric(storageName, "diskCache.maxMemory"),
-          "Maximum memory used by Disk Cache", METRIC_TYPE.SIZE, new OProfilerHookValue() {
-            @Override
-            public Object getValue() {
-              return maxSize * pageSize;
-            }
-          }, profiler.getDatabaseMetric(null, "diskCache.maxMemory"));
-    }
+    profiler.registerHookValue(profiler.getDatabaseMetric(storageName, "diskCache.maxMemory"), "Maximum memory used by Disk Cache",
+        METRIC_TYPE.SIZE, new OProfilerHookValue() {
+          @Override
+          public Object getValue() {
+            return maxSize * pageSize;
+          }
+        }, profiler.getDatabaseMetric(null, "diskCache.maxMemory"));
+  }
+
+  private void deinitProfiler() {
+    final OProfilerMBean profiler = Orient.instance().getProfiler();
+    profiler.unregisterHookValue(profiler.getDatabaseMetric(storageName, "diskCache.totalMemory"));
+    profiler.unregisterHookValue(profiler.getDatabaseMetric(storageName, "diskCache.maxMemory"));
   }
 
   private static final class PageKey {

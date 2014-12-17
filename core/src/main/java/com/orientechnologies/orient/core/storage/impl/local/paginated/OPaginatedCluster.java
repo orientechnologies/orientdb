@@ -52,7 +52,7 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 10/7/13
  */
 public class OPaginatedCluster extends ODurableComponent implements OCluster {
@@ -923,11 +923,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
   }
 
   @Override
-  public boolean addPhysicalPosition(OPhysicalPosition iPPosition) throws IOException {
-    throw new UnsupportedOperationException("addPhysicalPosition");
-  }
-
-  @Override
   public OPhysicalPosition getPhysicalPosition(OPhysicalPosition position) throws IOException {
     acquireSharedLock();
     try {
@@ -968,26 +963,6 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
     } finally {
       releaseSharedLock();
     }
-  }
-
-  @Override
-  public void updateDataSegmentPosition(long iPosition, int iDataSegmentId, long iDataPosition) throws IOException {
-    throw new UnsupportedOperationException("updateDataSegmentPosition");
-  }
-
-  @Override
-  public void removePhysicalPosition(long iPosition) throws IOException {
-    throw new UnsupportedOperationException("updateDataSegmentPosition");
-  }
-
-  @Override
-  public void updateRecordType(long iPosition, byte iRecordType) throws IOException {
-    throw new UnsupportedOperationException("updateRecordType");
-  }
-
-  @Override
-  public void updateVersion(long iPosition, ORecordVersion iVersion) throws IOException {
-    throw new UnsupportedOperationException("updateVersion");
   }
 
   @Override

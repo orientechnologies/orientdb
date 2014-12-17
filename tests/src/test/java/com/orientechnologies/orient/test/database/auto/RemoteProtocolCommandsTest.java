@@ -1,16 +1,5 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import static org.testng.AssertJUnit.assertTrue;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
-
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
@@ -20,9 +9,18 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.Arrays;
+import java.util.Map;
+
+import static org.testng.AssertJUnit.assertTrue;
 
 /**
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 @Test(groups = "db")
 public class RemoteProtocolCommandsTest extends DocumentDBBaseTest {
@@ -33,19 +31,28 @@ public class RemoteProtocolCommandsTest extends DocumentDBBaseTest {
   }
 
   @Test
+  public void testConnect() throws Exception {
+    final OServerAdmin admin = new OServerAdmin("remote:localhost:2424").connect("root", ODatabaseHelper.getServerRootPassword());
+    admin.close();
+  }
+
+  @Test
   public void testListDatabasesMemoryDB() throws Exception {
     final OServerAdmin admin = new OServerAdmin("remote:localhost").connect("root", ODatabaseHelper.getServerRootPassword());
+    try {
+      final String plocalDatabaseName = "plocalTestListDatabasesMemoryDB" + Math.random();
+      admin.createDatabase(plocalDatabaseName, "graph", "plocal");
 
-    final String plocalDatabaseName = "plocalTestListDatabasesMemoryDB" + Math.random();
-    admin.createDatabase(plocalDatabaseName, "graph", "plocal");
+      final String memoryDatabaseName = "memoryTestListDatabasesMemoryDB" + Math.random();
+      admin.createDatabase(memoryDatabaseName, "graph", "memory");
 
-    final String memoryDatabaseName = "memoryTestListDatabasesMemoryDB" + Math.random();
-    admin.createDatabase(memoryDatabaseName, "graph", "memory");
+      final Map<String, String> list = admin.listDatabases();
 
-    final Map<String, String> list = admin.listDatabases();
-
-    Assert.assertTrue(list.containsKey(plocalDatabaseName), "Check plocal db is in list");
-    Assert.assertTrue(list.containsKey(memoryDatabaseName), "Check memory db is in list");
+      Assert.assertTrue(list.containsKey(plocalDatabaseName), "Check plocal db is in list");
+      Assert.assertTrue(list.containsKey(memoryDatabaseName), "Check memory db is in list");
+    } finally {
+      admin.close();
+    }
   }
 
   @Test

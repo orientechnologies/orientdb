@@ -30,9 +30,11 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -178,7 +180,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
     // CHECK FOR ORESTRICTED
     OMetadata metaData = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata();
     if (metaData != null) {
-      final Set<OClass> classes = metaData.getImmutableSchemaSnapshot().getClassesRelyOnCluster(iClusterName);
+      final Set<OClass> classes = ((OMetadataInternal)metaData).getImmutableSchemaSnapshot().getClassesRelyOnCluster(iClusterName);
       for (OClass c : classes) {
         if (c.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME))
           throw new OSecurityException("Class " + c.getName()
@@ -191,6 +193,11 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
   @Override
   public boolean isDistributed() {
     return false;
+  }
+
+  @Override
+  public boolean isAssigningClusterIds() {
+    return true;
   }
 
   @Override
@@ -214,7 +221,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 
       final int remainingUsers = getUsers() > 0 ? removeUser() : 0;
 
-      return force || (!(this instanceof OStorageEmbedded) && remainingUsers == 0);
+      return force || (!(this instanceof OAbstractPaginatedStorage) && remainingUsers == 0);
     } finally {
       lock.releaseSharedLock();
     }

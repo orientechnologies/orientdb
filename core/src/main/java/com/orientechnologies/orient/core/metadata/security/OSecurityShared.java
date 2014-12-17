@@ -32,12 +32,14 @@ import com.orientechnologies.orient.core.db.record.OClassTrigger;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.ONullOutputListener;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser.STATUSES;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -153,7 +155,6 @@ public class OSecurityShared implements OSecurity, OCloseable {
 
   public OUser authenticate(final String iUserName, final String iUserPassword) {
     final String dbName = getDatabase().getName();
-
     final OUser user = getUser(iUserName);
     if (user == null)
       throw new OSecurityAccessException(dbName, "User or password not valid for database: '" + dbName + "'");
@@ -177,8 +178,39 @@ public class OSecurityShared implements OSecurity, OCloseable {
     return user;
   }
 
+  // Token MUST be validated before being passed to this method.
+  public OUser authenticate(final OToken authToken) {
+    final String dbName = getDatabase().getName();
+    if (authToken.getIsValid() != true) {
+      throw new OSecurityAccessException(dbName, "Token not valid");
+    }
+
+    OUser user = authToken.getUser(getDatabase());
+    if (user == null && authToken.getUserName() != null) {
+      // Token handler may not support returning an OUser so let's get username (subject) and query:
+      user = getUser(authToken.getUserName(), true);
+    }
+
+    if (user == null) {
+      throw new OSecurityAccessException(dbName, "Authentication failed, could not load user from token");
+    }
+    if (user.getAccountStatus() != STATUSES.ACTIVE)
+      throw new OSecurityAccessException(dbName, "User '" + user.getName() + "' is not active");
+
+    return user;
+  }
+
   public OUser getUser(final String iUserName) {
     return getUser(iUserName, true);
+  }
+
+  public OUser getUser(final ORID iRecordId) {
+    ODocument result;
+    result = getDatabase().load(iRecordId, "roles:1");
+    if (!result.getClassName().equals(OUser.CLASS_NAME)) {
+      result = null;
+    }
+    return new OUser(result);
   }
 
   public OUser createUser(final String iUserName, final String iUserPassword, final String... iRoles) {
@@ -330,7 +362,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
       roleClass.createProperty("mode", OType.BYTE);
 
     if (!roleClass.existsProperty("rules"))
-      roleClass.createProperty("rules", OType.EMBEDDEDSET);
+      roleClass.createProperty("rules", OType.EMBEDDEDMAP, OType.BYTE);
     if (!roleClass.existsProperty("inheritedRole"))
       roleClass.createProperty("inheritedRole", OType.LINK, roleClass);
 
@@ -408,7 +440,7 @@ public class OSecurityShared implements OSecurity, OCloseable {
       final OClass roleClass = getDatabase().getMetadata().getSchema().getClass("ORole");
 
       final OProperty rules = roleClass.getProperty("rules");
-      if (rules != null && !OType.EMBEDDEDSET.equals(rules.getType())) {
+      if (rules != null && !OType.EMBEDDEDMAP.equals(rules.getType())) {
         roleClass.dropProperty("rules");
       }
 

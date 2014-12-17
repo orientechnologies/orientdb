@@ -67,6 +67,7 @@ import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -75,8 +76,8 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.version.ORecordVersion;
@@ -99,7 +100,7 @@ import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
 public class ODistributedStorage implements OStorage, OFreezableStorage, OAutoshardedStorage {
   protected final OServer                                                   serverInstance;
   protected final ODistributedServerManager                                 dManager;
-  protected final OStorageEmbedded                                          wrapped;
+  protected final OAbstractPaginatedStorage                                 wrapped;
 
   protected final TimerTask                                                 purgeDeletedRecordsTask;
   protected final ConcurrentHashMap<ORecordId, OPair<Long, ORecordVersion>> deletedRecords  = new ConcurrentHashMap<ORecordId, OPair<Long, ORecordVersion>>();
@@ -109,7 +110,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   protected final Thread                                                    asynchWorker;
   protected volatile boolean                                                running         = true;
 
-  public ODistributedStorage(final OServer iServer, final OStorageEmbedded wrapped) {
+  public ODistributedStorage(final OServer iServer, final OAbstractPaginatedStorage wrapped) {
     this.serverInstance = iServer;
     this.dManager = iServer.getDistributedManager();
     this.wrapped = wrapped;
@@ -186,6 +187,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   @Override
   public boolean isDistributed() {
+    return true;
+  }
+
+  @Override
+  public boolean isAssigningClusterIds() {
     return true;
   }
 
@@ -455,7 +461,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       });
 
       // ASYNCHRONOUSLY REPLICATE IT TO ALL THE OTHER NODES
-      nodes.remove(getName());
+      nodes.remove(dManager.getLocalNodeName());
       if (!nodes.isEmpty()) {
         asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes,
             new OCreateRecordTask(iRecordId, iContent, iRecordVersion, iRecordType)));
@@ -579,7 +585,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         }
       });
 
-      nodes.remove(0);
+      nodes.remove(dManager.getLocalNodeName());
       if (!nodes.isEmpty()) {
         // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
         final OStorageOperationResult<ORawBuffer> previousContent = readRecord(iRecordId, null, false, null, false,
@@ -650,7 +656,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         }
       });
 
-      nodes.remove(0);
+      nodes.remove(dManager.getLocalNodeName());
       if (!nodes.isEmpty())
         asynchronousExecution(new OAsynchDistributedOperation(getName(), Collections.singleton(clusterName), nodes,
             new ODeleteRecordTask(iRecordId, iVersion)));
@@ -925,7 +931,23 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   @Override
   public int addCluster(final String iClusterName, boolean forceListBased, final Object... iParameters) {
-    return wrapped.addCluster(iClusterName, false, iParameters);
+    final int clId;
+
+    clId = wrapped.addCluster(iClusterName, false, iParameters);
+
+    if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.DEFAULT) {
+
+      final StringBuilder cmd = new StringBuilder("create cluster ");
+      cmd.append(iClusterName);
+
+      // EXECUTE THIS OUTSIDE LCK TO AVOID DEADLOCKS
+      OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
+      commandSQL.addExcludedNode(getNodeId());
+
+      command(commandSQL);
+    }
+
+    return clId;
   }
 
   @Override

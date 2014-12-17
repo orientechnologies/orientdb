@@ -44,7 +44,7 @@ import org.openjdk.jmh.annotations.Threads;
  *
  * To run this benchmark run {@link org.openjdk.jmh.Main}.
  *
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 @State(Scope.Thread)
 @BenchmarkMode(Mode.Throughput)

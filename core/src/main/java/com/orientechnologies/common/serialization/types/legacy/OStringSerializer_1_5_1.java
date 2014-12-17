@@ -33,7 +33,7 @@ import java.nio.ByteOrder;
  * Legacy serializer for {@link String} type. Keep it to support compatibility with 1.5.1.
  * 
  * 
- * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
+ * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
  * @since 18.01.12
  */
 public class OStringSerializer_1_5_1 implements OBinarySerializer<String> {

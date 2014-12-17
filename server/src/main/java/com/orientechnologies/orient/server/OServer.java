@@ -19,12 +19,19 @@
  */
 package com.orientechnologies.orient.server;
 
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.ReentrantLock;
@@ -52,22 +59,35 @@ import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.memory.ODirectMemoryStorage;
-import com.orientechnologies.orient.server.config.*;
+import com.orientechnologies.orient.server.config.OServerConfiguration;
+import com.orientechnologies.orient.server.config.OServerConfigurationLoaderXml;
+import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
+import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
+import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
+import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfiguration;
+import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.config.OServerSocketFactoryConfiguration;
+import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
+import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.OServerSocketFactory;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
@@ -206,46 +226,61 @@ public class OServer {
 
   @SuppressWarnings("unchecked")
   public OServer activate() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
-    for (OServerLifecycleListener l : lifecycleListeners)
-      l.onBeforeActivate();
+    try {
+      for (OServerLifecycleListener l : lifecycleListeners)
+        l.onBeforeActivate();
 
-    // REGISTER/CREATE SOCKET FACTORIES
-    if (configuration.network.sockets != null) {
-      for (OServerSocketFactoryConfiguration f : configuration.network.sockets) {
-        Class<? extends OServerSocketFactory> fClass = (Class<? extends OServerSocketFactory>) Class.forName(f.implementation);
-        OServerSocketFactory factory = fClass.newInstance();
-        try {
-          factory.config(f.name, f.parameters);
-          networkSocketFactories.put(f.name, factory);
-        } catch (OConfigurationException e) {
-          OLogManager.instance().error(this, "Error creating socket factory", e);
+      // REGISTER/CREATE SOCKET FACTORIES
+      if (configuration.network.sockets != null) {
+        for (OServerSocketFactoryConfiguration f : configuration.network.sockets) {
+          Class<? extends OServerSocketFactory> fClass = (Class<? extends OServerSocketFactory>) Class.forName(f.implementation);
+          OServerSocketFactory factory = fClass.newInstance();
+          try {
+            factory.config(f.name, f.parameters);
+            networkSocketFactories.put(f.name, factory);
+          } catch (OConfigurationException e) {
+            OLogManager.instance().error(this, "Error creating socket factory", e);
+          }
         }
       }
+
+      // REGISTER PROTOCOLS
+      for (OServerNetworkProtocolConfiguration p : configuration.network.protocols)
+        networkProtocols.put(p.name, (Class<? extends ONetworkProtocol>) Class.forName(p.implementation));
+
+      // STARTUP LISTENERS
+      for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
+        networkListeners.add(new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange,
+            l.protocol, networkProtocols.get(l.protocol), l.parameters, l.commands));
+
+      registerPlugins();
+
+      for (OServerLifecycleListener l : lifecycleListeners)
+        l.onAfterActivate();
+
+      try {
+        loadStorages();
+        loadUsers();
+      } catch (IOException e) {
+        OLogManager.instance().error(this, "Error on reading server configuration", e, OConfigurationException.class);
+      }
+
+      OLogManager.instance().info(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " is active.");
+    } catch (ClassNotFoundException e) {
+      running = false;
+      throw e;
+    } catch (InstantiationException e) {
+      running = false;
+      throw e;
+    } catch (IllegalAccessException e) {
+      running = false;
+      throw e;
+    } catch (RuntimeException e) {
+      running = false;
+      throw e;
+    } finally {
+      startupLatch.countDown();
     }
-
-    // REGISTER PROTOCOLS
-    for (OServerNetworkProtocolConfiguration p : configuration.network.protocols)
-      networkProtocols.put(p.name, (Class<? extends ONetworkProtocol>) Class.forName(p.implementation));
-
-    // STARTUP LISTENERS
-    for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
-      networkListeners.add(new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange,
-          l.protocol, networkProtocols.get(l.protocol), l.parameters, l.commands));
-
-    registerPlugins();
-
-    for (OServerLifecycleListener l : lifecycleListeners)
-      l.onAfterActivate();
-
-    try {
-      loadStorages();
-      loadUsers();
-    } catch (IOException e) {
-      OLogManager.instance().error(this, "Error on reading server configuration", e, OConfigurationException.class);
-    }
-
-    OLogManager.instance().info(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " is active.");
-    startupLatch.countDown();
 
     return this;
   }
@@ -364,7 +399,8 @@ public class OServer {
     for (OStorage storage : Orient.instance().getStorages()) {
       final String storageUrl = storage.getURL();
       // TEST IT'S OF CURRENT SERVER INSTANCE BY CHECKING THE PATH
-      if (storage.exists() && !storages.containsValue(storageUrl) && isStorageOfCurrentServerInstance(storage))
+      if (storage instanceof OAbstractPaginatedStorage && storage.exists() && !storages.containsValue(storageUrl)
+          && isStorageOfCurrentServerInstance(storage))
         storages.put(OIOUtils.getDatabaseNameFromPath(storage.getName()), storageUrl);
     }
 
@@ -478,6 +514,8 @@ public class OServer {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
+    if (!running)
+      throw new ODatabaseException("Error on plugin lookup the server didn't start correcty.");
 
     for (OServerPluginInfo h : getPlugins())
       if (h.getInstance() != null && h.getInstance().getClass().equals(iPluginClass))
@@ -493,6 +531,8 @@ public class OServer {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
+    if (!running)
+      throw new ODatabaseException("Error on plugin lookup the server didn't start correcty.");
 
     final OServerPluginInfo p = pluginManager.getPluginByName(iName);
     if (p != null)
@@ -543,25 +583,45 @@ public class OServer {
     return this;
   }
 
+  public ODatabase<?> openDatabase(final String iDbType, final String iDbUrl, final OToken iToken) {
+    final String path = getStoragePath(iDbUrl);
+
+    final ODatabaseInternal<?> database = Orient.instance().getDatabaseFactory().createDatabase(iDbType, path);
+
+    if (database.isClosed())
+      if (database.getStorage() instanceof ODirectMemoryStorage)
+        database.create();
+      else {
+        database.open(iToken);
+      }
+
+    return database;
+  }
+
   public ODatabase<?> openDatabase(final String iDbType, final String iDbUrl, final String user, final String password) {
+    return openDatabase(iDbType, iDbUrl, user, password, null);
+  }
+
+  public ODatabase<?> openDatabase(final String iDbType, final String iDbUrl, final String user, final String password,
+      ONetworkProtocolData data) {
     final String path = getStoragePath(iDbUrl);
 
     final ODatabaseInternal<?> database = Orient.instance().getDatabaseFactory().createDatabase(iDbType, path);
 
     final OStorage storage = database.getStorage();
     if (database.isClosed()) {
-      if (database.getStorage() instanceof ODirectMemoryStorage) {
-        if (!storage.exists())
-          try {
-            database.create();
-          } catch (OStorageException e) {
-          }
-
-        if (database.isClosed())
-          database.open(user, password);
+      if (database.getStorage() instanceof ODirectMemoryStorage && !storage.exists()) {
+        try {
+          database.create();
+        } catch (OStorageException e) {
+        }
       } else {
         try {
           database.open(user, password);
+          if (data != null) {
+            data.serverUser = false;
+            data.serverUsername = null;
+          }
         } catch (OSecurityException e) {
           // TRY WITH SERVER'S USER
           try {
@@ -574,6 +634,10 @@ public class OServer {
           database.resetInitialization();
           database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
           database.open(user, password);
+          if (data != null) {
+            data.serverUser = true;
+            data.serverUsername = user;
+          }
         }
       }
     }

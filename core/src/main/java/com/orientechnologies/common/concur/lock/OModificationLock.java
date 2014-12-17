@@ -31,7 +31,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * thread, but then allowed from other thread.
  * 
  * 
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 15.06.12
  */
 public class OModificationLock {

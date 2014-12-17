@@ -34,11 +34,16 @@ import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.ORestrictedAccessHook;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OSecurity;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
@@ -159,7 +164,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
         || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LET) || additionalStatement.equals(KEYWORD_LOCK)) {
       query = new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + additionalStatement + " "
           + parserText.substring(parserGetCurrentPosition()), this);
-      isUpsertAllowed = (getDatabase().getMetadata().getImmutableSchemaSnapshot().getClass(subjectName) != null);
+      isUpsertAllowed = (((OMetadataInternal)getDatabase().getMetadata()).getImmutableSchemaSnapshot().getClass(subjectName) != null);
     } else if (!additionalStatement.isEmpty())
       throwSyntaxErrorException("Invalid keyword " + additionalStatement);
     else
@@ -348,8 +353,19 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     boolean updated = false;
     if (content != null) {
       // REPLACE ALL THE CONTENT
+
+      final OClass restricted = getDatabase().getMetadata().getSchema().getClass(OSecurity.RESTRICTED_CLASSNAME);
+      final ODocument restrictedFields = new ODocument();
+      if (restricted != null) {
+        for (OProperty prop : restricted.properties()) {
+          restrictedFields.field(prop.getName(), record.field(prop.getName()));
+        }
+      }
+
       record.clear();
-      record.merge(content, false, false);
+
+      record.merge(restrictedFields, false, false);
+      record.merge(content, true, false);
       updated = true;
     }
     return updated;
@@ -403,8 +419,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       ORidBag bag = null;
       if (!record.containsField(entry.getKey())) {
         // GET THE TYPE IF ANY
-        if (record.getImmutableSchemaClass() != null) {
-          OProperty prop = record.getImmutableSchemaClass().getProperty(entry.getKey());
+        if (ODocumentInternal.getImmutableSchemaClass(record) != null) {
+          OProperty prop = ODocumentInternal.getImmutableSchemaClass(record).getProperty(entry.getKey());
           if (prop != null && prop.getType() == OType.LINKSET)
             // SET TYPE
             coll = new HashSet<Object>();
@@ -465,8 +481,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
         Object fieldValue = record.field(entry.getKey());
 
         if (fieldValue == null) {
-          if (record.getImmutableSchemaClass() != null) {
-            final OProperty property = record.getImmutableSchemaClass().getProperty(entry.getKey());
+          if (ODocumentInternal.getImmutableSchemaClass(record) != null) {
+            final OProperty property = ODocumentInternal.getImmutableSchemaClass(record).getProperty(entry.getKey());
             if (property != null
                 && (property.getType() != null && (!property.getType().equals(OType.EMBEDDEDMAP) && !property.getType().equals(
                     OType.LINKMAP)))) {

@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.*;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -37,13 +33,24 @@ import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstract {
   public static final String                           NAME             = "ORecordDocument2csv";
@@ -154,7 +161,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
           boolean setFieldType = false;
 
           // SEARCH FOR A CONFIGURED PROPERTY
-          prop = record.getImmutableSchemaClass() != null ? record.getImmutableSchemaClass().getProperty(fieldName) : null;
+          prop = ODocumentInternal.getImmutableSchemaClass(record) != null ? ODocumentInternal.getImmutableSchemaClass(record)
+              .getProperty(fieldName) : null;
           if (prop != null && prop.getType() != OType.ANY) {
             // RECOGNIZED PROPERTY
             type = prop.getType();
@@ -272,7 +280,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
   @Override
   protected StringBuilder toString(ORecord iRecord, final StringBuilder iOutput, final String iFormat,
-      OUserObject2RecordHandler iObjHandler, final Set<ODocument> iMarshalledRecords, final boolean iOnlyDelta,
+      OUserObject2RecordHandler iObjHandler, final Map<ODocument, Boolean> iMarshalledRecords, final boolean iOnlyDelta,
       final boolean autoDetectCollectionType) {
     if (iRecord == null)
       throw new OSerializationException("Expected a record but was null");
@@ -282,17 +290,17 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
     final ODocument record = (ODocument) iRecord;
 
-    // CHECK IF THE RECORD IS PENDING TO BE MARSHALLED
-    if (iMarshalledRecords != null)
-      if (iMarshalledRecords.contains(record)) {
-        return iOutput;
-      } else
-        iMarshalledRecords.add(record);
-
-    if (!iOnlyDelta && record.getImmutableSchemaClass() != null) {
-      iOutput.append(record.getImmutableSchemaClass().getStreamableName());
+    if (!iOnlyDelta && ODocumentInternal.getImmutableSchemaClass(record) != null) {
+      iOutput.append(ODocumentInternal.getImmutableSchemaClass(record).getStreamableName());
       iOutput.append(OStringSerializerHelper.CLASS_SEPARATOR);
     }
+
+    // CHECK IF THE RECORD IS PENDING TO BE MARSHALLED
+    if (iMarshalledRecords != null)
+      if (iMarshalledRecords.containsKey(record)) {
+        return iOutput;
+      } else
+        iMarshalledRecords.put(record, Boolean.TRUE);
 
     OProperty prop;
     OType type;
@@ -313,7 +321,8 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
         iOutput.append(OStringSerializerHelper.RECORD_SEPARATOR);
 
       // SEARCH FOR A CONFIGURED PROPERTY
-      prop = record.getImmutableSchemaClass() != null ? record.getImmutableSchemaClass().getProperty(fieldName) : null;
+      prop = ODocumentInternal.getImmutableSchemaClass(record) != null ? ODocumentInternal.getImmutableSchemaClass(record)
+          .getProperty(fieldName) : null;
       fieldClassName = getClassName(fieldValue);
 
       type = record.fieldType(fieldName);
@@ -494,7 +503,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
       iOutput.append(fieldName);
       iOutput.append(FIELD_VALUE_SEPARATOR);
-      fieldToStream((ODocument) iRecord, iOutput, iObjHandler, type, linkedClass, linkedType, fieldName, fieldValue,
+      fieldToStream(record, iOutput, iObjHandler, type, linkedClass, linkedType, fieldName, fieldValue,
           iMarshalledRecords, true);
 
       i++;
@@ -505,9 +514,9 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
     // GET THE OVERSIZE IF ANY
     final float overSize;
-    if (record.getImmutableSchemaClass() != null)
+    if (ODocumentInternal.getImmutableSchemaClass(record) != null)
       // GET THE CONFIGURED OVERSIZE SETTED PER CLASS
-      overSize = record.getImmutableSchemaClass().getOverSize();
+      overSize = ODocumentInternal.getImmutableSchemaClass(record).getOverSize();
     else
       overSize = 0;
 
@@ -549,7 +558,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
     if (iDatabase == null || iDatabase.isClosed() || iFieldClassName == null)
       return null;
 
-    OClass linkedClass = iDatabase.getMetadata().getImmutableSchemaSnapshot().getClass(iFieldClassName);
+    OClass linkedClass = ((OMetadataInternal) iDatabase.getMetadata()).getImmutableSchemaSnapshot().getClass(iFieldClassName);
 
     if (iDatabase.getDatabaseOwner() instanceof ODatabaseObject) {
       ODatabaseObject dbo = (ODatabaseObject) iDatabase.getDatabaseOwner();

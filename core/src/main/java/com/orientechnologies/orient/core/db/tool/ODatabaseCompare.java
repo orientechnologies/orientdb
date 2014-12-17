@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -184,8 +185,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
   }
 
   private void compareSchama() {
-    OSchema schema1 = databaseDocumentTxOne.getMetadata().getImmutableSchemaSnapshot();
-    OSchema schema2 = databaseDocumentTxTwo.getMetadata().getImmutableSchemaSnapshot();
+    OSchema schema1 = ((OMetadataInternal)databaseDocumentTxOne.getMetadata()).getImmutableSchemaSnapshot();
+    OSchema schema2 = ((OMetadataInternal)databaseDocumentTxTwo.getMetadata()).getImmutableSchemaSnapshot();
     boolean ok = true;
     for (OClass clazz : schema1.getClasses()) {
       OClass clazz2 = schema2.getClass(clazz.getName());

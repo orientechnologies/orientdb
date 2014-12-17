@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.query.OQueryAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -64,13 +65,13 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
     if (database == null)
       throw new OQueryParsingException("No database configured");
 
-    database.getMetadata().makeThreadLocalSchemaSnapshot();
+    ((OMetadataInternal) database.getMetadata()).makeThreadLocalSchemaSnapshot();
     try {
       setParameters(iArgs);
       return (List<T>) database.getStorage().command(this);
 
     } finally {
-      database.getMetadata().clearThreadLocalSchemaSnapshot();
+      ((OMetadataInternal) database.getMetadata()).clearThreadLocalSchemaSnapshot();
     }
   }
 

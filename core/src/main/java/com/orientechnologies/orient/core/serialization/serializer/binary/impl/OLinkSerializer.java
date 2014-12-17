@@ -36,7 +36,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 /**
  * Serializer for {@link com.orientechnologies.orient.core.metadata.schema.OType#LINK}
  *
- * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
+ * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
  * @since 07.02.12
  */
 public class OLinkSerializer implements OBinarySerializer<OIdentifiable> {

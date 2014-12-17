@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.core.type.tree;
 
-import java.io.IOException;
-import java.util.*;
-
 import com.orientechnologies.common.collection.OLimitedMap;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfilerMBean;
@@ -35,8 +32,17 @@ import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTree;
 import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeEntry;
 import com.orientechnologies.orient.core.memory.OLowMemoryException;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeProvider;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * Persistent based MVRB-Tree implementation. The difference with the class OMVRBTreePersistent is the level. In facts this class
@@ -253,7 +259,7 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
       root = null;
 
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-      if (db != null && !db.isClosed() && db.getStorage().getUnderlying() instanceof OStorageEmbedded) {
+      if (db != null && !db.isClosed() && db.getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
         // RELOAD IT
         try {
           load();
@@ -372,13 +378,6 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
       if (OLogManager.instance().isDebugEnabled())
         OLogManager.instance().debug(this, "After optimization: %d items on disk, threshold=%f, entryPoints=%d, nodesInCache=%d",
             size(), (entryPointsSize * optimizeEntryPointsFactor), entryPoints.size(), cache.size());
-
-      if (debug) {
-        int i = 0;
-        System.out.println();
-        for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints.values())
-          System.out.println("- Entrypoint " + ++i + "/" + entryPoints.size() + ": " + entryPoint);
-      }
 
       return totalDisconnected;
     } finally {

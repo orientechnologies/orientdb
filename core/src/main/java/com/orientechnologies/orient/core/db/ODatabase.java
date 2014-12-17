@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.intent.OIntent;
 import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -751,7 +752,8 @@ public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2Record
   public ODatabase<T> rollback(boolean force) throws OTransactionException;
 
   /**
-   * Execute a query against the database.
+   * Execute a query against the database. If the OStorage used is remote (OStorageRemote) then the command will be executed
+   * remotely and the result returned back to the calling client.
    *
    * @param iCommand
    *          Query command

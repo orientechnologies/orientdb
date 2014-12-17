@@ -67,7 +67,7 @@ public class OStorageConfiguration implements OSerializableStream {
 
   public static final String                         DEFAULT_CHARSET               = "UTF-8";
   private String                                     charset                       = DEFAULT_CHARSET;
-  public static final int                            CURRENT_VERSION               = 13;
+  public static final int                            CURRENT_VERSION               = 14;
   public static final int                            CURRENT_BINARY_FORMAT_VERSION = 12;
   public final List<OStorageEntryConfiguration>      properties                    = Collections
                                                                                        .synchronizedList(new ArrayList<OStorageEntryConfiguration>());

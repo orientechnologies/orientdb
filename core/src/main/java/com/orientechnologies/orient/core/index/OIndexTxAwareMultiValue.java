@@ -299,7 +299,8 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
 
   @Override
   public boolean contains(final Object key) {
-    return get(key) != null;
+    final Set<OIdentifiable> result = get(key);
+    return result != null && !result.isEmpty();
   }
 
   @Override

@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -100,7 +101,7 @@ public class OFindReferenceHelper {
 
   private static void browseClass(final ODatabaseDocument db, Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map,
       final String iClassName) {
-    final OClass clazz = db.getMetadata().getImmutableSchemaSnapshot().getClass(iClassName);
+    final OClass clazz = ((OMetadataInternal)db.getMetadata()).getImmutableSchemaSnapshot().getClass(iClassName);
 
     if (clazz == null)
       throw new OCommandExecutionException("Class '" + iClassName + "' was not found");

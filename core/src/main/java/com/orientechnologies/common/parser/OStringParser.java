@@ -56,6 +56,7 @@ public class OStringParser {
     for (int i = 0; i < iText.length(); ++i) {
       c = iText.charAt(i);
 
+
       if (!escape && c == '\\' && ((i + 1) < iText.length())) {
         // ESCAPE CHARS
         final char nextChar = iText.charAt(i + 1);

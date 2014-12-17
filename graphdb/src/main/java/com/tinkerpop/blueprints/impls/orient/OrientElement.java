@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -60,15 +61,22 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   public static final String                   LABEL_FIELD_NAME          = "label";
   public static final Object                   DEF_ORIGINAL_ID_FIELDNAME = "origId";
   private static final long                    serialVersionUID          = 1L;
-  // TODO: CAN REMOVE THIS REF IN FAVOR OF CONTEXT INSTANCE?
+
+  private transient OrientBaseGraph            graph;
+  protected boolean                            classicDetachMode         = false;
 
   protected transient OrientBaseGraph.Settings settings;
   protected OIdentifiable                      rawElement;
 
-  protected OrientElement(final OIdentifiable iRawElement) {
+  protected OrientElement(final OrientBaseGraph rawGraph, final OIdentifiable iRawElement) {
+    if (classicDetachMode)
+      graph = rawGraph;
+    else
+      graph = null;
+
     rawElement = iRawElement;
 
-    final OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
+    final OrientBaseGraph graph = getGraph();
     if (graph != null)
       settings = graph.settings;
   }
@@ -88,7 +96,10 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   @Override
   public void remove() {
-    final OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
+    checkIfAttached();
+
+    final OrientBaseGraph graph = getGraph();
+    graph.setCurrentGraphInThreadLocal();
     graph.autoStartTransaction();
 
     final ORecordOperation oper = graph.getRawGraph().getTransaction().getRecordEntry(getIdentity());
@@ -129,8 +140,8 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    * @return
    */
   public <T extends OrientElement> T setProperties(final Object... fields) {
+    OrientBaseGraph graph = getGraph();
     if (fields != null && fields.length > 0 && fields[0] != null) {
-      final OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
       if (graph != null)
         graph.autoStartTransaction();
 
@@ -168,8 +179,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   @Override
   public void setProperty(final String key, final Object value) {
     validateProperty(this, key, value);
-
-    final OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
+    final OrientBaseGraph graph = getGraph();
 
     if (graph != null)
       graph.autoStartTransaction();
@@ -192,8 +202,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   public void setProperty(final String key, final Object value, final OType iType) {
     validateProperty(this, key, value);
 
-    final OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
-
+    final OrientBaseGraph graph = getGraph();
     if (graph != null)
       graph.autoStartTransaction();
     getRecord().field(key, value, iType);
@@ -210,10 +219,11 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   @Override
   public <T> T removeProperty(final String key) {
-    final OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
+    final OrientBaseGraph graph = getGraph();
 
     if (graph != null)
       graph.autoStartTransaction();
+
     final Object oldValue = getRecord().removeField(key);
     if (graph != null)
       save();
@@ -232,9 +242,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     if (key == null)
       return null;
 
-    final OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
+    final OrientBaseGraph graph = getGraph();
     if (key.equals("_class"))
-      return (T) getRecord().getImmutableSchemaClass().getName();
+      return (T) ODocumentInternal.getImmutableSchemaClass(getRecord()).getName();
     else if (key.equals("_version"))
       return (T) new Integer(getRecord().getVersion());
     else if (key.equals("_rid"))
@@ -284,6 +294,11 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    *          Cluster name or null to use the default "E"
    */
   public void save(final String iClusterName) {
+    checkIfAttached();
+
+    final OrientBaseGraph graph = getGraph();
+    graph.setCurrentGraphInThreadLocal();
+
     if (rawElement instanceof ODocument)
       if (iClusterName != null)
         rawElement = ((ODocument) rawElement).save(iClusterName);
@@ -363,9 +378,11 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
       return ORecordId.EMPTY_RECORD_ID;
 
     final ORID rid = rawElement.getIdentity();
+    final OrientBaseGraph graph = getGraph();
 
-    final OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
     if (!rid.isValid() && graph != null) {
+      // SAVE THE RECORD TO OBTAIN A VALID RID
+      graph.setCurrentGraphInThreadLocal();
       graph.autoStartTransaction();
       save();
     }
@@ -391,7 +408,10 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
 
   /**
    * (Blueprints Extension) Removes the reference to the current graph instance to let working offline. To reattach it use @attach.
-   * 
+   *
+   * This methods works only in "classic detach/attach mode" when dettachment/attachment is done manually, by default it is done
+   * automatically, and currently active graph connection will be used as graph elements owner.
+   *
    * @return Current object to allow chained calls.
    * @see #attach(OrientBaseGraph), #isDetached
    */
@@ -400,15 +420,35 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     getRecord().setLazyLoad(false);
     getRecord().fieldNames();
     // COPY GRAPH SETTINGS TO WORK OFFLINE
-
-    final OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
     settings = graph.settings.copy();
+    graph = null;
+    classicDetachMode = true;
     return this;
+  }
+
+  /**
+   * Switches to auto attachment mode, when graph element is automatically attached to currently open graph instance.
+   */
+  public void switchToAutoAttachmentMode() {
+    graph = null;
+    classicDetachMode = false;
+  }
+
+  /**
+   * Behavior is the same as for {@link #attach(OrientBaseGraph)} method.
+   */
+  public void switchToManualAttachmentMode(final OrientBaseGraph iNewGraph) {
+    attach(iNewGraph);
   }
 
   /**
    * (Blueprints Extension) Replaces current graph instance with new one on @detach -ed elements. Use this method to pass elements
    * between graphs or to switch between Tx and NoTx instances.
+   * 
+   * This methods works only in "classic detach/attach mode" when detachment/attachment is done manually, by default it is done
+   * automatically, and currently active graph connection will be used as graph elements owner.
+   *
+   * To set "classic detach/attach mode" please set custom database parameter <code>classicDetachMode</code> to <code>true</code>.
    * 
    * @param iNewGraph
    *          The new Graph instance to use.
@@ -419,13 +459,27 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     if (iNewGraph == null)
       throw new IllegalArgumentException("Graph is null");
 
-    final OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
-    if (graph != iNewGraph)
-      throw new IllegalStateException("New and attached graphs should match");
+    classicDetachMode = true;
+    graph = iNewGraph;
 
     // LINK THE GRAPHS SETTINGS
-    settings = iNewGraph.settings;
+    settings = graph.settings;
     return this;
+  }
+
+  /**
+   * (Blueprints Extension) Tells if the current element has been @detach ed.
+   *
+   * This methods works only in "classic detach/attach mode" when detachment/attachment is done manually, by default it is done
+   * automatically, and currently active graph connection will be used as graph elements owner.
+   * 
+   * To set "classic detach/attach mode" please set custom database parameter <code>classicDetachMode</code> to <code>true</code>.
+   *
+   * @return True if detached, otherwise false
+   * @see #attach(OrientBaseGraph), #detach
+   */
+  public boolean isDetached() {
+    return getGraph() == null;
   }
 
   public boolean equals(final Object object) {
@@ -460,7 +514,10 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    * 
    */
   public OrientBaseGraph getGraph() {
-    return OrientBaseGraph.getActiveInstance();
+    if (classicDetachMode)
+      return graph;
+
+    return OrientBaseGraph.getActiveGraph();
   }
 
   /**
@@ -494,6 +551,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   }
 
   protected void copyTo(final OrientElement iCopy) {
+    iCopy.graph = graph;
     iCopy.settings = settings;
     if (rawElement instanceof ODocument) {
       iCopy.rawElement = new ODocument().fromStream(((ODocument) rawElement).toStream());
@@ -508,7 +566,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     final ODocument doc = getRecord();
     doc.deserializeFields();
 
-    final OClass cls = doc.getImmutableSchemaClass();
+    final OClass cls = ODocumentInternal.getImmutableSchemaClass(doc);
 
     if (cls == null || !cls.isSubClassOf(getBaseClassName()))
       throw new IllegalArgumentException("The document received is not a " + getElementType() + ". Found class '" + cls + "'");
@@ -525,7 +583,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     if (className == null)
       return null;
 
-		final OrientBaseGraph graph = OrientBaseGraph.getActiveInstance();
+    OrientBaseGraph graph = getGraph();
     if (graph == null)
       return className;
 
@@ -563,4 +621,18 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     validateProperty(element, key, value);
     doc.field(key, value);
   }
+
+  protected void setCurrentGraphInThreadLocal() {
+    OrientBaseGraph graph = getGraph();
+    if (graph != null)
+      graph.setCurrentGraphInThreadLocal();
+  }
+
+  protected void checkIfAttached() {
+    final OrientBaseGraph graph = getGraph();
+    if (graph == null)
+      throw new IllegalStateException(
+          "There is no active graph instance for current element. Please either open connection to your storage, or use detach/attach methods instead.");
+  }
+
 }

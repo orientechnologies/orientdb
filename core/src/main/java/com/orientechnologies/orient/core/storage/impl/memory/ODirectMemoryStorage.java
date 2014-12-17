@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 7/9/14
  */
 public class ODirectMemoryStorage extends OAbstractPaginatedStorage {

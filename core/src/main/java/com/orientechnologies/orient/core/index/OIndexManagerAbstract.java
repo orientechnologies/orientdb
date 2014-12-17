@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -51,17 +52,27 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  */
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass implements OIndexManager, OCloseable {
-  public static final String                                  CONFIG_INDEXES     = "indexes";
-  public static final String                                  DICTIONARY_NAME    = "dictionary";
-  protected final Map<String, Map<OMultiKey, Set<OIndex<?>>>> classPropertyIndex = new HashMap<String, Map<OMultiKey, Set<OIndex<?>>>>();
-  protected Map<String, OIndex<?>>                            indexes            = new ConcurrentHashMap<String, OIndex<?>>();
-  protected String                                            defaultClusterName = OMetadataDefault.CLUSTER_INDEX_NAME;
-  protected String                                            manualClusterName  = OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME;
+  public static final String                                  CONFIG_INDEXES         = "indexes";
+  public static final String                                  DICTIONARY_NAME        = "dictionary";
+  protected final Map<String, Map<OMultiKey, Set<OIndex<?>>>> classPropertyIndex     = new HashMap<String, Map<OMultiKey, Set<OIndex<?>>>>();
+  protected Map<String, OIndex<?>>                            indexes                = new ConcurrentHashMap<String, OIndex<?>>();
+  protected String                                            defaultClusterName     = OMetadataDefault.CLUSTER_INDEX_NAME;
+  protected String                                            manualClusterName      = OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME;
 
-  protected ReadWriteLock                                     lock               = new ReentrantReadWriteLock();
+  protected ReadWriteLock                                     lock                   = new ReentrantReadWriteLock();
+
+  private volatile boolean                                    fullCheckpointOnChange = false;
 
   public OIndexManagerAbstract(final ODatabaseDocument iDatabase) {
     super(new ODocument());
+  }
+
+  public boolean isFullCheckpointOnChange() {
+    return fullCheckpointOnChange;
+  }
+
+  public void setFullCheckpointOnChange(boolean fullCheckpointOnChange) {
+    this.fullCheckpointOnChange = fullCheckpointOnChange;
   }
 
   @Override
@@ -99,12 +110,18 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     try {
       for (int retry = 0; retry < 10; retry++)
         try {
-          return (RET) super.save();
+
+          super.save();
+          getDatabase().getStorage().synch();
+          return (RET) this;
         } catch (OConcurrentModificationException e) {
           reload(null, true);
         }
 
-      return (RET) super.save();
+      super.save();
+      getDatabase().getStorage().synch();
+
+      return (RET) this;
 
     } finally {
       releaseExclusiveLock();
@@ -365,7 +382,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   protected void acquireExclusiveLock() {
     final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
     if (databaseRecord != null && !databaseRecord.isClosed()) {
-      final OMetadata metadata = databaseRecord.getMetadata();
+      final OMetadataInternal metadata = (OMetadataInternal) databaseRecord.getMetadata();
       if (metadata != null)
         metadata.makeThreadLocalSchemaSnapshot();
     }
@@ -380,7 +397,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     if (databaseRecord != null && !databaseRecord.isClosed()) {
       final OMetadata metadata = databaseRecord.getMetadata();
       if (metadata != null)
-        metadata.clearThreadLocalSchemaSnapshot();
+        ((OMetadataInternal) metadata).clearThreadLocalSchemaSnapshot();
     }
   }
 

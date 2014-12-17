@@ -12,7 +12,7 @@ import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClust
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 10/21/14
  */
 public class OImmutableClass implements OClass {
@@ -244,8 +244,21 @@ public class OImmutableClass implements OClass {
   }
 
   @Override
-  public boolean existsProperty(String iPropertyName) {
-    return properties.containsKey(iPropertyName.toLowerCase());
+  public boolean existsProperty(String propertyName) {
+    propertyName = propertyName.toLowerCase();
+
+    OImmutableClass currentClass = this;
+    do {
+      final boolean result = currentClass.properties.containsKey(propertyName);
+
+      if (result)
+        return true;
+
+      currentClass = (OImmutableClass) currentClass.getSuperClass();
+
+    } while (currentClass != null);
+
+    return false;
   }
 
   @Override

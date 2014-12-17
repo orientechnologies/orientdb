@@ -111,10 +111,11 @@ public class ORuntimeResult {
             final List<Object> iteratorValues = new ArrayList<Object>();
             final Iterator projectionValueIterator = (Iterator) projectionValue;
             while (projectionValueIterator.hasNext()) {
-              final Object value = projectionValueIterator.next();
-              if (value instanceof OIdentifiable && !(value instanceof ORID) && !(value instanceof ORecord))
-                iteratorValues.add(((OIdentifiable) value).getRecord());
-              else
+              Object value = projectionValueIterator.next();
+              if (value instanceof OIdentifiable)
+                value = ((OIdentifiable) value).getRecord();
+
+              if (value != null)
                 iteratorValues.add(value);
             }
 

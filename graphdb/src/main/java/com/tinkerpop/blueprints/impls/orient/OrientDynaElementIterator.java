@@ -23,6 +23,7 @@ package com.tinkerpop.blueprints.impls.orient;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -64,12 +65,12 @@ class OrientDynaElementIterator implements Iterator<Object> {
       if (currentDocument.getInternalStatus() == ODocument.STATUS.NOT_LOADED)
         currentDocument.load();
 
-      final OClass schemaClass = currentDocument.getImmutableSchemaClass();
+      final OClass schemaClass = ODocumentInternal.getImmutableSchemaClass(currentDocument);
       if (schemaClass != null && schemaClass.isSubClassOf(graph.getEdgeBaseType()))
-        currentElement = new OrientEdge(currentDocument);
+        currentElement = new OrientEdge(graph, currentDocument);
       else
         // RETURN VERTEX IN ALL THE CASES, EVEN FOR PROJECTED DOCUMENTS
-        currentElement = new OrientVertex(currentDocument);
+        currentElement = new OrientVertex(graph, currentDocument);
     }
 
     return currentElement;

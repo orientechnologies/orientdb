@@ -45,7 +45,7 @@ import java.util.Map;
  *
  * @author Luca Garulli (l.garulli(at)orientechnologies.com)
  * @author Marko A. Rodriguez (http://markorodriguez.com)
- * @author Alex Averbuch (alex.averbuch@gmail.com)
+ * @author Alex Averbuch (alex.averbuch-at-gmail.com)
  * @author Joshua Shinavier (http://fortytwo.net)
  */
 public class OGraphMLReader {

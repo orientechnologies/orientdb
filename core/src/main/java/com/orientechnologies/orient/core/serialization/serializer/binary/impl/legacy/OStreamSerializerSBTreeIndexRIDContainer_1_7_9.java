@@ -39,7 +39,7 @@ import java.util.Set;
 import static com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer.RID_SIZE;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 9/24/14
  */
 public class OStreamSerializerSBTreeIndexRIDContainer_1_7_9 implements OStreamSerializer, OBinarySerializer<OIndexRIDContainer> {

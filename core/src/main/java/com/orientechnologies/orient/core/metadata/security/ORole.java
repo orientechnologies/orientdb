@@ -19,8 +19,11 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.annotation.OBeforeDeserialization;
@@ -147,12 +150,13 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
     final OIdentifiable role = document.field("inheritedRole");
     parentRole = role != null ? document.getDatabase().getMetadata().getSecurity().getRole(role) : null;
 
+    boolean rolesNeedToBeUpdated = false;
     Object loadedRules = document.field("rules");
     if (loadedRules instanceof Map) {
       loadOldVersionOfRules((Map<String, Number>) loadedRules);
     } else {
       final Set<ODocument> storedRules = (Set<ODocument>) loadedRules;
-      if (storedRules != null)
+      if (storedRules != null) {
         for (ODocument ruleDoc : storedRules) {
           final ORule.ResourceGeneric resourceGeneric = ORule.ResourceGeneric.valueOf(ruleDoc.<String> field("resourceGeneric"));
           final Map<String, Byte> specificResources = ruleDoc.field("specificResources");
@@ -161,30 +165,20 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
           final ORule rule = new ORule(resourceGeneric, specificResources, access);
           rules.put(resourceGeneric, rule);
         }
+      }
+
+      // convert the format of roles presentation to classic one
+      rolesNeedToBeUpdated = true;
     }
 
     if (getName().equals("admin") && !hasRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null))
       // FIX 1.5.1 TO ASSIGN database.bypassRestricted rule to the role
       addRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_ALL).save();
-  }
 
-  private void loadOldVersionOfRules(final Map<String, Number> storedRules) {
-    if (storedRules != null)
-      for (Entry<String, Number> a : storedRules.entrySet()) {
-        ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(a.getKey());
-        ORule rule = rules.get(resourceGeneric);
-        if (rule == null) {
-          rule = new ORule(resourceGeneric, null, null);
-          rules.put(resourceGeneric, rule);
-        }
-
-        String specificResource = ORule.mapLegacyResourceToSpecificResource(a.getKey());
-        if (specificResource == null || specificResource.equals("*")) {
-          rule.grantAccess(null, a.getValue().intValue());
-        } else {
-          rule.grantAccess(specificResource, a.getValue().intValue());
-        }
-      }
+    if (rolesNeedToBeUpdated) {
+      updateRolesDocumentContent();
+      save();
+    }
   }
 
   public boolean allow(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iCRUDOperation) {
@@ -291,22 +285,6 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
     return revoke(resourceGeneric, specificResource, iOperation);
   }
 
-	private ODocument updateRolesDocumentContent() {
-    final Set<ODocument> storedRules = new HashSet<ODocument>();
-
-    for (ORule rule : rules.values()) {
-      final ODocument doc = new ODocument();
-
-      doc.field("resourceGeneric", rule.getResourceGeneric().name());
-      doc.field("specificResources", rule.getSpecificResources());
-      doc.field("access", rule.getAccess());
-
-      storedRules.add(doc);
-    }
-
-    return document.field("rules", storedRules);
-  }
-
   /**
    * Grant a permission to the resource.
    * 
@@ -379,8 +357,27 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
     return this;
   }
 
-  public Set<ORule> getRules() {
+  public Set<ORule> getRuleSet() {
     return new HashSet<ORule>(rules.values());
+  }
+
+  @Deprecated
+  public Map<String, Byte> getRules() {
+    final Map<String, Byte> result = new HashMap<String, Byte>();
+
+    for (ORule rule : rules.values()) {
+      String name = ORule.mapResourceGenericToLegacyResource(rule.getResourceGeneric());
+
+      if (rule.getAccess() != null) {
+        result.put(name, rule.getAccess());
+      }
+
+      for (Map.Entry<String, Byte> specificResource : rule.getSpecificResources().entrySet()) {
+        result.put(name + "." + specificResource.getKey(), specificResource.getValue());
+      }
+    }
+
+    return result;
   }
 
   @Override
@@ -391,5 +388,28 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
   @Override
   public OIdentifiable getIdentity() {
     return document;
+  }
+
+  private void loadOldVersionOfRules(final Map<String, Number> storedRules) {
+    if (storedRules != null)
+      for (Entry<String, Number> a : storedRules.entrySet()) {
+        ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(a.getKey());
+        ORule rule = rules.get(resourceGeneric);
+        if (rule == null) {
+          rule = new ORule(resourceGeneric, null, null);
+          rules.put(resourceGeneric, rule);
+        }
+
+        String specificResource = ORule.mapLegacyResourceToSpecificResource(a.getKey());
+        if (specificResource == null || specificResource.equals("*")) {
+          rule.grantAccess(null, a.getValue().intValue());
+        } else {
+          rule.grantAccess(specificResource, a.getValue().intValue());
+        }
+      }
+  }
+
+  private ODocument updateRolesDocumentContent() {
+    return document.field("rules", getRules());
   }
 }

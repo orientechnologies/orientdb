@@ -167,11 +167,11 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     releaseWriteLock();
   }
 
-  public void beginResponse(final int iRequesterId) throws IOException {
-    beginResponse(iRequesterId, timeout);
+  public byte[] beginResponse(final int iRequesterId, boolean token) throws IOException {
+    return beginResponse(iRequesterId, timeout, token);
   }
 
-  public void beginResponse(final int iRequesterId, final long iTimeout) throws IOException {
+  public byte[] beginResponse(final int iRequesterId, final long iTimeout, boolean token) throws IOException {
     try {
       int unreadResponse = 0;
       final long startClock = iTimeout > 0 ? System.currentTimeMillis() : 0;
@@ -276,22 +276,17 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       if (debug)
         OLogManager.instance().debug(this, "%s - Session %d handle response", socket.getLocalAddress(), iRequesterId);
 
+      byte[] renew = null;
+      if (token)
+        renew = this.readBytes();
       handleStatus(currentStatus, currentSessionId);
+      return renew;
     } catch (OLockException e) {
       Thread.currentThread().interrupt();
       // NEVER HAPPENS?
       OLogManager.instance().error(this, "Unexpected error on reading response from channel", e);
     }
-  }
-
-  private void setReadResponseTimeout() throws SocketException {
-    if (socket != null)
-      socket.setSoTimeout(socketTimeout);
-  }
-
-  private void setWaitResponseTimeout() throws SocketException {
-    if (socket != null)
-      socket.setSoTimeout(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT.getValueAsInteger());
+    return null;
   }
 
   public void endResponse() {
@@ -373,6 +368,10 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     getLockWrite().unlock();
   }
 
+  public OAsynchChannelServiceThread getServiceThread() {
+    return serviceThread;
+  }
+
   protected int handleStatus(final byte iResult, final int iClientTxId) throws IOException {
     if (iResult == OChannelBinaryProtocol.RESPONSE_STATUS_OK || iResult == OChannelBinaryProtocol.PUSH_DATA) {
       return iClientTxId;
@@ -410,6 +409,16 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       // close();
       throw new ONetworkProtocolException("Error on reading response from the server");
     }
+  }
+
+  private void setReadResponseTimeout() throws SocketException {
+    if (socket != null && socket.isConnected() && !socket.isClosed())
+      socket.setSoTimeout(socketTimeout);
+  }
+
+  private void setWaitResponseTimeout() throws SocketException {
+    if (socket != null)
+      socket.setSoTimeout(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT.getValueAsInteger());
   }
 
   private void throwSerializedException(final byte[] serializedException) throws IOException {

@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.db;
 
 import java.util.concurrent.Callable;
 
+import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 public interface ODatabaseInternal<T> extends ODatabase<T> {
@@ -69,4 +70,14 @@ public interface ODatabaseInternal<T> extends ODatabase<T> {
    * Internal method. Don't call it directly unless you're building an internal component.
    */
   public void setInternal(ATTRIBUTES attribute, Object iValue);
+
+  /**
+   * Opens a database using an authentication token received as an argument.
+   *
+   * @param iToken
+   *          Authentication token
+   * @return The Database instance itself giving a "fluent interface". Useful to call multiple methods in chain.
+   */
+  public <DB extends ODatabase> DB open(final OToken iToken);
+
 }

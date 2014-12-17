@@ -29,6 +29,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
+import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
@@ -67,16 +68,16 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
   protected long             startRecordNumber;
   private City               redmond        = new City(new Country("Washington"), "Redmond");
 
-	@Parameters(value = "url")
-	public CRUDObjectInheritanceTestSchemaFull(@Optional String url) {
-		super(url);
-	}
+  @Parameters(value = "url")
+  public CRUDObjectInheritanceTestSchemaFull(@Optional String url) {
+    super(url);
+  }
 
-	@BeforeClass
+  @BeforeClass
   public void beforeClass() throws Exception {
-		super.beforeClass();
+    super.beforeClass();
 
-		database.close();
+    database.close();
 
     database = new OObjectDatabaseTx(url + "_objectschema");
     ODatabaseHelper.createDatabase(database, url + "_objectschema", getStorageType());
@@ -96,7 +97,11 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
       export.close();
       exportDatabase.close();
       ODatabaseDocumentTx importDatabase = new ODatabaseDocumentTx(url + "_objectschema");
-      importDatabase.open("admin", "admin");
+      if (url.startsWith("remote")) {
+        importDatabase.open("root", "D2AFD02F20640EC8B7A5140F34FCA49D2289DB1F0D0598BB9DE8AAA75A0792F3");
+      } else {
+        importDatabase.open("admin", "admin");
+      }
       ODatabaseImport impor = new ODatabaseImport(importDatabase, EXPORT_DIR, listener);
 
       // UNREGISTER ALL THE HOOKS
@@ -130,6 +135,7 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
 
   @Test
   public void create() {
+		database.getMetadata().getSchema().reload();
     database.getMetadata().getSchema().synchronizeSchema();
     database.setAutomaticSchemaGeneration(true);
     database.getEntityManager().registerEntityClasses("com.orientechnologies.orient.test.domain.business");

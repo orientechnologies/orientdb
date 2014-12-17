@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.command.script.OCommandExecutorFunction
 import com.orientechnologies.orient.core.command.script.OCommandFunction;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -59,7 +60,7 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
 
     // LOAD ALL THE FUNCTIONS IN MEMORY
     final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
-    if (db.getMetadata().getImmutableSchemaSnapshot().existsClass("OFunction")) {
+    if (((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().existsClass("OFunction")) {
       List<ODocument> result = db.query(new OSQLSynchQuery<ODocument>("select from OFunction order by name"));
       for (ODocument d : result) {
         d.reload();

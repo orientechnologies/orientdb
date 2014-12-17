@@ -7,7 +7,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 08/11/14
  */
 public class ORule implements Serializable{

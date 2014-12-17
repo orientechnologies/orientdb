@@ -40,7 +40,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 /**
  * Manages indexes at database level. A single instance is shared among multiple databases. Contentions are managed by r/w locks.
@@ -176,7 +176,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     if (OGlobalConfiguration.INDEX_FLUSH_AFTER_CREATE.getValueAsBoolean())
       storage.synch();
 
-    return index;
+    return preProcessBeforeReturn(index);
   }
 
   private Set<String> findClustersByIds(int[] clusterIdsToIndex, ODatabase database) {
@@ -318,12 +318,11 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
       return false;
 
     final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
-    if (!OGlobalConfiguration.INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE.getValueAsBoolean())
-      return false;
-
     final OStorage storage = database.getStorage().getUnderlying();
-    if (storage instanceof OLocalPaginatedStorage)
-      return ((OLocalPaginatedStorage) storage).wereDataRestoredAfterOpen();
+    if (storage instanceof OAbstractPaginatedStorage) {
+      OAbstractPaginatedStorage paginatedStorage = (OAbstractPaginatedStorage) storage;
+      return paginatedStorage.wereDataRestoredAfterOpen() && paginatedStorage.wereNonTxOperationsPerformedInPreviousOpen();
+    }
 
     return false;
   }

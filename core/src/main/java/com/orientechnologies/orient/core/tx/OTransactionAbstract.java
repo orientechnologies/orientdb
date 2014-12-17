@@ -30,7 +30,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 public abstract class OTransactionAbstract implements OTransaction {
   protected final ODatabaseDocumentTx                database;
@@ -78,9 +78,9 @@ public abstract class OTransactionAbstract implements OTransaction {
     for (Map.Entry<ORID, OStorage.LOCKING_STRATEGY> lock : locks.entrySet()) {
       try {
         if (lock.getValue().equals(OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK))
-          ((OStorageEmbedded) getDatabase().getStorage()).releaseWriteLock(lock.getKey());
+          ((OAbstractPaginatedStorage) getDatabase().getStorage()).releaseWriteLock(lock.getKey());
         else if (lock.getValue().equals(OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK))
-          ((OStorageEmbedded) getDatabase().getStorage()).releaseReadLock(lock.getKey());
+          ((OAbstractPaginatedStorage) getDatabase().getStorage()).releaseReadLock(lock.getKey());
       } catch (Exception e) {
         OLogManager.instance().debug(this, "Error on releasing lock against record " + lock.getKey(), e);
       }
@@ -91,7 +91,7 @@ public abstract class OTransactionAbstract implements OTransaction {
   @Override
   public OTransaction lockRecord(final OIdentifiable iRecord, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     final OStorage stg = database.getStorage();
-    if (!(stg.getUnderlying() instanceof OStorageEmbedded))
+    if (!(stg.getUnderlying() instanceof OAbstractPaginatedStorage))
       throw new OLockException("Cannot lock record across remote connections");
 
     final ORID rid = iRecord.getIdentity();
@@ -99,9 +99,9 @@ public abstract class OTransactionAbstract implements OTransaction {
     // throw new IllegalStateException("Record " + rid + " is already locked");
 
     if (iLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
-      ((OStorageEmbedded) stg.getUnderlying()).acquireWriteLock(rid);
+      ((OAbstractPaginatedStorage) stg.getUnderlying()).acquireWriteLock(rid);
     else
-      ((OStorageEmbedded) stg.getUnderlying()).acquireReadLock(rid);
+      ((OAbstractPaginatedStorage) stg.getUnderlying()).acquireReadLock(rid);
 
     locks.put(rid, iLockingStrategy);
     return this;
@@ -110,7 +110,7 @@ public abstract class OTransactionAbstract implements OTransaction {
   @Override
   public OTransaction unlockRecord(final OIdentifiable iRecord) {
     final OStorage stg = database.getStorage();
-    if (!(stg.getUnderlying() instanceof OStorageEmbedded))
+    if (!(stg.getUnderlying() instanceof OAbstractPaginatedStorage))
       throw new OLockException("Cannot lock record across remote connections");
 
     final ORID rid = iRecord.getIdentity();
@@ -120,9 +120,9 @@ public abstract class OTransactionAbstract implements OTransaction {
     if (lock == null)
       throw new OLockException("Cannot unlock a never acquired lock");
     else if (lock == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
-      ((OStorageEmbedded) stg.getUnderlying()).releaseWriteLock(rid);
+      ((OAbstractPaginatedStorage) stg.getUnderlying()).releaseWriteLock(rid);
     else
-      ((OStorageEmbedded) stg.getUnderlying()).releaseReadLock(rid);
+      ((OAbstractPaginatedStorage) stg.getUnderlying()).releaseReadLock(rid);
 
     return this;
   }

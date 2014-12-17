@@ -115,6 +115,9 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   public void cleanAll() {
     record = database.newInstance();
 
+    if( !database.existsCluster("Account"))
+      database.addCluster("Account");
+
     startRecordNumber = database.countClusterElements("Account");
 
     // DELETE ALL THE RECORDS IN THE CLUSTER

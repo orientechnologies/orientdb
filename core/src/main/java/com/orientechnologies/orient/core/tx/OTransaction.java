@@ -19,20 +19,21 @@
  */
 package com.orientechnologies.orient.core.tx;
 
-import java.util.HashMap;
-import java.util.List;
-
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.util.HashMap;
+import java.util.List;
 
 public interface OTransaction {
   public enum TXTYPE {
@@ -73,7 +74,7 @@ public interface OTransaction {
 
   public Iterable<? extends ORecordOperation> getAllRecordEntries();
 
-  public List<ORecordOperation> getRecordEntriesByClass(String iClassName);
+  public List<ORecordOperation> getNewRecordEntriesByClass(OClass iClass, boolean iPolymorphic);
 
   public List<ORecordOperation> getNewRecordEntriesByClusterIds(int[] iIds);
 

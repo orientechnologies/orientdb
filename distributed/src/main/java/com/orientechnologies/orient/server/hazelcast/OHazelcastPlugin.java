@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.io.*;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.*;
@@ -41,6 +34,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -49,22 +43,50 @@ import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.server.OClientConnectionManager;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugin;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabaseChunk;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ODistributedStorage;
 import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.task.ODeployDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation for clustering.
@@ -219,9 +241,11 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (!enabled)
       return null;
 
-    final ODocument cluster = new ODocument();
-
     final HazelcastInstance instance = getHazelcastInstance();
+    if (instance == null)
+      return null;
+
+    final ODocument cluster = new ODocument();
 
     cluster.field("localName", instance.getName());
     cluster.field("localId", instance.getCluster().getLocalMember().getUuid());
@@ -386,7 +410,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       if (iDatabase instanceof ODatabase<?> && !(iDatabase.getStorage() instanceof ODistributedStorage)) {
         ODistributedStorage storage = storages.get(iDatabase.getURL());
         if (storage == null) {
-          storage = new ODistributedStorage(serverInstance, (OStorageEmbedded) iDatabase.getStorage());
+          storage = new ODistributedStorage(serverInstance, (OAbstractPaginatedStorage) iDatabase.getStorage());
           final ODistributedStorage oldStorage = storages.putIfAbsent(iDatabase.getURL(), storage);
           if (oldStorage != null)
             storage = oldStorage;
@@ -401,7 +425,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   @Override
-  public void onCreateClass(ODatabaseInternal iDatabase, OClass iClass) {
+  public void onCreateClass(final ODatabaseInternal iDatabase, final OClass iClass) {
     final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
 
     if (dbUrl.startsWith("plocal:")) {
@@ -417,7 +441,12 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (cfg == null)
       return;
 
-    installLocalClusterPerClass(iDatabase, cfg, getLocalNodeName(), iClass);
+    Orient.instance().getWorkers().submit(new Runnable() {
+      @Override
+      public void run() {
+        installLocalClusterPerClass(iDatabase, cfg, getLocalNodeName(), iClass);
+      }
+    });
   }
 
   @Override
@@ -1194,19 +1223,33 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
         if (cfgClusterNames.contains(newClusterName)) {
           // FOUND A CLUSTER PREVIOUSLY ASSIGNED TO THE LOCAL ONE: CHANGE ASSIGNMENT TO LOCAL NODE AGAIN
-          ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE,
+          ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
               "class %s, change mastership of cluster '%s' (id=%d) to local node '%s'", iClass, newClusterName,
               iDatabase.getClusterIdByName(newClusterName), nodeName);
           cfg.setMasterServer(newClusterName, nodeName);
         } else {
 
           // CREATE A NEW CLUSTER WHERE LOCAL NODE IS THE MASTER
-          ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE, "class %s, creation of new local cluster '%s' (id=%d)",
+          ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "class %s, creation of new local cluster '%s' (id=%d)",
               iClass, newClusterName, iDatabase.getClusterIdByName(newClusterName));
 
-          iClass.addCluster(newClusterName);
+          final OScenarioThreadLocal.RUN_MODE currentDistributedMode = OScenarioThreadLocal.INSTANCE.get();
+          if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
+            OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
 
-          ODistributedServerLog.warn(this, nodeName, null, DIRECTION.NONE,
+          try {
+            iClass.addCluster(newClusterName);
+          } catch (OCommandSQLParsingException e) {
+            if (!e.getMessage().endsWith("already exists"))
+              throw e;
+          } finally {
+
+            if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
+              // RESTORE PREVIOUS MODE
+              OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
+          }
+
+          ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
               "class %s, set mastership of cluster '%s' (id=%d) to '%s'", iClass, newClusterName,
               iDatabase.getClusterIdByName(newClusterName), nodeName);
           cfg.setMasterServer(newClusterName, nodeName);

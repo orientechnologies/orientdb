@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import java.io.IOException;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 7/15/14
  */
 public class OStorageMemoryConfiguration extends OStorageConfiguration {

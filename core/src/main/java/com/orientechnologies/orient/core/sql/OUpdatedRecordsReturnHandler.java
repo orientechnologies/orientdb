@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OUpdatedRecordsReturnHandler extends ORecordsReturnHandler {
   public OUpdatedRecordsReturnHandler(Object returnExpression, OCommandContext context) {

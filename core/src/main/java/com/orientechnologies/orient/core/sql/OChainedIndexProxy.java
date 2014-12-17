@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.listener.OProgressListener;
@@ -113,8 +113,13 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
 
   private static Collection<OIndex<?>> prepareLastIndexVariants(OClass iSchemaClass, OSQLFilterItemField.FieldChain fieldChain) {
     OClass oClass = iSchemaClass;
+    final Collection<OIndex<?>> result = new ArrayList<OIndex<?>>();
+
     for (int i = 0; i < fieldChain.getItemCount() - 1; i++) {
       oClass = oClass.getProperty(fieldChain.getItemName(i)).getLinkedClass();
+      if (oClass == null) {
+        return result;
+      }
     }
 
     final Set<OIndex<?>> involvedIndexes = new TreeSet<OIndex<?>>(new Comparator<OIndex<?>>() {
@@ -125,7 +130,6 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
 
     involvedIndexes.addAll(oClass.getInvolvedIndexes(fieldChain.getItemName(fieldChain.getItemCount() - 1)));
     final Collection<Class<? extends OIndex>> indexTypes = new HashSet<Class<? extends OIndex>>(3);
-    final Collection<OIndex<?>> result = new ArrayList<OIndex<?>>();
 
     for (OIndex<?> involvedIndex : involvedIndexes) {
       if (!indexTypes.contains(involvedIndex.getInternal().getClass())) {
@@ -431,7 +435,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
-	public OType[] getKeyTypes() {
+  public OType[] getKeyTypes() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
@@ -529,12 +533,12 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     throw new UnsupportedOperationException("Not allowed operation");
   }
 
-	@Override
-	public OIndexCursor descCursor() {
-		throw new UnsupportedOperationException("Not allowed operation");
-	}
+  @Override
+  public OIndexCursor descCursor() {
+    throw new UnsupportedOperationException("Not allowed operation");
+  }
 
-	@Override
+  @Override
   public OIndexKeyCursor keyCursor() {
     throw new UnsupportedOperationException("Not allowed operation");
   }
@@ -626,5 +630,10 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
         }
       };
     }
+  }
+
+  @Override
+  public int compareTo(OIndex<T> o) {
+    throw new UnsupportedOperationException();
   }
 }

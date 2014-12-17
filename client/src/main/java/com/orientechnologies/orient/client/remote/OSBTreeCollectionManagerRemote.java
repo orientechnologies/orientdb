@@ -41,14 +41,14 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsyn
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 /**
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbstract {
 
   private final OCollectionNetworkSerializer             networkSerializer;
   private boolean                                        remoteCreationAllowed = false;
 
-  private ThreadLocal<Map<UUID, WeakReference<ORidBag>>> pendingCollections    = new ThreadLocal<Map<UUID, WeakReference<ORidBag>>>() {
+  private final ThreadLocal<Map<UUID, WeakReference<ORidBag>>> pendingCollections    = new ThreadLocal<Map<UUID, WeakReference<ORidBag>>>() {
                                                                                  @Override
                                                                                  protected Map<UUID, WeakReference<ORidBag>> initialValue() {
                                                                                    return new HashMap<UUID, WeakReference<ORidBag>>();

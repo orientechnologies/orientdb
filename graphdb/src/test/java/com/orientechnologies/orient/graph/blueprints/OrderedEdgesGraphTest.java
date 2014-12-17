@@ -21,6 +21,7 @@ public class OrderedEdgesGraphTest {
 
   public OrderedEdgesGraphTest() {
     graph = new OrientGraph(DB_URL);
+    graph.setUseLightweightEdges(true);
     graph.setAutoStartTx(false);
     graph.commit();
 
@@ -45,6 +46,7 @@ public class OrderedEdgesGraphTest {
   public void testEdgeOrder() {
 
     OrientVertex loadedPerson = graph.getVertex(mainPerson.getId());
+    graph.setUseLightweightEdges(true);
     int i = 1;
     for (Edge e : loadedPerson.getEdges(Direction.OUT)) {
       assertEquals(e.getVertex(Direction.IN).getProperty("index"), i++);
@@ -58,6 +60,7 @@ public class OrderedEdgesGraphTest {
   public void testReplacePosition() {
 
     OrientVertex loadedPerson = graph.getVertex(mainPerson.getId());
+    graph.setUseLightweightEdges(true);
     int i = 1;
     List<ODocument> edges = loadedPerson.getRecord().field("out_Knows");
 
@@ -67,6 +70,7 @@ public class OrderedEdgesGraphTest {
     graph.shutdown();
 
     graph = new OrientGraph(DB_URL);
+    graph.setUseLightweightEdges(true);
     loadedPerson = graph.getVertex(mainPerson.getId());
     edges = loadedPerson.getRecord().field("out_Knows");
     assertEquals(graph.getVertex(edges.get(9)).getProperty("index"), 11);

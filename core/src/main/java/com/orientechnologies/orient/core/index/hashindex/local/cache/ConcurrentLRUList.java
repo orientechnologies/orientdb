@@ -31,7 +31,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * Concurrent implementation of {@link LRUList}.
  *
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class ConcurrentLRUList implements LRUList {
 

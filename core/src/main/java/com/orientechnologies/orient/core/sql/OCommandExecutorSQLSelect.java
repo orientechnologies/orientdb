@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
@@ -45,25 +38,53 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexEngineException;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.security.*;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
-import com.orientechnologies.orient.core.sql.filter.*;
+import com.orientechnologies.orient.core.sql.filter.OFilterOptimizer;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilter;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
+import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
-import com.orientechnologies.orient.core.sql.operator.*;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorAnd;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorBetween;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajor;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMajorEquals;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinor;
+import com.orientechnologies.orient.core.sql.operator.OQueryOperatorMinorEquals;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -104,18 +125,18 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private boolean                     parallel             = false;
   private Lock                        parallelLock         = new ReentrantLock();
 
-  private Set<ORID>                   foundResults         = new HashSet<ORID>();
+  private Set<ORID>                   uniqueResult;
 
   private final class IndexUsageLog {
+    OIndex<?>        index;
+    List<Object>     keyParams;
+    OIndexDefinition indexDefinition;
+
     IndexUsageLog(OIndex<?> index, List<Object> keyParams, OIndexDefinition indexDefinition) {
       this.index = index;
       this.keyParams = keyParams;
       this.indexDefinition = indexDefinition;
     }
-
-    OIndex<?>        index;
-    List<Object>     keyParams;
-    OIndexDefinition indexDefinition;
   }
 
   private final class IndexComparator implements Comparator<OIndex<?>> {
@@ -1014,6 +1035,28 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return false;
   }
 
+  protected void revertProfiler(final OCommandContext iContext, final OIndex<?> index, final List<Object> keyParams,
+      final OIndexDefinition indexDefinition) {
+    if (iContext.isRecordingMetrics()) {
+      iContext.updateMetric("compositeIndexUsed", -1);
+    }
+
+    final OProfilerMBean profiler = Orient.instance().getProfiler();
+    if (profiler.isRecording()) {
+      profiler.updateCounter(profiler.getDatabaseMetric(index.getDatabaseName(), "query.indexUsed"), "Used index in query", -1);
+
+      int params = indexDefinition.getParamCount();
+      if (params > 1) {
+        final String profiler_prefix = profiler.getDatabaseMetric(index.getDatabaseName(), "query.compositeIndexUsed");
+
+        profiler.updateCounter(profiler_prefix, "Used composite index in query", -1);
+        profiler.updateCounter(profiler_prefix + "." + params, "Used composite index in query with " + params + " params", -1);
+        profiler.updateCounter(profiler_prefix + "." + params + '.' + keyParams.size(), "Used composite index in query with "
+            + params + " params and " + keyParams.size() + " keys", -1);
+      }
+    }
+  }
+
   private void mergeRangeConditionsToBetweenOperators(OSQLFilter filter) {
     OSQLFilterCondition condition = filter.getRootCondition();
 
@@ -1214,27 +1257,27 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     metricRecorder.setContext(context);
   }
 
-  private void fetchFromTarget(Iterator<? extends OIdentifiable> iTarget) {
+  private void fetchFromTarget(final Iterator<? extends OIdentifiable> iTarget) {
     final long startFetching = System.currentTimeMillis();
-    try {
 
+    try {
       if (parallel) {
         parallelExec(iTarget);
-      } else
-      // BROWSE; UNMARSHALL AND FILTER ALL THE RECORDS ON CURRENT THREAD
-      {
+      } else {
+        // BROWSE, UNMARSHALL AND FILTER ALL THE RECORDS ON CURRENT THREAD
         while (iTarget.hasNext()) {
           final OIdentifiable next = iTarget.next();
-          if (next == null) {
+          if (next == null)
             break;
-          }
-          ORID identity = next.getIdentity();
 
-          if (this.foundResults.contains(identity)) {
-            continue;
-          }
-          if (!identity.toString().equals("#-1:-1")) {
-            this.foundResults.add(identity);
+          final ORID identity = next.getIdentity();
+
+          if (uniqueResult != null) {
+            if (uniqueResult.contains(identity))
+              continue;
+
+            if (identity.isValid())
+              uniqueResult.add(identity);
           }
 
           if (!executeSearchRecord(next)) {
@@ -1358,7 +1401,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   @SuppressWarnings("rawtypes")
   private boolean searchForIndexes(final OClass iSchemaClass) {
-    this.foundResults.clear();
+    if (uniqueResult != null)
+      uniqueResult.clear();
+
     final ODatabaseDocument database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iSchemaClass.getName().toLowerCase());
 
@@ -1485,9 +1530,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (cursors.size() == 1 && canOptimize(conditionHierarchy)) {
         filterOptimizer.optimize(compiledFilter, lastSearchResult);
       }
+
+      uniqueResult = new HashSet<ORID>();
       for (OIndexCursor cursor : cursors) {
         fetchValuesFromIndexCursor(cursor);
       }
+      uniqueResult.clear();
+      uniqueResult = null;
 
       metricRecorder.recordOrderByOptimizationMetric(indexIsUsedInOrderBy, this.fullySortedByIndex);
 
@@ -1496,28 +1545,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     } finally {
       for (IndexUsageLog wastedIndexUsage : indexUseAttempts) {
         revertProfiler(context, wastedIndexUsage.index, wastedIndexUsage.keyParams, wastedIndexUsage.indexDefinition);
-      }
-    }
-  }
-
-  protected void revertProfiler(final OCommandContext iContext, final OIndex<?> index, final List<Object> keyParams,
-      final OIndexDefinition indexDefinition) {
-    if (iContext.isRecordingMetrics()) {
-      iContext.updateMetric("compositeIndexUsed", -1);
-    }
-
-    final OProfilerMBean profiler = Orient.instance().getProfiler();
-    if (profiler.isRecording()) {
-      profiler.updateCounter(profiler.getDatabaseMetric(index.getDatabaseName(), "query.indexUsed"), "Used index in query", -1);
-
-      int params = indexDefinition.getParamCount();
-      if (params > 1) {
-        final String profiler_prefix = profiler.getDatabaseMetric(index.getDatabaseName(), "query.compositeIndexUsed");
-
-        profiler.updateCounter(profiler_prefix, "Used composite index in query", -1);
-        profiler.updateCounter(profiler_prefix + "." + params, "Used composite index in query with " + params + " params", -1);
-        profiler.updateCounter(profiler_prefix + "." + params + '.' + keyParams.size(), "Used composite index in query with "
-            + params + " params and " + keyParams.size() + " keys", -1);
       }
     }
   }

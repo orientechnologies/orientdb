@@ -74,31 +74,11 @@ public interface OCluster {
   public boolean exists();
 
   /**
-   * Adds a new entry.
-   */
-  public boolean addPhysicalPosition(OPhysicalPosition iPPosition) throws IOException;
-
-  /**
    * Fills and return the PhysicalPosition object received as parameter with the physical position of logical record iPosition
    * 
    * @throws IOException
    */
   public OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException;
-
-  /**
-   * Updates position in data segment (usually on defrag).
-   */
-
-  public void updateDataSegmentPosition(long iPosition, int iDataSegmentId, long iDataPosition) throws IOException;
-
-  /**
-   * Removes the Logical Position entry.
-   */
-  public void removePhysicalPosition(long iPosition) throws IOException;
-
-  public void updateRecordType(long iPosition, final byte iRecordType) throws IOException;
-
-  public void updateVersion(long iPosition, ORecordVersion iVersion) throws IOException;
 
   public long getEntries();
 

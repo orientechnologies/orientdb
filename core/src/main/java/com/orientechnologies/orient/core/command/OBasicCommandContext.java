@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.command;
 
 import com.orientechnologies.common.concur.OTimeoutException;
@@ -35,12 +35,12 @@ import java.util.Map;
  * 
  */
 public class OBasicCommandContext implements OCommandContext {
-  public static final String                                                         EXECUTION_BEGUN  = "EXECUTION_BEGUN";
-  public static final String                                                         TIMEOUT_MS       = "TIMEOUT_MS";
-  public static final String                                                         TIMEOUT_STRATEGY = "TIMEOUT_STARTEGY";
+  public static final String                                                         EXECUTION_BEGUN       = "EXECUTION_BEGUN";
+  public static final String                                                         TIMEOUT_MS            = "TIMEOUT_MS";
+  public static final String                                                         TIMEOUT_STRATEGY      = "TIMEOUT_STARTEGY";
   public static final String                                                         INVALID_COMPARE_COUNT = "INVALID_COMPARE_COUNT";
 
-  protected boolean                                                                  recordMetrics    = false;
+  protected boolean                                                                  recordMetrics         = false;
   protected OCommandContext                                                          parent;
   protected OCommandContext                                                          child;
   protected Map<String, Object>                                                      variables;
@@ -235,11 +235,6 @@ public class OBasicCommandContext implements OCommandContext {
     return getVariables().toString();
   }
 
-  private void init() {
-    if (variables == null)
-      variables = new HashMap<String, Object>();
-  }
-
   public boolean isRecordingMetrics() {
     return recordMetrics;
   }
@@ -269,9 +264,16 @@ public class OBasicCommandContext implements OCommandContext {
           throw new OTimeoutException("Command execution timeout exceed (" + timeoutMs + "ms)");
         }
       }
-    }
+    } else if (parent != null)
+      // CHECK THE TIMER OF PARENT CONTEXT
+      return parent.checkTimeout();
 
     return true;
+  }
+
+  private void init() {
+    if (variables == null)
+      variables = new HashMap<String, Object>();
   }
 
 }

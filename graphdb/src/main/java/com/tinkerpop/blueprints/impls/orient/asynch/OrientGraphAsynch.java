@@ -38,7 +38,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Features;
@@ -279,7 +279,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     init();
 
     if (id instanceof OIdentifiable)
-      return new OrientVertex((OIdentifiable) id);
+      return new OrientVertex((OrientBaseGraph) null, (OIdentifiable) id);
 
     OrientVertex v = getFromCache(id);
     if (v != null) {
@@ -786,7 +786,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
     if (conflictStrategy != null) {
       final OStorage stg = g.getRawGraph().getStorage().getUnderlying();
-      if (stg instanceof OStorageEmbedded)
+      if (stg instanceof OAbstractPaginatedStorage)
         stg.setConflictStrategy(conflictStrategy);
     }
 

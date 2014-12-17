@@ -27,7 +27,7 @@ import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
  * contain not only given object presentation but all binary content. Such approach prevents creation of separate byte array for
  * each object and decreased GC overhead.
  *
- * @author <a href="mailto:gmandnepr@gmail.com">Evgeniy Degtiarenko</a>, Andrey Lomakin
+ * @author Evgeniy Degtiarenko (gmandnepr-at-gmail.com), Andrey Lomakin
  */
 public interface OBinarySerializer<T> {
 

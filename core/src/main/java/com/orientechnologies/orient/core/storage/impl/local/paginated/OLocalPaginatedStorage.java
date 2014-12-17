@@ -27,9 +27,14 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OIndexRIDContainer;
+import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManagerShared;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.index.engine.OHashTableIndexEngine;
+import com.orientechnologies.orient.core.index.engine.OSBTreeIndexEngine;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
@@ -56,7 +61,15 @@ import java.util.concurrent.TimeUnit;
  * @since 28.03.13
  */
 public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements OFreezableStorage, OBackupable {
-  private static final int                 ONE_KB = 1024;
+	private static String[]                            ALL_FILE_EXTENSIONS                  = { ".ocf", ".pls", ".pcl", ".oda",
+					".odh", ".otx", ".ocs", ".oef", ".oem", ".oet", ODiskWriteAheadLog.WAL_SEGMENT_EXTENSION,
+					ODiskWriteAheadLog.MASTER_RECORD_EXTENSION, OHashTableIndexEngine.BUCKET_FILE_EXTENSION,
+					OHashTableIndexEngine.METADATA_FILE_EXTENSION, OHashTableIndexEngine.TREE_FILE_EXTENSION,
+					OHashTableIndexEngine.NULL_BUCKET_FILE_EXTENSION, OClusterPositionMap.DEF_EXTENSION, OSBTreeIndexEngine.DATA_FILE_EXTENSION,
+					OWOWCache.NAME_ID_MAP_EXTENSION, OIndexRIDContainer.INDEX_FILE_EXTENSION, OSBTreeCollectionManagerShared.DEFAULT_EXTENSION,
+					OSBTreeIndexEngine.NULL_BUCKET_FILE_EXTENSION                                      };
+
+	private static final int                 ONE_KB = 1024;
 
   private final int                        DELETE_MAX_RETRIES;
   private final int                        DELETE_WAIT_TIME;

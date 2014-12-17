@@ -63,6 +63,7 @@ public class OStorageRemoteThread implements OStorageProxy {
   private final OStorageRemote delegate;
   private String               serverURL;
   private int                  sessionId;
+  private byte[]               token;
 
   public OStorageRemoteThread(final OStorageRemote iSharedStorage) {
     delegate = iSharedStorage;
@@ -154,10 +155,11 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  public void setSessionId(final String iServerURL, final int iSessionId) {
+  public void setSessionId(final String iServerURL, final int iSessionId, byte[] iToken) {
     serverURL = iServerURL;
     sessionId = iSessionId;
-    delegate.setSessionId(serverURL, iSessionId);
+    token = iToken;
+    delegate.setSessionId(serverURL, iSessionId, iToken);
   }
 
   public void reload() {
@@ -572,10 +574,10 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  public void updateClusterConfiguration(final byte[] iContent) {
+  public void updateClusterConfiguration(final String iCurrentURL, final byte[] iContent) {
     pushSession();
     try {
-      delegate.updateClusterConfiguration(iContent);
+      delegate.updateClusterConfiguration(iCurrentURL, iContent);
     } finally {
       popSession();
     }
@@ -591,7 +593,7 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   public boolean isClosed() {
-    return sessionId < 0 || delegate.isClosed();
+    return (sessionId < 0 && token == null) || delegate.isClosed();
   }
 
   public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
@@ -601,6 +603,11 @@ public class OStorageRemoteThread implements OStorageProxy {
     } finally {
       popSession();
     }
+  }
+
+  @Override
+  public boolean isAssigningClusterIds() {
+    return false;
   }
 
   public String getName() {
@@ -702,11 +709,13 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   protected void pushSession() {
-    delegate.setSessionId(serverURL, sessionId);
+    delegate.setSessionId(serverURL, sessionId, token);
   }
 
   protected void popSession() {
     serverURL = delegate.getServerURL();
     sessionId = delegate.getSessionId();
+    token = delegate.getSessionToken();
+    // delegate.clearSession();
   }
 }

@@ -1,6 +1,13 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -9,13 +16,12 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 10/21/14
  */
 public class OImmutableSchema implements OSchema {
@@ -40,6 +46,8 @@ public class OImmutableSchema implements OSchema {
       final OImmutableClass immutableClass = new OImmutableClass(oClass, this);
 
       classes.put(immutableClass.getName().toLowerCase(), immutableClass);
+      if (immutableClass.getShortName() != null)
+        classes.put(immutableClass.getShortName().toLowerCase(), immutableClass);
 
       for (int clusterId : immutableClass.getClusterIds())
         clustersToClasses.put(clusterId, immutableClass);
@@ -206,6 +214,8 @@ public class OImmutableSchema implements OSchema {
 
   @Override
   public OGlobalProperty getGlobalPropertyById(int id) {
+    if (id >= properties.size())
+      return null;
     return properties.get(id);
   }
 
@@ -222,6 +232,15 @@ public class OImmutableSchema implements OSchema {
   @Override
   public OClusterSelectionFactory getClusterSelectionFactory() {
     return clusterSelectionFactory;
+  }
+
+  @Override
+  public boolean isFullCheckpointOnChange() {
+    return false;
+  }
+
+  @Override
+  public void setFullCheckpointOnChange(boolean fullCheckpointOnChange) {
   }
 
   private ODatabaseDocumentInternal getDatabase() {

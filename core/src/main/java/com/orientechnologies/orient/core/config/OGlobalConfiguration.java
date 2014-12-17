@@ -19,6 +19,15 @@
  */
 package com.orientechnologies.orient.core.config;
 
+import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
+
+import java.io.File;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
@@ -29,14 +38,6 @@ import java.util.Map.Entry;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
-
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OReadWriteDiskCache;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 
 /**
  * Keeps all configuration settings. At startup assigns the configuration values by reading system properties.
@@ -55,6 +56,9 @@ public enum OGlobalConfiguration {
 
   ENVIRONMENT_ALLOW_JVM_SHUTDOWN("environment.allowJVMShutdown", "Allows to shutdown the JVM if needed/requested", Boolean.class,
       true),
+
+  // SCRIPT
+  SCRIPT_POOL("script.pool.maxSize", "Maximum number of instances in the pool of script engines", Integer.class, 20),
 
   // MEMORY
   MEMORY_USE_UNSAFE("memory.useUnsafe", "Indicates whether Unsafe will be used if it is present", Boolean.class, true),
@@ -107,10 +111,6 @@ public enum OGlobalConfiguration {
 
   STORAGE_COMPRESSION_METHOD("storage.compressionMethod", "Record compression method is used in storage."
       + " Possible values : gzip, nothing, snappy, snappy-native. Default is snappy.", String.class, "nothing"),
-
-  @Deprecated
-  // DEPRECATED IN 2.0
-  STORAGE_KEEP_OPEN("storage.keepOpen", "Deprecated", Boolean.class, Boolean.TRUE),
 
   USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
@@ -166,10 +166,10 @@ public enum OGlobalConfiguration {
   STORAGE_USE_CRC32_FOR_EACH_RECORD("storage.cluster.usecrc32",
       "Indicates whether crc32 should be used for each record to check record integrity.", Boolean.class, false),
 
-  STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 30000),
+  STORAGE_LOCK_TIMEOUT("storage.lockTimeout", "Maximum timeout in milliseconds to lock the storage", Integer.class, 0),
 
   STORAGE_RECORD_LOCK_TIMEOUT("storage.record.lockTimeout", "Maximum timeout in milliseconds to lock a shared record",
-      Integer.class, 100),
+      Integer.class, 2000),
 
   STORAGE_USE_TOMBSTONES("storage.useTombstones", "When record will be deleted its cluster"
       + " position will not be freed but tombstone will be placed instead", Boolean.class, false),
@@ -177,7 +177,7 @@ public enum OGlobalConfiguration {
   // RECORDS
   RECORD_DOWNSIZING_ENABLED(
       "record.downsizing.enabled",
-      "On updates if the record size is lower than before, reduces the space taken accordlying. If enabled this could increase defragmentation, but it reduces the used space",
+      "On updates if the record size is lower than before, reduces the space taken accordingly. If enabled this could increase defragmentation, but it reduces the used space",
       Boolean.class, true),
 
   // DATABASE
@@ -192,19 +192,12 @@ public enum OGlobalConfiguration {
 
   DB_POOL_IDLE_CHECK_DELAY("db.pool.idleCheckDelay", "Delay time on checking for idle databases", Integer.class, 0),
 
-  @Deprecated
-  DB_MVCC("db.mvcc", "Enables or disables MVCC (Multi-Version Concurrency Control) even outside transactions", Boolean.class, true),
-
   DB_MVCC_THROWFAST(
       "db.mvcc.throwfast",
       "Use fast-thrown exceptions for MVCC OConcurrentModificationExceptions. No context information will be available, use where these exceptions are handled and the detail is not neccessary",
       Boolean.class, false),
 
   DB_VALIDATION("db.validation", "Enables or disables validation of records", Boolean.class, true),
-
-  @Deprecated
-  DB_USE_DISTRIBUTED_VERSION("db.use.distributedVersion", "Use extended version that is safe in distributed environment",
-      Boolean.class, Boolean.FALSE),
 
   // SETTINGS OF NON-TRANSACTIONAL MODE
   NON_TX_RECORD_UPDATE_SYNCH("nonTX.recordUpdate.synch",
@@ -233,10 +226,19 @@ public enum OGlobalConfiguration {
   TX_COMMIT_SYNCH("tx.commit.synch", "Synchronizes the storage after transaction commit", Boolean.class, false),
 
   // INDEX
+  INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD("index.embeddedToSbtreeBonsaiThreshold",
+      "Amount of values after which index implementation will use sbtree as values container. Set to -1 to force always using it",
+      Integer.class, 40),
+
+  INDEX_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD("index.sbtreeBonsaiToEmbeddedThreshold",
+      "Amount of values after which index implementation will use embedded values container (disabled by default)", Integer.class,
+      -1),
+
   HASH_TABLE_SPLIT_BUCKETS_BUFFER_LENGTH("hashTable.slitBucketsBuffer.length", "Length of buffer (in pages) where buckets "
       + "that were splited but not flushed to the disk are kept. This buffer is used to minimize random IO overhead.",
       Integer.class, 1500),
 
+  @Deprecated
   INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE("index.auto.rebuildAfterNotSoftClose",
       "Auto rebuild all automatic indexes after upon database open when wasn't closed properly", Boolean.class, true),
 
@@ -259,59 +261,15 @@ public enum OGlobalConfiguration {
       false),
 
   INDEX_TX_MODE("index.txMode",
-      "Indicates index durability level in TX mode. Can be ROLLBACK_ONLY or FULL (ROLLBACK_ONLY by default)", String.class,
-      "ROLLBACK_ONLY"),
+      "Indicates index durability level in TX mode. Can be ROLLBACK_ONLY or FULL (ROLLBACK_ONLY by default)", String.class, "FULL"),
 
   INDEX_CURSOR_PREFETCH_SIZE("index.cursor.prefetchSize", "Default prefetch size of index cursor", Integer.class, 500000),
 
-  // TREEMAP
-  @Deprecated
-  MVRBTREE_TIMEOUT("mvrbtree.timeout", "Maximum timeout to get lock against the OMVRB-Tree", Integer.class, 5000),
-
-  @Deprecated
-  MVRBTREE_NODE_PAGE_SIZE("mvrbtree.nodePageSize",
-      "Page size of each node. 256 means that 256 entries can be stored inside each node", Integer.class, 256),
-
-  @Deprecated
-  MVRBTREE_LOAD_FACTOR("mvrbtree.loadFactor", "HashMap load factor", Float.class, 0.7f),
-
-  @Deprecated
-  MVRBTREE_OPTIMIZE_THRESHOLD(
-      "mvrbtree.optimizeThreshold",
-      "Auto optimize the TreeMap every X tree rotations. This forces the optimization of the tree after many changes to recompute entry points. -1 means never",
-      Integer.class, 100000),
-
-  @Deprecated
-  MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Number of entry points to start searching entries", Integer.class, 64),
-
-  @Deprecated
-  MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR("mvrbtree.optimizeEntryPointsFactor",
-      "Multiplicand factor to apply to entry-points list (parameter mvrbtree.entrypoints) to determine optimization is needed",
-      Float.class, 1.0f),
-
-  @Deprecated
-  MVRBTREE_ENTRY_KEYS_IN_MEMORY("mvrbtree.entryKeysInMemory", "Keep unserialized keys in memory", Boolean.class, Boolean.FALSE),
-
-  @Deprecated
-  MVRBTREE_ENTRY_VALUES_IN_MEMORY("mvrbtree.entryValuesInMemory", "Keep unserialized values in memory", Boolean.class,
-      Boolean.FALSE),
-
-  // TREEMAP OF RIDS
-  @Deprecated
-  MVRBTREE_RID_BINARY_THRESHOLD(
-      "mvrbtree.ridBinaryThreshold",
-      "Valid for set of rids. It's the threshold as number of entries to use the binary streaming instead of classic string streaming. -1 means never use binary streaming",
-      Integer.class, -1),
-
-  @Deprecated
-  MVRBTREE_RID_NODE_PAGE_SIZE("mvrbtree.ridNodePageSize",
-      "Page size of each treeset node. 16 means that 16 entries can be stored inside each node", Integer.class, 64),
-
-  @Deprecated
-  MVRBTREE_RID_NODE_SAVE_MEMORY("mvrbtree.ridNodeSaveMemory",
-      "Save memory usage by avoid keeping RIDs in memory but creating them at every access", Boolean.class, Boolean.FALSE),
-
   // SBTREE
+  SBTREE_MAX_DEPTH("sbtree.maxDepth",
+      "Maximum depth of sbtree which will be traversed during key look up till it will be treated like broken (64 by default)",
+      Integer.class, 64),
+
   SBTREE_MAX_KEY_SIZE("sbtree.maxKeySize", "Maximum size of key which can be put in SBTree in bytes (10240 by default)",
       Integer.class, 10240),
 
@@ -333,10 +291,8 @@ public enum OGlobalConfiguration {
       "How much free space should be in sbtreebonsai file before it will be reused during next allocation", Float.class, 0.5),
 
   // RIDBAG
-  RID_BAG_EMBEDDED_DEFAULT_SIZE(
-      "ridBag.embeddedDefaultSize",
-      "Size of embedded RidBag array when created (empty)",
-      Integer.class, 4),
+  RID_BAG_EMBEDDED_DEFAULT_SIZE("ridBag.embeddedDefaultSize", "Size of embedded RidBag array when created (empty)", Integer.class,
+      4),
 
   RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD(
       "ridBag.embeddedToSbtreeBonsaiThreshold",
@@ -348,9 +304,6 @@ public enum OGlobalConfiguration {
       Integer.class, -1),
 
   // COLLECTIONS
-  @Deprecated
-  LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Upon add avoid unmarshalling set", Boolean.class, true),
-
   PREFER_SBTREE_SET("collections.preferSBTreeSet", "This config is experimental.", Boolean.class, false),
 
   // FILE
@@ -399,8 +352,9 @@ public enum OGlobalConfiguration {
 
   NETWORK_HTTP_CONTENT_CHARSET("network.http.charset", "Http response charset", String.class, "utf-8"),
 
-  NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT("network.http.sessionExpireTimeout",
-      "Timeout after which an http session is considered tp have expired (seconds)", Integer.class, 300),
+  OAUTH2_SECRETKEY("oauth2.secretkey", "Http OAuth2 secret key", String.class, "utf-8"), NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT(
+      "network.http.sessionExpireTimeout", "Timeout after which an http session is considered tp have expired (seconds)",
+      Integer.class, 300),
 
   // PROFILER
   PROFILER_ENABLED("profiler.enabled", "Enable the recording of statistics and counters", Boolean.class, false,
@@ -465,6 +419,8 @@ public enum OGlobalConfiguration {
 
   CLIENT_SSL_TRUSTSTORE_PASSWORD("client.ssl.trustStorePass", "Use SSL for client connections", String.class, null),
 
+  CLIENT_SESSION_TOKEN_BASED("client.session.tokenBased", "Request a token based session to the server", Boolean.class, false),
+
   // SERVER
   SERVER_CHANNEL_CLEAN_DELAY("server.channel.cleanDelay", "Time in ms of delay to check pending closed connections", Integer.class,
       5000),
@@ -510,7 +466,71 @@ public enum OGlobalConfiguration {
       "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l),
 
   DB_DOCUMENT_SERIALIZER("db.document.serializer", "The default record serializer used by the document database", String.class,
-      ORecordSerializerBinary.NAME);
+      ORecordSerializerBinary.NAME),
+
+  @Deprecated
+  LAZYSET_WORK_ON_STREAM("lazyset.workOnStream", "Deprecated, now BINARY serialization is used in place of CSV", Boolean.class,
+      true),
+
+  @Deprecated
+  DB_MVCC("db.mvcc", "Deprecated, MVCC cannot be disabled anymore", Boolean.class, true),
+
+  @Deprecated
+  DB_USE_DISTRIBUTED_VERSION("db.use.distributedVersion", "Deprecated, distributed version is not used anymore", Boolean.class,
+      Boolean.FALSE),
+
+  @Deprecated
+  MVRBTREE_TIMEOUT("mvrbtree.timeout", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class,
+      5000),
+
+  @Deprecated
+  MVRBTREE_NODE_PAGE_SIZE("mvrbtree.nodePageSize", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX",
+      Integer.class, 256),
+
+  @Deprecated
+  MVRBTREE_LOAD_FACTOR("mvrbtree.loadFactor", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX",
+      Float.class, 0.7f),
+
+  @Deprecated
+  MVRBTREE_OPTIMIZE_THRESHOLD("mvrbtree.optimizeThreshold",
+      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, 100000),
+
+  @Deprecated
+  MVRBTREE_ENTRYPOINTS("mvrbtree.entryPoints", "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX",
+      Integer.class, 64),
+
+  @Deprecated
+  MVRBTREE_OPTIMIZE_ENTRYPOINTS_FACTOR("mvrbtree.optimizeEntryPointsFactor",
+      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Float.class, 1.0f),
+
+  @Deprecated
+  MVRBTREE_ENTRY_KEYS_IN_MEMORY("mvrbtree.entryKeysInMemory",
+      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Boolean.class, Boolean.FALSE),
+
+  @Deprecated
+  MVRBTREE_ENTRY_VALUES_IN_MEMORY("mvrbtree.entryValuesInMemory",
+      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Boolean.class, Boolean.FALSE),
+
+  // TREEMAP OF RIDS
+  @Deprecated
+  MVRBTREE_RID_BINARY_THRESHOLD("mvrbtree.ridBinaryThreshold",
+      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, -1),
+
+  @Deprecated
+  MVRBTREE_RID_NODE_PAGE_SIZE("mvrbtree.ridNodePageSize",
+      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Integer.class, 64),
+
+  @Deprecated
+  MVRBTREE_RID_NODE_SAVE_MEMORY("mvrbtree.ridNodeSaveMemory",
+      "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Boolean.class, Boolean.FALSE),
+
+  @Deprecated
+  // DEPRECATED IN 2.0
+  STORAGE_KEEP_OPEN("storage.keepOpen", "Deprecated", Boolean.class, Boolean.TRUE),
+
+  // DEPRECATED IN 2.0, LEVEL1 CACHE CANNOT BE DISABLED ANYMORE
+  @Deprecated
+  CACHE_LOCAL_ENABLED("cache.local.enabled", "Deprecated, Level1 cache cannot be disabled anymore", Boolean.class, true);
 
   private final String                 key;
   private final Object                 defValue;
@@ -619,19 +639,23 @@ public enum OGlobalConfiguration {
       final long osMemory = (Long) memorySize.invoke(mxBean);
       final long jvmMaxMemory = Runtime.getRuntime().maxMemory();
 
-      final long result = (osMemory - jvmMaxMemory) / (1024 * 1024) - 2 * 1024;
-      if (result > 0) {
-        OLogManager.instance().info(null, "Auto-config DISKCACHE=%,dMB (heap=%,dMB osMemory=%,dMB)", result,
-            jvmMaxMemory / 1024 / 1024, osMemory / 1024 / 1024);
-        DISK_CACHE_SIZE.setValue(result);
+      long diskCacheInMB = (osMemory - jvmMaxMemory) / (1024 * 1024) - 2 * 1024;
+      if (diskCacheInMB > 0) {
+        final long freeSpaceInMB = new File(".").getFreeSpace() / 1024 / 1024;
+
+        if (diskCacheInMB > freeSpaceInMB * 80 / 100)
+          // LOW DISK SPACE: REDUCE DISK CACHE SIZE
+          diskCacheInMB = freeSpaceInMB * 50 / 100;
+
+        OLogManager.instance().info(null, "OrientDB auto-config DISKCACHE=%,dMB (heap=%,dMB os=%,dMB disk=%,dMB)", diskCacheInMB,
+            jvmMaxMemory / 1024 / 1024, osMemory / 1024 / 1024, freeSpaceInMB);
+        DISK_CACHE_SIZE.setValue(diskCacheInMB);
       } else {
         // LOW MEMORY: SET IT TO 64MB ONLY
-        OLogManager
-            .instance()
-            .warn(
-                null,
-                "No enough physical memory available: %,dMB (heap=%,dMB). Set lower Heap and restart OrientDB. Now running with DISKCACHE=64MB",
-                osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
+        OLogManager.instance().warn(
+            null,
+            "No enough physical memory available: %,dMB (heap=%,dMB). Set lower Heap and restart OrientDB. Now running with DISKCACHE="
+                + OReadWriteDiskCache.MIN_CACHE_SIZE + "MB", osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
         DISK_CACHE_SIZE.setValue(OReadWriteDiskCache.MIN_CACHE_SIZE);
       }
 

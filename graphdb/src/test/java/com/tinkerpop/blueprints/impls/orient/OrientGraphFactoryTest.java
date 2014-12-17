@@ -19,24 +19,12 @@ import com.orientechnologies.orient.core.intent.OIntentMassiveInsert;
  */
 @RunWith(JUnit4.class)
 public class OrientGraphFactoryTest {
+
   @BeforeClass
   public static void setUp() {
     OrientBaseGraph.clearInitStack();
   }
 
-  @Test
-  public void createTx() {
-    OrientGraphFactory factory = new OrientGraphFactory("memory:testPool");
-    OrientBaseGraph g = factory.getTx();
-    assertEquals(g.getClass(), OrientGraph.class);
-    assertEquals(g.getRawGraph().getClass(), ODatabaseDocumentTx.class);
-    assertSame(g, OrientBaseGraph.getActiveInstance());
-    g.shutdown();
-    assertNull(OrientBaseGraph.getActiveInstance());
-    factory.close();
-  }
-
-  @Test
   public void createTxPool() {
     OrientGraph graph = new OrientGraph("memory:testPool");
     graph.shutdown();
@@ -45,9 +33,9 @@ public class OrientGraphFactoryTest {
     factory.setupPool(5, 10);
     OrientBaseGraph g = factory.getTx();
     assertEquals(g.getClass(), OrientGraph.class);
-    assertSame(g, OrientBaseGraph.getActiveInstance());
+    assertSame(g, OrientBaseGraph.getActiveGraph());
     g.shutdown();
-    assertNull(OrientBaseGraph.getActiveInstance());
+    assertNull(OrientBaseGraph.getActiveGraph());
     factory.close();
   }
 
@@ -61,15 +49,15 @@ public class OrientGraphFactoryTest {
 
     OrientBaseGraph g = factory.getTx();
     assertEquals(g.getClass(), OrientGraph.class);
-    assertSame(g, OrientBaseGraph.getActiveInstance());
+    assertSame(g, OrientBaseGraph.getActiveGraph());
     OrientBaseGraph g1 = factory.getTx();
-    assertSame(g1, OrientBaseGraph.getActiveInstance());
+    assertSame(g1, OrientBaseGraph.getActiveGraph());
     g1.shutdown();
 
-    assertSame(g, OrientBaseGraph.getActiveInstance());
+    assertSame(g, OrientBaseGraph.getActiveGraph());
 
     g.shutdown();
-    assertNull(OrientBaseGraph.getActiveInstance());
+    assertNull(OrientBaseGraph.getActiveGraph());
     factory.close();
   }
 
@@ -77,11 +65,11 @@ public class OrientGraphFactoryTest {
   public void createNoTx() {
     OrientGraphFactory factory = new OrientGraphFactory("memory:testPool");
     OrientBaseGraph g = factory.getNoTx();
-    assertSame(g, OrientBaseGraph.getActiveInstance());
+    assertSame(g, OrientBaseGraph.getActiveGraph());
     assertEquals(g.getClass(), OrientGraphNoTx.class);
     assertEquals(g.getRawGraph().getClass(), ODatabaseDocumentTx.class);
     g.shutdown();
-    assertNull(OrientBaseGraph.getActiveInstance());
+    assertNull(OrientBaseGraph.getActiveGraph());
     factory.close();
   }
 
@@ -93,10 +81,10 @@ public class OrientGraphFactoryTest {
     OrientGraphFactory factory = new OrientGraphFactory("memory:testPool");
     factory.setupPool(5, 10);
     OrientBaseGraph g = factory.getNoTx();
-    assertSame(g, OrientBaseGraph.getActiveInstance());
+    assertSame(g, OrientBaseGraph.getActiveGraph());
     assertEquals(g.getClass(), OrientGraphNoTx.class);
     g.shutdown();
-    assertNull(OrientBaseGraph.getActiveInstance());
+    assertNull(OrientBaseGraph.getActiveGraph());
     factory.close();
   }
 

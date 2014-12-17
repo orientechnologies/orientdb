@@ -153,33 +153,8 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public boolean addPhysicalPosition(OPhysicalPosition iPPosition) throws IOException {
-    throw new OOfflineClusterException("Cannot create a new record on offline cluster '" + name + "'");
-  }
-
-  @Override
   public OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException {
     throw new OOfflineClusterException("Cannot read a record on offline cluster '" + name + "'");
-  }
-
-  @Override
-  public void updateDataSegmentPosition(long iPosition, int iDataSegmentId, long iDataPosition) throws IOException {
-
-  }
-
-  @Override
-  public void removePhysicalPosition(long iPosition) throws IOException {
-    throw new OOfflineClusterException("Cannot delete a record from offline cluster '" + name + "'");
-  }
-
-  @Override
-  public void updateRecordType(long iPosition, byte iRecordType) throws IOException {
-    throw new OOfflineClusterException("Cannot update a record on offline cluster '" + name + "'");
-  }
-
-  @Override
-  public void updateVersion(long iPosition, ORecordVersion iVersion) throws IOException {
-    throw new OOfflineClusterException("Cannot update a record on offline cluster '" + name + "'");
   }
 
   @Override

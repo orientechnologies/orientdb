@@ -5,7 +5,7 @@
     <property environment="env"/>
     <property name="vendor" value="Orient Technologies Ltd"/>
     <property name="product" value="OrientDB"/>
-    <property name="version" value="2.0-M3"/>
+    <property name="version" value="2.0-rc1"/>
     <condition property="community.release" value="${releaseHome}/orientdb-community-${version}"
                else="../releases/orientdb-community-${version}">
         <isset property="releaseHome"/>
@@ -104,6 +104,7 @@
             </classpath>
             <fileset dir="." defaultexcludes="yes">
                 <include name="core/src/main/java/**/*.java"/>
+                <include name="client/src/main/java/**/*.java"/>
                 <include name="object/src/main/java/**/*.java"/>
                 <include name="../../os/tinkerpop/blueprints/blueprints-core/src/main/java/**/*.java"/>
                 <include name="graphdb/src/main/java/**/*.java"/>

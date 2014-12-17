@@ -49,11 +49,10 @@ import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class OMetadataDefault implements OMetadata {
+public class OMetadataDefault implements OMetadataInternal {
   public static final String                           CLUSTER_INTERNAL_NAME     = "internal";
   public static final String                           CLUSTER_INDEX_NAME        = "index";
   public static final String                           CLUSTER_MANUAL_INDEX_NAME = "manindex";
-  public static final String                           DATASEGMENT_INDEX_NAME    = "index";
 
   protected int                                        schemaClusterId;
 

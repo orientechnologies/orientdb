@@ -22,7 +22,6 @@ package com.orientechnologies.orient.server.network.protocol.http.command.post;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
-import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
@@ -49,7 +48,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Map.Entry;
+import java.util.Map;
 import java.util.Set;
 
 public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServerAbstract {
@@ -169,25 +168,14 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
       json.writeAttribute(3, false, "mode", role.getMode().toString());
 
       json.beginCollection(3, true, "rules");
-      for (ORule rule : role.getRules()) {
-        if (rule.getAccess() != null) {
-          json.beginObject(4);
-          json.writeAttribute(4, true, "name", rule.getResourceGeneric());
-          json.writeAttribute(4, false, "create", role.allow(rule.getResourceGeneric(), null, ORole.PERMISSION_CREATE));
-          json.writeAttribute(4, false, "read", role.allow(rule.getResourceGeneric(), null, ORole.PERMISSION_READ));
-          json.writeAttribute(4, false, "update", role.allow(rule.getResourceGeneric(), null, ORole.PERMISSION_UPDATE));
-          json.writeAttribute(4, false, "delete", role.allow(rule.getResourceGeneric(), null, ORole.PERMISSION_DELETE));
-          json.endObject(4, true);
-        }
-        for (String specificResource : rule.getSpecificResources().keySet()) {
-          json.beginObject(4);
-          json.writeAttribute(4, true, "name", rule.getResourceGeneric() + "." + specificResource);
-          json.writeAttribute(4, false, "create", role.allow(rule.getResourceGeneric(), specificResource, ORole.PERMISSION_CREATE));
-          json.writeAttribute(4, false, "read", role.allow(rule.getResourceGeneric(), specificResource, ORole.PERMISSION_READ));
-          json.writeAttribute(4, false, "update", role.allow(rule.getResourceGeneric(), specificResource, ORole.PERMISSION_UPDATE));
-          json.writeAttribute(4, false, "delete", role.allow(rule.getResourceGeneric(), specificResource, ORole.PERMISSION_DELETE));
-          json.endObject(4, true);
-        }
+      for (Map.Entry<String, Byte> rule : role.getRules().entrySet()) {
+        json.beginObject(4);
+        json.writeAttribute(4, true, "name", rule.getKey());
+        json.writeAttribute(4, false, "create", role.allow(rule.getKey(), ORole.PERMISSION_CREATE));
+        json.writeAttribute(4, false, "read", role.allow(rule.getKey(), ORole.PERMISSION_READ));
+        json.writeAttribute(4, false, "update", role.allow(rule.getKey(), ORole.PERMISSION_UPDATE));
+        json.writeAttribute(4, false, "delete", role.allow(rule.getKey(), ORole.PERMISSION_DELETE));
+        json.endObject(4, true);
       }
       json.endCollection(3, false);
 

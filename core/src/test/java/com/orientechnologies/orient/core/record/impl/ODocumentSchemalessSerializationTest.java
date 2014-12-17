@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.record.impl;
 import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertNotNull;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -270,7 +271,7 @@ public class ODocumentSchemalessSerializationTest {
   }
 
   @Test
-  private void testCollectionOfEmbeddedDocument() {
+  public void testCollectionOfEmbeddedDocument() {
 
     ODocument document = new ODocument();
 

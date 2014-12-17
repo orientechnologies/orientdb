@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSetAware;
@@ -88,7 +89,7 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
       className = "V";
 
     // GET/CHECK CLASS NAME
-    clazz = database.getMetadata().getImmutableSchemaSnapshot().getClass(className);
+    clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(className);
     if (clazz == null)
       throw new OCommandSQLParsingException("Class " + className + " was not found");
 

@@ -37,7 +37,7 @@ public abstract class OrientConfigurableGraph {
   }
 
   public class Settings {
-    protected boolean     useLightweightEdges                 = true;
+    protected boolean     useLightweightEdges                 = false;
     protected boolean     useClassForEdgeLabel                = true;
     protected boolean     useClassForVertexLabel              = true;
     protected boolean     keepInMemoryReferences              = false;

@@ -11,17 +11,17 @@ import com.orientechnologies.orient.core.security.OSecurityManager;
 import java.util.*;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 03/11/14
  */
 public class OImmutableUser implements OSecurityUser {
-  private static final long serialVersionUID = 1L;
+  private static final long         serialVersionUID = 1L;
   private final long                version;
 
   private final String              name;
   private final String              password;
 
-  private final Set<OImmutableRole> roles = new HashSet<OImmutableRole>();
+  private final Set<OImmutableRole> roles            = new HashSet<OImmutableRole>();
 
   private final STATUSES            status;
   private final ORID                rid;
@@ -77,7 +77,7 @@ public class OImmutableUser implements OSecurityUser {
   }
 
   @Override
-	@Deprecated
+  @Deprecated
   public OSecurityRole allow(String iResource, int iOperation) {
     final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
     final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
@@ -89,7 +89,7 @@ public class OImmutableUser implements OSecurityUser {
   }
 
   @Override
-	@Deprecated
+  @Deprecated
   public OSecurityRole checkIfAllowed(String iResource, int iOperation) {
     final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
     final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
@@ -101,7 +101,7 @@ public class OImmutableUser implements OSecurityUser {
   }
 
   @Override
-	@Deprecated
+  @Deprecated
   public boolean isRuleDefined(String iResource) {
     final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
     final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
@@ -167,7 +167,7 @@ public class OImmutableUser implements OSecurityUser {
         while (r != null) {
           if (r.getName().equals(iRoleName))
             return true;
-          r = role.getParentRole();
+          r = r.getParentRole();
         }
       }
     }

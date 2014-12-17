@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -151,27 +152,25 @@ public abstract class OStringSerializerHelper {
     throw new IllegalArgumentException("Type " + iType + " does not support converting value: " + iValue);
   }
 
-  public static String smartTrim(final String iSource, final boolean iRemoveLeadingSpaces, final boolean iRemoveTailingSpaces) {
-    final StringBuilder buffer = new StringBuilder(128);
-    boolean spaced = iRemoveLeadingSpaces;
-    for (int i = 0; i < iSource.length(); ++i) {
-      final char c = iSource.charAt(i);
-      if (c != ' ') {
-        // ALWAYS APPEND
-        spaced = false;
-        buffer.append(c);
-      } else if (!spaced) {
-        // FIRST SPACE, APPEND
-        spaced = true;
-        buffer.append(c);
-      } // ELSE SKIP
+  public static String smartTrim(String source, final boolean removeLeadingSpaces, final boolean removeTailingSpaces) {
+    int startIndex = 0;
+    int length = source.length();
+
+    while (startIndex < length && source.charAt(startIndex) == ' ') {
+      startIndex++;
     }
 
-    final int len = buffer.length();
-    if (iRemoveTailingSpaces && buffer.charAt(len - 1) == ' ')
-      buffer.setLength(len - 1);
+    if (!removeLeadingSpaces && startIndex > 0)
+      startIndex--;
 
-    return buffer.toString();
+    while (length > startIndex && source.charAt(length - 1) == ' ') {
+      length--;
+    }
+
+    if (!removeTailingSpaces && length < source.length())
+      length++;
+
+    return source.substring(startIndex, length);
   }
 
   public static List<String> smartSplit(final String iSource, final char iRecordSeparator, final char... iJumpChars) {
@@ -774,7 +773,7 @@ public abstract class OStringSerializerHelper {
       final String className = iValue.substring(0, classSeparatorPos);
       final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
       if (className != null && database != null)
-        iLinkedClass = database.getMetadata().getImmutableSchemaSnapshot().getClass(className);
+        iLinkedClass = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(className);
     }
     return iLinkedClass;
   }

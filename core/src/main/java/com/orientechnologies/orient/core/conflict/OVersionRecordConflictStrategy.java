@@ -38,7 +38,7 @@ public class OVersionRecordConflictStrategy implements ORecordConflictStrategy {
   @Override
   public byte[] onUpdate(final byte iRecordType, final ORecordId rid, final ORecordVersion iRecordVersion,
       final byte[] iRecordContent, final ORecordVersion iDatabaseVersion) {
-    checkVersions(rid, iDatabaseVersion, iRecordVersion);
+    checkVersions(rid, iRecordVersion, iDatabaseVersion);
     return null;
   }
 

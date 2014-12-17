@@ -19,10 +19,8 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
-import java.util.*;
-
 import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
@@ -37,9 +35,13 @@ import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionFactory;
+import com.orientechnologies.orient.core.index.OIndexException;
+import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OIndexManagerProxy;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
@@ -51,9 +53,17 @@ import com.orientechnologies.orient.core.serialization.serializer.record.ORecord
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import com.orientechnologies.orient.core.storage.*;
+import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
+import com.orientechnologies.orient.core.storage.OPhysicalPosition;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
+
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Schema Class implementation.
@@ -81,6 +91,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private boolean                            abstractClass           = false;                           // @SINCE v1.2.0
   private Map<String, String>                customFields;
   private volatile OClusterSelectionStrategy clusterSelection;                                          // @SINCE 1.7
+  private volatile int                       hashCode;
 
   /**
    * Constructor used in unmarshalling.
@@ -587,10 +598,23 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return addProperty(iPropertyName, iType, iLinkedType, null);
   }
 
-  public boolean existsProperty(final String iPropertyName) {
+  public boolean existsProperty(String propertyName) {
     acquireSchemaReadLock();
     try {
-      return properties.containsKey(iPropertyName.toLowerCase());
+      propertyName = propertyName.toLowerCase();
+
+      OClassImpl currentClass = this;
+      do {
+        final boolean result = currentClass.properties.containsKey(propertyName);
+
+        if (result)
+          return true;
+
+        currentClass = (OClassImpl) currentClass.getSuperClass();
+
+      } while (currentClass != null);
+
+      return false;
     } finally {
       releaseSchemaReadLock();
     }
@@ -836,15 +860,15 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         final String cmd = String.format("alter class %s addcluster %s", name, clusterNameOrId);
         database.command(new OCommandSQL(cmd)).execute();
       } else if (isDistributedCommand()) {
+        final int clusterId = createClusterIfNeeded(clusterNameOrId);
+        addClusterIdInternal(clusterId);
+
         final String cmd = String.format("alter class %s addcluster %s", name, clusterNameOrId);
 
         final OCommandSQL commandSQL = new OCommandSQL(cmd);
         commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
 
         database.command(commandSQL).execute();
-
-        final int clusterId = createClusterIfNeeded(clusterNameOrId);
-        addClusterIdInternal(clusterId);
       } else {
         final int clusterId = createClusterIfNeeded(clusterNameOrId);
         addClusterIdInternal(clusterId);
@@ -1074,20 +1098,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   @Override
-  public int hashCode() {
-    acquireSchemaReadLock();
-    try {
-      final int prime = 31;
-      int result = super.hashCode();
-      result = prime * result;
-      return result;
-    } finally {
-      releaseSchemaReadLock();
-    }
-  }
-
-  @Override
-  public boolean equals(final Object obj) {
+  public boolean equals(Object obj) {
     acquireSchemaReadLock();
     try {
       if (this == obj)
@@ -1102,10 +1113,36 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
           return false;
       } else if (!name.equals(other.getName()))
         return false;
+
       return true;
     } finally {
       releaseSchemaReadLock();
     }
+  }
+
+  @Override
+  public int hashCode() {
+    int sh = hashCode;
+    if (sh != 0)
+      return sh;
+
+    acquireSchemaReadLock();
+    try {
+      sh = hashCode;
+      if (sh != 0)
+        return sh;
+
+      calculateHashCode();
+      return hashCode;
+    } finally {
+      releaseSchemaReadLock();
+    }
+  }
+
+  private void calculateHashCode() {
+    int result = super.hashCode();
+    result = 31 * result + (name != null ? name.hashCode() : 0);
+    hashCode = result;
   }
 
   public int compareTo(final OClass o) {
@@ -1463,7 +1500,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public Set<OIndex<?>> getClassIndexes() {
     acquireSchemaReadLock();
     try {
-      return getDatabase().getMetadata().getIndexManager().getClassIndexes(name);
+      final OIndexManagerProxy idxManager = getDatabase().getMetadata().getIndexManager();
+      if (idxManager == null)
+        return new HashSet<OIndex<?>>();
+
+      return idxManager.getClassIndexes(name);
     } finally {
       releaseSchemaReadLock();
     }
@@ -1473,7 +1514,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   public void getClassIndexes(final Collection<OIndex<?>> indexes) {
     acquireSchemaReadLock();
     try {
-      getDatabase().getMetadata().getIndexManager().getClassIndexes(name, indexes);
+      final OIndexManagerProxy idxManager = getDatabase().getMetadata().getIndexManager();
+      if (idxManager == null)
+        return;
+
+      idxManager.getClassIndexes(name, indexes);
     } finally {
       releaseSchemaReadLock();
     }
@@ -1505,11 +1550,12 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public void releaseSchemaWriteLock() {
+    calculateHashCode();
     owner.releaseSchemaWriteLock();
   }
 
   public void checkEmbedded() {
-    if (!(getDatabase().getStorage().getUnderlying() instanceof OStorageEmbedded))
+    if (!(getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
       throw new OSchemaException("'Internal' schema modification methods can be used only inside of embedded database");
   }
 
@@ -1977,7 +2023,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private void addClusterIdToIndexes(int iId) {
-    if (getDatabase().getStorage().getUnderlying() instanceof OStorageEmbedded) {
+    if (getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
       final String clusterName = getDatabase().getClusterNameById(iId);
       final List<String> indexesToAdd = new ArrayList<String>();
 
@@ -2005,10 +2051,24 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     baseClasses.add(iBaseClass);
 
+    final Set<String> browsedClasses = new HashSet<String>();
+
     // ADD CLUSTER IDS OF BASE CLASS TO THIS CLASS AND ALL SUPER-CLASSES
     OClassImpl currentClass = this;
     while (currentClass != null) {
+      browsedClasses.add(currentClass.getName());
+
       currentClass.addPolymorphicClusterIds((OClassImpl) iBaseClass);
+
+      final OClass s = currentClass.getSuperClass();
+
+      if (s != null && browsedClasses.contains(s.getName())) {
+        OLogManager.instance().error(this, "Error in schema: class '%s' has a recursive dependency. Resetting superclass to null",
+            currentClass.getName());
+        currentClass.superClass = null;
+        break;
+      }
+
       currentClass = (OClassImpl) currentClass.getSuperClass();
     }
 
@@ -2037,7 +2097,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private void removeClusterFromIndexes(int iId) {
-    if (getDatabase().getStorage().getUnderlying() instanceof OStorageEmbedded) {
+    if (getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
       final String clusterName = getDatabase().getClusterNameById(iId);
       final List<String> indexesToRemove = new ArrayList<String>();
 

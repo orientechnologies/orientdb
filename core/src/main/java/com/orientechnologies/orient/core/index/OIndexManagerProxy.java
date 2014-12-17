@@ -170,4 +170,14 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
   public void removeClassPropertyIndex(final OIndex<?> idx) {
     delegate.removeClassPropertyIndex(idx);
   }
+
+  @Override
+  public boolean isFullCheckpointOnChange() {
+    return delegate.isFullCheckpointOnChange();
+  }
+
+  @Override
+  public void setFullCheckpointOnChange(boolean fullCheckpointOnChange) {
+    delegate.setFullCheckpointOnChange(fullCheckpointOnChange);
+  }
 }

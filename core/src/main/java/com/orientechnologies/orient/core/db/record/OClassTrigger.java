@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 henryzhao81@gmail.com
+ * Copyright 2010-2012 henryzhao81-at-gmail.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,18 @@ package com.orientechnologies.orient.core.db.record;
 
 import java.lang.reflect.Method;
 
-import javax.script.*;
+import javax.script.Bindings;
+import javax.script.Invocable;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
 
+import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.script.*;
+import com.orientechnologies.orient.core.command.script.OCommandScriptException;
+import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -37,6 +43,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 /**
@@ -175,21 +182,23 @@ public class OClassTrigger extends ODocumentHookAbstract {
       return RESULT.RECORD_NOT_CHANGED;
 
     final ODocument document = (ODocument) iRecord;
-    if (document.getImmutableSchemaClass() != null && document.getImmutableSchemaClass().isSubClassOf(CLASSNAME))
+    if (ODocumentInternal.getImmutableSchemaClass(document) != null
+        && ODocumentInternal.getImmutableSchemaClass(document).isSubClassOf(CLASSNAME))
       return super.onTrigger(iType, iRecord);
+
     return RESULT.RECORD_NOT_CHANGED;
   }
 
   private Object checkClzAttribute(final ODocument iDocument, String attr) {
-    final OClass clz = iDocument.getImmutableSchemaClass();
+    final OClass clz = ODocumentInternal.getImmutableSchemaClass(iDocument);
     if (clz != null && clz.isSubClassOf(CLASSNAME)) {
       OFunction func = null;
-      String fieldName = ((OClassImpl) clz).getCustom(attr);
+      String fieldName = clz.getCustom(attr);
       OClass superClz = clz.getSuperClass();
       while (fieldName == null || fieldName.length() == 0) {
         if (superClz == null || superClz.getName().equals(CLASSNAME))
           break;
-        fieldName = ((OClassImpl) superClz).getCustom(attr);
+        fieldName = superClz.getCustom(attr);
         superClz = superClz.getSuperClass();
       }
       if (fieldName != null && fieldName.length() > 0) {
@@ -265,56 +274,53 @@ public class OClassTrigger extends ODocumentHookAbstract {
     if (func == null)
       return RESULT.RECORD_NOT_CHANGED;
 
-    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    // final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(funcName);
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+
     final OScriptManager scriptManager = Orient.instance().getScriptManager();
-    final ScriptEngine scriptEngine = scriptManager.getEngine(func.getLanguage());
-    // final ScriptEngine scriptEngine = new ScriptEngineManager().getEngineByName("javascript");
-    final Bindings binding = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE);
-    // final Bindings binding = scriptEngine.createBindings();
 
-    for (OScriptInjection i : scriptManager.getInjections())
-      i.bind(binding);
-    binding.put("doc", iDocument);
-    if (db != null) {
-      binding.put("db", new OScriptDocumentDatabaseWrapper((ODatabaseDocumentTx) db));
-      binding.put("orient", new OScriptOrientWrapper(db));
-    } else
-      binding.put("orient", new OScriptOrientWrapper());
-
-    // scriptEngine.setBindings(binding, ScriptContext.ENGINE_SCOPE);
-
-    String result = null;
+    final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = scriptManager.acquireDatabaseEngine(db.getName(),
+        func.getLanguage());
+    final ScriptEngine scriptEngine = entry.object;
     try {
-      if (func.getLanguage() == null)
-        throw new OConfigurationException("Database function '" + func.getName() + "' has no language");
-      final String funcStr = scriptManager.getFunctionDefinition(func);
-      if (funcStr != null) {
-        try {
-          scriptEngine.eval(funcStr);
-        } catch (ScriptException e) {
-          scriptManager.getErrorMessage(e, funcStr);
+      final Bindings binding = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE);
+
+      scriptManager.bind(binding, (ODatabaseDocumentTx) db, null, null);
+
+      String result = null;
+      try {
+        if (func.getLanguage() == null)
+          throw new OConfigurationException("Database function '" + func.getName() + "' has no language");
+        final String funcStr = scriptManager.getFunctionDefinition(func);
+        if (funcStr != null) {
+          try {
+            scriptEngine.eval(funcStr);
+          } catch (ScriptException e) {
+            scriptManager.throwErrorMessage(e, funcStr);
+          }
         }
+        if (scriptEngine instanceof Invocable) {
+          final Invocable invocableEngine = (Invocable) scriptEngine;
+          Object[] EMPTY = new Object[0];
+          result = (String) invocableEngine.invokeFunction(func.getName(), EMPTY);
+        }
+      } catch (ScriptException e) {
+        throw new OCommandScriptException("Error on execution of the script", func.getName(), e.getColumnNumber(), e);
+      } catch (NoSuchMethodException e) {
+        throw new OCommandScriptException("Error on execution of the script", func.getName(), 0, e);
+      } catch (OCommandScriptException e) {
+        // PASS THROUGH
+        throw e;
+
+      } finally {
+        scriptManager.unbind(binding, null, null);
       }
-      if (scriptEngine instanceof Invocable) {
-        final Invocable invocableEngine = (Invocable) scriptEngine;
-        Object[] EMPTY = new Object[0];
-        result = (String) invocableEngine.invokeFunction(func.getName(), EMPTY);
+      if (result == null) {
+        return RESULT.RECORD_NOT_CHANGED;
       }
-    } catch (ScriptException e) {
-      throw new OCommandScriptException("Error on execution of the script", func.getName(), e.getColumnNumber(), e);
-    } catch (NoSuchMethodException e) {
-      throw new OCommandScriptException("Error on execution of the script", func.getName(), 0, e);
-    } catch (OCommandScriptException e) {
-      // PASS THROUGH
-      throw e;
+      return RESULT.valueOf(result);
 
     } finally {
-      scriptManager.unbind(binding);
+      scriptManager.releaseDatabaseEngine(func.getLanguage(), db.getName(), entry);
     }
-    if (result == null) {
-      return RESULT.RECORD_NOT_CHANGED;
-    }
-    return RESULT.valueOf(result);// result;
   }
 }

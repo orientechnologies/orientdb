@@ -33,7 +33,7 @@ import com.orientechnologies.orient.core.sql.operator.OQueryOperatorIn;
 import java.util.*;
 
 /**
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OFilterAnalyzer {
 

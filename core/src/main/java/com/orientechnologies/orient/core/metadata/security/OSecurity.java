@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.List;
@@ -32,6 +33,15 @@ import java.util.Set;
  * 
  */
 public interface OSecurity {
+  public static final String RESTRICTED_CLASSNAME   = "ORestricted";
+  public static final String IDENTITY_CLASSNAME     = "OIdentity";
+  public static final String ALLOW_ALL_FIELD        = "_allow";
+  public static final String ALLOW_READ_FIELD       = "_allowRead";
+  public static final String ALLOW_UPDATE_FIELD     = "_allowUpdate";
+  public static final String ALLOW_DELETE_FIELD     = "_allowDelete";
+  public static final String ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
+  public static final String ONCREATE_FIELD         = "onCreate.fields";
+
   public OUser create();
 
   public void load();
@@ -52,7 +62,11 @@ public interface OSecurity {
 
   public OUser authenticate(String iUsername, String iUserPassword);
 
+  public OUser authenticate(final OToken authToken);
+
   public OUser getUser(String iUserName);
+
+  public OUser getUser(final ORID iUserId);
 
   public OUser createUser(String iUserName, String iUserPassword, String... iRoles);
 

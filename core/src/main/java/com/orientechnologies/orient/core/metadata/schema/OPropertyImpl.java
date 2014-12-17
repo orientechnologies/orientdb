@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.index.*;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -43,8 +42,8 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.storage.OAutoshardedStorage;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
 /**
@@ -72,6 +71,8 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   private Map<String, String> customFields;
   private OCollate            collate = new ODefaultCollate();
   private OGlobalProperty     globalRef;
+
+  private volatile int        hashCode;
 
   @Deprecated
   OPropertyImpl(final OClassImpl owner, final String name, final OType type) {
@@ -907,15 +908,28 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
   @Override
   public int hashCode() {
+		int sh = hashCode;
+		if (sh != 0)
+			return sh;
+
     acquireSchemaReadLock();
     try {
-      final int prime = 31;
-      int result = super.hashCode();
-      result = prime * result + ((owner == null) ? 0 : owner.hashCode());
-      return result;
+			sh = hashCode;
+      if (sh != 0)
+        return  sh;
+
+			calculateHashCode();
+      return hashCode;
     } finally {
       releaseSchemaReadLock();
     }
+  }
+
+  private void calculateHashCode() {
+    final int prime = 31;
+    int result = super.hashCode();
+    result = prime * result + ((owner == null) ? 0 : owner.hashCode());
+    hashCode = result;
   }
 
   @Override
@@ -1033,11 +1047,12 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   public void releaseSchemaWriteLock() {
+		calculateHashCode();
     owner.releaseSchemaWriteLock();
   }
 
   public void checkEmbedded() {
-    if (!(getDatabase().getStorage().getUnderlying() instanceof OStorageEmbedded))
+    if (!(getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
       throw new OSchemaException("'Internal' schema modification methods can be used only inside of embedded database");
   }
 

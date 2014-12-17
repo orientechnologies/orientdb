@@ -24,7 +24,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 
 public interface ODocumentSerializer {
 
-  public void serialize(ODocument document, BytesContainer bytes);
+  public void serialize(ODocument document, BytesContainer bytes, boolean iClassOnly);
 
   public void deserialize(ODocument document, BytesContainer bytes, String[] iFields);
 
