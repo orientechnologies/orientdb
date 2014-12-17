@@ -98,8 +98,9 @@ public abstract class BaseLuceneTest {
     String javaExec = System.getProperty("java.home") + "/bin/java";
     System.setProperty("ORIENTDB_HOME", buildDirectory);
 
+      //"-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
     ProcessBuilder processBuilder = new ProcessBuilder(javaExec, "-Xmx2048m", "-classpath", System.getProperty("java.class.path"),
-        "-DORIENTDB_HOME=" + buildDirectory, "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005",
+        "-DORIENTDB_HOME=" + buildDirectory,
         RemoteDBRunner.class.getName(), getDatabaseName(), "" + drop);
     processBuilder.inheritIO();
 
