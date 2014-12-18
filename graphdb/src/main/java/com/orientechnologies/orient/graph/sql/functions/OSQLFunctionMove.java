@@ -63,25 +63,28 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
   public Object execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult,
       final Object[] iParameters, final OCommandContext iContext) {
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
+    try {
+      final String[] labels;
+      if (iParameters != null && iParameters.length > 0 && iParameters[0] != null)
+        labels = OMultiValue.array(iParameters, String.class, new OCallable<Object, Object>() {
 
-    final String[] labels;
-    if (iParameters != null && iParameters.length > 0 && iParameters[0] != null)
-      labels = OMultiValue.array(iParameters, String.class, new OCallable<Object, Object>() {
+          @Override
+          public Object call(final Object iArgument) {
+            return OStringSerializerHelper.getStringContent(iArgument);
+          }
+        });
+      else
+        labels = null;
 
+      return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
         @Override
-        public Object call(final Object iArgument) {
-          return OStringSerializerHelper.getStringContent(iArgument);
+        public Object call(final OIdentifiable iArgument) {
+          return move(graph, iArgument, labels);
         }
-      });
-    else
-      labels = null;
-
-    return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
-      @Override
-      public Object call(final OIdentifiable iArgument) {
-        return move(graph, iArgument, labels);
-      }
-    }, iThis, iContext);
+      }, iThis, iContext);
+    } finally {
+      graph.shutdown(false);
+    }
   }
 
   protected Object v2v(final OrientBaseGraph graph, final OIdentifiable iRecord, final Direction iDirection, final String[] iLabels) {

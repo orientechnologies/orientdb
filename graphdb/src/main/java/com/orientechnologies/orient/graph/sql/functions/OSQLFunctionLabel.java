@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.graph.sql.functions;
 
 import com.orientechnologies.common.util.OCallable;
@@ -47,18 +47,22 @@ public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
     super(NAME, 0, 0);
   }
 
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParameters, OCommandContext iContext) {
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParameters,
+      OCommandContext iContext) {
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
-
-    if (iCurrentResult != null) {
-      return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
-        @Override
-        public Object call(final OIdentifiable iArgument) {
-          return getLabel(graph, iArgument);
-        }
-      }, iCurrentResult, iContext);
-    } else
-      return getLabel(graph, iCurrentRecord);
+    try {
+      if (iCurrentResult != null) {
+        return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
+          @Override
+          public Object call(final OIdentifiable iArgument) {
+            return getLabel(graph, iArgument);
+          }
+        }, iCurrentResult, iContext);
+      } else
+        return getLabel(graph, iCurrentRecord);
+    } finally {
+      graph.shutdown(false);
+    }
   }
 
   private Object getLabel(final OrientBaseGraph graph, final OIdentifiable iCurrentRecord) {
@@ -75,7 +79,8 @@ public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
       return edge.getLabel();
 
     } else
-      throw new OCommandExecutionException("Invalid record: is neither a vertex nor an edge. Found class: " +ODocumentInternal.getImmutableSchemaClass(rec));
+      throw new OCommandExecutionException("Invalid record: is neither a vertex nor an edge. Found class: "
+          + ODocumentInternal.getImmutableSchemaClass(rec));
   }
 
   public String getSyntax() {
