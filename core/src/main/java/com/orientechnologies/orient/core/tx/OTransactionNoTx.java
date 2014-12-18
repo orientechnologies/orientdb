@@ -19,6 +19,9 @@
  */
 package com.orientechnologies.orient.core.tx;
 
+import java.util.Collection;
+import java.util.List;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
@@ -34,9 +37,6 @@ import com.orientechnologies.orient.core.storage.ORecordCallback;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.util.Collection;
-import java.util.List;
 
 /**
  * No operation transaction.
@@ -103,6 +103,13 @@ public class OTransactionNoTx extends OTransactionAbstract {
         throw (RuntimeException) e;
       throw new OException(e);
     }
+  }
+
+  @Override
+  public OTransaction setIsolationLevel(final ISOLATION_LEVEL isolationLevel) {
+    if (isolationLevel != ISOLATION_LEVEL.READ_COMMITTED)
+      throw new IllegalArgumentException("Isolation level '" + isolationLevel + "' is not supported without an active transaction");
+    return super.setIsolationLevel(isolationLevel);
   }
 
   /**

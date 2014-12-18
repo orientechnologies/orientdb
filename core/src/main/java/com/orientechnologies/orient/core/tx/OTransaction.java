@@ -44,6 +44,10 @@ public interface OTransaction {
     INVALID, BEGUN, COMMITTING, ROLLBACKING, COMPLETED, ROLLED_BACK
   }
 
+  public enum ISOLATION_LEVEL {
+    READ_COMMITTED, REPEATABLE_READ
+  }
+
   public void begin();
 
   public void commit();
@@ -51,6 +55,21 @@ public interface OTransaction {
   public void commit(boolean force);
 
   public void rollback();
+
+  /**
+   * Returns the current isolation level.
+   */
+  public ISOLATION_LEVEL getIsolationLevel();
+
+  /**
+   * Changes the isolation level. Default is READ_COMMITTED. When REPEATABLE_READ is set, any record read from the storage is cached
+   * in memory to guarantee the repeatable reads. This affects the used RAM and speed (because JVM Garbage Collector job).
+   * 
+   * @param iIsolationLevel
+   *          Isolation level to set
+   * @return Current object to allow call in chain
+   */
+  public OTransaction setIsolationLevel(ISOLATION_LEVEL iIsolationLevel);
 
   public void rollback(boolean force, int commitLevelDiff);
 
