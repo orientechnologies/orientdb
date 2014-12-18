@@ -15,11 +15,6 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -30,6 +25,11 @@ import com.orientechnologies.orient.core.sql.OCommandExecutorSQLFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Graph related command operator executor factory. It's auto-discovered.
@@ -68,18 +68,22 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
    * @return Transactional OrientGraph implementation from the current database in thread local.
    */
   public static OrientGraph getGraph(final boolean autoStartTx) {
-    ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
-    OrientBaseGraph result = OrientBaseGraph.getActiveGraph();
-    if(result != null && (result instanceof OrientGraph) && !result.getRawGraph().isClosed()){
-      OrientGraph g = (OrientGraph) result;
+    final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
+
+    final OrientBaseGraph result = OrientBaseGraph.getActiveGraph();
+    final ODatabaseDocumentTx graphDb = result.getRawGraph();
+
+    if (result != null && (result instanceof OrientGraph) && !graphDb.isClosed()) {
+      final OrientGraph g = (OrientGraph) result;
       g.setAutoStartTx(autoStartTx);
-      ODatabaseRecordThreadLocal.INSTANCE.set(g.getRawGraph());
+
+      ODatabaseRecordThreadLocal.INSTANCE.set(graphDb);
 
       return g;
     }
-    //I have to set it again on ThreadLocal because the getRawGraph() may have set a closed db in the threadlocal
+
+    // Set it again on ThreadLocal because the getRawGraph() may have set a closed db in the thread-local
     ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseDocumentInternal) database);
-    System.out.println("DAtabse closed? "+database.isClosed());
     return new OrientGraph((ODatabaseDocumentTx) database, autoStartTx);
   }
 
@@ -87,12 +91,17 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
    * @return a Non Transactional OrientGraph implementation from the current database in thread local.
    */
   public static OrientGraphNoTx getGraphNoTx() {
-    ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
-    OrientBaseGraph result = OrientBaseGraph.getActiveGraph();
-    if(result != null && (result instanceof OrientGraphNoTx) && !result.getRawGraph().isClosed()){
-      ODatabaseRecordThreadLocal.INSTANCE.set(result.getRawGraph());
+    final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
+
+    final OrientBaseGraph result = OrientBaseGraph.getActiveGraph();
+    final ODatabaseDocumentTx graphDb = result.getRawGraph();
+
+    if (result != null && (result instanceof OrientGraphNoTx) && !graphDb.isClosed()) {
+      ODatabaseRecordThreadLocal.INSTANCE.set(graphDb);
       return (OrientGraphNoTx) result;
     }
+
+    // Set it again on ThreadLocal because the getRawGraph() may have set a closed db in the thread-local
     ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseDocumentInternal) database);
     return new OrientGraphNoTx((ODatabaseDocumentTx) database);
   }
