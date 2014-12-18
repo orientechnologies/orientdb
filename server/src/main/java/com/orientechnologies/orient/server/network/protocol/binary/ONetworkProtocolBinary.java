@@ -995,7 +995,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         // OLD CLIENTS WAIT FOR A OK
         sendOk(clientTxId);
 
-      if (OClientConnectionManager.instance().disconnect(connection.id))
+      if (Boolean.FALSE.equals(tokenBased) && OClientConnectionManager.instance().disconnect(connection.id))
         sendShutdown();
     }
   }
