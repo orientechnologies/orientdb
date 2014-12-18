@@ -47,14 +47,13 @@ import com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngineFactory;
 import com.tinkerpop.gremlin.java.GremlinPipeline;
 
 public class OGremlinHelper {
-  private static final String                                          PARAM_OUTPUT = "output";
-  private static GremlinGroovyScriptEngineFactory                      factory      = new GremlinGroovyScriptEngineFactory();
-  private static OGremlinHelper                                        instance     = new OGremlinHelper();
+  private static final String                     PARAM_OUTPUT = "output";
+  private static GremlinGroovyScriptEngineFactory factory      = new GremlinGroovyScriptEngineFactory();
+  private static OGremlinHelper                   instance     = new OGremlinHelper();
 
-  private int                                                          maxPool      = 50;
+  private int                                     maxPool      = 50;
 
-  private OReentrantResourcePool<ODatabaseDocumentTx, OrientBaseGraph> graphPool;
-  private long                                                         timeout;
+  private long                                    timeout;
 
   public static interface OGremlinCallback {
     public boolean call(ScriptEngine iEngine, OrientBaseGraph iGraph);
@@ -308,57 +307,27 @@ public class OGremlinHelper {
    * Initializes the pools.
    */
   public void create() {
-    if (graphPool != null)
-      // ALREADY CREATED
-      return;
-    graphPool = new OReentrantResourcePool<ODatabaseDocumentTx, OrientBaseGraph>(maxPool,
-        new OResourcePoolListener<ODatabaseDocumentTx, OrientBaseGraph>() {
-
-          @Override
-          public OrientGraph createNewResource(final ODatabaseDocumentTx iKey, final Object... iAdditionalArgs) {
-            return new OrientGraph(iKey);
-          }
-
-          @Override
-          public boolean reuseResource(final ODatabaseDocumentTx iKey, final Object[] iAdditionalArgs,
-              final OrientBaseGraph iReusedGraph) {
-            iReusedGraph.reuse(iKey);
-            return true;
-          }
-        });
   }
 
   /**
    * Destroys the helper by cleaning all the in memory objects.
    */
   public void destroy() {
-    if (graphPool != null) {
-      for (OrientBaseGraph graph : graphPool.getResources()) {
-        graph.shutdown();
-      }
-      graphPool.close();
-    }
   }
 
   public ScriptEngine acquireEngine() {
-    checkStatus();
-    return new GremlinGroovyScriptEngine();// enginePool.getResource(ONE, Long.MAX_VALUE);
+    return new GremlinGroovyScriptEngine();
   }
 
   public void releaseEngine(final ScriptEngine engine) {
-    checkStatus();
-    // engine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
-    // enginePool.returnResource(engine);
   }
 
-  public OrientGraph acquireGraph(final ODatabaseDocumentTx iDatabase) {
-    checkStatus();
-    return (OrientGraph) ((OrientGraph) graphPool.getResource(iDatabase, timeout));
+  public OrientGraph acquireGraph(final ODatabaseDocumentTx database) {
+    return new OrientGraph(database);
   }
 
-  public void releaseGraph(final OrientBaseGraph iGraph) {
-    checkStatus();
-    graphPool.returnResource(iGraph);
+  public void releaseGraph(final OrientBaseGraph graph) {
+    graph.shutdown(false);
   }
 
   public int getMaxPool() {
@@ -374,9 +343,4 @@ public class OGremlinHelper {
     return factory.getScriptEngine();
   }
 
-  private void checkStatus() {
-    if (graphPool == null)
-      throw new IllegalStateException(
-          "OGremlinHelper instance has been not created. Call OGremlinHelper.global().create() to iniziailze it");
-  }
 }
