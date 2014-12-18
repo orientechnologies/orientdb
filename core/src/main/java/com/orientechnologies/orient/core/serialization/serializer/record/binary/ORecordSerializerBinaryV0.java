@@ -71,96 +71,115 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     utf8 = Charset.forName("UTF-8");
   }
 
-  @Override
-  public void deserialize(final ODocument document, final BytesContainer bytes, final String[] iFields) {
-
+  public void deserializePartial(final ODocument document, final BytesContainer bytes, final String[] iFields) {
     final String className = readString(bytes);
     if (className.length() != 0)
       document.setClassNameIfExists(className);
 
-    int last = 0;
     String fieldName;
+    int valuePos;
+    OType type;
     int unmarshalledFields = 0;
-    final boolean partialLoading = iFields != null && iFields.length > 0;
 
     while (true) {
-
-      OGlobalProperty prop = null;
       final int len = OVarIntSerializer.readAsInteger(bytes);
 
       if (len == 0) {
         // SCAN COMPLETED
         break;
       } else if (len > 0) {
-
-        if (partialLoading) {
-          // CHECK BY FIELD NAME SIZE: THIS AVOID EVEN THE UNMARSHALLING OF FIELD NAME
-          boolean possibleMatch = false;
-          for (int i = 0; i < iFields.length; ++i)
-            if (iFields[i].length() == len) {
-              possibleMatch = true;
-              break;
-            }
-
-          if (!possibleMatch) {
-            // SKIP IT
-            bytes.skip(len + OIntegerSerializer.INT_SIZE + 1);
-            continue;
+        // CHECK BY FIELD NAME SIZE: THIS AVOID EVEN THE UNMARSHALLING OF FIELD NAME
+        boolean possibleMatch = false;
+        for (int i = 0; i < iFields.length; ++i) {
+          if (iFields[i].length() == len) {
+            possibleMatch = true;
+            break;
           }
         }
 
-        // PARSE FIELD NAME
-        final String res = new String(bytes.bytes, bytes.offset, len, utf8);
+        if (!possibleMatch) {
+          // SKIP IT
+          bytes.skip(len + OIntegerSerializer.INT_SIZE + 1);
+          continue;
+        }
+        fieldName = new String(bytes.bytes, bytes.offset, len, utf8);
         bytes.skip(len);
-        fieldName = res;
-
-        if (partialLoading) {
-          // CHECK BY FIELD NAME
-          boolean foundField = false;
-          for (int i = 0; i < iFields.length; ++i)
-            if (iFields[i].equals(fieldName)) {
-              foundField = true;
-              unmarshalledFields++;
-              break;
-            }
-
-          if (!foundField) {
-            // SKIP IT
-            bytes.skip(OIntegerSerializer.INT_SIZE + 1);
-            continue;
-          }
-        }
-
+        valuePos = readInteger(bytes);
+        type = readOType(bytes);
       } else {
-        ODatabaseDocument db = document.getDatabase();
-        if (db == null || db.isClosed())
-          throw new ODatabaseException("Cannot unmarshall the document because no database is active");
-        OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
-        prop = metadata.getImmutableSchemaSnapshot().getGlobalPropertyById((len * -1) - 1);
-        if (prop == null) {
-          metadata.clearThreadLocalSchemaSnapshot();
-          metadata.reload();
-          metadata.makeThreadLocalSchemaSnapshot();
-          prop = metadata.getImmutableSchemaSnapshot().getGlobalPropertyById((len * -1) - 1);
-        }
+        // LOAD GLOBAL PROPERTY BY ID
+        OGlobalProperty prop = getGlobalProperty(document, len);
         fieldName = prop.getName();
+        valuePos = readInteger(bytes);
+        if (prop.getType() != OType.ANY)
+          type = prop.getType();
+        else
+          type = readOType(bytes);
+
+      }
+      // CHECK BY FIELD NAME
+      boolean foundField = false;
+      for (int i = 0; i < iFields.length; ++i) {
+        if (iFields[i].equals(fieldName)) {
+          foundField = true;
+          unmarshalledFields++;
+          break;
+        }
       }
 
-      if (ODocumentInternal.rawContainsField(document, fieldName)) {
-        // SKIP FIELD
-        if (prop != null && prop.getType() != OType.ANY)
-          bytes.skip(OIntegerSerializer.INT_SIZE);
-        else
-          bytes.skip(OIntegerSerializer.INT_SIZE + 1);
+      if (!foundField) {
         continue;
       }
 
-      final int valuePos = readInteger(bytes);
-      final OType type;
-      if (prop != null && prop.getType() != OType.ANY)
-        type = prop.getType();
-      else
+      if (valuePos != 0) {
+        int headerCursor = bytes.offset;
+        bytes.offset = valuePos;
+        final Object value = readSingleValue(bytes, type, document);
+        bytes.offset = headerCursor;
+        ODocumentInternal.rawField(document, fieldName, value, type);
+      } else
+        ODocumentInternal.rawField(document, fieldName, null, null);
+      if (unmarshalledFields == iFields.length)
+        break;
+    }
+
+  }
+
+  @Override
+  public void deserialize(final ODocument document, final BytesContainer bytes) {
+    final String className = readString(bytes);
+    if (className.length() != 0)
+      document.setClassNameIfExists(className);
+
+    int last = 0;
+    String fieldName;
+    int valuePos;
+    OType type;
+    while (true) {
+      final int len = OVarIntSerializer.readAsInteger(bytes);
+      if (len == 0) {
+        // SCAN COMPLETED
+        break;
+      } else if (len > 0) {
+        // PARSE FIELD NAME
+        fieldName = new String(bytes.bytes, bytes.offset, len, utf8);
+        bytes.skip(len);
+        valuePos = readInteger(bytes);
         type = readOType(bytes);
+      } else {
+        // LOAD GLOBAL PROPERTY BY ID
+        OGlobalProperty prop = getGlobalProperty(document, len);
+        fieldName = prop.getName();
+        valuePos = readInteger(bytes);
+        if (prop.getType() != OType.ANY)
+          type = prop.getType();
+        else
+          type = readOType(bytes);
+      }
+
+      if (ODocumentInternal.rawContainsField(document, fieldName)) {
+        continue;
+      }
 
       if (valuePos != 0) {
         int headerCursor = bytes.offset;
@@ -170,21 +189,30 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           last = bytes.offset;
         bytes.offset = headerCursor;
         ODocumentInternal.rawField(document, fieldName, value, type);
-        // document.fieldName(fieldName, value, type);
       } else
         ODocumentInternal.rawField(document, fieldName, null, null);
-      // document.fieldName(fieldName, (Object) null);
-
-      if (partialLoading && unmarshalledFields >= iFields.length)
-        break;
     }
 
-    if (!partialLoading)
-      // CLEAR SOURCE
-      ORecordInternal.clearSource(document);
+    ORecordInternal.clearSource(document);
 
     if (last > bytes.offset)
       bytes.offset = last;
+  }
+
+  private OGlobalProperty getGlobalProperty(final ODocument document, final int len) {
+    final int id = (len * -1) - 1;
+    ODatabaseDocument db = document.getDatabase();
+    if (db == null || db.isClosed())
+      throw new ODatabaseException("Cannot unmarshall the document because no database is active");
+    OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
+    OGlobalProperty prop = metadata.getImmutableSchemaSnapshot().getGlobalPropertyById(id);
+    if (prop == null) {
+      metadata.clearThreadLocalSchemaSnapshot();
+      metadata.reload();
+      metadata.makeThreadLocalSchemaSnapshot();
+      prop = metadata.getImmutableSchemaSnapshot().getGlobalPropertyById(id);
+    }
+    return prop;
   }
 
   @SuppressWarnings("unchecked")
@@ -298,7 +326,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       break;
     case EMBEDDED:
       value = new ODocument();
-      deserialize((ODocument) value, bytes, null);
+      deserialize((ODocument) value, bytes);
       if (((ODocument) value).containsField(ODocumentSerializable.CLASS_NAME)) {
         String className = ((ODocument) value).field(ODocumentSerializable.CLASS_NAME);
         try {
