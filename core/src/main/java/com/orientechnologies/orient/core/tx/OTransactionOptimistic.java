@@ -225,7 +225,8 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     // DELEGATE TO THE STORAGE, NO TOMBSTONES SUPPORT IN TX MODE
     final ORecord record = database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, ignoreCache, false, iLockingStrategy);
 
-    if (record != null)
+    if (record != null && isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ)
+      // KEEP THE RECORD IN TX TO ASSURE REPEATABLE READS
       addRecord(record, ORecordOperation.LOADED, null);
 
     return record;
@@ -346,7 +347,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
               if (database.getStorageVersions().classesAreDetectedByClusterId() && iRecord instanceof ODocument) {
                 final ODocument recordSchemaAware = (ODocument) iRecord;
                 final OClass recordClass = ODocumentInternal.getImmutableSchemaClass(recordSchemaAware);
-                final OClass clusterIdClass = ((OMetadataInternal)database.getMetadata()).getImmutableSchemaSnapshot()
+                final OClass clusterIdClass = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot()
                     .getClassByClusterId(rid.clusterId);
                 if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
                     || (recordClass != null && !recordClass.equals(clusterIdClass)))
