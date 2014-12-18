@@ -27,12 +27,12 @@
 This document contains the last changes of OrientDB Community Edition.
 
 ---------------------------------------------------------------------------------------------------
-VERSION 2.0-RC1 - (December, 15th 2014)
-- Core: Avoid rebuild of idexes if working in Transactional mode
+VERSION 2.0-RC1 - (December, 17th 2014)
+- Core: Avoid rebuild of indexes if working in Transactional mode
 - Javascript: Invoking of JS functions now is 10x faster
 - Network: Support for state less requests using Token
 - Graph API: Disabled light weight edges by default
-- Bug fixing: 80 total issues from 2.0-M3.
+- Bug fixing: 87 total issues from 2.0-M3.
 
 Full list: https://github.com/orientechnologies/orientdb/issues?q=milestone%3A%222.0-RC1+(Release+Candidate)%22+is%3Aclosed
 ---------------------------------------------------------------------------------------------------
