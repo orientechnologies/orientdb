@@ -71,17 +71,19 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
 
     final OrientBaseGraph result = OrientBaseGraph.getActiveGraph();
-    final ODatabaseDocumentTx graphDb = result.getRawGraph();
 
-    if (result != null && (result instanceof OrientGraph) && !graphDb.isClosed()) {
-      final OrientGraph g = (OrientGraph) result;
-      g.setAutoStartTx(autoStartTx);
+    if (result != null && (result instanceof OrientGraph)) {
+      final ODatabaseDocumentTx graphDb = result.getRawGraph();
 
-      ODatabaseRecordThreadLocal.INSTANCE.set(graphDb);
+      if (!graphDb.isClosed()) {
+        final OrientGraph g = (OrientGraph) result;
+        g.setAutoStartTx(autoStartTx);
 
-      return g;
+        ODatabaseRecordThreadLocal.INSTANCE.set(graphDb);
+
+        return g;
+      }
     }
-
     // Set it again on ThreadLocal because the getRawGraph() may have set a closed db in the thread-local
     ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseDocumentInternal) database);
     return new OrientGraph((ODatabaseDocumentTx) database, autoStartTx);
@@ -94,11 +96,14 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
 
     final OrientBaseGraph result = OrientBaseGraph.getActiveGraph();
-    final ODatabaseDocumentTx graphDb = result.getRawGraph();
 
-    if (result != null && (result instanceof OrientGraphNoTx) && !graphDb.isClosed()) {
-      ODatabaseRecordThreadLocal.INSTANCE.set(graphDb);
-      return (OrientGraphNoTx) result;
+    if (result != null && (result instanceof OrientGraphNoTx)) {
+      final ODatabaseDocumentTx graphDb = result.getRawGraph();
+
+      if (!graphDb.isClosed()) {
+        ODatabaseRecordThreadLocal.INSTANCE.set(graphDb);
+        return (OrientGraphNoTx) result;
+      }
     }
 
     // Set it again on ThreadLocal because the getRawGraph() may have set a closed db in the thread-local
