@@ -19,23 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
 import com.orientechnologies.common.exception.OException;
@@ -91,6 +74,23 @@ import com.orientechnologies.orient.server.distributed.task.OReadRecordTask;
 import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Distributed storage implementation that routes to the owner node the request.
@@ -192,7 +192,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   @Override
   public boolean isAssigningClusterIds() {
-    return true;
+    return OScenarioThreadLocal.INSTANCE.get() != RUN_MODE.RUNNING_DISTRIBUTED;
   }
 
   @Override
@@ -409,7 +409,28 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
     try {
       // ASSIGN DESTINATION NODE
-      final String clusterName = getClusterNameByRID(iRecordId);
+      String clusterName = getClusterNameByRID(iRecordId);
+
+      int clusterId = iRecordId.getClusterId();
+      if (clusterId == ORID.CLUSTER_ID_INVALID) {
+        System.out.println("ERROR");
+        // // COMPUTE THE CLUSTER ID
+        // if (schemaClass != null) {
+        // // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
+        // if (schemaClass.isAbstract())
+        // throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and can not be saved");
+        //
+        // clusterName = getClusterNameById(schemaClass.getClusterForNewInstance(doc));
+        // } else {
+        // clusterName = getClusterNameById(storage.getDefaultClusterId());
+        // }
+        //
+        // if (clusterName != null) {
+        // clusterId = getClusterIdByName(clusterName);
+        // if (clusterId == -1)
+        // throw new IllegalArgumentException("Cluster name '" + clusterName + "' is not configured");
+        // }
+      }
 
       final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
       final List<String> nodes = dbCfg.getServers(clusterName, null);
@@ -931,23 +952,47 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   @Override
   public int addCluster(final String iClusterName, boolean forceListBased, final Object... iParameters) {
-    final int clId;
+    int clId;
 
-    clId = wrapped.addCluster(iClusterName, false, iParameters);
+    for (int retry = 0; retry < 10; ++retry) {
+      clId = wrapped.addCluster(iClusterName, false, iParameters);
 
-    if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.DEFAULT) {
+      if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.DEFAULT) {
 
-      final StringBuilder cmd = new StringBuilder("create cluster ");
-      cmd.append(iClusterName);
+        final StringBuilder cmd = new StringBuilder("create cluster ");
+        cmd.append(iClusterName);
 
-      // EXECUTE THIS OUTSIDE LCK TO AVOID DEADLOCKS
-      OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
-      commandSQL.addExcludedNode(getNodeId());
+        // EXECUTE THIS OUTSIDE LCK TO AVOID DEADLOCKS
+        OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
+        commandSQL.addExcludedNode(getNodeId());
 
-      command(commandSQL);
+        final Object result = command(commandSQL);
+        if (((Integer) result).intValue() != clId) {
+          // REMOVE CLUSTER ON LOCAL NODE BECAUSE ID IS DIFFERENT AND RETRY AGAIN
+          wrapped.dropCluster(clId, false);
+
+          // REMOVE ON REMOTE NODES TOO
+          cmd.setLength(0);
+          cmd.append("drop cluster ");
+          cmd.append(iClusterName);
+
+          commandSQL = new OCommandSQL(cmd.toString());
+          commandSQL.addExcludedNode(getNodeId());
+
+          command(commandSQL);
+
+          try {
+            Thread.sleep(300);
+          } catch (InterruptedException e) {
+          }
+
+          continue;
+        }
+      }
+      return clId;
     }
 
-    return clId;
+    throw new ODistributedException("Error on creating cluster: local and remote id assigned are different");
   }
 
   @Override

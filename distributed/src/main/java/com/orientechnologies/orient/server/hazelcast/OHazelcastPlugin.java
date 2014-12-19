@@ -444,6 +444,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     Orient.instance().getWorkers().submit(new Runnable() {
       @Override
       public void run() {
+        ODatabaseRecordThreadLocal.INSTANCE.set((com.orientechnologies.orient.core.db.ODatabaseDocumentInternal) iDatabase);
         installLocalClusterPerClass(iDatabase, cfg, getLocalNodeName(), iClass);
       }
     });
@@ -1242,6 +1243,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           } catch (OCommandSQLParsingException e) {
             if (!e.getMessage().endsWith("already exists"))
               throw e;
+          } catch (Exception e) {
+            ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "error on creating cluster '%s' in class '%s'",
+                newClusterName, iClass);
+            throw new ODistributedException("Error on creating cluster '" + newClusterName + "' in class '" + iClass + "'");
           } finally {
 
             if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
@@ -1250,7 +1255,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           }
 
           ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
-              "class %s, set mastership of cluster '%s' (id=%d) to '%s'", iClass, newClusterName,
+              "class '%s', set mastership of cluster '%s' (id=%d) to '%s'", iClass, newClusterName,
               iDatabase.getClusterIdByName(newClusterName), nodeName);
           cfg.setMasterServer(newClusterName, nodeName);
         }

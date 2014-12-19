@@ -126,15 +126,15 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     return null;
   }
 
-	public boolean isFullCheckpointOnChange() {
-		return fullCheckpointOnChange;
-	}
+  public boolean isFullCheckpointOnChange() {
+    return fullCheckpointOnChange;
+  }
 
-	public void setFullCheckpointOnChange(boolean fullCheckpointOnChange) {
-		this.fullCheckpointOnChange = fullCheckpointOnChange;
-	}
+  public void setFullCheckpointOnChange(boolean fullCheckpointOnChange) {
+    this.fullCheckpointOnChange = fullCheckpointOnChange;
+  }
 
-	@Override
+  @Override
   public OImmutableSchema makeSnapshot() {
     acquireSchemaReadLock();
     try {
@@ -544,15 +544,20 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   }
 
   public void releaseSchemaWriteLock() {
+    releaseSchemaWriteLock(true);
+  }
+
+  public void releaseSchemaWriteLock(final boolean iSave) {
     try {
       if (modificationCounter.get().intValue() == 1) {
         // if it is embedded storage modification of schema is done by internal methods otherwise it is done by
         // by sql commands and we need to reload local replica
 
-        if (getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
-          saveInternal();
-        else
-          reload();
+        if (iSave)
+          if (getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
+            saveInternal();
+          else
+            reload();
 
         version++;
       }
@@ -1117,7 +1122,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   }
 
-  private void checkClustersAreAbsent(int[] iClusterIds) {
+  private void checkClustersAreAbsent(final int[] iClusterIds) {
     if (!clustersCanNotBeSharedAmongClasses || iClusterIds == null)
       return;
 

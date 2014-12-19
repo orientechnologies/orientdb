@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -30,6 +27,9 @@ import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClust
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Distributed cluster selection strategy that always prefers local cluster if any reducing network latency of remote calls. It
@@ -84,11 +84,12 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
     for (int c : clusterIds)
       clusterNames.add(db.getClusterNameById(c));
 
-    ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
+    final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
 
     final String bestCluster = cfg.getLocalCluster(clusterNames, nodeName);
     if (bestCluster == null)
-      throw new OException("Cannot find best cluster for class '" + cls.getName() + "'. ClusterStrategy=" + getName());
+      throw new OException("Cannot find best cluster for class '" + cls.getName() + "' on server '" + nodeName
+          + "'. ClusterStrategy=" + getName());
 
     bestClusterId = db.getClusterIdByName(bestCluster);
   }

@@ -1139,12 +1139,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
-  private void calculateHashCode() {
-    int result = super.hashCode();
-    result = 31 * result + (name != null ? name.hashCode() : 0);
-    hashCode = result;
-  }
-
   public int compareTo(final OClass o) {
     acquireSchemaReadLock();
     try {
@@ -1550,12 +1544,16 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public void releaseSchemaWriteLock() {
+    releaseSchemaWriteLock(true);
+  }
+
+  public void releaseSchemaWriteLock(final boolean iSave) {
     calculateHashCode();
-    owner.releaseSchemaWriteLock();
+    owner.releaseSchemaWriteLock(iSave);
   }
 
   public void checkEmbedded() {
-    if (!(getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage))
+    if (!(getDatabase().getStorage().getUnderlying().getUnderlying() instanceof OAbstractPaginatedStorage))
       throw new OSchemaException("'Internal' schema modification methods can be used only inside of embedded database");
   }
 
@@ -1571,8 +1569,13 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public void setClusterSelectionInternal(final OClusterSelectionStrategy clusterSelection) {
-    checkEmbedded();
-    this.clusterSelection = clusterSelection;
+    acquireSchemaWriteLock();
+    try {
+      checkEmbedded();
+      this.clusterSelection = clusterSelection;
+    } finally {
+      releaseSchemaWriteLock(false);
+    }
   }
 
   public void fireDatabaseMigration(final ODatabaseDocument database, final String propertyName, final OType type) {
@@ -1640,6 +1643,12 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   public OSchemaShared getOwner() {
     return owner;
+  }
+
+  private void calculateHashCode() {
+    int result = super.hashCode();
+    result = 31 * result + (name != null ? name.hashCode() : 0);
+    hashCode = result;
   }
 
   private void setOverSizeInternal(final float overSize) {

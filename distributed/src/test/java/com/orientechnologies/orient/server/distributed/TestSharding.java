@@ -1,5 +1,9 @@
 package com.orientechnologies.orient.server.distributed;
 
+import junit.framework.Assert;
+
+import org.junit.Test;
+
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.Direction;
@@ -11,18 +15,15 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-import junit.framework.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
 
 public class TestSharding extends AbstractServerClusterTest {
 
-  protected OrientVertex[] vertices;
+  protected final static int SERVERS = 2;
+  protected OrientVertex[]   vertices;
 
   @Test
-  @Ignore
   public void test() throws Exception {
-    init(2);
+    init(SERVERS);
     prepare(false);
     execute();
   }
@@ -56,6 +57,8 @@ public class TestSharding extends AbstractServerClusterTest {
         graphNoTx.createEdgeType("Knows");
         graphNoTx.createEdgeType("Buy");
         graphNoTx.createEdgeType("Loves");
+
+        Thread.sleep(500);
       } finally {
         graphNoTx.shutdown();
       }
@@ -110,8 +113,13 @@ public class TestSharding extends AbstractServerClusterTest {
         }
       }
 
-      for (int i = 0; i < vertices.length; ++i)
-        System.out.println("Created vertex " + i + ": " + vertices[i].getRecord());
+      graph = localFactory.getNoTx();
+      try {
+        for (int i = 0; i < vertices.length; ++i)
+          System.out.println("Created vertex " + i + ": " + vertices[i].getRecord());
+      } finally {
+        graph.shutdown();
+      }
 
       for (int i = 0; i < vertices.length; ++i) {
         OrientGraphFactory factory = new OrientGraphFactory("plocal:target/server" + i + "/databases/" + getDatabaseName());
@@ -150,20 +158,26 @@ public class TestSharding extends AbstractServerClusterTest {
         System.out.println("Query from server " + server + "...");
 
         try {
-          for (int cluster = 0; cluster < vertices.length; ++cluster) {
-            final String query = "select from cluster:client_" + cluster;
+          for (int i = 0; i < vertices.length; ++i) {
+            final String nodeName = serverInstance.get(i).getServerInstance().getDistributedManager().getLocalNodeName();
+
+            String clusterName = "client";
+            if (i > 0)
+              clusterName += "_" + nodeName;
+
+            String query = "select from cluster:" + clusterName;
 
             final OrientVertex explain = g.command(new OCommandSQL("explain " + query)).execute();
             System.out.println("explain " + query + " -> " + ((ODocument) explain.getRecord()).field("servers"));
 
             Iterable<OrientVertex> result = g.command(new OCommandSQL(query)).execute();
-            Assert.assertTrue("Error on query against 'cluster_" + cluster + "' on server '" + server + "': " + query, result
+            Assert.assertTrue("Error on query against '" + clusterName + "' on server '" + server + "': " + query, result
                 .iterator().hasNext());
 
             OrientVertex v = result.iterator().next();
 
-            Assert.assertEquals("Returned vertices name property is != shard_" + cluster + " on server " + server, "shard_"
-                + cluster, v.getProperty("name"));
+            Assert.assertEquals("Returned vertices name property is != shard_" + i + " on server " + server, "shard_" + i,
+                v.getProperty("name"));
 
             final Iterable<Vertex> knows = v.getVertices(Direction.OUT, "Knows");
 
@@ -221,7 +235,7 @@ public class TestSharding extends AbstractServerClusterTest {
             Assert.assertNotNull(boughtE.iterator().next().getProperty("price"));
           }
 
-          Assert.assertEquals("Returned wrong vertices count on server " + server, 3, count);
+          Assert.assertEquals("Returned wrong vertices count on server " + server, SERVERS, count);
         } finally {
           g.shutdown();
         }
