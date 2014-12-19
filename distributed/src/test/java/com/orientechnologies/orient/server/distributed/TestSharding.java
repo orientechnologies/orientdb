@@ -18,7 +18,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 public class TestSharding extends AbstractServerClusterTest {
 
-  protected final static int SERVERS = 2;
+  protected final static int SERVERS = 3;
   protected OrientVertex[]   vertices;
 
   @Test

@@ -921,6 +921,11 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         createClassInternal(className, superClass, clusterIds);
 
       result = classes.get(className.toLowerCase());
+
+      // WAKE UP DB LIFECYCLE LISTENER
+      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+        it.next().onCreateClass(getDatabase(), result);
+
     } finally {
       releaseSchemaWriteLock();
     }
@@ -990,10 +995,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       }
 
       addClusterClassMap(cls);
-
-      // WAKE UP DB LIFECYCLE LISTENER
-      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
-        it.next().onCreateClass(database, cls);
 
       return cls;
     } finally {

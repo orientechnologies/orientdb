@@ -952,10 +952,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
   @Override
   public int addCluster(final String iClusterName, boolean forceListBased, final Object... iParameters) {
-    int clId;
-
     for (int retry = 0; retry < 10; ++retry) {
-      clId = wrapped.addCluster(iClusterName, false, iParameters);
+      int clId = wrapped.addCluster(iClusterName, false, iParameters);
 
       if (OScenarioThreadLocal.INSTANCE.get() == RUN_MODE.DEFAULT) {
 
@@ -968,7 +966,6 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
         final Object result = command(commandSQL);
         if (((Integer) result).intValue() != clId) {
-          // REMOVE CLUSTER ON LOCAL NODE BECAUSE ID IS DIFFERENT AND RETRY AGAIN
           wrapped.dropCluster(clId, false);
 
           // REMOVE ON REMOTE NODES TOO
