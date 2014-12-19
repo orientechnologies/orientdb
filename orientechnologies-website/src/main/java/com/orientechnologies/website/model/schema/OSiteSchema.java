@@ -85,6 +85,10 @@ public class OSiteSchema {
 
     OClass v = schema.getClass("V");
     OClass e = schema.getClass("E");
+    OClass sequence = schema.createClass("OSequence");
+    sequence.createProperty("value", OType.LONG);
+    sequence.createProperty("className", OType.STRING);
+
     OClass identity = schema.getClass("OIdentity");
     identity.setSuperClass(v);
     Map<Class, OClass> created = new HashMap<Class, OClass>();

@@ -62,6 +62,7 @@ public class OServerCommandAuthenticateSingleDatabase extends OServerCommandAuth
     try {
 
       final String[] urlParts = iRequest.url.substring(1).split("/");
+
       OWorkbenchPlugin monitorPlugin = OServerMain.server().getPluginByClass(OWorkbenchPlugin.class);
 
       ODatabaseDocumentTx db = null;

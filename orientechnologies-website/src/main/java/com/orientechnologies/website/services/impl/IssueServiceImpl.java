@@ -81,24 +81,6 @@ public class IssueServiceImpl implements IssueService {
   }
 
   @Override
-  public void changeMilestone(Issue issue, Milestone milestone, OUser actor, boolean fire) {
-    createMilestoneRelationship(issue, milestone);
-    if (fire) {
-      IssueEvent e = new IssueEvent();
-      e.setCreatedAt(new Date());
-      e.setEvent("milestoned");
-      e.setMilestone(milestone);
-      if (actor == null) {
-        e.setActor(SecurityHelper.currentUser());
-      } else {
-        e.setActor(actor);
-      }
-      e = (IssueEvent) eventRepository.save(e);
-      fireEvent(issue, e);
-    }
-  }
-
-  @Override
   public void changeLabels(Issue issue, List<Label> labels, boolean replace) {
     createLabelsRelationship(issue, labels, replace);
   }
@@ -229,6 +211,34 @@ public class IssueServiceImpl implements IssueService {
       }
       e = (IssueEvent) eventRepository.save(e);
       fireEvent(issue, e);
+    }
+  }
+
+  @Override
+  public void changeMilestone(Issue issue, Milestone milestone, OUser actor, boolean fire) {
+    Milestone oldMileston = issue.getMilestone();
+    createMilestoneRelationship(issue, milestone);
+    if (fire) {
+      IssueEvent e = new IssueEvent();
+      e.setCreatedAt(new Date());
+      e.setEvent("milestoned");
+      e.setMilestone(milestone);
+      if (actor == null) {
+        e.setActor(SecurityHelper.currentUser());
+      } else {
+        e.setActor(actor);
+      }
+      e = (IssueEvent) eventRepository.save(e);
+      fireEvent(issue, e);
+      if (oldMileston != null) {
+        e = new IssueEventInternal();
+        e.setCreatedAt(new Date());
+        e.setEvent("demilestoned");
+        e.setMilestone(oldMileston);
+        e.setActor(SecurityHelper.currentUser());
+        e = (IssueEventInternal) eventRepository.save(e);
+        fireEvent(issue, e);
+      }
     }
   }
 

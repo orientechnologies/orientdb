@@ -15,12 +15,6 @@
  */
 package com.orientechnologies.workbench.event;
 
-import java.util.List;
-
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
@@ -30,6 +24,11 @@ import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityReso
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.workbench.event.metric.OEventLogExecutor;
+
+import javax.script.Invocable;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+import java.util.List;
 
 @EventConfig(when = "LogWhen", what = "FunctionWhat")
 public class OEventLogFunctionExecutor extends OEventLogExecutor {
@@ -86,7 +85,7 @@ public class OEventLogFunctionExecutor extends OEventLogExecutor {
 				try {
 					scriptEngine.eval(lib);
 				} catch (ScriptException e) {
-					scriptManager.getErrorMessage(e, lib);
+					scriptManager.throwErrorMessage(e, lib);
 				}
 
 			if (scriptEngine instanceof Invocable) {

@@ -65,6 +65,15 @@ public class OrganizationController {
         HttpStatus.OK);
   }
 
+  @RequestMapping(value = "{name}/issues/{number}", method = RequestMethod.GET)
+  public ResponseEntity<Issue> getOrganizationSingleIssue(@PathVariable("name") String organization,
+      @PathVariable("number") Long number) {
+
+    Issue issue = orgRepository.findSingleOrganizationIssueByNumber(organization, number);
+    return issue != null ? new ResponseEntity<Issue>(issue, HttpStatus.OK) : new ResponseEntity<Issue>(HttpStatus.NOT_FOUND);
+
+  }
+
   @RequestMapping(value = "{name}/repos", method = RequestMethod.GET)
   public ResponseEntity<List<Repository>> getOrganizationRepositories(@PathVariable("name") String name) {
     return new ResponseEntity<List<Repository>>(orgRepository.findOrganizationRepositories(name), HttpStatus.OK);

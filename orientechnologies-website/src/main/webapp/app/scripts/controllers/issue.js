@@ -153,7 +153,7 @@ angular.module('webappApp')
     $scope.save = function () {
       $scope.issue.scope = $scope.scope.number;
       Organization.all("issues").post($scope.issue).then(function (data) {
-        $location.path("/issues/" + $scope.scope.repository.name + "@" + data.uuid);
+        $location.path("/issues/" + data.iid);
       });
       //Repo.one($scope.repo.name).all("issues").post($scope.issue).then(function (data) {
       //  $location.path("/issues/" + $scope.repo.name + "@" + data.uuid);
@@ -179,18 +179,24 @@ angular.module('webappApp')
 angular.module('webappApp')
   .controller('IssueEditCtrl', function ($scope, $routeParams, Organization, Repo, $popover, $route, User) {
 
-    var id = $routeParams.id.split("@");
-
-    var repo = id[0];
-    var number = id[1];
-
+    //var id = $routeParams.id.split("@");
+    //
+    //var repo = id[0];
+    //var number = id[1];
+    var number = $routeParams.id;
 
     User.whoami().then(function (data) {
       $scope.isMember = User.isMember(ORGANIZATION);
     });
-    Repo.one(repo).all("issues").one(number).get().then(function (data) {
+    Organization.all("issues").one(number).get().then(function (data) {
       $scope.issue = data.plain();
+      $scope.repo = $scope.issue.repository.name;
+      refreshEvents();
+      initTypologic();
     });
+    //Repo.one(repo).all("issues").one(number).get().then(function (data) {
+    //  $scope.issue = data.plain();
+    //});
     Organization.all("priorities").getList().then(function (data) {
       $scope.priorities = data.plain();
     })
@@ -198,45 +204,46 @@ angular.module('webappApp')
       return 'views/issues/events/' + e + ".html";
     }
     function refreshEvents() {
-      $scope.comments = Repo.one(repo).all("issues").one(number).all("events").getList().$object;
+      $scope.comments = Repo.one($scope.repo).all("issues").one(number).all("events").getList().$object;
     }
 
-    refreshEvents();
 
+    function initTypologic() {
+      $scope.labels = Repo.one($scope.repo).all("labels").getList().$object;
+      Repo.one($scope.repo).all("milestones").getList().then(function (data) {
+        $scope.versions = data.plain();
+        $scope.milestones = data.plain();
+      });
+      Repo.one($scope.repo).all("scopes").getList().then(function (data) {
+        $scope.scopes = data.plain();
+      });
+      Repo.one($scope.repo).all("teams").getList().then(function (data) {
+        $scope.assignees = data.plain();
+      })
+    }
 
-    $scope.labels = Repo.one(repo).all("labels").getList().$object;
-
-    Repo.one(repo).all("milestones").getList().then(function (data) {
-      $scope.versions = data.plain();
-      $scope.milestones = data.plain();
-    });
-    Repo.one(repo).all("scopes").getList().then(function (data) {
-      $scope.scopes = data.plain();
-    });
-    Repo.one(repo).all("teams").getList().then(function (data) {
-      $scope.assignees = data.plain();
-    })
+    initTypologic();
     $scope.sync = function () {
-      Repo.one(repo).all("issues").one(number).all("sync").post().then(function (data) {
+      Repo.one($scope.repo).all("issues").one(number).all("sync").post().then(function (data) {
         $route.reload();
       });
     }
     $scope.comment = function () {
 
-      Repo.one(repo).all("issues").one(number).all("comments").post($scope.newComment).then(function (data) {
+      Repo.one($scope.repo).all("issues").one(number).all("comments").post($scope.newComment).then(function (data) {
         $scope.comments.push(data.plain());
         $scope.newComment.body = "";
       });
     }
 
     $scope.close = function () {
-      Repo.one(repo).all("issues").one(number).patch({state: "closed"}).then(function (data) {
+      Repo.one($scope.repo).all("issues").one(number).patch({state: "closed"}).then(function (data) {
         $scope.issue.state = "closed";
         refreshEvents();
       });
     }
     $scope.reopen = function () {
-      Repo.one(repo).all("issues").one(number).patch({state: "open"}).then(function (data) {
+      Repo.one($scope.repo).all("issues").one(number).patch({state: "open"}).then(function (data) {
         $scope.issue.state = "open";
         refreshEvents();
       });
@@ -244,7 +251,7 @@ angular.module('webappApp')
     // CHANGE LABEL EVENT
     $scope.$on("label:added", function (e, label) {
 
-      Repo.one(repo).all("issues").one(number).all("labels").post([label.name]).then(function (data) {
+      Repo.one($scope.repo).all("issues").one(number).all("labels").post([label.name]).then(function (data) {
         $scope.issue.labels.push(label);
         refreshEvents();
       });
@@ -254,7 +261,7 @@ angular.module('webappApp')
     $scope.$on("label:removed", function (e, label) {
 
 
-      Repo.one(repo).all("issues").one(number).one("labels", label.name).remove().then(function () {
+      Repo.one($scope.repo).all("issues").one(number).one("labels", label.name).remove().then(function () {
         var idx = $scope.issue.labels.indexOf(label);
         $scope.issue.labels.splice(idx, 1);
         refreshEvents();
@@ -265,7 +272,7 @@ angular.module('webappApp')
 
     $scope.$on("version:changed", function (e, version) {
 
-      Repo.one(repo).all("issues").one(number).patch({version: version.number}).then(function (data) {
+      Repo.one($scope.repo).all("issues").one(number).patch({version: version.number}).then(function (data) {
         $scope.issue.version = version;
         refreshEvents();
       })
@@ -275,7 +282,7 @@ angular.module('webappApp')
     // CHANGE MILESTONE EVENT
     $scope.$on("milestone:changed", function (e, milestone) {
 
-      Repo.one(repo).all("issues").one(number).patch({milestone: milestone.number}).then(function (data) {
+      Repo.one($scope.repo).all("issues").one(number).patch({milestone: milestone.number}).then(function (data) {
         $scope.issue.milestone = milestone;
         refreshEvents();
       })
@@ -284,7 +291,7 @@ angular.module('webappApp')
     });
 
     $scope.$on("assignee:changed", function (e, assignee) {
-      Repo.one(repo).all("issues").one(number).patch({assignee: assignee.name}).then(function (data) {
+      Repo.one($scope.repo).all("issues").one(number).patch({assignee: assignee.name}).then(function (data) {
         $scope.issue.assignee = assignee;
         refreshEvents();
       })
@@ -292,13 +299,13 @@ angular.module('webappApp')
 
     });
     $scope.$on("priority:changed", function (e, priority) {
-      Repo.one(repo).all("issues").one(number).patch({priority: priority.number}).then(function (data) {
+      Repo.one($scope.repo).all("issues").one(number).patch({priority: priority.number}).then(function (data) {
         $scope.issue.priority = priority;
         refreshEvents();
       })
     });
     $scope.$on("scope:changed", function (e, scope) {
-      Repo.one(repo).all("issues").one(number).patch({scope: scope.number}).then(function (data) {
+      Repo.one($scope.repo).all("issues").one(number).patch({scope: scope.number}).then(function (data) {
         $scope.issue.scope = scope;
         refreshEvents();
       })

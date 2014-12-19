@@ -16,10 +16,9 @@
 package com.orientechnologies.agent.http.command;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -48,7 +47,7 @@ public class OServerCommandPostBackupDatabase extends OServerCommandAuthenticate
     try {
       iRequest.databaseName = urlParts[1];
 
-      final ODatabaseRecord database = getProfiledDatabaseInstance(iRequest);
+      final ODatabaseDocumentTx database = getProfiledDatabaseInstance(iRequest);
 
       try {
         iResponse.writeStatus(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION);
@@ -57,8 +56,8 @@ public class OServerCommandPostBackupDatabase extends OServerCommandAuthenticate
         iResponse.writeLine("Date: " + new Date());
         iResponse.writeLine(null);
 
-         // TODO
-        database.backup(iResponse.getOutputStream(), null, null, null,0,0);
+        // TODO
+        database.backup(iResponse.getOutputStream(), null, null, null, 0, 0);
 
         try {
           iResponse.flush();
@@ -76,7 +75,7 @@ public class OServerCommandPostBackupDatabase extends OServerCommandAuthenticate
 
   protected ODatabaseDocumentTx getProfiledDatabaseInstance(final OHttpRequest iRequest) throws InterruptedException {
     // after authentication, if current login user is different compare with current DB user, reset DB user to login user
-    ODatabaseRecord localDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+    ODatabaseDocumentInternal localDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
 
     if (localDatabase == null) {
       final List<String> parts = OStringSerializerHelper.split(iRequest.authorization, ':');
@@ -85,7 +84,7 @@ public class OServerCommandPostBackupDatabase extends OServerCommandAuthenticate
 
       String currentUserId = iRequest.data.currentUserId;
       if (currentUserId != null && currentUserId.length() > 0 && localDatabase != null && localDatabase.getUser() != null) {
-        if (!currentUserId.equals(localDatabase.getUser().getDocument().getIdentity().toString())) {
+        if (!currentUserId.equals(localDatabase.getUser()   .getIdentity().toString())) {
           ODocument userDoc = localDatabase.load(new ORecordId(currentUserId));
           localDatabase.setUser(new OUser(userDoc));
         }
@@ -94,7 +93,7 @@ public class OServerCommandPostBackupDatabase extends OServerCommandAuthenticate
 
     iRequest.data.lastDatabase = localDatabase.getName();
     iRequest.data.lastUser = localDatabase.getUser() != null ? localDatabase.getUser().getName() : null;
-    return (ODatabaseDocumentTx) ((ODatabaseRecordInternal)localDatabase).getDatabaseOwner();
+    return (ODatabaseDocumentTx) ((ODatabaseDocumentInternal) localDatabase).getDatabaseOwner();
   }
 
   @Override

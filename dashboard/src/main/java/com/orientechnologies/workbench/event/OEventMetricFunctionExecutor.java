@@ -15,13 +15,6 @@
  */
 package com.orientechnologies.workbench.event;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
@@ -31,6 +24,10 @@ import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityReso
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.workbench.event.metric.OEventMetricExecutor;
+
+import javax.script.Invocable;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
 
 @EventConfig(when = "MetricsWhen", what = "FunctionWhat")
 public class OEventMetricFunctionExecutor extends OEventMetricExecutor {
@@ -79,7 +76,7 @@ public class OEventMetricFunctionExecutor extends OEventMetricExecutor {
 				try {
 					scriptEngine.eval(lib);
 				} catch (ScriptException e) {
-					scriptManager.getErrorMessage(e, lib);
+					scriptManager.throwErrorMessage(e, lib);
 				}
 
 			if (scriptEngine instanceof Invocable) {

@@ -340,11 +340,11 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   }
 
   @Override
-  public Issue findSingleOrganizationIssueByRepoAndNumber(String name, String repo, String number) {
+  public Issue findSingleOrganizationIssueByRepoAndNumber(String name, String repo, Long number) {
 
     OrientGraph db = dbFactory.getGraph();
     String query = String.format(
-        "select expand(out('HasRepo')[name = '%s'].out('HasIssue')[uuid = '%s'])  from Organization where name = '%s') ", repo,
+        "select expand(out('HasRepo')[name = '%s'].out('HasIssue')[iid = %d])  from Organization where name = '%s') ", repo,
         number, name);
 
     Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
@@ -357,7 +357,23 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   }
 
   @Override
-  public List<Comment> findSingleOrganizationIssueCommentByRepoAndNumber(String owner, String repo, String number) {
+  public Issue findSingleOrganizationIssueByNumber(String name, Long number) {
+
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format("select expand(out('HasRepo').out('HasIssue')[iid = %d])  from Organization where name = '%s') ",
+        number, name);
+
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+    try {
+      ODocument doc = vertices.iterator().next().getRecord();
+      return OIssue.NUMBER.fromDoc(doc, db);
+    } catch (NoSuchElementException e) {
+      return null;
+    }
+  }
+
+  @Override
+  public List<Comment> findSingleOrganizationIssueCommentByRepoAndNumber(String owner, String repo, Long number) {
 
     OrientGraph db = dbFactory.getGraph();
     Issue issue = findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
@@ -374,7 +390,7 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   }
 
   @Override
-  public List<Event> findEventsByOwnerRepoAndIssueNumber(String owner, String repo, String number) {
+  public List<Event> findEventsByOwnerRepoAndIssueNumber(String owner, String repo, Long number) {
     OrientGraph db = dbFactory.getGraph();
     Issue issue = findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
 

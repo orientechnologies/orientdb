@@ -85,7 +85,8 @@
               </div>
             </div>
             <div class="col-md-7">
-              <h5 class="list-group-item-heading"><a href="#issues/{{issue.repository.name}}@{{issue.uuid}}">
+              <!--<h5 class="list-group-item-heading"><a href="#issues/{{issue.repository.name}}@{{issue.uuid}}">-->
+              <h5 class="list-group-item-heading"><a href="#issues/{{issue.iid}}">
                 {{issue.title}}</a>
                 <!--<span class="label" ng-repeat="label in issue.labels" style="background-color: #{{label.color}}">{{label.name}}</span>-->
                 <span class="label" style="background-color: #{{issue.priority.color}}">{{issue.priority.name}}</span>

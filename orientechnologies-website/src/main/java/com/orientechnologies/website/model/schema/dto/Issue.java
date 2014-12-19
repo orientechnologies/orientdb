@@ -14,6 +14,7 @@ public class Issue {
 
   @JsonIgnore
   private String            id;
+  private Long              iid;
   private String            uuid;
   private Integer           number;
   private String            title;
@@ -32,6 +33,14 @@ public class Issue {
   private OUser             user;
   private OUser             assignee;
   private Boolean           confidential;
+
+  public Long getIid() {
+    return iid;
+  }
+
+  public void setIid(Long iid) {
+    this.iid = iid;
+  }
 
   public String getId() {
     return id;

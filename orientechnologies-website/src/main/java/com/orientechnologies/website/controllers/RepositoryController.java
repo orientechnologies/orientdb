@@ -39,7 +39,7 @@ public class RepositoryController {
 
   @RequestMapping(value = "{owner}/{repo}/issues/{number}", method = RequestMethod.GET)
   public ResponseEntity<Issue> getSingleIssue(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
-      @PathVariable("number") String number) {
+      @PathVariable("number") Long number) {
 
     Issue issue = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
     return issue != null ? new ResponseEntity<Issue>(issue, HttpStatus.OK) : new ResponseEntity<Issue>(HttpStatus.NOT_FOUND);
@@ -47,7 +47,7 @@ public class RepositoryController {
 
   @RequestMapping(value = "{owner}/{repo}/issues/{number}/sync", method = RequestMethod.POST)
   public ResponseEntity<Issue> syncIssue(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
-      @PathVariable("number") String number) {
+      @PathVariable("number") Long number) {
 
     Issue issue = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
 
@@ -57,14 +57,14 @@ public class RepositoryController {
 
   @RequestMapping(value = "{owner}/{repo}/issues/{number}/comments", method = RequestMethod.GET)
   public ResponseEntity<List<Comment>> getSingleIssueComments(@PathVariable("owner") String owner,
-      @PathVariable("repo") String repo, @PathVariable("number") String number) {
+      @PathVariable("repo") String repo, @PathVariable("number") Long number) {
     return new ResponseEntity<List<Comment>>(organizationRepository.findSingleOrganizationIssueCommentByRepoAndNumber(owner, repo,
         number), HttpStatus.OK);
   }
 
   @RequestMapping(value = "{owner}/{repo}/issues/{number}/events", method = RequestMethod.GET)
   public ResponseEntity<List<Event>> getSingleIssueEvents(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
-      @PathVariable("number") String number) {
+      @PathVariable("number") Long number) {
     List<Event> events = organizationRepository.findEventsByOwnerRepoAndIssueNumber(owner, repo, number);
     return events != null ? new ResponseEntity<List<Event>>(events, HttpStatus.OK) : new ResponseEntity<List<Event>>(
         HttpStatus.NOT_FOUND);
@@ -85,7 +85,7 @@ public class RepositoryController {
 
   @RequestMapping(value = "{owner}/{repo}/issues/{number}", method = RequestMethod.PATCH)
   public ResponseEntity<Issue> patchIssue(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
-      @PathVariable("number") String number, @RequestBody IssueDTO issue) {
+      @PathVariable("number") Long number, @RequestBody IssueDTO issue) {
 
     Issue i = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
     return i != null ? new ResponseEntity<Issue>(repositoryService.patchIssue(i, issue), HttpStatus.OK)
@@ -94,7 +94,7 @@ public class RepositoryController {
 
   @RequestMapping(value = "{owner}/{repo}/issues/{number}/labels", method = RequestMethod.POST)
   public ResponseEntity<List<Label>> addLabels(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
-      @PathVariable("number") String number, @RequestBody List<String> labels) {
+      @PathVariable("number") Long number, @RequestBody List<String> labels) {
 
     Issue i = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
 
@@ -108,7 +108,7 @@ public class RepositoryController {
 
   @RequestMapping(value = "{owner}/{repo}/issues/{number}/labels/{lname}", method = RequestMethod.DELETE)
   public ResponseEntity<List<Label>> deleteLabel(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
-      @PathVariable("number") String number, @PathVariable("lname") String lname) {
+      @PathVariable("number") Long number, @PathVariable("lname") String lname) {
 
     Issue i = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
     if (i == null) {
@@ -120,7 +120,7 @@ public class RepositoryController {
 
   @RequestMapping(value = "{owner}/{repo}/issues/{number}/comments", method = RequestMethod.POST)
   public ResponseEntity<Comment> postComment(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
-      @PathVariable("number") String number, @RequestBody Comment comment) {
+      @PathVariable("number") Long number, @RequestBody Comment comment) {
 
     Issue i = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
 

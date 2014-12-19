@@ -3,6 +3,7 @@ package com.orientechnologies.website.model.schema;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.website.helper.OSequenceHelper;
 import com.orientechnologies.website.model.schema.dto.Comment;
 import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.model.schema.dto.Label;
@@ -31,6 +32,12 @@ public enum OIssue implements OTypeHolder<Issue> {
     @Override
     public OType getType() {
       return OType.STRING;
+    }
+  },
+  IID("iid") {
+    @Override
+    public OType getType() {
+      return OType.LONG;
     }
   },
   BODY("body") {
@@ -105,6 +112,7 @@ public enum OIssue implements OTypeHolder<Issue> {
     ODocument doc;
     if (entity.getId() == null) {
       doc = new ODocument(entity.getClass().getSimpleName());
+      doc.field(IID.toString(), OSequenceHelper.next(graph, entity.getClass().getSimpleName()));
       doc.field(UUID.toString(), java.util.UUID.randomUUID().toString());
     } else {
       doc = graph.getRawGraph().load(new ORecordId(entity.getId()));
@@ -131,6 +139,7 @@ public enum OIssue implements OTypeHolder<Issue> {
     issue.setCreatedAt((Date) doc.field(CREATED_AT.toString()));
     issue.setUpdatedAt((Date) doc.field(UPDATED_AT.toString()));
     issue.setUuid((String) doc.field(UUID.toString()));
+    issue.setIid((Long) doc.field(IID.toString()));
     issue.setNumber((Integer) doc.field(NUMBER.toString()));
     issue.setConfidential((Boolean) doc.field(CONFIDENTIAL.toString()));
     OrientVertex iss = graph.getVertex(doc);

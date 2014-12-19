@@ -29,11 +29,13 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
 
   public Repository findOrganizationRepositoryByScope(String name, Integer scope);
 
-  public Issue findSingleOrganizationIssueByRepoAndNumber(String name, String repo, String number);
+  public Issue findSingleOrganizationIssueByRepoAndNumber(String name, String repo, Long number);
 
-  public List<Comment> findSingleOrganizationIssueCommentByRepoAndNumber(String owner, String repo, String number);
+  public Issue findSingleOrganizationIssueByNumber(String name, Long number);
 
-  public List<Event> findEventsByOwnerRepoAndIssueNumber(String owner, String repo, String number);
+  public List<Comment> findSingleOrganizationIssueCommentByRepoAndNumber(String owner, String repo, Long number);
+
+  public List<Event> findEventsByOwnerRepoAndIssueNumber(String owner, String repo, Long number);
 
   public List<OUser> findClientMembers(String org, Integer clientId);
 
