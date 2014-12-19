@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.storage.OStorage;
 import junit.framework.TestCase;
 
 import org.junit.Test;
@@ -190,13 +189,7 @@ public class OGraphBatchInsertTest extends TestCase {
 
     batch.end();
 
-		ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(dbUrl);
-		databaseDocumentTx.open("admin", "admin");
-		OStorage storage = databaseDocumentTx.getStorage();
-		databaseDocumentTx.close();
-		storage.close(true, false);
-
-		OrientGraph g = new OrientGraph(dbUrl, "admin", "admin");
+    OrientGraph g = new OrientGraph(dbUrl, "admin", "admin");
 
     Iterable<Vertex> result = g.command(
         new OSQLSynchQuery<Vertex>("select expand(out().in().out().out().in().out()) from V where uid = ?")).execute(1L);
@@ -222,12 +215,6 @@ public class OGraphBatchInsertTest extends TestCase {
     batch.setVertexProperties(4L, vertexProps);
 
     batch.end();
-
-		ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(dbUrl);
-		databaseDocumentTx.open("admin", "admin");
-		OStorage storage = databaseDocumentTx.getStorage();
-		databaseDocumentTx.close();
-		storage.close(true, false);
 
     OrientGraph g = new OrientGraph(dbUrl, "admin", "admin");
 

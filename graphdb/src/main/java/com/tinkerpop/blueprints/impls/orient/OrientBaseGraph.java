@@ -32,9 +32,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.apache.commons.configuration.Configuration;
 
 import com.orientechnologies.common.exception.OException;
@@ -401,7 +398,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     getRawGraph().drop();
 
-    pollGraphFromStack(true);
+    pollGraphFromStack();
   }
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -1111,26 +1108,11 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Closes the Graph. After closing the Graph cannot be used.
    */
   public void shutdown() {
-    shutdown(true);
-  }
-
-  /**
-   * Closes the Graph. After closing the Graph cannot be used.
-   */
-  public void shutdown(boolean closeDb) {
     makeActive();
 
     try {
-      if (!database.isClosed()) {
-				final OStorage storage = database.getStorage();
-        if (storage instanceof OAbstractPaginatedStorage) {
-          if (((OAbstractPaginatedStorage) storage).getWALInstance() != null)
-						database.commit();
-				}
-
-			}
-
-
+      if (!database.isClosed())
+        database.commit();
 
     } catch (RuntimeException e) {
       OLogManager.instance().error(this, "Error during context close for db " + url, e);
@@ -1140,8 +1122,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       throw new OException("Error during context close for db " + url, e);
     } finally {
       try {
-        if (closeDb)
-          database.close();
+        database.close();
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error during context close for db " + url, e);
       }
@@ -1151,7 +1132,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     username = null;
     password = null;
 
-    pollGraphFromStack(closeDb);
+    pollGraphFromStack();
   }
 
   /**
@@ -1770,7 +1751,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     stack.push(this);
   }
 
-  private void pollGraphFromStack(boolean updateDb) {
+  private void pollGraphFromStack() {
     final Deque<OrientBaseGraph> stack = initializationStack.get();
     stack.poll();
 
@@ -1781,8 +1762,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       prevGraph.makeActive();
     } else {
       activeGraph.set(null);
-      if (updateDb)
-        ODatabaseRecordThreadLocal.INSTANCE.set(null);
+      ODatabaseRecordThreadLocal.INSTANCE.set(null);
     }
 
   }

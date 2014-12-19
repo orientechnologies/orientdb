@@ -182,8 +182,6 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
 
   @Override
   public void end() {
-		if (graph != null)
-			graph.shutdown(false);
   }
 
   @Override

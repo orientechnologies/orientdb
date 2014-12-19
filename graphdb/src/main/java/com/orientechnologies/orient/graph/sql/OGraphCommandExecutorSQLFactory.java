@@ -134,12 +134,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
   }
 
   public static <T> T runInTx(final GraphCallBack<T> callBack) {
-    OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
-    try {
-      return runInTx(graph, callBack);
-    } finally {
-      graph.shutdown(false);
-    }
+    return runInTx(OGraphCommandExecutorSQLFactory.getGraph(false), callBack);
   }
 
   public static ODatabaseDocument getDatabase() {

@@ -17,9 +17,7 @@ package com.orientechnologies.orient.graph.sql;
 
 import java.util.List;
 
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -36,13 +34,9 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 @RunWith(JUnit4.class)
 public class SQLGraphFunctionsTest {
-  private static OrientGraph graph;
+  private OrientGraph graph;
 
   public SQLGraphFunctionsTest() {
-  }
-
-	@BeforeClass
-  public static void beforeClass() {
     String url = "memory:" + SQLGraphFunctionsTest.class.getSimpleName();
     graph = new OrientGraph(url);
 
@@ -61,12 +55,6 @@ public class SQLGraphFunctionsTest {
     v5.addEdge("label", v1, null, null, "weight", 100);
 
     graph.commit();
-  }
-
-
-	@AfterClass
-  public static void afterClass() {
-    graph.shutdown();
   }
 
   @Test
@@ -126,7 +114,5 @@ public class SQLGraphFunctionsTest {
     ODocument secondItem = result.get(1);
     List<OrientEdge> secondResult = secondItem.field("gremlin");
     Assert.assertTrue(secondResult.isEmpty());
-
-    OGremlinHelper.global().destroy();
   }
 }
