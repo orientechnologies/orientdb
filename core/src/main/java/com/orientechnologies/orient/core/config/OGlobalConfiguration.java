@@ -625,8 +625,17 @@ public enum OGlobalConfiguration {
   }
 
   private static void autoConfig() {
-    if (System.getProperty(DISK_CACHE_SIZE.key) == null) {
+    if (System.getProperty(DISK_CACHE_SIZE.key) == null)
       autoConfigDiskCacheSize();
+
+    if (System.getProperty(WAL_RESTORE_BATCH_SIZE.key) == null) {
+      final long jvmMaxMemory = Runtime.getRuntime().maxMemory();
+      if (jvmMaxMemory > 2 * OFileUtils.GIGABYTE)
+        // INCREASE WAL RESTORE BATCH SIZE TO 50K INSTEAD OF DEFAULT 1K
+        WAL_RESTORE_BATCH_SIZE.setValue(50000);
+      else if (jvmMaxMemory > 512 * OFileUtils.MEGABYTE)
+        // INCREASE WAL RESTORE BATCH SIZE TO 10K INSTEAD OF DEFAULT 1K
+        WAL_RESTORE_BATCH_SIZE.setValue(10000);
     }
   }
 
