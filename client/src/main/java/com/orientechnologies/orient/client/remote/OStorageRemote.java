@@ -1508,7 +1508,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       }
     } else {
       OLogManager.instance().warn(this, "Caught I/O errors, trying to reconnect (error: %s)",
-          exception == null ? originalException : exception);
+          exception == null ? originalException.toString() : exception.toString());
       OLogManager.instance().debug(this, "I/O error stack: ", exception == null ? originalException : exception);
     }
 
