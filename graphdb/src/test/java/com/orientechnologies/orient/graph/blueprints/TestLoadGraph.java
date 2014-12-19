@@ -59,7 +59,7 @@ public class TestLoadGraph {
     g.command(new OCommandSQL("alter database TIMEZONE GMT")).execute();
     g.command(new OCommandSQL("alter database LOCALECOUNTRY UK")).execute();
     g.command(new OCommandSQL("alter database LOCALELANGUAGE EN")).execute();
-
+    g.shutdown();
     // g.drop();
   }
 }
