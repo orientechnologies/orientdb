@@ -2,9 +2,11 @@ package com.orientechnologies.website.services;
 
 import com.orientechnologies.website.exception.ServiceException;
 import com.orientechnologies.website.model.schema.dto.Client;
+import com.orientechnologies.website.model.schema.dto.Environment;
 import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.model.schema.dto.Repository;
 import com.orientechnologies.website.model.schema.dto.web.UserDTO;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Created by Enrico Risa on 20/10/14.
@@ -18,5 +20,8 @@ public interface UserService {
 
   boolean isTeamMember(OUser user, Repository repo);
 
-  Client getClient(OUser user, String orgName);
+  public Client getClient(OUser user, String orgName);
+
+  @Transactional
+  public Environment registerUserEnvironment(OUser user, Environment environment);
 }

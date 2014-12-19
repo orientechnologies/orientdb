@@ -95,3 +95,80 @@
   margin-top: 0px;
   margin-bottom: 0px;
 }
+
+
+/* TAB Style*/
+
+.tabs-style-topline {
+  max-width: 1200px;
+}
+.tabs {
+  position: relative;
+  overflow: hidden;
+  margin: 0 auto;
+  width: 100%;
+  font-weight: 300;
+  font-size: 1.25em;
+}
+.tabs nav {
+  text-align: center;
+}
+.content-wrap {
+  position: relative;
+}
+.tabs nav ul {
+  position: relative;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: -moz-flex;
+  display: -ms-flex;
+  display: flex;
+  margin: 0 auto;
+  padding: 0;
+  max-width: 1200px;
+  list-style: none;
+  -ms-box-orient: horizontal;
+  -ms-box-pack: center;
+  -webkit-flex-flow: row wrap;
+  -moz-flex-flow: row wrap;
+  -ms-flex-flow: row wrap;
+  flex-flow: row wrap;
+  -webkit-justify-content: center;
+  -moz-justify-content: center;
+  -ms-justify-content: center;
+  justify-content: center;
+}
+.tabs-style-topline nav li.tab-current {
+  border-top-color: #2CC185;
+  border-bottom: none;
+}
+.tabs-style-topline nav li:not(:last-child) {
+  border-right: none;
+}
+.tabs nav ul li {
+  position: relative;
+  z-index: 1;
+  display: block;
+  margin: 0;
+  text-align: center;
+  -webkit-flex: 1;
+  -moz-flex: 1;
+  -ms-flex: 1;
+  flex: 1;
+}
+.tabs-style-topline nav li {
+  border: 1px solid rgba(40,44,42,0.1);
+}
+.tabs-style-linetriangle nav a {
+  overflow: visible;
+  border-bottom: 1px solid rgba(0,0,0,0.2);
+  -webkit-transition: color 0.2s;
+  transition: color 0.2s;
+}
+.tabs-style-linetriangle nav a span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1em;
+}

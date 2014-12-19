@@ -37,6 +37,10 @@ angular
         templateUrl: 'views/login.html',
         controller: 'LoginCtrl'
       })
+      .when('/users/:username', {
+        templateUrl: 'views/user.html',
+        controller: 'UserCtrl'
+      })
       .when('/issues', {
         templateUrl: 'views/issues.html',
         controller: 'IssueCtrl'

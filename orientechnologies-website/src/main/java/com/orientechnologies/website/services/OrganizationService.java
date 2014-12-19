@@ -19,10 +19,10 @@ public interface OrganizationService {
 
   public Organization createOrganization(String name, String description);
 
-  @Transactional
-  Environment registerClientEnvironment(String name, Integer id, Environment environment);
+//  @Transactional
+//  Environment registerClientEnvironment(String name, Integer id, Environment environment);
 
-  @Transactional
-  Sla registerClientSlaToEnvironment(String name, Integer id, String env, Sla sla);
+//  @Transactional
+//  Sla registerClientSlaToEnvironment(String name, Integer id, String env, Sla sla);
 
 }

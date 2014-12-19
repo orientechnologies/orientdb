@@ -1,15 +1,18 @@
 package com.orientechnologies.website.services.impl;
 
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.github.GUser;
 import com.orientechnologies.website.github.GitHub;
-import com.orientechnologies.website.model.schema.dto.Client;
-import com.orientechnologies.website.model.schema.dto.OUser;
-import com.orientechnologies.website.model.schema.dto.Organization;
-import com.orientechnologies.website.model.schema.dto.Repository;
+import com.orientechnologies.website.model.schema.HasEnvironment;
+import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.web.UserDTO;
+import com.orientechnologies.website.repository.EnvironmentRepository;
 import com.orientechnologies.website.repository.UserRepository;
 import com.orientechnologies.website.services.OrganizationService;
 import com.orientechnologies.website.services.UserService;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,10 +26,16 @@ import java.util.List;
 public class UserServiceImpl implements UserService {
 
   @Autowired
-  private UserRepository      userRepository;
+  private OrientDBFactory       dbFactory;
 
   @Autowired
-  private OrganizationService organizationService;
+  private UserRepository        userRepository;
+
+  @Autowired
+  private OrganizationService   organizationService;
+
+  @Autowired
+  private EnvironmentRepository environmentRepository;
 
   @Transactional
   @Override
@@ -85,4 +94,20 @@ public class UserServiceImpl implements UserService {
   public Client getClient(OUser user, String orgName) {
     return userRepository.findMyClientMember(user.getUsername(), orgName);
   }
+
+  @Override
+  public Environment registerUserEnvironment(OUser user, Environment environment) {
+    environment = environmentRepository.save(environment);
+    createUserEnvironmentRelationship(user, environment);
+    return environment;
+  }
+
+  private void createUserEnvironmentRelationship(OUser client, Environment environment) {
+
+    OrientGraph graph = dbFactory.getGraph();
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(client.getRid()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(environment.getId()));
+    orgVertex.addEdge(HasEnvironment.class.getSimpleName(), devVertex);
+  }
+
 }

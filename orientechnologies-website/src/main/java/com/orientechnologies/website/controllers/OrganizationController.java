@@ -152,27 +152,6 @@ public class OrganizationController {
     return orgRepository.findClientEnvironments(name, id);
   }
 
-  @RequestMapping(value = "{name}/clients/{id}/environments", method = RequestMethod.POST)
-  @ResponseStatus(HttpStatus.OK)
-  public Environment addClientEnvironment(@PathVariable("name") String name, @PathVariable("id") Integer id,
-      @RequestBody Environment environment) {
-    return organizationService.registerClientEnvironment(name, id, environment);
-  }
-
-  @RequestMapping(value = "{name}/clients/{id}/environments/{env}/sla", method = RequestMethod.GET)
-  @ResponseStatus(HttpStatus.OK)
-  public List<Sla> findClientEnvironmentSla(@PathVariable("name") String name, @PathVariable("id") Integer id,
-      @PathVariable("env") String env) {
-    return orgRepository.findClientEnvironmentSla(name, id, env);
-  }
-
-  @RequestMapping(value = "{name}/clients/{id}/environments/{env}/sla", method = RequestMethod.POST)
-  @ResponseStatus(HttpStatus.OK)
-  public Sla addClientSlaToEnvironment(@PathVariable("name") String name, @PathVariable("id") Integer id,
-      @PathVariable("env") String env, @RequestBody Sla sla) {
-    return organizationService.registerClientSlaToEnvironment(name, id, env, sla);
-  }
-
   @RequestMapping(value = "{name}", method = RequestMethod.POST)
   public ResponseEntity<Organization> registerOrganization(@PathVariable("name") String name) {
     Organization organization = orgRepository.findOneByName(name);
