@@ -29,7 +29,8 @@
     "karma-ng-scenario": "^0.1.0",
     "grunt-karma": "^0.9.0",
     "karma": "^0.12.24",
-    "karma-ng-html2js-preprocessor": "^0.1.2"
+    "karma-ng-html2js-preprocessor": "^0.1.2",
+    "grunt-connect-proxy": "~0.1.3"
   },
   "engines": {
     "node": ">=0.10.0"

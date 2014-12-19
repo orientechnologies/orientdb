@@ -1,0 +1,50 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-6">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">My Issues</h3>
+        </div>
+        <div class="list-group">
+          <div class="list-group-item" ng-repeat="issue in issues">
+            <div class="row">
+              <div class="col-md-1">
+                <div class="col-md-6">
+                  <i class="fa fa-check-circle-o" ng-class="'issue-' + issue.state.toLowerCase()"></i>
+                </div>
+              </div>
+              <div class="col-md-7">
+                <h5 class="list-group-item-heading"><a href="#issues/{{issue.repository.name}}@{{issue.uuid}}">
+                  {{issue.title}}</a>
+                  <span class="label" style="background-color: #{{issue.priority.color}}">{{issue.priority.name}}</span>
+                  <span class="label label-default">{{issue.scope.name}}</span>
+                </h5>
+                <!--<p class="issue-info">#{{issue.number}} opened {{issue.createdAt | fromNow}} by {{issue.user.name}}-->
+                  <!--<i ng-show="issue.milestone" class="fa fa-milestoned"> {{ issue.milestone.title }}</i>-->
+                  <!--<i ng-show="issue.version" class="fa fa-versioned"> {{ issue.version.title }}</i>-->
+                <!--</p>-->
+              </div>
+              <div class="col-md-4">
+                <div class="col-md-12">
+                  <div ng-if="issue.assignee">
+                    <avatar dim="20" name="true" user="issue.assignee"></avatar>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">Panel title</h3>
+        </div>
+        <div class="panel-body">
+          Panel content
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

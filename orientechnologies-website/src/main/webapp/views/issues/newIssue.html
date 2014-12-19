@@ -1,0 +1,60 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-10">
+      <div class="panel panel-default">
+        <div class="panel-body">
+          <form role="form" name="newIssue">
+            <div class="form-group">
+              <input type="text" class="form-control" required placeholder="Title" ng-model="issue.title">
+            </div>
+            <div class="checkbox">
+              <label>
+                <input type="checkbox" placeholder="Private Issue"
+                       ng-model="issue.confidential">
+                Private Issue</label>
+            </div>
+            <div class="form-group">
+              <div class="row">
+                <div class="col-md-3">
+                  <label>Scope</label>
+                  <select class="form-control" required ng-model="scope"
+                          ng-options="scope.name for scope in scopes"></select>
+                </div>
+                <!--<div class="col-md-3">-->
+                  <!--<label>Priority</label>-->
+                  <!--<select class="form-control" required ng-model="issue.priority"-->
+                          <!--ng-options="p.number as p.name for p in priorities"></select>-->
+                <!--</div>-->
+                <div class="col-md-3">
+                  <label>Assignee</label>
+                  <select class="form-control" ng-model="issue.assignee"
+                          ng-options="a.name as a.name for a in assignees"></select>
+                </div>
+                <div class="col-md-3">
+                  <label>Version</label>
+                  <select class="form-control" required ng-model="issue.version"
+                          ng-options="m.number as m.title for m in milestones"></select>
+                </div>
+                <div class="col-md-3">
+                  <label>Milestone</label>
+                  <select class="form-control" required ng-model="issue.milestone"
+                          ng-options="m.number as m.title for m in milestones"></select>
+                </div>
+
+              </div>
+              <div class="row">
+
+              </div>
+            </div>
+            <div class="form-group">
+              <div mkeditor ng-model="issue.body"></div>
+            </div>
+            <button type="submit" class="btn btn-success pull-right" ng-disabled="newIssue.$invalid" ng-click="save()">
+              Submit new issue
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,239 @@
+/* Space out content a bit */
+body {
+  padding-bottom: 20px;
+  /*background: #edeff0;*/
+}
+
+/* Everything but the jumbotron gets side spacing for mobile first views */
+.header,
+.marketing,
+.footer {
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+/* Custom page header */
+.header {
+  border-bottom: 1px solid #e5e5e5;
+}
+
+/* Make the masthead heading the same height as the navigation */
+.header h3 {
+  margin-top: 0;
+  margin-bottom: 0;
+  line-height: 40px;
+  padding-bottom: 19px;
+}
+
+/* Custom page footer */
+.footer {
+  padding-top: 19px;
+  color: #777;
+  border-top: 1px solid #e5e5e5;
+}
+
+/* Customize container */
+@media (min-width: 768px) {
+  .container {
+    max-width: 730px;
+  }
+}
+
+.container-narrow > hr {
+  margin: 30px 0;
+}
+
+/* Main marketing message and sign up button */
+.jumbotron {
+  text-align: center;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.jumbotron .btn {
+  font-size: 21px;
+  padding: 14px 24px;
+}
+
+/* Supporting marketing content */
+.marketing {
+  margin: 40px 0;
+}
+
+.marketing p + h4 {
+  margin-top: 28px;
+}
+
+/* Responsive: Portrait tablets and up */
+@media screen and (min-width: 768px) {
+  /* Remove the padding we set earlier */
+  .header,
+  .marketing,
+  .footer {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /* Space out the masthead */
+  .header {
+    margin-bottom: 30px;
+  }
+
+  /* Remove the bottom border on the jumbotron for visual effect */
+  .jumbotron {
+    border-bottom: 0;
+  }
+
+  .sidebar {
+    width: 70px;
+  }
+
+  .app-view {
+    margin-left: 70px;
+    margin-top: 60px;
+  }
+
+  .footer {
+    margin-left: 70px;
+  }
+}
+
+.sidebar {
+  position: fixed;
+  background: #384047;
+  top: 0;
+  bottom: 0;
+  z-index: 1031;
+}
+
+.app .navbar-default {
+  background: #edeff0;
+}
+
+.sidebar .nav li > a {
+  text-align: center;
+  margin: 10px;
+  padding: 10px 10px;
+  color: #60676d;
+
+}
+
+.issue-sidebar .issue-label {
+  text-align: center;
+
+}
+
+.issue-sidebar .issue-label .label {
+  width: 80%;
+  display: inline-block;
+}
+
+.issue-sidebar .milestone .label {
+  width: 80%;
+  display: inline-block;
+}
+
+.issue-sidebar .milestone {
+  text-align: center;
+}
+
+.issue-sidebar .btn-transparent {
+  width: 100%;
+  text-align: left;
+}
+
+.btn-transparent {
+  background-color: transparent;
+}
+
+.edit-issue .panel {
+  margin-bottom: 0px;
+}
+
+.edit-issue .event {
+  margin-left: 20px;
+  padding: 10px;
+  border-left: 2px solid #f3f3f3;
+}
+
+.issues-panel .issue-open {
+  color: #5cb85c;
+}
+.issues-panel .issue-closed {
+  color: #d9534f;
+}
+
+.issues-panel .list-group-item .issue-info {
+   color: #999;
+ }
+
+.issues-panel .list-group-item-heading a {
+  color: #000000;
+
+}
+.issues-panel .list-group-item-heading span.label {
+  margin-left: 2px;
+  margin-right: 2px;
+}
+.issues-panel .label-column span.label {
+  margin-left: 2px;
+  margin-right: 2px;
+}
+.issues-panel .list-group-item-heading a:hover {
+  color: #428bca;
+  text-decoration: none;
+}
+
+.vertical-align {
+  display: flex;
+  align-items: center;
+}
+
+
+.text-center {
+  text-align: center;
+}
+
+.events-list .event {
+  border-top: 1px solid #f3f3f3;
+}
+
+.events-list .event .fa {
+
+  position: relative;
+  left: -27px;
+  width: 32px;
+  height: 32px;
+  line-height: 28px;
+  color: #666;
+  text-align: center;
+  background-color: #f3f3f3;
+  border: 2px solid #fff;
+  border-radius: 50%;
+}
+
+.avatar-image {
+  border-radius: 100%;
+}
+
+.avatar-container {
+  display: inline-block;
+}
+
+.col-centered {
+  float: none;
+  margin: 0 auto;
+}
+
+.issue-assignee .issue-assignee-avatar {
+  padding-left: 15px;
+}
+
+.issue-assignee .issue-assignee-avatar {
+  text-align: center;
+}
+.edit-issue .state h3 {
+  margin: 0px;
+}
+.inline-block {
+  display: inline-block;
+}

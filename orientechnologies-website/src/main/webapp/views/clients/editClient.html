@@ -1,0 +1,79 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="panel panel-default">
+      <div class="panel-body">
+        <form class="form-horizontal" ng-submit="save()">
+          <div class="form-group">
+            <label for="inputClientId" class="col-sm-2 control-label">Id</label>
+
+            <div class="col-sm-10">
+              <input type="number" class="form-control" id="inputClientId" ng-model="client.clientId"
+                     placeholder="Client Id">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="inputName" class="col-sm-2 control-label">Name</label>
+
+            <div class="col-sm-10">
+              <input type="text" class="form-control" id="inputName" ng-model="client.name" placeholder="Name">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+              <button type="submit" class="btn btn-success pull-right">Save</button>
+            </div>
+          </div>
+        </form>
+        <div class="row">
+          <div class="col-md-offset-2 col-md-1">
+            <h4> Members</h4>
+          </div>
+          <div class="col-md-6">
+            <form ng-submit="addMember()">
+              <div class="form-group">
+                <div class="input-group">
+                  <input type="text" class="form-control" ng-model="newMember" placeholder="Add Member">
+                  <span class="input-group-btn">
+                        <button class="btn btn-success" type="submit">Add</button>
+                    </span>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-offset-2  col-md-12">
+            <table>
+              <tbody>
+              <tr ng-repeat="member in members">
+                <td>
+                  <avatar dim="50" name="true" user="member"></avatar>
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-offset-2 col-md-1">
+            <h4> Environments</h4>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-offset-2  col-md-12">
+            <table>
+              <tbody>
+              <tr ng-repeat="e in environments">
+                <td>
+                  {{e.name}}
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
