@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.graph.sql.functions;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -62,7 +63,8 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
 
   public Object execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult,
       final Object[] iParameters, final OCommandContext iContext) {
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
+    final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
+    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
     try {
       final String[] labels;
       if (iParameters != null && iParameters.length > 0 && iParameters[0] != null)
@@ -83,7 +85,8 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
         }
       }, iThis, iContext);
     } finally {
-      graph.shutdown(false);
+      if (shutdownFlag.getValue())
+        graph.shutdown(false);
     }
   }
 

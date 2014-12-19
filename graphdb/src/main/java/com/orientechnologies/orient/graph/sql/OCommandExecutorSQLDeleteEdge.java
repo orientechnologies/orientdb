@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
+import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -55,14 +56,15 @@ import java.util.Set;
  */
 public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstract implements OCommandDistributedReplicateRequest,
     OCommandResultListener {
-  public static final String NAME    = "DELETE EDGE";
+  public static final String NAME         = "DELETE EDGE";
   private ORecordId          rid;
   private String             fromExpr;
   private String             toExpr;
-  private int                removed = 0;
+  private int                removed      = 0;
   private OCommandRequest    query;
   private OSQLFilter         compiledFilter;
   private OrientGraph        graph;
+  private OModifiableBoolean shutdownFlag = new OModifiableBoolean();
   private String             label;
 
   @SuppressWarnings("unchecked")
@@ -81,7 +83,8 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
     if (temp != null && !parserIsEnded())
       originalTemp = parserText.substring(parserGetPreviousPosition(), parserGetCurrentPosition()).trim();
 
-    final OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
+    final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
+    final OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
     try {
       while (temp != null) {
 
@@ -140,7 +143,8 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
 
       return this;
     } finally {
-      graph.shutdown(false);
+      if (shutdownFlag.getValue())
+        graph.shutdown(false);
     }
 
   }
@@ -244,7 +248,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
               }
             });
           } else {
-            graph = OGraphCommandExecutorSQLFactory.getGraph(false);
+            graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
             OGraphCommandExecutorSQLFactory.runInTx(graph, new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
               @Override
               public Object call(OrientBaseGraph graph) {
@@ -306,7 +310,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
 
   @Override
   public void end() {
-    if (graph != null)
+    if (graph != null && shutdownFlag.getValue())
       graph.shutdown(false);
   }
 

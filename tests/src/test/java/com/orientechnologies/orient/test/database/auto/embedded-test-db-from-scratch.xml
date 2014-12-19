@@ -58,6 +58,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.TransactionAtomicTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.TransactionOptimisticTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.TransactionConsistencyTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.TransactionIsolationTest"/>
         </classes>
     </test>
     <test name="Index">

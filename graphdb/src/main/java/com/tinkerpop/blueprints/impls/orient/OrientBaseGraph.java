@@ -1165,8 +1165,6 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Returns the underlying Database instance as ODatabaseDocumentTx instance.
    */
   public ODatabaseDocumentTx getRawGraph() {
-    makeActive();
-
     return database;
   }
 

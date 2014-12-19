@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
+import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -22,6 +23,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLFactory;
+import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
@@ -67,7 +69,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
    *
    * @return Transactional OrientGraph implementation from the current database in thread local.
    */
-  public static OrientGraph getGraph(final boolean autoStartTx) {
+  public static OrientGraph getGraph(final boolean autoStartTx, OModifiableBoolean shouldBeShutDown) {
     final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
 
     final OrientBaseGraph result = OrientBaseGraph.getActiveGraph();
@@ -81,11 +83,13 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
 
         ODatabaseRecordThreadLocal.INSTANCE.set(graphDb);
 
+        shouldBeShutDown.setValue(false);
         return g;
       }
     }
     // Set it again on ThreadLocal because the getRawGraph() may have set a closed db in the thread-local
     ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseDocumentInternal) database);
+    shouldBeShutDown.setValue(true);
     return new OrientGraph((ODatabaseDocumentTx) database, autoStartTx);
   }
 
@@ -134,11 +138,13 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
   }
 
   public static <T> T runInTx(final GraphCallBack<T> callBack) {
-    OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
+    OModifiableBoolean shutdownFlag = new OModifiableBoolean();
+    OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
     try {
       return runInTx(graph, callBack);
     } finally {
-      graph.shutdown(false);
+      if (shutdownFlag.getValue())
+        graph.shutdown(false);
     }
   }
 

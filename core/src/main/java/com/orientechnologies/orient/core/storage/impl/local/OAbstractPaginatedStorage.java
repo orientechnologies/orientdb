@@ -20,6 +20,22 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.Lock;
+
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
@@ -81,22 +97,6 @@ import com.orientechnologies.orient.core.tx.OTxListener;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.locks.Lock;
 
 /**
  * @author Andrey Lomakin
@@ -1983,7 +1983,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   private byte[] checkAndIncrementVersion(final OCluster iCluster, final ORecordId rid, final ORecordVersion version,
       final ORecordVersion iDatabaseVersion, final byte[] iRecordContent, final byte iRecordType) {
     // VERSION CONTROL CHECK
-    switch (version.getCounter()) {
+    final int v = version.getCounter();
+
+    switch (v) {
     // DOCUMENT UPDATE, NO VERSION CONTROL
     case -1:
       iDatabaseVersion.increment();
@@ -1997,13 +1999,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     default:
       // MVCC CONTROL AND RECORD UPDATE OR WRONG VERSION VALUE
       // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-      if (!version.equals(iDatabaseVersion)) {
+      if (v < -2) {
+        // OVERWRITE VERSION: THIS IS USED IN CASE OF FIX OF RECORDS IN DISTRIBUTED MODE
+        version.clearRollbackMode();
+        iDatabaseVersion.setCounter(version.getCounter());
+      } else if (!version.equals(iDatabaseVersion)) {
         final ORecordConflictStrategy strategy = iCluster.getRecordConflictStrategy() != null ? iCluster
             .getRecordConflictStrategy() : recordConflictStrategy;
         return strategy.onUpdate(iRecordType, rid, version, iRecordContent, iDatabaseVersion);
-      }
-
-      iDatabaseVersion.increment();
+      } else
+        // OK, INCREMENT DB VERSION
+        iDatabaseVersion.increment();
     }
 
     return null;

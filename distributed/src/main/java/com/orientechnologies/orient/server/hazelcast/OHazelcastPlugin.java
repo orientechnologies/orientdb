@@ -426,6 +426,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   @Override
   public void onCreateClass(final ODatabaseInternal iDatabase, final OClass iClass) {
+    if (OScenarioThreadLocal.INSTANCE.get() == OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
+      return;
+
+    // RUN ONLY IN NON-DISTRIBUTED MODE
     final String dbUrl = OSystemVariableResolver.resolveSystemVariables(iDatabase.getURL());
 
     if (dbUrl.startsWith("plocal:")) {
@@ -441,12 +445,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (cfg == null)
       return;
 
-    Orient.instance().getWorkers().submit(new Runnable() {
-      @Override
-      public void run() {
-        installLocalClusterPerClass(iDatabase, cfg, getLocalNodeName(), iClass);
-      }
-    });
+    installClustersPerClass(iDatabase, cfg, iClass);
   }
 
   @Override
@@ -962,7 +961,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     boolean distribCfgDirty = false;
     for (final OClass c : schema.getClasses())
-      if (installLocalClusterPerClass(iDatabase, cfg, nodeName, c))
+      if (installLocalClusterPerClass(iDatabase, cfg, c))
         distribCfgDirty = true;
 
     return distribCfgDirty;
@@ -1203,19 +1202,89 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   }
 
   private synchronized boolean installLocalClusterPerClass(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg,
-      final String nodeName, final OClass iClass) {
+      final OClass iClass) {
     ((OClassImpl) iClass).setClusterSelectionInternal(new OLocalClusterStrategy(this, iDatabase.getName(), iClass));
-    if (!iClass.isAbstract()) {
+    if (iClass.isAbstract())
+      return false;
 
-      final int[] clusterIds = iClass.getClusterIds();
-      final List<String> clusterNames = new ArrayList<String>(clusterIds.length);
-      for (int clusterId : clusterIds)
-        clusterNames.add(iDatabase.getClusterNameById(clusterId));
+    final int[] clusterIds = iClass.getClusterIds();
+    final List<String> clusterNames = new ArrayList<String>(clusterIds.length);
+    for (int clusterId : clusterIds)
+      clusterNames.add(iDatabase.getClusterNameById(clusterId));
 
-      String bestCluster = cfg.getLocalCluster(clusterNames, nodeName);
+    String bestCluster = cfg.getLocalCluster(clusterNames, nodeName);
+    if (bestCluster == null) {
+      // TRY TO FIND A CLUSTER PREVIOUSLY ASSIGNED TO THE LOCAL NODE
+      final String newClusterName = (iClass.getName() + "_" + getLocalNodeName()).toLowerCase();
+
+      final Set<String> cfgClusterNames = new HashSet<String>();
+      for (String cl : cfg.getClusterNames())
+        cfgClusterNames.add(cl);
+
+      if (cfgClusterNames.contains(newClusterName)) {
+        // FOUND A CLUSTER PREVIOUSLY ASSIGNED TO THE LOCAL ONE: CHANGE ASSIGNMENT TO LOCAL NODE AGAIN
+        ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
+            "class %s, change mastership of cluster '%s' (id=%d) to local node '%s'", iClass, newClusterName,
+            iDatabase.getClusterIdByName(newClusterName), nodeName);
+        cfg.setMasterServer(newClusterName, nodeName);
+      } else {
+
+        // CREATE A NEW CLUSTER WHERE LOCAL NODE IS THE MASTER
+        ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "class %s, creation of new local cluster '%s' (id=%d)",
+            iClass, newClusterName, iDatabase.getClusterIdByName(newClusterName));
+
+        final OScenarioThreadLocal.RUN_MODE currentDistributedMode = OScenarioThreadLocal.INSTANCE.get();
+        if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
+          OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
+
+        try {
+          iClass.addCluster(newClusterName);
+        } catch (OCommandSQLParsingException e) {
+          if (!e.getMessage().endsWith("already exists"))
+            throw e;
+        } catch (Exception e) {
+          ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "error on creating cluster '%s' in class '%s'",
+              newClusterName, iClass);
+          throw new ODistributedException("Error on creating cluster '" + newClusterName + "' in class '" + iClass + "'");
+        } finally {
+
+          if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
+            // RESTORE PREVIOUS MODE
+            OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
+        }
+
+        ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
+            "class '%s', set mastership of cluster '%s' (id=%d) to '%s'", iClass, newClusterName,
+            iDatabase.getClusterIdByName(newClusterName), nodeName);
+        cfg.setMasterServer(newClusterName, nodeName);
+      }
+
+      return true;
+    }
+
+    return false;
+  }
+
+  private synchronized void installClustersPerClass(final ODatabaseInternal iDatabase, final ODistributedConfiguration cfg,
+      final OClass iClass) {
+    ((OClassImpl) iClass).setClusterSelectionInternal(new OLocalClusterStrategy(this, iDatabase.getName(), iClass));
+    if (iClass.isAbstract())
+      return;
+
+    final int[] clusterIds = iClass.getClusterIds();
+    final List<String> clusterNames = new ArrayList<String>(clusterIds.length);
+    for (int clusterId : clusterIds)
+      clusterNames.add(iDatabase.getClusterNameById(clusterId));
+
+    boolean distributedCfgDirty = false;
+
+    // CHECK IF EACH NODE HAS IS MASTER OF ONE CLUSTER
+    final Set<String> servers = cfg.getServers(null);
+    for (String server : servers) {
+      String bestCluster = cfg.getLocalCluster(clusterNames, server);
       if (bestCluster == null) {
         // TRY TO FIND A CLUSTER PREVIOUSLY ASSIGNED TO THE LOCAL NODE
-        final String newClusterName = (iClass.getName() + "_" + getLocalNodeName()).toLowerCase();
+        final String newClusterName = (iClass.getName() + "_" + server).toLowerCase();
 
         final Set<String> cfgClusterNames = new HashSet<String>();
         for (String cl : cfg.getClusterNames())
@@ -1224,13 +1293,14 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         if (cfgClusterNames.contains(newClusterName)) {
           // FOUND A CLUSTER PREVIOUSLY ASSIGNED TO THE LOCAL ONE: CHANGE ASSIGNMENT TO LOCAL NODE AGAIN
           ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
-              "class %s, change mastership of cluster '%s' (id=%d) to local node '%s'", iClass, newClusterName,
-              iDatabase.getClusterIdByName(newClusterName), nodeName);
-          cfg.setMasterServer(newClusterName, nodeName);
+              "class %s, change mastership of cluster '%s' (id=%d) to node '%s'", iClass, newClusterName,
+              iDatabase.getClusterIdByName(newClusterName), server);
+          cfg.setMasterServer(newClusterName, server);
+          distributedCfgDirty = true;
         } else {
 
-          // CREATE A NEW CLUSTER WHERE LOCAL NODE IS THE MASTER
-          ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "class %s, creation of new local cluster '%s' (id=%d)",
+          // CREATE A NEW CLUSTER WHERE CURRENT NODE IS THE MASTER
+          ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "class %s, creation of new cluster '%s' (id=%d)",
               iClass, newClusterName, iDatabase.getClusterIdByName(newClusterName));
 
           final OScenarioThreadLocal.RUN_MODE currentDistributedMode = OScenarioThreadLocal.INSTANCE.get();
@@ -1242,6 +1312,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           } catch (OCommandSQLParsingException e) {
             if (!e.getMessage().endsWith("already exists"))
               throw e;
+          } catch (Exception e) {
+            ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "error on creating cluster '%s' in class '%s'",
+                newClusterName, iClass);
+            throw new ODistributedException("Error on creating cluster '" + newClusterName + "' in class '" + iClass + "'");
           } finally {
 
             if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
@@ -1250,14 +1324,15 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           }
 
           ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
-              "class %s, set mastership of cluster '%s' (id=%d) to '%s'", iClass, newClusterName,
-              iDatabase.getClusterIdByName(newClusterName), nodeName);
-          cfg.setMasterServer(newClusterName, nodeName);
+              "class '%s', set mastership of cluster '%s' (id=%d) to '%s'", iClass, newClusterName,
+              iDatabase.getClusterIdByName(newClusterName), server);
+          cfg.setMasterServer(newClusterName, server);
+          distributedCfgDirty = true;
         }
-
-        return true;
       }
     }
-    return false;
+
+    if (distributedCfgDirty)
+      updateCachedDatabaseConfiguration(iDatabase.getName(), cfg.serialize(), true, true);
   }
 }

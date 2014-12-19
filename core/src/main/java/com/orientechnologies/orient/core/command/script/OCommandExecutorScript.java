@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.tx.OTransaction;
 
 import javax.script.Bindings;
 import javax.script.Compilable;
@@ -192,7 +193,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 
               // PUT THE RESULT INTO THE CONTEXT
               getContext().setVariable(variable, lastResult);
-            } else if ("begin".equalsIgnoreCase(lastCommand)) {
+            } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "begin")) {
 
               if (txBegun)
                 throw new OCommandSQLParsingException("Transaction already begun");
@@ -202,6 +203,14 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
               txBegunAtPart = linePart;
 
               db.begin();
+
+              if (lastCommand.length() > "begin ".length()) {
+                String next = lastCommand.substring("begin ".length()).trim();
+                if (OStringSerializerHelper.startsWithIgnoreCase(next, "isolation ")) {
+                  next = next.substring("isolation ".length()).trim();
+                  db.getTransaction().setIsolationLevel(OTransaction.ISOLATION_LEVEL.valueOf(next.toUpperCase()));
+                }
+              }
 
             } else if ("rollback".equalsIgnoreCase(lastCommand)) {
 

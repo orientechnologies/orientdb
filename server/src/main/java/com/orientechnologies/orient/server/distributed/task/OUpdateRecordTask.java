@@ -84,7 +84,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> updated record %s/%s v.%s",
         database.getName(), rid.toString(), loadedRecord.getRecordVersion().toString());
 
-    return loadedRecord.getRecordVersion();
+    return loadedRecord.getRecordVersion().copy();
   }
 
   @Override
@@ -105,7 +105,10 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     if (iBadResponse instanceof Throwable)
       return null;
 
-    return new OUpdateRecordTask(rid, null, null, previousContent, previousVersion);
+    final ORecordVersion versionCopy = previousVersion.copy();
+    versionCopy.setRollbackMode();
+
+    return new OUpdateRecordTask(rid, null, null, previousContent, versionCopy);
   }
 
   @Override
