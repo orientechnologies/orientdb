@@ -146,4 +146,9 @@ public class IssueServiceGithub implements IssueService {
   public void changeScope(Issue issue, Scope scope) {
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  public void changeClient(Issue issue, Client client) {
+    throw new UnsupportedOperationException();
+  }
 }

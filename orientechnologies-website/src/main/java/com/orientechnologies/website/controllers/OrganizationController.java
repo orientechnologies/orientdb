@@ -1,9 +1,10 @@
 package com.orientechnologies.website.controllers;
 
 import com.orientechnologies.website.configuration.ApiVersion;
-import com.orientechnologies.website.hateoas.assembler.IssueAssembler;
 import com.orientechnologies.website.hateoas.Page;
+import com.orientechnologies.website.hateoas.assembler.IssueAssembler;
 import com.orientechnologies.website.hateoas.assembler.PagedResourceAssembler;
+import com.orientechnologies.website.helper.SecurityHelper;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.web.IssueDTO;
 import com.orientechnologies.website.model.schema.dto.web.hateoas.IssueResource;
@@ -11,6 +12,7 @@ import com.orientechnologies.website.repository.OrganizationRepository;
 import com.orientechnologies.website.repository.RepositoryRepository;
 import com.orientechnologies.website.services.OrganizationService;
 import com.orientechnologies.website.services.RepositoryService;
+import com.orientechnologies.website.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.hateoas.PagedResources;
@@ -43,6 +45,9 @@ public class OrganizationController {
 
   @Autowired
   private PagedResourceAssembler pagedResourceAssembler;
+
+  @Autowired
+  private UserService            userService;
 
   @RequestMapping(value = "{name}", method = RequestMethod.GET)
   public ResponseEntity<Organization> getOrganizationInfo(@PathVariable("name") String name) {
@@ -119,8 +124,14 @@ public class OrganizationController {
 
   @RequestMapping(value = "{name}/clients", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
-  public List<Client> findClients(@PathVariable("name") String name) {
-    return orgRepository.findClients(name);
+  public ResponseEntity<List<Client>> findClients(@PathVariable("name") String name) {
+
+    OUser user = SecurityHelper.currentUser();
+    if (userService.isMember(user, name)) {
+      return new ResponseEntity<List<Client>>(orgRepository.findClients(name), HttpStatus.OK);
+    } else {
+      return new ResponseEntity<List<Client>>(HttpStatus.NOT_FOUND);
+    }
   }
 
   @RequestMapping(value = "{name}/clients/{id}", method = RequestMethod.GET)

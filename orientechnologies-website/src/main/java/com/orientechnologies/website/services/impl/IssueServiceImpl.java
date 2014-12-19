@@ -309,6 +309,11 @@ public class IssueServiceImpl implements IssueService {
   }
 
   @Override
+  public void changeClient(Issue issue, Client client) {
+    createClientRelationship(issue, client);
+  }
+
+  @Override
   public Issue changeState(Issue issue, String state, OUser actor, boolean fire) {
     issue.setState(state);
     if (fire) {
@@ -436,6 +441,17 @@ public class IssueServiceImpl implements IssueService {
     }
 
     orgVertex.addEdge(HasVersion.class.getSimpleName(), devVertex);
+  }
+
+  private void createClientRelationship(Issue issue, Client client) {
+
+    OrientGraph graph = dbFactory.getGraph();
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(issue.getId()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(client.getId()));
+    for (Edge edge : orgVertex.getEdges(Direction.IN, HasClient.class.getSimpleName())) {
+      edge.remove();
+    }
+    devVertex.addEdge(HasClient.class.getSimpleName(), orgVertex);
   }
 
   private void createPriorityRelationship(Issue issue, Priority priority) {

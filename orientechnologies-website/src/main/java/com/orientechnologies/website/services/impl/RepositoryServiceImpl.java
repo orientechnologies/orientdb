@@ -133,7 +133,7 @@ public class RepositoryServiceImpl implements RepositoryService {
     Integer versionId = issue.getVersion();
     Integer priorityId = issue.getPriority();
     Integer scope = issue.getScope();
-
+    Integer client = issue.getClient();
     Issue issueDomain = new Issue();
     issueDomain.setConfidential(true);
     issueDomain.setTitle(issue.getTitle());
@@ -149,8 +149,18 @@ public class RepositoryServiceImpl implements RepositoryService {
     handleVersion(repository, issueDomain, versionId);
     handlePriority(repository, issueDomain, priorityId);
     handleScope(repository, issueDomain, scope);
+    handleClient(repository, issueDomain, client);
     handleLabels(repository, issueDomain, issue.getLabels());
     return issueDomain;
+  }
+
+  private void handleClient(Repository repository, Issue issue, Integer clientId) {
+    if (clientId != null) {
+      Client client = organizationRepo.findClient(repository.getOrganization().getName(), clientId);
+      if (client != null) {
+        issueService.changeClient(issue, client);
+      }
+    }
   }
 
   protected void handleScope(Repository repository, Issue issue, Integer scope) {

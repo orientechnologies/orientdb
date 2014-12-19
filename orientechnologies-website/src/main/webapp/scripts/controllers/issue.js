@@ -147,21 +147,30 @@ angular.module('webappApp')
   });
 
 angular.module('webappApp')
-  .controller('IssueNewCtrl', function ($scope, Organization, Repo, $location) {
+  .controller('IssueNewCtrl', function ($scope, Organization, Repo, $location,User) {
 
 
+    $scope.issue = {}
     $scope.save = function () {
       $scope.issue.scope = $scope.scope.number;
       Organization.all("issues").post($scope.issue).then(function (data) {
         $location.path("/issues/" + data.iid);
       });
-      //Repo.one($scope.repo.name).all("issues").post($scope.issue).then(function (data) {
-      //  $location.path("/issues/" + $scope.repo.name + "@" + data.uuid);
-      //});
     }
     Organization.all("scopes").getList().then(function (data) {
       $scope.scopes = data.plain();
     })
+    User.whoami().then(function (data) {
+      $scope.isMember = User.isMember(ORGANIZATION);
+      $scope.client = User.getClient(ORGANIZATION);
+      $scope.issue.client = $scope.client.clientId;
+      if ($scope.isMember) {
+        Organization.all("clients").getList().then(function (data) {
+          $scope.clients = data.plain();
+        })
+      }
+    });
+
     Organization.all("priorities").getList().then(function (data) {
       $scope.priorities = data.plain();
     })

@@ -40,4 +40,6 @@ public interface IssueService {
   public void clearEvents(Issue issue);
 
   public void changeScope(Issue issue, Scope scope);
+
+  public void changeClient(Issue issue, Client client);
 }

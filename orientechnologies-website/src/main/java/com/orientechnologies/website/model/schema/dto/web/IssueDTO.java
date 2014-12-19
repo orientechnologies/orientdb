@@ -17,6 +17,7 @@ public class IssueDTO {
   private List<String> labels = new ArrayList<String>();
   private Integer      milestone;
   private Integer      version;
+  private Integer      client;
   private Integer      priority;
   private String       assignee;
   private Integer      scope;
@@ -38,6 +39,16 @@ public class IssueDTO {
 
   public void setMilestone(Integer milestone) {
     this.milestone = milestone;
+  }
+
+  @JsonIgnore
+  public Integer getClient() {
+    return client;
+  }
+
+  @JsonProperty
+  public void setClient(Integer client) {
+    this.client = client;
   }
 
   @JsonIgnore

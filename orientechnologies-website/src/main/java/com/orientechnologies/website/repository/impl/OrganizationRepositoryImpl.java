@@ -130,7 +130,7 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     Client client = userService.getClient(user, orgName);
     if (client != null) {
       return query + (idx > 0 ? " and " : " where ")
-          + "  (confidential <> true or (in('HasOpened').in('HasMember')[@class = 'Client'].clientId contains "
+          + "  (confidential <> true or (in('HasClient')[@class = 'Client'].clientId IN "
           + client.getClientId() + "))";
     }
     return query + (idx > 0 ? " and " : " where ") + " confidential <> true";
@@ -202,7 +202,7 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     }
     if ("client".equals(name)) {
       val = value;
-      query = query + "in('HasOpened').in('HasMember')[@class = 'Client'].name  CONTAINS '%s'";
+      query = query + "in('HasClient')[@class = 'Client'].name  IN '%s'";
     }
     if ("no".equals(name)) {
       if ("label".equals(value)) {
