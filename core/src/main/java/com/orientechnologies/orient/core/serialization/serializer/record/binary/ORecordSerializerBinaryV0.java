@@ -43,10 +43,8 @@ import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -74,7 +72,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   public void deserializePartial(final ODocument document, final BytesContainer bytes, final String[] iFields) {
     final String className = readString(bytes);
     if (className.length() != 0)
-      document.setClassNameIfExists(className);
+      ODocumentInternal.fillClassNameIfNeeded(document, className);
 
     String fieldName;
     int valuePos;
@@ -149,7 +147,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   public void deserialize(final ODocument document, final BytesContainer bytes) {
     final String className = readString(bytes);
     if (className.length() != 0)
-      document.setClassNameIfExists(className);
+      ODocumentInternal.fillClassNameIfNeeded(document, className);
 
     int last = 0;
     String fieldName;
@@ -201,18 +199,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   private OGlobalProperty getGlobalProperty(final ODocument document, final int len) {
     final int id = (len * -1) - 1;
-    ODatabaseDocument db = document.getDatabase();
-    if (db == null || db.isClosed())
-      throw new ODatabaseException("Cannot unmarshall the document because no database is active");
-    OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
-    OGlobalProperty prop = metadata.getImmutableSchemaSnapshot().getGlobalPropertyById(id);
-    if (prop == null) {
-      metadata.clearThreadLocalSchemaSnapshot();
-      metadata.reload();
-      metadata.makeThreadLocalSchemaSnapshot();
-      prop = metadata.getImmutableSchemaSnapshot().getGlobalPropertyById(id);
-    }
-    return prop;
+    return ODocumentInternal.getGlobalPropertyById(document, id);
   }
 
   @SuppressWarnings("unchecked")

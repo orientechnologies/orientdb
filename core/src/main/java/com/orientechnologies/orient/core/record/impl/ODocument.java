@@ -27,8 +27,18 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.ref.WeakReference;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
@@ -39,18 +49,32 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.ODetachable;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
-import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
@@ -63,6 +87,7 @@ import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -91,6 +116,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   protected boolean                                                      _lazyLoad               = true;
   protected boolean                                                      _allowChainedAccess     = true;
   protected transient List<WeakReference<ORecordElement>>                _owners                 = null;
+  protected OImmutableSchema                                             _schema;
   private String                                                         _className;
   private OClass                                                         _immutableClazz;
   private int                                                            _immutableSchemaVersion = 1;
@@ -577,6 +603,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    * @return true if the record has been detached, otherwise false
    */
   public boolean detach() {
+    deserializeFields();
     boolean fullyDetached = true;
 
     if (_fieldValues != null) {
@@ -778,6 +805,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    * 
    * @param iValue
    */
+  @Deprecated
   public void fromString(final String iValue) {
     _dirty = true;
     _contentChanged = true;
@@ -1403,6 +1431,13 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   @Override
+  protected ORecordAbstract fill(ORID iRid, ORecordVersion iVersion, byte[] iBuffer, boolean iDirty) {
+    _schema = null;
+    fetchSchemaIfCan();
+    return super.fill(iRid, iVersion, iBuffer, iDirty);
+  }
+
+  @Override
   public ODocument fromStream(final byte[] iRecordBuffer) {
     removeAllCollectionChangeListeners();
 
@@ -1412,7 +1447,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     _fieldChangeListeners = null;
     _fieldCollectionChangeTimeLines = null;
     _contentChanged = false;
-
+    _schema = null;
+    fetchSchemaIfCan();
     super.fromStream(iRecordBuffer);
 
     if (!_lazyLoad) {
@@ -1421,6 +1457,43 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
 
     return this;
+  }
+
+  @Override
+  protected void clearSource() {
+    super.clearSource();
+    _schema = null;
+  }
+
+  private void fetchSchemaIfCan() {
+    if (_schema == null) {
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      if (db != null) {
+        OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
+        _schema = metadata.getImmutableSchemaSnapshot();
+      }
+    }
+  }
+
+  protected OGlobalProperty getGlobalPropertyById(int id) {
+    if (_schema == null) {
+      OMetadataInternal metadata = (OMetadataInternal) getDatabase().getMetadata();
+      _schema = metadata.getImmutableSchemaSnapshot();
+    }
+    OGlobalProperty prop = _schema.getGlobalPropertyById(id);
+    if (prop == null) {
+      ODatabaseDocument db = getDatabase();
+      if (db == null || db.isClosed())
+        throw new ODatabaseException(
+            "Cannot unmarshall the document because no database is active, use detach for use the document outside the database session scope");
+      OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
+      metadata.clearThreadLocalSchemaSnapshot();
+      metadata.reload();
+      metadata.makeThreadLocalSchemaSnapshot();
+      _schema = metadata.getImmutableSchemaSnapshot();
+      prop = _schema.getGlobalPropertyById(id);
+    }
+    return prop;
   }
 
   /**
@@ -1806,6 +1879,11 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       _className = _clazz.getName();
       convertFieldsToClass(_clazz);
     }
+  }
+
+  protected void fillClassIfNeed(final String iClassName) {
+    if (this._className == null)
+      setClassNameIfExists(iClassName);
   }
 
   public OClass getSchemaClass() {
