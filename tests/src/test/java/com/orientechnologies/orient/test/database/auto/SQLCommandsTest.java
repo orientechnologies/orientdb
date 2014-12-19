@@ -15,24 +15,22 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPositionMap;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
+import java.io.File;
+import java.util.Collection;
+
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.command.script.OCommandScript;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-
-import java.io.File;
-import java.util.Collection;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OClusterPositionMap;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 
 @Test(groups = "sql-delete", sequential = true)
 public class SQLCommandsTest extends DocumentDBBaseTest {

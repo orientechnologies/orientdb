@@ -19,7 +19,10 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import org.testng.Assert;
@@ -28,6 +31,10 @@ import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 @Test(groups = "dictionary")
 public class TransactionIsolationTest extends DocumentDBBaseTest {
@@ -95,6 +102,91 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     db1.reload(record1, null, true);
 
     Assert.assertEquals(record1.field("name"), "This is the second version");
+
+    db1.close();
+    db2.close();
+  }
+
+  @Test
+  public void testIsolationRepeatableReadScript() throws ExecutionException, InterruptedException {
+    final ODatabaseDocumentTx db1 = new ODatabaseDocumentTx(url);
+    db1.open("admin", "admin");
+
+    ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(url);
+    db2.open("admin", "admin");
+
+    final ODocument record1 = new ODocument();
+    record1.field("name", "This is the first version").save();
+
+    Future<List<OIdentifiable>> txFuture = Orient.instance().getWorkers().submit(new Callable<List<OIdentifiable>>() {
+      @Override
+      public List<OIdentifiable> call() throws Exception {
+        String cmd = "";
+        cmd += "begin isolation REPEATABLE_READ;";
+        cmd += "let r1 = select from " + record1.getIdentity() + ";";
+        cmd += "sleep 2000;";
+        cmd += "let r2 = select from " + record1.getIdentity() + ";";
+        cmd += "commit;";
+        cmd += "return $r2;";
+
+        return db1.command(new OCommandScript("sql", cmd)).execute();
+      }
+    });
+
+    Thread.sleep(500);
+
+    // CHANGE THE RECORD FROM DB2
+    ODocument record2 = db2.load(record1.getIdentity());
+    record2.field("name", "This is the second version").save();
+
+    List<OIdentifiable> txRecord = txFuture.get();
+
+    Assert.assertNotNull(txRecord);
+    Assert.assertEquals(txRecord.size(),1);
+    Assert.assertEquals(((ODocument) txRecord.get(0).getRecord()).field("name"), "This is the first version");
+
+    db1.close();
+    db2.close();
+  }
+
+
+  @Test
+  public void testIsolationReadCommittedScript() throws ExecutionException, InterruptedException {
+    final ODatabaseDocumentTx db1 = new ODatabaseDocumentTx(url);
+    db1.open("admin", "admin");
+
+    ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(url);
+    db2.open("admin", "admin");
+
+    final ODocument record1 = new ODocument();
+    record1.field("name", "This is the first version").save();
+
+    Future<List<OIdentifiable>> txFuture = Orient.instance().getWorkers().submit(new Callable<List<OIdentifiable>>() {
+      @Override
+      public List<OIdentifiable> call() throws Exception {
+        String cmd = "";
+        cmd += "begin isolation READ_COMMITTED;";
+        cmd += "let r1 = select from " + record1.getIdentity() + ";";
+        cmd += "sleep 2000;";
+        cmd += "let r2 = select from " + record1.getIdentity() + " nocache;";
+        cmd += "commit;";
+        cmd += "return $r2;";
+
+        return db1.command(new OCommandScript("sql", cmd)).execute();
+      }
+    });
+
+    Thread.sleep(500);
+
+    // CHANGE THE RECORD FROM DB2
+    ODocument record2 = db2.load(record1.getIdentity());
+    record2.field("name", "This is the second version").save();
+
+    List<OIdentifiable> txRecord = txFuture.get();
+
+    Assert.assertNotNull(txRecord);
+    Assert.assertEquals(txRecord.size(),1);
+    Assert.assertEquals(((ODocument) txRecord.get(0).getRecord()).field("name"), "This is the second version");
 
     db1.close();
     db2.close();

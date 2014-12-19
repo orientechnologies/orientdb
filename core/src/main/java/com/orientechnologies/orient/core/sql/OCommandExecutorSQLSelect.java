@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
@@ -86,6 +79,13 @@ import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
 
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
  * If the query contains the ORDER BY clause, the results are temporary collected internally, then ordered and finally returned all
@@ -102,6 +102,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   public static final String          KEYWORD_BY           = "BY";
   public static final String          KEYWORD_GROUP        = "GROUP";
   public static final String          KEYWORD_FETCHPLAN    = "FETCHPLAN";
+  public static final String          KEYWORD_NOCACHE      = "NOCACHE";
   private static final String         KEYWORD_AS           = "AS";
   private static final String         KEYWORD_PARALLEL     = "PARALLEL";
   private final OOrderByOptimizer     orderByOptimizer     = new OOrderByOptimizer();
@@ -126,6 +127,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private Lock                        parallelLock         = new ReentrantLock();
 
   private Set<ORID>                   uniqueResult;
+  private boolean                     noCache              = false;
 
   private final class IndexUsageLog {
     OIndex<?>        index;
@@ -248,6 +250,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             parseSkip(w);
           } else if (w.equals(KEYWORD_FETCHPLAN)) {
             parseFetchplan(w);
+          } else if (w.equals(KEYWORD_NOCACHE)) {
+            parseNoCache(w);
           } else if (w.equals(KEYWORD_TIMEOUT)) {
             parseTimeout(w);
           } else if (w.equals(KEYWORD_LOCK)) {
@@ -406,7 +410,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   @Override
   public String getSyntax() {
-    return "SELECT [<Projections>] FROM <Target> [LET <Assignment>*] [WHERE <Condition>*] [ORDER BY <Fields>* [ASC|DESC]*] [LIMIT <MaxRecords>] [TIMEOUT <TimeoutInMs>] [LOCK none|record]";
+    return "SELECT [<Projections>] FROM <Target> [LET <Assignment>*] [WHERE <Condition>*] [ORDER BY <Fields>* [ASC|DESC]*] [LIMIT <MaxRecords>] [TIMEOUT <TimeoutInMs>] [LOCK none|record] [NOCACHE]";
   }
 
   public String getFetchPlan() {
@@ -471,11 +475,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
 
       } else {
-        boolean noCache = false;
+        boolean useNoCache = noCache;
+
         if (localLockingStrategy == LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
             || localLockingStrategy == LOCKING_STRATEGY.KEEP_SHARED_LOCK)
-          noCache = true;
-        record = getDatabase().load(id.getIdentity(), null, noCache, false, localLockingStrategy);
+          // FORCE NO CACHE
+          useNoCache = true;
+
+        record = getDatabase().load(id.getIdentity(), null, useNoCache, false, localLockingStrategy);
         if (id instanceof OContextualRecordId && ((OContextualRecordId) id).getContext() != null) {
           Map<String, Object> ridContext = ((OContextualRecordId) id).getContext();
           for (String key : ridContext.keySet()) {
@@ -1055,6 +1062,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             + params + " params and " + keyParams.size() + " keys", -1);
       }
     }
+  }
+
+  /**
+   * Parses the NOCACHE keyword if found.
+   */
+  protected boolean parseNoCache(final String w) throws OCommandSQLParsingException {
+    if (!w.equals(KEYWORD_NOCACHE))
+      return false;
+
+    noCache = true;
+    return true;
   }
 
   private void mergeRangeConditionsToBetweenOperators(OSQLFilter filter) {
@@ -2005,4 +2023,5 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
     }
   }
+
 }
