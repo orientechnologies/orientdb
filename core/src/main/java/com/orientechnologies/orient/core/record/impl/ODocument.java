@@ -1468,7 +1468,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   private void fetchSchemaIfCan() {
     if (_schema == null) {
       ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-      if (db != null) {
+      if (db != null && !db.isClosed()) {
         OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
         _schema = metadata.getImmutableSchemaSnapshot();
       }
