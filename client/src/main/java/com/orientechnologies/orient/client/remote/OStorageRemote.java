@@ -1608,6 +1608,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             byte[] token = network.readBytes();
             if (token.length == 0) {
               token = null;
+            } else {
               network.getServiceThread().setTokenBased(true);
             }
             setSessionId(network.getServerURL(), sessionId, token);
