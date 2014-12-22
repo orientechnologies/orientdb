@@ -34,6 +34,13 @@ public abstract class OrientBaseRepository<T> implements BaseRepository<T> {
   }
 
   @Override
+  public T load(T entity) {
+    OrientGraph graph = dbFactory.getGraph();
+    ODocument doc = graph.getRawGraph().load(toDoc(entity));
+    return fromDoc(doc);
+  }
+
+  @Override
   public void save(Collection<T> entities) {
 
   }

@@ -1,12 +1,12 @@
 <div class="container-fluid edit-issue">
 <div class="row vertical-align">
-  <div class="col-md-8">
+  <div class="col-md-9">
     <h3>{{ issue.title}}</h3>
   </div>
   <div class="col-md-3">
-    <div class="btn-group">
-      <a href="#/issues/new" class="btn btn-sm btn-default">Edit</a>
-    </div>
+    <!--<div class="btn-group">-->
+    <!--<a href="#/issues/new" class="btn btn-sm btn-default">Edit</a>-->
+    <!--</div>-->
 
     <div class="btn-group">
       <a href="javascript:void(0)" ng-show="issue.number && isMember" ng-click="sync()" class="btn btn-sm btn-default">Sync
@@ -139,6 +139,45 @@
         <hr>
       </div>
     </div>
+    <div class="row issue-assignee">
+      <div class="col-md-12">
+        <button class="btn btn-transparent" ng-disabled="!isMember" data-placement="bottom-right"
+                data-template="views/issues/popover/assignee.html" title="{{popover.title}}"
+                data-content="{{popover.content}}" data-trigger="click" bs-popover>Assignee <i
+          class="fa fa-gear pull-right"></i>
+        </button>
+      </div>
+      <div class="col-md-12">
+        <div ng-if="issue.assignee">
+          <avatar class="issue-assignee-avatar" name="true" dim="20" user="issue.assignee">
+          </avatar>
+        </div>
+      </div>
+
+      <div class="col-md-12">
+        <hr>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-12">
+        <button class="btn btn-transparent" ng-disabled="false" data-placement="left"
+                data-template="views/issues/popover/environmentEdit.html"
+                title="{{popover.title}}"
+                data-content="{{popover.content}}"
+                data-trigger="click"
+                bs-popover="issue">Environment <i
+          class="fa fa-edit pull-right"></i></button>
+      </div>
+      <div class="col-md-12 milestone">
+        <span data-placement="top"
+              data-template="views/issues/popover/environment.html" title="{{popover.title}}"
+              data-content="{{popover.content}}" data-trigger="hover" bs-popover="issue.environment"
+              class="label label-primary">{{issue.environment.name}}</span>
+      </div>
+      <div class="col-md-12">
+        <hr>
+      </div>
+    </div>
     <div class="row">
       <div class="col-md-12">
         <button class="btn btn-transparent" ng-disabled="!isMember" class="btn btn-lg btn-primary"
@@ -189,25 +228,7 @@
       </div>
 
     </div>
-    <div class="row issue-assignee">
-      <div class="col-md-12">
-        <button class="btn btn-transparent" ng-disabled="!isMember" data-placement="bottom-right"
-                data-template="views/issues/popover/assignee.html" title="{{popover.title}}"
-                data-content="{{popover.content}}" data-trigger="click" bs-popover>Assignee <i
-          class="fa fa-gear pull-right"></i>
-        </button>
-      </div>
-      <div class="col-md-12">
-        <div ng-if="issue.assignee">
-          <avatar class="issue-assignee-avatar" name="true" dim="20" user="issue.assignee">
-          </avatar>
-        </div>
-      </div>
 
-      <div class="col-md-12">
-        <hr>
-      </div>
-    </div>
   </div>
 </div>
 </div>

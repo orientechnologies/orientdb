@@ -32,6 +32,12 @@ public enum OIssueEventInternal implements OTypeHolder<IssueEventInternal> {
     public OType getType() {
       return OType.EMBEDDED;
     }
+  },
+  ENVIRONMENT("environment") {
+    @Override
+    public OType getType() {
+      return OType.EMBEDDED;
+    }
   };
 
   private String name;
@@ -54,6 +60,7 @@ public enum OIssueEventInternal implements OTypeHolder<IssueEventInternal> {
     event.setVersion(OMilestone.TITLE.fromDoc((ODocument) doc.field(VERSION.toString()), graph));
     event.setPriority(OPriority.NAME.fromDoc((ODocument) doc.field(PRIORITY.toString()), graph));
     event.setScope(OScope.NAME.fromDoc((ODocument) doc.field(SCOPE.toString()), graph));
+    event.setEnvironment(OEnvironment.EID.fromDoc(doc.<ODocument> field(ENVIRONMENT.toString()), graph));
     return event;
   }
 
@@ -78,6 +85,8 @@ public enum OIssueEventInternal implements OTypeHolder<IssueEventInternal> {
     doc.field(VERSION.toString(), (entity.getVersion() != null ? OMilestone.TITLE.toDoc(entity.getVersion(), graph) : null));
     doc.field(PRIORITY.toString(), (entity.getPriority() != null ? OPriority.NAME.toDoc(entity.getPriority(), graph) : null));
     doc.field(SCOPE.toString(), (entity.getScope() != null ? OScope.NAME.toDoc(entity.getScope(), graph) : null));
+    doc.field(ENVIRONMENT.toString(), (entity.getEnvironment() != null ? OEnvironment.EID.toDoc(entity.getEnvironment(), graph)
+        : null));
     return doc;
   }
 

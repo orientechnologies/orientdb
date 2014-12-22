@@ -13,5 +13,5 @@ public interface BaseRepository<T> {
 
   public Class<T> getEntityClass();
 
-
+  public T load(T entity);
 }

@@ -8,6 +8,8 @@ import com.orientechnologies.website.model.schema.dto.Repository;
 import com.orientechnologies.website.model.schema.dto.web.UserDTO;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 /**
  * Created by Enrico Risa on 20/10/14.
  */
@@ -24,4 +26,10 @@ public interface UserService {
 
   @Transactional
   public Environment registerUserEnvironment(OUser user, Environment environment);
+
+  public void deregisterUserEnvironment(OUser user, Long environmentId);
+
+  public Environment patchUserEnvironment(OUser user, Long environmentId, Environment environment);
+
+  public List<Environment> getUserEnvironments(OUser user);
 }

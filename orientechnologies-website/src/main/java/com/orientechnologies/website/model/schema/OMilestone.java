@@ -94,7 +94,10 @@ public enum OMilestone implements OTypeHolder<Milestone> {
   @Override
   public ODocument toDoc(Milestone entity, OrientBaseGraph graph) {
 
+    if (entity == null)
+      return null;
     ODocument doc;
+
     if (entity.getId() == null) {
       doc = new ODocument(entity.getClass().getSimpleName());
     } else {
@@ -102,7 +105,7 @@ public enum OMilestone implements OTypeHolder<Milestone> {
     }
     doc.field(NUMBER.toString(), entity.getNumber());
     doc.field(TITLE.toString(), entity.getTitle());
-    doc.field(STATE.toString(), entity.getTitle());
+    doc.field(STATE.toString(), entity.getState());
     doc.field(DESCRIPTION.toString(), entity.getDescription());
     doc.field(CREATED_AT.toString(), entity.getCreatedAt());
     doc.field(UPDATED_AT.toString(), entity.getUpdatedAt());

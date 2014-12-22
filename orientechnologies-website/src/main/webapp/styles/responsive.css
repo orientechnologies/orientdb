@@ -23,6 +23,28 @@
 .client-popover {
   width: 300px;
 }
+.environment-popover  {
+  max-width: 400px;
+  width: 400px;
+}
+.environment-edit-popover {
+  max-width: 500px;
+  width: 500px;
+}
+.environment-popover .form-group{
+  margin: 0px;
+}
+.environment-popover .form-horizontal .control-label{
+  padding-top: 2px;
+}
+.environment-popover .form-group .form-control-static{
+  padding-bottom: 2px;
+  padding-top: 2px;
+}
+/*.environment-popover .popover-content {*/
+  /*width: 400px;*/
+/*}*/
+
 .version-popover .form-group {
   margin-top: 15px;
   padding-left: 15px;
@@ -99,8 +121,9 @@
 
 /* TAB Style*/
 
-.tabs-style-topline {
-  max-width: 1200px;
+
+.tabs nav {
+  text-align: center;
 }
 .tabs {
   position: relative;
@@ -109,12 +132,6 @@
   width: 100%;
   font-weight: 300;
   font-size: 1.25em;
-}
-.tabs nav {
-  text-align: center;
-}
-.content-wrap {
-  position: relative;
 }
 .tabs nav ul {
   position: relative;
@@ -138,13 +155,6 @@
   -ms-justify-content: center;
   justify-content: center;
 }
-.tabs-style-topline nav li.tab-current {
-  border-top-color: #2CC185;
-  border-bottom: none;
-}
-.tabs-style-topline nav li:not(:last-child) {
-  border-right: none;
-}
 .tabs nav ul li {
   position: relative;
   z-index: 1;
@@ -156,14 +166,13 @@
   -ms-flex: 1;
   flex: 1;
 }
-.tabs-style-topline nav li {
-  border: 1px solid rgba(40,44,42,0.1);
+.tabs nav li.tab-current a {
+  color: #74777b;
 }
-.tabs-style-linetriangle nav a {
-  overflow: visible;
-  border-bottom: 1px solid rgba(0,0,0,0.2);
-  -webkit-transition: color 0.2s;
-  transition: color 0.2s;
+.tabs-style-linetriangle nav li.tab-current a:before {
+  margin-left: -11px;
+  border-width: 11px;
+  border-top-color: rgba(0,0,0,0.2);
 }
 .tabs-style-linetriangle nav a span {
   display: block;
@@ -171,4 +180,40 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 1em;
+}
+.tabs nav a span {
+  vertical-align: middle;
+  font-size: 0.75em;
+}
+.tabs-style-linetriangle nav li.tab-current a:after {
+  margin-left: -10px;
+  border-width: 10px;
+  border-top-color: #e7ecea;
+}
+.tabs-style-linetriangle nav li.tab-current a:after, .tabs-style-linetriangle nav li.tab-current a:before {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border: solid transparent;
+  content: '';
+  pointer-events: none;
+}
+.tabs-style-linetriangle nav a {
+  overflow: visible;
+  border-bottom: 1px solid rgba(0,0,0,0.2);
+  -webkit-transition: color 0.2s;
+  transition: color 0.2s;
+}
+.tabs nav a {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 2.5;
+  color: #2CC185;
+  text-decoration: none;
+  outline: none;
 }

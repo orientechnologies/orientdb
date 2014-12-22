@@ -4,7 +4,7 @@
 angular.module('webappApp').factory("User", function (Restangular, $q) {
 
   var userService = Restangular.all('user');
-
+  var allUserService = Restangular.all('users');
   return {
 
     current: {},
@@ -50,7 +50,36 @@ angular.module('webappApp').factory("User", function (Restangular, $q) {
         deferred.resolve(self.current);
       }
       return deferred.promise;
+    },
+    environments: function () {
+      var deferred = $q.defer();
+      allUserService.one(this.current.name).all('environments').getList().then(function (data) {
+        deferred.resolve(data);
+      })
+      return deferred.promise;
+    },
+    addEnvironment: function (env) {
+      var deferred = $q.defer();
+      allUserService.one(this.current.name).all('environments').post(env).then(function (data) {
+        deferred.resolve(data);
+      })
+      return deferred.promise;
+    },
+    deleteEnvironment: function (env) {
+      var deferred = $q.defer();
+      allUserService.one(this.current.name).all('environments').one(env.eid.toString()).remove().then(function (data) {
+        deferred.resolve(data);
+      })
+      return deferred.promise;
+    },
+    changeEnvironment: function (env) {
+      var deferred = $q.defer();
+      allUserService.one(this.current.name).all('environments').one(env.eid.toString()).patch(env).then(function (data) {
+        deferred.resolve(data);
+      })
+      return deferred.promise;
     }
+
   }
 });
 

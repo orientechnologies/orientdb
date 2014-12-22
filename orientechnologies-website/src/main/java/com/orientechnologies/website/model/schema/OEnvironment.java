@@ -5,10 +5,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.helper.OSequenceHelper;
 import com.orientechnologies.website.model.schema.dto.Environment;
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 /**
  * Created by Enrico Risa on 04/12/14.
@@ -57,10 +54,22 @@ public enum OEnvironment implements OTypeHolder<Environment> {
       return OType.STRING;
     }
   },
+  VERSION("version") {
+    @Override
+    public OType getType() {
+      return OType.STRING;
+    }
+  },
   DISTRIBUTED("distributed") {
     @Override
     public OType getType() {
       return OType.BOOLEAN;
+    }
+  },
+  NOTE("note") {
+    @Override
+    public OType getType() {
+      return OType.STRING;
     }
   };
   private String name;
@@ -76,22 +85,17 @@ public enum OEnvironment implements OTypeHolder<Environment> {
     }
     Environment env = new Environment();
     env.setId(doc.getIdentity().toString());
-    env.setEid((Integer) doc.field(EID.toString()));
+    env.setEid((Long) doc.field(EID.toString()));
     env.setName((String) doc.field(NAME.toString()));
     env.setDescription((String) doc.field(DESCRIPTION.toString()));
     env.setConnectionType((String) doc.field(CONNECTION_TYPE.toString()));
     env.setJvm((String) doc.field(JVM.toString()));
     env.setOs((String) doc.field(OS.toString()));
-    env.setRam((Integer) doc.field(RAM.toString()));
+    env.setRam((String) doc.field(RAM.toString()));
     env.setDistributed((Boolean) doc.field(DISTRIBUTED.toString()));
-    OrientVertex iss = graph.getVertex(doc);
+    env.setNote((String) doc.field(NOTE.toString()));
+    env.setVersion(OMilestone.NUMBER.fromDoc(doc.<ODocument> field(VERSION.toString()), graph));
 
-    for (Vertex vertex : iss.getVertices(Direction.OUT, HasVersion.class.getSimpleName())) {
-
-      OrientVertex v = (OrientVertex) vertex;
-      env.setVersion(OMilestone.NUMBER.fromDoc(v.getRecord(), graph));
-
-    }
     return env;
   }
 
@@ -100,7 +104,9 @@ public enum OEnvironment implements OTypeHolder<Environment> {
     ODocument doc;
     if (entity.getId() == null) {
       doc = new ODocument(entity.getClass().getSimpleName());
-      doc.field(EID.toString(), OSequenceHelper.next(graph, entity.getClass().getSimpleName()));
+      long next = OSequenceHelper.next(graph, entity.getClass().getSimpleName());
+      doc.field(EID.toString(), next);
+      entity.setEid(next);
     } else {
       doc = graph.getRawGraph().load(new ORecordId(entity.getId()));
     }
@@ -111,7 +117,9 @@ public enum OEnvironment implements OTypeHolder<Environment> {
     doc.field(JVM.toString(), entity.getJvm());
     doc.field(OS.toString(), entity.getOs());
     doc.field(RAM.toString(), entity.getRam());
-    doc.field(DISTRIBUTED.toString(), entity.getDescription());
+    doc.field(DISTRIBUTED.toString(), entity.getDistributed());
+    doc.field(NOTE.toString(), entity.getNote());
+    doc.field(VERSION.toString(), OMilestone.NUMBER.toDoc(entity.getVersion(), graph));
     return doc;
   }
 

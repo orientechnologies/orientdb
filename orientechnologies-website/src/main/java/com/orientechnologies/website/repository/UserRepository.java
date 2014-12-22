@@ -1,9 +1,6 @@
 package com.orientechnologies.website.repository;
 
-import com.orientechnologies.website.model.schema.dto.Client;
-import com.orientechnologies.website.model.schema.dto.OUser;
-import com.orientechnologies.website.model.schema.dto.Organization;
-import com.orientechnologies.website.model.schema.dto.Repository;
+import com.orientechnologies.website.model.schema.dto.*;
 
 import java.util.List;
 
@@ -27,4 +24,6 @@ public interface UserRepository extends BaseRepository<OUser> {
   public Client findMyClientMember(String username, String organization);
 
   public List<Client> findAllMyClientMember(String username);
+
+  public List<Environment> findMyEnvironment(OUser user);
 }

@@ -64,6 +64,12 @@ public enum OIssue implements OTypeHolder<Issue> {
       return OType.STRING;
     }
   },
+  ENVIRONMENT("environment") {
+    @Override
+    public OType getType() {
+      return OType.EMBEDDED;
+    }
+  },
   LABELS("labels") {
     @Override
     public OType getType() {
@@ -125,6 +131,8 @@ public enum OIssue implements OTypeHolder<Issue> {
     doc.field(NUMBER.toString(), entity.getNumber());
     doc.field(STATE.toString(), entity.getState().toUpperCase());
     doc.field(CONFIDENTIAL.toString(), entity.getConfidential());
+    doc.field(ENVIRONMENT.toString(), (entity.getEnvironment() != null ? OEnvironment.EID.toDoc(entity.getEnvironment(), graph)
+        : null));
     return doc;
   }
 
@@ -142,6 +150,7 @@ public enum OIssue implements OTypeHolder<Issue> {
     issue.setIid((Long) doc.field(IID.toString()));
     issue.setNumber((Integer) doc.field(NUMBER.toString()));
     issue.setConfidential((Boolean) doc.field(CONFIDENTIAL.toString()));
+    issue.setEnvironment(OEnvironment.EID.fromDoc(doc.<ODocument> field(ENVIRONMENT.toString()), graph));
     OrientVertex iss = graph.getVertex(doc);
     for (Vertex vertex : iss.getVertices(Direction.IN, HasIssue.class.getSimpleName())) {
       issue.setRepository(ORepository.NAME.fromDoc(((OrientVertex) vertex).getRecord(), graph));

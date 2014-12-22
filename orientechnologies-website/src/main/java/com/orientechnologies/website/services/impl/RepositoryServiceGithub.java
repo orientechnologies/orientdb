@@ -67,10 +67,11 @@ public class RepositoryServiceGithub implements RepositoryService {
       if (repositoryService.userService.isTeamMember(SecurityHelper.currentUser(), repository)) {
         repositoryService.handleMilestone(repository, i, issue.getMilestone());
       }
+      repositoryService.handleEnvironment(repository, i, issue.getEnvironment());
       repositoryService.handleScope(repository, i, issue.getScope());
       repositoryService.handleVersion(repository, i, issue.getVersion());
       repositoryService.handlePriority(repository, i, issue.getPriority());
-      return i;
+      return repositoryService.issueRepository.save(i);
     } catch (IOException e) {
       e.printStackTrace();
     }

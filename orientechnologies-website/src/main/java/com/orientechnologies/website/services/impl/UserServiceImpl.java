@@ -5,12 +5,16 @@ import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.github.GUser;
 import com.orientechnologies.website.github.GitHub;
 import com.orientechnologies.website.model.schema.HasEnvironment;
+import com.orientechnologies.website.model.schema.HasVersion;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.web.UserDTO;
 import com.orientechnologies.website.repository.EnvironmentRepository;
+import com.orientechnologies.website.repository.RepositoryRepository;
 import com.orientechnologies.website.repository.UserRepository;
 import com.orientechnologies.website.services.OrganizationService;
 import com.orientechnologies.website.services.UserService;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +40,9 @@ public class UserServiceImpl implements UserService {
 
   @Autowired
   private EnvironmentRepository environmentRepository;
+
+  @Autowired
+  private RepositoryRepository  repositoryRepository;
 
   @Transactional
   @Override
@@ -97,9 +104,62 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public Environment registerUserEnvironment(OUser user, Environment environment) {
+
+    Integer version = environment.getVersionNumber();
+
+    // To be handle in a better way the repo name for looking a milestone from id
+    Milestone m = repositoryRepository.findMilestoneByRepoAndName(environment.getRepoName(), version);
+
+    environment.setVersion(m);
     environment = environmentRepository.save(environment);
+    // createVersionEnvironmentRelationship(environment, m);
     createUserEnvironmentRelationship(user, environment);
-    return environment;
+    return environmentRepository.load(environment);
+  }
+
+  @Override
+  public void deregisterUserEnvironment(OUser user, Long environmentId) {
+
+    Environment environment = environmentRepository.findById(environmentId);
+    OrientGraph graph = dbFactory.getGraph();
+
+    OrientVertex vertex = graph.getVertex(new ORecordId(environment.getId()));
+    vertex.remove();
+
+  }
+
+  @Override
+  public Environment patchUserEnvironment(OUser user, Long environmentId, Environment environment) {
+
+    Environment env = environmentRepository.findById(environmentId);
+    Integer version = environment.getVersionNumber();
+    environment.setId(env.getId());
+    // To be handle in a better way the repo name for looking a milestone from id
+    Milestone m = repositoryRepository.findMilestoneByRepoAndName(environment.getRepoName(), version);
+    environment.setVersion(m);
+    environment = environmentRepository.save(environment);
+    // createVersionEnvironmentRelationship(environment, m);
+    return environmentRepository.load(environment);
+  }
+
+  private void createVersionEnvironmentRelationship(Environment environment, Milestone milestone) {
+
+    if (milestone == null || (environment.getVersion() != null && environment.getVersion().getNumber() == milestone.getNumber())) {
+      return;
+    }
+    OrientGraph graph = dbFactory.getGraph();
+    OrientVertex orgVertex = graph.getVertex(new ORecordId(environment.getId()));
+    OrientVertex devVertex = graph.getVertex(new ORecordId(milestone.getId()));
+
+    for (Edge edge : orgVertex.getEdges(Direction.OUT, HasVersion.class.getSimpleName())) {
+      edge.remove();
+    }
+    orgVertex.addEdge(HasVersion.class.getSimpleName(), devVertex);
+  }
+
+  @Override
+  public List<Environment> getUserEnvironments(OUser user) {
+    return userRepository.findMyEnvironment(user);
   }
 
   private void createUserEnvironmentRelationship(OUser client, Environment environment) {

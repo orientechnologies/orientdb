@@ -6,15 +6,18 @@ package com.orientechnologies.website.model.schema.dto;
 public class Environment {
 
   protected String    id;
-  protected Integer   eid;
+  protected Long      eid;
   protected String    name;
   protected Milestone version;
+  protected Integer   versionNumber;
+  protected String    repoName;
   protected String    description;
   protected String    os;
-  protected Integer ram;
+  protected String    ram;
   protected String    jvm;
   protected String    connectionType;
-  protected boolean   distributed;
+  protected Boolean   distributed;
+  protected String    note;
 
   public String getId() {
     return id;
@@ -32,6 +35,14 @@ public class Environment {
     this.name = name;
   }
 
+  public String getRepoName() {
+    return repoName;
+  }
+
+  public void setRepoName(String repoName) {
+    this.repoName = repoName;
+  }
+
   public String getDescription() {
     return description;
   }
@@ -40,11 +51,11 @@ public class Environment {
     this.description = description;
   }
 
-  public Integer getEid() {
+  public Long getEid() {
     return eid;
   }
 
-  public void setEid(Integer eid) {
+  public void setEid(Long eid) {
     this.eid = eid;
   }
 
@@ -64,11 +75,11 @@ public class Environment {
     this.os = os;
   }
 
-  public Integer getRam() {
+  public String getRam() {
     return ram;
   }
 
-  public void setRam(Integer ram) {
+  public void setRam(String ram) {
     this.ram = ram;
   }
 
@@ -88,11 +99,27 @@ public class Environment {
     this.connectionType = connectionType;
   }
 
-  public boolean isDistributed() {
+  public Boolean getDistributed() {
     return distributed;
   }
 
   public void setDistributed(boolean distributed) {
     this.distributed = distributed;
+  }
+
+  public Integer getVersionNumber() {
+    return versionNumber == null ? (getVersion() != null ? getVersion().getNumber() : null) : versionNumber;
+  }
+
+  public void setVersionNumber(Integer versionNumber) {
+    this.versionNumber = versionNumber;
+  }
+
+  public String getNote() {
+    return note;
+  }
+
+  public void setNote(String note) {
+    this.note = note;
   }
 }

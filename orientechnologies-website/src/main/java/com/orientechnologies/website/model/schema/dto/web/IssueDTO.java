@@ -2,6 +2,7 @@ package com.orientechnologies.website.model.schema.dto.web;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.orientechnologies.website.model.schema.dto.Environment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +16,7 @@ public class IssueDTO {
   private String       body;
   private String       state;
   private List<String> labels = new ArrayList<String>();
+  private Environment environment;
   private Integer      milestone;
   private Integer      version;
   private Integer      client;
@@ -91,6 +93,14 @@ public class IssueDTO {
 
   public void setLabels(List<String> labels) {
     this.labels = labels;
+  }
+
+  public Environment getEnvironment() {
+    return environment;
+  }
+
+  public void setEnvironment(Environment environment) {
+    this.environment = environment;
   }
 
   @JsonIgnore

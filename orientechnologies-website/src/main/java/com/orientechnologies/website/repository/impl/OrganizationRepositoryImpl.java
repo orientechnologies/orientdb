@@ -442,7 +442,7 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
   public List<Environment> findClientEnvironments(String org, Integer clientId) {
     OrientGraph db = dbFactory.getGraph();
     String query = String.format(
-        "select expand(out('HasClient')[clientId = %d].out('HasEnvironment')) from Organization where name = '%s'", clientId, org);
+        "select expand(out('HasClient')[clientId = %d].out('HasMember').out('HasEnvironment')) from Organization where name = '%s'", clientId, org);
     Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
 
     List<Environment> users = new ArrayList<Environment>();

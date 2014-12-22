@@ -12,20 +12,19 @@ public class Milestone {
   private String  state;
   private String  title;
   private String  description;
-  private OUser creator;
+  private OUser   creator;
   private Date    createdAt;
   private Date    updatedAt;
 
+  public String getId() {
+    return id;
+  }
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
+  public void setId(String id) {
     this.id = id;
-    }
+  }
 
-    public Date getDueOn() {
+  public Date getDueOn() {
     return dueOn;
   }
 

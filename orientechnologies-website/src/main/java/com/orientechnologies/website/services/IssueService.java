@@ -42,4 +42,6 @@ public interface IssueService {
   public void changeScope(Issue issue, Scope scope);
 
   public void changeClient(Issue issue, Client client);
+
+  public void changeEnvironment(Issue issue, Environment e);
 }

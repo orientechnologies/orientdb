@@ -54,6 +54,9 @@ public class RepositoryServiceImpl implements RepositoryService {
   @Autowired
   protected OrganizationRepository organizationRepo;
 
+  @Autowired
+  protected EnvironmentRepository  environmentRepository;
+
   @PostConstruct
   protected void init() {
     githubService = new RepositoryServiceGithub(this);
@@ -117,6 +120,11 @@ public class RepositoryServiceImpl implements RepositoryService {
         handleScope(r, original, issue.getScope());
       }
     }
+    if (issue.getEnvironment() != null) {
+      original.setEnvironment(issue.getEnvironment());
+      handleEnvironment(r, original, issue.getEnvironment());
+      original = issueRepository.save(original);
+    }
     if (skipGithub) {
       if (issue.getState() != null) {
         if (!original.getState().equals(issue.getState())) {
@@ -134,6 +142,7 @@ public class RepositoryServiceImpl implements RepositoryService {
     Integer priorityId = issue.getPriority();
     Integer scope = issue.getScope();
     Integer client = issue.getClient();
+    Environment env = issue.getEnvironment();
     Issue issueDomain = new Issue();
     issueDomain.setConfidential(true);
     issueDomain.setTitle(issue.getTitle());
@@ -151,7 +160,15 @@ public class RepositoryServiceImpl implements RepositoryService {
     handleScope(repository, issueDomain, scope);
     handleClient(repository, issueDomain, client);
     handleLabels(repository, issueDomain, issue.getLabels());
-    return issueDomain;
+    handleEnvironment(repository, issueDomain, env);
+    return issueRepository.save(issueDomain);
+  }
+
+  protected void handleEnvironment(Repository repository, Issue issue, Environment env) {
+
+    if (env != null) {
+      issueService.changeEnvironment(issue, env);
+    }
   }
 
   private void handleClient(Repository repository, Issue issue, Integer clientId) {

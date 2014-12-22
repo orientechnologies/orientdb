@@ -314,6 +314,22 @@ public class IssueServiceImpl implements IssueService {
   }
 
   @Override
+  public void changeEnvironment(Issue issue, Environment e) {
+    embedEnvironment(issue, e);
+  }
+
+  private void embedEnvironment(Issue issue, Environment environment) {
+    issue.setEnvironment(environment);
+    IssueEventInternal e = new IssueEventInternal();
+    e.setCreatedAt(new Date());
+    e.setEvent("environmented");
+    e.setEnvironment(environment);
+    e.setActor(SecurityHelper.currentUser());
+    e = (IssueEventInternal) eventRepository.save(e);
+    fireEvent(issue, e);
+  }
+
+  @Override
   public Issue changeState(Issue issue, String state, OUser actor, boolean fire) {
     issue.setState(state);
     if (fire) {

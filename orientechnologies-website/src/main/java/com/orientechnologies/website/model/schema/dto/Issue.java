@@ -26,6 +26,7 @@ public class Issue {
   private Milestone         version;
   private Priority          priority;
   private Scope             scope;
+  private Environment       environment;
   private Date              createdAt;
   private Date              updatedAt;
   private Date              closedAt;
@@ -188,6 +189,17 @@ public class Issue {
 
   public void setVersion(Milestone version) {
     this.version = version;
+  }
+
+  public Environment getEnvironment() {
+    return environment;
+  }
+
+  public void setEnvironment(Environment environment) {
+    if (environment != null) {
+      environment.setId(null);
+    }
+    this.environment = environment;
   }
 
   public String getUuid() {

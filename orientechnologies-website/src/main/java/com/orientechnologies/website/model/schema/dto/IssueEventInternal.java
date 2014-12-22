@@ -5,9 +5,10 @@ package com.orientechnologies.website.model.schema.dto;
  */
 public class IssueEventInternal extends IssueEvent {
 
-  protected Milestone version;
-  protected Priority  priority;
-  protected Scope     scope;
+  protected Milestone   version;
+  protected Priority    priority;
+  protected Scope       scope;
+  protected Environment environment;
 
   public Milestone getVersion() {
     return version;
@@ -28,6 +29,17 @@ public class IssueEventInternal extends IssueEvent {
       priority.setId(null);
     }
     this.priority = priority;
+  }
+
+  public Environment getEnvironment() {
+    return environment;
+  }
+
+  public void setEnvironment(Environment environment) {
+    if (environment != null) {
+      environment.setId(null);
+    }
+    this.environment = environment;
   }
 
   public Scope getScope() {

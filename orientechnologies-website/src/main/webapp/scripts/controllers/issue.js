@@ -147,7 +147,7 @@ angular.module('webappApp')
   });
 
 angular.module('webappApp')
-  .controller('IssueNewCtrl', function ($scope, Organization, Repo, $location,User) {
+  .controller('IssueNewCtrl', function ($scope, Organization, Repo, $location, User) {
 
 
     $scope.issue = {}
@@ -163,7 +163,11 @@ angular.module('webappApp')
     User.whoami().then(function (data) {
       $scope.isMember = User.isMember(ORGANIZATION);
       $scope.client = User.getClient(ORGANIZATION);
-      $scope.issue.client = $scope.client.clientId;
+      User.environments().then(function (data) {
+        $scope.environments = data;
+      });
+      if ($scope.client)
+        $scope.issue.client = $scope.client.clientId;
       if ($scope.isMember) {
         Organization.all("clients").getList().then(function (data) {
           $scope.clients = data.plain();
@@ -171,9 +175,18 @@ angular.module('webappApp')
       }
     });
 
+
     Organization.all("priorities").getList().then(function (data) {
       $scope.priorities = data.plain();
     })
+    $scope.$watch('issue.client', function (val) {
+      if (val) {
+        Organization.all("clients").one(val.toString()
+        ).all('environments').getList().then(function (data) {
+            $scope.environments = data.plain();
+          })
+      }
+    });
     $scope.$watch("scope", function (val) {
       if (val && val.repository) {
         Repo.one(val.repository.name).all("teams").getList().then(function (data) {
@@ -310,6 +323,14 @@ angular.module('webappApp')
     $scope.$on("priority:changed", function (e, priority) {
       Repo.one($scope.repo).all("issues").one(number).patch({priority: priority.number}).then(function (data) {
         $scope.issue.priority = priority;
+        refreshEvents();
+      })
+    });
+
+    $scope.$on("environment:changed", function (e, environment) {
+
+      Repo.one($scope.repo).all("issues").one(number).patch({environment: environment}).then(function (data) {
+        $scope.issue.environment = environment;
         refreshEvents();
       })
     });

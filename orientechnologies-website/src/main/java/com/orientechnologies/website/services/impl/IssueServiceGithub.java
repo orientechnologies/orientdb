@@ -151,4 +151,9 @@ public class IssueServiceGithub implements IssueService {
   public void changeClient(Issue issue, Client client) {
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  public void changeEnvironment(Issue issue, Environment e) {
+    throw new UnsupportedOperationException();
+  }
 }

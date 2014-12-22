@@ -2,11 +2,9 @@ package com.orientechnologies.website.repository.impl;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.website.model.schema.OClient;
-import com.orientechnologies.website.model.schema.OOrganization;
-import com.orientechnologies.website.model.schema.ORepository;
-import com.orientechnologies.website.model.schema.OTypeHolder;
+import com.orientechnologies.website.model.schema.*;
 import com.orientechnologies.website.model.schema.dto.Client;
+import com.orientechnologies.website.model.schema.dto.Environment;
 import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.model.schema.dto.Organization;
 import com.orientechnologies.website.repository.UserRepository;
@@ -134,6 +132,19 @@ public class UserRepositoryImpl extends OrientBaseRepository<OUser> implements U
     List<Client> clients = new ArrayList<Client>();
     for (OrientVertex v : vertices) {
       clients.add(OClient.CLIENT_ID.fromDoc(v.getRecord(), db));
+    }
+    return clients;
+  }
+
+  @Override
+  public List<Environment> findMyEnvironment(OUser user) {
+    OrientGraph db = dbFactory.getGraph();
+    String query = String.format("select from (select expand(out('HasEnvironment')) from %s where name = '%s')", getEntityClass()
+        .getSimpleName(), user.getName());
+    Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
+    List<Environment> clients = new ArrayList<Environment>();
+    for (OrientVertex v : vertices) {
+      clients.add(OEnvironment.EID.fromDoc(v.getRecord(), db));
     }
     return clients;
   }
