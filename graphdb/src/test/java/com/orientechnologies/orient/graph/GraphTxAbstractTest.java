@@ -20,15 +20,10 @@
 
 package com.orientechnologies.orient.graph;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.storage.OStorage;
+import org.junit.After;
+import org.junit.Before;
+
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-
-import java.io.File;
 
 /**
  * Base class for tests against transactional Graphs.
@@ -36,7 +31,7 @@ import java.io.File;
  * @author Luca Garulli
  */
 public abstract class GraphTxAbstractTest {
-  protected static OrientGraph graph;
+  protected OrientGraph graph;
 
   public static enum ENV {
     DEV, RELEASE, CI
@@ -63,8 +58,8 @@ public abstract class GraphTxAbstractTest {
     return "plocal";
   }
 
-  @BeforeClass
-  public static void beforeClass() {
+  @Before
+  public void beforeClass() {
     final String dbName = GraphTxAbstractTest.class.getSimpleName();
     final String storageType = getStorageType();
     final String buildDirectory = System.getProperty("buildDirectory", ".");
@@ -74,8 +69,8 @@ public abstract class GraphTxAbstractTest {
 
   }
 
-  @AfterClass
-  public static void afterClass() throws Exception {
+  @After
+  public void afterClass() throws Exception {
     graph.shutdown();
   }
 }
