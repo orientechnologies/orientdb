@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -55,6 +56,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.util.ODateHelper;
@@ -645,6 +647,8 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
         ORecord record = link.getRecord();
         if (record != null) {
+          if (ONetworkThreadLocalSerializer.getNetworkSerializer() != null)
+            throw new ODatabaseException("Impossible save a record during network serialization");
           database.save(record);
           return record;
         }
@@ -652,6 +656,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     } else if (link instanceof ORecord) {
       ORID rid = link.getIdentity();
       if (((ORecord) link).isDirty() || (rid.isTemporary())) {
+        if (ONetworkThreadLocalSerializer.getNetworkSerializer() != null)
+          throw new ODatabaseException("Impossible save a record during network serialization");
+
         ((ORecord) link).save();
       }
     }
