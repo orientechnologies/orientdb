@@ -60,17 +60,20 @@ public abstract class GraphTxAbstractTest {
 
   @Before
   public void beforeClass() {
-    final String dbName = GraphTxAbstractTest.class.getSimpleName();
-    final String storageType = getStorageType();
-    final String buildDirectory = System.getProperty("buildDirectory", ".");
-    graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
-    graph.drop();
-    graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
+    if (graph == null) {
+      final String dbName = GraphTxAbstractTest.class.getSimpleName();
+      final String storageType = getStorageType();
+      final String buildDirectory = System.getProperty("buildDirectory", ".");
+      graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
+      graph.drop();
+      graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
+    }
 
   }
 
   @After
   public void afterClass() throws Exception {
     graph.shutdown();
+    graph = null;
   }
 }
