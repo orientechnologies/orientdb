@@ -650,7 +650,8 @@ public class ODocumentHelper {
 
     final ODocument doc = ((ODocument) iCurrent.getRecord());
     doc.checkForFields(iFieldName);
-    return doc._fieldValues.get(iFieldName);
+    ODocumentEntry entry = doc._fields.get(iFieldName);
+    return entry != null ? entry.value : null;
   }
 
   public static Object evaluateFunction(final Object currentValue, final String iFunction, final OCommandContext iContext) {
@@ -768,75 +769,75 @@ public class ODocumentHelper {
   }
 
   @SuppressWarnings("unchecked")
-  public static void copyFieldValue(final ODocument iCloned, final Entry<String, Object> iEntry) {
-    final Object fieldValue = iEntry.getValue();
+  public static Object cloneValue(ODocument iCloned, final Object fieldValue) {
 
     if (fieldValue != null) {
       if (fieldValue instanceof ODocument && !((ODocument) fieldValue).getIdentity().isValid()) {
         // EMBEDDED DOCUMENT
-        iCloned._fieldValues.put(iEntry.getKey(), ((ODocument) fieldValue).copy());
+        return ((ODocument) fieldValue).copy();
 
       } else if (fieldValue instanceof ORidBag) {
-        iCloned._fieldValues.put(iEntry.getKey(), ((ORidBag) fieldValue).copy());
+        return ((ORidBag) fieldValue).copy();
 
       } else if (fieldValue instanceof ORecordLazyList) {
-        iCloned._fieldValues.put(iEntry.getKey(), ((ORecordLazyList) fieldValue).copy(iCloned));
+        return ((ORecordLazyList) fieldValue).copy(iCloned);
 
       } else if (fieldValue instanceof ORecordTrackedList) {
         final ORecordTrackedList newList = new ORecordTrackedList(iCloned);
         newList.addAll((ORecordTrackedList) fieldValue);
-        iCloned._fieldValues.put(iEntry.getKey(), newList);
+        return newList;
 
       } else if (fieldValue instanceof OTrackedList<?>) {
         final OTrackedList<Object> newList = new OTrackedList<Object>(iCloned);
         newList.addAll((OTrackedList<Object>) fieldValue);
-        iCloned._fieldValues.put(iEntry.getKey(), newList);
+        return newList;
 
       } else if (fieldValue instanceof List<?>) {
-        iCloned._fieldValues.put(iEntry.getKey(), new ArrayList<Object>((List<Object>) fieldValue));
+        return new ArrayList<Object>((List<Object>) fieldValue);
 
         // SETS
       } else if (fieldValue instanceof OMVRBTreeRIDSet) {
-        iCloned._fieldValues.put(iEntry.getKey(), ((OMVRBTreeRIDSet) fieldValue).copy(iCloned));
+        return ((OMVRBTreeRIDSet) fieldValue).copy(iCloned);
 
       } else if (fieldValue instanceof ORecordLazySet) {
         final ORecordLazySet newList = new ORecordLazySet(iCloned);
         newList.addAll((ORecordLazySet) fieldValue);
-        iCloned._fieldValues.put(iEntry.getKey(), newList);
+        return newList;
 
       } else if (fieldValue instanceof ORecordTrackedSet) {
         final ORecordTrackedSet newList = new ORecordTrackedSet(iCloned);
         newList.addAll((ORecordTrackedSet) fieldValue);
-        iCloned._fieldValues.put(iEntry.getKey(), newList);
+        return newList;
 
       } else if (fieldValue instanceof OTrackedSet<?>) {
         final OTrackedSet<Object> newList = new OTrackedSet<Object>(iCloned);
         newList.addAll((OTrackedSet<Object>) fieldValue);
-        iCloned._fieldValues.put(iEntry.getKey(), newList);
+        return newList;
 
       } else if (fieldValue instanceof Set<?>) {
-        iCloned._fieldValues.put(iEntry.getKey(), new HashSet<Object>((Set<Object>) fieldValue));
-
+        return new HashSet<Object>((Set<Object>) fieldValue);
         // MAPS
       } else if (fieldValue instanceof ORecordLazyMap) {
         final ORecordLazyMap newMap = new ORecordLazyMap(iCloned, ((ORecordLazyMap) fieldValue).getRecordType());
         newMap.putAll((ORecordLazyMap) fieldValue);
-        iCloned._fieldValues.put(iEntry.getKey(), newMap);
+        return newMap;
 
       } else if (fieldValue instanceof OTrackedMap) {
         final OTrackedMap<Object> newMap = new OTrackedMap<Object>(iCloned);
         newMap.putAll((OTrackedMap<Object>) fieldValue);
-        iCloned._fieldValues.put(iEntry.getKey(), newMap);
+        return newMap;
 
       } else if (fieldValue instanceof Map<?, ?>) {
-        iCloned._fieldValues.put(iEntry.getKey(), new LinkedHashMap<String, Object>((Map<String, Object>) fieldValue));
+        return new LinkedHashMap<String, Object>((Map<String, Object>) fieldValue);
       } else
-        iCloned._fieldValues.put(iEntry.getKey(), fieldValue);
-    } else if (iCloned.getImmutableSchemaClass() != null) {
-      final OProperty prop = iCloned.getImmutableSchemaClass().getProperty(iEntry.getKey());
-      if (prop != null && prop.isMandatory())
-        iCloned._fieldValues.put(iEntry.getKey(), fieldValue);
+        return fieldValue;
     }
+    // else if (iCloned.getImmutableSchemaClass() != null) {
+    // final OProperty prop = iCloned.getImmutableSchemaClass().getProperty(iEntry.getKey());
+    // if (prop != null && prop.isMandatory())
+    // return fieldValue;
+    // }
+    return null;
   }
 
   public static boolean hasSameContentItem(final Object iCurrent, ODatabaseDocumentInternal iMyDb, final Object iOther,
@@ -930,15 +931,15 @@ public class ODocumentHelper {
     else
       iOther.checkForFields();
 
-    if (iCurrent._fieldValues.size() != iOther._fieldValues.size())
+    if (iCurrent.fields() != iOther.fields())
       return false;
 
     // CHECK FIELD-BY-FIELD
     Object myFieldValue;
     Object otherFieldValue;
-    for (Entry<String, Object> f : iCurrent._fieldValues.entrySet()) {
+    for (Entry<String, Object> f : iCurrent) {
       myFieldValue = f.getValue();
-      otherFieldValue = iOther._fieldValues.get(f.getKey());
+      otherFieldValue = iOther._fields.get(f.getKey()).value;
 
       if (myFieldValue == otherFieldValue)
         continue;
