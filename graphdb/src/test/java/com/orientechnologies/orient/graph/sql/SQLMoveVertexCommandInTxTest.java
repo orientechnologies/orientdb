@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.graph.sql;
 
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.orientechnologies.common.util.OCallable;
@@ -34,13 +35,14 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 public class SQLMoveVertexCommandInTxTest extends GraphTxAbstractTest {
-  private OrientVertexType customer;
-  private OrientVertexType provider;
-  private OrientEdgeType   knows;
-  private int              customerGeniusCluster;
+  private static OrientVertexType customer;
+  private static OrientVertexType provider;
+  private static OrientEdgeType   knows;
+  private static int              customerGeniusCluster;
 
-  public void beforeClass() {
-    super.beforeClass();
+  @BeforeClass
+  public static void beforeClass() {
+    GraphTxAbstractTest.beforeClass();
     graph.executeOutsideTx(new OCallable<Object, OrientBaseGraph>() {
       @Override
       public Object call(OrientBaseGraph iArgument) {
