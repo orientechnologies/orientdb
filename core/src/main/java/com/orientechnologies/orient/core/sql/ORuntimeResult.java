@@ -19,6 +19,14 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -32,12 +40,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 /**
  * Handles runtime results.
@@ -66,6 +68,7 @@ public class ORuntimeResult {
     return doc;
   }
 
+  @SuppressWarnings("unchecked")
   public static ODocument applyRecord(final ODocument iValue, final Map<String, Object> iProjections,
       final OCommandContext iContext, final OIdentifiable iRecord) {
     // APPLY PROJECTIONS
@@ -105,6 +108,7 @@ public class ORuntimeResult {
               && !(projectionValue instanceof ORecord))
             iValue.field(projection.getKey(), ((OIdentifiable) projectionValue).getRecord());
           else if (projectionValue instanceof Iterator) {
+            boolean link = true;
             // make temporary value typical case graph database elemenet's iterator edges
             if (projectionValue instanceof OResettable)
               ((OResettable) projectionValue).reset();
@@ -113,16 +117,35 @@ public class ORuntimeResult {
             final Iterator projectionValueIterator = (Iterator) projectionValue;
             while (projectionValueIterator.hasNext()) {
               Object value = projectionValueIterator.next();
-              if (value instanceof OIdentifiable)
+              if (value instanceof OIdentifiable) {
                 value = ((OIdentifiable) value).getRecord();
+                if (!((OIdentifiable) value).getIdentity().isPersistent())
+                  link = false;
+              }
 
               if (value != null)
                 iteratorValues.add(value);
             }
 
-            iValue.field(projection.getKey(), iteratorValues);
+            iValue.field(projection.getKey(), iteratorValues, link ? OType.LINKLIST : OType.EMBEDDEDLIST);
           } else if (projectionValue instanceof ODocument && !((ODocument) projectionValue).getIdentity().isPersistent()) {
             iValue.field(projection.getKey(), projectionValue, OType.EMBEDDED);
+          } else if (projectionValue instanceof Set<?>) {
+            OType type = OType.getTypeByValue(projectionValue);
+            if (type == OType.LINKSET && !entriesPersistent((Collection<OIdentifiable>) projectionValue))
+              type = OType.EMBEDDEDSET;
+            iValue.field(projection.getKey(), projectionValue, type);
+          } else if (projectionValue instanceof Map<?, ?>) {
+            OType type = OType.getTypeByValue(projectionValue);
+            if (type == OType.LINKMAP && !entriesPersistent(((Map<?, OIdentifiable>) projectionValue).values()))
+              type = OType.EMBEDDEDMAP;
+            iValue.field(projection.getKey(), projectionValue, type);
+          } else if (projectionValue instanceof List<?>) {
+            OType type = OType.getTypeByValue(projectionValue);
+            if (type == OType.LINKLIST && !entriesPersistent((Collection<OIdentifiable>) projectionValue))
+              type = OType.EMBEDDEDLIST;
+            iValue.field(projection.getKey(), projectionValue, type);
+
           } else
             iValue.field(projection.getKey(), projectionValue);
 
@@ -130,6 +153,14 @@ public class ORuntimeResult {
     }
 
     return iValue;
+  }
+
+  private static boolean entriesPersistent(Collection<OIdentifiable> projectionValue) {
+    for (OIdentifiable rec : projectionValue) {
+      if (!rec.getIdentity().isPersistent())
+        return false;
+    }
+    return true;
   }
 
   public static ODocument getResult(final ODocument iValue, final Map<String, Object> iProjections) {
