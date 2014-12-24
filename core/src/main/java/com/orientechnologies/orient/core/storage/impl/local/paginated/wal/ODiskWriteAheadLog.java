@@ -73,11 +73,10 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private OLogSequenceNumber           secondMasterRecord;
   private volatile OLogSequenceNumber  flushedLsn;
 
-  private boolean                      truncationFlag          = false;
-  private final Condition              truncationComplete      = syncObject.newCondition();
+  private boolean                      segmentCreationFlag     = false;
+  private final Condition              segmentCreationComplete = syncObject.newCondition();
 
   private final Set<OOperationUnitId>  activeOperations        = new HashSet<OOperationUnitId>();
-  private final Condition              operationComplete       = syncObject.newCondition();
 
   private final class LogSegment implements Comparable<LogSegment> {
     private final RandomAccessFile                           rndFile;
@@ -778,8 +777,6 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       final OLogSequenceNumber lsn = log(new OAtomicUnitEndRecord(operationUnitId, rollback));
       activeOperations.remove(operationUnitId);
 
-      operationComplete.signalAll();
-
       return lsn;
     } finally {
       syncObject.unlock();
@@ -791,16 +788,11 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     try {
       checkForClose();
 
-      boolean insideOfActiveOperations = false;
-      if (record instanceof OOperationUnitRecord) {
-        final OOperationUnitId unitId = ((OOperationUnitRecord) record).getOperationUnitId();
-        insideOfActiveOperations = activeOperations.contains(unitId);
-      }
-
-      if (!insideOfActiveOperations) {
-        while (truncationFlag) {
+      if (record instanceof OOperationUnitRecord
+          && !activeOperations.contains(((OOperationUnitRecord) record).getOperationUnitId())) {
+        while (segmentCreationFlag) {
           try {
-            truncationComplete.await();
+            segmentCreationComplete.await();
           } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new OInterruptedException(e);
@@ -846,27 +838,21 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       }
 
       if (last.filledUpTo() >= maxSegmentSize) {
-        truncationFlag = true;
-        while (record instanceof OOperationUnitRecord && activeOperations.size() > 1 || !(record instanceof OOperationUnitRecord)
-            && !activeOperations.isEmpty()) {
-          try {
-            operationComplete.await();
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new OInterruptedException(e);
-          }
+        segmentCreationFlag = true;
+
+        if (record instanceof OAtomicUnitEndRecord && activeOperations.size() == 1
+            || (!(record instanceof OOperationUnitRecord) && activeOperations.isEmpty())) {
+          last.stopFlush(true);
+
+          last = new LogSegment(new File(walLocation, getSegmentName(last.getOrder() + 1)), maxPagesCacheSize);
+          last.init();
+          last.startFlush();
+
+          logSegments.add(last);
+
+          segmentCreationFlag = false;
+          segmentCreationComplete.signalAll();
         }
-
-        last.stopFlush(true);
-
-        last = new LogSegment(new File(walLocation, getSegmentName(last.getOrder() + 1)), maxPagesCacheSize);
-        last.init();
-        last.startFlush();
-
-        logSegments.add(last);
-
-        truncationFlag = false;
-        truncationComplete.signalAll();
       }
 
       return lsn;
