@@ -2475,9 +2475,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       if (!atomicUnitStartRecord.isRollbackSupported())
         continue;
 
-      final OAtomicUnitEndRecord atomicUnitEndRecord = new OAtomicUnitEndRecord(atomicUnitStartRecord.getOperationUnitId(), true);
-      final OLogSequenceNumber logSequenceNumber = writeAheadLog.log(atomicUnitEndRecord);
-
+      final OLogSequenceNumber logSequenceNumber = writeAheadLog.logAtomicOperationEndRecord(atomicUnitStartRecord.getOperationUnitId(), true);
       operationUnit.add(logSequenceNumber);
 
       undoOperation(operationUnit);
