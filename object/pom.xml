@@ -38,6 +38,30 @@
         <name>Orient Technologies</name>
         <url>http://www.orientechnologies.com</url>
     </organization>
+    <profiles>
+        <profile>
+            <id>development</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <exclude.test.1>**/PersistenceXMLParsingTest.java</exclude.test.1>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>ci</id>
+            <activation>
+                <property>
+                    <name>orientdb.test.env</name>
+                    <value>ci</value>
+                </property>
+            </activation>
+            <properties>
+                <exclude.test.1>empty.java</exclude.test.1>
+            </properties>
+        </profile>
+    </profiles>
     <dependencies>
         <dependency>
             <groupId>com.orientechnologies</groupId>
@@ -78,6 +102,9 @@
                     <systemPropertyVariables>
                         <buildDirectory>${project.build.directory}</buildDirectory>
                     </systemPropertyVariables>
+                    <excludes>
+                        <exclude>${exclude.test.1}</exclude>
+                    </excludes>
                 </configuration>
             </plugin>
         </plugins>

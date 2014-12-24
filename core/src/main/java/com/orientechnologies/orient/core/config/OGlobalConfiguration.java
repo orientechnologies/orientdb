@@ -120,7 +120,7 @@ public enum OGlobalConfiguration {
       "Maximum size of WAL cache (in amount of WAL pages, each page is 64k) <= 0 means that caching will be switched off.",
       Integer.class, 3000),
 
-  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single. WAL segment in megabytes.", Integer.class, 64),
+  WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single. WAL segment in megabytes.", Integer.class, 128),
 
   WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk in megabytes.", Integer.class, 4 * 1024),
 

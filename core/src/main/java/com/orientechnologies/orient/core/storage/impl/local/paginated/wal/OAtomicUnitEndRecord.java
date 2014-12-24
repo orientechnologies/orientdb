@@ -32,7 +32,7 @@ public class OAtomicUnitEndRecord extends OOperationUnitRecord {
   public OAtomicUnitEndRecord() {
   }
 
-  public OAtomicUnitEndRecord(OOperationUnitId operationUnitId, boolean rollback) {
+  OAtomicUnitEndRecord(OOperationUnitId operationUnitId, boolean rollback) {
     super(operationUnitId);
     this.rollback = rollback;
     assert operationUnitId != null;
