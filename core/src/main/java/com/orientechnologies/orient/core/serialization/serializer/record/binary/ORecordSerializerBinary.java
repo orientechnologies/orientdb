@@ -64,7 +64,10 @@ public class ORecordSerializerBinary implements ORecordSerializer {
 
     BytesContainer container = new BytesContainer(iSource);
     container.skip(1);
-    serializerByVersion[iSource[0]].deserialize((ODocument) iRecord, container, iFields);
+    if (iFields != null && iFields.length > 0)
+      serializerByVersion[iSource[0]].deserializePartial((ODocument) iRecord, container, iFields);
+    else
+      serializerByVersion[iSource[0]].deserialize((ODocument) iRecord, container);
     return iRecord;
   }
 
@@ -92,7 +95,8 @@ public class ORecordSerializerBinary implements ORecordSerializer {
     serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, false);
 
     OSerializationSetThreadLocal.removeCheck((ODocument) iSource);
-    return container.fitBytes();  }
+    return container.fitBytes();
+  }
 
   private void checkTypeODocument(final ORecord iRecord) {
     if (!(iRecord instanceof ODocument)) {

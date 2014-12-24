@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -120,6 +121,8 @@ public class ORuntimeResult {
             }
 
             iValue.field(projection.getKey(), iteratorValues);
+          } else if (projectionValue instanceof ODocument && !((ODocument) projectionValue).getIdentity().isPersistent()) {
+            iValue.field(projection.getKey(), projectionValue, OType.EMBEDDED);
           } else
             iValue.field(projection.getKey(), projectionValue);
 

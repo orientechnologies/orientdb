@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
 public class ODocumentInternal {
@@ -49,4 +50,13 @@ public class ODocumentInternal {
   public static OClass getImmutableSchemaClass(final ODocument oDocument) {
     return oDocument.getImmutableSchemaClass();
   }
+
+  public static OGlobalProperty getGlobalPropertyById(final ODocument oDocument, final int id) {
+    return oDocument.getGlobalPropertyById(id);
+  }
+
+  public static void fillClassNameIfNeeded(final ODocument oDocument, String className) {
+    oDocument.fillClassIfNeed(className);
+  }
+
 }

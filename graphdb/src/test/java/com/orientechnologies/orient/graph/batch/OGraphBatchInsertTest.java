@@ -189,6 +189,7 @@ public class OGraphBatchInsertTest extends TestCase {
     batch.setVertexProperties(3L, vertexProps);
 
     batch.end();
+    
 
 		ODatabaseDocumentTx databaseDocumentTx = new ODatabaseDocumentTx(dbUrl);
 		databaseDocumentTx.open("admin", "admin");
@@ -204,6 +205,7 @@ public class OGraphBatchInsertTest extends TestCase {
     for (Vertex v : result) {
       assertEquals("bar", v.getProperty("foo"));
     }
+    g.shutdown();
   }
 
   public void testHoles() {
@@ -241,6 +243,7 @@ public class OGraphBatchInsertTest extends TestCase {
       found = true;
     }
     assertTrue(found);
+    g.shutdown();
   }
 
 }

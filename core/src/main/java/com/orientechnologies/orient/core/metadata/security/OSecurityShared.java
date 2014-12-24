@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
@@ -52,16 +53,26 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
  * 
  */
 public class OSecurityShared implements OSecurity, OCloseable {
-  private final AtomicLong   version                = new AtomicLong();
+  private final AtomicLong        version                = new AtomicLong();
 
-  public static final String RESTRICTED_CLASSNAME   = "ORestricted";
-  public static final String IDENTITY_CLASSNAME     = "OIdentity";
-  public static final String ALLOW_ALL_FIELD        = "_allow";
-  public static final String ALLOW_READ_FIELD       = "_allowRead";
-  public static final String ALLOW_UPDATE_FIELD     = "_allowUpdate";
-  public static final String ALLOW_DELETE_FIELD     = "_allowDelete";
-  public static final String ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
-  public static final String ONCREATE_FIELD         = "onCreate.fields";
+  public static final String      RESTRICTED_CLASSNAME   = "ORestricted";
+  public static final String      IDENTITY_CLASSNAME     = "OIdentity";
+  public static final String      ALLOW_ALL_FIELD        = "_allow";
+  public static final String      ALLOW_READ_FIELD       = "_allowRead";
+  public static final String      ALLOW_UPDATE_FIELD     = "_allowUpdate";
+  public static final String      ALLOW_DELETE_FIELD     = "_allowDelete";
+  public static final String      ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
+  public static final String      ONCREATE_FIELD         = "onCreate.fields";
+
+  @SuppressWarnings("serial")
+  public static final Set<String> ALLOW_FIELDS           = new HashSet<String>() {
+                                                           {
+                                                             add(ALLOW_ALL_FIELD);
+                                                             add(ALLOW_DELETE_FIELD);
+                                                             add(ALLOW_READ_FIELD);
+                                                             add(ALLOW_UPDATE_FIELD);
+                                                           }
+                                                         };
 
   public OSecurityShared() {
   }
