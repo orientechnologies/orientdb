@@ -72,7 +72,7 @@ public class OAtomicOperationsManager {
     }
 
     final OOperationUnitId unitId = OOperationUnitId.generateId();
-    final OLogSequenceNumber lsn = writeAheadLog.log(new OAtomicUnitStartRecord(true, unitId));
+    final OLogSequenceNumber lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
 
     operation = new OAtomicOperation(lsn, unitId);
     currentOperation.set(operation);
@@ -107,7 +107,7 @@ public class OAtomicOperationsManager {
       for (Object lockObject : operation.lockedObjects())
         lockManager.releaseLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
 
-      writeAheadLog.log(new OAtomicUnitEndRecord(operation.getOperationUnitId(), rollback));
+      writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback);
       currentOperation.set(null);
     }
 

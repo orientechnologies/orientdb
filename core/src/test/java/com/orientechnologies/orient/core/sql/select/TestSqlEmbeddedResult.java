@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.sql.select;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -12,6 +11,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class TestSqlEmbeddedResult {
@@ -34,11 +35,25 @@ public class TestSqlEmbeddedResult {
     Assert.assertEquals(res.size(), 1);
     ODocument ele = res.get(0);
     Assert.assertNotNull(ele.field("el"));
+    ONetworkThreadLocalSerializer.setNetworkSerializer(new ORecordSerializerBinary());
 
     byte [] bt = ele.toStream();
     ODocument read = new ODocument(bt);
     Assert.assertNotNull(read.field("el"));
     Assert.assertEquals(read.fieldType("el"), OType.EMBEDDED);
+    
+    ONetworkThreadLocalSerializer.setNetworkSerializer(null);
+    res = db.query(new OSQLSynchQuery<Object>("select $Pics as el FROM Test LET $Pics = (select expand( rel.include('format')) from $current)"));
+    
+    ONetworkThreadLocalSerializer.setNetworkSerializer(new ORecordSerializerBinary());
+    Assert.assertEquals(res.size(), 1);
+    ele = res.get(0);
+    Assert.assertNotNull(ele.field("el"));
+    bt = ele.toStream();
+    read = new ODocument(bt);
+    Assert.assertNotNull(read.field("el"));
+    Assert.assertEquals(read.fieldType("el"), OType.EMBEDDEDLIST);
+    ONetworkThreadLocalSerializer.setNetworkSerializer(null);
     db.drop();
   }
 }

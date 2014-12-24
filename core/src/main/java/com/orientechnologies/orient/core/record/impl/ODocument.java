@@ -79,6 +79,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
 import com.orientechnologies.orient.core.record.ORecordListener;
@@ -292,7 +293,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       // CHECK TYPE
       switch (type) {
       case LINK:
-        validateLink(p, fieldValue);
+        validateLink(p, fieldValue, false);
         break;
       case LINKLIST:
         if (!(fieldValue instanceof List))
@@ -453,7 +454,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   protected static void validateLinkCollection(final OProperty property, Collection<Object> values) {
     if (property.getLinkedClass() != null)
       for (Object object : values) {
-        validateLink(property, object);
+        validateLink(property, object, OSecurityShared.ALLOW_FIELDS.contains(property.getName()));
       }
   }
 
@@ -464,10 +465,14 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
             + p.getLinkedType() + "' but the value is " + value);
   }
 
-  protected static void validateLink(final OProperty p, final Object fieldValue) {
-    if (fieldValue == null)
-      throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
-          + " but contains a null record (probably a deleted record?)");
+  protected static void validateLink(final OProperty p, final Object fieldValue, boolean allowNull) {
+    if (fieldValue == null) {
+      if (allowNull)
+        return;
+      else
+        throw new OValidationException("The field '" + p.getFullName() + "' has been declared as " + p.getType()
+            + " but contains a null record (probably a deleted record?)");
+    }
 
     final ORecord linkedRecord;
     if (fieldValue instanceof OIdentifiable)

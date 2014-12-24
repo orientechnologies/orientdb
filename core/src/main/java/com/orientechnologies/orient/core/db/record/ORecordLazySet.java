@@ -167,7 +167,30 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
     return true;
   }
 
+  public boolean clearDeletedRecords() {
+    boolean removed = false;
+    Iterator<Entry<OIdentifiable, Object>> all = map.entrySet().iterator();
+    while (all.hasNext()) {
+      Entry<OIdentifiable, Object> entry = all.next();
+      if (entry.getValue() == ENTRY_REMOVAL) {
+        try {
+          if (entry.getKey().getRecord() == null) {
+            all.remove();
+            removed = true;
+          }
+        } catch (ORecordNotFoundException e) {
+          all.remove();
+          removed = true;
+        }
+      }
+    }
+    return removed;
+  }
+
   public boolean remove(Object o) {
+    if (o == null)
+      return clearDeletedRecords();
+
     final Object old = map.remove(o);
     if (old != null) {
       if (o instanceof ORecord)

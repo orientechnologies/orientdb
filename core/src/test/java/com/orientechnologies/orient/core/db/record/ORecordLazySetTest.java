@@ -4,6 +4,7 @@ import static org.testng.AssertJUnit.assertFalse;
 import static org.testng.Assert.assertEquals;
 import static org.testng.AssertJUnit.assertTrue;
 
+import java.io.OutputStream;
 import java.util.Iterator;
 
 import org.testng.annotations.AfterClass;
@@ -11,9 +12,12 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.OSerializableStream;
 
 public class ORecordLazySetTest {
 
@@ -118,6 +122,17 @@ public class ORecordLazySetTest {
     set.add(doc);
     set.remove(doc);
     assertTrue(set.isEmpty());
+  }
+
+  @Test()
+  public void testSetRemoveNotPersistent() {
+    ORecordLazySet set = new ORecordLazySet(new ODocument());
+    set.add(doc1);
+    set.add(doc2);
+    set.add(new ORecordId(5, 1000));
+    assertEquals(set.size(), 3);
+    set.remove(null);
+    assertEquals(set.size(), 2);
   }
 
 }
