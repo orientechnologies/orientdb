@@ -160,16 +160,23 @@
     </div>
     <div class="row">
       <div class="col-md-12">
-        <button class="btn btn-transparent" ng-disabled="false" data-placement="left"
+        <button ng-show="issue.environment" class="btn btn-transparent" ng-disabled="false" data-placement="left"
                 data-template="views/issues/popover/environmentEdit.html"
                 title="{{popover.title}}"
                 data-content="{{popover.content}}"
                 data-trigger="click"
                 bs-popover="issue">Environment <i
-          class="fa fa-edit pull-right"></i></button>
+          class="fa fa-gear pull-right"></i></button>
+        <button ng-hide="issue.environment" class="btn btn-transparent" ng-disabled="false" data-placement="left"
+                data-template="views/issues/popover/environmentSelect.html"
+                title="{{popover.title}}"
+                data-content="{{popover.content}}"
+                data-trigger="click"
+                bs-popover="issue">Environment <i
+          class="fa fa-gear pull-right"></i></button>
       </div>
       <div class="col-md-12 milestone">
-        <span data-placement="top"
+        <span ng-show="issue.environment" data-placement="top"
               data-template="views/issues/popover/environment.html" title="{{popover.title}}"
               data-content="{{popover.content}}" data-trigger="hover" bs-popover="issue.environment"
               class="label label-primary">{{issue.environment.name}}</span>

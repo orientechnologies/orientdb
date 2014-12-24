@@ -42,7 +42,7 @@ angular.module('webappApp')
     User.whoami().then(function (user) {
       $scope.user = user;
       User.environments().then(function (data) {
-        $scope.environments = data;
+        $scope.environments = data.plain();
       })
     });
 
@@ -108,6 +108,24 @@ angular.module('webappApp')
     $scope.connections = ['plocal', 'remote', 'memory']
     Repo.one(DEFAULT_REPO).all("milestones").getList().then(function (data) {
       $scope.milestones = data.plain();
+    });
+
+    $scope.save = function () {
+      $scope.$emit("environment:changed", $scope.environment);
+      $scope.$hide();
+    }
+  })
+
+
+angular.module('webappApp')
+  .controller('ChangeSelectEnvironmentCtrl', function ($scope, User, Repo) {
+
+
+    User.whoami().then(function (user) {
+      $scope.user = user;
+      User.environments().then(function (data) {
+        $scope.environments = data.plain();
+      })
     });
 
     $scope.save = function () {
