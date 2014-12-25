@@ -39,6 +39,8 @@ import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
@@ -265,8 +267,6 @@ public class OClientConnectionManager {
     if (iConfig == null)
       return;
 
-    final byte[] content = iConfig.toStream();
-
     final Set<String> pushed = new HashSet<String>();
     for (OClientConnection c : connections.values()) {
       try {
@@ -286,6 +286,8 @@ public class OClientConnectionManager {
 
       final ONetworkProtocolBinary p = (ONetworkProtocolBinary) c.protocol;
       final OChannelBinary channel = (OChannelBinary) p.getChannel();
+      ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(c.data.serializationImpl);
+      final byte[] content = ser.toStream(iConfig, false);
 
       try {
         channel.acquireWriteLock();

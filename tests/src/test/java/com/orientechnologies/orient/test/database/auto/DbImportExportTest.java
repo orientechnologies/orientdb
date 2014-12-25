@@ -15,20 +15,18 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.hook.ORecordHook;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 
 @Test(groups = { "db", "import-export" })
 public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOutputListener {
@@ -87,7 +85,7 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
   @Override
   @Test(enabled = false)
   public void onMessage(final String iText) {
-    System.out.print(iText);
-    System.out.flush();
+//    System.out.print(iText);
+//    System.out.flush();
   }
 }

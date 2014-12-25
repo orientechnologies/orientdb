@@ -20,8 +20,8 @@
 
 package com.orientechnologies.orient.graph;
 
-import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
@@ -31,7 +31,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
  * @author Luca Garulli
  */
 public abstract class GraphTxAbstractTest {
-  protected OrientGraph graph;
+  protected static OrientGraph graph;
 
   public static enum ENV {
     DEV, RELEASE, CI
@@ -58,8 +58,8 @@ public abstract class GraphTxAbstractTest {
     return "plocal";
   }
 
-  @Before
-  public void beforeClass() {
+  @BeforeClass
+  public static void beforeClass() {
     if (graph == null) {
       final String dbName = GraphTxAbstractTest.class.getSimpleName();
       final String storageType = getStorageType();
@@ -71,9 +71,10 @@ public abstract class GraphTxAbstractTest {
 
   }
 
-  @After
-  public void afterClass() throws Exception {
+  @AfterClass
+  public static void afterClass() throws Exception {
     graph.shutdown();
     graph = null;
   }
+
 }

@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -141,6 +142,7 @@ public class OFetchHelper {
               .rawIterator().next() instanceof OIdentifiable))
           && (!(fieldValue instanceof Collection<?>) || ((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue)
               .iterator().next() instanceof OIdentifiable))
+          && (!(fieldValue.getClass().isArray()) || Array.getLength(fieldValue) == 0 || !(Array.get(fieldValue, 0) instanceof OIdentifiable))
           && (!(fieldValue instanceof OMultiCollectionIterator<?>))
           && (!(fieldValue instanceof Map<?, ?>) || ((Map<?, ?>) fieldValue).size() == 0 || !(((Map<?, ?>) fieldValue).values()
               .iterator().next() instanceof OIdentifiable))) {
@@ -289,6 +291,7 @@ public class OFetchHelper {
           || !(fieldValue instanceof OIdentifiable)
           && (!(fieldValue instanceof ORecordLazyMultiValue) || !((ORecordLazyMultiValue) fieldValue).rawIterator().hasNext() || !(((ORecordLazyMultiValue) fieldValue)
               .rawIterator().next() instanceof OIdentifiable))
+          && (!(fieldValue.getClass().isArray()) || Array.getLength(fieldValue) == 0 || !(Array.get(fieldValue, 0) instanceof OIdentifiable))
           && (!(OMultiValue.getFirstValue(fieldValue) instanceof OIdentifiable
               || OMultiValue.getFirstValue(OMultiValue.getFirstValue(fieldValue)) instanceof OIdentifiable || OMultiValue
                 .getFirstValue(OMultiValue.getFirstValue(OMultiValue.getFirstValue(fieldValue))) instanceof OIdentifiable))) {
@@ -450,6 +453,9 @@ public class OFetchHelper {
     else if (fieldValue instanceof Iterable<?> || fieldValue instanceof ORidBag) {
       linked = (Iterable<OIdentifiable>) fieldValue;
       iContext.onBeforeCollection(iRootRecord, fieldName, iUserObject, (Iterable) linked);
+    } else if (fieldValue.getClass().isArray()) {
+      linked = OMultiValue.getMultiValueIterable(fieldValue);
+      iContext.onBeforeCollection(iRootRecord, fieldName, iUserObject, (Iterable) linked);
     } else if (fieldValue instanceof Map<?, ?>) {
       linked = (Collection<?>) ((Map<?, ?>) fieldValue).values();
       iContext.onBeforeMap(iRootRecord, fieldName, iUserObject);
@@ -502,6 +508,8 @@ public class OFetchHelper {
       }
     } finally {
       if (fieldValue instanceof Iterable<?> || fieldValue instanceof ORidBag)
+        iContext.onAfterCollection(iRootRecord, fieldName, iUserObject);
+      else if (fieldValue.getClass().isArray())
         iContext.onAfterCollection(iRootRecord, fieldName, iUserObject);
       else if (fieldValue instanceof Map<?, ?>)
         iContext.onAfterMap(iRootRecord, fieldName, iUserObject);
