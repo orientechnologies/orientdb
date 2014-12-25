@@ -55,7 +55,19 @@ public class OLogTransformer extends OAbstractTransformer {
 
   @Override
   public Object executeTransform(final Object input) {
-    out.println(prefix + input + postfix);
+    final StringBuilder buffer = new StringBuilder();
+
+    if (prefix != null && !prefix.isEmpty())
+      buffer.append(resolve(prefix));
+
+    if (input != null)
+      buffer.append(input);
+
+    if (postfix != null && !postfix.isEmpty())
+      buffer.append(resolve(postfix));
+
+    out.println(buffer.toString());
+
     return input;
   }
 }
