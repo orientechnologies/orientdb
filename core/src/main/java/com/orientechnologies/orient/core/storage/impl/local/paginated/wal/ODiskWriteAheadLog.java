@@ -788,7 +788,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     try {
       checkForClose();
 
-      if (record instanceof OOperationUnitRecord
+      if (segmentCreationFlag && record instanceof OOperationUnitRecord
           && !activeOperations.contains(((OOperationUnitRecord) record).getOperationUnitId())) {
         while (segmentCreationFlag) {
           try {
