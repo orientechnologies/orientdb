@@ -96,7 +96,7 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
   /**
    * @return a Non Transactional OrientGraph implementation from the current database in thread local.
    */
-  public static OrientGraphNoTx getGraphNoTx() {
+  public static OrientGraphNoTx getGraphNoTx(OModifiableBoolean shouldBeShutDown) {
     final ODatabaseDocument database = ODatabaseRecordThreadLocal.INSTANCE.get();
 
     final OrientBaseGraph result = OrientBaseGraph.getActiveGraph();
@@ -106,11 +106,13 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
 
       if (!graphDb.isClosed()) {
         ODatabaseRecordThreadLocal.INSTANCE.set(graphDb);
+				shouldBeShutDown.setValue(false);
         return (OrientGraphNoTx) result;
       }
     }
 
     // Set it again on ThreadLocal because the getRawGraph() may have set a closed db in the thread-local
+		shouldBeShutDown.setValue(true);
     ODatabaseRecordThreadLocal.INSTANCE.set((ODatabaseDocumentInternal) database);
     return new OrientGraphNoTx((ODatabaseDocumentTx) database);
   }

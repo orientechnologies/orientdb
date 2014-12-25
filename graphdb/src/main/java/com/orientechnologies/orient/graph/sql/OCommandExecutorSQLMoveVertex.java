@@ -22,6 +22,7 @@ package com.orientechnologies.orient.graph.sql;
 import java.util.*;
 import java.util.Map.Entry;
 
+import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -111,41 +112,46 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
     if (className == null && clusterName == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    final OrientGraphNoTx graph = OGraphCommandExecutorSQLFactory.getGraphNoTx();
+    OModifiableBoolean shutdownGraph = new OModifiableBoolean();
+    final OrientGraphNoTx graph = OGraphCommandExecutorSQLFactory.getGraphNoTx(shutdownGraph);
+    try {
+      final Set<OIdentifiable> sourceRIDs = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), source, context, iArgs);
 
-    final Set<OIdentifiable> sourceRIDs = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), source, context, iArgs);
+      // CREATE EDGES
+      final List<ODocument> result = new ArrayList<ODocument>(sourceRIDs.size());
 
-    // CREATE EDGES
-    final List<ODocument> result = new ArrayList<ODocument>(sourceRIDs.size());
+      for (OIdentifiable from : sourceRIDs) {
+        final OrientVertex fromVertex = graph.getVertex(from);
+        if (fromVertex == null)
+          continue;
 
-    for (OIdentifiable from : sourceRIDs) {
-      final OrientVertex fromVertex = graph.getVertex(from);
-      if (fromVertex == null)
-        continue;
+        final ORID oldVertex = fromVertex.getIdentity().copy();
+        final ORID newVertex = fromVertex.moveTo(className, clusterName);
 
-      final ORID oldVertex = fromVertex.getIdentity().copy();
-      final ORID newVertex = fromVertex.moveTo(className, clusterName);
+        if (fields != null)
+          // EVALUATE FIELDS
+          for (Entry<String, Object> f : fields.entrySet()) {
+            if (f.getValue() instanceof OSQLFunctionRuntime)
+              fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(newVertex.getRecord(), null, context));
+          }
 
-      if (fields != null)
-        // EVALUATE FIELDS
-        for (Entry<String, Object> f : fields.entrySet()) {
-          if (f.getValue() instanceof OSQLFunctionRuntime)
-            fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(newVertex.getRecord(), null, context));
-        }
+        OSQLHelper.bindParameters(fromVertex.getRecord(), fields, new OCommandParameters(iArgs), context);
 
-      OSQLHelper.bindParameters(fromVertex.getRecord(), fields, new OCommandParameters(iArgs), context);
+        if (merge != null)
+          fromVertex.getRecord().merge(merge, true, false);
 
-      if (merge != null)
-        fromVertex.getRecord().merge(merge, true, false);
+        // SAVE CHANGES
+        fromVertex.save();
 
-      // SAVE CHANGES
-      fromVertex.save();
+        // PUT THE MOVE INTO THE RESULT
+        result.add(new ODocument().field("old", oldVertex, OType.LINK).field("new", newVertex, OType.LINK));
+      }
 
-      // PUT THE MOVE INTO THE RESULT
-      result.add(new ODocument().field("old", oldVertex, OType.LINK).field("new", newVertex, OType.LINK));
+      return result;
+    } finally {
+      if (shutdownGraph.getValue())
+        graph.shutdown(false);
     }
-
-    return result;
   }
 
   @Override
