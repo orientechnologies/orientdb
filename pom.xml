@@ -108,7 +108,7 @@
         <module>tests</module>
         <module>distributed</module>
         <module>graphdb</module>
-        <!--module>distribution</module-->
+        <module>distribution</module>
     </modules>
 
     <scm>
@@ -286,11 +286,11 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefire.version}</version>
                 <configuration>
-                  <systemPropertyVariables>
-                    <!-- SET THIS TO AVOID ASKING FOR PASSWORD DURING TESTS -->
-                    <propertyName>ORIENTDB_ROOT_PASSWORD</propertyName>
-                    <propertyName>ORIENTDB_NODE_NAME</propertyName>
-                  </systemPropertyVariables>
+                    <systemPropertyVariables>
+                        <!-- SET THIS TO AVOID ASKING FOR PASSWORD DURING TESTS -->
+                        <propertyName>ORIENTDB_ROOT_PASSWORD</propertyName>
+                        <propertyName>ORIENTDB_NODE_NAME</propertyName>
+                    </systemPropertyVariables>
                 </configuration>
             </plugin>
 
@@ -512,8 +512,8 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                            <version>1.4</version>
-                            <executions>
+                        <version>1.4</version>
+                        <executions>
                             <execution>
                                 <id>sign-artifacts</id>
                                 <phase>verify</phase>
