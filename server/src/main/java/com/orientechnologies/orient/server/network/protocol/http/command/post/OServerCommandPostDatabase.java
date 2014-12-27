@@ -33,7 +33,6 @@ import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
@@ -90,16 +89,18 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
     return false;
   }
 
-  protected String getStoragePath(final String databaseName, final String storageMode) {
-    final String path;
-    if (storageMode.equals(OEngineLocalPaginated.NAME)) {
-      path = storageMode + ":${" + Orient.ORIENTDB_HOME + "}/databases/" + databaseName;
-    } else if (storageMode.equals(OEngineMemory.NAME)) {
-      path = storageMode + ":" + databaseName;
-    } else {
-      return null;
-    }
-    return path;
+  @Override
+  public String[] getNames() {
+    return NAMES;
+  }
+
+  protected String getStoragePath(final String databaseName, final String iStorageMode) {
+    if (iStorageMode.equals(OEngineLocalPaginated.NAME))
+      return iStorageMode + ":" + server.getDatabaseDirectory() + databaseName;
+    else if (iStorageMode.equals(OEngineMemory.NAME))
+      return iStorageMode + ":" + databaseName;
+
+    return null;
   }
 
   protected void sendDatabaseInfo(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODatabaseDocumentTx db)
@@ -263,11 +264,6 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
     }
 
     json.endObject(1, false);
-  }
-
-  @Override
-  public String[] getNames() {
-    return NAMES;
   }
 
 }

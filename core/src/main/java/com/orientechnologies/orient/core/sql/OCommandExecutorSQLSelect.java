@@ -1276,6 +1276,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private void fetchFromTarget(final Iterator<? extends OIdentifiable> iTarget) {
+    fetchLimit = getQueryFetchLimit();
+
     final long startFetching = System.currentTimeMillis();
 
     try {
