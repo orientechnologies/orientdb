@@ -2442,4 +2442,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     if (entry != null)
       entry.timeLine = null;
   }
+
+  protected Set<Entry<String, ODocumentEntry>> getRawEntries() {
+    return _fields == null ? new HashSet<Map.Entry<String, ODocumentEntry>>() : _fields.entrySet();
+  }
 }
