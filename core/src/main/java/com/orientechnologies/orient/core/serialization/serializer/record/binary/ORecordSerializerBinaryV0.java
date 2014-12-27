@@ -21,8 +21,8 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -66,12 +66,11 @@ import com.orientechnologies.orient.core.util.ODateHelper;
 
 public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
+  private static final String    CHARSET_UTF_8    = "UTF-8";
   private static final ORecordId NULL_RECORD_ID   = new ORecordId(-2, ORID.CLUSTER_POS_INVALID);
   private static final long      MILLISEC_PER_DAY = 86400000;
-  private Charset                utf8;
 
   public ORecordSerializerBinaryV0() {
-    utf8 = Charset.forName("UTF-8");
   }
 
   public void deserializePartial(final ODocument document, final BytesContainer bytes, final String[] iFields) {
@@ -169,7 +168,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         break;
       } else if (len > 0) {
         // PARSE FIELD NAME
-        fieldName = new String(bytes.bytes, bytes.offset, len, utf8);
+        fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
         bytes.skip(len);
         valuePos = readInteger(bytes);
         type = readOType(bytes);
@@ -751,7 +750,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   private String readString(final BytesContainer bytes) {
     final int len = OVarIntSerializer.readAsInteger(bytes);
-    final String res = new String(bytes.bytes, bytes.offset, len, utf8);
+    final String res = stringFromBytes(bytes.bytes, bytes.offset, len);
     bytes.skip(len);
     return res;
   }
@@ -777,11 +776,26 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
 
   private int writeString(final BytesContainer bytes, final String toWrite) {
-    final byte[] nameBytes = toWrite.getBytes(utf8);
+    final byte[] nameBytes = bytesFromString(toWrite);
     final int pointer = OVarIntSerializer.write(bytes, nameBytes.length);
     final int start = bytes.alloc(nameBytes.length);
     System.arraycopy(nameBytes, 0, bytes.bytes, start, nameBytes.length);
     return pointer;
   }
 
+  private byte[] bytesFromString(final String toWrite) {
+    try {
+      return toWrite.getBytes(CHARSET_UTF_8);
+    } catch (UnsupportedEncodingException e) {
+      throw new OSerializationException("Error on string encoding", e);
+    }
+  }
+
+  private String stringFromBytes(final byte[] bytes, final int offset, final int len) {
+    try {
+      return new String(bytes, offset, len, CHARSET_UTF_8);
+    } catch (UnsupportedEncodingException e) {
+      throw new OSerializationException("Error on string decoding", e);
+    }
+  }
 }
