@@ -825,7 +825,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       return EMPTY_STRINGS;
     List<String> names = new ArrayList<String>(_fields.size());
     for (Entry<String, ODocumentEntry> entry : _fields.entrySet()) {
-      if (entry.getValue().exist)
+      if (entry.getValue().exist())
         names.add(entry.getKey());
     }
     return names.toArray(new String[names.size()]);
@@ -857,7 +857,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     // OPTIMIZATION
     if (iFieldName.charAt(0) != '@' && OStringSerializerHelper.indexOf(iFieldName, 0, '.', '[') == -1) {
       ODocumentEntry entry = _fields.get(iFieldName);
-      if (entry != null && entry.exist)
+      if (entry != null && entry.exist())
         return (RET) entry.value;
       else
         return null;
@@ -1089,12 +1089,12 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       entry = new ODocumentEntry();
       _size++;
       _fields.put(iFieldName, entry);
-      entry.created = true;
+      entry.setCreated(true);
       knownProperty = false;
       oldValue = null;
       oldType = null;
     } else {
-      knownProperty = entry.exist;
+      knownProperty = entry.exist();
       oldValue = entry.value;
       oldType = entry.type;
     }
@@ -1159,17 +1159,17 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     removeCollectionChangeListener(entry, oldValue);
     removeCollectionTimeLine(entry);
     entry.value = iPropertyValue;
-    if (!entry.exist) {
-      entry.exist = true;
+    if (!entry.exist()) {
+      entry.setExist(true);
       _size++;
     }
     addCollectionChangeListener(iFieldName, entry, iPropertyValue);
 
     if (_status != STATUS.UNMARSHALLING) {
       setDirty();
-      if (!entry.changed) {
+      if (!entry.isChanged()) {
         entry.original = oldValue;
-        entry.changed = true;
+        entry.setChanged(true);
       }
     }
 
@@ -1187,13 +1187,13 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     if (entry == null)
       return null;
     Object oldValue = entry.value;
-    if (entry.exist && _trackingChanges) {
+    if (entry.exist() && _trackingChanges) {
       // SAVE THE OLD VALUE IN A SEPARATE MAP
       if (entry.original == null)
         entry.original = entry.value;
       entry.value = null;
-      entry.exist = false;
-      entry.changed = true;
+      entry.setExist(false);
+      entry.setChanged(true);
     } else {
       _fields.remove(iFieldName);
     }
@@ -1256,7 +1256,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     for (String f : iOther.keySet()) {
       ODocumentEntry docEntry = iOther.get(f);
-      if (!docEntry.exist) {
+      if (!docEntry.exist()) {
         continue;
       }
       final Object value = field(f);
@@ -1293,7 +1293,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     if (!iUpdateOnlyMode) {
       // REMOVE PROPERTIES NOT FOUND IN OTHER DOC
       for (String f : fieldNames())
-        if (!iOther.containsKey(f) || !iOther.get(f).exist)
+        if (!iOther.containsKey(f) || !iOther.get(f).exist())
           removeField(f);
     }
 
@@ -1315,7 +1315,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     final Set<String> dirtyFields = new HashSet<String>();
     for (Entry<String, ODocumentEntry> entry : _fields.entrySet()) {
-      if (entry.getValue().changed || entry.getValue().timeLine != null)
+      if (entry.getValue().isChanged() || entry.getValue().timeLine != null)
         dirtyFields.add(entry.getKey());
     }
     return dirtyFields.toArray(new String[dirtyFields.size()]);
@@ -1359,7 +1359,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       public boolean hasNext() {
         while (iterator.hasNext()) {
           current = iterator.next();
-          if (current.getValue().exist) {
+          if (current.getValue().exist()) {
             read = false;
             return true;
           }
@@ -1398,11 +1398,11 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       public void remove() {
 
         if (_trackingChanges) {
-          if (current.getValue().changed)
+          if (current.getValue().isChanged())
             current.getValue().original = current.getValue().value;
           current.getValue().value = null;
-          current.getValue().exist = false;
-          current.getValue().changed = true;
+          current.getValue().setExist(false);
+          current.getValue().setChanged(true);
         } else
           iterator.remove();
         _size--;
@@ -1424,7 +1424,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     checkForLoading();
     checkForFields(iFieldName);
     ODocumentEntry entry = _fields.get(iFieldName);
-    return entry != null && entry.exist;
+    return entry != null && entry.exist();
   }
 
   /**
@@ -1659,13 +1659,13 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     Iterator<Entry<String, ODocumentEntry>> vals = _fields.entrySet().iterator();
     while (vals.hasNext()) {
       Entry<String, ODocumentEntry> next = vals.next();
-      if (next.getValue().created) {
+      if (next.getValue().isCreated()) {
         vals.remove();
-      } else if (next.getValue().changed) {
+      } else if (next.getValue().isChanged()) {
         next.getValue().value = next.getValue().original;
-        next.getValue().changed = false;
+        next.getValue().setChanged(false);
         next.getValue().original = null;
-        next.getValue().exist = true;
+        next.getValue().setExist(true);
       }
     }
     _size = _fields.size();
@@ -1727,11 +1727,11 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       Iterator<Entry<String, ODocumentEntry>> iter = _fields.entrySet().iterator();
       while (iter.hasNext()) {
         Entry<String, ODocumentEntry> cur = iter.next();
-        if (!cur.getValue().exist)
+        if (!cur.getValue().exist())
           iter.remove();
         else {
-          cur.getValue().created = false;
-          cur.getValue().changed = false;
+          cur.getValue().setCreated(false);
+          cur.getValue().setChanged(false);
           cur.getValue().original = null;
           cur.getValue().timeLine = null;
         }
@@ -2400,7 +2400,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     if (entry.changeListener == null) {
       final OSimpleMultiValueChangeListener<Object, Object> listener = new OSimpleMultiValueChangeListener<Object, Object>(this,
-          fieldName);
+          entry);
       multiValue.addChangeListener(listener);
       entry.changeListener = listener;
     }

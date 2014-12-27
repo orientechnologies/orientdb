@@ -31,4 +31,28 @@ public class ODocumentEntry {
     return entry;
   }
 
+  public boolean isChanged() {
+    return changed;
+  }
+
+  public void setChanged(boolean changed) {
+    this.changed = changed;
+  }
+
+  public boolean exist() {
+    return exist;
+  }
+
+  public void setExist(boolean exist) {
+    this.exist = exist;
+  }
+
+  public boolean isCreated() {
+    return created;
+  }
+
+  public void setCreated(boolean created) {
+    this.created = created;
+  }
+
 }

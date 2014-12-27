@@ -38,12 +38,12 @@ final class OSimpleMultiValueChangeListener<K, V> implements OMultiValueChangeLi
   /**
    * 
    */
-  private final ODocument oDocument;
-  private final String    fieldName;
+  private final ODocument      oDocument;
+  private final ODocumentEntry entry;
 
-  OSimpleMultiValueChangeListener(ODocument oDocument, final String fieldName) {
+  OSimpleMultiValueChangeListener(ODocument oDocument, final ODocumentEntry entry) {
     this.oDocument = oDocument;
-    this.fieldName = fieldName;
+    this.entry = entry;
   }
 
   public void onAfterRecordChanged(final OMultiValueChangeEvent<K, V> event) {
@@ -58,11 +58,7 @@ final class OSimpleMultiValueChangeListener<K, V> implements OMultiValueChangeLi
         || this.oDocument.getInternalStatus() == STATUS.UNMARSHALLING)
       return;
 
-    if (this.oDocument._fields == null)
-      return;
-    
-    ODocumentEntry entry = this.oDocument._fields.get(fieldName);
-    if (entry == null || entry.changed)
+    if (entry == null || entry.isChanged())
       return;
 
     if (entry.timeLine == null) {

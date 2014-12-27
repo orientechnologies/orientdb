@@ -226,7 +226,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
     final Entry<String, ODocumentEntry> values[] = new Entry[fields.size()];
     for (Entry<String, ODocumentEntry> entry : fields) {
-      if (!entry.getValue().exist)
+      if (!entry.getValue().exist())
         continue;
       if (entry.getValue().property == null && props != null)
         entry.getValue().property = props.get(entry.getKey());
