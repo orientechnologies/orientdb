@@ -262,10 +262,10 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   protected static void validateField(ODocument iRecord, OProperty p) throws OValidationException {
     final Object fieldValue;
-
-    if (iRecord.containsField(p.getName())) {
+    ODocumentEntry entry = iRecord._fields.get(p.getName());
+    if (entry != null && entry.exist()) {
       // AVOID CONVERSIONS: FASTER!
-      fieldValue = iRecord.rawField(p.getName());
+      fieldValue = entry.value;
 
       if (p.isNotNull() && fieldValue == null)
         // NULLITY
@@ -343,11 +343,11 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
           throw new OValidationException("The field '" + p.getFullName()
               + "' has been declared as EMBEDDEDMAP but an incompatible type is used. Value: " + fieldValue);
         if (p.getLinkedClass() != null) {
-          for (Entry<?, ?> entry : ((Map<?, ?>) fieldValue).entrySet())
-            validateEmbedded(p, entry.getValue());
+          for (Entry<?, ?> colleEntry : ((Map<?, ?>) fieldValue).entrySet())
+            validateEmbedded(p, colleEntry.getValue());
         } else if (p.getLinkedType() != null) {
-          for (Entry<?, ?> entry : ((Map<?, ?>) fieldValue).entrySet())
-            validateType(p, entry.getValue());
+          for (Entry<?, ?> collEntry : ((Map<?, ?>) fieldValue).entrySet())
+            validateType(p, collEntry.getValue());
         }
         break;
       }
@@ -2238,11 +2238,13 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         continue;
       }
 
-      OType fieldType = fieldType(fieldEntry.getKey());
-      OClass _clazz = getImmutableSchemaClass();
-      if (fieldType == null && _clazz != null) {
-        final OProperty prop = _clazz.getProperty(fieldEntry.getKey());
-        fieldType = prop != null ? prop.getType() : null;
+      OType fieldType = fieldEntry.getValue().type;
+      if (fieldType == null) {
+        OClass _clazz = getImmutableSchemaClass();
+        if (_clazz != null) {
+          final OProperty prop = _clazz.getProperty(fieldEntry.getKey());
+          fieldType = prop != null ? prop.getType() : null;
+        }
       }
       if (fieldType == null)
         fieldType = OType.getTypeByValue(fieldValue);
@@ -2358,11 +2360,14 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    * @param _clazz
    */
   private void convertFieldsToClass(OClass _clazz) {
+    if (_fields == null)
+      return;
     for (OProperty prop : _clazz.properties()) {
-      OType type = fieldType(prop.getName());
-      if ((type == null && containsField(prop.getName())) || (type != null && type != prop.getType())) {
-        field(prop.getName(), field(prop.getName()), prop.getType());
-      }
+      ODocumentEntry entry = _fields.get(prop.getName());
+      if (entry != null && entry.exist())
+        if (entry.type == null || entry.type != prop.getType()) {
+          field(prop.getName(), entry.value, prop.getType());
+        }
     }
   }
 
