@@ -43,7 +43,6 @@ import java.util.Set;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.types.OModifiableInteger;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -101,13 +100,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   public static final byte                                RECORD_TYPE             = 'd';
   protected static final String[]                         EMPTY_STRINGS           = new String[] {};
   private static final long                               serialVersionUID        = 1L;
-  private final ThreadLocal<OModifiableInteger>           TO_STRING_DEPTH         = new ThreadLocal<OModifiableInteger>() {
-                                                                                    @Override
-                                                                                    protected OModifiableInteger initialValue() {
-                                                                                      return new OModifiableInteger();
-                                                                                    }
-                                                                                  };
-  protected int                                           _size;
+  protected int                                           _fieldSize;
   protected Map<String, ODocumentEntry>                   _fields;
   protected boolean                                       _trackingChanges        = true;
   protected boolean                                       _ordered                = true;
@@ -569,7 +562,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       }
     } else
       destination._fields = null;
-    destination._size = _size;
+    destination._fieldSize = _fieldSize;
     destination.addAllMultiValueChangeListeners();
 
     destination._dirty = _dirty; // LEAVE IT AS LAST TO AVOID SOMETHING SET THE FLAG TO TRUE
@@ -723,67 +716,71 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    */
   @Override
   public String toString() {
-    TO_STRING_DEPTH.get().increment();
+    return toString(new HashSet<ORecord>());
+  }
+
+  protected String toString(Set<ORecord> inspected) {
+    if (inspected.contains(this))
+      return "<recursion:rid=" + (_recordId != null ? _recordId : "null") + ">";
+    else
+      inspected.add(this);
+
+    final boolean saveDirtyStatus = _dirty;
+    final boolean oldUpdateContent = _contentChanged;
+
     try {
-      if (TO_STRING_DEPTH.get().intValue() > 1)
-        return "<recursion:rid=" + (_recordId != null ? _recordId : "null") + ">";
+      final StringBuilder buffer = new StringBuilder(128);
 
-      final boolean saveDirtyStatus = _dirty;
-      final boolean oldUpdateContent = _contentChanged;
+      checkForFields();
 
-      try {
-        final StringBuilder buffer = new StringBuilder(128);
+      final OClass _clazz = getImmutableSchemaClass();
+      if (_clazz != null)
+        buffer.append(_clazz.getStreamableName());
 
-        checkForFields();
-
-        final OClass _clazz = getImmutableSchemaClass();
-        if (_clazz != null)
-          buffer.append(_clazz.getStreamableName());
-
-        if (_recordId != null) {
-          if (_recordId.isValid())
-            buffer.append(_recordId);
-        }
-
-        boolean first = true;
-        for (Entry<String, ODocumentEntry> f : _fields.entrySet()) {
-          buffer.append(first ? '{' : ',');
-          buffer.append(f.getKey());
-          buffer.append(':');
-          if (f.getValue().value == null)
-            buffer.append("null");
-          else if (f.getValue().value instanceof Collection<?> || f.getValue().value.getClass().isArray()) {
-            buffer.append('[');
-            buffer.append(OMultiValue.getSize(f.getValue().value));
-            buffer.append(']');
-          } else if (f.getValue().value instanceof ORecord) {
-            final ORecord record = (ORecord) f.getValue().value;
-
-            if (record.getIdentity().isValid())
-              record.getIdentity().toString(buffer);
-            else
-              buffer.append(record.toString());
-          } else
-            buffer.append(f.getValue().value);
-
-          if (first)
-            first = false;
-        }
-        if (!first)
-          buffer.append('}');
-
-        if (_recordId != null && _recordId.isValid()) {
-          buffer.append(" v");
-          buffer.append(_recordVersion);
-        }
-
-        return buffer.toString();
-      } finally {
-        _dirty = saveDirtyStatus;
-        _contentChanged = oldUpdateContent;
+      if (_recordId != null) {
+        if (_recordId.isValid())
+          buffer.append(_recordId);
       }
+
+      boolean first = true;
+      for (Entry<String, ODocumentEntry> f : _fields.entrySet()) {
+        buffer.append(first ? '{' : ',');
+        buffer.append(f.getKey());
+        buffer.append(':');
+        if (f.getValue().value == null)
+          buffer.append("null");
+        else if (f.getValue().value instanceof Collection<?> || f.getValue().value instanceof Map<?, ?>
+            || f.getValue().value.getClass().isArray()) {
+          buffer.append('[');
+          buffer.append(OMultiValue.getSize(f.getValue().value));
+          buffer.append(']');
+        } else if (f.getValue().value instanceof ORecord) {
+          final ORecord record = (ORecord) f.getValue().value;
+
+          if (record.getIdentity().isValid())
+            record.getIdentity().toString(buffer);
+          else if (record instanceof ODocument)
+            buffer.append(((ODocument) record).toString(inspected));
+          else
+            buffer.append(record.toString());
+        } else
+          buffer.append(f.getValue().value);
+
+        if (first)
+          first = false;
+      }
+      if (!first)
+        buffer.append('}');
+
+      if (_recordId != null && _recordId.isValid()) {
+        buffer.append(" v");
+        buffer.append(_recordVersion);
+      }
+
+      return buffer.toString();
     } finally {
-      TO_STRING_DEPTH.get().decrement();
+      _dirty = saveDirtyStatus;
+      _contentChanged = oldUpdateContent;
     }
   }
 
@@ -811,7 +808,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     removeAllCollectionChangeListeners();
 
     _fields = null;
-    _size = 0;
+    _fieldSize = 0;
   }
 
   /**
@@ -1087,7 +1084,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     final OType oldType;
     if (entry == null) {
       entry = new ODocumentEntry();
-      _size++;
+      _fieldSize++;
       _fields.put(iFieldName, entry);
       entry.setCreated(true);
       knownProperty = false;
@@ -1161,7 +1158,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     entry.value = iPropertyValue;
     if (!entry.exist()) {
       entry.setExist(true);
-      _size++;
+      _fieldSize++;
     }
     addCollectionChangeListener(iFieldName, entry, iPropertyValue);
 
@@ -1197,7 +1194,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     } else {
       _fields.remove(iFieldName);
     }
-    _size--;
+    _fieldSize--;
 
     removeCollectionTimeLine(entry);
     removeCollectionChangeListener(entry, oldValue);
@@ -1405,7 +1402,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
           current.getValue().setChanged(true);
         } else
           iterator.remove();
-        _size--;
+        _fieldSize--;
         removeCollectionChangeListener(current.getValue(), current.getValue().value);
         removeCollectionTimeLine(current.getValue());
       }
@@ -1509,7 +1506,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     removeAllCollectionChangeListeners();
 
     _fields = null;
-    _size = 0;
+    _fieldSize = 0;
     _contentChanged = false;
     _schema = null;
     fetchSchemaIfCan();
@@ -1668,7 +1665,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         next.getValue().setExist(true);
       }
     }
-    _size = _fields.size();
+    _fieldSize = _fields.size();
 
     return this;
   }
@@ -1774,7 +1771,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   public int fields() {
     checkForLoading();
     checkForFields();
-    return _size;
+    return _fieldSize;
   }
 
   public boolean isEmpty() {
@@ -2102,7 +2099,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     ODocumentEntry entry = _fields.get(key);
     if (entry == null) {
       entry = new ODocumentEntry();
-      _size++;
+      _fieldSize++;
       _fields.put(key, entry);
     }
     return entry;
@@ -2279,7 +2276,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     if (_fields != null)
       _fields.clear();
-    _size = 0;
+    _fieldSize = 0;
 
   }
 
