@@ -89,7 +89,7 @@ public class OSQLFunctionDifference extends OSQLFunctionMultiValueAbstract<Set<O
 
       for (Object iParameter : iParams) {
         if (iParameter instanceof Collection<?>) {
-          addItemsToResult((Collection<Object>) value, result, rejected);
+          addItemsToResult((Collection<Object>) iParameter, result, rejected);
         } else {
           addItemToResult(iParameter, result, rejected);
         }
