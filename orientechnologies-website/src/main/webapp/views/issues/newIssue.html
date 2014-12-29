@@ -1,6 +1,9 @@
 <div class="container-fluid">
   <div class="row">
-    <div class="col-md-12">
+    <div class="col-md-1">
+      <avatar dim="50" user="user"></avatar>
+    </div>
+    <div class="col-md-11">
       <div class="panel panel-default">
         <div class="panel-body">
           <form role="form" name="newIssue">
@@ -57,7 +60,8 @@
               </div>
             </div>
             <div class="form-group">
-              <div mkeditor ng-model="issue.body"></div>
+              <div vue-editor preview="false"  ng-model="issue.body"></div>
+              <!--<div mkeditor ng-model="issue.body"></div>-->
             </div>
             <button type="submit" class="btn btn-success pull-right" ng-disabled="newIssue.$invalid" ng-click="save()">
               Submit new issue

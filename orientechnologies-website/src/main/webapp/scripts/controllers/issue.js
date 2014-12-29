@@ -161,6 +161,7 @@ angular.module('webappApp')
       $scope.scopes = data.plain();
     })
     User.whoami().then(function (data) {
+      $scope.user = data;
       $scope.isMember = User.isMember(ORGANIZATION);
       $scope.client = User.getClient(ORGANIZATION);
       User.environments().then(function (data) {
@@ -252,10 +253,12 @@ angular.module('webappApp')
     }
     $scope.comment = function () {
 
-      Repo.one($scope.repo).all("issues").one(number).all("comments").post($scope.newComment).then(function (data) {
-        $scope.comments.push(data.plain());
-        $scope.newComment.body = "";
-      });
+      if ($scope.newComment && $scope.newComment.body ) {
+        Repo.one($scope.repo).all("issues").one(number).all("comments").post($scope.newComment).then(function (data) {
+          $scope.comments.push(data.plain());
+          $scope.newComment.body = "";
+        });
+      }
     }
 
     $scope.close = function () {
