@@ -167,7 +167,7 @@
   flex: 1;
 }
 .tabs nav li.tab-current a {
-  color: #74777b;
+  color: #2CC185;
 }
 .tabs-style-linetriangle nav li.tab-current a:before {
   margin-left: -11px;
@@ -213,7 +213,7 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   line-height: 2.5;
-  color: #2CC185;
+  color: #74777b;
   text-decoration: none;
   outline: none;
 }

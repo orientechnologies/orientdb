@@ -15,6 +15,8 @@ public class OSiteSchemaPopupator {
     OrientGraph graph = new OrientGraph(db);
 
     graph.command(new OSQLSynchQuery<ODocument>("insert into OSequence set className='Issue', value=1")).execute();
+    graph.command(new OSQLSynchQuery<ODocument>("insert into OSequence set className='Environment', value=1")).execute();
+    graph.command(new OSQLSynchQuery<ODocument>("insert into OSequence set className='Scope', value=1")).execute();
     // OrientVertex org = graph.addVertex("class:" + OSiteSchema.Organization.class.getSimpleName(), new Object[] {
     // OSiteSchema.Organization.NAME.toString(), "Orient Technologies", OSiteSchema.Organization.DESCRIPTION.toString(),
     // "orientechnologies" });

@@ -162,26 +162,30 @@ body {
 .issues-panel .issue-open {
   color: #5cb85c;
 }
+
 .issues-panel .issue-closed {
   color: #d9534f;
 }
 
 .issues-panel .list-group-item .issue-info {
-   color: #999;
- }
+  color: #999;
+}
 
 .issues-panel .list-group-item-heading a {
   color: #000000;
 
 }
+
 .issues-panel .list-group-item-heading span.label {
   margin-left: 2px;
   margin-right: 2px;
 }
+
 .issues-panel .label-column span.label {
   margin-left: 2px;
   margin-right: 2px;
 }
+
 .issues-panel .list-group-item-heading a:hover {
   color: #428bca;
   text-decoration: none;
@@ -191,7 +195,6 @@ body {
   display: flex;
   align-items: center;
 }
-
 
 .text-center {
   text-align: center;
@@ -235,14 +238,16 @@ body {
 .issue-assignee .issue-assignee-avatar {
   text-align: center;
 }
+
 .edit-issue .state h3 {
   margin: 0px;
 }
+
 .inline-block {
   display: inline-block;
 }
 
-textarea.vue-editor  {
+textarea.vue-editor {
   border: none;
   width: 100%;
   border-right: 1px solid #ccc;
@@ -256,4 +261,9 @@ textarea.vue-editor  {
 
 code {
   color: #f66;
+}
+
+.areas-panel .panel span {
+  cursor: pointer;
+  margin: 0px 5px;
 }

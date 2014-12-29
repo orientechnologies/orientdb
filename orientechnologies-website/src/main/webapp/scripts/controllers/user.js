@@ -27,6 +27,12 @@ angular.module('webappApp')
 
     User.whoami().then(function (user) {
       $scope.user = user;
+      if (User.isMember(ORGANIZATION)) {
+        $scope.tabs.push({
+          title: 'Organization',
+          url: 'views/users/organization.html'
+        })
+      }
     });
   });
 
@@ -115,6 +121,65 @@ angular.module('webappApp')
       $scope.$hide();
     }
   })
+angular.module('webappApp')
+  .controller('UserOrgCtrl', function ($scope, User, Repo, Organization) {
+
+    $scope.areaEditing = false;
+    Organization.all("members").getList().then(function (data) {
+      $scope.members = data.plain();
+    })
+    Organization.all("repos").getList().then(function (data) {
+      $scope.repositories = data.plain();
+    })
+    Organization.all("scopes").getList().then(function (data) {
+      $scope.areas = data.plain();
+    })
+
+    $scope.addArea = function () {
+      $scope.areaEditing = true;
+      $scope.area = {}
+      $scope.area.members = [];
+    }
+    $scope.cancelArea = function () {
+      $scope.areaEditing = false;
+      $scope.area = {}
+      $scope.area.members = [];
+    }
+    $scope.saveArea = function () {
+      if (!$scope.area.number) {
+        Organization.all("scopes").post($scope.area).then(function (data) {
+          $scope.areas.push(data);
+          $scope.cancelArea();
+        })
+      } else {
+        var idx = $scope.areas.indexOf($scope.selectedArea);
+        Organization.all("scopes").one($scope.area.number.toString()).patch($scope.area).then(function (data) {
+          $scope.areas[idx] = data;
+          $scope.cancelArea();
+        })
+      }
+    }
+    $scope.toggleBackup = function (member) {
+      var idx = $scope.area.members.indexOf(member.name)
+      if (idx == -1) {
+        $scope.area.members.push(member.name);
+      } else {
+        $scope.area.members.splice(idx, 1);
+      }
+    }
+    $scope.selectArea = function (area) {
+      $scope.selectedArea = area;
+      $scope.area = angular.copy(area);
+      $scope.area.members = $scope.area.members.map(function (e) {
+        return e.name;
+      });
+      if (area.owner) {
+        $scope.area.owner = area.owner.name;
+      }
+      $scope.area.repository = area.repository.name;
+      $scope.areaEditing = true;
+    }
+  });
 
 
 angular.module('webappApp')
