@@ -23,9 +23,9 @@ import java.util.ArrayList;
 
 /**
  * String parser utility class
- * 
+ *
  * @author Luca Garulli
- * 
+ *
  */
 public class OStringParser {
 
@@ -79,8 +79,12 @@ public class OStringParser {
           buffer.append('\\');
           buffer.append(nextChar);
           i++;
-        } else
+        } else {
+          if(openGraph > 0) {
+            buffer.append('\\');
+          }
           escape = true;
+        }
 
         continue;
       }
