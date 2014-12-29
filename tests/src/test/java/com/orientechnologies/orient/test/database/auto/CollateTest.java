@@ -1,5 +1,13 @@
 package com.orientechnologies.orient.test.database.auto;
 
+import java.util.List;
+import java.util.Set;
+
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.collate.OCaseInsensitiveCollate;
 import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -10,13 +18,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-
-import java.util.List;
-import java.util.Set;
 
 @Test
 public class CollateTest extends DocumentDBBaseTest {
@@ -61,6 +63,29 @@ public class CollateTest extends DocumentDBBaseTest {
 
     for (ODocument document : result)
       Assert.assertEquals((document.<String> field("cip")).toUpperCase(), "VAL");
+  }
+
+  public void testQueryNotNullCi() {
+    final OSchema schema = database.getMetadata().getSchema();
+    OClass clazz = schema.createClass("collateTestNotNull");
+
+    OProperty csp = clazz.createProperty("bar", OType.STRING);
+    csp.setCollate(OCaseInsensitiveCollate.NAME);
+
+    ODocument document = new ODocument("collateTestNotNull");
+    document.field("bar", "baz");
+    document.save();
+
+    document = new ODocument("collateTestNotNull");
+    document.field("nobar", true);
+    document.save();
+
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from collateTestNotNull where bar is null"));
+    Assert.assertEquals(result.size(), 1);
+
+    result = database.query(new OSQLSynchQuery<ODocument>("select from collateTestNotNull where bar is not null"));
+    Assert.assertEquals(result.size(), 1);
+
   }
 
   public void testIndexQuery() {
