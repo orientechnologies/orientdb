@@ -15,22 +15,25 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+import java.io.IOException;
+import java.util.List;
+
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
-import java.util.List;
 
 @Test(groups = "sql-select")
 public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
@@ -359,4 +362,38 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
       Assert.assertTrue(d.field("bEE").equals("bEE"));
     }
   }
+
+  @Test()
+  public void testSelectExcludeFunction() throws IOException {
+    try {
+      database.command(new OCommandSQL("create class A extends V")).execute();
+      database.command(new OCommandSQL("create class B extends E")).execute();
+      OIdentifiable id = database.command(new OCommandSQL("insert into A (a,b) values ('a','b')")).execute();
+      OIdentifiable id2 = database.command(new OCommandSQL("insert into A (a,b) values ('a','b')")).execute();
+      OIdentifiable id3 = database.command(new OCommandSQL("insert into A (a,b) values ('a','b')")).execute();
+      OIdentifiable id4 = database.command(new OCommandSQL("insert into A (a,b) values ('a','b')")).execute();
+      database.command(new OCommandSQL("create edge B from " + id.getIdentity() + " to " + id2.getIdentity())).execute();
+      database.command(new OCommandSQL("create edge B from " + id.getIdentity() + " to " + id3.getIdentity())).execute();
+      database.command(new OCommandSQL("create edge B from " + id.getIdentity() + " to " + id4.getIdentity())).execute();
+      database.command(new OCommandSQL("create edge B from " + id4.getIdentity() + " to " + id.getIdentity())).execute();
+
+      List<ODocument> res = database.query(new OSQLSynchQuery<Object>("select a,b,in_B.out.exclude('out_B') from "
+          + id2.getIdentity() + " fetchplan in_B.out:1"));
+
+      Assert.assertNotNull(res.get(0).field("a"));
+      Assert.assertNotNull(res.get(0).field("b"));
+      Assert.assertNull((((List<ODocument>) res.get(0).field("in_B")).get(0).field("out_B")));
+
+      res = database.query(new OSQLSynchQuery<Object>("SELECT out.exclude('in_B') FROM ( SELECT EXPAND(in_B) FROM "
+          + id2.getIdentity() + " ) FETCHPLAN out:0 "));
+
+      Assert.assertNotNull(res.get(0).field("out"));
+      Assert.assertNotNull(((ODocument) res.get(0).field("out")).field("a"));
+      Assert.assertNull(((ODocument) res.get(0).field("out")).field("in_B"));
+    } finally {
+      database.command(new OCommandSQL("drop class A unsafe ")).execute();
+      database.command(new OCommandSQL("drop class b unsafe ")).execute();
+    }
+  }
+
 }
