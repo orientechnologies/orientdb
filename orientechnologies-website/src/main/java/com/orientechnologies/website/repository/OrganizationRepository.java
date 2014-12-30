@@ -7,57 +7,59 @@ import java.util.List;
 
 public interface OrganizationRepository extends BaseRepository<Organization> {
 
-  public Organization findOneByName(String name);
+    public Organization findOneByName(String name);
 
-  public List<Issue> findOrganizationIssues(String name, String q, String page, String perPage);
+    public OUser findOwnerByName(String name);
 
-  public Page<Issue> findOrganizationIssuesPagedProfiled(String name, String q, String page, String perPage);
+    public List<Issue> findOrganizationIssues(String name, String q, String page, String perPage);
 
-  public List<Repository> findOrganizationRepositories(String name);
+    public Page<Issue> findOrganizationIssuesPagedProfiled(String name, String q, String page, String perPage);
 
-  public List<Client> findClients(String name);
+    public List<Repository> findOrganizationRepositories(String name);
 
-  public List<Priority> findPriorities(String name);
+    public List<Client> findClients(String name);
 
-  public Priority findPriorityByNumber(String name, Integer number);
+    public List<Priority> findPriorities(String name);
 
-  public List<Scope> findScopes(String name);
+    public Priority findPriorityByNumber(String name, Integer number);
 
-  public Client findClient(String name, Integer clientId);
+    public List<Scope> findScopes(String name);
 
-  public Repository findOrganizationRepository(String name, String repo);
+    public Client findClient(String name, Integer clientId);
 
-  public Repository findOrganizationRepositoryByScope(String name, Integer scope);
+    public Repository findOrganizationRepository(String name, String repo);
 
-  public Issue findSingleOrganizationIssueByRepoAndNumber(String name, String repo, Long number);
+    public Repository findOrganizationRepositoryByScope(String name, Integer scope);
 
-  public Issue findSingleOrganizationIssueByNumber(String name, Long number);
+    public Issue findSingleOrganizationIssueByRepoAndNumber(String name, String repo, Long number);
 
-  public List<Comment> findSingleOrganizationIssueCommentByRepoAndNumber(String owner, String repo, Long number);
+    public Issue findSingleOrganizationIssueByNumber(String name, Long number);
 
-  public List<Event> findEventsByOwnerRepoAndIssueNumber(String owner, String repo, Long number);
+    public List<Comment> findSingleOrganizationIssueCommentByRepoAndNumber(String owner, String repo, Long number);
 
-  public List<OUser> findClientMembers(String org, Integer clientId);
+    public List<Event> findEventsByOwnerRepoAndIssueNumber(String owner, String repo, Long number);
 
-  public Environment findClientEnvironmentById(String org, Integer clientId, String env);
+    public List<OUser> findClientMembers(String org, Integer clientId);
 
-  public List<Environment> findClientEnvironments(String org, Integer clientId);
+    public Environment findClientEnvironmentById(String org, Integer clientId, String env);
 
-  public List<OUser> findTeamMembers(String owner, String repo);
+    public List<Environment> findClientEnvironments(String org, Integer clientId);
 
-  public Milestone findMilestoneByOwnerRepoAndNumberIssueAndNumberMilestone(String owner, String repo, Integer iNumber,
-      Integer mNumber);
+    public List<OUser> findTeamMembers(String owner, String repo);
 
-  public List<Milestone> findRepoMilestones(String owner, String repo);
+    public Milestone findMilestoneByOwnerRepoAndNumberIssueAndNumberMilestone(String owner, String repo, Integer iNumber,
+                                                                              Integer mNumber);
 
-  public List<Label> findRepoLabels(String owner, String repo);
+    public List<Milestone> findRepoMilestones(String owner, String repo);
 
-  List<OUser> findMembers(String name);
+    public List<Label> findRepoLabels(String owner, String repo);
 
-  List<Milestone> findMilestones(String name);
+    List<OUser> findMembers(String name);
 
-  List<Label> findLabels(String name);
+    List<Milestone> findMilestones(String name);
 
-  List<Sla> findClientEnvironmentSla(String organizationName, Integer clientId, String env);
+    List<Label> findLabels(String name);
+
+    List<Sla> findClientEnvironmentSla(String organizationName, Integer clientId, String env);
 
 }

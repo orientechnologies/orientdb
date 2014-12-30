@@ -1,5 +1,7 @@
 package com.orientechnologies.website.interceptor;
 
+import com.orientechnologies.website.OrientDBFactory;
+import com.orientechnologies.website.events.EventManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,58 +11,62 @@ import org.springframework.transaction.support.AbstractPlatformTransactionManage
 import org.springframework.transaction.support.DefaultTransactionStatus;
 import org.springframework.transaction.support.ResourceTransactionManager;
 
-import com.orientechnologies.website.OrientDBFactory;
-
 /**
  * Created by Enrico Risa on 17/11/14.
  */
 public class OrientDbTransactionManager extends AbstractPlatformTransactionManager implements ResourceTransactionManager {
 
-  /** The logger. */
-  private static Logger   log = LoggerFactory.getLogger(OrientDbTransactionManager.class);
-  @Autowired
-  private OrientDBFactory factory;
+    /**
+     * The logger.
+     */
+    private static Logger log = LoggerFactory.getLogger(OrientDbTransactionManager.class);
+    @Autowired
+    private OrientDBFactory factory;
 
-  @Override
-  protected Object doGetTransaction() throws TransactionException {
+    @Autowired
+    protected EventManager eventManager;
 
-    OrientTransaction transaction = new OrientTransaction();
+    @Override
+    protected Object doGetTransaction() throws TransactionException {
 
-    transaction.setGraph(factory.getGraph());
+        OrientTransaction transaction = new OrientTransaction();
 
-    return transaction;
-  }
+        transaction.setGraph(factory.getGraph());
 
-  @Override
-  protected void doBegin(Object transaction, TransactionDefinition transactionDefinition) throws TransactionException {
+        return transaction;
+    }
 
-    OrientTransaction tx = (OrientTransaction) transaction;
+    @Override
+    protected void doBegin(Object transaction, TransactionDefinition transactionDefinition) throws TransactionException {
 
-    log.debug("beginning transaction, db.hashCode() = {}", tx.getDatabase().hashCode());
-    if (!tx.getDatabase().getTransaction().isActive())
-      tx.getDatabase().begin();
-  }
+        OrientTransaction tx = (OrientTransaction) transaction;
 
-  @Override
-  protected void doCommit(DefaultTransactionStatus defaultTransactionStatus) throws TransactionException {
-    OrientTransaction tx = (OrientTransaction) defaultTransactionStatus.getTransaction();
+        log.debug("beginning transaction, db.hashCode() = {}", tx.getDatabase().hashCode());
+        if (!tx.getDatabase().getTransaction().isActive())
+            tx.getDatabase().begin();
+    }
 
-    log.debug("committing transaction, db.hashCode() = {}", tx.getDatabase().hashCode());
-    tx.getDatabase().commit();
-  }
+    @Override
+    protected void doCommit(DefaultTransactionStatus defaultTransactionStatus) throws TransactionException {
+        OrientTransaction tx = (OrientTransaction) defaultTransactionStatus.getTransaction();
 
-  @Override
-  protected void doRollback(DefaultTransactionStatus defaultTransactionStatus) throws TransactionException {
-    OrientTransaction tx = (OrientTransaction) defaultTransactionStatus.getTransaction();
-    tx.getDatabase().rollback();
-  }
+        log.debug("committing transaction, db.hashCode() = {}", tx.getDatabase().hashCode());
+        tx.getDatabase().commit();
+        eventManager.fireEvents();
+    }
 
-  @Override
-  public Object getResourceFactory() {
-    return null;
-  }
+    @Override
+    protected void doRollback(DefaultTransactionStatus defaultTransactionStatus) throws TransactionException {
+        OrientTransaction tx = (OrientTransaction) defaultTransactionStatus.getTransaction();
+        tx.getDatabase().rollback();
+    }
 
-  public void setGraphFactory(OrientDBFactory graphFactory) {
-    this.factory = graphFactory;
-  }
+    @Override
+    public Object getResourceFactory() {
+        return null;
+    }
+
+    public void setGraphFactory(OrientDBFactory graphFactory) {
+        this.factory = graphFactory;
+    }
 }

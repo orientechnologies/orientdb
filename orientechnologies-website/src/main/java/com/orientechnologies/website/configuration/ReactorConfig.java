@@ -1,5 +1,6 @@
 package com.orientechnologies.website.configuration;
 
+import com.orientechnologies.website.events.EventInternal;
 import com.orientechnologies.website.services.reactor.GitHubHandler;
 import com.orientechnologies.website.services.reactor.GitHubIssueImporter;
 import com.orientechnologies.website.services.reactor.ReactorMSG;
@@ -22,34 +23,40 @@ import static reactor.event.selector.Selectors.$;
 @Configuration
 public class ReactorConfig {
 
-  @Autowired
-  private GitHubIssueImporter             hubIssueImporter;
+    @Autowired
+    private GitHubIssueImporter hubIssueImporter;
 
-  @Autowired
-  protected List<GitHubHandler<Event<?>>> handlers;
+    @Autowired
+    protected List<GitHubHandler<Event<?>>> handlers;
 
-  @Autowired
-  private Reactor                         reactor;
+    @Autowired
+    protected List<EventInternal<?>> internalEvents;
 
-  @PostConstruct
-  public void startup() {
+    @Autowired
+    private Reactor reactor;
 
-    reactor.on($(ReactorMSG.ISSUE_IMPORT), hubIssueImporter);
-    for (GitHubHandler<Event<?>> handler : handlers) {
-      for (String s : handler.handleWhat()) {
-        reactor.on($(s), handler);
-      }
+    @PostConstruct
+    public void startup() {
+
+        reactor.on($(ReactorMSG.ISSUE_IMPORT), hubIssueImporter);
+        for (GitHubHandler<Event<?>> handler : handlers) {
+            for (String s : handler.handleWhat()) {
+                reactor.on($(s), handler);
+            }
+        }
+        for (EventInternal<?> event : internalEvents) {
+            reactor.on($(event.handleWhat()), event);
+        }
     }
-  }
 
-  @Bean
-  Environment env() {
-    return new Environment();
-  }
+    @Bean
+    Environment env() {
+        return new Environment();
+    }
 
-  @Bean
-  Reactor createReactor(Environment env) {
-    return Reactors.reactor().env(env).dispatcher(Environment.THREAD_POOL).get();
-  }
+    @Bean
+    Reactor createReactor(Environment env) {
+        return Reactors.reactor().env(env).dispatcher(Environment.THREAD_POOL).get();
+    }
 
 }

@@ -289,6 +289,7 @@ public class IssueServiceImpl implements IssueService {
   @Override
   public void changeScope(Issue issue, Scope scope) {
     Scope oldScope = issue.getScope();
+    issue.setScope(scope);
     createScopeRelationshipt(issue, scope);
     IssueEventInternal e = new IssueEventInternal();
     e.setCreatedAt(new Date());

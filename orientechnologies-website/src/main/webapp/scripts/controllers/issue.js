@@ -17,7 +17,10 @@ angular.module('webappApp')
       close: true
     }
 
-    $scope.search = function () {
+    $scope.search = function (page) {
+      if (!page) {
+        $scope.page = 1;
+      }
       Organization.all('issues').customGET("", {q: $scope.query, page: $scope.page}).then(function (data) {
         $scope.issues = data.content;
         $scope.pager = data.page;
@@ -140,7 +143,7 @@ angular.module('webappApp')
     $scope.changePage = function (val) {
       if (val > 0 && val <= $scope.pager.totalPages) {
         $scope.page = val;
-        $scope.search();
+        $scope.search(true);
       }
     }
     $scope.search();
@@ -253,7 +256,7 @@ angular.module('webappApp')
     }
     $scope.comment = function () {
 
-      if ($scope.newComment && $scope.newComment.body ) {
+      if ($scope.newComment && $scope.newComment.body) {
         Repo.one($scope.repo).all("issues").one(number).all("comments").post($scope.newComment).then(function (data) {
           $scope.comments.push(data.plain());
           $scope.newComment.body = "";

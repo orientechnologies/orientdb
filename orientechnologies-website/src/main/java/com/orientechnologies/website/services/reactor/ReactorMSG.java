@@ -5,16 +5,16 @@ package com.orientechnologies.website.services.reactor;
  */
 public enum ReactorMSG {
 
-  ISSUE_IMPORT("issue/import");
+    ISSUE_IMPORT("issue/import"), INTERNAL_EVENT("internalEvent");
 
-  private String name;
+    private String name;
 
-  ReactorMSG(String name) {
-    this.name = name;
-  }
+    ReactorMSG(String name) {
+        this.name = name;
+    }
 
-  @Override
-  public String toString() {
-    return name;
-  }
+    @Override
+    public String toString() {
+        return name;
+    }
 }
