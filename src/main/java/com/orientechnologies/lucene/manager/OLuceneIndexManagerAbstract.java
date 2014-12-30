@@ -104,6 +104,10 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   public void deleteDocument(Query query) {
     try {
       reopenToken = mgrWriter.deleteDocuments(query);
+      if (!mgrWriter.getIndexWriter().hasDeletions()) {
+        OLogManager.instance().error(this, "Error on deleting document by query '%s' to Lucene index",
+            new OIndexException("Error deleting document"), query);
+      }
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on deleting document by query '%s' to Lucene index", e, query);
     }
@@ -205,13 +209,27 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
   }
 
   public long size(ValuesTransformer<V> transformer) {
+
     IndexReader reader = null;
+    IndexSearcher searcher = null;
     try {
       reader = getSearcher().getIndexReader();
     } catch (IOException e) {
       OLogManager.instance().error(this, "Error on getting size of Lucene index", e);
+    } finally {
+      if (searcher != null) {
+        release(searcher);
+      }
     }
     return reader.numDocs();
+  }
+
+  public void release(IndexSearcher searcher) {
+    try {
+      searcherManager.release(searcher);
+    } catch (IOException e) {
+      OLogManager.instance().error(this, "Error on releasing index searcher  of Lucene index", e);
+    }
   }
 
   public void setManagedIndex(OIndex index) {
