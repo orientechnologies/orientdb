@@ -39,7 +39,7 @@ public class FetchPlanTest extends DocumentDBBaseTest {
 
   @Test
   public void queryNoFetchPlan() {
-		createBasicTestSchema();
+    createBasicTestSchema();
 
     final long times = Orient.instance().getProfiler().getCounter("Cache.reused");
 
@@ -66,6 +66,18 @@ public class FetchPlanTest extends DocumentDBBaseTest {
       linked = ((ODocument) d.field("location"));
       if (linked != null)
         Assert.assertNotNull(database.getLocalCache().findRecord(linked.getIdentity()));
+    }
+  }
+
+  @Test(dependsOnMethods = "queryWithFetchPlan")
+  public void queryWithExcludeFetchPlan() {
+    List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>("select * from Profile where nicl is not null and followers is not null")
+        .setFetchPlan("followers:-2 nick:-1"));
+
+    ODocument linked;
+    for (ODocument d : resultset) {
+      Assert.assertNotNull(d.field("nick"));
+      Assert.assertNull(d.field("followers"));
     }
   }
 }
