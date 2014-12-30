@@ -19,6 +19,16 @@
  */
 package com.orientechnologies.orient.core.fetch;
 
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
@@ -31,14 +41,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
-
-import java.io.IOException;
-import java.lang.reflect.Array;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Helper class for fetching.
@@ -263,13 +265,16 @@ public class OFetchHelper {
     Object fieldValue;
 
     iContext.onBeforeFetch(record);
+    Set<String> toRemove = new HashSet<String>();
 
     for (String fieldName : record.fieldNames()) {
       String fieldPath = !iFieldPathFromRoot.isEmpty() ? iFieldPathFromRoot + "." + fieldName : fieldName;
       int depthLevel;
       depthLevel = getDepthLevel(iFetchPlan, fieldPath);
-      if (depthLevel == -2)
+      if (depthLevel == -2) {
+        toRemove.add(fieldName);
         continue;
+      }
       if (iFieldDepthLevel > -1)
         depthLevel = iFieldDepthLevel;
 
@@ -312,7 +317,9 @@ public class OFetchHelper {
         }
       }
     }
-
+    for (String fieldName : toRemove) {
+      iListener.skipStandardField(record, fieldName, iContext, iUserObject, iFormat);
+    }
     iContext.onAfterFetch(record);
   }
 

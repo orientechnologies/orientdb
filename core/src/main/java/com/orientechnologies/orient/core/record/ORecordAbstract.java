@@ -59,8 +59,7 @@ public abstract class ORecordAbstract implements ORecord {
   protected ORecordElement.STATUS                _status                    = ORecordElement.STATUS.LOADED;
   protected transient Set<ORecordListener>       _listeners                 = null;
 
-  private transient Set<OIdentityChangeListener> newIdentityChangeListeners = Collections
-                                                                                .newSetFromMap(new WeakHashMap<OIdentityChangeListener, Boolean>());
+  private transient Set<OIdentityChangeListener> newIdentityChangeListeners = null;
 
   public ORecordAbstract() {
   }
@@ -200,7 +199,7 @@ public abstract class ORecordAbstract implements ORecord {
   }
 
   public int getVersion() {
-//    checkForLoading();
+    // checkForLoading();
     return _recordVersion.getCounter();
   }
 
@@ -209,7 +208,7 @@ public abstract class ORecordAbstract implements ORecord {
   }
 
   public ORecordVersion getRecordVersion() {
-//    checkForLoading();
+    // checkForLoading();
     return _recordVersion;
   }
 
@@ -394,15 +393,19 @@ public abstract class ORecordAbstract implements ORecord {
   protected abstract byte getRecordType();
 
   protected void onBeforeIdentityChanged(final ORecord iRecord) {
-    for (OIdentityChangeListener changeListener : newIdentityChangeListeners)
-      changeListener.onBeforeIdentityChange(this);
+    if (newIdentityChangeListeners != null) {
+      for (OIdentityChangeListener changeListener : newIdentityChangeListeners)
+        changeListener.onBeforeIdentityChange(this);
+    }
   }
 
   protected void onAfterIdentityChanged(final ORecord iRecord) {
     invokeListenerEvent(ORecordListener.EVENT.IDENTITY_CHANGED);
 
-    for (OIdentityChangeListener changeListener : newIdentityChangeListeners)
-      changeListener.onAfterIdentityChange(this);
+    if (newIdentityChangeListeners != null) {
+      for (OIdentityChangeListener changeListener : newIdentityChangeListeners)
+        changeListener.onAfterIdentityChange(this);
+    }
 
   }
 
@@ -446,11 +449,14 @@ public abstract class ORecordAbstract implements ORecord {
   }
 
   protected void addIdentityChangeListener(OIdentityChangeListener identityChangeListener) {
+    if (newIdentityChangeListeners == null)
+      newIdentityChangeListeners = Collections.newSetFromMap(new WeakHashMap<OIdentityChangeListener, Boolean>());
     newIdentityChangeListeners.add(identityChangeListener);
   }
 
   protected void removeIdentityChangeListener(OIdentityChangeListener identityChangeListener) {
-    newIdentityChangeListeners.remove(identityChangeListener);
+    if (newIdentityChangeListeners != null)
+      newIdentityChangeListeners.remove(identityChangeListener);
   }
 
   protected void setup() {

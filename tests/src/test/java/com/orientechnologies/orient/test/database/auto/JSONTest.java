@@ -19,6 +19,7 @@ import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -620,8 +621,7 @@ public class JSONTest extends DocumentDBBaseTest {
         + "                            {\n"
         + "\n"
         + "                                \"datavalue\":{\n"
-        + "                                    \"value\":\"\\\"\\\"\",\n"
-        + "\n"
+        + "                                    \"value\":\"\\\"\\\"\" \n"
         + "                                }\n"
         + "                        }\n"
         + "                ]   \n"
@@ -631,7 +631,10 @@ public class JSONTest extends DocumentDBBaseTest {
         + "} ");
     doc.fromJSON(builder.toString());
     Assert.assertEquals(doc.field("foo.three"), "a");
-    //TODO complete this
+    Collection c = doc.field("foo.bar.P357");
+    Assert.assertEquals(c.size(), 1);
+    Map doc2 = (Map) c.iterator().next();
+    Assert.assertEquals(((Map)doc2.get("datavalue")).get("value"), "\"\"");
   }
 
   public void testEscapingDoubleQuotes2(){
@@ -657,7 +660,10 @@ public class JSONTest extends DocumentDBBaseTest {
 
     doc.fromJSON(builder.toString());
     Assert.assertEquals(doc.field("foo.three"), "a");
-    //TODO complete this
+    Collection c = doc.field("foo.bar.P357");
+    Assert.assertEquals(c.size(), 1);
+    Map doc2 = (Map) c.iterator().next();
+    Assert.assertEquals(((Map)doc2.get("datavalue")).get("value"), "\"");
   }
 
   public void testEscapingDoubleQuotes3(){
@@ -681,9 +687,131 @@ public class JSONTest extends DocumentDBBaseTest {
         + "} ");
 
     doc.fromJSON(builder.toString());
-    //TODO complete this
+    Collection c = doc.field("foo.bar.P357");
+    Assert.assertEquals(c.size(), 1);
+    Map doc2 = (Map) c.iterator().next();
+    Assert.assertEquals(((Map)doc2.get("datavalue")).get("value"), "\"");
   }
 
+
+
+  public void testEmbeddedQuotes(){
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+    //FROM ISSUE 3151
+    builder.append("{\"mainsnak\":{\"datavalue\":{\"value\":\"Sub\\\\urban\"}}}");
+    doc.fromJSON(builder.toString());
+    Assert.assertEquals(doc.field("mainsnak.datavalue.value"), "Sub\\urban");
+  }
+
+
+  public void testEmbeddedQuotes2(){
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+    builder.append("{\"datavalue\":{\"value\":\"Sub\\\\urban\"}}");
+    doc.fromJSON(builder.toString());
+    Assert.assertEquals(doc.field("datavalue.value"), "Sub\\urban");
+  }
+
+  public void testEmbeddedQuotes2a(){
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+    builder.append("{\"datavalue\":\"Sub\\\\urban\"}");
+    doc.fromJSON(builder.toString());
+    Assert.assertEquals(doc.field("datavalue"), "Sub\\urban");
+  }
+
+  public void testEmbeddedQuotes3(){
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+    builder.append("{\"mainsnak\":{\"datavalue\":{\"value\":\"Suburban\\\\\"\"}}}");
+    doc.fromJSON(builder.toString());
+    Assert.assertEquals(doc.field("mainsnak.datavalue.value"), "Suburban\\\"");
+  }
+
+  public void testEmbeddedQuotes4() {
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+    builder.append("{\"datavalue\":{\"value\":\"Suburban\\\\\"\"}}");
+    doc.fromJSON(builder.toString());
+    Assert.assertEquals(doc.field("datavalue.value"), "Suburban\\\"");
+  }
+
+  public void testEmbeddedQuotes5() {
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+    builder.append("{\"datavalue\":\"Suburban\\\\\"\"}");
+    doc.fromJSON(builder.toString());
+    Assert.assertEquals(doc.field("datavalue"), "Suburban\\\"");
+  }
+
+  public void testEmbeddedQuotes6(){
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+    builder.append("{\"mainsnak\":{\"datavalue\":{\"value\":\"Suburban\\\\\"}}}");
+    doc.fromJSON(builder.toString());
+    Assert.assertEquals(doc.field("mainsnak.datavalue.value"), "Suburban\\");
+  }
+
+  public void testEmbeddedQuotes7() {
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+    builder.append("{\"datavalue\":{\"value\":\"Suburban\\\\\"}}");
+    doc.fromJSON(builder.toString());
+    Assert.assertEquals(doc.field("datavalue.value"), "Suburban\\");
+  }
+
+  public void testEmbeddedQuotes8() {
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+    builder.append("{\"datavalue\":\"Suburban\\\\\"}");
+    doc.fromJSON(builder.toString());
+    Assert.assertEquals(doc.field("datavalue"), "Suburban\\");
+  }
+
+  public void testEmpty(){
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+    builder.append("{}");
+    doc.fromJSON(builder.toString());
+    Assert.assertEquals(doc.fieldNames().length,0);
+  }
+
+  public void testInvalidJson(){
+    ODocument doc = new ODocument();
+    try {
+      doc.fromJSON("{");
+      Assert.fail();
+    }catch (OSerializationException e){
+    }
+
+    try {
+      doc.fromJSON("{\"foo\":{}");
+      Assert.fail();
+    }catch (OSerializationException e){
+    }
+
+
+    try {
+      doc.fromJSON("{{}");
+      Assert.fail();
+    }catch (OSerializationException e){
+    }
+
+    try {
+      doc.fromJSON("{}}");
+      Assert.fail();
+    }catch (OSerializationException e){
+    }
+
+
+    try {
+      doc.fromJSON("}");
+      Assert.fail();
+    }catch (OSerializationException e){
+    }
+
+  }
 
   public void testDates() {
     Date now = new Date(1350518475000l);

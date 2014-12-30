@@ -7,11 +7,13 @@ import java.util.Set;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.ONetworkThreadLocalSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
@@ -20,6 +22,7 @@ public class TestSqlEmbeddedResult {
   @Test
   public void testEmbeddedRusultTypeNotLink() {
     ODatabaseDocument db = new ODatabaseDocumentTx("memory:" + TestSqlEmbeddedResult.class.getSimpleName());
+    ORecordSerializer ser = ((ODatabaseDocumentInternal)db).getSerializer();
     db.create();
     db.getMetadata().getSchema().createClass("Test");
     ODocument doc = new ODocument("Test");
@@ -35,7 +38,7 @@ public class TestSqlEmbeddedResult {
     Assert.assertEquals(res.size(), 1);
     ODocument ele = res.get(0);
     Assert.assertNotNull(ele.field("el"));
-    ONetworkThreadLocalSerializer.setNetworkSerializer(new ORecordSerializerBinary());
+    ONetworkThreadLocalSerializer.setNetworkSerializer(ser);
 
     byte [] bt = ele.toStream();
     ODocument read = new ODocument(bt);
@@ -45,7 +48,7 @@ public class TestSqlEmbeddedResult {
     ONetworkThreadLocalSerializer.setNetworkSerializer(null);
     res = db.query(new OSQLSynchQuery<Object>("select $Pics as el FROM Test LET $Pics = (select expand( rel.include('format')) from $current)"));
     
-    ONetworkThreadLocalSerializer.setNetworkSerializer(new ORecordSerializerBinary());
+    ONetworkThreadLocalSerializer.setNetworkSerializer(ser);
     Assert.assertEquals(res.size(), 1);
     ele = res.get(0);
     Assert.assertNotNull(ele.field("el"));
