@@ -514,7 +514,7 @@ public abstract class OBaseParser {
       for (; parserCurrentPos < text2Use.length(); parserCurrentPos++) {
         final char c = text2Use.charAt(parserCurrentPos);
 
-        if (c == '\\' && ((parserCurrentPos + 1) < text2Use.length())) {
+        if (escapePos == -1 && c == '\\' && ((parserCurrentPos + 1) < text2Use.length())) {
           // ESCAPE CHARS
 
           if (openGraph == 0) {

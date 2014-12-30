@@ -713,6 +713,62 @@ public class JSONTest extends DocumentDBBaseTest {
     Assert.assertEquals(doc.field("datavalue.value"), "Sub\\urban");
   }
 
+  public void testEmbeddedQuotes2a(){
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+    builder.append("{\"datavalue\":\"Sub\\\\urban\"}");
+    doc.fromJSON(builder.toString());
+    Assert.assertEquals(doc.field("datavalue"), "Sub\\urban");
+  }
+
+  public void testEmbeddedQuotes3(){
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+    builder.append("{\"mainsnak\":{\"datavalue\":{\"value\":\"Suburban\\\\\"\"}}}");
+    doc.fromJSON(builder.toString());
+    Assert.assertEquals(doc.field("mainsnak.datavalue.value"), "Suburban\\\"");
+  }
+
+  public void testEmbeddedQuotes4() {
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+    builder.append("{\"datavalue\":{\"value\":\"Suburban\\\\\"\"}}");
+    doc.fromJSON(builder.toString());
+    Assert.assertEquals(doc.field("datavalue.value"), "Suburban\\\"");
+  }
+
+  public void testEmbeddedQuotes5() {
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+    builder.append("{\"datavalue\":\"Suburban\\\\\"\"}");
+    doc.fromJSON(builder.toString());
+    Assert.assertEquals(doc.field("datavalue"), "Suburban\\\"");
+  }
+
+  public void testEmbeddedQuotes6(){
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+    builder.append("{\"mainsnak\":{\"datavalue\":{\"value\":\"Suburban\\\\\"}}}");
+    doc.fromJSON(builder.toString());
+    Assert.assertEquals(doc.field("mainsnak.datavalue.value"), "Suburban\\");
+  }
+
+  public void testEmbeddedQuotes7() {
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+    builder.append("{\"datavalue\":{\"value\":\"Suburban\\\\\"}}");
+    doc.fromJSON(builder.toString());
+    Assert.assertEquals(doc.field("datavalue.value"), "Suburban\\");
+  }
+
+  public void testEmbeddedQuotes8() {
+    ODocument doc = new ODocument();
+    StringBuilder builder = new StringBuilder();
+    builder.append("{\"datavalue\":\"Suburban\\\\\"}");
+    doc.fromJSON(builder.toString());
+    Assert.assertEquals(doc.field("datavalue"), "Suburban\\");
+  }
+
   public void testEmpty(){
     ODocument doc = new ODocument();
     StringBuilder builder = new StringBuilder();

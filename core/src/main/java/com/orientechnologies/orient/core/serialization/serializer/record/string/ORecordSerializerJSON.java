@@ -22,12 +22,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 import java.io.IOException;
 import java.io.StringWriter;
 import java.text.ParseException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.parser.OStringParser;
@@ -35,12 +30,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
-import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
-import com.orientechnologies.orient.core.db.record.ORecordLazySet;
-import com.orientechnologies.orient.core.db.record.OTrackedList;
-import com.orientechnologies.orient.core.db.record.OTrackedSet;
+import com.orientechnologies.orient.core.db.record.*;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
@@ -705,10 +695,27 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   }
 
   private String decodeJSON(String iFieldValueAsString) {
-    iFieldValueAsString = OStringParser.replaceAll(iFieldValueAsString, "\\\\", "\\");
-    iFieldValueAsString = OStringParser.replaceAll(iFieldValueAsString, "\\\"", "\"");
-    iFieldValueAsString = OStringParser.replaceAll(iFieldValueAsString, "\\/", "/");
-    return iFieldValueAsString;
+    if (iFieldValueAsString == null) {
+      return null;
+    }
+    StringBuilder builder = new StringBuilder(iFieldValueAsString.length());
+    boolean quoting = false;
+    for (char c : iFieldValueAsString.toCharArray()) {
+      if (quoting) {
+        if (c != '\\' && c != '\"' && c != '/') {
+          builder.append('\\');
+        }
+        builder.append(c);
+        quoting = false;
+      } else {
+        if (c == '\\') {
+          quoting = true;
+        } else {
+          builder.append(c);
+        }
+      }
+    }
+    return builder.toString();
   }
 
   private boolean hasTypeField(final String[] fields) {
