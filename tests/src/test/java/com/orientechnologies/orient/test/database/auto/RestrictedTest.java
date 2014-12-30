@@ -265,6 +265,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
 
   }
 
+  @Test(dependsOnMethods = "testTruncateUnderlyingCluster")
   public void testUpdateRestricted() {
     database.open("admin", "admin");
     database.getMetadata().getSchema()
