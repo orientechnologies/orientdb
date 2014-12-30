@@ -28,15 +28,13 @@ import java.util.Set;
  * @since 6/25/14
  */
 public interface OWriteAheadLog {
-  OLogSequenceNumber logFuzzyCheckPointStart() throws IOException;
+  OLogSequenceNumber logFuzzyCheckPointStart(OLogSequenceNumber flushedLsn) throws IOException;
 
   OLogSequenceNumber logFuzzyCheckPointEnd() throws IOException;
 
   OLogSequenceNumber logFullCheckpointStart() throws IOException;
 
   OLogSequenceNumber logFullCheckpointEnd() throws IOException;
-
-  void logDirtyPages(Set<ODirtyPage> dirtyPages) throws IOException;
 
   OLogSequenceNumber getLastCheckpoint();
 

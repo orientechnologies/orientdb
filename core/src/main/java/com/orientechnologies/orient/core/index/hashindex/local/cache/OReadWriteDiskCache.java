@@ -878,10 +878,6 @@ public class OReadWriteDiskCache implements ODiskCache {
     return writeCache.checkStoredPages(commandOutputListener);
   }
 
-  @Override
-  public Set<ODirtyPage> logDirtyPagesTable() throws IOException {
-    return writeCache.logDirtyPagesTable();
-  }
 
   @Override
   public void delete() throws IOException {

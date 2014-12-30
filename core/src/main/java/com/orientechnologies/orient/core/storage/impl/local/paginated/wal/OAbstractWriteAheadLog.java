@@ -37,12 +37,12 @@ public abstract class OAbstractWriteAheadLog implements OWriteAheadLog {
   protected final Lock         syncObject = new ReentrantLock();
   protected OLogSequenceNumber lastCheckpoint;
 
-  public OLogSequenceNumber logFuzzyCheckPointStart() throws IOException {
+  public OLogSequenceNumber logFuzzyCheckPointStart(OLogSequenceNumber flushedLsn) throws IOException {
     syncObject.lock();
     try {
       checkForClose();
 
-      OFuzzyCheckpointStartRecord record = new OFuzzyCheckpointStartRecord(lastCheckpoint);
+      OFuzzyCheckpointStartRecord record = new OFuzzyCheckpointStartRecord(lastCheckpoint, flushedLsn);
       log(record);
       return record.getLsn();
     } finally {
@@ -73,17 +73,6 @@ public abstract class OAbstractWriteAheadLog implements OWriteAheadLog {
       checkForClose();
 
       return log(new OCheckpointEndRecord());
-    } finally {
-      syncObject.unlock();
-    }
-  }
-
-  public void logDirtyPages(Set<ODirtyPage> dirtyPages) throws IOException {
-    syncObject.lock();
-    try {
-      checkForClose();
-
-      log(new ODirtyPagesRecord(dirtyPages));
     } finally {
       syncObject.unlock();
     }

@@ -23,7 +23,6 @@ import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -156,6 +155,17 @@ public class OWOWCache {
 
       if (pageFlushInterval > 0)
         commitExecutor.scheduleWithFixedDelay(new PeriodicFlushTask(), pageFlushInterval, pageFlushInterval, TimeUnit.MILLISECONDS);
+
+      if (writeAheadLog != null) {
+        OLogSequenceNumber minFlushedLSN = writeAheadLog.getFlushedLSN();
+        if (minFlushedLSN == null)
+          minFlushedLSN = new OLogSequenceNumber(-1, -1);
+
+        final long fuzzyCheckPointInterval = OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsInteger();
+        commitExecutor.scheduleWithFixedDelay(new PeriodicalFuzzyCheckpointTask(minFlushedLSN), fuzzyCheckPointInterval,
+            fuzzyCheckPointInterval, TimeUnit.SECONDS);
+      }
+
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -607,47 +617,18 @@ public class OWOWCache {
     }
   }
 
-  public Set<ODirtyPage> logDirtyPagesTable() throws IOException {
-    filesLock.acquireWriteLock();
-    try {
-      if (writeAheadLog == null)
-        return Collections.emptySet();
-
-      Set<ODirtyPage> logDirtyPages = new HashSet<ODirtyPage>(writeGroups.size() * 16);
-      for (Map.Entry<GroupKey, WriteGroup> writeGroupEntry : writeGroups.entrySet()) {
-        final GroupKey groupKey = writeGroupEntry.getKey();
-        final WriteGroup writeGroup = writeGroupEntry.getValue();
-        for (int i = 0; i < 16; i++) {
-          final OCachePointer cachePointer = writeGroup.pages[i];
-          if (cachePointer != null) {
-            final OLogSequenceNumber lastFlushedLSN = cachePointer.getLastFlushedLsn();
-            final String fileName = files.get(groupKey.fileId).getName();
-            final long pageIndex = (groupKey.groupIndex << 4) + i;
-            final ODirtyPage logDirtyPage = new ODirtyPage(fileName, pageIndex, lastFlushedLSN);
-            logDirtyPages.add(logDirtyPage);
-          }
-        }
-      }
-
-      writeAheadLog.logDirtyPages(logDirtyPages);
-      return logDirtyPages;
-    } finally {
-      filesLock.releaseWriteLock();
-    }
-  }
-
   public void close(long fileId, boolean flush) throws IOException {
     filesLock.acquireWriteLock();
     try {
-			if (!isOpen(fileId))
-				return;
+      if (!isOpen(fileId))
+        return;
 
       if (flush)
         flush(fileId);
       else
         removeCachedPages(fileId);
 
-			files.get(fileId).close();
+      files.get(fileId).close();
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -929,7 +910,7 @@ public class OWOWCache {
       addAllocatedSpace(space);
 
       final ODirectMemoryPointer pointer = new ODirectMemoryPointer(content);
-      dataPointer = new OCachePointer(pointer, new OLogSequenceNumber(0, -1));
+      dataPointer = new OCachePointer(pointer, new OLogSequenceNumber(-1, -1));
     }
 
     return dataPointer;
@@ -1171,6 +1152,58 @@ public class OWOWCache {
       }
 
       return flushedWriteGroups;
+    }
+  }
+
+  private final class PeriodicalFuzzyCheckpointTask implements Runnable {
+    private OLogSequenceNumber flushedLsn;
+
+    private PeriodicalFuzzyCheckpointTask(OLogSequenceNumber flushedLsn) {
+      this.flushedLsn = flushedLsn;
+      if (this.flushedLsn.compareTo(new OLogSequenceNumber(-1, -1)) <= 0)
+        this.flushedLsn = new OLogSequenceNumber(-1, -1);
+    }
+
+    @Override
+    public void run() {
+      OLogSequenceNumber minLsn = new OLogSequenceNumber(-1, -1);
+
+      for (Map.Entry<GroupKey, WriteGroup> entry : writeGroups.entrySet()) {
+        Lock groupLock = lockManager.acquireExclusiveLock(entry.getKey());
+        try {
+          WriteGroup group = entry.getValue();
+          for (int i = 0; i < 16; i++) {
+            final OCachePointer pagePointer = group.pages[i];
+            if (pagePointer != null) {
+              if (minLsn.compareTo(pagePointer.getLastFlushedLsn()) < 0) {
+                minLsn = pagePointer.getLastFlushedLsn();
+              }
+            }
+          }
+        } finally {
+          lockManager.releaseLock(groupLock);
+        }
+      }
+
+      if (flushedLsn.compareTo(minLsn) < 0)
+        flushedLsn = minLsn;
+
+      OLogManager.instance().debug(this, "Start fuzzy checkpoint flushed LSN is %s", flushedLsn);
+      try {
+        writeAheadLog.logFuzzyCheckPointStart(flushedLsn);
+        for (OFileClassic fileClassic : files.values()) {
+          fileClassic.synch();
+        }
+        writeAheadLog.logFuzzyCheckPointEnd();
+        writeAheadLog.flush();
+
+        if (flushedLsn.compareTo(new OLogSequenceNumber(-1, -1)) > 0)
+          writeAheadLog.cutTill(flushedLsn);
+      } catch (IOException ioe) {
+        OLogManager.instance().error(this, "Error during fuzzy checkpoint", ioe);
+      }
+
+      OLogManager.instance().debug(this, "End fuzzy checkpoint");
     }
   }
 

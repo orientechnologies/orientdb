@@ -1025,6 +1025,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       }
 
       recalculateLogSize();
+      fixMasterRecords();
     } finally {
       syncObject.unlock();
     }

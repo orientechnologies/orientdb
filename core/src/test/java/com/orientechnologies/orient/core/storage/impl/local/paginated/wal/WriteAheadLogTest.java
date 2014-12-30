@@ -76,13 +76,13 @@ public class WriteAheadLogTest {
   }
 
   public void testLogCheckpoints() throws Exception {
-    OLogSequenceNumber checkPointOneLSN = writeAheadLog.logFuzzyCheckPointStart();
+    OLogSequenceNumber checkPointOneLSN = writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
     writeAheadLog.logFullCheckpointEnd();
 
     OLogSequenceNumber checkPointTwoLSN = writeAheadLog.logFullCheckpointStart();
     writeAheadLog.logFullCheckpointEnd();
 
-    OLogSequenceNumber checkPointThreeLSN = writeAheadLog.logFuzzyCheckPointStart();
+    OLogSequenceNumber checkPointThreeLSN = writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
     OLogSequenceNumber end = writeAheadLog.logFuzzyCheckPointEnd();
 
     OFuzzyCheckpointStartRecord fuzzyCheckpointStartRecordOne = (OFuzzyCheckpointStartRecord) writeAheadLog.read(checkPointOneLSN);
@@ -128,7 +128,7 @@ public class WriteAheadLogTest {
     TestRecord writtenRecord = new TestRecord(30, false);
 
     writeAheadLog.log(writtenRecord);
-    OLogSequenceNumber masterLSN = writeAheadLog.logFuzzyCheckPointStart();
+    OLogSequenceNumber masterLSN = writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
 
     OLogSequenceNumber end = writeAheadLog.logFuzzyCheckPointEnd();
 
@@ -145,12 +145,12 @@ public class WriteAheadLogTest {
   public void testSecondMasterRecordUpdate() throws Exception {
     writeAheadLog.log(new TestRecord(30, false));
 
-    writeAheadLog.logFuzzyCheckPointStart();
+    writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
     writeAheadLog.logFuzzyCheckPointEnd();
 
     writeAheadLog.log(new TestRecord(30, false));
 
-    OLogSequenceNumber checkpointLSN = writeAheadLog.logFuzzyCheckPointStart();
+    OLogSequenceNumber checkpointLSN = writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
     OLogSequenceNumber end = writeAheadLog.logFuzzyCheckPointEnd();
 
     Assert.assertEquals(writeAheadLog.getLastCheckpoint(), checkpointLSN);
@@ -165,17 +165,17 @@ public class WriteAheadLogTest {
   public void testThirdMasterRecordUpdate() throws Exception {
     writeAheadLog.log(new TestRecord(30, false));
 
-    writeAheadLog.logFuzzyCheckPointStart();
+    writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
     writeAheadLog.logFuzzyCheckPointEnd();
 
     writeAheadLog.log(new TestRecord(30, false));
 
-    writeAheadLog.logFuzzyCheckPointStart();
+    writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
     writeAheadLog.logFuzzyCheckPointEnd();
 
     writeAheadLog.log(new TestRecord(30, false));
 
-    OLogSequenceNumber checkpointLSN = writeAheadLog.logFuzzyCheckPointStart();
+    OLogSequenceNumber checkpointLSN = writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
     OLogSequenceNumber end = writeAheadLog.logFuzzyCheckPointEnd();
 
     Assert.assertEquals(writeAheadLog.getLastCheckpoint(), checkpointLSN);
@@ -799,7 +799,7 @@ public class WriteAheadLogTest {
   public void testFirstMasterRecordIsBrokenSingleRecord() throws Exception {
     writeAheadLog.log(new TestRecord(30, false));
 
-    writeAheadLog.logFuzzyCheckPointStart();
+    writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
     OLogSequenceNumber end = writeAheadLog.logFuzzyCheckPointEnd();
 
     Assert.assertEquals(writeAheadLog.end(), end);
@@ -821,12 +821,12 @@ public class WriteAheadLogTest {
   public void testSecondMasterRecordIsBroken() throws Exception {
     writeAheadLog.log(new TestRecord(30, false));
 
-    OLogSequenceNumber checkPointLSN = writeAheadLog.logFuzzyCheckPointStart();
+    OLogSequenceNumber checkPointLSN = writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
     writeAheadLog.logFuzzyCheckPointEnd();
 
     writeAheadLog.log(new TestRecord(OWALPage.PAGE_SIZE, false));
 
-    writeAheadLog.logFuzzyCheckPointStart();
+    writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
     OLogSequenceNumber end = writeAheadLog.logFuzzyCheckPointEnd();
 
     Assert.assertEquals(writeAheadLog.end(), end);
@@ -848,17 +848,17 @@ public class WriteAheadLogTest {
   public void testFirstMasterRecordIsBrokenThreeCheckpoints() throws Exception {
     writeAheadLog.log(new TestRecord(30, false));
 
-    writeAheadLog.logFuzzyCheckPointStart();
+    writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
     writeAheadLog.logFuzzyCheckPointEnd();
 
     writeAheadLog.log(new TestRecord(OWALPage.PAGE_SIZE, false));
 
-    OLogSequenceNumber checkPointLSN = writeAheadLog.logFuzzyCheckPointStart();
+    OLogSequenceNumber checkPointLSN = writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
     writeAheadLog.logFuzzyCheckPointEnd();
 
     writeAheadLog.log(new TestRecord(OWALPage.PAGE_SIZE, false));
 
-    writeAheadLog.logFuzzyCheckPointStart();
+    writeAheadLog.logFuzzyCheckPointStart(new OLogSequenceNumber(-1, -1));
     OLogSequenceNumber end = writeAheadLog.logFuzzyCheckPointEnd();
 
     writeAheadLog.close();
@@ -991,7 +991,7 @@ public class WriteAheadLogTest {
 
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
 
-    OWALRecord walRecord = new OFuzzyCheckpointStartRecord();
+    OWALRecord walRecord = new OFuzzyCheckpointStartRecord(null, new OLogSequenceNumber(-1, -1));
     writeAheadLog.log(walRecord);
 
     writtenRecords.add(walRecord);
@@ -1047,11 +1047,11 @@ public class WriteAheadLogTest {
 
     Random rnd = new Random(seed);
 
-    OWALRecord walRecord = new OFuzzyCheckpointStartRecord();
+    OWALRecord walRecord = new OFuzzyCheckpointStartRecord(null, new OLogSequenceNumber(-1, -1));
     writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
-    walRecord = new OFuzzyCheckpointStartRecord();
+    walRecord = new OFuzzyCheckpointStartRecord(null, new OLogSequenceNumber(-1, -1));
     writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
@@ -1101,7 +1101,7 @@ public class WriteAheadLogTest {
 
     Random rnd = new Random(seed);
 
-    OWALRecord walRecord = new OFuzzyCheckpointStartRecord();
+    OWALRecord walRecord = new OFuzzyCheckpointStartRecord(null, new OLogSequenceNumber(-1, -1));
     writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
@@ -1127,7 +1127,7 @@ public class WriteAheadLogTest {
       counter++;
     }
 
-    walRecord = new OFuzzyCheckpointStartRecord();
+    walRecord = new OFuzzyCheckpointStartRecord(null, new OLogSequenceNumber(-1, -1));
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
@@ -1150,15 +1150,15 @@ public class WriteAheadLogTest {
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
     Random rnd = new Random();
 
-    OWALRecord walRecord = new OFuzzyCheckpointStartRecord();
+    OWALRecord walRecord = new OFuzzyCheckpointStartRecord(null, new OLogSequenceNumber(-1, -1));
     writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
-    walRecord = new OFuzzyCheckpointStartRecord();
+    walRecord = new OFuzzyCheckpointStartRecord(null, new OLogSequenceNumber(-1, -1));
     writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
-    walRecord = new OFuzzyCheckpointStartRecord();
+    walRecord = new OFuzzyCheckpointStartRecord(null, new OLogSequenceNumber(-1, -1));
     writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
@@ -1206,11 +1206,11 @@ public class WriteAheadLogTest {
     List<OWALRecord> writtenRecords = new ArrayList<OWALRecord>();
     Random rnd = new Random();
 
-    OWALRecord walRecord = new OFuzzyCheckpointStartRecord();
+    OWALRecord walRecord = new OFuzzyCheckpointStartRecord(null, new OLogSequenceNumber(-1, -1));
     writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
-    walRecord = new OFuzzyCheckpointStartRecord();
+    walRecord = new OFuzzyCheckpointStartRecord(null, new OLogSequenceNumber(-1, -1));
     writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 
@@ -1236,7 +1236,7 @@ public class WriteAheadLogTest {
       counter++;
     }
 
-    walRecord = new OFuzzyCheckpointStartRecord();
+    walRecord = new OFuzzyCheckpointStartRecord(null, new OLogSequenceNumber(-1, -1));
     OLogSequenceNumber end = writeAheadLog.log(walRecord);
     writtenRecords.add(walRecord);
 

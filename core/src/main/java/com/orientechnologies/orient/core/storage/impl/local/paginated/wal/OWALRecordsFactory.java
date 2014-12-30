@@ -43,8 +43,6 @@ public class OWALRecordsFactory {
       content[0] = 1;
     else if (walRecord instanceof OFuzzyCheckpointEndRecord)
       content[0] = 2;
-    else if (walRecord instanceof ODirtyPagesRecord)
-      content[0] = 3;
     else if (walRecord instanceof OFullCheckpointStartRecord)
       content[0] = 4;
     else if (walRecord instanceof OCheckpointEndRecord)
@@ -78,9 +76,6 @@ public class OWALRecordsFactory {
       break;
     case 2:
       walRecord = new OFuzzyCheckpointEndRecord();
-      break;
-    case 3:
-      walRecord = new ODirtyPagesRecord();
       break;
     case 4:
       walRecord = new OFullCheckpointStartRecord();

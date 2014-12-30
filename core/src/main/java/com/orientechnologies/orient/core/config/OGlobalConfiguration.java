@@ -130,7 +130,7 @@ public enum OGlobalConfiguration {
       + " will receive shutdown command and when background flush will be stopped (in ms.)", Integer.class, 10000),
 
   WAL_FUZZY_CHECKPOINT_INTERVAL("storage.wal.fuzzyCheckpointInterval", "Interval between fuzzy checkpoints (in seconds)",
-      Integer.class, 2592000),
+      Integer.class, 900),
 
   WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE(
       "storage.wal.reportAfterOperationsDuringRestore",
@@ -636,6 +636,10 @@ public enum OGlobalConfiguration {
       else if (jvmMaxMemory > 512 * OFileUtils.MEGABYTE)
         // INCREASE WAL RESTORE BATCH SIZE TO 10K INSTEAD OF DEFAULT 1K
         WAL_RESTORE_BATCH_SIZE.setValue(10000);
+    }
+
+    if (System.getProperty(WAL_MAX_SIZE.key) == null) {
+      WAL_MAX_SIZE.setValue(DISK_CACHE_SIZE.getValueAsInteger() * 4);
     }
   }
 

@@ -2302,30 +2302,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   private void restoreFromFuzzyCheckPoint(OFuzzyCheckpointStartRecord checkPointRecord) throws IOException {
     OLogManager.instance().info(this, "Data restore procedure from FUZZY checkpoint is started.");
-    OLogSequenceNumber dirtyPagesLSN = writeAheadLog.next(checkPointRecord.getLsn());
-    ODirtyPagesRecord dirtyPagesRecord = (ODirtyPagesRecord) writeAheadLog.read(dirtyPagesLSN);
-    OLogSequenceNumber startLSN;
+    OLogSequenceNumber flushedLsn = checkPointRecord.getFlushedLsn();
 
-    Set<ODirtyPage> dirtyPages = dirtyPagesRecord.getDirtyPages();
-    if (dirtyPages.isEmpty()) {
-      startLSN = dirtyPagesLSN;
-    } else {
-      ODirtyPage[] pages = dirtyPages.toArray(new ODirtyPage[dirtyPages.size()]);
+    if (flushedLsn.compareTo(writeAheadLog.begin()) < 0)
+      flushedLsn = writeAheadLog.begin();
 
-      Arrays.sort(pages, new Comparator<ODirtyPage>() {
-        @Override
-        public int compare(ODirtyPage pageOne, ODirtyPage pageTwo) {
-          return pageOne.getLsn().compareTo(pageTwo.getLsn());
-        }
-      });
-
-      startLSN = pages[0].getLsn();
-    }
-
-    if (startLSN.compareTo(writeAheadLog.begin()) < 0)
-      startLSN = writeAheadLog.begin();
-
-    restoreFrom(startLSN);
+    restoreFrom(flushedLsn);
   }
 
   private void restoreFromBegging() throws IOException {
@@ -2475,7 +2457,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       if (!atomicUnitStartRecord.isRollbackSupported())
         continue;
 
-      final OLogSequenceNumber logSequenceNumber = writeAheadLog.logAtomicOperationEndRecord(atomicUnitStartRecord.getOperationUnitId(), true);
+      final OLogSequenceNumber logSequenceNumber = writeAheadLog.logAtomicOperationEndRecord(
+          atomicUnitStartRecord.getOperationUnitId(), true);
       operationUnit.add(logSequenceNumber);
 
       undoOperation(operationUnit);

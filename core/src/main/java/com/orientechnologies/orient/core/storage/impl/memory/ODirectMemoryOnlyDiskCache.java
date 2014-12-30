@@ -247,11 +247,6 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
   }
 
   @Override
-  public Set<ODirtyPage> logDirtyPagesTable() throws IOException {
-    return Collections.emptySet();
-  }
-
-  @Override
   public boolean isOpen(long fileId) {
     return files.get(fileId) != null;
   }
@@ -321,7 +316,7 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
           return cacheEntry;
 
         ODirectMemoryPointer directMemoryPointer = new ODirectMemoryPointer(new byte[pageSize + 2 * ODurablePage.PAGE_PADDING]);
-        OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(0, 0));
+        OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(-1, -1));
         cachePointer.incrementReferrer();
 
         cacheEntry = new OCacheEntry(id, index, cachePointer, false);
@@ -355,7 +350,7 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
 
           final ODirectMemoryPointer directMemoryPointer = new ODirectMemoryPointer(new byte[pageSize + 2
               * ODurablePage.PAGE_PADDING]);
-          final OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(0, 0));
+          final OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(-1, -1));
           cachePointer.incrementReferrer();
 
           cacheEntry = new OCacheEntry(id, index, cachePointer, false);
