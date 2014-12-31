@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import com.orientechnologies.common.io.OFileUtils;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
 
 public class OFileClassic extends OAbstractFile {
@@ -243,7 +244,12 @@ public class OFileClassic extends OAbstractFile {
     try {
       if (headerDirty || dirty) {
         headerDirty = dirty = false;
-        channel.force(false);
+        try {
+          channel.force(false);
+        } catch (IOException e) {
+          OLogManager.instance().warn(this, "Error during flush of file %s. Data may be lost in case of power failure.", getName());
+        }
+
       }
     } finally {
       releaseWriteLock();
@@ -345,7 +351,11 @@ public class OFileClassic extends OAbstractFile {
 
       writeBuffer(buffer, SOFTLY_CLOSED_OFFSET);
 
-      channel.force(true);
+      try {
+        channel.force(true);
+      } catch (IOException e) {
+        OLogManager.instance().warn(this, "Error during flush of file %s. Data may be lost in case of power failure.", getName());
+      }
     } finally {
       releaseWriteLock();
     }
