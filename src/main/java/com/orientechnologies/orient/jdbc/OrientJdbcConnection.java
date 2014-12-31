@@ -51,8 +51,10 @@ public class OrientJdbcConnection implements Connection {
 
     usePool = Boolean.parseBoolean(iInfo.getProperty("db.usePool", "false"));
     if (usePool) {
-      final int poolMinSize = Integer.parseInt(iInfo.getProperty("db.pool.min", OGlobalConfiguration.DB_POOL_MAX.getValueAsString()));
-      final int poolMaxSize = Integer.parseInt(iInfo.getProperty("db.pool.max", OGlobalConfiguration.DB_POOL_MAX.getValueAsString()));
+      final int poolMinSize = Integer
+          .parseInt(iInfo.getProperty("db.pool.min", OGlobalConfiguration.DB_POOL_MAX.getValueAsString()));
+      final int poolMaxSize = Integer
+          .parseInt(iInfo.getProperty("db.pool.max", OGlobalConfiguration.DB_POOL_MAX.getValueAsString()));
 
       database = ODatabaseDocumentPool.global(poolMinSize, poolMaxSize).acquire(dbUrl, username, password);
     } else {

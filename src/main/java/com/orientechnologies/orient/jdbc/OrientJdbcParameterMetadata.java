@@ -25,89 +25,91 @@ import java.util.List;
  */
 class OrientJdbcParameterMetadata implements ParameterMetaData {
 
-	static class ParameterDefinition {
-		public int nullable = parameterNullableUnknown;
-		public boolean signed = true;
-		public int precision = 0;
-		public int scale = 0;
-		public int type = java.sql.Types.OTHER;
-		public String typeName = "String";
-		public String className = "java.lang.String";
-		public int mode = parameterModeUnknown;
+  static class ParameterDefinition {
+    public int     nullable  = parameterNullableUnknown;
+    public boolean signed    = true;
+    public int     precision = 0;
+    public int     scale     = 0;
+    public int     type      = java.sql.Types.OTHER;
+    public String  typeName  = "String";
+    public String  className = "java.lang.String";
+    public int     mode      = parameterModeUnknown;
 
-	}
+  }
 
-	private final List<ParameterDefinition> definitions;
+  private final List<ParameterDefinition> definitions;
 
-	public OrientJdbcParameterMetadata(List<ParameterDefinition> definitions) {
-		this.definitions = definitions;
-	}
+  public OrientJdbcParameterMetadata(List<ParameterDefinition> definitions) {
+    this.definitions = definitions;
+  }
 
-	@Override
-	public int getParameterCount() throws SQLException {
-		return definitions.size();
-	}
+  @Override
+  public int getParameterCount() throws SQLException {
+    return definitions.size();
+  }
 
-	@Override
-	public int isNullable(int param) throws SQLException {
-		checkIndex(param);
-		return definitions.get(param).nullable;
-	}
+  @Override
+  public int isNullable(int param) throws SQLException {
+    checkIndex(param);
+    return definitions.get(param).nullable;
+  }
 
-	@Override
-	public boolean isSigned(int param) throws SQLException {
-		checkIndex(param);
-		return definitions.get(param).signed;
-	}
+  @Override
+  public boolean isSigned(int param) throws SQLException {
+    checkIndex(param);
+    return definitions.get(param).signed;
+  }
 
-	@Override
-	public int getPrecision(int param) throws SQLException {
-		checkIndex(param);
-		return definitions.get(param).precision;
-	}
+  @Override
+  public int getPrecision(int param) throws SQLException {
+    checkIndex(param);
+    return definitions.get(param).precision;
+  }
 
-	@Override
-	public int getScale(int param) throws SQLException {
-		checkIndex(param);
-		return definitions.get(param).scale;
-	}
+  @Override
+  public int getScale(int param) throws SQLException {
+    checkIndex(param);
+    return definitions.get(param).scale;
+  }
 
-	@Override
-	public int getParameterType(int param) throws SQLException {
-		checkIndex(param);
-		return definitions.get(param).type;
-	}
+  @Override
+  public int getParameterType(int param) throws SQLException {
+    checkIndex(param);
+    return definitions.get(param).type;
+  }
 
-	@Override
-	public String getParameterTypeName(int param) throws SQLException {
-		checkIndex(param);
-		return definitions.get(param).typeName;
-	}
+  @Override
+  public String getParameterTypeName(int param) throws SQLException {
+    checkIndex(param);
+    return definitions.get(param).typeName;
+  }
 
-	@Override
-	public String getParameterClassName(int param) throws SQLException {
-		checkIndex(param);
-		return definitions.get(param).className;
-	}
+  @Override
+  public String getParameterClassName(int param) throws SQLException {
+    checkIndex(param);
+    return definitions.get(param).className;
+  }
 
-	@Override
-	public int getParameterMode(int param) throws SQLException {
-		checkIndex(param);
-		return definitions.get(param).mode;
-	}
+  @Override
+  public int getParameterMode(int param) throws SQLException {
+    checkIndex(param);
+    return definitions.get(param).mode;
+  }
 
-	@Override
-	public <T> T unwrap(Class<T> iface) throws SQLException {
-		throw new SQLException("No object wrapper for class : " + iface);
-	}
+  @Override
+  public <T> T unwrap(Class<T> iface) throws SQLException {
+    throw new SQLException("No object wrapper for class : " + iface);
+  }
 
-	@Override
-	public boolean isWrapperFor(Class<?> iface) throws SQLException {
-		return false;
-	}
+  @Override
+  public boolean isWrapperFor(Class<?> iface) throws SQLException {
+    return false;
+  }
 
-	private void checkIndex(int index) throws SQLException {
-		if (index < 0 || index >= definitions.size()) { throw new SQLException("Parameter number " + index + " does not exist."); }
-	}
+  private void checkIndex(int index) throws SQLException {
+    if (index < 0 || index >= definitions.size()) {
+      throw new SQLException("Parameter number " + index + " does not exist.");
+    }
+  }
 
 }
