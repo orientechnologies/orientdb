@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.*;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -34,7 +32,6 @@ import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClassDescendentOrder;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClusters;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -54,6 +51,16 @@ import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
@@ -214,6 +221,8 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
   protected Object getResult() {
     if (tempResult != null) {
+      int fetched = 0;
+
       for (Object d : tempResult)
         if (d != null) {
           if (!(d instanceof OIdentifiable))
@@ -222,8 +231,13 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
           else if (!(d instanceof ORID || d instanceof ORecord))
             d = ((OIdentifiable) d).getRecord();
 
+          if (limit > -1 && fetched >= limit)
+            break;
+
           if (!request.getResultListener().result(d))
             break;
+
+          ++fetched;
         }
     }
 
@@ -389,7 +403,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
           subQuery.getContext().setParent(context);
           subQuery.getContext().setVariable("current", iRecord);
           varValue = ODatabaseRecordThreadLocal.INSTANCE.get().query(subQuery);
-          if(varValue instanceof OResultSet){
+          if (varValue instanceof OResultSet) {
             varValue = ((OResultSet) varValue).copy();
             ((OResultSet) varValue).setCompleted();
           }
