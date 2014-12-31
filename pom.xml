@@ -214,6 +214,39 @@
                     <arguments>-Prelease</arguments>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>com.mycila.maven-license-plugin</groupId>
+                <artifactId>maven-license-plugin</artifactId>
+                <version>1.9.0</version>
+                <inherited>false</inherited>
+                <configuration>
+                    <header>${basedir}/LICENSE.txt</header>
+                    <aggregate>true</aggregate>
+                    <failIfMissing>true</failIfMissing>
+                    <encoding>UTF-8</encoding>
+                    <excludes>
+                        <exclude>orientdb-jdbc.iml</exclude>
+                        <exclude>README.textile</exclude>
+                        <exclude>**/target/**</exclude>
+                        <exclude>.idea/**</exclude>
+                        <exclude>.classpath</exclude>
+                        <exclude>.project</exclude>
+                        <exclude>.settings/**</exclude>
+                        <exclude>.gitignore</exclude>
+                        <exclude>.gitattributes</exclude>
+                        <exclude>src/test/**</exclude>
+                    </excludes>
+                    <strictCheck>true</strictCheck>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>format</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
