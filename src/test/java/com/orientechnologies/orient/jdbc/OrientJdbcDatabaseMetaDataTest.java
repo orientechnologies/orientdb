@@ -115,7 +115,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     ResultSet rs = this.metaData.getTables(null, null, null, null);
     int tableCount = 0;
 
-    while(rs.next()){
+    while (rs.next()) {
       tableCount = tableCount + 1;
     }
     assertTrue(tableCount > 1);
@@ -126,7 +126,7 @@ public class OrientJdbcDatabaseMetaDataTest extends OrientJdbcBaseTest {
     ResultSet rs = this.metaData.getTables(null, null, "ouser", null);
     int tableCount = 0;
 
-    while(rs.next()){
+    while (rs.next()) {
       tableCount = tableCount + 1;
     }
     assertEquals(1, tableCount);

@@ -57,7 +57,7 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
     ResultSet rs = stmt.executeQuery();
     assertTrue(rs.next());
 
-//    assertThat(rs.getInt("@version"), equalTo(0));
+    // assertThat(rs.getInt("@version"), equalTo(0));
 
     assertThat(rs.getString("@class"), equalTo("Item"));
 
