@@ -627,8 +627,10 @@ public enum OGlobalConfiguration {
   }
 
   private static void autoConfig() {
+    final long freeSpaceInMB = new File(".").getFreeSpace() / 1024 / 1024;
+
     if (System.getProperty(DISK_CACHE_SIZE.key) == null)
-      autoConfigDiskCacheSize();
+      autoConfigDiskCacheSize(freeSpaceInMB);
 
     if (System.getProperty(WAL_RESTORE_BATCH_SIZE.key) == null) {
       final long jvmMaxMemory = Runtime.getRuntime().maxMemory();
@@ -641,11 +643,16 @@ public enum OGlobalConfiguration {
     }
 
     if (System.getProperty(WAL_MAX_SIZE.key) == null) {
-      WAL_MAX_SIZE.setValue(DISK_CACHE_SIZE.getValueAsInteger() * 4);
+      long walSize = DISK_CACHE_SIZE.getValueAsInteger() * 4;
+
+      if (walSize>freeSpaceInMB / 2)
+        walSize = freeSpaceInMB / 2;
+
+      WAL_MAX_SIZE.setValue(walSize);
     }
   }
 
-  private static void autoConfigDiskCacheSize() {
+  private static void autoConfigDiskCacheSize(final long freeSpaceInMB) {
     final OperatingSystemMXBean mxBean = ManagementFactory.getOperatingSystemMXBean();
     try {
       final Method memorySize = mxBean.getClass().getDeclaredMethod("getTotalPhysicalMemorySize");
@@ -656,7 +663,6 @@ public enum OGlobalConfiguration {
 
       long diskCacheInMB = (osMemory - jvmMaxMemory) / (1024 * 1024) - 2 * 1024;
       if (diskCacheInMB > 0) {
-        final long freeSpaceInMB = new File(".").getFreeSpace() / 1024 / 1024;
 
         if (diskCacheInMB > freeSpaceInMB * 80 / 100)
           // LOW DISK SPACE: REDUCE DISK CACHE SIZE
