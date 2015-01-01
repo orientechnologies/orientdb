@@ -23,8 +23,6 @@ package com.orientechnologies.orient.core.storage.impl.local;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -2374,15 +2372,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) walRecord;
         OOperationUnitId unitId = operationUnitRecord.getOperationUnitId();
 
-        final List<OLogSequenceNumber> records = operationUnits.get(unitId);
-
-        assert records != null;
+        List<OLogSequenceNumber> records = operationUnits.get(unitId);
 
         if (records == null) {
-          OLogManager.instance().warn(this,
-              "Record with lsn %s  which indication of start of atomic operation was truncated will be skipped.",
-              walRecord.getLsn());
-          continue;
+          records = new ArrayList<OLogSequenceNumber>();
+          operationUnits.put(unitId, records);
         }
 
         records.add(lsn);
@@ -2418,9 +2412,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         } else if (operationUnitRecord instanceof OAtomicUnitEndRecord) {
           final OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
 
-          if (atomicUnitEndRecord.isRollback())
-            undoOperation(records);
-          else {
+          if (atomicUnitEndRecord.isRollback()) {
+            // it is needed because we can start to restore atomic operation from the middle
+            List<OLogSequenceNumber> recordsToRollback = readOperationUnit(atomicUnitEndRecord.getStartLsn(), unitId);
+            undoOperation(recordsToRollback);
+          } else {
             if (nonTxOperationWasUsed && !wereNonTxOperationsPerformedInPreviousOpen) {
               OLogManager.instance().warn(this, "Non tx operation was used during data modification we will need index rebuild.");
               wereNonTxOperationsPerformedInPreviousOpen = true;
@@ -2453,15 +2449,23 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       if (operationUnit.isEmpty())
         continue;
 
-      final OAtomicUnitStartRecord atomicUnitStartRecord = (OAtomicUnitStartRecord) writeAheadLog.read(operationUnit.get(0));
-      if (!atomicUnitStartRecord.isRollbackSupported())
+      final OOperationUnitRecord atomicOperationRecord = (OOperationUnitRecord) writeAheadLog.read(operationUnit.get(0));
+      final OAtomicUnitStartRecord startRecord;
+
+      if (atomicOperationRecord instanceof OAtomicUnitStartRecord)
+        startRecord = (OAtomicUnitStartRecord) atomicOperationRecord;
+      else {
+        startRecord = (OAtomicUnitStartRecord) writeAheadLog.read(((OOperationUnitBodyRecord) atomicOperationRecord).getStartLsn());
+      }
+
+      if (!startRecord.isRollbackSupported())
         continue;
 
-      final OLogSequenceNumber logSequenceNumber = writeAheadLog.logAtomicOperationEndRecord(
-          atomicUnitStartRecord.getOperationUnitId(), true);
-      operationUnit.add(logSequenceNumber);
+      writeAheadLog.logAtomicOperationEndRecord(startRecord.getOperationUnitId(), true, startRecord.getLsn());
 
-      undoOperation(operationUnit);
+			// it is needed because we can start to restore atomic operation from the middle
+			List<OLogSequenceNumber> records = readOperationUnit(startRecord.getLsn(), startRecord.getOperationUnitId());
+      undoOperation(records);
     }
   }
 

@@ -51,6 +51,7 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
 
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
+			OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
       OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(30);
       OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(20);
 
@@ -210,6 +211,7 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
   public void beforeClass() throws Exception {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(10);
     OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(5);
+		OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/localPaginatedStorageLinkBagCrashRestore";
@@ -257,7 +259,7 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
     for (int i = 0; i < 5; i++)
       futures.add(executorService.submit(new RidDeleter()));
 
-    Thread.sleep(5000);
+		Thread.sleep(1800000);
     long lastTs = System.currentTimeMillis();
 
     System.out.println("Wait for process to destroy");

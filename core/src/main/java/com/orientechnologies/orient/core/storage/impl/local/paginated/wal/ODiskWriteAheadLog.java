@@ -62,7 +62,6 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private final int                    maxPagesCacheSize;
   private final int                    commitDelay;
   private final long                   maxSegmentSize;
-  private final long                   maxLogSize;
   private final File                   walLocation;
   private final RandomAccessFile       masterRecordLSNHolder;
   private final OLocalPaginatedStorage storage;
@@ -587,16 +586,14 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
   public ODiskWriteAheadLog(OLocalPaginatedStorage storage) throws IOException {
     this(OGlobalConfiguration.WAL_CACHE_SIZE.getValueAsInteger(), OGlobalConfiguration.WAL_COMMIT_TIMEOUT.getValueAsInteger(),
-        OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsInteger() * ONE_KB * ONE_KB, OGlobalConfiguration.WAL_MAX_SIZE
-            .getValueAsInteger() * ONE_KB * ONE_KB, storage);
+        OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsInteger() * ONE_KB * ONE_KB, storage);
   }
 
-  public ODiskWriteAheadLog(int maxPagesCacheSize, int commitDelay, long maxSegmentSize, long maxLogSize,
-      OLocalPaginatedStorage storage) throws IOException {
+  public ODiskWriteAheadLog(int maxPagesCacheSize, int commitDelay, long maxSegmentSize, OLocalPaginatedStorage storage)
+      throws IOException {
     this.maxPagesCacheSize = maxPagesCacheSize;
     this.commitDelay = commitDelay;
     this.maxSegmentSize = maxSegmentSize;
-    this.maxLogSize = maxLogSize;
     this.storage = storage;
 
     try {
@@ -769,12 +766,13 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback) throws IOException {
+  public OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback,
+      OLogSequenceNumber startLsn) throws IOException {
     syncObject.lock();
     try {
       checkForClose();
 
-      final OLogSequenceNumber lsn = log(new OAtomicUnitEndRecord(operationUnitId, rollback));
+      final OLogSequenceNumber lsn = log(new OAtomicUnitEndRecord(operationUnitId, rollback, startLsn));
       activeOperations.remove(operationUnitId);
 
       return lsn;
@@ -823,19 +821,6 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
       final long sizeDiff = last.filledUpTo() - lastSize;
       logSize += sizeDiff;
-
-      if (logSize >= maxLogSize) {
-        final LogSegment first = removeHeadSegmentFromList();
-
-        if (first != null) {
-          first.stopFlush(false);
-
-          recalculateLogSize();
-
-          first.delete(false);
-          fixMasterRecords();
-        }
-      }
 
       if (last.filledUpTo() >= maxSegmentSize) {
         segmentCreationFlag = true;

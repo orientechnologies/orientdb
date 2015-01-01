@@ -157,12 +157,8 @@ public class OWOWCache {
         commitExecutor.scheduleWithFixedDelay(new PeriodicFlushTask(), pageFlushInterval, pageFlushInterval, TimeUnit.MILLISECONDS);
 
       if (writeAheadLog != null) {
-        OLogSequenceNumber minFlushedLSN = writeAheadLog.getFlushedLSN();
-        if (minFlushedLSN == null)
-          minFlushedLSN = new OLogSequenceNumber(-1, -1);
-
         final long fuzzyCheckPointInterval = OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsInteger();
-        commitExecutor.scheduleWithFixedDelay(new PeriodicalFuzzyCheckpointTask(minFlushedLSN), fuzzyCheckPointInterval,
+        commitExecutor.scheduleWithFixedDelay(new PeriodicalFuzzyCheckpointTask(), fuzzyCheckPointInterval,
             fuzzyCheckPointInterval, TimeUnit.SECONDS);
       }
 
@@ -897,12 +893,17 @@ public class OWOWCache {
     if (fileClassic == null)
       throw new IllegalArgumentException("File with id " + fileId + " not found in WOW Cache");
 
+		OLogSequenceNumber lastLsn;
+		if (writeAheadLog != null)
+			lastLsn = writeAheadLog.getFlushedLSN();
+		else
+		  lastLsn = new OLogSequenceNumber(-1, -1);
+
     if (fileClassic.getFilledUpTo() >= endPosition) {
       fileClassic.read(startPosition, content, content.length - 2 * PAGE_PADDING, PAGE_PADDING);
       final ODirectMemoryPointer pointer = new ODirectMemoryPointer(content);
 
-      final OLogSequenceNumber storedLSN = ODurablePage.getLogSequenceNumberFromPage(pointer);
-      dataPointer = new OCachePointer(pointer, storedLSN);
+      dataPointer = new OCachePointer(pointer, lastLsn);
     } else {
       final int space = (int) (endPosition - fileClassic.getFilledUpTo());
       fileClassic.allocateSpace(space);
@@ -910,7 +911,7 @@ public class OWOWCache {
       addAllocatedSpace(space);
 
       final ODirectMemoryPointer pointer = new ODirectMemoryPointer(content);
-      dataPointer = new OCachePointer(pointer, new OLogSequenceNumber(-1, -1));
+      dataPointer = new OCachePointer(pointer, lastLsn);
     }
 
     return dataPointer;
@@ -1156,12 +1157,9 @@ public class OWOWCache {
   }
 
   private final class PeriodicalFuzzyCheckpointTask implements Runnable {
-    private OLogSequenceNumber flushedLsn;
+    private OLogSequenceNumber flushedLsn = new OLogSequenceNumber(-1, -1);
 
-    private PeriodicalFuzzyCheckpointTask(OLogSequenceNumber flushedLsn) {
-      this.flushedLsn = flushedLsn;
-      if (this.flushedLsn.compareTo(new OLogSequenceNumber(-1, -1)) <= 0)
-        this.flushedLsn = new OLogSequenceNumber(-1, -1);
+    private PeriodicalFuzzyCheckpointTask() {
     }
 
     @Override

@@ -46,7 +46,7 @@ public interface OWriteAheadLog {
 
   OLogSequenceNumber logAtomicOperationStartRecord(boolean isRollbackSupported, OOperationUnitId unitId) throws IOException;
 
-  OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback) throws IOException;
+  OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback, OLogSequenceNumber startLsn) throws IOException;
 
   OLogSequenceNumber log(OWALRecord record) throws IOException;
 

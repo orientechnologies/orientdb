@@ -115,7 +115,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
       else
         prevLsn = localPage.getLsn();
 
-      final OLogSequenceNumber lsn = writeAheadLog.log(new OUpdatePageRecord(pageIndex, fileId, unitId, pageChanges, prevLsn));
+      final OLogSequenceNumber lsn = writeAheadLog.log(new OUpdatePageRecord(pageIndex, fileId, unitId, pageChanges, prevLsn, atomicOperation.getStartLSN()));
       localPage.setLsn(lsn);
     }
   }
@@ -126,7 +126,7 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
       assert atomicOperation != null;
 
       final OOperationUnitId unitId = atomicOperation.getOperationUnitId();
-      writeAheadLog.log(new OFileCreatedCreatedWALRecord(unitId, fileName, fileId));
+      writeAheadLog.log(new OFileCreatedCreatedWALRecord(unitId, fileName, fileId, atomicOperation.getStartLSN()));
     }
   }
 

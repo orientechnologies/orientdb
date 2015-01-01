@@ -20,8 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -70,8 +68,8 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback) throws IOException {
-    return log(new OAtomicUnitEndRecord(operationUnitId, rollback));
+  public OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback, OLogSequenceNumber startLsn) throws IOException {
+    return log(new OAtomicUnitEndRecord(operationUnitId, rollback, startLsn));
   }
 
   @Override
