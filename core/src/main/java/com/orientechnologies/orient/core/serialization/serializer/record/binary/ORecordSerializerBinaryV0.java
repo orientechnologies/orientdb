@@ -77,6 +77,11 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     if (className.length() != 0)
       ODocumentInternal.fillClassNameIfNeeded(document, className);
 
+    // TRANSFORMS FIELDS FOM STRINGS TO BYTE[]
+    final byte[][] fields = new byte[iFields.length][];
+    for (int i = 0; i < iFields.length; ++i)
+      fields[i] = iFields[i].getBytes();
+
     String fieldName;
     int valuePos;
     OType type;
@@ -103,6 +108,29 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           bytes.skip(len + OIntegerSerializer.INT_SIZE + 1);
           continue;
         }
+
+        // CHECK IF THE FIELD IS IN THE FIELD LIST BY COMPARING THEM BYTE PER BYTE
+        int matchFieldId = -1;
+        for (int f = 0; f < fields.length; f++) {
+          boolean matchField = true;
+          for (int i = 0; i < len; i++) {
+            if (bytes.bytes[bytes.offset + i] != fields[f][i]) {
+              matchField = false;
+              break;
+            }
+          }
+          if (matchField) {
+            matchFieldId = f;
+            unmarshalledFields++;
+            break;
+          }
+        }
+
+        if (matchFieldId < 0) {
+          bytes.skip(len + OIntegerSerializer.INT_SIZE + 1);
+          continue;
+        }
+
         fieldName = new String(bytes.bytes, bytes.offset, len, utf8);
         bytes.skip(len);
         valuePos = readInteger(bytes);
@@ -118,19 +146,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           type = readOType(bytes);
 
       }
-      // CHECK BY FIELD NAME
-      boolean foundField = false;
-      for (int i = 0; i < iFields.length; ++i) {
-        if (iFields[i].equals(fieldName)) {
-          foundField = true;
-          unmarshalledFields++;
-          break;
-        }
-      }
-
-      if (!foundField) {
-        continue;
-      }
 
       if (valuePos != 0) {
         int headerCursor = bytes.offset;
@@ -140,10 +155,11 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         ODocumentInternal.rawField(document, fieldName, value, type);
       } else
         ODocumentInternal.rawField(document, fieldName, null, null);
+
       if (unmarshalledFields == iFields.length)
+        // ALL REQUESTED FIELDS UNMARSHALLED: EXIT
         break;
     }
-
   }
 
   @Override
@@ -198,11 +214,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
     if (last > bytes.offset)
       bytes.offset = last;
-  }
-
-  private OGlobalProperty getGlobalProperty(final ODocument document, final int len) {
-    final int id = (len * -1) - 1;
-    return ODocumentInternal.getGlobalPropertyById(document, id);
   }
 
   @SuppressWarnings("unchecked")
@@ -270,6 +281,11 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     else
       writeEmptyString(bytes);
     return clazz;
+  }
+
+  private OGlobalProperty getGlobalProperty(final ODocument document, final int len) {
+    final int id = (len * -1) - 1;
+    return ODocumentInternal.getGlobalPropertyById(document, id);
   }
 
   private OType readOType(final BytesContainer bytes) {
