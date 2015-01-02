@@ -37,7 +37,8 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
   @Override
   public ODocument getConfiguration() {
     return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
-        + "{joinFieldName:{optional:false,description:'field name containing the value to join'}},"
+        + "{joinValue:{optional:true,description:'value to use for join'}},"
+        + "{joinFieldName:{optional:true,description:'field name containing the value to join'}},"
         + "{lookup:{optional:false,description:'<Class>.<property> or Query to execute'}},"
         + "{direction:{optional:true,description:'Direction between \'in\' and \'out\'. Default is \'out\''}},"
         + "{class:{optional:true,description:'Edge class name. Default is \'E\''}},"
@@ -97,11 +98,11 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
     else
       throw new OTransformException(getName() + ": input type '" + input + "' is not supported");
 
-    Object joinValue = vertex.getProperty(joinFieldName);
+    final Object joinCurrentValue = joinValue != null ? joinValue : vertex.getProperty(joinFieldName);
 
-    Object result = lookup(joinValue, false);
+    Object result = lookup(joinCurrentValue, false);
 
-    log(OETLProcessor.LOG_LEVELS.DEBUG, "joinValue=%s, lookupResult=%s", joinValue, result);
+    log(OETLProcessor.LOG_LEVELS.DEBUG, "joinCurrentValue=%s, lookupResult=%s", joinCurrentValue, result);
 
     if (result == null) {
       // APPLY THE STRATEGY DEFINED IN unresolvedLinkAction
@@ -110,7 +111,7 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
         if (lookup != null) {
           final String[] lookupParts = lookup.split("\\.");
           final OrientVertex linkedV = graph.addTemporaryVertex(lookupParts[0]);
-          linkedV.setProperty(lookupParts[1], joinValue);
+          linkedV.setProperty(lookupParts[1], joinCurrentValue);
           linkedV.save();
 
           log(OETLProcessor.LOG_LEVELS.DEBUG, "created new vertex=%s", linkedV.getRecord());
@@ -121,16 +122,16 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
         break;
       case ERROR:
         processor.getStats().incrementErrors();
-        log(OETLProcessor.LOG_LEVELS.ERROR, "%s: ERROR Cannot resolve join for value '%s'", getName(), joinValue);
+        log(OETLProcessor.LOG_LEVELS.ERROR, "%s: ERROR Cannot resolve join for value '%s'", getName(), joinCurrentValue);
         break;
       case WARNING:
         processor.getStats().incrementWarnings();
-        log(OETLProcessor.LOG_LEVELS.INFO, "%s: WARN Cannot resolve join for value '%s'", getName(), joinValue);
+        log(OETLProcessor.LOG_LEVELS.INFO, "%s: WARN Cannot resolve join for value '%s'", getName(), joinCurrentValue);
         break;
       case SKIP:
         return null;
       case HALT:
-        throw new OETLProcessHaltedException("Cannot resolve join for value '" + joinValue + "'");
+        throw new OETLProcessHaltedException("Cannot resolve join for value '" + joinCurrentValue + "'");
       }
     }
 

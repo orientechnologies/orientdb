@@ -36,6 +36,7 @@ import java.util.Collection;
  */
 public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
   protected String               joinFieldName;
+  protected Object               joinValue;
   protected String               lookup;
   protected ACTION               unresolvedLinkAction = ACTION.NOTHING;
   protected OSQLQuery<ODocument> sqlQuery;
@@ -51,6 +52,9 @@ public abstract class OAbstractLookupTransformer extends OAbstractTransformer {
     super.configure(iProcessor, iConfiguration, iContext);
 
     joinFieldName = iConfiguration.field("joinFieldName");
+
+    if (iConfiguration.containsField("joinValue"))
+      joinValue = iConfiguration.field("joinValue");
 
     if (iConfiguration.containsField("lookup"))
       lookup = iConfiguration.field("lookup");
