@@ -527,6 +527,7 @@ public abstract class OBaseParser {
 
             if (nextChar == 'u') {
               parserCurrentPos = OStringParser.readUnicode(text2Use, parserCurrentPos + 2, parserLastWord);
+              parserEscapeSequnceCount+=5;
             } else {
 							if (nextChar == 'n')
 								parserLastWord.append('\n');
