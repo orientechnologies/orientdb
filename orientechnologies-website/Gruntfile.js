@@ -19,8 +19,8 @@ module.exports = function (grunt) {
 
   // Configurable paths for the application
   var appConfig = {
-    app: require('./bower.json').appPath || 'app',
-    dist: 'dist'
+    app: 'src/main/webapp',
+    dist: 'src/main/webapp/dist'
   };
 
   // Define the configuration for all the tasks
@@ -36,7 +36,7 @@ module.exports = function (grunt) {
         tasks: ['wiredep']
       },
       js: {
-        files: ['<%= yeoman.app %>/scripts/{,*/}*.js'],
+        files: ['src/main/webapp/scripts/{,*/}*.js'],
         tasks: ['newer:jshint:all'],
         options: {
           livereload: '<%= connect.options.livereload %>'
@@ -47,7 +47,7 @@ module.exports = function (grunt) {
         tasks: ['newer:jshint:test', 'karma']
       },
       styles: {
-        files: ['<%= yeoman.app %>/styles/{,*/}*.css'],
+        files: ['src/main/webapp/styles/{,*/}*.css'],
         tasks: ['newer:copy:styles', 'autoprefixer']
       },
       gruntfile: {
@@ -58,9 +58,9 @@ module.exports = function (grunt) {
           livereload: '<%= connect.options.livereload %>'
         },
         files: [
-          '<%= yeoman.app %>/{,*/}*.html',
+          'src/main/webapp/{,*/}*.html',
           '.tmp/styles/{,*/}*.css',
-          '<%= yeoman.app %>/images/{,*/}*.{png,jpg,jpeg,gif,webp,svg}'
+          'src/main/webapp/images/{,*/}*.{png,jpg,jpeg,gif,webp,svg}'
         ]
       }
     },
@@ -133,7 +133,7 @@ module.exports = function (grunt) {
       all: {
         src: [
           'Gruntfile.js',
-          '<%= yeoman.app %>/scripts/{,*/}*.js'
+          'src/main/webapp/scripts/{,*/}*.js'
         ]
       },
       test: {
@@ -143,6 +143,30 @@ module.exports = function (grunt) {
         src: ['test/spec/{,*/}*.js']
       }
     },
+    coffee: {
+                options: {
+                    sourceMap: true,
+                    sourceRoot: ''
+                },
+                dist: {
+                    files: [{
+                        expand: true,
+                        cwd: 'src/main/webapp/scripts',
+                        src: '**/*.coffee',
+                        dest: '.tmp/scripts',
+                        ext: '.js'
+                    }]
+                },
+                test: {
+                    files: [{
+                        expand: true,
+                        cwd: 'test/spec',
+                        src: '**/*.coffee',
+                        dest: '.tmp/spec',
+                        ext: '.js'
+                    }]
+                }
+            },
 
     // Empties folders to start fresh
     clean: {
@@ -177,14 +201,20 @@ module.exports = function (grunt) {
     // Automatically inject Bower components into the app
     wiredep: {
       options: {
-        cwd: '<%= yeoman.app %>'
+        cwd: 'src/main/webapp'
       },
       app: {
-        src: ['<%= yeoman.app %>/index.html'],
+        src: ['src/main/webapp/index.html'],
         ignorePath:  /\.\.\//
       }
     },
 
+    // Automatically inject Bower components into the app
+    'bower-install': {
+      app: {
+        html: 'src/main/webapp/index.html',
+      }
+    },
     // Renames files for browser caching purposes
     filerev: {
       dist: {
@@ -201,7 +231,7 @@ module.exports = function (grunt) {
     // concat, minify and revision files. Creates configurations in memory so
     // additional tasks can operate on them
     useminPrepare: {
-      html: '<%= yeoman.app %>/index.html',
+      html: 'src/main/webapp/index.html',
       options: {
         dest: '<%= yeoman.dist %>',
         flow: {
@@ -255,7 +285,7 @@ module.exports = function (grunt) {
       dist: {
         files: [{
           expand: true,
-          cwd: '<%= yeoman.app %>/images',
+          cwd: 'src/main/webapp/images',
           src: '{,*/}*.{png,jpg,jpeg,gif}',
           dest: '<%= yeoman.dist %>/images'
         }]
@@ -266,7 +296,7 @@ module.exports = function (grunt) {
       dist: {
         files: [{
           expand: true,
-          cwd: '<%= yeoman.app %>/images',
+          cwd: 'src/main/webapp/images',
           src: '{,*/}*.svg',
           dest: '<%= yeoman.dist %>/images'
         }]
@@ -285,12 +315,22 @@ module.exports = function (grunt) {
         files: [{
           expand: true,
           cwd: '<%= yeoman.dist %>',
-          src: ['*.html', 'views/{,*/}*.html'],
+          src: ['*.html','views/{,*/,*/*/,*/*/*/}*.html'],
           dest: '<%= yeoman.dist %>'
         }]
       }
     },
 
+    ngAnnotate: {
+            dist: {
+                files: [{
+                    expand: true,
+                    cwd: '.tmp/concat/scripts',
+                    src: '*.js',
+                    dest: '.tmp/concat/scripts'
+                }]
+            }
+        },
     // ngmin tries to make the code safe for minification automatically by
     // using the Angular long form for dependency injection. It doesn't work on
     // things like resolve or inject so those have to be done manually.
@@ -318,13 +358,13 @@ module.exports = function (grunt) {
         files: [{
           expand: true,
           dot: true,
-          cwd: '<%= yeoman.app %>',
+          cwd: 'src/main/webapp',
           dest: '<%= yeoman.dist %>',
           src: [
             '*.{ico,png,txt}',
             '.htaccess',
             '*.html',
-            'views/{,*/}*.html',
+            'views/{,*/,*/*/,*/*/*/}*.html',
             'images/{,*/}*.{webp}',
             'fonts/*'
           ]
@@ -342,7 +382,7 @@ module.exports = function (grunt) {
       },
       styles: {
         expand: true,
-        cwd: '<%= yeoman.app %>/styles',
+        cwd: 'src/main/webapp/styles',
         dest: '.tmp/styles/',
         src: '{,*/}*.css'
       }
@@ -398,8 +438,8 @@ module.exports = function (grunt) {
     'clean:server',
     'concurrent:test',
     'autoprefixer',
-    'connect:test',
-    'karma'
+    'connect:test'
+//    'karma'
   ]);
 
   grunt.registerTask('build', [
@@ -409,7 +449,7 @@ module.exports = function (grunt) {
     'concurrent:dist',
     'autoprefixer',
     'concat',
-    'ngmin',
+    'ngAnnotate',
     'copy:dist',
     'cdnify',
     'cssmin',

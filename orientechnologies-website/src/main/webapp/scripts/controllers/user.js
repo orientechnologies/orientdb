@@ -135,6 +135,12 @@ angular.module('webappApp')
       $scope.areas = data.plain();
     })
 
+    $scope.addRepository = function () {
+      Organization.all("repos").one($scope.newRepo).post().then(function (data) {
+        $scope.repositories.push(data.plain());
+        $scope.newRepo = null;
+      });
+    }
     $scope.addArea = function () {
       $scope.areaEditing = true;
       $scope.area = {}

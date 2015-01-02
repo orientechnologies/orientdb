@@ -93,7 +93,7 @@
                 <span class="label label-default">{{issue.scope.name}}</span>
               </h5>
 
-              <p class="issue-info">#{{issue.number}} opened {{issue.createdAt | fromNow}} by {{issue.user.name}}
+              <p class="issue-info">#{{issue.iid}} opened {{issue.createdAt | fromNow}} by {{issue.user.name}}
                 <i ng-show="issue.milestone" class="fa fa-milestoned"> {{ issue.milestone.title }}</i>
                 <i ng-show="issue.version" class="fa fa-versioned"> {{ issue.version.title }}</i>
               </p>

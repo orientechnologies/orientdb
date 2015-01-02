@@ -10,7 +10,7 @@
             <div class="form-group">
               <input type="text" class="form-control" required placeholder="Title" ng-model="issue.title">
             </div>
-            <div class="checkbox">
+            <div class="checkbox"  ng-show="(isMember || isClient)" >
               <label>
                 <input type="checkbox" placeholder="Private Issue"
                        ng-model="issue.confidential">

@@ -181,10 +181,6 @@ public class OrganizationServiceImpl implements OrganizationService {
                 GitHub github = new GitHub(token);
 
                 GRepo repository = github.repo(org + '/' + repo);
-                // Github gu = new RtGithub(token);
-                // Repo repo1 = gu.repos().get(new Coordinates.Simple(org + '/' + repo));
-
-                // GHRepository repository = github.getRepository(org + '/' + repo);
 
                 r = repoRepository.findByOrgAndName(org, repo);
                 if (r == null) {

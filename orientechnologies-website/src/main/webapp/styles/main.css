@@ -250,7 +250,7 @@ body {
 textarea.vue-editor {
   border: none;
   width: 100%;
-  border-right: 1px solid #ccc;
+  border: 1px solid #ccc;
   resize: none;
   outline: none;
   background-color: #f6f6f6;

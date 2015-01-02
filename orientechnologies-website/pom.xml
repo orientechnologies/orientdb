@@ -15,13 +15,71 @@
         <reactor.version>1.1.5.RELEASE</reactor.version>
     </properties>
     <build>
+        <resources>
+            <resource>
+                <filtering>true</filtering>
+                <directory>src/main/resources</directory>
+            </resource>
+            <resource>
+            <directory>src/main/webapp/dist
+            </directory>
+            <targetPath>static</targetPath>
+            </resource>
+        </resources>
         <plugins>
+            <plugin>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>2.5</version>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>src/main/webapp/dist</directory>
+                        </fileset>
+                        <!--<fileset>-->
+                        <!--<directory>.tmp</directory>-->
+                        <!--</fileset>-->
+                        <!--<fileset>-->
+                        <!--<directory>node_modules</directory>-->
+                        <!--</fileset>-->
+                    </filesets>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.github.trecloux</groupId>
+                <artifactId>yeoman-maven-plugin</artifactId>
+                <version>0.2</version>
+                <executions>
+                    <execution>
+                        <id>run-grunt</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                        <configuration>
+                            <gruntBuildArgs>--force</gruntBuildArgs>
+                        </configuration>
+                    </execution>
+                </executions>
+                <configuration>
+                    <yeomanProjectDirectory>${project.basedir}</yeomanProjectDirectory>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-
+                <configuration>
+                    <arguments>
+                        <argument>--spring.profiles.active=production</argument>
+                    </arguments>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
-
         </plugins>
 
 
@@ -41,8 +99,8 @@
             <version>${spring-boot.version}</version>
             <exclusions>
                 <!--<exclusion>-->
-                    <!--<groupId>org.springframework.boot</groupId>-->
-                    <!--<artifactId>spring-boot-starter-tomcat</artifactId>-->
+                <!--<groupId>org.springframework.boot</groupId>-->
+                <!--<artifactId>spring-boot-starter-tomcat</artifactId>-->
                 <!--</exclusion>-->
                 <exclusion>
                     <groupId>org.springframework.boot</groupId>
@@ -56,9 +114,9 @@
             <version>${spring-boot.version}</version>
         </dependency>
         <!--<dependency>-->
-            <!--<groupId>org.springframework.boot</groupId>-->
-            <!--<artifactId>spring-boot-starter-jetty</artifactId>-->
-            <!--<version>${spring-boot.version}</version>-->
+        <!--<groupId>org.springframework.boot</groupId>-->
+        <!--<artifactId>spring-boot-starter-jetty</artifactId>-->
+        <!--<version>${spring-boot.version}</version>-->
         <!--</dependency>-->
         <!-- end::jetty[] -->
         <!-- tag::actuator[] -->
@@ -111,9 +169,9 @@
             </exclusions>
         </dependency>
         <!--<dependency>-->
-            <!--<groupId>org.springframework.data</groupId>-->
-            <!--<artifactId>spring-data-commons</artifactId>-->
-            <!--<version>1.7.0.RELEASE</version>-->
+        <!--<groupId>org.springframework.data</groupId>-->
+        <!--<artifactId>spring-data-commons</artifactId>-->
+        <!--<version>1.7.0.RELEASE</version>-->
         <!--</dependency>-->
         <dependency>
             <groupId>com.orientechnologies</groupId>

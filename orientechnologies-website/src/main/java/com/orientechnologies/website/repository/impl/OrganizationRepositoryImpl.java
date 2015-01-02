@@ -533,7 +533,7 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     @Override
     public List<OUser> findMembers(String name) {
         OrientGraph db = dbFactory.getGraph();
-        String query = String.format("select expand(out('HasRepo').out('HasMember')) from Organization where name = '%s'", name);
+        String query = String.format("select expand(set(out('HasRepo').out('HasMember'))) from Organization where name = '%s'", name);
         Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
 
         List<OUser> users = new ArrayList<OUser>();

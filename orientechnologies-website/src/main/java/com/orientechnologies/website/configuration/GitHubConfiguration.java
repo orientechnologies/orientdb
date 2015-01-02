@@ -1,6 +1,7 @@
 package com.orientechnologies.website.configuration;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 /**
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ConfigurationProperties(prefix = "github")
+@PropertySource("classpath:github-${spring.profiles.active}.properties")
 public class GitHubConfiguration {
 
   private String clientId;

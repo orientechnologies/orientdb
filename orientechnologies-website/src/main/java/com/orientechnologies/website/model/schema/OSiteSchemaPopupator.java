@@ -1,8 +1,7 @@
 package com.orientechnologies.website.model.schema;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
 /**
@@ -14,9 +13,11 @@ public class OSiteSchemaPopupator {
 
     OrientGraph graph = new OrientGraph(db);
 
-    graph.command(new OSQLSynchQuery<ODocument>("insert into OSequence set className='Issue', value=1")).execute();
-    graph.command(new OSQLSynchQuery<ODocument>("insert into OSequence set className='Environment', value=1")).execute();
-    graph.command(new OSQLSynchQuery<ODocument>("insert into OSequence set className='Scope', value=1")).execute();
+    graph.command(new OCommandSQL("insert into OSequence set className='Issue', value=1")).execute();
+    graph.command(new OCommandSQL("insert into OSequence set className='Environment', value=1")).execute();
+    graph.command(new OCommandSQL("insert into OSequence set className='Scope', value=1")).execute();
+
+    graph.commit();
     // OrientVertex org = graph.addVertex("class:" + OSiteSchema.Organization.class.getSimpleName(), new Object[] {
     // OSiteSchema.Organization.NAME.toString(), "Orient Technologies", OSiteSchema.Organization.DESCRIPTION.toString(),
     // "orientechnologies" });

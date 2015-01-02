@@ -6,7 +6,7 @@
   <meta name="body" content="">
   <meta name="viewport" content="width=device-width">
   <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
-  <!-- build:css(.) styles/vendor.css -->
+  <!-- build:css(src/main/webapp) styles/vendor.css -->
   <!-- bower:css -->
   <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
   <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.css" />
@@ -69,7 +69,7 @@
 <![endif]-->
 <!-- endbuild -->
 
-<!-- build:js(.) scripts/vendor.js -->
+<!-- build:js(src/main/webapp) scripts/vendor.js -->
 <!-- bower:js -->
 <script src="bower_components/jquery/dist/jquery.js"></script>
 <script src="bower_components/angular/angular.js"></script>
@@ -88,13 +88,12 @@
 <script src="bower_components/angular-strap/dist/angular-strap.js"></script>
 <script src="bower_components/angular-strap/dist/angular-strap.tpl.js"></script>
 <script src="bower_components/string/lib/string.min.js"></script>
-<script src="bower_components/ngstorage/ngStorage.min.js"></script>
-<script src="bower_components/vue/dist/vue.min.js"></script>
-<script src="bower_components/marked/lib/marked.js"></script>
+<script src="bower_components/ngstorage/ngStorage.js"></script>
+<script src="bower_components/vue/dist/vue.js"></script>
 <!-- endbower -->
 <!-- endbuild -->
 
-<!-- build:js({.tmp,app}) scripts/scripts.js -->
+<!-- build:js({.tmp,src/main/webapp}) scripts/scripts.js -->
 <script src="scripts/app.js"></script>
 <script src="scripts/controllers/main.js"></script>
 <script src="scripts/controllers/client.js"></script>
@@ -110,6 +109,7 @@
 <script src="scripts/filters/moment-filters.js"></script>
 <script src="scripts/filters/util-filters.js"></script>
 <script src="scripts/directive/custom.js"></script>
+<script src="bower_components/marked/lib/marked.js"></script>
 <script src="scripts/vendors/markdown.js"></script>
 <script src="scripts/vendors/to-markdown.js"></script>
 <!-- endbuild -->

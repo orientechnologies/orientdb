@@ -166,6 +166,7 @@ angular.module('webappApp')
     User.whoami().then(function (data) {
       $scope.user = data;
       $scope.isMember = User.isMember(ORGANIZATION);
+      $scope.isClient = User.isClient(ORGANIZATION);
       $scope.client = User.getClient(ORGANIZATION);
       User.environments().then(function (data) {
         $scope.environments = data;
