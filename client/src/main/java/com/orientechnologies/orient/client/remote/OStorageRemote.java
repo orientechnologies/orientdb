@@ -50,6 +50,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
+import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerSchemaAware2CSV;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerStringAbstract;
 import com.orientechnologies.orient.core.serialization.serializer.stream.OStreamSerializerAnyStreamable;
 import com.orientechnologies.orient.core.storage.OCluster;
@@ -74,6 +75,7 @@ import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -120,6 +122,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private String                        connectionUserPassword;
   private Map<String, Object>           connectionOptions;
   private OEngineRemote                 engine;
+  private String                        recordFormat;
 
   public OStorageRemote(final String iClientId, final String iURL, final String iMode) throws IOException {
     this(iClientId, iURL, iMode, null);
@@ -202,8 +205,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       // POST OPEN
       openRemoteDatabase();
 
-      final OStorageConfiguration storageConfiguration = new OStorageRemoteConfiguration(this, ODatabaseDocumentTx
-          .getDefaultSerializer().toString());
+      final OStorageConfiguration storageConfiguration = new OStorageRemoteConfiguration(this, recordFormat);
       storageConfiguration.load();
 
       configuration = storageConfiguration;
@@ -1686,8 +1688,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       network.writeString(DRIVER_NAME).writeString(OConstants.ORIENT_VERSION)
           .writeShort((short) OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION).writeString(clientId);
     }
-    if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_21)
+    if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_21) {
       network.writeString(ODatabaseDocumentTx.getDefaultSerializer().toString());
+      recordFormat = ODatabaseDocumentTx.getDefaultSerializer().toString();
+    } else
+      recordFormat = ORecordSerializerSchemaAware2CSV.NAME;
     if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_26)
       network.writeBoolean(OGlobalConfiguration.CLIENT_SESSION_TOKEN_BASED.getValueAsBoolean());
   }
