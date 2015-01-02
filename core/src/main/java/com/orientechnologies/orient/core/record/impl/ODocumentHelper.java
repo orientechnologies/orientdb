@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
-import java.lang.reflect.Array;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
@@ -48,6 +41,13 @@ import com.orientechnologies.orient.core.serialization.serializer.record.string.
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
+
+import java.lang.reflect.Array;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Helper class to manage documents.
@@ -289,7 +289,8 @@ public class ODocumentHelper {
           final Object index = getIndexPart(iContext, indexPart);
           final String indexAsString = index != null ? index.toString() : null;
 
-          final List<String> indexParts = OStringSerializerHelper.smartSplit(indexAsString, ',');
+          final List<String> indexParts = OStringSerializerHelper.smartSplit(indexAsString, ',',
+              OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
           final List<String> indexRanges = OStringSerializerHelper.smartSplit(indexAsString, '-', ' ');
           final List<String> indexCondition = OStringSerializerHelper.smartSplit(indexAsString, '=', ' ');
 
@@ -300,7 +301,7 @@ public class ODocumentHelper {
             // MULTI VALUE
             final Object[] values = new Object[indexParts.size()];
             for (int i = 0; i < indexParts.size(); ++i) {
-              values[i] = ((ODocument) record).field(indexParts.get(i));
+              values[i] = ((ODocument) record).field(OStringSerializerHelper.getStringContent(indexParts.get(i)));
             }
             value = values;
           } else if (indexRanges.size() > 1) {
@@ -309,7 +310,7 @@ public class ODocumentHelper {
             String from = indexRanges.get(0);
             String to = indexRanges.get(1);
 
-            final ODocument doc = ((ODocument) ((OIdentifiable) value).getRecord());
+            final ODocument doc = (ODocument) record;
 
             final String[] fieldNames = doc.fieldNames();
             final int rangeFrom = from != null && !from.isEmpty() ? Integer.parseInt(from) : 0;
@@ -341,21 +342,61 @@ public class ODocumentHelper {
               value = null;
           }
         } else if (value instanceof Map<?, ?>) {
-          final List<String> indexParts = OStringSerializerHelper.smartSplit(indexPart, ',',
+          final Object index = getIndexPart(iContext, indexPart);
+          final String indexAsString = index != null ? index.toString() : null;
+
+          final List<String> indexParts = OStringSerializerHelper.smartSplit(indexAsString, ',',
               OStringSerializerHelper.DEFAULT_IGNORE_CHARS);
-          if (indexParts.size() == 1) {
+          final List<String> indexRanges = OStringSerializerHelper.smartSplit(indexAsString, '-', ' ');
+          final List<String> indexCondition = OStringSerializerHelper.smartSplit(indexAsString, '=', ' ');
+
+          final Map<String, ?> map = (Map<String, ?>) value;
+          if (indexParts.size() == 1 && indexCondition.size() == 1 && indexRanges.size() == 1)
             // SINGLE VALUE
-            final Object index = getIndexPart(iContext, indexPart);
-            value = ((Map<?, ?>) value).get(index);
-          } else {
+            value = map.get(indexAsString);
+          else if (indexParts.size() > 1) {
             // MULTI VALUE
             final Object[] values = new Object[indexParts.size()];
             for (int i = 0; i < indexParts.size(); ++i) {
-              final Object index = getIndexPart(iContext, indexParts.get(i));
-              values[i] = ((Map<?, ?>) value).get(index);
+              values[i] = map.get(OStringSerializerHelper.getStringContent(indexParts.get(i)));
             }
             value = values;
+          } else if (indexRanges.size() > 1) {
+
+            // MULTI VALUES RANGE
+            String from = indexRanges.get(0);
+            String to = indexRanges.get(1);
+
+            final List<String> fieldNames = new ArrayList<String>(map.keySet());
+            final int rangeFrom = from != null && !from.isEmpty() ? Integer.parseInt(from) : 0;
+            final int rangeTo = to != null && !to.isEmpty() ? Math.min(Integer.parseInt(to), fieldNames.size() - 1) : fieldNames
+                .size() - 1;
+
+            final Object[] values = new Object[rangeTo - rangeFrom + 1];
+
+            for (int i = rangeFrom; i <= rangeTo; ++i)
+              values[i - rangeFrom] = map.get(fieldNames.get(i));
+
+            value = values;
+
+          } else if (!indexCondition.isEmpty()) {
+            // CONDITION
+            final String conditionFieldName = indexCondition.get(0);
+            Object conditionFieldValue = ORecordSerializerStringAbstract.getTypeValue(indexCondition.get(1));
+
+            if (conditionFieldValue instanceof String)
+              conditionFieldValue = OStringSerializerHelper.getStringContent(conditionFieldValue);
+
+            final Object fieldValue = map.get(conditionFieldName);
+
+            if (conditionFieldValue != null && fieldValue != null)
+              conditionFieldValue = OType.convert(conditionFieldValue, fieldValue.getClass());
+
+            if (fieldValue == null && !conditionFieldValue.equals("null") || fieldValue != null
+                && !fieldValue.equals(conditionFieldValue))
+              value = null;
           }
+
         } else if (OMultiValue.isMultiValue(value)) {
           // MULTI VALUE
           final Object index = getIndexPart(iContext, indexPart);
@@ -499,7 +540,7 @@ public class ODocumentHelper {
 
   protected static Object getIndexPart(final OCommandContext iContext, final String indexPart) {
     Object index = indexPart;
-    if (indexPart.charAt(0) == '"' || indexPart.charAt(0) == '\'')
+    if (indexPart.indexOf(',') == -1 && ( indexPart.charAt(0) == '"' || indexPart.charAt(0) == '\'') )
       index = OStringSerializerHelper.getStringContent(indexPart);
     else if (indexPart.charAt(0) == '$') {
       final Object ctxValue = iContext.getVariable(indexPart);
@@ -1286,9 +1327,12 @@ public class ODocumentHelper {
       if (myArraySize != otherArraySize)
         return false;
 
-      for (int i = 0; i < myArraySize; i++)
-        if (!Array.get(myValue, i).equals(Array.get(otherValue, i)))
+      for (int i = 0; i < myArraySize; i++) {
+        final Object first = Array.get(myValue, i);
+        final Object second = Array.get(otherValue, i);
+        if (first == null && second != null || (first != null && !first.equals(second)))
           return false;
+      }
 
       return true;
     }
