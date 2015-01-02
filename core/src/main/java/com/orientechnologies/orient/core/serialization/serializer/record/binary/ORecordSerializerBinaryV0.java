@@ -20,6 +20,15 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -52,15 +61,6 @@ import com.orientechnologies.orient.core.serialization.serializer.ONetworkThread
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.util.ODateHelper;
-
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
-import java.util.Map.Entry;
 
 public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
@@ -109,6 +109,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           continue;
         }
 
+        // CHECK IF THE FIELD IS IN THE FIELD LIST BY COMPARING THEM BYTE PER BYTE
         int matchFieldId = -1;
         for (int f = 0; f < fields.length; f++) {
           boolean matchField = true;
@@ -154,10 +155,11 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         ODocumentInternal.rawField(document, fieldName, value, type);
       } else
         ODocumentInternal.rawField(document, fieldName, null, null);
+
       if (unmarshalledFields == iFields.length)
+        // ALL REQUESTED FIELDS UNMARSHALLED: EXIT
         break;
     }
-
   }
 
   @Override
