@@ -20,15 +20,6 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
@@ -62,6 +53,15 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.util.ODateHelper;
 
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.nio.charset.Charset;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
+import java.util.Map.Entry;
+
 public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   private static final ORecordId NULL_RECORD_ID   = new ORecordId(-2, ORID.CLUSTER_POS_INVALID);
@@ -76,6 +76,11 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     final String className = readString(bytes);
     if (className.length() != 0)
       ODocumentInternal.fillClassNameIfNeeded(document, className);
+
+    // TRANSFORMS FIELDS FOM STRINGS TO BYTE[]
+    final byte[][] fields = new byte[iFields.length][];
+    for (int i = 0; i < iFields.length; ++i)
+      fields[i] = iFields[i].getBytes();
 
     String fieldName;
     int valuePos;
@@ -103,6 +108,28 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
           bytes.skip(len + OIntegerSerializer.INT_SIZE + 1);
           continue;
         }
+
+        int matchFieldId = -1;
+        for (int f = 0; f < fields.length; f++) {
+          boolean matchField = true;
+          for (int i = 0; i < len; i++) {
+            if (bytes.bytes[bytes.offset + i] != fields[f][i]) {
+              matchField = false;
+              break;
+            }
+          }
+          if (matchField) {
+            matchFieldId = f;
+            unmarshalledFields++;
+            break;
+          }
+        }
+
+        if (matchFieldId < 0) {
+          bytes.skip(len + OIntegerSerializer.INT_SIZE + 1);
+          continue;
+        }
+
         fieldName = new String(bytes.bytes, bytes.offset, len, utf8);
         bytes.skip(len);
         valuePos = readInteger(bytes);
@@ -117,19 +144,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         else
           type = readOType(bytes);
 
-      }
-      // CHECK BY FIELD NAME
-      boolean foundField = false;
-      for (int i = 0; i < iFields.length; ++i) {
-        if (iFields[i].equals(fieldName)) {
-          foundField = true;
-          unmarshalledFields++;
-          break;
-        }
-      }
-
-      if (!foundField) {
-        continue;
       }
 
       if (valuePos != 0) {
@@ -200,11 +214,6 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       bytes.offset = last;
   }
 
-  private OGlobalProperty getGlobalProperty(final ODocument document, final int len) {
-    final int id = (len * -1) - 1;
-    return ODocumentInternal.getGlobalPropertyById(document, id);
-  }
-
   @SuppressWarnings("unchecked")
   @Override
   public void serialize(final ODocument document, final BytesContainer bytes, final boolean iClassOnly) {
@@ -270,6 +279,11 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     else
       writeEmptyString(bytes);
     return clazz;
+  }
+
+  private OGlobalProperty getGlobalProperty(final ODocument document, final int len) {
+    final int id = (len * -1) - 1;
+    return ODocumentInternal.getGlobalPropertyById(document, id);
   }
 
   private OType readOType(final BytesContainer bytes) {
