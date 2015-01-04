@@ -156,14 +156,16 @@ public class OWOWCache {
       if (pageFlushInterval > 0)
         commitExecutor.scheduleWithFixedDelay(new PeriodicFlushTask(), pageFlushInterval, pageFlushInterval, TimeUnit.MILLISECONDS);
 
-      if (writeAheadLog != null) {
-        final long fuzzyCheckPointInterval = OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsInteger();
-        commitExecutor.scheduleWithFixedDelay(new PeriodicalFuzzyCheckpointTask(), fuzzyCheckPointInterval,
-            fuzzyCheckPointInterval, TimeUnit.SECONDS);
-      }
-
     } finally {
       filesLock.releaseWriteLock();
+    }
+  }
+
+  public void startFuzzyCheckpoints() {
+    if (writeAheadLog != null) {
+      final long fuzzyCheckPointInterval = OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.getValueAsInteger();
+      commitExecutor.scheduleWithFixedDelay(new PeriodicalFuzzyCheckpointTask(), fuzzyCheckPointInterval, fuzzyCheckPointInterval,
+          TimeUnit.SECONDS);
     }
   }
 
@@ -893,11 +895,11 @@ public class OWOWCache {
     if (fileClassic == null)
       throw new IllegalArgumentException("File with id " + fileId + " not found in WOW Cache");
 
-		OLogSequenceNumber lastLsn;
-		if (writeAheadLog != null)
-			lastLsn = writeAheadLog.getFlushedLSN();
-		else
-		  lastLsn = new OLogSequenceNumber(-1, -1);
+    OLogSequenceNumber lastLsn;
+    if (writeAheadLog != null)
+      lastLsn = writeAheadLog.getFlushedLSN();
+    else
+      lastLsn = new OLogSequenceNumber(-1, -1);
 
     if (fileClassic.getFilledUpTo() >= endPosition) {
       fileClassic.read(startPosition, content, content.length - 2 * PAGE_PADDING, PAGE_PADDING);
@@ -1164,7 +1166,7 @@ public class OWOWCache {
 
     @Override
     public void run() {
-      OLogSequenceNumber minLsn = new OLogSequenceNumber(-1, -1);
+      OLogSequenceNumber minLsn = writeAheadLog.getFlushedLSN();
 
       for (Map.Entry<GroupKey, WriteGroup> entry : writeGroups.entrySet()) {
         Lock groupLock = lockManager.acquireExclusiveLock(entry.getKey());
@@ -1173,7 +1175,7 @@ public class OWOWCache {
           for (int i = 0; i < 16; i++) {
             final OCachePointer pagePointer = group.pages[i];
             if (pagePointer != null) {
-              if (minLsn.compareTo(pagePointer.getLastFlushedLsn()) < 0) {
+              if (minLsn.compareTo(pagePointer.getLastFlushedLsn()) > 0) {
                 minLsn = pagePointer.getLastFlushedLsn();
               }
             }

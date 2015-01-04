@@ -39,6 +39,7 @@ import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
@@ -201,7 +202,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       }
 
       restoreIfNeeded();
-      clearStorageDirty();
+
+			clearStorageDirty();
+			diskCache.startFuzzyCheckpoints();
 
       status = STATUS.OPEN;
     } catch (Exception e) {
@@ -262,6 +265,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE.getValueAsBoolean())
         makeFullCheckpoint();
 
+			diskCache.startFuzzyCheckpoints();
       postCreateSteps();
 
     } catch (OStorageException e) {
@@ -1555,7 +1559,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (isDirty()) {
       OLogManager.instance().warn(this, "Storage " + name + " was not closed properly. Will try to restore from write ahead log.");
       try {
-        restoreFromWAL();
+        wereDataRestoredAfterOpen = restoreFromWAL();
         makeFullCheckpoint();
       } catch (Exception e) {
         OLogManager.instance().error(this, "Exception during storage data restore.", e);
@@ -2147,15 +2151,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     return operationUnit;
   }
 
-  private void restoreFromWAL() throws IOException {
+  private boolean restoreFromWAL() throws IOException {
     if (writeAheadLog == null) {
       OLogManager.instance().error(this, "Restore is not possible because write ahead logging is switched off.");
-      return;
+      return true;
     }
 
     if (writeAheadLog.begin() == null) {
       OLogManager.instance().error(this, "Restore is not possible because write ahead log is empty.");
-      return;
+      return false;
     }
 
     OLogManager.instance().info(this, "Looking for last checkpoint...");
@@ -2169,8 +2173,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     if (lastCheckPoint == null) {
       OLogManager.instance().info(this, "Checkpoints are absent, the restore will start from the beginning.");
-      restoreFromBegging();
-      return;
+      return restoreFromBegging();
     }
 
     OWALRecord checkPointRecord;
@@ -2182,8 +2185,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     if (checkPointRecord == null) {
       OLogManager.instance().info(this, "Checkpoints are absent, the restore will start from the beginning.");
-      restoreFromBegging();
-      return;
+      return restoreFromBegging();
     }
 
     if (checkPointRecord instanceof OFuzzyCheckpointStartRecord) {
@@ -2201,15 +2203,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
         if (checkPointRecord != null) {
           OLogManager.instance().warn(this, "Restore will start from the previous checkpoint.");
-          restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
+          return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
         } else {
           OLogManager.instance().warn(this, "Restore will start from the beginning.");
-          restoreFromBegging();
+          return restoreFromBegging();
         }
       } else
-        restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
-
-      return;
+        return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
     }
 
     if (checkPointRecord instanceof OFullCheckpointStartRecord) {
@@ -2228,12 +2228,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
         } else {
           OLogManager.instance().warn(this, "Restore will start from the beginning.");
-          restoreFromBegging();
+          return restoreFromBegging();
         }
       } else
-        restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
-
-      return;
+        return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
     }
 
     throw new OStorageException("Unknown checkpoint record type " + checkPointRecord.getClass().getName());
@@ -2276,47 +2274,45 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     return false;
   }
 
-  private void restoreFromCheckPoint(OAbstractCheckPointStartRecord checkPointRecord) throws IOException {
+  private boolean restoreFromCheckPoint(OAbstractCheckPointStartRecord checkPointRecord) throws IOException {
     if (checkPointRecord instanceof OFuzzyCheckpointStartRecord) {
-      restoreFromFuzzyCheckPoint((OFuzzyCheckpointStartRecord) checkPointRecord);
-      return;
+      return restoreFromFuzzyCheckPoint((OFuzzyCheckpointStartRecord) checkPointRecord);
     }
 
     if (checkPointRecord instanceof OFullCheckpointStartRecord) {
-      restoreFromFullCheckPoint((OFullCheckpointStartRecord) checkPointRecord);
-      return;
+      return restoreFromFullCheckPoint((OFullCheckpointStartRecord) checkPointRecord);
     }
 
     throw new OStorageException("Unknown checkpoint record type " + checkPointRecord.getClass().getName());
   }
 
-  private void restoreFromFullCheckPoint(OFullCheckpointStartRecord checkPointRecord) throws IOException {
+  private boolean restoreFromFullCheckPoint(OFullCheckpointStartRecord checkPointRecord) throws IOException {
     OLogManager.instance().info(this, "Data restore procedure from full checkpoint is started. Restore is performed from LSN %s",
         checkPointRecord.getLsn());
 
     final OLogSequenceNumber lsn = writeAheadLog.next(checkPointRecord.getLsn());
-    restoreFrom(lsn);
+    return restoreFrom(lsn);
   }
 
-  private void restoreFromFuzzyCheckPoint(OFuzzyCheckpointStartRecord checkPointRecord) throws IOException {
+  private boolean restoreFromFuzzyCheckPoint(OFuzzyCheckpointStartRecord checkPointRecord) throws IOException {
     OLogManager.instance().info(this, "Data restore procedure from FUZZY checkpoint is started.");
     OLogSequenceNumber flushedLsn = checkPointRecord.getFlushedLsn();
 
     if (flushedLsn.compareTo(writeAheadLog.begin()) < 0)
       flushedLsn = writeAheadLog.begin();
 
-    restoreFrom(flushedLsn);
+    return restoreFrom(flushedLsn);
   }
 
-  private void restoreFromBegging() throws IOException {
+  private boolean restoreFromBegging() throws IOException {
     OLogManager.instance().info(this, "Data restore procedure is started.");
     OLogSequenceNumber lsn = writeAheadLog.begin();
 
-    restoreFrom(lsn);
+    return restoreFrom(lsn);
   }
 
-  private void restoreFrom(OLogSequenceNumber lsn) throws IOException {
-    wereDataRestoredAfterOpen = true;
+  private boolean restoreFrom(OLogSequenceNumber lsn) throws IOException {
+    final OModifiableBoolean atLeastOnePageUpdate = new OModifiableBoolean(false);
 
     long recordsProcessed = 0;
     int reportInterval = OGlobalConfiguration.WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE.getValueAsInteger();
@@ -2335,7 +2331,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
               .info(this, "WAL size exceed configured heap memory for recovery (%s=%d). Fetching WAL records in batch",
                   OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getKey(),
                   OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getValueAsInteger());
-          recordsProcessed = restoreWALBatch(batch, operationUnits, recordsProcessed, reportInterval);
+          recordsProcessed = restoreWALBatch(batch, operationUnits, recordsProcessed, reportInterval, atLeastOnePageUpdate);
           batch = new ArrayList<OWALRecord>();
         }
 
@@ -2344,7 +2340,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       if (!batch.isEmpty()) {
         OLogManager.instance().info(this, "Apply last batch of operations are read from WAL.");
-        restoreWALBatch(batch, operationUnits, recordsProcessed, reportInterval);
+        restoreWALBatch(batch, operationUnits, recordsProcessed, reportInterval, atLeastOnePageUpdate);
       }
     } catch (OWALPageBrokenException e) {
       OLogManager.instance().error(this,
@@ -2353,10 +2349,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     rollbackAllUnfinishedWALOperations(operationUnits);
     operationUnits.clear();
+
+    return atLeastOnePageUpdate.getValue();
   }
 
   private long restoreWALBatch(List<OWALRecord> batch, Map<OOperationUnitId, List<OLogSequenceNumber>> operationUnits,
-      long recordsProcessed, int reportInterval) throws IOException {
+      long recordsProcessed, int reportInterval, OModifiableBoolean atLestOnePageUpdate) throws IOException {
 
     boolean nonTxOperationWasUsed = false;
     for (OWALRecord walRecord : batch) {
@@ -2404,6 +2402,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
             diskCache.release(cacheEntry);
           }
 
+          atLestOnePageUpdate.setValue(true);
         } else if (operationUnitRecord instanceof OFileCreatedCreatedWALRecord) {
 
           final OFileCreatedCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedCreatedWALRecord) operationUnitRecord;
@@ -2450,11 +2449,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         continue;
 
       final OOperationUnitRecord atomicOperationRecord = (OOperationUnitRecord) writeAheadLog.read(operationUnit.get(0));
+			if (atomicOperationRecord == null) {
+				writeAheadLog.read(operationUnit.get(0));
+			}
       final OAtomicUnitStartRecord startRecord;
 
       if (atomicOperationRecord instanceof OAtomicUnitStartRecord)
         startRecord = (OAtomicUnitStartRecord) atomicOperationRecord;
       else {
+
+        OLogManager.instance().info(this, "Rollback operation with id %s  and lsn %s", atomicOperationRecord.getOperationUnitId(),
+            ((OOperationUnitBodyRecord) atomicOperationRecord).getStartLsn());
         startRecord = (OAtomicUnitStartRecord) writeAheadLog.read(((OOperationUnitBodyRecord) atomicOperationRecord).getStartLsn());
       }
 
@@ -2463,8 +2468,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       writeAheadLog.logAtomicOperationEndRecord(startRecord.getOperationUnitId(), true, startRecord.getLsn());
 
-			// it is needed because we can start to restore atomic operation from the middle
-			List<OLogSequenceNumber> records = readOperationUnit(startRecord.getLsn(), startRecord.getOperationUnitId());
+      // it is needed because we can start to restore atomic operation from the middle
+      List<OLogSequenceNumber> records = readOperationUnit(startRecord.getLsn(), startRecord.getOperationUnitId());
       undoOperation(records);
     }
   }
