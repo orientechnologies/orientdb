@@ -78,7 +78,5 @@ public abstract class ORemoteFetchListener implements OFetchListener {
   @Override
   public void skipStandardField(ODocument iRecord, String iFieldName, OFetchContext iContext, Object iUserObject, String iFormat)
       throws OFetchException {
-    iRecord.removeField(iFieldName);
-    ORecordInternal.unsetDirty(iRecord);
   }
 }

@@ -1435,6 +1435,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     // the main condition is a set of sub-conditions separated by OR operators
     final List<List<OIndexSearchResult>> conditionHierarchy = filterAnalyzer.analyzeMainCondition(
         compiledFilter.getRootCondition(), iSchemaClass, context);
+    if( conditionHierarchy == null )
+      return false;
 
     List<OIndexCursor> cursors = new ArrayList<OIndexCursor>();
 

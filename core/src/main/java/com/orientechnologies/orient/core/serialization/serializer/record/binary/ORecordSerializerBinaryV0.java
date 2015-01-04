@@ -82,7 +82,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     for (int i = 0; i < iFields.length; ++i)
       fields[i] = iFields[i].getBytes();
 
-    String fieldName;
+    String fieldName = null;
     int valuePos;
     OType type;
     int unmarshalledFields = 0;
@@ -95,44 +95,31 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
         break;
       } else if (len > 0) {
         // CHECK BY FIELD NAME SIZE: THIS AVOID EVEN THE UNMARSHALLING OF FIELD NAME
-        boolean possibleMatch = false;
+        boolean match = false;
         for (int i = 0; i < iFields.length; ++i) {
           if (iFields[i].length() == len) {
-            possibleMatch = true;
-            break;
+            boolean matchField = true;
+            for (int j = 0; j < len; ++j) {
+              if (bytes.bytes[bytes.offset + j] != fields[i][j]) {
+                matchField = false;
+                break;
+              }
+            }
+            if (matchField) {
+              fieldName = iFields[i];
+              unmarshalledFields++;
+              bytes.skip(len);
+              match = true;
+              break;
+            }
           }
         }
 
-        if (!possibleMatch) {
+        if (!match) {
           // SKIP IT
           bytes.skip(len + OIntegerSerializer.INT_SIZE + 1);
           continue;
         }
-
-        // CHECK IF THE FIELD IS IN THE FIELD LIST BY COMPARING THEM BYTE PER BYTE
-        int matchFieldId = -1;
-        for (int f = 0; f < fields.length; f++) {
-          boolean matchField = true;
-          for (int i = 0; i < len; i++) {
-            if (bytes.bytes[bytes.offset + i] != fields[f][i]) {
-              matchField = false;
-              break;
-            }
-          }
-          if (matchField) {
-            matchFieldId = f;
-            unmarshalledFields++;
-            break;
-          }
-        }
-
-        if (matchFieldId < 0) {
-          bytes.skip(len + OIntegerSerializer.INT_SIZE + 1);
-          continue;
-        }
-
-        fieldName = new String(bytes.bytes, bytes.offset, len, utf8);
-        bytes.skip(len);
         valuePos = readInteger(bytes);
         type = readOType(bytes);
       } else {
