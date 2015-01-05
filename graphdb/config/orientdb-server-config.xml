@@ -35,8 +35,6 @@
                 <parameter name="configuration.db.default"
                            value="${ORIENTDB_HOME}/config/default-distributed-db-config.json"/>
                 <parameter name="configuration.hazelcast" value="${ORIENTDB_HOME}/config/hazelcast.xml"/>
-                <parameter name="conflict.resolver.impl"
-                           value="com.orientechnologies.orient.server.distributed.conflict.ODefaultReplicationConflictResolver"/>
             </parameters>
         </handler>
         <!-- JMX SERVER, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->

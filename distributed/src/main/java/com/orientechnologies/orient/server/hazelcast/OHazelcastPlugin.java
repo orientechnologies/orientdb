@@ -61,7 +61,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedStorage;
-import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTask;
 import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
@@ -711,10 +710,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
   public Lock getLock(final String iName) {
     return getHazelcastInstance().getLock(iName);
-  }
-
-  public Class<? extends OReplicationConflictResolver> getConfictResolverClass() {
-    return confictResolverClass;
   }
 
   @Override
