@@ -152,8 +152,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         // REUSED
         return;
 
-      status = STATUS.OPENING;
-
       if (!exists())
         throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
 
