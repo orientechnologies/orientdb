@@ -24,6 +24,7 @@ angular.module('webappApp')
       Organization.all('issues').customGET("", {q: $scope.query, page: $scope.page}).then(function (data) {
         $scope.issues = data.content;
         $scope.pager = data.page;
+        $scope.pager.pages = $scope.calculatePages($scope.pager);
       });
     }
 
@@ -137,6 +138,32 @@ angular.module('webappApp')
         $scope.search();
       }
     });
+    $scope.calculatePages = function (pager) {
+
+      var maxBlocks, maxPage, maxPivotPages, minPage, numPages, pages;
+      maxBlocks = 11;
+      pages = [];
+      var currentPage = pager.number;
+      numPages = pager.totalPages;
+      if (numPages > 1) {
+        pages.push(1);
+        maxPivotPages = Math.round((maxBlocks - 5) / 2);
+        minPage = Math.max(2, currentPage - maxPivotPages);
+        maxPage = Math.min(numPages - 1, currentPage + maxPivotPages * 2 - (currentPage - minPage));
+        minPage = Math.max(2, minPage - (maxPivotPages * 2 - (maxPage - minPage)));
+        var i = minPage;
+        while (i <= maxPage) {
+          if ((i === minPage && i !== 2) || (i === maxPage && i !== numPages - 1)) {
+            pages.push(null);
+          } else {
+            pages.push(i);
+          }
+          i++;
+        }
+        pages.push(numPages);
+        return pages
+      }
+    }
     $scope.getNumber = function (number) {
       return new Array(number);
     }
@@ -147,7 +174,8 @@ angular.module('webappApp')
       }
     }
     $scope.search();
-  });
+  }
+);
 
 angular.module('webappApp')
   .controller('IssueNewCtrl', function ($scope, Organization, Repo, $location, User) {
@@ -352,6 +380,7 @@ angular.module('webappApp')
 angular.module('webappApp')
   .controller('ChangeLabelCtrl', function ($scope) {
 
+    $scope.title = $scope.title || 'Apply labels to this issue';
     $scope.isLabeled = function (label) {
 
       for (var l in $scope.issue.labels) {
@@ -376,6 +405,8 @@ angular.module('webappApp')
 
 angular.module('webappApp')
   .controller('ChangeMilestoneCtrl', function ($scope, $routeParams, Repo, $popover) {
+
+    $scope.title = $scope.title || 'Change target milestone';
     $scope.isMilestoneSelected = function (milestone) {
       return $scope.issue.milestone ? milestone.number == $scope.issue.milestone.number : false;
     }
@@ -390,6 +421,7 @@ angular.module('webappApp')
 angular.module('webappApp')
   .controller('ChangeVersionCtrl', function ($scope) {
 
+    $scope.title = $scope.title || 'Change affected version';
     $scope.isVersionSelected = function (version) {
       return $scope.issue.version ? version.number == $scope.issue.version.number : false;
     }
@@ -402,6 +434,7 @@ angular.module('webappApp')
   });
 angular.module('webappApp')
   .controller('ChangeAssigneeCtrl', function ($scope) {
+    $scope.title = $scope.title || 'Assign this issue';
     $scope.isAssigneeSelected = function (assignee) {
 
       return ($scope.issue.assignee && assignee) ? assignee.name == $scope.issue.assignee.name : false;
@@ -432,7 +465,7 @@ angular.module('webappApp')
 
 angular.module('webappApp')
   .controller('ChangeScopeCtrl', function ($scope) {
-
+    $scope.title = $scope.title || 'Change Area';
     $scope.isScoped = function (scope) {
       return $scope.issue.scope ? scope.name == $scope.issue.scope.name : false;
     }

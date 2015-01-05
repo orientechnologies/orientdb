@@ -59,14 +59,14 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
 
         try {
 
-            dbFactory.getGraph().begin();
 
             Repository repoDtp = repoRepository.findByOrgAndName(message.org, message.repo);
 
             importTeams(message, repoDtp);
             importLabels(message.repository.getLabels(), repoDtp);
             importMilestones(message.repository.getMilestones(), repoDtp);
-            importIssue(message, repoDtp, GIssueState.CLOSED);
+            dbFactory.getGraph().commit();
+            importIssue(message, repoDtp, GIssueState.OPEN);
 
             dbFactory.getGraph().commit();
         } catch (IOException e) {
@@ -133,12 +133,13 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
     }
 
     private void importIssue(GitHubIssueMessage message, Repository repoDtp, GIssueState state) throws IOException {
-        Iterable<GIssue> issues = message.repository.getIssues();
+        Iterable<GIssue> issues = message.repository.getIssues(state);
 
         int i = 0;
         for (GIssue issue : issues) {
 
             importSingleIssue(repoDtp, issue);
+            dbFactory.getGraph().commit();
             i++;
             log.info("Imported [" + i + "] issues", i);
         }
@@ -181,7 +182,7 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
         String login = assignee1 != null ? assignee1.getLogin() : null;
         if (login != null) {
             OUser assignee = userRepo.findUserOrCreateByLogin(login, assignee1.getId());
-            importIssueAssignee(issueDto, user);
+            importIssueAssignee(issueDto, assignee);
         }
         // IMPORT COMMENTS
         importIssueComments(issue, issueDto);

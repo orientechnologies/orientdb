@@ -547,7 +547,7 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     @Override
     public List<Milestone> findMilestones(String name) {
         OrientGraph db = dbFactory.getGraph();
-        String query = String.format("select expand(out('HasRepo').out('HasMilestone')) from Organization where name = '%s'", name);
+        String query = String.format("select distinct(title) as title from (select expand(out('HasRepo').out('HasMilestone')) from Organization where name = '%s')", name);
         Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
 
         List<Milestone> milestones = new ArrayList<Milestone>();
@@ -561,7 +561,7 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     @Override
     public List<Label> findLabels(String name) {
         OrientGraph db = dbFactory.getGraph();
-        String query = String.format("select expand(out('HasRepo').out('HasLabel')) from Organization where name = '%s'", name);
+        String query = String.format("select name,color from (select expand(out('HasRepo').out('HasLabel')) from Organization where name = '%s')  group by name,color", name);
         Iterable<OrientVertex> vertices = db.command(new OCommandSQL(query)).execute();
 
         List<Label> labels = new ArrayList<Label>();

@@ -1,18 +1,18 @@
 <div class="popover label-popover" ng-controller="ChangeLabelCtrl">
   <div class="arrow"></div>
-  <h3 class="popover-title">Apply labels to this issue</h3>
+  <h3 class="popover-title">{{title}}</h3>
 
   <div class="popover-content">
     <form>
       <div class="form-group">
-        <input type="text" class="form-control" placeholder="Filter labels">
+        <input type="text" class="form-control" ng-model="labelFilter" placeholder="Filter labels">
       </div>
     </form>
     <hr class="label-popover-divider"/>
     <ul class="labels-group">
       <li class="label-item" ng-click="toggleLabel(label)" ng-class="{ 'label-unselected' : !isLabeled(label)  }"
           style="background-color: {{label.color | toRgbString:0.4}}"
-          ng-repeat="label in labels">
+          ng-repeat="label in labels | filter:labelFilter">
         <div class="container-fluid">
           <div class="row">
             <div class="col-md-1 text-center">

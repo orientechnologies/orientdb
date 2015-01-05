@@ -217,3 +217,9 @@
   text-decoration: none;
   outline: none;
 }
+
+.labels-group,.milestones-group,.versions-group {
+  max-height: 400px;
+  overflow: auto;
+  position: relative;
+}

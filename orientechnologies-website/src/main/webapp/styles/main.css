@@ -267,3 +267,10 @@ code {
   cursor: pointer;
   margin: 0px 5px;
 }
+
+.panel-comment .btn-group {
+  margin: 0 2px;
+}
+.panel-comment .btn-group button {
+  border-radius: 3px !important;
+}

@@ -41,10 +41,12 @@ public class OSiteSchema {
         addEdgeClass(HasOpened.class);
         addEdgeClass(HasVersion.class);
         addEdgeClass(HasRepo.class);
+        addEdgeClass(HasMilestone.class);
         addEdgeClass(HasClient.class);
         addEdgeClass(HasPriority.class);
         addEdgeClass(HasScope.class);
         addEdgeClass(HasEnvironment.class);
+        addEdgeClass(IsAssigned.class);
         addEdgeClass(HasSla.class);
 
     }
