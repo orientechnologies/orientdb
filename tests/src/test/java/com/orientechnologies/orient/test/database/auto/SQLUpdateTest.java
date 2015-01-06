@@ -17,6 +17,7 @@ package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -437,6 +438,89 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
 
     document.reload();
     Assert.assertEquals(document.field("test"), "aaa \f bbb");
+  }
+
+  public void testUpdateVertexContent() {
+    final OSchema schema = database.getMetadata().getSchema();
+    OClass vertex = schema.getClass("V");
+    schema.createClass("UpdateVertexContent", vertex);
+
+    final ORID vOneId = ((ODocument) database.command(new OCommandSQL("create vertex UpdateVertexContent")).execute())
+        .getIdentity();
+    final ORID vTwoId = ((ODocument) database.command(new OCommandSQL("create vertex UpdateVertexContent")).execute())
+        .getIdentity();
+
+    database.command(new OCommandSQL("create edge from " + vOneId + " to " + vTwoId)).execute();
+    database.command(new OCommandSQL("create edge from " + vOneId + " to " + vTwoId)).execute();
+    database.command(new OCommandSQL("create edge from " + vOneId + " to " + vTwoId)).execute();
+
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
+        "select sum(outE().size(), inE().size()) from UpdateVertexContent"));
+
+    Assert.assertEquals(result.size(), 2);
+
+    for (ODocument doc : result) {
+      Assert.assertEquals(doc.field("sum"), 3);
+    }
+
+    database.command(new OCommandSQL("update UpdateVertexContent content {value : 'val'} where @rid = " + vOneId)).execute();
+    database.command(new OCommandSQL("update UpdateVertexContent content {value : 'val'} where @rid =  " + vTwoId)).execute();
+
+    result = database.query(new OSQLSynchQuery<ODocument>("select sum(outE().size(), inE().size()) from UpdateVertexContent"));
+
+    Assert.assertEquals(result.size(), 2);
+
+    for (ODocument doc : result) {
+      Assert.assertEquals(doc.field("sum"), 3);
+    }
+
+    result = database.query(new OSQLSynchQuery<ODocument>("select from UpdateVertexContent"));
+    Assert.assertEquals(result.size(), 2);
+    for (ODocument doc : result) {
+      Assert.assertEquals(doc.field("value"), "val");
+    }
+  }
+
+  public void testUpdateEdgeContent() {
+    final OSchema schema = database.getMetadata().getSchema();
+    OClass vertex = schema.getClass("V");
+    OClass edge = schema.getClass("E");
+
+    schema.createClass("UpdateEdgeContentV", vertex);
+    schema.createClass("UpdateEdgeContentE", edge);
+
+    final ORID vOneId = ((ODocument) database.command(new OCommandSQL("create vertex UpdateEdgeContentV")).execute()).getIdentity();
+    final ORID vTwoId = ((ODocument) database.command(new OCommandSQL("create vertex UpdateEdgeContentV")).execute()).getIdentity();
+
+    database.command(new OCommandSQL("create edge UpdateEdgeContentE from " + vOneId + " to " + vTwoId)).execute();
+    database.command(new OCommandSQL("create edge UpdateEdgeContentE from " + vOneId + " to " + vTwoId)).execute();
+    database.command(new OCommandSQL("create edge UpdateEdgeContentE from " + vOneId + " to " + vTwoId)).execute();
+
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select outV(), inV() from UpdateEdgeContentE"));
+
+    Assert.assertEquals(result.size(), 3);
+
+    for (ODocument doc : result) {
+      Assert.assertEquals(doc.field("outV"), vOneId);
+      Assert.assertEquals(doc.field("inV"), vTwoId);
+    }
+
+    database.command(new OCommandSQL("update UpdateEdgeContentE content {value : 'val'}")).execute();
+
+		result = database.query(new OSQLSynchQuery<ODocument>("select outV(), inV() from UpdateEdgeContentE"));
+
+		Assert.assertEquals(result.size(), 3);
+
+		for (ODocument doc : result) {
+			Assert.assertEquals(doc.field("outV"), vOneId);
+			Assert.assertEquals(doc.field("inV"), vTwoId);
+		}
+
+    result = database.query(new OSQLSynchQuery<ODocument>("select from UpdateEdgeContentE"));
+    Assert.assertEquals(result.size(), 3);
+    for (ODocument doc : result) {
+      Assert.assertEquals(doc.field("value"), "val");
+    }
   }
 
   private void checkUpdatedDoc(ODatabaseDocument database, String expectedName, String expectedCity, String expectedGender) {
