@@ -61,12 +61,10 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
   public static final String                   LABEL_FIELD_NAME          = "label";
   public static final Object                   DEF_ORIGINAL_ID_FIELDNAME = "origId";
   private static final long                    serialVersionUID          = 1L;
-
-  private transient OrientBaseGraph            graph;
   protected boolean                            classicDetachMode         = false;
-
   protected transient OrientBaseGraph.Settings settings;
   protected OIdentifiable                      rawElement;
+  private transient OrientBaseGraph            graph;
 
   protected OrientElement(final OrientBaseGraph rawGraph, final OIdentifiable iRawElement) {
     if (classicDetachMode)
@@ -420,8 +418,10 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     getRecord().setLazyLoad(false);
     getRecord().fieldNames();
     // COPY GRAPH SETTINGS TO WORK OFFLINE
-    settings = graph.settings.copy();
-    graph = null;
+    if (graph != null) {
+      settings = graph.settings.copy();
+      graph = null;
+    }
     classicDetachMode = true;
     return this;
   }

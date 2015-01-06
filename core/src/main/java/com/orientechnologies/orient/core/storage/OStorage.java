@@ -52,7 +52,7 @@ public interface OStorage extends OBackupable, OSharedContainer {
   }
 
   public enum STATUS {
-    CLOSED, OPEN, CLOSING, OPENING
+    CLOSED, OPEN, CLOSING, @Deprecated OPENING
   }
 
   public enum LOCKING_STRATEGY {

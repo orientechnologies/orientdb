@@ -95,8 +95,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
     */
    public Lock getLock(String iLockName);
 
-   public Class<? extends OReplicationConflictResolver> getConfictResolverClass();
-
    public ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName);
 
    public Object sendRequest(String iDatabaseName, Collection<String> iClusterNames, Collection<String> iTargetNodeNames, OAbstractRemoteTask iTask, EXECUTION_MODE iExecutionMode);
