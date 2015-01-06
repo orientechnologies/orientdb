@@ -65,72 +65,50 @@ import java.util.zip.CRC32;
  */
 public class OWOWCache {
   // we add 8 bytes before and after cache pages to prevent word tearing in mt case.
-  public static final int                                   PAGE_PADDING            = 8;
+  public static final int                                   PAGE_PADDING          = 8;
 
-  public static final String                                NAME_ID_MAP_EXTENSION   = ".cm";
+  public static final String                                NAME_ID_MAP_EXTENSION = ".cm";
 
-  private static final String                               NAME_ID_MAP             = "name_id_map" + NAME_ID_MAP_EXTENSION;
+  private static final String                               NAME_ID_MAP           = "name_id_map" + NAME_ID_MAP_EXTENSION;
 
-  public static final int                                   MIN_CACHE_SIZE          = 16;
+  public static final int                                   MIN_CACHE_SIZE        = 16;
 
-  public static final long                                  MAGIC_NUMBER            = 0xFACB03FEL;
+  public static final long                                  MAGIC_NUMBER          = 0xFACB03FEL;
 
-  private final long                                        freeSpaceLimit          = (OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT
-                                                                                        .getValueAsLong() + OGlobalConfiguration.WAL_MAX_SIZE
-                                                                                        .getValueAsLong()) * 1024L * 1024L;
+  private final long                                        freeSpaceLimit        = (OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT
+                                                                                      .getValueAsLong() + OGlobalConfiguration.WAL_MAX_SIZE
+                                                                                      .getValueAsLong()) * 1024L * 1024L;
 
-  private final long                                        diskSizeCheckInterval   = OGlobalConfiguration.DISC_CACHE_FREE_SPACE_CHECK_INTERVAL
-                                                                                        .getValueAsInteger() * 1000;
-  private final List<WeakReference<LowDiskSpaceListener>>   listeners               = new CopyOnWriteArrayList<WeakReference<LowDiskSpaceListener>>();
+  private final long                                        diskSizeCheckInterval = OGlobalConfiguration.DISC_CACHE_FREE_SPACE_CHECK_INTERVAL
+                                                                                      .getValueAsInteger() * 1000;
+  private final List<WeakReference<LowDiskSpaceListener>>   listeners             = new CopyOnWriteArrayList<WeakReference<LowDiskSpaceListener>>();
 
-  private final AtomicLong                                  lastDiskSpaceCheck      = new AtomicLong(System.currentTimeMillis());
+  private final AtomicLong                                  lastDiskSpaceCheck    = new AtomicLong(System.currentTimeMillis());
   private final String                                      storagePath;
 
-  private final ConcurrentSkipListMap<GroupKey, WriteGroup> writeGroups             = new ConcurrentSkipListMap<GroupKey, WriteGroup>();
+  private final ConcurrentSkipListMap<GroupKey, WriteGroup> writeGroups           = new ConcurrentSkipListMap<GroupKey, WriteGroup>();
   private final OBinarySerializer<String>                   stringSerializer;
   private final Map<Long, OFileClassic>                     files;
   private final boolean                                     syncOnPageFlush;
   private final int                                         pageSize;
   private final long                                        groupTTL;
   private final OWriteAheadLog                              writeAheadLog;
-  private final AtomicInteger                               cacheSize               = new AtomicInteger();
-  private final ONewLockManager<GroupKey>                   lockManager             = new ONewLockManager<GroupKey>();
+  private final AtomicInteger                               cacheSize             = new AtomicInteger();
+  private final ONewLockManager<GroupKey>                   lockManager           = new ONewLockManager<GroupKey>();
   private final OLocalPaginatedStorage                      storageLocal;
-  private final OReadersWriterSpinLock                      filesLock               = new OReadersWriterSpinLock();
-  private final ScheduledExecutorService                    commitExecutor          = Executors
-                                                                                        .newSingleThreadScheduledExecutor(new ThreadFactory() {
-                                                                                          @Override
-                                                                                          public Thread newThread(Runnable r) {
-                                                                                            Thread thread = new Thread(r);
-                                                                                            thread.setDaemon(true);
-                                                                                            thread
-                                                                                                .setName("OrientDB Write Cache Flush Task ("
-                                                                                                    + storageLocal.getName() + ")");
-                                                                                            return thread;
-                                                                                          }
-                                                                                        });
+  private final OReadersWriterSpinLock                      filesLock             = new OReadersWriterSpinLock();
+  private final ScheduledExecutorService                    commitExecutor;
 
-  private final ExecutorService                             lowSpaceEventsPublisher = Executors
-                                                                                        .newCachedThreadPool(new ThreadFactory() {
-                                                                                          @Override
-                                                                                          public Thread newThread(Runnable r) {
-                                                                                            Thread thread = new Thread(r);
-                                                                                            thread.setDaemon(true);
-                                                                                            thread
-                                                                                                .setName("OrientDB Low Disk Space Publisher ("
-                                                                                                    + storageLocal.getName() + ")");
-                                                                                            return thread;
-                                                                                          }
-                                                                                        });
+  private final ExecutorService                             lowSpaceEventsPublisher;
 
   private Map<String, Long>                                 nameIdMap;
   private RandomAccessFile                                  nameIdMapHolder;
   private volatile int                                      cacheMaxSize;
-  private long                                              fileCounter             = 0;
-  private GroupKey                                          lastGroupKey            = new GroupKey(0, -1);
+  private long                                              fileCounter           = 0;
+  private GroupKey                                          lastGroupKey          = new GroupKey(0, -1);
   private File                                              nameIdMapHolderFile;
 
-  private final AtomicLong                                  allocatedSpace          = new AtomicLong();
+  private final AtomicLong                                  allocatedSpace        = new AtomicLong();
 
   public OWOWCache(boolean syncOnPageFlush, int pageSize, long groupTTL, OWriteAheadLog writeAheadLog, long pageFlushInterval,
       int cacheMaxSize, OLocalPaginatedStorage storageLocal, boolean checkMinSize) {
@@ -152,6 +130,9 @@ public class OWOWCache {
 
       if (checkMinSize && this.cacheMaxSize < MIN_CACHE_SIZE)
         this.cacheMaxSize = MIN_CACHE_SIZE;
+
+      commitExecutor = Executors.newSingleThreadScheduledExecutor(new FlushThreadFactory(storageLocal.getName()));
+      lowSpaceEventsPublisher = Executors.newCachedThreadPool(new LowSpaceEventsPublisherFactory(storageLocal.getName()));
 
       if (pageFlushInterval > 0)
         commitExecutor.scheduleWithFixedDelay(new PeriodicFlushTask(), pageFlushInterval, pageFlushInterval, TimeUnit.MILLISECONDS);
@@ -1318,6 +1299,38 @@ public class OWOWCache {
     public LowDiskSpaceInformation(long freeSpace, long requiredSpace) {
       this.freeSpace = freeSpace;
       this.requiredSpace = requiredSpace;
+    }
+  }
+
+  private static class FlushThreadFactory implements ThreadFactory {
+    private final String storageName;
+
+    private FlushThreadFactory(String storageName) {
+      this.storageName = storageName;
+    }
+
+    @Override
+    public Thread newThread(Runnable r) {
+      Thread thread = new Thread(r);
+      thread.setDaemon(true);
+      thread.setName("OrientDB Write Cache Flush Task (" + storageName + ")");
+      return thread;
+    }
+  }
+
+  private static class LowSpaceEventsPublisherFactory implements ThreadFactory {
+    private final String storageName;
+
+    private LowSpaceEventsPublisherFactory(String storageName) {
+      this.storageName = storageName;
+    }
+
+    @Override
+    public Thread newThread(Runnable r) {
+      Thread thread = new Thread(r);
+      thread.setDaemon(true);
+      thread.setName("OrientDB Low Disk Space Publisher (" + storageName + ")");
+      return thread;
     }
   }
 }

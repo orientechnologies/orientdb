@@ -90,9 +90,6 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   public void makeFullCheckpoint() throws IOException {
   }
 
-  @Override
-  protected void makeFuzzyCheckPoint() throws IOException {
-  }
 
   @Override
   public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable, OCommandOutputListener iListener,

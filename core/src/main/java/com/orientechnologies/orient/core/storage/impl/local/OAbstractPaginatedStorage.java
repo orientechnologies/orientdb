@@ -1352,9 +1352,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   protected abstract void initWalAndDiskCache() throws IOException;
 
-  protected void makeFuzzyCheckPoint() throws IOException {
-  }
-
   protected void postCloseSteps(boolean onDelete) throws IOException {
   }
 
