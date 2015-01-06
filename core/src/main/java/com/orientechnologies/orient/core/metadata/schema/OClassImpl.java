@@ -1344,7 +1344,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     final Character wrongCharacter = OSchemaShared.checkNameIfValid(name);
     if (wrongCharacter != null)
-      throw new OSchemaException("Invalid property name found. Character '" + wrongCharacter + "' cannot be used in property name.");
+      throw new OSchemaException("Invalid property name found. Character '" + wrongCharacter + "' cannot be used in property name");
 
     final String lowerName = name.toLowerCase();
 
@@ -1635,7 +1635,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     List<ODocument> res = database.command(new OCommandSQL(builder.toString())).execute();
     if (((Long) res.get(0).field("count")) > 0)
       throw new OSchemaException("The database contains some schema-less data in the property '" + name + "." + propertyName
-          + "' that is not compatible with the type " + type + ". Fix those records and change the schema again.");
+          + "' that is not compatible with the type " + type + ". Fix those records and change the schema again");
 
   }
 
