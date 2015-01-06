@@ -1126,7 +1126,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     message("\nCluster selection....: " + cls.getClusterSelection().getName());
 
     if (!cls.getBaseClasses().isEmpty()) {
-      message("Base classes.........: ");
+      message("\nBase classes.........: ");
       int i = 0;
       for (OClass c : cls.getBaseClasses()) {
         if (i > 0)
@@ -1138,7 +1138,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
 
     if (cls.properties().size() > 0) {
-      message("\n\nPROPERTIES");
+      message("\nPROPERTIES");
       message("\n-------------------------------+-------------+-------------------------------+-----------+----------+----------+-----------+-----------+----------+");
       message("\n NAME                          | TYPE        | LINKED TYPE/CLASS             | MANDATORY | READONLY | NOT NULL |    MIN    |    MAX    | COLLATE  |");
       message("\n-------------------------------+-------------+-------------------------------+-----------+----------+----------+-----------+-----------+----------+");
@@ -1701,13 +1701,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(description = "Return all configured properties")
   public void properties() {
     message("\nPROPERTIES:");
-    message("\n+---------------------+----------------------+");
+    message("\n+-------------------------------+--------------------------------+");
     message("\n| %-30s| %-30s |", "NAME", "VALUE");
-    message("\n+---------------------+----------------------+");
+    message("\n+-------------------------------+--------------------------------+");
     for (Entry<String, String> p : properties.entrySet()) {
-      message("\n| %-30s= %-30s |", p.getKey(), p.getValue());
+      message("\n| %-30s| %-30s |", p.getKey(), p.getValue());
     }
-    message("\n+---------------------+----------------------+");
+    message("\n+-------------------------------+--------------------------------+");
   }
 
   @ConsoleCommand(description = "Return the value of a property")
