@@ -123,7 +123,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     if (getDatabase().getTransaction().isActive())
       throw new IllegalStateException("Cannot create a new index inside a transaction");
 
-    final Character c = OSchemaShared.checkClassNameIfValid(iName);
+    final Character c = OSchemaShared.checkFieldNameIfValid(iName);
     if (c != null)
       throw new IllegalArgumentException("Invalid index name '" + iName + "'. Character '" + c + "' is invalid");
 
