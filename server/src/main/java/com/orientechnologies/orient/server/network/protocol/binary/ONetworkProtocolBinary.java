@@ -1156,6 +1156,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     // connection.database.getLocalCache().setEnable(true);
     beginResponse();
     try {
+      connection.data.command = command;
       final OAbstractCommandResultListener listener;
 
       if (asynch) {
@@ -1244,6 +1245,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
 
     } finally {
+      connection.data.command = null;
       endResponse();
     }
   }
