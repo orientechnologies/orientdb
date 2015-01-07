@@ -2,6 +2,7 @@ package com.orientechnologies.website.services;
 
 import com.orientechnologies.website.exception.ServiceException;
 import com.orientechnologies.website.model.schema.dto.*;
+import com.orientechnologies.website.model.schema.dto.web.ImportDTO;
 import com.orientechnologies.website.model.schema.dto.web.hateoas.ScopeDTO;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,7 +17,7 @@ public interface OrganizationService {
     @Transactional
     public OUser addMemberClient(String org, Integer clientId, String username);
 
-    public Repository registerRepository(String org, String repo);
+    public Repository registerRepository(String org, String repo, ImportDTO importRules);
 
     public Organization createOrganization(String name, String description);
 

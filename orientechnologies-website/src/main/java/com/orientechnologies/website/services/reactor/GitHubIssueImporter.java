@@ -66,7 +66,11 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
             importLabels(message.repository.getLabels(), repoDtp);
             importMilestones(message.repository.getMilestones(), repoDtp);
             dbFactory.getGraph().commit();
-            importIssue(message, repoDtp, GIssueState.OPEN);
+            if (message.getState() != null) {
+                importIssue(message, repoDtp, message.getState());
+            } else {
+                importIssue(message, repoDtp, GIssueState.OPEN);
+            }
 
             dbFactory.getGraph().commit();
         } catch (IOException e) {
@@ -133,8 +137,12 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
     }
 
     private void importIssue(GitHubIssueMessage message, Repository repoDtp, GIssueState state) throws IOException {
-        Iterable<GIssue> issues = message.repository.getIssues(state);
-
+        Iterable<GIssue> issues = null;
+        if (message.getIssues() != null) {
+            issues = message.repository.getIssues(message.getIssues());
+        } else {
+            issues = message.repository.getIssues(state);
+        }
         int i = 0;
         for (GIssue issue : issues) {
 
@@ -219,10 +227,12 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
 
                 GUser actor = event.getActor();
 
-                fillAdditionalInfo(e, event);
-                e.setActor(userRepo.findUserOrCreateByLogin(actor.getLogin(), actor.getId()));
-                e = (IssueEvent) eventRepository.save(e);
-                createIssueEventAssociation(issueDto, e);
+                if (actor != null) {
+                    fillAdditionalInfo(e, event);
+                    e.setActor(userRepo.findUserOrCreateByLogin(actor.getLogin(), actor.getId()));
+                    e = (IssueEvent) eventRepository.save(e);
+                    createIssueEventAssociation(issueDto, e);
+                }
             }
         }
     }
@@ -322,12 +332,30 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
         private final String org;
         private String repo;
         private GRepo repository;
+        private GIssueState state;
+        private List<Integer> issues;
 
         public GitHubIssueMessage(GRepo repository) {
             this.repository = repository;
             org = repository.getFullName().split("/")[0];
             repo = repository.getFullName().split("/")[1];
 
+        }
+
+        public GIssueState getState() {
+            return state;
+        }
+
+        public void setState(GIssueState state) {
+            this.state = state;
+        }
+
+        public void setIssues(List<Integer> issues) {
+            this.issues = issues;
+        }
+
+        public List<Integer> getIssues() {
+            return issues;
         }
     }
 

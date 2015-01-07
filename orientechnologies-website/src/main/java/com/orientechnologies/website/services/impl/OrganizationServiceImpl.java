@@ -3,12 +3,14 @@ package com.orientechnologies.website.services.impl;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.exception.ServiceException;
+import com.orientechnologies.website.github.GIssueState;
 import com.orientechnologies.website.github.GOrganization;
 import com.orientechnologies.website.github.GRepo;
 import com.orientechnologies.website.github.GitHub;
 import com.orientechnologies.website.model.schema.*;
 import com.orientechnologies.website.model.schema.dto.*;
 import com.orientechnologies.website.model.schema.dto.OUser;
+import com.orientechnologies.website.model.schema.dto.web.ImportDTO;
 import com.orientechnologies.website.model.schema.dto.web.hateoas.ScopeDTO;
 import com.orientechnologies.website.repository.*;
 import com.orientechnologies.website.security.DeveloperAuthentication;
@@ -166,7 +168,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
-    public Repository registerRepository(String org, String repo) {
+    public Repository registerRepository(String org, String repo, ImportDTO importRules) {
 
         Organization organization = organizationRepository.findOneByName(org);
         if (organization != null) {
@@ -189,6 +191,12 @@ public class OrganizationServiceImpl implements OrganizationService {
                     dbFactory.getGraph().commit();
                 }
                 GitHubIssueImporter.GitHubIssueMessage gitHubIssueMessage = new GitHubIssueImporter.GitHubIssueMessage(repository);
+                if (importRules.getState() != null) {
+                    gitHubIssueMessage.setState(GIssueState.valueOf(importRules.getState().toUpperCase()));
+                }
+                if (importRules.getIssues() != null && !importRules.getIssues().isEmpty()) {
+                    gitHubIssueMessage.setIssues(importRules.getIssues());
+                }
 
                 reactor.notify(ReactorMSG.ISSUE_IMPORT, Event.wrap(gitHubIssueMessage));
                 return r;
@@ -245,6 +253,7 @@ public class OrganizationServiceImpl implements OrganizationService {
             throw ServiceException.create(HttpStatus.NOT_FOUND.value()).withMessage("Organization not Found");
         }
     }
+
 
     private void createMembersScopeRelationship(Scope scope, List<OUser> members) {
         OrientGraph graph = dbFactory.getGraph();

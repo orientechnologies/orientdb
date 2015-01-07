@@ -52,6 +52,27 @@ public class GRepo extends GEntity {
         return issues;
     }
 
+    public Iterable<GIssue> getIssues(List<Integer> issues) throws IOException {
+        
+        List<GIssue> iss = new ArrayList<GIssue>();
+
+        for (Integer issue : issues) {
+            GIssue issue1 = getIssue(issue);
+            iss.add(issue1);
+        }
+        return iss;
+    }
+
+    private GIssue getSingleIssue(Integer i) throws IOException {
+        Response response = github.REQUEST.uri().path(getBaseUrl() + "/issues/" + i).back().method("GET").header("Authorization", String.format("token %s", github.token)).fetch();
+
+        byte[] bodies = response.binary();
+        String body = new String(bodies, "UTF-8");
+
+        GIssue g = new GIssue(github, this, body);
+        return g;
+    }
+
     private String fillIssue(String page, String state, List<GIssue> issues) throws IOException {
         Response response = github.REQUEST.uri().path(getBaseUrl() + "/issues").queryParam("page", page).queryParam("per_page", "100")
                 .queryParam("state", state).back().method("GET").header("Authorization", String.format("token %s", github.token)).fetch();

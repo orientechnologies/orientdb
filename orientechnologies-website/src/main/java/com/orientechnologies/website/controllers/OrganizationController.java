@@ -6,6 +6,7 @@ import com.orientechnologies.website.hateoas.assembler.IssueAssembler;
 import com.orientechnologies.website.hateoas.assembler.PagedResourceAssembler;
 import com.orientechnologies.website.helper.SecurityHelper;
 import com.orientechnologies.website.model.schema.dto.*;
+import com.orientechnologies.website.model.schema.dto.web.ImportDTO;
 import com.orientechnologies.website.model.schema.dto.web.IssueDTO;
 import com.orientechnologies.website.model.schema.dto.web.hateoas.IssueResource;
 import com.orientechnologies.website.model.schema.dto.web.hateoas.ScopeDTO;
@@ -187,9 +188,9 @@ public class OrganizationController {
     }
 
     @RequestMapping(value = "{name}/repos/{repo}", method = RequestMethod.POST)
-    public ResponseEntity<Repository> registerRepository(@PathVariable("name") String name, @PathVariable("repo") String repo) {
+    public ResponseEntity<Repository> registerRepository(@PathVariable("name") String name, @PathVariable("repo") String repo, @RequestBody ImportDTO importRules) {
 
-        Repository rep = organizationService.registerRepository(name, repo);
+        Repository rep = organizationService.registerRepository(name, repo, importRules);
         return new ResponseEntity<Repository>(rep, HttpStatus.OK);
     }
 
