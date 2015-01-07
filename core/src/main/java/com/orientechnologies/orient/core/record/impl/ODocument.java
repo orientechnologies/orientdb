@@ -2211,7 +2211,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   protected String checkFieldName(final String iFieldName) {
-    final Character c = OSchemaShared.checkNameIfValid(iFieldName);
+    final Character c = OSchemaShared.checkFieldNameIfValid(iFieldName);
     if (c != null)
       throw new IllegalArgumentException("Invalid field name '" + iFieldName + "'. Character '" + c + "' is invalid");
 
