@@ -19,17 +19,15 @@
  */
 package com.orientechnologies.orient.core.command.script;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-
-import javax.script.*;
-
 import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.script.formatter.*;
+import com.orientechnologies.orient.core.command.script.formatter.OGroovyScriptFormatter;
+import com.orientechnologies.orient.core.command.script.formatter.OJSScriptFormatter;
+import com.orientechnologies.orient.core.command.script.formatter.ORubyScriptFormatter;
+import com.orientechnologies.orient.core.command.script.formatter.OSQLScriptFormatter;
+import com.orientechnologies.orient.core.command.script.formatter.OScriptFormatter;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -37,6 +35,21 @@ import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.function.OFunctionUtilWrapper;
 import com.orientechnologies.orient.core.sql.OSQLScriptEngine;
 import com.orientechnologies.orient.core.sql.OSQLScriptEngineFactory;
+
+import javax.script.Bindings;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineFactory;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Scanner;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Executes Script Commands.
@@ -167,7 +180,7 @@ public class OScriptManager {
    * @param language
    *          Script language
    * @return ScriptEngine instance with the function library already parsed
-   * @see #releaseDatabaseEngine(String, ScriptEngine)
+   * @see #releaseDatabaseEngine(String, String, OPartitionedObjectPool.PoolEntry)
    */
   public OPartitionedObjectPool.PoolEntry<ScriptEngine> acquireDatabaseEngine(final String databaseName, final String language) {
     ODatabaseScriptManager dbManager = dbManagers.get(databaseName);
@@ -187,19 +200,21 @@ public class OScriptManager {
    * Acquires a database engine from the pool. Once finished using it, the instance MUST be returned in the pool by calling the
    * method
    *
+   * @param iLanguage
+   *          Script language
    * @param iDatabaseName
    *          Database name
-   * @param iEngine
-   *          Script engine to release
+   * @param poolEntry
+   *          Pool entry to free
    * @see #acquireDatabaseEngine(String, String)
    */
-  public void releaseDatabaseEngine(final String language, final String iDatabaseName,
+  public void releaseDatabaseEngine(final String iLanguage, final String iDatabaseName,
       final OPartitionedObjectPool.PoolEntry<ScriptEngine> poolEntry) {
     final ODatabaseScriptManager dbManager = dbManagers.get(iDatabaseName);
     if (dbManager == null)
       throw new IllegalArgumentException("Script pool for database '" + iDatabaseName + "' is not configured");
 
-    dbManager.releaseEngine(language, poolEntry);
+    dbManager.releaseEngine(iLanguage, poolEntry);
   }
 
   public Iterable<String> getSupportedLanguages() {
