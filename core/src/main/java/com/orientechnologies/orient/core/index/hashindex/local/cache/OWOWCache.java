@@ -180,10 +180,25 @@ public class OWOWCache {
 
     if (ts - lastSpaceCheck > diskSizeCheckInterval) {
       final File storageDir = new File(storagePath);
-      final long freeSpace = storageDir.getFreeSpace();
-      final long effectiveFreeSpace = freeSpace - allocatedSpace.get();
+
+      long freeSpace = storageDir.getFreeSpace();
+      long effectiveFreeSpace = freeSpace - allocatedSpace.get();
+
       if (effectiveFreeSpace < freeSpaceLimit) {
-        callLowSpaceListeners(new LowDiskSpaceInformation(effectiveFreeSpace, freeSpaceLimit));
+        writeAheadLog.flush();
+
+        Future<?> future = commitExecutor.submit(new PeriodicalFuzzyCheckpointTask());
+        try {
+          future.get();
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error during fuzzy checkpoint execution for storage %s .", e, storageLocal.getName());
+        }
+
+        freeSpace = storageDir.getFreeSpace();
+        effectiveFreeSpace = freeSpace - allocatedSpace.get();
+
+        if (effectiveFreeSpace < freeSpaceLimit)
+          callLowSpaceListeners(new LowDiskSpaceInformation(effectiveFreeSpace, freeSpaceLimit));
       }
 
       lastDiskSpaceCheck.lazySet(ts);
@@ -1140,8 +1155,6 @@ public class OWOWCache {
   }
 
   private final class PeriodicalFuzzyCheckpointTask implements Runnable {
-    private OLogSequenceNumber flushedLsn = new OLogSequenceNumber(-1, -1);
-
     private PeriodicalFuzzyCheckpointTask() {
     }
 
@@ -1166,20 +1179,17 @@ public class OWOWCache {
         }
       }
 
-      if (flushedLsn.compareTo(minLsn) < 0)
-        flushedLsn = minLsn;
-
-      OLogManager.instance().debug(this, "Start fuzzy checkpoint flushed LSN is %s", flushedLsn);
+      OLogManager.instance().debug(this, "Start fuzzy checkpoint flushed LSN is %s", minLsn);
       try {
-        writeAheadLog.logFuzzyCheckPointStart(flushedLsn);
+        writeAheadLog.logFuzzyCheckPointStart(minLsn);
         for (OFileClassic fileClassic : files.values()) {
           fileClassic.synch();
         }
         writeAheadLog.logFuzzyCheckPointEnd();
         writeAheadLog.flush();
 
-        if (flushedLsn.compareTo(new OLogSequenceNumber(-1, -1)) > 0)
-          writeAheadLog.cutTill(flushedLsn);
+        if (minLsn.compareTo(new OLogSequenceNumber(-1, -1)) > 0)
+          writeAheadLog.cutTill(minLsn);
       } catch (IOException ioe) {
         OLogManager.instance().error(this, "Error during fuzzy checkpoint", ioe);
       }
