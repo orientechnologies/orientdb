@@ -18,13 +18,15 @@ package com.orientechnologies.lucene.manager;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.lucene.OLuceneIndexType;
+import com.orientechnologies.lucene.collections.LuceneResultSet;
 import com.orientechnologies.lucene.collections.OSpatialCompositeKey;
+import com.orientechnologies.lucene.query.QueryContext;
+import com.orientechnologies.lucene.query.SpatialQueryContext;
 import com.orientechnologies.lucene.shape.OShapeFactory;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndexCursor;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
@@ -142,39 +144,32 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
 
         double lat = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(0), Double.class)).doubleValue();
         double lng = ((Double) OType.convert(((OCompositeKey) key).getKeys().get(1), Double.class)).doubleValue();
-        Set<OIdentifiable> result = new HashSet<OIdentifiable>();
-
         SpatialOperation operation = SpatialOperation.Intersects;
         Point p = ctx.makePoint(lng, lat);
         SpatialArgs args = new SpatialArgs(operation, ctx.makeCircle(lng, lat,
                 DistanceUtils.dist2Degrees(distance, DistanceUtils.EARTH_MEAN_RADIUS_KM)));
         Filter filter = strategy.makeFilter(args);
-
         IndexSearcher searcher = getSearcher();
         ValueSource valueSource = strategy.makeDistanceValueSource(p);
         Sort distSort = new Sort(valueSource.getSortField(false)).rewrite(searcher);
 
-        Integer limit = null;
-        if (context != null) {
-            limit = (Integer) context.getVariable("$limit");
-        }
-        int limitDoc = (limit != null && limit > 0) ? limit : Integer.MAX_VALUE;
-        TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), filter, limitDoc, distSort);
-        ScoreDoc[] scoreDocs = topDocs.scoreDocs;
+        return new LuceneResultSet(this, new SpatialQueryContext(context, searcher, new MatchAllDocsQuery(), filter, distSort).setSpatialArgs(args));
+    }
 
-        for (ScoreDoc s : scoreDocs) {
-            Document doc = searcher.doc(s.doc);
+    @Override
+    public void onRecordAddedToResultSet(QueryContext queryContext, OContextualRecordId recordId, Document doc, ScoreDoc score) {
+
+        SpatialQueryContext spatialContext = (SpatialQueryContext) queryContext;
+        if (spatialContext.spatialArgs != null) {
             Point docPoint = (Point) ctx.readShape(doc.get(strategy.getFieldName()));
-            double docDistDEG = ctx.getDistCalc().distance(args.getShape().getCenter(), docPoint);
+            double docDistDEG = ctx.getDistCalc().distance(spatialContext.spatialArgs.getShape().getCenter(), docPoint);
             final double docDistInKM = DistanceUtils.degrees2Dist(docDistDEG, DistanceUtils.EARTH_EQUATORIAL_RADIUS_KM);
-            result.add(new OContextualRecordId(doc.get(RID)).setContext(new HashMap<String, Object>() {
+            recordId.setContext(new HashMap<String, Object>() {
                 {
                     put("distance", docDistInKM);
                 }
-            }));
-
+            });
         }
-        return result;
     }
 
     public Object searchWithin(OSpatialCompositeKey key, OCommandContext context) throws IOException {
@@ -187,22 +182,11 @@ public class OLuceneSpatialIndexManager extends OLuceneIndexManagerAbstract {
         SpatialArgs args = new SpatialArgs(SpatialOperation.IsWithin, shape);
         IndexSearcher searcher = getSearcher();
 
-        Integer limit = null;
-        if (context != null) {
-            limit = (Integer) context.getVariable("$limit");
-        }
-        int limitDoc = (limit != null && limit > 0) ? limit : Integer.MAX_VALUE;
+
         Filter filter = strategy.makeFilter(args);
-        TopDocs topDocs = searcher.search(new MatchAllDocsQuery(), filter, limitDoc);
 
-        sendTotalHits(context, topDocs);
-        ScoreDoc[] scoreDocs = topDocs.scoreDocs;
-        for (ScoreDoc s : scoreDocs) {
-            Document doc = searcher.doc(s.doc);
-            result.add(new ORecordId(doc.get(RID)));
 
-        }
-        return result;
+        return new LuceneResultSet(this, new SpatialQueryContext(context, searcher, new MatchAllDocsQuery(), filter));
     }
 
     @Override
