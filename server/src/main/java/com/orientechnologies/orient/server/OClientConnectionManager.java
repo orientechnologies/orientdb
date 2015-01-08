@@ -37,6 +37,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -72,7 +73,13 @@ public class OClientConnectionManager {
             OLogManager.instance().debug(this, "[OClientConnectionManager] found and removed pending closed channel %d (%s)",
                 entry.getKey(), socket);
             try {
+              OCommandRequestText command = entry.getValue().data.command;
+              if (command != null && command.isIdempotent()) {
+                entry.getValue().protocol.sendShutdown();
+                entry.getValue().protocol.interrupt();
+              }
               entry.getValue().close();
+
             } catch (Exception e) {
               OLogManager.instance().error(this, "Error during close of connection for close channel", e);
             }
@@ -309,6 +316,40 @@ public class OClientConnectionManager {
       } catch (Exception e) {
         OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e, c.getRemoteAddress());
         disconnect(c);
+      }
+    }
+  }
+
+  public void shutdown() {
+
+    final Iterator<Entry<Integer, OClientConnection>> iterator = connections.entrySet().iterator();
+    while (iterator.hasNext()) {
+      final Entry<Integer, OClientConnection> entry = iterator.next();
+      entry.getValue().protocol.sendShutdown();
+      OCommandRequestText command = entry.getValue().data.command;
+      if (command != null && command.isIdempotent()) {
+        entry.getValue().protocol.interrupt();
+      } else {
+        try {
+          final Socket socket;
+          if (entry.getValue().protocol == null || entry.getValue().protocol.getChannel() == null)
+            socket = null;
+          else
+            socket = entry.getValue().protocol.getChannel().socket;
+
+          if (socket != null && !socket.isClosed() && !socket.isInputShutdown()) {
+            try {
+              socket.shutdownInput();
+            } catch (IOException e) {
+              OLogManager.instance().warn(this, "Error on closing connection of %s client during shutdown", e,
+                  entry.getValue().getRemoteAddress());
+            }
+          }
+          if (entry.getValue().protocol.isAlive())
+            entry.getValue().protocol.join();
+        } catch (InterruptedException e) {
+          // NOT Needed to handle
+        }
       }
     }
   }

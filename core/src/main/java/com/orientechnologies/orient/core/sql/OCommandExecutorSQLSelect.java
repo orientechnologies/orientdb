@@ -555,7 +555,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         return false;
       }
 
-      return !((orderedFields.isEmpty() || fullySortedByIndex) && !isAnyFunctionAggregates() && fetchLimit > -1 && resultCount >= fetchLimit);
+      return !((orderedFields.isEmpty() || fullySortedByIndex) && !isAnyFunctionAggregates()
+          && (groupByFields == null || groupByFields.isEmpty()) && fetchLimit > -1 && resultCount >= fetchLimit);
     } finally {
       if (parallel)
       // UNLOCK PARALLEL EXECUTION
@@ -1435,7 +1436,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     // the main condition is a set of sub-conditions separated by OR operators
     final List<List<OIndexSearchResult>> conditionHierarchy = filterAnalyzer.analyzeMainCondition(
         compiledFilter.getRootCondition(), iSchemaClass, context);
-    if( conditionHierarchy == null )
+    if (conditionHierarchy == null)
       return false;
 
     List<OIndexCursor> cursors = new ArrayList<OIndexCursor>();
