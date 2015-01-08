@@ -41,7 +41,8 @@ public class OImmutableClass implements OClass {
   private final float                       classOverSize;
   private final String                      shortName;
   private final Map<String, String>         customFields;
-  private final OImmutableSchema            schema;
+
+	private final OImmutableSchema            schema;
   // do not do it volatile it is already SAFE TO USE IT in MT mode.
   private       OImmutableClass             superClass;
   // do not do it volatile it is already SAFE TO USE IT in MT mode.
@@ -75,7 +76,7 @@ public class OImmutableClass implements OClass {
 
     properties = new HashMap<String, OProperty>();
     for (OProperty p : oClass.declaredProperties())
-      properties.put(p.getName().toLowerCase(), new OImmutableProperty(p));
+      properties.put(p.getName().toLowerCase(), new OImmutableProperty(p, this));
 
     customFields = new HashMap<String, String>();
     for (String key : oClass.getCustomKeys())
@@ -322,7 +323,11 @@ public class OImmutableClass implements OClass {
     return polymorphicClusterIds;
   }
 
-  @Override
+	public OImmutableSchema getSchema() {
+		return schema;
+	}
+
+	@Override
   public Collection<OClass> getBaseClasses() {
     initBaseClasses();
 

@@ -14,7 +14,12 @@ public class OImmutableProperty implements OProperty {
   private final String              name;
   private final String              fullName;
   private final OType               type;
-  private final OClass              linkedClass;
+
+  //do not make it volatile it is already thread safe.
+  private OClass                    linkedClass = null;
+
+  private final String              linkedClassName;
+
   private final OType               linkedType;
   private final boolean             notNull;
   private final OCollate            collate;
@@ -27,11 +32,16 @@ public class OImmutableProperty implements OProperty {
   private final Integer             id;
   private final boolean             readOnly;
 
-  public OImmutableProperty(OProperty property) {
+  public OImmutableProperty(OProperty property, OImmutableClass owner) {
     name = property.getName();
     fullName = property.getFullName();
     type = property.getType();
-    linkedClass = property.getLinkedClass();
+
+    if (property.getLinkedClass() != null)
+      linkedClassName = property.getLinkedClass().getName();
+    else
+      linkedClassName = null;
+
     linkedType = property.getLinkedType();
     notNull = property.isNotNull();
     collate = property.getCollate();
@@ -44,7 +54,7 @@ public class OImmutableProperty implements OProperty {
     for (String key : property.getCustomKeys())
       customProperties.put(key, property.getCustom(key));
 
-    owner = property.getOwnerClass();
+    this.owner = owner;
     id = property.getId();
     readOnly = property.isReadonly();
   }
@@ -76,6 +86,15 @@ public class OImmutableProperty implements OProperty {
 
   @Override
   public OClass getLinkedClass() {
+		if (linkedClassName == null)
+			return null;
+
+		if(linkedClass != null)
+			return linkedClass;
+
+		OSchema schema = ((OImmutableClass)owner).getSchema();
+		linkedClass = schema.getClass(linkedClassName);
+
     return linkedClass;
   }
 
