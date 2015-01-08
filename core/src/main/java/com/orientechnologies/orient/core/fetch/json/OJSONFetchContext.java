@@ -240,6 +240,8 @@ public class OJSONFetchContext implements OFetchContext {
         final OType t = OType.getTypeByValue(iFieldValue);
         if (t == OType.LINKLIST)
           appendType(typesStack.peek(), iFieldName, 'z');
+        else if (t == OType.LINKMAP)
+          appendType(typesStack.peek(), iFieldName, 'm');
       }
     }
   }
