@@ -1,38 +1,31 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
@@ -42,9 +35,9 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 
 /**
  * IN operator.
- * 
+ *
  * @author Luca Garulli
- * 
+ *
  */
 public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 
@@ -153,8 +146,60 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
         return null;
 
       cursor = index.iterateEntries(inKeys, ascSortOrder);
-    } else
-      return null;
+    } else {
+      final List<Object> partialKey = new ArrayList<Object>();
+      partialKey.addAll(keyParams);
+      partialKey.remove(keyParams.size() - 1);
+
+      final Object inKeyValue = keyParams.get(keyParams.size() - 1);
+
+      final List<Object> inParams;
+      if (inKeyValue instanceof List<?>)
+        inParams = (List<Object>) inKeyValue;
+      else if (inKeyValue instanceof OSQLFilterItem)
+        inParams = (List<Object>) ((OSQLFilterItem) inKeyValue).getValue(null, null, iContext);
+      else
+        throw new IllegalArgumentException("Key '" + inKeyValue + "' is not valid");
+
+      final List<Object> inKeys = new ArrayList<Object>();
+
+      final OCompositeIndexDefinition compositeIndexDefinition = (OCompositeIndexDefinition) indexDefinition;
+
+      boolean containsNotCompatibleKey = false;
+      for (final Object keyValue : inParams) {
+        List<Object> fullKey = new ArrayList<Object>();
+        fullKey.addAll(partialKey);
+        fullKey.add(keyValue);
+        final Object key = compositeIndexDefinition.createSingleValue(fullKey);
+        if (key == null) {
+          containsNotCompatibleKey = true;
+          break;
+        }
+
+        inKeys.add(key);
+
+      }
+      if (containsNotCompatibleKey) {
+        return null;
+      }
+
+      if (inKeys == null)
+        return null;
+
+      if (indexDefinition.getParamCount() == keyParams.size()) {
+        final Object indexResult;
+        indexResult = index.iterateEntries(inKeys, ascSortOrder);
+
+        if (indexResult == null || indexResult instanceof OIdentifiable) {
+          cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, inKeys);
+        } else if (indexResult instanceof OIndexCursor) {
+          cursor = (OIndexCursor) indexResult;
+        } else {
+          cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), inKeys);
+        }
+      } else
+        return null;
+    }
 
     updateProfiler(iContext, internalIndex, keyParams, indexDefinition);
     return cursor;
