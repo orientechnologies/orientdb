@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.graph.sql.functions;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,7 +40,6 @@ import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-import com.tinkerpop.pipes.util.structures.ArrayQueue;
 
 /**
  * Shortest path algorithm to find the shortest path from one node to another node in a directed graph.
@@ -89,7 +89,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
       if (iParams.length > 2)
         direction = Direction.valueOf(iParams[2].toString().toUpperCase());
 
-      final ArrayQueue<OrientVertex> queue = new ArrayQueue<OrientVertex>();
+      final ArrayDeque<OrientVertex> queue = new ArrayDeque<OrientVertex>();
       final Set<ORID> visited = new HashSet<ORID>();
       final Map<ORID, ORID> previouses = new HashMap<ORID, ORID>();
 
