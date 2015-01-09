@@ -22,6 +22,8 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicope
 
 import com.orientechnologies.common.concur.lock.OLockManager;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
+import com.orientechnologies.orient.core.OOrientShutdownListener;
+import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
@@ -36,16 +38,18 @@ public class OAtomicOperationsManager {
   private static volatile ThreadLocal<OAtomicOperation>        currentOperation = new ThreadLocal<OAtomicOperation>();
 
   static {
-    Orient.instance().registerListener(new OOrientListenerAbstract() {
-      @Override
-      public void onShutdown() {
-        currentOperation = null;
-      }
-
+    Orient.instance().registerWeakOrientStartupListener(new OOrientStartupListener() {
       @Override
       public void onStartup() {
         if (currentOperation == null)
           currentOperation = new ThreadLocal<OAtomicOperation>();
+      }
+    });
+
+    Orient.instance().registerWeakOrientShutdownListener(new OOrientShutdownListener() {
+      @Override
+      public void onShutdown() {
+        currentOperation = null;
       }
     });
   }

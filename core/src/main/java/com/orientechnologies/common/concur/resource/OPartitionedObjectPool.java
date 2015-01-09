@@ -48,7 +48,8 @@ public class OPartitionedObjectPool<T> extends OOrientListenerAbstract {
 
     partitions = pts;
 
-    Orient.instance().registerListener(this);
+    Orient.instance().registerWeakOrientStartupListener(this);
+    Orient.instance().registerWeakOrientShutdownListener(this);
   }
 
   public PoolEntry<T> acquire() {

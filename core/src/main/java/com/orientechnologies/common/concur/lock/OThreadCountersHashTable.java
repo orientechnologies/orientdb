@@ -1,27 +1,30 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.common.concur.lock;
 
 import com.orientechnologies.common.hash.OMurmurHash3;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.OOrientShutdownListener;
+import com.orientechnologies.orient.core.OOrientStartupListener;
+import com.orientechnologies.orient.core.Orient;
 
 import java.util.Arrays;
 import java.util.Random;
@@ -34,7 +37,7 @@ import java.util.concurrent.locks.LockSupport;
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 8/20/14
  */
-public final class OThreadCountersHashTable {
+public final class OThreadCountersHashTable implements OOrientStartupListener, OOrientShutdownListener {
   private static final int                                        SEED             = 362498820;
 
   private static final int                                        NCPU             = Runtime.getRuntime().availableProcessors();
@@ -44,7 +47,7 @@ public final class OThreadCountersHashTable {
   public static final int                                         THRESHOLD        = 10;
   private final boolean                                           deadThreadsAreAllowed;
 
-  private final ThreadLocal<HashEntry>                            hashEntry        = new ThreadLocal<HashEntry>();
+  private volatile ThreadLocal<HashEntry>                         hashEntry        = new ThreadLocal<HashEntry>();
 
   private volatile int                                            activeTableIndex = 0;
 
@@ -77,6 +80,9 @@ public final class OThreadCountersHashTable {
     busyCounters = counters;
 
     this.tables = tables;
+
+    Orient.instance().registerWeakOrientStartupListener(this);
+    Orient.instance().registerWeakOrientShutdownListener(this);
   }
 
   public void increment() {
@@ -460,6 +466,17 @@ public final class OThreadCountersHashTable {
 
     final long hashCode = OMurmurHash3.murmurHash3_x64_64(serializedId, SEED);
     return new int[] { (int) (hashCode & 0xFFFFFFFFL), (int) (hashCode >>> 32) };
+  }
+
+  @Override
+  public void onShutdown() {
+    hashEntry = null;
+  }
+
+  @Override
+  public void onStartup() {
+    if (hashEntry == null)
+      hashEntry = new ThreadLocal<HashEntry>();
   }
 
   static final class HashEntry {

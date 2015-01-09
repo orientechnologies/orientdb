@@ -20,6 +20,8 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
+import com.orientechnologies.orient.core.OOrientShutdownListener;
+import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 
@@ -33,18 +35,21 @@ public class OScenarioThreadLocal extends ThreadLocal<RUN_MODE> {
   public static volatile OScenarioThreadLocal INSTANCE = new OScenarioThreadLocal();
 
   static {
-    Orient.instance().registerListener(new OOrientListenerAbstract() {
-      @Override
-      public void onShutdown() {
-        INSTANCE = null;
-      }
-
+    Orient.instance().registerWeakOrientStartupListener(new OOrientStartupListener() {
       @Override
       public void onStartup() {
         if (INSTANCE == null)
           INSTANCE = new OScenarioThreadLocal();
       }
     });
+
+    Orient.instance().registerWeakOrientShutdownListener(new OOrientShutdownListener() {
+      @Override
+      public void onShutdown() {
+        INSTANCE = null;
+      }
+    });
+
   }
 
   public enum RUN_MODE {

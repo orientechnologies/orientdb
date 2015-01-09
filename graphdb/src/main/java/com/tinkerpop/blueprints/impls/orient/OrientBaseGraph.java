@@ -32,6 +32,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.OOrientShutdownListener;
+import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -98,13 +100,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
                                                                                     }
                                                                                   };
   static {
-    Orient.instance().registerListener(new OOrientListenerAbstract() {
-      @Override
-      public void onShutdown() {
-        activeGraph = null;
-        initializationStack = null;
-      }
-
+    Orient.instance().registerWeakOrientStartupListener(new OOrientStartupListener() {
       @Override
       public void onStartup() {
         if (activeGraph == null)
@@ -116,6 +112,14 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
               return new LinkedList<OrientBaseGraph>();
             }
           };
+      }
+    });
+
+    Orient.instance().registerWeakOrientShutdownListener(new OOrientShutdownListener() {
+      @Override
+      public void onShutdown() {
+        activeGraph = null;
+        initializationStack = null;
       }
     });
   }
@@ -1122,15 +1126,13 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
     try {
       if (!database.isClosed()) {
-				final OStorage storage = database.getStorage();
+        final OStorage storage = database.getStorage();
         if (storage instanceof OAbstractPaginatedStorage) {
           if (((OAbstractPaginatedStorage) storage).getWALInstance() != null)
-						database.commit();
-				}
+            database.commit();
+        }
 
-			}
-
-
+      }
 
     } catch (RuntimeException e) {
       OLogManager.instance().error(this, "Error during context close for db " + url, e);

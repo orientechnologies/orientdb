@@ -21,6 +21,8 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
+import com.orientechnologies.orient.core.OOrientShutdownListener;
+import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
@@ -40,12 +42,7 @@ public class ORecordSerializationContext {
                                                                                                         }
                                                                                                       };
   static {
-    Orient.instance().registerListener(new OOrientListenerAbstract() {
-      @Override
-      public void onShutdown() {
-        SERIALIZATION_CONTEXT_STACK = null;
-      }
-
+    Orient.instance().registerWeakOrientStartupListener(new OOrientStartupListener() {
       @Override
       public void onStartup() {
         if (SERIALIZATION_CONTEXT_STACK == null)
@@ -55,6 +52,13 @@ public class ORecordSerializationContext {
               return new ArrayDeque<ORecordSerializationContext>();
             }
           };
+      }
+    });
+
+    Orient.instance().registerWeakOrientShutdownListener(new OOrientShutdownListener() {
+      @Override
+      public void onShutdown() {
+        SERIALIZATION_CONTEXT_STACK = null;
       }
     });
   }

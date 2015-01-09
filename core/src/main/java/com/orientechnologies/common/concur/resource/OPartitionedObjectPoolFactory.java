@@ -41,7 +41,8 @@ public class OPartitionedObjectPoolFactory<K, T> extends OOrientListenerAbstract
     poolStore = new ConcurrentLinkedHashMap.Builder<K, OPartitionedObjectPool<T>>().maximumWeightedCapacity(capacity)
         .listener(evictionListener).build();
 
-    Orient.instance().registerListener(this);
+    Orient.instance().registerWeakOrientStartupListener(this);
+    Orient.instance().registerWeakOrientShutdownListener(this);
   }
 
   public int getMaxPoolSize() {
