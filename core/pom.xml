@@ -159,7 +159,7 @@
         <dependency>
             <groupId>com.googlecode.concurrentlinkedhashmap</groupId>
             <artifactId>concurrentlinkedhashmap-lru</artifactId>
-            <version>1.4</version>
+            <version>1.4.1</version>
         </dependency>
 
         <dependency>

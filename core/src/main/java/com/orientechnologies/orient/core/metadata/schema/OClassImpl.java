@@ -67,18 +67,16 @@ import java.util.*;
 
 /**
  * Schema Class implementation.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- * 
  */
 @SuppressWarnings("unchecked")
 public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   private static final long                  serialVersionUID        = 1L;
   private static final int                   NOT_EXISTENT_CLUSTER_ID = -1;
-
-  private int                                defaultClusterId        = NOT_EXISTENT_CLUSTER_ID;
   final OSchemaShared                        owner;
   private final Map<String, OProperty>       properties              = new HashMap<String, OProperty>();
+  private int                                defaultClusterId        = NOT_EXISTENT_CLUSTER_ID;
   private String                             name;
   private Class<?>                           javaClass;
   private int[]                              clusterIds;
@@ -321,7 +319,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   /**
    * Set the super class.
-   * 
+   *
    * @param superClass
    *          Super class as OClass instance
    * @return the object itself.
@@ -958,7 +956,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     acquireSchemaReadLock();
     try {
       if (overSize > 0)
-        // CUSTOM OVERSIZE SETTED
+        // CUSTOM OVERSIZE SET
         return overSize;
 
       if (superClass != null)
@@ -1344,9 +1342,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     if (name == null || name.length() == 0)
       throw new OSchemaException("Found property name null");
 
-    final Character wrongCharacter = OSchemaShared.checkNameIfValid(name);
+    final Character wrongCharacter = OSchemaShared.checkFieldNameIfValid(name);
     if (wrongCharacter != null)
-      throw new OSchemaException("Invalid property name found. Character '" + wrongCharacter + "' cannot be used in property name.");
+      throw new OSchemaException("Invalid property name found. Character '" + wrongCharacter + "' cannot be used in property name");
 
     final String lowerName = name.toLowerCase();
 
@@ -1632,12 +1630,12 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
     builder.append("] and ").append(propertyName).append(" is not null ");
     if (type.isMultiValue())
-      builder.append(" and ").append(propertyName).append(".size() <> 0 ");
+      builder.append(" and ").append(propertyName).append(".size() <> 0 limit 1");
 
     List<ODocument> res = database.command(new OCommandSQL(builder.toString())).execute();
     if (((Long) res.get(0).field("count")) > 0)
-      throw new OSchemaException("The database contains some schemaless data in the property " + name + "." + propertyName
-          + " that is not compatible with the type " + type);
+      throw new OSchemaException("The database contains some schema-less data in the property '" + name + "." + propertyName
+          + "' that is not compatible with the type " + type + ". Fix those records and change the schema again");
 
   }
 

@@ -428,4 +428,8 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
 
     return totalPages * (pageSize + 2 * OWOWCache.PAGE_PADDING);
   }
+
+  @Override
+  public void startFuzzyCheckpoints() {
+  }
 }

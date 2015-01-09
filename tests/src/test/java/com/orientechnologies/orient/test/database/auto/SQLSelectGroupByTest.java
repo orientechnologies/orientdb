@@ -15,19 +15,16 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Test(groups = "sql-select")
 public class SQLSelectGroupByTest extends DocumentDBBaseTest {
@@ -47,6 +44,14 @@ public class SQLSelectGroupByTest extends DocumentDBBaseTest {
     for (ODocument d : result)
       set.add(d.field("location"));
     Assert.assertEquals(result.size(), set.size());
+  }
+
+  @Test
+  public void queryGroupByLimit() {
+    List<ODocument> result = database.command(
+        new OSQLSynchQuery<ODocument>("select location from Account group by location limit 2")).execute();
+
+    Assert.assertEquals(result.size(), 2);
   }
 
   @Test

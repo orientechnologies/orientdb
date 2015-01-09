@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.conflict;
 
-import java.util.Date;
-import java.util.List;
-
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -47,11 +44,16 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
+import java.util.Date;
+import java.util.List;
+
 /**
  * Default conflict resolver.
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
+ * @deprecated since 2.0
  */
+@Deprecated
 public class ODefaultReplicationConflictResolver implements OReplicationConflictResolver {
 
   private static final String       DISTRIBUTED_CONFLICT_CLASS = "ODistributedConflict";

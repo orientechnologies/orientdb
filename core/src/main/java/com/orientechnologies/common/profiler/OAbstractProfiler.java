@@ -257,50 +257,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
   }
 
   protected void installMemoryChecker() {
-    Orient.instance().getTimer().schedule(new TimerTask() {
-      @Override
-      public void run() {
-        final java.lang.management.OperatingSystemMXBean mxBean = ManagementFactory.getOperatingSystemMXBean();
-        final long jvmTotMemory = Runtime.getRuntime().totalMemory();
-        final long jvmMaxMemory = Runtime.getRuntime().maxMemory();
-
-        for (OStorage s : Orient.instance().getStorages()) {
-          if (s instanceof OLocalPaginatedStorage) {
-            final ODiskCache dk = ((OLocalPaginatedStorage) s).getDiskCache();
-            if (dk == null)
-              // NOT YET READY
-              continue;
-
-            final long totalDiskCacheUsedMemory = dk.getUsedMemory() / OFileUtils.MEGABYTE;
-            final long maxDiskCacheUsedMemory = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong();
-
-            // CHECK IF THERE IS MORE THAN 40% HEAP UNUSED AND DISK-CACHE IS 80% OF THE MAXIMUM SIZE
-            if ((jvmTotMemory * 140 / 100) < jvmMaxMemory && (totalDiskCacheUsedMemory * 120 / 100) > maxDiskCacheUsedMemory) {
-
-              final long suggestedMaxHeap = jvmTotMemory * 120 / 100;
-              final long suggestedDiskCache = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong()
-                  + (jvmMaxMemory - suggestedMaxHeap) / OFileUtils.MEGABYTE;
-
-              OLogManager
-                  .instance()
-                  .info(
-                      this,
-                      "Database '%s' uses %,dMB/%,dMB of DISKCACHE memory, while Heap is not completely used (usedHeap=%dMB maxHeap=%dMB). To improve performance set maxHeap to %dMB and DISKCACHE to %dMB",
-                      s.getName(), totalDiskCacheUsedMemory, maxDiskCacheUsedMemory, jvmTotMemory / OFileUtils.MEGABYTE,
-                      jvmMaxMemory / OFileUtils.MEGABYTE, suggestedMaxHeap / OFileUtils.MEGABYTE, suggestedDiskCache);
-
-              OLogManager
-                  .instance()
-                  .info(
-                      this,
-                      "-> Open server.sh (or server.bat on Windows) and change the following variables: 1) MAXHEAP=-Xmx%dM 2) MAXDISKCACHE=%d",
-                      suggestedMaxHeap / OFileUtils.MEGABYTE, suggestedDiskCache);
-            }
-
-          }
-        }
-      }
-    }, 120000, 120000);
+    Orient.instance().getTimer().schedule(new MemoryChecker(), 120000, 120000);
   }
 
   /**
@@ -310,4 +267,49 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
     if (iDescription != null && dictionary.putIfAbsent(iName, iDescription) == null)
       types.put(iName, iType);
   }
+
+	private static final class MemoryChecker extends TimerTask {
+		@Override
+		public void run() {
+			final java.lang.management.OperatingSystemMXBean mxBean = ManagementFactory.getOperatingSystemMXBean();
+			final long jvmTotMemory = Runtime.getRuntime().totalMemory();
+			final long jvmMaxMemory = Runtime.getRuntime().maxMemory();
+
+			for (OStorage s : Orient.instance().getStorages()) {
+				if (s instanceof OLocalPaginatedStorage) {
+					final ODiskCache dk = ((OLocalPaginatedStorage) s).getDiskCache();
+					if (dk == null)
+						// NOT YET READY
+						continue;
+
+					final long totalDiskCacheUsedMemory = dk.getUsedMemory() / OFileUtils.MEGABYTE;
+					final long maxDiskCacheUsedMemory = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong();
+
+					// CHECK IF THERE IS MORE THAN 40% HEAP UNUSED AND DISK-CACHE IS 80% OF THE MAXIMUM SIZE
+					if ((jvmTotMemory * 140 / 100) < jvmMaxMemory && (totalDiskCacheUsedMemory * 120 / 100) > maxDiskCacheUsedMemory) {
+
+						final long suggestedMaxHeap = jvmTotMemory * 120 / 100;
+						final long suggestedDiskCache = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong()
+								+ (jvmMaxMemory - suggestedMaxHeap) / OFileUtils.MEGABYTE;
+
+						OLogManager
+								.instance()
+								.info(
+										this,
+										"Database '%s' uses %,dMB/%,dMB of DISKCACHE memory, while Heap is not completely used (usedHeap=%dMB maxHeap=%dMB). To improve performance set maxHeap to %dMB and DISKCACHE to %dMB",
+										s.getName(), totalDiskCacheUsedMemory, maxDiskCacheUsedMemory, jvmTotMemory / OFileUtils.MEGABYTE,
+										jvmMaxMemory / OFileUtils.MEGABYTE, suggestedMaxHeap / OFileUtils.MEGABYTE, suggestedDiskCache);
+
+						OLogManager
+								.instance()
+								.info(
+										this,
+										"-> Open server.sh (or server.bat on Windows) and change the following variables: 1) MAXHEAP=-Xmx%dM 2) MAXDISKCACHE=%d",
+										suggestedMaxHeap / OFileUtils.MEGABYTE, suggestedDiskCache);
+					}
+
+				}
+			}
+		}
+	}
 }

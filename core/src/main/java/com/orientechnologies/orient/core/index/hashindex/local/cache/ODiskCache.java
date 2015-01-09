@@ -125,4 +125,6 @@ public interface ODiskCache {
   void removeLowDiskSpaceListener(OWOWCache.LowDiskSpaceListener listener);
 
 	long getUsedMemory();
+
+	void startFuzzyCheckpoints();
 }

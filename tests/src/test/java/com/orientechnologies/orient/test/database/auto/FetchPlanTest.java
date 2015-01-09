@@ -21,15 +21,14 @@ import java.util.List;
 import java.util.Set;
 
 import org.testng.Assert;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -46,7 +45,9 @@ public class FetchPlanTest extends DocumentDBBaseTest {
   @BeforeMethod
   public void beforeMeth() throws Exception {
     database.getMetadata().getSchema().createClass("FetchClass");
+
     database.getMetadata().getSchema().createClass("SecondFetchClass").createProperty("surname", OType.STRING).setMandatory(true);
+    database.getMetadata().getSchema().createClass("OutInFetchClass");
     ODocument singleLinked = new ODocument();
     database.save(singleLinked);
     ODocument doc = new ODocument("FetchClass");
@@ -70,9 +71,10 @@ public class FetchPlanTest extends DocumentDBBaseTest {
     database.save(doc2);
 
     ODocument doc3 = new ODocument("FetchClass");
-    doc2.field("name", "forth");
-    doc2.field("ref", doc2);
-    doc2.field("linkSet", linkSet);
+    doc3.field("name", "forth");
+    doc3.field("ref", doc2);
+    doc3.field("linkSet", linkSet);
+    doc3.field("linkList", linkList);
     database.save(doc3);
 
     ODocument doc4 = new ODocument("SecondFetchClass");
@@ -85,6 +87,18 @@ public class FetchPlanTest extends DocumentDBBaseTest {
     doc5.field("surname", "test");
     database.save(doc5);
 
+    ODocument doc6 = new ODocument("OutInFetchClass");
+    ORidBag out = new ORidBag();
+    out.add(doc2);
+    out.add(doc3);
+    doc6.field("out_friend", out);
+    ORidBag in = new ORidBag();
+    in.add(doc4);
+    in.add(doc5);
+    doc6.field("in_friend", in);
+    doc6.field("name", "myName");
+    database.save(doc6);
+
     database.getLocalCache().clear();
   }
 
@@ -92,6 +106,7 @@ public class FetchPlanTest extends DocumentDBBaseTest {
   public void afterMeth() throws Exception {
     database.getMetadata().getSchema().dropClass("FetchClass");
     database.getMetadata().getSchema().dropClass("SecondFetchClass");
+    database.getMetadata().getSchema().dropClass("OutInFetchClass");
   }
 
   @Test
@@ -140,7 +155,7 @@ public class FetchPlanTest extends DocumentDBBaseTest {
   @Test(enabled = false)
   public void queryWithExcludeWildcardFetchPlan() {
     List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>(
-        "select * from FetchClass where name is not null and linkSet is not null").setFetchPlan("link*:-2 name:-1"));
+        "select * from FetchClass where name is not null and linkSet is not null").setFetchPlan("link*:-2 *:1"));
 
     for (ODocument d : resultset) {
       Assert.assertNotNull(d.field("name"));
@@ -149,7 +164,19 @@ public class FetchPlanTest extends DocumentDBBaseTest {
     }
   }
 
-  @Test
+  @Test(enabled = false)
+  public void queryOutInWithExcludeWildcardFetchPlan() {
+    List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>("select * from OutInFetchClass ")
+        .setFetchPlan("*:1 out_*:-2 in_*:-2"));
+
+    for (ODocument d : resultset) {
+      Assert.assertNotNull(d.field("name"));
+      Assert.assertNull(d.field("out_friend"));
+      Assert.assertNull(d.field("in_friend"));
+    }
+  }
+
+  @Test(enabled = false)
   public void queryWithFullFetchPlan() {
     List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>(
         "select * from FetchClass where name is not null and linkSet is not null"));
@@ -190,8 +217,7 @@ public class FetchPlanTest extends DocumentDBBaseTest {
       database.save(d);
     }
     database.getLocalCache().clear();
-    resultset = database.query(new OSQLSynchQuery<ODocument>("select * from FetchClass where name = 'forth' ")
-        .setFetchPlan("ref:-1 "));
+    resultset = database.query(new OSQLSynchQuery<ODocument>("select * from FetchClass where name = 'forth' "));
 
     for (ODocument d : resultset) {
       Assert.assertNotNull(d.field("name"));
@@ -206,17 +232,16 @@ public class FetchPlanTest extends DocumentDBBaseTest {
   @Test(enabled = false)
   public void queryUpdateConstraintReadedWithFetchPlan() {
     List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>("select * from SecondFetchClass where name = 'sixth'")
-        .setFetchPlan("nema:-1 surname:-2"));
+        .setFetchPlan("name:-1 surname:-2"));
 
     for (ODocument d : resultset) {
       Assert.assertNotNull(d.field("name"));
       Assert.assertNull(d.field("surname"));
-      d.field("name", "sixth");
+      d.field("name", "sixth1");
       database.save(d);
     }
     database.getLocalCache().clear();
-    resultset = database.query(new OSQLSynchQuery<ODocument>("select * from SecondFetchClass where name = 'fifth'")
-        .setFetchPlan("ref:-1 "));
+    resultset = database.query(new OSQLSynchQuery<ODocument>("select * from SecondFetchClass where name = 'sixth1'"));
 
     Assert.assertEquals(resultset.size(), 0);
 
@@ -225,7 +250,7 @@ public class FetchPlanTest extends DocumentDBBaseTest {
   @Test(enabled = false)
   public void queryDeleteReadedWithFetchPlan() {
     List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>("select * from SecondFetchClass where name = 'fifth'")
-        .setFetchPlan("nema:-1 surname:-2"));
+        .setFetchPlan("*:1 surname:-2"));
 
     for (ODocument d : resultset) {
       Assert.assertNotNull(d.field("name"));
@@ -233,8 +258,7 @@ public class FetchPlanTest extends DocumentDBBaseTest {
       database.delete(d);
     }
     database.getLocalCache().clear();
-    resultset = database.query(new OSQLSynchQuery<ODocument>("select * from SecondFetchClass where name = 'fifth'")
-        .setFetchPlan("ref:-1 "));
+    resultset = database.query(new OSQLSynchQuery<ODocument>("select * from SecondFetchClass where name = 'fifth'"));
 
     Assert.assertEquals(resultset.size(), 0);
 

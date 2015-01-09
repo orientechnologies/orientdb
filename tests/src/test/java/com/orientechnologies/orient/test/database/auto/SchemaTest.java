@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OOfflineClusterException;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
-
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -583,6 +582,67 @@ public class SchemaTest extends DocumentDBBaseTest {
 
     Assert.assertNotNull(classB.getProperty("property"));
     Assert.assertTrue(classB.existsProperty("property"));
+  }
+
+  public void testWrongClassNameWithAt() {
+    try {
+      database.command(new OCommandSQL("create class Ant@ni")).execute();
+      Assert.fail();
+
+    } catch (Exception e) {
+      if (e instanceof OResponseProcessingException)
+        e = (Exception) e.getCause();
+      Assert.assertTrue(e instanceof OSchemaException);
+    }
+  }
+
+  public void testWrongClassNameWithSpace() {
+    try {
+      database.getMetadata().getSchema().createClass("Anta ni");
+      Assert.fail();
+
+    } catch (Exception e) {
+      if (e instanceof OResponseProcessingException)
+        e = (Exception) e.getCause();
+      Assert.assertTrue(e instanceof OSchemaException);
+    }
+  }
+
+
+  public void testWrongClassNameWithPercent() {
+    try {
+      database.command(new OCommandSQL("create class Ant%ni")).execute();
+      Assert.fail();
+
+    } catch (Exception e) {
+      if (e instanceof OResponseProcessingException)
+        e = (Exception) e.getCause();
+      Assert.assertTrue(e instanceof OSchemaException);
+    }
+  }
+
+  public void testWrongClassNameWithComma() {
+    try {
+      database.getMetadata().getSchema().createClass("Anta,ni");
+      Assert.fail();
+
+    } catch (Exception e) {
+      if (e instanceof OResponseProcessingException)
+        e = (Exception) e.getCause();
+      Assert.assertTrue(e instanceof OSchemaException);
+    }
+  }
+
+  public void testWrongClassNameWithColon() {
+    try {
+      database.command(new OCommandSQL("create class Ant:ni")).execute();
+      Assert.fail();
+
+    } catch (Exception e) {
+      if (e instanceof OResponseProcessingException)
+        e = (Exception) e.getCause();
+      Assert.assertTrue(e instanceof OSchemaException);
+    }
   }
 
   private void swapClusters(ODatabaseDocumentTx databaseDocumentTx, int i) {

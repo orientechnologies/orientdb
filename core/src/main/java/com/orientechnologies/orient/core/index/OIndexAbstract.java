@@ -22,6 +22,8 @@ package com.orientechnologies.orient.core.index;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
@@ -60,7 +62,7 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
  * @author Luca Garulli
  * 
  */
-public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal implements OIndexInternal<T> {
+public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
   protected static final String              CONFIG_MAP_RID   = "mapRid";
   protected static final String              CONFIG_CLUSTERS  = "clusters";
   protected final OModificationLock          modificationLock = new OModificationLock();
@@ -87,6 +89,7 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
                                                                   return new IndexTxSnapshot();
                                                                 }
                                                               };
+  private final ReadWriteLock                rwLock           = new ReentrantReadWriteLock();
 
   protected static final class RemovedValue {
     public static final RemovedValue INSTANCE = new RemovedValue();
@@ -99,8 +102,6 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
   public OIndexAbstract(final String type, String algorithm, final OIndexEngine<T> indexEngine, String valueContainerAlgorithm,
       ODocument metadata) {
-    super(OGlobalConfiguration.ENVIRONMENT_CONCURRENT.getValueAsBoolean(), OGlobalConfiguration.MVRBTREE_TIMEOUT
-        .getValueAsInteger(), true);
     acquireExclusiveLock();
     try {
       databaseName = ODatabaseRecordThreadLocal.INSTANCE.get().getName();
@@ -941,6 +942,22 @@ public abstract class OIndexAbstract<T> extends OSharedResourceAdaptiveExternal 
 
   private OAbstractPaginatedStorage getStorage() {
     return ((OAbstractPaginatedStorage) getDatabase().getStorage().getUnderlying());
+  }
+
+  protected void releaseExclusiveLock() {
+    rwLock.writeLock().unlock();
+  }
+
+  protected void acquireExclusiveLock() {
+    rwLock.writeLock().lock();
+  }
+
+  protected void releaseSharedLock() {
+    rwLock.readLock().unlock();
+  }
+
+  protected void acquireSharedLock() {
+    rwLock.readLock().lock();
   }
 
   private void removeValuesContainer() {
