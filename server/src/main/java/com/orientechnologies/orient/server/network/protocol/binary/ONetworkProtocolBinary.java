@@ -1400,9 +1400,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     beginResponse();
     try {
       final ORecordMetadata metadata = connection.database.getRecordMetadata(rid);
-      sendOk(clientTxId);
-      channel.writeRID(metadata.getRecordId());
-      channel.writeVersion(metadata.getRecordVersion());
+      if (metadata!=null) {
+        sendOk(clientTxId);
+        channel.writeRID(metadata.getRecordId());
+        channel.writeVersion(metadata.getRecordVersion());
+      }else
+      {
+        throw new ODatabaseException(String.format("Record metadata for RID: %s, Not found",rid));
+      }
     } finally {
       endResponse();
     }
