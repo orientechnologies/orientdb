@@ -44,6 +44,7 @@
             com.tinkerpop.blueprints;resolution:=optional,
             com.tinkerpop.gremlin.groovy.jsr223;resolution:=optional,
             com.tinkerpop.gremlin.java;resolution:=optional,
+            com.tinkerpop.rexster.config;resolution:=optional,
             *
         </osgi.import>
         <osgi.export>
