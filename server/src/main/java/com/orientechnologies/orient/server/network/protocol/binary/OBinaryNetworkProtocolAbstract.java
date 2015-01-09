@@ -452,4 +452,8 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     return realLength;
   }
 
+  public int getRequestType() {
+    return requestType;
+  }
+
 }

@@ -330,6 +330,12 @@ public class OClientConnectionManager {
       if (command != null && command.isIdempotent()) {
         entry.getValue().protocol.interrupt();
       } else {
+        ONetworkProtocol protocol = entry.getValue().protocol;
+        if (protocol instanceof ONetworkProtocolBinary
+            && ((ONetworkProtocolBinary) protocol).getRequestType() == OChannelBinaryProtocol.REQUEST_SHUTDOWN) {
+          continue;
+        }
+
         try {
           final Socket socket;
           if (entry.getValue().protocol == null || entry.getValue().protocol.getChannel() == null)
