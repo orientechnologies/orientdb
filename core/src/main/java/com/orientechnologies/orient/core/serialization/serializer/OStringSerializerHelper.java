@@ -544,7 +544,8 @@ public abstract class OStringSerializerHelper {
 
     final StringBuilder buffer = new StringBuilder(128);
 
-    boolean escape = false, insideQuote = false;
+    boolean escape = false;
+    char insideQuote = ' ';
     int currentPos, deep;
     int maxPos = iText.length() - 1;
     for (currentPos = openPos + 1, deep = 1; deep > 0; currentPos++) {
@@ -567,15 +568,15 @@ public abstract class OStringSerializerHelper {
         deep--;
       } else if (c == iCollectionSeparator) {
         // SEPARATOR
-        if (deep > 1 || insideQuote) {
+        if (deep > 1 || insideQuote != ' ') {
           buffer.append(c);
         } else {
           iCollection.add(buffer.toString().trim());
           buffer.setLength(0);
         }
       }
-      else if (!escape && (c == '"' || c == '\'')) {
-        insideQuote = !insideQuote;
+      else if (!escape && ((insideQuote == ' ' && (c == '"' || c == '\'')) || (insideQuote==c))) {
+        insideQuote = insideQuote == ' ' ? c : ' ';
         buffer.append(c);
       } else {
         // COLLECT
