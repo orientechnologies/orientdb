@@ -101,13 +101,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.tinkerpop</groupId>
-            <artifactId>pipes</artifactId>
-            <version>${blueprints.version}</version>
-            <type>jar</type>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
             <groupId>com.tinkerpop.gremlin</groupId>
             <artifactId>gremlin-java</artifactId>
             <version>${blueprints.version}</version>
