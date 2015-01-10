@@ -305,7 +305,7 @@ public abstract class OLuceneIndexManagerAbstract<V> extends OSharedResourceAdap
         }
     }
 
-    protected IndexSearcher getSearcher() throws IOException {
+    public IndexSearcher getSearcher() throws IOException {
         try {
             nrt.waitForGeneration(reopenToken);
         } catch (InterruptedException e) {

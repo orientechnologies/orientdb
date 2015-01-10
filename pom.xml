@@ -259,13 +259,7 @@
             <scope>compile</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.jruby</groupId>
-            <artifactId>jruby-complete</artifactId>
-            <version>1.7.15</version>
-        </dependency>
-
-
+       
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-core</artifactId>
