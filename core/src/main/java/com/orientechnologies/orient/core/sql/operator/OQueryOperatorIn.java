@@ -19,19 +19,29 @@
  */
 package com.orientechnologies.orient.core.sql.operator;
 
-import java.util.*;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexCursor;
+import com.orientechnologies.orient.core.index.OIndexCursorCollectionValue;
+import com.orientechnologies.orient.core.index.OIndexCursorSingleValue;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemField;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * IN operator.
@@ -43,65 +53,6 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 
   public OQueryOperatorIn() {
     super("IN", 5, false);
-  }
-
-  @Override
-  @SuppressWarnings("unchecked")
-  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
-      final Object iRight, OCommandContext iContext) {
-    if (iLeft instanceof Collection<?>) {
-      final Collection<Object> sourceCollection = (Collection<Object>) iLeft;
-
-      if (iRight instanceof Collection<?>) {
-        // AGAINST COLLECTION OF ITEMS
-        final Collection<Object> collectionToMatch = (Collection<Object>) iRight;
-
-        boolean found = false;
-        for (final Object o1 : sourceCollection) {
-          for (final Object o2 : collectionToMatch) {
-            if (OQueryOperatorEquals.equals(o1, o2)) {
-              found = true;
-              break;
-            }
-          }
-        }
-        return found;
-      } else {
-        // AGAINST SINGLE ITEM
-        if (sourceCollection instanceof Set<?>)
-          return sourceCollection.contains(iRight);
-
-        for (final Object o : sourceCollection) {
-          if (OQueryOperatorEquals.equals(iRight, o))
-            return true;
-        }
-      }
-    } else if (iRight instanceof Collection<?>) {
-
-      final Collection<Object> sourceCollection = (Collection<Object>) iRight;
-
-      if (sourceCollection instanceof Set<?>)
-        return sourceCollection.contains(iLeft);
-
-      for (final Object o : sourceCollection) {
-        if (OQueryOperatorEquals.equals(iLeft, o))
-          return true;
-      }
-    } else if (iLeft.getClass().isArray()) {
-
-      for (final Object o : (Object[]) iLeft) {
-        if (OQueryOperatorEquals.equals(iRight, o))
-          return true;
-      }
-    } else if (iRight.getClass().isArray()) {
-
-      for (final Object o : (Object[]) iRight) {
-        if (OQueryOperatorEquals.equals(iLeft, o))
-          return true;
-      }
-    }
-
-    return iLeft.equals(iRight);
   }
 
   @Override
@@ -252,6 +203,61 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
     final List<ORID> rids = addRangeResults(ridCollection, ridSize);
 
     return rids == null ? null : Collections.max(rids);
+  }
+
+  @Override
+  @SuppressWarnings("unchecked")
+  protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
+      final Object iRight, OCommandContext iContext) {
+    if (OMultiValue.isMultiValue(iLeft)) {
+      if (iRight instanceof Collection<?>) {
+        // AGAINST COLLECTION OF ITEMS
+        final Collection<Object> collectionToMatch = (Collection<Object>) iRight;
+
+        boolean found = false;
+        for (final Object o1 : OMultiValue.getMultiValueIterable(iLeft)) {
+          for (final Object o2 : collectionToMatch) {
+            if (OQueryOperatorEquals.equals(o1, o2)) {
+              found = true;
+              break;
+            }
+          }
+        }
+        return found;
+      } else {
+        // AGAINST SINGLE ITEM
+        if (iLeft instanceof Set<?>)
+          return ((Set)iLeft).contains(iRight);
+
+        for (final Object o : OMultiValue.getMultiValueIterable(iLeft)) {
+          if (OQueryOperatorEquals.equals(iRight, o))
+            return true;
+        }
+      }
+    } else if (OMultiValue.isMultiValue(iRight)) {
+
+      if (iRight instanceof Set<?>)
+        return ((Set)iRight).contains(iLeft);
+
+      for (final Object o : OMultiValue.getMultiValueIterable(iRight)) {
+        if (OQueryOperatorEquals.equals(iLeft, o))
+          return true;
+      }
+    } else if (iLeft.getClass().isArray()) {
+
+      for (final Object o : (Object[]) iLeft) {
+        if (OQueryOperatorEquals.equals(iRight, o))
+          return true;
+      }
+    } else if (iRight.getClass().isArray()) {
+
+      for (final Object o : (Object[]) iRight) {
+        if (OQueryOperatorEquals.equals(iLeft, o))
+          return true;
+      }
+    }
+
+    return iLeft.equals(iRight);
   }
 
   protected List<ORID> addRangeResults(final Iterable<?> ridCollection, final int ridSize) {
