@@ -276,7 +276,7 @@ public class Orient extends OListenerManger<OOrientListener> {
 
     }
 
-		purgeWeakShutdownListeners();
+    purgeWeakShutdownListeners();
     for (final WeakHashSetValueHolder<OOrientShutdownListener> wl : weakShutdownListeners)
       try {
         if (wl != null) {
@@ -602,7 +602,7 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   public void registerWeakOrientStartupListener(OOrientStartupListener listener) {
     purgeWeakStartupListeners();
-    weakStartupListeners.add(new WeakHashSetValueHolder<OOrientStartupListener>(listener, removedStartupListenersQueue, true));
+    weakStartupListeners.add(new WeakHashSetValueHolder<OOrientStartupListener>(listener, removedStartupListenersQueue));
   }
 
   public void unregisterOrientStartupListener(OOrientStartupListener listener) {
@@ -611,17 +611,17 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   public void unregisterWeakOrientStartupListener(OOrientStartupListener listener) {
     purgeWeakStartupListeners();
-    weakStartupListeners.remove(new WeakHashSetValueHolder<OOrientStartupListener>(listener, null, true));
+    weakStartupListeners.remove(new WeakHashSetValueHolder<OOrientStartupListener>(listener, null));
   }
 
   public void registerWeakOrientShutdownListener(OOrientShutdownListener listener) {
     purgeWeakShutdownListeners();
-    weakShutdownListeners.add(new WeakHashSetValueHolder<OOrientShutdownListener>(listener, removedShutdownListenersQueue, true));
+    weakShutdownListeners.add(new WeakHashSetValueHolder<OOrientShutdownListener>(listener, removedShutdownListenersQueue));
   }
 
   public void unregisterWeakOrientShutdownListener(OOrientShutdownListener listener) {
     purgeWeakShutdownListeners();
-    weakShutdownListeners.remove(new WeakHashSetValueHolder<OOrientShutdownListener>(listener, null, true));
+    weakShutdownListeners.remove(new WeakHashSetValueHolder<OOrientShutdownListener>(listener, null));
   }
 
   @Override
@@ -667,19 +667,10 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   private static class WeakHashSetValueHolder<T> extends WeakReference<T> {
-    private final boolean findValue;
-    private final int     hashCode;
+    private final int hashCode;
 
-    private WeakHashSetValueHolder(T referent, int hashCode, boolean findValue) {
-      super(referent);
-
-      this.hashCode = hashCode;
-      this.findValue = findValue;
-    }
-
-    private WeakHashSetValueHolder(T referent, ReferenceQueue<? super T> q, boolean findValue) {
+    private WeakHashSetValueHolder(T referent, ReferenceQueue<? super T> q) {
       super(referent, q);
-      this.findValue = findValue;
       this.hashCode = referent.hashCode();
     }
 
@@ -692,6 +683,7 @@ public class Orient extends OListenerManger<OOrientListener> {
     public boolean equals(Object o) {
       if (this == o)
         return true;
+
       if (o == null || getClass() != o.getClass())
         return false;
 
@@ -700,19 +692,15 @@ public class Orient extends OListenerManger<OOrientListener> {
       if (hashCode != that.hashCode)
         return false;
 
-      if (that.findValue && this.findValue) {
-        final T thisObject = get();
-        final Object thatObject = that.get();
+      final T thisObject = get();
+      final Object thatObject = that.get();
 
-        if (thisObject == null)
-          return false;
-        if (thatObject == null)
-          return false;
-
+      if (thisObject == null && thatObject == null)
+        return super.equals(that);
+      else if (thisObject != null && thatObject != null)
         return thisObject.equals(thatObject);
-      }
 
-      return super.equals(that);
+      return false;
     }
   }
 }
