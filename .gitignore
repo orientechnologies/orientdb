@@ -5,7 +5,7 @@ target/
 *.prefs
 */.idea
 *.iml
-
+.idea
 licenses/*
 agent/generated/*
 orientechnologies-website/databases

@@ -57,7 +57,7 @@ public enum OEnvironment implements OTypeHolder<Environment> {
   VERSION("version") {
     @Override
     public OType getType() {
-      return OType.STRING;
+      return OType.LINK;
     }
   },
   DISTRIBUTED("distributed") {

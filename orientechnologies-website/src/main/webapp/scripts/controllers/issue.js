@@ -2,7 +2,9 @@
 angular.module('webappApp')
   .controller('IssueCtrl', function ($scope, Organization, User, $routeParams) {
 
-    $scope.query = 'is:open'
+    $scope.githubIssue = GITHUB + "/" + ORGANIZATION;
+
+    $scope.query = 'is:open '
     $scope.page = 1;
     // Query By Example
     $scope.issue = {};
@@ -17,6 +19,11 @@ angular.module('webappApp')
       close: true
     }
 
+    $scope.clear = function () {
+      $scope.query = 'is:open '
+      $scope.issue = {};
+      $scope.search();
+    }
     $scope.search = function (page) {
       if (!page) {
         $scope.page = 1;
@@ -55,20 +62,22 @@ angular.module('webappApp')
     })
 
     var addCondition = function (input, name, val) {
-      return input += " " + name + ":\"" + val + "\"";
+      input = input.trim()
+      return input += " " + name + ":\"" + val + "\" ";
     }
     var removeCondition = function (input, name, val) {
       return input.replace(" " + name + ":\"" + val + "\"", "");
     }
     $scope.$on("scope:changed", function (e, scope) {
+
+      if ($scope.issue.scope) {
+        $scope.query = removeCondition($scope.query, "area", $scope.issue.scope.name);
+      }
       if (scope) {
-        if ($scope.issue.scope) {
-          $scope.query = removeCondition($scope.query, "area", $scope.issue.scope.name);
-        }
         $scope.query = addCondition($scope.query, "area", scope.name)
         $scope.issue.scope = scope;
-        $scope.search();
       }
+      $scope.search();
     });
     $scope.$on("client:changed", function (e, client) {
       if (client) {
@@ -236,16 +245,22 @@ angular.module('webappApp')
 
     //var id = $routeParams.id.split("@");
     //
+
+    $scope.githubIssue = GITHUB + "/" + ORGANIZATION;
     //var repo = id[0];
     //var number = id[1];
     var number = $routeParams.id;
 
     User.whoami().then(function (data) {
       $scope.isMember = User.isMember(ORGANIZATION);
+
     });
     Organization.all("issues").one(number).get().then(function (data) {
       $scope.issue = data.plain();
       $scope.repo = $scope.issue.repository.name;
+      User.whoami().then(function (data) {
+        $scope.isOwner = $scope.issue.user.name == data.name;
+      })
       refreshEvents();
       initTypologic();
     });
@@ -470,7 +485,7 @@ angular.module('webappApp')
       return $scope.issue.scope ? scope.name == $scope.issue.scope.name : false;
     }
     $scope.toggleScope = function (scope) {
-      if (!$scope.isScoped(scope)) {
+      if (scope == null || !$scope.isScoped(scope)) {
         $scope.$emit("scope:changed", scope);
       }
       $scope.$hide();

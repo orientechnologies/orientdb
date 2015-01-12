@@ -13,18 +13,19 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 //@Configuration
 public class WebMvcConfig extends WebMvcConfigurationSupport {
 
-  @Autowired
-  private OrientDBFactoryInterceptor interceptor;
+    @Autowired
+    private OrientDBFactoryInterceptor interceptor;
 
-  @Override
-  public RequestMappingHandlerMapping requestMappingHandlerMapping() {
-    ApiVersionRequestMappingHandlerMapping v = new ApiVersionRequestMappingHandlerMapping("api/v");
-    v.setInterceptors(getInterceptors());
-    return v;
-  }
+    @Override
+    public RequestMappingHandlerMapping requestMappingHandlerMapping() {
+        ApiVersionRequestMappingHandlerMapping v = new ApiVersionRequestMappingHandlerMapping("api/v");
+        v.setInterceptors(getInterceptors());
+        return v;
+    }
 
-  @Override
-  protected void addInterceptors(InterceptorRegistry registry) {
-    registry.addInterceptor(interceptor);
-  }
+
+    @Override
+    protected void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(interceptor);
+    }
 }

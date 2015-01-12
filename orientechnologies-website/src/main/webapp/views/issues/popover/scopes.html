@@ -10,6 +10,15 @@
     </form>
     <hr class="scope-popover-divider"/>
     <ul class="scopes-group">
+      <!--<li class="scope-item" ng-click="toggleScope(null)">-->
+        <!--<div class="container-fluid">-->
+          <!--<div class="row">-->
+            <!--<div class="col-md-12">-->
+              <!--<i class="fa fa-times-circle-o"> Clear Area</i>-->
+            <!--</div>-->
+          <!--</div>-->
+        <!--</div>-->
+      <!--</li>-->
       <li class="scope-item" ng-click="toggleScope(scope)"
           ng-class="{ 'scope-selected' : isScoped(scope)  }"
           ng-repeat="scope in scopes">
@@ -19,7 +28,7 @@
               <i class="fa fa-check-circle-o" ng-show="isScoped(scope)"></i>
             </div>
             <div class="col-md-9">
-              <span class="color"></span>
+              <span class="color" ></span>
               <span>{{scope.name}}</span>
             </div>
             <div class="col-md-1 text-center">

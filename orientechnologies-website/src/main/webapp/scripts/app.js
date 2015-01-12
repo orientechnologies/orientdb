@@ -106,3 +106,4 @@ var API = "v1/"
 var ORGANIZATION = 'orientechnologies';
 //var ORGANIZATION = 'organizationwolf';
 var DEFAULT_REPO = 'orientdb';
+var GITHUB = "https://github.com"
