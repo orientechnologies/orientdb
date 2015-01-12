@@ -27,6 +27,12 @@
 This document contains the last changes of OrientDB Community Edition.
 
 ---------------------------------------------------------------------------------------------------
+VERSION 2.0-RC2 - (January, 12th 2014)
+- Bug fixing: 86 total issues from 2.0-RC1.
+
+Full list: https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.0-rc2+is%3Aclosed
+
+---------------------------------------------------------------------------------------------------
 VERSION 2.0-RC1 - (December, 17th 2014)
 - Core: Avoid rebuild of indexes if working in Transactional mode
 - Javascript: Invoking of JS functions now is 10x faster
