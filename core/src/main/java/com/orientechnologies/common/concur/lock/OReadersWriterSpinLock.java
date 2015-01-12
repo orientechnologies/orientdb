@@ -184,9 +184,18 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer implemen
 
   @Override
   public void onShutdown() {
-    lockHolds = null;
-    myNode = null;
-    predNode = null;
+      if (lockHolds != null) {
+          lockHolds.remove();
+          lockHolds = null;
+      }
+      if (myNode != null) {
+          myNode.remove();
+          myNode = null;
+      }
+      if (predNode != null) {
+          predNode.remove();
+          predNode = null;
+      }
   }
 
   @Override
