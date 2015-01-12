@@ -254,6 +254,17 @@ public class Orient extends OListenerManger<OOrientListener> {
         // STOP ALL THE PENDING THREADS
         threadGroup.interrupt();
 
+      for (final WeakHashSetValueHolder<OOrientShutdownListener> wl : weakShutdownListeners)
+          try {
+              if (wl != null) {
+                  final OOrientShutdownListener l = wl.get();
+                  if (l != null)
+                      l.onShutdown();
+              }
+              
+          } catch (Exception e) {
+              OLogManager.instance().error(this, "Error during orient shutdown.", e);
+          }
       resetListeners();
 
       timer.cancel();
@@ -277,17 +288,6 @@ public class Orient extends OListenerManger<OOrientListener> {
     }
 
     purgeWeakShutdownListeners();
-    for (final WeakHashSetValueHolder<OOrientShutdownListener> wl : weakShutdownListeners)
-      try {
-        if (wl != null) {
-          final OOrientShutdownListener l = wl.get();
-          if (l != null)
-            l.onShutdown();
-        }
-
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during orient shutdown.", e);
-      }
 
     OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
     OLogManager.instance().flush();
