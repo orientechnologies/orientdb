@@ -113,7 +113,9 @@ public enum OGlobalConfiguration {
 
   WAL_LOCATION("storage.wal.path", "Path to the wal file on the disk, by default is placed in DB directory but" + " it is highly recomended to use separate disk to store log operations", String.class, null),
 
-  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE("storage.makeFullCheckpointAfterCreate", "Indicates whether full checkpoint should be performed if storage was opened.", Boolean.class, true),
+  STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE("storage.makeFullCheckpointAfterCreate", "Indicates whether full checkpoint should be performed if storage was created.", Boolean.class, true),
+
+	STORAGE_MAKE_FULL_CHECKPOINT_AFTER_OPEN("storage.makeFullCheckpointAfterOpen", "Indicates whether full checkpoint should be performed if storage was opened. It is needed to make fuzzy checkpoints to work without issues", Boolean.class, true),
 
   STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE("storage.makeFullCheckpointAfterClusterCreate", "Indicates whether full checkpoint should be performed if storage was opened.", Boolean.class, true),
 

@@ -131,6 +131,7 @@
                 <configuration>
                     <argLine>-ea -Xmx3G -Xss2048k -Dindex.flushAfterCreate=false
                         -Dstorage.makeFullCheckpointAfterCreate=false
+                        -Dstorage.makeFullCheckpointAfterOpen=false
                         -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false
                         -Dstorage.configuration.syncOnUpdate=false
                     </argLine>

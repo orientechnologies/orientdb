@@ -200,9 +200,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       }
 
       restoreIfNeeded();
+      if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_OPEN.getValueAsBoolean())
+        makeFullCheckpoint();
 
-			clearStorageDirty();
-			diskCache.startFuzzyCheckpoints();
+      diskCache.startFuzzyCheckpoints();
 
       status = STATUS.OPEN;
     } catch (Exception e) {
@@ -263,7 +264,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE.getValueAsBoolean())
         makeFullCheckpoint();
 
-			diskCache.startFuzzyCheckpoints();
+      diskCache.startFuzzyCheckpoints();
       postCreateSteps();
 
     } catch (OStorageException e) {
@@ -1555,7 +1556,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       OLogManager.instance().warn(this, "Storage " + name + " was not closed properly. Will try to restore from write ahead log.");
       try {
         wereDataRestoredAfterOpen = restoreFromWAL();
-        makeFullCheckpoint();
       } catch (Exception e) {
         OLogManager.instance().error(this, "Exception during storage data restore.", e);
         throw e;
@@ -2444,9 +2444,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         continue;
 
       final OOperationUnitRecord atomicOperationRecord = (OOperationUnitRecord) writeAheadLog.read(operationUnit.get(0));
-			if (atomicOperationRecord == null) {
-				writeAheadLog.read(operationUnit.get(0));
-			}
+      if (atomicOperationRecord == null) {
+        writeAheadLog.read(operationUnit.get(0));
+      }
       final OAtomicUnitStartRecord startRecord;
 
       if (atomicOperationRecord instanceof OAtomicUnitStartRecord)

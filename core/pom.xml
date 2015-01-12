@@ -114,7 +114,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${surefire.version}</version>
                 <configuration>
-                    <argLine>-ea -Xmx2048m -Dindex.flushAfterCreate=false -Dstorage.makeFullCheckpointAfterCreate=false
+                    <argLine>-ea -Xmx2048m -Dindex.flushAfterCreate=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterOpen=false
                         -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false
                         -Dstorage.configuration.syncOnUpdate=false
                     </argLine>
