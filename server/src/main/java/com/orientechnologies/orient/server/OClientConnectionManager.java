@@ -59,35 +59,11 @@ public class OClientConnectionManager {
 
       @Override
       public void run() {
-        final Iterator<Entry<Integer, OClientConnection>> iterator = connections.entrySet().iterator();
-        while (iterator.hasNext()) {
-          final Entry<Integer, OClientConnection> entry = iterator.next();
-
-          final Socket socket;
-          if (entry.getValue().protocol == null || entry.getValue().protocol.getChannel() == null)
-            socket = null;
-          else
-            socket = entry.getValue().protocol.getChannel().socket;
-
-          if (socket == null || socket.isClosed() || socket.isInputShutdown()) {
-            OLogManager.instance().debug(this, "[OClientConnectionManager] found and removed pending closed channel %d (%s)",
-                entry.getKey(), socket);
-            try {
-              OCommandRequestText command = entry.getValue().data.command;
-              if (command != null && command.isIdempotent()) {
-                entry.getValue().protocol.sendShutdown();
-                entry.getValue().protocol.interrupt();
-              }
-              entry.getValue().close();
-
-            } catch (Exception e) {
-              OLogManager.instance().error(this, "Error during close of connection for close channel", e);
-            }
-            iterator.remove();
-          }
-        }
+        cleanExpiredConnections();
       }
-    }, delay, delay);
+    }
+
+    , delay, delay);
 
     Orient
         .instance()
@@ -98,6 +74,36 @@ public class OClientConnectionManager {
                 return connections.size();
               }
             });
+  }
+
+  public void cleanExpiredConnections() {
+    final Iterator<Entry<Integer, OClientConnection>> iterator = connections.entrySet().iterator();
+    while (iterator.hasNext()) {
+      final Entry<Integer, OClientConnection> entry = iterator.next();
+
+      final Socket socket;
+      if (entry.getValue().protocol == null || entry.getValue().protocol.getChannel() == null)
+        socket = null;
+      else
+        socket = entry.getValue().protocol.getChannel().socket;
+
+      if (socket == null || socket.isClosed() || socket.isInputShutdown()) {
+        OLogManager.instance().debug(this, "[OClientConnectionManager] found and removed pending closed channel %d (%s)",
+            entry.getKey(), socket);
+        try {
+          OCommandRequestText command = entry.getValue().data.command;
+          if (command != null && command.isIdempotent()) {
+            entry.getValue().protocol.sendShutdown();
+            entry.getValue().protocol.interrupt();
+          }
+          entry.getValue().close();
+
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error during close of connection for close channel", e);
+        }
+        iterator.remove();
+      }
+    }
   }
 
   public static OClientConnectionManager instance() {

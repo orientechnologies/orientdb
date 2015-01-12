@@ -204,17 +204,21 @@ public class OServerNetworkListener extends Thread {
             }
           }
 
-          final int conns = OClientConnectionManager.instance().getTotal();
+          int conns = OClientConnectionManager.instance().getTotal();
           if (conns >= OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS.getValueAsInteger()) {
-            // MAXIMUM OF CONNECTIONS EXCEEDED
-            OLogManager.instance().warn(this,
-                "Reached maximum number of concurrent connections (%d), reject incoming connection from %s", conns,
-                socket.getRemoteSocketAddress());
-            socket.close();
+            OClientConnectionManager.instance().cleanExpiredConnections();
+            conns = OClientConnectionManager.instance().getTotal();
+            if (conns >= OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS.getValueAsInteger()) {
+              // MAXIMUM OF CONNECTIONS EXCEEDED
+              OLogManager.instance().warn(this,
+                  "Reached maximum number of concurrent connections (%d), reject incoming connection from %s", conns,
+                  socket.getRemoteSocketAddress());
+              socket.close();
 
-            // PAUSE CURRENT THREAD TO SLOW DOWN ANY POSSIBLE ATTACK
-            Thread.sleep(100);
-            continue;
+              // PAUSE CURRENT THREAD TO SLOW DOWN ANY POSSIBLE ATTACK
+              Thread.sleep(100);
+              continue;
+            }
           }
 
           socket.setPerformancePreferences(0, 2, 1);
