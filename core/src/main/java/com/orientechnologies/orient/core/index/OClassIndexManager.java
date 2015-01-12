@@ -482,7 +482,7 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   @Override
   public RESULT onRecordBeforeDelete(final ODocument iDocument) {
     final ORecordVersion version = iDocument.getRecordVersion(); // Cache the transaction-provided value
-    if (iDocument.fields() == 0) {
+    if (iDocument.fields() == 0 && iDocument.getIdentity().isPersistent()) {
       // FORCE LOADING OF CLASS+FIELDS TO USE IT AFTER ON onRecordAfterDelete METHOD
       iDocument.reload();
       if (version.getCounter() > -1 && iDocument.getRecordVersion().compareTo(version) != 0) // check for record version errors
