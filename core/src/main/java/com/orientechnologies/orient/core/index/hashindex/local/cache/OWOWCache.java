@@ -185,20 +185,25 @@ public class OWOWCache {
       long effectiveFreeSpace = freeSpace - allocatedSpace.get();
 
       if (effectiveFreeSpace < freeSpaceLimit) {
-        writeAheadLog.flush();
+        if (writeAheadLog != null) {
+          writeAheadLog.flush();
 
-        Future<?> future = commitExecutor.submit(new PeriodicalFuzzyCheckpointTask());
-        try {
-          future.get();
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error during fuzzy checkpoint execution for storage %s .", e, storageLocal.getName());
-        }
+          Future<?> future = commitExecutor.submit(new PeriodicalFuzzyCheckpointTask());
+          try {
+            future.get();
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error during fuzzy checkpoint execution for storage %s .", e,
+                storageLocal.getName());
+          }
 
-        freeSpace = storageDir.getFreeSpace();
-        effectiveFreeSpace = freeSpace - allocatedSpace.get();
+          freeSpace = storageDir.getFreeSpace();
+          effectiveFreeSpace = freeSpace - allocatedSpace.get();
 
-        if (effectiveFreeSpace < freeSpaceLimit)
+          if (effectiveFreeSpace < freeSpaceLimit)
+            callLowSpaceListeners(new LowDiskSpaceInformation(effectiveFreeSpace, freeSpaceLimit));
+        } else {
           callLowSpaceListeners(new LowDiskSpaceInformation(effectiveFreeSpace, freeSpaceLimit));
+        }
       }
 
       lastDiskSpaceCheck.lazySet(ts);
