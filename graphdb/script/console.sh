@@ -3,9 +3,6 @@
 # Copyright (c) Orient Technologies LTD (http://www.orientechnologies.com)
 #
 
-#set current working directory
-cd `dirname $0`
-
 # resolve links - $0 may be a softlink
 PRG="$0"
 
@@ -25,6 +22,7 @@ PRGDIR=`dirname "$PRG"`
 # Only set ORIENTDB_HOME if not already set
 [ -f "$ORIENTDB_HOME"/lib/orientdb-tools-@VERSION@.jar ] || ORIENTDB_HOME=`cd "$PRGDIR/.." ; pwd`
 export ORIENTDB_HOME
+cd "$ORIENTDB_HOME/bin"
 
 # Set JavaHome if it exists
 if [ -f "${JAVA_HOME}/bin/java" ]; then 
