@@ -254,8 +254,6 @@ public class Orient extends OListenerManger<OOrientListener> {
         // STOP ALL THE PENDING THREADS
         threadGroup.interrupt();
 
-      resetListeners();
-
       timer.cancel();
       timer = null;
 
@@ -289,7 +287,9 @@ public class Orient extends OListenerManger<OOrientListener> {
         OLogManager.instance().error(this, "Error during orient shutdown.", e);
       }
 
-    OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
+		resetListeners();
+
+		OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
     OLogManager.instance().flush();
 
     return this;

@@ -37,7 +37,7 @@ import java.util.concurrent.locks.LockSupport;
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 8/20/14
  */
-public final class OThreadCountersHashTable implements OOrientStartupListener, OOrientShutdownListener {
+public final class OThreadCountersHashTable {
   private static final int                                        SEED             = 362498820;
 
   private static final int                                        NCPU             = Runtime.getRuntime().availableProcessors();
@@ -47,7 +47,7 @@ public final class OThreadCountersHashTable implements OOrientStartupListener, O
   public static final int                                         THRESHOLD        = 10;
   private final boolean                                           deadThreadsAreAllowed;
 
-  private volatile ThreadLocal<HashEntry>                         hashEntry        = new ThreadLocal<HashEntry>();
+  private final ThreadLocal<HashEntry>                            hashEntry        = new ThreadLocal<HashEntry>();
 
   private volatile int                                            activeTableIndex = 0;
 
@@ -80,9 +80,6 @@ public final class OThreadCountersHashTable implements OOrientStartupListener, O
     busyCounters = counters;
 
     this.tables = tables;
-
-    Orient.instance().registerWeakOrientStartupListener(this);
-    Orient.instance().registerWeakOrientShutdownListener(this);
   }
 
   public void increment() {
@@ -466,17 +463,6 @@ public final class OThreadCountersHashTable implements OOrientStartupListener, O
 
     final long hashCode = OMurmurHash3.murmurHash3_x64_64(serializedId, SEED);
     return new int[] { (int) (hashCode & 0xFFFFFFFFL), (int) (hashCode >>> 32) };
-  }
-
-  @Override
-  public void onShutdown() {
-    hashEntry = null;
-  }
-
-  @Override
-  public void onStartup() {
-    if (hashEntry == null)
-      hashEntry = new ThreadLocal<HashEntry>();
   }
 
   static final class HashEntry {
