@@ -1303,11 +1303,13 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     } catch (Exception t) {
       if (record != null)
-        System.err.println("Error importing record " + record.getIdentity() + ". Source line " + jsonReader.getLineNumber()
-            + ", column " + jsonReader.getColumnNumber());
+        OLogManager.instance().error(
+            this,
+            "Error importing record " + record.getIdentity() + ". Source line " + jsonReader.getLineNumber() + ", column "
+                + jsonReader.getColumnNumber());
       else
-        System.err.println("Error importing record. Source line " + jsonReader.getLineNumber() + ", column "
-            + jsonReader.getColumnNumber());
+        OLogManager.instance().error(this,
+            "Error importing record. Source line " + jsonReader.getLineNumber() + ", column " + jsonReader.getColumnNumber());
 
       throw t;
     } finally {
