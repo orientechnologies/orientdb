@@ -48,6 +48,8 @@ public class OSQLMethodField extends OAbstractSQLMethod {
     if (iParams[0] == null)
       return null;
 
+    final String paramAsString = iParams[0].toString();
+
     if (ioResult != null) {
       if (ioResult instanceof String) {
         try {
@@ -62,17 +64,17 @@ public class OSQLMethodField extends OAbstractSQLMethod {
           || ioResult.getClass().isArray()) {
         final List<Object> result = new ArrayList<Object>(OMultiValue.getSize(ioResult));
         for (Object o : OMultiValue.getMultiValueIterable(ioResult)) {
-          result.add(ODocumentHelper.getFieldValue(o, iParams[0].toString()));
+          result.add(ODocumentHelper.getFieldValue(o, paramAsString));
         }
         return result;
       }
     }
 
-    if (ioResult != null) {
+    if (!"*".equals(paramAsString) && ioResult != null) {
       if (ioResult instanceof OCommandContext) {
-        ioResult = ((OCommandContext) ioResult).getVariable(iParams[0].toString());
+        ioResult = ((OCommandContext) ioResult).getVariable(paramAsString);
       } else {
-        ioResult = ODocumentHelper.getFieldValue(ioResult, iParams[0].toString(), iContext);
+        ioResult = ODocumentHelper.getFieldValue(ioResult, paramAsString, iContext);
       }
     }
 

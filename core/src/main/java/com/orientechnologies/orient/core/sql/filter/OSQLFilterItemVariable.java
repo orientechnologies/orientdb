@@ -55,4 +55,6 @@ public class OSQLFilterItemVariable extends OSQLFilterItemAbstract {
   public String toString() {
     return "$" + super.toString();
   }
+
+
 }
