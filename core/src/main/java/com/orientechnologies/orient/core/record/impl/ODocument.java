@@ -1601,6 +1601,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       else
         _fieldValues.put(entry.getKey(), entry.getValue());
     }
+    _fieldOriginalValues.clear();
 
     return this;
   }
