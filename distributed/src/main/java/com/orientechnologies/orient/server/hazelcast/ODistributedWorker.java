@@ -63,13 +63,13 @@ import java.util.concurrent.TimeUnit;
 public class ODistributedWorker extends Thread {
 
   private final static int                            LOCAL_QUEUE_MAXSIZE = 1000;
-  protected Queue<ODistributedRequest>                localQueue          = new ArrayBlockingQueue<ODistributedRequest>(
-                                                                              LOCAL_QUEUE_MAXSIZE);
   protected final OHazelcastDistributedDatabase       distributed;
   protected final OHazelcastPlugin                    manager;
   protected final OHazelcastDistributedMessageService msgService;
   protected final String                              databaseName;
   protected final IQueue<ODistributedRequest>         requestQueue;
+  protected Queue<ODistributedRequest>                localQueue          = new ArrayBlockingQueue<ODistributedRequest>(
+                                                                              LOCAL_QUEUE_MAXSIZE);
   protected volatile ODatabaseDocumentTx              database;
   protected volatile OUser                            lastUser;
   protected boolean                                   restoringMessages;
@@ -90,12 +90,14 @@ public class ODistributedWorker extends Thread {
   public void run() {
     final int queuedMsg = requestQueue.size();
 
+    long lastMessageId = -1;
+
     for (long processedMessages = 0; running; processedMessages++) {
-      if (restoringMessages && processedMessages >= queuedMsg) {
+      if (restoringMessages && processedMessages >= queuedMsg ) {
         // END OF RESTORING MESSAGES, SET IT ONLINE
-        ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
-            "executed all pending tasks in queue (%d), set restoringMessages=false and database '%s' as online...", queuedMsg,
-            databaseName);
+        ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
+            "executed all pending tasks in queue (%d), set restoringMessages=false and database '%s' as online. Last req=%d",
+            queuedMsg, databaseName, lastMessageId);
 
         restoringMessages = false;
         break;
@@ -107,6 +109,7 @@ public class ODistributedWorker extends Thread {
         message = readRequest();
 
         if (message != null) {
+          lastMessageId = message.getId();
           // DECIDE TO USE THE HZ MAP ONLY IF THE COMMAND IS NOT IDEMPOTENT (ALL BUT READ-RECORD/SQL SELECT/SQL TRAVERSE
           // final boolean saveAsPending = !message.getTask().isIdempotent();
           // if (saveAsPending)

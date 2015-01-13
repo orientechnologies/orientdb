@@ -1,31 +1,32 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.server.hazelcast;
+
+import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.Serializable;
-
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
+import java.util.Arrays;
 
 /**
  * Hazelcast implementation of distributed peer.
@@ -73,12 +74,12 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
     return senderNodeName;
   }
 
-  public Object getPayload() {
-    return payload;
-  }
-
   public void setSenderNodeName(final String senderNodeName) {
     this.senderNodeName = senderNodeName;
+  }
+
+  public Object getPayload() {
+    return payload;
   }
 
   public ODistributedResponse setPayload(final Object payload) {
@@ -109,7 +110,13 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
 
   @Override
   public String toString() {
-    return payload != null ? payload.toString() : "null";
+    if (payload == null)
+      return "null";
+
+    if (payload.getClass().isArray())
+      return Arrays.toString((Object[]) payload);
+
+    return payload.toString();
   }
 
 }

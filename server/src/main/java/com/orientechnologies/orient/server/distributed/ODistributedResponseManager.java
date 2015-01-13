@@ -46,23 +46,24 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  */
 public class ODistributedResponseManager {
-  private static final String                    NO_RESPONSE                 = "waiting-for-response";
+  public static final int                        ADDITIONAL_TIMEOUT_CLUSTER_SHAPE = 15000;
+  private static final String                    NO_RESPONSE                      = "waiting-for-response";
   private final ODistributedServerManager        dManager;
   private final ODistributedRequest              request;
   private final long                             sentOn;
-  private final HashMap<String, Object>          responses                   = new HashMap<String, Object>();
+  private final HashMap<String, Object>          responses                        = new HashMap<String, Object>();
   private final boolean                          groupResponsesByResult;
-  private final List<List<ODistributedResponse>> responseGroups              = new ArrayList<List<ODistributedResponse>>();
+  private final List<List<ODistributedResponse>> responseGroups                   = new ArrayList<List<ODistributedResponse>>();
   private final int                              expectedSynchronousResponses;
   private final long                             synchTimeout;
   private final long                             totalTimeout;
-  private final Lock                             synchronousResponsesLock    = new ReentrantLock();
-  private final Condition                        synchronousResponsesArrived = synchronousResponsesLock.newCondition();
+  private final Lock                             synchronousResponsesLock         = new ReentrantLock();
+  private final Condition                        synchronousResponsesArrived      = synchronousResponsesLock.newCondition();
   private final int                              quorum;
   private final boolean                          waitForLocalNode;
-  private volatile int                           receivedResponses           = 0;
+  private volatile int                           receivedResponses                = 0;
   private volatile boolean                       receivedCurrentNode;
-  private Object                                 responseLock                = new Object();
+  private Object                                 responseLock                     = new Object();
 
   public ODistributedResponseManager(final ODistributedServerManager iManager, final ODistributedRequest iRequest,
       final Collection<String> expectedResponses, final int iExpectedSynchronousResponses, final int iQuorum,
@@ -262,7 +263,7 @@ public class ODistributedResponseManager {
         currentTimeout = synchTimeout - elapsed;
 
         final long lastClusterChange = dManager.getLastClusterChangeOn();
-        if (lastClusterChange > 0 && now - lastClusterChange < (synchTimeout * 2)) {
+        if (lastClusterChange > 0 && now - lastClusterChange < (synchTimeout + ADDITIONAL_TIMEOUT_CLUSTER_SHAPE)) {
           // CHECK IF ANY NODE ARE UNREACHABLE IN THE MEANWHILE
           int missingActiveNodes = 0;
 
@@ -283,8 +284,8 @@ public class ODistributedResponseManager {
             break;
           }
 
-          // NEW NODE DURING WAIT: ENLARGE TIMEOUT
-          currentTimeout += synchTimeout;
+          // CHANGED CLUSTER SHAPE DURING WAIT: ENLARGE TIMEOUT
+          currentTimeout = synchTimeout;
           ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
               "cluster shape changed during request (%s): enlarge timeout +%dms, wait again for %dms", request, synchTimeout,
               currentTimeout);
@@ -532,8 +533,6 @@ public class ODistributedResponseManager {
               "detected %d node(s) in timeout or in conflict and quorum (%d) has not been reached, rolling back changes for request (%s)",
               conflicts, quorum, request);
 
-      undoRequest();
-
       final StringBuilder msg = new StringBuilder(256);
       msg.append("Quorum " + getQuorum() + " not reached for request (" + request + "). Timeout="
           + (System.currentTimeMillis() - sentOn) + "ms");
@@ -553,6 +552,10 @@ public class ODistributedResponseManager {
 
       msg.append("Received: ");
       msg.append(responses);
+
+      ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE, msg.toString());
+
+      undoRequest();
 
       throw new ODistributedException(msg.toString());
     }
@@ -582,7 +585,7 @@ public class ODistributedResponseManager {
         // CONFLICT GROUP: FIX THEM ONE BY ONE
         for (ODistributedResponse r : responseGroup) {
           ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-              "fixing response for request (%s) in server %s to be: %s", request, r.getExecutorNodeName(), goodResponse);
+              "fixing response (%s) for request (%s) in server %s to be: %s",  r, request, r.getExecutorNodeName(), goodResponse);
 
           final OAbstractRemoteTask fixTask = ((OAbstractReplicatedTask) request.getTask()).getFixTask(request, r.getPayload(),
               goodResponse.getPayload());

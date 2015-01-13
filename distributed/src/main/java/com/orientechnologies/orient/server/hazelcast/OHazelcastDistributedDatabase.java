@@ -19,6 +19,15 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+
 import com.hazelcast.core.IQueue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -40,15 +49,6 @@ import com.orientechnologies.orient.server.distributed.task.OResurrectRecordTask
 import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -208,12 +208,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     unqueuePendingMessages(iRestoreMessages, iUnqueuePendingMessages, queueName, requestQueue);
 
-    final String insertQueueName = OHazelcastDistributedMessageService.getRequestQueueName(getLocalNodeName(), databaseName
-        + OCreateRecordTask.SUFFIX_QUEUE_NAME);
-    final IQueue<ODistributedRequest> insertQueue = msgService.getQueue(insertQueueName);
-
-    unqueuePendingMessages(iRestoreMessages, iUnqueuePendingMessages, insertQueueName, insertQueue);
-
     if (iCallback != null)
       try {
         iCallback.call();
@@ -227,13 +221,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     ODistributedWorker listenerThread = new ODistributedWorker(this, requestQueue, databaseName, 0, false);
     workers.add(listenerThread);
     listenerThread.start();
-    //
-    // // CREATE WORKER THREADS FOR GENERIC REQUESTS
-    // for (int i = 1; i < numWorkers - 1; ++i) {
-    // listenerThread = new ODistributedWorker(this, requestQueue, databaseName, i, false);
-    // workers.add(listenerThread);
-    // listenerThread.start();
-    // }
 
     return this;
   }

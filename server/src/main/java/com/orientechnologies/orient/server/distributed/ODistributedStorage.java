@@ -413,23 +413,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       int clusterId = iRecordId.getClusterId();
       if (clusterId == ORID.CLUSTER_ID_INVALID) {
-        System.out.println("ERROR");
-        // // COMPUTE THE CLUSTER ID
-        // if (schemaClass != null) {
-        // // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
-        // if (schemaClass.isAbstract())
-        // throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and can not be saved");
-        //
-        // clusterName = getClusterNameById(schemaClass.getClusterForNewInstance(doc));
-        // } else {
-        // clusterName = getClusterNameById(storage.getDefaultClusterId());
-        // }
-        //
-        // if (clusterName != null) {
-        // clusterId = getClusterIdByName(clusterName);
-        // if (clusterId == -1)
-        // throw new IllegalArgumentException("Cluster name '" + clusterName + "' is not configured");
-        // }
+        throw new IllegalArgumentException("Cluster not valid");
       }
 
       final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());

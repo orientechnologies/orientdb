@@ -1219,13 +1219,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       if (cfgClusterNames.contains(newClusterName)) {
         // FOUND A CLUSTER PREVIOUSLY ASSIGNED TO THE LOCAL ONE: CHANGE ASSIGNMENT TO LOCAL NODE AGAIN
         ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE,
-            "class %s, change mastership of cluster '%s' (id=%d) to local node '%s'", iClass, newClusterName,
+            "class '%s', change mastership of cluster '%s' (id=%d) to local node '%s'", iClass, newClusterName,
             iDatabase.getClusterIdByName(newClusterName), nodeName);
         cfg.setMasterServer(newClusterName, nodeName);
       } else {
 
         // CREATE A NEW CLUSTER WHERE LOCAL NODE IS THE MASTER
-        ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "class %s, creation of new local cluster '%s' (id=%d)",
+        ODistributedServerLog.info(this, nodeName, null, DIRECTION.NONE, "class '%s', creation of new local cluster '%s' (id=%d)",
             iClass, newClusterName, iDatabase.getClusterIdByName(newClusterName));
 
         final OScenarioThreadLocal.RUN_MODE currentDistributedMode = OScenarioThreadLocal.INSTANCE.get();
