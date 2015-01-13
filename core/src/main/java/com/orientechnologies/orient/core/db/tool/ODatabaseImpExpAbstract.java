@@ -19,17 +19,17 @@
  */
 package com.orientechnologies.orient.core.db.tool;
 
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Abstract class for import/export of database and data in general.
@@ -38,9 +38,9 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * 
  */
 public abstract class ODatabaseImpExpAbstract {
+  protected final static String       DEFAULT_EXT               = ".json";
   protected ODatabaseDocumentInternal database;
   protected String                    fileName;
-
   protected Set<String>               includeClusters;
   protected Set<String>               excludeClusters;
   protected Set<String>               includeClasses;
@@ -54,10 +54,7 @@ public abstract class ODatabaseImpExpAbstract {
   protected boolean                   includeManualIndexes      = true;
   protected boolean                   useLineFeedForRecords     = false;
   protected boolean                   preserveRids              = false;
-
   protected OCommandOutputListener    listener;
-
-  protected final static String       DEFAULT_EXT               = ".json";
 
   public ODatabaseImpExpAbstract(final ODatabaseDocumentInternal iDatabase, final String iFileName,
       final OCommandOutputListener iListener) {
@@ -79,14 +76,13 @@ public abstract class ODatabaseImpExpAbstract {
       for (String o : options) {
         final int sep = o.indexOf('=');
         if (sep == -1) {
-          OLogManager.instance().warn(this, "Unrecognized option %s, skipped", o);
-          continue;
+          parseSetting(o, Collections.EMPTY_LIST);
+        } else {
+          final String option = o.substring(0, sep);
+          final List<String> items = OStringSerializerHelper.smartSplit(o.substring(sep + 1), ' ');
+          parseSetting(option, items);
         }
 
-        final String option = o.substring(0, sep);
-        final List<String> items = OStringSerializerHelper.smartSplit(o.substring(sep + 1), ' ');
-
-        parseSetting(option, items);
       }
     }
     return this;
@@ -144,20 +140,20 @@ public abstract class ODatabaseImpExpAbstract {
     return includeInfo;
   }
 
-  public boolean isIncludeSecurity() {
-    return includeSecurity;
-  }
-
   public void setIncludeInfo(final boolean includeInfo) {
     this.includeInfo = includeInfo;
   }
 
-  public boolean isIncludeSchema() {
-    return includeSchema;
+  public boolean isIncludeSecurity() {
+    return includeSecurity;
   }
 
   public void setIncludeSecurity(final boolean includeSecurity) {
     this.includeSecurity = includeSecurity;
+  }
+
+  public boolean isIncludeSchema() {
+    return includeSchema;
   }
 
   public void setIncludeSchema(final boolean includeSchema) {
@@ -204,6 +200,14 @@ public abstract class ODatabaseImpExpAbstract {
     this.useLineFeedForRecords = useLineFeedForRecords;
   }
 
+  public boolean isPreserveRids() {
+    return preserveRids;
+  }
+
+  public void setPreserveRids(boolean preserveRids) {
+    this.preserveRids = preserveRids;
+  }
+
   protected void parseSetting(final String option, final List<String> items) {
     if (option.equalsIgnoreCase("-excludeAll")) {
       includeClasses = new HashSet<String>();
@@ -222,6 +226,7 @@ public abstract class ODatabaseImpExpAbstract {
       includeClasses = new HashSet<String>();
       for (String item : items)
         includeClasses.add(item.toUpperCase());
+      includeRecords = true;
 
     } else if (option.equalsIgnoreCase("-excludeClass")) {
       excludeClasses = new HashSet<String>(items);
@@ -232,6 +237,7 @@ public abstract class ODatabaseImpExpAbstract {
       includeClusters = new HashSet<String>(items);
       for (String item : items)
         includeClusters.add(item.toUpperCase());
+      includeRecords = true;
 
     } else if (option.equalsIgnoreCase("-excludeCluster")) {
       excludeClusters = new HashSet<String>(items);
@@ -263,13 +269,5 @@ public abstract class ODatabaseImpExpAbstract {
       useLineFeedForRecords = Boolean.parseBoolean(items.get(0));
 
     }
-  }
-
-  public boolean isPreserveRids() {
-    return preserveRids;
-  }
-
-  public void setPreserveRids(boolean preserveRids) {
-    this.preserveRids = preserveRids;
   }
 }
