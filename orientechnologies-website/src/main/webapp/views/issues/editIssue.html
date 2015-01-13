@@ -74,13 +74,8 @@
         <div class="event" ng-if="!comment.event && $index == 0">
 
         </div>
-        <div ng-if="!comment.event" class="panel panel-default">
-
-          <div class="panel-heading"><b>{{comment.user.name}}</b> commented {{ comment.createdAt | fromNow}}</div>
-          <div class="panel-body">
-            <div vue-editor ng-model="comment.body"></div>
-            <!--<div mkeditor ng-show="comment.body" ng-model="comment.body"></div>-->
-          </div>
+        <div ng-if="!comment.event" class="">
+          <ng-include src="'views/issues/comment.html'"></ng-include>
         </div>
         <div class="event" ng-if="!comment.event">
 
@@ -186,7 +181,8 @@
   </div>
   <div class="row">
     <div class="col-md-12">
-      <button ng-show="issue.environment" data-auto-close="1" class="btn btn-transparent" ng-disabled="!(isOwner || isMember)"
+      <button ng-show="issue.environment" data-auto-close="1" class="btn btn-transparent"
+              ng-disabled="!(isOwner || isMember)"
               data-placement="left"
               data-template="views/issues/popover/environmentEdit.html"
               title="{{popover.title}}"
@@ -194,7 +190,8 @@
               data-trigger="click"
               bs-popover="issue">Environment <i
         class="fa fa-gear pull-right"></i></button>
-      <button ng-hide="issue.environment" data-auto-close="1" class="btn btn-transparent" ng-disabled="!(isOwner || isMember)"
+      <button ng-hide="issue.environment" data-auto-close="1" class="btn btn-transparent"
+              ng-disabled="!(isOwner || isMember)"
               data-placement="left"
               data-template="views/issues/popover/environmentSelect.html"
               title="{{popover.title}}"

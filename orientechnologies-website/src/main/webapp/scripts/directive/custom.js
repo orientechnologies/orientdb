@@ -50,7 +50,7 @@ angular.module('webappApp').directive('vueEditor', function ($timeout) {
       preview: "=?preview"
     },
     templateUrl: 'views/vueditor.html',
-    controller : function($scope){
+    controller: function ($scope) {
       $scope.preview = $scope.preview || true
     },
     link: function (scope, elem, attrs, ngModel) {
@@ -63,8 +63,17 @@ angular.module('webappApp').directive('vueEditor', function ($timeout) {
         if (value) {
           ngModel.$setViewValue(value);
         }
+        scope.$watch('preview', function (newVal, oldVal) {
+          if (newVal) {
+
+          } else {
+            if (oldVal === true) {
+
+            }
+          }
+        });
         if (!editor) {
-          var defaultVal = scope.preview ?  'No description' : '';
+          var defaultVal = scope.preview ? 'No description' : '';
           editor = new Vue({
             el: elem[0],
             data: {
@@ -74,11 +83,11 @@ angular.module('webappApp').directive('vueEditor', function ($timeout) {
               marked: marked
             }
           })
-          editor.$watch('$data.input',function(newVal,oldval){
+          editor.$watch('$data.input', function (newVal, oldval) {
             ngModel.$setViewValue(newVal);
           });
         } else {
-          var defaultVal = scope.preview ?  'No description' : '';
+          var defaultVal = scope.preview ? 'No description' : '';
           editor.$data.input = value || defaultVal
         }
 
@@ -94,7 +103,7 @@ angular.module('webappApp').directive('avatar', function ($timeout) {
       dim: "=dim",
       name: "=name"
     },
-    controller  : function($scope){
+    controller: function ($scope) {
 
     },
     templateUrl: 'views/avatar.html'

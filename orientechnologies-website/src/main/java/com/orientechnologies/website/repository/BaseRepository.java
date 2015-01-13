@@ -7,11 +7,13 @@ import java.util.Collection;
  */
 public interface BaseRepository<T> {
 
-  public T save(T entity);
+    public T save(T entity);
 
-  public void save(Collection<T> entities);
+    public void save(Collection<T> entities);
 
-  public Class<T> getEntityClass();
+    public Class<T> getEntityClass();
 
-  public T load(T entity);
+    public T load(T entity);
+
+    public void delete(T entity);
 }

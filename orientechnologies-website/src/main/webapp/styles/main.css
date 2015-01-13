@@ -271,6 +271,20 @@ code {
 .panel-comment .btn-group {
   margin: 0 2px;
 }
+
 .panel-comment .btn-group button {
   border-radius: 3px !important;
 }
+
+span.label-dark {
+  color: #000000;
+}
+.issues-panel span.label {
+  border-radius: 2px;
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.12);
+}
+.events-list span.label {
+  border-radius: 2px;
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.12);
+}
+

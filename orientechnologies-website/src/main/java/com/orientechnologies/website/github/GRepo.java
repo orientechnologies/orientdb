@@ -53,7 +53,7 @@ public class GRepo extends GEntity {
     }
 
     public Iterable<GIssue> getIssues(List<Integer> issues) throws IOException {
-        
+
         List<GIssue> iss = new ArrayList<GIssue>();
 
         for (Integer issue : issues) {
@@ -163,6 +163,13 @@ public class GRepo extends GEntity {
 
     }
 
+    public GComment patchComment(Integer number, Integer commentId, String content) throws IOException {
+        String res = GitHub.REQUEST.uri().path(getBaseUrl() + "/issues/comments/" + commentId).back().body().set(content).back()
+                .method("PATCH").header("Authorization", String.format("token %s", github.token)).fetch().body();
+        return new GComment(github, this, res);
+
+    }
+
     public GIssue patchIssue(Integer number, String content) throws IOException {
         String res = GitHub.REQUEST.uri().path(getBaseUrl() + "/issues/" + number).back().body().set(content).back().method("PATCH")
                 .header("Authorization", String.format("token %s", github.token)).fetch().body();
@@ -201,5 +208,11 @@ public class GRepo extends GEntity {
             issues.add(g);
         }
         return issues;
+    }
+
+    public void deleteComment(Integer number, Integer commentId, String value) throws IOException {
+        String res = GitHub.REQUEST.uri().path(getBaseUrl() + "/issues/comments/" + commentId).back()
+                .method("DELETE").header("Authorization", String.format("token %s", github.token)).fetch().body();
+
     }
 }

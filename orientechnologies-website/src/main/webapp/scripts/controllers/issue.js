@@ -243,17 +243,14 @@ angular.module('webappApp')
 angular.module('webappApp')
   .controller('IssueEditCtrl', function ($scope, $routeParams, Organization, Repo, $popover, $route, User) {
 
-    //var id = $routeParams.id.split("@");
-    //
 
     $scope.githubIssue = GITHUB + "/" + ORGANIZATION;
-    //var repo = id[0];
-    //var number = id[1];
-    var number = $routeParams.id;
 
+    $scope.number = $routeParams.id;
+    var number = $scope.number;
     User.whoami().then(function (data) {
       $scope.isMember = User.isMember(ORGANIZATION);
-
+      $scope.currentUser = data;
     });
     Organization.all("issues").one(number).get().then(function (data) {
       $scope.issue = data.plain();
@@ -423,7 +420,15 @@ angular.module('webappApp')
 
     $scope.title = $scope.title || 'Change target milestone';
     $scope.isMilestoneSelected = function (milestone) {
-      return $scope.issue.milestone ? milestone.number == $scope.issue.milestone.number : false;
+      if ($scope.issue.milestone) {
+        if (milestone.number) {
+          return milestone.number == $scope.issue.milestone.number;
+        } else {
+          return milestone.title == $scope.issue.milestone.title;
+        }
+      } else {
+        return false;
+      }
     }
     $scope.toggleMilestone = function (milestone) {
       if (!$scope.isMilestoneSelected(milestone)) {
@@ -438,7 +443,16 @@ angular.module('webappApp')
 
     $scope.title = $scope.title || 'Change affected version';
     $scope.isVersionSelected = function (version) {
-      return $scope.issue.version ? version.number == $scope.issue.version.number : false;
+      if ($scope.issue.version) {
+        if (version.number) {
+          return version.number == $scope.issue.version.number;
+        } else {
+          return version.title == $scope.issue.version.title;
+        }
+      } else {
+        return false;
+      }
+
     }
     $scope.toggleVersion = function (version) {
       if (!$scope.isVersionSelected(version)) {
@@ -507,4 +521,35 @@ angular.module('webappApp')
 
   });
 
+angular.module('webappApp').controller('CommentController', function ($scope, Repo) {
+  $scope.preview = true;
 
+
+  $scope.clonedComment = {};
+  $scope.cancelEditing = function () {
+    $scope.preview = true;
+    $scope.comment = $scope.clonedComment;
+  }
+  $scope.edit = function () {
+    $scope.preview = false;
+    $scope.clonedComment = angular.copy($scope.comment);
+  }
+  $scope.deleteComment = function () {
+
+    Repo.one($scope.repo).all("issues").one($scope.number).all("comments").one($scope.comment.uuid).remove().then(function (data) {
+      var idx = $scope.comments.indexOf($scope.comment);
+      if (idx > -1) {
+        $scope.comments.splice(idx, 1);
+      }
+    }).catch(function () {
+
+    });
+  }
+  $scope.patchComment = function () {
+    Repo.one($scope.repo).all("issues").one($scope.number).all("comments").one($scope.comment.uuid).patch($scope.comment).then(function (data) {
+      $scope.preview = true;
+    }).catch(function () {
+      $scope.cancelEditing()
+    });
+  }
+})

@@ -7,50 +7,59 @@ import java.util.Date;
  */
 public class Comment extends Event {
 
-  private String  id;
-  private Integer commentId;
-  private String  body;
-  private OUser user;
+    private String id;
+    private String uuid;
+    private Integer commentId;
+    private String body;
+    private OUser user;
 
-  private Date    updatedAt;
+    private Date updatedAt;
 
-  public Integer getCommentId() {
-    return commentId;
-  }
+    public Integer getCommentId() {
+        return commentId;
+    }
 
-  public void setCommentId(Integer commentId) {
-    this.commentId = commentId;
-  }
+    public void setCommentId(Integer commentId) {
+        this.commentId = commentId;
+    }
 
-  public String getBody() {
-    return body;
-  }
+    public String getBody() {
+        return body;
+    }
 
-  public void setBody(String body) {
-    this.body = body;
-  }
+    public void setBody(String body) {
+        this.body = body;
+    }
 
-  public String getId() {
-    return id;
-  }
+    public String getId() {
+        return id;
+    }
 
-  public void setId(String id) {
-    this.id = id;
-  }
+    public void setId(String id) {
+        this.id = id;
+    }
 
-  public OUser getUser() {
-    return user;
-  }
+    public OUser getUser() {
+        return user;
+    }
 
-  public void setUser(OUser user) {
-    this.user = user;
-  }
+    public void setUser(OUser user) {
+        this.user = user;
+    }
 
-  public Date getUpdatedAt() {
-    return updatedAt;
-  }
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
 
-  public void setUpdatedAt(Date updatedAt) {
-    this.updatedAt = updatedAt;
-  }
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
 }

@@ -6,7 +6,8 @@
           <div class="input-group">
             <input type="text" class="form-control" placeholder="Search" ng-model="query">
 
-            <div class="input-group-addon"><a href="javascript:void(0)" ng-click="clear()"><i class="fa fa-times-circle-o"></i></a></div>
+            <div class="input-group-addon"><a href="javascript:void(0)" ng-click="clear()"><i
+              class="fa fa-times-circle-o"></i></a></div>
           </div>
         </div>
       </form>
@@ -112,7 +113,8 @@
               </p>
             </div>
             <div class="col-md-3 label-column">
-              <span class="label" ng-repeat="label in issue.labels" style="background-color: #{{label.color}}">{{label.name}}</span>
+              <span class="label" ng-class="{ 'label-dark' : label.color =='ffffff' }" ng-repeat="label in issue.labels"
+                    style="background-color: #{{label.color}}">{{label.name}}</span>
             </div>
             <div class="col-md-1">
               <div class="col-md-6">
