@@ -102,6 +102,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   public static final String          KEYWORD_BY           = "BY";
   public static final String          KEYWORD_GROUP        = "GROUP";
   public static final String          KEYWORD_FETCHPLAN    = "FETCHPLAN";
+  public static final String          KEYWORD_NOCACHE      = "NOCACHE";
   private static final String         KEYWORD_AS           = "AS";
   private static final String         KEYWORD_PARALLEL     = "PARALLEL";
   private final OOrderByOptimizer     orderByOptimizer     = new OOrderByOptimizer();
@@ -126,6 +127,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private Lock                        parallelLock         = new ReentrantLock();
 
   private Set<ORID>                   uniqueResult;
+  private boolean                     noCache              = false;
 
   private final class IndexUsageLog {
     OIndex<?>        index;
@@ -248,6 +250,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             parseSkip(w);
           } else if (w.equals(KEYWORD_FETCHPLAN)) {
             parseFetchplan(w);
+          } else if (w.equals(KEYWORD_NOCACHE)) {
+            parseNoCache(w);
           } else if (w.equals(KEYWORD_TIMEOUT)) {
             parseTimeout(w);
           } else if (w.equals(KEYWORD_LOCK)) {
@@ -314,7 +318,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
 
       if (parsedTarget.getTargetClusters() != null) {
-        return getInvolvedClustersOfClusters(parsedTarget.getTargetClusters().values());
+        return getInvolvedClustersOfClusters(parsedTarget.getTargetClusters().keySet());
       }
 
       if (parsedTarget.getTargetIndex() != null)
@@ -406,7 +410,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   @Override
   public String getSyntax() {
-    return "SELECT [<Projections>] FROM <Target> [LET <Assignment>*] [WHERE <Condition>*] [ORDER BY <Fields>* [ASC|DESC]*] [LIMIT <MaxRecords>] [TIMEOUT <TimeoutInMs>] [LOCK none|record]";
+    return "SELECT [<Projections>] FROM <Target> [LET <Assignment>*] [WHERE <Condition>*] [ORDER BY <Fields>* [ASC|DESC]*] [LIMIT <MaxRecords>] [TIMEOUT <TimeoutInMs>] [LOCK none|record] [NOCACHE]";
   }
 
   public String getFetchPlan() {
@@ -471,11 +475,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
 
       } else {
-        boolean noCache = false;
+        boolean useNoCache = noCache;
+
         if (localLockingStrategy == LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
             || localLockingStrategy == LOCKING_STRATEGY.KEEP_SHARED_LOCK)
-          noCache = true;
-        record = getDatabase().load(id.getIdentity(), null, noCache, false, localLockingStrategy);
+          // FORCE NO CACHE
+          useNoCache = true;
+
+        record = getDatabase().load(id.getIdentity(), null, useNoCache, false, localLockingStrategy);
         if (id instanceof OContextualRecordId && ((OContextualRecordId) id).getContext() != null) {
           Map<String, Object> ridContext = ((OContextualRecordId) id).getContext();
           for (String key : ridContext.keySet()) {
@@ -548,7 +555,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         return false;
       }
 
-      return !((orderedFields.isEmpty() || fullySortedByIndex) && !isAnyFunctionAggregates() && fetchLimit > -1 && resultCount >= fetchLimit);
+      return !((orderedFields.isEmpty() || fullySortedByIndex) && !isAnyFunctionAggregates()
+          && (groupByFields == null || groupByFields.isEmpty()) && fetchLimit > -1 && resultCount >= fetchLimit);
     } finally {
       if (parallel)
       // UNLOCK PARALLEL EXECUTION
@@ -1057,6 +1065,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
   }
 
+  /**
+   * Parses the NOCACHE keyword if found.
+   */
+  protected boolean parseNoCache(final String w) throws OCommandSQLParsingException {
+    if (!w.equals(KEYWORD_NOCACHE))
+      return false;
+
+    noCache = true;
+    return true;
+  }
+
   private void mergeRangeConditionsToBetweenOperators(OSQLFilter filter) {
     OSQLFilterCondition condition = filter.getRootCondition();
 
@@ -1258,6 +1277,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private void fetchFromTarget(final Iterator<? extends OIdentifiable> iTarget) {
+    fetchLimit = getQueryFetchLimit();
+
     final long startFetching = System.currentTimeMillis();
 
     try {
@@ -1415,6 +1436,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     // the main condition is a set of sub-conditions separated by OR operators
     final List<List<OIndexSearchResult>> conditionHierarchy = filterAnalyzer.analyzeMainCondition(
         compiledFilter.getRootCondition(), iSchemaClass, context);
+    if (conditionHierarchy == null)
+      return false;
 
     List<OIndexCursor> cursors = new ArrayList<OIndexCursor>();
 
@@ -2005,4 +2028,5 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
     }
   }
+
 }

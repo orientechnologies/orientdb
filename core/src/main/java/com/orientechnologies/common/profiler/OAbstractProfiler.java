@@ -30,6 +30,8 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.util.Date;
@@ -38,9 +40,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
-
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
 
 public abstract class OAbstractProfiler extends OSharedResourceAbstract implements OProfilerMBean {
 
@@ -78,30 +77,27 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
         stgs++;
       }
     }
-    try
-	{
-		MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-		ObjectName osMBeanName = ObjectName.getInstance(ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME);
-		if(mbs.isInstanceOf(osMBeanName, "com.sun.management.OperatingSystemMXBean"))
-		{
-		  final long osTotalMem = ((Number)mbs.getAttribute(osMBeanName, "TotalPhysicalMemorySize")).longValue();
-		  final long osUsedMem = ((Number)mbs.getAttribute(osMBeanName, "FreePhysicalMemorySize")).longValue();
+    try {
+      MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+      ObjectName osMBeanName = ObjectName.getInstance(ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME);
+      if (mbs.isInstanceOf(osMBeanName, "com.sun.management.OperatingSystemMXBean")) {
+        final long osTotalMem = ((Number) mbs.getAttribute(osMBeanName, "TotalPhysicalMemorySize")).longValue();
+        final long osUsedMem = ((Number) mbs.getAttribute(osMBeanName, "FreePhysicalMemorySize")).longValue();
 
-		  out.printf("OrientDB Memory profiler: Heap=%s of %s - DiskCache (%s dbs)=%s of %s - OS=%s of %s\n",
-		      OFileUtils.getSizeAsString(runtime.totalMemory() - runtime.freeMemory()),
-		      OFileUtils.getSizeAsString(runtime.maxMemory()), stgs, OFileUtils.getSizeAsString(diskCacheUsed),
-		      OFileUtils.getSizeAsString(diskCacheTotal), OFileUtils.getSizeAsString(osUsedMem), OFileUtils.getSizeAsString(osTotalMem));
-		  return;
-		}
-	} catch (Exception e)
-	{
-		// Nothing to do. Proceed with default output
-	} 
-    
-      out.printf("OrientDB Memory profiler: Heap=%s of %s - DiskCache (%s dbs)=%s of %s\n",
-          OFileUtils.getSizeAsString(runtime.totalMemory() - runtime.freeMemory()),
-          OFileUtils.getSizeAsString(runtime.maxMemory()), stgs, OFileUtils.getSizeAsString(diskCacheUsed),
-          OFileUtils.getSizeAsString(diskCacheTotal));
+        out.printf("OrientDB Memory profiler: Heap=%s of %s - DiskCache (%s dbs)=%s of %s - OS=%s of %s\n",
+            OFileUtils.getSizeAsString(runtime.totalMemory() - runtime.freeMemory()),
+            OFileUtils.getSizeAsString(runtime.maxMemory()), stgs, OFileUtils.getSizeAsString(diskCacheUsed),
+            OFileUtils.getSizeAsString(diskCacheTotal), OFileUtils.getSizeAsString(osUsedMem),
+            OFileUtils.getSizeAsString(osTotalMem));
+        return;
+      }
+    } catch (Exception e) {
+      // Nothing to do. Proceed with default output
+    }
+
+    out.printf("OrientDB Memory profiler: Heap=%s of %s - DiskCache (%s dbs)=%s of %s\n",
+        OFileUtils.getSizeAsString(runtime.totalMemory() - runtime.freeMemory()), OFileUtils.getSizeAsString(runtime.maxMemory()),
+        stgs, OFileUtils.getSizeAsString(diskCacheUsed), OFileUtils.getSizeAsString(diskCacheTotal));
   }
 
   public void shutdown() {
@@ -261,49 +257,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
   }
 
   protected void installMemoryChecker() {
-    Orient.instance().getTimer().schedule(new TimerTask() {
-      @Override
-      public void run() {
-        final java.lang.management.OperatingSystemMXBean mxBean = ManagementFactory.getOperatingSystemMXBean();
-        final long jvmTotMemory = Runtime.getRuntime().totalMemory();
-        final long jvmMaxMemory = Runtime.getRuntime().maxMemory();
-
-        for (OStorage s : Orient.instance().getStorages()) {
-          if (s instanceof OLocalPaginatedStorage) {
-            final ODiskCache dk = ((OLocalPaginatedStorage) s).getDiskCache();
-            if (dk == null)
-              // NOT YET READY
-              continue;
-
-            final long totalDiskCacheUsedMemory = dk.getUsedMemory() / OFileUtils.MEGABYTE;
-            final long maxDiskCacheUsedMemory = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong();
-
-            if (jvmTotMemory < jvmMaxMemory && (totalDiskCacheUsedMemory * 120 / 100) > maxDiskCacheUsedMemory) {
-
-              final long suggestedMaxHeap = jvmTotMemory * 120 / 100;
-              final long suggestedDiskCache = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong()
-                  + (jvmMaxMemory - suggestedMaxHeap) / OFileUtils.MEGABYTE;
-
-              OLogManager
-                  .instance()
-                  .info(
-                      this,
-                      "Database '%s' uses %,dMB/%,dMB of DISKCACHE memory, while Heap is not completely used (usedHeap=%dMB maxHeap=%dMB). To improve performance set maxHeap to %dMB and DISKCACHE to %dMB",
-                      s.getName(), totalDiskCacheUsedMemory, maxDiskCacheUsedMemory, jvmTotMemory / OFileUtils.MEGABYTE,
-                      jvmMaxMemory / OFileUtils.MEGABYTE, suggestedMaxHeap / OFileUtils.MEGABYTE, suggestedDiskCache);
-
-              OLogManager
-                  .instance()
-                  .info(
-                      this,
-                      "-> Open server.sh (or server.bat on Windows) and change the following variables: 1) MAXHEAP=-Xmx%dM 2) MAXDISKCACHE=%d",
-                      suggestedMaxHeap / OFileUtils.MEGABYTE, suggestedDiskCache);
-            }
-
-          }
-        }
-      }
-    }, 5000, 5000);
+    Orient.instance().getTimer().schedule(new MemoryChecker(), 120000, 120000);
   }
 
   /**
@@ -313,4 +267,49 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
     if (iDescription != null && dictionary.putIfAbsent(iName, iDescription) == null)
       types.put(iName, iType);
   }
+
+	private static final class MemoryChecker extends TimerTask {
+		@Override
+		public void run() {
+			final java.lang.management.OperatingSystemMXBean mxBean = ManagementFactory.getOperatingSystemMXBean();
+			final long jvmTotMemory = Runtime.getRuntime().totalMemory();
+			final long jvmMaxMemory = Runtime.getRuntime().maxMemory();
+
+			for (OStorage s : Orient.instance().getStorages()) {
+				if (s instanceof OLocalPaginatedStorage) {
+					final ODiskCache dk = ((OLocalPaginatedStorage) s).getDiskCache();
+					if (dk == null)
+						// NOT YET READY
+						continue;
+
+					final long totalDiskCacheUsedMemory = dk.getUsedMemory() / OFileUtils.MEGABYTE;
+					final long maxDiskCacheUsedMemory = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong();
+
+					// CHECK IF THERE IS MORE THAN 40% HEAP UNUSED AND DISK-CACHE IS 80% OF THE MAXIMUM SIZE
+					if ((jvmTotMemory * 140 / 100) < jvmMaxMemory && (totalDiskCacheUsedMemory * 120 / 100) > maxDiskCacheUsedMemory) {
+
+						final long suggestedMaxHeap = jvmTotMemory * 120 / 100;
+						final long suggestedDiskCache = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong()
+								+ (jvmMaxMemory - suggestedMaxHeap) / OFileUtils.MEGABYTE;
+
+						OLogManager
+								.instance()
+								.info(
+										this,
+										"Database '%s' uses %,dMB/%,dMB of DISKCACHE memory, while Heap is not completely used (usedHeap=%dMB maxHeap=%dMB). To improve performance set maxHeap to %dMB and DISKCACHE to %dMB",
+										s.getName(), totalDiskCacheUsedMemory, maxDiskCacheUsedMemory, jvmTotMemory / OFileUtils.MEGABYTE,
+										jvmMaxMemory / OFileUtils.MEGABYTE, suggestedMaxHeap / OFileUtils.MEGABYTE, suggestedDiskCache);
+
+						OLogManager
+								.instance()
+								.info(
+										this,
+										"-> Open server.sh (or server.bat on Windows) and change the following variables: 1) MAXHEAP=-Xmx%dM 2) MAXDISKCACHE=%d",
+										suggestedMaxHeap / OFileUtils.MEGABYTE, suggestedDiskCache);
+					}
+
+				}
+			}
+		}
+	}
 }

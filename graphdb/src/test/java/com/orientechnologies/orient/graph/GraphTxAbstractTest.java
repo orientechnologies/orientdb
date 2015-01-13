@@ -20,15 +20,10 @@
 
 package com.orientechnologies.orient.graph;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-import java.io.File;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
 /**
  * Base class for tests against transactional Graphs.
@@ -65,17 +60,21 @@ public abstract class GraphTxAbstractTest {
 
   @BeforeClass
   public static void beforeClass() {
-    final String dbName = GraphTxAbstractTest.class.getSimpleName();
-    final String storageType = getStorageType();
-    final String buildDirectory = System.getProperty("buildDirectory", ".");
-    graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
-    graph.drop();
-    graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
+    if (graph == null) {
+      final String dbName = GraphTxAbstractTest.class.getSimpleName();
+      final String storageType = getStorageType();
+      final String buildDirectory = System.getProperty("buildDirectory", ".");
+      graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
+      graph.drop();
+      graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
+    }
 
   }
 
   @AfterClass
   public static void afterClass() throws Exception {
     graph.shutdown();
+    graph = null;
   }
+
 }

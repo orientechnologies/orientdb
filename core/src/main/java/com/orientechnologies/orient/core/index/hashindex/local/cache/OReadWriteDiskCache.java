@@ -878,10 +878,6 @@ public class OReadWriteDiskCache implements ODiskCache {
     return writeCache.checkStoredPages(commandOutputListener);
   }
 
-  @Override
-  public Set<ODirtyPage> logDirtyPagesTable() throws IOException {
-    return writeCache.logDirtyPagesTable();
-  }
 
   @Override
   public void delete() throws IOException {
@@ -906,7 +902,12 @@ public class OReadWriteDiskCache implements ODiskCache {
     return (am.size() + a1in.size() + writeCache.getAllocatedPages()) * (2 * ODurablePage.PAGE_PADDING + pageSize);
   }
 
-  private OCacheEntry get(long fileId, long pageIndex, boolean useOutQueue) {
+	@Override
+	public void startFuzzyCheckpoints() {
+		writeCache.startFuzzyCheckpoints();
+	}
+
+	private OCacheEntry get(long fileId, long pageIndex, boolean useOutQueue) {
     OCacheEntry cacheEntry = am.get(fileId, pageIndex);
 
     if (cacheEntry != null)

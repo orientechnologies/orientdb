@@ -44,7 +44,7 @@ public class ORidBagDeleteHook extends ODocumentHookAbstract {
 
   private void deleteAllRidBags(ODocument document) {
     final ORecordVersion version = document.getRecordVersion();
-    if (document.fields() == 0) {
+    if (document.fields() == 0 && document.getIdentity().isPersistent()) {
       // FORCE LOADING OF CLASS+FIELDS TO USE IT AFTER ON onRecordAfterDelete METHOD
       document.reload();
       if (version.getCounter() > -1 && document.getRecordVersion().compareTo(version) != 0) // check for record version errors

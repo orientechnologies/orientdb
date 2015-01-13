@@ -108,8 +108,6 @@ public interface ODiskCache {
 
   OPageDataVerificationError[] checkStoredPages(OCommandOutputListener commandOutputListener);
 
-  Set<ODirtyPage> logDirtyPagesTable() throws IOException;
-
   boolean isOpen(long fileId);
 
   boolean exists(String name);
@@ -127,4 +125,6 @@ public interface ODiskCache {
   void removeLowDiskSpaceListener(OWOWCache.LowDiskSpaceListener listener);
 
 	long getUsedMemory();
+
+	void startFuzzyCheckpoints();
 }

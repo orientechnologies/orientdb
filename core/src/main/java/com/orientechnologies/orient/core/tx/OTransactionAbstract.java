@@ -30,12 +30,14 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 public abstract class OTransactionAbstract implements OTransaction {
   protected final ODatabaseDocumentTx                database;
-  protected TXSTATUS                                 status = TXSTATUS.INVALID;
-  protected HashMap<ORID, OStorage.LOCKING_STRATEGY> locks  = new HashMap<ORID, OStorage.LOCKING_STRATEGY>();
+  protected TXSTATUS                                 status         = TXSTATUS.INVALID;
+  protected ISOLATION_LEVEL                          isolationLevel = ISOLATION_LEVEL.READ_COMMITTED;
+  protected HashMap<ORID, OStorage.LOCKING_STRATEGY> locks          = new HashMap<ORID, OStorage.LOCKING_STRATEGY>();
 
   protected OTransactionAbstract(final ODatabaseDocumentTx iDatabase) {
     database = iDatabase;
@@ -56,6 +58,20 @@ public abstract class OTransactionAbstract implements OTransaction {
         // UDPATE OR CREATE
         dbCache.updateRecord(txEntry.getRecord());
     }
+  }
+
+  @Override
+  public ISOLATION_LEVEL getIsolationLevel() {
+    return isolationLevel;
+  }
+
+  @Override
+  public OTransaction setIsolationLevel(final ISOLATION_LEVEL isolationLevel) {
+    if (isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ && getDatabase().getStorage() instanceof OStorageProxy)
+      throw new IllegalArgumentException("Remote storage does not support isolation level '" + isolationLevel + "'");
+
+    this.isolationLevel = isolationLevel;
+    return this;
   }
 
   public boolean isActive() {

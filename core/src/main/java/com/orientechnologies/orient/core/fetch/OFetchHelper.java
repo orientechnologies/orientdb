@@ -33,11 +33,14 @@ import com.orientechnologies.orient.core.type.tree.OMVRBTreeRIDSet;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Helper class for fetching.
@@ -141,6 +144,7 @@ public class OFetchHelper {
               .rawIterator().next() instanceof OIdentifiable))
           && (!(fieldValue instanceof Collection<?>) || ((Collection<?>) fieldValue).size() == 0 || !(((Collection<?>) fieldValue)
               .iterator().next() instanceof OIdentifiable))
+          && (!(fieldValue.getClass().isArray()) || Array.getLength(fieldValue) == 0 || !(Array.get(fieldValue, 0) instanceof OIdentifiable))
           && (!(fieldValue instanceof OMultiCollectionIterator<?>))
           && (!(fieldValue instanceof Map<?, ?>) || ((Map<?, ?>) fieldValue).size() == 0 || !(((Map<?, ?>) fieldValue).values()
               .iterator().next() instanceof OIdentifiable))) {
@@ -261,13 +265,16 @@ public class OFetchHelper {
     Object fieldValue;
 
     iContext.onBeforeFetch(record);
+    Set<String> toRemove = new HashSet<String>();
 
     for (String fieldName : record.fieldNames()) {
       String fieldPath = !iFieldPathFromRoot.isEmpty() ? iFieldPathFromRoot + "." + fieldName : fieldName;
       int depthLevel;
       depthLevel = getDepthLevel(iFetchPlan, fieldPath);
-      if (depthLevel == -2)
+      if (depthLevel == -2) {
+        toRemove.add(fieldName);
         continue;
+      }
       if (iFieldDepthLevel > -1)
         depthLevel = iFieldDepthLevel;
 
@@ -289,6 +296,7 @@ public class OFetchHelper {
           || !(fieldValue instanceof OIdentifiable)
           && (!(fieldValue instanceof ORecordLazyMultiValue) || !((ORecordLazyMultiValue) fieldValue).rawIterator().hasNext() || !(((ORecordLazyMultiValue) fieldValue)
               .rawIterator().next() instanceof OIdentifiable))
+          && (!(fieldValue.getClass().isArray()) || Array.getLength(fieldValue) == 0 || !(Array.get(fieldValue, 0) instanceof OIdentifiable))
           && (!(OMultiValue.getFirstValue(fieldValue) instanceof OIdentifiable
               || OMultiValue.getFirstValue(OMultiValue.getFirstValue(fieldValue)) instanceof OIdentifiable || OMultiValue
                 .getFirstValue(OMultiValue.getFirstValue(OMultiValue.getFirstValue(fieldValue))) instanceof OIdentifiable))) {
@@ -309,7 +317,9 @@ public class OFetchHelper {
         }
       }
     }
-
+    for (String fieldName : toRemove) {
+      iListener.skipStandardField(record, fieldName, iContext, iUserObject, iFormat);
+    }
     iContext.onAfterFetch(record);
   }
 
@@ -450,6 +460,9 @@ public class OFetchHelper {
     else if (fieldValue instanceof Iterable<?> || fieldValue instanceof ORidBag) {
       linked = (Iterable<OIdentifiable>) fieldValue;
       iContext.onBeforeCollection(iRootRecord, fieldName, iUserObject, (Iterable) linked);
+    } else if (fieldValue.getClass().isArray()) {
+      linked = OMultiValue.getMultiValueIterable(fieldValue);
+      iContext.onBeforeCollection(iRootRecord, fieldName, iUserObject, (Iterable) linked);
     } else if (fieldValue instanceof Map<?, ?>) {
       linked = (Collection<?>) ((Map<?, ?>) fieldValue).values();
       iContext.onBeforeMap(iRootRecord, fieldName, iUserObject);
@@ -503,6 +516,8 @@ public class OFetchHelper {
     } finally {
       if (fieldValue instanceof Iterable<?> || fieldValue instanceof ORidBag)
         iContext.onAfterCollection(iRootRecord, fieldName, iUserObject);
+      else if (fieldValue.getClass().isArray())
+        iContext.onAfterCollection(iRootRecord, fieldName, iUserObject);
       else if (fieldValue instanceof Map<?, ?>)
         iContext.onAfterMap(iRootRecord, fieldName, iUserObject);
     }
@@ -522,7 +537,9 @@ public class OFetchHelper {
           iFieldPathFromRoot, iListener, iContext, "");
       iContext.onAfterDocument(iRootRecord, linked, fieldName, iUserObject);
     } else {
+      iContext.onBeforeStandardField(fieldValue, fieldName, iRootRecord);
       iListener.parseLinked(iRootRecord, fieldValue, iUserObject, fieldName, iContext);
+      iContext.onAfterStandardField(fieldValue, fieldName, iRootRecord);
     }
   }
 

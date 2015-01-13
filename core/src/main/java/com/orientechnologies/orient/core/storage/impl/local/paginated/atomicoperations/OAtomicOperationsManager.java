@@ -21,8 +21,9 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations;
 
 import com.orientechnologies.common.concur.lock.OLockManager;
-import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
+import com.orientechnologies.orient.core.OOrientShutdownListener;
+import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
@@ -37,16 +38,18 @@ public class OAtomicOperationsManager {
   private static volatile ThreadLocal<OAtomicOperation>        currentOperation = new ThreadLocal<OAtomicOperation>();
 
   static {
-    Orient.instance().registerListener(new OOrientListenerAbstract() {
-      @Override
-      public void onShutdown() {
-        currentOperation = null;
-      }
-
+    Orient.instance().registerWeakOrientStartupListener(new OOrientStartupListener() {
       @Override
       public void onStartup() {
         if (currentOperation == null)
           currentOperation = new ThreadLocal<OAtomicOperation>();
+      }
+    });
+
+    Orient.instance().registerWeakOrientShutdownListener(new OOrientShutdownListener() {
+      @Override
+      public void onShutdown() {
+        currentOperation = null;
       }
     });
   }
@@ -72,7 +75,7 @@ public class OAtomicOperationsManager {
     }
 
     final OOperationUnitId unitId = OOperationUnitId.generateId();
-    final OLogSequenceNumber lsn = writeAheadLog.log(new OAtomicUnitStartRecord(true, unitId));
+    final OLogSequenceNumber lsn = writeAheadLog.logAtomicOperationStartRecord(true, unitId);
 
     operation = new OAtomicOperation(lsn, unitId);
     currentOperation.set(operation);
@@ -107,7 +110,7 @@ public class OAtomicOperationsManager {
       for (Object lockObject : operation.lockedObjects())
         lockManager.releaseLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
 
-      writeAheadLog.log(new OAtomicUnitEndRecord(operation.getOperationUnitId(), rollback));
+      writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN());
       currentOperation.set(null);
     }
 

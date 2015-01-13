@@ -1,26 +1,24 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
-package com.orientechnologies.orient.core.storage.impl.memory;
-
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.*;
+package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,21 +34,27 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
 
   @Override
   public OLogSequenceNumber begin() throws IOException {
-    synchronized (syncObject) {
+    syncObject.lock();
+    try {
       if (records.isEmpty())
         return null;
 
       return records.get(0).getLsn();
+    } finally {
+      syncObject.unlock();
     }
   }
 
   @Override
   public OLogSequenceNumber end() throws IOException {
-    synchronized (syncObject) {
+    syncObject.lock();
+    try {
       if (records.isEmpty())
         return null;
 
       return records.get(records.size() - 1).getLsn();
+    } finally {
+      syncObject.unlock();
     }
   }
 
@@ -59,9 +63,20 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
+  public OLogSequenceNumber logAtomicOperationStartRecord(boolean isRollbackSupported, OOperationUnitId unitId) throws IOException {
+    return log(new OAtomicUnitStartRecord(isRollbackSupported, unitId));
+  }
+
+  @Override
+  public OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback, OLogSequenceNumber startLsn) throws IOException {
+    return log(new OAtomicUnitEndRecord(operationUnitId, rollback, startLsn));
+  }
+
+  @Override
   public OLogSequenceNumber log(OWALRecord record) throws IOException {
     OLogSequenceNumber logSequenceNumber;
-    synchronized (syncObject) {
+    syncObject.lock();
+    try {
       logSequenceNumber = new OLogSequenceNumber(0, counter);
       counter++;
 
@@ -70,6 +85,8 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
 
       records.add(record);
       record.setLsn(logSequenceNumber);
+    } finally {
+      syncObject.unlock();
     }
 
     return logSequenceNumber;
@@ -77,8 +94,11 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
 
   @Override
   public void truncate() throws IOException {
-    synchronized (syncObject) {
+    syncObject.lock();
+    try {
       records.clear();
+    } finally {
+      syncObject.unlock();
     }
   }
 
@@ -102,7 +122,8 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
 
   @Override
   public OWALRecord read(OLogSequenceNumber lsn) throws IOException {
-    synchronized (syncObject) {
+    syncObject.lock();
+    try {
       if (records.isEmpty())
         return null;
 
@@ -111,12 +132,15 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
         return null;
 
       return records.get((int) index);
+    } finally {
+      syncObject.unlock();
     }
   }
 
   @Override
   public OLogSequenceNumber next(OLogSequenceNumber lsn) throws IOException {
-    synchronized (syncObject) {
+    syncObject.lock();
+    try {
       if (records.isEmpty())
         return null;
 
@@ -125,6 +149,8 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
         return null;
 
       return new OLogSequenceNumber(0, lsn.getPosition() + 1);
+    } finally {
+      syncObject.unlock();
     }
   }
 
@@ -135,7 +161,8 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
 
   @Override
   public void cutTill(OLogSequenceNumber lsn) throws IOException {
-    synchronized (syncObject) {
+    syncObject.lock();
+    try {
       if (records.isEmpty())
         return;
 
@@ -148,6 +175,8 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
 
       for (int i = 0; i < index; i++)
         records.remove(0);
+    } finally {
+      syncObject.unlock();
     }
   }
 }

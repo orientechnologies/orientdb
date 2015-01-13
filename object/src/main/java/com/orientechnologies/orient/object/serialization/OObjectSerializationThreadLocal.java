@@ -23,22 +23,26 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
+import com.orientechnologies.orient.core.OOrientShutdownListener;
+import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 
 public class OObjectSerializationThreadLocal extends ThreadLocal<Map<Integer, Object>> {
   public static volatile OObjectSerializationThreadLocal INSTANCE = new OObjectSerializationThreadLocal();
 
   static {
-    Orient.instance().registerListener(new OOrientListenerAbstract() {
-      @Override
-      public void onShutdown() {
-        INSTANCE = null;
-      }
-
+    Orient.instance().registerWeakOrientStartupListener(new OOrientStartupListener() {
       @Override
       public void onStartup() {
         if (INSTANCE == null)
           INSTANCE = new OObjectSerializationThreadLocal();
+      }
+    });
+
+    Orient.instance().registerWeakOrientShutdownListener(new OOrientShutdownListener() {
+      @Override
+      public void onShutdown() {
+        INSTANCE = null;
       }
     });
   }

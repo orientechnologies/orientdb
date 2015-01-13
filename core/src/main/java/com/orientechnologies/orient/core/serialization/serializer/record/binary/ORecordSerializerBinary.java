@@ -20,8 +20,10 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationSetThreadLocal;
 
@@ -64,7 +66,17 @@ public class ORecordSerializerBinary implements ORecordSerializer {
 
     BytesContainer container = new BytesContainer(iSource);
     container.skip(1);
-    serializerByVersion[iSource[0]].deserialize((ODocument) iRecord, container, iFields);
+
+    try {
+      if (iFields != null && iFields.length > 0)
+        serializerByVersion[iSource[0]].deserializePartial((ODocument) iRecord, container, iFields);
+      else
+        serializerByVersion[iSource[0]].deserialize((ODocument) iRecord, container);
+    } catch (IndexOutOfBoundsException e) {
+      OLogManager.instance().warn(this, "Error deserializing record %s send this data for debugging",
+          OBase64Utils.encodeBytes(iSource));
+      throw e;
+    }
     return iRecord;
   }
 
@@ -92,7 +104,8 @@ public class ORecordSerializerBinary implements ORecordSerializer {
     serializerByVersion[CURRENT_RECORD_VERSION].serialize((ODocument) iSource, container, false);
 
     OSerializationSetThreadLocal.removeCheck((ODocument) iSource);
-    return container.fitBytes();  }
+    return container.fitBytes();
+  }
 
   private void checkTypeODocument(final ORecord iRecord) {
     if (!(iRecord instanceof ODocument)) {

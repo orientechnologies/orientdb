@@ -72,12 +72,12 @@ public class OTransactionNoTx extends OTransactionAbstract {
   public void rollback() {
   }
 
-  public ORecord loadRecord(final ORID iRid, final ORecord iRecord, final String iFetchPlan, final boolean ignonreCache,
+  public ORecord loadRecord(final ORID iRid, final ORecord iRecord, final String iFetchPlan, final boolean ignoreCache,
       final boolean loadTombstone, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     if (iRid.isNew())
       return null;
 
-    return database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, ignonreCache, loadTombstone, iLockingStrategy);
+    return database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, ignoreCache, loadTombstone, iLockingStrategy);
   }
 
   /**
@@ -103,6 +103,13 @@ public class OTransactionNoTx extends OTransactionAbstract {
         throw (RuntimeException) e;
       throw new OException(e);
     }
+  }
+
+  @Override
+  public OTransaction setIsolationLevel(final ISOLATION_LEVEL isolationLevel) {
+    if (isolationLevel != ISOLATION_LEVEL.READ_COMMITTED)
+      throw new IllegalArgumentException("Isolation level '" + isolationLevel + "' is not supported without an active transaction");
+    return super.setIsolationLevel(isolationLevel);
   }
 
   /**

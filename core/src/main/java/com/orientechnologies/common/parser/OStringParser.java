@@ -23,9 +23,9 @@ import java.util.ArrayList;
 
 /**
  * String parser utility class
- * 
+ *
  * @author Luca Garulli
- * 
+ *
  */
 public class OStringParser {
 
@@ -56,7 +56,6 @@ public class OStringParser {
     for (int i = 0; i < iText.length(); ++i) {
       c = iText.charAt(i);
 
-
       if (!escape && c == '\\' && ((i + 1) < iText.length())) {
         // ESCAPE CHARS
         final char nextChar = iText.charAt(i + 1);
@@ -79,8 +78,10 @@ public class OStringParser {
           buffer.append('\\');
           buffer.append(nextChar);
           i++;
-        } else
+        } else {
+          buffer.append('\\');
           escape = true;
+        }
 
         continue;
       }

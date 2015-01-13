@@ -21,6 +21,9 @@
 package com.orientechnologies.common.concur.lock;
 
 import com.orientechnologies.common.types.OModifiableInteger;
+import com.orientechnologies.orient.core.OOrientShutdownListener;
+import com.orientechnologies.orient.core.OOrientStartupListener;
+import com.orientechnologies.orient.core.Orient;
 
 import java.util.HashSet;
 import java.util.Queue;

@@ -22,6 +22,7 @@ package com.orientechnologies.orient.graph.sql;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -39,6 +40,7 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
+import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -51,14 +53,15 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
  */
 public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract implements OCommandDistributedReplicateRequest,
     OCommandResultListener {
-  public static final String NAME      = "DELETE VERTEX";
+  public static final String NAME         = "DELETE VERTEX";
   private ORecordId          rid;
-  private int                removed   = 0;
+  private int                removed      = 0;
   private ODatabaseDocument  database;
   private OCommandRequest    query;
-  private String             returning = "COUNT";
+  private String             returning    = "COUNT";
   private List<ORecord>      allDeletedRecords;
   private OrientGraph        graph;
+  private OModifiableBoolean shutdownFlag = new OModifiableBoolean();
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDeleteVertex parse(final OCommandRequest iRequest) {
@@ -145,7 +148,7 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
       });
     } else if (query != null) {
       // TARGET IS A CLASS + OPTIONAL CONDITION
-      graph = OGraphCommandExecutorSQLFactory.getGraph(false);
+      graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
       OGraphCommandExecutorSQLFactory.runInTx(graph, new OGraphCommandExecutorSQLFactory.GraphCallBack<Object>() {
         @Override
         public Object call(OrientBaseGraph graph) {
@@ -182,6 +185,8 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
 
   @Override
   public void end() {
+    if (graph != null && shutdownFlag.getValue())
+      graph.shutdown(false);
   }
 
   @Override

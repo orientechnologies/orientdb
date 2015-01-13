@@ -21,6 +21,7 @@ import com.orientechnologies.orient.core.exception.OFetchException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -72,5 +73,10 @@ public abstract class ORemoteFetchListener implements OFetchListener {
       throws OFetchException {
     sendRecord(iLinked);
     return true;
+  }
+
+  @Override
+  public void skipStandardField(ODocument iRecord, String iFieldName, OFetchContext iContext, Object iUserObject, String iFormat)
+      throws OFetchException {
   }
 }

@@ -24,6 +24,8 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
+import com.orientechnologies.orient.core.OOrientShutdownListener;
+import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
@@ -40,16 +42,18 @@ public class OSerializationSetThreadLocal extends ThreadLocal<Map<ODocument, Boo
   }
 
   static {
-    Orient.instance().registerListener(new OOrientListenerAbstract() {
-      @Override
-      public void onShutdown() {
-        INSTANCE = null;
-      }
-
+    Orient.instance().registerWeakOrientStartupListener(new OOrientStartupListener() {
       @Override
       public void onStartup() {
         if (INSTANCE == null)
           INSTANCE = new OSerializationSetThreadLocal();
+      }
+    });
+
+    Orient.instance().registerWeakOrientShutdownListener(new OOrientShutdownListener() {
+      @Override
+      public void onShutdown() {
+        INSTANCE = null;
       }
     });
   }

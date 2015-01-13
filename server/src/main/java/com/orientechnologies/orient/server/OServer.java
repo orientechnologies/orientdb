@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.server;
 
-
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -218,6 +217,8 @@ public class OServer {
     databaseDirectory = contextConfiguration.getValue("server.database.path", serverRootDirectory + "/databases/");
     databaseDirectory = OFileUtils.getPath(OSystemVariableResolver.resolveSystemVariables(databaseDirectory));
     databaseDirectory = databaseDirectory.replace("//", "/");
+    if (!databaseDirectory.endsWith("/"))
+      databaseDirectory += "/";
 
     OLogManager.instance().info(this, "Databases directory: " + new File(databaseDirectory).getAbsolutePath());
 
@@ -339,6 +340,8 @@ public class OServer {
 
       if (pluginManager != null)
         pluginManager.shutdown();
+
+      OClientConnectionManager.instance().shutdown();
 
     } finally {
       lock.unlock();

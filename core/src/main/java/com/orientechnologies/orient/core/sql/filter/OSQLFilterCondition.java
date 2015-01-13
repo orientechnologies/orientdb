@@ -342,9 +342,9 @@ public class OSQLFilterCondition {
   private Object[] checkForConversion(final OIdentifiable o, Object l, Object r, final OCollate collate) {
     Object[] result = null;
 
+    final Object oldL = l;
+    final Object oldR = r;
     if (collate != null) {
-      final Object oldL = l;
-      final Object oldR = r;
 
       l = collate.transform(l);
       r = collate.transform(r);
@@ -358,12 +358,12 @@ public class OSQLFilterCondition {
 
     try {
       // DEFINED OPERATOR
-      if ((r instanceof String && r.equals(OSQLHelper.DEFINED)) || (l instanceof String && l.equals(OSQLHelper.DEFINED))) {
+      if ((oldR instanceof String && oldR.equals(OSQLHelper.DEFINED)) || (oldL instanceof String && oldL.equals(OSQLHelper.DEFINED))) {
         result = new Object[] { ((OSQLFilterItemAbstract) this.left).getRoot(), r };
       }
 
       // NOT_NULL OPERATOR
-      else if ((r instanceof String && r.equals(OSQLHelper.NOT_NULL)) || (l instanceof String && l.equals(OSQLHelper.NOT_NULL))) {
+      else if ((oldR instanceof String && oldR.equals(OSQLHelper.NOT_NULL)) || (oldL instanceof String && oldL.equals(OSQLHelper.NOT_NULL))) {
         result = null;
       } else if (l != null && r != null && !l.getClass().isAssignableFrom(r.getClass())
           && !r.getClass().isAssignableFrom(l.getClass()))
@@ -404,9 +404,9 @@ public class OSQLFilterCondition {
         }
 
         // RIDS
-        else if (r instanceof ORID && l instanceof String && !l.equals(OSQLHelper.NOT_NULL)) {
+        else if (r instanceof ORID && l instanceof String && !oldL.equals(OSQLHelper.NOT_NULL)) {
           result = new Object[] { new ORecordId((String) l), r };
-        } else if (l instanceof ORID && r instanceof String && !r.equals(OSQLHelper.NOT_NULL)) {
+        } else if (l instanceof ORID && r instanceof String && !oldR.equals(OSQLHelper.NOT_NULL)) {
           result = new Object[] { l, new ORecordId((String) r) };
         }
       }

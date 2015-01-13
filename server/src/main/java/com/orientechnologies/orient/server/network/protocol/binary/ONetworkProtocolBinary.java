@@ -995,7 +995,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         // OLD CLIENTS WAIT FOR A OK
         sendOk(clientTxId);
 
-      if (OClientConnectionManager.instance().disconnect(connection.id))
+      if (Boolean.FALSE.equals(tokenBased) && OClientConnectionManager.instance().disconnect(connection.id))
         sendShutdown();
     }
   }
@@ -1156,6 +1156,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     // connection.database.getLocalCache().setEnable(true);
     beginResponse();
     try {
+      connection.data.command = command;
       final OAbstractCommandResultListener listener;
 
       if (asynch) {
@@ -1244,6 +1245,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       }
 
     } finally {
+      connection.data.command = null;
       endResponse();
     }
   }
@@ -1398,9 +1400,14 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     beginResponse();
     try {
       final ORecordMetadata metadata = connection.database.getRecordMetadata(rid);
-      sendOk(clientTxId);
-      channel.writeRID(metadata.getRecordId());
-      channel.writeVersion(metadata.getRecordVersion());
+      if (metadata!=null) {
+        sendOk(clientTxId);
+        channel.writeRID(metadata.getRecordId());
+        channel.writeVersion(metadata.getRecordVersion());
+      }else
+      {
+        throw new ODatabaseException(String.format("Record metadata for RID: %s, Not found",rid));
+      }
     } finally {
       endResponse();
     }

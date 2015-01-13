@@ -42,6 +42,7 @@ public class IndexCrashRestoreMultiValue {
 
   @BeforeClass
   public void beforeClass() throws Exception {
+		OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(3);
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
@@ -91,6 +92,7 @@ public class IndexCrashRestoreMultiValue {
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
       OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(3);
+		  OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
 
       OServer server = OServerMain.create();
       server
@@ -114,7 +116,7 @@ public class IndexCrashRestoreMultiValue {
       futures.add(executorService.submit(new DataPropagationTask(baseDocumentTx, testDocumentTx)));
     }
 
-    Thread.sleep(150000);
+		Thread.sleep(1800000);
 
     System.out.println("Wait for process to destroy");
     Process p = Runtime.getRuntime().exec("pkill -9 -f RemoteDBRunner");

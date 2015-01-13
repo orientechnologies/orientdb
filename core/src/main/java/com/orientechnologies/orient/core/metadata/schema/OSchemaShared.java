@@ -19,6 +19,16 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
@@ -52,16 +62,6 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Shared schema class. It's shared by all the database instances that point to the same storage.
@@ -105,7 +105,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     this.clustersCanNotBeSharedAmongClasses = clustersCanNotBeSharedAmongClasses;
   }
 
-  public static Character checkNameIfValid(String iName) {
+  public static Character checkClassNameIfValid(String iName) {
     if (iName == null)
       throw new IllegalArgumentException("Name is null");
 
@@ -118,7 +118,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
     for (int i = 0; i < nameSize; ++i) {
       final char c = iName.charAt(i);
-      if (c == ':' || c == ',' || c == ' ' || c == '%')
+      if (c == ':' || c == ',' || c == ';' || c == ' ' || c == '%' || c == '@' || c == '=')
         // INVALID CHARACTER
         return c;
     }
@@ -126,15 +126,36 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     return null;
   }
 
-	public boolean isFullCheckpointOnChange() {
-		return fullCheckpointOnChange;
-	}
+  public static Character checkFieldNameIfValid(String iName) {
+    if (iName == null)
+      throw new IllegalArgumentException("Name is null");
 
-	public void setFullCheckpointOnChange(boolean fullCheckpointOnChange) {
-		this.fullCheckpointOnChange = fullCheckpointOnChange;
-	}
+    iName = iName.trim();
 
-	@Override
+    final int nameSize = iName.length();
+
+    if (nameSize == 0)
+      throw new IllegalArgumentException("Name is empty");
+
+    for (int i = 0; i < nameSize; ++i) {
+      final char c = iName.charAt(i);
+      if (c == ':' || c == ',' || c == ';' || c == ' ' || c == '%' || c == '=')
+        // INVALID CHARACTER
+        return c;
+    }
+
+    return null;
+  }
+
+  public boolean isFullCheckpointOnChange() {
+    return fullCheckpointOnChange;
+  }
+
+  public void setFullCheckpointOnChange(boolean fullCheckpointOnChange) {
+    this.fullCheckpointOnChange = fullCheckpointOnChange;
+  }
+
+  @Override
   public OImmutableSchema makeSnapshot() {
     acquireSchemaReadLock();
     try {
@@ -329,6 +350,10 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   }
 
   public OClass createClass(final String className, final OClass superClass, int[] clusterIds) {
+    final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(className);
+    if (wrongCharacter != null)
+      throw new OSchemaException("Invalid class name found. Character '" + wrongCharacter + "' cannot be used in class name");
+
     OClass result;
     int retry = 0;
 
@@ -544,15 +569,20 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   }
 
   public void releaseSchemaWriteLock() {
+    releaseSchemaWriteLock(true);
+  }
+
+  public void releaseSchemaWriteLock(final boolean iSave) {
     try {
       if (modificationCounter.get().intValue() == 1) {
         // if it is embedded storage modification of schema is done by internal methods otherwise it is done by
         // by sql commands and we need to reload local replica
 
-        if (getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
-          saveInternal();
-        else
-          reload();
+        if (iSave)
+          if (getDatabase().getStorage().getUnderlying() instanceof OAbstractPaginatedStorage)
+            saveInternal();
+          else
+            reload();
 
         version++;
       }
@@ -916,6 +946,11 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         createClassInternal(className, superClass, clusterIds);
 
       result = classes.get(className.toLowerCase());
+
+      // WAKE UP DB LIFECYCLE LISTENER
+      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
+        it.next().onCreateClass(getDatabase(), result);
+
     } finally {
       releaseSchemaWriteLock();
     }
@@ -938,7 +973,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       if (Character.isDigit(className.charAt(0)))
         throw new OSchemaException("Found invalid class name. Cannot start with numbers");
 
-      final Character wrongCharacter = checkNameIfValid(className);
+      final Character wrongCharacter = checkClassNameIfValid(className);
       if (wrongCharacter != null)
         throw new OSchemaException("Found invalid class name. Character '" + wrongCharacter + "' cannot be used in class name.");
 
@@ -985,10 +1020,6 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       }
 
       addClusterClassMap(cls);
-
-      // WAKE UP DB LIFECYCLE LISTENER
-      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
-        it.next().onCreateClass(database, cls);
 
       return cls;
     } finally {
@@ -1117,7 +1148,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   }
 
-  private void checkClustersAreAbsent(int[] iClusterIds) {
+  private void checkClustersAreAbsent(final int[] iClusterIds) {
     if (!clustersCanNotBeSharedAmongClasses || iClusterIds == null)
       return;
 

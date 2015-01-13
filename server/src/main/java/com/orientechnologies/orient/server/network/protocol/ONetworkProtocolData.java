@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.server.network.protocol;
 
+import com.orientechnologies.orient.core.command.OCommandRequestText;
+
 /**
  * Saves all the important information about the network connection. Useful for monitoring and statistics.
  *
@@ -26,25 +28,26 @@ package com.orientechnologies.orient.server.network.protocol;
  *
  */
 public class ONetworkProtocolData {
-  public int     totalRequests             = 0;
-  public String  commandInfo               = null;
-  public String  commandDetail             = null;
-  public String  lastCommandInfo           = null;
-  public String  lastCommandDetail         = null;
-  public long    lastCommandExecutionTime  = 0;
-  public long    lastCommandReceived       = 0;
-  public String  lastDatabase              = null;
-  public String  lastUser                  = null;
-  public long    totalCommandExecutionTime = 0;
-  public String  serverInfo                = null;
-  public String  caller                    = null;
-  public String  driverName                = null;
-  public String  driverVersion             = null;
-  public short   protocolVersion           = -1;
-  public String  clientId                  = null;
-  public String  currentUserId             = null;
-  public String  serializationImpl         = null;
-  public boolean serverUser                = false;
-  public String  serverUsername            = null;
-  public boolean stateFull                 = false;
+  public int                 totalRequests             = 0;
+  public String              commandInfo               = null;
+  public String              commandDetail             = null;
+  public String              lastCommandInfo           = null;
+  public String              lastCommandDetail         = null;
+  public long                lastCommandExecutionTime  = 0;
+  public long                lastCommandReceived       = 0;
+  public String              lastDatabase              = null;
+  public String              lastUser                  = null;
+  public long                totalCommandExecutionTime = 0;
+  public String              serverInfo                = null;
+  public String              caller                    = null;
+  public String              driverName                = null;
+  public String              driverVersion             = null;
+  public short               protocolVersion           = -1;
+  public String              clientId                  = null;
+  public String              currentUserId             = null;
+  public String              serializationImpl         = null;
+  public boolean             serverUser                = false;
+  public String              serverUsername            = null;
+  public boolean             stateFull                 = false;
+  public OCommandRequestText command                   = null;
 }

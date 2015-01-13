@@ -20,11 +20,26 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.Lock;
+
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandExecutor;
 import com.orientechnologies.orient.core.command.OCommandManager;
@@ -82,49 +97,37 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.locks.Lock;
-
 /**
  * @author Andrey Lomakin
  * @since 28.03.13
  */
 public abstract class OAbstractPaginatedStorage extends OStorageAbstract implements OWOWCache.LowDiskSpaceListener {
-  private static final int RECORD_LOCK_TIMEOUT = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT.getValueAsInteger();
+  private static final int                           RECORD_LOCK_TIMEOUT                        = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT
+                                                                                                    .getValueAsInteger();
 
-  private final ONewLockManager<ORID> lockManager;
-  private final String                PROFILER_CREATE_RECORD;
-  private final String                PROFILER_READ_RECORD;
-  private final String                PROFILER_UPDATE_RECORD;
-  private final String                PROFILER_DELETE_RECORD;
-  private final ConcurrentMap<String, OCluster>  clusterMap       = new ConcurrentHashMap<String, OCluster>();
-  private final ThreadLocal<OStorageTransaction> transaction      = new ThreadLocal<OStorageTransaction>();
-  private final OModificationLock                modificationLock = new OModificationLock();
-  protected volatile OWriteAheadLog writeAheadLog;
-  protected volatile ODiskCache     diskCache;
-  private          ORecordConflictStrategy        recordConflictStrategy = Orient.instance().getRecordConflictStrategy().newInstanceOfDefaultClass();
-  private          CopyOnWriteArrayList<OCluster> clusters               = new CopyOnWriteArrayList<OCluster>();
-  private volatile int                            defaultClusterId       = -1;
-  private volatile OAtomicOperationsManager atomicOperationsManager;
+  private final ONewLockManager<ORID>                lockManager;
+  private final String                               PROFILER_CREATE_RECORD;
+  private final String                               PROFILER_READ_RECORD;
+  private final String                               PROFILER_UPDATE_RECORD;
+  private final String                               PROFILER_DELETE_RECORD;
+  private final ConcurrentMap<String, OCluster>      clusterMap                                 = new ConcurrentHashMap<String, OCluster>();
+  private final ThreadLocal<OStorageTransaction>     transaction                                = new ThreadLocal<OStorageTransaction>();
+  private final OModificationLock                    modificationLock                           = new OModificationLock();
+  protected volatile OWriteAheadLog                  writeAheadLog;
+  protected volatile ODiskCache                      diskCache;
+  private ORecordConflictStrategy                    recordConflictStrategy                     = Orient.instance()
+                                                                                                    .getRecordConflictStrategy()
+                                                                                                    .newInstanceOfDefaultClass();
+  private CopyOnWriteArrayList<OCluster>             clusters                                   = new CopyOnWriteArrayList<OCluster>();
+  private volatile int                               defaultClusterId                           = -1;
+  private volatile OAtomicOperationsManager          atomicOperationsManager;
 
-  private volatile boolean wereDataRestoredAfterOpen                  = false;
-  private volatile boolean wereNonTxOperationsPerformedInPreviousOpen = false;
+  private volatile boolean                           wereDataRestoredAfterOpen                  = false;
+  private volatile boolean                           wereNonTxOperationsPerformedInPreviousOpen = false;
 
-  private          boolean                           makeFullCheckPointAfterClusterCreate = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE.getValueAsBoolean();
-  private volatile OWOWCache.LowDiskSpaceInformation lowDiskSpace                         = null;
+  private boolean                                    makeFullCheckPointAfterClusterCreate       = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE
+                                                                                                    .getValueAsBoolean();
+  private volatile OWOWCache.LowDiskSpaceInformation lowDiskSpace                               = null;
 
   public OAbstractPaginatedStorage(String name, String filePath, String mode) {
     super(name, filePath, mode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
@@ -149,8 +152,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         // REUSED
         return;
 
-      status = STATUS.OPENING;
-
       if (!exists())
         throw new OStorageException("Cannot open the storage '" + name + "' because it does not exist in path: " + url);
 
@@ -168,7 +169,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       addDefaultClusters();
 
       // REGISTER CLUSTER
-      for (int i = 0; i<configuration.clusters.size(); ++i) {
+      for (int i = 0; i < configuration.clusters.size(); ++i) {
         final OStorageClusterConfiguration clusterConfig = configuration.clusters.get(i);
 
         if (clusterConfig != null) {
@@ -184,7 +185,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
               clusters.get(pos).open();
             }
           } catch (FileNotFoundException e) {
-            OLogManager.instance().warn(this, "Error on loading cluster '" + clusters.get(i).getName() + "' (" + i + "): file not found. It will be excluded from current database '" + getName() + "'.");
+            OLogManager.instance().warn(
+                this,
+                "Error on loading cluster '" + clusters.get(i).getName() + "' (" + i
+                    + "): file not found. It will be excluded from current database '" + getName() + "'.");
 
             clusterMap.remove(clusters.get(i).getName().toLowerCase());
 
@@ -196,7 +200,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       }
 
       restoreIfNeeded();
-      clearStorageDirty();
+      if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_OPEN.getValueAsBoolean())
+        makeFullCheckpoint();
+
+      diskCache.startFuzzyCheckpoints();
 
       status = STATUS.OPEN;
     } catch (Exception e) {
@@ -221,10 +228,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       if (exists())
         throw new OStorageException("Cannot create new storage '" + name + "' because it already exists");
 
-      if (!configuration.getContextConfiguration().getContextKeys().contains(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey()))
+      if (!configuration.getContextConfiguration().getContextKeys()
+          .contains(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getKey()))
 
         // SAVE COMPRESSION IN STORAGE CFG
-        configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD, OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValue());
+        configuration.getContextConfiguration().setValue(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD,
+            OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.getValue());
 
       componentsFactory = new OCurrentStorageComponentsFactory(configuration);
       initWalAndDiskCache();
@@ -255,6 +264,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       if (OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CREATE.getValueAsBoolean())
         makeFullCheckpoint();
 
+      diskCache.startFuzzyCheckpoints();
       postCreateSteps();
 
     } catch (OStorageException e) {
@@ -1343,9 +1353,6 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   protected abstract void initWalAndDiskCache() throws IOException;
 
-  protected void makeFuzzyCheckPoint() throws IOException {
-  }
-
   protected void postCloseSteps(boolean onDelete) throws IOException {
   }
 
@@ -1548,8 +1555,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (isDirty()) {
       OLogManager.instance().warn(this, "Storage " + name + " was not closed properly. Will try to restore from write ahead log.");
       try {
-        restoreFromWAL();
-        makeFullCheckpoint();
+        wereDataRestoredAfterOpen = restoreFromWAL();
       } catch (Exception e) {
         OLogManager.instance().error(this, "Exception during storage data restore.", e);
         throw e;
@@ -1974,7 +1980,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   private byte[] checkAndIncrementVersion(final OCluster iCluster, final ORecordId rid, final ORecordVersion version,
       final ORecordVersion iDatabaseVersion, final byte[] iRecordContent, final byte iRecordType) {
     // VERSION CONTROL CHECK
-    switch (version.getCounter()) {
+    final int v = version.getCounter();
+
+    switch (v) {
     // DOCUMENT UPDATE, NO VERSION CONTROL
     case -1:
       iDatabaseVersion.increment();
@@ -1988,13 +1996,17 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     default:
       // MVCC CONTROL AND RECORD UPDATE OR WRONG VERSION VALUE
       // MVCC TRANSACTION: CHECK IF VERSION IS THE SAME
-      if (!version.equals(iDatabaseVersion)) {
+      if (v < -2) {
+        // OVERWRITE VERSION: THIS IS USED IN CASE OF FIX OF RECORDS IN DISTRIBUTED MODE
+        version.clearRollbackMode();
+        iDatabaseVersion.setCounter(version.getCounter());
+      } else if (!version.equals(iDatabaseVersion)) {
         final ORecordConflictStrategy strategy = iCluster.getRecordConflictStrategy() != null ? iCluster
             .getRecordConflictStrategy() : recordConflictStrategy;
         return strategy.onUpdate(iRecordType, rid, version, iRecordContent, iDatabaseVersion);
-      }
-
-      iDatabaseVersion.increment();
+      } else
+        // OK, INCREMENT DB VERSION
+        iDatabaseVersion.increment();
     }
 
     return null;
@@ -2134,15 +2146,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     return operationUnit;
   }
 
-  private void restoreFromWAL() throws IOException {
+  private boolean restoreFromWAL() throws IOException {
     if (writeAheadLog == null) {
       OLogManager.instance().error(this, "Restore is not possible because write ahead logging is switched off.");
-      return;
+      return true;
     }
 
     if (writeAheadLog.begin() == null) {
       OLogManager.instance().error(this, "Restore is not possible because write ahead log is empty.");
-      return;
+      return false;
     }
 
     OLogManager.instance().info(this, "Looking for last checkpoint...");
@@ -2156,8 +2168,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     if (lastCheckPoint == null) {
       OLogManager.instance().info(this, "Checkpoints are absent, the restore will start from the beginning.");
-      restoreFromBegging();
-      return;
+      return restoreFromBegging();
     }
 
     OWALRecord checkPointRecord;
@@ -2169,8 +2180,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     if (checkPointRecord == null) {
       OLogManager.instance().info(this, "Checkpoints are absent, the restore will start from the beginning.");
-      restoreFromBegging();
-      return;
+      return restoreFromBegging();
     }
 
     if (checkPointRecord instanceof OFuzzyCheckpointStartRecord) {
@@ -2188,15 +2198,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
         if (checkPointRecord != null) {
           OLogManager.instance().warn(this, "Restore will start from the previous checkpoint.");
-          restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
+          return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
         } else {
           OLogManager.instance().warn(this, "Restore will start from the beginning.");
-          restoreFromBegging();
+          return restoreFromBegging();
         }
       } else
-        restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
-
-      return;
+        return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
     }
 
     if (checkPointRecord instanceof OFullCheckpointStartRecord) {
@@ -2215,12 +2223,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
         } else {
           OLogManager.instance().warn(this, "Restore will start from the beginning.");
-          restoreFromBegging();
+          return restoreFromBegging();
         }
       } else
-        restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
-
-      return;
+        return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
     }
 
     throw new OStorageException("Unknown checkpoint record type " + checkPointRecord.getClass().getName());
@@ -2263,65 +2269,45 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     return false;
   }
 
-  private void restoreFromCheckPoint(OAbstractCheckPointStartRecord checkPointRecord) throws IOException {
+  private boolean restoreFromCheckPoint(OAbstractCheckPointStartRecord checkPointRecord) throws IOException {
     if (checkPointRecord instanceof OFuzzyCheckpointStartRecord) {
-      restoreFromFuzzyCheckPoint((OFuzzyCheckpointStartRecord) checkPointRecord);
-      return;
+      return restoreFromFuzzyCheckPoint((OFuzzyCheckpointStartRecord) checkPointRecord);
     }
 
     if (checkPointRecord instanceof OFullCheckpointStartRecord) {
-      restoreFromFullCheckPoint((OFullCheckpointStartRecord) checkPointRecord);
-      return;
+      return restoreFromFullCheckPoint((OFullCheckpointStartRecord) checkPointRecord);
     }
 
     throw new OStorageException("Unknown checkpoint record type " + checkPointRecord.getClass().getName());
   }
 
-  private void restoreFromFullCheckPoint(OFullCheckpointStartRecord checkPointRecord) throws IOException {
+  private boolean restoreFromFullCheckPoint(OFullCheckpointStartRecord checkPointRecord) throws IOException {
     OLogManager.instance().info(this, "Data restore procedure from full checkpoint is started. Restore is performed from LSN %s",
         checkPointRecord.getLsn());
 
     final OLogSequenceNumber lsn = writeAheadLog.next(checkPointRecord.getLsn());
-    restoreFrom(lsn);
+    return restoreFrom(lsn);
   }
 
-  private void restoreFromFuzzyCheckPoint(OFuzzyCheckpointStartRecord checkPointRecord) throws IOException {
+  private boolean restoreFromFuzzyCheckPoint(OFuzzyCheckpointStartRecord checkPointRecord) throws IOException {
     OLogManager.instance().info(this, "Data restore procedure from FUZZY checkpoint is started.");
-    OLogSequenceNumber dirtyPagesLSN = writeAheadLog.next(checkPointRecord.getLsn());
-    ODirtyPagesRecord dirtyPagesRecord = (ODirtyPagesRecord) writeAheadLog.read(dirtyPagesLSN);
-    OLogSequenceNumber startLSN;
+    OLogSequenceNumber flushedLsn = checkPointRecord.getFlushedLsn();
 
-    Set<ODirtyPage> dirtyPages = dirtyPagesRecord.getDirtyPages();
-    if (dirtyPages.isEmpty()) {
-      startLSN = dirtyPagesLSN;
-    } else {
-      ODirtyPage[] pages = dirtyPages.toArray(new ODirtyPage[dirtyPages.size()]);
+    if (flushedLsn.compareTo(writeAheadLog.begin()) < 0)
+      flushedLsn = writeAheadLog.begin();
 
-      Arrays.sort(pages, new Comparator<ODirtyPage>() {
-        @Override
-        public int compare(ODirtyPage pageOne, ODirtyPage pageTwo) {
-          return pageOne.getLsn().compareTo(pageTwo.getLsn());
-        }
-      });
-
-      startLSN = pages[0].getLsn();
-    }
-
-    if (startLSN.compareTo(writeAheadLog.begin()) < 0)
-      startLSN = writeAheadLog.begin();
-
-    restoreFrom(startLSN);
+    return restoreFrom(flushedLsn);
   }
 
-  private void restoreFromBegging() throws IOException {
+  private boolean restoreFromBegging() throws IOException {
     OLogManager.instance().info(this, "Data restore procedure is started.");
     OLogSequenceNumber lsn = writeAheadLog.begin();
 
-    restoreFrom(lsn);
+    return restoreFrom(lsn);
   }
 
-  private void restoreFrom(OLogSequenceNumber lsn) throws IOException {
-    wereDataRestoredAfterOpen = true;
+  private boolean restoreFrom(OLogSequenceNumber lsn) throws IOException {
+    final OModifiableBoolean atLeastOnePageUpdate = new OModifiableBoolean(false);
 
     long recordsProcessed = 0;
     int reportInterval = OGlobalConfiguration.WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE.getValueAsInteger();
@@ -2340,7 +2326,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
               .info(this, "WAL size exceed configured heap memory for recovery (%s=%d). Fetching WAL records in batch",
                   OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getKey(),
                   OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getValueAsInteger());
-          recordsProcessed = restoreWALBatch(batch, operationUnits, recordsProcessed, reportInterval);
+          recordsProcessed = restoreWALBatch(batch, operationUnits, recordsProcessed, reportInterval, atLeastOnePageUpdate);
           batch = new ArrayList<OWALRecord>();
         }
 
@@ -2349,7 +2335,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       if (!batch.isEmpty()) {
         OLogManager.instance().info(this, "Apply last batch of operations are read from WAL.");
-        restoreWALBatch(batch, operationUnits, recordsProcessed, reportInterval);
+        restoreWALBatch(batch, operationUnits, recordsProcessed, reportInterval, atLeastOnePageUpdate);
       }
     } catch (OWALPageBrokenException e) {
       OLogManager.instance().error(this,
@@ -2358,10 +2344,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     rollbackAllUnfinishedWALOperations(operationUnits);
     operationUnits.clear();
+
+    return atLeastOnePageUpdate.getValue();
   }
 
   private long restoreWALBatch(List<OWALRecord> batch, Map<OOperationUnitId, List<OLogSequenceNumber>> operationUnits,
-      long recordsProcessed, int reportInterval) throws IOException {
+      long recordsProcessed, int reportInterval, OModifiableBoolean atLestOnePageUpdate) throws IOException {
 
     boolean nonTxOperationWasUsed = false;
     for (OWALRecord walRecord : batch) {
@@ -2377,15 +2365,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) walRecord;
         OOperationUnitId unitId = operationUnitRecord.getOperationUnitId();
 
-        final List<OLogSequenceNumber> records = operationUnits.get(unitId);
-
-        assert records != null;
+        List<OLogSequenceNumber> records = operationUnits.get(unitId);
 
         if (records == null) {
-          OLogManager.instance().warn(this,
-              "Record with lsn %s  which indication of start of atomic operation was truncated will be skipped.",
-              walRecord.getLsn());
-          continue;
+          records = new ArrayList<OLogSequenceNumber>();
+          operationUnits.put(unitId, records);
         }
 
         records.add(lsn);
@@ -2413,6 +2397,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
             diskCache.release(cacheEntry);
           }
 
+          atLestOnePageUpdate.setValue(true);
         } else if (operationUnitRecord instanceof OFileCreatedCreatedWALRecord) {
 
           final OFileCreatedCreatedWALRecord fileCreatedCreatedRecord = (OFileCreatedCreatedWALRecord) operationUnitRecord;
@@ -2421,9 +2406,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         } else if (operationUnitRecord instanceof OAtomicUnitEndRecord) {
           final OAtomicUnitEndRecord atomicUnitEndRecord = (OAtomicUnitEndRecord) walRecord;
 
-          if (atomicUnitEndRecord.isRollback())
-            undoOperation(records);
-          else {
+          if (atomicUnitEndRecord.isRollback()) {
+            // it is needed because we can start to restore atomic operation from the middle
+            List<OLogSequenceNumber> recordsToRollback = readOperationUnit(atomicUnitEndRecord.getStartLsn(), unitId);
+            undoOperation(recordsToRollback);
+          } else {
             if (nonTxOperationWasUsed && !wereNonTxOperationsPerformedInPreviousOpen) {
               OLogManager.instance().warn(this, "Non tx operation was used during data modification we will need index rebuild.");
               wereNonTxOperationsPerformedInPreviousOpen = true;
@@ -2456,16 +2443,29 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       if (operationUnit.isEmpty())
         continue;
 
-      final OAtomicUnitStartRecord atomicUnitStartRecord = (OAtomicUnitStartRecord) writeAheadLog.read(operationUnit.get(0));
-      if (!atomicUnitStartRecord.isRollbackSupported())
+      final OOperationUnitRecord atomicOperationRecord = (OOperationUnitRecord) writeAheadLog.read(operationUnit.get(0));
+      if (atomicOperationRecord == null) {
+        writeAheadLog.read(operationUnit.get(0));
+      }
+      final OAtomicUnitStartRecord startRecord;
+
+      if (atomicOperationRecord instanceof OAtomicUnitStartRecord)
+        startRecord = (OAtomicUnitStartRecord) atomicOperationRecord;
+      else {
+
+        OLogManager.instance().info(this, "Rollback operation with id %s  and lsn %s", atomicOperationRecord.getOperationUnitId(),
+            ((OOperationUnitBodyRecord) atomicOperationRecord).getStartLsn());
+        startRecord = (OAtomicUnitStartRecord) writeAheadLog.read(((OOperationUnitBodyRecord) atomicOperationRecord).getStartLsn());
+      }
+
+      if (!startRecord.isRollbackSupported())
         continue;
 
-      final OAtomicUnitEndRecord atomicUnitEndRecord = new OAtomicUnitEndRecord(atomicUnitStartRecord.getOperationUnitId(), true);
-      final OLogSequenceNumber logSequenceNumber = writeAheadLog.log(atomicUnitEndRecord);
+      writeAheadLog.logAtomicOperationEndRecord(startRecord.getOperationUnitId(), true, startRecord.getLsn());
 
-      operationUnit.add(logSequenceNumber);
-
-      undoOperation(operationUnit);
+      // it is needed because we can start to restore atomic operation from the middle
+      List<OLogSequenceNumber> records = readOperationUnit(startRecord.getLsn(), startRecord.getOperationUnitId());
+      undoOperation(records);
     }
   }
 

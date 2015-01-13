@@ -20,6 +20,8 @@
 package com.orientechnologies.orient.graph.gremlin;
 
 import com.orientechnologies.orient.core.OOrientListenerAbstract;
+import com.orientechnologies.orient.core.OOrientShutdownListener;
+import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngine;
@@ -32,16 +34,18 @@ public class OGremlinEngineThreadLocal extends ThreadLocal<ScriptEngine> {
   public static volatile OGremlinEngineThreadLocal INSTANCE = new OGremlinEngineThreadLocal();
 
   static {
-    Orient.instance().registerListener(new OOrientListenerAbstract() {
-      @Override
-      public void onShutdown() {
-        INSTANCE = null;
-      }
-
+    Orient.instance().registerWeakOrientStartupListener(new OOrientStartupListener() {
       @Override
       public void onStartup() {
         if (INSTANCE == null)
           INSTANCE = new OGremlinEngineThreadLocal();
+      }
+    });
+
+    Orient.instance().registerWeakOrientShutdownListener(new OOrientShutdownListener() {
+      @Override
+      public void onShutdown() {
+        INSTANCE = null;
       }
     });
   }

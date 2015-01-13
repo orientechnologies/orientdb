@@ -44,5 +44,6 @@ public class TestOutInChain {
     // but test fails
     resEdge = graph.command(new OCommandSQL("select expand( out('Owns').inE('Owns') ) from User")).execute();
     assertTrue(resEdge.iterator().hasNext());// assertion error here
+		graph.shutdown();
   }
 }

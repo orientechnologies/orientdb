@@ -410,7 +410,7 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     database.open("admin", "admin");
     int chunkSize = 500;
     for (int initialValue = 0; initialValue < 10; initialValue++) {
-      System.out.println("initialValue = " + initialValue);
+//      System.out.println("initialValue = " + initialValue);
       Assert.assertEquals(database.countClusterElements("MyFruit"), 0);
 
       // do insert
@@ -422,16 +422,16 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
         v.addElement(d);
 
       }
-      System.out.println("populate commit");
+//      System.out.println("populate commit");
       database.commit();
 
       // do delete
       database.begin();
-      System.out.println("vector size = " + v.size());
+//      System.out.println("vector size = " + v.size());
       for (int i = 0; i < v.size(); i++) {
         database.delete(v.elementAt(i));
       }
-      System.out.println("delete commit");
+//      System.out.println("delete commit");
       database.commit();
 
       Assert.assertEquals(database.countClusterElements("MyFruit"), 0);

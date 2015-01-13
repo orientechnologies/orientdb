@@ -51,13 +51,13 @@ public class OJSONFetchListener implements OFetchListener {
     }
   }
 
-  public Object fetchLinked(final ODocument iRecord, final Object iUserObject, final String iFieldName,
-      final ODocument iLinked, final OFetchContext iContext) throws OFetchException {
+  public Object fetchLinked(final ODocument iRecord, final Object iUserObject, final String iFieldName, final ODocument iLinked,
+      final OFetchContext iContext) throws OFetchException {
     return iLinked;
   }
 
-  public Object fetchLinkedMapEntry(final ODocument iRecord, final Object iUserObject, final String iFieldName,
-      final String iKey, final ODocument iLinked, final OFetchContext iContext) throws OFetchException {
+  public Object fetchLinkedMapEntry(final ODocument iRecord, final Object iUserObject, final String iFieldName, final String iKey,
+      final ODocument iLinked, final OFetchContext iContext) throws OFetchException {
     return iLinked;
   }
 
@@ -71,8 +71,8 @@ public class OJSONFetchListener implements OFetchListener {
     }
   }
 
-  public void parseLinkedCollectionValue(ODocument iRootRecord, OIdentifiable iLinked, Object iUserObject,
-      String iFieldName, OFetchContext iContext) throws OFetchException {
+  public void parseLinkedCollectionValue(ODocument iRootRecord, OIdentifiable iLinked, Object iUserObject, String iFieldName,
+      OFetchContext iContext) throws OFetchException {
     try {
       if (((OJSONFetchContext) iContext).isInCollection(iRootRecord)) {
         ((OJSONFetchContext) iContext).writeLinkedValue(iLinked, iFieldName);
@@ -85,9 +85,13 @@ public class OJSONFetchListener implements OFetchListener {
     }
   }
 
-  public Object fetchLinkedCollectionValue(ODocument iRoot, Object iUserObject, String iFieldName,
-      ODocument iLinked, OFetchContext iContext) throws OFetchException {
+  public Object fetchLinkedCollectionValue(ODocument iRoot, Object iUserObject, String iFieldName, ODocument iLinked,
+      OFetchContext iContext) throws OFetchException {
     return iLinked;
   }
 
+  @Override
+  public void skipStandardField(ODocument iRecord, String iFieldName, OFetchContext iContext, Object iUserObject, String iFormat)
+      throws OFetchException {
+  }
 }

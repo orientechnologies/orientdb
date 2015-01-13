@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageMemoryConfiguration;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OMemoryWriteAheadLog;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
 
 import java.io.IOException;
@@ -89,9 +90,6 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   public void makeFullCheckpoint() throws IOException {
   }
 
-  @Override
-  protected void makeFuzzyCheckPoint() throws IOException {
-  }
 
   @Override
   public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable, OCommandOutputListener iListener,

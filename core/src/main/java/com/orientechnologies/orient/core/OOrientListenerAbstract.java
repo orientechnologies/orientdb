@@ -27,7 +27,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public abstract class OOrientListenerAbstract implements OOrientListener, OOrientStartupListener {
+public abstract class OOrientListenerAbstract implements OOrientListener, OOrientStartupListener, OOrientShutdownListener {
   @Override
   public void onStartup() {
   }
