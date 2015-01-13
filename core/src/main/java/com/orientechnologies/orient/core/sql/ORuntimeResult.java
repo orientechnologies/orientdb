@@ -104,7 +104,7 @@ public class ORuntimeResult {
             if (inputDocument != null && value != null && inputDocument instanceof ODocument && value instanceof ODocument) {
               // COPY FIELDS WITH PROJECTION NAME AS PREFIX
               for (String fieldName : ((ODocument) value).fieldNames()) {
-                iValue.field(prjName + "_" + fieldName, ((ODocument) value).field(fieldName));
+                iValue.field(prjName + fieldName, ((ODocument) value).field(fieldName));
               }
             }
             projectionValue = null;
