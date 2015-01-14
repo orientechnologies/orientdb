@@ -210,7 +210,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     super.shutdown();
 
     OLogManager.instance().warn(this, "Shutting down node %s...", getLocalNodeName());
-    setNodeStatus(NODE_STATUS.SHUTDOWNING);
+    setNodeStatus(NODE_STATUS.SHUTTINGDOWN);
 
     if (messageService != null)
       messageService.shutdown();
@@ -602,7 +602,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     } else if (key.startsWith(CONFIG_DBSTATUS_PREFIX)) {
       ODistributedServerLog.info(this, getLocalNodeName(), getNodeName(iEvent.getMember()), DIRECTION.IN,
-          "received added status %s=%s", key.substring(CONFIG_DBSTATUS_PREFIX.length()), iEvent.getValue());
+          "received new status %s=%s", key.substring(CONFIG_DBSTATUS_PREFIX.length()), iEvent.getValue());
     }
   }
 
@@ -857,7 +857,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         ODistributedDatabaseChunk chunk = (ODistributedDatabaseChunk) value;
 
         // DISCARD ALL THE MESSAGES BEFORE THE BACKUP
-        distrDatabase.setWaitForMessage(chunk.getLastOperationId() + 1);
+        distrDatabase.setWaitForMessage(chunk.getLastOperationId()-1);
 
         final String fileName = Orient.getTempPath() + "install_" + databaseName + ".zip";
 

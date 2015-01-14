@@ -46,7 +46,7 @@ import java.util.concurrent.locks.ReentrantLock;
  *
  */
 public class ODistributedResponseManager {
-  public static final int                        ADDITIONAL_TIMEOUT_CLUSTER_SHAPE = 15000;
+  public static final int                        ADDITIONAL_TIMEOUT_CLUSTER_SHAPE = 10000;
   private static final String                    NO_RESPONSE                      = "waiting-for-response";
   private final ODistributedServerManager        dManager;
   private final ODistributedRequest              request;
@@ -262,33 +262,46 @@ public class ODistributedResponseManager {
         final long elapsed = now - beginTime;
         currentTimeout = synchTimeout - elapsed;
 
-        final long lastClusterChange = dManager.getLastClusterChangeOn();
-        if (lastClusterChange > 0 && now - lastClusterChange < (synchTimeout + ADDITIONAL_TIMEOUT_CLUSTER_SHAPE)) {
-          // CHECK IF ANY NODE ARE UNREACHABLE IN THE MEANWHILE
-          int missingActiveNodes = 0;
+        // CHECK IF ANY NODE ARE UNREACHABLE IN THE MEANWHILE
+        int synchronizingNodes = 0;
+        int missingActiveNodes = 0;
 
-          synchronized (responseLock) {
-            for (Iterator<Map.Entry<String, Object>> iter = responses.entrySet().iterator(); iter.hasNext();) {
-              final Map.Entry<String, Object> curr = iter.next();
-              if (curr.getValue() == NO_RESPONSE)
-                // ANALYZE THE NODE WITHOUT A RESPONSE
-                if (dManager.isNodeAvailable(curr.getKey(), getDatabaseName()))
-                  missingActiveNodes++;
+        synchronized (responseLock) {
+          for (Iterator<Map.Entry<String, Object>> iter = responses.entrySet().iterator(); iter.hasNext();) {
+            final Map.Entry<String, Object> curr = iter.next();
+
+            if (curr.getValue() == NO_RESPONSE) {
+              // ANALYZE THE NODE WITHOUT A RESPONSE
+              final ODistributedServerManager.DB_STATUS dbStatus = dManager.getDatabaseStatus(curr.getKey(), getDatabaseName());
+              switch (dbStatus) {
+              case SYNCHRONIZING:
+                synchronizingNodes++;
+                missingActiveNodes++;
+                break;
+              case ONLINE:
+                missingActiveNodes++;
+                break;
+              }
             }
           }
+        }
 
-          if (missingActiveNodes == 0) {
-            // NO MORE ACTIVE NODES TO WAIT
-            ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-                "no more active nodes to wait for request (%s): anticipate timeout (saved %d ms)", request, currentTimeout);
-            break;
-          }
+        if (missingActiveNodes == 0) {
+          // NO MORE ACTIVE NODES TO WAIT
+          ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE, "no more active nodes to wait for request (%s): anticipate timeout (saved %d ms)", request, currentTimeout);
+          break;
+        }
 
+        final long lastClusterChange = dManager.getLastClusterChangeOn();
+        if (lastClusterChange > 0 && now - lastClusterChange < (synchTimeout + ADDITIONAL_TIMEOUT_CLUSTER_SHAPE)) {
           // CHANGED CLUSTER SHAPE DURING WAIT: ENLARGE TIMEOUT
           currentTimeout = synchTimeout;
-          ODistributedServerLog.info(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-              "cluster shape changed during request (%s): enlarge timeout +%dms, wait again for %dms", request, synchTimeout,
-              currentTimeout);
+          ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE, "cluster shape changed during request (%s): enlarge timeout +%dms, wait again for %dms", request, synchTimeout, currentTimeout);
+          continue;
+        } else if (synchronizingNodes > 0) {
+          // SOME NODE IS SYNCHRONIZING: WAIT FOR THEM
+          currentTimeout = synchTimeout;
+          ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE, "%d nodes are in synchronization mode during request (%s): enlarge timeout +%dms, wait again for %dms", synchronizingNodes, request, synchTimeout, currentTimeout);
         }
       }
 
@@ -585,7 +598,7 @@ public class ODistributedResponseManager {
         // CONFLICT GROUP: FIX THEM ONE BY ONE
         for (ODistributedResponse r : responseGroup) {
           ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-              "fixing response (%s) for request (%s) in server %s to be: %s",  r, request, r.getExecutorNodeName(), goodResponse);
+              "fixing response (%s) for request (%s) in server %s to be: %s", r, request, r.getExecutorNodeName(), goodResponse);
 
           final OAbstractRemoteTask fixTask = ((OAbstractReplicatedTask) request.getTask()).getFixTask(request, r.getPayload(),
               goodResponse.getPayload());
