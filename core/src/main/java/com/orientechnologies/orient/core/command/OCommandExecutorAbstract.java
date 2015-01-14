@@ -19,18 +19,18 @@
  */
 package com.orientechnologies.orient.core.command;
 
+import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.common.parser.OBaseParser;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
+
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-
-import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.common.parser.OBaseParser;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
-import com.orientechnologies.orient.core.metadata.security.ORule;
 
 /**
  * Abstract implementation of Executor Command interface.
@@ -41,7 +41,7 @@ import com.orientechnologies.orient.core.metadata.security.ORule;
 @SuppressWarnings("unchecked")
 public abstract class OCommandExecutorAbstract extends OBaseParser implements OCommandExecutor {
   protected OProgressListener   progressListener;
-  protected int                 limit = -1;
+  protected int                 limit = OGlobalConfiguration.QUERY_DEFAULT_LIMIT.getValueAsInteger();
   protected Map<Object, Object> parameters;
   protected OCommandContext     context;
 
