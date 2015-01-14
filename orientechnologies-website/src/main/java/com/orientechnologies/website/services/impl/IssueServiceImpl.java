@@ -344,6 +344,29 @@ public class IssueServiceImpl implements IssueService {
         return c;
     }
 
+    @Override
+    public List<OUser> findInvolvedActors(Issue issue) {
+        return issueRepository.findInvolvedActors(issue);
+    }
+
+    @Override
+    public void clearComments(Issue issue) {
+        OrientGraph graph = dbFactory.getGraph();
+        OrientVertex orgVertex = graph.getVertex(new ORecordId(issue.getId()));
+
+        List<OrientVertex> toRemove = new ArrayList<OrientVertex>();
+        for (Vertex v : orgVertex.getVertices(Direction.OUT, HasEvent.class.getSimpleName())) {
+            OrientVertex ov = (OrientVertex) v;
+            String type = ov.getType().getName();
+            if (Comment.class.getSimpleName().equalsIgnoreCase(type)) {
+                toRemove.add(ov);
+            }
+        }
+        for (OrientVertex vertex : toRemove) {
+            vertex.remove();
+        }
+    }
+
     private void embedEnvironment(Issue issue, Environment environment) {
         issue.setEnvironment(environment);
         IssueEventInternal e = new IssueEventInternal();

@@ -47,6 +47,9 @@ public interface IssueService {
 
     public Comment patchComment(Issue issue, String commentUUID, Comment comment);
 
-    public Comment deleteComment(Issue i, String commentUUID,Comment comment);
+    public Comment deleteComment(Issue i, String commentUUID, Comment comment);
 
+    public List<OUser> findInvolvedActors(Issue issue);
+
+    public void clearComments(Issue issueDto);
 }

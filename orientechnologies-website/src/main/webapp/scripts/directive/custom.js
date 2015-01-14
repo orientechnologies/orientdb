@@ -43,7 +43,7 @@ angular.module('webappApp').directive('mkeditor', function ($timeout) {
   }
 });
 
-angular.module('webappApp').directive('vueEditor', function ($timeout) {
+angular.module('webappApp').directive('vueEditor', function ($timeout, $compile, $http, $typeahead) {
   return {
     require: '^ngModel',
     scope: {
@@ -63,15 +63,13 @@ angular.module('webappApp').directive('vueEditor', function ($timeout) {
         if (value) {
           ngModel.$setViewValue(value);
         }
-        scope.$watch('preview', function (newVal, oldVal) {
-          if (newVal) {
-
-          } else {
-            if (oldVal === true) {
-
-            }
+        scope.$parent.$watch('actors', function (val) {
+          if (val) {
+            scope.actors = val.map(function (a) {
+              return {label: a.name};
+            });
           }
-        });
+        })
         if (!editor) {
           var defaultVal = scope.preview ? 'No description' : '';
           editor = new Vue({
@@ -109,3 +107,21 @@ angular.module('webappApp').directive('avatar', function ($timeout) {
     templateUrl: 'views/avatar.html'
   }
 });
+
+
+(function ($, undefined) {
+  $.fn.getCursorPosition = function () {
+    var el = $(this).get(0);
+    var pos = 0;
+    if ('selectionStart' in el) {
+      pos = el.selectionStart;
+    } else if ('selection' in document) {
+      el.focus();
+      var Sel = document.selection.createRange();
+      var SelLength = document.selection.createRange().text.length;
+      Sel.moveStart('character', -el.value.length);
+      pos = Sel.text.length - SelLength;
+    }
+    return pos;
+  }
+})(jQuery);

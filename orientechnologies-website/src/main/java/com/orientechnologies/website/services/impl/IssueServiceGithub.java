@@ -3,7 +3,9 @@ package com.orientechnologies.website.services.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.website.github.GComment;
 import com.orientechnologies.website.github.GRepo;
+import com.orientechnologies.website.github.GUser;
 import com.orientechnologies.website.github.GitHub;
 import com.orientechnologies.website.helper.SecurityHelper;
 import com.orientechnologies.website.model.schema.dto.*;
@@ -44,7 +46,17 @@ public class IssueServiceGithub implements IssueService {
             ObjectNode node = mapper.createObjectNode();
             node.put("body", comment.getBody());
             String value = mapper.writeValueAsString(node);
-            repo.commentIssue(issue.getNumber(), value);
+            GComment gComment = repo.commentIssue(issue.getNumber(), value);
+            Comment persistentComment = new Comment();
+            persistentComment.setCommentId(gComment.getId());
+            persistentComment.setBody(gComment.getBody());
+            GUser user = gComment.getUser();
+            persistentComment.setUser(SecurityHelper.currentUser());
+            persistentComment.setCreatedAt(gComment.getCreatedAt());
+            persistentComment.setUpdatedAt(gComment.getUpdatedAt());
+            persistentComment = issueService.commentRepository.save(persistentComment);
+            issueService.commentIssue(issue, persistentComment);
+            return persistentComment;
         } catch (IOException e) {
 
         }
@@ -198,5 +210,15 @@ public class IssueServiceGithub implements IssueService {
 
         }
         return null;
+    }
+
+    @Override
+    public List<OUser> findInvolvedActors(Issue issue) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void clearComments(Issue issueDto) {
+        throw new UnsupportedOperationException();
     }
 }

@@ -128,6 +128,16 @@ public class RepositoryController {
                 : new ResponseEntity<Comment>(HttpStatus.NOT_FOUND);
     }
 
+    @RequestMapping(value = "{owner}/{repo}/issues/{number}/actors", method = RequestMethod.GET)
+    public ResponseEntity<List<OUser>> getActors(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
+                                                 @PathVariable("number") Long number) {
+
+        Issue i = organizationRepository.findSingleOrganizationIssueByRepoAndNumber(owner, repo, number);
+
+        return i != null ? new ResponseEntity<List<OUser>>(issueService.findInvolvedActors(i), HttpStatus.OK)
+                : new ResponseEntity<List<OUser>>(HttpStatus.NOT_FOUND);
+    }
+
     @RequestMapping(value = "{owner}/{repo}/issues/{number}/comments/{comment_id}", method = RequestMethod.PATCH)
     public ResponseEntity<Comment> patchComment(@PathVariable("owner") String owner, @PathVariable("repo") String repo,
                                                 @PathVariable("number") Long number, @PathVariable("comment_id") String commentUUID, @RequestBody Comment comment) {

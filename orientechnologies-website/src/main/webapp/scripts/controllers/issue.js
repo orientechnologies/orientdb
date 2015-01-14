@@ -241,7 +241,7 @@ angular.module('webappApp')
     });
   });
 angular.module('webappApp')
-  .controller('IssueEditCtrl', function ($scope, $routeParams, Organization, Repo, $popover, $route, User) {
+  .controller('IssueEditCtrl', function ($scope, $routeParams, Organization, Repo, $popover, $route, User,$timeout) {
 
 
     $scope.githubIssue = GITHUB + "/" + ORGANIZATION;
@@ -258,6 +258,9 @@ angular.module('webappApp')
       User.whoami().then(function (data) {
         $scope.isOwner = $scope.issue.user.name == data.name;
       })
+      Repo.one($scope.repo).all("issues").one(number).all("actors").getList().then(function (data) {
+        $scope.actors = data.plain();
+      });
       refreshEvents();
       initTypologic();
     });
@@ -299,8 +302,15 @@ angular.module('webappApp')
 
       if ($scope.newComment && $scope.newComment.body) {
         Repo.one($scope.repo).all("issues").one(number).all("comments").post($scope.newComment).then(function (data) {
-          $scope.comments.push(data.plain());
-          $scope.newComment.body = "";
+          if (data) {
+            $scope.comments.push(data.plain());
+            $scope.newComment.body = "";
+          } else {
+            $scope.newComment.body = "";
+            $timeout(function () {
+              refreshEvents();
+            }, 2000)
+          }
         });
       }
     }

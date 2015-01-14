@@ -270,6 +270,7 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
 
     private void importIssueComments(GIssue issue, Issue issueDto) throws IOException {
         boolean isNewComment = false;
+        issueService.clearComments(issueDto);
         for (GComment ghIssueComment : issue.getComments()) {
             Comment comment = commentRepository.findByIssueAndCommentId(issueDto, ghIssueComment.getId());
 

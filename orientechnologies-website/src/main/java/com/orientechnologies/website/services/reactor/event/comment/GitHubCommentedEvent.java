@@ -20,43 +20,46 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class GitHubCommentedEvent implements GithubCommentEvent {
-  @Autowired
-  private RepositoryRepository repositoryRepository;
+    @Autowired
+    private RepositoryRepository repositoryRepository;
 
-  @Autowired
-  private UserRepository       userRepository;
+    @Autowired
+    private UserRepository userRepository;
 
-  @Autowired
-  private CommentRepository    commentRepository;
+    @Autowired
+    private CommentRepository commentRepository;
 
-  @Autowired
-  private IssueService         issueService;
+    @Autowired
+    private IssueService issueService;
 
-  @Override
-  public void handle(String evt, ODocument payload) {
-    ODocument commentDoc = payload.field("comment");
-    ODocument issue = payload.field("issue");
-    ODocument organization = payload.field("organization");
-    ODocument repository = payload.field("repository");
+    @Override
+    public void handle(String evt, ODocument payload) {
+        ODocument commentDoc = payload.field("comment");
+        ODocument issue = payload.field("issue");
+        ODocument organization = payload.field("organization");
+        ODocument repository = payload.field("repository");
 
-    final GComment gComment = GComment.fromDoc(commentDoc);
-    String repoName = repository.field(ORepository.NAME.toString());
-    Integer issueNumber = issue.field(OIssue.NUMBER.toString());
+        final GComment gComment = GComment.fromDoc(commentDoc);
+        String repoName = repository.field(ORepository.NAME.toString());
+        Integer issueNumber = issue.field(OIssue.NUMBER.toString());
 
-    Issue issueDto = repositoryRepository.findIssueByRepoAndNumber(repoName, issueNumber);
-    Comment comment = new Comment();
-    comment.setCommentId(gComment.getId());
-    comment.setBody(gComment.getBody());
-    GUser user = gComment.getUser();
-    comment.setUser(userRepository.findUserOrCreateByLogin(user.getLogin(), user.getId()));
-    comment.setCreatedAt(gComment.getCreatedAt());
-    comment.setUpdatedAt(gComment.getUpdatedAt());
-    comment = commentRepository.save(comment);
-    issueService.commentIssue(issueDto, comment);
-  }
+        Issue issueDto = repositoryRepository.findIssueByRepoAndNumber(repoName, issueNumber);
 
-  @Override
-  public String handleWhat() {
-    return "created";
-  }
+        Comment comment = commentRepository.findByIssueAndCommentId(issueDto, gComment.getId());
+        if (comment == null) {
+            comment.setCommentId(gComment.getId());
+            comment.setBody(gComment.getBody());
+            GUser user = gComment.getUser();
+            comment.setUser(userRepository.findUserOrCreateByLogin(user.getLogin(), user.getId()));
+            comment.setCreatedAt(gComment.getCreatedAt());
+            comment.setUpdatedAt(gComment.getUpdatedAt());
+            comment = commentRepository.save(comment);
+            issueService.commentIssue(issueDto, comment);
+        }
+    }
+
+    @Override
+    public String handleWhat() {
+        return "created";
+    }
 }
