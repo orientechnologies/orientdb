@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -116,7 +117,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private List<String>                groupByFields;
   private Map<Object, ORuntimeResult> groupedResult;
   private Object                      expandTarget;
-  private int                         fetchLimit           = -1;
+  private int                         fetchLimit           = OGlobalConfiguration.QUERY_DEFAULT_LIMIT.getValueAsInteger();
   private OIdentifiable               lastRecord;
   private String                      fetchPlan;
   private volatile boolean            executing;
@@ -535,13 +536,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    */
   protected boolean handleResult(final OIdentifiable iRecord) {
     if (parallel)
-    // LOCK FOR PARALLEL EXECUTION. THIS PREVENT CONCURRENT ISSUES
-    {
+      // LOCK FOR PARALLEL EXECUTION. THIS PREVENT CONCURRENT ISSUES
       parallelLock.lock();
-    }
 
     try {
-      if ((orderedFields.isEmpty() || fullySortedByIndex) && skip > 0) {
+      if ((orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) && skip > 0) {
         lastRecord = null;
         skip--;
         return true;
@@ -551,18 +550,15 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       resultCount++;
 
-      if (!addResult(lastRecord)) {
+      if (!addResult(lastRecord))
         return false;
-      }
 
-      return !((orderedFields.isEmpty() || fullySortedByIndex) && !isAnyFunctionAggregates()
+      return !((orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) && !isAnyFunctionAggregates()
           && (groupByFields == null || groupByFields.isEmpty()) && fetchLimit > -1 && resultCount >= fetchLimit);
     } finally {
       if (parallel)
-      // UNLOCK PARALLEL EXECUTION
-      {
+        // UNLOCK PARALLEL EXECUTION
         parallelLock.unlock();
-      }
     }
   }
 
@@ -1285,8 +1281,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (parallel) {
         parallelExec(iTarget);
       } else {
+        int queryScanThresholdWarning = OGlobalConfiguration.QUERY_SCAN_THRESHOLD_TIP.getValueAsInteger();
+
         // BROWSE, UNMARSHALL AND FILTER ALL THE RECORDS ON CURRENT THREAD
-        while (iTarget.hasNext()) {
+        for (int browsed = 0; iTarget.hasNext(); browsed++) {
           final OIdentifiable next = iTarget.next();
           if (next == null)
             break;
@@ -1301,8 +1299,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               uniqueResult.add(identity);
           }
 
-          if (!executeSearchRecord(next)) {
+          if (!executeSearchRecord(next))
             break;
+
+          if (queryScanThresholdWarning > 0 && browsed > queryScanThresholdWarning && compiledFilter != null) {
+            OLogManager
+                .instance()
+                .info(
+                    this,
+                    "[TIP] Query '%s' fetched more than %d records: to speed up the execution, create an index or change the query to use an existent index",
+                    parserText, queryScanThresholdWarning);
+            queryScanThresholdWarning = 0;
           }
         }
       }
