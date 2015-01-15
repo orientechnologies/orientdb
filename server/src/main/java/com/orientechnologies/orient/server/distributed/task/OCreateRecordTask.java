@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
@@ -36,6 +32,10 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
  * Distributed create record task used for synchronization.
@@ -95,9 +95,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     if (iBadResponse instanceof Throwable)
       return null;
 
-    // TODO: NO ROLLBACK, PUT THE NODE AS OFFLINE
     final OPlaceholder badResult = (OPlaceholder) iBadResponse;
-
     return new ODeleteRecordTask(new ORecordId(badResult.getIdentity()), badResult.getRecordVersion()).setDelayed(false);
   }
 

@@ -19,6 +19,26 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+
 import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.config.QueueConfig;
 import com.hazelcast.core.*;
@@ -66,26 +86,6 @@ import com.orientechnologies.orient.server.distributed.task.OCopyDatabaseChunkTa
 import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
 import com.orientechnologies.orient.server.distributed.task.ODeployDatabaseTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation for clustering.
@@ -219,9 +219,6 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (membershipListenerRegistration != null) {
       hazelcastInstance.getCluster().removeMembershipListener(membershipListenerRegistration);
     }
-
-    // AVOID TO REMOVE THE CFG TO PREVENT OTHER NODES TO UN-REGISTER IT
-    // getConfigurationMap().remove(CONFIG_NODE_PREFIX + getLocalNodeId());
 
     if (hazelcastInstance != null)
       try {
@@ -542,11 +539,8 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
   @Override
   public void memberRemoved(final MembershipEvent iEvent) {
     updateLastClusterChange();
-    ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "node removed id=%s name=%s", iEvent.getMember(),
-        getNodeName(iEvent.getMember()));
 
     final Member member = iEvent.getMember();
-
     final String nodeName = getNodeName(member);
     if (nodeName != null) {
       activeNodes.remove(nodeName);
@@ -554,6 +548,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       // REMOVE NODE IN DB CFG
       if (messageService != null)
         messageService.handleUnreachableNode(nodeName);
+
+      ODistributedServerLog.warn(this, getLocalNodeName(), null, DIRECTION.NONE, "node removed id=%s name=%s", member, nodeName);
+
+      if (nodeName.startsWith("ext:"))
+        ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
+            "removed node id=%s name=%s has not being recognized. Remove the node manually", member, nodeName);
+
     }
 
     OClientConnectionManager.instance().pushDistribCfg2Clients(getClusterConfiguration());
@@ -857,7 +858,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         ODistributedDatabaseChunk chunk = (ODistributedDatabaseChunk) value;
 
         // DISCARD ALL THE MESSAGES BEFORE THE BACKUP
-        distrDatabase.setWaitForMessage(chunk.getLastOperationId()-1);
+        distrDatabase.setWaitForMessage(chunk.getLastOperationId());
 
         final String fileName = Orient.getTempPath() + "install_" + databaseName + ".zip";
 

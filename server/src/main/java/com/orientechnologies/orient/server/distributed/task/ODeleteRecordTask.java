@@ -19,22 +19,22 @@
      */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.IOException;
- import java.io.ObjectInput;
- import java.io.ObjectOutput;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
+import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ODistributedStorage;
 
- import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
- import com.orientechnologies.orient.core.db.record.ORecordOperation;
- import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
- import com.orientechnologies.orient.core.id.ORecordId;
- import com.orientechnologies.orient.core.record.ORecord;
- import com.orientechnologies.orient.core.version.ORecordVersion;
- import com.orientechnologies.orient.server.OServer;
- import com.orientechnologies.orient.server.distributed.ODistributedRequest;
- import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
- import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
- import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
- import com.orientechnologies.orient.server.distributed.ODistributedStorage;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 
 /**
   * Distributed delete record task used for synchronization.
@@ -87,9 +87,6 @@ import java.io.IOException;
 
    @Override
    public OAbstractRemoteTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
-     if( iBadResponse instanceof Throwable)
-       return null;
-
      return new OResurrectRecordTask(rid, version);
    }
 
