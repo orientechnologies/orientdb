@@ -143,6 +143,6 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
 
   @Override
   public String getSyntax() {
-    return "CREATE PROPERTY <class>.<property> <type> [<linked-type>|<linked-class>]";
+    return "CREATE PROPERTY <class>.<property> <type> [<linked-type>|<linked-class>] [UNSAFE]";
   }
 }

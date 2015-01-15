@@ -1352,6 +1352,8 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
     final String lowerName = name.toLowerCase();
 
+    final OPropertyImpl prop;
+
     acquireSchemaWriteLock();
     try {
       checkEmbedded();
@@ -1361,7 +1363,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
       OGlobalProperty global = owner.findOrCreateGlobalProperty(name, type);
 
-      final OPropertyImpl prop = new OPropertyImpl(this, global);
+      prop = new OPropertyImpl(this, global);
 
       properties.put(lowerName, prop);
 
@@ -1369,10 +1371,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         prop.setLinkedTypeInternal(linkedType);
       else if (linkedClass != null)
         prop.setLinkedClassInternal(linkedClass);
-      return prop;
     } finally {
       releaseSchemaWriteLock();
     }
+
+    if (prop != null)
+      fireDatabaseMigration(getDatabase(), name, type);
+
+    return prop;
   }
 
   public OIndex<?> createIndex(final String iName, final INDEX_TYPE iType, final String... fields) {
@@ -2018,8 +2024,6 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       releaseSchemaWriteLock();
     }
 
-    if (property != null)
-      fireDatabaseMigration(database, propertyName, type);
     return property;
   }
 
