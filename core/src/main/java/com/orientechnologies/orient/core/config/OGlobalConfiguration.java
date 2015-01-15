@@ -406,10 +406,12 @@ public enum OGlobalConfiguration {
 
   // QUERY
   QUERY_SCAN_THRESHOLD_TIP("query.scanThresholdTip",
-      "If total number of records scanned in a query are major than this threshold a warning is given. Use 0 to disable it",
+      "If total number of records scanned in a query is major than this threshold a warning is given. Use 0 to disable it",
       Long.class, 50000),
 
-  QUERY_DEFAULT_LIMIT("query.defaultLimit", "Default limit for queries. Set to -1 to remove any limit.", Long.class, 10000),
+  QUERY_LIMIT_THRESHOLD_TIP("query.limitThresholdTip",
+      "If total number of returned records in a query is major than this threshold a warning is given. Use 0 to disable it",
+      Long.class, 10000),
 
   // CLIENT
   CLIENT_CHANNEL_MIN_POOL("client.channel.minPool", "Minimum pool size", Integer.class, 1),
@@ -688,7 +690,10 @@ public enum OGlobalConfiguration {
         // LOW MEMORY: SET IT TO 256MB ONLY
         OLogManager
             .instance()
-            .warn(null, "No enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower Maximum Heap (-Xmx setting on JVM) and restart OrientDB. Now running with DISKCACHE=" + OReadWriteDiskCache.MIN_CACHE_SIZE + "MB", osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
+            .warn(
+                null,
+                "No enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower Maximum Heap (-Xmx setting on JVM) and restart OrientDB. Now running with DISKCACHE="
+                    + OReadWriteDiskCache.MIN_CACHE_SIZE + "MB", osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
         DISK_CACHE_SIZE.setValue(OReadWriteDiskCache.MIN_CACHE_SIZE);
       }
 

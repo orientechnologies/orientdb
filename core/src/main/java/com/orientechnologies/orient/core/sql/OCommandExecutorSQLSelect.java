@@ -19,6 +19,13 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
@@ -80,13 +87,6 @@ import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
  * If the query contains the ORDER BY clause, the results are temporary collected internally, then ordered and finally returned all
@@ -117,7 +117,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private List<String>                groupByFields;
   private Map<Object, ORuntimeResult> groupedResult;
   private Object                      expandTarget;
-  private int                         fetchLimit           = OGlobalConfiguration.QUERY_DEFAULT_LIMIT.getValueAsInteger();
+  private int                         fetchLimit           = -1;
   private OIdentifiable               lastRecord;
   private String                      fetchPlan;
   private volatile boolean            executing;
@@ -129,6 +129,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   private Set<ORID>                   uniqueResult;
   private boolean                     noCache              = false;
+  private int                         tipLimitThreshold    = OGlobalConfiguration.QUERY_LIMIT_THRESHOLD_TIP.getValueAsInteger();
 
   private final class IndexUsageLog {
     OIndex<?>        index;
@@ -563,17 +564,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   protected boolean addResult(OIdentifiable iRecord) {
-    if (iRecord == null) {
+    if (iRecord == null)
       return true;
-    }
 
     if (projections != null || groupByFields != null && !groupByFields.isEmpty()) {
       if (groupedResult == null) {
         // APPLY PROJECTIONS IN LINE
         iRecord = ORuntimeResult.getProjectionResult(resultCount, projections, context, iRecord);
-        if (iRecord == null) {
+        if (iRecord == null)
           return true;
-        }
+
       } else {
         // AGGREGATION/GROUP BY
         Object fieldValue = null;
@@ -584,21 +584,20 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             final Object[] fields = new Object[groupByFields.size()];
             for (int i = 0; i < groupByFields.size(); ++i) {
               final String field = groupByFields.get(i);
-              if (field.startsWith("$")) {
+              if (field.startsWith("$"))
                 fields[i] = context.getVariable(field);
-              } else {
+              else
                 fields[i] = doc.field(field);
-              }
+
             }
             fieldValue = fields;
           } else {
             final String field = groupByFields.get(0);
             if (field != null) {
-              if (field.startsWith("$")) {
+              if (field.startsWith("$"))
                 fieldValue = context.getVariable(field);
-              } else {
+              else
                 fieldValue = ((ODocument) iRecord.getRecord()).field(field);
-              }
             }
           }
         }
@@ -608,23 +607,44 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
     }
 
+    if (tipLimitThreshold > 0 && resultCount > tipLimitThreshold) {
+      reportTip(String.format(
+          "Query '%s' returned a result set with more than %d records. Reduce it to improve performance and reduce RAM used",
+          parserText, tipLimitThreshold));
+      tipLimitThreshold = 0;
+    }
+
     boolean result = true;
     if ((fullySortedByIndex || orderedFields.isEmpty()) && expandTarget == null) {
       // SEND THE RESULT INLINE
-      if (request.getResultListener() != null) {
+      if (request.getResultListener() != null)
         result = request.getResultListener().result(iRecord);
-      }
 
     } else {
 
       // COLLECT ALL THE RECORDS AND ORDER THEM AT THE END
-      if (tempResult == null) {
+      if (tempResult == null)
         tempResult = new ArrayList<OIdentifiable>();
-      }
+
       ((Collection<OIdentifiable>) tempResult).add(iRecord);
     }
 
     return result;
+  }
+
+  /**
+   * Report the tip to the profiler and collect it in context to be reported by tools like Studio
+   * 
+   * @param iMessage
+   */
+  protected void reportTip(final String iMessage) {
+    Orient.instance().getProfiler().reportTip(iMessage);
+    List<String> tips = (List<String>) context.getVariable("tips");
+    if (tips == null) {
+      tips = new ArrayList<String>(3);
+      context.setVariable("tips", tips);
+    }
+    tips.add(iMessage);
   }
 
   protected ORuntimeResult getProjectionGroup(final Object fieldValue) {
@@ -1303,12 +1323,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             break;
 
           if (queryScanThresholdWarning > 0 && browsed > queryScanThresholdWarning && compiledFilter != null) {
-            OLogManager
-                .instance()
-                .info(
-                    this,
-                    "[TIP] Query '%s' fetched more than %d records: to speed up the execution, create an index or change the query to use an existent index",
-                    parserText, queryScanThresholdWarning);
+            reportTip(String
+                .format("Query '%s' fetched more than %d records: to speed up the execution, create an index or change the query to use an existent index", parserText, queryScanThresholdWarning));
             queryScanThresholdWarning = 0;
           }
         }
