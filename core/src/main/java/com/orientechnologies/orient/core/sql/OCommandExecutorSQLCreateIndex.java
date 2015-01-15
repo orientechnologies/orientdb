@@ -216,10 +216,28 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
 
     final ODatabaseDocument database = getDatabase();
     final OIndex<?> idx;
+    List<OCollate> collatesList = null;
+
+    if (collates != null) {
+      collatesList = new ArrayList<OCollate>();
+
+      for (String collate : collates) {
+        if (collate != null) {
+          final OCollate col = OSQLEngine.getCollate(collate);
+          collatesList.add(col);
+        } else
+          collatesList.add(null);
+      }
+    }
+
     if (fields == null || fields.length == 0) {
+
       if (keyTypes != null)
-        idx = database.getMetadata().getIndexManager()
-            .createIndex(indexName, indexType.toString(), new OSimpleKeyIndexDefinition(keyTypes), null, null, metadataDoc, engine);
+        idx = database
+            .getMetadata()
+            .getIndexManager()
+            .createIndex(indexName, indexType.toString(), new OSimpleKeyIndexDefinition(keyTypes, collatesList), null, null,
+                metadataDoc, engine);
       else if (serializerKeyId != 0) {
         idx = database
             .getMetadata()
@@ -233,20 +251,6 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
       if ((keyTypes == null || keyTypes.length == 0) && collates == null) {
         idx = oClass.createIndex(indexName, indexType.toString(), null, metadataDoc, engine, fields);
       } else {
-
-        List<OCollate> collatesList = null;
-
-        if (collates != null) {
-          collatesList = new ArrayList<OCollate>();
-
-          for (String collate : collates) {
-            if (collate != null) {
-              final OCollate col = OSQLEngine.getCollate(collate);
-              collatesList.add(col);
-            } else
-              collatesList.add(null);
-          }
-        }
 
         final OIndexDefinition idxDef = OIndexDefinitionFactory.createIndexDefinition(oClass, Arrays.asList(fields),
             Arrays.asList(keyTypes), collatesList);

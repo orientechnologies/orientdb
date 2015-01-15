@@ -35,7 +35,6 @@ public class ODefaultCollateFactory implements OCollateFactory {
 
   static {
     register(new ODefaultCollate());
-    register(new OMultivalueCollate());
     register(new OCaseInsensitiveCollate());
   }
 

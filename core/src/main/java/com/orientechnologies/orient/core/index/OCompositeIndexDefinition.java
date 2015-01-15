@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.index;
 
 import java.lang.reflect.InvocationTargetException;
@@ -44,7 +44,7 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
   private final List<OIndexDefinition> indexDefinitions;
   private String                       className;
   private int                          multiValueDefinitionIndex = -1;
-  private OCompositeCollate            collate                   = new OCompositeCollate();
+  private OCompositeCollate            collate                   = new OCompositeCollate(this);
 
   public OCompositeIndexDefinition() {
     indexDefinitions = new ArrayList<OIndexDefinition>(5);
@@ -420,7 +420,7 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
 
       indexDefinitions.clear();
 
-      collate = new OCompositeCollate();
+      collate = new OCompositeCollate(this);
 
       for (int i = 0; i < indClasses.size(); i++) {
         final Class<?> clazz = Class.forName(indClasses.get(i));
@@ -544,72 +544,5 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
   @Override
   public boolean isAutomatic() {
     return indexDefinitions.get(0).isAutomatic();
-  }
-
-  private final class OCompositeCollate implements OCollate {
-    private final List<OCollate> collates = new ArrayList<OCollate>();
-
-    public void addCollate(OCollate collate) {
-      collates.add(collate);
-    }
-
-    @Override
-    public String getName() {
-      throw new UnsupportedOperationException("getName");
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public Object transform(Object obj) {
-      List<Object> keys = null;
-      if (obj instanceof OCompositeKey) {
-        final OCompositeKey compositeKey = (OCompositeKey) obj;
-        keys = compositeKey.getKeys();
-      } else if (obj instanceof List) {
-        keys = (List<Object>) obj;
-      } else {
-        throw new OIndexException("Impossible add as key of a CompositeIndex a value of type " + obj.getClass());
-      }
-
-      OCompositeKey transformedKey = new OCompositeKey();
-
-      final int size = Math.min(keys.size(), collates.size());
-      for (int i = 0; i < size; i++) {
-        final Object key = keys.get(i);
-
-        final OCollate collate = collates.get(i);
-        transformedKey.addKey(collate.transform(key));
-      }
-
-      for (int i = size; i < keys.size(); i++)
-        transformedKey.addKey(keys.get(i));
-
-      return transformedKey;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
-
-      OCompositeCollate that = (OCompositeCollate) o;
-
-      if (!collates.equals(that.collates))
-        return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return collates.hashCode();
-    }
-
-    @Override
-    public String toString() {
-      return "OCompositeCollate{" + "collates=" + collates + ", null values ignored = " + isNullValuesIgnored() + '}';
-    }
   }
 }

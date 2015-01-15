@@ -25,7 +25,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import com.orientechnologies.orient.core.collate.OMultivalueCollate;
+import com.orientechnologies.orient.core.collate.OCollate;
+import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -36,12 +37,27 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
 
   public OSimpleKeyIndexDefinition(final OType... keyTypes) {
     this.keyTypes = keyTypes;
-    if (keyTypes.length > 1)
-      collate = OSQLEngine.getCollate(OMultivalueCollate.NAME);
-
   }
 
   public OSimpleKeyIndexDefinition() {
+  }
+
+  public OSimpleKeyIndexDefinition(OType[] keyTypes2, List<OCollate> collatesList) {
+    this.keyTypes = keyTypes2;
+    if (keyTypes.length > 1) {
+      OCompositeCollate collate = new OCompositeCollate(this);
+      if (collatesList != null) {
+        for (OCollate oCollate : collatesList) {
+          collate.addCollate(oCollate);
+        }
+      } else {
+        for (OType type : keyTypes) {
+          collate.addCollate(OSQLEngine.getCollate(ODefaultCollate.NAME));
+        }
+      }
+      this.collate = collate;
+    }
+
   }
 
   public List<String> getFields() {
@@ -99,8 +115,15 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
         keyTypeNames.add(keyType.toString());
 
       document.field("keyTypes", keyTypeNames, OType.EMBEDDEDLIST);
-      document.field("collate", collate.getName());
+      if (collate instanceof OCompositeCollate) {
+        List<String> collatesNames = new ArrayList<String>();
+        for (OCollate collate : ((OCompositeCollate) collate).getCollates())
+          collatesNames.add(collate.getName());
+        document.field("collates", collatesNames, OType.EMBEDDEDLIST);
+      } else
+        document.field("collate", collate.getName());
       document.field("nullValuesIgnored", isNullValuesIgnored());
+
       return document;
     } finally {
       document.setInternalStatus(ORecordElement.STATUS.LOADED);
@@ -117,8 +140,17 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
       keyTypes[i] = OType.valueOf(keyTypeName);
       i++;
     }
+    String collate = document.field("collate");
+    if (collate != null) {
+      setCollate(collate);
+    } else {
+      List<String> collatesNames = document.field("collates");
+      OCompositeCollate collates = new OCompositeCollate(this);
+      for (String collateName : collatesNames)
+        collates.addCollate(OSQLEngine.getCollate(collateName));
+      this.collate = collates;
+    }
 
-    setCollate((String) document.field("collate"));
     setNullValuesIgnored(!Boolean.FALSE.equals(document.<Boolean> field("nullValuesIgnored")));
   }
 
