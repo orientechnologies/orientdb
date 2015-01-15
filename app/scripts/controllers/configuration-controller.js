@@ -214,7 +214,7 @@ configModule.controller("DbConfigController", ['$scope', '$routeParams', '$locat
     $scope.changeTemplate = { clusterSelection: "views/database/config/clusterSelection.html", useLightweightEdges: "views/database/config/boolenaCustom.html", conflictStrategy: "views/database/config/conflictStrategy.html"}
     $scope.dirty = [];
     $scope.customDirty = [];
-    $scope.clusterStrategies = ['round-robin', "default", "balanced"];
+    $scope.clusterStrategies = ['round-robin', "default", "balanced","local"];
 
     $scope.conflictStrategies = ['version', 'content', 'automerge']
     $scope.isDisabledVal = function (val) {

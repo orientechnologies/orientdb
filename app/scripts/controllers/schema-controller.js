@@ -12,7 +12,7 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
         linkInheritance: Database.getOWikiFor("Inheritance.html")
     }
     $scope.popover = { title: "Rename Class"};
-    $scope.clusterStrategies = ['round-robin', "default", "balanced"];
+    $scope.clusterStrategies = ['round-robin', "default", "balanced","local"];
     $scope.database = Database;
     $scope.database.refreshMetadata($routeParams.database);
     $scope.database = Database;
@@ -131,6 +131,8 @@ schemaModule.controller("SchemaController", ['$scope', '$routeParams', '$locatio
         ClassAlterApi.changeProperty($routeParams.database, { clazz: clazz.name, name: "clusterSelection", value: clazz.clusterSelection}).then(function (data) {
             var noti = S("Cluster selection strategy for the class {{name}} has been changed to {{clusterSelection}}").template(clazz).s;
             Notification.push({content: noti});
+        }).catch(function(e){
+            Notification.push({content: e,error : true});
         });
     };
 }
