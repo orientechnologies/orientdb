@@ -19,12 +19,6 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -40,6 +34,12 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * SQL CREATE VERTEX command.
@@ -71,7 +71,7 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
 
       } else if (temp.equals(KEYWORD_SET)) {
         fields = new LinkedHashMap<String, Object>();
-        parseSetFields(fields);
+        parseSetFields(clazz, fields);
 
       } else if (temp.equals(KEYWORD_CONTENT)) {
         parseContent();
@@ -91,7 +91,7 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
     // GET/CHECK CLASS NAME
     clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(className);
     if (clazz == null)
-      throw new OCommandSQLParsingException("Class " + className + " was not found");
+      throw new OCommandSQLParsingException("Class '" + className + "' was not found");
 
     return this;
   }

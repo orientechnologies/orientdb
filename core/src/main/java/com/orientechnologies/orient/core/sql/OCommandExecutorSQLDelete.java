@@ -58,7 +58,6 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
     OCommandResultListener {
   public static final String   NAME            = "DELETE FROM";
   public static final String   KEYWORD_DELETE  = "DELETE";
-  public static final String   KEYWORD_UNSAFE  = "UNSAFE";
   private static final String  VALUE_NOT_FOUND = "_not_found_";
 
   private OSQLQuery<ODocument> query;

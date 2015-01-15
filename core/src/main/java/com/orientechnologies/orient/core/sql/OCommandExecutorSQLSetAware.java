@@ -16,9 +16,17 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author luca.molino
@@ -40,7 +48,7 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
       throwSyntaxErrorException("Content not provided. Example: CONTENT { \"name\": \"Jay\" }");
   }
 
-  protected void parseSetFields(final Map<String, Object> fields) {
+  protected void parseSetFields(final OClass iClass, final Map<String, Object> fields) {
     String fieldName;
     String fieldValue;
 
@@ -55,7 +63,67 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
       fieldValue = parserRequiredWord(false, "Value expected", " =><,\r\n");
 
       // INSERT TRANSFORMED FIELD VALUE
-      fields.put(fieldName, getFieldValueCountingParameters(fieldValue));
+      Object v = getFieldValueCountingParameters(fieldValue);
+
+      if (iClass != null) {
+        // CHECK TYPE AND CONVERT IF NEEDED
+        final OProperty p = iClass.getProperty(fieldName);
+        if (p != null) {
+          switch (p.getType()) {
+          case EMBEDDEDSET:
+            // CONVERT MAPS IN DOCUMENTS ASSIGNING THE CLASS TAKEN FROM SCHEMA
+            if (!(v instanceof Map) && OMultiValue.isMultiValue(v)) {
+              final Set set = new HashSet();
+              final OClass embeddedType = p.getLinkedClass();
+
+              for (Object o : OMultiValue.getMultiValueIterable(v)) {
+                if (o instanceof Map) {
+                  final ODocument doc = new ODocument();
+                  if (embeddedType != null)
+                    doc.setClassName(embeddedType.getName());
+
+                  doc.fromMap((Map<String, Object>) o);
+
+                  set.add(doc);
+                } else if (o instanceof OIdentifiable)
+                  set.add(((OIdentifiable) o).getRecord());
+                else
+                  set.add(o);
+              }
+
+              v = set;
+            }
+            break;
+
+          case EMBEDDEDLIST:
+            // CONVERT MAPS IN DOCUMENTS ASSIGNING THE CLASS TAKEN FROM SCHEMA
+            if (!(v instanceof Map) && OMultiValue.isMultiValue(v)) {
+              final List set = new ArrayList();
+              final OClass embeddedType = p.getLinkedClass();
+
+              for (Object o : OMultiValue.getMultiValueIterable(v)) {
+                if (o instanceof Map) {
+                  final ODocument doc = new ODocument();
+                  if (embeddedType != null)
+                    doc.setClassName(embeddedType.getName());
+
+                  doc.fromMap((Map<String, Object>) o);
+
+                  set.add(doc);
+                } else if (o instanceof OIdentifiable)
+                  set.add(((OIdentifiable) o).getRecord());
+                else
+                  set.add(o);
+              }
+
+              v = set;
+            }
+            break;
+          }
+        }
+      }
+
+      fields.put(fieldName, v);
       parserSkipWhiteSpaces();
     }
 
