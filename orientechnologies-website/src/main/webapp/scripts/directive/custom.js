@@ -70,6 +70,8 @@ angular.module('webappApp').directive('vueEditor', function ($timeout, $compile,
             });
           }
         })
+
+
         if (!editor) {
           var defaultVal = scope.preview ? 'No description' : '';
           editor = new Vue({
@@ -88,7 +90,11 @@ angular.module('webappApp').directive('vueEditor', function ($timeout, $compile,
           var defaultVal = scope.preview ? 'No description' : '';
           editor.$data.input = value || defaultVal
         }
-
+        scope.selectActor = function (item) {
+          var selected = item.label;
+          editor.$data.input += selected;
+          return selected;
+        }
       }
     }
   }

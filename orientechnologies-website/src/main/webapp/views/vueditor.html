@@ -1,4 +1,4 @@
-<textarea class="vue-editor" mentio  mentio-typed-text="typedTerm"  mentio-items="actors | filter:label:typedTerm" ng-model="dummy" ng-hide="preview" v-model="input" placeholder="Leave a comment"></textarea>
+<textarea class="vue-editor" mentio  mentio-typed-text="typedTerm"  mentio-select="selectActor(item)" mentio-items="actors | filter:label:typedTerm" ng-model="dummy" ng-hide="preview" v-model="input" placeholder="Leave a comment"></textarea>
 <div class="mkd-preview" ng-show="preview" v-html="input | marked"></div>
 
 

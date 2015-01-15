@@ -105,7 +105,7 @@
               </h5>
 
               <p class="issue-info">#{{issue.iid}} <a ng-show="issue.number"
-                                                      href="{{githubIssue + '/' + issue.repository.name + '/issues/' + issue.number}}"><span
+                                                      href="{{githubIssue + '/' + issue.repository.name + '/issues/' + issue.number}}" target="_blank"><span
                 class="label label-warning">{{ issue.repository.name + '/' + issue.number }}</span></a>
                 opened {{issue.createdAt | fromNow}} by {{issue.user.name}}
                 <i ng-show="issue.milestone" class="fa fa-milestoned"> {{ issue.milestone.title }}</i>
