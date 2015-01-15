@@ -20,6 +20,13 @@
 
 package com.orientechnologies.orient.core.db.document;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
@@ -106,13 +113,6 @@ import com.orientechnologies.orient.core.tx.OTransactionRealAbstract;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.Callable;
 
 @SuppressWarnings("unchecked")
 public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> implements ODatabaseDocumentInternal {
@@ -943,7 +943,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       if (rec == null)
         return ORecordHook.RESULT.RECORD_NOT_CHANGED;
 
-      OScenarioThreadLocal.RUN_MODE runMode = OScenarioThreadLocal.INSTANCE.get();
+      final OScenarioThreadLocal.RUN_MODE runMode = OScenarioThreadLocal.INSTANCE.get();
 
       boolean recordChanged = false;
       for (ORecordHook hook : hooks.keySet()) {
@@ -1018,7 +1018,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-  public boolean declareIntent(OIntent iIntent) {
+  public boolean declareIntent(final OIntent iIntent) {
     if (currentIntent != null) {
       if (iIntent != null && iIntent.getClass().equals(currentIntent.getClass()))
         // SAME INTENT: JUMP IT
@@ -1112,7 +1112,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-  public boolean existsCluster(String iClusterName) {
+  public boolean existsCluster(final String iClusterName) {
     return storage.getClusterNames().contains(iClusterName.toLowerCase());
   }
 
@@ -1122,7 +1122,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-  public int getClusterIdByName(String iClusterName) {
+  public int getClusterIdByName(final String iClusterName) {
     if (iClusterName == null)
       return -1;
 
@@ -1130,7 +1130,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-  public String getClusterNameById(int iClusterId) {
+  public String getClusterNameById(final int iClusterId) {
     if (iClusterId == -1)
       return null;
 
@@ -1139,7 +1139,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-  public long getClusterRecordSizeByName(String clusterName) {
+  public long getClusterRecordSizeByName(final String clusterName) {
     try {
       return storage.getClusterById(getClusterIdByName(clusterName)).getRecordsSize();
     } catch (Exception e) {
@@ -1148,7 +1148,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-  public long getClusterRecordSizeById(int clusterId) {
+  public long getClusterRecordSizeById(final int clusterId) {
     try {
       return storage.getClusterById(clusterId).getRecordsSize();
     } catch (Exception e) {
@@ -1162,27 +1162,27 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-  public int addCluster(String iClusterName, Object... iParameters) {
+  public int addCluster(final String iClusterName, final Object... iParameters) {
     return storage.addCluster(iClusterName, false, iParameters);
   }
 
   @Override
-  public int addCluster(String iClusterName, int iRequestedId, Object... iParameters) {
+  public int addCluster(final String iClusterName, final int iRequestedId, final Object... iParameters) {
     return storage.addCluster(iClusterName, iRequestedId, false, iParameters);
   }
 
   @Override
-  public boolean dropCluster(String iClusterName, boolean iTruncate) {
+  public boolean dropCluster(final String iClusterName, final boolean iTruncate) {
     return storage.dropCluster(iClusterName, iTruncate);
   }
 
   @Override
-  public boolean dropCluster(int iClusterId, boolean iTruncate) {
+  public boolean dropCluster(final int iClusterId, final boolean iTruncate) {
     return storage.dropCluster(iClusterId, iTruncate);
   }
 
   @Override
-  public Object setProperty(String iName, Object iValue) {
+  public Object setProperty(final String iName, final Object iValue) {
     if (iValue == null)
       return properties.remove(iName.toLowerCase());
     else
@@ -1190,7 +1190,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-  public Object getProperty(String iName) {
+  public Object getProperty(final String iName) {
     return properties.get(iName.toLowerCase());
   }
 
@@ -1200,7 +1200,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-  public Object get(ATTRIBUTES iAttribute) {
+  public Object get(final ATTRIBUTES iAttribute) {
     if (iAttribute == null)
       throw new IllegalArgumentException("attribute is null");
 
@@ -1246,7 +1246,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-  public <DB extends ODatabase> DB set(ATTRIBUTES iAttribute, Object iValue) {
+  public <DB extends ODatabase> DB set(final ATTRIBUTES iAttribute, final Object iValue) {
     if (iAttribute == null)
       throw new IllegalArgumentException("attribute is null");
 
@@ -1346,6 +1346,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       break;
 
     case CONFLICTSTRATEGY:
+      storage.setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(stringValue));
       storage.getConfiguration().setConflictStrategy(stringValue);
       storage.getConfiguration().update();
       break;
@@ -1359,17 +1360,17 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-  public ORecordMetadata getRecordMetadata(ORID rid) {
+  public ORecordMetadata getRecordMetadata(final ORID rid) {
     return storage.getRecordMetadata(rid);
   }
 
   @Override
-  public void freezeCluster(int iClusterId) {
+  public void freezeCluster(final int iClusterId) {
     freezeCluster(iClusterId, false);
   }
 
   @Override
-  public void releaseCluster(int iClusterId) {
+  public void releaseCluster(final int iClusterId) {
     final OLocalPaginatedStorage storage;
     if (getStorage() instanceof OLocalPaginatedStorage)
       storage = ((OLocalPaginatedStorage) getStorage());
@@ -1382,7 +1383,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   @Override
-  public void freezeCluster(int iClusterId, boolean throwException) {
+  public void freezeCluster(final int iClusterId, final boolean throwException) {
     if (getStorage() instanceof OLocalPaginatedStorage) {
       final OLocalPaginatedStorage paginatedStorage = ((OLocalPaginatedStorage) getStorage());
       paginatedStorage.freeze(throwException, iClusterId);
@@ -2754,7 +2755,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
   }
 
-  private void checkRecordClass(ORecord record, String iClusterName, ORecordId rid, boolean isNew) {
+  private void checkRecordClass(final ORecord record, final String iClusterName, final ORecordId rid, final boolean isNew) {
     if (rid.clusterId > -1 && getStorageVersions().classesAreDetectedByClusterId() && isNew && record instanceof ODocument) {
       final ODocument recordSchemaAware = (ODocument) record;
       final OClass recordClass = ODocumentInternal.getImmutableSchemaClass(recordSchemaAware);
@@ -2766,18 +2767,16 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
   }
 
-  private byte[] updateStream(ORecord record) {
-    byte[] stream;
+  private byte[] updateStream(final ORecord record) {
     ORecordInternal.unsetDirty(record);
     record.setDirty();
     ORecordSerializationContext.pullContext();
     ORecordSerializationContext.pushContext();
 
-    stream = record.toStream();
-    return stream;
+    return record.toStream();
   }
 
-  private void releaseIndexModificationLock(Set<OIndex<?>> lockedIndexes) {
+  private void releaseIndexModificationLock(final Set<OIndex<?>> lockedIndexes) {
     if (metadata == null)
       return;
 
@@ -2790,7 +2789,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
   }
 
-  private void acquireIndexModificationLock(ODocument doc, Set<OIndex<?>> lockedIndexes) {
+  private void acquireIndexModificationLock(final ODocument doc, final Set<OIndex<?>> lockedIndexes) {
     if (getStorage().getUnderlying() instanceof OAbstractPaginatedStorage) {
       final OClass cls = ODocumentInternal.getImmutableSchemaClass(doc);
       if (cls != null) {

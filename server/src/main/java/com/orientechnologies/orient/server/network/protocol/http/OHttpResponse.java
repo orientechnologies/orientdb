@@ -19,11 +19,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
-import java.io.*;
-import java.nio.charset.Charset;
-import java.util.*;
-import java.util.zip.GZIPOutputStream;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OCallable;
@@ -32,30 +27,46 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.StringWriter;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.GZIPOutputStream;
+
 /**
  * Maintains information about current HTTP response.
  *
  * @author Luca Garulli
  */
 public class OHttpResponse {
-  public static final  String  JSON_FORMAT   = "type,indent:-1,rid,version,attribSameRow,class,keepTypes,alwaysFetchEmbeddedDocuments";
-  public static final  char[]  URL_SEPARATOR = { '/' };
+  public static final String   JSON_FORMAT   = "type,indent:-1,rid,version,attribSameRow,class,keepTypes,alwaysFetchEmbeddedDocuments";
+  public static final char[]   URL_SEPARATOR = { '/' };
   private static final Charset utf8          = Charset.forName("utf8");
-  public final  String       httpVersion;
-  private final OutputStream out;
-  public        String       headers;
-  public        String[]     additionalHeaders;
-  public        String       characterSet;
-  public        String       contentType;
-  public        String       serverInfo;
+  public final String          httpVersion;
+  private final OutputStream   out;
+  public String                headers;
+  public String[]              additionalHeaders;
+  public String                characterSet;
+  public String                contentType;
+  public String                serverInfo;
 
-  public String sessionId;
-  public String callbackFunction;
-  public String contentEncoding;
-  public boolean sendStarted = false;
-  public String content;
-  public int    code;
-  public boolean keepAlive = true;
+  public String                sessionId;
+  public String                callbackFunction;
+  public String                contentEncoding;
+  public boolean               sendStarted   = false;
+  public String                content;
+  public int                   code;
+  public boolean               keepAlive     = true;
 
   public OHttpResponse(final OutputStream iOutStream, final String iHttpVersion, final String[] iAdditionalHeaders,
       final String iResponseCharSet, final String iServerInfo, final String iSessionId, final String iCallbackFunction,
@@ -174,11 +185,15 @@ public class OHttpResponse {
   }
 
   public void writeResult(Object iResult) throws InterruptedException, IOException {
-    writeResult(iResult, null, null);
+    writeResult(iResult, null, null, null);
   }
 
-  @SuppressWarnings("unchecked")
-  public void writeResult(Object iResult, final String iFormat, final String accept) throws InterruptedException, IOException {
+  public void writeResult(Object iResult, final String iFormat, final String iAccept) throws InterruptedException, IOException {
+    writeResult(iResult, iFormat, iAccept, null);
+  }
+
+  public void writeResult(Object iResult, final String iFormat, final String iAccept,
+      final Map<String, Object> iAdditionalProperties) throws InterruptedException, IOException {
     if (iResult == null) {
       send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
     } else {
@@ -208,23 +223,27 @@ public class OHttpResponse {
       if (newResult == null) {
         send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "", OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
       } else {
-        writeRecords(newResult, null, iFormat, accept);
+        writeRecords(newResult, null, iFormat, iAccept, iAdditionalProperties);
       }
     }
   }
 
   public void writeRecords(final Object iRecords) throws IOException {
-    writeRecords(iRecords, null, null, null);
+    writeRecords(iRecords, null, null, null, null);
   }
 
   public void writeRecords(final Object iRecords, final String iFetchPlan) throws IOException {
-    writeRecords(iRecords, iFetchPlan, null, null);
+    writeRecords(iRecords, iFetchPlan, null, null, null);
   }
 
   public void writeRecords(final Object iRecords, final String iFetchPlan, String iFormat, final String accept) throws IOException {
-    if (iRecords == null) {
+    writeRecords(iRecords, iFetchPlan, iFormat, accept, null);
+  }
+
+  public void writeRecords(final Object iRecords, final String iFetchPlan, String iFormat, final String accept,
+      final Map<String, Object> iAdditionalProperties) throws IOException {
+    if (iRecords == null)
       return;
-    }
 
     final Iterator<Object> it = OMultiValue.getMultiValueIterator(iRecords);
 
@@ -260,9 +279,9 @@ public class OHttpResponse {
           try {
             // WRITE THE HEADER
             for (int col = 0; col < orderedColumns.size(); ++col) {
-              if (col > 0) {
+              if (col > 0)
                 iArgument.write(',');
-              }
+
               iArgument.write(orderedColumns.get(col).getBytes());
             }
             iArgument.write(OHttpUtils.EOL);
@@ -276,9 +295,9 @@ public class OHttpResponse {
 
                 Object value = doc.field(orderedColumns.get(col));
                 if (value != null) {
-                  if (!(value instanceof Number)) {
+                  if (!(value instanceof Number))
                     value = "\"" + value + "\"";
-                  }
+
                   iArgument.write(value.toString().getBytes());
                 }
               }
@@ -295,11 +314,10 @@ public class OHttpResponse {
         }
       });
     } else {
-      if (iFormat == null) {
+      if (iFormat == null)
         iFormat = JSON_FORMAT;
-      } else {
+      else
         iFormat = JSON_FORMAT + "," + iFormat;
-      }
 
       final StringWriter buffer = new StringWriter();
       final OJSONWriter json = new OJSONWriter(buffer, iFormat);
@@ -311,6 +329,18 @@ public class OHttpResponse {
       json.beginCollection(-1, true, "result");
       formatMultiValue(it, buffer, format);
       json.endCollection(-1, true);
+
+      if (iAdditionalProperties != null) {
+        for (Map.Entry<String, Object> entry : iAdditionalProperties.entrySet()) {
+          final Object v = entry.getValue();
+          if (OMultiValue.isMultiValue(v)) {
+            json.beginCollection(-1, true, entry.getKey());
+            formatMultiValue(OMultiValue.getMultiValueIterator(v), buffer, format);
+            json.endCollection(-1, true);
+          } else
+            json.writeAttribute(entry.getKey(), v);
+        }
+      }
 
       json.endObject();
       send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);

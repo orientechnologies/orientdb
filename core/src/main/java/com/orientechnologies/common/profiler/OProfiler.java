@@ -49,6 +49,7 @@ public class OProfiler extends OAbstractProfiler {
   public boolean startRecording() {
     if (super.startRecording()) {
       counters.clear();
+      tips.clear();
       return true;
     }
     return false;
@@ -57,6 +58,7 @@ public class OProfiler extends OAbstractProfiler {
   public boolean stopRecording() {
     if (super.stopRecording()) {
       counters.clear();
+      tips.clear();
       return true;
     }
     return false;

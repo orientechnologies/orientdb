@@ -19,15 +19,6 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.Lock;
-
 import com.hazelcast.core.IQueue;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -49,6 +40,15 @@ import com.orientechnologies.orient.server.distributed.task.OResurrectRecordTask
 import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
 import com.orientechnologies.orient.server.distributed.task.OTxTask;
 import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Hazelcast implementation of distributed peer. There is one instance per database. Each node creates own instance to talk with
@@ -276,7 +276,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   protected void checkForServerOnline(ODistributedRequest iRequest) throws ODistributedException {
     final ODistributedServerManager.NODE_STATUS srvStatus = manager.getNodeStatus();
     if (srvStatus == ODistributedServerManager.NODE_STATUS.OFFLINE
-        || srvStatus == ODistributedServerManager.NODE_STATUS.SHUTDOWNING) {
+        || srvStatus == ODistributedServerManager.NODE_STATUS.SHUTTINGDOWN) {
       ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.OUT,
           "Local server is not online (status='%s'). Request %s will be ignored", srvStatus, iRequest);
       throw new ODistributedException("Local server is not online (status='" + srvStatus + "'). Request " + iRequest
@@ -421,7 +421,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     final List<String> foundPartition = cfg.addNewNodeInServerList(getLocalNodeName());
     if (foundPartition != null) {
       // SET THE NODE.DB AS OFFLINE, READY TO BE SYNCHRONIZED
-      manager.setDatabaseStatus(getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.OFFLINE);
+      manager.setDatabaseStatus(getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
       ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "adding node '%s' in partition: db=%s %s",
           getLocalNodeName(), databaseName, foundPartition);
