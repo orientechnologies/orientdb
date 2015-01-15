@@ -189,31 +189,31 @@ public class Orient extends OListenerManger<OOrientListener> {
       if (OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP.getValueAsBoolean())
         OGlobalConfiguration.dumpConfiguration(System.out);
 
+      for (OOrientStartupListener l : startupListeners)
+        try {
+          if (l != null)
+            l.onStartup();
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error on startup", e);
+        }
+
+      purgeWeakStartupListeners();
+      for (final WeakHashSetValueHolder<OOrientStartupListener> wl : weakStartupListeners)
+        try {
+          if (wl != null) {
+            final OOrientStartupListener l = wl.get();
+            if (l != null)
+              l.onStartup();
+          }
+
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error on startup", e);
+        }
+
       active = true;
     } finally {
       engineLock.writeLock().unlock();
     }
-
-    for (OOrientStartupListener l : startupListeners)
-      try {
-        if (l != null)
-          l.onStartup();
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "Error on startup", e);
-      }
-
-    purgeWeakStartupListeners();
-    for (final WeakHashSetValueHolder<OOrientStartupListener> wl : weakStartupListeners)
-      try {
-        if (wl != null) {
-          final OOrientStartupListener l = wl.get();
-          if (l != null)
-            l.onStartup();
-        }
-
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "Error on startup", e);
-      }
 
     return this;
   }
@@ -259,38 +259,35 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       profiler.shutdown();
 
-    } finally {
-      engineLock.writeLock().unlock();
-    }
+      // CALL THE SHUTDOWN ON ALL THE LISTENERS
+      for (OOrientListener l : browseListeners()) {
+        if (l != null)
+          try {
+            l.onShutdown();
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error during orient shutdown.", e);
+          }
 
-    // CALL THE SHUTDOWN ON ALL THE LISTENERS
-    for (OOrientListener l : browseListeners()) {
-      if (l != null)
+      }
+
+      purgeWeakShutdownListeners();
+      for (final WeakHashSetValueHolder<OOrientShutdownListener> wl : weakShutdownListeners)
         try {
-          l.onShutdown();
+          if (wl != null) {
+            final OOrientShutdownListener l = wl.get();
+            if (l != null)
+              l.onShutdown();
+          }
+
         } catch (Exception e) {
           OLogManager.instance().error(this, "Error during orient shutdown.", e);
         }
 
+      OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
+      OLogManager.instance().flush();
+    } finally {
+      engineLock.writeLock().unlock();
     }
-
-    purgeWeakShutdownListeners();
-    for (final WeakHashSetValueHolder<OOrientShutdownListener> wl : weakShutdownListeners)
-      try {
-        if (wl != null) {
-          final OOrientShutdownListener l = wl.get();
-          if (l != null)
-            l.onShutdown();
-        }
-
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "Error during orient shutdown.", e);
-      }
-
-		resetListeners();
-
-		OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
-    OLogManager.instance().flush();
 
     return this;
   }
