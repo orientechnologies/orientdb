@@ -299,6 +299,8 @@ schemaModule.controller("ClassEditController", ['$scope', '$routeParams', '$loca
             if (arrayToUpdate) {
                 arrayToUpdate.forEach(function (v) {
                     var val = properties[result][v];
+                    if (val == 'Case Insensitive')
+                      val = 'ci';
                     PropertyAlterApi.changeProperty($routeParams.database, { clazz: $scope.class2show, property: keyName, name: v, value: val}).then(function (data) {
                         var noti = S("The {{prop}} value of the property {{name}} has been modified to {{newVal}}").template({ name: keyName, prop: v, newVal: val}).s;
                         Notification.push({content: noti});
