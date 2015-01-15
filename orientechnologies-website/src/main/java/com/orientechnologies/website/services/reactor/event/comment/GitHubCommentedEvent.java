@@ -47,6 +47,7 @@ public class GitHubCommentedEvent implements GithubCommentEvent {
 
         Comment comment = commentRepository.findByIssueAndCommentId(issueDto, gComment.getId());
         if (comment == null) {
+            comment = new Comment();
             comment.setCommentId(gComment.getId());
             comment.setBody(gComment.getBody());
             GUser user = gComment.getUser();
