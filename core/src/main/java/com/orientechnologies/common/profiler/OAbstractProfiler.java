@@ -347,7 +347,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
   }
 
   protected void installMemoryChecker() {
-    Orient.instance().getTimer().schedule(new MemoryChecker(), 120000, 120000);
+    Orient.instance().scheduleTask(new MemoryChecker(), 120000, 120000);
   }
 
   /**

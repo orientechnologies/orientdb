@@ -44,11 +44,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -69,8 +65,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   protected final ThreadGroup                                                          threadGroup;
   protected final AtomicInteger                                                        serialId                      = new AtomicInteger();
   private final ReadWriteLock                                                          engineLock                    = new ReentrantReadWriteLock();
-  protected volatile Timer                                                             timer                         = new Timer(
-                                                                                                                         true);
+  protected volatile Timer                                                             timer;
   protected ORecordFactoryManager                                                      recordFactoryManager          = new ORecordFactoryManager();
   protected ORecordConflictStrategyFactory                                             recordConflictStrategy        = new ORecordConflictStrategyFactory();
   protected OrientShutdownHook                                                         shutdownHook;
@@ -153,7 +148,7 @@ public class Orient extends OListenerManger<OOrientListener> {
         return this;
 
       if (timer == null)
-        timer = new Timer();
+        timer = new Timer(true);
 
       shutdownHook = new OrientShutdownHook();
       if (signalHandler == null) {
@@ -292,6 +287,30 @@ public class Orient extends OListenerManger<OOrientListener> {
     return this;
   }
 
+  public void scheduleTask(TimerTask task, long delay, long period) {
+    engineLock.readLock().lock();
+    try {
+      if (active)
+        timer.schedule(task, delay, period);
+      else
+        OLogManager.instance().warn(this, "OrientDB engine is down. Task will not be scheduled.");
+    } finally {
+      engineLock.readLock().unlock();
+    }
+  }
+
+  public void scheduleTask(TimerTask task, Date firstTime, long period) {
+    engineLock.readLock().lock();
+    try {
+      if (active)
+        timer.schedule(task, firstTime, period);
+      else
+        OLogManager.instance().warn(this, "OrientDB engine is down. Task will not be scheduled.");
+    } finally {
+      engineLock.readLock().unlock();
+    }
+  }
+
   public void closeAllStorages() {
     engineLock.writeLock().lock();
     try {
@@ -311,8 +330,44 @@ public class Orient extends OListenerManger<OOrientListener> {
     }
   }
 
+  public boolean isActive() {
+    return active;
+  }
+
+  /**
+   * @deprecated This method is not thread safe. Use {@link #submit(java.util.concurrent.Callable)}  instead.
+   */
+  @Deprecated
   public ThreadPoolExecutor getWorkers() {
     return workers;
+  }
+
+  public Future<?> submit(Runnable runnable) {
+    engineLock.readLock().lock();
+    try {
+      if (active)
+        return workers.submit(runnable);
+      else {
+        OLogManager.instance().warn(this, "OrientDB engine is down. Task will not be submitted.");
+        throw new IllegalStateException("OrientDB engine is down. Task will not be submitted.");
+      }
+    } finally {
+      engineLock.readLock().unlock();
+    }
+  }
+
+  public <V> Future<V> submit(Callable<V> callable) {
+    engineLock.readLock().lock();
+    try {
+      if (active)
+        return workers.submit(callable);
+      else {
+        OLogManager.instance().warn(this, "OrientDB engine is down. Task will not be submitted.");
+				throw new IllegalStateException("OrientDB engine is down. Task will not be submitted.");
+      }
+    } finally {
+      engineLock.readLock().unlock();
+    }
   }
 
   public OStorage loadStorage(String iURL) {
@@ -505,6 +560,10 @@ public class Orient extends OListenerManger<OOrientListener> {
     }
   }
 
+  /**
+   * @deprecated This method is not thread safe please use {@link #scheduleTask(java.util.TimerTask, long, long)} instead.
+   */
+  @Deprecated
   public Timer getTimer() {
     return timer;
   }

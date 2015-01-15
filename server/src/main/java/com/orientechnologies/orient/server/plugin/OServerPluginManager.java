@@ -93,7 +93,7 @@ public class OServerPluginManager implements OService {
         }
       };
 
-      Orient.instance().getTimer().schedule(timerTask, CHECK_DELAY, CHECK_DELAY);
+      Orient.instance().scheduleTask(timerTask, CHECK_DELAY, CHECK_DELAY);
       autoReloadTimerTask = timerTask;
     }
   }

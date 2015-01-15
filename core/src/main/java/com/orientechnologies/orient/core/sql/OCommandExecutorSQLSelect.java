@@ -1354,8 +1354,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final int cores = Runtime.getRuntime().availableProcessors();
     OLogManager.instance().debug(this, "Parallel query against %d threads", cores);
 
-    final ThreadPoolExecutor workers = Orient.instance().getWorkers();
-
     executing = true;
     final List<Future<?>> jobs = new ArrayList<Future<?>>();
 
@@ -1378,7 +1376,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         }
       };
 
-      jobs.add(workers.submit(job));
+      jobs.add(Orient.instance().submit(job));
     }
 
     if (OLogManager.instance().isDebugEnabled()) {

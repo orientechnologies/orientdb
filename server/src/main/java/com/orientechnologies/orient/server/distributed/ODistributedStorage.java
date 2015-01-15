@@ -146,8 +146,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
     Orient
         .instance()
-        .getTimer()
-        .schedule(purgeDeletedRecordsTask, OGlobalConfiguration.DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY.getValueAsLong(),
+        .scheduleTask(purgeDeletedRecordsTask, OGlobalConfiguration.DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY.getValueAsLong(),
             OGlobalConfiguration.DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY.getValueAsLong());
 
     asynchronousOperationsQueue = new ArrayBlockingQueue<OAsynchDistributedOperation>(10000);

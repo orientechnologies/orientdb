@@ -185,9 +185,9 @@ public class OAutomaticBackup extends OServerPluginAbstract {
     };
 
     if (firstTime == null)
-      Orient.instance().getTimer().schedule(timerTask, delay, delay);
+      Orient.instance().scheduleTask(timerTask, delay, delay);
     else
-      Orient.instance().getTimer().schedule(timerTask, firstTime, delay);
+      Orient.instance().scheduleTask(timerTask, firstTime, delay);
   }
 
   @Override
