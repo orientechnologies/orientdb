@@ -19,11 +19,12 @@
   */
 package com.orientechnologies.orient.core.sql;
 
+import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.util.Collection;
 import java.util.Map;
-
-import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Explains the execution of a command returning profiling information.
@@ -36,7 +37,7 @@ public class OCommandExecutorSQLExplain extends OCommandExecutorSQLDelegate {
 	@SuppressWarnings("unchecked")
 	@Override
 	public OCommandExecutorSQLExplain parse(OCommandRequest iCommand) {
-		String cmd = ((OCommandSQL) iCommand).getText();
+		final String cmd = ((OCommandRequestText) iCommand).getText();
 		super.parse(new OCommandSQL(cmd.substring(KEYWORD_EXPLAIN.length())));
 		return this;
 	}

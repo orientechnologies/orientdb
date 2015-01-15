@@ -37,6 +37,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugi
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
+import com.orientechnologies.orient.server.distributed.ODiscardedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
@@ -93,7 +94,7 @@ public class ODistributedWorker extends Thread {
     long lastMessageId = -1;
 
     for (long processedMessages = 0; running; processedMessages++) {
-      if (restoringMessages && processedMessages >= queuedMsg ) {
+      if (restoringMessages && processedMessages >= queuedMsg) {
         // END OF RESTORING MESSAGES, SET IT ONLINE
         ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
             "executed all pending tasks in queue (%d), set restoringMessages=false and database '%s' as online. Last req=%d",
@@ -231,6 +232,8 @@ public class ODistributedWorker extends Thread {
           ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
               "discarded request %d because waiting for %d request=%s sourceNode=%s", req.getId(),
               distributed.waitForMessageId.get(), req, req.getSenderNodeName());
+
+          sendResponseBack(req, req.getTask(), new ODiscardedResponse());
 
           // READ THE NEXT ONE
           req = nextMessage();

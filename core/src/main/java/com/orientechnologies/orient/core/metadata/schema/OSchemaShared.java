@@ -19,16 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
@@ -62,6 +52,16 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Shared schema class. It's shared by all the database instances that point to the same storage.
@@ -479,6 +479,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
       cmd = new StringBuilder("drop class ");
       cmd.append(className);
+      cmd.append(" unsafe");
 
       if (isDistributedCommand()) {
         final OAutoshardedStorage autoshardedStorage = (OAutoshardedStorage) storage;

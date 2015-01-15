@@ -15,28 +15,17 @@
  *  *  limitations under the License.
  *  *
  *  * For more information: http://www.orientechnologies.com
- *
+ *  
  */
+
 package com.orientechnologies.orient.server.distributed;
 
+import java.io.Serializable;
+
 /**
- *
- * @author Luca Garulli (l.garulli--at--orientechnologies.com)
- *
+ * Immutable class used to report back a discarded response.
  */
-public interface ODistributedResponse {
-
-  String getExecutorNodeName();
-
-  ODistributedResponse setExecutorNodeName(String iExecutor);
-
-  String getSenderNodeName();
-
-  Object getPayload();
-
-  ODistributedResponse setPayload(Object iPayload);
-
-  long getRequestId();
-
-  boolean isExecutedOnLocalNode();
+public class ODiscardedResponse implements Serializable {
+  public ODiscardedResponse() {
+  }
 }

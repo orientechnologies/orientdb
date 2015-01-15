@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.serialization.serializer;
 
-import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
@@ -30,7 +29,7 @@ public class ONetworkThreadLocalSerializer {
   private static volatile ThreadLocal<ORecordSerializer> networkSerializer = new ThreadLocal<ORecordSerializer>();
 
   public static ORecordSerializer getNetworkSerializer() {
-    return networkSerializer.get();
+    return networkSerializer != null ? networkSerializer.get() : null;
   }
 
   public static void setNetworkSerializer(ORecordSerializer value) {

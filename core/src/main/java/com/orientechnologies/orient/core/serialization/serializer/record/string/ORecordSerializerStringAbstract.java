@@ -429,12 +429,15 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     boolean integer = true;
     char c;
 
+    boolean stringStarBySign = false;
+
     for (int index = 0; index < iValue.length(); ++index) {
       c = iValue.charAt(index);
-      if (c < '0' || c > '9')
-        if ((index == 0 && (c == '+' || c == '-')))
+      if (c < '0' || c > '9') {
+        if ((index == 0 && (c == '+' || c == '-'))) {
+          stringStarBySign = true;
           continue;
-        else if (c == DECIMAL_SEPARATOR)
+        } else if (c == DECIMAL_SEPARATOR)
           integer = false;
         else {
           if (index > 0) {
@@ -465,7 +468,12 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
           }
           return iValue;
         }
+      } else if (stringStarBySign) {
+        stringStarBySign = false;
+      }
     }
+    if (stringStarBySign)
+      return iValue;
 
     if (integer) {
       try {
