@@ -117,8 +117,8 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
       document.field("keyTypes", keyTypeNames, OType.EMBEDDEDLIST);
       if (collate instanceof OCompositeCollate) {
         List<String> collatesNames = new ArrayList<String>();
-        for (OCollate collate : ((OCompositeCollate) collate).getCollates())
-          collatesNames.add(collate.getName());
+        for (OCollate curCollate : ((OCompositeCollate) this.collate).getCollates())
+          collatesNames.add(curCollate.getName());
         document.field("collates", collatesNames, OType.EMBEDDEDLIST);
       } else
         document.field("collate", collate.getName());
