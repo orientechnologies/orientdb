@@ -83,7 +83,7 @@ public class DbListenerTest extends DocumentDBBaseTest {
             final Object oldValue = iDocument.getOriginalValue(f);
             final Object newValue = iDocument.field(f);
 
-            System.out.println("Field " + f + " Old: " + oldValue + " -> " + newValue);
+//            System.out.println("Field " + f + " Old: " + oldValue + " -> " + newValue);
           }
           changes.put(iDocument, changedFields);
         }

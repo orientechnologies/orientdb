@@ -15,16 +15,14 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import java.io.IOException;
 
 @Test(groups = "db")
 public class DbCheckTest extends DocumentDBBaseTest implements OCommandOutputListener {
@@ -43,7 +41,7 @@ public class DbCheckTest extends DocumentDBBaseTest implements OCommandOutputLis
   @Override
   @Test(enabled = false)
   public void onMessage(final String iText) {
-    System.out.print(iText);
-    System.out.flush();
+//    System.out.print(iText);
+//    System.out.flush();
   }
 }

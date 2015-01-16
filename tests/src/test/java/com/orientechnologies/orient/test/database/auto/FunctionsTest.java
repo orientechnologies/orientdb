@@ -89,8 +89,8 @@ public class FunctionsTest extends DocumentDBBaseTest {
 
     final int TOT = 1000;
     final int threadNum = OGlobalConfiguration.SCRIPT_POOL.getValueAsInteger() * 3;
-    System.out.println("Starting " + threadNum + " concurrent threads with scriptPool="
-        + OGlobalConfiguration.SCRIPT_POOL.getValueAsInteger() + " executing function for " + TOT + " times");
+//    System.out.println("Starting " + threadNum + " concurrent threads with scriptPool="
+//        + OGlobalConfiguration.SCRIPT_POOL.getValueAsInteger() + " executing function for " + TOT + " times");
 
     final long startTime = System.currentTimeMillis();
 
@@ -123,8 +123,8 @@ public class FunctionsTest extends DocumentDBBaseTest {
     Assert.assertEquals(counter.get(), (long) threadNum * TOT);
 
     final long totalTime = System.currentTimeMillis() - startTime;
-    System.out.println("Executed in " + totalTime + "ms: select+fun()=" + (totalTime / ((float) threadNum * TOT))
-        + " select+fun()/sec=" + (1000 / (totalTime / ((float) threadNum * TOT))));
+//    System.out.println("Executed in " + totalTime + "ms: select+fun()=" + (totalTime / ((float) threadNum * TOT))
+//        + " select+fun()/sec=" + (1000 / (totalTime / ((float) threadNum * TOT))));
 
   }
 }

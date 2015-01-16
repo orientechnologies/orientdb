@@ -29,8 +29,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-import java.util.Set;
-
 public final class DatabaseConflictStategyTest {
 
   private String             dbName;
@@ -75,12 +73,12 @@ public final class DatabaseConflictStategyTest {
   }
 
   public void printVertex(String info, OrientVertex vtx) {
-    System.out.println("--------" + info + " ----------");
-    System.out.println(vtx);
-    Set<String> keys = vtx.getPropertyKeys();
-    for (String key : keys) {
-      System.out.println("Key = " + key + " Value = " + vtx.getProperty(key));
-    }
+//    System.out.println("--------" + info + " ----------");
+//    System.out.println(vtx);
+//    Set<String> keys = vtx.getPropertyKeys();
+//    for (String key : keys) {
+//      System.out.println("Key = " + key + " Value = " + vtx.getProperty(key));
+//    }
   }
 
   /**
@@ -133,7 +131,7 @@ public final class DatabaseConflictStategyTest {
   }
 
   private void log(String message) {
-    System.out.println(message);
+//    System.out.println(message);
   }
 
   private void log(String message, Throwable th) {
