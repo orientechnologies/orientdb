@@ -846,7 +846,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           }
         }
 
-        String p = projection.toUpperCase(Locale.ENGLISH);
+        String p = upperCase(projection);
         if (p.startsWith("FLATTEN(") || p.startsWith("EXPAND(")) {
           if (p.startsWith("FLATTEN(")) {
             OLogManager.instance().debug(this, "FLATTEN() operator has been replaced by EXPAND()");

@@ -339,6 +339,7 @@ public abstract class OBaseParser {
     final String text2Use = iUpperCase ? parserTextUpperCase : parserText;
     final int max = text2Use.length();
 
+    parserCurrentPos=parserCurrentPos+parserTextUpperCase.length()-parserText.length();
     // PARSE TILL 1 CHAR AFTER THE END TO SIMULATE A SEPARATOR AS EOF
     for (int i = 0; parserCurrentPos <= max; ++i) {
       final char ch = parserCurrentPos < max ? text2Use.charAt(parserCurrentPos) : '\n';

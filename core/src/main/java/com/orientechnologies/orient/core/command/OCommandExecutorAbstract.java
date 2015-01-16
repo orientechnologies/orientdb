@@ -51,8 +51,21 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
   public OCommandExecutorAbstract init(final OCommandRequestText iRequest) {
     getDatabase().checkSecurity(ORule.ResourceGeneric.COMMAND, ORole.PERMISSION_READ);
     parserText = iRequest.getText().trim();
-    parserTextUpperCase = parserText.toUpperCase(Locale.ENGLISH);
+    parserTextUpperCase = upperCase(parserText);
     return this;
+  }
+
+  protected String upperCase(String text) {
+    StringBuilder result = new StringBuilder(text.length());
+    for (char c : text.toCharArray()) {
+      String upper = ("" + c).toUpperCase(Locale.ENGLISH);
+      if (upper.length() > 1) {
+        result.append(c);
+      } else {
+        result.append(upper);
+      }
+    }
+    return result.toString();
   }
 
   @Override
