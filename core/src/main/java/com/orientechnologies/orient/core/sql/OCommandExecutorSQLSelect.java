@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OSharedResource;
@@ -86,6 +79,12 @@ import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.Future;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -764,24 +763,20 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   protected int parseProjections() {
-    if (!parserOptionalKeyword(KEYWORD_SELECT)) {
+    if (!parserOptionalKeyword(KEYWORD_SELECT))
       return -1;
-    }
 
     int upperBound = OStringSerializerHelper.getLowerIndexOf(parserTextUpperCase, parserGetCurrentPosition(), KEYWORD_FROM_2FIND,
         KEYWORD_LET_2FIND);
     if (upperBound == -1)
-    // UP TO THE END
-    {
+      // UP TO THE END
       upperBound = parserText.length();
-    }
 
     int lastRealPositionProjection = -1;
 
     int currPos = parserGetCurrentPosition();
-    if (currPos == -1) {
+    if (currPos == -1)
       return -1;
-    }
 
     final String projectionString = parserText.substring(currPos, upperBound);
     if (projectionString.trim().length() > 0) {
@@ -795,33 +790,29 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       for (String projectionItem : items) {
         String projection = OStringSerializerHelper.smartTrim(projectionItem.trim(), true, true);
 
-        if (projectionDefinition == null) {
+        if (projectionDefinition == null)
           throw new OCommandSQLParsingException("Projection not allowed with FLATTEN() and EXPAND() operators");
-        }
 
         final List<String> words = OStringSerializerHelper.smartSplit(projection, ' ');
 
         String fieldName;
         if (words.size() > 1 && words.get(1).trim().equalsIgnoreCase(KEYWORD_AS)) {
           // FOUND AS, EXTRACT ALIAS
-          if (words.size() < 3) {
+          if (words.size() < 3)
             throw new OCommandSQLParsingException("Found 'AS' without alias");
-          }
 
           fieldName = words.get(2).trim();
 
-          if (projectionDefinition.containsKey(fieldName)) {
+          if (projectionDefinition.containsKey(fieldName))
             throw new OCommandSQLParsingException("Field '" + fieldName
                 + "' is duplicated in current SELECT, choose a different name");
-          }
 
           projection = words.get(0).trim();
 
-          if (words.size() > 3) {
+          if (words.size() > 3)
             lastRealPositionProjection = projectionString.indexOf(words.get(3));
-          } else {
+          else
             lastRealPositionProjection += projectionItem.length() + 1;
-          }
 
         } else {
           // EXTRACT THE FIELD NAME WITHOUT FUNCTIONS AND/OR LINKS
@@ -830,32 +821,29 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
           lastRealPositionProjection = projectionString.indexOf(fieldName) + fieldName.length() + 1;
 
-          if (fieldName.charAt(0) == '@') {
+          if (fieldName.charAt(0) == '@')
             fieldName = fieldName.substring(1);
-          }
 
           endPos = extractProjectionNameSubstringEndPosition(fieldName);
 
-          if (endPos > -1) {
+          if (endPos > -1)
             fieldName = fieldName.substring(0, endPos);
-          }
 
           // FIND A UNIQUE NAME BY ADDING A COUNTER
-          for (int fieldIndex = 2; projectionDefinition.containsKey(fieldName); ++fieldIndex) {
+          for (int fieldIndex = 2; projectionDefinition.containsKey(fieldName); ++fieldIndex)
             fieldName += fieldIndex;
-          }
         }
 
-        String p = upperCase(projection);
+        final String p = upperCase(projection);
         if (p.startsWith("FLATTEN(") || p.startsWith("EXPAND(")) {
-          if (p.startsWith("FLATTEN(")) {
+          if (p.startsWith("FLATTEN("))
             OLogManager.instance().debug(this, "FLATTEN() operator has been replaced by EXPAND()");
-          }
+
           List<String> pars = OStringSerializerHelper.getParameters(projection);
-          if (pars.size() != 1) {
+          if (pars.size() != 1)
             throw new OCommandSQLParsingException(
                 "EXPAND/FLATTEN operators expects the field name as parameter. Example EXPAND( out )");
-          }
+
           expandTarget = OSQLHelper.parseValue(this, pars.get(0).trim(), context);
 
           // BY PASS THIS AS PROJECTION BUT TREAT IT AS SPECIAL
@@ -863,9 +851,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           projections = null;
 
           if (groupedResult == null && expandTarget instanceof OSQLFunctionRuntime
-              && ((OSQLFunctionRuntime) expandTarget).aggregateResults()) {
+              && ((OSQLFunctionRuntime) expandTarget).aggregateResults())
             getProjectionGroup(null);
-          }
 
           continue;
         }
@@ -895,13 +882,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
     }
 
-    if (upperBound < parserText.length() - 1) {
+    if (upperBound < parserText.length() - 1)
       parserSetCurrentPosition(upperBound);
-    } else if (lastRealPositionProjection > -1) {
+    else if (lastRealPositionProjection > -1)
       parserMoveCurrentPosition(lastRealPositionProjection);
-    } else {
+    else
       parserSetEndOfText();
-    }
 
     return parserGetCurrentPosition();
   }
@@ -1324,7 +1310,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
           if (queryScanThresholdWarning > 0 && browsed > queryScanThresholdWarning && compiledFilter != null) {
             reportTip(String
-                .format("Query '%s' fetched more than %d records: to speed up the execution, create an index or change the query to use an existent index", parserText, queryScanThresholdWarning));
+                .format(
+                    "Query '%s' fetched more than %d records: to speed up the execution, create an index or change the query to use an existent index",
+                    parserText, queryScanThresholdWarning));
             queryScanThresholdWarning = 0;
           }
         }
