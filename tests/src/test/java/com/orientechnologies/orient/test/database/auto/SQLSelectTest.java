@@ -965,7 +965,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
       last = resultset.get(resultset.size() - 1).getIdentity();
 
-      System.out.printf("\nIterating page %d, last record is %s", iterationCount, last);
+//      System.out.printf("\nIterating page %d, last record is %s", iterationCount, last);
 
       iterationCount++;
       resultset = database.query(query);
@@ -1225,7 +1225,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     List<ODocument> recordDocs = executeQuery(sb.toString(), graph.getRawGraph());
 
     for (ODocument doc : recordDocs) {
-      System.out.println(doc);
+//      System.out.println(doc);
     }
 
     graph.shutdown();
@@ -1281,8 +1281,8 @@ public class SQLSelectTest extends AbstractSelectTest {
 
     Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("p1", "a");
-    System.out.println(database.query(new OSQLSynchQuery<ODocument>("select from test where (f1 = :p1)"), parameters));
-    System.out.println(database.query(new OSQLSynchQuery<ODocument>("select from test where f1 = :p1 and f2 = :p1"), parameters));
+    database.query(new OSQLSynchQuery<ODocument>("select from test where (f1 = :p1)"), parameters);
+    database.query(new OSQLSynchQuery<ODocument>("select from test where f1 = :p1 and f2 = :p1"), parameters);
   }
 
   @Test

@@ -19,18 +19,17 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicLong;
-
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.test.ConcurrentTestHelper;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.sql.OCommandSQL;
-import com.orientechnologies.orient.test.ConcurrentTestHelper;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Test
 public class ConcurrentSchemaTest extends DocumentDBBaseTest {
@@ -109,7 +108,7 @@ public class ConcurrentSchemaTest extends DocumentDBBaseTest {
 
   @Test
   public void concurrentCommands() throws Exception {
-    System.out.println("Create classes, spanning " + THREADS + " threads...");
+//    System.out.println("Create classes, spanning " + THREADS + " threads...");
 
     ConcurrentTestHelper.test(THREADS, new ConcurrentTestHelper.TestFactory<Void>() {
       @Override
@@ -118,7 +117,7 @@ public class ConcurrentSchemaTest extends DocumentDBBaseTest {
       }
     });
 
-    System.out.println("Create classes, checking...");
+//    System.out.println("Create classes, checking...");
 
     for (int id = 0; id < THREADS; ++id) {
       for (int i = 0; i < CYCLES; ++i) {
@@ -127,7 +126,7 @@ public class ConcurrentSchemaTest extends DocumentDBBaseTest {
       }
     }
 
-    System.out.println("Dropping classes, spanning " + THREADS + " threads...");
+//    System.out.println("Dropping classes, spanning " + THREADS + " threads...");
 
     ConcurrentTestHelper.test(THREADS, new ConcurrentTestHelper.TestFactory<Void>() {
       @Override
@@ -136,7 +135,7 @@ public class ConcurrentSchemaTest extends DocumentDBBaseTest {
       }
     });
 
-    System.out.println("Done!");
+//    System.out.println("Done!");
 
     Assert.assertEquals(counter.get(), 0);
   }

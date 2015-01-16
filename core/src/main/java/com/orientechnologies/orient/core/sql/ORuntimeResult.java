@@ -94,7 +94,9 @@ public class ORuntimeResult {
         if (v.equals("*")) {
           // COPY ALL
           inputDocument.copyTo(iValue);
-          projectionValue = null;
+          // CONTINUE WITH NEXT ITEM
+          continue;
+
         } else if (v instanceof OSQLFilterItemVariable || v instanceof OSQLFilterItemField) {
           final OSQLFilterItemAbstract var = (OSQLFilterItemAbstract) v;
           final OPair<OSQLMethodRuntime, Object[]> last = var.getLastChainOperator();
@@ -115,8 +117,14 @@ public class ORuntimeResult {
         } else if (v instanceof OSQLFunctionRuntime) {
           final OSQLFunctionRuntime f = (OSQLFunctionRuntime) v;
           projectionValue = f.execute(inputDocument, inputDocument, iValue, iContext);
-        } else
+        } else {
+          if (v == null) {
+            // SIMPLE NULL VALUE: SET IT IN DOCUMENT
+            iValue.field(prjName, v);
+            continue;
+          }
           projectionValue = v;
+        }
 
         if (projectionValue != null)
           if (projectionValue instanceof ORidBag)

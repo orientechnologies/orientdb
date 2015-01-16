@@ -15,20 +15,18 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
-
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
 
 @Test(groups = { "index" })
 public class FullTextIndexTest extends DocumentDBBaseTest {
@@ -104,8 +102,8 @@ public class FullTextIndexTest extends DocumentDBBaseTest {
       doc.save();
     }
 
-    System.out.println("Indexed words: "
-        + database.getMetadata().getSchema().getClass("Whiz").getProperty("text").getIndex().getSize());
+//    System.out.println("Indexed words: "
+//        + database.getMetadata().getSchema().getClass("Whiz").getProperty("text").getIndex().getSize());
   }
 
   @Test(dependsOnMethods = "testFullTextInsertion")
