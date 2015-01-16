@@ -29,9 +29,9 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPagi
  */
 @Test
 public class WriteAheadLogTest {
-  private static final int ONE_KB = 1024;
+  private static final int   ONE_KB = 1024;
   private ODiskWriteAheadLog writeAheadLog;
-  private File             testDir;
+  private File               testDir;
 
   @BeforeClass
   public void beforeClass() {
@@ -498,7 +498,7 @@ public class WriteAheadLogTest {
     Random random = new Random(seed);
 
     for (int writtenSize = 0; writtenSize < 16 * OWALPage.PAGE_SIZE;) {
-      int contentSize = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 1;
+      int contentSize = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 2 * OIntegerSerializer.INT_SIZE + 5;
       OWALRecord walRecord = new TestRecord(contentSize, false);
 
       writeAheadLog.log(walRecord);
@@ -517,7 +517,7 @@ public class WriteAheadLogTest {
 
     OLogSequenceNumber end = null;
     for (int writtenSize = 0; writtenSize < 16 * OWALPage.PAGE_SIZE;) {
-      int contentSize = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 1;
+      int contentSize = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 2 * OIntegerSerializer.INT_SIZE + 5;;
       OWALRecord walRecord = new TestRecord(contentSize, false);
 
       end = writeAheadLog.log(walRecord);
