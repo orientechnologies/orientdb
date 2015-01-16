@@ -42,15 +42,13 @@ public class OSerializationSetThreadLocal extends ThreadLocal<Map<ODocument, Boo
   }
 
   static {
-    Orient.instance().registerWeakOrientStartupListener(new OOrientStartupListener() {
+    Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onStartup() {
         if (INSTANCE == null)
           INSTANCE = new OSerializationSetThreadLocal();
       }
-    });
 
-    Orient.instance().registerWeakOrientShutdownListener(new OOrientShutdownListener() {
       @Override
       public void onShutdown() {
         INSTANCE = null;

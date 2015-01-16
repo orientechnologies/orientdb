@@ -34,15 +34,13 @@ public class OGremlinEngineThreadLocal extends ThreadLocal<ScriptEngine> {
   public static volatile OGremlinEngineThreadLocal INSTANCE = new OGremlinEngineThreadLocal();
 
   static {
-    Orient.instance().registerWeakOrientStartupListener(new OOrientStartupListener() {
+    Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onStartup() {
         if (INSTANCE == null)
           INSTANCE = new OGremlinEngineThreadLocal();
       }
-    });
 
-    Orient.instance().registerWeakOrientShutdownListener(new OOrientShutdownListener() {
       @Override
       public void onShutdown() {
         INSTANCE = null;

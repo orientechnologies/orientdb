@@ -31,15 +31,13 @@ public class OObjectSerializationThreadLocal extends ThreadLocal<Map<Integer, Ob
   public static volatile OObjectSerializationThreadLocal INSTANCE = new OObjectSerializationThreadLocal();
 
   static {
-    Orient.instance().registerWeakOrientStartupListener(new OOrientStartupListener() {
+    Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onStartup() {
         if (INSTANCE == null)
           INSTANCE = new OObjectSerializationThreadLocal();
       }
-    });
 
-    Orient.instance().registerWeakOrientShutdownListener(new OOrientShutdownListener() {
       @Override
       public void onShutdown() {
         INSTANCE = null;

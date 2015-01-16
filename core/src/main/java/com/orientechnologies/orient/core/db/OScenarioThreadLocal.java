@@ -35,21 +35,18 @@ public class OScenarioThreadLocal extends ThreadLocal<RUN_MODE> {
   public static volatile OScenarioThreadLocal INSTANCE = new OScenarioThreadLocal();
 
   static {
-    Orient.instance().registerWeakOrientStartupListener(new OOrientStartupListener() {
+    Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onStartup() {
         if (INSTANCE == null)
           INSTANCE = new OScenarioThreadLocal();
       }
-    });
 
-    Orient.instance().registerWeakOrientShutdownListener(new OOrientShutdownListener() {
       @Override
       public void onShutdown() {
         INSTANCE = null;
       }
     });
-
   }
 
   public enum RUN_MODE {

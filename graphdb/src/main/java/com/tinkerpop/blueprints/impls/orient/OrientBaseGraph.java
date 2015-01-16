@@ -100,7 +100,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
                                                                                     }
                                                                                   };
   static {
-    Orient.instance().registerWeakOrientStartupListener(new OOrientStartupListener() {
+    Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onStartup() {
         if (activeGraph == null)
@@ -113,9 +113,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
             }
           };
       }
-    });
 
-    Orient.instance().registerWeakOrientShutdownListener(new OOrientShutdownListener() {
       @Override
       public void onShutdown() {
         activeGraph = null;

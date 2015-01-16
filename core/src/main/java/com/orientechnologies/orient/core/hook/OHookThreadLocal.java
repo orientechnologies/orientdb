@@ -38,21 +38,18 @@ public class OHookThreadLocal extends ThreadLocal<Set<OIdentifiable>> {
   public static volatile OHookThreadLocal INSTANCE = new OHookThreadLocal();
 
   static {
-    Orient.instance().registerWeakOrientStartupListener(new OOrientStartupListener() {
+    Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onStartup() {
         if (INSTANCE == null)
           INSTANCE = new OHookThreadLocal();
       }
-    });
 
-    Orient.instance().registerWeakOrientShutdownListener(new OOrientShutdownListener() {
       @Override
       public void onShutdown() {
         INSTANCE = null;
       }
     });
-
   }
 
   public boolean push(final OIdentifiable iRecord) {

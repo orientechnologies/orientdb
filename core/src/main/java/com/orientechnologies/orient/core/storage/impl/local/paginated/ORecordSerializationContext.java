@@ -42,25 +42,23 @@ public class ORecordSerializationContext {
                                                                                                         }
                                                                                                       };
   static {
-    Orient.instance().registerWeakOrientStartupListener(new OOrientStartupListener() {
-      @Override
-      public void onStartup() {
-        if (SERIALIZATION_CONTEXT_STACK == null)
-          SERIALIZATION_CONTEXT_STACK = new ThreadLocal<Deque<ORecordSerializationContext>>() {
-            @Override
-            protected Deque<ORecordSerializationContext> initialValue() {
-              return new ArrayDeque<ORecordSerializationContext>();
-            }
-          };
-      }
-    });
+    Orient.instance().registerListener(new OOrientListenerAbstract() {
+			@Override
+			public void onStartup() {
+				if (SERIALIZATION_CONTEXT_STACK == null)
+					SERIALIZATION_CONTEXT_STACK = new ThreadLocal<Deque<ORecordSerializationContext>>() {
+						@Override
+						protected Deque<ORecordSerializationContext> initialValue() {
+							return new ArrayDeque<ORecordSerializationContext>();
+						}
+					};
+			}
 
-    Orient.instance().registerWeakOrientShutdownListener(new OOrientShutdownListener() {
-      @Override
-      public void onShutdown() {
-        SERIALIZATION_CONTEXT_STACK = null;
-      }
-    });
+			@Override
+			public void onShutdown() {
+				SERIALIZATION_CONTEXT_STACK = null;
+			}
+		});
   }
   private final Deque<ORecordSerializationOperation>                      operations                  = new ArrayDeque<ORecordSerializationOperation>();
 
