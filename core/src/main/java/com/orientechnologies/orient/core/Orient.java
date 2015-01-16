@@ -50,52 +50,51 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Orient extends OListenerManger<OOrientListener> {
-  public static final String                                                           ORIENTDB_HOME                 = "ORIENTDB_HOME";
-  public static final String                                                           URL_SYNTAX                    = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
+  public static final String                                                         ORIENTDB_HOME                 = "ORIENTDB_HOME";
+  public static final String                                                         URL_SYNTAX                    = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
 
-  protected static Orient                                                              instance                      = new Orient();
-  protected static boolean                                                             registerDatabaseByPath        = false;
+  private static final Orient                                                        instance                      = new Orient();
+  private static volatile boolean                                                    registerDatabaseByPath        = false;
 
-  protected final ConcurrentMap<String, OEngine>                                       engines                       = new ConcurrentHashMap<String, OEngine>();
-  protected final ConcurrentMap<String, OStorage>                                      storages                      = new ConcurrentHashMap<String, OStorage>();
+  private final ConcurrentMap<String, OEngine>                                       engines                       = new ConcurrentHashMap<String, OEngine>();
+  private final ConcurrentMap<String, OStorage>                                      storages                      = new ConcurrentHashMap<String, OStorage>();
 
-  protected final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners          = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
-  protected final ODatabaseFactory                                                     databaseFactory               = new ODatabaseFactory();
-  protected final OScriptManager                                                       scriptManager                 = new OScriptManager();
-  protected final ThreadGroup                                                          threadGroup;
-  protected final AtomicInteger                                                        serialId                      = new AtomicInteger();
-  private final ReadWriteLock                                                          engineLock                    = new ReentrantReadWriteLock();
-  protected volatile Timer                                                             timer;
-  protected ORecordFactoryManager                                                      recordFactoryManager          = new ORecordFactoryManager();
-  protected ORecordConflictStrategyFactory                                             recordConflictStrategy        = new ORecordConflictStrategyFactory();
-  protected OrientShutdownHook                                                         shutdownHook;
-  protected OProfilerMBean                                                             profiler;
-  protected ODatabaseThreadLocalFactory                                                databaseThreadFactory;
-  protected volatile boolean                                                           active                        = false;
-  protected ThreadPoolExecutor                                                         workers;
-  protected OSignalHandler                                                             signalHandler;
+  private final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners          = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
+  private final ODatabaseFactory                                                     databaseFactory               = new ODatabaseFactory();
+  private final OScriptManager                                                       scriptManager                 = new OScriptManager();
+  private final ThreadGroup                                                          threadGroup;
+  private final AtomicInteger                                                        serialId                      = new AtomicInteger();
+  private final ReadWriteLock                                                        engineLock                    = new ReentrantReadWriteLock();
+  private volatile Timer                                                             timer;
+  private volatile ORecordFactoryManager                                             recordFactoryManager          = new ORecordFactoryManager();
+  private final ORecordConflictStrategyFactory                                       recordConflictStrategy        = new ORecordConflictStrategyFactory();
+  private OrientShutdownHook                                                         shutdownHook;
+  private volatile OProfilerMBean                                                    profiler;
+  private ODatabaseThreadLocalFactory                                                databaseThreadFactory;
+  private volatile boolean                                                           active                        = false;
+  private ThreadPoolExecutor                                                         workers;
+  private OSignalHandler                                                             signalHandler;
 
-  private final ReferenceQueue<OOrientStartupListener>                                 removedStartupListenersQueue  = new ReferenceQueue<OOrientStartupListener>();
-  private final ReferenceQueue<OOrientShutdownListener>                                removedShutdownListenersQueue = new ReferenceQueue<OOrientShutdownListener>();
+  private final ReferenceQueue<OOrientStartupListener>                               removedStartupListenersQueue  = new ReferenceQueue<OOrientStartupListener>();
+  private final ReferenceQueue<OOrientShutdownListener>                              removedShutdownListenersQueue = new ReferenceQueue<OOrientShutdownListener>();
 
-  private final Set<OOrientStartupListener>                                            startupListeners              = Collections
-                                                                                                                         .newSetFromMap(new ConcurrentHashMap<OOrientStartupListener, Boolean>());
-  private final Set<WeakHashSetValueHolder<OOrientStartupListener>>                    weakStartupListeners          = Collections
-                                                                                                                         .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientStartupListener>, Boolean>());
+  private final Set<OOrientStartupListener>                                          startupListeners              = Collections
+                                                                                                                       .newSetFromMap(new ConcurrentHashMap<OOrientStartupListener, Boolean>());
+  private final Set<WeakHashSetValueHolder<OOrientStartupListener>>                  weakStartupListeners          = Collections
+                                                                                                                       .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientStartupListener>, Boolean>());
 
-  private final Set<WeakHashSetValueHolder<OOrientShutdownListener>>                   weakShutdownListeners         = Collections
-                                                                                                                         .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientShutdownListener>, Boolean>());
+  private final Set<WeakHashSetValueHolder<OOrientShutdownListener>>                 weakShutdownListeners         = Collections
+                                                                                                                       .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientShutdownListener>, Boolean>());
+
+  static {
+    instance.startup();
+  }
 
   protected Orient() {
     super(true);
 
     threadGroup = new ThreadGroup("OrientDB");
     threadGroup.setDaemon(false);
-
-    instance = this;
-    profiler = new OProfiler();
-
-    startup();
   }
 
   public static Orient instance() {
@@ -146,6 +145,8 @@ public class Orient extends OListenerManger<OOrientListener> {
       if (active)
         // ALREADY ACTIVE
         return this;
+
+      profiler = new OProfiler();
 
       if (timer == null)
         timer = new Timer(true);
@@ -253,6 +254,7 @@ public class Orient extends OListenerManger<OOrientListener> {
       timer = null;
 
       profiler.shutdown();
+      profiler = null;
 
       // CALL THE SHUTDOWN ON ALL THE LISTENERS
       for (OOrientListener l : browseListeners()) {
@@ -335,7 +337,7 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   /**
-   * @deprecated This method is not thread safe. Use {@link #submit(java.util.concurrent.Callable)}  instead.
+   * @deprecated This method is not thread safe. Use {@link #submit(java.util.concurrent.Callable)} instead.
    */
   @Deprecated
   public ThreadPoolExecutor getWorkers() {
@@ -363,7 +365,7 @@ public class Orient extends OListenerManger<OOrientListener> {
         return workers.submit(callable);
       else {
         OLogManager.instance().warn(this, "OrientDB engine is down. Task will not be submitted.");
-				throw new IllegalStateException("OrientDB engine is down. Task will not be submitted.");
+        throw new IllegalStateException("OrientDB engine is down. Task will not be submitted.");
       }
     } finally {
       engineLock.readLock().unlock();
