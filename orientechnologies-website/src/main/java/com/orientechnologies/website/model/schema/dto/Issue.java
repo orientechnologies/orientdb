@@ -33,6 +33,7 @@ public class Issue {
   private Long              comments;
   private OUser             user;
   private OUser             assignee;
+  private Client            client;
   private Boolean           confidential;
 
   public Long getIid() {
@@ -200,6 +201,14 @@ public class Issue {
       environment.setId(null);
     }
     this.environment = environment;
+  }
+
+  public Client getClient() {
+    return client;
+  }
+
+  public void setClient(Client client) {
+    this.client = client;
   }
 
   public String getUuid() {

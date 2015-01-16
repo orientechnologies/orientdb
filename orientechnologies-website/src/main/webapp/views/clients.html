@@ -13,30 +13,31 @@
   </div>
   <div class="row">
     <div class="panel panel-default clients-panel">
-      <div class="panel-heading">Cients</div>
-      <div class="list-group">
-        <div class="list-group-item" ng-repeat="client in clients | filter:query">
+      <div class="panel-heading text-center">Cients</div>
 
-
-          <div class="row">
-            <div class="col-md-1">
-              <div class="col-md-6">
-                <input type="checkbox">
-              </div>
-              <div class="col-md-6">
-
-              </div>
-            </div>
-            <div class="col-md-9">
-              <h5 class="list-group-item-heading"><a href="#clients/{{client.clientId}}">
-                {{client.name}}</a>
-              </h5>
-            </div>
-            <div class="col-md-2">
-            </div>
-          </div>
-        </div>
-      </div>
+      <table class="table table-hover">
+        <thead>
+        <tr>
+          <td>
+            Client Id
+          </td>
+          <td>
+            Name
+          </td>
+          <td>
+            Members
+          </td>
+        </tr>
+        </thead>
+        <tbody>
+        <tr ng-repeat="client in clients | filter:query">
+          <td>{{client.clientId}}</td>
+          <td><a href="#clients/{{client.clientId}}">
+            {{client.name}}</a></td>
+          <td></td>
+        </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>

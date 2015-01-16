@@ -71,6 +71,7 @@ public class RepositoryServiceGithub implements RepositoryService {
       repositoryService.handleScope(repository, i, issue.getScope());
       repositoryService.handleVersion(repository, i, issue.getVersion());
       repositoryService.handlePriority(repository, i, issue.getPriority());
+      repositoryService.handleClient(repository,i,issue.getClient());
       return repositoryService.issueRepository.save(i);
     } catch (IOException e) {
       e.printStackTrace();
@@ -94,6 +95,12 @@ public class RepositoryServiceGithub implements RepositoryService {
       }
       if (patch.getState() != null) {
         node.put("state", patch.getState());
+      }
+      if (patch.getTitle() != null) {
+        node.put("title", patch.getTitle());
+      }
+      if (patch.getBody() != null) {
+        node.put("body", patch.getBody());
       }
       if (patch.getAssignee() != null) {
         node.put("assignee", patch.getAssignee());

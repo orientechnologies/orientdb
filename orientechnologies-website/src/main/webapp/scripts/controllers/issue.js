@@ -4,6 +4,7 @@ angular.module('webappApp')
 
     $scope.githubIssue = GITHUB + "/" + ORGANIZATION;
 
+
     $scope.query = 'is:open '
     $scope.page = 1;
     // Query By Example
@@ -60,7 +61,9 @@ angular.module('webappApp')
     Organization.all("labels").getList().then(function (data) {
       $scope.labels = data.plain();
     })
-
+    Organization.all('repos').getList().then(function (data) {
+      $scope.repositories = data.plain();
+    })
     var addCondition = function (input, name, val) {
       input = input.trim()
       return input += " " + name + ":\"" + val + "\" ";
@@ -106,6 +109,16 @@ angular.module('webappApp')
         }
         $scope.query = addCondition($scope.query, "assignee", assignee.name);
         $scope.issue.assignee = assignee;
+        $scope.search();
+      }
+    });
+    $scope.$on("repo:changed", function (e, repo) {
+      if (repo) {
+        if ($scope.issue.repo) {
+          $scope.query = removeCondition($scope.query, "repo", $scope.issue.repo.name);
+        }
+        $scope.query = addCondition($scope.query, "repo", repo.name);
+        $scope.issue.repo = repo;
         $scope.search();
       }
     });
@@ -241,7 +254,7 @@ angular.module('webappApp')
     });
   });
 angular.module('webappApp')
-  .controller('IssueEditCtrl', function ($scope, $routeParams, Organization, Repo, $popover, $route, User,$timeout) {
+  .controller('IssueEditCtrl', function ($scope, $routeParams, Organization, Repo, $popover, $route, User, $timeout) {
 
 
     $scope.githubIssue = GITHUB + "/" + ORGANIZATION;
@@ -255,6 +268,7 @@ angular.module('webappApp')
     Organization.all("issues").one(number).get().then(function (data) {
       $scope.issue = data.plain();
       $scope.repo = $scope.issue.repository.name;
+      $scope.githubCommit = GITHUB + "/" + ORGANIZATION + "/" + $scope.repo + "/commit/";
       User.whoami().then(function (data) {
         $scope.isOwner = $scope.issue.user.name == data.name;
       })
@@ -290,6 +304,7 @@ angular.module('webappApp')
       Repo.one($scope.repo).all("teams").getList().then(function (data) {
         $scope.assignees = data.plain();
       })
+
     }
 
     initTypologic();
@@ -315,6 +330,14 @@ angular.module('webappApp')
       }
     }
 
+    $scope.changeTitle = function (title) {
+      Repo.one($scope.repo).all("issues").one(number).patch({title: title}).then(function (data) {
+        $scope.issue.title = title;
+        $scope.newTitle = null;
+        $scope.editingTitle = false;
+        refreshEvents();
+      });
+    }
     $scope.close = function () {
       Repo.one($scope.repo).all("issues").one(number).patch({state: "closed"}).then(function (data) {
         $scope.issue.state = "closed";
@@ -517,6 +540,20 @@ angular.module('webappApp')
 
   });
 angular.module('webappApp')
+  .controller('ChangeRepoCtrl', function ($scope) {
+    $scope.title = $scope.title || 'Change Repository';
+    $scope.isRepo = function (repository) {
+      return $scope.issue.repository ? repository.name == $scope.issue.repository.name : false;
+    }
+    $scope.toggleRepo = function (repo) {
+      if (repo == null || !$scope.isRepo(repo)) {
+        $scope.$emit("repo:changed", repo);
+      }
+      $scope.$hide();
+    }
+
+  });
+angular.module('webappApp')
   .controller('ChangeClientCtrl', function ($scope) {
 
     $scope.isClientSelected = function (client) {
@@ -557,6 +594,28 @@ angular.module('webappApp').controller('CommentController', function ($scope, Re
   }
   $scope.patchComment = function () {
     Repo.one($scope.repo).all("issues").one($scope.number).all("comments").one($scope.comment.uuid).patch($scope.comment).then(function (data) {
+      $scope.preview = true;
+    }).catch(function () {
+      $scope.cancelEditing()
+    });
+  }
+})
+
+angular.module('webappApp').controller('BodyController', function ($scope, Repo) {
+  $scope.preview = true;
+
+
+  $scope.clonedComment = {};
+  $scope.cancelEditing = function () {
+    $scope.preview = true;
+    $scope.issue.body = $scope.clonedComment;
+  }
+  $scope.edit = function () {
+    $scope.preview = false;
+    $scope.clonedComment = angular.copy($scope.issue.body);
+  }
+  $scope.patchComment = function () {
+    Repo.one($scope.repo).all("issues").one($scope.number).patch({body: $scope.issue.body}).then(function (data) {
       $scope.preview = true;
     }).catch(function () {
       $scope.cancelEditing()

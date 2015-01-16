@@ -40,12 +40,12 @@
                           ng-options="a.name as a.name for a in assignees"></select>
                 </div>
                 <div class="col-md-3">
-                  <label>Version</label>
+                  <label>Verified in Version</label>
                   <select class="form-control" required ng-model="issue.version"
                           ng-options="m.number as m.title for m in milestones"></select>
                 </div>
                 <div class="col-md-3" ng-hide="!isMember">
-                  <label>Milestone</label>
+                  <label>Resolve in Milestone</label>
                   <select class="form-control"  ng-model="issue.milestone"
                           ng-options="m.number as m.title for m in milestones"></select>
                 </div>

@@ -1,5 +1,6 @@
 package com.orientechnologies.website.services.reactor;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.github.*;
 import com.orientechnologies.website.model.schema.dto.*;
@@ -224,7 +225,7 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
                 e.setCreatedAt(event.getCreatedAt());
                 e.setEventId(event.getId());
                 e.setEvent(event.getEvent());
-
+                e.setCommitId((String) event.get("commit_id"));
                 GUser actor = event.getActor();
 
                 if (actor != null) {
@@ -261,6 +262,11 @@ public class GitHubIssueImporter implements Consumer<Event<GitHubIssueImporter.G
             if (assignee != null) {
                 e.setAssignee(userRepo.findUserOrCreateByLogin(assignee.getLogin(), assignee.getId()));
             }
+        }
+        if (event.getEvent().equals("renamed")) {
+            ODocument renamed = event.get("rename");
+            e.setFrom((String) renamed.field("from"));
+            e.setTo((String) renamed.field("to"));
         }
     }
 

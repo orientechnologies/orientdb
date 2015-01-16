@@ -26,6 +26,13 @@ public enum OIssueEvent implements OTypeHolder<IssueEvent> {
     }
 
   },
+  COMMIT_ID("commit_id") {
+    @Override
+    public OType getType() {
+      return OType.STRING;
+    }
+
+  },
   EVENT("event") {
     @Override
     public OType getType() {
@@ -60,6 +67,18 @@ public enum OIssueEvent implements OTypeHolder<IssueEvent> {
       return OType.LINK;
     }
 
+  },
+  FROM("from") {
+    @Override
+    public OType getType() {
+      return OType.STRING;
+    }
+  },
+  TO("to") {
+    @Override
+    public OType getType() {
+      return OType.STRING;
+    }
   };
   private String name;
 
@@ -79,6 +98,9 @@ public enum OIssueEvent implements OTypeHolder<IssueEvent> {
     event.setAssignee(OUser.NAME.fromDoc((ODocument) doc.field(ASSIGNEE.toString()), graph));
     event.setLabel(OLabel.NAME.fromDoc((ODocument) doc.field(LABEL.toString()), graph));
     event.setMilestone(OMilestone.TITLE.fromDoc((ODocument) doc.field(MILESTONE.toString()), graph));
+    event.setFrom((String) doc.field(FROM.toString()));
+    event.setTo((String) doc.field(TO.toString()));
+    event.setCommitId((String) doc.field(COMMIT_ID.toString()));
     return event;
   }
 
@@ -94,11 +116,14 @@ public enum OIssueEvent implements OTypeHolder<IssueEvent> {
     }
     doc.field(EVENT.toString(), entity.getEvent());
     doc.field(EVENT_ID.toString(), entity.getEventId());
+    doc.field(FROM.toString(), entity.getFrom());
+    doc.field(TO.toString(), entity.getTo());
     doc.field(OEvent.CREATED_AT.toString(), entity.getCreatedAt());
     doc.field(ACTOR.toString(), (entity.getActor() != null ? new ORecordId(entity.getActor().getRid()) : null));
     doc.field(ASSIGNEE.toString(), (entity.getAssignee() != null ? new ORecordId(entity.getAssignee().getRid()) : null));
     doc.field(LABEL.toString(), (entity.getLabel() != null ? OLabel.NAME.toDoc(entity.getLabel(), graph) : null));
     doc.field(MILESTONE.toString(), (entity.getMilestone() != null ? OMilestone.TITLE.toDoc(entity.getMilestone(), graph) : null));
+    doc.field(COMMIT_ID.toString(), entity.getCommitId());
     return doc;
   }
 

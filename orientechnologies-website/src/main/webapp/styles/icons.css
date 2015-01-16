@@ -49,3 +49,6 @@
 .fa-environmented:before {
   content: "\f085";
 }
+.fa-referenced:before {
+  content: "\f097";
+}

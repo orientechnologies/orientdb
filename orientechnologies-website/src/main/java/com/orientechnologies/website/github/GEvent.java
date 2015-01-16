@@ -49,4 +49,7 @@ public class GEvent extends GEntity {
   public GUser getAssignee() {
     return toUser((ODocument) get("assignee"));
   }
+
+
+
 }

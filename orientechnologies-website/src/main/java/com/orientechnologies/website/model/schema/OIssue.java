@@ -185,6 +185,10 @@ public enum OIssue implements OTypeHolder<Issue> {
       issue.setUser(OUser.NAME.fromDoc(((OrientVertex) vertex).getRecord(), graph));
       break;
     }
+    for (Vertex vertex : iss.getVertices(Direction.IN, HasClient.class.getSimpleName())) {
+      issue.setClient(OClient.CLIENT_ID.fromDoc(((OrientVertex) vertex).getRecord(), graph));
+      break;
+    }
     long count = 0;
     for (Vertex vertex : iss.getVertices(Direction.OUT, HasEvent.class.getSimpleName())) {
       count += ((OrientVertex) vertex).getLabel().equals(Comment.class.getSimpleName()) ? 1 : 0;

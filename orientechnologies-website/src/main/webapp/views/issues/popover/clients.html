@@ -5,14 +5,14 @@
   <div class="popover-content">
     <form>
       <div class="form-group">
-        <input type="text" class="form-control" placeholder="Filter milestones">
+        <input type="text" class="form-control" placeholder="Filter client" ng-model="queryClient">
       </div>
     </form>
     <hr class="client-popover-divider"/>
     <ul class="clients-group">
       <li class="client-item" ng-click="toggleClient(client)"
           ng-class="{ 'client-selected' : isClientSelected(client)  }"
-          ng-repeat="client in clients">
+          ng-repeat="client in clients | filter:queryClient">
         <div class="container-fluid">
           <div class="row">
             <div class="col-md-1 text-center">

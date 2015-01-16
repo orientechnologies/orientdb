@@ -26,7 +26,7 @@ public abstract class GEntity {
 
   protected abstract String getBaseUrl();
 
-  protected <RET> RET get(String fieldName) {
+  public <RET> RET get(String fieldName) {
     return _local.field(fieldName);
   }
 
