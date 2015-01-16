@@ -425,6 +425,70 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     }
   }
 
+  public void testAutoConversionOfEmbeddededMapNoLinkedClass() {
+    OClass c = database.getMetadata().getSchema().getOrCreateClass("TestConvert");
+    c.createProperty("embeddedMapNoLinkedClass", OType.EMBEDDEDMAP);
+
+    ODocument doc = database
+        .command(
+            new OCommandSQL(
+                "INSERT INTO TestConvert SET name = 'embeddedMapNoLinkedClass', embeddedMapNoLinkedClass = {test:{'line1':'123 Fake Street'}}"))
+        .execute();
+
+    Assert.assertTrue(doc.field("embeddedMapNoLinkedClass") instanceof Map);
+
+    Map addr = doc.field("embeddedMapNoLinkedClass");
+    for (Object o : addr.values()) {
+      Assert.assertTrue(o instanceof ODocument);
+    }
+  }
+
+  public void testAutoConversionOfEmbeddededMapWithLinkedClass() {
+    OClass c = database.getMetadata().getSchema().getOrCreateClass("TestConvert");
+    c.createProperty("embeddedMapWithLinkedClass", OType.EMBEDDEDMAP,
+        database.getMetadata().getSchema().getOrCreateClass("TestConvertLinkedClass"));
+
+    ODocument doc = database
+        .command(
+            new OCommandSQL(
+                "INSERT INTO TestConvert SET name = 'embeddedMapWithLinkedClass', embeddedMapWithLinkedClass = {test:{'line1':'123 Fake Street'}}"))
+        .execute();
+
+    Assert.assertTrue(doc.field("embeddedMapWithLinkedClass") instanceof Map);
+
+    Map addr = doc.field("embeddedMapWithLinkedClass");
+    for (Object o : addr.values()) {
+      Assert.assertTrue(o instanceof ODocument);
+      Assert.assertEquals(((ODocument) o).getClassName(), "TestConvertLinkedClass");
+    }
+  }
+
+  public void testAutoConversionOfEmbeddededNoLinkedClass() {
+    OClass c = database.getMetadata().getSchema().getOrCreateClass("TestConvert");
+    c.createProperty("embeddedNoLinkedClass", OType.EMBEDDED);
+
+    ODocument doc = database.command(
+        new OCommandSQL(
+            "INSERT INTO TestConvert SET name = 'embeddedNoLinkedClass', embeddedNoLinkedClass = {'line1':'123 Fake Street'}"))
+        .execute();
+
+    Assert.assertTrue(doc.field("embeddedNoLinkedClass") instanceof ODocument);
+  }
+
+  public void testAutoConversionOfEmbeddededWithLinkedClass() {
+    OClass c = database.getMetadata().getSchema().getOrCreateClass("TestConvert");
+    c.createProperty("embeddedWithLinkedClass", OType.EMBEDDED,
+        database.getMetadata().getSchema().getOrCreateClass("TestConvertLinkedClass"));
+
+    ODocument doc = database.command(
+        new OCommandSQL(
+            "INSERT INTO TestConvert SET name = 'embeddedWithLinkedClass', embeddedWithLinkedClass = {'line1':'123 Fake Street'}"))
+        .execute();
+
+    Assert.assertTrue(doc.field("embeddedWithLinkedClass") instanceof ODocument);
+    Assert.assertEquals(((ODocument) doc.field("embeddedWithLinkedClass")).getClassName(), "TestConvertLinkedClass");
+  }
+
   private List<Long> getValidPositions(int clusterId) {
     final List<Long> positions = new ArrayList<Long>();
 
