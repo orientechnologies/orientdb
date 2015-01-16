@@ -117,61 +117,62 @@ public class ORuntimeResult {
         } else if (v instanceof OSQLFunctionRuntime) {
           final OSQLFunctionRuntime f = (OSQLFunctionRuntime) v;
           projectionValue = f.execute(inputDocument, inputDocument, iValue, iContext);
-          if (f.aggregateResults())
-            // SKIP SETTING THE VALUE
+        } else {
+          if (v == null) {
+            // SIMPLE NULL VALUE: SET IT IN DOCUMENT
+            iValue.field(prjName, v);
             continue;
-        } else
+          }
           projectionValue = v;
+        }
 
-        if (projectionValue == null)
-          // NULL
-          iValue.field(prjName, projectionValue);
-        else if (projectionValue instanceof ORidBag)
-          iValue.field(prjName, new ORidBag((ORidBag) projectionValue));
-        else if (projectionValue instanceof OIdentifiable && !(projectionValue instanceof ORID)
-            && !(projectionValue instanceof ORecord))
-          iValue.field(prjName, ((OIdentifiable) projectionValue).getRecord());
-        else if (projectionValue instanceof Iterator) {
-          boolean link = true;
-          // make temporary value typical case graph database elemenet's iterator edges
-          if (projectionValue instanceof OResettable)
-            ((OResettable) projectionValue).reset();
+        if (projectionValue != null)
+          if (projectionValue instanceof ORidBag)
+            iValue.field(prjName, new ORidBag((ORidBag) projectionValue));
+          else if (projectionValue instanceof OIdentifiable && !(projectionValue instanceof ORID)
+              && !(projectionValue instanceof ORecord))
+            iValue.field(prjName, ((OIdentifiable) projectionValue).getRecord());
+          else if (projectionValue instanceof Iterator) {
+            boolean link = true;
+            // make temporary value typical case graph database elemenet's iterator edges
+            if (projectionValue instanceof OResettable)
+              ((OResettable) projectionValue).reset();
 
-          final List<Object> iteratorValues = new ArrayList<Object>();
-          final Iterator projectionValueIterator = (Iterator) projectionValue;
-          while (projectionValueIterator.hasNext()) {
-            Object value = projectionValueIterator.next();
-            if (value instanceof OIdentifiable) {
-              value = ((OIdentifiable) value).getRecord();
-              if (!((OIdentifiable) value).getIdentity().isPersistent())
-                link = false;
+            final List<Object> iteratorValues = new ArrayList<Object>();
+            final Iterator projectionValueIterator = (Iterator) projectionValue;
+            while (projectionValueIterator.hasNext()) {
+              Object value = projectionValueIterator.next();
+              if (value instanceof OIdentifiable) {
+                value = ((OIdentifiable) value).getRecord();
+                if (!((OIdentifiable) value).getIdentity().isPersistent())
+                  link = false;
+              }
+
+              if (value != null)
+                iteratorValues.add(value);
             }
 
-            if (value != null)
-              iteratorValues.add(value);
-          }
+            iValue.field(prjName, iteratorValues, link ? OType.LINKLIST : OType.EMBEDDEDLIST);
+          } else if (projectionValue instanceof ODocument && !((ODocument) projectionValue).getIdentity().isPersistent()) {
+            iValue.field(prjName, projectionValue, OType.EMBEDDED);
+          } else if (projectionValue instanceof Set<?>) {
+            OType type = OType.getTypeByValue(projectionValue);
+            if (type == OType.LINKSET && !entriesPersistent((Collection<OIdentifiable>) projectionValue))
+              type = OType.EMBEDDEDSET;
+            iValue.field(prjName, projectionValue, type);
+          } else if (projectionValue instanceof Map<?, ?>) {
+            OType type = OType.getTypeByValue(projectionValue);
+            if (type == OType.LINKMAP && !entriesPersistent(((Map<?, OIdentifiable>) projectionValue).values()))
+              type = OType.EMBEDDEDMAP;
+            iValue.field(prjName, projectionValue, type);
+          } else if (projectionValue instanceof List<?>) {
+            OType type = OType.getTypeByValue(projectionValue);
+            if (type == OType.LINKLIST && !entriesPersistent((Collection<OIdentifiable>) projectionValue))
+              type = OType.EMBEDDEDLIST;
+            iValue.field(prjName, projectionValue, type);
 
-          iValue.field(prjName, iteratorValues, link ? OType.LINKLIST : OType.EMBEDDEDLIST);
-        } else if (projectionValue instanceof ODocument && !((ODocument) projectionValue).getIdentity().isPersistent()) {
-          iValue.field(prjName, projectionValue, OType.EMBEDDED);
-        } else if (projectionValue instanceof Set<?>) {
-          OType type = OType.getTypeByValue(projectionValue);
-          if (type == OType.LINKSET && !entriesPersistent((Collection<OIdentifiable>) projectionValue))
-            type = OType.EMBEDDEDSET;
-          iValue.field(prjName, projectionValue, type);
-        } else if (projectionValue instanceof Map<?, ?>) {
-          OType type = OType.getTypeByValue(projectionValue);
-          if (type == OType.LINKMAP && !entriesPersistent(((Map<?, OIdentifiable>) projectionValue).values()))
-            type = OType.EMBEDDEDMAP;
-          iValue.field(prjName, projectionValue, type);
-        } else if (projectionValue instanceof List<?>) {
-          OType type = OType.getTypeByValue(projectionValue);
-          if (type == OType.LINKLIST && !entriesPersistent((Collection<OIdentifiable>) projectionValue))
-            type = OType.EMBEDDEDLIST;
-          iValue.field(prjName, projectionValue, type);
-
-        } else
-          iValue.field(prjName, projectionValue);
+          } else
+            iValue.field(prjName, projectionValue);
 
       }
     }
