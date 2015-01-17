@@ -65,7 +65,7 @@ public class OSQLFunctionLast extends OSQLFunctionConfigurableAbstract {
 
   @Override
   public boolean filterResult() {
-    return true;
+    return false;
   }
 
   public String getSyntax() {
