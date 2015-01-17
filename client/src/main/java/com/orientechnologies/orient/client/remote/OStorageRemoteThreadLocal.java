@@ -29,16 +29,13 @@ public class OStorageRemoteThreadLocal extends ThreadLocal<OStorageRemoteSession
   public static volatile OStorageRemoteThreadLocal INSTANCE = new OStorageRemoteThreadLocal();
 
   static {
-
-    Orient.instance().registerWeakOrientStartupListener(new OOrientStartupListener() {
+    Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onStartup() {
         if (INSTANCE == null)
           INSTANCE = new OStorageRemoteThreadLocal();
       }
-    });
 
-    Orient.instance().registerWeakOrientShutdownListener(new OOrientShutdownListener() {
       @Override
       public void onShutdown() {
         INSTANCE = null;

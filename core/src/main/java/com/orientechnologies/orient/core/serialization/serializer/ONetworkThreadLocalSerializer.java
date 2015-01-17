@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.serialization.serializer;
 
+import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.OOrientShutdownListener;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
@@ -37,15 +38,13 @@ public class ONetworkThreadLocalSerializer {
   }
 
   static {
-    Orient.instance().registerWeakOrientStartupListener(new OOrientStartupListener() {
+    Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onStartup() {
         if (networkSerializer == null)
           networkSerializer = new ThreadLocal<ORecordSerializer>();
       }
-    });
 
-    Orient.instance().registerWeakOrientShutdownListener(new OOrientShutdownListener() {
       @Override
       public void onShutdown() {
         networkSerializer = null;

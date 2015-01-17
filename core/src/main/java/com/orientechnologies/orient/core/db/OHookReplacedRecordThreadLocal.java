@@ -34,15 +34,13 @@ public class OHookReplacedRecordThreadLocal extends ThreadLocal<ORecord> {
   public static volatile OHookReplacedRecordThreadLocal INSTANCE = new OHookReplacedRecordThreadLocal();
 
   static {
-    Orient.instance().registerWeakOrientStartupListener(new OOrientStartupListener() {
+    Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onStartup() {
         if (INSTANCE == null)
           INSTANCE = new OHookReplacedRecordThreadLocal();
       }
-    });
 
-    Orient.instance().registerWeakOrientShutdownListener(new OOrientShutdownListener() {
       @Override
       public void onShutdown() {
         INSTANCE = null;
