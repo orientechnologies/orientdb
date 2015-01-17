@@ -1,0 +1,17 @@
+description "Document Graph NoSQL Database"
+
+start on runlevel [2345]
+stop on runlevel [016]
+
+# Must change before running
+setuid USER_YOU_WANT_ORIENTDB_RUN_WITH
+env ORIENTDB_DIR="YOUR_ORIENTDB_INSTALLATION_PATH"
+
+# Remove or comment the following once
+# you have configured OrientDB above
+manual
+
+script
+	cd $ORIENTDB_DIR
+	exec ./bin/server.sh 1>log/orientdb.log 2>log/orientdb.err
+end script
