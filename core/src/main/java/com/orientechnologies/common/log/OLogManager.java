@@ -80,14 +80,18 @@ public class OLogManager {
   public void log(final Object iRequester, final Level iLevel, String iMessage, final Throwable iException,
       final Object... iAdditionalArgs) {
     if (iMessage != null) {
+      try {
+        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+        if (db != null)
+          iMessage = "{db=" + db.getName() + "} " + iMessage;
+      } catch (Exception e) {
+        // IGNORE INCLUDING DB
+      }
+
       final Logger log = iRequester != null ? Logger.getLogger(iRequester.getClass().getName()) : Logger.getLogger(DEFAULT_LOG);
       if (log == null) {
         // USE SYSERR
         try {
-          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-          if (db != null)
-            iMessage = "{db=" + db.getName() + "} " + iMessage;
-
           System.err.println(String.format(iMessage, iAdditionalArgs));
         } catch (Exception e) {
           OLogManager.instance().warn(this, "Error on formatting message", e);
@@ -95,17 +99,13 @@ public class OLogManager {
       } else if (log.isLoggable(iLevel)) {
         // USE THE LOG
         try {
-          final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-          if (db != null)
-            iMessage = "{db=" + db.getName() + "} " + iMessage;
-
           final String msg = String.format(iMessage, iAdditionalArgs);
           if (iException != null)
             log.log(iLevel, msg, iException);
           else
             log.log(iLevel, msg);
         } catch (Exception e) {
-          OLogManager.instance().warn(this, "Error on formatting message '%s'", e, iMessage);
+          System.err.print(String.format("Error on formatting message '%s'. Exception: %s", iMessage, e.toString()));
         }
       }
     }
