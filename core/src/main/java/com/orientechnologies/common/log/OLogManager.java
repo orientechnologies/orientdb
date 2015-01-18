@@ -23,6 +23,7 @@ package com.orientechnologies.common.log;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -81,11 +82,14 @@ public class OLogManager {
       final Object... iAdditionalArgs) {
     if (iMessage != null) {
       try {
-        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-        if (db != null)
-          iMessage = "{db=" + db.getName() + "} " + iMessage;
-      } catch (Exception e) {
-        // IGNORE INCLUDING DB
+        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE != null ? ODatabaseRecordThreadLocal.INSTANCE
+            .getIfDefined() : null;
+        if (db != null && db.getStorage() != null && db.getStorage() instanceof OAbstractPaginatedStorage) {
+          final String dbName = db.getStorage().getName();
+          if (dbName != null)
+            iMessage = "{db=" + dbName + "} " + iMessage;
+        }
+      } catch (Throwable e) {
       }
 
       final Logger log = iRequester != null ? Logger.getLogger(iRequester.getClass().getName()) : Logger.getLogger(DEFAULT_LOG);
