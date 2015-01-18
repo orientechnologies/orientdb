@@ -81,6 +81,7 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
     init();
 
     final OFunction f = new OFunction().setName(iName);
+    f.save();
     functions.put(iName.toUpperCase(), f);
 
     return f;
