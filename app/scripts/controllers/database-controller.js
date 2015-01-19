@@ -1,5 +1,5 @@
 var dbModule = angular.module('database.controller', ['database.services', 'bookmarks.services']);
-dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', '$modal', '$q', '$window', 'Bookmarks', 'Notification', 'Aside', 'BrowseConfig','$timeout', function ($scope, $routeParams, $location, Database, CommandApi, localStorageService, Spinner, $modal, $q, $window, Bookmarks, Notification, Aside, BrowseConfig,$timeout) {
+dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 'Database', 'CommandApi', 'localStorageService', 'Spinner', '$modal', '$q', '$window', 'Bookmarks', 'Notification', 'Aside', 'BrowseConfig', '$timeout', function ($scope, $routeParams, $location, Database, CommandApi, localStorageService, Spinner, $modal, $q, $window, Bookmarks, Notification, Aside, BrowseConfig, $timeout) {
 
   $scope.database = Database;
   $scope.limit = 20;
@@ -184,6 +184,7 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
 
       if (data.result) {
 
+        var warnings = data.warnings;
         var item = new Object;
         item.query = $scope.queryText;
         item.executedQuery = queryBuffer;
@@ -249,6 +250,9 @@ dbModule.controller("BrowseController", ['$scope', '$routeParams', '$location', 
         $scope.context = $scope.items[0];
         $scope.nContext = $scope.items[1];
         Notification.clear();
+        warnings.forEach(function (w) {
+          Notification.push({content: w, autoHide: true, warning: true});
+        });
       } else {
         Spinner.stopSpinner();
         Notification.push({content: "The command has been executed", autoHide: true});
