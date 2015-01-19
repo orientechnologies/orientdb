@@ -527,17 +527,17 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     return database.getStorage().getConflictStrategy();
   }
 
-  public OrientBaseGraph setConflictStrategy(final ORecordConflictStrategy iResolver) {
-    makeActive();
-
-    database.setConflictStrategy(iResolver);
-    return this;
-  }
-
   public OrientBaseGraph setConflictStrategy(final String iStrategyName) {
     makeActive();
 
     database.setConflictStrategy(Orient.instance().getRecordConflictStrategy().getStrategy(iStrategyName));
+    return this;
+  }
+
+  public OrientBaseGraph setConflictStrategy(final ORecordConflictStrategy iResolver) {
+    makeActive();
+
+    database.setConflictStrategy(iResolver);
     return this;
   }
 
@@ -1807,6 +1807,8 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         setUseClassForVertexLabel(Boolean.parseBoolean(c.value));
       else if (c.name.equals("useVertexFieldsForEdgeLabels"))
         setUseVertexFieldsForEdgeLabels(Boolean.parseBoolean(c.value));
+      else if (c.name.equals("standardElementConstraints"))
+        setStandardElementConstraints(Boolean.parseBoolean(c.value));
     }
 
   }
