@@ -184,27 +184,8 @@ public class OWOWCache {
       long freeSpace = storageDir.getFreeSpace();
       long effectiveFreeSpace = freeSpace - allocatedSpace.get();
 
-      if (effectiveFreeSpace < freeSpaceLimit) {
-        if (writeAheadLog != null) {
-          writeAheadLog.flush();
-
-          Future<?> future = commitExecutor.submit(new PeriodicalFuzzyCheckpointTask());
-          try {
-            future.get();
-          } catch (Exception e) {
-            OLogManager.instance().error(this, "Error during fuzzy checkpoint execution for storage %s .", e,
-                storageLocal.getName());
-          }
-
-          freeSpace = storageDir.getFreeSpace();
-          effectiveFreeSpace = freeSpace - allocatedSpace.get();
-
-          if (effectiveFreeSpace < freeSpaceLimit)
-            callLowSpaceListeners(new LowDiskSpaceInformation(effectiveFreeSpace, freeSpaceLimit));
-        } else {
-          callLowSpaceListeners(new LowDiskSpaceInformation(effectiveFreeSpace, freeSpaceLimit));
-        }
-      }
+      if (effectiveFreeSpace < freeSpaceLimit)
+        callLowSpaceListeners(new LowDiskSpaceInformation(effectiveFreeSpace, freeSpaceLimit));
 
       lastDiskSpaceCheck.lazySet(ts);
     }
@@ -299,6 +280,27 @@ public class OWOWCache {
       openFile(fileClassic);
     } finally {
       filesLock.releaseWriteLock();
+    }
+  }
+
+  public boolean checkLowDiskSpace() {
+    final File storageDir = new File(storagePath);
+
+    long freeSpace = storageDir.getFreeSpace();
+    long effectiveFreeSpace = freeSpace - allocatedSpace.get();
+
+    return effectiveFreeSpace < freeSpaceLimit;
+  }
+
+  public void makeFuzzyCheckpoint() {
+    if (writeAheadLog != null) {
+      writeAheadLog.flush();
+      Future<?> future = commitExecutor.submit(new PeriodicalFuzzyCheckpointTask());
+      try {
+        future.get();
+      } catch (Exception e) {
+        throw new OStorageException("Error during fuzzy checkpoint execution for storage " + storageLocal.getName(), e);
+      }
     }
   }
 
