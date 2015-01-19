@@ -23,20 +23,8 @@ package com.tinkerpop.blueprints.impls.orient;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-import com.orientechnologies.orient.core.OOrientShutdownListener;
-import com.orientechnologies.orient.core.OOrientStartupListener;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import org.apache.commons.configuration.Configuration;
 
 import com.orientechnologies.common.exception.OException;
@@ -70,13 +58,10 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Element;
-import com.tinkerpop.blueprints.GraphQuery;
-import com.tinkerpop.blueprints.Index;
-import com.tinkerpop.blueprints.Parameter;
-import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.*;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
@@ -390,8 +375,13 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public OrientBaseGraph configure(final Settings iSetting) {
     makeActive();
 
-    if (iSetting != null)
-      settings = iSetting;
+    if (iSetting != null) {
+      if (settings == null) {
+        settings = iSetting;
+      } else {
+        settings.copyFrom(iSetting);
+      }
+    }
     return this;
   }
 
@@ -564,7 +554,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
         }
       }
 
-      if (settings.saveOriginalIds)
+      if (isSaveOriginalIds())
         // SAVE THE ID TOO
         fields = new Object[] { OrientElement.DEF_ORIGINAL_ID_FIELDNAME, id };
     }
@@ -669,7 +659,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       className = id.toString().substring(CLASS_PREFIX.length());
 
     // SAVE THE ID TOO?
-    final Object[] fields = settings.saveOriginalIds && id != null ? new Object[] { OrientElement.DEF_ORIGINAL_ID_FIELDNAME, id }
+    final Object[] fields = isSaveOriginalIds() && id != null ? new Object[] { OrientElement.DEF_ORIGINAL_ID_FIELDNAME, id }
         : null;
 
     if (outVertex instanceof PartitionVertex)
@@ -1655,7 +1645,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public long countEdges() {
     makeActive();
 
-    if (settings.useLightweightEdges)
+    if (isUseLightweightEdges())
       throw new UnsupportedOperationException("Graph set to use Lightweight Edges, count against edges is not supported");
 
     return getRawGraph().countClass(OrientEdgeType.CLASS_NAME);
@@ -1669,7 +1659,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public long countEdges(final String iClassName) {
     makeActive();
 
-    if (settings.useLightweightEdges)
+    if (isUseLightweightEdges())
       throw new UnsupportedOperationException("Graph set to use Lightweight Edges, count against edges is not supported");
 
     return getRawGraph().countClass(iClassName);
@@ -1682,7 +1672,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     final boolean committed;
     final ODatabaseDocumentTx raw = getRawGraph();
     if (raw.getTransaction().isActive()) {
-      if (settings.warnOnForceClosingTx && OLogManager.instance().isWarnEnabled() && iOperationStrings.length > 0) {
+      if (isWarnOnForceClosingTx() && OLogManager.instance().isWarnEnabled() && iOperationStrings.length > 0) {
         // COMPOSE THE MESSAGE
         final StringBuilder msg = new StringBuilder(256);
         for (String s : iOperationStrings)
@@ -1752,11 +1742,11 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   }
 
   protected void setCurrentGraphInThreadLocal() {
-    if (settings.threadMode == THREAD_MODE.MANUAL)
+    if (getThreadMode() == THREAD_MODE.MANUAL)
       return;
 
     final ODatabaseDocument tlDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if (settings.threadMode == THREAD_MODE.ALWAYS_AUTOSET || tlDb == null) {
+    if (getThreadMode() == THREAD_MODE.ALWAYS_AUTOSET || tlDb == null) {
       if (database != null && tlDb != database)
         // SET IT
         ODatabaseRecordThreadLocal.INSTANCE.set(database);

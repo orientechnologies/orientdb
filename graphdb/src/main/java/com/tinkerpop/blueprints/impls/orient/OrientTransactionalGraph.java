@@ -51,9 +51,9 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
       final Settings iConfiguration) {
     super(iDatabase, iUserName, iUserPasswd, iConfiguration);
     setCurrentGraphInThreadLocal();
-    this.setAutoStartTx(settings.autoStartTx);
+    this.setAutoStartTx(isAutoStartTx());
 
-    if (settings.autoStartTx)
+    if (isAutoStartTx())
       begin();
   }
 
@@ -116,13 +116,13 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   }
 
   public boolean isUseLog() {
-		makeActive();
+    makeActive();
 
     return useLog;
   }
 
   public OrientTransactionalGraph setUseLog(final boolean useLog) {
-		makeActive();
+    makeActive();
 
     this.useLog = useLog;
     return this;
@@ -137,7 +137,7 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   @SuppressWarnings("deprecation")
   @Override
   public void stopTransaction(final Conclusion conclusion) {
-		makeActive();
+    makeActive();
 
     if (database.isClosed() || database.getTransaction() instanceof OTransactionNoTx
         || database.getTransaction().getStatus() != TXSTATUS.BEGUN)
@@ -153,13 +153,13 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
    * Commits the current active transaction.
    */
   public void commit() {
-		makeActive();
+    makeActive();
 
     if (database == null)
       return;
 
     database.commit();
-    if (settings.autoStartTx)
+    if (isAutoStartTx())
       begin();
   }
 
@@ -167,18 +167,18 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
    * Rollbacks the current active transaction. All the pending changes are rollbacked.
    */
   public void rollback() {
-		makeActive();
+    makeActive();
 
     if (database == null)
       return;
 
     database.rollback();
-    if (settings.autoStartTx)
+    if (isAutoStartTx())
       begin();
   }
 
   public void begin() {
-		makeActive();
+    makeActive();
 
     final boolean txBegun = database.getTransaction().isActive();
     if (!txBegun) {
@@ -191,8 +191,8 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   protected void autoStartTransaction() {
     final boolean txBegun = database.getTransaction().isActive();
 
-    if (!settings.autoStartTx) {
-      if (settings.requireTransaction && !txBegun)
+    if (!isAutoStartTx()) {
+      if (isRequireTransaction() && !txBegun)
         throw new OTransactionException("Transaction required to change the Graph");
 
       return;
