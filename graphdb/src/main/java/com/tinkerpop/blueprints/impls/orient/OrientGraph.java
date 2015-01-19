@@ -257,10 +257,10 @@ public class OrientGraph extends OrientTransactionalGraph {
       FEATURES.supportsThreadIsolatedTransactions = false;
 
       // DYNAMIC FEATURES BASED ON CONFIGURATION
-      FEATURES.supportsEdgeIndex = !settings.useLightweightEdges;
-      FEATURES.supportsEdgeKeyIndex = !settings.useLightweightEdges;
-      FEATURES.supportsEdgeIteration = !settings.useLightweightEdges;
-      FEATURES.supportsEdgeRetrieval = !settings.useLightweightEdges;
+      FEATURES.supportsEdgeIndex = !isUseLightweightEdges();
+      FEATURES.supportsEdgeKeyIndex = !isUseLightweightEdges();
+      FEATURES.supportsEdgeIteration = !isUseLightweightEdges();
+      FEATURES.supportsEdgeRetrieval = !isUseLightweightEdges();
 
       featuresInitialized = true;
     }
