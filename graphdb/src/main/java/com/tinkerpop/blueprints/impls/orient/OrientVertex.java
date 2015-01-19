@@ -20,8 +20,6 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.util.*;
-
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
@@ -31,6 +29,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -40,10 +39,21 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.tinkerpop.blueprints.*;
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.Index;
+import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * OrientDB Vertex implementation of TinkerPop Blueprints standard.
@@ -426,7 +436,11 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       if (doc != null && ODocumentInternal.getImmutableSchemaClass(doc) != null
           && ODocumentInternal.getImmutableSchemaClass(doc).isSubClassOf(OrientEdgeType.CLASS_NAME))
         // DELETE THE EDGE RECORD TOO
-        doc.delete();
+        try {
+          doc.delete();
+        } catch (ORecordNotFoundException e) {
+          // IGNORE THE EXCEPTION: THE RECORD HAS BEEN ALREADY DELETED
+        }
     }
   }
 
