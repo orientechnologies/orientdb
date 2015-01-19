@@ -195,7 +195,7 @@ public class OrientEdge extends OrientElement implements Edge {
     if (doc == null)
       return null;
 
-    if (settings != null && settings.keepInMemoryReferences)
+    if (settings != null && settings.isKeepInMemoryReferences())
       // AVOID LAZY RESOLVING+SETTING OF RECORD
       return doc.rawField(OrientBaseGraph.CONNECTION_OUT);
     else
@@ -218,7 +218,7 @@ public class OrientEdge extends OrientElement implements Edge {
     if (doc == null)
       return null;
 
-    if (settings != null && settings.keepInMemoryReferences)
+    if (settings != null && settings.isKeepInMemoryReferences())
       // AVOID LAZY RESOLVING+SETTING OF RECORD
       return doc.rawField(OrientBaseGraph.CONNECTION_IN);
     else
@@ -237,7 +237,7 @@ public class OrientEdge extends OrientElement implements Edge {
       // LIGHTWEIGHT EDGE
       return label;
     else if (rawElement != null) {
-      if (settings != null && settings.useClassForEdgeLabel) {
+      if (settings != null && settings.isUseClassForEdgeLabel()) {
         final String clsName = getRecord().getClassName();
         if (!OrientEdgeType.CLASS_NAME.equals(clsName) && !"OGraphEdge".equals(clsName))
           // RETURN THE CLASS NAME
@@ -324,7 +324,7 @@ public class OrientEdge extends OrientElement implements Edge {
 
     for (String field : getRecord().fieldNames())
       if (!field.equals(OrientBaseGraph.CONNECTION_OUT) && !field.equals(OrientBaseGraph.CONNECTION_IN)
-          && (settings.useClassForEdgeLabel || !field.equals(OrientElement.LABEL_FIELD_NAME)))
+          && (settings.isUseClassForEdgeLabel() || !field.equals(OrientElement.LABEL_FIELD_NAME)))
         result.add(field);
 
     return result;
@@ -392,7 +392,7 @@ public class OrientEdge extends OrientElement implements Edge {
 
     final String edgeClassName = OrientBaseGraph.encodeClassName(getLabel());
 
-    final boolean useVertexFieldsForEdgeLabels = settings.useVertexFieldsForEdgeLabels;
+    final boolean useVertexFieldsForEdgeLabels = settings.isUseVertexFieldsForEdgeLabels();
 
     final String outFieldName = OrientVertex.getConnectionFieldName(Direction.OUT, edgeClassName, useVertexFieldsForEdgeLabels);
     final boolean outVertexChanged = dropEdgeFromVertex(inVertexEdge, outVertex, outFieldName, outVertex.field(outFieldName));
@@ -455,7 +455,7 @@ public class OrientEdge extends OrientElement implements Edge {
       final ODocument tmp = new ODocument(getClassName(label)).setTrackingChanges(false);
       tmp.field("in", vIn);
       tmp.field("out", vOut);
-      if (label != null && settings != null && !settings.useClassForEdgeLabel)
+      if (label != null && settings != null && !settings.isUseClassForEdgeLabel())
         tmp.field("label", label);
       return tmp;
     }
@@ -481,11 +481,11 @@ public class OrientEdge extends OrientElement implements Edge {
 
     final ODocument doc = createDocument(label);
 
-    doc.field(OrientBaseGraph.CONNECTION_OUT, settings.keepInMemoryReferences ? vOutRecord.getIdentity() : vOutRecord);
-    doc.field(OrientBaseGraph.CONNECTION_IN, settings.keepInMemoryReferences ? vInRecord.getIdentity() : vInRecord);
+    doc.field(OrientBaseGraph.CONNECTION_OUT, settings.isKeepInMemoryReferences() ? vOutRecord.getIdentity() : vOutRecord);
+    doc.field(OrientBaseGraph.CONNECTION_IN, settings.isKeepInMemoryReferences() ? vInRecord.getIdentity() : vInRecord);
     rawElement = doc;
 
-    final boolean useVertexFieldsForEdgeLabels = settings.useVertexFieldsForEdgeLabels;
+    final boolean useVertexFieldsForEdgeLabels = settings.isUseVertexFieldsForEdgeLabels();
 
     final String outFieldName = OrientVertex.getConnectionFieldName(Direction.OUT, label, useVertexFieldsForEdgeLabels);
     removeLightweightConnection(vOutRecord, outFieldName, vInRecord);
@@ -510,7 +510,7 @@ public class OrientEdge extends OrientElement implements Edge {
    * (Blueprints Extension) Returns the class name based on graph settings.
    */
   public String getClassName(final String iLabel) {
-    if (iLabel != null && (settings == null || settings.useClassForEdgeLabel))
+    if (iLabel != null && (settings == null || settings.isUseClassForEdgeLabel()))
       // USE THE LABEL AS DOCUMENT CLASS
       return checkForClassInSchema(iLabel);
 
@@ -553,7 +553,7 @@ public class OrientEdge extends OrientElement implements Edge {
 
     final ODocument doc = new ODocument(className);
 
-    if (iLabel != null && !settings.useClassForEdgeLabel)
+    if (iLabel != null && !settings.isUseClassForEdgeLabel())
       // SET THE LABEL AS FIELD
       doc.field(OrientElement.LABEL_FIELD_NAME, iLabel);
 

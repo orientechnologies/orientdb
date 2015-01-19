@@ -532,11 +532,11 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    * @throws IllegalArgumentException
    */
   public final void validateProperty(final Element element, final String key, final Object value) throws IllegalArgumentException {
-    if (settings.standardElementConstraints && null == value)
+    if (settings.isStandardElementConstraints() && null == value)
       throw ExceptionFactory.propertyValueCanNotBeNull();
     if (null == key)
       throw ExceptionFactory.propertyKeyCanNotBeNull();
-    if (settings.standardElementConstraints && key.equals(StringFactory.ID))
+    if (settings.isStandardElementConstraints() && key.equals(StringFactory.ID))
       throw ExceptionFactory.propertyKeyIdIsReserved();
     if (element instanceof Edge && key.equals(StringFactory.LABEL))
       throw ExceptionFactory.propertyKeyLabelIsReservedForEdges();

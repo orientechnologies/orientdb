@@ -1,26 +1,29 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.common.log;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -78,6 +81,17 @@ public class OLogManager {
   public void log(final Object iRequester, final Level iLevel, String iMessage, final Throwable iException,
       final Object... iAdditionalArgs) {
     if (iMessage != null) {
+      try {
+        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE != null ? ODatabaseRecordThreadLocal.INSTANCE
+            .getIfDefined() : null;
+        if (db != null && db.getStorage() != null && db.getStorage() instanceof OAbstractPaginatedStorage) {
+          final String dbName = db.getStorage().getName();
+          if (dbName != null)
+            iMessage = "{db=" + dbName + "} " + iMessage;
+        }
+      } catch (Throwable e) {
+      }
+
       final Logger log = iRequester != null ? Logger.getLogger(iRequester.getClass().getName()) : Logger.getLogger(DEFAULT_LOG);
       if (log == null) {
         // USE SYSERR
@@ -95,7 +109,7 @@ public class OLogManager {
           else
             log.log(iLevel, msg);
         } catch (Exception e) {
-          OLogManager.instance().warn(this, "Error on formatting message '%s'", e, iMessage);
+          System.err.print(String.format("Error on formatting message '%s'. Exception: %s", iMessage, e.toString()));
         }
       }
     }

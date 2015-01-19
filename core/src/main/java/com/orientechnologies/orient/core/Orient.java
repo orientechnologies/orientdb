@@ -320,7 +320,7 @@ public class Orient extends OListenerManger<OOrientListener> {
       final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
       for (OStorage stg : storagesCopy) {
         try {
-          OLogManager.instance().info(this, "- storage: " + stg.getName() + "...");
+          OLogManager.instance().info(this, "- closing storage: " + stg.getName() + "...");
           stg.close(true, false);
         } catch (Throwable e) {
           OLogManager.instance().warn(this, "-- error on closing storage", e);
@@ -344,7 +344,7 @@ public class Orient extends OListenerManger<OOrientListener> {
     return workers;
   }
 
-  public Future<?> submit(Runnable runnable) {
+  public Future<?> submit(final Runnable runnable) {
     engineLock.readLock().lock();
     try {
       if (active)
@@ -358,7 +358,7 @@ public class Orient extends OListenerManger<OOrientListener> {
     }
   }
 
-  public <V> Future<V> submit(Callable<V> callable) {
+  public <V> Future<V> submit(final Callable<V> callable) {
     engineLock.readLock().lock();
     try {
       if (active)
