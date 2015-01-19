@@ -214,6 +214,10 @@ public class ODocumentTest {
       doc.undo(); // we decided undo everything
       doc.field("name", "My Name 3"); // change something
       doc.save();
+      doc.field("name", "My Name 4");
+      doc.field("property", "value4");
+      doc.undo("property");// we decided undo readonly field
+      doc.save();
     } finally {
       db.drop();
     }

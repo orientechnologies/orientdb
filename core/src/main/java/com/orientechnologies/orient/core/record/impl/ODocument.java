@@ -1605,6 +1605,18 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     return this;
   }
+  
+  public ODocument undo(String field) {
+	    if (!_trackingChanges)
+	      throw new OConfigurationException("Cannot undo the document because tracking of changes is disabled");
+	    final Object value = _fieldOriginalValues.get(field);
+	    if (value == null)
+	        _fieldValues.remove(field);
+	      else
+	        _fieldValues.put(field, value);
+	    _fieldOriginalValues.remove(field);
+	    return this;
+	  }
 
   public boolean isLazyLoad() {
     return _lazyLoad;
