@@ -215,21 +215,6 @@ public enum OGlobalConfiguration {
       OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME),
 
   // TRANSACTIONS
-  TX_USE_LOG("tx.useLog", "Transactions use log file to store temporary data to be rolled back in case of crash", Boolean.class,
-      true),
-
-  TX_AUTO_RETRY("tx.autoRetry",
-      "Maximum number of automatic retry if some resource has been locked in the middle of the transaction (Timeout exception)",
-      Integer.class, 1),
-
-  TX_LOG_TYPE("tx.log.fileType", "File type to handle transaction logs: mmap or classic", String.class, "classic"),
-
-  TX_LOG_SYNCH(
-      "tx.log.synch",
-      "Executes a synch against the file-system at every log entry. This slows down transactions but guarantee transaction reliability on unreliable drives",
-      Boolean.class, Boolean.FALSE),
-
-  TX_COMMIT_SYNCH("tx.commit.synch", "Synchronizes the storage after transaction commit", Boolean.class, false),
 
   // INDEX
   INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD("index.embeddedToSbtreeBonsaiThreshold",
@@ -243,10 +228,6 @@ public enum OGlobalConfiguration {
   HASH_TABLE_SPLIT_BUCKETS_BUFFER_LENGTH("hashTable.slitBucketsBuffer.length", "Length of buffer (in pages) where buckets "
       + "that were splited but not flushed to the disk are kept. This buffer is used to minimize random IO overhead.",
       Integer.class, 1500),
-
-  @Deprecated
-  INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE("index.auto.rebuildAfterNotSoftClose",
-      "Auto rebuild all automatic indexes after upon database open when wasn't closed properly", Boolean.class, true),
 
   INDEX_SYNCHRONOUS_AUTO_REBUILD("index.auto.synchronousAutoRebuild",
       "Synchronous execution of auto rebuilding of indexes in case of db crash.", Boolean.class, Boolean.TRUE),
@@ -413,13 +394,17 @@ public enum OGlobalConfiguration {
       "If total number of returned records in a query is major than this threshold a warning is given. Use 0 to disable it",
       Long.class, 10000),
 
-  // CLIENT
-  CLIENT_CHANNEL_MIN_POOL("client.channel.minPool", "Minimum pool size", Integer.class, 1),
+  /**
+   * Maximum size of pool of network channels between client and server. A channel is a TCP/IP connection.
+   */
+  CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool",
+      "Maximum size of pool of network channels between client and server. A channel is a TCP/IP connection.", Integer.class, 100),
 
-  CLIENT_CHANNEL_MAX_POOL("client.channel.maxPool", "Maximum channel pool size", Integer.class, 100),
-
+  /**
+   * Maximum time which client should wait a connection from the pool when all connection are used.
+   */
   CLIENT_CONNECT_POOL_WAIT_TIMEOUT("client.connectionPool.waitTimeout",
-      "Maximum time which client should wait connection from the pool", Integer.class, 5000),
+      "Maximum time which client should wait a connection from the pool when all connection are used", Integer.class, 5000),
 
   CLIENT_DB_RELEASE_WAIT_TIMEOUT("client.channel.dbReleaseWaitTimeout",
       "Delay in ms. after which data modification command will be resent if DB was frozen", Integer.class, 10000),
@@ -538,6 +523,33 @@ public enum OGlobalConfiguration {
   @Deprecated
   MVRBTREE_RID_NODE_SAVE_MEMORY("mvrbtree.ridNodeSaveMemory",
       "Deprecated, MVRBTREE IS NOT USED ANYMORE IN FAVOR OF SBTREE AND HASHINDEX", Boolean.class, Boolean.FALSE),
+
+  @Deprecated
+  TX_COMMIT_SYNCH("tx.commit.synch", "Synchronizes the storage after transaction commit", Boolean.class, false),
+
+  @Deprecated
+  TX_AUTO_RETRY("tx.autoRetry",
+                 "Maximum number of automatic retry if some resource has been locked in the middle of the transaction (Timeout exception)",
+                 Integer.class, 1),
+
+  @Deprecated
+  TX_LOG_TYPE("tx.log.fileType", "File type to handle transaction logs: mmap or classic", String.class, "classic"),
+
+  @Deprecated
+  TX_LOG_SYNCH(
+                "tx.log.synch",
+                "Executes a synch against the file-system at every log entry. This slows down transactions but guarantee transaction reliability on unreliable drives",
+                Boolean.class, Boolean.FALSE),
+  @Deprecated
+  TX_USE_LOG("tx.useLog", "Transactions use log file to store temporary data to be rolled back in case of crash", Boolean.class,
+              true),
+
+  @Deprecated
+  INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE("index.auto.rebuildAfterNotSoftClose",
+      "Auto rebuild all automatic indexes after upon database open when wasn't closed properly", Boolean.class, true),
+
+  @Deprecated
+  CLIENT_CHANNEL_MIN_POOL("client.channel.minPool", "Minimum pool size", Integer.class, 1),
 
   @Deprecated
   // DEPRECATED IN 2.0
@@ -690,10 +702,7 @@ public enum OGlobalConfiguration {
         // LOW MEMORY: SET IT TO 256MB ONLY
         OLogManager
             .instance()
-            .warn(
-                null,
-                "No enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower Maximum Heap (-Xmx setting on JVM) and restart OrientDB. Now running with DISKCACHE="
-                    + OReadWriteDiskCache.MIN_CACHE_SIZE + "MB", osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
+            .warn(null, "No enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower Maximum Heap (-Xmx setting on JVM) and restart OrientDB. Now running with DISKCACHE=" + OReadWriteDiskCache.MIN_CACHE_SIZE + "MB", osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
         DISK_CACHE_SIZE.setValue(OReadWriteDiskCache.MIN_CACHE_SIZE);
       }
 

@@ -144,10 +144,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       }
     };
 
-    Orient
-        .instance()
-        .scheduleTask(purgeDeletedRecordsTask, OGlobalConfiguration.DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY.getValueAsLong(),
-            OGlobalConfiguration.DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY.getValueAsLong());
+    Orient.instance().scheduleTask(purgeDeletedRecordsTask, OGlobalConfiguration.DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY.getValueAsLong(), OGlobalConfiguration.DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY.getValueAsLong());
 
     asynchronousOperationsQueue = new ArrayBlockingQueue<OAsynchDistributedOperation>(10000);
     asynchWorker = new Thread() {
@@ -800,8 +797,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
         switch (op.type) {
         case ORecordOperation.CREATED:
-          task = new OCreateRecordTask(rid, record.toStream(), record.getRecordVersion(), ORecordInternal.getRecordType(record));
-          break;
+          final byte[] stream = record.toStream();
+          if (!rid.isPersistent()) {
+            task = new OCreateRecordTask(rid, stream, record.getRecordVersion(), ORecordInternal.getRecordType(record));
+            break;
+          }
+          // ELSE TREAT IT AS UPDATE: GO DOWN
 
         case ORecordOperation.UPDATED:
           // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO

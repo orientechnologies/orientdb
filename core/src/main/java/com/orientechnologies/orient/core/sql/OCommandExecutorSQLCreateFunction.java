@@ -98,7 +98,7 @@ public class OCommandExecutorSQLCreateFunction extends OCommandExecutorSQLAbstra
       f.setParameters(parameters);
     if (language != null)
       f.setLanguage(language);
-
+    f.save();
     return f.getId();
   }
 

@@ -28,8 +28,6 @@ public class TestOrientBulkInsert {
     OGlobalConfiguration.INDEX_AUTO_LAZY_UPDATES.setValue(0); // Turn off cache
     OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(0);
 
-    OGlobalConfiguration.TX_USE_LOG.setValue(false);
-
     Map defaultsMap = new HashMap<String, Object>();
     defaultsMap.put("mvrbtree.lazyUpdates", 1);
     defaultsMap.put("index.auto.lazyUpdates", 1);

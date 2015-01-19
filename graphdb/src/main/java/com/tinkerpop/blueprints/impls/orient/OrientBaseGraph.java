@@ -20,13 +20,6 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.util.*;
-
-import org.apache.commons.configuration.Configuration;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -61,10 +54,28 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
-import com.tinkerpop.blueprints.*;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.GraphQuery;
+import com.tinkerpop.blueprints.Index;
+import com.tinkerpop.blueprints.Parameter;
+import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.ExceptionFactory;
 import com.tinkerpop.blueprints.util.StringFactory;
 import com.tinkerpop.blueprints.util.wrappers.partition.PartitionVertex;
+import org.apache.commons.configuration.Configuration;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * A Blueprints implementation of the graph database OrientDB (http://www.orientechnologies.com)
@@ -263,9 +274,17 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Internal use only.
    */
   public static void clearInitStack() {
-    initializationStack.get().clear();
-    activeGraph.set(null);
-    ODatabaseRecordThreadLocal.INSTANCE.set(null);
+    final ThreadLocal<Deque<OrientBaseGraph>> is = initializationStack;
+    if (is != null)
+      is.get().clear();
+
+    final ThreadLocal<OrientBaseGraph> ag = activeGraph;
+    if (ag != null)
+      ag.set(null);
+
+    final ODatabaseRecordThreadLocal dbtl = ODatabaseRecordThreadLocal.INSTANCE;
+    if (dbtl != null)
+      dbtl.set(null);
   }
 
   /**
@@ -659,8 +678,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       className = id.toString().substring(CLASS_PREFIX.length());
 
     // SAVE THE ID TOO?
-    final Object[] fields = isSaveOriginalIds() && id != null ? new Object[] { OrientElement.DEF_ORIGINAL_ID_FIELDNAME, id }
-        : null;
+    final Object[] fields = isSaveOriginalIds() && id != null ? new Object[] { OrientElement.DEF_ORIGINAL_ID_FIELDNAME, id } : null;
 
     if (outVertex instanceof PartitionVertex)
       // WRAPPED: GET THE BASE VERTEX
