@@ -432,4 +432,13 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
   @Override
   public void startFuzzyCheckpoints() {
   }
+
+	@Override
+	public boolean checkLowDiskSpace() {
+		return true;
+	}
+
+	@Override
+	public void makeFuzzyCheckpoint() {
+	}
 }
