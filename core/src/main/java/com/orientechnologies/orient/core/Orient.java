@@ -178,12 +178,11 @@ public class Orient extends OListenerManger<OOrientListener> {
       registerEngine(new OEngineMemory());
       registerEngine("com.orientechnologies.orient.client.remote.OEngineRemote");
 
-      if (OGlobalConfiguration.PROFILER_ENABLED.getValueAsBoolean())
-        // ACTIVATE RECORDING OF THE PROFILER
-        profiler.startRecording();
 
       if (OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP.getValueAsBoolean())
         OGlobalConfiguration.dumpConfiguration(System.out);
+
+      active = true;
 
       for (OOrientStartupListener l : startupListeners)
         try {
@@ -205,8 +204,6 @@ public class Orient extends OListenerManger<OOrientListener> {
         } catch (Exception e) {
           OLogManager.instance().error(this, "Error on startup", e);
         }
-
-      active = true;
     } finally {
       engineLock.writeLock().unlock();
     }

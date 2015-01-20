@@ -24,6 +24,9 @@ import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.OOrientListener;
+import com.orientechnologies.orient.core.OOrientListenerAbstract;
+import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
@@ -45,7 +48,7 @@ import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class OAbstractProfiler extends OSharedResourceAbstract implements OProfilerMBean {
+public abstract class OAbstractProfiler extends OSharedResourceAbstract implements OProfilerMBean, OOrientStartupListener {
 
   protected final Map<String, OProfilerHookValue>          hooks         = new ConcurrentHashMap<String, OProfilerHookValue>();
   protected final ConcurrentHashMap<String, String>        dictionary    = new ConcurrentHashMap<String, String>();
@@ -103,7 +106,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
   }
 
   public OAbstractProfiler() {
-    installMemoryChecker();
+    Orient.instance().registerWeakOrientStartupListener(this);
   }
 
   public OAbstractProfiler(final OAbstractProfiler profiler) {
@@ -111,7 +114,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
     dictionary.putAll(profiler.dictionary);
     types.putAll(profiler.types);
 
-    installMemoryChecker();
+    Orient.instance().registerWeakOrientStartupListener(this);
   }
 
   public static void dumpEnvironment(final PrintStream out) {
@@ -148,6 +151,14 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
     out.printf("OrientDB Memory profiler: Heap=%s of %s - DiskCache (%s dbs)=%s of %s\n",
         OFileUtils.getSizeAsString(runtime.totalMemory() - runtime.freeMemory()), OFileUtils.getSizeAsString(runtime.maxMemory()),
         stgs, OFileUtils.getSizeAsString(diskCacheUsed), OFileUtils.getSizeAsString(diskCacheTotal));
+  }
+
+  @Override
+  public void onStartup() {
+    if (OGlobalConfiguration.PROFILER_ENABLED.getValueAsBoolean())
+      // ACTIVATE RECORDING OF THE PROFILER
+      startRecording();
+    installMemoryChecker();
   }
 
   public void shutdown() {
@@ -357,4 +368,5 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
     if (iDescription != null && dictionary.putIfAbsent(iName, iDescription) == null)
       types.put(iName, iType);
   }
+
 }
