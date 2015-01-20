@@ -1492,7 +1492,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         throw new ODatabaseException(
             "Cannot unmarshall the document because no database is active, use detach for use the document outside the database session scope");
       OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
-      metadata.clearThreadLocalSchemaSnapshot();
+      if (metadata.getImmutableSchemaSnapshot() != null)
+        metadata.clearThreadLocalSchemaSnapshot();
       metadata.reload();
       metadata.makeThreadLocalSchemaSnapshot();
       _schema = metadata.getImmutableSchemaSnapshot();
