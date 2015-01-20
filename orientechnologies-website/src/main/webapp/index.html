@@ -12,6 +12,8 @@
   <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.css" />
   <link rel="stylesheet" href="bower_components/bootstrap-markdown/css/bootstrap-markdown.min.css" />
   <link rel="stylesheet" href="bower_components/angular-motion/dist/angular-motion.css" />
+  <link rel="stylesheet" href="bower_components/humane/themes/libnotify.css" />
+  <link rel="stylesheet" href="bower_components/humane/themes/jackedup.css" />
   <!-- endbower -->
   <!-- endbuild -->
   <!-- build:css(.tmp) styles/main.css -->
@@ -32,7 +34,7 @@
 <ng-include src="'views/header.html'">
 
 </ng-include>
-<div class="container-fluid">
+<div class="container-fluid app-container">
 
 
   <div ng-view="" class="app-view"></div>
@@ -91,11 +93,14 @@
 <script src="bower_components/ngstorage/ngStorage.js"></script>
 <script src="bower_components/vue/dist/vue.js"></script>
 <script src="bower_components/ment.io/dist/mentio.js"></script>
+<script src="bower_components/angular-scroll-glue/src/scrollglue.js"></script>
+<script src="bower_components/humane/humane.min.js"></script>
 <!-- endbower -->
 <!-- endbuild -->
 
 <!-- build:js({.tmp,src/main/webapp}) scripts/scripts.js -->
 <script src="scripts/app.js"></script>
+
 <script src="scripts/controllers/main.js"></script>
 <script src="scripts/controllers/client.js"></script>
 <script src="scripts/controllers/about.js"></script>
@@ -103,6 +108,7 @@
 <script src="scripts/controllers/issue.js"></script>
 <script src="scripts/controllers/login.js"></script>
 <script src="scripts/controllers/user.js"></script>
+<script src="scripts/controllers/chat.js"></script>
 <script src="scripts/services/user-services.js"></script>
 <script src="scripts/services/issue-services.js"></script>
 <script src="scripts/services/organization-services.js"></script>

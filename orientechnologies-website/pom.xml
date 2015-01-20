@@ -113,6 +113,16 @@
             <artifactId>spring-boot-starter-tomcat</artifactId>
             <version>${spring-boot.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+            <version>${spring-boot.version}</version>
+        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.springframework</groupId>-->
+            <!--<artifactId>spring-messaging</artifactId>-->
+            <!--<version>${spring-boot.version}</version>-->
+        <!--</dependency>-->
         <!--<dependency>-->
         <!--<groupId>org.springframework.boot</groupId>-->
         <!--<artifactId>spring-boot-starter-jetty</artifactId>-->

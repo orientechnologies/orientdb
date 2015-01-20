@@ -1,6 +1,6 @@
 'use strict';
 angular.module('webappApp')
-  .controller('IssueCtrl', function ($scope, Organization, User, $routeParams) {
+  .controller('IssueCtrl', function ($scope, Organization, User, $routeParams, $location) {
 
     $scope.githubIssue = GITHUB + "/" + ORGANIZATION;
 
@@ -12,8 +12,11 @@ angular.module('webappApp')
     if ($routeParams.q) {
       $scope.query = $routeParams.q;
     }
+
     if ($routeParams.page) {
+
       $scope.page = $routeParams.page;
+      console.log($scope.page);
     }
 
     $scope.labelPopover = {
@@ -25,15 +28,22 @@ angular.module('webappApp')
       $scope.issue = {};
       $scope.search();
     }
-    $scope.search = function (page) {
-      if (!page) {
-        $scope.page = 1;
-      }
+    $scope.changeRoute = function () {
+
+    }
+    $scope.searchForIssue = function () {
+
       Organization.all('issues').customGET("", {q: $scope.query, page: $scope.page}).then(function (data) {
         $scope.issues = data.content;
         $scope.pager = data.page;
         $scope.pager.pages = $scope.calculatePages($scope.pager);
       });
+    }
+    $scope.search = function (page) {
+      if (!page) {
+        $scope.page = 1;
+      }
+      $location.search({'q': $scope.query, 'page': $scope.page});
     }
 
     User.whoami().then(function (data) {
@@ -195,7 +205,7 @@ angular.module('webappApp')
         $scope.search(true);
       }
     }
-    $scope.search();
+    $scope.searchForIssue();
   }
 );
 
@@ -288,7 +298,13 @@ angular.module('webappApp')
       return 'views/issues/events/' + e + ".html";
     }
     function refreshEvents() {
-      $scope.comments = Repo.one($scope.repo).all("issues").one(number).all("events").getList().$object;
+      Repo.one($scope.repo).all("issues").one(number).all("events").getList().then(function (data) {
+
+
+        $scope.comments = data.plain().filter(function (e) {
+          return (e.event != 'mentioned' && e.event != 'subscribed')
+        })
+      });
     }
 
 

@@ -62,4 +62,5 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
 
     List<Sla> findClientEnvironmentSla(String organizationName, Integer clientId, String env);
 
+    List<Message> findClientMessages(String name, Integer clientId, String beforeUuid);
 }

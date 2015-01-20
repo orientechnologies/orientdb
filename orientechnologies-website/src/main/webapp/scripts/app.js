@@ -22,7 +22,8 @@ angular
     'mgcrea.ngStrap',
     'ngUtilFilters',
     'ngStorage',
-    'mentio'
+    'mentio',
+    'luegg.directives'
   ])
   .config(function ($routeProvider, $httpProvider, RestangularProvider) {
     $routeProvider
@@ -57,6 +58,14 @@ angular
       .when('/clients', {
         templateUrl: 'views/clients.html',
         controller: 'ClientCtrl'
+      })
+      .when('/rooms', {
+        templateUrl: 'views/room.html',
+        controller: 'ChatCtrl'
+      })
+      .when('/rooms/:id', {
+        templateUrl: 'views/room.html',
+        controller: 'ChatCtrl'
       })
       .when('/clients/new', {
         templateUrl: 'views/clients/newClient.html',
@@ -104,8 +113,8 @@ angular.module('webappApp').factory('oauthHttpInterceptor', function ($cookies, 
 
 
 var API = "v1/"
-//var ORGANIZATION = 'orientechnologies';
-var ORGANIZATION = 'romeshell';
-var DEFAULT_REPO = 'shell-notifications';
-//var DEFAULT_REPO = 'orientdb';
+var ORGANIZATION = 'orientechnologies';
+//var ORGANIZATION = 'romeshell';
+//var DEFAULT_REPO = 'shell-notifications';
+var DEFAULT_REPO = 'orientdb';
 var GITHUB = "https://github.com"

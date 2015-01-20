@@ -1,6 +1,11 @@
 package com.orientechnologies.website.exception;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.website.model.schema.dto.MessageError;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.Charset;
 
 /**
  * Created by Enrico Risa on 17/10/14.
@@ -41,5 +46,24 @@ public class ServiceException extends RuntimeException {
 
   public static ServiceException create(Integer code) {
     return new ServiceException(code, null);
+  }
+
+  public String toJson() {
+    ObjectMapper mapper = new ObjectMapper();
+    ByteArrayOutputStream steam = new ByteArrayOutputStream();
+    try {
+      mapper.writeValue(steam, new Object() {
+        public Integer getCode() {
+          return code;
+        }
+
+        public String getMessage() {
+          return ServiceException.this.getMessage();
+        }
+      });
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return new String(steam.toByteArray(), Charset.forName("UTF-8"));
   }
 }

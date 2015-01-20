@@ -1,11 +1,20 @@
 /* Space out content a bit */
+html {
+  height: 100%;
+}
+
 body {
   padding-bottom: 20px;
+  height: 100%;
   /*background: #edeff0;*/
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-family: 'Source Sans Pro', 'Helvetica Neue', Arial, sans-serif;
   color: #34495e;
+}
+
+.app-container, .app-view {
+  height: 100%;
 }
 
 /* Everything but the jumbotron gets side spacing for mobile first views */
@@ -91,6 +100,11 @@ body {
     width: 70px;
   }
 
+  .sidebar-right {
+    width: 200px;
+    top: 50px;
+  }
+
   .app-view {
     margin-left: 70px;
     margin-top: 60px;
@@ -99,6 +113,27 @@ body {
   .footer {
     margin-left: 70px;
   }
+}
+
+.sidebar-right .nav-pills > li.active > a, .sidebar-right .nav-pills > li > a:hover {
+  text-decoration: none;
+  background-color: #eee;
+}
+.sidebar-right .nav li > a:hover {
+  color: #60676d;
+}
+.sidebar-right .nav li > a {
+  text-align: center;
+  margin: 10px;
+  padding: 10px 10px;
+  color: #60676d;
+}
+.sidebar-right {
+  position: fixed;
+  background: #384047;
+  right: 0;
+  bottom: 0;
+  z-index: 1031;
 }
 
 .sidebar {
@@ -279,12 +314,54 @@ code {
 span.label-dark {
   color: #000000;
 }
+
 .issues-panel span.label {
   border-radius: 2px;
-  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.12);
-}
-.events-list span.label {
-  border-radius: 2px;
-  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.12);
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.12);
 }
 
+.events-list span.label {
+  border-radius: 2px;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.12);
+}
+
+.chat-messages {
+  position: relative;
+  height: 90%;
+  display: block;
+  width: 100%;
+  vertical-align: bottom;
+}
+
+.chat-timeline {
+  position: absolute;
+  bottom: 0;
+  height: 90%;
+  overflow: auto;
+  width: 82%;
+}
+
+.chat-input {
+  height: 10%;
+  width: 100%;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  -webkit-transition: all 500ms ease-in-out;
+  transition: all 500ms ease-in-out;
+  background-color: white;
+  min-height: 70px;
+  /*border-top: 1px solid rgba(0, 0, 0, .05);*/
+}
+
+.chat-container > .row {
+  height: 100%;
+}
+
+.chat-container {
+  height: 100%;
+  margin-top: -60px;
+}
+
+.new-chat {
+  padding-top: 60px;
+}

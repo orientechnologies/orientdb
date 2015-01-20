@@ -41,6 +41,11 @@ angular.module('webappApp')
     $scope.save = function () {
 
     }
+    $scope.createChat = function () {
+      Organization.all("clients").one($routeParams.id).all("room").post().then(function (data) {
+        console.log("chat created")
+      });
+    }
     $scope.addMember = function () {
       Organization.all("clients").one($routeParams.id).all("members").one($scope.newMember).post().then(function (data) {
         $scope.members.push(data);

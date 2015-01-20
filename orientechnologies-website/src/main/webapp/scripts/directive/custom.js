@@ -47,7 +47,9 @@ angular.module('webappApp').directive('vueEditor', function ($timeout, $compile,
   return {
     require: '^ngModel',
     scope: {
-      preview: "=?preview"
+      preview: "=?preview",
+      placeholder: "=?placeholder",
+      onSend: '&'
     },
     templateUrl: 'views/vueditor.html',
     controller: function ($scope) {
@@ -73,6 +75,7 @@ angular.module('webappApp').directive('vueEditor', function ($timeout, $compile,
 
 
         if (!editor) {
+          scope.placeholder = scope.placeholder || 'Leave a comment'
           var defaultVal = scope.preview ? 'No description' : '';
           editor = new Vue({
             el: elem[0],
@@ -81,10 +84,20 @@ angular.module('webappApp').directive('vueEditor', function ($timeout, $compile,
             },
             filters: {
               marked: marked
+            },
+            methods: {
+              send: function (e) {
+                if ((e.keyCode == 10 || e.keyCode == 13) && (e.metaKey || e.ctrlKey)) {
+                  if (scope.onSend && editor.$data.input && editor.$data.input.length > 0) {
+                    scope.onSend()
+                  }
+                }
+              }
             }
           })
           editor.$watch('$data.input', function (newVal, oldval) {
             ngModel.$setViewValue(newVal);
+
           });
         } else {
           var defaultVal = scope.preview ? 'No description' : '';

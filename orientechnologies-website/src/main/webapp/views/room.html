@@ -1,0 +1,56 @@
+<nav class="sidebar-right">
+  <ul class="nav nav-pills nav-stacked">
+    <li ng-class="{ 'active' : client.clientId == clientId}" ng-repeat="client in clients">
+      <a href="#/rooms/{{client.clientId}}">{{client.name}}</a>
+    </li>
+  </ul>
+</nav>
+<div class="container-fluid chat-container">
+  <div class="row">
+
+    <div class="chat-messages">
+      <div class="new-chat" ng-show="isNew">
+        <div class="btn-group">
+          <a class="btn btn-success" ng-click="createChat()">
+            Create Room for Client {{client.name}}
+          </a>
+        </div>
+      </div>
+      <div scroll-glue class="chat-timeline" ng-show="!isNew">
+        <div ng-repeat="message in messages">
+          <div class="col-md-1">
+            <avatar dim="40" user="message.sender"></avatar>
+          </div>
+          <div class="col-md-11">
+            <div class="row">
+              <div class="col-md-12">
+                {{message.sender.name}} - {{ message.date | fromNow}}
+              </div>
+              <div class="col-md-12">
+                <div vue-editor ng-model="message.body"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="chat-input">
+      <div class="row ">
+        <div class="col-md-10">
+          <footer>
+            <form ng-submit="">
+              <div vue-editor preview="false" placeholder="placeholder" on-send="sendMessage()"
+                   ng-model="current"></div>
+            </form>
+          </footer>
+        </div>
+        <!--<div class="col-md-2">-->
+          <!--<div class="btn-group">-->
+            <!--<button ng-click="sendMessage()" class="btn btn-success">Send</button>-->
+          <!--</div>-->
+        <!--</div>-->
+      </div>
+    </div>
+  </div>
+</div>
