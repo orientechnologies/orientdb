@@ -1338,26 +1338,32 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     return this;
   }
 
-  public OPropertyImpl addPropertyInternal(final String name, final OType type, final OType linkedType, final OClass linkedClass) {
+  public OPropertyImpl addPropertyInternal(final String name, final OType type, final OType linkedType, final OClass linkedClass,
+      final boolean iCheckExistentRecords) {
     if (name == null || name.length() == 0)
       throw new OSchemaException("Found property name null");
 
     final Character wrongCharacter = OSchemaShared.checkFieldNameIfValid(name);
     if (wrongCharacter != null)
-      throw new OSchemaException("Invalid property name found. Character '" + wrongCharacter + "' cannot be used in property name");
+      throw new OSchemaException("Invalid property name '" + name + "'. Character '" + wrongCharacter + "' cannot be used");
+
+    if (iCheckExistentRecords)
+      checkPersistentPropertyType(getDatabase(), name, type);
 
     final String lowerName = name.toLowerCase();
+
+    final OPropertyImpl prop;
 
     acquireSchemaWriteLock();
     try {
       checkEmbedded();
 
       if (properties.containsKey(lowerName))
-        throw new OSchemaException("Class " + this.name + " already has property '" + name + "'");
+        throw new OSchemaException("Class '" + this.name + "' already has property '" + name + "'");
 
       OGlobalProperty global = owner.findOrCreateGlobalProperty(name, type);
 
-      final OPropertyImpl prop = new OPropertyImpl(this, global);
+      prop = new OPropertyImpl(this, global);
 
       properties.put(lowerName, prop);
 
@@ -1365,10 +1371,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
         prop.setLinkedTypeInternal(linkedType);
       else if (linkedClass != null)
         prop.setLinkedClassInternal(linkedClass);
-      return prop;
     } finally {
       releaseSchemaWriteLock();
     }
+
+    if (prop != null)
+      fireDatabaseMigration(getDatabase(), name, type);
+
+    return prop;
   }
 
   public OIndex<?> createIndex(final String iName, final INDEX_TYPE iType, final String... fields) {
@@ -1617,12 +1627,13 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
   }
 
-  public void checkPersistentPropertyType(ODatabase<ORecord> database, String propertyName, OType type) {
+  public void checkPersistentPropertyType(final ODatabase<ORecord> database, final String propertyName, final OType type) {
 
-    StringBuilder builder = new StringBuilder(256);
+    final StringBuilder builder = new StringBuilder(256);
     builder.append("select count(*) from ").append(name).append(" where ");
     builder.append(propertyName).append(".type() not in [");
-    Iterator<OType> cur = type.getCastable().iterator();
+
+    final Iterator<OType> cur = type.getCastable().iterator();
     while (cur.hasNext()) {
       builder.append('"').append(cur.next().name()).append('"');
       if (cur.hasNext())
@@ -1632,7 +1643,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     if (type.isMultiValue())
       builder.append(" and ").append(propertyName).append(".size() <> 0 limit 1");
 
-    List<ODocument> res = database.command(new OCommandSQL(builder.toString())).execute();
+    final List<ODocument> res = database.command(new OCommandSQL(builder.toString())).execute();
     if (((Long) res.get(0).field("count")) > 0)
       throw new OSchemaException("The database contains some schema-less data in the property '" + name + "." + propertyName
           + "' that is not compatible with the type " + type + ". Fix those records and change the schema again");
@@ -1960,15 +1971,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       throw new OSchemaException("Property name is null or empty");
 
     if (Character.isDigit(propertyName.charAt(0)))
-      throw new OSchemaException("Found invalid property name. Cannot start with numbers");
+      throw new OSchemaException("Found invalid name for property '" + propertyName + "': it cannot start with numbers");
 
     if (getDatabase().getTransaction().isActive())
-      throw new OSchemaException("Cannot create a new property inside a transaction");
+      throw new OSchemaException("Cannot create property '" + propertyName + "' inside a transaction");
 
     final ODatabaseDocumentInternal database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
 
-    checkPersistentPropertyType(database, propertyName, type);
     OProperty property = null;
     acquireSchemaWriteLock();
     try {
@@ -2006,16 +2016,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
         database.command(commandSQL).execute();
 
-        property = addPropertyInternal(propertyName, type, linkedType, linkedClass);
+        property = addPropertyInternal(propertyName, type, linkedType, linkedClass, true);
       } else
-        property = addPropertyInternal(propertyName, type, linkedType, linkedClass);
+        property = addPropertyInternal(propertyName, type, linkedType, linkedClass, true);
 
     } finally {
       releaseSchemaWriteLock();
     }
 
-    if (property != null)
-      fireDatabaseMigration(database, propertyName, type);
     return property;
   }
 

@@ -102,9 +102,6 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
 
   @Override
   public OAbstractRemoteTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
-    if (iBadResponse instanceof Throwable)
-      return null;
-
     final ORecordVersion versionCopy = previousVersion.copy();
     versionCopy.setRollbackMode();
 

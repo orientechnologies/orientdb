@@ -45,7 +45,7 @@ public class OCommandGremlin extends OCommandRequestTextAbstract {
 
   @Override
   public String toString() {
-    return "gremlin." + OIOUtils.getStringMaxLength(text, 200, "...");
+    return "gremlin." + text;
   }
 
 }

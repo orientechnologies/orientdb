@@ -483,15 +483,15 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
         + jaimeDoc.toJSON() + "}}");
     tyrionDoc.save();
 
-    System.out.println("The saved documents are:");
+//    System.out.println("The saved documents are:");
     for (ODocument o : database.browseClass("PersonTest")) {
-      System.out.println("my id is " + o.getIdentity().toString());
-      System.out.println("my name is: " + o.field("name"));
-      System.out.println("my ODocument representation is " + o);
-      System.out.println("my JSON representation is " + o.toJSON());
-      System.out.println("my traversable links are: ");
+//      System.out.println("my id is " + o.getIdentity().toString());
+//      System.out.println("my name is: " + o.field("name"));
+//      System.out.println("my ODocument representation is " + o);
+//      System.out.println("my JSON representation is " + o.toJSON());
+//      System.out.println("my traversable links are: ");
       for (OIdentifiable id : new OSQLSynchQuery<ODocument>("traverse * from " + o.getIdentity().toString())) {
-        System.out.println(database.load(id.getIdentity()).toJSON());
+        database.load(id.getIdentity()).toJSON();
       }
     }
   }
@@ -688,8 +688,8 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     final ODatabaseDocumentTx db = pool.acquire();
     long tot;
     while ((tot = db.countClusterElements("Account")) < startRecordNumber + TOT_RECORDS) {
-      System.out.println("Asynchronous insertion: found " + tot + " records but waiting till " + (startRecordNumber + TOT_RECORDS)
-          + " is reached");
+//      System.out.println("Asynchronous insertion: found " + tot + " records but waiting till " + (startRecordNumber + TOT_RECORDS)
+//          + " is reached");
       try {
         Thread.sleep(100);
       } catch (InterruptedException e) {

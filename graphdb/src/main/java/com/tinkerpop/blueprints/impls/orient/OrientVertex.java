@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -435,7 +436,11 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       if (doc != null && ODocumentInternal.getImmutableSchemaClass(doc) != null
           && ODocumentInternal.getImmutableSchemaClass(doc).isSubClassOf(OrientEdgeType.CLASS_NAME))
         // DELETE THE EDGE RECORD TOO
-        doc.delete();
+        try {
+          doc.delete();
+        } catch (ORecordNotFoundException e) {
+          // IGNORE THE EXCEPTION: THE RECORD HAS BEEN ALREADY DELETED
+        }
     }
   }
 
@@ -544,7 +549,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     final OrientBaseGraph graph = getGraph();
 
     for (String field : doc.fieldNames())
-      if (graph != null && settings.useVertexFieldsForEdgeLabels) {
+      if (graph != null && settings.isUseVertexFieldsForEdgeLabels()) {
         if (!field.startsWith(CONNECTION_OUT_PREFIX) && !field.startsWith(CONNECTION_IN_PREFIX))
           result.add(field);
       } else if (!field.equals(OrientBaseGraph.CONNECTION_OUT) && !field.equals(OrientBaseGraph.CONNECTION_IN))
@@ -672,7 +677,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
         // SKIP THIS FIELD
         continue;
 
-      removeEdges(doc, fieldName, null, true, settings.useVertexFieldsForEdgeLabels);
+      removeEdges(doc, fieldName, null, true, settings.isUseVertexFieldsForEdgeLabels());
     }
 
     super.remove();
@@ -719,7 +724,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    * @see #moveToCluster(String)
    */
   public ORID moveTo(final String iClassName, final String iClusterName) {
-		final OrientBaseGraph graph = getGraph();
+    final OrientBaseGraph graph = getGraph();
 
     final ORID oldIdentity = getIdentity().copy();
 
@@ -862,7 +867,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     if (inVertex == null)
       throw new IllegalArgumentException("destination vertex is null");
 
-		final OrientBaseGraph graph = getGraph();
+    final OrientBaseGraph graph = getGraph();
     if (graph != null) {
       setCurrentGraphInThreadLocal();
       graph.autoStartTransaction();
@@ -886,8 +891,8 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       // RETRO-COMPATIBILITY WITH THE SYNTAX CLASS:<CLASS-NAME>
       label = OrientBaseGraph.encodeClassName(iClassName);
 
-    final String outFieldName = getConnectionFieldName(Direction.OUT, label, settings.useVertexFieldsForEdgeLabels);
-    final String inFieldName = getConnectionFieldName(Direction.IN, label, settings.useVertexFieldsForEdgeLabels);
+    final String outFieldName = getConnectionFieldName(Direction.OUT, label, settings.isUseVertexFieldsForEdgeLabels());
+    final String inFieldName = getConnectionFieldName(Direction.IN, label, settings.isUseVertexFieldsForEdgeLabels());
 
     // since the label for the edge can potentially get re-assigned
     // before being pushed into the OrientEdge, the
@@ -899,7 +904,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       // CREATE A LIGHTWEIGHT DYNAMIC EDGE
       from = rawElement;
       to = inDocument;
-      if (settings.keepInMemoryReferences)
+      if (settings.isKeepInMemoryReferences())
         edge = new OrientEdge(graph, from.getIdentity(), to.getIdentity(), label);
       else
         edge = new OrientEdge(graph, from, to, label);
@@ -907,7 +912,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       // CREATE THE EDGE DOCUMENT TO STORE FIELDS TOO
       edge = new OrientEdge(graph, label, fields);
 
-      if (settings.keepInMemoryReferences)
+      if (settings.isKeepInMemoryReferences())
         edge.getRecord().fields(OrientBaseGraph.CONNECTION_OUT, rawElement.getIdentity(), OrientBaseGraph.CONNECTION_IN,
             inDocument.getIdentity());
       else
@@ -917,7 +922,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       to = (OIdentifiable) edge.getRecord();
     }
 
-    if (settings.keepInMemoryReferences) {
+    if (settings.isKeepInMemoryReferences()) {
       // USES REFERENCES INSTEAD OF DOCUMENTS
       from = from.getIdentity();
       to = to.getIdentity();
@@ -954,7 +959,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
     OrientBaseGraph.encodeClassNames(iLabels);
 
-    if (settings.useVertexFieldsForEdgeLabels || iLabels == null || iLabels.length == 0) {
+    if (settings.isUseVertexFieldsForEdgeLabels() || iLabels == null || iLabels.length == 0) {
       // VERY FAST
       final ODocument doc = getRecord();
       for (String fieldName : doc.fieldNames()) {
@@ -1071,7 +1076,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
   public String getLabel() {
     setCurrentGraphInThreadLocal();
 
-    if (settings.useClassForVertexLabel) {
+    if (settings.isUseClassForVertexLabel()) {
       final String clsName = getRecord().getClassName();
       if (!OrientVertexType.CLASS_NAME.equals(clsName))
         // RETURN THE CLASS NAME
@@ -1101,7 +1106,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    */
   @Override
   public OrientVertexType getType() {
-		final OrientBaseGraph graph = getGraph();
+    final OrientBaseGraph graph = getGraph();
     return new OrientVertexType(graph, getRecord().getSchemaClass());
   }
 
@@ -1109,7 +1114,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    * Returns a string representation of the vertex.
    */
   public String toString() {
-		final OrientBaseGraph graph = getGraph();
+    final OrientBaseGraph graph = getGraph();
     if (graph != null)
       graph.setCurrentGraphInThreadLocal();
 
@@ -1157,9 +1162,9 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    * @return The found direction if any
    */
   protected OPair<Direction, String> getConnection(final Direction iDirection, final String iFieldName, final String... iClassNames) {
-		final OrientBaseGraph graph = getGraph();
+    final OrientBaseGraph graph = getGraph();
     if (iDirection == Direction.OUT || iDirection == Direction.BOTH) {
-      if (settings.useVertexFieldsForEdgeLabels) {
+      if (settings.isUseVertexFieldsForEdgeLabels()) {
         // FIELDS THAT STARTS WITH "out_"
         if (iFieldName.startsWith(CONNECTION_OUT_PREFIX)) {
           if (iClassNames == null || iClassNames.length == 0)
@@ -1190,7 +1195,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     }
 
     if (iDirection == Direction.IN || iDirection == Direction.BOTH) {
-      if (settings.useVertexFieldsForEdgeLabels) {
+      if (settings.isUseVertexFieldsForEdgeLabels()) {
         // FIELDS THAT STARTS WITH "in_"
         if (iFieldName.startsWith(CONNECTION_IN_PREFIX)) {
           if (iClassNames == null || iClassNames.length == 0)
@@ -1225,10 +1230,10 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
   protected void addSingleEdge(final ODocument doc, final OMultiCollectionIterator<Edge> iterable, String fieldName,
       final OPair<Direction, String> connection, final Object fieldValue, final OIdentifiable iTargetVertex, final String[] iLabels) {
-		final OrientBaseGraph graph = getGraph();
+    final OrientBaseGraph graph = getGraph();
     final OrientEdge toAdd = getEdge(graph, doc, fieldName, connection, fieldValue, iTargetVertex, iLabels);
 
-    if (settings.useVertexFieldsForEdgeLabels || toAdd.isLabeled(iLabels))
+    if (settings.isUseVertexFieldsForEdgeLabels() || toAdd.isLabeled(iLabels))
       // ADD THE EDGE
       iterable.add(toAdd);
   }
@@ -1238,11 +1243,11 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
     checkIfAttached();
 
-		final OrientBaseGraph graph = getGraph();
-    if (!settings.useVertexFieldsForEdgeLabels && label != null)
+    final OrientBaseGraph graph = getGraph();
+    if (!settings.isUseVertexFieldsForEdgeLabels() && label != null)
       return false;
 
-    if (settings.useLightweightEdges
+    if (settings.isUseLightweightEdges()
         && (fields == null || fields.length == 0 || fields[0] == null || (fields[0] instanceof Map && ((Map) fields[0]).isEmpty()))) {
       Object field = iFromVertex.field(iOutFieldName);
       if (field != null)
@@ -1264,7 +1269,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
             return false;
           }
 
-      if (settings.useClassForEdgeLabel) {
+      if (settings.isUseClassForEdgeLabel()) {
         // CHECK IF THE EDGE CLASS HAS SPECIAL CONSTRAINTS
         final OClass cls = graph.getEdgeType(label);
         if (cls != null)
@@ -1282,7 +1287,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
   private void addSingleVertex(final ODocument doc, final OMultiCollectionIterator<Vertex> iterable, String fieldName,
       final OPair<Direction, String> connection, final Object fieldValue, final String[] iLabels) {
-		final OrientBaseGraph graph = getGraph();
+    final OrientBaseGraph graph = getGraph();
 
     final OrientVertex toAdd;
 
@@ -1292,7 +1297,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       toAdd = new OrientVertex(graph, fieldRecord);
     } else if (ODocumentInternal.getImmutableSchemaClass(fieldRecord).isSubClassOf(OrientEdgeType.CLASS_NAME)) {
       // EDGE
-      if (settings.useVertexFieldsForEdgeLabels || OrientEdge.isLabeled(OrientEdge.getRecordLabel(fieldRecord), iLabels)) {
+      if (settings.isUseVertexFieldsForEdgeLabels() || OrientEdge.isLabeled(OrientEdge.getRecordLabel(fieldRecord), iLabels)) {
         final OIdentifiable vertexDoc = OrientEdge.getConnection(fieldRecord, connection.getKey().opposite());
         if (vertexDoc == null) {
           fieldRecord.reload();

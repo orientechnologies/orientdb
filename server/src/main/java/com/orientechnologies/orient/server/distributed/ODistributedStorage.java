@@ -144,11 +144,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       }
     };
 
-    Orient
-        .instance()
-        .getTimer()
-        .schedule(purgeDeletedRecordsTask, OGlobalConfiguration.DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY.getValueAsLong(),
-            OGlobalConfiguration.DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY.getValueAsLong());
+    Orient.instance().scheduleTask(purgeDeletedRecordsTask, OGlobalConfiguration.DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY.getValueAsLong(), OGlobalConfiguration.DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY.getValueAsLong());
 
     asynchronousOperationsQueue = new ArrayBlockingQueue<OAsynchDistributedOperation>(10000);
     asynchWorker = new Thread() {
@@ -413,23 +409,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
       int clusterId = iRecordId.getClusterId();
       if (clusterId == ORID.CLUSTER_ID_INVALID) {
-        System.out.println("ERROR");
-        // // COMPUTE THE CLUSTER ID
-        // if (schemaClass != null) {
-        // // FIND THE RIGHT CLUSTER AS CONFIGURED IN CLASS
-        // if (schemaClass.isAbstract())
-        // throw new OSchemaException("Document belongs to abstract class " + schemaClass.getName() + " and can not be saved");
-        //
-        // clusterName = getClusterNameById(schemaClass.getClusterForNewInstance(doc));
-        // } else {
-        // clusterName = getClusterNameById(storage.getDefaultClusterId());
-        // }
-        //
-        // if (clusterName != null) {
-        // clusterId = getClusterIdByName(clusterName);
-        // if (clusterId == -1)
-        // throw new IllegalArgumentException("Cluster name '" + clusterName + "' is not configured");
-        // }
+        throw new IllegalArgumentException("Cluster not valid");
       }
 
       final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
@@ -817,8 +797,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
         switch (op.type) {
         case ORecordOperation.CREATED:
-          task = new OCreateRecordTask(rid, record.toStream(), record.getRecordVersion(), ORecordInternal.getRecordType(record));
-          break;
+          final byte[] stream = record.toStream();
+          if (rid.isNew()) {
+            task = new OCreateRecordTask(rid, stream, record.getRecordVersion(), ORecordInternal.getRecordType(record));
+            break;
+          }
+          // ELSE TREAT IT AS UPDATE: GO DOWN
 
         case ORecordOperation.UPDATED:
           // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO

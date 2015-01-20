@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
@@ -32,8 +28,11 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORule;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * SQL abstract Command Executor implementation.
@@ -57,6 +56,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
   public static final String CLUSTER_PREFIX           = "CLUSTER:";
   public static final String CLASS_PREFIX             = "CLASS:";
   public static final String INDEX_PREFIX             = "INDEX:";
+  public static final String KEYWORD_UNSAFE           = "UNSAFE";
 
   public static final String INDEX_VALUES_PREFIX      = "INDEXVALUES:";
   public static final String INDEX_VALUES_ASC_PREFIX  = "INDEXVALUESASC:";

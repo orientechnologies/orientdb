@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -31,11 +28,23 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.sql.*;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLRetryAbstract;
+import com.orientechnologies.orient.core.sql.OCommandParameters;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * SQL CREATE EDGE command.
@@ -76,7 +85,7 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
 
       } else if (temp.equals(KEYWORD_SET)) {
         fields = new LinkedHashMap<String, Object>();
-        parseSetFields(fields);
+        parseSetFields(clazz, fields);
 
       } else if (temp.equals(KEYWORD_CONTENT)) {
         parseContent();
@@ -84,22 +93,25 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
       } else if (temp.equals(KEYWORD_RETRY)) {
         parseRetry();
 
-      } else if (className == null && temp.length() > 0)
+      } else if (className == null && temp.length() > 0) {
         className = temp;
+        clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(className);
+      }
 
       temp = parseOptionalWord(true);
       if (parserIsEnded())
         break;
     }
 
-    if (className == null)
+    if (className == null) {
       // ASSIGN DEFAULT CLASS
       className = "E";
+      clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(className);
+    }
 
     // GET/CHECK CLASS NAME
-    clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(className);
     if (clazz == null)
-      throw new OCommandSQLParsingException("Class " + className + " was not found");
+      throw new OCommandSQLParsingException("Class '" + className + "' was not found");
 
     return this;
   }

@@ -20,20 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.locks.Lock;
-
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
@@ -97,6 +83,22 @@ import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.SoftReference;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.Lock;
+
 /**
  * @author Andrey Lomakin
  * @since 28.03.13
@@ -127,6 +129,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   private boolean                                    makeFullCheckPointAfterClusterCreate       = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE
                                                                                                     .getValueAsBoolean();
+
   private volatile OWOWCache.LowDiskSpaceInformation lowDiskSpace                               = null;
 
   public OAbstractPaginatedStorage(String name, String filePath, String mode) {
@@ -2020,6 +2023,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     ORecordId rid = (ORecordId) rec.getIdentity();
 
+    if (txEntry.type == ORecordOperation.UPDATED && rid.isNew())
+      // OVERWRITE OPERATION AS CREATE
+      txEntry.type = ORecordOperation.CREATED;
+
     ORecordSerializationContext.pushContext();
     try {
       int clusterId = rid.clusterId;
@@ -2311,31 +2318,110 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     long recordsProcessed = 0;
     int reportInterval = OGlobalConfiguration.WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE.getValueAsInteger();
-    final int batchSize = OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getValueAsInteger();
+    int batchSize = OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getValueAsInteger();
 
     Map<OOperationUnitId, List<OLogSequenceNumber>> operationUnits = new HashMap<OOperationUnitId, List<OLogSequenceNumber>>();
-    List<OWALRecord> batch = new ArrayList<OWALRecord>();
+    ReferenceQueue<OWALRecord> batchQueue = new ReferenceQueue<OWALRecord>();
+
+    List<SoftReference<OWALRecord>> batch = new ArrayList<SoftReference<OWALRecord>>();
+
+    OLogSequenceNumber startLsn = lsn;
 
     try {
-      while (lsn != null) {
+      restoreLoop:
+			while (lsn != null) {
         OWALRecord walRecord = writeAheadLog.read(lsn);
-        batch.add(walRecord);
+
+        batch.add(new SoftReference<OWALRecord>(walRecord, batchQueue));
+        if (batchQueue.poll() != null) {
+          lsn = startLsn;
+
+          batchSize = batchSize / 2;
+
+          batch = new ArrayList<SoftReference<OWALRecord>>(batchSize);
+          batchQueue = new ReferenceQueue<OWALRecord>();
+					System.gc();
+
+          OLogManager.instance().error(
+              this,
+              "You have not enough amount of heap to operate with restore buffer of size %d, size of buffer will be decreased too %d, "
+                  + "during next start of JVM please set this parameter %s to %d to avoid this message.", batchSize * 2, batchSize,
+              OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getKey(), batchSize);
+
+          continue restoreLoop;
+        }
 
         if (batch.size() >= batchSize) {
-          OLogManager.instance()
-              .info(this, "WAL size exceed configured heap memory for recovery (%s=%d). Fetching WAL records in batch",
-                  OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getKey(),
-                  OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getValueAsInteger());
-          recordsProcessed = restoreWALBatch(batch, operationUnits, recordsProcessed, reportInterval, atLeastOnePageUpdate);
-          batch = new ArrayList<OWALRecord>();
+          OLogManager.instance().info(this,
+              "WAL size exceed configured heap memory for recovery (%s=%d). Fetching WAL records in batch",
+              OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getKey(), batchSize);
+
+          final List<OWALRecord> hardBatch = new ArrayList<OWALRecord>(batch.size());
+          for (SoftReference<OWALRecord> reference : batch) {
+            final OWALRecord record = reference.get();
+
+            if (batchQueue.poll() != null || record == null) {
+              lsn = startLsn;
+
+              batchSize = batchSize / 2;
+
+              batch = new ArrayList<SoftReference<OWALRecord>>(batchSize);
+              batchQueue = new ReferenceQueue<OWALRecord>();
+
+							System.gc();
+
+              OLogManager.instance().error(
+                  this,
+                  "You have not enough amount of heap to operate with restore buffer of size %d, size of buffer will be decreased too %d, "
+                      + "during next start of JVM please set this parameter %s to %d to avoid this message.", batchSize * 2,
+                  batchSize, OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getKey(), batchSize);
+
+              continue restoreLoop;
+            } else {
+              hardBatch.add(record);
+            }
+          }
+
+          recordsProcessed = restoreWALBatch(hardBatch, operationUnits, recordsProcessed, reportInterval, atLeastOnePageUpdate);
+          hardBatch.clear();
+
+          batch = new ArrayList<SoftReference<OWALRecord>>();
+          batchQueue = new ReferenceQueue<OWALRecord>();
         }
 
         lsn = writeAheadLog.next(lsn);
-      }
+        if (lsn == null) {
+          final List<OWALRecord> hardBatch = new ArrayList<OWALRecord>();
+          for (SoftReference<OWALRecord> reference : batch) {
+            final OWALRecord record = reference.get();
 
-      if (!batch.isEmpty()) {
-        OLogManager.instance().info(this, "Apply last batch of operations are read from WAL.");
-        restoreWALBatch(batch, operationUnits, recordsProcessed, reportInterval, atLeastOnePageUpdate);
+            if (batchQueue.poll() != null || record == null) {
+              lsn = startLsn;
+
+              batchSize = batchSize / 2;
+
+              batch = new ArrayList<SoftReference<OWALRecord>>(batchSize);
+              batchQueue = new ReferenceQueue<OWALRecord>();
+							System.gc();
+
+              OLogManager.instance().error(
+                  this,
+                  "You have not enough amount of heap to operate with restore buffer of size %d, size of buffer will be decreased too %d, "
+                      + "during next start of JVM please set this parameter %s to %d to avoid this message.", batchSize * 2,
+                  batchSize, OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getKey(), batchSize);
+
+              continue restoreLoop;
+            } else {
+              hardBatch.add(record);
+            }
+          }
+
+          OLogManager.instance().info(this, "Apply last batch of operations are read from WAL.");
+          restoreWALBatch(hardBatch, operationUnits, recordsProcessed, reportInterval, atLeastOnePageUpdate);
+          break;
+        }
+
+        startLsn = lsn;
       }
     } catch (OWALPageBrokenException e) {
       OLogManager.instance().error(this,
@@ -2470,13 +2556,26 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   private void checkLowDiskSpace() {
-    if (lowDiskSpace != null)
-      throw new OLowDiskSpaceException("Error occurred while executing a write operation to database '" + name
-          + "' due to limited free space on the disk (" + (lowDiskSpace.freeSpace / (1024 * 1024))
-          + " MB). The database is now working in read-only mode."
-          + " Please close the database (or stop OrientDB), make room on your hard drive and then reopen the database. "
-          + "The minimal required space is (" + (lowDiskSpace.requiredSpace / (1024 * 1024)) + " MB). "
-          + "Required space is calculated as sum of disk space required by WAL (you can change it by setting parameter "
-          + OGlobalConfiguration.WAL_MAX_SIZE.getKey() + ") and space required for data.");
+    if (lowDiskSpace != null) {
+      diskCache.makeFuzzyCheckpoint();
+
+      if (diskCache.checkLowDiskSpace()) {
+        synch();
+        diskCache.makeFuzzyCheckpoint();
+
+        if (diskCache.checkLowDiskSpace()) {
+          throw new OLowDiskSpaceException("Error occurred while executing a write operation to database '" + name
+              + "' due to limited free space on the disk (" + (lowDiskSpace.freeSpace / (1024 * 1024))
+              + " MB). The database is now working in read-only mode."
+              + " Please close the database (or stop OrientDB), make room on your hard drive and then reopen the database. "
+              + "The minimal required space is (" + (lowDiskSpace.requiredSpace / (1024 * 1024)) + " MB). "
+              + "Required space is calculated as sum of disk space required by WAL (you can change it by setting parameter "
+              + OGlobalConfiguration.WAL_MAX_SIZE.getKey() + ") and space required for data.");
+        } else {
+          lowDiskSpace = null;
+        }
+      } else
+        lowDiskSpace = null;
+    }
   }
 }

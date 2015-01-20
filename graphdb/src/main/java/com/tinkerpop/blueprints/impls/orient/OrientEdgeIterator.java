@@ -89,7 +89,7 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
     } else
       throw new IllegalStateException("Invalid content found while iterating edges, value '" + value + "' is not an edge");
 
-    if (this.sourceVertex.settings.useVertexFieldsForEdgeLabels || edge.isLabeled(labels))
+    if (this.sourceVertex.settings.isUseVertexFieldsForEdgeLabels() || edge.isLabeled(labels))
       return edge;
 
     return null;
@@ -99,6 +99,6 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
     if (targetVertex != null && !targetVertex.equals(iObject.getVertex(connection.getKey().opposite())))
       return false;
 
-    return this.sourceVertex.settings.useVertexFieldsForEdgeLabels || iObject.isLabeled(labels);
+    return this.sourceVertex.settings.isUseVertexFieldsForEdgeLabels() || iObject.isLabeled(labels);
   }
 }

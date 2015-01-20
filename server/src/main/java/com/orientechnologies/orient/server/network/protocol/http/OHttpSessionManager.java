@@ -45,7 +45,7 @@ import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
    protected OHttpSessionManager() {
      expirationTime = OGlobalConfiguration.NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT.getValueAsInteger() * 1000;
 
-     Orient.instance().getTimer().schedule(new TimerTask() {
+     Orient.instance().scheduleTask(new TimerTask() {
        @Override
        public void run() {
          final int expired = checkSessionsValidity();

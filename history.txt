@@ -27,7 +27,16 @@
 This document contains the last changes of OrientDB Community Edition.
 
 ---------------------------------------------------------------------------------------------------
-VERSION 2.0-RC2 - (January, 12th 2014)
+VERSION 2.0 - (January, 20th 2015)
+- Core: logged database name on server and embedded messages
+- SQL: added UNSAFE to CREATE PROPERTY command to avoid slow checks
+       auto conversion from map when working on EMBEDDED types
+- Bug fixing: 54 total issues from 2.0-RC2.
+
+Full list: https://github.com/orientechnologies/orientdb/issues?q=is%3Aissue+milestone%3A%222.0+Final%22+is%3Aclosed
+
+---------------------------------------------------------------------------------------------------
+VERSION 2.0-RC2 - (January, 12th 2015)
 - Bug fixing: 86 total issues from 2.0-RC1.
 
 Full list: https://github.com/orientechnologies/orientdb/issues?q=milestone%3A2.0-rc2+is%3Aclosed

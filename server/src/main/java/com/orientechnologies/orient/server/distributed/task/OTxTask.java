@@ -84,10 +84,10 @@ public class OTxTask extends OAbstractReplicatedTask {
           // SEND RID + VERSION
           final OCreateRecordTask t = (OCreateRecordTask) task;
           results.set(i, new OPlaceholder(t.getRecord()));
-//        } else if (task instanceof OUpdateRecordTask) {
-//          // SEND VERSION
-//          final OUpdateRecordTask t = (OUpdateRecordTask) task;
-//          results.set(i, new OPlaceholder(t.getRecord()));
+          // } else if (task instanceof OUpdateRecordTask) {
+          // // SEND VERSION
+          // final OUpdateRecordTask t = (OUpdateRecordTask) task;
+          // results.set(i, new OPlaceholder(t.getRecord()));
         }
       }
 
@@ -139,19 +139,21 @@ public class OTxTask extends OAbstractReplicatedTask {
 
   @Override
   public OAbstractRemoteTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
-    if (!(iBadResponse instanceof List)) {
-      // TODO: MANAGE ERROR ON LOCAL NODE!
-      ODistributedServerLog.debug(this, getNodeSource(), null, DIRECTION.NONE,
-          "error on creating undo-task for request: '%s' because bad response is not expected type: %s", iRequest, iBadResponse);
-      return null;
-    }
-
     final OFixTxTask fixTask = new OFixTxTask();
 
     for (int i = 0; i < tasks.size(); ++i) {
       final OAbstractRecordReplicatedTask t = tasks.get(i);
-      fixTask.add(t.getUndoTask(iRequest, ((List<Object>) iBadResponse).get(i)));
+
+      final OAbstractRemoteTask undoTask;
+      if (iBadResponse instanceof List)
+        undoTask = t.getUndoTask(iRequest, ((List<Object>) iBadResponse).get(i));
+      else
+        undoTask = t.getUndoTask(iRequest, iBadResponse);
+
+      if (undoTask != null)
+        fixTask.add(undoTask);
     }
+
     return fixTask;
   }
 

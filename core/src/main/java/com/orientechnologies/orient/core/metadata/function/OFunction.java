@@ -33,6 +33,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 /**
  * Stored function. It contains language and code to execute as a function. The execute() takes parameters. The function is
@@ -41,16 +42,15 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  * @author Luca Garulli
  * 
  */
-public class OFunction {
+public class OFunction extends ODocumentWrapper{
   public static final String CLASS_NAME = "OFunction";
-  protected ODocument        document;
 
   /**
    * Creates a new function.
    */
   public OFunction() {
-    document = new ODocument(CLASS_NAME);
-    document.field("language", "SQL");
+	  super(CLASS_NAME);
+	  setLanguage("SQL");
   }
 
   /**
@@ -60,7 +60,7 @@ public class OFunction {
    *          Document to assign
    */
   public OFunction(final ODocument iDocument) {
-    document = iDocument;
+    super(iDocument);
   }
 
   /**
@@ -70,7 +70,7 @@ public class OFunction {
    *          RID of the function to load
    */
   public OFunction(final ORecordId iRid) {
-    document = ODatabaseRecordThreadLocal.INSTANCE.get().load(iRid);
+	  super(iRid);
   }
 
   public String getName() {
@@ -79,7 +79,6 @@ public class OFunction {
 
   public OFunction setName(final String iName) {
     document.field("name", iName);
-    saveChanges();
     return this;
   }
 
@@ -89,7 +88,6 @@ public class OFunction {
 
   public OFunction setCode(final String iCode) {
     document.field("code", iCode);
-    saveChanges();
     return this;
   }
 
@@ -99,7 +97,6 @@ public class OFunction {
 
   public OFunction setLanguage(final String iLanguage) {
     document.field("language", iLanguage);
-    saveChanges();
     return this;
   }
 
@@ -109,7 +106,6 @@ public class OFunction {
 
   public OFunction setParameters(final List<String> iParameters) {
     document.field("parameters", iParameters);
-    saveChanges();
     return this;
   }
 
@@ -120,7 +116,6 @@ public class OFunction {
 
   public OFunction setIdempotent(final boolean iIdempotent) {
     document.field("idempotent", iIdempotent);
-    saveChanges();
     return this;
   }
 
@@ -179,10 +174,4 @@ public class OFunction {
     return getName();
   }
 
-  /**
-   * Save pending changes if any.
-   */
-  private void saveChanges() {
-    document.save();
-  }
 }

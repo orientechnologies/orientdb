@@ -1,25 +1,23 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.server.network.protocol.http.command.get;
-
-import java.util.List;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -30,6 +28,10 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstract {
   private static final String[] NAMES = { "GET|query/*" };
 
@@ -39,7 +41,7 @@ public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstrac
     String[] urlParts = checkSyntax(
         iRequest.url,
         4,
-        "Syntax error: query/<database>/sql/<query-text>[/<limit>][/<fetchPlan>].<br>Limit is optional and is setted to 20 by default. Set expressely to 0 to have no limits.");
+        "Syntax error: query/<database>/sql/<query-text>[/<limit>][/<fetchPlan>].<br>Limit is optional and is set to 20 by default. Set to 0 to have no limits.");
 
     final int limit = urlParts.length > 4 ? Integer.parseInt(urlParts[4]) : 20;
 
@@ -61,7 +63,15 @@ public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstrac
       response = (List<OIdentifiable>) db.query(command);
       fetchPlan = command.getFetchPlan();
 
-      iResponse.writeRecords(response, fetchPlan);
+      Map<String, Object> additionalContent = null;
+
+      final List<String> tips = (List<String>) command.getContext().getVariable("tips");
+      if (tips != null) {
+        additionalContent = new HashMap<String, Object>(1);
+        additionalContent.put("warnings", tips);
+      }
+
+      iResponse.writeRecords(response, fetchPlan, null, null, additionalContent);
 
     } finally {
       if (db != null)

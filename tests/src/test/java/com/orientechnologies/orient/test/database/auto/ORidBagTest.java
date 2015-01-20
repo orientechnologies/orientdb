@@ -1,19 +1,9 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-
-import java.io.IOException;
-import java.util.*;
-
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import org.testng.Assert;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.client.db.ODatabaseHelper;
 import com.orientechnologies.orient.client.remote.OServerAdmin;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
@@ -25,6 +15,15 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import org.testng.Assert;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.util.*;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 @Test
 public abstract class ORidBagTest extends DocumentDBBaseTest {
@@ -1401,9 +1400,9 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     c.addEdge("link", a);
     c.addEdge("link", b);
 
-    System.out.println("A: " + a.getRecord());
-    System.out.println("B: " + b.getRecord());
-    System.out.println("C: " + c.getRecord());
+//    System.out.println("A: " + a.getRecord());
+//    System.out.println("B: " + b.getRecord());
+//    System.out.println("C: " + c.getRecord());
 
     database.commit();
   }

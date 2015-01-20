@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.Locale;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -31,6 +28,9 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * SQL CREATE PROPERTY command: Creates a new property in the target class.
@@ -47,11 +47,12 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
   private String             fieldName;
   private OType              type;
   private String             linked;
+  private boolean            unsafe           = false;
 
   public OCommandExecutorSQLCreateProperty parse(final OCommandRequest iRequest) {
     init((OCommandRequestText) iRequest);
 
-    StringBuilder word = new StringBuilder();
+    final StringBuilder word = new StringBuilder();
 
     int oldPos = 0;
     int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
@@ -89,7 +90,19 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
     if (pos == -1)
       return this;
 
-    linked = word.toString();
+    if (word.toString().equals(KEYWORD_UNSAFE))
+      unsafe = true;
+    else {
+      linked = word.toString();
+
+      oldPos = pos;
+      pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
+      if (pos == -1)
+        return this;
+
+      if (word.toString().equals(KEYWORD_UNSAFE))
+        unsafe = true;
+    }
 
     return this;
   }
@@ -124,12 +137,12 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
     }
 
     // CREATE IT LOCALLY
-    sourceClass.addPropertyInternal(fieldName, type, linkedType, linkedClass);
+    sourceClass.addPropertyInternal(fieldName, type, linkedType, linkedClass, !unsafe);
     return sourceClass.properties().size();
   }
 
   @Override
   public String getSyntax() {
-    return "CREATE PROPERTY <class>.<property> <type> [<linked-type>|<linked-class>]";
+    return "CREATE PROPERTY <class>.<property> <type> [<linked-type>|<linked-class>] [UNSAFE]";
   }
 }

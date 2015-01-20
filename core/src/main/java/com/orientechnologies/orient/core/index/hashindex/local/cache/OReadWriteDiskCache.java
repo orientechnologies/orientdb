@@ -408,8 +408,8 @@ public class OReadWriteDiskCache implements ODiskCache {
 
   @Override
   public void closeFile(long fileId, boolean flush) throws IOException {
-		if (!isOpen(fileId))
-			return;
+    if (!isOpen(fileId))
+      return;
 
     Lock fileLock;
     cacheLock.acquireReadLock();
@@ -419,8 +419,8 @@ public class OReadWriteDiskCache implements ODiskCache {
         writeCache.close(fileId, flush);
 
         final Set<Long> pageIndexes = filePages.get(fileId);
-				if (pageIndexes == null)
-					return;
+        if (pageIndexes == null)
+          return;
 
         for (Long pageIndex : pageIndexes) {
           OCacheEntry cacheEntry = get(fileId, pageIndex, true);
@@ -878,7 +878,6 @@ public class OReadWriteDiskCache implements ODiskCache {
     return writeCache.checkStoredPages(commandOutputListener);
   }
 
-
   @Override
   public void delete() throws IOException {
     cacheLock.acquireWriteLock();
@@ -902,12 +901,22 @@ public class OReadWriteDiskCache implements ODiskCache {
     return (am.size() + a1in.size() + writeCache.getAllocatedPages()) * (2 * ODurablePage.PAGE_PADDING + pageSize);
   }
 
-	@Override
-	public void startFuzzyCheckpoints() {
-		writeCache.startFuzzyCheckpoints();
-	}
+  @Override
+  public void startFuzzyCheckpoints() {
+    writeCache.startFuzzyCheckpoints();
+  }
 
-	private OCacheEntry get(long fileId, long pageIndex, boolean useOutQueue) {
+  @Override
+  public boolean checkLowDiskSpace() {
+    return writeCache.checkLowDiskSpace();
+  }
+
+  @Override
+  public void makeFuzzyCheckpoint() {
+    writeCache.makeFuzzyCheckpoint();
+  }
+
+  private OCacheEntry get(long fileId, long pageIndex, boolean useOutQueue) {
     OCacheEntry cacheEntry = am.get(fileId, pageIndex);
 
     if (cacheEntry != null)

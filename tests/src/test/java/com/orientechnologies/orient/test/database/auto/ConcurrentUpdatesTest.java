@@ -181,7 +181,7 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
 
   @Test
   public void concurrentOptimisticUpdates() throws Exception {
-    System.out.println("Started Test OPTIMISTIC");
+//    System.out.println("Started Test OPTIMISTIC");
 
     counter.set(0);
     startedOn = System.currentTimeMillis();
@@ -214,8 +214,8 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
     for (int i = 0; i < THREADS; ++i)
       threads[i].join();
 
-    System.out.println("Done! Total updates executed in parallel: " + counter.get() + " average retries: "
-        + ((float) totalRetries.get() / (float) counter.get()));
+//    System.out.println("Done! Total updates executed in parallel: " + counter.get() + " average retries: "
+//        + ((float) totalRetries.get() / (float) counter.get()));
 
     Assert.assertEquals(counter.get(), OPTIMISTIC_CYCLES * THREADS);
 
@@ -224,21 +224,23 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
     for (int i = 0; i < THREADS; ++i)
       Assert.assertEquals(doc1.field(ops[i].threadName), ops[i].fieldValue, ops[i].threadName);
 
-    System.out.println("RESULT doc 1:");
-    System.out.println(doc1.toJSON());
+    doc1.toJSON();
+//    System.out.println("RESULT doc 1:");
+//    System.out.println(doc1.toJSON());
 
     doc2 = databases[0].load(rid2, null, true);
 
     for (int i = 0; i < THREADS; ++i)
       Assert.assertEquals(doc2.field(ops[i].threadName), ops[i].fieldValue, ops[i].threadName);
 
-    System.out.println("RESULT doc 2:");
+//    System.out.println("RESULT doc 2:");
+    doc2.toJSON();
     System.out.println(doc2.toJSON());
 
     for (int i = 0; i < THREADS; ++i)
       databases[i].close();
 
-    System.out.println("Test completed in " + (System.currentTimeMillis() - startedOn));
+//    System.out.println("Test completed in " + (System.currentTimeMillis() - startedOn));
   }
 
   @Test
@@ -252,7 +254,7 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
   }
 
   protected void sqlUpdate(boolean lock) throws InterruptedException {
-    System.out.println("Started Test " + (lock ? "LOCK" : ""));
+//    System.out.println("Started Test " + (lock ? "LOCK" : ""));
 
     counter.set(0);
     startedOn = System.currentTimeMillis();
@@ -280,7 +282,7 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
     for (int i = 0; i < THREADS; ++i)
       threads[i].join();
 
-    System.out.println("Done! Total sql updates executed in parallel: " + counter.get());
+//    System.out.println("Done! Total sql updates executed in parallel: " + counter.get());
 
     Assert.assertEquals(counter.get(), PESSIMISTIC_CYCLES * THREADS);
 
@@ -290,7 +292,7 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
     for (int i = 0; i < THREADS; ++i)
       databases[i].close();
 
-    System.out.println("concurrentOptimisticSQLUpdates Test " + (lock ? "LOCK" : "") + " completed in "
-        + (System.currentTimeMillis() - startedOn));
+//    System.out.println("concurrentOptimisticSQLUpdates Test " + (lock ? "LOCK" : "") + " completed in "
+//        + (System.currentTimeMillis() - startedOn));
   }
 }

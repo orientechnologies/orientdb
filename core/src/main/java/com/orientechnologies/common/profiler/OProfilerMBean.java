@@ -19,13 +19,13 @@
  */
 package com.orientechnologies.common.profiler;
 
-import java.io.PrintStream;
-import java.util.Date;
-import java.util.Map;
-
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OService;
+
+import java.io.PrintStream;
+import java.util.Date;
+import java.util.Map;
 
 public interface OProfilerMBean extends OService {
 
@@ -75,11 +75,10 @@ public interface OProfilerMBean extends OService {
 
   public Map<String, OPair<String, METRIC_TYPE>> getMetadata();
 
-  public void registerHookValue(final String iName, final String iDescription, final METRIC_TYPE iType,
-      final OProfilerHookValue iHookValue);
+  public void registerHookValue(String iName, String iDescription, METRIC_TYPE iType, OProfilerHookValue iHookValue);
 
-  public void registerHookValue(final String iName, final String iDescription, final METRIC_TYPE iType,
-      final OProfilerHookValue iHookValue, final String iMetadataName);
+  public void registerHookValue(String iName, String iDescription, METRIC_TYPE iType, OProfilerHookValue iHookValue,
+      String iMetadataName);
 
   public String getSystemMetric(String iMetricName);
 
@@ -87,9 +86,11 @@ public interface OProfilerMBean extends OService {
 
   public String getDatabaseMetric(String databaseName, String iName);
 
-  public String toJSON(String command, final String iPar1);
+  public String toJSON(String command, String iPar1);
 
-  public void resetRealtime(final String iText);
+  public void resetRealtime(String iText);
 
   public void dump(PrintStream out);
+
+  public int reportTip(String iMessage);
 }

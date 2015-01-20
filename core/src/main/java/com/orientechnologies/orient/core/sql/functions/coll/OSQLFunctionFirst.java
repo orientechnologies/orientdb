@@ -58,7 +58,7 @@ public class OSQLFunctionFirst extends OSQLFunctionConfigurableAbstract {
   }
 
   public boolean aggregateResults() {
-    return configuredParameters.length == 1;
+    return false;
   }
 
   @Override
@@ -68,7 +68,7 @@ public class OSQLFunctionFirst extends OSQLFunctionConfigurableAbstract {
 
   @Override
   public boolean filterResult() {
-    return true;
+    return false;
   }
 
   public String getSyntax() {

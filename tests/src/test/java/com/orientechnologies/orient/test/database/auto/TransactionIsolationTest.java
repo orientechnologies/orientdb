@@ -118,7 +118,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     final ODocument record1 = new ODocument();
     record1.field("name", "This is the first version").save();
 
-    Future<List<OIdentifiable>> txFuture = Orient.instance().getWorkers().submit(new Callable<List<OIdentifiable>>() {
+    Future<List<OIdentifiable>> txFuture = Orient.instance().submit(new Callable<List<OIdentifiable>>() {
       @Override
       public List<OIdentifiable> call() throws Exception {
         String cmd = "";
@@ -161,7 +161,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     final ODocument record1 = new ODocument();
     record1.field("name", "This is the first version").save();
 
-    Future<List<OIdentifiable>> txFuture = Orient.instance().getWorkers().submit(new Callable<List<OIdentifiable>>() {
+    Future<List<OIdentifiable>> txFuture = Orient.instance().submit(new Callable<List<OIdentifiable>>() {
       @Override
       public List<OIdentifiable> call() throws Exception {
         String cmd = "";

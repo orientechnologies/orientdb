@@ -30,7 +30,7 @@ public class ONetworkThreadLocalSerializer {
   private static volatile ThreadLocal<ORecordSerializer> networkSerializer = new ThreadLocal<ORecordSerializer>();
 
   public static ORecordSerializer getNetworkSerializer() {
-    return networkSerializer.get();
+    return networkSerializer != null ? networkSerializer.get() : null;
   }
 
   public static void setNetworkSerializer(ORecordSerializer value) {
@@ -38,15 +38,13 @@ public class ONetworkThreadLocalSerializer {
   }
 
   static {
-    Orient.instance().registerWeakOrientStartupListener(new OOrientStartupListener() {
+    Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onStartup() {
         if (networkSerializer == null)
           networkSerializer = new ThreadLocal<ORecordSerializer>();
       }
-    });
 
-    Orient.instance().registerWeakOrientShutdownListener(new OOrientShutdownListener() {
       @Override
       public void onShutdown() {
         networkSerializer = null;

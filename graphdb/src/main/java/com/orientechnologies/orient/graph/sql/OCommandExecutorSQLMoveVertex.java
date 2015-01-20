@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -30,13 +27,24 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.*;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSetAware;
+import com.orientechnologies.orient.core.sql.OCommandParameters;
+import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 /**
  * SQL MOVE VERTEX command.
@@ -50,6 +58,7 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
   private String                        source        = null;
   private String                        clusterName;
   private String                        className;
+  private OClass                        clazz;
   private LinkedHashMap<String, Object> fields;
   private ODocument                     merge;
 
@@ -85,12 +94,14 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
 
         className = temp.substring("CLASS:".length());
 
-        if (!((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().existsClass(className))
-          throw new OCommandSQLParsingException("Class " + className + " was not found");
+        clazz = database.getMetadata().getSchema().getClass(className);
+
+        if (clazz == null)
+          throw new OCommandSQLParsingException("Class '" + className + "' was not found");
 
       } else if (temp.equals(KEYWORD_SET)) {
         fields = new LinkedHashMap<String, Object>();
-        parseSetFields(fields);
+        parseSetFields(clazz, fields);
 
       } else if (temp.equals(KEYWORD_MERGE)) {
         merge = parseJSON();

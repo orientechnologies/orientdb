@@ -208,12 +208,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     unqueuePendingMessages(iRestoreMessages, iUnqueuePendingMessages, queueName, requestQueue);
 
-    final String insertQueueName = OHazelcastDistributedMessageService.getRequestQueueName(getLocalNodeName(), databaseName
-        + OCreateRecordTask.SUFFIX_QUEUE_NAME);
-    final IQueue<ODistributedRequest> insertQueue = msgService.getQueue(insertQueueName);
-
-    unqueuePendingMessages(iRestoreMessages, iUnqueuePendingMessages, insertQueueName, insertQueue);
-
     if (iCallback != null)
       try {
         iCallback.call();
@@ -227,13 +221,6 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     ODistributedWorker listenerThread = new ODistributedWorker(this, requestQueue, databaseName, 0, false);
     workers.add(listenerThread);
     listenerThread.start();
-    //
-    // // CREATE WORKER THREADS FOR GENERIC REQUESTS
-    // for (int i = 1; i < numWorkers - 1; ++i) {
-    // listenerThread = new ODistributedWorker(this, requestQueue, databaseName, i, false);
-    // workers.add(listenerThread);
-    // listenerThread.start();
-    // }
 
     return this;
   }
@@ -289,7 +276,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   protected void checkForServerOnline(ODistributedRequest iRequest) throws ODistributedException {
     final ODistributedServerManager.NODE_STATUS srvStatus = manager.getNodeStatus();
     if (srvStatus == ODistributedServerManager.NODE_STATUS.OFFLINE
-        || srvStatus == ODistributedServerManager.NODE_STATUS.SHUTDOWNING) {
+        || srvStatus == ODistributedServerManager.NODE_STATUS.SHUTTINGDOWN) {
       ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.OUT,
           "Local server is not online (status='%s'). Request %s will be ignored", srvStatus, iRequest);
       throw new ODistributedException("Local server is not online (status='" + srvStatus + "'). Request " + iRequest
@@ -434,7 +421,7 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     final List<String> foundPartition = cfg.addNewNodeInServerList(getLocalNodeName());
     if (foundPartition != null) {
       // SET THE NODE.DB AS OFFLINE, READY TO BE SYNCHRONIZED
-      manager.setDatabaseStatus(getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.OFFLINE);
+      manager.setDatabaseStatus(getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
 
       ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "adding node '%s' in partition: db=%s %s",
           getLocalNodeName(), databaseName, foundPartition);

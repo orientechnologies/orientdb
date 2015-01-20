@@ -1492,7 +1492,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         throw new ODatabaseException(
             "Cannot unmarshall the document because no database is active, use detach for use the document outside the database session scope");
       OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
-      metadata.clearThreadLocalSchemaSnapshot();
+      if (metadata.getImmutableSchemaSnapshot() != null)
+        metadata.clearThreadLocalSchemaSnapshot();
       metadata.reload();
       metadata.makeThreadLocalSchemaSnapshot();
       _schema = metadata.getImmutableSchemaSnapshot();
@@ -1593,17 +1594,35 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   public ODocument undo() {
     if (!_trackingChanges)
       throw new OConfigurationException("Cannot undo the document because tracking of changes is disabled");
-
-    for (Entry<String, Object> entry : _fieldOriginalValues.entrySet()) {
-      final Object value = entry.getValue();
-      if (value == null)
-        _fieldValues.remove(entry.getKey());
-      else
-        _fieldValues.put(entry.getKey(), entry.getValue());
+    if(_fieldOriginalValues!=null)
+    {
+	    for (Entry<String, Object> entry : _fieldOriginalValues.entrySet()) {
+	      final Object value = entry.getValue();
+	      if (value == null)
+	        _fieldValues.remove(entry.getKey());
+	      else
+	        _fieldValues.put(entry.getKey(), entry.getValue());
+	    }
+	    _fieldOriginalValues.clear();
     }
 
     return this;
   }
+  
+  public ODocument undo(String field) {
+	    if (!_trackingChanges)
+	      throw new OConfigurationException("Cannot undo the document because tracking of changes is disabled");
+	    if(_fieldOriginalValues!=null && _fieldOriginalValues.containsKey(field))
+	    {
+		    final Object value = _fieldOriginalValues.get(field);
+		    if (value == null)
+		        _fieldValues.remove(field);
+		      else
+		        _fieldValues.put(field, value);
+		    _fieldOriginalValues.remove(field);
+	    }
+	    return this;
+	  }
 
   public boolean isLazyLoad() {
     return _lazyLoad;

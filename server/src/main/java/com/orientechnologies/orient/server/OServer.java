@@ -114,9 +114,17 @@ public class OServer {
   private Map<String, Object>                              variables              = new HashMap<String, Object>();
   private String                                           serverRootDirectory;
   private String                                           databaseDirectory;
+  private final boolean                                    shutdownEngineOnExit;
 
   public OServer() throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
       InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
+    this(true);
+  }
+
+  public OServer(boolean shutdownEngineOnExit) throws ClassNotFoundException, MalformedObjectNameException, NullPointerException,
+      InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
+    this.shutdownEngineOnExit = shutdownEngineOnExit;
+
     serverRootDirectory = OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME + "}", ".");
 
     OLogManager.installCustomFormatter();
@@ -347,7 +355,7 @@ public class OServer {
       lock.unlock();
     }
 
-    if (!Orient.isRegisterDatabaseByPath())
+    if (shutdownEngineOnExit && !Orient.isRegisterDatabaseByPath())
       try {
         OLogManager.instance().info(this, "Shutting down databases:");
         Orient.instance().shutdown();
@@ -866,8 +874,6 @@ public class OServer {
   }
 
   protected void defaultSettings() {
-    OGlobalConfiguration.TX_USE_LOG.setValue(true);
-    OGlobalConfiguration.TX_COMMIT_SYNCH.setValue(true);
   }
 
   private boolean isStorageOfCurrentServerInstance(OStorage storage) {

@@ -38,15 +38,13 @@ public class OAtomicOperationsManager {
   private static volatile ThreadLocal<OAtomicOperation>        currentOperation = new ThreadLocal<OAtomicOperation>();
 
   static {
-    Orient.instance().registerWeakOrientStartupListener(new OOrientStartupListener() {
+    Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onStartup() {
         if (currentOperation == null)
           currentOperation = new ThreadLocal<OAtomicOperation>();
       }
-    });
 
-    Orient.instance().registerWeakOrientShutdownListener(new OOrientShutdownListener() {
       @Override
       public void onShutdown() {
         currentOperation = null;

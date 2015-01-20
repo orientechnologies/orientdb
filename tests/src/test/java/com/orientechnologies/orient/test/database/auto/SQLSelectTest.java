@@ -15,14 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -42,6 +34,13 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be because the order of clusters could
@@ -966,7 +965,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
       last = resultset.get(resultset.size() - 1).getIdentity();
 
-      System.out.printf("\nIterating page %d, last record is %s", iterationCount, last);
+//      System.out.printf("\nIterating page %d, last record is %s", iterationCount, last);
 
       iterationCount++;
       resultset = database.query(query);
@@ -1226,7 +1225,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     List<ODocument> recordDocs = executeQuery(sb.toString(), graph.getRawGraph());
 
     for (ODocument doc : recordDocs) {
-      System.out.println(doc);
+//      System.out.println(doc);
     }
 
     graph.shutdown();
@@ -1282,8 +1281,8 @@ public class SQLSelectTest extends AbstractSelectTest {
 
     Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("p1", "a");
-    System.out.println(database.query(new OSQLSynchQuery<ODocument>("select from test where (f1 = :p1)"), parameters));
-    System.out.println(database.query(new OSQLSynchQuery<ODocument>("select from test where f1 = :p1 and f2 = :p1"), parameters));
+    database.query(new OSQLSynchQuery<ODocument>("select from test where (f1 = :p1)"), parameters);
+    database.query(new OSQLSynchQuery<ODocument>("select from test where f1 = :p1 and f2 = :p1"), parameters);
   }
 
   @Test
@@ -1600,6 +1599,10 @@ public class SQLSelectTest extends AbstractSelectTest {
         Assert.assertTrue(rid.compareTo(lastRid) < 0);
       lastRid = rid;
     }
+
+    ODocument res = database.command(new OCommandSQL("explain select from OUser order by @rid desc")).execute();
+    Assert.assertNull(res.field("orderByElapsed"));
+
   }
 
   public void testSelectFromIndexValues() {

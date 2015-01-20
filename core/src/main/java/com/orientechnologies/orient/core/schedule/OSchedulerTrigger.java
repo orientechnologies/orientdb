@@ -81,7 +81,7 @@ public class OSchedulerTrigger extends ODocumentHookAbstract {
           iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.STOPPED.name());
         }
       }
-      scheduler.resetDocument(iDocument);
+      scheduler.fromStream(iDocument);
     } catch (Exception ex) {
       OLogManager.instance().error(this, "Error when updating scheduler - " + ex.getMessage());
       return RESULT.RECORD_NOT_CHANGED;

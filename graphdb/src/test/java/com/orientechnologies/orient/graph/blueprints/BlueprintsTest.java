@@ -5,6 +5,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -140,4 +141,12 @@ public class BlueprintsTest {
     }
   }
 
+  @Test
+  public void testPersistentRIDAfterCommit() {
+    Vertex v = graph.addVertex(null);
+    v.setProperty("test", "value");
+    graph.commit();
+    // System.out.println(v.getId());
+    Assert.assertTrue(((ORID) v.getId()).isPersistent());
+  }
 }

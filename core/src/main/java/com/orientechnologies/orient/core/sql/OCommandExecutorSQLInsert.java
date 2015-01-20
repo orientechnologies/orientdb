@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -55,8 +56,8 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
   public static final String             KEYWORD_INSERT   = "INSERT";
   protected static final String          KEYWORD_RETURN   = "RETURN";
   private static final String            KEYWORD_VALUES   = "VALUES";
-  private static final String            KEYWORD_UNSAFE   = "UNSAFE";
   private String                         className        = null;
+  private OClass                         clazz            = null;
   private String                         clusterName      = null;
   private String                         indexName        = null;
   private List<Map<String, Object>>      newRecords;
@@ -109,6 +110,9 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
             "'INSERT' command cannot create Edges. Use 'CREATE EDGE' command instead, or apply the 'UNSAFE' keyword to force it");
 
       className = cls.getName();
+      clazz = database.getMetadata().getSchema().getClass(className);
+      if (clazz == null)
+        throw new OQueryParsingException("Class '" + className + "' was not found");
     }
 
     parserSkipWhiteSpaces();
@@ -141,7 +145,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
       } else if (parserGetLastWord().equals(KEYWORD_SET)) {
         final LinkedHashMap<String, Object> fields = new LinkedHashMap<String, Object>();
         newRecords.add(fields);
-        parseSetFields(fields);
+        parseSetFields(clazz, fields);
         sourceClauseProcessed = true;
       }
     }

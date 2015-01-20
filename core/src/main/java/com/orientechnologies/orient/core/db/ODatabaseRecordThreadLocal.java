@@ -30,15 +30,13 @@ public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseDocumentInt
   public static volatile ODatabaseRecordThreadLocal INSTANCE = new ODatabaseRecordThreadLocal();
 
   static {
-    Orient.instance().registerWeakOrientStartupListener(new OOrientStartupListener() {
+    Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onStartup() {
         if (INSTANCE == null)
           INSTANCE = new ODatabaseRecordThreadLocal();
       }
-    });
 
-    Orient.instance().registerWeakOrientShutdownListener(new OOrientShutdownListener() {
       @Override
       public void onShutdown() {
         INSTANCE = null;
