@@ -2474,15 +2474,22 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (lowDiskSpace != null) {
       diskCache.makeFuzzyCheckpoint();
 
-      if (diskCache.checkLowDiskSpace())
-        throw new OLowDiskSpaceException("Error occurred while executing a write operation to database '" + name
-            + "' due to limited free space on the disk (" + (lowDiskSpace.freeSpace / (1024 * 1024))
-            + " MB). The database is now working in read-only mode."
-            + " Please close the database (or stop OrientDB), make room on your hard drive and then reopen the database. "
-            + "The minimal required space is (" + (lowDiskSpace.requiredSpace / (1024 * 1024)) + " MB). "
-            + "Required space is calculated as sum of disk space required by WAL (you can change it by setting parameter "
-            + OGlobalConfiguration.WAL_MAX_SIZE.getKey() + ") and space required for data.");
-      else
+      if (diskCache.checkLowDiskSpace()) {
+        synch();
+        diskCache.makeFuzzyCheckpoint();
+
+        if (diskCache.checkLowDiskSpace()) {
+          throw new OLowDiskSpaceException("Error occurred while executing a write operation to database '" + name
+              + "' due to limited free space on the disk (" + (lowDiskSpace.freeSpace / (1024 * 1024))
+              + " MB). The database is now working in read-only mode."
+              + " Please close the database (or stop OrientDB), make room on your hard drive and then reopen the database. "
+              + "The minimal required space is (" + (lowDiskSpace.requiredSpace / (1024 * 1024)) + " MB). "
+              + "Required space is calculated as sum of disk space required by WAL (you can change it by setting parameter "
+              + OGlobalConfiguration.WAL_MAX_SIZE.getKey() + ") and space required for data.");
+        } else {
+          lowDiskSpace = null;
+        }
+      } else
         lowDiskSpace = null;
     }
   }
