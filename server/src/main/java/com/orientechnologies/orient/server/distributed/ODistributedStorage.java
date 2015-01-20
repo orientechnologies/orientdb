@@ -798,7 +798,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         switch (op.type) {
         case ORecordOperation.CREATED:
           final byte[] stream = record.toStream();
-          if (!rid.isPersistent()) {
+          if (rid.isNew()) {
             task = new OCreateRecordTask(rid, stream, record.getRecordVersion(), ORecordInternal.getRecordType(record));
             break;
           }

@@ -44,7 +44,13 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -146,10 +152,10 @@ public class Orient extends OListenerManger<OOrientListener> {
         // ALREADY ACTIVE
         return this;
 
-      profiler = new OProfiler();
-
       if (timer == null)
         timer = new Timer(true);
+
+      profiler = new OProfiler();
 
       shutdownHook = new OrientShutdownHook();
       if (signalHandler == null) {

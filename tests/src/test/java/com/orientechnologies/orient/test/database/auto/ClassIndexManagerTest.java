@@ -1,21 +1,5 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
@@ -27,6 +11,21 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Test(groups = { "index" })
 public class ClassIndexManagerTest  extends DocumentDBBaseTest {
@@ -89,6 +88,9 @@ public class ClassIndexManagerTest  extends DocumentDBBaseTest {
 		database.command(new OCommandSQL("delete from classIndexManagerTestClass")).execute();
 		database.command(new OCommandSQL("delete from classIndexManagerTestClassTwo")).execute();
 		database.command(new OCommandSQL("delete from classIndexManagerTestSuperClass")).execute();
+
+    Assert.assertEquals(database.getMetadata().getIndexManager().getIndex("classIndexManagerTestClass.prop1").getSize(), 0 );
+    Assert.assertEquals(database.getMetadata().getIndexManager().getIndex("classIndexManagerTestClass.prop2").getSize(), 0);
 
 		super.afterMethod();
   }
