@@ -22,6 +22,8 @@ package com.orientechnologies.orient.core.storage.impl.local;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -2312,31 +2314,110 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     long recordsProcessed = 0;
     int reportInterval = OGlobalConfiguration.WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE.getValueAsInteger();
-    final int batchSize = OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getValueAsInteger();
+    int batchSize = OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getValueAsInteger();
 
     Map<OOperationUnitId, List<OLogSequenceNumber>> operationUnits = new HashMap<OOperationUnitId, List<OLogSequenceNumber>>();
-    List<OWALRecord> batch = new ArrayList<OWALRecord>();
+    ReferenceQueue<OWALRecord> batchQueue = new ReferenceQueue<OWALRecord>();
+
+    List<SoftReference<OWALRecord>> batch = new ArrayList<SoftReference<OWALRecord>>();
+
+    OLogSequenceNumber startLsn = lsn;
 
     try {
-      while (lsn != null) {
+      restoreLoop:
+			while (lsn != null) {
         OWALRecord walRecord = writeAheadLog.read(lsn);
-        batch.add(walRecord);
+
+        batch.add(new SoftReference<OWALRecord>(walRecord, batchQueue));
+        if (batchQueue.poll() != null) {
+          lsn = startLsn;
+
+          batchSize = batchSize / 2;
+
+          batch = new ArrayList<SoftReference<OWALRecord>>(batchSize);
+          batchQueue = new ReferenceQueue<OWALRecord>();
+					System.gc();
+
+          OLogManager.instance().error(
+              this,
+              "You have not enough amount of heap to operate with restore buffer of size %d, size of buffer will be decreased too %d, "
+                  + "during next start of JVM please set this parameter %s to %d to avoid this message.", batchSize * 2, batchSize,
+              OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getKey(), batchSize);
+
+          continue restoreLoop;
+        }
 
         if (batch.size() >= batchSize) {
-          OLogManager.instance()
-              .info(this, "WAL size exceed configured heap memory for recovery (%s=%d). Fetching WAL records in batch",
-                  OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getKey(),
-                  OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getValueAsInteger());
-          recordsProcessed = restoreWALBatch(batch, operationUnits, recordsProcessed, reportInterval, atLeastOnePageUpdate);
-          batch = new ArrayList<OWALRecord>();
+          OLogManager.instance().info(this,
+              "WAL size exceed configured heap memory for recovery (%s=%d). Fetching WAL records in batch",
+              OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getKey(), batchSize);
+
+          final List<OWALRecord> hardBatch = new ArrayList<OWALRecord>(batch.size());
+          for (SoftReference<OWALRecord> reference : batch) {
+            final OWALRecord record = reference.get();
+
+            if (batchQueue.poll() != null || record == null) {
+              lsn = startLsn;
+
+              batchSize = batchSize / 2;
+
+              batch = new ArrayList<SoftReference<OWALRecord>>(batchSize);
+              batchQueue = new ReferenceQueue<OWALRecord>();
+
+							System.gc();
+
+              OLogManager.instance().error(
+                  this,
+                  "You have not enough amount of heap to operate with restore buffer of size %d, size of buffer will be decreased too %d, "
+                      + "during next start of JVM please set this parameter %s to %d to avoid this message.", batchSize * 2,
+                  batchSize, OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getKey(), batchSize);
+
+              continue restoreLoop;
+            } else {
+              hardBatch.add(record);
+            }
+          }
+
+          recordsProcessed = restoreWALBatch(hardBatch, operationUnits, recordsProcessed, reportInterval, atLeastOnePageUpdate);
+          hardBatch.clear();
+
+          batch = new ArrayList<SoftReference<OWALRecord>>();
+          batchQueue = new ReferenceQueue<OWALRecord>();
         }
 
         lsn = writeAheadLog.next(lsn);
-      }
+        if (lsn == null) {
+          final List<OWALRecord> hardBatch = new ArrayList<OWALRecord>();
+          for (SoftReference<OWALRecord> reference : batch) {
+            final OWALRecord record = reference.get();
 
-      if (!batch.isEmpty()) {
-        OLogManager.instance().info(this, "Apply last batch of operations are read from WAL.");
-        restoreWALBatch(batch, operationUnits, recordsProcessed, reportInterval, atLeastOnePageUpdate);
+            if (batchQueue.poll() != null || record == null) {
+              lsn = startLsn;
+
+              batchSize = batchSize / 2;
+
+              batch = new ArrayList<SoftReference<OWALRecord>>(batchSize);
+              batchQueue = new ReferenceQueue<OWALRecord>();
+							System.gc();
+
+              OLogManager.instance().error(
+                  this,
+                  "You have not enough amount of heap to operate with restore buffer of size %d, size of buffer will be decreased too %d, "
+                      + "during next start of JVM please set this parameter %s to %d to avoid this message.", batchSize * 2,
+                  batchSize, OGlobalConfiguration.WAL_RESTORE_BATCH_SIZE.getKey(), batchSize);
+
+              continue restoreLoop;
+            } else {
+              hardBatch.add(record);
+            }
+          }
+
+          OLogManager.instance().info(this, "Apply last batch of operations are read from WAL.");
+          restoreWALBatch(hardBatch, operationUnits, recordsProcessed, reportInterval, atLeastOnePageUpdate);
+          break;
+        }
+
+        startLsn = lsn;
       }
     } catch (OWALPageBrokenException e) {
       OLogManager.instance().error(this,

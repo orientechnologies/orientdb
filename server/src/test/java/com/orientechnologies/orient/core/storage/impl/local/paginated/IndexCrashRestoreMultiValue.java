@@ -12,6 +12,8 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import org.testng.Assert;
+import org.testng.TestListenerAdapter;
+import org.testng.TestNG;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -116,7 +118,7 @@ public class IndexCrashRestoreMultiValue {
       futures.add(executorService.submit(new DataPropagationTask(baseDocumentTx, testDocumentTx)));
     }
 
-		Thread.sleep(1800000);
+		Thread.sleep(60000);
 
     System.out.println("Wait for process to destroy");
     Process p = Runtime.getRuntime().exec("pkill -9 -f RemoteDBRunner");
@@ -242,4 +244,11 @@ public class IndexCrashRestoreMultiValue {
     }
   }
 
+	public static void main(String[] args) {
+		TestListenerAdapter tla = new TestListenerAdapter();
+		TestNG testng = new TestNG();
+		testng.setTestClasses(new Class[] { IndexCrashRestoreMultiValue.class });
+		testng.addListener(tla);
+		testng.run();
+	}
 }
