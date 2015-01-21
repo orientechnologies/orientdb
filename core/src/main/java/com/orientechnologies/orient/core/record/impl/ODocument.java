@@ -2356,7 +2356,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    * @param _clazz
    */
   private void convertFieldsToClass(OClass _clazz) {
-    if (_fields == null)
+    if (_fields == null || _fields.isEmpty())
       return;
     for (OProperty prop : _clazz.properties()) {
       ODocumentEntry entry = _fields.get(prop.getName());
