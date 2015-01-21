@@ -120,12 +120,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private OIdentifiable               lastRecord;
   private String                      fetchPlan;
   private volatile boolean            executing;
-
   private boolean                     fullySortedByIndex   = false;
   private OStorage.LOCKING_STRATEGY   lockingStrategy      = OStorage.LOCKING_STRATEGY.DEFAULT;
   private boolean                     parallel             = false;
   private Lock                        parallelLock         = new ReentrantLock();
-
   private Set<ORID>                   uniqueResult;
   private boolean                     noCache              = false;
   private int                         tipLimitThreshold    = OGlobalConfiguration.QUERY_LIMIT_THRESHOLD_TIP.getValueAsInteger();
@@ -562,6 +560,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
   }
 
+  /**
+   * Returns the temporary RID counter assuring it's unique per query tree.
+   * 
+   * @return Serial as integer
+   */
+  protected int getTemporaryRIDCounter() {
+    final OCommandExecutorSQLSelect parentQuery = (OCommandExecutorSQLSelect) context.getVariable("parentQuery");
+    return parentQuery != null && parentQuery != this ? parentQuery.getTemporaryRIDCounter() : serialTempRID++;
+  }
+
   protected boolean addResult(OIdentifiable iRecord) {
     if (iRecord == null)
       return true;
@@ -569,7 +577,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     if (projections != null || groupByFields != null && !groupByFields.isEmpty()) {
       if (groupedResult == null) {
         // APPLY PROJECTIONS IN LINE
-        iRecord = ORuntimeResult.getProjectionResult(resultCount, projections, context, iRecord);
+        iRecord = ORuntimeResult.getProjectionResult(getTemporaryRIDCounter(), projections, context, iRecord);
         if (iRecord == null)
           return true;
 
@@ -683,7 +691,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       ORuntimeResult group = groupedResult.get(key);
       if (group == null) {
-        group = new ORuntimeResult(fieldValue, createProjectionFromDefinition(), resultCount, context);
+        group = new ORuntimeResult(fieldValue, createProjectionFromDefinition(), getTemporaryRIDCounter(), context);
         groupedResult.put(key, group);
       }
       return group;
@@ -2009,10 +2017,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   private void handleNoTarget() {
     if (parsedTarget == null && expandTarget == null)
-    // ONLY LET, APPLY TO THEM
-    {
-      addResult(ORuntimeResult.createProjectionDocument(resultCount));
-    }
+      // ONLY LET, APPLY TO THEM
+      addResult(ORuntimeResult.createProjectionDocument(getTemporaryRIDCounter()));
   }
 
   private void handleGroupBy() {

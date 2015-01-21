@@ -93,6 +93,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   protected Iterator<? extends OIdentifiable> target;
   protected Iterable<OIdentifiable>           tempResult;
   protected int                               resultCount;
+  protected int                               serialTempRID = 0;
   protected int                               skip               = 0;
 
   private static final class IndexValuesIterator implements Iterator<OIdentifiable> {
@@ -401,6 +402,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
           subQuery.reset();
           subQuery.resetPagination();
           subQuery.getContext().setParent(context);
+          subQuery.getContext().setVariable("parentQuery", this);
           subQuery.getContext().setVariable("current", iRecord);
           varValue = ODatabaseRecordThreadLocal.INSTANCE.get().query(subQuery);
           if (varValue instanceof OResultSet) {
