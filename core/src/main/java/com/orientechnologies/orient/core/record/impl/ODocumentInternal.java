@@ -20,6 +20,10 @@
 
 package com.orientechnologies.orient.core.record.impl;
 
+import java.util.Collection;
+import java.util.Set;
+import java.util.Map.Entry;
+
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
@@ -57,6 +61,10 @@ public class ODocumentInternal {
 
   public static void fillClassNameIfNeeded(final ODocument oDocument, String className) {
     oDocument.fillClassIfNeed(className);
+  }
+
+  public static Set<Entry<String, ODocumentEntry>> rawEntries(final ODocument document) {
+    return document.getRawEntries();
   }
 
 }
