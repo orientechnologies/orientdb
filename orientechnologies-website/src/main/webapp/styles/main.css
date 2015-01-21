@@ -119,15 +119,18 @@ body {
   text-decoration: none;
   background-color: #eee;
 }
+
 .sidebar-right .nav li > a:hover {
   color: #60676d;
 }
+
 .sidebar-right .nav li > a {
   text-align: center;
   margin: 10px;
   padding: 10px 10px;
   color: #60676d;
 }
+
 .sidebar-right {
   position: fixed;
   background: #384047;
@@ -364,4 +367,8 @@ span.label-dark {
 
 .new-chat {
   padding-top: 60px;
+}
+
+.chat-timeline .mkd-preview > p {
+  margin: 0;
 }

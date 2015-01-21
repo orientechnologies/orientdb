@@ -16,21 +16,22 @@
           </a>
         </div>
       </div>
-      <div scroll-glue class="chat-timeline" ng-show="!isNew">
-        <div ng-repeat="message in messages">
+      <div scroll-glue when-scrolled="loadMore()" class="chat-timeline" ng-show="!isNew">
+        <div ng-repeat="group in messages">
           <div class="col-md-1">
-            <avatar dim="40" user="message.sender"></avatar>
+            <avatar dim="40" user="group.sender"></avatar>
           </div>
           <div class="col-md-11">
             <div class="row">
               <div class="col-md-12">
-                {{message.sender.name}} - {{ message.date | fromNow}}
+                {{group.sender.name}} - {{ group.date | fromNow}}
               </div>
+            </div>
+            <div class="row" ng-repeat="message in group.messages">
               <div class="col-md-12">
                 <div vue-editor ng-model="message.body"></div>
               </div>
             </div>
-
           </div>
         </div>
       </div>
@@ -46,9 +47,9 @@
           </footer>
         </div>
         <!--<div class="col-md-2">-->
-          <!--<div class="btn-group">-->
-            <!--<button ng-click="sendMessage()" class="btn btn-success">Send</button>-->
-          <!--</div>-->
+        <!--<div class="btn-group">-->
+        <!--<button ng-click="sendMessage()" class="btn btn-success">Send</button>-->
+        <!--</div>-->
         <!--</div>-->
       </div>
     </div>

@@ -56,8 +56,9 @@ public class UserServiceImpl implements UserService {
 
       if (user == null) {
         user = new OUser(self.getLogin(), token, email);
-        user.setId(self.getId());
+
       } else {
+        user.setId(self.getId());
         user.setToken(token);
         user.setEmail(email);
       }

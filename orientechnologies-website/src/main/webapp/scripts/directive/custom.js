@@ -128,6 +128,18 @@ angular.module('webappApp').directive('avatar', function ($timeout) {
 });
 
 
+angular.module('scroll', []).directive('whenScrolled', function () {
+  return function (scope, elm, attr) {
+    var raw = elm[0];
+
+    elm.bind('scroll', function () {
+      if (raw.scrollTop == 0) {
+        scope.$apply(attr.whenScrolled);
+      }
+    });
+  };
+});
+
 (function ($, undefined) {
   $.fn.getCursorPosition = function () {
     var el = $(this).get(0);

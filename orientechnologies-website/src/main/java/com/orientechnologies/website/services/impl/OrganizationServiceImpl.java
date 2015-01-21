@@ -4,6 +4,8 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.website.OrientDBFactory;
+import com.orientechnologies.website.events.ChatMessageSentEvent;
+import com.orientechnologies.website.events.EventManager;
 import com.orientechnologies.website.exception.ServiceException;
 import com.orientechnologies.website.github.GIssueState;
 import com.orientechnologies.website.github.GOrganization;
@@ -45,6 +47,9 @@ import java.util.UUID;
  */
 @Service
 public class OrganizationServiceImpl implements OrganizationService {
+
+  @Autowired
+  protected EventManager         eventManager;
 
   @Autowired
   private OrientDBFactory        dbFactory;
@@ -287,6 +292,7 @@ public class OrganizationServiceImpl implements OrganizationService {
       message.setDate(new Date());
       message.setSender(SecurityHelper.currentUser());
       message.setUuid(UUID.randomUUID().toString());
+      eventManager.pushInternalEvent(ChatMessageSentEvent.EVENT, message);
       message = messageRepository.save(message);
       return message;
     }
@@ -296,6 +302,13 @@ public class OrganizationServiceImpl implements OrganizationService {
   @Override
   public List<Message> getClientRoomMessage(String name, Integer clientId, String beforeUuid) {
     return organizationRepository.findClientMessages(name, clientId, beforeUuid);
+  }
+
+  @Override
+  public List<OUser> getClientRoomActors(String name, Integer clientId) {
+    List<OUser> users = organizationRepository.findClientMembers(name, clientId);
+    users.addAll(organizationRepository.findMembers(name));
+    return users;
   }
 
   private void createMembersScopeRelationship(Scope scope, List<OUser> members) {

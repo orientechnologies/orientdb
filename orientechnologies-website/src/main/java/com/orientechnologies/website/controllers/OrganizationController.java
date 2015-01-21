@@ -131,6 +131,13 @@ public class OrganizationController extends ExceptionController {
     return new ResponseEntity(organizationService.getClientRoomMessage(name, clientId, beforeUuid), HttpStatus.OK);
   }
 
+  @RequestMapping(value = "{name}/clients/{id}/room/actors", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity<List<OUser>> getRoomActors(@PathVariable("name") String name, @PathVariable("id") Integer clientId,
+      @RequestParam(value = "before", defaultValue = "") String beforeUuid) {
+    return new ResponseEntity(organizationService.getClientRoomActors(name, clientId), HttpStatus.OK);
+  }
+
   @RequestMapping(value = "{name}/clients/{id}/room", method = RequestMethod.PATCH)
   @ResponseStatus(HttpStatus.OK)
   public ResponseEntity<Message> registerMessage(@PathVariable("name") String name, @PathVariable("id") Integer clientId,

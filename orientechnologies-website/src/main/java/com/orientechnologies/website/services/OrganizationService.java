@@ -33,6 +33,8 @@ public interface OrganizationService {
 
   public List<Message> getClientRoomMessage(String name, Integer clientId, String beforeUuid);
 
+  public List<OUser> getClientRoomActors(String name, Integer clientId);
+
   // @Transactional
   // Environment registerClientEnvironment(String name, Integer id, Environment environment);
 
