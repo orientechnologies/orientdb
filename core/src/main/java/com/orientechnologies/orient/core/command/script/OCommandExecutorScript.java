@@ -1,38 +1,40 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.command.script;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
+import com.orientechnologies.orient.core.tx.OTransaction;
 
 import javax.script.Bindings;
 import javax.script.Compilable;
@@ -40,7 +42,6 @@ import javax.script.CompiledScript;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -88,57 +89,50 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
   }
 
   protected Object executeJsr223Script(final String language, final OCommandContext iContext, final Map<Object, Object> iArgs) {
-    ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if (db != null && !(db instanceof ODatabaseRecordTx))
-      db = db.getUnderlying();
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
     final OScriptManager scriptManager = Orient.instance().getScriptManager();
     CompiledScript compiledScript = request.getCompiledScript();
 
-    if (compiledScript == null) {
-      ScriptEngine scriptEngine = scriptManager.getEngine(language);
+    final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = scriptManager.acquireDatabaseEngine(db.getName(), language);
+    final ScriptEngine scriptEngine = entry.object;
+    try {
 
-      if (!(scriptEngine instanceof Compilable))
-        throw new OCommandExecutionException("Language '" + language + "' does not support compilation");
+      if (compiledScript == null) {
+        if (!(scriptEngine instanceof Compilable))
+          throw new OCommandExecutionException("Language '" + language + "' does not support compilation");
 
-      // COMPILE FUNCTION LIBRARY
-      String lib = scriptManager.getLibrary(db, language);
-      if (lib == null)
-        lib = "";
+        final Compilable c = (Compilable) scriptEngine;
+        try {
+          compiledScript = c.compile(parserText);
+        } catch (ScriptException e) {
+          scriptManager.throwErrorMessage(e, parserText);
+        }
 
-      parserText = lib + parserText;
-
-      Compilable c = (Compilable) scriptEngine;
-      try {
-        compiledScript = c.compile(parserText);
-      } catch (ScriptException e) {
-        scriptManager.getErrorMessage(e, parserText);
+        request.setCompiledScript(compiledScript);
       }
 
-      request.setCompiledScript(compiledScript);
-    }
+      final Bindings binding = scriptManager.bind(compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE),
+          (ODatabaseDocumentTx) db, iContext, iArgs);
 
-    final Bindings binding = scriptManager.bind(compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE),
-        (ODatabaseRecordTx) db, iContext, iArgs);
+      try {
+        final Object ob = compiledScript.eval(binding);
 
-    try {
-      final Object ob = compiledScript.eval(binding);
+        return OCommandExecutorUtility.transformResult(ob);
+      } catch (ScriptException e) {
+        throw new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber(), e);
 
-      return OCommandExecutorUtility.transformResult(ob);
-    } catch (ScriptException e) {
-      throw new OCommandScriptException("Error on execution of the script", request.getText(), e.getColumnNumber(), e);
-
+      } finally {
+        scriptManager.unbind(binding, iContext, iArgs);
+      }
     } finally {
-      scriptManager.unbind(binding);
+      scriptManager.releaseDatabaseEngine(language, db.getName(), entry);
     }
   }
 
   // TODO: CREATE A REGULAR JSR223 SCRIPT IMPL
   protected Object executeSQL() {
-    ODatabaseRecordInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if (db != null && !(db instanceof ODatabaseRecordTx))
-      db = db.getUnderlying();
-
+    ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
     try {
 
       return executeSQLScript(db, parserText);
@@ -153,184 +147,193 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
     throw new OCommandScriptException("Error on execution of the script: " + iText, request.getText(), 0);
   }
 
-  protected Object executeSQLScript(ODatabaseRecord db, final String iText) throws IOException {
+  protected Object executeSQLScript(ODatabaseDocument db, final String iText) throws IOException {
     Object lastResult = null;
     int maxRetry = 1;
 
     context.setVariable("transactionRetries", 0);
 
     for (int retry = 0; retry < maxRetry; retry++) {
-      int txBegunAtLine = -1;
-      int txBegunAtPart = -1;
-      lastResult = null;
+      try {
+        int txBegunAtLine = -1;
+        int txBegunAtPart = -1;
+        lastResult = null;
 
-      final BufferedReader reader = new BufferedReader(new StringReader(iText));
+        final BufferedReader reader = new BufferedReader(new StringReader(iText));
 
-      int line = 0;
-      int linePart = 0;
-      String lastLine;
-      boolean txBegun = false;
+        int line = 0;
+        int linePart = 0;
+        String lastLine;
+        boolean txBegun = false;
 
-      for (; line < txBegunAtLine; ++line)
-        // SKIP PREVIOUS COMMAND AND JUMP TO THE BEGIN IF ANY
-        lastLine = reader.readLine();
+        for (; line < txBegunAtLine; ++line)
+          // SKIP PREVIOUS COMMAND AND JUMP TO THE BEGIN IF ANY
+          reader.readLine();
 
-      for (; (lastLine = reader.readLine()) != null; ++line) {
-        lastLine = lastLine.trim();
+        for (; (lastLine = reader.readLine()) != null; ++line) {
+          lastLine = lastLine.trim();
 
-        final List<String> lineParts = OStringSerializerHelper.smartSplit(lastLine, ';');
+          final List<String> lineParts = OStringSerializerHelper.smartSplit(lastLine, ';');
 
-        if (line == txBegunAtLine)
-          // SKIP PREVIOUS COMMAND PART AND JUMP TO THE BEGIN IF ANY
-          linePart = txBegunAtPart;
-        else
-          linePart = 0;
+          if (line == txBegunAtLine)
+            // SKIP PREVIOUS COMMAND PART AND JUMP TO THE BEGIN IF ANY
+            linePart = txBegunAtPart;
+          else
+            linePart = 0;
 
-        for (; linePart < lineParts.size(); ++linePart) {
-          final String lastCommand = lineParts.get(linePart);
+          for (; linePart < lineParts.size(); ++linePart) {
+            final String lastCommand = lineParts.get(linePart);
 
-          if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "let ")) {
-            final int equalsPos = lastCommand.indexOf('=');
-            final String variable = lastCommand.substring("let ".length(), equalsPos).trim();
-            final String cmd = lastCommand.substring(equalsPos + 1).trim();
+            if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "let ")) {
+              final int equalsPos = lastCommand.indexOf('=');
+              final String variable = lastCommand.substring("let ".length(), equalsPos).trim();
+              final String cmd = lastCommand.substring(equalsPos + 1).trim();
 
-            lastResult = db.command(new OCommandSQL(cmd).setContext(getContext())).execute();
+              lastResult = db.command(new OCommandSQL(cmd).setContext(getContext())).execute();
 
-            // PUT THE RESULT INTO THE CONTEXT
-            getContext().setVariable(variable, lastResult);
-          } else if (lastCommand.equalsIgnoreCase("begin")) {
+              // PUT THE RESULT INTO THE CONTEXT
+              getContext().setVariable(variable, lastResult);
+            } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "begin")) {
 
-            if (txBegun)
-              throw new OCommandSQLParsingException("Transaction already begun");
+              if (txBegun)
+                throw new OCommandSQLParsingException("Transaction already begun");
 
-            txBegun = true;
-            txBegunAtLine = line;
-            txBegunAtPart = linePart;
+              txBegun = true;
+              txBegunAtLine = line;
+              txBegunAtPart = linePart;
 
-            db.begin();
+              db.begin();
 
-          } else if (lastCommand.equalsIgnoreCase("rollback")) {
-
-            if (!txBegun)
-              throw new OCommandSQLParsingException("Transaction not begun");
-
-            db.rollback();
-
-            txBegun = false;
-            txBegunAtLine = -1;
-            txBegunAtPart = -1;
-
-          } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "commit")) {
-            if (txBegunAtLine < 0)
-              throw new OCommandSQLParsingException("Transaction not begun");
-
-            if (lastCommand.length() > "commit ".length()) {
-              String next = lastCommand.substring("commit ".length()).trim();
-              if (OStringSerializerHelper.startsWithIgnoreCase(next, "retry ")) {
-                next = next.substring("retry ".length()).trim();
-                maxRetry = Integer.parseInt(next) + 1;
+              if (lastCommand.length() > "begin ".length()) {
+                String next = lastCommand.substring("begin ".length()).trim();
+                if (OStringSerializerHelper.startsWithIgnoreCase(next, "isolation ")) {
+                  next = next.substring("isolation ".length()).trim();
+                  db.getTransaction().setIsolationLevel(OTransaction.ISOLATION_LEVEL.valueOf(next.toUpperCase()));
+                }
               }
-            }
 
-            try {
+            } else if ("rollback".equalsIgnoreCase(lastCommand)) {
+
+              if (!txBegun)
+                throw new OCommandSQLParsingException("Transaction not begun");
+
+              db.rollback();
+
+              txBegun = false;
+              txBegunAtLine = -1;
+              txBegunAtPart = -1;
+
+            } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "commit")) {
+              if (txBegunAtLine < 0)
+                throw new OCommandSQLParsingException("Transaction not begun");
+
+              if (retry == 0 && lastCommand.length() > "commit ".length()) {
+                // FIRST CYCLE: PARSE RETRY TIMES OVERWRITING DEFAULT = 1
+                String next = lastCommand.substring("commit ".length()).trim();
+                if (OStringSerializerHelper.startsWithIgnoreCase(next, "retry ")) {
+                  next = next.substring("retry ".length()).trim();
+                  maxRetry = Integer.parseInt(next) + 1;
+                }
+              }
+
               db.commit();
-            } catch (OConcurrentModificationException e) {
-              context.setVariable("transactionRetries", retry);
-              break;
-            }
 
-            txBegun = false;
-            txBegunAtLine = -1;
-            txBegunAtPart = -1;
+              txBegun = false;
+              txBegunAtLine = -1;
+              txBegunAtPart = -1;
 
-          } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "sleep ")) {
+            } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "sleep ")) {
 
-            final String sleepTimeInMs = lastCommand.substring("sleep ".length()).trim();
-            try {
-              Thread.sleep(Integer.parseInt(sleepTimeInMs));
-            } catch (InterruptedException e) {
-            }
-
-          } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "return ")) {
-
-            final String variable = lastCommand.substring("return ".length()).trim();
-
-            if (variable.equalsIgnoreCase("NULL"))
-              lastResult = null;
-            else if (variable.startsWith("$"))
-              lastResult = getContext().getVariable(variable);
-            else if (variable.startsWith("[") && variable.endsWith("]")) {
-              // ARRAY - COLLECTION
-              final List<String> items = new ArrayList<String>();
-
-              OStringSerializerHelper.getCollection(variable, 0, items);
-              final List<Object> result = new ArrayList<Object>(items.size());
-
-              for (int i = 0; i < items.size(); ++i) {
-                String item = items.get(i);
-
-                Object res;
-                if (item.startsWith("$"))
-                  res = getContext().getVariable(item);
-                else
-                  res = item;
-
-                if (OMultiValue.isMultiValue(res) && OMultiValue.getSize(res) == 1)
-                  res = OMultiValue.getFirstValue(res);
-
-                result.add(res);
+              final String sleepTimeInMs = lastCommand.substring("sleep ".length()).trim();
+              try {
+                Thread.sleep(Integer.parseInt(sleepTimeInMs));
+              } catch (InterruptedException e) {
               }
-              lastResult = result;
-            } else if (variable.startsWith("{") && variable.endsWith("}")) {
-              // MAP
-              final Map<String, String> map = OStringSerializerHelper.getMap(variable);
-              final Map<Object, Object> result = new HashMap<Object, Object>(map.size());
 
-              for (Map.Entry<String, String> entry : map.entrySet()) {
-                // KEY
-                String stringKey = entry.getKey();
-                if (stringKey == null)
-                  continue;
+            } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "return ")) {
 
-                stringKey = stringKey.trim();
+              final String variable = lastCommand.substring("return ".length()).trim();
 
-                Object key;
-                if (stringKey.startsWith("$"))
-                  key = getContext().getVariable(stringKey);
-                else
-                  key = stringKey;
+              if (variable.equalsIgnoreCase("NULL"))
+                lastResult = null;
+              else if (variable.startsWith("$"))
+                lastResult = getContext().getVariable(variable);
+              else if (variable.startsWith("[") && variable.endsWith("]")) {
+                // ARRAY - COLLECTION
+                final List<String> items = new ArrayList<String>();
 
-                if (OMultiValue.isMultiValue(key) && OMultiValue.getSize(key) == 1)
-                  key = OMultiValue.getFirstValue(key);
+                OStringSerializerHelper.getCollection(variable, 0, items);
+                final List<Object> result = new ArrayList<Object>(items.size());
 
-                // VALUE
-                String stringValue = entry.getValue();
-                if (stringValue == null)
-                  continue;
+                for (int i = 0; i < items.size(); ++i) {
+                  String item = items.get(i);
 
-                stringValue = stringValue.trim();
+                  Object res;
+                  if (item.startsWith("$"))
+                    res = getContext().getVariable(item);
+                  else
+                    res = item;
 
-                Object value;
-                if (stringValue.toString().startsWith("$"))
-                  value = getContext().getVariable(stringValue);
-                else
-                  value = stringValue;
+                  if (OMultiValue.isMultiValue(res) && OMultiValue.getSize(res) == 1)
+                    res = OMultiValue.getFirstValue(res);
 
-                if (OMultiValue.isMultiValue(value) && OMultiValue.getSize(value) == 1)
-                  value = OMultiValue.getFirstValue(value);
+                  result.add(res);
+                }
+                lastResult = result;
+              } else if (variable.startsWith("{") && variable.endsWith("}")) {
+                // MAP
+                final Map<String, String> map = OStringSerializerHelper.getMap(variable);
+                final Map<Object, Object> result = new HashMap<Object, Object>(map.size());
 
-                result.put(key, value);
-              }
-              lastResult = result;
-            } else
-              lastResult = variable;
+                for (Map.Entry<String, String> entry : map.entrySet()) {
+                  // KEY
+                  String stringKey = entry.getKey();
+                  if (stringKey == null)
+                    continue;
 
-            // END OF THE SCRIPT
-            return lastResult;
+                  stringKey = stringKey.trim();
 
-          } else if (lastCommand != null && lastCommand.length() > 0)
-            lastResult = db.command(new OCommandSQL(lastCommand).setContext(getContext())).execute();
+                  Object key;
+                  if (stringKey.startsWith("$"))
+                    key = getContext().getVariable(stringKey);
+                  else
+                    key = stringKey;
+
+                  if (OMultiValue.isMultiValue(key) && OMultiValue.getSize(key) == 1)
+                    key = OMultiValue.getFirstValue(key);
+
+                  // VALUE
+                  String stringValue = entry.getValue();
+                  if (stringValue == null)
+                    continue;
+
+                  stringValue = stringValue.trim();
+
+                  Object value;
+                  if (stringValue.toString().startsWith("$"))
+                    value = getContext().getVariable(stringValue);
+                  else
+                    value = stringValue;
+
+                  if (OMultiValue.isMultiValue(value) && OMultiValue.getSize(value) == 1)
+                    value = OMultiValue.getFirstValue(value);
+
+                  result.put(key, value);
+                }
+                lastResult = result;
+              } else
+                lastResult = variable;
+
+              // END OF THE SCRIPT
+              return lastResult;
+
+            } else if (lastCommand != null && lastCommand.length() > 0)
+              lastResult = db.command(new OCommandSQL(lastCommand).setContext(getContext())).execute();
+          }
         }
+      } catch (OConcurrentModificationException e) {
+        context.setVariable("retries", retry);
+        getDatabase().getLocalCache().clear();
       }
     }
 

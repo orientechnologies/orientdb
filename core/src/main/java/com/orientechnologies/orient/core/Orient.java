@@ -40,10 +40,14 @@ import com.orientechnologies.orient.core.record.ORecordFactoryManager;
 import com.orientechnologies.orient.core.storage.OStorage;
 
 import java.io.IOException;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -52,36 +56,51 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class Orient extends OListenerManger<OOrientListener> {
-  public static final String                                                           ORIENTDB_HOME          = "ORIENTDB_HOME";
-  public static final String                                                           URL_SYNTAX             = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
+  public static final String                                                         ORIENTDB_HOME                 = "ORIENTDB_HOME";
+  public static final String                                                         URL_SYNTAX                    = "<engine>:<db-type>:<db-name>[?<db-param>=<db-value>[&]]*";
 
-  protected static final Orient                                                        instance               = new Orient();
-  protected static boolean                                                             registerDatabaseByPath = false;
+  private static final Orient                                                        instance                      = new Orient();
+  private static volatile boolean                                                    registerDatabaseByPath        = false;
 
-  protected final ConcurrentMap<String, OEngine>                                       engines                = new ConcurrentHashMap<String, OEngine>();
-  protected final ConcurrentMap<String, OStorage>                                      storages               = new ConcurrentHashMap<String, OStorage>();
+  private final ConcurrentMap<String, OEngine>                                       engines                       = new ConcurrentHashMap<String, OEngine>();
+  private final ConcurrentMap<String, OStorage>                                      storages                      = new ConcurrentHashMap<String, OStorage>();
 
-  protected final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners   = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
-  protected final ODatabaseFactory                                                     databaseFactory        = new ODatabaseFactory();
-  protected final OScriptManager                                                       scriptManager          = new OScriptManager();
-  protected final Timer                                                                timer                  = new Timer(true);
-  protected final ThreadGroup                                                          threadGroup            = new ThreadGroup(
-                                                                                                                  "OrientDB");
-  protected final AtomicInteger                                                        serialId               = new AtomicInteger();
-  private final ReadWriteLock                                                          engineLock             = new ReentrantReadWriteLock();
-  protected ORecordFactoryManager                                                      recordFactoryManager   = new ORecordFactoryManager();
-  protected ORecordConflictStrategyFactory                                             recordConflictStrategy = new ORecordConflictStrategyFactory();
-  protected OrientShutdownHook                                                         shutdownHook;
-  protected OProfilerMBean                                                             profiler               = new OProfiler();
-  protected ODatabaseThreadLocalFactory                                                databaseThreadFactory;
-  protected volatile boolean                                                           active                 = false;
-  protected ThreadPoolExecutor                                                         workers;
-  protected OSignalHandler                                                             signalHandler;
+  private final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> dbLifecycleListeners          = new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>();
+  private final ODatabaseFactory                                                     databaseFactory               = new ODatabaseFactory();
+  private final OScriptManager                                                       scriptManager                 = new OScriptManager();
+  private final ThreadGroup                                                          threadGroup;
+  private final AtomicInteger                                                        serialId                      = new AtomicInteger();
+  private final ReadWriteLock                                                        engineLock                    = new ReentrantReadWriteLock();
+  private volatile Timer                                                             timer;
+  private volatile ORecordFactoryManager                                             recordFactoryManager          = new ORecordFactoryManager();
+  private final ORecordConflictStrategyFactory                                       recordConflictStrategy        = new ORecordConflictStrategyFactory();
+  private OrientShutdownHook                                                         shutdownHook;
+  private volatile OProfilerMBean                                                    profiler;
+  private ODatabaseThreadLocalFactory                                                databaseThreadFactory;
+  private volatile boolean                                                           active                        = false;
+  private ThreadPoolExecutor                                                         workers;
+  private OSignalHandler                                                             signalHandler;
+
+  private final ReferenceQueue<OOrientStartupListener>                               removedStartupListenersQueue  = new ReferenceQueue<OOrientStartupListener>();
+  private final ReferenceQueue<OOrientShutdownListener>                              removedShutdownListenersQueue = new ReferenceQueue<OOrientShutdownListener>();
+
+  private final Set<OOrientStartupListener>                                          startupListeners              = Collections
+                                                                                                                       .newSetFromMap(new ConcurrentHashMap<OOrientStartupListener, Boolean>());
+  private final Set<WeakHashSetValueHolder<OOrientStartupListener>>                  weakStartupListeners          = Collections
+                                                                                                                       .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientStartupListener>, Boolean>());
+
+  private final Set<WeakHashSetValueHolder<OOrientShutdownListener>>                 weakShutdownListeners         = Collections
+                                                                                                                       .newSetFromMap(new ConcurrentHashMap<WeakHashSetValueHolder<OOrientShutdownListener>, Boolean>());
+
+  static {
+    instance.startup();
+  }
 
   protected Orient() {
     super(true);
 
-    startup();
+    threadGroup = new ThreadGroup("OrientDB");
+    threadGroup.setDaemon(false);
   }
 
   public static Orient instance() {
@@ -133,6 +152,11 @@ public class Orient extends OListenerManger<OOrientListener> {
         // ALREADY ACTIVE
         return this;
 
+      if (timer == null)
+        timer = new Timer(true);
+
+      profiler = new OProfiler();
+
       shutdownHook = new OrientShutdownHook();
       if (signalHandler == null) {
         signalHandler = new OSignalHandler();
@@ -160,19 +184,37 @@ public class Orient extends OListenerManger<OOrientListener> {
       registerEngine(new OEngineMemory());
       registerEngine("com.orientechnologies.orient.client.remote.OEngineRemote");
 
-      if (OGlobalConfiguration.PROFILER_ENABLED.getValueAsBoolean())
-        // ACTIVATE RECORDING OF THE PROFILER
-        profiler.startRecording();
 
       if (OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP.getValueAsBoolean())
         OGlobalConfiguration.dumpConfiguration(System.out);
 
       active = true;
-      return this;
 
+      for (OOrientStartupListener l : startupListeners)
+        try {
+          if (l != null)
+            l.onStartup();
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error on startup", e);
+        }
+
+      purgeWeakStartupListeners();
+      for (final WeakHashSetValueHolder<OOrientStartupListener> wl : weakStartupListeners)
+        try {
+          if (wl != null) {
+            final OOrientStartupListener l = wl.get();
+            if (l != null)
+              l.onStartup();
+          }
+
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error on startup", e);
+        }
     } finally {
       engineLock.writeLock().unlock();
     }
+
+    return this;
   }
 
   public Orient shutdown() {
@@ -184,14 +226,12 @@ public class Orient extends OListenerManger<OOrientListener> {
       active = false;
 
       workers.shutdown();
+      try {
+        workers.awaitTermination(2, TimeUnit.MINUTES);
+      } catch (InterruptedException e) {
+      }
 
       OLogManager.instance().debug(this, "Orient Engine is shutting down...");
-
-      // CALL THE SHUTDOWN ON ALL THE LISTENERS
-      for (OOrientListener l : browseListeners()) {
-        if (l != null)
-          l.onShutdown();
-      }
 
       closeAllStorages();
 
@@ -213,19 +253,67 @@ public class Orient extends OListenerManger<OOrientListener> {
         // STOP ALL THE PENDING THREADS
         threadGroup.interrupt();
 
-      resetListeners();
-
-      timer.purge();
+      timer.cancel();
+      timer = null;
 
       profiler.shutdown();
+      profiler = null;
+
+      // CALL THE SHUTDOWN ON ALL THE LISTENERS
+      for (OOrientListener l : browseListeners()) {
+        if (l != null)
+          try {
+            l.onShutdown();
+          } catch (Exception e) {
+            OLogManager.instance().error(this, "Error during orient shutdown.", e);
+          }
+
+      }
+
+      purgeWeakShutdownListeners();
+      for (final WeakHashSetValueHolder<OOrientShutdownListener> wl : weakShutdownListeners)
+        try {
+          if (wl != null) {
+            final OOrientShutdownListener l = wl.get();
+            if (l != null)
+              l.onShutdown();
+          }
+
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error during orient shutdown.", e);
+        }
 
       OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
       OLogManager.instance().flush();
-
     } finally {
       engineLock.writeLock().unlock();
     }
+
     return this;
+  }
+
+  public void scheduleTask(TimerTask task, long delay, long period) {
+    engineLock.readLock().lock();
+    try {
+      if (active)
+        timer.schedule(task, delay, period);
+      else
+        OLogManager.instance().warn(this, "OrientDB engine is down. Task will not be scheduled.");
+    } finally {
+      engineLock.readLock().unlock();
+    }
+  }
+
+  public void scheduleTask(TimerTask task, Date firstTime, long period) {
+    engineLock.readLock().lock();
+    try {
+      if (active)
+        timer.schedule(task, firstTime, period);
+      else
+        OLogManager.instance().warn(this, "OrientDB engine is down. Task will not be scheduled.");
+    } finally {
+      engineLock.readLock().unlock();
+    }
   }
 
   public void closeAllStorages() {
@@ -235,7 +323,7 @@ public class Orient extends OListenerManger<OOrientListener> {
       final List<OStorage> storagesCopy = new ArrayList<OStorage>(storages.values());
       for (OStorage stg : storagesCopy) {
         try {
-          OLogManager.instance().info(this, "- storage: " + stg.getName() + "...");
+          OLogManager.instance().info(this, "- closing storage: " + stg.getName() + "...");
           stg.close(true, false);
         } catch (Throwable e) {
           OLogManager.instance().warn(this, "-- error on closing storage", e);
@@ -247,8 +335,44 @@ public class Orient extends OListenerManger<OOrientListener> {
     }
   }
 
+  public boolean isActive() {
+    return active;
+  }
+
+  /**
+   * @deprecated This method is not thread safe. Use {@link #submit(java.util.concurrent.Callable)} instead.
+   */
+  @Deprecated
   public ThreadPoolExecutor getWorkers() {
     return workers;
+  }
+
+  public Future<?> submit(final Runnable runnable) {
+    engineLock.readLock().lock();
+    try {
+      if (active)
+        return workers.submit(runnable);
+      else {
+        OLogManager.instance().warn(this, "OrientDB engine is down. Task will not be submitted.");
+        throw new IllegalStateException("OrientDB engine is down. Task will not be submitted.");
+      }
+    } finally {
+      engineLock.readLock().unlock();
+    }
+  }
+
+  public <V> Future<V> submit(final Callable<V> callable) {
+    engineLock.readLock().lock();
+    try {
+      if (active)
+        return workers.submit(callable);
+      else {
+        OLogManager.instance().warn(this, "OrientDB engine is down. Task will not be submitted.");
+        throw new IllegalStateException("OrientDB engine is down. Task will not be submitted.");
+      }
+    } finally {
+      engineLock.readLock().unlock();
+    }
   }
 
   public OStorage loadStorage(String iURL) {
@@ -422,6 +546,11 @@ public class Orient extends OListenerManger<OOrientListener> {
       for (String dbName : storagesToRemove)
         storages.remove(dbName);
 
+      // UNREGISTER STORAGE FROM ENGINES IN CASE IS CACHED
+      for (OEngine engine : engines.values()) {
+        engine.removeStorage(storage);
+      }
+
     } finally {
       engineLock.writeLock().unlock();
     }
@@ -436,13 +565,23 @@ public class Orient extends OListenerManger<OOrientListener> {
     }
   }
 
+  /**
+   * @deprecated This method is not thread safe please use {@link #scheduleTask(java.util.TimerTask, long, long)} instead.
+   */
+  @Deprecated
   public Timer getTimer() {
     return timer;
   }
 
   public void removeShutdownHook() {
-    if (shutdownHook != null)
-      Runtime.getRuntime().removeShutdownHook(shutdownHook);
+    if (shutdownHook != null) {
+      shutdownHook.cancel();
+      shutdownHook = null;
+    }
+  }
+
+  public boolean isSelfManagedShutdown() {
+    return shutdownHook != null;
   }
 
   public Iterator<ODatabaseLifecycleListener> getDbLifecycleListeners() {
@@ -502,11 +641,127 @@ public class Orient extends OListenerManger<OOrientListener> {
     return scriptManager;
   }
 
-  private void registerEngine(final String iClassName) {
+  @Override
+  public void registerListener(OOrientListener listener) {
+    if (listener instanceof OOrientStartupListener)
+      registerOrientStartupListener((OOrientStartupListener) listener);
+
+    super.registerListener(listener);
+  }
+
+  @Override
+  public void unregisterListener(OOrientListener listener) {
+    if (listener instanceof OOrientStartupListener)
+      unregisterOrientStartupListener((OOrientStartupListener) listener);
+
+    super.unregisterListener(listener);
+  }
+
+  public void registerOrientStartupListener(OOrientStartupListener listener) {
+    startupListeners.add(listener);
+  }
+
+  public void registerWeakOrientStartupListener(OOrientStartupListener listener) {
+    purgeWeakStartupListeners();
+    weakStartupListeners.add(new WeakHashSetValueHolder<OOrientStartupListener>(listener, removedStartupListenersQueue));
+  }
+
+  public void unregisterOrientStartupListener(OOrientStartupListener listener) {
+    startupListeners.remove(listener);
+  }
+
+  public void unregisterWeakOrientStartupListener(OOrientStartupListener listener) {
+    purgeWeakStartupListeners();
+    weakStartupListeners.remove(new WeakHashSetValueHolder<OOrientStartupListener>(listener, null));
+  }
+
+  public void registerWeakOrientShutdownListener(OOrientShutdownListener listener) {
+    purgeWeakShutdownListeners();
+    weakShutdownListeners.add(new WeakHashSetValueHolder<OOrientShutdownListener>(listener, removedShutdownListenersQueue));
+  }
+
+  public void unregisterWeakOrientShutdownListener(OOrientShutdownListener listener) {
+    purgeWeakShutdownListeners();
+    weakShutdownListeners.remove(new WeakHashSetValueHolder<OOrientShutdownListener>(listener, null));
+  }
+
+  @Override
+  public void resetListeners() {
+    super.resetListeners();
+
+    weakShutdownListeners.clear();
+
+    startupListeners.clear();
+    weakStartupListeners.clear();
+  }
+
+  private void registerEngine(final String className) {
     try {
-      final Class<?> cls = Class.forName(iClassName);
+      final Class<?> cls = Class.forName(className);
       registerEngine((OEngine) cls.newInstance());
     } catch (Exception e) {
+    }
+  }
+
+  private void purgeWeakStartupListeners() {
+    synchronized (removedStartupListenersQueue) {
+      WeakHashSetValueHolder<OOrientStartupListener> ref = (WeakHashSetValueHolder<OOrientStartupListener>) removedStartupListenersQueue
+          .poll();
+      while (ref != null) {
+        weakStartupListeners.remove(ref);
+        ref = (WeakHashSetValueHolder<OOrientStartupListener>) removedStartupListenersQueue.poll();
+      }
+
+    }
+  }
+
+  private void purgeWeakShutdownListeners() {
+    synchronized (removedShutdownListenersQueue) {
+      WeakHashSetValueHolder<OOrientShutdownListener> ref = (WeakHashSetValueHolder<OOrientShutdownListener>) removedShutdownListenersQueue
+          .poll();
+      while (ref != null) {
+        weakShutdownListeners.remove(ref);
+        ref = (WeakHashSetValueHolder<OOrientShutdownListener>) removedShutdownListenersQueue.poll();
+      }
+
+    }
+  }
+
+  private static class WeakHashSetValueHolder<T> extends WeakReference<T> {
+    private final int hashCode;
+
+    private WeakHashSetValueHolder(T referent, ReferenceQueue<? super T> q) {
+      super(referent, q);
+      this.hashCode = referent.hashCode();
+    }
+
+    @Override
+    public int hashCode() {
+      return hashCode;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o)
+        return true;
+
+      if (o == null || getClass() != o.getClass())
+        return false;
+
+      WeakHashSetValueHolder that = (WeakHashSetValueHolder) o;
+
+      if (hashCode != that.hashCode)
+        return false;
+
+      final T thisObject = get();
+      final Object thatObject = that.get();
+
+      if (thisObject == null && thatObject == null)
+        return super.equals(that);
+      else if (thisObject != null && thatObject != null)
+        return thisObject.equals(thatObject);
+
+      return false;
     }
   }
 }

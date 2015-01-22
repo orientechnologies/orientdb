@@ -1,16 +1,15 @@
 package com.orientechnologies.orient.test.database.speed;
 
+import org.testng.annotations.Test;
+
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
-import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import org.testng.annotations.Test;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 9/17/14
  */
 @Test
@@ -25,9 +24,8 @@ public class IteratorSpeedTest {
       document.save();
     }
 
-    ORecordIteratorClass iterator = new ORecordIteratorClass(db, (ODatabaseRecordAbstract) db.getUnderlying(), "SpeedTest", true);
-    iterator.setRange(new ORecordId(oClass.getDefaultClusterId(), new OClusterPositionLong(999998)),
-        new ORecordId(oClass.getDefaultClusterId(), new OClusterPositionLong(999999)));
+    ORecordIteratorClass iterator = new ORecordIteratorClass(db, db, "SpeedTest", true);
+    iterator.setRange(new ORecordId(oClass.getDefaultClusterId(), 999998), new ORecordId(oClass.getDefaultClusterId(), 999999));
 
     long start = System.nanoTime();
 

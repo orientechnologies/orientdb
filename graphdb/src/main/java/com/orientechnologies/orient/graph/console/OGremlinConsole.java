@@ -104,7 +104,7 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
     final String fileName = items.size() <= 0 || (items.get(1)).charAt(0) == '-' ? null : items.get(1);
     final String options = fileName != null ? text.substring((items.get(0)).length() + (items.get(1)).length() + 1).trim() : text;
 
-    if (fileName.endsWith(".graphml")) {
+    if (fileName != null && fileName.endsWith(".graphml")) {
       message("\nImporting GRAPHML database from " + text + "...");
 
       try {

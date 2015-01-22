@@ -1,33 +1,33 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.type.tree;
 
-import java.io.IOException;
-
-import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeEntry;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.mvrbtree.OMVRBTreeEntry;
 import com.orientechnologies.orient.core.type.tree.provider.OIdentityChangedListener;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeEntryDataProvider;
+
+import java.io.IOException;
 
 /**
  * 
@@ -231,114 +231,6 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
     return this;
   }
 
-  /**
-   * Disconnect the current node from others.
-   * 
-   * @param iForceDirty
-   *          Force disconnection also if the record it's dirty
-   * @param iLevel
-   * @return count of nodes that has been disconnected
-   */
-  protected int disconnect(final boolean iForceDirty, final int iLevel) {
-    if (dataProvider == null)
-      // DIRTY NODE, JUST REMOVE IT
-      return 1;
-
-    int totalDisconnected = 0;
-
-    final ORID rid = dataProvider.getIdentity();
-
-    boolean disconnectedFromParent = false;
-    if (parent != null) {
-      // DISCONNECT RECURSIVELY THE PARENT NODE
-      if (canDisconnectFrom(parent) || iForceDirty) {
-        if (parent.left == this) {
-          parent.left = null;
-        } else if (parent.right == this) {
-          parent.right = null;
-        } else
-          OLogManager.instance().warn(this,
-              "Node " + rid + " has the parent (" + parent + ") unlinked to itself. It links to " + parent);
-
-        totalDisconnected += parent.disconnect(iForceDirty, iLevel + 1);
-        parent = null;
-        disconnectedFromParent = true;
-      }
-    } else {
-      disconnectedFromParent = true;
-    }
-
-    boolean disconnectedFromLeft = false;
-    if (left != null) {
-      // DISCONNECT RECURSIVELY THE LEFT NODE
-      if (canDisconnectFrom(left) || iForceDirty) {
-        if (left.parent == this)
-          left.parent = null;
-        else
-          OLogManager.instance().warn(this,
-              "Node " + rid + " has the left (" + left + ") unlinked to itself. It links to " + left.parent);
-
-        totalDisconnected += left.disconnect(iForceDirty, iLevel + 1);
-        left = null;
-        disconnectedFromLeft = true;
-      }
-    } else {
-      disconnectedFromLeft = true;
-    }
-
-    boolean disconnectedFromRight = false;
-    if (right != null) {
-      // DISCONNECT RECURSIVELY THE RIGHT NODE
-      if (canDisconnectFrom(right) || iForceDirty) {
-        if (right.parent == this)
-          right.parent = null;
-        else
-          OLogManager.instance().warn(this,
-              "Node " + rid + " has the right (" + right + ") unlinked to itself. It links to " + right.parent);
-
-        totalDisconnected += right.disconnect(iForceDirty, iLevel + 1);
-        right = null;
-        disconnectedFromRight = true;
-      }
-    } else {
-      disconnectedFromLeft = true;
-    }
-
-    if (disconnectedFromParent && disconnectedFromLeft && disconnectedFromRight)
-      if ((!dataProvider.isEntryDirty() && !dataProvider.getIdentity().isTemporary() || iForceDirty)
-          && !pTree.isNodeEntryPoint(this)) {
-        totalDisconnected++;
-        pTree.removeNodeFromMemory(this);
-        clear();
-      }
-
-    return totalDisconnected;
-  }
-
-  private boolean canDisconnectFrom(OMVRBTreeEntryPersistent<K, V> entry) {
-    return dataProvider == null || !dataProvider.getIdentity().isNew() && !entry.dataProvider.getIdentity().isNew();
-  }
-
-  protected void clear() {
-    // SPEED UP MEMORY CLAIM BY RESETTING INTERNAL FIELDS
-    pTree = null;
-    tree = null;
-    dataProvider.removeIdentityChangedListener(this);
-    dataProvider.clear();
-    dataProvider = null;
-  }
-
-  /**
-   * Clear links and current node only if it's not an entry point.
-   * 
-   * @param iForceDirty
-   * 
-   * @param iSource
-   */
-  protected int disconnectLinked(final boolean iForce) {
-    return disconnect(iForce, 0);
-  }
-
   public int getDepthInMemory() {
     int level = 0;
     OMVRBTreeEntryPersistent<K, V> entry = this;
@@ -366,8 +258,6 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
       return null;
 
     if (parent == null && dataProvider.getParent().isValid()) {
-      // System.out.println("Node " + record.getIdentity() + " is loading PARENT node " + parentRid + "...");
-
       // LAZY LOADING OF THE PARENT NODE
       parent = pTree.loadEntry(null, dataProvider.getParent());
 
@@ -510,43 +400,8 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
   }
 
   @Override
-  protected void copyFrom(final OMVRBTreeEntry<K, V> iSource) {
-    if (dataProvider.copyFrom(((OMVRBTreeEntryPersistent<K, V>) iSource).dataProvider))
-      markDirty();
-  }
-
-  @Override
-  protected void insert(final int iIndex, final K iKey, final V iValue) {
-    K oldKey = iIndex == 0 ? dataProvider.getKeyAt(0) : null;
-    if (dataProvider.insertAt(iIndex, iKey, iValue))
-      markDirty();
-
-    if (iIndex == 0)
-      pTree.updateEntryPoint(oldKey, this);
-  }
-
-  @Override
-  protected void remove() {
-    final int index = tree.getPageIndex();
-    final K oldKey = index == 0 ? getKeyAt(0) : null;
-
-    if (dataProvider.removeAt(index))
-      markDirty();
-
-    tree.setPageIndex(index - 1);
-
-    if (index == 0)
-      pTree.updateEntryPoint(oldKey, this);
-  }
-
-  @Override
   public K getKeyAt(final int iIndex) {
     return dataProvider.getKeyAt(iIndex);
-  }
-
-  @Override
-  protected V getValueAt(final int iIndex) {
-    return dataProvider.getValueAt(iIndex);
   }
 
   /**
@@ -572,25 +427,6 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
 
   public int getMaxDepthInMemory() {
     return getMaxDepthInMemory(0);
-  }
-
-  private int getMaxDepthInMemory(final int iCurrDepthLevel) {
-    int depth;
-
-    if (left != null)
-      // GET THE LEFT'S DEPTH LEVEL AS GOOD
-      depth = left.getMaxDepthInMemory(iCurrDepthLevel + 1);
-    else
-      // GET THE CURRENT DEPTH LEVEL AS GOOD
-      depth = iCurrDepthLevel;
-
-    if (right != null) {
-      int rightDepth = right.getMaxDepthInMemory(iCurrDepthLevel + 1);
-      if (rightDepth > depth)
-        depth = rightDepth;
-    }
-
-    return depth;
   }
 
   /**
@@ -631,21 +467,6 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
     pTree.signalNodeChanged(this);
   }
 
-  @Override
-  protected OMVRBTreeEntry<K, V> getLeftInMemory() {
-    return left;
-  }
-
-  @Override
-  protected OMVRBTreeEntry<K, V> getParentInMemory() {
-    return parent;
-  }
-
-  @Override
-  protected OMVRBTreeEntry<K, V> getRightInMemory() {
-    return right;
-  }
-
   public void onIdentityChanged(ORID rid) {
     if (left != null) {
       if (left.dataProvider.setParent(rid))
@@ -671,5 +492,179 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
       if (pTree.dataProvider.setRoot(rid))
         pTree.markDirty();
     }
+  }
+
+  /**
+   * Disconnect the current node from others.
+   *
+   * @param iForceDirty
+   *          Force disconnection also if the record it's dirty
+   * @param iLevel
+   * @return count of nodes that has been disconnected
+   */
+  protected int disconnect(final boolean iForceDirty, final int iLevel) {
+    if (dataProvider == null)
+      // DIRTY NODE, JUST REMOVE IT
+      return 1;
+
+    int totalDisconnected = 0;
+
+    final ORID rid = dataProvider.getIdentity();
+
+    boolean disconnectedFromParent = false;
+    if (parent != null) {
+      // DISCONNECT RECURSIVELY THE PARENT NODE
+      if (canDisconnectFrom(parent) || iForceDirty) {
+        if (parent.left == this) {
+          parent.left = null;
+        } else if (parent.right == this) {
+          parent.right = null;
+        } else
+          OLogManager.instance().warn(this,
+              "Node " + rid + " has the parent (" + parent + ") unlinked to itself. It links to " + parent);
+
+        totalDisconnected += parent.disconnect(iForceDirty, iLevel + 1);
+        parent = null;
+        disconnectedFromParent = true;
+      }
+    } else {
+      disconnectedFromParent = true;
+    }
+
+    boolean disconnectedFromLeft = false;
+    if (left != null) {
+      // DISCONNECT RECURSIVELY THE LEFT NODE
+      if (canDisconnectFrom(left) || iForceDirty) {
+        if (left.parent == this)
+          left.parent = null;
+        else
+          OLogManager.instance().warn(this,
+              "Node " + rid + " has the left (" + left + ") unlinked to itself. It links to " + left.parent);
+
+        totalDisconnected += left.disconnect(iForceDirty, iLevel + 1);
+        left = null;
+        disconnectedFromLeft = true;
+      }
+    } else {
+      disconnectedFromLeft = true;
+    }
+
+    boolean disconnectedFromRight = false;
+    if (right != null) {
+      // DISCONNECT RECURSIVELY THE RIGHT NODE
+      if (canDisconnectFrom(right) || iForceDirty) {
+        if (right.parent == this)
+          right.parent = null;
+        else
+          OLogManager.instance().warn(this,
+              "Node " + rid + " has the right (" + right + ") unlinked to itself. It links to " + right.parent);
+
+        totalDisconnected += right.disconnect(iForceDirty, iLevel + 1);
+        right = null;
+        disconnectedFromRight = true;
+      }
+    } else {
+      disconnectedFromLeft = true;
+    }
+
+    if (disconnectedFromParent && disconnectedFromLeft && disconnectedFromRight)
+      if ((!dataProvider.isEntryDirty() && !dataProvider.getIdentity().isTemporary() || iForceDirty)
+          && !pTree.isNodeEntryPoint(this)) {
+        totalDisconnected++;
+        pTree.removeNodeFromMemory(this);
+        clear();
+      }
+
+    return totalDisconnected;
+  }
+
+  protected void clear() {
+    // SPEED UP MEMORY CLAIM BY RESETTING INTERNAL FIELDS
+    pTree = null;
+    tree = null;
+    dataProvider.removeIdentityChangedListener(this);
+    dataProvider.clear();
+    dataProvider = null;
+  }
+
+  /**
+   * Clear links and current node only if it's not an entry point.
+   *
+   */
+  protected int disconnectLinked(final boolean iForce) {
+    return disconnect(iForce, 0);
+  }
+
+  @Override
+  protected void copyFrom(final OMVRBTreeEntry<K, V> iSource) {
+    if (dataProvider.copyFrom(((OMVRBTreeEntryPersistent<K, V>) iSource).dataProvider))
+      markDirty();
+  }
+
+  @Override
+  protected void insert(final int iIndex, final K iKey, final V iValue) {
+    K oldKey = iIndex == 0 ? dataProvider.getKeyAt(0) : null;
+    if (dataProvider.insertAt(iIndex, iKey, iValue))
+      markDirty();
+
+    if (iIndex == 0)
+      pTree.updateEntryPoint(oldKey, this);
+  }
+
+  @Override
+  protected void remove() {
+    final int index = tree.getPageIndex();
+    final K oldKey = index == 0 ? getKeyAt(0) : null;
+
+    if (dataProvider.removeAt(index))
+      markDirty();
+
+    tree.setPageIndex(index - 1);
+
+    if (index == 0)
+      pTree.updateEntryPoint(oldKey, this);
+  }
+
+  @Override
+  protected V getValueAt(final int iIndex) {
+    return dataProvider.getValueAt(iIndex);
+  }
+
+  @Override
+  protected OMVRBTreeEntry<K, V> getLeftInMemory() {
+    return left;
+  }
+
+  @Override
+  protected OMVRBTreeEntry<K, V> getParentInMemory() {
+    return parent;
+  }
+
+  @Override
+  protected OMVRBTreeEntry<K, V> getRightInMemory() {
+    return right;
+  }
+
+  private boolean canDisconnectFrom(OMVRBTreeEntryPersistent<K, V> entry) {
+    return dataProvider == null || !dataProvider.getIdentity().isNew() && !entry.dataProvider.getIdentity().isNew();
+  }
+
+  private int getMaxDepthInMemory(final int iCurrDepthLevel) {
+    int depth;
+
+    if (left != null)
+      // GET THE LEFT'S DEPTH LEVEL AS GOOD
+      depth = left.getMaxDepthInMemory(iCurrDepthLevel + 1);
+    else
+      // GET THE CURRENT DEPTH LEVEL AS GOOD
+      depth = iCurrDepthLevel;
+
+    if (right != null) {
+      int rightDepth = right.getMaxDepthInMemory(iCurrDepthLevel + 1);
+      if (rightDepth > depth)
+        depth = rightDepth;
+    }
+
+    return depth;
   }
 }

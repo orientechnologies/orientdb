@@ -24,8 +24,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
@@ -38,7 +39,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -46,6 +46,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
+import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
@@ -57,6 +58,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.orientechnologies.orient.test.database.base.OrientTest;
@@ -210,7 +212,7 @@ public class IndexTest extends ObjectDBBaseTest {
     database.getMetadata().getIndexManager().reload();
     Assert.assertNotNull(database.getMetadata().getIndexManager().getIndex("idx"));
 
-    final List<OClusterPosition> positions = getValidPositions(3);
+    final List<Long> positions = getValidPositions(3);
 
     database.command(new OCommandSQL("insert into index:IDX (key,rid) values (10,#3:" + positions.get(0) + ')')).execute();
     database.command(new OCommandSQL("insert into index:IDX (key,rid) values (20,#3:" + positions.get(1) + ')')).execute();
@@ -1680,8 +1682,82 @@ public class IndexTest extends ObjectDBBaseTest {
     Assert.assertTrue(!diskCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
   }
 
-  private List<OClusterPosition> getValidPositions(int clusterId) {
-    final List<OClusterPosition> positions = new ArrayList<OClusterPosition>();
+  public void testPreservingIdentityInIndexTx() {
+    OrientGraph graph = new OrientGraph((ODatabaseDocumentTx) database.getUnderlying(), true);
+    graph.setAutoScaleEdgeType(true);
+
+    OrientVertexType fieldClass = graph.getVertexType("PreservingIdentityInIndexTxChild");
+    if (fieldClass == null) {
+      fieldClass = graph.createVertexType("PreservingIdentityInIndexTxChild");
+      fieldClass.createProperty("name", OType.STRING);
+      fieldClass.createProperty("in_field", OType.LINK);
+      fieldClass.createIndex("nameParentIndex", OClass.INDEX_TYPE.NOTUNIQUE, "in_field", "name");
+    }
+
+    Vertex parent = graph.addVertex("class:PreservingIdentityInIndexTxParent");
+    Vertex child = graph.addVertex("class:PreservingIdentityInIndexTxChild");
+    parent.addEdge("preservingIdentityInIndexTxEdge", child);
+    child.setProperty("name", "pokus");
+
+    Vertex parent2 = graph.addVertex("class:PreservingIdentityInIndexTxParent");
+    Vertex child2 = graph.addVertex("class:PreservingIdentityInIndexTxChild");
+    parent2.addEdge("preservingIdentityInIndexTxEdge", child2);
+    child2.setProperty("name", "pokus2");
+    graph.commit();
+
+    {
+      fieldClass = graph.getVertexType("PreservingIdentityInIndexTxChild");
+      OIndex<?> index = fieldClass.getClassIndex("nameParentIndex");
+      OCompositeKey key = new OCompositeKey(parent.getId(), "pokus");
+
+      Set<ORecordId> h = (Set<ORecordId>) index.get(key);
+      for (ORecordId o : h) {
+        Assert.assertNotNull(graph.getVertex(o));
+      }
+    }
+
+    {
+      fieldClass = graph.getVertexType("PreservingIdentityInIndexTxChild");
+      OIndex<?> index = fieldClass.getClassIndex("nameParentIndex");
+      OCompositeKey key = new OCompositeKey(parent2.getId(), "pokus2");
+
+      Set<ORecordId> h = (Set<ORecordId>) index.get(key);
+      for (ORecordId o : h) {
+        Assert.assertNotNull(graph.getVertex(o));
+      }
+    }
+
+    parent.remove();
+    child.remove();
+
+    parent2.remove();
+    child2.remove();
+
+    graph.shutdown();
+  }
+
+  public void testEmptyNotUniqueIndex() {
+    OClass emptyNotUniqueIndexClazz = database.getMetadata().getSchema().createClass("EmptyNotUniqueIndexTest");
+    emptyNotUniqueIndexClazz.createProperty("prop", OType.STRING);
+
+    final OIndex notUniqueIndex = emptyNotUniqueIndexClazz.createIndex("EmptyNotUniqueIndexTestIndex", INDEX_TYPE.NOTUNIQUE_HASH_INDEX, "prop");
+    ODocument document = new ODocument("EmptyNotUniqueIndexTest");
+    document.field("prop", "keyOne");
+    document.save();
+
+    document = new ODocument("EmptyNotUniqueIndexTest");
+    document.field("prop", "keyTwo");
+    document.save();
+
+    Assert.assertFalse(notUniqueIndex.contains("RandomKeyOne"));
+    Assert.assertTrue(notUniqueIndex.contains("keyOne"));
+
+    Assert.assertFalse(notUniqueIndex.contains("RandomKeyTwo"));
+    Assert.assertTrue(notUniqueIndex.contains("keyTwo"));
+  }
+
+  private List<Long> getValidPositions(int clusterId) {
+    final List<Long> positions = new ArrayList<Long>();
 
     final ORecordIteratorCluster<?> iteratorCluster = database.getUnderlying()
         .browseCluster(database.getClusterNameById(clusterId));

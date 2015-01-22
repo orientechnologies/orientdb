@@ -1,14 +1,10 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.testng.Assert;
 import org.testng.annotations.*;
+import org.testng.annotations.Optional;
 
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -2620,4 +2616,154 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
     doc.delete();
   }
 
+  @Test
+  public void testCompositeSearchIn1() {
+    long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
+    long oldcompositeIndexUsed = profiler.getCounter("db.demo.query.compositeIndexUsed");
+    long oldcompositeIndexUsed3 = profiler.getCounter("db.demo.query.compositeIndexUsed.3");
+    long oldcompositeIndexUsed33 = profiler.getCounter("db.demo.query.compositeIndexUsed.3.3");
+
+    if (oldIndexUsage == -1) {
+      oldIndexUsage = 0;
+    }
+    if (oldcompositeIndexUsed == -1) {
+      oldcompositeIndexUsed = 0;
+    }
+    if (oldcompositeIndexUsed3 == -1) {
+      oldcompositeIndexUsed3 = 0;
+    }
+    if (oldcompositeIndexUsed33 == -1) {
+      oldcompositeIndexUsed33 = 0;
+    }
+
+    final List<ODocument> result = database.command(
+        new OSQLSynchQuery<ODocument>(
+            "select * from sqlSelectHashIndexReuseTestClass where prop4 = 1 and prop1 = 1 and prop3 in [13, 113]")).execute();
+
+    Assert.assertEquals(result.size(), 1);
+
+    final ODocument document = result.get(0);
+    Assert.assertEquals(document.<Integer> field("prop4").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop1").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop3").intValue(), 13);
+
+    Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
+    Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed"), oldcompositeIndexUsed + 1);
+    Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed.3"), oldcompositeIndexUsed3 + 1);
+    Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed.3.3"), oldcompositeIndexUsed33 + 1);
+  }
+
+  @Test
+  public void testCompositeSearchIn2() {
+    long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
+    long oldcompositeIndexUsed = profiler.getCounter("db.demo.query.compositeIndexUsed");
+    long oldcompositeIndexUsed3 = profiler.getCounter("db.demo.query.compositeIndexUsed.3");
+    long oldcompositeIndexUsed33 = profiler.getCounter("db.demo.query.compositeIndexUsed.3.3");
+
+    if (oldIndexUsage == -1) {
+      oldIndexUsage = 0;
+    }
+    if (oldcompositeIndexUsed == -1) {
+      oldcompositeIndexUsed = 0;
+    }
+    if (oldcompositeIndexUsed3 == -1) {
+      oldcompositeIndexUsed3 = 0;
+    }
+    if (oldcompositeIndexUsed33 == -1) {
+      oldcompositeIndexUsed33 = 0;
+    }
+
+    final List<ODocument> result = database.command(
+        new OSQLSynchQuery<ODocument>(
+            "select * from sqlSelectHashIndexReuseTestClass where prop4 = 1 and prop1 in [1, 2] and prop3 = 13")).execute();
+
+    Assert.assertEquals(result.size(), 1);
+
+    final ODocument document = result.get(0);
+    Assert.assertEquals(document.<Integer> field("prop4").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop1").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop3").intValue(), 13);
+
+    // TODO improve query execution plan so that also next statements succeed (in 2.0 it's not guaranteed)
+    // Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
+    // Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed"), oldcompositeIndexUsed + 1);
+    // Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed.3"), oldcompositeIndexUsed3 + 1);
+    // Assert.assertTrue(profiler.getCounter("db.demo.query.compositeIndexUsed.3.3") < oldcompositeIndexUsed33 + 1);
+  }
+
+  @Test
+  public void testCompositeSearchIn3() {
+    long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
+    long oldcompositeIndexUsed = profiler.getCounter("db.demo.query.compositeIndexUsed");
+    long oldcompositeIndexUsed3 = profiler.getCounter("db.demo.query.compositeIndexUsed.3");
+    long oldcompositeIndexUsed33 = profiler.getCounter("db.demo.query.compositeIndexUsed.3.3");
+
+    if (oldIndexUsage == -1) {
+      oldIndexUsage = 0;
+    }
+    if (oldcompositeIndexUsed == -1) {
+      oldcompositeIndexUsed = 0;
+    }
+    if (oldcompositeIndexUsed3 == -1) {
+      oldcompositeIndexUsed3 = 0;
+    }
+    if (oldcompositeIndexUsed33 == -1) {
+      oldcompositeIndexUsed33 = 0;
+    }
+
+    final List<ODocument> result = database.command(
+        new OSQLSynchQuery<ODocument>(
+            "select * from sqlSelectHashIndexReuseTestClass where prop4 = 1 and prop1 in [1, 2] and prop3 in [13, 15]")).execute();
+
+    Assert.assertEquals(result.size(), 2);
+
+    final ODocument document = result.get(0);
+    Assert.assertEquals(document.<Integer> field("prop4").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop1").intValue(), 1);
+    Assert.assertTrue(document.<Integer> field("prop3").equals(13) || document.<Integer> field("prop3").equals(15));
+
+    // TODO improve query execution plan so that also next statements succeed (in 2.0 it's not guaranteed)
+    // Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
+    // Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed"), oldcompositeIndexUsed + 1);
+    // Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed.3"), oldcompositeIndexUsed3 + 1);
+    // Assert.assertTrue(profiler.getCounter("db.demo.query.compositeIndexUsed.3.3") < oldcompositeIndexUsed33 + 1);
+  }
+
+  @Test
+  public void testCompositeSearchIn4() {
+    long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
+    long oldcompositeIndexUsed = profiler.getCounter("db.demo.query.compositeIndexUsed");
+    long oldcompositeIndexUsed3 = profiler.getCounter("db.demo.query.compositeIndexUsed.3");
+    long oldcompositeIndexUsed33 = profiler.getCounter("db.demo.query.compositeIndexUsed.3.3");
+
+    if (oldIndexUsage == -1) {
+      oldIndexUsage = 0;
+    }
+    if (oldcompositeIndexUsed == -1) {
+      oldcompositeIndexUsed = 0;
+    }
+    if (oldcompositeIndexUsed3 == -1) {
+      oldcompositeIndexUsed3 = 0;
+    }
+    if (oldcompositeIndexUsed33 == -1) {
+      oldcompositeIndexUsed33 = 0;
+    }
+
+    final List<ODocument> result = database.command(
+        new OSQLSynchQuery<ODocument>(
+            "select * from sqlSelectHashIndexReuseTestClass where prop4 in [1, 2] and prop1 = 1 and prop3 = 13")).execute();
+
+    Assert.assertEquals(result.size(), 1);
+
+    final ODocument document = result.get(0);
+    Assert.assertEquals(document.<Integer> field("prop4").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop1").intValue(), 1);
+    Assert.assertEquals(document.<Integer> field("prop3").intValue(), 13);
+
+    // TODO improve query execution plan so that also next statements succeed (in 2.0 it's not guaranteed)
+    // Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage + 1);
+    // Assert.assertEquals(profiler.getCounter("db.demo.query.compositeIndexUsed"), oldcompositeIndexUsed + 1);
+    // Assert.assertTrue(profiler.getCounter("db.demo.query.compositeIndexUsed.3") < oldcompositeIndexUsed3 + 1);
+    // Assert.assertTrue(profiler.getCounter("db.demo.query.compositeIndexUsed.3.3") < oldcompositeIndexUsed33 + 1);
+  }
 }

@@ -37,8 +37,9 @@ public class OSQLMethodRemoveAll extends OAbstractSQLMethod {
   }
 
   @Override
-  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final OCommandContext iContext, Object ioResult, Object[] iParams) {
-    if (iParams != null && iParams.length>0 && iParams[0] != null) {
+  public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final OCommandContext iContext, Object ioResult,
+      Object[] iParams) {
+    if (iParams != null && iParams.length > 0 && iParams[0] != null) {
       iParams = OMultiValue.array(iParams, Object.class, new OCallable<Object, Object>() {
 
         @Override
@@ -49,10 +50,9 @@ public class OSQLMethodRemoveAll extends OAbstractSQLMethod {
           return iArgument;
         }
       });
-    }
-
-    for (Object o : iParams) {
-      ioResult = OMultiValue.remove(ioResult, o, true);
+      for (Object o : iParams) {
+        ioResult = OMultiValue.remove(ioResult, o, true);
+      }
     }
 
     return ioResult;

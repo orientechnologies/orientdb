@@ -34,7 +34,6 @@ public class EdgeBug {
   }
 
   private OServer setupDatabase() throws Exception {
-    OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(true);
     OServer ret = OServerMain.create();
     ret.startup("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
         + "<orient-server>"

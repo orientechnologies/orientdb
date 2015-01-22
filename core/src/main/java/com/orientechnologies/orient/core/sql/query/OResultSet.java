@@ -1,41 +1,35 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.sql.query;
 
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 /**
  * ResultSet class that implements List interface for retro compatibility.
- * 
+ *
  * @author Luca Garulli
- * 
+ *
  * @param <T>
  * @see OSQLAsynchQuery
  */
@@ -117,11 +111,12 @@ public class OResultSet<T> implements List<T>, Externalizable {
           waitForNewItemOrCompleted();
         }
 
-        if (index > size())
+        if (index > size() || size() == 0)
           throw new NoSuchElementException("Error on browsing at element " + index + " while the resultset contains only " + size()
               + " items");
 
         return underlying.get(index++);
+
       }
 
       @Override
@@ -137,11 +132,11 @@ public class OResultSet<T> implements List<T>, Externalizable {
   }
 
   @Override
-  public <T1> T1[] toArray(T1[] a) {
+  public <T1> T1[] toArray(final T1[] a) {
     return underlying.toArray(a);
   }
 
-  public boolean add(T t) {
+  public boolean add(final T t) {
     if (limit > -1 && underlying.size() >= limit)
       return false;
 
@@ -151,30 +146,30 @@ public class OResultSet<T> implements List<T>, Externalizable {
   }
 
   @Override
-  public boolean remove(Object o) {
+  public boolean remove(final Object o) {
     throw new UnsupportedOperationException("remove");
   }
 
   @Override
-  public boolean containsAll(Collection<?> c) {
+  public boolean containsAll(final Collection<?> c) {
     throw new UnsupportedOperationException("remove");
   }
 
-  public boolean addAll(Collection<? extends T> c) {
+  public boolean addAll(final Collection<? extends T> c) {
     return underlying.addAll(c);
   }
 
-  public boolean addAll(int index, Collection<? extends T> c) {
+  public boolean addAll(final int index, final Collection<? extends T> c) {
     return underlying.addAll(index, c);
   }
 
   @Override
-  public boolean removeAll(Collection<?> c) {
+  public boolean removeAll(final Collection<?> c) {
     throw new UnsupportedOperationException("remove");
   }
 
   @Override
-  public boolean retainAll(Collection<?> c) {
+  public boolean retainAll(final Collection<?> c) {
     throw new UnsupportedOperationException("remove");
   }
 
@@ -184,7 +179,7 @@ public class OResultSet<T> implements List<T>, Externalizable {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(final Object o) {
     return underlying.equals(o);
   }
 
@@ -194,16 +189,16 @@ public class OResultSet<T> implements List<T>, Externalizable {
   }
 
   @Override
-  public T get(int index) {
+  public T get(final int index) {
     return underlying.get(index);
   }
 
-  public void add(int index, T element) {
+  public void add(final int index, T element) {
     underlying.add(index, element);
   }
 
   @Override
-  public T remove(int index) {
+  public T remove(final int index) {
     throw new UnsupportedOperationException("remove");
   }
 
@@ -275,4 +270,11 @@ public class OResultSet<T> implements List<T>, Externalizable {
       waitForNextItem.notifyAll();
     }
   }
+
+  public OResultSet<T> copy() {
+    OResultSet<T> newValue = new OResultSet<T>();
+    newValue.underlying.addAll(underlying);
+    return newValue;
+  }
+
 }

@@ -16,9 +16,7 @@ import org.testng.annotations.Test;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -31,6 +29,7 @@ public class ODocumentSchemafullSerializationTest {
 
   private static final String       CITY           = "city";
   private static final String       NUMBER         = "number";
+  private static final String       INT_FIELD      = NUMBER;
   private static final String       NAME           = "name";
   private static final String       MAP_BYTES      = "bytesMap";
   private static final String       MAP_DOUBLE     = "doubleMap";
@@ -52,7 +51,6 @@ public class ODocumentSchemafullSerializationTest {
   private static final String       LIST_STRINGS   = "listStrings";
   private static final String       SHORT_FIELD    = "shortNumber";
   private static final String       LONG_FIELD     = "longNumber";
-  private static final String       INT_FIELD      = NUMBER;
   private static final String       STRING_FIELD   = "stringField";
   private static final String       FLOAT_NUMBER   = "floatNumber";
   private static final String       DOUBLE_NUMBER  = "doubleNumber";
@@ -149,7 +147,7 @@ public class ODocumentSchemafullSerializationTest {
     document.field(BYTE_FIELD, (byte) 'C');
     document.field(BOOLEAN_FIELD, true);
     document.field(DATE_FIELD, new Date());
-    document.field(RECORDID_FIELD, new ORecordId(10, new OClusterPositionLong(10)));
+    document.field(RECORDID_FIELD, new ORecordId(10, 0));
 
     byte[] res = serializer.toStream(document, false);
     ODocument extr = (ODocument) serializer.fromStream(res, new ODocument(), new String[] {});

@@ -16,24 +16,25 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentHelper;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
-
 import org.testng.Assert;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Test(groups = "sql-select")
 public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
@@ -55,10 +56,10 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
 
     for (ODocument d : result) {
       String[] colNames = d.fieldNames();
-      Assert.assertEquals(colNames.length, 3);
-      Assert.assertEquals(colNames[0], "nick");
-      Assert.assertEquals(colNames[1], "followings");
-      Assert.assertEquals(colNames[2], "followers");
+      Assert.assertEquals(colNames.length, 3, "document: " + d);
+      Assert.assertEquals(colNames[0], "nick", "document: " + d);
+      Assert.assertEquals(colNames[1], "followings", "document: " + d);
+      Assert.assertEquals(colNames[2], "followers", "document: " + d);
 
       Assert.assertNull(d.getClassName());
       Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
@@ -362,4 +363,92 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
       Assert.assertTrue(d.field("bEE").equals("bEE"));
     }
   }
+
+  @Test()
+  public void testSelectExcludeFunction() throws IOException {
+    try {
+      database.command(new OCommandSQL("create class A extends V")).execute();
+      database.command(new OCommandSQL("create class B extends E")).execute();
+      OIdentifiable id = database.command(new OCommandSQL("insert into A (a,b) values ('a','b')")).execute();
+      OIdentifiable id2 = database.command(new OCommandSQL("insert into A (a,b) values ('a','b')")).execute();
+      OIdentifiable id3 = database.command(new OCommandSQL("insert into A (a,b) values ('a','b')")).execute();
+      OIdentifiable id4 = database.command(new OCommandSQL("insert into A (a,b) values ('a','b')")).execute();
+      database.command(new OCommandSQL("create edge B from " + id.getIdentity() + " to " + id2.getIdentity())).execute();
+      database.command(new OCommandSQL("create edge B from " + id.getIdentity() + " to " + id3.getIdentity())).execute();
+      database.command(new OCommandSQL("create edge B from " + id.getIdentity() + " to " + id4.getIdentity())).execute();
+      database.command(new OCommandSQL("create edge B from " + id4.getIdentity() + " to " + id.getIdentity())).execute();
+
+      List<ODocument> res = database.query(new OSQLSynchQuery<Object>("select a,b,in_B.out.exclude('out_B') from "
+          + id2.getIdentity() + " fetchplan in_B.out:1"));
+
+      Assert.assertNotNull(res.get(0).field("a"));
+      Assert.assertNotNull(res.get(0).field("b"));
+      Assert.assertNull((((List<ODocument>) res.get(0).field("in_B")).get(0).field("out_B")));
+
+      res = database.query(new OSQLSynchQuery<Object>("SELECT out.exclude('in_B') FROM ( SELECT EXPAND(in_B) FROM "
+          + id2.getIdentity() + " ) FETCHPLAN out:0 "));
+
+      Assert.assertNotNull(res.get(0).field("out"));
+      Assert.assertNotNull(((ODocument) res.get(0).field("out")).field("a"));
+      Assert.assertNull(((ODocument) res.get(0).field("out")).field("in_B"));
+    } finally {
+      database.command(new OCommandSQL("drop class A unsafe ")).execute();
+      database.command(new OCommandSQL("drop class B unsafe ")).execute();
+    }
+  }
+
+  @Test
+  public void testSimpleExpandExclude() {
+    try {
+      database.command(new OCommandSQL("create class A extends V")).execute();
+      database.command(new OCommandSQL("create class B extends E")).execute();
+      database.command(new OCommandSQL("create class C extends E")).execute();
+      OIdentifiable id = database.command(new OCommandSQL("insert into A (a,b) values ('a1','b1')")).execute();
+      OIdentifiable id2 = database.command(new OCommandSQL("insert into A (a,b) values ('a2','b2')")).execute();
+      OIdentifiable id3 = database.command(new OCommandSQL("insert into A (a,b) values ('a3','b3')")).execute();
+      database.command(new OCommandSQL("create edge B from " + id.getIdentity() + " to " + id2.getIdentity())).execute();
+      database.command(new OCommandSQL("create edge C from " + id2.getIdentity() + " to " + id3.getIdentity())).execute();
+
+      List<ODocument> res = database.query(new OSQLSynchQuery<Object>("select out.exclude('in_B') from (select expand(in_C) from "
+          + id3.getIdentity() + " )"));
+      Assert.assertEquals(res.size(), 1);
+      ODocument ele = res.get(0);
+      Assert.assertNotNull(ele.field("out"));
+      Assert.assertEquals(((ODocument) ele.field("out")).field("a"), "a2");
+      Assert.assertNull(((ODocument) ele.field("out")).field("in_B"));
+
+    } finally {
+      database.command(new OCommandSQL("drop class A unsafe ")).execute();
+      database.command(new OCommandSQL("drop class B unsafe ")).execute();
+      database.command(new OCommandSQL("drop class C unsafe ")).execute();
+    }
+  }
+
+  @Test
+  public void testTempRIDsAreNotRecycledInResultSet() {
+    final List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>(
+        "select name, $l as l from OUser let $l = (select name from OuSer)"));
+
+    Assert.assertNotNull(resultset);
+
+    Set<ORID> rids = new HashSet<ORID>();
+    for (ODocument d : resultset) {
+      final ORID rid = d.getIdentity();
+      Assert.assertFalse(rids.contains(rid));
+
+      rids.add(rid);
+
+      final List<ODocument> embeddedList = d.field("l");
+      Assert.assertNotNull(embeddedList);
+      Assert.assertFalse(embeddedList.isEmpty());
+
+      for (ODocument embedded : embeddedList) {
+        final ORID embeddedRid = embedded.getIdentity();
+
+        Assert.assertFalse(rids.contains(embeddedRid));
+        rids.add(rid);
+      }
+    }
+  }
+
 }

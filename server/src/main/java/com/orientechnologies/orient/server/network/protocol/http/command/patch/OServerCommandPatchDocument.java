@@ -85,7 +85,7 @@ public class OServerCommandPatchDocument extends
        iResponse.send(com.orientechnologies.orient.server.network.protocol.http.OHttpUtils.STATUS_OK_CODE,
            com.orientechnologies.orient.server.network.protocol.http.OHttpUtils.STATUS_OK_DESCRIPTION,
            com.orientechnologies.orient.server.network.protocol.http.OHttpUtils.CONTENT_TEXT_PLAIN, currentDocument.toJSON(),
-           com.orientechnologies.orient.server.network.protocol.http.OHttpUtils.HEADER_ETAG + doc.getVersion(), true);
+           com.orientechnologies.orient.server.network.protocol.http.OHttpUtils.HEADER_ETAG + doc.getVersion());
 
      } finally {
        if (db != null)

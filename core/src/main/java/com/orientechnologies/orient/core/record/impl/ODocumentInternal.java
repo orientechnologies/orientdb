@@ -20,7 +20,14 @@
 
 package com.orientechnologies.orient.core.record.impl;
 
+import java.util.Collection;
+import java.util.Set;
+import java.util.Map.Entry;
+
 import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 
 public class ODocumentInternal {
 
@@ -34,6 +41,30 @@ public class ODocumentInternal {
 
   public static void removeOwner(ODocument oDocument, ORecordElement iOwner) {
     oDocument.removeOwner(iOwner);
+  }
+
+  public static void rawField(final ODocument oDocument, final String iFieldName, final Object iFieldValue, final OType iFieldType) {
+    oDocument.rawField(iFieldName, iFieldValue, iFieldType);
+  }
+
+  public static boolean rawContainsField(final ODocument oDocument, final String iFiledName) {
+    return oDocument.rawContainsField(iFiledName);
+  }
+
+  public static OClass getImmutableSchemaClass(final ODocument oDocument) {
+    return oDocument.getImmutableSchemaClass();
+  }
+
+  public static OGlobalProperty getGlobalPropertyById(final ODocument oDocument, final int id) {
+    return oDocument.getGlobalPropertyById(id);
+  }
+
+  public static void fillClassNameIfNeeded(final ODocument oDocument, String className) {
+    oDocument.fillClassIfNeed(className);
+  }
+
+  public static Set<Entry<String, ODocumentEntry>> rawEntries(final ODocument document) {
+    return document.getRawEntries();
   }
 
 }

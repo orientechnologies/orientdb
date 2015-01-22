@@ -59,7 +59,6 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
     stream[startPosition] = binarySerializer.getId();
     startPosition += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
     binarySerializer.serialize(key, stream, startPosition);
-    startPosition += binarySerializer.getObjectSize(key);
   }
 
   public T deserialize(byte[] stream, int startPosition) {

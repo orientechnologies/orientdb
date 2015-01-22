@@ -31,14 +31,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import javassist.util.proxy.Proxy;
 import javassist.util.proxy.ProxyObject;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
-import com.orientechnologies.orient.core.db.ODatabaseComplexInternal;
-import com.orientechnologies.orient.core.db.ODatabaseSchemaAware;
-import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -63,8 +61,8 @@ import com.orientechnologies.orient.object.enhancement.OObjectProxyMethodHandler
 import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper;
 
 @SuppressWarnings("unchecked")
-public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseWrapperAbstract<ODatabaseDocumentTx> implements
-    ODatabaseSchemaAware<T>, ODatabaseComplexInternal<T> {
+public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseWrapperAbstract<ODatabaseDocumentTx, T> implements
+    ODatabaseSchemaAware<T>, ODatabaseInternal<T> {
   protected IdentityHashMap<Object, ODocument> objects2Records = new IdentityHashMap<Object, ODocument>();
   protected IdentityHashMap<ODocument, T>      records2Objects = new IdentityHashMap<ODocument, T>();
   protected HashMap<ORID, ODocument>           rid2Records     = new HashMap<ORID, ODocument>();
@@ -91,24 +89,24 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     return underlying.getTransaction();
   }
 
-  public ODatabaseComplex<T> begin() {
-    return (ODatabaseComplex<T>) underlying.begin();
+  public ODatabase<T> begin() {
+    return (ODatabase<T>) underlying.begin();
   }
 
-  public ODatabaseComplex<T> begin(final TXTYPE iType) {
-    return (ODatabaseComplex<T>) underlying.begin(iType);
+  public ODatabase<T> begin(final TXTYPE iType) {
+    return (ODatabase<T>) underlying.begin(iType);
   }
 
-  public ODatabaseComplex<T> begin(final OTransaction iTx) {
-    return (ODatabaseComplex<T>) underlying.begin(iTx);
+  public ODatabase<T> begin(final OTransaction iTx) {
+    return (ODatabase<T>) underlying.begin(iTx);
   }
 
-  public ODatabaseComplex<T> commit() {
+  public ODatabase<T> commit() {
     return commit(false);
   }
 
   @Override
-  public ODatabaseComplex<T> commit(boolean force) throws OTransactionException {
+  public ODatabase<T> commit(boolean force) throws OTransactionException {
     underlying.commit(force);
 
     if (!underlying.getTransaction().isActive())
@@ -117,12 +115,12 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     return this;
   }
 
-  public ODatabaseComplex<T> rollback() {
+  public ODatabase<T> rollback() {
     return rollback(false);
   }
 
   @Override
-  public ODatabaseComplex<T> rollback(boolean force) throws OTransactionException {
+  public ODatabase<T> rollback(boolean force) throws OTransactionException {
     underlying.rollback(force);
 
     if (!underlying.getTransaction().isActive()) {
@@ -216,11 +214,11 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     return record.getIdentity();
   }
 
-  public OUser getUser() {
+  public OSecurityUser getUser() {
     return underlying.getUser();
   }
 
-  public void setUser(OUser user) {
+  public void setUser(OSecurityUser user) {
     underlying.setUser(user);
   }
 
@@ -235,62 +233,63 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     return (RET) new OCommandSQLPojoWrapper(this, underlying.command(iCommand));
   }
 
-  public <RET extends List<?>> RET query(final OQuery<?> iCommand, final Object... iArgs) {
-    checkOpeness();
+	@Override
+	public <RET extends List<?>> RET query(OQuery<?> iCommand, Object... iArgs) {
+		checkOpeness();
 
-    convertParameters(iArgs);
+		convertParameters(iArgs);
 
-    final List<ODocument> result = underlying.query(iCommand, iArgs);
+		final List<ODocument> result = underlying.query(iCommand, iArgs);
 
-    if (result == null)
-      return null;
+		if (result == null)
+			return null;
 
-    final List<Object> resultPojo = new ArrayList<Object>();
-    Object obj;
-    for (OIdentifiable doc : result) {
-      if (doc instanceof ODocument) {
-        // GET THE ASSOCIATED DOCUMENT
-        if (((ODocument) doc).getClassName() == null)
-          obj = doc;
-        else
-          obj = getUserObjectByRecord(((ODocument) doc), iCommand.getFetchPlan(), true);
+		final List<Object> resultPojo = new ArrayList<Object>();
+		Object obj;
+		for (OIdentifiable doc : result) {
+			if (doc instanceof ODocument) {
+				// GET THE ASSOCIATED DOCUMENT
+				if (((ODocument) doc).getClassName() == null)
+					obj = doc;
+				else
+					obj = getUserObjectByRecord(((ODocument) doc), iCommand.getFetchPlan(), true);
 
-        resultPojo.add(obj);
-      } else {
-        resultPojo.add(doc);
-      }
+				resultPojo.add(obj);
+			} else {
+				resultPojo.add(doc);
+			}
 
-    }
+		}
 
-    return (RET) resultPojo;
-  }
+		return (RET) resultPojo;
+	}
 
-  public ODatabaseComplex<T> delete(final ORecord iRecord) {
+	public ODatabase<T> delete(final ORecord iRecord) {
     underlying.delete(iRecord);
     return this;
   }
 
-  public ODatabaseComplex<T> delete(final ORID iRID) {
+  public ODatabase<T> delete(final ORID iRID) {
     underlying.delete(iRID);
     return this;
   }
 
-  public ODatabaseComplex<T> delete(final ORID iRID, final ORecordVersion iVersion) {
+  public ODatabase<T> delete(final ORID iRID, final ORecordVersion iVersion) {
     underlying.delete(iRID, iVersion);
     return this;
   }
 
-  public ODatabaseComplex<T> cleanOutRecord(final ORID iRID, final ORecordVersion iVersion) {
+  public ODatabase<T> cleanOutRecord(final ORID iRID, final ORecordVersion iVersion) {
     underlying.cleanOutRecord(iRID, iVersion);
     return this;
   }
 
-  public <DBTYPE extends ODatabaseComplex<?>> DBTYPE registerHook(final ORecordHook iHookImpl) {
+  public <DBTYPE extends ODatabase<?>> DBTYPE registerHook(final ORecordHook iHookImpl) {
     underlying.registerHook(iHookImpl);
     return (DBTYPE) this;
   }
 
-  public <DBTYPE extends ODatabaseComplex<?>> DBTYPE registerHook(final ORecordHook iHookImpl, ORecordHook.HOOK_POSITION iPosition) {
+  public <DBTYPE extends ODatabase<?>> DBTYPE registerHook(final ORecordHook iHookImpl, ORecordHook.HOOK_POSITION iPosition) {
     underlying.registerHook(iHookImpl, iPosition);
     return (DBTYPE) this;
   }
@@ -303,7 +302,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     return underlying.getHooks();
   }
 
-  public <DBTYPE extends ODatabaseComplex<?>> DBTYPE unregisterHook(final ORecordHook iHookImpl) {
+  public <DBTYPE extends ODatabase<?>> DBTYPE unregisterHook(final ORecordHook iHookImpl) {
     underlying.unregisterHook(iHookImpl);
     return (DBTYPE) this;
   }
@@ -312,7 +311,7 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     return underlying.isMVCC();
   }
 
-  public <DBTYPE extends ODatabaseComplex<?>> DBTYPE setMVCC(final boolean iMvcc) {
+  public <DBTYPE extends ODatabase<?>> DBTYPE setMVCC(final boolean iMvcc) {
     underlying.setMVCC(iMvcc);
     return (DBTYPE) this;
   }

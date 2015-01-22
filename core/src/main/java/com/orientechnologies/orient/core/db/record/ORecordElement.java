@@ -64,13 +64,5 @@ public interface ORecordElement {
    */
   public ORecordElement getOwner();
 
-  /**
-   * Internal only.
-   */
-  public void onBeforeIdentityChanged(ORecord iRecord);
 
-  /**
-   * Internal only.
-   */
-  public void onAfterIdentityChanged(ORecord iRecord);
 }

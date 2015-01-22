@@ -1,25 +1,26 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 import java.util.List;
@@ -32,6 +33,15 @@ import java.util.Set;
  * 
  */
 public interface OSecurity {
+  public static final String RESTRICTED_CLASSNAME   = "ORestricted";
+  public static final String IDENTITY_CLASSNAME     = "OIdentity";
+  public static final String ALLOW_ALL_FIELD        = "_allow";
+  public static final String ALLOW_READ_FIELD       = "_allowRead";
+  public static final String ALLOW_UPDATE_FIELD     = "_allowUpdate";
+  public static final String ALLOW_DELETE_FIELD     = "_allowDelete";
+  public static final String ONCREATE_IDENTITY_TYPE = "onCreate.identityType";
+  public static final String ONCREATE_FIELD         = "onCreate.fields";
+
   public OUser create();
 
   public void load();
@@ -52,7 +62,11 @@ public interface OSecurity {
 
   public OUser authenticate(String iUsername, String iUserPassword);
 
+  public OUser authenticate(final OToken authToken);
+
   public OUser getUser(String iUserName);
+
+  public OUser getUser(final ORID iUserId);
 
   public OUser createUser(String iUserName, String iUserPassword, String... iRoles);
 
@@ -74,11 +88,13 @@ public interface OSecurity {
 
   public List<ODocument> getAllRoles();
 
-  public OUser repair();
-
   public void close(boolean onDelete);
 
   public void createClassTrigger();
 
   public OSecurity getUnderlying();
+
+  public long getVersion();
+
+  public void incrementVersion();
 }

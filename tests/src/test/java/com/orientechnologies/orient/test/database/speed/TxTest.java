@@ -17,22 +17,22 @@ package com.orientechnologies.orient.test.database.speed;
 
 import java.io.UnsupportedEncodingException;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import org.testng.annotations.Test;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.tx.OTransaction.TXTYPE;
 import com.orientechnologies.orient.test.database.base.OrientMonoThreadTest;
 
 @Test(enabled = false)
 public class TxTest extends OrientMonoThreadTest {
-	private ODatabaseFlat	database;
+	private ODatabaseDocumentTx database;
 	private ORecordFlat					record;
 
 	public TxTest() throws InstantiationException, IllegalAccessException {
 		super(10);
-		database = new ODatabaseFlat(System.getProperty("url")).open("admin", "admin");
-		record = database.newInstance();
+		database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
+		record = new ORecordFlat();
 
 		database.begin(TXTYPE.OPTIMISTIC);
 	}

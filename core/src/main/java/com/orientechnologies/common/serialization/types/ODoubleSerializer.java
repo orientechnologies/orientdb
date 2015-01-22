@@ -29,7 +29,7 @@ import java.nio.ByteOrder;
 /**
  * Serializer for {@link Double}
  *
- * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
+ * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
  * @since 17.01.12
  */
 public class ODoubleSerializer implements OBinarySerializer<Double> {

@@ -1,27 +1,27 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.record;
 
 import java.io.Serializable;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
@@ -34,7 +34,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  * Generic record representation. The object can be reused across multiple calls to the database by using the {@link #reset()}
  * method.
  */
-public interface ORecord extends ORecordElement, OIdentifiable, Serializable ,OSerializableStream {
+public interface ORecord extends ORecordElement, OIdentifiable, Serializable, OSerializableStream {
   /**
    * Removes all the dependencies with other records. All the relationships remain in form of RecordID. If some links contain dirty
    * records, the detach cannot be complete and this method returns false.
@@ -102,7 +102,7 @@ public interface ORecord extends ORecordElement, OIdentifiable, Serializable ,OS
    * 
    * @return
    */
-  public ODatabaseRecord getDatabase();
+  public ODatabaseDocument getDatabase();
 
   /**
    * Checks if the record is dirty, namely if it was changed in memory.
@@ -206,21 +206,4 @@ public interface ORecord extends ORecordElement, OIdentifiable, Serializable ,OS
    */
   public int getSize();
 
-  /**
-   * Adds identity change listener, which is called when record identity is changed. Identity is changed if new record is saved or
-   * if transaction is committed and new record created inside of transaction.
-   * 
-   * @param identityChangeListener
-   *          Listener instance.
-   */
-  public void addIdentityChangeListener(OIdentityChangeListener identityChangeListener);
-
-  /**
-   * Removes identity change listener, which is called when record identity is changed. Identity is changed if new record is saved
-   * or if transaction is committed and new record created inside of transaction.
-   * 
-   * @param identityChangeListener
-   *          Listener instance.
-   */
-  public void removeIdentityChangeListener(OIdentityChangeListener identityChangeListener);
 }

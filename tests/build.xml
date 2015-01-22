@@ -60,7 +60,7 @@
 
 
     <target name="test-embedded" depends="test-init">
-        <echo>REMOVE FIlES OF PREVIOUS INSTANCE OF TEST DATABASE</echo>
+        <echo>REMOVE FILES OF PREVIOUS INSTANCE OF TEST DATABASE</echo>
         <delete failonerror="false">
             <fileset dir="${test.db.path}" includes="**/*"/>
         </delete>
@@ -78,6 +78,7 @@
             <jvmarg value="-DORIENTDB_NODE_NAME="/>
             <jvmarg value="-Dstorage.lockTimeout=60000"/>
             <jvmarg value="-Dstorage.makeFullCheckpointAfterCreate=false"/>
+            <jvmarg value="-Dstorage.makeFullCheckpointAfterOpen=false"/>
             <jvmarg value="-Dstorage.makeFullCheckpointAfterClusterCreate=false"/>
             <jvmarg value="-Dstorage.wal.syncOnPageFlush=false"/>
             <jvmarg value="-Dstorage.configuration.syncOnUpdate=false"/>
@@ -120,11 +121,11 @@
 		<condition property="serializer" value="-Ddb.document.serializer=${db.document.serializer}" else="-Dnone=none">
 				<isset property="db.document.serializer" />
 		</condition>
-		
+
     	<condition property="spareSerailizer" value="-Ddb.document.serializer=ORecordSerializerBinary" else="-Dnone=none">
 			<isset property="spareSerialization" />
 		</condition>
-    	
+
         <echo>STARTING REMOTE ORIENTDB SERVER INSTANCE...</echo>
         <exec dir="${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
             <env key="JAVA_OPTS"

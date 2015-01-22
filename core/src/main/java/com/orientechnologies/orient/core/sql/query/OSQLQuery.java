@@ -19,23 +19,17 @@
  */
 package com.orientechnologies.orient.core.sql.query;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.query.OQueryAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -67,12 +61,18 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
    */
   @SuppressWarnings("unchecked")
   public List<T> run(final Object... iArgs) {
-    final ODatabaseRecordInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (database == null)
       throw new OQueryParsingException("No database configured");
 
-    setParameters(iArgs);
-    return (List<T>) database.getStorage().command(this);
+    ((OMetadataInternal) database.getMetadata()).makeThreadLocalSchemaSnapshot();
+    try {
+      setParameters(iArgs);
+      return (List<T>) database.getStorage().command(this);
+
+    } finally {
+      ((OMetadataInternal) database.getMetadata()).clearThreadLocalSchemaSnapshot();
+    }
   }
 
   /**
@@ -123,45 +123,6 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
     return buffer;
   }
 
-  @SuppressWarnings("unchecked")
-  private Map<Object, Object> convertToRIDsIfPossible(final Map<Object, Object> params) {
-    final Map<Object, Object> newParams = new HashMap<Object, Object>(params.size());
-
-    for (Entry<Object, Object> entry : params.entrySet()) {
-      final Object value = entry.getValue();
-
-      if (value instanceof Set<?> && ((Set<?>) value).iterator().next() instanceof ORecord) {
-        // CONVERT RECORDS AS RIDS
-        final Set<ORID> newSet = new HashSet<ORID>();
-        for (ORecord rec : (Set<ORecord>) value) {
-          newSet.add(rec.getIdentity());
-        }
-        newParams.put(entry.getKey(), newSet);
-
-      } else if (value instanceof List<?> && ((List<?>) value).get(0) instanceof ORecord) {
-        // CONVERT RECORDS AS RIDS
-        final List<ORID> newList = new ArrayList<ORID>();
-        for (ORecord rec : (List<ORecord>) value) {
-          newList.add(rec.getIdentity());
-        }
-        newParams.put(entry.getKey(), newList);
-
-      } else if (value instanceof Map<?, ?> && ((Map<?, ?>) value).values().iterator().next() instanceof ORecord) {
-        // CONVERT RECORDS AS RIDS
-        final Map<Object, ORID> newMap = new HashMap<Object, ORID>();
-        for (Entry<?, ORecord> mapEntry : ((Map<?, ORecord>) value).entrySet()) {
-          newMap.put(mapEntry.getKey(), mapEntry.getValue().getIdentity());
-        }
-        newParams.put(entry.getKey(), newMap);
-      } else if (entry.getValue() instanceof ORecord) {
-        newParams.put(entry.getKey(), ((OIdentifiable) entry.getValue()).getIdentity());
-      } else
-        newParams.put(entry.getKey(), entry.getValue());
-    }
-
-    return newParams;
-  }
-
   protected void queryFromStream(final OMemoryStream buffer) {
     text = buffer.getAsString();
     limit = buffer.getAsInteger();
@@ -199,5 +160,44 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
     final ODocument param = new ODocument();
     param.field("params", convertToRIDsIfPossible(params));
     return param.toStream();
+  }
+
+  @SuppressWarnings("unchecked")
+  private Map<Object, Object> convertToRIDsIfPossible(final Map<Object, Object> params) {
+    final Map<Object, Object> newParams = new HashMap<Object, Object>(params.size());
+
+    for (Entry<Object, Object> entry : params.entrySet()) {
+      final Object value = entry.getValue();
+
+      if (value instanceof Set<?> && ((Set<?>) value).iterator().next() instanceof ORecord) {
+        // CONVERT RECORDS AS RIDS
+        final Set<ORID> newSet = new HashSet<ORID>();
+        for (ORecord rec : (Set<ORecord>) value) {
+          newSet.add(rec.getIdentity());
+        }
+        newParams.put(entry.getKey(), newSet);
+
+      } else if (value instanceof List<?> && ((List<?>) value).get(0) instanceof ORecord) {
+        // CONVERT RECORDS AS RIDS
+        final List<ORID> newList = new ArrayList<ORID>();
+        for (ORecord rec : (List<ORecord>) value) {
+          newList.add(rec.getIdentity());
+        }
+        newParams.put(entry.getKey(), newList);
+
+      } else if (value instanceof Map<?, ?> && ((Map<?, ?>) value).values().iterator().next() instanceof ORecord) {
+        // CONVERT RECORDS AS RIDS
+        final Map<Object, ORID> newMap = new HashMap<Object, ORID>();
+        for (Entry<?, ORecord> mapEntry : ((Map<?, ORecord>) value).entrySet()) {
+          newMap.put(mapEntry.getKey(), mapEntry.getValue().getIdentity());
+        }
+        newParams.put(entry.getKey(), newMap);
+      } else if (entry.getValue() instanceof ORecord) {
+        newParams.put(entry.getKey(), ((OIdentifiable) entry.getValue()).getIdentity());
+      } else
+        newParams.put(entry.getKey(), entry.getValue());
+    }
+
+    return newParams;
   }
 }

@@ -1,29 +1,27 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.iterator;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -37,32 +35,32 @@ import com.orientechnologies.orient.core.storage.OStorage;
 public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIterator<REC> {
   private ORecord currentRecord;
 
-  public ORecordIteratorCluster(final ODatabaseRecordInternal iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
+  public ORecordIteratorCluster(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentTx iLowLevelDatabase,
       final int iClusterId, final boolean iUseCache) {
-    this(iDatabase, iLowLevelDatabase, iClusterId, OClusterPosition.INVALID_POSITION, OClusterPosition.INVALID_POSITION, iUseCache,
-        false, OStorage.LOCKING_STRATEGY.DEFAULT);
+    this(iDatabase, iLowLevelDatabase, iClusterId, ORID.CLUSTER_POS_INVALID, ORID.CLUSTER_POS_INVALID, iUseCache, false,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
   }
 
-  public ORecordIteratorCluster(final ODatabaseRecordInternal iDatabase, final ODatabaseRecordAbstract iLowLevelDatabase,
-      final int iClusterId, final OClusterPosition firstClusterEntry, final OClusterPosition lastClusterEntry,
-      final boolean iUseCache, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
+  public ORecordIteratorCluster(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentTx iLowLevelDatabase,
+      final int iClusterId, final long firstClusterEntry, final long lastClusterEntry, final boolean iUseCache,
+      final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
 
     if (iClusterId == ORID.CLUSTER_ID_INVALID)
       throw new IllegalArgumentException("The clusterId is invalid");
 
     current.clusterId = iClusterId;
-    final OClusterPosition[] range = database.getStorage().getClusterDataRange(current.clusterId);
+    final long[] range = database.getStorage().getClusterDataRange(current.clusterId);
 
-    if (firstClusterEntry.equals(OClusterPosition.INVALID_POSITION))
+    if (firstClusterEntry == ORID.CLUSTER_POS_INVALID)
       this.firstClusterEntry = range[0];
     else
-      this.firstClusterEntry = firstClusterEntry.compareTo(range[0]) > 0 ? firstClusterEntry : range[0];
+      this.firstClusterEntry = firstClusterEntry > range[0] ? firstClusterEntry : range[0];
 
-    if (lastClusterEntry.equals(OClusterPosition.INVALID_POSITION))
+    if (lastClusterEntry == ORID.CLUSTER_POS_INVALID)
       this.lastClusterEntry = range[1];
     else
-      this.lastClusterEntry = lastClusterEntry.compareTo(range[1]) < 0 ? lastClusterEntry : range[1];
+      this.lastClusterEntry = lastClusterEntry < range[1] ? lastClusterEntry : range[1];
 
     totalAvailableRecords = database.countClusterElements(current.clusterId, iterateThroughTombstones);
 
@@ -99,7 +97,7 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
       // LIMIT REACHED
       return false;
 
-    boolean thereAreRecordsToBrowse = getCurrentEntry().compareTo(firstClusterEntry) > 0;
+    boolean thereAreRecordsToBrowse = getCurrentEntry() > firstClusterEntry;
 
     if (thereAreRecordsToBrowse) {
       ORecord record = getRecord();
@@ -107,15 +105,6 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
     }
 
     return currentRecord != null;
-  }
-
-  private void updateRangesOnLiveUpdate() {
-    if (liveUpdated) {
-      OClusterPosition[] range = database.getStorage().getClusterDataRange(current.clusterId);
-
-      firstClusterEntry = range[0];
-      lastClusterEntry = range[1];
-    }
   }
 
   public boolean hasNext() {
@@ -138,7 +127,7 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
     if (browsedRecords >= totalAvailableRecords)
       return false;
 
-    if (!current.clusterPosition.isTemporary() && getCurrentEntry().compareTo(lastClusterEntry) < 0) {
+    if (!(current.clusterPosition < ORID.CLUSTER_POS_INVALID) && getCurrentEntry() < lastClusterEntry) {
       ORecord record = getRecord();
       currentRecord = readCurrentRecord(record, +1);
       if (currentRecord != null)
@@ -259,10 +248,10 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
 
     // SET THE RANGE LIMITS
     if (iLiveUpdated) {
-      firstClusterEntry = OClusterPositionFactory.INSTANCE.valueOf(0);
-      lastClusterEntry = OClusterPositionFactory.INSTANCE.getMaxValue();
+      firstClusterEntry = 0L;
+      lastClusterEntry = Long.MAX_VALUE;
     } else {
-      OClusterPosition[] range = database.getStorage().getClusterDataRange(current.clusterId);
+      final long[] range = database.getStorage().getClusterDataRange(current.clusterId);
       firstClusterEntry = range[0];
       lastClusterEntry = range[1];
     }
@@ -270,5 +259,14 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
     totalAvailableRecords = database.countClusterElements(current.clusterId, isIterateThroughTombstones());
 
     return this;
+  }
+
+  private void updateRangesOnLiveUpdate() {
+    if (liveUpdated) {
+      final long[] range = database.getStorage().getClusterDataRange(current.clusterId);
+
+      firstClusterEntry = range[0];
+      lastClusterEntry = range[1];
+    }
   }
 }

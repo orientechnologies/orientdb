@@ -15,29 +15,34 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
-import com.tinkerpop.blueprints.impls.orient.OrientEdge;
+import java.util.List;
+
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
+import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-import java.util.List;
-
 @RunWith(JUnit4.class)
 public class SQLGraphFunctionsTest {
-  private OrientGraph graph;
+  private static OrientGraph graph;
 
   public SQLGraphFunctionsTest() {
+  }
+
+	@BeforeClass
+  public static void beforeClass() {
     String url = "memory:" + SQLGraphFunctionsTest.class.getSimpleName();
     graph = new OrientGraph(url);
 
@@ -56,6 +61,12 @@ public class SQLGraphFunctionsTest {
     v5.addEdge("label", v1, null, null, "weight", 100);
 
     graph.commit();
+  }
+
+
+	@AfterClass
+  public static void afterClass() {
+    graph.shutdown();
   }
 
   @Test
@@ -97,7 +108,8 @@ public class SQLGraphFunctionsTest {
     int tc1Id = graph.getRawGraph().getClusterIdByName("tc1");
     int edge1Id = graph.getRawGraph().getClusterIdByName("edge1");
 
-    Iterable<OrientEdge> e = graph.command(new OCommandSQL("create edge edge1 from #" + tc1Id + ":0 to #" + tc1Id + ":1 set f='fieldValue';")).execute();
+    Iterable<OrientEdge> e = graph.command(
+        new OCommandSQL("create edge edge1 from #" + tc1Id + ":0 to #" + tc1Id + ":1 set f='fieldValue';")).execute();
     graph.commit();
 
     List<ODocument> result = graph.getRawGraph().query(new OSQLSynchQuery<ODocument>("select gremlin('current.outE') from tc1"));
@@ -109,10 +121,12 @@ public class SQLGraphFunctionsTest {
 
     Assert.assertEquals(1, firstResult.size());
     OrientEdge edge = firstResult.get(0);
-    Assert.assertEquals(new ORecordId(edge1Id, OClusterPositionFactory.INSTANCE.valueOf(0)), (ORID) edge.getId());
+    Assert.assertEquals(new ORecordId(edge1Id, 0), (ORID) edge.getId());
 
     ODocument secondItem = result.get(1);
     List<OrientEdge> secondResult = secondItem.field("gremlin");
     Assert.assertTrue(secondResult.isEmpty());
+
+    OGremlinHelper.global().destroy();
   }
 }

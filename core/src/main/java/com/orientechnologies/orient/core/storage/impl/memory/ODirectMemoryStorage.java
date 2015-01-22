@@ -22,13 +22,14 @@ package com.orientechnologies.orient.core.storage.impl.memory;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageMemoryConfiguration;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OMemoryWriteAheadLog;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
 
 import java.io.IOException;
@@ -38,7 +39,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 7/9/14
  */
 public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
@@ -68,7 +69,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
 		ORecordId recordId = new ORecordId();
 		recordId.clusterId = 0;
     createRecord(recordId, new byte[0], new OSimpleVersion(), ORecordBytes.RECORD_TYPE,
-        ODatabaseComplex.OPERATION_MODE.SYNCHRONOUS.ordinal(), null);
+        ODatabase.OPERATION_MODE.SYNCHRONOUS.ordinal(), null);
   }
 
   @Override
@@ -89,9 +90,6 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   public void makeFullCheckpoint() throws IOException {
   }
 
-  @Override
-  protected void makeFuzzyCheckPoint() throws IOException {
-  }
 
   @Override
   public void backup(OutputStream out, Map<String, Object> options, Callable<Object> callable, OCommandOutputListener iListener,

@@ -1,30 +1,31 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.tx;
 
-import com.orientechnologies.orient.core.db.ODatabaseComplex.OPERATION_MODE;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.ODatabase.OPERATION_MODE;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.ORecordCallback;
@@ -43,6 +44,10 @@ public interface OTransaction {
     INVALID, BEGUN, COMMITTING, ROLLBACKING, COMPLETED, ROLLED_BACK
   }
 
+  public enum ISOLATION_LEVEL {
+    READ_COMMITTED, REPEATABLE_READ
+  }
+
   public void begin();
 
   public void commit();
@@ -51,9 +56,24 @@ public interface OTransaction {
 
   public void rollback();
 
+  /**
+   * Returns the current isolation level.
+   */
+  public ISOLATION_LEVEL getIsolationLevel();
+
+  /**
+   * Changes the isolation level. Default is READ_COMMITTED. When REPEATABLE_READ is set, any record read from the storage is cached
+   * in memory to guarantee the repeatable reads. This affects the used RAM and speed (because JVM Garbage Collector job).
+   * 
+   * @param iIsolationLevel
+   *          Isolation level to set
+   * @return Current object to allow call in chain
+   */
+  public OTransaction setIsolationLevel(ISOLATION_LEVEL iIsolationLevel);
+
   public void rollback(boolean force, int commitLevelDiff);
 
-  public ODatabaseRecordTx getDatabase();
+  public ODatabaseDocument getDatabase();
 
   public void clearRecordEntries();
 
@@ -73,7 +93,7 @@ public interface OTransaction {
 
   public Iterable<? extends ORecordOperation> getAllRecordEntries();
 
-  public List<ORecordOperation> getRecordEntriesByClass(String iClassName);
+  public List<ORecordOperation> getNewRecordEntriesByClass(OClass iClass, boolean iPolymorphic);
 
   public List<ORecordOperation> getNewRecordEntriesByClusterIds(int[] iIds);
 

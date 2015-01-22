@@ -23,7 +23,7 @@ package com.orientechnologies.orient.core.index.hashindex.local.cache;
 import com.orientechnologies.orient.core.exception.OStorageException;
 
 /**
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  * @since 4/24/13
  */
 public class OBlockedPageException extends OStorageException {

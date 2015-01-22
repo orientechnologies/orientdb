@@ -35,7 +35,7 @@ public class ReadWriteDiskCacheTest {
   private OLocalPaginatedStorage storageLocal;
   private String                 fileName;
   private byte                   seed;
-  private ODiskWriteAheadLog writeAheadLog;
+  private ODiskWriteAheadLog     writeAheadLog;
 
   @BeforeClass
   public void beforeClass() throws IOException {
@@ -756,7 +756,7 @@ public class ReadWriteDiskCacheTest {
     if (!file.exists())
       file.mkdir();
 
-    writeAheadLog = new ODiskWriteAheadLog(1024, -1, 10 * 1024, 100L * 1024 * 1024 * 1024, storageLocal);
+    writeAheadLog = new ODiskWriteAheadLog(1024, -1, 10 * 1024, storageLocal);
 
     final OStorageSegmentConfiguration segmentConfiguration = new OStorageSegmentConfiguration(storageLocal.getConfiguration(),
         "readWriteDiskCacheTest.tst", 0);
@@ -786,79 +786,6 @@ public class ReadWriteDiskCacheTest {
     }
 
     Assert.assertEquals(writeAheadLog.getFlushedLSN(), lsnToFlush);
-  }
-
-  public void testLogDirtyTables() throws Exception {
-    ODatabaseRecordThreadLocal.INSTANCE.set(null);
-    closeBufferAndDeleteFile();
-
-    File file = new File(storageLocal.getConfiguration().getDirectory());
-    if (!file.exists())
-      file.mkdir();
-
-    writeAheadLog = new ODiskWriteAheadLog(1024, -1, 10 * 1024, 100L * 1024 * 1024 * 1024, storageLocal);
-    writeAheadLog.logFuzzyCheckPointStart();
-    OLogSequenceNumber pageLSN = writeAheadLog.logFuzzyCheckPointEnd();
-
-    final OStorageSegmentConfiguration segmentConfiguration = new OStorageSegmentConfiguration(storageLocal.getConfiguration(),
-        "readWriteDiskCacheTest.tst", 0);
-    segmentConfiguration.fileType = OFileClassic.NAME;
-
-    buffer = new OReadWriteDiskCache(4 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING),
-        2 * (8 + systemOffset + 2 * OWOWCache.PAGE_PADDING), 8 + systemOffset, 10000, -1, storageLocal, writeAheadLog, true, false);
-
-    long fileId = buffer.openFile(fileName);
-    for (int i = 0; i < 8; i++) {
-      OCacheEntry cacheEntry = buffer.load(fileId, i, false);
-      OCachePointer dataPointer = cacheEntry.getCachePointer();
-
-      dataPointer.acquireExclusiveLock();
-
-      setLsn(dataPointer.getDataPointer(), pageLSN);
-
-      cacheEntry.markDirty();
-      dataPointer.releaseExclusiveLock();
-      buffer.release(cacheEntry);
-    }
-
-    buffer.flushBuffer();
-    buffer.clear();
-
-    writeAheadLog.getFlushedLSN();
-
-    writeAheadLog.logFuzzyCheckPointStart();
-    OLogSequenceNumber lsn = writeAheadLog.logFuzzyCheckPointEnd();
-
-    for (int i = 0; i < 8; i++) {
-      OCacheEntry cacheEntry = buffer.load(fileId, i, false);
-      OCachePointer dataPointer = cacheEntry.getCachePointer();
-
-      dataPointer.acquireExclusiveLock();
-
-      setLsn(dataPointer.getDataPointer(), lsn);
-
-      cacheEntry.markDirty();
-
-      dataPointer.releaseExclusiveLock();
-      buffer.release(cacheEntry);
-    }
-
-    Set<ODirtyPage> dirtyPages = buffer.logDirtyPagesTable();
-    Set<ODirtyPage> expectedDirtyPages = new HashSet<ODirtyPage>();
-    for (int i = 7; i >= 6; i--)
-      expectedDirtyPages.add(new ODirtyPage("readWriteDiskCacheTest.tst", i, pageLSN));
-
-    Assert.assertEquals(dirtyPages, expectedDirtyPages);
-
-    lsn = writeAheadLog.begin();
-    OLogSequenceNumber prevLSN = null;
-    while (lsn != null) {
-      prevLSN = lsn;
-      lsn = writeAheadLog.next(lsn);
-    }
-
-    final ODirtyPagesRecord dirtyPagesRecord = (ODirtyPagesRecord) writeAheadLog.read(prevLSN);
-    Assert.assertEquals(dirtyPagesRecord.getDirtyPages(), dirtyPages);
   }
 
   private void updateFilePage(long pageIndex, long offset, byte[] value) throws IOException {

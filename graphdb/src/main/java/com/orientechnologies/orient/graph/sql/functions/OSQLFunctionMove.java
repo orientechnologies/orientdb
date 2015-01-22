@@ -1,29 +1,31 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.graph.sql.functions;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableAbstract;
@@ -61,33 +63,38 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
 
   public Object execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult,
       final Object[] iParameters, final OCommandContext iContext) {
-    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false);
+    final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
+    final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
+    try {
+      final String[] labels;
+      if (iParameters != null && iParameters.length > 0 && iParameters[0] != null)
+        labels = OMultiValue.array(iParameters, String.class, new OCallable<Object, Object>() {
 
-    final String[] labels;
-    if (iParameters != null && iParameters.length > 0 && iParameters[0] != null)
-      labels = OMultiValue.array(iParameters, String.class, new OCallable<Object, Object>() {
+          @Override
+          public Object call(final Object iArgument) {
+            return OStringSerializerHelper.getStringContent(iArgument);
+          }
+        });
+      else
+        labels = null;
 
+      return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
         @Override
-        public Object call(final Object iArgument) {
-          return OStringSerializerHelper.getStringContent(iArgument);
+        public Object call(final OIdentifiable iArgument) {
+          return move(graph, iArgument, labels);
         }
-      });
-    else
-      labels = null;
-
-    return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
-      @Override
-      public Object call(final OIdentifiable iArgument) {
-        return move(graph, iArgument, labels);
-      }
-    }, iThis, iContext);
+      }, iThis, iContext);
+    } finally {
+      if (shutdownFlag.getValue())
+        graph.shutdown(false);
+    }
   }
 
   protected Object v2v(final OrientBaseGraph graph, final OIdentifiable iRecord, final Direction iDirection, final String[] iLabels) {
     final ODocument rec = iRecord.getRecord();
 
-    if (rec.getSchemaClass() != null)
-      if (rec.getSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
+    if (ODocumentInternal.getImmutableSchemaClass(rec) != null)
+      if (ODocumentInternal.getImmutableSchemaClass(rec).isSubClassOf(OrientVertexType.CLASS_NAME)) {
         // VERTEX
         final OrientVertex vertex = graph.getVertex(rec);
         if (vertex != null)
@@ -100,8 +107,8 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
   protected Object v2e(final OrientBaseGraph graph, final OIdentifiable iRecord, final Direction iDirection, final String[] iLabels) {
     final ODocument rec = iRecord.getRecord();
 
-    if (rec.getSchemaClass() != null)
-      if (rec.getSchemaClass().isSubClassOf(OrientVertexType.CLASS_NAME)) {
+    if (ODocumentInternal.getImmutableSchemaClass(rec) != null)
+      if (ODocumentInternal.getImmutableSchemaClass(rec).isSubClassOf(OrientVertexType.CLASS_NAME)) {
         // VERTEX
         final OrientVertex vertex = graph.getVertex(rec);
         if (vertex != null)
@@ -114,8 +121,8 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
   protected Object e2v(final OrientBaseGraph graph, final OIdentifiable iRecord, final Direction iDirection, final String[] iLabels) {
     final ODocument rec = iRecord.getRecord();
 
-    if (rec.getSchemaClass() != null)
-      if (rec.getSchemaClass().isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+    if (ODocumentInternal.getImmutableSchemaClass(rec) != null)
+      if (ODocumentInternal.getImmutableSchemaClass(rec).isSubClassOf(OrientEdgeType.CLASS_NAME)) {
         // EDGE
         final OrientEdge edge = graph.getEdge(rec);
         if (edge != null) {

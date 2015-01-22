@@ -1,23 +1,40 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.object.serialization;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.io.OUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -47,7 +64,6 @@ import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchListener;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -68,23 +84,6 @@ import com.orientechnologies.orient.object.db.OObjectNotDetachedException;
 import com.orientechnologies.orient.object.fetch.OObjectFetchContext;
 import com.orientechnologies.orient.object.fetch.OObjectFetchListener;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 @SuppressWarnings("unchecked")
 /**
  * Helper class to manage POJO by using the reflection.
@@ -97,9 +96,6 @@ public class OObjectSerializerHelper {
   public static final Class<?>[]                            callbackAnnotationClasses = new Class[] { OBeforeDeserialization.class,
       OAfterDeserialization.class, OBeforeSerialization.class, OAfterSerialization.class };
   private static final Class<?>[]                           NO_ARGS                   = new Class<?>[] {};
-
-  public static HashMap<Class<?>, OObjectSerializerContext> serializerContexts        = new LinkedHashMap<Class<?>, OObjectSerializerContext>();
-
   private static final HashMap<String, List<Field>>         classes                   = new HashMap<String, List<Field>>();
   private static final HashMap<String, Method>              callbacks                 = new HashMap<String, Method>();
   private static final HashMap<String, Object>              getters                   = new HashMap<String, Object>();
@@ -108,6 +104,7 @@ public class OObjectSerializerHelper {
   private static final HashMap<Class<?>, Field>             fieldIds                  = new HashMap<Class<?>, Field>();
   private static final HashMap<Class<?>, Field>             fieldVersions             = new HashMap<Class<?>, Field>();
   private static final HashMap<Class<?>, List<String>>      embeddedFields            = new HashMap<Class<?>, List<String>>();
+  public static HashMap<Class<?>, OObjectSerializerContext> serializerContexts        = new LinkedHashMap<Class<?>, OObjectSerializerContext>();
   @SuppressWarnings("rawtypes")
   public static Class                                       jpaIdClass;
   @SuppressWarnings("rawtypes")
@@ -434,7 +431,7 @@ public class OObjectSerializerHelper {
           if (cls == null)
             throw new OConfigurationException("Class " + iPojo.getClass() + " is not managed by current database");
 
-          return new ORecordId(cls.getDefaultClusterId(), OClusterPositionFactory.INSTANCE.valueOf(((Number) id).longValue()));
+          return new ORecordId(cls.getDefaultClusterId(), ((Number) id).longValue());
         } else if (id instanceof String)
           return new ORecordId((String) id);
       }
@@ -581,11 +578,11 @@ public class OObjectSerializerHelper {
         } else if (id instanceof Number) {
           // TREATS AS CLUSTER POSITION
           ((ORecordId) iRecord.getIdentity()).clusterId = schemaClass.getDefaultClusterId();
-          ((ORecordId) iRecord.getIdentity()).clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(((Number) id).longValue());
+          ((ORecordId) iRecord.getIdentity()).clusterPosition = ((Number) id).longValue();
         } else if (id instanceof String)
           ((ORecordId) iRecord.getIdentity()).fromString((String) id);
         else if (id.getClass().equals(Object.class))
-          ORecordInternal.setIdentity(iRecord,(ORecordId) id);
+          ORecordInternal.setIdentity(iRecord, (ORecordId) id);
         else
           OLogManager.instance().warn(OObjectSerializerHelper.class,
               "@Id field has been declared as %s while the supported are: ORID, Number, String, Object", id.getClass());

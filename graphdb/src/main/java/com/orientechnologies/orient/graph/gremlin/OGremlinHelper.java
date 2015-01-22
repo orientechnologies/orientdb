@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.graph.gremlin;
 
 import java.io.ByteArrayInputStream;
@@ -24,13 +24,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 import javax.script.ScriptContext;
@@ -41,10 +35,9 @@ import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
@@ -54,14 +47,13 @@ import com.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngineFactory;
 import com.tinkerpop.gremlin.java.GremlinPipeline;
 
 public class OGremlinHelper {
-  private static final String                                          PARAM_OUTPUT = "output";
-  private static GremlinGroovyScriptEngineFactory                      factory      = new GremlinGroovyScriptEngineFactory();
-  private static OGremlinHelper                                        instance     = new OGremlinHelper();
+  private static final String                     PARAM_OUTPUT = "output";
+  private static GremlinGroovyScriptEngineFactory factory      = new GremlinGroovyScriptEngineFactory();
+  private static OGremlinHelper                   instance     = new OGremlinHelper();
 
-  private int                                                          maxPool      = 50;
+  private int                                     maxPool      = 50;
 
-  private OReentrantResourcePool<ODatabaseDocumentTx, OrientBaseGraph> graphPool;
-  private long                                                         timeout;
+  private long                                    timeout;
 
   public static interface OGremlinCallback {
     public boolean call(ScriptEngine iEngine, OrientBaseGraph iGraph);
@@ -278,7 +270,8 @@ public class OGremlinHelper {
           // 4. Impossible to clone
           // ***************************************************************************************************************************************
         } catch (Throwable e2) {
-          OLogManager.instance().error(null, "[GremlinHelper] error on cloning object %s, previous %s", e2, objectToClone, previousClone);
+          OLogManager.instance().error(null, "[GremlinHelper] error on cloning object %s, previous %s", e2, objectToClone,
+              previousClone);
           return null;
         }
       }
@@ -289,25 +282,20 @@ public class OGremlinHelper {
     return instance;
   }
 
-  public static ODatabaseDocumentTx getGraphDatabase(final ODatabaseRecordInternal iCurrentDatabase) {
-    ODatabaseRecordInternal currentDb = ODatabaseRecordThreadLocal.INSTANCE.get();
+  public static ODatabaseDocumentTx getGraphDatabase(final ODatabaseDocumentInternal iCurrentDatabase) {
+    ODatabaseDocumentInternal currentDb = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (currentDb == null && iCurrentDatabase != null)
       // GET FROM THE RECORD
       currentDb = iCurrentDatabase;
 
-    currentDb = (ODatabaseRecordInternal) currentDb.getDatabaseOwner();
+    if (currentDb != null)
+      currentDb = (ODatabaseDocumentInternal) currentDb.getDatabaseOwner();
 
     final ODatabaseDocumentTx db;
     if (currentDb instanceof ODatabaseDocumentTx)
       db = (ODatabaseDocumentTx) currentDb;
-    else if (currentDb instanceof ODatabaseDocumentTx) {
-      db = new ODatabaseDocumentTx((ODatabaseRecordTx) currentDb.getUnderlying());
-      ODatabaseRecordThreadLocal.INSTANCE.set(db);
-    } else if (currentDb instanceof ODatabaseRecordTx) {
-      db = new ODatabaseDocumentTx((ODatabaseRecordTx) currentDb);
-      ODatabaseRecordThreadLocal.INSTANCE.set(db);
-    } else
-      throw new OCommandExecutionException("Cannot find a database of type ODatabaseDocumentTx or ODatabaseRecordTx");
+    else
+      throw new OCommandExecutionException("Cannot find a database of type ODatabaseDocumentTx or ODatabaseDocumentTx");
     return db;
   }
 
@@ -319,57 +307,27 @@ public class OGremlinHelper {
    * Initializes the pools.
    */
   public void create() {
-    if (graphPool != null)
-      // ALREADY CREATED
-      return;
-    graphPool = new OReentrantResourcePool<ODatabaseDocumentTx, OrientBaseGraph>(maxPool,
-        new OResourcePoolListener<ODatabaseDocumentTx, OrientBaseGraph>() {
-
-          @Override
-          public OrientGraph createNewResource(final ODatabaseDocumentTx iKey, final Object... iAdditionalArgs) {
-            return new OrientGraph(iKey);
-          }
-
-          @Override
-          public boolean reuseResource(final ODatabaseDocumentTx iKey, final Object[] iAdditionalArgs,
-              final OrientBaseGraph iReusedGraph) {
-            iReusedGraph.reuse(iKey);
-            return true;
-          }
-        });
   }
 
   /**
    * Destroys the helper by cleaning all the in memory objects.
    */
   public void destroy() {
-    if (graphPool != null) {
-      for (OrientBaseGraph graph : graphPool.getResources()) {
-        graph.shutdown();
-      }
-      graphPool.close();
-    }
   }
 
   public ScriptEngine acquireEngine() {
-    checkStatus();
-    return new GremlinGroovyScriptEngine();// enginePool.getResource(ONE, Long.MAX_VALUE);
+    return new GremlinGroovyScriptEngine();
   }
 
   public void releaseEngine(final ScriptEngine engine) {
-    checkStatus();
-    // engine.getBindings(ScriptContext.ENGINE_SCOPE).clear();
-    // enginePool.returnResource(engine);
   }
 
-  public OrientGraph acquireGraph(final ODatabaseDocumentTx iDatabase) {
-    checkStatus();
-    return (OrientGraph) ((OrientGraph) graphPool.getResource(iDatabase, timeout));
+  public OrientGraph acquireGraph(final ODatabaseDocumentTx database) {
+    return new OrientGraph(database);
   }
 
-  public void releaseGraph(final OrientBaseGraph iGraph) {
-    checkStatus();
-    graphPool.returnResource(iGraph);
+  public void releaseGraph(final OrientBaseGraph graph) {
+    graph.shutdown(false);
   }
 
   public int getMaxPool() {
@@ -385,9 +343,4 @@ public class OGremlinHelper {
     return factory.getScriptEngine();
   }
 
-  private void checkStatus() {
-    if (graphPool == null)
-      throw new IllegalStateException(
-          "OGremlinHelper instance has been not created. Call OGremlinHelper.global().create() to iniziailze it");
-  }
 }

@@ -23,7 +23,7 @@ package com.orientechnologies.orient.core.index.hashindex.local.cache;
 import java.util.Iterator;
 
 /**
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class SynchronizedLRUList implements LRUList {
   private final LRUList underlying = new HashLRUList();

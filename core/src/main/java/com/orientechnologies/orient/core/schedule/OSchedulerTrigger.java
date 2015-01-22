@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 henryzhao81@gmail.com
+ * Copyright 2010-2012 henryzhao81-at-gmail.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OSchedulerListener.SCHEDULER_STATUS;
 
 /**
- * Author : henryzhao81@gmail.com Mar 28, 2013
+ * @author henryzhao81-at-gmail.com
+ * @since Mar 28, 2013
  */
 
 public class OSchedulerTrigger extends ODocumentHookAbstract {
@@ -80,7 +81,7 @@ public class OSchedulerTrigger extends ODocumentHookAbstract {
           iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.STOPPED.name());
         }
       }
-      scheduler.resetDocument(iDocument);
+      scheduler.fromStream(iDocument);
     } catch (Exception ex) {
       OLogManager.instance().error(this, "Error when updating scheduler - " + ex.getMessage());
       return RESULT.RECORD_NOT_CHANGED;

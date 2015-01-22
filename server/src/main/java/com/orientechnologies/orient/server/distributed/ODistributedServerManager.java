@@ -20,13 +20,12 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
- import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
- import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
- import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
+import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
- import java.util.Collection;
- import java.util.Map;
- import java.util.concurrent.locks.Lock;
+import java.util.Collection;
+import java.util.Map;
+import java.util.concurrent.locks.Lock;
 
 /**
   * Server cluster interface to abstract cluster behavior.
@@ -37,7 +36,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
  public interface ODistributedServerManager {
 
    public enum NODE_STATUS {
-     OFFLINE, STARTING, ONLINE, SHUTDOWNING
+     OFFLINE, STARTING, ONLINE, SHUTTINGDOWN
    };
 
    public enum DB_STATUS {
@@ -94,8 +93,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
     * @return
     */
    public Lock getLock(String iLockName);
-
-   public Class<? extends OReplicationConflictResolver> getConfictResolverClass();
 
    public ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName);
 

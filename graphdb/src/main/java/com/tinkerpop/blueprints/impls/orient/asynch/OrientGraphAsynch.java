@@ -38,7 +38,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Features;
@@ -137,7 +137,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
   public Vertex addOrUpdateVertex(final Object id, final Object... prop) {
     beginAsynchOperation();
 
-    return new OrientVertexFuture(Orient.instance().getWorkers().submit(new Callable<OrientVertex>() {
+    return new OrientVertexFuture(Orient.instance().submit(new Callable<OrientVertex>() {
       @Override
       public OrientVertex call() throws Exception {
         final OrientBaseGraph g = acquire();
@@ -203,7 +203,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
   public Vertex addVertex(final Object id, final Object... prop) {
     beginAsynchOperation();
 
-    return new OrientVertexFuture(Orient.instance().getWorkers().submit(new Callable<OrientVertex>() {
+    return new OrientVertexFuture(Orient.instance().submit(new Callable<OrientVertex>() {
       @Override
       public OrientVertex call() throws Exception {
         final OrientBaseGraph g = acquire();
@@ -244,7 +244,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
   public Vertex addVertex(final Object id) {
     beginAsynchOperation();
 
-    return new OrientVertexFuture(Orient.instance().getWorkers().submit(new Callable<OrientVertex>() {
+    return new OrientVertexFuture(Orient.instance().submit(new Callable<OrientVertex>() {
       @Override
       public OrientVertex call() throws Exception {
         final OrientBaseGraph g = acquire();
@@ -305,7 +305,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
   public void removeVertex(final Vertex vertex) {
     beginAsynchOperation();
 
-    Orient.instance().getWorkers().submit(new Callable<Object>() {
+    Orient.instance().submit(new Callable<Object>() {
       @Override
       public Object call() throws Exception {
         final OrientBaseGraph g = acquire();
@@ -351,7 +351,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
   public Edge addEdgeByVerticesKeys(final Object iOutVertex, final Object iInVertex, final String iEdgeLabel) {
     beginAsynchOperation();
 
-    return new OrientEdgeFuture(Orient.instance().getWorkers().submit(new Callable<OrientEdge>() {
+    return new OrientEdgeFuture(Orient.instance().submit(new Callable<OrientEdge>() {
       @Override
       public OrientEdge call() throws Exception {
         final OrientBaseGraph g = acquire();
@@ -402,7 +402,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
   public Edge addEdge(final Object id, final Vertex outVertex, final Vertex inVertex, final String label) {
     beginAsynchOperation();
 
-    return new OrientEdgeFuture(Orient.instance().getWorkers().submit(new Callable<OrientEdge>() {
+    return new OrientEdgeFuture(Orient.instance().submit(new Callable<OrientEdge>() {
       @Override
       public OrientEdge call() throws Exception {
         final OrientBaseGraph g = acquire();
@@ -469,7 +469,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
   public void removeEdge(final Edge edge) {
     beginAsynchOperation();
 
-    Orient.instance().getWorkers().submit(new Callable<Object>() {
+    Orient.instance().submit(new Callable<Object>() {
       @Override
       public Object call() throws Exception {
         final OrientBaseGraph g = acquire();
@@ -786,7 +786,7 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
     if (conflictStrategy != null) {
       final OStorage stg = g.getRawGraph().getStorage().getUnderlying();
-      if (stg instanceof OStorageEmbedded)
+      if (stg instanceof OAbstractPaginatedStorage)
         stg.setConflictStrategy(conflictStrategy);
     }
 

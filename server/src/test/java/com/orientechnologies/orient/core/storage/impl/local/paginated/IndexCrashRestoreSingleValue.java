@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -24,7 +25,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 9/22/14
  */
 @Test
@@ -40,6 +41,7 @@ public class IndexCrashRestoreSingleValue {
 
   @BeforeClass
   public void beforeClass() throws Exception {
+		OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
     String buildDirectory = System.getProperty("buildDirectory", ".");
     buildDirectory += "/uniqueIndexCrashRestore";
 
@@ -86,6 +88,7 @@ public class IndexCrashRestoreSingleValue {
 
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
+			OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
       OServer server = OServerMain.create();
       server.startup(RemoteDBRunner.class
           .getResourceAsStream("/com/orientechnologies/orient/core/storage/impl/local/paginated/index-crash-single-value-config.xml"));
@@ -107,7 +110,7 @@ public class IndexCrashRestoreSingleValue {
       futures.add(executorService.submit(new DataPropagationTask(baseDocumentTx, testDocumentTx)));
     }
 
-    Thread.sleep(150000);
+		Thread.sleep(1800000);
 
     System.out.println("Wait for process to destroy");
     Process p = Runtime.getRuntime().exec("pkill -9 -f RemoteDBRunner");
@@ -191,7 +194,6 @@ public class IndexCrashRestoreSingleValue {
 
     @Override
     public Void call() throws Exception {
-      Random random = new Random();
       baseDB.open("admin", "admin");
       testDB.open("admin", "admin");
 

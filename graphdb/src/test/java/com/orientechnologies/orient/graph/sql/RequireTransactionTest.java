@@ -20,14 +20,64 @@
 
 package com.orientechnologies.orient.graph.sql;
 
-import com.orientechnologies.orient.core.exception.OTransactionException;
-import com.orientechnologies.orient.graph.GraphTxAbstractTest;
-import org.junit.Test;
-
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class RequireTransactionTest extends GraphTxAbstractTest {
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.graph.GraphTxAbstractTest;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+
+public class RequireTransactionTest {
+
+  protected static OrientGraph graph;
+
+  public static enum ENV {
+    DEV, RELEASE, CI
+  }
+
+  public static ENV getEnvironment() {
+    String envName = System.getProperty("orientdb.test.env", "dev").toUpperCase();
+    ENV result = null;
+    try {
+      result = ENV.valueOf(envName);
+    } catch (IllegalArgumentException e) {
+    }
+
+    if (result == null)
+      result = ENV.DEV;
+
+    return result;
+  }
+
+  public static String getStorageType() {
+    if (getEnvironment().equals(ENV.DEV))
+      return "memory";
+
+    return "plocal";
+  }
+
+  @BeforeClass
+  public static void beforeClass() {
+    if (graph == null) {
+      final String dbName = GraphTxAbstractTest.class.getSimpleName();
+      final String storageType = getStorageType();
+      final String buildDirectory = System.getProperty("buildDirectory", ".");
+      graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
+      graph.drop();
+      graph = new OrientGraph(storageType + ":" + buildDirectory + "/" + dbName);
+    }
+
+  }
+
+  @AfterClass
+  public static void afterClass() throws Exception {
+    graph.shutdown();
+    graph = null;
+  }
 
   @Test
   public void requireTxEnable() {

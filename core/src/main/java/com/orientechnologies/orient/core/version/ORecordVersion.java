@@ -35,9 +35,8 @@ import com.orientechnologies.orient.core.storage.fs.OFile;
  * information to prevent generation of two different versions of document with the same version number. This interface provide an
  * ability to create extended versions.
  * 
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  * @see OSimpleVersion
- * @see ODistributedVersion
  */
 public interface ORecordVersion extends Comparable<ORecordVersion>, Externalizable {
   void increment();

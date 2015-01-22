@@ -19,24 +19,27 @@
   */
 package com.orientechnologies.orient.graph.sql.functions;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.graph.gremlin.OGremlinHelper;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientElementIterable;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Executes a GREMLIN expression as function of SQL engine.
@@ -71,7 +74,8 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
               return false;
 
             final ODocument document = (ODocument) iCurrentRecord;
-            if (document.getSchemaClass() != null && document.getSchemaClass().isSubClassOf("E")) {
+            OClass clazz =ODocumentInternal.getImmutableSchemaClass(document);
+            if (clazz != null && clazz.isSubClassOf("E")) {
               // EDGE TYPE, CREATE THE BLUEPRINTS'S WRAPPER
               OrientEdge graphElement = (OrientEdge) new OrientElementIterable<OrientEdge>(iGraph, Arrays
                   .asList(new ODocument[] { document })).iterator().next();

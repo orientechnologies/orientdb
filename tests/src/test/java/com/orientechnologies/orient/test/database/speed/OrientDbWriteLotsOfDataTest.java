@@ -17,7 +17,7 @@ package com.orientechnologies.orient.test.database.speed;
 
 import java.util.ArrayList;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -47,8 +47,7 @@ public class OrientDbWriteLotsOfDataTest {
   public void testThreaded(int numthreads, TXTYPE txtype) throws InterruptedException {
 
     // create document pool
-    ODatabaseDocumentPool pool = new ODatabaseDocumentPool(DBURI, DBUSR, DBPWD);
-    pool.setup(100, 200);
+    OPartitionedDatabasePool pool = new OPartitionedDatabasePool(DBURI, DBUSR, DBPWD);
 
     // create the schema for the test class if it doesn't exist
     ODatabaseDocumentTx db = pool.acquire();
@@ -65,38 +64,36 @@ public class OrientDbWriteLotsOfDataTest {
     }
 
     // create threads and execute
-    try {
-      // create threads, put into list
-      ArrayList<RunTest> threads = new ArrayList<RunTest>(1000);
-      for (int numth = 0; numth < numthreads; numth++) {
-        threads.add(new RunTest(pool, txtype));
-      }
-      // run test: start each thread and wait for all threads to complete with join
-      long a = System.currentTimeMillis();
-      for (RunTest t : threads) {
-        t.start();
-      }
-      for (RunTest t : threads) {
-        t.join();
-      }
-      long b = System.currentTimeMillis();
 
-      // collect from each thread
-      int savesum = 0;
-      int txnsum = 0;
-      for (RunTest t : threads) {
-        t.printStats();
-        savesum += t.getTotalSaves();
-        txnsum += t.getTotalTxns();
-      }
-
-      // print out cummulative stats
-      double secs = 1.0E-3D * (b - a);
-      System.out.printf("TOTAL: [%4.2f secs %d tx, %d save] %.2f tx/sec %.2f save/sec \n", secs, txnsum, savesum, txnsum / secs,
-          savesum / secs);
-    } finally {
-      pool.close();
+    // create threads, put into list
+    ArrayList<RunTest> threads = new ArrayList<RunTest>(1000);
+    for (int numth = 0; numth < numthreads; numth++) {
+      threads.add(new RunTest(pool, txtype));
     }
+    // run test: start each thread and wait for all threads to complete with join
+    long a = System.currentTimeMillis();
+    for (RunTest t : threads) {
+      t.start();
+    }
+    for (RunTest t : threads) {
+      t.join();
+    }
+    long b = System.currentTimeMillis();
+
+    // collect from each thread
+    int savesum = 0;
+    int txnsum = 0;
+    for (RunTest t : threads) {
+      t.printStats();
+      savesum += t.getTotalSaves();
+      txnsum += t.getTotalTxns();
+    }
+
+    // print out cummulative stats
+    double secs = 1.0E-3D * (b - a);
+    System.out.printf("TOTAL: [%4.2f secs %d tx, %d save] %.2f tx/sec %.2f save/sec \n", secs, txnsum, savesum, txnsum / secs,
+        savesum / secs);
+
   }
 
   class RunTest extends Thread {
@@ -107,7 +104,7 @@ public class OrientDbWriteLotsOfDataTest {
     private double              statTotalSecs;
     private TXTYPE              txtype;
 
-    public RunTest(ODatabaseDocumentPool pool, TXTYPE txtype) {
+    public RunTest(OPartitionedDatabasePool pool, TXTYPE txtype) {
       this.txtype = txtype;
       this.db = pool.acquire();
     }

@@ -51,8 +51,11 @@ public class TestNetworkSerializerIndipendency {
       assertEquals(doc.field("name"), document.field("name"));
       assertEquals(doc.field("surname"), document.field("surname"));
     } finally {
-      if (dbTx != null)
-        dbTx.close();
+      if (dbTx != null) {
+				dbTx.close();
+				dbTx.getStorage().close();
+			}
+
       dropDatabase();
       ODatabaseDocumentTx.setDefaultSerializer(prev);
     }
@@ -91,8 +94,10 @@ public class TestNetworkSerializerIndipendency {
       assertEquals(doc.field("name"), document.field("name"));
       assertEquals(doc.field("surname"), document.field("surname"));
     } finally {
-      if (dbTx != null)
-        dbTx.close();
+      if (dbTx != null) {
+				dbTx.close();
+				dbTx.getStorage().close();
+			}
 
       dropDatabase();
       ODatabaseDocumentTx.setDefaultSerializer(prev);

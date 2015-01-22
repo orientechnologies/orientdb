@@ -1,31 +1,26 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.id;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.List;
-
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -34,23 +29,24 @@ import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.List;
+
 public class ORecordId implements ORID {
   public static final ORecordId EMPTY_RECORD_ID        = new ORecordId();
   public static final byte[]    EMPTY_RECORD_ID_STREAM = EMPTY_RECORD_ID.toStream();
-  public static final int       PERSISTENT_SIZE        = OBinaryProtocol.SIZE_SHORT
-                                                           + OClusterPositionFactory.INSTANCE.getSerializedSize();
+  public static final int       PERSISTENT_SIZE        = OBinaryProtocol.SIZE_SHORT + OBinaryProtocol.SIZE_LONG;
   private static final long     serialVersionUID       = 247070594054408657L;
-  public int                    clusterId              = CLUSTER_ID_INVALID;                                      // INT TO AVOID
-                                                                                                                   // JVM
-                                                                                                                   // PENALTY, BUT
-                                                                                                                   // IT'S STORED
-                                                                                                                   // AS SHORT
-  public OClusterPosition       clusterPosition        = OClusterPosition.INVALID_POSITION;
+  // INT TO AVOID JVM PENALTY, BUT IT'S STORED AS SHORT
+  public int                    clusterId              = CLUSTER_ID_INVALID;
+  public long                   clusterPosition        = CLUSTER_POS_INVALID;
 
   public ORecordId() {
   }
 
-  public ORecordId(final int iClusterId, final OClusterPosition iPosition) {
+  public ORecordId(final int iClusterId, final long iPosition) {
     clusterId = iClusterId;
     checkClusterLimits();
     clusterPosition = iPosition;
@@ -76,7 +72,7 @@ public class ORecordId implements ORID {
     clusterPosition = parentRid.getClusterPosition();
   }
 
-  public static String generateString(final int iClusterId, final OClusterPosition iPosition) {
+  public static String generateString(final int iClusterId, final long iPosition) {
     final StringBuilder buffer = new StringBuilder(12);
     buffer.append(PREFIX);
     buffer.append(iClusterId);
@@ -85,25 +81,41 @@ public class ORecordId implements ORID {
     return buffer.toString();
   }
 
+  public static boolean isValid(final long pos) {
+    return pos != CLUSTER_POS_INVALID;
+  }
+
+  public static boolean isPersistent(final long pos) {
+    return pos > CLUSTER_POS_INVALID;
+  }
+
+  public static boolean isNew(final long pos) {
+    return pos < 0;
+  }
+
+  public static boolean isTemporary(final long clusterPosition) {
+    return clusterPosition < CLUSTER_POS_INVALID;
+  }
+
   public void reset() {
     clusterId = CLUSTER_ID_INVALID;
     clusterPosition = CLUSTER_POS_INVALID;
   }
 
   public boolean isValid() {
-    return clusterPosition.isValid();
+    return clusterPosition != CLUSTER_POS_INVALID;
   }
 
   public boolean isPersistent() {
-    return clusterId > -1 && clusterPosition.isPersistent();
+    return clusterId > -1 && clusterPosition > CLUSTER_POS_INVALID;
   }
 
   public boolean isNew() {
-    return clusterPosition.isNew();
+    return clusterPosition < 0;
   }
 
   public boolean isTemporary() {
-    return clusterId != -1 && clusterPosition.isTemporary();
+    return clusterId != -1 && clusterPosition < CLUSTER_POS_INVALID;
   }
 
   @Override
@@ -134,7 +146,7 @@ public class ORecordId implements ORID {
 
     if (clusterId != other.clusterId)
       return false;
-    if (!clusterPosition.equals(other.clusterPosition))
+    if (clusterPosition != other.clusterPosition)
       return false;
     return true;
   }
@@ -142,7 +154,7 @@ public class ORecordId implements ORID {
   @Override
   public int hashCode() {
     int result = clusterId;
-    result = 31 * result + clusterPosition.hashCode();
+    result = 31 * result + (int) (clusterPosition ^ (clusterPosition >>> 32));
     return result;
   }
 
@@ -155,9 +167,9 @@ public class ORecordId implements ORID {
 
     final int otherClusterId = iOther.getIdentity().getClusterId();
     if (clusterId == otherClusterId) {
-      final OClusterPosition otherClusterPos = iOther.getIdentity().getClusterPosition();
+      final long otherClusterPos = iOther.getIdentity().getClusterPosition();
 
-      return clusterPosition.compareTo(otherClusterPos);
+      return (clusterPosition < otherClusterPos) ? -1 : ((clusterPosition == otherClusterPos) ? 0 : 1);
     } else if (clusterId > otherClusterId)
       return 1;
 
@@ -180,46 +192,41 @@ public class ORecordId implements ORID {
 
   public ORecordId fromStream(final InputStream iStream) throws IOException {
     clusterId = OBinaryProtocol.bytes2short(iStream);
-
-    clusterPosition = OClusterPositionFactory.INSTANCE.fromStream(iStream);
+    clusterPosition = OBinaryProtocol.bytes2long(iStream);
     return this;
   }
 
   public ORecordId fromStream(final OMemoryStream iStream) {
     clusterId = iStream.getAsShort();
-    clusterPosition = OClusterPositionFactory.INSTANCE.fromStream(iStream.getAsByteArrayFixed(OClusterPositionFactory.INSTANCE
-        .getSerializedSize()));
+    clusterPosition = iStream.getAsLong();
     return this;
   }
 
   public ORecordId fromStream(final byte[] iBuffer) {
     if (iBuffer != null) {
       clusterId = OBinaryProtocol.bytes2short(iBuffer, 0);
-
-      clusterPosition = OClusterPositionFactory.INSTANCE.fromStream(iBuffer, OBinaryProtocol.SIZE_SHORT);
+      clusterPosition = OBinaryProtocol.bytes2long(iBuffer, OBinaryProtocol.SIZE_SHORT);
     }
     return this;
   }
 
   public int toStream(final OutputStream iStream) throws IOException {
     final int beginOffset = OBinaryProtocol.short2bytes((short) clusterId, iStream);
-    iStream.write(clusterPosition.toStream());
+    OBinaryProtocol.long2bytes(clusterPosition, iStream);
     return beginOffset;
   }
 
   public int toStream(final OMemoryStream iStream) throws IOException {
     final int beginOffset = OBinaryProtocol.short2bytes((short) clusterId, iStream);
-    iStream.write(clusterPosition.toStream());
+    OBinaryProtocol.long2bytes(clusterPosition, iStream);
     return beginOffset;
   }
 
   public byte[] toStream() {
-    final int serializedSize = OClusterPositionFactory.INSTANCE.getSerializedSize();
-
-    byte[] buffer = new byte[OBinaryProtocol.SIZE_SHORT + serializedSize];
+    final byte[] buffer = new byte[OBinaryProtocol.SIZE_SHORT + OBinaryProtocol.SIZE_LONG];
 
     OBinaryProtocol.short2bytes((short) clusterId, buffer, 0);
-    System.arraycopy(clusterPosition.toStream(), 0, buffer, OBinaryProtocol.SIZE_SHORT, serializedSize);
+    OBinaryProtocol.long2bytes(clusterPosition, buffer, OBinaryProtocol.SIZE_SHORT);
 
     return buffer;
   }
@@ -228,7 +235,7 @@ public class ORecordId implements ORID {
     return clusterId;
   }
 
-  public OClusterPosition getClusterPosition() {
+  public long getClusterPosition() {
     return clusterPosition;
   }
 
@@ -254,7 +261,7 @@ public class ORecordId implements ORID {
 
     clusterId = Integer.parseInt(parts.get(0));
     checkClusterLimits();
-    clusterPosition = OClusterPositionFactory.INSTANCE.valueOf(parts.get(1));
+    clusterPosition = Long.parseLong(parts.get(1));
   }
 
   public void copyFrom(final ORID iSource) {
@@ -277,12 +284,12 @@ public class ORecordId implements ORID {
   }
 
   public String next() {
-    return generateString(clusterId, clusterPosition.inc());
+    return generateString(clusterId, clusterPosition + 1);
   }
 
   @Override
   public ORID nextRid() {
-    return new ORecordId(clusterId, clusterPosition.inc());
+    return new ORecordId(clusterId, clusterPosition + 1);
   }
 
   public ORID getIdentity() {
@@ -294,7 +301,7 @@ public class ORecordId implements ORID {
     if (!isValid())
       return null;
 
-    final ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (db == null)
       throw new ODatabaseException(
           "No database found in current thread local space. If you manually control databases over threads assure to set the current database before to use it by calling: ODatabaseRecordThreadLocal.INSTANCE.set(db);");

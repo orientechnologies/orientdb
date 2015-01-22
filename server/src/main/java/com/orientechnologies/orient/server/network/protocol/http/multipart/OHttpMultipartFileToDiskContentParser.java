@@ -15,17 +15,10 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.multipart;
 
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.StringWriter;
+import java.io.*;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -48,7 +41,7 @@ public class OHttpMultipartFileToDiskContentParser implements OHttpMultipartCont
 
   @Override
   public InputStream parse(final OHttpRequest iRequest, final Map<String, String> headers,
-      final OHttpMultipartContentInputStream in, ODatabaseRecord database) throws IOException {
+      final OHttpMultipartContentInputStream in, ODatabaseDocument database) throws IOException {
     final StringWriter buffer = new StringWriter();
     final OJSONWriter json = new OJSONWriter(buffer);
     json.beginObject();

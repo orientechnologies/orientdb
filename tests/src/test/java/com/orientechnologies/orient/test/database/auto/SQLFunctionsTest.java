@@ -19,8 +19,8 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
 import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
@@ -131,7 +131,8 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
 
     ORole byPassRestrictedRole = database.getMetadata().getSecurity()
         .createRole("byPassRestrictedRole", ORole.ALLOW_MODES.DENY_ALL_BUT);
-    byPassRestrictedRole.addRule(ODatabaseSecurityResources.BYPASS_RESTRICTED, ORole.PERMISSION_READ);
+    byPassRestrictedRole.addRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_READ);
+    byPassRestrictedRole.save();
 
     database.getMetadata().getSecurity().createUser("superReader", "superReader", "reader", "byPassRestrictedRole");
 
@@ -164,10 +165,10 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
     database.close();
     database.open("superReader", "superReader");
 
-		result = database.query(new OSQLSynchQuery<ODocument>("select count(*) from QueryCountExtendsRestrictedClass"));
-		count = result.get(0);
-		Assert.assertEquals(2L, count.field("count"));
-	}
+    result = database.query(new OSQLSynchQuery<ODocument>("select count(*) from QueryCountExtendsRestrictedClass"));
+    count = result.get(0);
+    Assert.assertEquals(2L, count.field("count"));
+  }
 
   @Test
   public void queryCountWithConditions() {
@@ -267,7 +268,7 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(myresult.size(), 1);
 
-    Assert.assertTrue(myresult.get(0) instanceof Map);
+    Assert.assertTrue(myresult.get(0) instanceof Map, "The object is: " + myresult.getClass());
     Map map = (Map) myresult.get(0);
 
     String value = (String) map.get("kAA");

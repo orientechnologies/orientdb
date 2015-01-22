@@ -52,6 +52,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.TransactionAtomicTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.TransactionOptimisticTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.TransactionConsistencyTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.TransactionIsolationTest"/>
         </classes>
     </test>
     <test name="Index">
@@ -130,6 +131,7 @@
             <class name="com.orientechnologies.orient.test.database.auto.SQLUpdateTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLDeleteTest"/>
             <class name="com.orientechnologies.orient.test.database.auto.SQLCreateVertexTest"/>
+            <class name="com.orientechnologies.orient.test.database.auto.SQLDeleteEdgeTest"/>
         </classes>
     </test>
     <test name="other-commands">

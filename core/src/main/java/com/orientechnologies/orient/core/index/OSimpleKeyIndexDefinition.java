@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.orient.core.index;
 
@@ -25,9 +25,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.orientechnologies.orient.core.collate.OCollate;
+import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OSQLEngine;
 
 public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
   private OType[] keyTypes;
@@ -37,6 +40,24 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
   }
 
   public OSimpleKeyIndexDefinition() {
+  }
+
+  public OSimpleKeyIndexDefinition(OType[] keyTypes2, List<OCollate> collatesList) {
+    this.keyTypes = keyTypes2;
+    if (keyTypes.length > 1) {
+      OCompositeCollate collate = new OCompositeCollate(this);
+      if (collatesList != null) {
+        for (OCollate oCollate : collatesList) {
+          collate.addCollate(oCollate);
+        }
+      } else {
+        for (OType type : keyTypes) {
+          collate.addCollate(OSQLEngine.getCollate(ODefaultCollate.NAME));
+        }
+      }
+      this.collate = collate;
+    }
+
   }
 
   public List<String> getFields() {
@@ -94,8 +115,15 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
         keyTypeNames.add(keyType.toString());
 
       document.field("keyTypes", keyTypeNames, OType.EMBEDDEDLIST);
-      document.field("collate", collate.getName());
+      if (collate instanceof OCompositeCollate) {
+        List<String> collatesNames = new ArrayList<String>();
+        for (OCollate curCollate : ((OCompositeCollate) this.collate).getCollates())
+          collatesNames.add(curCollate.getName());
+        document.field("collates", collatesNames, OType.EMBEDDEDLIST);
+      } else
+        document.field("collate", collate.getName());
       document.field("nullValuesIgnored", isNullValuesIgnored());
+
       return document;
     } finally {
       document.setInternalStatus(ORecordElement.STATUS.LOADED);
@@ -112,8 +140,17 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
       keyTypes[i] = OType.valueOf(keyTypeName);
       i++;
     }
+    String collate = document.field("collate");
+    if (collate != null) {
+      setCollate(collate);
+    } else {
+      List<String> collatesNames = document.field("collates");
+      OCompositeCollate collates = new OCompositeCollate(this);
+      for (String collateName : collatesNames)
+        collates.addCollate(OSQLEngine.getCollate(collateName));
+      this.collate = collates;
+    }
 
-    setCollate((String) document.field("collate"));
     setNullValuesIgnored(!Boolean.FALSE.equals(document.<Boolean> field("nullValuesIgnored")));
   }
 

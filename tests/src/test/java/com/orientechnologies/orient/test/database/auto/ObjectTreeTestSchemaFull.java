@@ -15,21 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javassist.util.proxy.Proxy;
-
-import org.testng.Assert;
-import org.testng.annotations.*;
-
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.object.OObjectSerializer;
@@ -56,6 +41,24 @@ import com.orientechnologies.orient.test.domain.business.IdentityChild;
 import com.orientechnologies.orient.test.domain.customserialization.Sec;
 import com.orientechnologies.orient.test.domain.customserialization.SecurityRole;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
+import javassist.util.proxy.Proxy;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Test(groups = { "record-object", "treeSchemaFull" }, dependsOnGroups = "physicalSchemaFull")
 public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
@@ -255,7 +258,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
     Profile parent;
     for (Profile r : result) {
 
-      System.out.println(r.getNick());
+//      System.out.println(r.getNick());
 
       parent = r.getInvitedBy();
 
@@ -274,7 +277,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
 
     for (ODocument profile : result) {
 
-      System.out.println(profile.field("name") + " " + profile.field("surname"));
+//      System.out.println(profile.field("name") + " " + profile.field("surname"));
 
       final Collection<ODocument> followers = profile.field("followers");
 
@@ -282,8 +285,8 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
         for (ODocument follower : followers) {
           Assert.assertTrue(((Collection<ODocument>) follower.field("followings")).contains(profile));
 
-          System.out.println("- follower: " + follower.field("name") + " " + follower.field("surname") + " (parent: "
-              + follower.field("name") + " " + follower.field("surname") + ")");
+//          System.out.println("- follower: " + follower.field("name") + " " + follower.field("surname") + " (parent: "
+//              + follower.field("name") + " " + follower.field("surname") + ")");
         }
       }
     }

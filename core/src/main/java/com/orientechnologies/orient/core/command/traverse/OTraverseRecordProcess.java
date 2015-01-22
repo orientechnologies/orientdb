@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAll;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemFieldAny;
@@ -87,7 +88,7 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
         final int pos = cfgField.indexOf('.');
         if (pos > -1) {
           // FOUND <CLASS>.<FIELD>
-          final OClass cls = target.getSchemaClass();
+          final OClass cls = ODocumentInternal.getImmutableSchemaClass(target);
           if (cls == null)
             // JUMP IT BECAUSE NO SCHEMA
             continue;

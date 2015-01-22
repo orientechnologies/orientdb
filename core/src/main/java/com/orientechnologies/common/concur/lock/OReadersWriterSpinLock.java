@@ -1,64 +1,69 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.common.concur.lock;
 
 import com.orientechnologies.common.types.OModifiableInteger;
+import com.orientechnologies.orient.core.OOrientShutdownListener;
+import com.orientechnologies.orient.core.OOrientStartupListener;
+import com.orientechnologies.orient.core.Orient;
 
 import java.util.HashSet;
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.AbstractOwnableSynchronizer;
 import java.util.concurrent.locks.LockSupport;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 8/18/14
  */
-public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
-  private final OThreadCountersHashTable        threadCountersHashTable = new OThreadCountersHashTable();
+public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer implements OOrientStartupListener, OOrientShutdownListener {
+  private final OThreadCountersHashTable           threadCountersHashTable = new OThreadCountersHashTable();
 
-  private final AtomicReference<WNode>          tail                    = new AtomicReference<WNode>();
-  private final ThreadLocal<OModifiableInteger> lockHolds               = new ThreadLocal<OModifiableInteger>() {
-                                                                          @Override
-                                                                          protected OModifiableInteger initialValue() {
-                                                                            return new OModifiableInteger();
-                                                                          }
-                                                                        };
+  private final AtomicReference<WNode>             tail                    = new AtomicReference<WNode>();
+  private volatile ThreadLocal<OModifiableInteger> lockHolds               = new ThreadLocal<OModifiableInteger>() {
+                                                                             @Override
+                                                                             protected OModifiableInteger initialValue() {
+                                                                               return new OModifiableInteger();
+                                                                             }
+                                                                           };
 
-  private final ThreadLocal<WNode>              myNode                  = new ThreadLocal<WNode>() {
-                                                                          @Override
-                                                                          protected WNode initialValue() {
-                                                                            return new WNode();
-                                                                          }
-                                                                        };
-  private final ThreadLocal<WNode>              predNode                = new ThreadLocal<WNode>();
+  private volatile ThreadLocal<WNode>              myNode                  = new ThreadLocal<WNode>() {
+                                                                             @Override
+                                                                             protected WNode initialValue() {
+                                                                               return new WNode();
+                                                                             }
+                                                                           };
+  private volatile ThreadLocal<WNode>              predNode                = new ThreadLocal<WNode>();
 
   public OReadersWriterSpinLock() {
     final WNode wNode = new WNode();
     wNode.locked = false;
 
     tail.set(wNode);
+
+    Orient.instance().registerWeakOrientStartupListener(this);
+    Orient.instance().registerWeakOrientShutdownListener(this);
   }
 
   public void acquireReadLock() {
@@ -80,10 +85,10 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
     while (wNode.locked) {
       threadCountersHashTable.decrement();
 
-      while (wNode.locked) {
+      while (wNode.locked && wNode == tail.get()) {
         wNode.waitingReaders.add(Thread.currentThread());
 
-        if (wNode == tail.get() && wNode.locked)
+        if (wNode.locked && wNode == tail.get())
           LockSupport.park(this);
 
         wNode = tail.get();
@@ -164,18 +169,47 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer {
     if (waitingWriter != null)
       LockSupport.unpark(waitingWriter);
 
-    final Set<Thread> waitingReaders = new HashSet<Thread>();
-
     for (Thread waitingReader : node.waitingReaders) {
-      if (waitingReaders.add(waitingReader))
-        LockSupport.unpark(waitingReader);
+      LockSupport.unpark(waitingReader);
     }
+
+    node.waitingReaders.clear();
 
     myNode.set(predNode.get());
     predNode.set(null);
 
     lHolds.increment();
     assert lHolds.intValue() == 0;
+  }
+
+  @Override
+  public void onShutdown() {
+    lockHolds = null;
+    myNode = null;
+    predNode = null;
+  }
+
+  @Override
+  public void onStartup() {
+    if (lockHolds == null)
+      lockHolds = new ThreadLocal<OModifiableInteger>() {
+        @Override
+        protected OModifiableInteger initialValue() {
+          return new OModifiableInteger();
+        }
+      };
+
+    if (myNode == null)
+      myNode = new ThreadLocal<WNode>() {
+        @Override
+        protected WNode initialValue() {
+          return new WNode();
+        }
+      };
+
+    if (predNode == null)
+      predNode = new ThreadLocal<WNode>();
+
   }
 
   private final static class WNode {

@@ -40,7 +40,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 6/24/14
  */
 public class ODirectMemoryOnlyDiskCache implements ODiskCache {
@@ -247,11 +247,6 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
   }
 
   @Override
-  public Set<ODirtyPage> logDirtyPagesTable() throws IOException {
-    return Collections.emptySet();
-  }
-
-  @Override
   public boolean isOpen(long fileId) {
     return files.get(fileId) != null;
   }
@@ -321,7 +316,7 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
           return cacheEntry;
 
         ODirectMemoryPointer directMemoryPointer = new ODirectMemoryPointer(new byte[pageSize + 2 * ODurablePage.PAGE_PADDING]);
-        OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(0, 0));
+        OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(-1, -1));
         cachePointer.incrementReferrer();
 
         cacheEntry = new OCacheEntry(id, index, cachePointer, false);
@@ -355,7 +350,7 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
 
           final ODirectMemoryPointer directMemoryPointer = new ODirectMemoryPointer(new byte[pageSize + 2
               * ODurablePage.PAGE_PADDING]);
-          final OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(0, 0));
+          final OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(-1, -1));
           cachePointer.incrementReferrer();
 
           cacheEntry = new OCacheEntry(id, index, cachePointer, false);
@@ -391,6 +386,10 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
       }
     }
 
+    private long getUsedMemory() {
+      return content.size();
+    }
+
     private void clear() {
       boolean thereAreNotReleased = false;
 
@@ -420,4 +419,26 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
   @Override
   public void removeLowDiskSpaceListener(OWOWCache.LowDiskSpaceListener listener) {
   }
+
+  @Override
+  public long getUsedMemory() {
+    long totalPages = 0;
+    for (MemoryFile file : files.values())
+      totalPages += file.getUsedMemory();
+
+    return totalPages * (pageSize + 2 * OWOWCache.PAGE_PADDING);
+  }
+
+  @Override
+  public void startFuzzyCheckpoints() {
+  }
+
+	@Override
+	public boolean checkLowDiskSpace() {
+		return true;
+	}
+
+	@Override
+	public void makeFuzzyCheckpoint() {
+	}
 }

@@ -18,7 +18,7 @@ package com.orientechnologies.orient.server.network.protocol.http.multipart;
 import java.io.IOException;
 import java.util.Map;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 
 /**
@@ -27,7 +27,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
  */
 public interface OHttpMultipartContentParser<T> {
 
-  public T parse(OHttpRequest iRequest, Map<String, String> headers, OHttpMultipartContentInputStream in, ODatabaseRecord database)
+  public T parse(OHttpRequest iRequest, Map<String, String> headers, OHttpMultipartContentInputStream in, ODatabaseDocument database)
       throws IOException;
 
 }

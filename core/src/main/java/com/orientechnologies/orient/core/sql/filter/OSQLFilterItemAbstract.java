@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.sql.filter;
 
 import com.orientechnologies.common.parser.OBaseParser;
@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
@@ -54,8 +55,8 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
   }
 
   public OSQLFilterItemAbstract(final OBaseParser iQueryToParse, final String iText) {
-    final List<String> parts = OStringSerializerHelper.smartSplit(iText, new char[] { '.', '[', ']' }, new boolean[] { false, false, true }, new boolean[] { false, true,
-        false },  0, -1, false, true, false, false, new char[] {});
+    final List<String> parts = OStringSerializerHelper.smartSplit(iText, new char[] { '.', '[', ']' }, new boolean[] { false,
+        false, true }, new boolean[] { false, true, false }, 0, -1, false, true, false, false, new char[] {});
 
     setRoot(iQueryToParse, parts.get(0));
 
@@ -125,8 +126,6 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
   public abstract String getRoot();
 
-  protected abstract void setRoot(OBaseParser iQueryToParse, final String iRoot);
-
   public Object transformValue(final OIdentifiable iRecord, final OCommandContext iContext, Object ioResult) {
     if (ioResult != null && operationsChain != null) {
       // APPLY OPERATIONS FOLLOWING THE STACK ORDER
@@ -147,6 +146,13 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
   public boolean hasChainOperators() {
     return operationsChain != null;
+  }
+
+  public OPair<OSQLMethodRuntime, Object[]> getLastChainOperator() {
+    if (operationsChain != null)
+      return operationsChain.get(operationsChain.size() - 1);
+
+    return null;
   }
 
   @Override
@@ -175,9 +181,11 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
     return buffer.toString();
   }
 
+  protected abstract void setRoot(OBaseParser iQueryToParse, final String iRoot);
+
   protected OCollate getCollateForField(final ODocument doc, final String iFieldName) {
-    if (doc.getSchemaClass() != null) {
-      final OProperty p = doc.getSchemaClass().getProperty(iFieldName);
+    if (ODocumentInternal.getImmutableSchemaClass(doc) != null) {
+      final OProperty p = ODocumentInternal.getImmutableSchemaClass(doc).getProperty(iFieldName);
       if (p != null)
         return p.getCollate();
     }

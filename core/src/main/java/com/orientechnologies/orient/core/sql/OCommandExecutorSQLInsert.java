@@ -1,32 +1,34 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -40,6 +42,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +61,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
   protected static final String          KEYWORD_RETURN   = "RETURN";
   private static final String            KEYWORD_VALUES   = "VALUES";
   private String                         className        = null;
+  private OClass                         clazz            = null;
   private String                         clusterName      = null;
   private String                         indexName        = null;
   private List<Map<String, Object>>      newRecords;
@@ -65,12 +69,13 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
   private AtomicLong                     saved            = new AtomicLong(0);
   private Object                         returnExpression = null;
   private List<ODocument>                queryResult      = null;
+  private boolean                        unsafe           = false;
 
 
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLInsert parse(final OCommandRequest iRequest) {
-    final ODatabaseRecord database = getDatabase();
+    final ODatabaseDocument database = getDatabase();
 
     testNewParser(iRequest);
 
@@ -79,6 +84,12 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     className = null;
     newRecords = null;
     content = null;
+
+    if (parserTextUpperCase.endsWith(KEYWORD_UNSAFE)) {
+      unsafe = true;
+      parserText = parserText.substring(0, parserText.length() - KEYWORD_UNSAFE.length() - 1);
+      parserTextUpperCase = parserTextUpperCase.substring(0, parserTextUpperCase.length() - KEYWORD_UNSAFE.length() - 1);
+    }
 
     parserRequiredKeyword("INSERT");
     parserRequiredKeyword("INTO");
@@ -97,11 +108,19 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
       if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
         subjectName = subjectName.substring(OCommandExecutorSQLAbstract.CLASS_PREFIX.length());
 
-      final OClass cls = database.getMetadata().getSchema().getClass(subjectName);
+      final OClass cls = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(subjectName);
       if (cls == null)
         throwParsingException("Class " + subjectName + " not found in database");
 
+      if (!unsafe && cls.isSubClassOf("E"))
+        // FOUND EDGE
+        throw new OCommandExecutionException(
+            "'INSERT' command cannot create Edges. Use 'CREATE EDGE' command instead, or apply the 'UNSAFE' keyword to force it");
+
       className = cls.getName();
+      clazz = database.getMetadata().getSchema().getClass(className);
+      if (clazz == null)
+        throw new OQueryParsingException("Class '" + className + "' was not found");
     }
 
     parserSkipWhiteSpaces();
@@ -134,7 +153,7 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
       } else if (parserGetLastWord().equals(KEYWORD_SET)) {
         final LinkedHashMap<String, Object> fields = new LinkedHashMap<String, Object>();
         newRecords.add(fields);
-        parseSetFields(fields);
+        parseSetFields(clazz, fields);
         sourceClauseProcessed = true;
       }
     }
@@ -173,17 +192,19 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
         throw new OCommandExecutionException("Target index '" + indexName + "' not found");
 
       // BIND VALUES
-      Map<String, Object> result = null;
+      Map<String, Object> result = new HashMap<String, Object>();
 
       for (Map<String, Object> candidate : newRecords) {
-        index.put(getIndexKeyValue(commandParameters, candidate), getIndexValue(commandParameters, candidate));
-        result = candidate;
+        Object indexKey = getIndexKeyValue(commandParameters, candidate);
+        OIdentifiable indexValue = getIndexValue(commandParameters, candidate);
+        index.put(indexKey, indexValue);
+        result.put(KEYWORD_KEY, indexKey);
+        result.put(KEYWORD_RID, indexValue);
       }
 
       // RETURN LAST ENTRY
       return prepareReturnItem(new ODocument(result));
     } else {
-
       // CREATE NEW DOCUMENTS
       final List<ODocument> docs = new ArrayList<ODocument>();
       if (newRecords != null) {
@@ -223,8 +244,8 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
   @Override
   public Set<String> getInvolvedClusters() {
     if (className != null) {
-      final OClass clazz = getDatabase().getMetadata().getSchema().getClass(className);
-      return Collections.singleton(getDatabase().getClusterNameById(clazz.getClusterSelection().getCluster(clazz)));
+      final OClass clazz = ((OMetadataInternal) getDatabase().getMetadata()).getImmutableSchemaSnapshot().getClass(className);
+      return Collections.singleton(getDatabase().getClusterNameById(clazz.getClusterSelection().getCluster(clazz, null)));
     } else if (clusterName != null)
       return getInvolvedClustersOfClusters(Collections.singleton(clusterName));
 

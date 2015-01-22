@@ -56,7 +56,7 @@ public class ORemoteConnectionManager implements OChannelListener {
 
   public void close() {
     for (Map.Entry<String, OResourcePool<String, OChannelBinaryAsynchClient>> entry : connections.entrySet()) {
-      entry.getValue().close();
+      closePool(entry.getValue());
     }
 
     connections.clear();
@@ -197,6 +197,7 @@ public class ORemoteConnectionManager implements OChannelListener {
         c.close();
       } catch (Exception e) {
       }
+    pool.close();
   }
 
   protected OChannelBinaryAsynchClient createNetworkConnection(String iServerURL, final OContextConfiguration clientConfiguration,

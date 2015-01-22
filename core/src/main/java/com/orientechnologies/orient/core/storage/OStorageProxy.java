@@ -26,4 +26,5 @@ package com.orientechnologies.orient.core.storage;
  * 
  */
 public interface OStorageProxy extends OStorage {
+	public String getUserName();
 }

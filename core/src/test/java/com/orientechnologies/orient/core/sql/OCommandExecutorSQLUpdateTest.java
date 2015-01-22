@@ -45,4 +45,42 @@ public class OCommandExecutorSQLUpdateTest {
 
     db.close();
   }
+
+  @Test
+  public void testUpdateContent() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestContent");
+    db.create();
+    try {
+      db.command(new OCommandSQL("CREATE class V")).execute();
+      db.command(new OCommandSQL("insert into V (name) values ('bar')")).execute();
+      db.command(new OCommandSQL("UPDATE V content {\"value\":\"foo\"}")).execute();
+      Iterable result = db.query(new OSQLSynchQuery<Object>("select from V"));
+      ODocument doc = (ODocument) result.iterator().next();
+      assertEquals(doc.field("value"), "foo");
+    } finally {
+      db.close();
+    }
+  }
+
+  @Test
+  public void testUpdateContentParse() throws Exception {
+    final ODatabaseDocumentTx db = new ODatabaseDocumentTx("memory:OCommandExecutorSQLUpdateTestContentParse");
+    db.create();
+    try {
+      db.command(new OCommandSQL("CREATE class V")).execute();
+      db.command(new OCommandSQL("insert into V (name) values ('bar')")).execute();
+      db.command(new OCommandSQL("UPDATE V content {\"value\":\"foo\\\\\"}")).execute();
+      Iterable result = db.query(new OSQLSynchQuery<Object>("select from V"));
+      ODocument doc = (ODocument) result.iterator().next();
+      assertEquals(doc.field("value"), "foo\\");
+
+      db.command(new OCommandSQL("UPDATE V content {\"value\":\"foo\\\\\\\\\"}")).execute();
+
+      result = db.query(new OSQLSynchQuery<Object>("select from V"));
+      doc = (ODocument) result.iterator().next();
+      assertEquals(doc.field("value"), "foo\\\\");
+    } finally {
+      db.close();
+    }
+  }
 }

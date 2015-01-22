@@ -1,34 +1,32 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.iterator;
 
-import java.util.Arrays;
-import java.util.NoSuchElementException;
-
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.util.Arrays;
+import java.util.NoSuchElementException;
 
 /**
  * Iterator to browse multiple clusters forward and backward. Once browsed in a direction, the iterator cannot change it. This
@@ -46,7 +44,7 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
   protected ORID    beginRange;
   protected ORID    endRange;
 
-  public ORecordIteratorClusters(final ODatabaseRecordInternal iDatabase, final ODatabaseRecordInternal iLowLevelDatabase,
+  public ORecordIteratorClusters(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
       final int[] iClusterIds, final boolean iUseCache, final boolean iterateThroughTombstones,
       final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
@@ -57,7 +55,7 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
     config();
   }
 
-  protected ORecordIteratorClusters(final ODatabaseRecordInternal iDatabase, final ODatabaseRecordInternal iLowLevelDatabase,
+  protected ORecordIteratorClusters(final ODatabaseDocumentInternal iDatabase, final ODatabaseDocumentInternal iLowLevelDatabase,
       final boolean iUseCache, final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
   }
@@ -170,19 +168,9 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
     return false;
   }
 
-  private boolean outsideOfTheRange(ORID orid) {
-    if (beginRange != null && orid.compareTo(beginRange) < 0)
-      return true;
-
-    if (endRange != null && orid.compareTo(endRange) > 0)
-      return true;
-
-    return false;
-  }
-
   /**
    * Return the element at the current position and move forward the cursor to the next position available.
-   * 
+   *
    * @return the next record found, otherwise the NoSuchElementException exception is thrown when no more records are found.
    */
   @SuppressWarnings("unchecked")
@@ -229,7 +217,7 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
 
   /**
    * Return the element at the current position and move backward the cursor to the previous position available.
-   * 
+   *
    * @return the previous record found, otherwise the NoSuchElementException exception is thrown when no more records are found.
    */
   @SuppressWarnings("unchecked")
@@ -273,13 +261,9 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
     return null;
   }
 
-  protected boolean include(final ORecord iRecord) {
-    return true;
-  }
-
   /**
    * Move the iterator to the begin of the range. If no range was specified move to the first record of the cluster.
-   * 
+   *
    * @return The object itself
    */
   @Override
@@ -310,7 +294,7 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
 
   /**
    * Move the iterator to the end of the range. If no range was specified move to the last record of the cluster.
-   * 
+   *
    * @return The object itself
    */
   @Override
@@ -342,7 +326,7 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
   /**
    * Tell to the iterator that the upper limit must be checked at every cycle. Useful when concurrent deletes or additions change
    * the size of the cluster while you're browsing it. Default is false.
-   * 
+   *
    * @param iLiveUpdated
    *          True to activate it, otherwise false (default)
    * @see #isLiveUpdated()
@@ -352,8 +336,8 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
     super.setLiveUpdated(iLiveUpdated);
 
     if (iLiveUpdated) {
-      firstClusterEntry = OClusterPositionFactory.INSTANCE.valueOf(0);
-      lastClusterEntry = OClusterPositionFactory.INSTANCE.getMaxValue();
+      firstClusterEntry = 0;
+      lastClusterEntry = Long.MAX_VALUE;
     } else {
       updateClusterRange();
     }
@@ -361,20 +345,29 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
     return this;
   }
 
+  @Override
+  public String toString() {
+    return String.format("ORecordIteratorCluster.clusters(%s).currentRecord(%s).range(%s-%s)", Arrays.toString(clusterIds),
+        currentRecord, beginRange, endRange);
+  }
+
+  protected boolean include(final ORecord iRecord) {
+    return true;
+  }
+
   protected void updateClusterRange() {
     if (clusterIds.length == 0)
       return;
 
     current.clusterId = clusterIds[currentClusterIdx];
-    final OClusterPosition[] range = database.getStorage().getClusterDataRange(current.clusterId);
+    final long[] range = database.getStorage().getClusterDataRange(current.clusterId);
 
-    if (beginRange != null && beginRange.getClusterId() == current.clusterId
-        && beginRange.getClusterPosition().compareTo(range[0]) > 0)
+    if (beginRange != null && beginRange.getClusterId() == current.clusterId && beginRange.getClusterPosition() > range[0])
       firstClusterEntry = beginRange.getClusterPosition();
     else
       firstClusterEntry = range[0];
 
-    if (endRange != null && endRange.getClusterId() == current.clusterId && endRange.getClusterPosition().compareTo(range[1]) < 0)
+    if (endRange != null && endRange.getClusterId() == current.clusterId && endRange.getClusterPosition() < range[1])
       lastClusterEntry = endRange.getClusterPosition();
     else
       lastClusterEntry = range[1];
@@ -397,7 +390,7 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
     if (txEntries != null)
       // ADJUST TOTAL ELEMENT BASED ON CURRENT TRANSACTION'S ENTRIES
       for (ORecordOperation entry : txEntries) {
-        if (entry.getRecord().getIdentity().isTemporary() && entry.type != ORecordOperation.DELETED)
+        if (!entry.getRecord().getIdentity().isPersistent() && entry.type != ORecordOperation.DELETED)
           totalAvailableRecords++;
         else if (entry.type == ORecordOperation.DELETED)
           totalAvailableRecords--;
@@ -406,9 +399,13 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
     begin();
   }
 
-  @Override
-  public String toString() {
-    return String.format("ORecordIteratorCluster.clusters(%s).currentRecord(%s).range(%s-%s)", Arrays.toString(clusterIds),
-        currentRecord, beginRange, endRange);
+  private boolean outsideOfTheRange(ORID orid) {
+    if (beginRange != null && orid.compareTo(beginRange) < 0)
+      return true;
+
+    if (endRange != null && orid.compareTo(endRange) > 0)
+      return true;
+
+    return false;
   }
 }

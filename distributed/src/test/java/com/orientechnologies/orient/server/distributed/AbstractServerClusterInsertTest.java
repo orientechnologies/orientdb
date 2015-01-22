@@ -16,12 +16,13 @@
 
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -30,6 +31,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
+
 import junit.framework.Assert;
 
 import java.util.ArrayList;
@@ -56,6 +58,8 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
   protected OIndex<?>        idx;
   protected CountDownLatch   runningWriters;
 
+	private final OPartitionedDatabasePoolFactory poolFactory = new OPartitionedDatabasePoolFactory();
+
   class Writer implements Callable<Void> {
     private final String databaseUrl;
     private int          serverId;
@@ -71,7 +75,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
     public Void call() throws Exception {
       String name = Integer.toString(threadId);
       for (int i = 0; i < count; i++) {
-        final ODatabaseDocumentTx database = ODatabaseDocumentPool.global().acquire(databaseUrl, "admin", "admin");
+        final ODatabaseDocumentTx database = poolFactory.get(databaseUrl, "admin", "admin").acquire();
         try {
           if ((i + 1) % 100 == 0)
             System.out.println("\nWriter " + database.getURL() + " managed " + (i + 1) + "/" + count + " records so far");
@@ -102,7 +106,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
     }
 
     private ODocument createRecord(ODatabaseDocumentTx database, int i) {
-      final int uniqueId = count * threadId + i;
+      final String uniqueId = serverId + "-" + threadId + "-" + i;
 
       ODocument person = new ODocument("Person").fields("id", UUID.randomUUID().toString(), "name", "Billy" + uniqueId, "surname",
           "Mayes" + uniqueId, "birthday", new Date(), "children", uniqueId);
@@ -134,7 +138,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
     }
 
     private ODocument loadRecord(ODatabaseDocumentTx database, int i) {
-      final int uniqueId = count * threadId + i;
+      final String uniqueId = serverId + "-" + threadId + "-" + i;
 
       List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Person where name = 'Billy" + uniqueId
           + "'"));
@@ -180,7 +184,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
 
   public void executeTest() throws Exception {
 
-    ODatabaseDocumentTx database = ODatabaseDocumentPool.global().acquire(getDatabaseURL(serverInstance.get(0)), "admin", "admin");
+    ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(serverInstance.get(0)), "admin", "admin").acquire();
     try {
       new ODocument("Customer").fields("name", "Jay", "surname", "Miner").save();
       new ODocument("Customer").fields("name", "Luke", "surname", "Skywalker").save();
@@ -271,7 +275,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
     personClass.createProperty("id", OType.STRING);
     personClass.createProperty("name", OType.STRING);
     personClass.createProperty("birthday", OType.DATE);
-    personClass.createProperty("children", OType.INTEGER);
+    personClass.createProperty("children", OType.STRING);
 
     final OSchema schema = db.getRawGraph().getMetadata().getSchema();
     OClass person = schema.getClass("Person");
@@ -286,7 +290,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
 
   protected void dropIndexNode1() {
     ServerRun server = serverInstance.get(0);
-    ODatabaseDocumentTx database = ODatabaseDocumentPool.global().acquire(getDatabaseURL(server), "admin", "admin");
+    ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
     try {
       Object result = database.command(new OCommandSQL("drop index Person.name")).execute();
       System.out.println("dropIndexNode1: Node1 drop index: " + result);
@@ -296,7 +300,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
 
     // CHECK ON NODE 1
     server = serverInstance.get(1);
-    database = ODatabaseDocumentPool.global().acquire(getDatabaseURL(server), "admin", "admin");
+    database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
     try {
       database.getMetadata().getIndexManager().reload();
       Assert.assertNull(database.getMetadata().getIndexManager().getIndex("Person.name"));
@@ -309,7 +313,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
   protected void recreateIndexNode2() {
     // RE-CREATE INDEX ON NODE 1
     ServerRun server = serverInstance.get(1);
-    ODatabaseDocumentTx database = ODatabaseDocumentPool.global().acquire(getDatabaseURL(server), "admin", "admin");
+    ODatabaseDocumentTx database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
     try {
       Object result = database.command(new OCommandSQL("create index Person.name on Person (name) unique")).execute();
       System.out.println("recreateIndexNode2: Node2 created index: " + result);
@@ -320,7 +324,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
 
     // CHECK ON NODE 1
     server = serverInstance.get(0);
-    database = ODatabaseDocumentPool.global().acquire(getDatabaseURL(server), "admin", "admin");
+    database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
     try {
       final long indexSize = database.getMetadata().getIndexManager().getIndex("Person.name").getSize();
       Assert.assertEquals(expected, indexSize);
@@ -333,7 +337,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
   protected void checkIndexedEntries() {
     ODatabaseDocumentTx database;
     for (ServerRun server : serverInstance) {
-      database = ODatabaseDocumentPool.global().acquire(getDatabaseURL(server), "admin", "admin");
+      database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
       try {
         final long indexSize = database.getMetadata().getIndexManager().getIndex("Person.name").getSize();
 
@@ -364,7 +368,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
     ODatabaseDocumentTx database;
     int i;
     for (ServerRun server : serverInstance) {
-      database = ODatabaseDocumentPool.global().acquire(getDatabaseURL(server), "admin", "admin");
+      database = poolFactory.get(getDatabaseURL(server), "admin", "admin").acquire();
       try {
         List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
         final long total = result.get(0).field("count");
@@ -390,7 +394,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
   }
 
   private void printStats(final String databaseUrl) {
-    final ODatabaseDocumentTx database = ODatabaseDocumentPool.global().acquire(databaseUrl, "admin", "admin");
+    final ODatabaseDocumentTx database = poolFactory.get(databaseUrl, "admin", "admin").acquire();
     try {
       List<ODocument> result = database.query(new OSQLSynchQuery<OIdentifiable>("select count(*) from Person"));
 
@@ -399,7 +403,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
       System.out.println("\nReader " + name + " sql count: " + result.get(0) + " counting class: " + database.countClass("Person")
           + " counting cluster: " + database.countClusterElements("Person"));
 
-      if (database.getMetadata().getSchema().existsClass("ODistributedConflict"))
+      if (((OMetadataInternal)database.getMetadata()).getImmutableSchemaSnapshot().existsClass("ODistributedConflict"))
         try {
           List<ODocument> conflicts = database
               .query(new OSQLSynchQuery<OIdentifiable>("select count(*) from ODistributedConflict"));

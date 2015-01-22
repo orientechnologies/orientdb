@@ -19,28 +19,19 @@
   */
 package com.orientechnologies.orient.core.db.tool;
 
-import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexKeyCursor;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -52,6 +43,14 @@ import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
+
+import static com.orientechnologies.orient.core.record.impl.ODocumentHelper.makeDbCall;
 
 public class ODatabaseCompare extends ODatabaseImpExpAbstract {
   private OStorage              storage1;
@@ -186,8 +185,8 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
   }
 
   private void compareSchama() {
-    OSchema schema1 = databaseDocumentTxOne.getMetadata().getSchema();
-    OSchema schema2 = databaseDocumentTxTwo.getMetadata().getSchema();
+    OSchema schema1 = ((OMetadataInternal)databaseDocumentTxOne.getMetadata()).getImmutableSchemaSnapshot();
+    OSchema schema2 = ((OMetadataInternal)databaseDocumentTxTwo.getMetadata()).getImmutableSchemaSnapshot();
     boolean ok = true;
     for (OClass clazz : schema1.getClasses()) {
       OClass clazz2 = schema2.getClass(clazz.getName());
@@ -238,6 +237,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
           listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as missed property " + prop.getName()
               + "in DB2.");
           ok = false;
+          continue;
         }
         if (prop.getType() != prop2.getType()) {
           listener.onMessage("\n- ERR: Class definition for " + clazz.getName() + " as not same type for property "
@@ -637,11 +637,11 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
       clusterId = storage1.getClusterIdByName(clusterName);
 
-      OClusterPosition[] db1Range = storage1.getClusterDataRange(clusterId);
-      OClusterPosition[] db2Range = storage2.getClusterDataRange(clusterId);
+      final long[] db1Range = storage1.getClusterDataRange(clusterId);
+      final long[] db2Range = storage2.getClusterDataRange(clusterId);
 
-      final OClusterPosition db1Max = db1Range[1];
-      final OClusterPosition db2Max = db2Range[1];
+      final long db1Max = db1Range[1];
+      final long db2Max = db2Range[1];
 
       ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocumentTxOne);
       final ODocument doc1 = new ODocument();
@@ -651,24 +651,24 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       final ORecordId rid = new ORecordId(clusterId);
 
       // TODO why this maximums can be different?
-      final OClusterPosition clusterMax = db1Max.compareTo(db2Max) > 0 ? db1Max : db2Max;
+      final long clusterMax = Math.max(db1Max, db2Max);
 
       final OStorage storage;
 
-      if (clusterMax.equals(db1Max))
+      if (clusterMax==db1Max)
         storage = storage1;
       else
         storage = storage2;
 
       OPhysicalPosition[] physicalPositions = storage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(
-          OClusterPositionFactory.INSTANCE.valueOf(0)));
+          0));
 
       long recordsCounter = 0;
       while (physicalPositions.length > 0) {
         for (OPhysicalPosition physicalPosition : physicalPositions) {
           recordsCounter++;
 
-          final OClusterPosition position = physicalPosition.clusterPosition;
+          final long position = physicalPosition.clusterPosition;
           rid.clusterPosition = position;
 
           if (isDocumentDatabases() && rid.equals(new ORecordId(storage1.getConfiguration().indexMgrRecordId))

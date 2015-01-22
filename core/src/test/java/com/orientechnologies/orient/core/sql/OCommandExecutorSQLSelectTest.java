@@ -1,8 +1,6 @@
 package com.orientechnologies.orient.core.sql;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 import java.util.List;
 
@@ -88,6 +86,14 @@ public class OCommandExecutorSQLSelectTest {
     db.command(new OCommandSQL("drop class foo")).execute();
     db.getMetadata().getSchema().reload();
     db.close();
+  }
+
+  @Test
+  public void testUseIndexWithOrderBy2() throws Exception {
+    long idxUsagesBefore = indexUsages(db);
+
+    List<ODocument> qResult = db.command(new OCommandSQL("select * from foo where address.city = 'NY' order by name ASC")).execute();
+    assertEquals(qResult.size(), 1);
   }
 
   @Test
@@ -282,33 +288,31 @@ public class OCommandExecutorSQLSelectTest {
     assertEquals(qResult.get(0).field("city"), "NY");
   }
 
-
   @Test
   public void testOrderByRid() {
     List<ODocument> qResult = db.command(new OCommandSQL("select from ridsorttest order by @rid ASC")).execute();
-    assertTrue(qResult.size()>0);
+    assertTrue(qResult.size() > 0);
 
     ODocument prev = qResult.get(0);
-    for(int i=1;i<qResult.size();i++){
+    for (int i = 1; i < qResult.size(); i++) {
       assertTrue(prev.getIdentity().compareTo(qResult.get(i).getIdentity()) <= 0);
       prev = qResult.get(i);
     }
 
-
     qResult = db.command(new OCommandSQL("select from ridsorttest order by @rid DESC")).execute();
-    assertTrue(qResult.size()>0);
+    assertTrue(qResult.size() > 0);
 
     prev = qResult.get(0);
-    for(int i=1;i<qResult.size();i++){
+    for (int i = 1; i < qResult.size(); i++) {
       assertTrue(prev.getIdentity().compareTo(qResult.get(i).getIdentity()) >= 0);
       prev = qResult.get(i);
     }
 
     qResult = db.command(new OCommandSQL("select from ridsorttest where name > 3 order by @rid DESC")).execute();
-    assertTrue(qResult.size()>0);
+    assertTrue(qResult.size() > 0);
 
     prev = qResult.get(0);
-    for(int i=1;i<qResult.size();i++){
+    for (int i = 1; i < qResult.size(); i++) {
       assertTrue(prev.getIdentity().compareTo(qResult.get(i).getIdentity()) >= 0);
       prev = qResult.get(i);
     }

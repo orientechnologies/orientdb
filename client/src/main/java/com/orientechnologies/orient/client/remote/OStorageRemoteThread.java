@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.client.remote;
 
 import com.orientechnologies.common.concur.resource.OSharedResourceAdaptiveExternal;
@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -64,6 +63,7 @@ public class OStorageRemoteThread implements OStorageProxy {
   private final OStorageRemote delegate;
   private String               serverURL;
   private int                  sessionId;
+  private byte[]               token;
 
   public OStorageRemoteThread(final OStorageRemote iSharedStorage) {
     delegate = iSharedStorage;
@@ -75,6 +75,10 @@ public class OStorageRemoteThread implements OStorageProxy {
     delegate = iSharedStorage;
     serverURL = null;
     sessionId = iSessionId;
+  }
+
+  public static int getNextConnectionId() {
+    return sessionSerialId.decrementAndGet();
   }
 
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iOptions) {
@@ -151,10 +155,11 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  public void setSessionId(final String iServerURL, final int iSessionId) {
+  public void setSessionId(final String iServerURL, final int iSessionId, byte[] iToken) {
     serverURL = iServerURL;
     sessionId = iSessionId;
-    delegate.setSessionId(serverURL, iSessionId);
+    token = iToken;
+    delegate.setSessionId(serverURL, iSessionId, iToken);
   }
 
   public void reload() {
@@ -231,13 +236,11 @@ public class OStorageRemoteThread implements OStorageProxy {
     throw new UnsupportedOperationException("restore");
   }
 
-  public OStorageOperationResult<OPhysicalPosition> createRecord(final ORecordId iRid,
-																																 final byte[] iContent, ORecordVersion iRecordVersion, final byte iRecordType, final int iMode,
-																																 ORecordCallback<OClusterPosition> iCallback) {
+  public OStorageOperationResult<OPhysicalPosition> createRecord(final ORecordId iRid, final byte[] iContent,
+      ORecordVersion iRecordVersion, final byte iRecordType, final int iMode, ORecordCallback<Long> iCallback) {
     pushSession();
     try {
-      return delegate.createRecord(iRid, iContent, OVersionFactory.instance().createVersion(), iRecordType, iMode,
-							iCallback);
+      return delegate.createRecord(iRid, iContent, OVersionFactory.instance().createVersion(), iRecordType, iMode, iCallback);
     } finally {
       popSession();
     }
@@ -309,16 +312,6 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   @Override
-  public <V> V callInRecordLock(Callable<V> iCallable, ORID rid, boolean iExclusiveLock) {
-    pushSession();
-    try {
-      return delegate.callInRecordLock(iCallable, rid, iExclusiveLock);
-    } finally {
-      popSession();
-    }
-  }
-
-  @Override
   public boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode, ORecordCallback<Boolean> callback) {
     pushSession();
     try {
@@ -358,15 +351,10 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   public String toString() {
-    pushSession();
-    try {
-      return delegate.toString();
-    } finally {
-      popSession();
-    }
+    return delegate.toString();
   }
 
-  public OClusterPosition[] getClusterDataRange(final int iClusterId) {
+  public long[] getClusterDataRange(final int iClusterId) {
     pushSession();
     try {
       return delegate.getClusterDataRange(iClusterId);
@@ -496,8 +484,7 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  public int addCluster(final String iClusterName,
-												boolean forceListBased, final Object... iArguments) {
+  public int addCluster(final String iClusterName, boolean forceListBased, final Object... iArguments) {
     pushSession();
     try {
       return delegate.addCluster(iClusterName, false, iArguments);
@@ -506,12 +493,10 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  public int addCluster(String iClusterName, int iRequestedId,
-												boolean forceListBased, Object... iParameters) {
+  public int addCluster(String iClusterName, int iRequestedId, boolean forceListBased, Object... iParameters) {
     pushSession();
     try {
-      return delegate
-          .addCluster(iClusterName, iRequestedId, forceListBased, iParameters);
+      return delegate.addCluster(iClusterName, iRequestedId, forceListBased, iParameters);
     } finally {
       popSession();
     }
@@ -589,10 +574,10 @@ public class OStorageRemoteThread implements OStorageProxy {
     }
   }
 
-  public void updateClusterConfiguration(final byte[] iContent) {
+  public void updateClusterConfiguration(final String iCurrentURL, final byte[] iContent) {
     pushSession();
     try {
-      delegate.updateClusterConfiguration(iContent);
+      delegate.updateClusterConfiguration(iCurrentURL, iContent);
     } finally {
       popSession();
     }
@@ -608,7 +593,7 @@ public class OStorageRemoteThread implements OStorageProxy {
   }
 
   public boolean isClosed() {
-    return delegate.isClosed();
+    return (sessionId < 0 && token == null) || delegate.isClosed();
   }
 
   public boolean checkForRecordValidity(final OPhysicalPosition ppos) {
@@ -618,6 +603,11 @@ public class OStorageRemoteThread implements OStorageProxy {
     } finally {
       popSession();
     }
+  }
+
+  @Override
+  public boolean isAssigningClusterIds() {
+    return false;
   }
 
   public String getName() {
@@ -668,10 +658,6 @@ public class OStorageRemoteThread implements OStorageProxy {
     return delegate.getClusterConfiguration();
   }
 
-  protected void handleException(final OChannelBinaryAsynchClient iNetwork, final String iMessage, final Exception iException) {
-    delegate.handleException(iNetwork, iMessage, iException);
-  }
-
   public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
     return delegate.callInLock(iCallable, iExclusiveLock);
   }
@@ -688,10 +674,6 @@ public class OStorageRemoteThread implements OStorageProxy {
     delegate.removeRemoteServerEventListener();
   }
 
-  public static int getNextConnectionId() {
-    return sessionSerialId.decrementAndGet();
-  }
-
   @Override
   public void checkForClusterPermissions(final String iClusterName) {
     delegate.checkForClusterPermissions(iClusterName);
@@ -699,6 +681,11 @@ public class OStorageRemoteThread implements OStorageProxy {
 
   public STATUS getStatus() {
     return delegate.getStatus();
+  }
+
+  @Override
+  public String getUserName() {
+    return delegate.getUserName();
   }
 
   @Override
@@ -717,12 +704,18 @@ public class OStorageRemoteThread implements OStorageProxy {
     return false;
   }
 
+  protected void handleException(final OChannelBinaryAsynchClient iNetwork, final String iMessage, final Exception iException) {
+    delegate.handleException(iNetwork, iMessage, iException);
+  }
+
   protected void pushSession() {
-    delegate.setSessionId(serverURL, sessionId);
+    delegate.setSessionId(serverURL, sessionId, token);
   }
 
   protected void popSession() {
     serverURL = delegate.getServerURL();
     sessionId = delegate.getSessionId();
+    token = delegate.getSessionToken();
+    // delegate.clearSession();
   }
 }

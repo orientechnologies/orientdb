@@ -16,28 +16,25 @@
  */
 package com.orientechnologies.orient.object.metadata.schema;
 
+import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import javassist.util.proxy.Proxy;
+
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.reflection.OReflectionHelper;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.schema.*;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
 import com.orientechnologies.orient.object.enhancement.OObjectEntitySerializer;
-import javassist.util.proxy.Proxy;
-
-import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author luca.molino
@@ -49,6 +46,11 @@ public class OSchemaProxyObject implements OSchema {
 
   public OSchemaProxyObject(OSchema iUnderlying) {
     underlying = iUnderlying;
+  }
+
+  @Override
+  public OImmutableSchema makeSnapshot() {
+    return underlying.makeSnapshot();
   }
 
   @Override
@@ -191,6 +193,16 @@ public class OSchemaProxyObject implements OSchema {
     return underlying.getClusterSelectionFactory();
   }
 
+  @Override
+  public boolean isFullCheckpointOnChange() {
+    return underlying.isFullCheckpointOnChange();
+  }
+
+  @Override
+  public void setFullCheckpointOnChange(boolean fullCheckpointOnChange) {
+    underlying.setFullCheckpointOnChange(fullCheckpointOnChange);
+  }
+
   /**
    * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
    * 
@@ -237,7 +249,7 @@ public class OSchemaProxyObject implements OSchema {
    * @param iClass
    *          :- the Class<?> to generate
    */
-  public synchronized void generateSchema(final Class<?> iClass, ODatabaseRecord database) {
+  public synchronized void generateSchema(final Class<?> iClass, ODatabaseDocument database) {
     if (iClass == null || iClass.isInterface() || iClass.isPrimitive() || iClass.isEnum() || iClass.isAnonymousClass())
       return;
     OObjectEntitySerializer.registerClass(iClass);
@@ -373,7 +385,7 @@ public class OSchemaProxyObject implements OSchema {
     }
   }
 
-  protected static void generateOClass(Class<?> iClass, ODatabaseRecord database) {
+  protected static void generateOClass(Class<?> iClass, ODatabaseDocument database) {
     boolean reloadSchema = false;
     for (Class<?> currentClass = iClass; currentClass != Object.class;) {
       String iClassName = currentClass.getSimpleName();
@@ -409,7 +421,7 @@ public class OSchemaProxyObject implements OSchema {
     }
   }
 
-  protected static void generateLinkProperty(ODatabaseRecord database, OClass schema, String field, OType t, Class<?> linkedClazz) {
+  protected static void generateLinkProperty(ODatabaseDocument database, OClass schema, String field, OType t, Class<?> linkedClazz) {
     OClass linkedClass = database.getMetadata().getSchema().getClass(linkedClazz);
     if (linkedClass == null) {
       OObjectEntitySerializer.registerClass(linkedClazz);

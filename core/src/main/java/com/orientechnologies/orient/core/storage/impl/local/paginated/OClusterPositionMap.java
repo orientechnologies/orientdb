@@ -1,39 +1,38 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import java.io.IOException;
-import java.util.Arrays;
-
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.id.OClusterPosition;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurableComponent;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
+import java.io.IOException;
+import java.util.Arrays;
+
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 10/7/13
  */
 public class OClusterPositionMap extends ODurableComponent {
@@ -130,7 +129,7 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
-  public OClusterPosition add(long pageIndex, int recordPosition) throws IOException {
+  public long add(long pageIndex, int recordPosition) throws IOException {
     acquireExclusiveLock();
     try {
       long lastPage = diskCache.getFilledUpTo(fileId) - 1;
@@ -161,8 +160,7 @@ public class OClusterPositionMap extends ODurableComponent {
         }
 
         final long index = bucket.add(pageIndex, recordPosition);
-        final OClusterPosition result = OClusterPositionFactory.INSTANCE.valueOf(index + cacheEntry.getPageIndex()
-            * OClusterPositionMapBucket.MAX_ENTRIES);
+        final long result = index + cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES;
 
         logPageChanges(bucket, fileId, cacheEntry.getPageIndex(), isNewPage);
         cacheEntry.markDirty();
@@ -181,13 +179,11 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
-  public OClusterPositionMapBucket.PositionEntry get(OClusterPosition clusterPosition) throws IOException {
+  public OClusterPositionMapBucket.PositionEntry get(final long clusterPosition) throws IOException {
     acquireSharedLock();
     try {
-      final long position = clusterPosition.longValue();
-
-      long pageIndex = position / OClusterPositionMapBucket.MAX_ENTRIES;
-      int index = (int) (position % OClusterPositionMapBucket.MAX_ENTRIES);
+      long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
+      int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
 
       if (pageIndex >= diskCache.getFilledUpTo(fileId))
         return null;
@@ -204,13 +200,11 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
-  public OClusterPositionMapBucket.PositionEntry remove(OClusterPosition clusterPosition) throws IOException {
+  public OClusterPositionMapBucket.PositionEntry remove(final long clusterPosition) throws IOException {
     acquireExclusiveLock();
     try {
-      final long position = clusterPosition.longValue();
-
-      long pageIndex = position / OClusterPositionMapBucket.MAX_ENTRIES;
-      int index = (int) (position % OClusterPositionMapBucket.MAX_ENTRIES);
+      long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
+      int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
 
       final OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
       cacheEntry.acquireExclusiveLock();
@@ -242,35 +236,33 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
-  public OClusterPosition[] higherPositions(OClusterPosition clusterPosition) throws IOException {
+  public long[] higherPositions(final long clusterPosition) throws IOException {
     acquireSharedLock();
     try {
-      final long position = clusterPosition.longValue();
-      if (position == Long.MAX_VALUE)
-        return new OClusterPosition[0];
+      if (clusterPosition == Long.MAX_VALUE)
+        return new long[0];
 
-      return ceilingPositions(OClusterPositionFactory.INSTANCE.valueOf(position + 1));
+      return ceilingPositions(clusterPosition + 1);
     } finally {
       releaseSharedLock();
     }
   }
 
-  public OClusterPosition[] ceilingPositions(OClusterPosition clusterPosition) throws IOException {
+  public long[] ceilingPositions(long clusterPosition) throws IOException {
     acquireSharedLock();
     try {
-      long position = clusterPosition.longValue();
-      if (position < 0)
-        position = 0;
+      if (clusterPosition < 0)
+        clusterPosition = 0;
 
-      long pageIndex = position / OClusterPositionMapBucket.MAX_ENTRIES;
-      int index = (int) (position % OClusterPositionMapBucket.MAX_ENTRIES);
+      long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
+      int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
 
       final long filledUpTo = diskCache.getFilledUpTo(fileId);
 
       if (pageIndex >= filledUpTo)
-        return new OClusterPosition[0];
+        return new long[0];
 
-      OClusterPosition[] result = null;
+      long[] result = null;
       do {
         OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
         OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, ODurablePage.TrackMode.NONE);
@@ -284,10 +276,10 @@ public class OClusterPositionMap extends ODurableComponent {
           int entriesCount = 0;
           long startIndex = cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES + index;
 
-          result = new OClusterPosition[resultSize];
+          result = new long[resultSize];
           for (int i = 0; i < resultSize; i++) {
             if (bucket.exists(i + index)) {
-              result[entriesCount] = OClusterPositionFactory.INSTANCE.valueOf(startIndex + i);
+              result[entriesCount] = startIndex + i;
               entriesCount++;
             }
           }
@@ -304,7 +296,7 @@ public class OClusterPositionMap extends ODurableComponent {
       } while (result == null && pageIndex < filledUpTo);
 
       if (result == null)
-        result = new OClusterPosition[0];
+        result = new long[0];
 
       return result;
     } finally {
@@ -312,31 +304,29 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
-  public OClusterPosition[] lowerPositions(OClusterPosition clusterPosition) throws IOException {
+  public long[] lowerPositions(final long clusterPosition) throws IOException {
     acquireSharedLock();
     try {
-      final long position = clusterPosition.longValue();
-      if (position == 0)
-        return new OClusterPosition[0];
+      if (clusterPosition == 0)
+        return new long[0];
 
-      return floorPositions(OClusterPositionFactory.INSTANCE.valueOf(position - 1));
+      return floorPositions(clusterPosition - 1);
     } finally {
       releaseSharedLock();
     }
   }
 
-  public OClusterPosition[] floorPositions(OClusterPosition clusterPosition) throws IOException {
+  public long[] floorPositions(final long clusterPosition) throws IOException {
     acquireSharedLock();
     try {
-      final long position = clusterPosition.longValue();
-      if (position < 0)
-        return new OClusterPosition[0];
+      if (clusterPosition < 0)
+        return new long[0];
 
-      long pageIndex = position / OClusterPositionMapBucket.MAX_ENTRIES;
-      int index = (int) (position % OClusterPositionMapBucket.MAX_ENTRIES);
+      long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
+      int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
 
       final long filledUpTo = diskCache.getFilledUpTo(fileId);
-      OClusterPosition[] result;
+      long[] result;
 
       if (pageIndex >= filledUpTo) {
         pageIndex = filledUpTo - 1;
@@ -353,11 +343,11 @@ public class OClusterPositionMap extends ODurableComponent {
         int entriesCount = 0;
 
         long startPosition = cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES;
-        result = new OClusterPosition[resultSize];
+        result = new long[resultSize];
 
         for (int i = 0; i < resultSize; i++) {
           if (bucket.exists(i)) {
-            result[entriesCount] = OClusterPositionFactory.INSTANCE.valueOf(startPosition + i);
+            result[entriesCount] = startPosition + i;
             entriesCount++;
           }
         }
@@ -373,7 +363,7 @@ public class OClusterPositionMap extends ODurableComponent {
       } while (result == null && pageIndex >= 0);
 
       if (result == null)
-        result = new OClusterPosition[0];
+        result = new long[0];
 
       return result;
     } finally {
@@ -381,7 +371,7 @@ public class OClusterPositionMap extends ODurableComponent {
     }
   }
 
-  public OClusterPosition getFirstPosition() throws IOException {
+  public long getFirstPosition() throws IOException {
     acquireSharedLock();
     try {
       final long filledUpTo = diskCache.getFilledUpTo(fileId);
@@ -393,20 +383,20 @@ public class OClusterPositionMap extends ODurableComponent {
 
           for (int index = 0; index < bucketSize; index++) {
             if (bucket.exists(index))
-              return OClusterPositionFactory.INSTANCE.valueOf(pageIndex * OClusterPositionMapBucket.MAX_ENTRIES + index);
+              return pageIndex * OClusterPositionMapBucket.MAX_ENTRIES + index;
           }
         } finally {
           diskCache.release(cacheEntry);
         }
       }
 
-      return OClusterPosition.INVALID_POSITION;
+      return ORID.CLUSTER_POS_INVALID;
     } finally {
       releaseSharedLock();
     }
   }
 
-  public OClusterPosition getLastPosition() throws IOException {
+  public long getLastPosition() throws IOException {
     acquireSharedLock();
     try {
       final long filledUpTo = diskCache.getFilledUpTo(fileId);
@@ -418,14 +408,14 @@ public class OClusterPositionMap extends ODurableComponent {
 
           for (int index = bucketSize - 1; index >= 0; index--) {
             if (bucket.exists(index))
-              return OClusterPositionFactory.INSTANCE.valueOf(pageIndex * OClusterPositionMapBucket.MAX_ENTRIES + index);
+              return pageIndex * OClusterPositionMapBucket.MAX_ENTRIES + index;
           }
         } finally {
           diskCache.release(cacheEntry);
         }
       }
 
-      return OClusterPosition.INVALID_POSITION;
+      return ORID.CLUSTER_POS_INVALID;
     } finally {
       releaseSharedLock();
     }
@@ -449,7 +439,7 @@ public class OClusterPositionMap extends ODurableComponent {
   }
 
   @Override
-  protected void endAtomicOperation(boolean rollback) throws IOException {
+  protected void endAtomicOperation(final boolean rollback) throws IOException {
     if (useWal)
       super.endAtomicOperation(rollback);
   }

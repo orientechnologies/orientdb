@@ -29,7 +29,7 @@ import java.util.Set;
 
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -446,12 +446,19 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     };
   }
 
-  protected OCommandRequest formatCommand(final String iTemplate, final Object... iArgs) {
+	@Override
+	public int compareTo(OIndex<T> index) {
+		final String name = index.getName();
+		return this.name.compareTo(name);
+	}
+
+
+	protected OCommandRequest formatCommand(final String iTemplate, final Object... iArgs) {
     final String text = String.format(iTemplate, iArgs);
     return new OCommandSQL(text);
   }
 
-  protected ODatabaseComplex<ORecord> getDatabase() {
+  protected ODatabase<ORecord> getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 }

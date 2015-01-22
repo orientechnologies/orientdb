@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
@@ -36,6 +37,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedAbstractPlugi
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
+import com.orientechnologies.orient.server.distributed.ODiscardedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
@@ -62,13 +64,13 @@ import java.util.concurrent.TimeUnit;
 public class ODistributedWorker extends Thread {
 
   private final static int                            LOCAL_QUEUE_MAXSIZE = 1000;
-  protected Queue<ODistributedRequest>                localQueue          = new ArrayBlockingQueue<ODistributedRequest>(
-                                                                              LOCAL_QUEUE_MAXSIZE);
   protected final OHazelcastDistributedDatabase       distributed;
   protected final OHazelcastPlugin                    manager;
   protected final OHazelcastDistributedMessageService msgService;
   protected final String                              databaseName;
   protected final IQueue<ODistributedRequest>         requestQueue;
+  protected Queue<ODistributedRequest>                localQueue          = new ArrayBlockingQueue<ODistributedRequest>(
+                                                                              LOCAL_QUEUE_MAXSIZE);
   protected volatile ODatabaseDocumentTx              database;
   protected volatile OUser                            lastUser;
   protected boolean                                   restoringMessages;
@@ -76,7 +78,7 @@ public class ODistributedWorker extends Thread {
 
   public ODistributedWorker(final OHazelcastDistributedDatabase iDistributed, final IQueue<ODistributedRequest> iRequestQueue,
       final String iDatabaseName, final int i, final boolean iRestoringMessages) {
-    setName("OrientDB DistributedWorker-" + iDatabaseName + "-" + i);
+    setName("OrientDB DistributedWorker node=" + iDistributed.getLocalNodeName() + " db=" + iDatabaseName + " id=" + i);
     distributed = iDistributed;
     requestQueue = iRequestQueue;
     databaseName = iDatabaseName;
@@ -89,12 +91,14 @@ public class ODistributedWorker extends Thread {
   public void run() {
     final int queuedMsg = requestQueue.size();
 
+    long lastMessageId = -1;
+
     for (long processedMessages = 0; running; processedMessages++) {
       if (restoringMessages && processedMessages >= queuedMsg) {
         // END OF RESTORING MESSAGES, SET IT ONLINE
-        ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE,
-            "executed all pending tasks in queue (%d), set restoringMessages=false and database '%s' as online...", queuedMsg,
-            databaseName);
+        ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
+            "executed all pending tasks in queue (%d), set restoringMessages=false and database '%s' as online. Last req=%d",
+            queuedMsg, databaseName, lastMessageId);
 
         restoringMessages = false;
         break;
@@ -106,6 +110,7 @@ public class ODistributedWorker extends Thread {
         message = readRequest();
 
         if (message != null) {
+          lastMessageId = message.getId();
           // DECIDE TO USE THE HZ MAP ONLY IF THE COMMAND IS NOT IDEMPOTENT (ALL BUT READ-RECORD/SQL SELECT/SQL TRAVERSE
           // final boolean saveAsPending = !message.getTask().isIdempotent();
           // if (saveAsPending)
@@ -228,6 +233,8 @@ public class ODistributedWorker extends Thread {
               "discarded request %d because waiting for %d request=%s sourceNode=%s", req.getId(),
               distributed.waitForMessageId.get(), req, req.getSenderNodeName());
 
+          sendResponseBack(req, req.getTask(), new ODiscardedResponse());
+
           // READ THE NEXT ONE
           req = nextMessage();
         }
@@ -268,7 +275,7 @@ public class ODistributedWorker extends Thread {
 
       // EXECUTE IT LOCALLY
       final Serializable responsePayload;
-      OUser origin = null;
+      OSecurityUser origin = null;
       try {
         if (task.isRequiredOpenDatabase())
           initDatabaseInstance();

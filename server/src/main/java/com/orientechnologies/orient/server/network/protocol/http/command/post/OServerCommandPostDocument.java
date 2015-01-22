@@ -52,7 +52,7 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
        doc.save();
 
        iResponse.send(OHttpUtils.STATUS_CREATED_CODE, OHttpUtils.STATUS_CREATED_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-           doc.toJSON(), OHttpUtils.HEADER_ETAG + doc.getVersion(), true);
+           doc.toJSON(), OHttpUtils.HEADER_ETAG + doc.getVersion());
 
      } finally {
        if (db != null)

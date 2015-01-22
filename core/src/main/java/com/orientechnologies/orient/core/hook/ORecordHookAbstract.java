@@ -1,25 +1,26 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.hook;
 
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * Hook abstract class that calls separate methods for each hook defined.
@@ -169,66 +170,80 @@ public abstract class ORecordHookAbstract implements ORecordHook {
   public void onRecordReplicaDeleteFailed(final ORecord record) {
   }
 
-  public RESULT onTrigger(final TYPE iType, final ORecord iRecord) {
+  public void onRecordFinalizeUpdate(final ORecord record) {
+  }
+
+  public void onRecordFinalizeCreation(final ORecord record) {
+  }
+
+  public RESULT onTrigger(final TYPE iType, final ORecord record) {
     switch (iType) {
     case BEFORE_CREATE:
-      return onRecordBeforeCreate(iRecord);
+      return onRecordBeforeCreate(record);
 
     case AFTER_CREATE:
-      onRecordAfterCreate(iRecord);
+      onRecordAfterCreate(record);
       break;
 
     case CREATE_FAILED:
-      onRecordCreateFailed(iRecord);
+      onRecordCreateFailed(record);
       break;
 
     case CREATE_REPLICATED:
-      onRecordCreateReplicated(iRecord);
+      onRecordCreateReplicated(record);
       break;
 
     case BEFORE_READ:
-      return onRecordBeforeRead(iRecord);
+      return onRecordBeforeRead(record);
 
     case AFTER_READ:
-      onRecordAfterRead(iRecord);
+      onRecordAfterRead(record);
       break;
 
     case READ_FAILED:
-      onRecordReadFailed(iRecord);
+      onRecordReadFailed(record);
       break;
 
     case READ_REPLICATED:
-      onRecordReadReplicated(iRecord);
+      onRecordReadReplicated(record);
       break;
 
     case BEFORE_UPDATE:
-      return onRecordBeforeUpdate(iRecord);
+      return onRecordBeforeUpdate(record);
 
     case AFTER_UPDATE:
-      onRecordAfterUpdate(iRecord);
+      onRecordAfterUpdate(record);
       break;
 
     case UPDATE_FAILED:
-      onRecordUpdateFailed(iRecord);
+      onRecordUpdateFailed(record);
       break;
 
     case UPDATE_REPLICATED:
-      onRecordUpdateReplicated(iRecord);
+      onRecordUpdateReplicated(record);
       break;
 
     case BEFORE_DELETE:
-      return onRecordBeforeDelete(iRecord);
+      return onRecordBeforeDelete(record);
 
     case AFTER_DELETE:
-      onRecordAfterDelete(iRecord);
+      onRecordAfterDelete(record);
       break;
 
     case DELETE_FAILED:
-      onRecordDeleteFailed(iRecord);
+      onRecordDeleteFailed(record);
       break;
 
     case DELETE_REPLICATED:
-      onRecordDeleteReplicated(iRecord);
+      onRecordDeleteReplicated(record);
+      break;
+
+    case FINALIZE_CREATION:
+      onRecordFinalizeCreation(record);
+      break;
+
+    case FINALIZE_UPDATE:
+      onRecordFinalizeUpdate(record);
       break;
 
     }

@@ -19,12 +19,9 @@
  */
 package com.orientechnologies.orient.core.cache;
 
-import static com.orientechnologies.orient.core.metadata.OMetadataDefault.CLUSTER_INDEX_NAME;
-
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
 
@@ -44,15 +41,13 @@ public class OLocalRecordCache extends OAbstractRecordCache {
 
   @Override
   public void startup() {
-    ODatabaseRecord db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
     profilerPrefix = "db." + db.getName() + ".cache.level1.";
     profilerMetadataPrefix = "db.*.cache.level1.";
 
     CACHE_HIT = profilerPrefix + "cache.found";
     CACHE_MISS = profilerPrefix + "cache.notFound";
-
-    excludedCluster = db.getClusterIdByName(CLUSTER_INDEX_NAME);
 
     super.startup();
   }

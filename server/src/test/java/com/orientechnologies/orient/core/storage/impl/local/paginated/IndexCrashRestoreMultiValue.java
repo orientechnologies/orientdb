@@ -12,6 +12,8 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import org.testng.Assert;
+import org.testng.TestListenerAdapter;
+import org.testng.TestNG;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -26,7 +28,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 9/25/14
  */
 @Test
@@ -42,6 +44,7 @@ public class IndexCrashRestoreMultiValue {
 
   @BeforeClass
   public void beforeClass() throws Exception {
+		OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(3);
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
@@ -91,6 +94,7 @@ public class IndexCrashRestoreMultiValue {
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
       OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(3);
+		  OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
 
       OServer server = OServerMain.create();
       server
@@ -114,7 +118,7 @@ public class IndexCrashRestoreMultiValue {
       futures.add(executorService.submit(new DataPropagationTask(baseDocumentTx, testDocumentTx)));
     }
 
-    Thread.sleep(150000);
+		Thread.sleep(60000);
 
     System.out.println("Wait for process to destroy");
     Process p = Runtime.getRuntime().exec("pkill -9 -f RemoteDBRunner");
@@ -240,4 +244,11 @@ public class IndexCrashRestoreMultiValue {
     }
   }
 
+	public static void main(String[] args) {
+		TestListenerAdapter tla = new TestListenerAdapter();
+		TestNG testng = new TestNG();
+		testng.setTestClasses(new Class[] { IndexCrashRestoreMultiValue.class });
+		testng.addListener(tla);
+		testng.run();
+	}
 }

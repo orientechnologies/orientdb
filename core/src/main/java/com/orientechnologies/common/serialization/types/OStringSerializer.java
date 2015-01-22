@@ -25,7 +25,7 @@ import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 /**
  * Serializer for {@link String} type.
  *
- * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
+ * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
  * @since 18.01.12
  */
 public class OStringSerializer implements OBinarySerializer<String> {

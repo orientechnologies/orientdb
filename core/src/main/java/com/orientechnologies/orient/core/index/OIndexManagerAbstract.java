@@ -1,48 +1,42 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.index;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.util.OMultiKey;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.dictionary.ODictionary;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -58,17 +52,27 @@ import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
  */
 @SuppressWarnings({ "unchecked", "serial" })
 public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass implements OIndexManager, OCloseable {
-  public static final String                                  CONFIG_INDEXES     = "indexes";
-  public static final String                                  DICTIONARY_NAME    = "dictionary";
-  protected final Map<String, Map<OMultiKey, Set<OIndex<?>>>> classPropertyIndex = new HashMap<String, Map<OMultiKey, Set<OIndex<?>>>>();
-  protected Map<String, OIndex<?>>                            indexes            = new ConcurrentHashMap<String, OIndex<?>>();
-  protected String                                            defaultClusterName = OMetadataDefault.CLUSTER_INDEX_NAME;
-  protected String                                            manualClusterName  = OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME;
+  public static final String                                  CONFIG_INDEXES         = "indexes";
+  public static final String                                  DICTIONARY_NAME        = "dictionary";
+  protected final Map<String, Map<OMultiKey, Set<OIndex<?>>>> classPropertyIndex     = new HashMap<String, Map<OMultiKey, Set<OIndex<?>>>>();
+  protected Map<String, OIndex<?>>                            indexes                = new ConcurrentHashMap<String, OIndex<?>>();
+  protected String                                            defaultClusterName     = OMetadataDefault.CLUSTER_INDEX_NAME;
+  protected String                                            manualClusterName      = OMetadataDefault.CLUSTER_MANUAL_INDEX_NAME;
 
-  protected ReadWriteLock                                     lock               = new ReentrantReadWriteLock();
+  protected ReadWriteLock                                     lock                   = new ReentrantReadWriteLock();
 
-  public OIndexManagerAbstract(final ODatabaseRecord iDatabase) {
+  private volatile boolean                                    fullCheckpointOnChange = false;
+
+  public OIndexManagerAbstract(final ODatabaseDocument iDatabase) {
     super(new ODocument());
+  }
+
+  public boolean isFullCheckpointOnChange() {
+    return fullCheckpointOnChange;
+  }
+
+  public void setFullCheckpointOnChange(boolean fullCheckpointOnChange) {
+    this.fullCheckpointOnChange = fullCheckpointOnChange;
   }
 
   @Override
@@ -106,12 +110,18 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     try {
       for (int retry = 0; retry < 10; retry++)
         try {
-          return (RET) super.save();
+
+          super.save();
+          getDatabase().getStorage().synch();
+          return (RET) this;
         } catch (OConcurrentModificationException e) {
           reload(null, true);
         }
 
-      return (RET) super.save();
+      super.save();
+      getDatabase().getStorage().synch();
+
+      return (RET) this;
 
     } finally {
       releaseExclusiveLock();
@@ -125,7 +135,7 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
         save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
       } catch (Exception e) {
         // RESET RID TO ALLOCATE A NEW ONE
-        if (document.getIdentity().getClusterPosition().isPersistent()) {
+        if (ORecordId.isPersistent(document.getIdentity().getClusterPosition())) {
           document.getIdentity().reset();
           save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
         }
@@ -366,14 +376,29 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
   protected void releaseSharedLock() {
     lock.readLock().unlock();
+
   }
 
   protected void acquireExclusiveLock() {
+    final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
+    if (databaseRecord != null && !databaseRecord.isClosed()) {
+      final OMetadataInternal metadata = (OMetadataInternal) databaseRecord.getMetadata();
+      if (metadata != null)
+        metadata.makeThreadLocalSchemaSnapshot();
+    }
+
     lock.writeLock().lock();
   }
 
   protected void releaseExclusiveLock() {
     lock.writeLock().unlock();
+
+    final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
+    if (databaseRecord != null && !databaseRecord.isClosed()) {
+      final OMetadata metadata = databaseRecord.getMetadata();
+      if (metadata != null)
+        ((OMetadataInternal) metadata).clearThreadLocalSchemaSnapshot();
+    }
   }
 
   protected void clearMetadata() {
@@ -386,8 +411,12 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     }
   }
 
-  protected ODatabaseRecordInternal getDatabase() {
+  protected ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
+  }
+
+  protected ODatabaseDocumentInternal getDatabaseIfDefined() {
+    return ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
   }
 
   protected void addIndexInternal(final OIndex<?> index) {

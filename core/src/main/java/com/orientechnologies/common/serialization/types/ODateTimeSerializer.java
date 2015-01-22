@@ -28,7 +28,7 @@ import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 /**
   * Serializer for {@link Date} type.
   *
-  * @author ibershadskiy <a href="mailto:ibersh20@gmail.com">Ilya Bershadskiy</a>
+  * @author Ilya Bershadskiy (ibersh20-at-gmail.com)
   * @since 20.01.12
   */
  public class ODateTimeSerializer implements OBinarySerializer<Date> {

@@ -22,7 +22,7 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import org.apache.commons.configuration.Configuration;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.tinkerpop.blueprints.Features;
 
@@ -45,12 +45,12 @@ public class OrientGraphNoTx extends OrientBaseGraph {
     config();
   }
 
-  public OrientGraphNoTx(ODatabaseDocumentPool pool) {
+  public OrientGraphNoTx(OPartitionedDatabasePool pool) {
     super(pool);
     config();
   }
 
-  public OrientGraphNoTx(ODatabaseDocumentPool pool, final Settings configuration) {
+  public OrientGraphNoTx(OPartitionedDatabasePool pool, final Settings configuration) {
     super(pool, configuration);
     config();
   }
@@ -82,11 +82,13 @@ public class OrientGraphNoTx extends OrientBaseGraph {
   }
 
   public Features getFeatures() {
+    makeActive();
+
     // DYNAMIC FEATURES BASED ON CONFIGURATION
-    FEATURES.supportsEdgeIndex = !settings.useLightweightEdges;
-    FEATURES.supportsEdgeKeyIndex = !settings.useLightweightEdges;
-    FEATURES.supportsEdgeIteration = !settings.useLightweightEdges;
-    FEATURES.supportsEdgeRetrieval = !settings.useLightweightEdges;
+    FEATURES.supportsEdgeIndex = !isUseLightweightEdges();
+    FEATURES.supportsEdgeKeyIndex = !isUseLightweightEdges();
+    FEATURES.supportsEdgeIteration = !isUseLightweightEdges();
+    FEATURES.supportsEdgeRetrieval = !isUseLightweightEdges();
     return FEATURES;
   }
 

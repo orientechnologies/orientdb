@@ -39,10 +39,8 @@ import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.tool.ODatabaseCompare;
@@ -92,18 +90,18 @@ import java.util.*;
 import java.util.Map.Entry;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
-  protected static final int          DEFAULT_WIDTH      = 150;
-  private int                         windowSize         = DEFAULT_WIDTH;
-  protected ODatabaseDocumentInternal currentDatabase;
-  protected String                    currentDatabaseName;
-  protected ORecord                   currentRecord;
-  protected int                       currentRecordIdx;
-  protected List<OIdentifiable>       currentResultSet;
-  protected OServerAdmin              serverAdmin;
-  private int                         lastPercentStep;
-  private String                      currentDatabaseUserName;
-  private String                      currentDatabaseUserPassword;
-  private int                         collectionMaxItems = 10;
+  protected static final int    DEFAULT_WIDTH      = 150;
+  private int                   windowSize         = DEFAULT_WIDTH;
+  protected ODatabaseDocumentTx currentDatabase;
+  protected String              currentDatabaseName;
+  protected ORecord             currentRecord;
+  protected int                 currentRecordIdx;
+  protected List<OIdentifiable> currentResultSet;
+  protected OServerAdmin        serverAdmin;
+  private int                   lastPercentStep;
+  private String                currentDatabaseUserName;
+  private String                currentDatabaseUserPassword;
+  private int                   collectionMaxItems = 10;
 
   public OConsoleDatabaseApp(final String[] args) {
     super(args);
@@ -504,6 +502,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     sqlCommand("update", iCommandText, "\nUpdated record(s) '%s' in %f sec(s).\n", true);
     updateDatabaseInfo();
     currentDatabase.getLocalCache().invalidate();
+  }
+
+  @ConsoleCommand(description = "Force calling of JVM Garbage Collection")
+  public void gc() {
+    System.gc();
   }
 
   @ConsoleCommand(splitInWords = false, description = "Delete records from the database")
@@ -1105,7 +1108,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       return;
     }
 
-    final OClass cls = currentDatabase.getMetadata().getSchema().getClass(iClassName);
+    final OClass cls = currentDatabase.getMetadata().getImmutableSchemaSnapshot().getClass(iClassName);
 
     if (cls == null) {
       message("\n! Class '" + iClassName + "' does not exist in the database '" + currentDatabaseName + "'");
@@ -1123,7 +1126,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     message("\nCluster selection....: " + cls.getClusterSelection().getName());
 
     if (!cls.getBaseClasses().isEmpty()) {
-      message("Base classes.........: ");
+      message("\nBase classes.........: ");
       int i = 0;
       for (OClass c : cls.getBaseClasses()) {
         if (i > 0)
@@ -1135,7 +1138,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     }
 
     if (cls.properties().size() > 0) {
-      message("\n\nPROPERTIES");
+      message("\nPROPERTIES");
       message("\n-------------------------------+-------------+-------------------------------+-----------+----------+----------+-----------+-----------+----------+");
       message("\n NAME                          | TYPE        | LINKED TYPE/CLASS             | MANDATORY | READONLY | NOT NULL |    MIN    |    MAX    | COLLATE  |");
       message("\n-------------------------------+-------------+-------------------------------+-----------+----------+----------+-----------+-----------+----------+");
@@ -1281,7 +1284,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       long totalElements = 0;
       long count;
 
-      final List<OClass> classes = new ArrayList<OClass>(currentDatabase.getMetadata().getSchema().getClasses());
+      final List<OClass> classes = new ArrayList<OClass>(currentDatabase.getMetadata().getImmutableSchemaSnapshot().getClasses());
       Collections.sort(classes, new Comparator<OClass>() {
         public int compare(OClass o1, OClass o2) {
           return o1.getName().compareToIgnoreCase(o2.getName());
@@ -1698,13 +1701,13 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(description = "Return all configured properties")
   public void properties() {
     message("\nPROPERTIES:");
-    message("\n+---------------------+----------------------+");
+    message("\n+-------------------------------+--------------------------------+");
     message("\n| %-30s| %-30s |", "NAME", "VALUE");
-    message("\n+---------------------+----------------------+");
+    message("\n+-------------------------------+--------------------------------+");
     for (Entry<String, String> p : properties.entrySet()) {
-      message("\n| %-30s= %-30s |", p.getKey(), p.getValue());
+      message("\n| %-30s| %-30s |", p.getKey(), p.getValue());
     }
-    message("\n+---------------------+----------------------+");
+    message("\n+-------------------------------+--------------------------------+");
   }
 
   @ConsoleCommand(description = "Return the value of a property")
@@ -1888,8 +1891,8 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   public void reloadRecordInternal(String iRecordId, String iFetchPlan) {
     checkForDatabase();
 
-    currentRecord = ((ODatabaseRecordAbstract) currentDatabase.getUnderlying()).executeReadRecord(new ORecordId(iRecordId), null,
-        iFetchPlan, true, false, OStorage.LOCKING_STRATEGY.DEFAULT);
+    currentRecord = currentDatabase.executeReadRecord(new ORecordId(iRecordId), null, iFetchPlan, true, false,
+        OStorage.LOCKING_STRATEGY.DEFAULT);
     displayRecord(null);
 
     message("\nOK");
@@ -2018,8 +2021,6 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     setResultset(new ArrayList<OIdentifiable>());
 
-    OGlobalConfiguration.STORAGE_KEEP_OPEN.setValue(false);
-
     // DISABLE THE NETWORK AND STORAGE TIMEOUTS
     OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.setValue(0);
     OGlobalConfiguration.NETWORK_LOCK_TIMEOUT.setValue(0);
@@ -2048,7 +2049,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
   protected void printApplicationInfo() {
     message("\nOrientDB console v." + OConstants.getVersion() + " " + OConstants.ORIENT_URL);
-    message("\nType 'help' to display all the commands supported.");
+    message("\nType 'help' to display all the supported commands.");
   }
 
   protected void dumpResultSet(final int limit) {

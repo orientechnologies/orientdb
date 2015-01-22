@@ -19,12 +19,20 @@
  */
 package com.orientechnologies.orient.core.config;
 
+import java.io.IOException;
+import java.text.DecimalFormatSymbols;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.id.OClusterPositionFactory;
 import com.orientechnologies.orient.core.id.OImmutableRecordId;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -34,15 +42,6 @@ import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-
-import java.io.IOException;
-import java.text.DecimalFormatSymbols;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.TimeZone;
 
 /**
  * Versions:
@@ -64,12 +63,11 @@ import java.util.TimeZone;
  */
 @SuppressWarnings("serial")
 public class OStorageConfiguration implements OSerializableStream {
-  public static final ORecordId                      CONFIG_RID                    = new OImmutableRecordId(0,
-                                                                                       OClusterPositionFactory.INSTANCE.valueOf(0));
+  public static final ORecordId                      CONFIG_RID                    = new OImmutableRecordId(0, 0);
 
   public static final String                         DEFAULT_CHARSET               = "UTF-8";
   private String                                     charset                       = DEFAULT_CHARSET;
-  public static final int                            CURRENT_VERSION               = 13;
+  public static final int                            CURRENT_VERSION               = 14;
   public static final int                            CURRENT_BINARY_FORMAT_VERSION = 12;
   public final List<OStorageEntryConfiguration>      properties                    = Collections
                                                                                        .synchronizedList(new ArrayList<OStorageEntryConfiguration>());
@@ -347,6 +345,17 @@ public class OStorageConfiguration implements OSerializableStream {
   }
 
   public byte[] toStream() throws OSerializationException {
+    return toStream(Integer.MAX_VALUE);
+  }
+
+  /**
+   * Added version used for managed Network Versioning.
+   * 
+   * @param version
+   * @return
+   * @throws OSerializationException
+   */
+  public byte[] toStream(int version) throws OSerializationException {
     final StringBuilder buffer = new StringBuilder(8192);
 
     write(buffer, CURRENT_VERSION);
@@ -363,7 +372,8 @@ public class OStorageConfiguration implements OSerializableStream {
 
     write(buffer, timeZone.getID());
     write(buffer, charset);
-    write(buffer, conflictStrategy);
+    if (version > 24)
+      write(buffer, conflictStrategy);
 
     phySegmentToStream(buffer, fileTemplate);
 
@@ -387,11 +397,23 @@ public class OStorageConfiguration implements OSerializableStream {
         write(buffer, paginatedClusterConfiguration.recordOverflowGrowFactor);
         write(buffer, paginatedClusterConfiguration.recordGrowFactor);
         write(buffer, paginatedClusterConfiguration.compression);
-        write(buffer, paginatedClusterConfiguration.conflictStrategy);
-        write(buffer, paginatedClusterConfiguration.getStatus().name().toString());
+        if (version > 24)
+          write(buffer, paginatedClusterConfiguration.conflictStrategy);
+        if (version > 25)
+          write(buffer, paginatedClusterConfiguration.getStatus().name().toString());
       }
     }
-
+    if (version <= 25) {
+      // dataSegment array
+      write(buffer, 0);
+      // tx Segment File
+      write(buffer, "");
+      write(buffer, "");
+      write(buffer, 0);
+      // tx segment flags
+      write(buffer, false);
+      write(buffer, false);
+    }
     write(buffer, properties.size());
     for (OStorageEntryConfiguration e : properties)
       entryToStream(buffer, e);
@@ -400,14 +422,16 @@ public class OStorageConfiguration implements OSerializableStream {
     write(buffer, clusterSelection);
     write(buffer, minimumClusters);
 
-    write(buffer, recordSerializer);
-    write(buffer, recordSerializerVersion);
+    if (version > 24) {
+      write(buffer, recordSerializer);
+      write(buffer, recordSerializerVersion);
 
-    // WRITE CONFIGURATION
-    write(buffer, configuration.getContextSize());
-    for (String k : configuration.getContextKeys()) {
-      write(buffer, k);
-      write(buffer, configuration.getValueAsString(OGlobalConfiguration.findByKey(k)));
+      // WRITE CONFIGURATION
+      write(buffer, configuration.getContextSize());
+      for (String k : configuration.getContextKeys()) {
+        write(buffer, k);
+        write(buffer, configuration.getValueAsString(OGlobalConfiguration.findByKey(k)));
+      }
     }
 
     // PLAIN: ALLOCATE ENOUGH SPACE TO REUSE IT EVERY TIME

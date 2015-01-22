@@ -182,15 +182,15 @@ public class OServerCommandPostInstallDatabase extends OServerCommandAuthenticat
       json.writeAttribute(3, false, "mode", role.getMode().toString());
 
       json.beginCollection(3, true, "rules");
-      for (Entry<String, Byte> rule : role.getRules().entrySet()) {
-        json.beginObject(4);
-        json.writeAttribute(4, true, "name", rule.getKey());
-        json.writeAttribute(4, false, "create", role.allow(rule.getKey(), ORole.PERMISSION_CREATE));
-        json.writeAttribute(4, false, "read", role.allow(rule.getKey(), ORole.PERMISSION_READ));
-        json.writeAttribute(4, false, "update", role.allow(rule.getKey(), ORole.PERMISSION_UPDATE));
-        json.writeAttribute(4, false, "delete", role.allow(rule.getKey(), ORole.PERMISSION_DELETE));
-        json.endObject(4, true);
-      }
+//      for (Entry<String, Byte> rule : role.getRules().entrySet()) {
+//        json.beginObject(4);
+//        json.writeAttribute(4, true, "name", rule.getKey());
+//        json.writeAttribute(4, false, "create", role.allow(rule.getKey(), ORole.PERMISSION_CREATE));
+//        json.writeAttribute(4, false, "read", role.allow(rule.getKey(), ORole.PERMISSION_READ));
+//        json.writeAttribute(4, false, "update", role.allow(rule.getKey(), ORole.PERMISSION_UPDATE));
+//        json.writeAttribute(4, false, "delete", role.allow(rule.getKey(), ORole.PERMISSION_DELETE));
+//        json.endObject(4, true);
+//      }
       json.endCollection(3, false);
 
       json.endObject(2, true);

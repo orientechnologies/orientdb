@@ -51,7 +51,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 /**
  * Persistent Set<OIdentifiable> implementation that uses the SBTree to handle entries in persistent way.
  * 
- * @author <a href="mailto:enisher@gmail.com">Artem Orobets</a>
+ * @author Artem Orobets (enisher-at-gmail.com)
  */
 public class OSBTreeRidBag implements ORidBagDelegate {
   private final OSBTreeCollectionManager                               collectionManager   = ODatabaseRecordThreadLocal.INSTANCE
@@ -367,7 +367,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
         }
       }
 
-      if (updateOwner)
+      if (updateOwner && !changeListeners.isEmpty())
         fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
             OMultiValueChangeEvent.OChangeType.REMOVE, currentValue, null, currentValue, false));
       currentRemoved = true;
@@ -614,7 +614,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     }
   }
 
-  public void add(OIdentifiable identifiable) {
+  public void add(final OIdentifiable identifiable) {
     if (identifiable.getIdentity().isValid()) {
       Change counter = changes.get(identifiable);
       if (counter == null)
@@ -627,7 +627,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
         counter.increment();
       }
     } else {
-      OModifiableInteger counter = newEntries.get(identifiable);
+      final OModifiableInteger counter = newEntries.get(identifiable);
       if (counter == null)
         newEntries.put(identifiable, new OModifiableInteger(1));
       else
@@ -637,7 +637,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     if (size >= 0)
       size++;
 
-    if (updateOwner)
+    if (updateOwner && !changeListeners.isEmpty())
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
           identifiable, identifiable, null, false));
   }
@@ -667,7 +667,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       }
     }
 
-    if (updateOwner)
+    if (updateOwner && !changeListeners.isEmpty())
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
           OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable, false));
   }
@@ -868,13 +868,13 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     return collectionPointer;
   }
 
+  public void setCollectionPointer(OBonsaiCollectionPointer collectionPointer) {
+    this.collectionPointer = collectionPointer;
+  }
+
   @Override
   public Set<OMultiValueChangeListener<OIdentifiable, OIdentifiable>> getChangeListeners() {
     return Collections.unmodifiableSet(changeListeners);
-  }
-
-  public void setCollectionPointer(OBonsaiCollectionPointer collectionPointer) {
-    this.collectionPointer = collectionPointer;
   }
 
   protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {

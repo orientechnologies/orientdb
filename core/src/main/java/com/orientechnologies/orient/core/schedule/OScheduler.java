@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2012 henryzhao81@gmail.com
+ * Copyright 2010-2012 henryzhao81-at-gmail.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,167 +21,146 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.script.Bindings;
-import javax.script.Invocable;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
+import javax.script.*;
 
+import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
-import com.orientechnologies.orient.core.command.script.OScriptDocumentDatabaseWrapper;
-import com.orientechnologies.orient.core.command.script.OScriptInjection;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
-import com.orientechnologies.orient.core.command.script.OScriptOrientWrapper;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OSchedulerListener.SCHEDULER_STATUS;
+import com.orientechnologies.orient.core.type.ODocumentWrapper;
 
 /**
- * Author : henryzhao81@gmail.com Mar 28, 2013
+ * @author henryzhao81-at-gmail.com
+ * @since Mar 28, 2013
  */
 
-public class OScheduler implements Runnable {
-  public final static String      CLASSNAME      = "OSchedule";
+public class OScheduler extends ODocumentWrapper implements Runnable {
+  public final static String        CLASSNAME      = "OSchedule";
 
-  public static String            PROP_NAME      = "name";
-  public static String            PROP_RULE      = "rule";
-  public static String            PROP_ARGUMENTS = "arguments";
-  public static String            PROP_STATUS    = "status";
-  public static String            PROP_FUNC      = "function";
-  public static String            PROP_STARTTIME = "starttime";
-  public static String            PROP_STARTED   = "start";
+  public static String              PROP_NAME      = "name";
+  public static String              PROP_RULE      = "rule";
+  public static String              PROP_ARGUMENTS = "arguments";
+  public static String              PROP_STATUS    = "status";
+  public static String              PROP_FUNC      = "function";
+  public static String              PROP_STARTTIME = "starttime";
+  public static String              PROP_STARTED   = "start";
 
-  private String                  name;
-  private String                  rule;
-  private Map<Object, Object>     iArgs;
-  private String                  status;
-  private OFunction               function;
-  private Date                    startTime;
-  private ODocument               document;
-  private ODatabaseRecordInternal db;
-  private boolean                 started;
-  private boolean                 isRunning      = false;
+  private OFunction					function;
+  private boolean                   isRunning      = false;
+  private ODatabaseDocumentInternal 		db;
 
   public OScheduler(ODocument doc) {
-    this.name = doc.field(PROP_NAME);
-    this.rule = doc.field(PROP_RULE);
-    this.iArgs = doc.field(PROP_ARGUMENTS);
-    this.status = doc.field(PROP_STATUS);
-    // this.runAtStart = doc.field(PROP_RUN_ON_START) == null ? false : ((Boolean)doc.field(PROP_RUN_ON_START));
-    this.started = doc.field(PROP_STARTED) == null ? false : ((Boolean) doc.field(PROP_STARTED));
-    ODocument funcDoc = doc.field(PROP_FUNC);
-    if (funcDoc != null)
-      function = new OFunction(funcDoc);
-    else
-      throw new OCommandScriptException("function cannot be null");
-    this.startTime = doc.field(PROP_STARTTIME);
-    this.document = doc;
-    this.db = ODatabaseRecordThreadLocal.INSTANCE.get();
+    //To check presence of function
+    getFunction();
+    bindDb();
+  }
+  
+  protected void bindDb()
+  {
+	  this.db = ODatabaseRecordThreadLocal.INSTANCE.get();
+  }
+  
+  
+  @Override
+  public void fromStream(ODocument iDocument) {
+	super.fromStream(iDocument);
+	bindDb();
+  }
+
+public OFunction getFunctionSafe()
+  {
+	  if(function==null)
+	  {
+		  ODocument funcDoc = document.field(PROP_FUNC);
+		  if(funcDoc!=null) function = new OFunction(funcDoc);
+	  }
+	  return function;
+  }
+  
+  public OFunction getFunction()
+  {
+	  OFunction fun = getFunctionSafe();
+	  if(fun==null) throw new OCommandScriptException("function cannot be null");
+	  return fun;
   }
 
   public String getSchedulingRule() {
-    return this.rule;
+    return document.field(PROP_RULE);
   }
 
   public String getSchduleName() {
-    return this.name;
+    return document.field(PROP_NAME);
   }
 
   public boolean isStarted() {
-    return this.started;
+	  Boolean started = document.field(PROP_STARTED);
+    return started == null ? false : started;
   }
 
   public void setStarted(boolean started) {
-    this.started = started;
+    document.field(PROP_STARTED, started);
   }
 
   public String getStatus() {
-    return status;
-  }
-
-  public Map<Object, Object> arguments() {
-    return this.iArgs;
-  }
-
-  public OFunction getFunction() {
-    return this.function;
-  }
-
-  public Date getStartTime() {
-    return this.startTime;
+    return document.field(PROP_STATUS);
   }
 
   public void setStatus(String status) {
-    this.status = status;
+    document.field(status, PROP_STATUS);
+  }
+
+  public Map<Object, Object> getArguments() {
+    return document.field(PROP_ARGUMENTS);
+  }
+
+  public Date getStartTime() {
+    return document.field(PROP_STARTTIME);
   }
 
   public boolean isRunning() {
     return this.isRunning;
   }
 
-  public void resetDocument(ODocument doc) {
-    this.document = doc;
-    this.name = doc.field(PROP_NAME);
-    this.rule = doc.field(PROP_RULE);
-    this.iArgs = doc.field(PROP_ARGUMENTS);
-    this.status = doc.field(PROP_STATUS);
-    this.started = doc.field(PROP_STARTED) == null ? false : ((Boolean) doc.field(PROP_STARTED));
-    ODocument funcDoc = doc.field(PROP_FUNC);
-    if (funcDoc != null)
-      function = new OFunction(funcDoc);
-    else
-      throw new OCommandScriptException("function cannot be null");
-    this.startTime = doc.field(PROP_STARTTIME);
-    this.db = ODatabaseRecordThreadLocal.INSTANCE.get();
-  }
-
   public String toString() {
-    String str = "OSchedule <name:" + this.name + ",rule:" + this.rule + ",current status:" + this.status + ",func:"
-        + this.function.getName() + ",start:" + this.isStarted() + ">";
+    String str = "OSchedule <name:" + getSchduleName() + ",rule:" + getSchedulingRule() + ",current status:" + getStatus() + ",func:"
+        + getFunctionSafe() + ",start:" + isStarted() + ">";
     return str;
   }
 
   @Override
   public void run() {
+    if (this.function == null)
+      return;
+
     isRunning = true;
-    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
-    Date date = new Date(System.currentTimeMillis());
+    final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
+    final Date date = new Date(System.currentTimeMillis());
     OLogManager.instance().warn(this, "execute : " + this.toString() + " at " + sdf.format(date));
-    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    if(db!=null) ODatabaseRecordThreadLocal.INSTANCE.set(db);
+
     this.document.field(PROP_STATUS, SCHEDULER_STATUS.RUNNING);
     this.document.field(PROP_STARTTIME, System.currentTimeMillis());
     this.document.save();
     OScriptManager scriptManager = null;
     Bindings binding = null;
+
+    scriptManager = Orient.instance().getScriptManager();
+    final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = scriptManager.acquireDatabaseEngine(db.getName(),
+        function.getLanguage());
+    final ScriptEngine scriptEngine = entry.object;
     try {
-      if (this.function == null)
-        return;
-      if (db != null && !(db instanceof ODatabaseRecordTx))
-        db = db.getUnderlying();
-      scriptManager = Orient.instance().getScriptManager();
-      final ScriptEngine scriptEngine = scriptManager.getEngine(this.function.getLanguage());
       binding = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE);
 
-      for (OScriptInjection i : scriptManager.getInjections())
-        i.bind(binding);
-      binding.put("doc", this.document);
-      if (db != null)
-        binding.put("db", new OScriptDocumentDatabaseWrapper((ODatabaseRecordTx) db));
-      binding.put("orient", new OScriptOrientWrapper(db));
-      if (iArgs != null) {
-        for (Entry<Object, Object> a : iArgs.entrySet()) {
-          binding.put(a.getKey().toString(), a.getValue());
-        }
-        binding.put("params", iArgs.values().toArray());
-      } else {
-        binding.put("params", new Object[0]);
-      }
+      scriptManager.bind(binding, (ODatabaseDocumentTx) db, null, getArguments());
 
       if (this.function.getLanguage() == null)
         throw new OConfigurationException("Database function '" + this.function.getName() + "' has no language");
@@ -190,12 +169,13 @@ public class OScheduler implements Runnable {
         try {
           scriptEngine.eval(funcStr);
         } catch (ScriptException e) {
-          scriptManager.getErrorMessage(e, funcStr);
+          scriptManager.throwErrorMessage(e, funcStr);
         }
       }
       if (scriptEngine instanceof Invocable) {
         final Invocable invocableEngine = (Invocable) scriptEngine;
         Object[] args = null;
+        Map<Object, Object> iArgs = getArguments();
         if (iArgs != null) {
           args = new Object[iArgs.size()];
           int i = 0;
@@ -214,7 +194,10 @@ public class OScheduler implements Runnable {
       throw new OCommandScriptException("Unknown Exception", this.function.getName(), 0, ex);
     } finally {
       if (scriptManager != null && binding != null)
-        scriptManager.unbind(binding);
+        scriptManager.unbind(binding, null, getArguments());
+
+      scriptManager.releaseDatabaseEngine(function.getLanguage(), db.getName(), entry);
+
       OLogManager.instance().warn(this, "Job : " + this.toString() + " Finished!");
       isRunning = false;
       this.document.field(PROP_STATUS, SCHEDULER_STATUS.WAITING);

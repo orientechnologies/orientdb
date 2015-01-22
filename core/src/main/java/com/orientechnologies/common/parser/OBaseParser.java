@@ -32,6 +32,7 @@ public abstract class OBaseParser {
   public String                   parserTextUpperCase;
 
   private transient StringBuilder parserLastWord      = new StringBuilder(256);
+  private transient int 		  parserEscapeSequnceCount  = 0;
   private transient int           parserCurrentPos    = 0;
   private transient int           parserPreviousPos   = 0;
   private transient char          parserLastSeparator = ' ';
@@ -181,6 +182,8 @@ public abstract class OBaseParser {
   public String parserGetLastWord() {
     return parserLastWord.toString();
   }
+  
+  public int getLastWordLength(){ return parserLastWord.length() + parserEscapeSequnceCount; }
 
   /**
    * Throws a syntax error exception.
@@ -327,6 +330,7 @@ public abstract class OBaseParser {
     parserPreviousPos = parserCurrentPos;
     parserSkipWhiteSpaces();
 
+    parserEscapeSequnceCount = 0;
     parserLastWord.setLength(0);
 
     final String[] processedWords = Arrays.copyOf(iCandidateWords, iCandidateWords.length);
@@ -335,6 +339,7 @@ public abstract class OBaseParser {
     final String text2Use = iUpperCase ? parserTextUpperCase : parserText;
     final int max = text2Use.length();
 
+    parserCurrentPos=parserCurrentPos+parserTextUpperCase.length()-parserText.length();
     // PARSE TILL 1 CHAR AFTER THE END TO SIMULATE A SEPARATOR AS EOF
     for (int i = 0; parserCurrentPos <= max; ++i) {
       final char ch = parserCurrentPos < max ? text2Use.charAt(parserCurrentPos) : '\n';
@@ -479,6 +484,7 @@ public abstract class OBaseParser {
   protected void parserNextWord(final boolean iForceUpperCase, final String iSeparatorChars) {
     parserPreviousPos = parserCurrentPos;
     parserLastWord.setLength(0);
+    parserEscapeSequnceCount = 0;
 
     parserSkipWhiteSpaces();
     if (parserCurrentPos == -1)
@@ -514,7 +520,7 @@ public abstract class OBaseParser {
       for (; parserCurrentPos < text2Use.length(); parserCurrentPos++) {
         final char c = text2Use.charAt(parserCurrentPos);
 
-        if (c == '\\' && ((parserCurrentPos + 1) < text2Use.length())) {
+        if (escapePos == -1 && c == '\\' && ((parserCurrentPos + 1) < text2Use.length())) {
           // ESCAPE CHARS
 
           if (openGraph == 0) {
@@ -522,6 +528,7 @@ public abstract class OBaseParser {
 
             if (nextChar == 'u') {
               parserCurrentPos = OStringParser.readUnicode(text2Use, parserCurrentPos + 2, parserLastWord);
+              parserEscapeSequnceCount+=5;
             } else {
 							if (nextChar == 'n')
 								parserLastWord.append('\n');
@@ -533,8 +540,10 @@ public abstract class OBaseParser {
 								parserLastWord.append('\b');
 							else if(nextChar == 'f')
 								parserLastWord.append('\f');
-							else
-              	parserLastWord.append(nextChar);
+							else{
+								parserLastWord.append(nextChar);
+								parserEscapeSequnceCount++;
+							}
 
               parserCurrentPos++;
             }
@@ -580,6 +589,9 @@ public abstract class OBaseParser {
             openGraph--;
         }
 
+        if (escapePos != -1)
+        	parserEscapeSequnceCount++;
+        
         if (escapePos != parserCurrentPos)
           escapePos = -1;
 

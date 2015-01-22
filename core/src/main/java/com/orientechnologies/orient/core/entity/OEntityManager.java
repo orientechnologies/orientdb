@@ -19,6 +19,7 @@
   */
 package com.orientechnologies.orient.core.entity;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -201,6 +202,35 @@ public class OEntityManager {
       }
     }
   }
+
+
+
+
+
+  /**
+   * Scans all classes accessible from the context class loader which belong to the given class and all it´ attribut - classes.
+   *
+   * @param aClass The class to start from
+   * @param recursive Beginning from the class, it will register all classes that are direct or indirect a attribute class
+   *
+   */
+  public synchronized void registerEntityClasses(Class<?> aClass, boolean recursive) {
+    if (recursive){
+      classHandler.registerEntityClass(aClass);
+      Field[] declaredFields = aClass.getDeclaredFields();
+      for (Field declaredField : declaredFields) {
+        Class<?> declaredFieldType = declaredField.getType();
+          if (!classHandler.containsEntityClass(declaredFieldType)) {
+//            classHandler.registerEntityClass(declaredFieldType);
+            registerEntityClasses(declaredFieldType, recursive);
+          }
+      }
+    }else{
+      classHandler.registerEntityClass(aClass);
+    }
+  }
+
+
 
   /**
    * Sets the received handler as default and merges the classes all together.

@@ -1,0 +1,4 @@
+
+com.orientechnologies.orient.core.metadata.schema.clusterselection.ORoundRobinClusterSelectionStrategy
+com.orientechnologies.orient.core.metadata.schema.clusterselection.ODefaultClusterSelectionStrategy
+com.orientechnologies.orient.core.metadata.schema.clusterselection.OBalancedClusterSelectionStrategy

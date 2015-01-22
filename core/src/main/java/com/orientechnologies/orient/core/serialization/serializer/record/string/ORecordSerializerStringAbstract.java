@@ -1,31 +1,23 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
-
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.orient.core.Orient;
@@ -45,6 +37,15 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerAnyStreamable;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringSerializerEmbedded;
 import com.orientechnologies.orient.core.util.ODateHelper;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 @SuppressWarnings("serial")
 public abstract class ORecordSerializerStringAbstract implements ORecordSerializer, Serializable {
@@ -366,6 +367,8 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       return OType.LINKBAG;
     else if (iCharType == 'z')
       return OType.LINKLIST;
+    else if (iCharType == 'm')
+      return OType.LINKMAP;
     else if (iCharType == 'x')
       return OType.LINK;
     else if (iCharType == 'n')
@@ -426,12 +429,15 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     boolean integer = true;
     char c;
 
+    boolean stringStarBySign = false;
+
     for (int index = 0; index < iValue.length(); ++index) {
       c = iValue.charAt(index);
-      if (c < '0' || c > '9')
-        if ((index == 0 && (c == '+' || c == '-')))
+      if (c < '0' || c > '9') {
+        if ((index == 0 && (c == '+' || c == '-'))) {
+          stringStarBySign = true;
           continue;
-        else if (c == DECIMAL_SEPARATOR)
+        } else if (c == DECIMAL_SEPARATOR)
           integer = false;
         else {
           if (index > 0) {
@@ -462,7 +468,12 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
           }
           return iValue;
         }
+      } else if (stringStarBySign) {
+        stringStarBySign = false;
+      }
     }
+    if (stringStarBySign)
+      return iValue;
 
     if (integer) {
       try {
@@ -683,6 +694,6 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
   }
 
   protected abstract StringBuilder toString(final ORecord iRecord, final StringBuilder iOutput, final String iFormat,
-      final OUserObject2RecordHandler iObjHandler, final Set<ODocument> iMarshalledRecords, boolean iOnlyDelta,
+      final OUserObject2RecordHandler iObjHandler, final Map<ODocument, Boolean> iMarshalledRecords, boolean iOnlyDelta,
       boolean autoDetectCollectionType);
 }

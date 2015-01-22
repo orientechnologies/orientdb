@@ -22,7 +22,7 @@ package com.tinkerpop.blueprints.impls.orient;
 
 import org.apache.commons.configuration.Configuration;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.tinkerpop.blueprints.Features;
 
@@ -120,13 +120,13 @@ public class OrientGraph extends OrientTransactionalGraph {
    * @param pool
    *          Database pool where to acquire a database instance
    */
-  public OrientGraph(final ODatabaseDocumentPool pool) {
+  public OrientGraph(final OPartitionedDatabasePool pool) {
     super(pool);
   }
 
-	public OrientGraph(final ODatabaseDocumentPool pool, final Settings configuration) {
-		super(pool, configuration);
-	}
+  public OrientGraph(final OPartitionedDatabasePool pool, final Settings configuration) {
+    super(pool, configuration);
+  }
 
   /**
    * Builds a OrientGraph instance passing a configuration. Supported configuration settings are:
@@ -223,6 +223,8 @@ public class OrientGraph extends OrientTransactionalGraph {
    * @return Features object
    */
   public Features getFeatures() {
+		makeActive();
+
     if (!featuresInitialized) {
       FEATURES.supportsDuplicateEdges = true;
       FEATURES.supportsSelfLoops = true;
@@ -255,10 +257,10 @@ public class OrientGraph extends OrientTransactionalGraph {
       FEATURES.supportsThreadIsolatedTransactions = false;
 
       // DYNAMIC FEATURES BASED ON CONFIGURATION
-      FEATURES.supportsEdgeIndex = !settings.useLightweightEdges;
-      FEATURES.supportsEdgeKeyIndex = !settings.useLightweightEdges;
-      FEATURES.supportsEdgeIteration = !settings.useLightweightEdges;
-      FEATURES.supportsEdgeRetrieval = !settings.useLightweightEdges;
+      FEATURES.supportsEdgeIndex = !isUseLightweightEdges();
+      FEATURES.supportsEdgeKeyIndex = !isUseLightweightEdges();
+      FEATURES.supportsEdgeIteration = !isUseLightweightEdges();
+      FEATURES.supportsEdgeRetrieval = !isUseLightweightEdges();
 
       featuresInitialized = true;
     }

@@ -21,7 +21,7 @@
 package com.orientechnologies.orient.core.index.sbtree.local;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 9/27/13
  */
 public class OSBTreeValue<V> {

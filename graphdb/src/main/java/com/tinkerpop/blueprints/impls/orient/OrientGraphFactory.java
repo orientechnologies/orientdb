@@ -1,19 +1,19 @@
 package com.tinkerpop.blueprints.impls.orient;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentPool;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import com.orientechnologies.orient.core.db.OPartitionedDatabasePool;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.intent.OIntent;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 public class OrientGraphFactory extends OrientConfigurableGraph {
-  protected final String                   url;
-  protected final String                   user;
-  protected final String                   password;
-  protected volatile ODatabaseDocumentPool pool;
-  protected OIntent                        intent;
-  protected AtomicBoolean                  used = new AtomicBoolean(false);
+  protected final String                      url;
+  protected final String                      user;
+  protected final String                      password;
+  protected volatile OPartitionedDatabasePool pool;
+  protected OIntent                           intent;
+  protected AtomicBoolean                     used = new AtomicBoolean(false);
 
   /**
    * Creates a factory that use default admin credentials.
@@ -45,8 +45,8 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    * Closes all pooled databases and clear the pool.
    */
   public void close() {
-    if (pool != null)
-      pool.close();
+		if (pool != null)
+			pool.close();
 
     pool = null;
   }
@@ -158,13 +158,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    * @return this
    */
   public OrientGraphFactory setupPool(final int iMin, final int iMax) {
-    // CLOSE ANY PREVIOUS POOL
-    if (pool != null)
-      pool.close();
-
-    pool = new ODatabaseDocumentPool(url, user, password);
-    pool.setup(iMin, iMax);
-
+    pool = new OPartitionedDatabasePool(url, user, password, iMax);
     return this;
   }
 
@@ -173,7 +167,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    */
   public int getAvailableInstancesInPool() {
     if (pool != null)
-      return pool.getAvailableConnections(url, user);
+      return pool.getAvailableConnections();
     return 0;
   }
 
@@ -182,7 +176,7 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    */
   public int getCreatedInstancesInPool() {
     if (pool != null)
-      return pool.getCreatedInstances(url, user);
+      return pool.getCreatedInstances();
 
     return 0;
   }

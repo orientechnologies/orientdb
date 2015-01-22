@@ -22,10 +22,10 @@ package com.orientechnologies.orient.server;
 import com.orientechnologies.orient.core.Orient;
 
 public class OServerShutdownHook extends Thread {
-   private OServer server;
+   private final OServer server;
 
-   protected OServerShutdownHook(final OServer iServer) {
-     server = iServer;
+   protected OServerShutdownHook(final OServer server) {
+     this.server = server;
      Orient.instance().removeShutdownHook();
      Runtime.getRuntime().addShutdownHook(this);
    }

@@ -1,36 +1,36 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.sql;
-
-import java.util.Locale;
-import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OPropertyImpl;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * SQL CREATE PROPERTY command: Creates a new property in the target class.
@@ -47,11 +47,12 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
   private String             fieldName;
   private OType              type;
   private String             linked;
+  private boolean            unsafe           = false;
 
   public OCommandExecutorSQLCreateProperty parse(final OCommandRequest iRequest) {
     init((OCommandRequestText) iRequest);
 
-    StringBuilder word = new StringBuilder();
+    final StringBuilder word = new StringBuilder();
 
     int oldPos = 0;
     int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
@@ -89,7 +90,19 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
     if (pos == -1)
       return this;
 
-    linked = word.toString();
+    if (word.toString().equals(KEYWORD_UNSAFE))
+      unsafe = true;
+    else {
+      linked = word.toString();
+
+      oldPos = pos;
+      pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
+      if (pos == -1)
+        return this;
+
+      if (word.toString().equals(KEYWORD_UNSAFE))
+        unsafe = true;
+    }
 
     return this;
   }
@@ -101,7 +114,7 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
     if (type == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    final ODatabaseRecord database = getDatabase();
+    final ODatabaseDocument database = getDatabase();
     final OClassImpl sourceClass = (OClassImpl) database.getMetadata().getSchema().getClass(className);
     if (sourceClass == null)
       throw new OCommandExecutionException("Source class '" + className + "' not found");
@@ -124,12 +137,12 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
     }
 
     // CREATE IT LOCALLY
-    sourceClass.addPropertyInternal(fieldName, type, linkedType, linkedClass);
+    sourceClass.addPropertyInternal(fieldName, type, linkedType, linkedClass, !unsafe);
     return sourceClass.properties().size();
   }
 
   @Override
   public String getSyntax() {
-    return "CREATE PROPERTY <class>.<property> <type> [<linked-type>|<linked-class>]";
+    return "CREATE PROPERTY <class>.<property> <type> [<linked-type>|<linked-class>] [UNSAFE]";
   }
 }

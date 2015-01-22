@@ -23,9 +23,9 @@ import java.util.ArrayList;
 
 /**
  * String parser utility class
- * 
+ *
  * @author Luca Garulli
- * 
+ *
  */
 public class OStringParser {
 
@@ -78,8 +78,10 @@ public class OStringParser {
           buffer.append('\\');
           buffer.append(nextChar);
           i++;
-        } else
+        } else {
+          buffer.append('\\');
           escape = true;
+        }
 
         continue;
       }

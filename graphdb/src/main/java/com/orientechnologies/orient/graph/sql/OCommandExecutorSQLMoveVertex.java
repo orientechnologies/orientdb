@@ -1,31 +1,33 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.graph.sql;
 
+import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSetAware;
@@ -56,12 +58,13 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
   private String                        source        = null;
   private String                        clusterName;
   private String                        className;
+  private OClass                        clazz;
   private LinkedHashMap<String, Object> fields;
   private ODocument                     merge;
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLMoveVertex parse(final OCommandRequest iRequest) {
-    final ODatabaseRecord database = getDatabase();
+    final ODatabaseDocument database = getDatabase();
 
     init((OCommandRequestText) iRequest);
 
@@ -91,12 +94,14 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
 
         className = temp.substring("CLASS:".length());
 
-        if (!database.getMetadata().getSchema().existsClass(className))
-          throw new OCommandSQLParsingException("Class " + className + " was not found");
+        clazz = database.getMetadata().getSchema().getClass(className);
+
+        if (clazz == null)
+          throw new OCommandSQLParsingException("Class '" + className + "' was not found");
 
       } else if (temp.equals(KEYWORD_SET)) {
         fields = new LinkedHashMap<String, Object>();
-        parseSetFields(fields);
+        parseSetFields(clazz, fields);
 
       } else if (temp.equals(KEYWORD_MERGE)) {
         merge = parseJSON();
@@ -118,41 +123,46 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
     if (className == null && clusterName == null)
       throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
 
-    final OrientGraphNoTx graph = OGraphCommandExecutorSQLFactory.getGraphNoTx();
+    OModifiableBoolean shutdownGraph = new OModifiableBoolean();
+    final OrientGraphNoTx graph = OGraphCommandExecutorSQLFactory.getGraphNoTx(shutdownGraph);
+    try {
+      final Set<OIdentifiable> sourceRIDs = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), source, context, iArgs);
 
-    final Set<OIdentifiable> sourceRIDs = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), source, context, iArgs);
+      // CREATE EDGES
+      final List<ODocument> result = new ArrayList<ODocument>(sourceRIDs.size());
 
-    // CREATE EDGES
-    final List<ODocument> result = new ArrayList<ODocument>(sourceRIDs.size());
+      for (OIdentifiable from : sourceRIDs) {
+        final OrientVertex fromVertex = graph.getVertex(from);
+        if (fromVertex == null)
+          continue;
 
-    for (OIdentifiable from : sourceRIDs) {
-      final OrientVertex fromVertex = graph.getVertex(from);
-      if (fromVertex == null)
-        continue;
+        final ORID oldVertex = fromVertex.getIdentity().copy();
+        final ORID newVertex = fromVertex.moveTo(className, clusterName);
 
-      final ORID oldVertex = fromVertex.getIdentity().copy();
-      final ORID newVertex = fromVertex.moveTo(className, clusterName);
+        if (fields != null)
+          // EVALUATE FIELDS
+          for (Entry<String, Object> f : fields.entrySet()) {
+            if (f.getValue() instanceof OSQLFunctionRuntime)
+              fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(newVertex.getRecord(), null, context));
+          }
 
-      if (fields != null)
-        // EVALUATE FIELDS
-        for (Entry<String, Object> f : fields.entrySet()) {
-          if (f.getValue() instanceof OSQLFunctionRuntime)
-            fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(newVertex.getRecord(), null, context));
-        }
+        OSQLHelper.bindParameters(fromVertex.getRecord(), fields, new OCommandParameters(iArgs), context);
 
-      OSQLHelper.bindParameters(fromVertex.getRecord(), fields, new OCommandParameters(iArgs), context);
+        if (merge != null)
+          fromVertex.getRecord().merge(merge, true, false);
 
-      if (merge != null)
-        fromVertex.getRecord().merge(merge, true, false);
+        // SAVE CHANGES
+        fromVertex.save();
 
-      // SAVE CHANGES
-      fromVertex.save();
+        // PUT THE MOVE INTO THE RESULT
+        result.add(new ODocument().field("old", oldVertex, OType.LINK).field("new", newVertex, OType.LINK));
+      }
 
-      // PUT THE MOVE INTO THE RESULT
-      result.add(new ODocument().field("old", oldVertex, OType.LINK).field("new", newVertex, OType.LINK));
+      return result;
+    } finally {
+      if (shutdownGraph.getValue())
+        graph.shutdown(false);
     }
-
-    return result;
   }
 
   @Override

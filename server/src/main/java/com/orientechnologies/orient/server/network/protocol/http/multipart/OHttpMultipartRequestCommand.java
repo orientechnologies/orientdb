@@ -15,15 +15,15 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http.multipart;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 /**
  * @author luca.molino
@@ -39,7 +39,7 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
 
   public HashMap<String, String> parse(final OHttpRequest iRequest, final OHttpResponse iResponse,
       final OHttpMultipartContentParser<B> standardContentParser, final OHttpMultipartContentParser<F> fileContentParser,
-      final ODatabaseRecord database) throws Exception {
+      final ODatabaseDocument database) throws Exception {
     char currChar;
     boolean endRequest = false;
     final OHttpMultipartContentInputStream contentIn = new OHttpMultipartContentInputStream(iRequest.multipartStream,
@@ -232,14 +232,16 @@ public abstract class OHttpMultipartRequestCommand<B, F> extends OServerCommandA
   }
 
   protected void parseBaseContent(final OHttpRequest iRequest, final OHttpMultipartContentParser<B> contentParser,
-      final HashMap<String, String> headers, final OHttpMultipartContentInputStream in, ODatabaseRecord database) throws Exception {
+      final HashMap<String, String> headers, final OHttpMultipartContentInputStream in, ODatabaseDocument database)
+      throws Exception {
     B result = contentParser.parse(iRequest, headers, in, database);
     parseStatus = STATUS.STATUS_EXPECTED_END_REQUEST;
     processBaseContent(iRequest, result, headers);
   }
 
   protected void parseFileContent(final OHttpRequest iRequest, final OHttpMultipartContentParser<F> contentParser,
-      final HashMap<String, String> headers, final OHttpMultipartContentInputStream in, ODatabaseRecord database) throws Exception {
+      final HashMap<String, String> headers, final OHttpMultipartContentInputStream in, ODatabaseDocument database)
+      throws Exception {
     F result = contentParser.parse(iRequest, headers, in, database);
     parseStatus = STATUS.STATUS_EXPECTED_END_REQUEST;
     processFileContent(iRequest, result, headers);

@@ -29,7 +29,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 9/25/14
  */
 @Test
@@ -45,6 +45,7 @@ public class IndexCrashRestoreMultiValueAddDelete {
 
   @BeforeClass
   public void beforeClass() throws Exception {
+		OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(3);
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
@@ -93,6 +94,7 @@ public class IndexCrashRestoreMultiValueAddDelete {
 
   public static final class RemoteDBRunner {
     public static void main(String[] args) throws Exception {
+			OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL.setValue(5);
       OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(3);
 
       OServer server = OServerMain.create();
@@ -117,7 +119,7 @@ public class IndexCrashRestoreMultiValueAddDelete {
       futures.add(executorService.submit(new DataPropagationTask(baseDocumentTx, testDocumentTx)));
     }
 
-    Thread.sleep(150000);
+		Thread.sleep(1800000);
 
     System.out.println("Wait for process to destroy");
     Process p = Runtime.getRuntime().exec("pkill -9 -f RemoteDBRunner");

@@ -20,16 +20,15 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OProxedResource;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionFactory;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Proxy class to use the shared OSchemaShared instance. Before to delegate each operations it sets the current database in the
@@ -40,10 +39,14 @@ import java.util.Set;
  */
 @SuppressWarnings("unchecked")
 public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSchema {
-  private final OSchemaShared.OSchemaData data = new OSchemaShared.OSchemaData();
 
-  public OSchemaProxy(final OSchemaShared iDelegate, final ODatabaseRecordInternal iDatabase) {
+  public OSchemaProxy(final OSchemaShared iDelegate, final ODatabaseDocumentInternal iDatabase) {
     super(iDelegate, iDatabase);
+  }
+
+  @Override
+  public OImmutableSchema makeSnapshot() {
+    return delegate.makeSnapshot();
   }
 
   public void create() {
@@ -52,7 +55,7 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   }
 
   public int countClasses() {
-    return getData().classes.size();
+    return delegate.countClasses();
   }
 
   public OClass createClass(final Class<?> iClass) {
@@ -78,7 +81,7 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
     if (iClassName == null)
       return null;
 
-    OClass cls = getData().classes.get(iClassName.toLowerCase());
+    OClass cls = delegate.getClass(iClassName.toLowerCase());
     if (cls != null)
       return cls;
 
@@ -135,25 +138,25 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
     if (iClassName == null)
       return false;
 
-    return getData().classes.containsKey(iClassName.toLowerCase());
+    return delegate.existsClass(iClassName.toLowerCase());
   }
 
   public OClass getClass(final Class<?> iClass) {
     if (iClass == null)
       return null;
 
-    return getData().classes.get(iClass.getSimpleName().toLowerCase());
+    return delegate.getClass(iClass);
   }
 
   public OClass getClass(final String iClassName) {
     if (iClassName == null)
       return null;
 
-    return getData().classes.get(iClassName.toLowerCase());
+    return delegate.getClass(iClassName);
   }
 
   public Collection<OClass> getClasses() {
-    return new ArrayList<OClass>(getData().classes.values());
+    return delegate.getClasses();
   }
 
   public void load() {
@@ -217,11 +220,17 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   }
 
   @Override
-  public OClusterSelectionFactory getClusterSelectionFactory() {
-    return delegate.getClusterSelectionFactory();
+  public boolean isFullCheckpointOnChange() {
+    return delegate.isFullCheckpointOnChange();
   }
 
-  private OSchemaShared.OSchemaData getData() {
-    return delegate.reloadDataIfChanged(data);
+  @Override
+  public void setFullCheckpointOnChange(boolean fullCheckpointOnChange) {
+    delegate.setFullCheckpointOnChange(fullCheckpointOnChange);
+  }
+
+  @Override
+  public OClusterSelectionFactory getClusterSelectionFactory() {
+    return delegate.getClusterSelectionFactory();
   }
 }

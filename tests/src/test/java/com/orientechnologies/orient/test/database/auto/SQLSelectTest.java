@@ -15,26 +15,8 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.id.OClusterPosition;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
@@ -52,6 +34,13 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * If some of the tests start to fail then check cluster number in queries, e.g #7:1. It can be because the order of clusters could
@@ -503,7 +492,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void queryWhereRidDirectMatching() {
-    List<OClusterPosition> positions = getValidPositions(4);
+    List<Long> positions = getValidPositions(4);
 
     List<ODocument> result = executeQuery("select * from OUser where roles in #4:" + positions.get(0), database);
 
@@ -754,7 +743,7 @@ public class SQLSelectTest extends AbstractSelectTest {
   @Test
   public void queryRecordTargetRid() {
     int profileClusterId = database.getMetadata().getSchema().getClass("Profile").getDefaultClusterId();
-    List<OClusterPosition> positions = getValidPositions(profileClusterId);
+    List<Long> positions = getValidPositions(profileClusterId);
 
     List<ODocument> result = executeQuery("select from " + profileClusterId + ":" + positions.get(0), database);
 
@@ -768,7 +757,7 @@ public class SQLSelectTest extends AbstractSelectTest {
   @Test
   public void queryRecordTargetRids() {
     int profileClusterId = database.getMetadata().getSchema().getClass("Profile").getDefaultClusterId();
-    List<OClusterPosition> positions = getValidPositions(profileClusterId);
+    List<Long> positions = getValidPositions(profileClusterId);
 
     List<ODocument> result = executeQuery(" select from [" + profileClusterId + ":" + positions.get(0) + ", " + profileClusterId
         + ":" + positions.get(1) + "]", database);
@@ -783,7 +772,7 @@ public class SQLSelectTest extends AbstractSelectTest {
   public void queryRecordAttribRid() {
 
     int profileClusterId = database.getMetadata().getSchema().getClass("Profile").getDefaultClusterId();
-    List<OClusterPosition> postions = getValidPositions(profileClusterId);
+    List<Long> postions = getValidPositions(profileClusterId);
 
     List<ODocument> result = executeQuery("select from Profile where @rid = #" + profileClusterId + ":" + postions.get(0), database);
 
@@ -885,7 +874,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
       for (ODocument d : resultset) {
         Assert.assertTrue(d.getIdentity().getClusterId() < 0 || (d.getIdentity().getClusterId() >= last.getClusterId())
-            && d.getIdentity().getClusterPosition().compareTo(last.getClusterPosition()) > 0);
+            && d.getIdentity().getClusterPosition() > last.getClusterPosition());
       }
 
       last = resultset.get(resultset.size() - 1).getIdentity();
@@ -910,7 +899,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
       for (ODocument d : resultset) {
         Assert.assertTrue(d.getIdentity().getClusterId() >= last.getClusterId()
-            && d.getIdentity().getClusterPosition().compareTo(last.getClusterPosition()) > 0);
+            && d.getIdentity().getClusterPosition() > last.getClusterPosition());
       }
 
       last = resultset.get(resultset.size() - 1).getIdentity();
@@ -926,7 +915,7 @@ public class SQLSelectTest extends AbstractSelectTest {
   public void queryWithAutomaticPaginationAndRidInWhere() {
     int clusterId = database.getClusterIdByName("profile");
 
-    OClusterPosition[] range = database.getStorage().getClusterDataRange(clusterId);
+    long[] range = database.getStorage().getClusterDataRange(clusterId);
 
     final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from Profile where @rid between #" + clusterId
         + ":" + range[0] + " and #" + clusterId + ":" + range[1] + " LIMIT 3");
@@ -943,7 +932,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
       for (ODocument d : resultset) {
         Assert.assertTrue(d.getIdentity().getClusterId() >= last.getClusterId()
-            && d.getIdentity().getClusterPosition().compareTo(last.getClusterPosition()) > 0);
+            && d.getIdentity().getClusterPosition() > last.getClusterPosition());
       }
 
       last = resultset.get(resultset.size() - 1).getIdentity();
@@ -971,12 +960,12 @@ public class SQLSelectTest extends AbstractSelectTest {
 
       for (ODocument d : resultset) {
         Assert.assertTrue(d.getIdentity().getClusterId() >= last.getClusterId()
-            && d.getIdentity().getClusterPosition().compareTo(last.getClusterPosition()) > 0);
+            && d.getIdentity().getClusterPosition() > last.getClusterPosition());
       }
 
       last = resultset.get(resultset.size() - 1).getIdentity();
 
-      System.out.printf("\nIterating page %d, last record is %s", iterationCount, last);
+//      System.out.printf("\nIterating page %d, last record is %s", iterationCount, last);
 
       iterationCount++;
       resultset = database.query(query);
@@ -1000,7 +989,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
       for (ODocument d : resultset) {
         Assert.assertTrue(d.getIdentity().getClusterId() >= last.getClusterId()
-            && d.getIdentity().getClusterPosition().compareTo(last.getClusterPosition()) > 0);
+            && d.getIdentity().getClusterPosition() > last.getClusterPosition());
       }
 
       last = resultset.get(resultset.size() - 1).getIdentity();
@@ -1027,7 +1016,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
       for (ODocument d : resultset) {
         Assert.assertTrue(d.getIdentity().getClusterId() >= last.getClusterId()
-            && d.getIdentity().getClusterPosition().compareTo(last.getClusterPosition()) > 0);
+            && d.getIdentity().getClusterPosition() > last.getClusterPosition());
       }
 
       last = resultset.get(resultset.size() - 1).getIdentity();
@@ -1236,7 +1225,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     List<ODocument> recordDocs = executeQuery(sb.toString(), graph.getRawGraph());
 
     for (ODocument doc : recordDocs) {
-      System.out.println(doc);
+//      System.out.println(doc);
     }
 
     graph.shutdown();
@@ -1292,8 +1281,8 @@ public class SQLSelectTest extends AbstractSelectTest {
 
     Map<String, Object> parameters = new HashMap<String, Object>();
     parameters.put("p1", "a");
-    System.out.println(database.query(new OSQLSynchQuery<ODocument>("select from test where (f1 = :p1)"), parameters));
-    System.out.println(database.query(new OSQLSynchQuery<ODocument>("select from test where f1 = :p1 and f2 = :p1"), parameters));
+    database.query(new OSQLSynchQuery<ODocument>("select from test where (f1 = :p1)"), parameters);
+    database.query(new OSQLSynchQuery<ODocument>("select from test where f1 = :p1 and f2 = :p1"), parameters);
   }
 
   @Test
@@ -1383,10 +1372,10 @@ public class SQLSelectTest extends AbstractSelectTest {
   public void queryWithTwoRidInWhere() {
     int clusterId = database.getClusterIdByName("profile");
 
-    List<OClusterPosition> positions = getValidPositions(clusterId);
+    List<Long> positions = getValidPositions(clusterId);
 
-    final OClusterPosition minPos;
-    final OClusterPosition maxPos;
+    final long minPos;
+    final long maxPos;
     if (positions.get(5).compareTo(positions.get(25)) > 0) {
       minPos = positions.get(25);
       maxPos = positions.get(5);
@@ -1479,7 +1468,7 @@ public class SQLSelectTest extends AbstractSelectTest {
     ORID famousPlaceId = famousPlace.getIdentity();
     // if one of these two asserts fails, the test will be meaningless.
     Assert.assertTrue(secondPlaceId.getClusterId() < famousPlaceId.getClusterId());
-    Assert.assertTrue(secondPlaceId.getClusterPosition().longValue() > famousPlaceId.getClusterPosition().longValue());
+    Assert.assertTrue(secondPlaceId.getClusterPosition() > famousPlaceId.getClusterPosition());
 
     List<ODocument> result = executeQuery("select from Place where @rid in [" + secondPlaceId + "," + famousPlaceId + "]", database);
     Assert.assertEquals(2, result.size());
@@ -1610,21 +1599,10 @@ public class SQLSelectTest extends AbstractSelectTest {
         Assert.assertTrue(rid.compareTo(lastRid) < 0);
       lastRid = rid;
     }
-  }
 
-  private List<OClusterPosition> getValidPositions(int clusterId) {
-    final List<OClusterPosition> positions = new ArrayList<OClusterPosition>();
+    ODocument res = database.command(new OCommandSQL("explain select from OUser order by @rid desc")).execute();
+    Assert.assertNull(res.field("orderByElapsed"));
 
-    final ORecordIteratorCluster<ODocument> iteratorCluster = database.browseCluster(database.getClusterNameById(clusterId));
-
-    for (int i = 0; i < 100; i++) {
-      if (!iteratorCluster.hasNext())
-        break;
-
-      ODocument doc = iteratorCluster.next();
-      positions.add(doc.getIdentity().getClusterPosition());
-    }
-    return positions;
   }
 
   public void testSelectFromIndexValues() {
@@ -1712,5 +1690,20 @@ public class SQLSelectTest extends AbstractSelectTest {
     database.query(new OSQLSynchQuery<Object>("select from OUser where @rid = ?"), doc);
     Assert.assertTrue(doc.isDirty());
 
+  }
+
+  private List<Long> getValidPositions(int clusterId) {
+    final List<Long> positions = new ArrayList<Long>();
+
+    final ORecordIteratorCluster<ODocument> iteratorCluster = database.browseCluster(database.getClusterNameById(clusterId));
+
+    for (int i = 0; i < 100; i++) {
+      if (!iteratorCluster.hasNext())
+        break;
+
+      ODocument doc = iteratorCluster.next();
+      positions.add(doc.getIdentity().getClusterPosition());
+    }
+    return positions;
   }
 }

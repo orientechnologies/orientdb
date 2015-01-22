@@ -6,7 +6,6 @@ import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndexUnique;
 import com.orientechnologies.orient.core.index.OSimpleKeyIndexDefinition;
@@ -52,7 +51,7 @@ public class MVRBTreeInsertionSpeedTest extends SpeedTestMonoThread {
   @Test(enabled = false)
   public void cycle() throws Exception {
     String key = "bsadfasfas" + random.nextInt();
-    index.put(key, new ORecordId(0, new OClusterPositionLong(0)));
+    index.put(key, new ORecordId(0, 0));
   }
 
   @Override

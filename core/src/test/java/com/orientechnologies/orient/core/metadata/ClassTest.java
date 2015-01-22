@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OPaginatedCluster;
+
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeMethod;
@@ -14,6 +15,7 @@ import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -75,6 +77,26 @@ public class ClassTest {
     oClass.setShortName("");
     Assert.assertNull(oClass.getShortName());
     Assert.assertNull(queryShortName());
+
+  }
+
+  @Test
+  public void testShortNameSnapshot() {
+    OSchema schema = db.getMetadata().getSchema();
+    OClass oClass = schema.createClass(SHORTNAME_CLASS_NAME);
+    Assert.assertNull(oClass.getShortName());
+
+    String shortName = "shortName";
+    oClass.setShortName(shortName);
+    Assert.assertEquals(shortName, oClass.getShortName());
+    OClass shorted = schema.getClass(shortName);
+    Assert.assertNotNull(shorted);
+    Assert.assertEquals(shortName, shorted.getShortName());
+    OMetadataInternal intern = db.getMetadata();
+    OImmutableSchema immSchema = intern.getImmutableSchemaSnapshot();
+    shorted = immSchema.getClass(shortName);
+    Assert.assertNotNull(shorted);
+    Assert.assertEquals(shortName, shorted.getShortName());
 
   }
 

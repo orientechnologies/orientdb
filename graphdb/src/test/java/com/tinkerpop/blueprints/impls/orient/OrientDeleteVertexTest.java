@@ -75,6 +75,7 @@ public class OrientDeleteVertexTest {
         contains = true;
 
     assertFalse(contains);
+    g.shutdown();
   }
 
   int getEdgeCount(Object vid) {

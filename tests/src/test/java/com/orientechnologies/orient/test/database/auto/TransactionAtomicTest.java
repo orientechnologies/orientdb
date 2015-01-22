@@ -15,17 +15,9 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseFlat;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -35,6 +27,12 @@ import com.orientechnologies.orient.core.record.impl.ORecordFlat;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
 
 @Test(groups = "dictionary")
 public class TransactionAtomicTest extends DocumentDBBaseTest {
@@ -45,13 +43,13 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
 
   @Test
   public void testTransactionAtomic() throws IOException {
-    ODatabaseFlat db1 = new ODatabaseFlat(url);
+    ODatabaseDocumentTx db1 = new ODatabaseDocumentTx(url);
     db1.open("admin", "admin");
 
-    ODatabaseFlat db2 = new ODatabaseFlat(url);
+    ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(url);
     db2.open("admin", "admin");
 
-    ORecordFlat record1 = new ORecordFlat(db1);
+    ORecordFlat record1 = new ORecordFlat();
     record1.value("This is the first version").save();
 
     // RE-READ THE RECORD
@@ -91,7 +89,7 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
 
   @Test(expectedExceptions = OTransactionException.class)
   public void testTransactionPreListenerRollback() throws IOException {
-    ODatabaseFlat db = new ODatabaseFlat(url);
+    ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
     db.open("admin", "admin");
 
     ORecordFlat record1 = new ORecordFlat(db);
@@ -172,18 +170,17 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
       ODocument kumquat = new ODocument("Fruit").field("name", "Kumquat").field("color", "Orange");
 
       apple.save();
-      Assert.assertEquals(apple.getIdentity().getClusterId(), fruitClass.getDefaultClusterId());
-
       orange.save();
-      Assert.assertEquals(orange.getIdentity().getClusterId(), fruitClass.getDefaultClusterId());
-
       banana.save();
-      Assert.assertEquals(banana.getIdentity().getClusterId(), fruitClass.getDefaultClusterId());
-
       kumquat.save();
-      Assert.assertEquals(kumquat.getIdentity().getClusterId(), fruitClass.getDefaultClusterId());
 
       database.commit();
+
+      Assert.assertEquals(apple.getIdentity().getClusterId(), fruitClass.getDefaultClusterId());
+      Assert.assertEquals(orange.getIdentity().getClusterId(), fruitClass.getDefaultClusterId());
+      Assert.assertEquals(banana.getIdentity().getClusterId(), fruitClass.getDefaultClusterId());
+      Assert.assertEquals(kumquat.getIdentity().getClusterId(), fruitClass.getDefaultClusterId());
+
       Assert.assertTrue(false);
 
     } catch (OResponseProcessingException e) {

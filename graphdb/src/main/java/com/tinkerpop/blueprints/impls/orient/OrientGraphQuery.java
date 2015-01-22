@@ -38,7 +38,7 @@ import java.util.Set;
 
 /**
  * OrientDB implementation for Graph query.
- * 
+ *
  * @author Luca Garulli (http://www.orientechnologies.com)
  */
 public class OrientGraphQuery extends DefaultGraphQuery {
@@ -95,7 +95,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
 
   /**
    * (Blueprints Extension) Sets the labels to filter. Labels are bound to Class names by default.
-   * 
+   *
    * @param labels
    *          String vararg of labels
    * @return Current Query Object to allow calls in chain.
@@ -107,7 +107,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
 
   /**
    * Skips first iSkip items from the result set.
-   * 
+   *
    * @param iSkip
    *          Number of items to skip on result set
    * @return Current Query Object to allow calls in chain.
@@ -120,7 +120,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
   /**
    * (Blueprints Extension) Sets the order of results by a field in ascending (asc) order. This is translated on ORDER BY in the
    * underlying SQL query.
-   * 
+   *
    * @param props
    *          Field to order by
    * @return Current Query Object to allow calls in chain.
@@ -133,7 +133,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
   /**
    * (Blueprints Extension) Sets the order of results by a field in ascending (asc) or descending (desc) order based on dir
    * parameter. This is translated on ORDER BY in the underlying SQL query.
-   * 
+   *
    * @param props
    *          Field to order by
    * @param dir
@@ -204,7 +204,7 @@ public class OrientGraphQuery extends DefaultGraphQuery {
   }
 
   /**
-   * 
+   *
    * Returns the result set of the query as iterable edges.
    */
   @Override

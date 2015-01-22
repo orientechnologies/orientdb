@@ -17,11 +17,11 @@
 package com.orientechnologies.orient.core.fetch.json;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OFetchException;
 import com.orientechnologies.orient.core.fetch.OFetchContext;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -109,6 +109,9 @@ public class OJSONFetchContext implements OFetchContext {
     settings.indentLevel++;
     try {
       jsonWriter.beginObject(settings.indentLevel, true, iFieldName);
+      if (!(iUserObject instanceof ODocument)) {
+        collectionStack.add(new ODocument()); // <-- sorry for this... fixes #2845 but this mess should be rewritten...
+      }
     } catch (IOException e) {
       throw new OFetchException("Error writing map field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
     }
@@ -117,6 +120,9 @@ public class OJSONFetchContext implements OFetchContext {
   public void onAfterMap(final ODocument iRootRecord, final String iFieldName, final Object iUserObject) {
     try {
       jsonWriter.endObject(settings.indentLevel, true);
+      if (!(iUserObject instanceof ODocument)) {
+        collectionStack.pop();
+      }
     } catch (IOException e) {
       throw new OFetchException("Error writing map field " + iFieldName + " of record " + iRootRecord.getIdentity(), e);
     }
@@ -168,14 +174,6 @@ public class OJSONFetchContext implements OFetchContext {
     return settings.indentLevel;
   }
 
-  private void appendType(final StringBuilder iBuffer, final String iFieldName, final char iType) {
-    if (iBuffer.length() > 0)
-      iBuffer.append(',');
-    iBuffer.append(iFieldName);
-    iBuffer.append('=');
-    iBuffer.append(iType);
-  }
-
   public void writeSignature(final OJSONWriter json, final ORecord record) throws IOException {
     if (record == null) {
       json.write("null");
@@ -218,6 +216,8 @@ public class OJSONFetchContext implements OFetchContext {
     if (settings.keepTypes) {
       if (iFieldValue instanceof Long)
         appendType(typesStack.peek(), iFieldName, 'l');
+      else if (iFieldValue instanceof OIdentifiable)
+        appendType(typesStack.peek(), iFieldName, 'x');
       else if (iFieldValue instanceof Float)
         appendType(typesStack.peek(), iFieldName, 'f');
       else if (iFieldValue instanceof Short)
@@ -230,14 +230,27 @@ public class OJSONFetchContext implements OFetchContext {
         appendType(typesStack.peek(), iFieldName, 'b');
       else if (iFieldValue instanceof BigDecimal)
         appendType(typesStack.peek(), iFieldName, 'c');
-      else if (iFieldValue instanceof ORecordLazyList)
-        appendType(typesStack.peek(), iFieldName, 'z');
       else if (iFieldValue instanceof ORecordLazySet)
         appendType(typesStack.peek(), iFieldName, 'n');
       else if (iFieldValue instanceof Set<?>)
         appendType(typesStack.peek(), iFieldName, 'e');
       else if (iFieldValue instanceof ORidBag)
         appendType(typesStack.peek(), iFieldName, 'g');
+      else {
+        final OType t = OType.getTypeByValue(iFieldValue);
+        if (t == OType.LINKLIST)
+          appendType(typesStack.peek(), iFieldName, 'z');
+        else if (t == OType.LINKMAP)
+          appendType(typesStack.peek(), iFieldName, 'm');
+      }
     }
+  }
+
+  private void appendType(final StringBuilder iBuffer, final String iFieldName, final char iType) {
+    if (iBuffer.length() > 0)
+      iBuffer.append(',');
+    iBuffer.append(iFieldName);
+    iBuffer.append('=');
+    iBuffer.append(iType);
   }
 }

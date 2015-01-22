@@ -15,10 +15,12 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import java.io.IOException;
+
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
-import com.orientechnologies.orient.core.id.OClusterPosition;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OClusterEntryIterator;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -26,8 +28,6 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.io.IOException;
 
 /**
  * Represents an offline cluster, created with the "alter cluster X status offline" command. To restore the original cluster assure
@@ -108,7 +108,7 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public void convertToTombstone(OClusterPosition iPosition) throws IOException {
+  public void convertToTombstone(long iPosition) throws IOException {
 
   }
 
@@ -133,18 +133,17 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public boolean deleteRecord(OClusterPosition clusterPosition) throws IOException {
+  public boolean deleteRecord(long clusterPosition) throws IOException {
     throw new OOfflineClusterException("Cannot delete a record on offline cluster '" + name + "'");
   }
 
   @Override
-  public void updateRecord(OClusterPosition clusterPosition, byte[] content, ORecordVersion recordVersion, byte recordType)
-      throws IOException {
+  public void updateRecord(long clusterPosition, byte[] content, ORecordVersion recordVersion, byte recordType) throws IOException {
     throw new OOfflineClusterException("Cannot update a record on offline cluster '" + name + "'");
   }
 
   @Override
-  public ORawBuffer readRecord(OClusterPosition clusterPosition) throws IOException {
+  public ORawBuffer readRecord(long clusterPosition) throws IOException {
     throw new OOfflineClusterException("Cannot read a record from the offline cluster '" + name + "'");
   }
 
@@ -154,33 +153,8 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public boolean addPhysicalPosition(OPhysicalPosition iPPosition) throws IOException {
-    throw new OOfflineClusterException("Cannot create a new record on offline cluster '" + name + "'");
-  }
-
-  @Override
   public OPhysicalPosition getPhysicalPosition(OPhysicalPosition iPPosition) throws IOException {
     throw new OOfflineClusterException("Cannot read a record on offline cluster '" + name + "'");
-  }
-
-  @Override
-  public void updateDataSegmentPosition(OClusterPosition iPosition, int iDataSegmentId, long iDataPosition) throws IOException {
-
-  }
-
-  @Override
-  public void removePhysicalPosition(OClusterPosition iPosition) throws IOException {
-    throw new OOfflineClusterException("Cannot delete a record from offline cluster '" + name + "'");
-  }
-
-  @Override
-  public void updateRecordType(OClusterPosition iPosition, byte iRecordType) throws IOException {
-    throw new OOfflineClusterException("Cannot update a record on offline cluster '" + name + "'");
-  }
-
-  @Override
-  public void updateVersion(OClusterPosition iPosition, ORecordVersion iVersion) throws IOException {
-    throw new OOfflineClusterException("Cannot update a record on offline cluster '" + name + "'");
   }
 
   @Override
@@ -189,13 +163,13 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public OClusterPosition getFirstPosition() throws IOException {
-    return null;
+  public long getFirstPosition() throws IOException {
+    return ORID.CLUSTER_POS_INVALID;
   }
 
   @Override
-  public OClusterPosition getLastPosition() throws IOException {
-    return null;
+  public long getLastPosition() throws IOException {
+    return ORID.CLUSTER_POS_INVALID;
   }
 
   @Override
@@ -279,7 +253,7 @@ public class OOfflineCluster implements OCluster {
   }
 
   @Override
-  public boolean hideRecord(OClusterPosition position) throws IOException {
+  public boolean hideRecord(long position) throws IOException {
     return false;
   }
 

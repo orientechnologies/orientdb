@@ -9,20 +9,10 @@ import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.iterator.ORecordIteratorClass;
-import com.orientechnologies.orient.core.iterator.ORecordIteratorClassDescendentOrder;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.security.ODatabaseSecurityResources;
-import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import com.orientechnologies.orient.core.storage.OStorage;
 
 public class OSelectStatement extends OStatement {
 
@@ -122,7 +112,7 @@ public class OSelectStatement extends OStatement {
   }
 
   protected boolean matchesFilters(OIdentifiable currentRecord) {
-    if(getWhereClause()==null){
+    if (getWhereClause() == null) {
       return true;
     }
     return getWhereClause().matchesFilters(currentRecord);
@@ -131,7 +121,7 @@ public class OSelectStatement extends OStatement {
   public Iterator<? extends OIdentifiable> getTargetIterator(OCommandContext iContext, boolean useCache) {
 
     if (target != null && target.getClassName() != null)
-      return getClassTarget(iContext, useCache);
+      return null;// TODO
     // else if (parsedTarget.getTargetIndexValues() != null) {
     // target = new IndexValuesIterator(parsedTarget.getTargetIndexValues(), parsedTarget.isTargetIndexValuesAsc());
     // } else if (parsedTarget.getTargetClusters() != null)
@@ -155,36 +145,6 @@ public class OSelectStatement extends OStatement {
     // target = ((Iterable<? extends OIdentifiable>) var).iterator();
 
     return null;
-  }
-
-  public Iterator<? extends OIdentifiable> getClassTarget(OCommandContext iContext, boolean useCache) {
-    final ODatabaseRecordInternal database = new ODatabaseDocumentTx((ODatabaseRecordTx) getDatabase());
-
-    String className = getTarget().getClassName().getValue();
-    if (className == null) {
-      return null;
-    }
-
-    OClass cls = database.getMetadata().getSchema().getClass(className);
-    if (cls == null) {
-      return null;// TODO throw exception;
-    }
-    database.checkSecurity(ODatabaseSecurityResources.CLASS, ORole.PERMISSION_READ, cls.getName().toLowerCase());
-
-    // NO INDEXES: SCAN THE ENTIRE CLUSTER
-
-    OStorage.LOCKING_STRATEGY locking = iContext != null && iContext.getVariable("$locking") != null ? (OStorage.LOCKING_STRATEGY) iContext
-        .getVariable("$locking") : OStorage.LOCKING_STRATEGY.DEFAULT;
-
-    // final ORID[] range = getRange();
-    boolean ascendingOrder = true;//TODO check the query!
-    if (ascendingOrder)
-      return new ORecordIteratorClass<ORecord>(database, database, cls.getName(), true, useCache, false, locking);
-    // .setRange(range[0], range[1]);
-    else
-      return new ORecordIteratorClassDescendentOrder<ORecord>(database, database, cls.getName(), true, useCache, false,
-          locking);
-    // .setRange(range[0], range[1]);}
   }
 
   protected void assignLetClauses(final ORecord iRecord) {
@@ -269,10 +229,6 @@ public class OSelectStatement extends OStatement {
 
   public void setLetClause(OLetClause letClause) {
     this.letClause = letClause;
-  }
-
-  public static ODatabaseRecordInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
 }

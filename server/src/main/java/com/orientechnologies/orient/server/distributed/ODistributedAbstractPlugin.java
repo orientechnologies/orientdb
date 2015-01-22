@@ -22,18 +22,17 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseComplex;
+import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
-import com.orientechnologies.orient.server.distributed.conflict.OReplicationConflictResolver;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 
 import java.io.File;
@@ -64,7 +63,6 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
 
   protected boolean                                        enabled                     = true;
   protected String                                         nodeName                    = null;
-  protected Class<? extends OReplicationConflictResolver>  confictResolverClass;
   protected File                                           defaultDatabaseConfigFile;
   protected ConcurrentHashMap<String, ODistributedStorage> storages                    = new ConcurrentHashMap<String, ODistributedStorage>();
 
@@ -104,12 +102,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
         nodeName = param.value;
       else if (param.name.startsWith(PAR_DEF_DISTRIB_DB_CONFIG)) {
         setDefaultDatabaseConfigFile(param.value);
-      } else if (param.name.equalsIgnoreCase("conflict.resolver.impl"))
-        try {
-          confictResolverClass = (Class<? extends OReplicationConflictResolver>) Class.forName(param.value);
-        } catch (ClassNotFoundException e) {
-          OLogManager.instance().error(this, "Cannot find the conflict resolver implementation '%s'", e, param.value);
-        }
+      } else if (param.name.equalsIgnoreCase("conflict.resolver.impl")) {
+        // NOT USED ANYMORE
+      }
     }
 
     if (serverInstance.getUser(REPLICATOR_USER) == null)
@@ -175,10 +170,10 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
 
       final OStorage dbStorage = iDatabase.getStorage();
 
-      if (iDatabase instanceof ODatabaseComplex<?> && dbStorage instanceof OStorageEmbedded) {
+      if (iDatabase instanceof ODatabase<?> && dbStorage instanceof OAbstractPaginatedStorage) {
         ODistributedStorage storage = storages.get(iDatabase.getURL());
         if (storage == null) {
-          storage = new ODistributedStorage(serverInstance, (OStorageEmbedded) dbStorage);
+          storage = new ODistributedStorage(serverInstance, (OAbstractPaginatedStorage) dbStorage);
           final ODistributedStorage oldStorage = storages.putIfAbsent(iDatabase.getURL(), storage);
           if (oldStorage != null)
             storage = oldStorage;

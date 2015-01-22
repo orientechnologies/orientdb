@@ -72,13 +72,27 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
     throw new OCommandSQLParsingException(iText + ". Use " + syntax, parserText, parserGetPreviousPosition());
   }
 
+  protected String upperCase(String text) {
+    //TODO remove and refactor (see same method in OCommandExecutorAbstract)
+    StringBuilder result = new StringBuilder(text.length());
+    for (char c : text.toCharArray()) {
+      String upper = ("" + c).toUpperCase(Locale.ENGLISH);
+      if (upper.length() > 1) {
+        result.append(c);
+      } else {
+        result.append(upper);
+      }
+    }
+    return result.toString();
+  }
+
   public OSQLPredicate text(final String iText) {
     if (iText == null)
       throw new OCommandSQLParsingException("Query text is null");
 
     try {
       parserText = iText;
-      parserTextUpperCase = parserText.toUpperCase(Locale.ENGLISH);
+      parserTextUpperCase = upperCase(parserText);
       parserSetCurrentPosition(0);
       parserSkipWhiteSpaces();
 
@@ -281,7 +295,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
         result[i] = subCondition;
       } else if (word.charAt(0) == OStringSerializerHelper.LIST_BEGIN) {
         // COLLECTION OF ELEMENTS
-        parserSetCurrentPosition(lastPosition - word.length());
+        parserSetCurrentPosition(lastPosition - getLastWordLength());
 
         final List<String> stringItems = new ArrayList<String>();
         parserSetCurrentPosition(OStringSerializerHelper.getCollection(parserText, parserGetCurrentPosition(), stringItems));

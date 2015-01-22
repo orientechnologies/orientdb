@@ -25,7 +25,7 @@ package com.orientechnologies.orient.core.db;
  * @author Luca Garulli
  * 
  */
-public interface ODatabaseSchemaAware<T extends Object> extends ODatabaseComplex<T> {
+public interface ODatabaseSchemaAware<T extends Object> extends ODatabase<T> {
   /**
    * Creates a new entity instance. Each database implementation will return the right type.
    * 

@@ -149,8 +149,8 @@ public abstract class OClassAbstractDelegate implements OClass {
   }
 
   @Override
-  public int getClusterForNewInstance() {
-    return delegate.getClusterForNewInstance();
+  public int getClusterForNewInstance(final ODocument doc) {
+    return delegate.getClusterForNewInstance(doc);
   }
 
   @Override
@@ -399,4 +399,9 @@ public abstract class OClassAbstractDelegate implements OClass {
   public int compareTo(final OClass o) {
     return delegate.compareTo(o);
   }
+
+	@Override
+	public float getClassOverSize() {
+		return delegate.getClassOverSize();
+	}
 }

@@ -1,45 +1,45 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.tx;
-
-import com.orientechnologies.common.concur.lock.OLockException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.cache.OLocalRecordCache;
-import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.raw.ODatabaseRaw;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEmbedded;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class OTransactionAbstract implements OTransaction {
-  protected final ODatabaseRecordTx                  database;
-  protected TXSTATUS                                 status = TXSTATUS.INVALID;
-  protected HashMap<ORID, OStorage.LOCKING_STRATEGY> locks  = new HashMap<ORID, OStorage.LOCKING_STRATEGY>();
+import com.orientechnologies.common.concur.lock.OLockException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.cache.OLocalRecordCache;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageProxy;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
-  protected OTransactionAbstract(final ODatabaseRecordTx iDatabase) {
+public abstract class OTransactionAbstract implements OTransaction {
+  protected final ODatabaseDocumentTx                database;
+  protected TXSTATUS                                 status         = TXSTATUS.INVALID;
+  protected ISOLATION_LEVEL                          isolationLevel = ISOLATION_LEVEL.READ_COMMITTED;
+  protected HashMap<ORID, OStorage.LOCKING_STRATEGY> locks          = new HashMap<ORID, OStorage.LOCKING_STRATEGY>();
+
+  protected OTransactionAbstract(final ODatabaseDocumentTx iDatabase) {
     database = iDatabase;
   }
 
@@ -60,6 +60,20 @@ public abstract class OTransactionAbstract implements OTransaction {
     }
   }
 
+  @Override
+  public ISOLATION_LEVEL getIsolationLevel() {
+    return isolationLevel;
+  }
+
+  @Override
+  public OTransaction setIsolationLevel(final ISOLATION_LEVEL isolationLevel) {
+    if (isolationLevel == ISOLATION_LEVEL.REPEATABLE_READ && getDatabase().getStorage() instanceof OStorageProxy)
+      throw new IllegalArgumentException("Remote storage does not support isolation level '" + isolationLevel + "'");
+
+    this.isolationLevel = isolationLevel;
+    return this;
+  }
+
   public boolean isActive() {
     return status != TXSTATUS.INVALID && status != TXSTATUS.COMPLETED && status != TXSTATUS.ROLLED_BACK;
   }
@@ -68,7 +82,7 @@ public abstract class OTransactionAbstract implements OTransaction {
     return status;
   }
 
-  public ODatabaseRecordTx getDatabase() {
+  public ODatabaseDocumentTx getDatabase() {
     return database;
   }
 
@@ -80,11 +94,11 @@ public abstract class OTransactionAbstract implements OTransaction {
     for (Map.Entry<ORID, OStorage.LOCKING_STRATEGY> lock : locks.entrySet()) {
       try {
         if (lock.getValue().equals(OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK))
-          ((OStorageEmbedded) getDatabase().getStorage()).releaseWriteLock(lock.getKey());
+          ((OAbstractPaginatedStorage) getDatabase().getStorage()).releaseWriteLock(lock.getKey());
         else if (lock.getValue().equals(OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK))
-          ((OStorageEmbedded) getDatabase().getStorage()).releaseReadLock(lock.getKey());
+          ((OAbstractPaginatedStorage) getDatabase().getStorage()).releaseReadLock(lock.getKey());
       } catch (Exception e) {
-        OLogManager.instance().debug(this, "Error on releasing lock against record " + lock.getKey());
+        OLogManager.instance().debug(this, "Error on releasing lock against record " + lock.getKey(), e);
       }
     }
     locks.clear();
@@ -93,7 +107,7 @@ public abstract class OTransactionAbstract implements OTransaction {
   @Override
   public OTransaction lockRecord(final OIdentifiable iRecord, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     final OStorage stg = database.getStorage();
-    if (!(stg.getUnderlying() instanceof OStorageEmbedded))
+    if (!(stg.getUnderlying() instanceof OAbstractPaginatedStorage))
       throw new OLockException("Cannot lock record across remote connections");
 
     final ORID rid = iRecord.getIdentity();
@@ -101,9 +115,9 @@ public abstract class OTransactionAbstract implements OTransaction {
     // throw new IllegalStateException("Record " + rid + " is already locked");
 
     if (iLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
-      ((OStorageEmbedded) stg.getUnderlying()).acquireWriteLock(rid);
+      ((OAbstractPaginatedStorage) stg.getUnderlying()).acquireWriteLock(rid);
     else
-      ((OStorageEmbedded) stg.getUnderlying()).acquireReadLock(rid);
+      ((OAbstractPaginatedStorage) stg.getUnderlying()).acquireReadLock(rid);
 
     locks.put(rid, iLockingStrategy);
     return this;
@@ -112,7 +126,7 @@ public abstract class OTransactionAbstract implements OTransaction {
   @Override
   public OTransaction unlockRecord(final OIdentifiable iRecord) {
     final OStorage stg = database.getStorage();
-    if (!(stg.getUnderlying() instanceof OStorageEmbedded))
+    if (!(stg.getUnderlying() instanceof OAbstractPaginatedStorage))
       throw new OLockException("Cannot lock record across remote connections");
 
     final ORID rid = iRecord.getIdentity();
@@ -122,9 +136,9 @@ public abstract class OTransactionAbstract implements OTransaction {
     if (lock == null)
       throw new OLockException("Cannot unlock a never acquired lock");
     else if (lock == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK)
-      ((OStorageEmbedded) stg.getUnderlying()).releaseWriteLock(rid);
+      ((OAbstractPaginatedStorage) stg.getUnderlying()).releaseWriteLock(rid);
     else
-      ((OStorageEmbedded) stg.getUnderlying()).releaseReadLock(rid);
+      ((OAbstractPaginatedStorage) stg.getUnderlying()).releaseReadLock(rid);
 
     return this;
   }
@@ -132,25 +146,5 @@ public abstract class OTransactionAbstract implements OTransaction {
   @Override
   public HashMap<ORID, OStorage.LOCKING_STRATEGY> getLockedRecords() {
     return locks;
-  }
-
-  protected void invokeCommitAgainstListeners() {
-    // WAKE UP LISTENERS
-    for (ODatabaseListener listener : ((ODatabaseRaw) database.getUnderlying()).browseListeners())
-      try {
-        listener.onBeforeTxCommit(database.getUnderlying());
-      } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error on commit callback against listener: " + listener, t);
-      }
-  }
-
-  protected void invokeRollbackAgainstListeners() {
-    // WAKE UP LISTENERS
-    for (ODatabaseListener listener : ((ODatabaseRaw) database.getUnderlying()).browseListeners())
-      try {
-        listener.onBeforeTxRollback(database.getUnderlying());
-      } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error on rollback callback against listener: " + listener, t);
-      }
   }
 }

@@ -6,7 +6,6 @@ import com.orientechnologies.common.test.SpeedTestMonoThread;
 import com.orientechnologies.common.util.MersenneTwisterFast;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.id.OClusterPositionLong;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
@@ -51,7 +50,7 @@ public class SBTreeInsertionSpeedTest extends SpeedTestMonoThread {
   public void cycle() throws Exception {
     databaseDocumentTx.begin();
     String key = "bsadfasfas" + random.nextInt();
-    index.put(key, new ORecordId(0, new OClusterPositionLong(0)));
+    index.put(key, new ORecordId(0, 0));
     databaseDocumentTx.commit();
   }
 

@@ -27,7 +27,7 @@ import java.util.Map;
 /**
  * Implementation of index cursor in case of collection of values which belongs to single key should be returned.
  * 
- * @author Andrey Lomakin <a href="mailto:lomakin.andrey@gmail.com">Andrey Lomakin</a>
+ * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 4/4/14
  */
 public class OIndexCursorCollectionValue extends OIndexAbstractCursor {

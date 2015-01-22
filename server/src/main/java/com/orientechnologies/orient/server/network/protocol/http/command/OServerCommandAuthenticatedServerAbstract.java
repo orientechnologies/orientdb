@@ -19,12 +19,12 @@
     */
 package com.orientechnologies.orient.server.network.protocol.http.command;
 
-import java.io.IOException;
+import com.orientechnologies.orient.server.config.OServerConfiguration;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 
- import com.orientechnologies.orient.server.config.OServerConfiguration;
- import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
- import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
- import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
+import java.io.IOException;
 
 /**
   * Server based authenticated commands. Authenticates against the OrientDB server users found in configuration.
@@ -90,6 +90,6 @@ import java.io.IOException;
      // UNAUTHORIZED
      iRequest.sessionId = SESSIONID_UNAUTHORIZED;
      iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-         "401 Unauthorized.", "WWW-Authenticate: Basic realm=\"OrientDB Server\"", false);
+         "401 Unauthorized.", "WWW-Authenticate: Basic realm=\"OrientDB Server\"");
    }
  }

@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.exception.OException;
@@ -25,11 +25,11 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OMultiKey;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordTrackedSet;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -38,7 +38,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -62,7 +62,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
   protected volatile Thread recreateIndexesThread = null;
   private volatile boolean  rebuildCompleted      = false;
 
-  public OIndexManagerShared(final ODatabaseRecord iDatabase) {
+  public OIndexManagerShared(final ODatabaseDocument iDatabase) {
     super(iDatabase);
   }
 
@@ -123,7 +123,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     if (getDatabase().getTransaction().isActive())
       throw new IllegalStateException("Cannot create a new index inside a transaction");
 
-    final Character c = OSchemaShared.checkNameIfValid(iName);
+    final Character c = OSchemaShared.checkFieldNameIfValid(iName);
     if (c != null)
       throw new IllegalArgumentException("Invalid index name '" + iName + "'. Character '" + c + "' is invalid");
 
@@ -183,7 +183,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     if (OGlobalConfiguration.INDEX_FLUSH_AFTER_CREATE.getValueAsBoolean())
       storage.synch();
 
-    return index;
+    return preProcessBeforeReturn(index);
   }
 
   private Set<String> findClustersByIds(int[] clusterIdsToIndex, ODatabase database) {
@@ -280,7 +280,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
         // BUILDING ALREADY IN PROGRESS
         return;
 
-      final ODatabaseRecord db = getDatabase();
+      final ODatabaseDocument db = getDatabase();
       document = db.load(new ORecordId(getDatabase().getStorage().getConfiguration().indexMgrRecordId));
       final ODocument doc = new ODocument();
       document.copyTo(doc);
@@ -324,13 +324,12 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     if (rebuildCompleted)
       return false;
 
-    final ODatabaseRecordInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
-    if (!OGlobalConfiguration.INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE.getValueAsBoolean())
-      return false;
-
+    final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
     final OStorage storage = database.getStorage().getUnderlying();
-    if (storage instanceof OLocalPaginatedStorage)
-      return ((OLocalPaginatedStorage) storage).wereDataRestoredAfterOpen();
+    if (storage instanceof OAbstractPaginatedStorage) {
+      OAbstractPaginatedStorage paginatedStorage = (OAbstractPaginatedStorage) storage;
+      return paginatedStorage.wereDataRestoredAfterOpen() && paginatedStorage.wereNonTxOperationsPerformedInPreviousOpen();
+    }
 
     return false;
   }
@@ -568,6 +567,7 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     }
 
     private void setUpDatabase() {
+      newDb.resetInitialization();
       newDb.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
       newDb.open("admin", "nopass");
 

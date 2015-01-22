@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.server;
 
 import java.io.IOException;
@@ -37,8 +37,11 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
@@ -52,33 +55,15 @@ public class OClientConnectionManager {
   public OClientConnectionManager() {
     final int delay = OGlobalConfiguration.SERVER_CHANNEL_CLEAN_DELAY.getValueAsInteger();
 
-    Orient.instance().getTimer().schedule(new TimerTask() {
+    Orient.instance().scheduleTask(new TimerTask() {
 
       @Override
       public void run() {
-        final Iterator<Entry<Integer, OClientConnection>> iterator = connections.entrySet().iterator();
-        while (iterator.hasNext()) {
-          final Entry<Integer, OClientConnection> entry = iterator.next();
-
-          final Socket socket;
-          if (entry.getValue().protocol == null || entry.getValue().protocol.getChannel() == null)
-            socket = null;
-          else
-            socket = entry.getValue().protocol.getChannel().socket;
-
-          if (socket == null || socket.isClosed() || socket.isInputShutdown()) {
-            OLogManager.instance().debug(this, "[OClientConnectionManager] found and removed pending closed channel %d (%s)",
-                entry.getKey(), socket);
-            try {
-              entry.getValue().close();
-            } catch (Exception e) {
-              OLogManager.instance().error(this, "Error during close of connection for close channel", e);
-            }
-            iterator.remove();
-          }
-        }
+        cleanExpiredConnections();
       }
-    }, delay, delay);
+    }
+
+    , delay, delay);
 
     Orient
         .instance()
@@ -89,6 +74,36 @@ public class OClientConnectionManager {
                 return connections.size();
               }
             });
+  }
+
+  public void cleanExpiredConnections() {
+    final Iterator<Entry<Integer, OClientConnection>> iterator = connections.entrySet().iterator();
+    while (iterator.hasNext()) {
+      final Entry<Integer, OClientConnection> entry = iterator.next();
+
+      final Socket socket;
+      if (entry.getValue().protocol == null || entry.getValue().protocol.getChannel() == null)
+        socket = null;
+      else
+        socket = entry.getValue().protocol.getChannel().socket;
+
+      if (socket == null || socket.isClosed() || socket.isInputShutdown()) {
+        OLogManager.instance().debug(this, "[OClientConnectionManager] found and removed pending closed channel %d (%s)",
+            entry.getKey(), socket);
+        try {
+          OCommandRequestText command = entry.getValue().data.command;
+          if (command != null && command.isIdempotent()) {
+            entry.getValue().protocol.sendShutdown();
+            entry.getValue().protocol.interrupt();
+          }
+          entry.getValue().close();
+
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Error during close of connection for close channel", e);
+        }
+        iterator.remove();
+      }
+    }
   }
 
   public static OClientConnectionManager instance() {
@@ -166,11 +181,22 @@ public class OClientConnectionManager {
   public void kill(final OClientConnection connection) {
     if (connection != null) {
       final ONetworkProtocol protocol = connection.protocol;
+
+      try {
+        // INTERRUPT THE NEWTORK MANAGER TOO
+        protocol.interrupt();
+      } catch (Exception e) {
+      }
+
       disconnect(connection);
 
       // KILL THE NETWORK MANAGER TOO
       protocol.sendShutdown();
     }
+  }
+
+  public boolean has(final int id) {
+    return connections.containsKey(id);
   }
 
   /**
@@ -184,7 +210,7 @@ public class OClientConnectionManager {
     if (connection != null) {
       final ONetworkProtocol protocol = connection.protocol;
       if (protocol != null)
-        // INTERRUPT THE NEWTORK MANAGER TOO
+        // INTERRUPT THE NEWTORK MANAGER
         protocol.interrupt();
     }
   }
@@ -251,7 +277,8 @@ public class OClientConnectionManager {
    * Pushes the distributed configuration to all the connected clients.
    */
   public void pushDistribCfg2Clients(final ODocument iConfig) {
-    final byte[] content = iConfig.toStream();
+    if (iConfig == null)
+      return;
 
     final Set<String> pushed = new HashSet<String>();
     for (OClientConnection c : connections.values()) {
@@ -272,6 +299,8 @@ public class OClientConnectionManager {
 
       final ONetworkProtocolBinary p = (ONetworkProtocolBinary) c.protocol;
       final OChannelBinary channel = (OChannelBinary) p.getChannel();
+      ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(c.data.serializationImpl);
+      final byte[] content = ser.toStream(iConfig, false);
 
       try {
         channel.acquireWriteLock();
@@ -293,6 +322,46 @@ public class OClientConnectionManager {
       } catch (Exception e) {
         OLogManager.instance().warn(this, "Cannot push cluster configuration to the client %s", e, c.getRemoteAddress());
         disconnect(c);
+      }
+    }
+  }
+
+  public void shutdown() {
+
+    final Iterator<Entry<Integer, OClientConnection>> iterator = connections.entrySet().iterator();
+    while (iterator.hasNext()) {
+      final Entry<Integer, OClientConnection> entry = iterator.next();
+      entry.getValue().protocol.sendShutdown();
+      OCommandRequestText command = entry.getValue().data.command;
+      if (command != null && command.isIdempotent()) {
+        entry.getValue().protocol.interrupt();
+      } else {
+        ONetworkProtocol protocol = entry.getValue().protocol;
+        if (protocol instanceof ONetworkProtocolBinary
+            && ((ONetworkProtocolBinary) protocol).getRequestType() == OChannelBinaryProtocol.REQUEST_SHUTDOWN) {
+          continue;
+        }
+
+        try {
+          final Socket socket;
+          if (entry.getValue().protocol == null || entry.getValue().protocol.getChannel() == null)
+            socket = null;
+          else
+            socket = entry.getValue().protocol.getChannel().socket;
+
+          if (socket != null && !socket.isClosed() && !socket.isInputShutdown()) {
+            try {
+              socket.shutdownInput();
+            } catch (IOException e) {
+              OLogManager.instance().warn(this, "Error on closing connection of %s client during shutdown", e,
+                  entry.getValue().getRemoteAddress());
+            }
+          }
+          if (entry.getValue().protocol.isAlive())
+            entry.getValue().protocol.join();
+        } catch (InterruptedException e) {
+          // NOT Needed to handle
+        }
       }
     }
   }

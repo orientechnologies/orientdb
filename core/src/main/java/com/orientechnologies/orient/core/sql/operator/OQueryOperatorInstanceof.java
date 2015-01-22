@@ -24,10 +24,12 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterCondition;
 
 /**
@@ -46,7 +48,7 @@ public class OQueryOperatorInstanceof extends OQueryOperatorEqualityNotNulls {
 	protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
 			final Object iRight, OCommandContext iContext) {
 
-		final OSchema schema = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchema();
+		final OSchema schema = ((OMetadataInternal)ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata()).getImmutableSchemaSnapshot();
 
 		final String baseClassName = iRight.toString();
 		final OClass baseClass = schema.getClass(baseClassName);
@@ -58,7 +60,7 @@ public class OQueryOperatorInstanceof extends OQueryOperatorEqualityNotNulls {
 			// GET THE RECORD'S CLASS
 			final ORecord record = ((OIdentifiable) iLeft).getRecord();
 			if (record instanceof ODocument) {
-				cls = ((ODocument) record).getSchemaClass();
+				cls = ODocumentInternal.getImmutableSchemaClass(((ODocument) record));
 			}
 		} else if (iLeft instanceof String)
 			// GET THE CLASS BY NAME

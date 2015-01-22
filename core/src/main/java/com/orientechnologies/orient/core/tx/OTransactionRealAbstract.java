@@ -1,25 +1,25 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.tx;
 
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordTx;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -78,7 +79,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
     }
   }
 
-  protected OTransactionRealAbstract(ODatabaseRecordTx database, int id) {
+  protected OTransactionRealAbstract(ODatabaseDocumentTx database, int id) {
     super(database);
     this.id = id;
     this.operationUnitId = OOperationUnitId.generateId();
@@ -170,21 +171,28 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
   /**
    * Called by class iterator.
    */
-  public List<ORecordOperation> getRecordEntriesByClass(final String iClassName) {
+  public List<ORecordOperation> getNewRecordEntriesByClass(final OClass iClass, final boolean iPolymorphic) {
     final List<ORecordOperation> result = new ArrayList<ORecordOperation>();
 
-    if (iClassName == null || iClassName.length() == 0)
+    if (iClass == null)
       // RETURN ALL THE RECORDS
       for (ORecordOperation entry : recordEntries.values()) {
-        result.add(entry);
-      }
-    else
-      // FILTER RECORDS BY CLASSNAME
-      for (ORecordOperation entry : recordEntries.values()) {
-        if (entry.getRecord() != null && entry.getRecord() instanceof ODocument
-            && iClassName.equals(((ODocument) entry.getRecord()).getClassName()))
+        if (entry.type == ORecordOperation.CREATED)
           result.add(entry);
       }
+    else {
+      // FILTER RECORDS BY CLASSNAME
+      for (ORecordOperation entry : recordEntries.values()) {
+        if (entry.type == ORecordOperation.CREATED)
+          if (entry.getRecord() != null && entry.getRecord() instanceof ODocument) {
+            if (iPolymorphic) {
+              if (iClass.isSuperClassOf(((ODocument) entry.getRecord()).getSchemaClass()))
+                result.add(entry);
+            } else if (iClass.getName().equals(((ODocument) entry.getRecord()).getClassName()))
+              result.add(entry);
+          }
+      }
+    }
 
     return result;
   }
@@ -325,7 +333,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
         recordEntries.put(newRid, rec);
 
       if (!rec.getRecord().getIdentity().equals(newRid)) {
-        rec.getRecord().onBeforeIdentityChanged(rec.getRecord());
+        ORecordInternal.onBeforeIdentityChanged(rec.getRecord());
 
         final ORecordId recordId = (ORecordId) rec.getRecord().getIdentity();
         if (recordId == null) {
@@ -335,7 +343,7 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
           recordId.clusterId = newRid.getClusterId();
         }
 
-        rec.getRecord().onAfterIdentityChanged(rec.getRecord());
+        ORecordInternal.onAfterIdentityChanged(rec.getRecord());
       }
     }
 

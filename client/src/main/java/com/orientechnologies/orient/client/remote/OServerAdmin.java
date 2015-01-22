@@ -43,10 +43,11 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
  */
 public class OServerAdmin {
   private OStorageRemote storage;
-  private int            sessionId = -1;
+  private int            sessionId    = -1;
+  private byte[]         sessionToken = null;
 
   /**
-   * Creates the object passing a remote URL to connect.
+   * Creates the object passing a remote URL to connect. sessionToken
    * 
    * @param iURL
    *          URL to connect. It supports only the "remote" storage type.
@@ -82,7 +83,7 @@ public class OServerAdmin {
    * @throws IOException
    */
   public synchronized OServerAdmin connect(final String iUserName, final String iUserPassword) throws IOException {
-    storage.setSessionId(null, -1);
+    storage.setSessionId(null, -1, null);
 
     try {
       final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_CONNECT);
@@ -99,7 +100,13 @@ public class OServerAdmin {
       try {
         storage.beginResponse(network);
         sessionId = network.readInt();
-        storage.setSessionId(network.getServerURL(), sessionId);
+        sessionToken = network.readBytes();
+        if (sessionToken.length == 0) {
+          sessionToken = null;
+        } else {
+          network.getServiceThread().setTokenBased(true);
+        }
+        storage.setSessionId(network.getServerURL(), sessionId, sessionToken);
       } finally {
         storage.endResponse(network);
       }
@@ -301,7 +308,7 @@ public class OServerAdmin {
       }
     }
 
-    ODatabaseRecordThreadLocal.INSTANCE.set(null);
+    ODatabaseRecordThreadLocal.INSTANCE.remove();
 
     return this;
   }
@@ -549,7 +556,8 @@ public class OServerAdmin {
         storage.getEngine().getConnectionManager().remove(network);
         throw new OStorageException("Error on executing  '" + iActivity + "'", e);
       } catch (Exception e2) {
-        storage.getEngine().getConnectionManager().release(network);
+        if (network != null)
+          storage.getEngine().getConnectionManager().release(network);
         throw new OStorageException("Error on executing  '" + iActivity + "'", e2);
       }
     }

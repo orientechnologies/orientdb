@@ -1,35 +1,35 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.db.tool;
 
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.metadata.OMetadataDefault;
+import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecord;
-import com.orientechnologies.orient.core.db.record.ODatabaseRecordInternal;
-import com.orientechnologies.orient.core.metadata.OMetadataDefault;
-import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
 /**
  * Abstract class for import/export of database and data in general.
@@ -38,28 +38,26 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
  * 
  */
 public abstract class ODatabaseImpExpAbstract {
-  protected ODatabaseRecordInternal database;
-  protected String                  fileName;
+  protected final static String       DEFAULT_EXT               = ".json";
+  protected ODatabaseDocumentInternal database;
+  protected String                    fileName;
+  protected Set<String>               includeClusters;
+  protected Set<String>               excludeClusters;
+  protected Set<String>               includeClasses;
+  protected Set<String>               excludeClasses;
+  protected boolean                   includeInfo               = true;
+  protected boolean                   includeClusterDefinitions = true;
+  protected boolean                   includeSchema             = true;
+  protected boolean                   includeSecurity           = false;
+  protected boolean                   includeRecords            = true;
+  protected boolean                   includeIndexDefinitions   = true;
+  protected boolean                   includeManualIndexes      = true;
+  protected boolean                   useLineFeedForRecords     = false;
+  protected boolean                   preserveRids              = false;
+  protected OCommandOutputListener    listener;
 
-  protected Set<String>             includeClusters;
-  protected Set<String>             excludeClusters;
-  protected Set<String>             includeClasses;
-  protected Set<String>             excludeClasses;
-  protected boolean                 includeInfo               = true;
-  protected boolean                 includeClusterDefinitions = true;
-  protected boolean                 includeSchema             = true;
-  protected boolean                 includeSecurity           = false;
-  protected boolean                 includeRecords            = true;
-  protected boolean                 includeIndexDefinitions   = true;
-  protected boolean                 includeManualIndexes      = true;
-  protected boolean                 useLineFeedForRecords     = false;
-  protected boolean                 preserveRids              = false;
-
-  protected OCommandOutputListener  listener;
-
-  protected final static String     DEFAULT_EXT               = ".json";
-
-  public ODatabaseImpExpAbstract(final ODatabaseRecordInternal iDatabase, final String iFileName, final OCommandOutputListener iListener) {
+  public ODatabaseImpExpAbstract(final ODatabaseDocumentInternal iDatabase, final String iFileName,
+      final OCommandOutputListener iListener) {
     database = iDatabase;
     fileName = iFileName;
 
@@ -78,14 +76,13 @@ public abstract class ODatabaseImpExpAbstract {
       for (String o : options) {
         final int sep = o.indexOf('=');
         if (sep == -1) {
-          OLogManager.instance().warn(this, "Unrecognized option %s, skipped", o);
-          continue;
+          parseSetting(o, Collections.EMPTY_LIST);
+        } else {
+          final String option = o.substring(0, sep);
+          final List<String> items = OStringSerializerHelper.smartSplit(o.substring(sep + 1), ' ');
+          parseSetting(option, items);
         }
 
-        final String option = o.substring(0, sep);
-        final List<String> items = OStringSerializerHelper.smartSplit(o.substring(sep + 1), ' ');
-
-        parseSetting(option, items);
       }
     }
     return this;
@@ -131,7 +128,7 @@ public abstract class ODatabaseImpExpAbstract {
     this.listener = listener;
   }
 
-  public ODatabaseRecord getDatabase() {
+  public ODatabaseDocument getDatabase() {
     return database;
   }
 
@@ -143,20 +140,20 @@ public abstract class ODatabaseImpExpAbstract {
     return includeInfo;
   }
 
-  public boolean isIncludeSecurity() {
-    return includeSecurity;
-  }
-
   public void setIncludeInfo(final boolean includeInfo) {
     this.includeInfo = includeInfo;
   }
 
-  public boolean isIncludeSchema() {
-    return includeSchema;
+  public boolean isIncludeSecurity() {
+    return includeSecurity;
   }
 
   public void setIncludeSecurity(final boolean includeSecurity) {
     this.includeSecurity = includeSecurity;
+  }
+
+  public boolean isIncludeSchema() {
+    return includeSchema;
   }
 
   public void setIncludeSchema(final boolean includeSchema) {
@@ -203,6 +200,14 @@ public abstract class ODatabaseImpExpAbstract {
     this.useLineFeedForRecords = useLineFeedForRecords;
   }
 
+  public boolean isPreserveRids() {
+    return preserveRids;
+  }
+
+  public void setPreserveRids(boolean preserveRids) {
+    this.preserveRids = preserveRids;
+  }
+
   protected void parseSetting(final String option, final List<String> items) {
     if (option.equalsIgnoreCase("-excludeAll")) {
       includeClasses = new HashSet<String>();
@@ -221,6 +226,7 @@ public abstract class ODatabaseImpExpAbstract {
       includeClasses = new HashSet<String>();
       for (String item : items)
         includeClasses.add(item.toUpperCase());
+      includeRecords = true;
 
     } else if (option.equalsIgnoreCase("-excludeClass")) {
       excludeClasses = new HashSet<String>(items);
@@ -231,6 +237,7 @@ public abstract class ODatabaseImpExpAbstract {
       includeClusters = new HashSet<String>(items);
       for (String item : items)
         includeClusters.add(item.toUpperCase());
+      includeRecords = true;
 
     } else if (option.equalsIgnoreCase("-excludeCluster")) {
       excludeClusters = new HashSet<String>(items);
@@ -262,13 +269,5 @@ public abstract class ODatabaseImpExpAbstract {
       useLineFeedForRecords = Boolean.parseBoolean(items.get(0));
 
     }
-  }
-
-  public boolean isPreserveRids() {
-    return preserveRids;
-  }
-
-  public void setPreserveRids(boolean preserveRids) {
-    this.preserveRids = preserveRids;
   }
 }

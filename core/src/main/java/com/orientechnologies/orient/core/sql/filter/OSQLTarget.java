@@ -35,10 +35,7 @@ import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OCommandSQLResultset;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Target parser.
@@ -64,7 +61,7 @@ public class OSQLTarget extends OBaseParser {
     super();
     context = iContext;
     parserText = iText;
-    parserTextUpperCase = iText.toUpperCase();
+    parserTextUpperCase = upperCase(iText);
 
     try {
       empty = !extractTargets();
@@ -79,6 +76,21 @@ public class OSQLTarget extends OBaseParser {
       throw new OQueryParsingException("Error on parsing query", parserText, parserGetCurrentPosition(), t);
     }
   }
+
+  protected String upperCase(String text) {
+    //TODO remove and refactor (see same method in OCommandExecutorAbstract)
+    StringBuilder result = new StringBuilder(text.length());
+    for (char c : text.toCharArray()) {
+      String upper = ("" + c).toUpperCase(Locale.ENGLISH);
+      if (upper.length() > 1) {
+        result.append(c);
+      } else {
+        result.append(upper);
+      }
+    }
+    return result.toString();
+  }
+
 
   public Map<String, String> getTargetClusters() {
     return targetClusters;

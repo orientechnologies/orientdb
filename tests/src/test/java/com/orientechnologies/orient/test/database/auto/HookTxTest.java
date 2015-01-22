@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
@@ -44,10 +45,16 @@ public class HookTxTest extends ORecordHookAbstract {
   private int               callbackCount        = 0;
   private Profile           p;
   private int               expectedHookState;
+  private String            url;
 
   @Parameters(value = "url")
-  public HookTxTest(String iURL) {
-    database = new OObjectDatabaseTx(iURL);
+  public HookTxTest(String url) {
+    this.url = url;
+  }
+
+  @BeforeClass
+  public void beforeClass() {
+    database = new OObjectDatabaseTx(url);
   }
 
   @Override
