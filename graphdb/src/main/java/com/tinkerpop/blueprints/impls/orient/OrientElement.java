@@ -392,6 +392,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
    */
   @Override
   public ODocument getRecord() {
+    if (rawElement == null)
+      return null;
+
     if (rawElement instanceof ODocument)
       return (ODocument) rawElement;
 
