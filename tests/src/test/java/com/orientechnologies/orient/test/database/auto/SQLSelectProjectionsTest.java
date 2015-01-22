@@ -424,7 +424,7 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
     }
   }
 
-  @Test
+  @Test(enabled = false)
   public void testTempRIDsAreNotRecycledInResultSet() {
     final List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>(
         "select name, $l as l from OUser let $l = (select name from OuSer)"));
