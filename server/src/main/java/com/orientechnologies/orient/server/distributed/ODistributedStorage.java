@@ -247,6 +247,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         if (iCommand instanceof ODistributedCommand)
           nodes.removeAll(((ODistributedCommand) iCommand).nodesToExclude());
 
+        if( nodes.isEmpty() )
+          /// NO NODE TO REPLICATE
+          return null;
+
         result = dManager.sendRequest(getName(), involvedClusters, nodes, task, EXECUTION_MODE.RESPONSE);
         break;
       }
@@ -944,12 +948,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         final StringBuilder cmd = new StringBuilder("create cluster ");
         cmd.append(iClusterName);
 
-        // EXECUTE THIS OUTSIDE LCK TO AVOID DEADLOCKS
+        // EXECUTE THIS OUTSIDE LOCK TO AVOID DEADLOCKS
         OCommandSQL commandSQL = new OCommandSQL(cmd.toString());
         commandSQL.addExcludedNode(getNodeId());
 
         final Object result = command(commandSQL);
-        if (((Integer) result).intValue() != clId) {
+        if (result != null && ((Integer) result).intValue() != clId) {
           wrapped.dropCluster(clId, false);
 
           // REMOVE ON REMOTE NODES TOO
