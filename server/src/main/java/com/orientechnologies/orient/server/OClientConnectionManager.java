@@ -293,7 +293,7 @@ public class OClientConnectionManager {
         continue;
       }
 
-      if (!(c.protocol instanceof ONetworkProtocolBinary))
+      if (!(c.protocol instanceof ONetworkProtocolBinary) && c.data.serializationImpl != null)
         // INVOLVE ONLY BINAR PROTOCOLS
         continue;
 
