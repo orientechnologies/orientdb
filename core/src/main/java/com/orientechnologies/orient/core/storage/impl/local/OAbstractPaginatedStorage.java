@@ -20,6 +20,22 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.SoftReference;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.Lock;
+
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
@@ -82,22 +98,6 @@ import com.orientechnologies.orient.core.tx.OTxListener;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.SoftReference;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.locks.Lock;
 
 /**
  * @author Andrey Lomakin
@@ -2328,8 +2328,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     OLogSequenceNumber startLsn = lsn;
 
     try {
-      restoreLoop:
-			while (lsn != null) {
+      restoreLoop: while (lsn != null) {
         OWALRecord walRecord = writeAheadLog.read(lsn);
 
         batch.add(new SoftReference<OWALRecord>(walRecord, batchQueue));
@@ -2340,7 +2339,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
           batch = new ArrayList<SoftReference<OWALRecord>>(batchSize);
           batchQueue = new ReferenceQueue<OWALRecord>();
-					System.gc();
+          System.gc();
 
           OLogManager.instance().error(
               this,
@@ -2368,7 +2367,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
               batch = new ArrayList<SoftReference<OWALRecord>>(batchSize);
               batchQueue = new ReferenceQueue<OWALRecord>();
 
-							System.gc();
+              System.gc();
 
               OLogManager.instance().error(
                   this,
@@ -2402,7 +2401,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
               batch = new ArrayList<SoftReference<OWALRecord>>(batchSize);
               batchQueue = new ReferenceQueue<OWALRecord>();
-							System.gc();
+              System.gc();
 
               OLogManager.instance().error(
                   this,
@@ -2568,8 +2567,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
               + "' due to limited free space on the disk (" + (lowDiskSpace.freeSpace / (1024 * 1024))
               + " MB). The database is now working in read-only mode."
               + " Please close the database (or stop OrientDB), make room on your hard drive and then reopen the database. "
-              + "The minimal required space is (" + (lowDiskSpace.requiredSpace / (1024 * 1024)) + " MB). "
-              + "Required space is calculated as sum of disk space required by WAL (you can change it by setting parameter "
+              + "The minimal required space is " + (lowDiskSpace.requiredSpace / (1024 * 1024)) + " MB. "
+              + "Required space is calculated as sum of disk space required by WAL, now set to "
+              + OGlobalConfiguration.WAL_MAX_SIZE.getValueAsInteger() + "MB (you can change it by setting parameter "
               + OGlobalConfiguration.WAL_MAX_SIZE.getKey() + ") and space required for data.");
         } else {
           lowDiskSpace = null;
