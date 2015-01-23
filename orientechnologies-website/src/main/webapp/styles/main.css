@@ -125,7 +125,7 @@ body {
 }
 
 .sidebar-right .nav li > a {
-  text-align: center;
+  text-align: left;
   margin: 10px;
   padding: 10px 10px;
   color: white;
@@ -374,4 +374,13 @@ span.label-dark {
 
 .chat-timeline .mkd-preview > p {
   margin: 0;
+}
+.chat-sender {
+  color: #aaa;
+}
+.chat-group > div {
+  margin-bottom: 10px;
+}
+.fa-green {
+  color: #5cb85c;
 }

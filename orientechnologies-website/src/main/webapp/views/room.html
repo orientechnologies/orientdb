@@ -1,9 +1,10 @@
 <nav class="sidebar-right">
   <ul class="nav nav-pills nav-stacked">
     <li ng-class="{ 'active' : client.clientId == clientId}" ng-repeat="client in clients | orderBy:'timestamp':true">
-      <a href="#/rooms/{{client.clientId}}"><span ng-show="client.timestamp > client.lastVisit"
-                                                  class="label label-success"><i class="fa fa-envelope-o"></i></span>
-        {{client.name}}</a>
+      <a href="#/rooms/{{client.clientId}}">
+        <!--<span ng-show="client.timestamp > client.lastVisit"-->
+                                                  <!--class="label label-success"><i class="fa fa-envelope-o"></i></span>-->
+        <i class="fa fa-weixin" ng-class="{'fa-green' : client.timestamp > client.lastVisit}"></i> {{client.name}}</a>
     </li>
   </ul>
 </nav>
@@ -19,14 +20,14 @@
         </div>
       </div>
       <div scroll-glue when-scrolled="loadMore()" class="chat-timeline" ng-show="!isNew">
-        <div ng-repeat="group in messages">
+        <div class="chat-group" ng-repeat="group in messages">
           <div class="col-md-1">
             <avatar dim="40" user="group.sender"></avatar>
           </div>
           <div class="col-md-11">
             <div class="row">
               <div class="col-md-12">
-                {{group.sender.name}} - {{ group.date | fromNow}}
+                <span class="chat-sender">{{group.sender.name}} - {{ group.date | fromNow}}</span>
               </div>
             </div>
             <div class="row" ng-repeat="message in group.messages">

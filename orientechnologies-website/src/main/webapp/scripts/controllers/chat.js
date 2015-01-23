@@ -11,7 +11,7 @@ angular.module('webappApp')
   .controller('ChatCtrl', function ($scope, Organization, $routeParams, $route, User, $timeout) {
 
     $scope.isNew = false;
-    $scope.placeholder = "Click here to type a message.";
+    $scope.placeholder = "Click here to type a message. ⌘+Enter to send.";
     $scope.clientId = $routeParams.id;
     $scope.chatService = new WebSocket(WEBSOCKET);
 
@@ -26,6 +26,7 @@ angular.module('webappApp')
       if (msg.sender.name != $scope.currentUser.name) {
         if ($scope.clientId == msg.clientId) {
           $scope.$apply(function () {
+            console.log(msg);
             addNewMessage(msg);
             visit()
 

@@ -15,25 +15,24 @@ import java.util.Map;
 @Component
 public class EventManager {
 
-    @Autowired
-    @Lazy
-    protected Reactor reactor;
+  @Autowired
+  @Lazy
+  protected Reactor reactor;
 
+  public void pushEvent(String nameSpace, String event, Object payload) {
+    throw new UnsupportedOperationException();
+  }
 
-    public void pushEvent(String nameSpace, String event, Object payload) {
-        throw new UnsupportedOperationException();
+  public void pushInternalEvent(String event, Object payload) {
+    Map<String, Event<?>> eventMap = EventQueue.INSTANCE.get();
+    eventMap.put(ReactorMSG.INTERNAL_EVENT + "/" + event, Event.wrap(payload));
+  }
+
+  public void fireEvents() {
+    Map<String, Event<?>> eventMap = EventQueue.INSTANCE.get();
+    for (String e : eventMap.keySet()) {
+      reactor.notify(e, eventMap.get(e));
     }
-
-    public void pushInternalEvent(String event, Object payload) {
-        Map<String, Event<?>> eventMap = EventQueue.INSTANCE.get();
-        eventMap.put(ReactorMSG.INTERNAL_EVENT + "/" + event, Event.wrap(payload));
-    }
-
-
-    public void fireEvents() {
-        Map<String, Event<?>> eventMap = EventQueue.INSTANCE.get();
-        for (String e : eventMap.keySet()) {
-            reactor.notify(e, eventMap.get(e));
-        }
-    }
+    eventMap.clear();
+  }
 }

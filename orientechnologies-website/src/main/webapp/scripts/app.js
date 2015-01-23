@@ -114,10 +114,10 @@ angular.module('webappApp').factory('oauthHttpInterceptor', function ($cookies, 
 
 
 var API = "v1/"
-//var ORGANIZATION = 'orientechnologies';
-var ORGANIZATION = 'romeshell';
-var DEFAULT_REPO = 'shell-notifications';
-//var DEFAULT_REPO = 'orientdb';
+var ORGANIZATION = 'orientechnologies';
+//var ORGANIZATION = 'romeshell';
+//var DEFAULT_REPO = 'shell-notifications';
+var DEFAULT_REPO = 'orientdb';
 var GITHUB = "https://github.com"
 
 var WEBSOCKET = 'ws://localhost:8080/chat'
