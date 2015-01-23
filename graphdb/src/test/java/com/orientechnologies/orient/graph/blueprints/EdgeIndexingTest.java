@@ -53,4 +53,45 @@ public class EdgeIndexingTest {
 
 		graph.drop();
 	}
+
+	@Test
+	public void testOutLinksUniquenessTwo() {
+		final String url = "memory:" + this.getClass().getSimpleName();
+		OrientGraph graph = new OrientGraph(url);
+		graph.drop();
+
+		graph = new OrientGraph(url);
+		graph.setUseLightweightEdges(true);
+		graph.createEdgeType("link");
+		graph.setAutoStartTx(false);
+
+		OClass outVertexType = graph.createVertexType("IndexedOutVertex");
+		outVertexType.createProperty("out_link", OType.LINKBAG);
+		outVertexType.createIndex("uniqueLinkIndex", "unique", "out_link");
+
+		graph.setAutoStartTx(true);
+
+
+		Vertex vertexOutOne = graph.addVertex("class:IndexedOutVertex");
+
+		Vertex vertexInOne = graph.addVertex(null);
+		Vertex vertexInTwo = graph.addVertex(null);
+
+		vertexOutOne.addEdge("link", vertexInOne);
+		vertexOutOne.addEdge("link", vertexInTwo);
+
+		Vertex vertexOutTwo = graph.addVertex("class:IndexedOutVertex");
+		vertexOutTwo.addEdge("link", vertexInTwo);
+
+		try {
+			graph.commit();
+
+			//in vertex can be linked by only one out vertex.
+			Assert.fail();
+		} catch (ORecordDuplicatedException e) {
+			   int i = 1;
+		}
+
+		graph.drop();
+	}
 }
