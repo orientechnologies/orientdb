@@ -15,16 +15,6 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -36,6 +26,15 @@ import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.orientechnologies.orient.object.db.OObjectDatabaseTx;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Test(groups = "sql-select")
 public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
@@ -443,10 +442,12 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
       Assert.assertFalse(embeddedList.isEmpty());
 
       for (OIdentifiable embedded : embeddedList) {
-        final ORID embeddedRid = embedded.getIdentity();
+        if( embedded != null ) {
+          final ORID embeddedRid = embedded.getIdentity();
 
-        Assert.assertFalse(rids.contains(embeddedRid));
-        rids.add(rid);
+          Assert.assertFalse(rids.contains(embeddedRid));
+          rids.add(rid);
+        }
       }
     }
   }
