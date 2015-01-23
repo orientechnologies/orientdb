@@ -35,6 +35,9 @@ public interface OrganizationService {
 
   public List<OUser> getClientRoomActors(String name, Integer clientId);
 
+  @Transactional
+  void checkInRoom(String name, Integer clientId);
+
   // @Transactional
   // Environment registerClientEnvironment(String name, Integer id, Environment environment);
 

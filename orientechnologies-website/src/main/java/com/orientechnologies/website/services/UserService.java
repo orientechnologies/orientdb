@@ -24,6 +24,8 @@ public interface UserService {
 
   public Client getClient(OUser user, String orgName);
 
+  public boolean isClient(OUser user, String orgName);
+
   @Transactional
   public Environment registerUserEnvironment(OUser user, Environment environment);
 

@@ -145,6 +145,13 @@ public class OrganizationController extends ExceptionController {
     return new ResponseEntity(organizationService.registerMessage(name, clientId, message), HttpStatus.OK);
   }
 
+  @RequestMapping(value = "{name}/clients/{id}/room/checkin", method = RequestMethod.PATCH)
+  @ResponseStatus(HttpStatus.OK)
+  public ResponseEntity checkInRoom(@PathVariable("name") String name, @PathVariable("id") Integer clientId) {
+    organizationService.checkInRoom(name, clientId);
+    return new ResponseEntity(HttpStatus.OK);
+  }
+
   @RequestMapping(value = "{name}/clients/{id}/members/{username}", method = RequestMethod.POST)
   @ResponseStatus(HttpStatus.OK)
   public OUser addMemberClientToOrg(@PathVariable("name") String name, @PathVariable("id") Integer id,
@@ -166,13 +173,13 @@ public class OrganizationController extends ExceptionController {
 
   @RequestMapping(value = "{name}/rooms", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)
-  public ResponseEntity<List<Client>> findRooms(@PathVariable("name") String name) {
+  public ResponseEntity<List<Room>> findRooms(@PathVariable("name") String name) {
 
     OUser user = SecurityHelper.currentUser();
-    if (userService.isMember(user, name)) {
-      return new ResponseEntity<List<Client>>(orgRepository.findClients(name), HttpStatus.OK);
+    if (userService.isMember(user, name) || userService.isClient(user, name)) {
+      return new ResponseEntity<List<Room>>(orgRepository.findRooms(name), HttpStatus.OK);
     } else {
-      return new ResponseEntity<List<Client>>(HttpStatus.NOT_FOUND);
+      return new ResponseEntity<List<Room>>(HttpStatus.NOT_FOUND);
     }
   }
 

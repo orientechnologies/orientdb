@@ -128,9 +128,11 @@ body {
   text-align: center;
   margin: 10px;
   padding: 10px 10px;
+  color: white;
+}
+.sidebar-right .nav li.active > a{
   color: #60676d;
 }
-
 .sidebar-right {
   position: fixed;
   background: #384047;
@@ -340,6 +342,7 @@ span.label-dark {
   position: absolute;
   bottom: 0;
   height: 90%;
+  padding-bottom: 10px;
   overflow: auto;
   width: 82%;
 }

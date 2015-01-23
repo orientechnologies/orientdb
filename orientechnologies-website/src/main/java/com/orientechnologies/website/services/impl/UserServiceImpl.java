@@ -104,6 +104,11 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
+  public boolean isClient(OUser user, String orgName) {
+    return userRepository.findMyClientMember(user.getUsername(), orgName) != null;
+  }
+
+  @Override
   public Environment registerUserEnvironment(OUser user, Environment environment) {
 
     Integer version = environment.getVersionNumber();

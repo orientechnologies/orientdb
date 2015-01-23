@@ -1,7 +1,9 @@
 <nav class="sidebar-right">
   <ul class="nav nav-pills nav-stacked">
-    <li ng-class="{ 'active' : client.clientId == clientId}" ng-repeat="client in clients">
-      <a href="#/rooms/{{client.clientId}}">{{client.name}}</a>
+    <li ng-class="{ 'active' : client.clientId == clientId}" ng-repeat="client in clients | orderBy:'timestamp':true">
+      <a href="#/rooms/{{client.clientId}}"><span ng-show="client.timestamp > client.lastVisit"
+                                                  class="label label-success"><i class="fa fa-envelope-o"></i></span>
+        {{client.name}}</a>
     </li>
   </ul>
 </nav>
@@ -46,11 +48,6 @@
             </form>
           </footer>
         </div>
-        <!--<div class="col-md-2">-->
-        <!--<div class="btn-group">-->
-        <!--<button ng-click="sendMessage()" class="btn btn-success">Send</button>-->
-        <!--</div>-->
-        <!--</div>-->
       </div>
     </div>
   </div>

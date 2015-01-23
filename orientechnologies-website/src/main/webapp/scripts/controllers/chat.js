@@ -24,9 +24,21 @@ angular.module('webappApp')
       var msg = JSON.parse(evt.data);
 
       if (msg.sender.name != $scope.currentUser.name) {
-        $scope.$apply(function () {
-          addNewMessage(msg);
-        });
+        if ($scope.clientId == msg.clientId) {
+          $scope.$apply(function () {
+            addNewMessage(msg);
+            visit()
+
+          });
+        } else {
+          $scope.$apply(function () {
+            $scope.clients.forEach(function (c) {
+              if (c.clientId == msg.clientId) {
+                c.timestamp = new Date().getTime();
+              }
+            })
+          });
+        }
       }
     };
 
@@ -52,6 +64,17 @@ angular.module('webappApp')
     var findGroup = function (groups, date) {
       return groups.filter(function (g) {
         return g.date == date;
+      })
+    }
+    var visit = function () {
+      Organization.all("clients").one($scope.clientId).all("room").all('checkin').patch().then(function (data) {
+        $scope.clients.forEach(function (c) {
+          if (c.clientId == $scope.clientId) {
+            c.lastVisit = new Date().getTime();
+          }
+        });
+      }).catch(function (e) {
+
       })
     }
     var aggregateMessage = function (msg) {
@@ -121,60 +144,50 @@ angular.module('webappApp')
 
       $scope.currentUser = data;
 
+      Organization.all("rooms").getList().then(function (data) {
+        $scope.clients = data.plain();
+        if ($scope.clients.length > 0) {
+          if (!$scope.clientId) {
+            $scope.clientId = $scope.clients[0].clientId.toString();
+            $scope.client = $scope.clients[0];
+          } else {
 
-      if (User.isClient(ORGANIZATION)) {
-        $scope.client = User.getClient(ORGANIZATION);
-        $scope.clientId = $scope.client.clientId.toString();
-        $scope.clients = [$scope.client];
-
-
+            $scope.clients.forEach(function (c) {
+              if (c.clientId == $scope.clientId) {
+                $scope.client = c;
+              }
+            })
+          }
+        }
+        getMessages();
         var msg = {
           "action": "join",
           "rooms": []
         }
-        msg.rooms.push($scope.client.clientId);
-        $timeout(function () {
-          $scope.chatService.send(JSON.stringify(msg));
-        }, 1000)
-      } else if (User.isMember(ORGANIZATION)) {
-        Organization.all("clients").getList().then(function (data) {
-          $scope.clients = data.plain();
-          if ($scope.clients.length > 1) {
-            if (!$scope.clientId) {
-              $scope.clientId = $scope.clients[0].clientId.toString();
-              $scope.client = $scope.clients[0];
-            } else {
-
-              $scope.clients.forEach(function (c) {
-                if (c.clientId == $scope.clientId) {
-                  $scope.client = c;
-                }
-              })
-            }
-          }
-          var msg = {
-            "action": "join",
-            "rooms": []
-          }
-          $scope.clients.forEach(function (c) {
-            msg.rooms.push(c.clientId);
-          })
-          $scope.chatService.send(JSON.stringify(msg));
-
+        $scope.clients.forEach(function (c) {
+          msg.rooms.push(c.clientId);
         })
+        $scope.chatService.send(JSON.stringify(msg));
+
+      })
+
+      function getMessages() {
+        if ($scope.clientId) {
+          Organization.all("clients").one($scope.clientId).all("room").getList().then(function (data) {
+            $scope.messages = aggregateMessage(data.plain().reverse())
+          }).catch(function (e) {
+            if (e.status == 400 && e.data) {
+              $scope.isNew = true;
+            }
+          });
+          Organization.all("clients").one($scope.clientId).all("room").all('actors').getList().then(function (data) {
+            $scope.actors = data.plain();
+          });
+          visit()
+        }
       }
-      if ($scope.clientId) {
-        Organization.all("clients").one($scope.clientId).all("room").getList().then(function (data) {
-          $scope.messages = aggregateMessage(data.plain().reverse())
-        }).catch(function (e) {
-          if (e.status == 400 && e.data) {
-            $scope.isNew = true;
-          }
-        });
-        Organization.all("clients").one($scope.clientId).all("room").all('actors').getList().then(function (data) {
-          $scope.actors = data.plain();
-        });
-      }
+
+
     });
 
 

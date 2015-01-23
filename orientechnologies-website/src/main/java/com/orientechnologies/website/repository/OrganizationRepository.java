@@ -19,6 +19,8 @@ public interface OrganizationRepository extends BaseRepository<Organization> {
 
     public List<Client> findClients(String name);
 
+    public List<Room> findRooms(String name);
+
     public List<Priority> findPriorities(String name);
 
     public Priority findPriorityByNumber(String name, Integer number);

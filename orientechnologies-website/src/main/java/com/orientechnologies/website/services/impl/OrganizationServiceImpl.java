@@ -3,6 +3,7 @@ package com.orientechnologies.website.services.impl;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.events.ChatMessageSentEvent;
 import com.orientechnologies.website.events.EventManager;
@@ -37,10 +38,7 @@ import reactor.core.Reactor;
 import reactor.event.Event;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Created by Enrico Risa on 17/10/14.
@@ -297,6 +295,25 @@ public class OrganizationServiceImpl implements OrganizationService {
       return message;
     }
     return null;
+  }
+
+  @Override
+  public void checkInRoom(String name, Integer clientId) {
+
+    final Client client = organizationRepository.findClient(name, clientId);
+    OrientGraph graph = dbFactory.getGraph();
+    final OUser user = SecurityHelper.currentUser();
+    Map<String, Object> params = new HashMap<String, Object>() {
+      {
+        put("user", user.getRid());
+        put("room", client.getId());
+        put("timestamp", new Date());
+      }
+    };
+    graph.command(
+        new OCommandSQL("update ChatLog SET user=:user, room=:room, timestamp=:timestamp UPSERT WHERE user=:user and room =:room"))
+        .execute(params);
+
   }
 
   @Override
