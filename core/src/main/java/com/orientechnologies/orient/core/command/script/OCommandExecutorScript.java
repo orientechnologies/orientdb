@@ -198,6 +198,10 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
               if (txBegun)
                 throw new OCommandSQLParsingException("Transaction already begun");
 
+              if (db.getTransaction().isActive())
+                // COMMIT ANY ACTIVE TX
+                db.commit();
+
               txBegun = true;
               txBegunAtLine = line;
               txBegunAtPart = linePart;
