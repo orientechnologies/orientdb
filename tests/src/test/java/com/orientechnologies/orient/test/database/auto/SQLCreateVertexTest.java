@@ -54,4 +54,25 @@ public class SQLCreateVertexTest extends DocumentDBBaseTest {
 
 		Assert.assertEquals(messages.size(), 0);
   }
+
+
+  public void testCreateVertexBooleanProp() {
+    OrientGraph graph = new OrientGraph(database, false);
+    graph.shutdown();
+    database.open("admin", "admin");
+
+
+    database.command(new OCommandSQL("create vertex set script = true")).execute();
+    database.command(new OCommandSQL("create vertex")).execute();
+    database.command(new OCommandSQL("create vertex V")).execute();
+
+    //TODO complete this!
+//    database.command(new OCommandSQL("create vertex set")).execute();
+//    database.command(new OCommandSQL("create vertex set set set = 1")).execute();
+
+
+
+  }
+
+
 }

@@ -575,7 +575,7 @@ public class JSONTest extends DocumentDBBaseTest {
 
     database.command(new OCommandSQL("insert into device (resource_id, domainset) VALUES (1, { 'domain' : 'eee' })")).execute();
 
-    List<ODocument> result = database.query(new OSQLSynchQuery<Object>("select from device where domainset.domain in 'eee'"));
+    List<ODocument> result = database.query(new OSQLSynchQuery<Object>("select from device where domainset.domain = 'eee'"));
     Assert.assertTrue(result.size() > 0);
   }
 
@@ -587,7 +587,7 @@ public class JSONTest extends DocumentDBBaseTest {
         .execute();
 
     List<ODocument> result = database.query(new OSQLSynchQuery<Object>(
-        "select from device where domainset.domain.lvlone.value in 'five'"));
+        "select from device where domainset.domain.lvlone.value = 'five'"));
     Assert.assertTrue(result.size() > 0);
   }
 

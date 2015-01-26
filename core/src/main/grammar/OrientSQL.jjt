@@ -73,7 +73,7 @@ TOKEN:
 	|
 	< INSERT: ( "i" | "I" ) ( "n" | "N" ) ( "s" | "S" ) ( "e" | "E" ) ( "r" | "R" ) ( "t" | "T" ) >
 	|
-	< CREATE: ( "c" | "C" ) ( "r" | "R" ) ( "e" | "E" ) ( "a" | "a" ) ( "t" | "T" ) ( "e" | "E" ) >
+	< CREATE: ( "c" | "C" ) ( "r" | "R" ) ( "e" | "E" ) ( "a" | "A" ) ( "t" | "T" ) ( "e" | "E" ) >
 	|
 	< DELETE: ( "d" | "D" ) ( "e" | "E" ) ( "l" | "L" ) ( "e" | "E" ) ( "t" | "T" ) ( "e" | "E" ) >
 	|
@@ -156,6 +156,10 @@ TOKEN:
     < RETRY: ( "r" | "R" ) ( "e" | "E" ) ( "t" | "T" ) ( "r" | "R" ) ( "y" | "Y" ) >
     |
     < LET: ( "l" | "L" ) ( "e" | "E" ) ( "t" | "T" ) >
+    |
+    < NOCACHE: ( "n" | "N" ) ( "o" | "O" ) ( "c" | "C" ) ( "a" | "A" ) ( "c" | "C" ) ( "h" | "H" ) ( "e" | "E" ) >
+    |
+    < UNSAFE: ( "u" | "U" ) ( "n" | "N" ) ( "s" | "S" ) ( "a" | "A" ) ( "f" | "F" ) ( "e" | "E" ) >
 	|
 	< THIS: "@this" >
 	|
@@ -278,6 +282,7 @@ TOKEN :
 | < COMMA: "," >
 | < DOT: "." >
 | < AT: "@" >
+| < DOLLAR: "$" >
 }
 
 /* OPERATORS */
@@ -343,7 +348,7 @@ TOKEN :
 
 TOKEN :
 {
-  < IDENTIFIER: ( <LETTER> (<PART_LETTER>)* ) >
+  < IDENTIFIER: ( (<DOLLAR>)? <LETTER> (<PART_LETTER>)* ) >
 |
   < INDEX_IDENTIFIER: "index:" <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
 |
@@ -377,10 +382,10 @@ void Rid():
 {}
 {
 	 LOOKAHEAD(4)
-	 "#" <INTEGER_LITERAL> <COLON> <INTEGER_LITERAL>
+	 "#" Integer() <COLON> Integer()
 	 |
 	 LOOKAHEAD(3)
-	 <INTEGER_LITERAL> <COLON> <INTEGER_LITERAL>
+	 Integer() <COLON> Integer()
 }
 
 /** Root production. */
@@ -481,12 +486,18 @@ OStatement Statement():
 		|
 		result = InsertStatement()
 		|
-		LOOKAHEAD(CreateVertexStatement())
-		result = CreateVertexStatement()
-		|
 		LOOKAHEAD(CreateVertexStatementNoTarget())
 		result = CreateVertexStatementNoTarget()
 		|
+		LOOKAHEAD(CreateVertexStatement())
+        result = CreateVertexStatement()
+        |
+		LOOKAHEAD(CreateVertexStatementEmpty())
+        result = CreateVertexStatementEmpty()
+        |
+		LOOKAHEAD(CreateVertexStatementEmptyNoTarget())
+        result = CreateVertexStatementEmptyNoTarget()
+        |
 		LOOKAHEAD(2)
         result = CreateEdgeStatement()
         |
@@ -499,7 +510,13 @@ OSelectWithoutTargetStatement SelectWithoutTargetStatement():
 {}
 {
 (
-	<SELECT> ValueItem() [<AS> Alias() ] ( <COMMA> ValueItem() [<AS> Alias() ] )* [ FetchPlan() ]
+	<SELECT>
+	ValueItem() [<AS> Alias() ]
+	(
+	    <COMMA> ValueItem() [<AS> Alias() ]
+	)*
+	[ jjtThis.letClause = LetClause() ]
+	[ FetchPlan() ] [ <NOCACHE> ]
 ) { return jjtThis; }
 }
 
@@ -524,6 +541,7 @@ OSelectStatement SelectStatement():
     )
     [ jjtThis.fetchPlan = FetchPlan() ]
     [ <LOCK> <RECORD> {jjtThis.lockRecord = true;} ]
+    [ <NOCACHE> ]
 ) {return jjtThis;}
 }
 
@@ -549,6 +567,9 @@ ODeleteStatement DeleteStatement():
 	<FROM>
 	FromClause()
 	[ <WHERE> WhereClause() ]
+	[ <RETURN> <BEFORE> ]
+	[ <LIMIT> Integer() ]
+	[ <UNSAFE> ]
 ) {return jjtThis;}
 }
 
@@ -596,7 +617,7 @@ void UpdateOperations():
     |
     (
         ( <MERGE> | <CONTENT> )
-        UpdateMergeItem() ( <COMMA> UpdateMergeItem() )*
+        Json()
     )
     |
     (
@@ -650,11 +671,6 @@ void UpdatePutItem():
 	Identifier() <EQ> Expression() <COMMA> Expression()
 }
 
-void UpdateMergeItem():
-{}
-{
-	Identifier() <EQ> Json()
-}
 
 void UpdateAddItem():
 {}
@@ -693,6 +709,7 @@ OInsertStatement InsertStatement():
 	    IndexIdentifier()
 	)
     InsertBody()
+    [ <UNSAFE> ]
 ) {return jjtThis;}
 }
 
@@ -701,7 +718,7 @@ void InsertBody():
 {}
 {
     (
-        LOOKAHEAD(2)
+        LOOKAHEAD(3)
         (
             <LPAREN> Identifier() (<COMMA> Identifier())* <RPAREN>
             <VALUES>
@@ -732,6 +749,24 @@ void InsertBody():
     [ <RETURN> Projection() ]
 }
 
+OCreateVertexStatementEmptyNoTarget CreateVertexStatementEmptyNoTarget():
+{}
+{
+	<CREATE>
+	<VERTEX>
+	{return jjtThis;}
+}
+
+OCreateVertexStatementEmpty CreateVertexStatementEmpty():
+{}
+{
+
+	<CREATE>
+	<VERTEX>
+	Identifier()
+    {return jjtThis;}
+}
+
 
 OCreateVertexStatement CreateVertexStatement():
 {}
@@ -740,14 +775,16 @@ OCreateVertexStatement CreateVertexStatement():
 	<CREATE>
 	<VERTEX>
 	(
-	    LOOKAHEAD(3)
+	    LOOKAHEAD( Identifier() )
 	    Identifier()
 	    |
+	    LOOKAHEAD( Cluster() )
 	    Cluster()
 	)
-	[ InsertBody() ]
+	[ LOOKAHEAD(InsertBody()) InsertBody() ]
 ) {return jjtThis;}
 }
+
 
 OCreateVertexStatementNoTarget CreateVertexStatementNoTarget():
 {}
@@ -755,7 +792,7 @@ OCreateVertexStatementNoTarget CreateVertexStatementNoTarget():
 (
 	<CREATE>
 	<VERTEX>
-	[ InsertBody() ]
+	InsertBody()
 ) {return jjtThis;}
 }
 
@@ -774,6 +811,10 @@ OCreateEdgeStatement CreateEdgeStatement():
 	    ( <LBRACKET> [ Rid() ( <COMMA> Rid() )* ] <RBRACKET> )
 	    |
 	    ( <LPAREN> ( LOOKAHEAD(SelectStatement()) SelectStatement() | LOOKAHEAD(SelectWithoutTargetStatement()) SelectWithoutTargetStatement() ) <RPAREN> )
+	    |
+	    InputParameter()
+	    |
+	    Identifier()
 	)
 	<TO>
 	(
@@ -782,6 +823,10 @@ OCreateEdgeStatement CreateEdgeStatement():
         ( <LBRACKET> [ Rid() ( <COMMA> Rid() )* ] <RBRACKET> )
         |
         ( <LPAREN> ( LOOKAHEAD(SelectStatement()) SelectStatement() | LOOKAHEAD(SelectWithoutTargetStatement()) SelectWithoutTargetStatement() ) <RPAREN> )
+        |
+        InputParameter()
+        |
+        Identifier()
     )
     [ InsertBody() ]
     [ Retry() ]
@@ -939,7 +984,9 @@ void FunctionCall():
 {
 OExpression lastExpression = null;}
 {
-	Identifier()
+	(
+	    Identifier()
+	)
 	<LPAREN>
 	(
 		<STAR> { jjtThis.star = true;}
@@ -1088,6 +1135,10 @@ void BaseExpression():
     |
     (
 	    BaseIdentifier() [ LOOKAHEAD( Modifier() ) Modifier() ]
+	)
+	|
+	(
+	    InputParameter() [ LOOKAHEAD( Modifier() ) Modifier()  ]
 	)
 }
 
@@ -1269,6 +1320,10 @@ OBooleanExpression ConditionBlock():
 	|
     LOOKAHEAD( InstanceofCondition() )
     result = InstanceofCondition()
+    |
+    <TRUE> { result = OBooleanExpression.TRUE;}
+    |
+    <FALSE> { result = OBooleanExpression.FALSE;}
 ){ return result; }
 }
 
@@ -1497,9 +1552,13 @@ OBooleanExpression InCondition():
 	        }
 	        (<COMMA> lastExpression = Expression())* <RBRACKET> )
 	    |
+	    LOOKAHEAD(2)
 	    ( <LPAREN> jjtThis.rightStatement = SelectStatement() <RPAREN>)
 	    |
-	    jjtThis.rightParam = InputParameter()
+	    LOOKAHEAD(2)
+	    ( <LPAREN> jjtThis.rightParam = InputParameter() <RPAREN>)
+	    |
+        jjtThis.rightParam = InputParameter()
 	)
 ){return jjtThis;}
 }
@@ -1521,7 +1580,15 @@ OBooleanExpression ContainsAllCondition():
 {}
 {
 (
-	Expression() <CONTAINSALL> <LPAREN> OrBlock() <RPAREN>
+	Expression()
+	<CONTAINSALL>
+	(
+    	LOOKAHEAD( 3 )
+    	( <LPAREN> OrBlock() <RPAREN> )
+    	|
+    	LOOKAHEAD( Expression() )
+    	Expression()
+    )
 ){return jjtThis;}
 }
 

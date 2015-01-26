@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -67,7 +68,6 @@ import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
-
 
 /**
  * Executes the SQL SELECT statement. the parse() method compiles the query and builds the meta information needed by the execute().
@@ -180,13 +180,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return doc;
   }
 
-
   /**
    * Compile the filter conditions only the first time.
    */
   public OCommandExecutorSQLSelect parse(final OCommandRequest iRequest) {
-    super.parse(iRequest);
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
+    String queryText = textRequest.getText();
+    queryText = preParse(queryText);
+    textRequest.setText(queryText);
+
     testNewParser(iRequest);
+    super.parse(iRequest);
 
     initContext();
 
@@ -261,6 +265,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     }
 
     return this;
+  }
+
+  private String preParse(String queryText) {
+    return queryText;// TODO
   }
 
   /**

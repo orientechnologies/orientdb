@@ -2,13 +2,24 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Created by luigidellaquila on 07/11/14.
  */
 public abstract class OBooleanExpression extends SimpleNode {
+
+  public static OBooleanExpression TRUE  = new OBooleanExpression(0) {
+                                           @Override
+                                           public boolean evaluate(OIdentifiable currentRecord) {
+                                             return true;
+                                           }
+                                         };
+
+  public static OBooleanExpression FALSE = new OBooleanExpression(0) {
+                                           @Override
+                                           public boolean evaluate(OIdentifiable currentRecord) {
+                                             return false;
+                                           }
+                                         };
 
   public OBooleanExpression(int id) {
     super(id);
@@ -24,4 +35,5 @@ public abstract class OBooleanExpression extends SimpleNode {
   }
 
   public abstract boolean evaluate(OIdentifiable currentRecord);
+
 }
