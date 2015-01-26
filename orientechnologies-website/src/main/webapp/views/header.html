@@ -1,19 +1,24 @@
-<header ng-controller="HeaderCtrl">
+<header ng-controller="HeaderCtrl" class="main-header">
   <nav class="navbar  navbar-default navbar-fixed-top ">
 
     <div class="container-fluid">
-      <div class="navbar-collapse collapse">
-        <ul class="nav navbar-nav navbar-right">
-
-          <li>
-
-          </li>
-        </ul>
+      <div class="row vertical-align">
+        <div class="col-md-10 col-md-offset-1">
+          <h3>{{breadCrumb.title}}</h3>
+        </div>
       </div>
+      <!--<div class="navbar-collapse collapse">-->
+      <!--<ul class="nav navbar-nav navbar-right">-->
+
+      <!--<li>-->
+
+      <!--</li>-->
+      <!--</ul>-->
+      <!--</div>-->
     </div>
   </nav>
   <a href="javascript:void(0)" class="settings-button" ng-click="toggleMenu()">
-    <avatar  name="true" dim="20" user="user">
+    <avatar name="true" dim="20" user="user">
     </avatar>
     <i class="fa fa-fw fa-2x fa-cog"></i>
   </a>
@@ -43,7 +48,7 @@
           <i class="fa fa-2x fa-home"></i>
         </a>
       </li>
-      <li >
+      <li>
         <a href="#/issues">
           <i class="fa fa-2x fa-bug"></i>
         </a>
@@ -53,12 +58,12 @@
           <i class="fa fa-2x fa-money"></i>
         </a>
       </li>
-      <li >
+      <li>
         <a href="#/users/{{user.name}}">
           <i class="fa fa-2x fa-gear"></i>
         </a>
       </li>
-      <li >
+      <li ng-show="member || isClient">
         <a href="#/rooms">
           <i class="fa fa-2x fa-users"></i>
         </a>

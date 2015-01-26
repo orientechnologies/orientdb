@@ -120,4 +120,12 @@ var ORGANIZATION = 'orientechnologies';
 var DEFAULT_REPO = 'orientdb';
 var GITHUB = "https://github.com"
 
-var WEBSOCKET = 'ws://localhost:8080/chat'
+if (location.hostname == 'localhost') {
+
+  var WEBSOCKET = "ws://" + location.host + "/chat"
+}
+else {
+  var WEBSOCKET = "ws://" + location.hostname + "/chat";
+}
+//var WEBSOCKET = 'ws://prjhub.com/chat'
+//var WEBSOCKET = 'ws://localhost:8080/chat'

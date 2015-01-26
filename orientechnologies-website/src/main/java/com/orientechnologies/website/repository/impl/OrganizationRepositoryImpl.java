@@ -524,13 +524,15 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
       }
     } else {
       ORecordId recordId = new ORecordId(beforeUuid);
-      ORecordIteratorCluster<ODocument> iterator = new ORecordIteratorCluster(db.getRawGraph(), db.getRawGraph(),
-          recordId.getClusterId(), 0, recordId.getClusterPosition() - 1, true, false, OStorage.LOCKING_STRATEGY.DEFAULT);
-      iterator.setLimit(20);
-      iterator.last();
-      while (iterator.hasPrevious()) {
-        ODocument doc = iterator.previous();
-        messages.add(OMessage.UUID.fromDoc(doc, db));
+      if (recordId.getClusterPosition() > 0) {
+        ORecordIteratorCluster<ODocument> iterator = new ORecordIteratorCluster(db.getRawGraph(), db.getRawGraph(),
+            recordId.getClusterId(), 0, recordId.getClusterPosition() - 1, true, false, OStorage.LOCKING_STRATEGY.DEFAULT);
+        iterator.setLimit(20);
+        iterator.last();
+        while (iterator.hasPrevious()) {
+          ODocument doc = iterator.previous();
+          messages.add(OMessage.UUID.fromDoc(doc, db));
+        }
       }
 
     }

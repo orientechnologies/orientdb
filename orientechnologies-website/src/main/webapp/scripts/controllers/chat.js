@@ -8,10 +8,10 @@
  * Controller of the webappApp
  */
 angular.module('webappApp')
-  .controller('ChatCtrl', function ($scope, Organization, $routeParams, $route, User, $timeout) {
+  .controller('ChatCtrl', function ($scope, Organization, $routeParams, $route, User, $timeout, BreadCrumb) {
 
     $scope.isNew = false;
-    $scope.placeholder = "Click here to type a message. ⌘+Enter to send.";
+    $scope.placeholder = "Click here to type a message. Ctrl/Command + Enter to send.";
     $scope.clientId = $routeParams.id;
     $scope.chatService = new WebSocket(WEBSOCKET);
 
@@ -26,7 +26,6 @@ angular.module('webappApp')
       if (msg.sender.name != $scope.currentUser.name) {
         if ($scope.clientId == msg.clientId) {
           $scope.$apply(function () {
-            console.log(msg);
             addNewMessage(msg);
             visit()
 
@@ -117,15 +116,23 @@ angular.module('webappApp')
 
 
       var len = $scope.messages.length;
-      var lastTime = $scope.messages[len - 1].date;
-      var lastGroup = $scope.messages[len - 1];
-      if (lastGroup.sender.name == message.sender.name) {
+      if (len > 0) {
+        var lastTime = $scope.messages[len - 1].date;
+        var lastGroup = $scope.messages[len - 1];
+        if (lastGroup.sender.name == message.sender.name) {
 
-        var momentLast = moment(new Date(parseInt(lastTime)));
-        var momentCurrent = moment(new Date(message.date));
-        var diff = momentCurrent.diff(momentLast, "minutes");
-        if (diff < 20) {
-          lastGroup.messages.push(message);
+          var momentLast = moment(new Date(parseInt(lastTime)));
+          var momentCurrent = moment(new Date(message.date));
+          var diff = momentCurrent.diff(momentLast, "minutes");
+          if (diff < 20) {
+            lastGroup.messages.push(message);
+          } else {
+            $scope.messages.push({
+              date: message.date,
+              sender: message.sender,
+              messages: [message]
+            })
+          }
         } else {
           $scope.messages.push({
             date: message.date,
@@ -159,6 +166,7 @@ angular.module('webappApp')
               }
             })
           }
+          BreadCrumb.title = 'Room ' + $scope.client.name;
         }
         getMessages();
         var msg = {
@@ -166,6 +174,7 @@ angular.module('webappApp')
           "rooms": []
         }
         $scope.clients.forEach(function (c) {
+          if(!c.timestamp) c.timestamp = 0;
           msg.rooms.push(c.clientId);
         })
         $scope.chatService.send(JSON.stringify(msg));

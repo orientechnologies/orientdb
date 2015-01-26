@@ -123,11 +123,13 @@ body {
 .sidebar-right .nav li > a:hover {
   color: #60676d;
 }
-
+.sidebar-right .nav li:first-child >a {
+  margin-top: 5px;
+}
 .sidebar-right .nav li > a {
   text-align: left;
-  margin: 10px;
-  padding: 10px 10px;
+  margin: 0px;
+  padding: 2px 10px;
   color: white;
 }
 .sidebar-right .nav li.active > a{
@@ -136,6 +138,7 @@ body {
 .sidebar-right {
   position: fixed;
   background: #384047;
+  overflow: auto;
   right: 0;
   bottom: 0;
   z-index: 1031;
@@ -383,4 +386,20 @@ span.label-dark {
 }
 .fa-green {
   color: #5cb85c;
+}
+.main-header .container-fluid h3{
+  margin-top: 5px;
+  margin-bottom: 5px;
+  padding-top: 5px;
+}
+
+.vcenter {
+  display: inline-block;
+  vertical-align: middle;
+  float: none;
+}
+
+.vertical-align {
+  display: flex;
+  align-items: center;
 }
