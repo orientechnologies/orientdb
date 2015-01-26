@@ -351,7 +351,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     dexter.save();
 
     result = database
-        .command(new OSQLSynchQuery<ODocument>("select from Profile where tag_list in 'actor' and tag_list in 'test'")).execute();
+        .command(new OSQLSynchQuery<ODocument>("select from Profile where tag_list contains 'actor' and tag_list contains 'test'")).execute();
     Assert.assertEquals(result.size(), 1);
   }
 

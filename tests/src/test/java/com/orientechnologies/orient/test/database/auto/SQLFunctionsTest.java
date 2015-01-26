@@ -391,8 +391,8 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
     SimpleDateFormat dateFormat = new SimpleDateFormat(pattern);
 
     result = database.command(
-        new OSQLSynchQuery<ODocument>("select from Account where created <= date('" + dateFormat.format(new Date()) + "', '"
-            + pattern + "')")).execute();
+        new OSQLSynchQuery<ODocument>("select from Account where created <= date('" + dateFormat.format(new Date()) + "', \""
+            + pattern + "\")")).execute();
 
     Assert.assertEquals(result.size(), tot);
     for (ODocument d : result) {

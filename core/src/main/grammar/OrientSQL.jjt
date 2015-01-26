@@ -161,6 +161,14 @@ TOKEN:
     < NOCACHE: ( "n" | "N" ) ( "o" | "O" ) ( "c" | "C" ) ( "a" | "A" ) ( "c" | "C" ) ( "h" | "H" ) ( "e" | "E" ) >
     |
     < UNSAFE: ( "u" | "U" ) ( "n" | "N" ) ( "s" | "S" ) ( "a" | "A" ) ( "f" | "F" ) ( "e" | "E" ) >
+    |
+    < PARALLEL: ( "p" | "P" ) ( "a" | "A" ) ( "r" | "R" ) ( "a" | "A" ) ( "l" | "L" ) ( "l" | "L" ) ( "e" | "E" ) ( "l" | "L" ) >
+    |
+    < STRATEGY: ( "s" | "S" ) ( "t" | "T" ) ( "r" | "R" ) ( "a" | "A" ) ( "t" | "T" ) ( "e" | "E" ) ( "g" | "G" ) ( "y" | "Y" )  >
+    |
+    < DEPTH_FIRST: ( "d" | "d" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "h" | "H" ) "_" ( "f" | "F" ) ( "i" | "I" ) ( "r" | "R" ) ( "s" | "S" ) ( "t" | "T" )  >
+    |
+    < BREADTH_FIRST: ( "b" | "B" ) ( "r" | "R" ) ( "e" | "E" ) ( "a" | "A" ) ( "d" | "D" ) ( "t" | "T" )  ( "h" | "H" ) "_" ( "f" | "F" ) ( "i" | "I" ) ( "r" | "R" ) ( "s" | "S" ) ( "t" | "T" )  >
 	|
 	< THIS: "@this" >
 	|
@@ -512,12 +520,15 @@ OSelectWithoutTargetStatement SelectWithoutTargetStatement():
 {
 (
 	<SELECT>
-	ValueItem() [<AS> Alias() ]
+	Expression() [<AS> Alias() ]
 	(
-	    <COMMA> ValueItem() [<AS> Alias() ]
+	    <COMMA> Expression() [<AS> Alias() ]
 	)*
 	[ jjtThis.letClause = LetClause() ]
-	[ FetchPlan() ] [ <NOCACHE> ]
+	[ FetchPlan() ]
+	[ Timeout() ]
+    [ <PARALLEL> ]
+    [ <NOCACHE> ]
 ) { return jjtThis; }
 }
 
@@ -531,8 +542,8 @@ OSelectStatement SelectStatement():
     jjtThis.target = FromClause()
     [ jjtThis.letClause = LetClause() ]
     [ <WHERE> jjtThis.whereClause = WhereClause() ]
-    [ jjtThis.orderBy = OrderBy() ]
     [ jjtThis.groupBy = GroupBy() ]
+    [ jjtThis.orderBy = OrderBy() ]
     (
         [
             jjtThis.skip = Skip() [ jjtThis.limit = Limit() ]
@@ -541,7 +552,9 @@ OSelectStatement SelectStatement():
         ]
     )
     [ jjtThis.fetchPlan = FetchPlan() ]
-    [ <LOCK> <RECORD> {jjtThis.lockRecord = true;} ]
+    [ Timeout() ]
+    [ <LOCK>  <RECORD> {jjtThis.lockRecord = true;} ]
+    [ <PARALLEL> ]
     [ <NOCACHE> ]
 ) {return jjtThis;}
 }
@@ -556,6 +569,7 @@ OTraverseStatement TraverseStatement():
 	FromClause()
 	[ <WHILE> WhereClause() ]
     [ Limit() ]
+    [ <STRATEGY> ( <DEPTH_FIRST> | <BREADTH_FIRST> ) ]
 ) {return jjtThis;}
 }
 
@@ -709,6 +723,7 @@ OInsertStatement InsertStatement():
 	    |
 	    IndexIdentifier()
 	)
+	[ <RETURN> Projection() ]
     InsertBody()
     [ <UNSAFE> ]
 ) {return jjtThis;}
@@ -724,6 +739,7 @@ void InsertBody():
             <LPAREN> Identifier() (<COMMA> Identifier())* <RPAREN>
             <VALUES>
             <LPAREN> Expression() (<COMMA> Expression())* <RPAREN>
+            ( <COMMA> <LPAREN> Expression() (<COMMA> Expression())* <RPAREN> )*
         )
         |
         LOOKAHEAD(3)
