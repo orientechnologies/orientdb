@@ -1239,9 +1239,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           if (!e.getMessage().endsWith("already exists"))
             throw e;
         } catch (Exception e) {
-          ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "error on creating cluster '%s' in class '%s'",
-              newClusterName, iClass);
-          throw new ODistributedException("Error on creating cluster '" + newClusterName + "' in class '" + iClass + "'");
+          ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "error on creating cluster '%s' in class '%s': ",
+              newClusterName, iClass, e);
+          throw new ODistributedException("Error on creating cluster '" + newClusterName + "' in class '" + iClass + "'", e);
         } finally {
 
           if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
