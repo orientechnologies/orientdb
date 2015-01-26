@@ -9153,7 +9153,7 @@ jjtn000.jjtSetFirstToken(getToken(1));OExpression lastExpression = null;
 
   /** Generated Token Manager. */
   public OrientSqlTokenManager token_source;
-  SimpleCharStream jj_input_stream;
+  JavaCharStream jj_input_stream;
   /** Current token. */
   public Token token;
   /** Next token. */
@@ -9200,7 +9200,7 @@ jjtn000.jjtSetFirstToken(getToken(1));OExpression lastExpression = null;
   }
   /** Constructor with InputStream and supplied encoding */
   public OrientSql(java.io.InputStream stream, String encoding) {
-    try { jj_input_stream = new SimpleCharStream(stream, encoding, 1, 1); } catch(java.io.UnsupportedEncodingException e) { throw new RuntimeException(e); }
+    try { jj_input_stream = new JavaCharStream(stream, encoding, 1, 1); } catch(java.io.UnsupportedEncodingException e) { throw new RuntimeException(e); }
     token_source = new OrientSqlTokenManager(jj_input_stream);
     token = new Token();
     jj_ntk = -1;
@@ -9227,7 +9227,7 @@ jjtn000.jjtSetFirstToken(getToken(1));OExpression lastExpression = null;
 
   /** Constructor. */
   public OrientSql(java.io.Reader stream) {
-    jj_input_stream = new SimpleCharStream(stream, 1, 1);
+    jj_input_stream = new JavaCharStream(stream, 1, 1);
     token_source = new OrientSqlTokenManager(jj_input_stream);
     token = new Token();
     jj_ntk = -1;

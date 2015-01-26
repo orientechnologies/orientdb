@@ -25,6 +25,7 @@ options {
   	MULTI=true;
   	VISITOR=true;
   	STATIC=false;
+  	JAVA_UNICODE_ESCAPE=true;
   	NODE_PREFIX="O";
 }
 

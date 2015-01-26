@@ -555,6 +555,9 @@ private int jjStartNfaWithStates_0(int pos, int kind, int state)
    return jjMoveNfa_0(state, pos + 1);
 }
 static final long[] jjbitVec0 = {
+   0xfffffffffffffffeL, 0xffffffffffffffffL, 0xffffffffffffffffL, 0xffffffffffffffffL
+};
+static final long[] jjbitVec2 = {
    0x0L, 0x0L, 0xffffffffffffffffL, 0xffffffffffffffffL
 };
 private int jjMoveNfa_0(int startState, int curPos)
@@ -3072,6 +3075,9 @@ private int jjMoveNfa_0(int startState, int curPos)
       }
       else
       {
+         int hiByte = (int)(curChar >> 8);
+         int i1 = hiByte >> 6;
+         long l1 = 1L << (hiByte & 077);
          int i2 = (curChar & 0xff) >> 6;
          long l2 = 1L << (curChar & 077);
          do
@@ -3079,15 +3085,15 @@ private int jjMoveNfa_0(int startState, int curPos)
             switch(jjstateSet[--i])
             {
                case 23:
-                  if ((jjbitVec0[i2] & l2) != 0L)
+                  if (jjCanMove_0(hiByte, i1, i2, l1, l2))
                      jjAddStates(14, 16);
                   break;
                case 387:
-                  if ((jjbitVec0[i2] & l2) != 0L)
+                  if (jjCanMove_0(hiByte, i1, i2, l1, l2))
                      jjstateSet[jjnewStateCnt++] = 388;
                   break;
                case 395:
-                  if ((jjbitVec0[i2] & l2) != 0L)
+                  if (jjCanMove_0(hiByte, i1, i2, l1, l2))
                      jjAddStates(63, 65);
                   break;
                default : break;
@@ -3120,6 +3126,18 @@ static final int[] jjnextStates = {
    29, 84, 85, 88, 89, 94, 95, 390, 391, 393, 397, 399, 401, 484, 485, 486, 
    487, 492, 493, 
 };
+private static final boolean jjCanMove_0(int hiByte, int i1, int i2, long l1, long l2)
+{
+   switch(hiByte)
+   {
+      case 0:
+         return ((jjbitVec2[i2] & l2) != 0L);
+      default :
+         if ((jjbitVec0[i1] & l1) != 0L)
+            return true;
+         return false;
+   }
+}
 
 /** Token literal values. */
 public static final String[] jjstrLiteralImages = {
@@ -3148,25 +3166,25 @@ static final long[] jjtoToken = {
 static final long[] jjtoSkip = {
    0x1eL, 0x0L, 0x0L, 
 };
-protected SimpleCharStream input_stream;
+protected JavaCharStream input_stream;
 private final int[] jjrounds = new int[494];
 private final int[] jjstateSet = new int[988];
 protected char curChar;
 /** Constructor. */
-public OrientSqlTokenManager(SimpleCharStream stream){
-   if (SimpleCharStream.staticFlag)
+public OrientSqlTokenManager(JavaCharStream stream){
+   if (JavaCharStream.staticFlag)
       throw new Error("ERROR: Cannot use a static CharStream class with a non-static lexical analyzer.");
    input_stream = stream;
 }
 
 /** Constructor. */
-public OrientSqlTokenManager(SimpleCharStream stream, int lexState){
+public OrientSqlTokenManager(JavaCharStream stream, int lexState){
    this(stream);
    SwitchTo(lexState);
 }
 
 /** Reinitialise parser. */
-public void ReInit(SimpleCharStream stream)
+public void ReInit(JavaCharStream stream)
 {
    jjmatchedPos = jjnewStateCnt = 0;
    curLexState = defaultLexState;
@@ -3182,7 +3200,7 @@ private void ReInitRounds()
 }
 
 /** Reinitialise parser. */
-public void ReInit(SimpleCharStream stream, int lexState)
+public void ReInit(JavaCharStream stream, int lexState)
 {
    ReInit(stream);
    SwitchTo(lexState);
