@@ -359,6 +359,12 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
     if (clusterIds.length == 0)
       return;
 
+    // ADJUST IDX CHECKING BOUNDARIES
+    if (currentClusterIdx >= clusterIds.length)
+      currentClusterIdx = clusterIds.length - 1;
+    else if (currentClusterIdx < 0)
+      currentClusterIdx = 0;
+
     current.clusterId = clusterIds[currentClusterIdx];
     final long[] range = database.getStorage().getClusterDataRange(current.clusterId);
 
