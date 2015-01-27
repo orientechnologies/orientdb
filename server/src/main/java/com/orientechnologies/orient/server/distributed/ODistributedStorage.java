@@ -144,7 +144,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       }
     };
 
-    Orient.instance().scheduleTask(purgeDeletedRecordsTask, OGlobalConfiguration.DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY.getValueAsLong(), OGlobalConfiguration.DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY.getValueAsLong());
+    Orient.instance().scheduleTask(purgeDeletedRecordsTask,
+        OGlobalConfiguration.DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY.getValueAsLong(),
+        OGlobalConfiguration.DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY.getValueAsLong());
 
     asynchronousOperationsQueue = new ArrayBlockingQueue<OAsynchDistributedOperation>(10000);
     asynchWorker = new Thread() {
@@ -247,8 +249,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         if (iCommand instanceof ODistributedCommand)
           nodes.removeAll(((ODistributedCommand) iCommand).nodesToExclude());
 
-        if( nodes.isEmpty() )
-          /// NO NODE TO REPLICATE
+        if (nodes.isEmpty())
+          // / NO NODE TO REPLICATE
           return null;
 
         result = dManager.sendRequest(getName(), involvedClusters, nodes, task, EXECUTION_MODE.RESPONSE);
@@ -954,6 +956,10 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
         final Object result = command(commandSQL);
         if (result != null && ((Integer) result).intValue() != clId) {
+          OLogManager.instance().warn(this,
+              "Error on creating cluster on distributed nodes: ids are different (local=%d and remote=%d). Retrying %d/%d...",
+              clId, ((Integer) result).intValue(), retry, 10);
+
           wrapped.dropCluster(clId, false);
 
           // REMOVE ON REMOTE NODES TOO
@@ -977,7 +983,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       return clId;
     }
 
-    throw new ODistributedException("Error on creating cluster: local and remote id assigned are different");
+    throw new ODistributedException("Error on creating cluster on distributed nodes: local and remote ids assigned are different");
   }
 
   @Override
