@@ -8,13 +8,13 @@
  * Controller of the webappApp
  */
 angular.module('webappApp')
-  .controller('ChatCtrl', function ($scope, Organization, $routeParams, $route, User, $timeout, BreadCrumb,$location) {
+  .controller('ChatCtrl', function ($scope, Organization, $routeParams, $route, User, $timeout, BreadCrumb, $location) {
 
     $scope.isNew = false;
-    $scope.placeholder = "Click here to type a message. Ctrl/Command + Enter to send.";
+    $scope.placeholder = "Click here to type a message. Enter to send.";
     $scope.clientId = $routeParams.id;
     $scope.chatService = new WebSocket(WEBSOCKET);
-
+    $scope.sending = false;
     $scope.chatService.onopen = function () {
       console.log("Connected to chat service! ")
 
@@ -215,8 +215,8 @@ angular.module('webappApp')
         else if (Notification.permission === "granted") {
           // If it's okay let's create a notification
           var notification = new Notification("Room " + $scope.getClientName(msg.clientId), {body: msg.sender.name + ": " + msg.body});
-          notification.onclick = function(){
-            $scope.$apply(function(){
+          notification.onclick = function () {
+            $scope.$apply(function () {
               $location.path('rooms/' + msg.clientId);
             })
           }
@@ -254,10 +254,14 @@ angular.module('webappApp')
       });
     }
     $scope.sendMessage = function () {
+      $scope.sending = true;
       Organization.all("clients").one($scope.clientId).all("room").patch({body: $scope.current}).then(function (data) {
         $scope.current = null;
         addNewMessage(data);
+        $scope.sending = false;
 
+      }).catch(function () {
+        $scope.sending = false;
       })
     }
   });

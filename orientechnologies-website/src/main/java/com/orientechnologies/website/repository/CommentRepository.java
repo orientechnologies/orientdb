@@ -10,4 +10,7 @@ public interface CommentRepository extends BaseRepository<Comment> {
     public Comment findByIssueAndCommentId(Issue issue, int id);
 
     public Comment findByIssueAndCommentUUID(Issue issue, String uuid);
+
+    public Issue findIssueByComment(Comment comment);
+
 }

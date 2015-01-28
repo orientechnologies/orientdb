@@ -10,7 +10,7 @@
     <name>Orient Technologies Web Site</name>
 
     <properties>
-        <orientdb.version>2.0-SNAPSHOT</orientdb.version>
+        <orientdb.version>2.0</orientdb.version>
         <spring-boot.version>1.1.8.RELEASE</spring-boot.version>
         <reactor.version>1.1.5.RELEASE</reactor.version>
     </properties>

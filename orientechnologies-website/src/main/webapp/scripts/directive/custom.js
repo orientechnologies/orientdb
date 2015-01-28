@@ -87,13 +87,17 @@ angular.module('webappApp').directive('vueEditor', function ($timeout, $compile,
             },
             methods: {
               send: function (e) {
-                if ((e.keyCode == 10 || e.keyCode == 13) && (e.metaKey || e.ctrlKey)) {
+                if ((e.keyCode == 13) && (!e.ctrlKey)) {
                   if (scope.onSend && editor.$data.input && editor.$data.input.length > 0) {
                     scope.onSend()
                   }
                 }
               }
             }
+          })
+
+          scope.$parent.$watch('sending', function (val) {
+            scope.sending = val;
           })
           editor.$watch('$data.input', function (newVal, oldval) {
             ngModel.$setViewValue(newVal);
@@ -105,7 +109,7 @@ angular.module('webappApp').directive('vueEditor', function ($timeout, $compile,
         }
         scope.selectActor = function (item) {
           var selected = item.label;
-          editor.$data.input += selected;
+          editor.$data.input += " ";
           return selected;
         }
       }

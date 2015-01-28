@@ -380,6 +380,8 @@ span.label-dark {
 }
 .chat-sender {
   color: #aaa;
+  position: absolute;
+  right: 30px;
 }
 .chat-group > div {
   margin-bottom: 10px;
