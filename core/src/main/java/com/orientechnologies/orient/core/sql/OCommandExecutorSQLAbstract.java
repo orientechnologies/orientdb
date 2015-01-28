@@ -226,6 +226,7 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
       osql.parse();
     } catch (ParseException e) {
       System.out.println("NEW PARSER FAILED: "+text);
+      e.printStackTrace();
       throwParsingException(e.getMessage());
       //      throw new RuntimeException(e);
     }

@@ -211,6 +211,25 @@ public class OSelectStatementTest {
 
   }
 
+  public void testEscape1() {
+    SimpleNode result = checkRightSyntax("select from cluster:internal where \"\\u005C\\u005C\" = \"\\u005C\\u005C\" ");
+    assertTrue(result instanceof OSelectStatement);
+
+
+  }
+
+  public void testEscape2() {
+    try{
+
+      SimpleNode result = checkWrongSyntax("select from cluster:internal where \"\\u005C\" = \"\\u005C\" ");
+      fail();
+    }catch (Error e){
+
+    }
+
+
+  }
+
   private void printTree(String s) {
     OrientSql osql = getParserFor(s);
     try {
