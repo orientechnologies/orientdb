@@ -230,7 +230,7 @@ public class OScriptManager {
       binding.put("db", new OScriptDocumentDatabaseWrapper(db));
       binding.put("orient", new OScriptOrientWrapper(db));
     }
-    binding.put("util", new OFunctionUtilWrapper(null));
+    binding.put("util", new OFunctionUtilWrapper());
 
     for (OScriptInjection i : injections)
       i.bind(binding);
@@ -238,14 +238,26 @@ public class OScriptManager {
     // BIND CONTEXT VARIABLE INTO THE SCRIPT
     if (iContext != null) {
       binding.put("ctx", iContext);
-      for (Entry<String, Object> a : iContext.getVariables().entrySet())
+      for (Entry<String, Object> a : iContext.getVariables().entrySet()) {
+        final Object prev = binding.get(a.getKey());
+        if (prev != null && a.getValue() != null && !prev.getClass().equals(a.getValue().getClass()))
+          throw new OCommandScriptException("Cannot bind context variable '" + a.getKey()
+              + "' because engine already contains it as: " + prev + ". Rename variable to avoid this conflict");
+
         binding.put(a.getKey(), a.getValue());
+      }
     }
 
     // BIND PARAMETERS INTO THE SCRIPT
     if (iArgs != null) {
-      for (Entry<Object, Object> a : iArgs.entrySet())
+      for (Entry<Object, Object> a : iArgs.entrySet()) {
+        final Object prev = binding.get(a.getKey());
+        if (prev != null && a.getValue() != null && !prev.getClass().equals(a.getValue().getClass()))
+          throw new OCommandScriptException("Cannot bind parameter '" + a.getKey() + "' because engine already contains it as: "
+              + prev + ". Rename parameter to avoid this conflict");
+
         binding.put(a.getKey().toString(), a.getValue());
+      }
 
       binding.put("params", iArgs.values().toArray());
     } else
@@ -321,25 +333,23 @@ public class OScriptManager {
     for (OScriptInjection i : injections)
       i.unbind(binding);
 
-    binding.clear();
+    binding.put("db", null);
+    binding.put("orient", null);
 
-    // binding.put("db", null);
-    // binding.put("orient", null);
-    //
-    // binding.put("util", null);
-    //
-    // binding.put("ctx", null);
-    // if (iContext != null) {
-    // for (Entry<String, Object> a : iContext.getVariables().entrySet())
-    // binding.put(a.getKey(), null);
-    // }
-    //
-    // if (iArgs != null) {
-    // for (Entry<Object, Object> a : iArgs.entrySet())
-    // binding.put(a.getKey().toString(), null);
-    //
-    // }
-    // binding.put("params", null);
+    binding.put("util", null);
+
+    binding.put("ctx", null);
+    if (iContext != null) {
+      for (Entry<String, Object> a : iContext.getVariables().entrySet())
+        binding.put(a.getKey(), null);
+    }
+
+    if (iArgs != null) {
+      for (Entry<Object, Object> a : iArgs.entrySet())
+        binding.put(a.getKey().toString(), null);
+
+    }
+    binding.put("params", null);
   }
 
   public void registerInjection(final OScriptInjection iInj) {
