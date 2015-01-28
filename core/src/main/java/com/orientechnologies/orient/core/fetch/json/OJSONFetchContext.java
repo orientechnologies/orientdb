@@ -159,7 +159,8 @@ public class OJSONFetchContext implements OFetchContext {
   }
 
   public void writeLinkedAttribute(final OIdentifiable iRecord, final String iFieldName) throws IOException {
-    jsonWriter.writeAttribute(settings.indentLevel, true, iFieldName, OJSONWriter.encode(iRecord.getIdentity()));
+    final Object link = iRecord.getIdentity().isValid() ? OJSONWriter.encode(iRecord.getIdentity()) : null;
+    jsonWriter.writeAttribute(settings.indentLevel, true, iFieldName, link);
   }
 
   public boolean isInCollection(ODocument record) {

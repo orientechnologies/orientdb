@@ -97,6 +97,10 @@ public class ORecordId implements ORID {
     return clusterPosition < CLUSTER_POS_INVALID;
   }
 
+  public static boolean isA(final String iString) {
+    return iString.matches("#(-?[0-9]+):(-?[0-9]+)");
+  }
+
   public void reset() {
     clusterId = CLUSTER_ID_INVALID;
     clusterPosition = CLUSTER_POS_INVALID;

@@ -527,11 +527,19 @@ public class OFetchHelper {
       final OIdentifiable fieldValue, final String fieldName, final int iCurrentLevel, final int iLevelFromRoot,
       final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords, final String iFieldPathFromRoot,
       final OFetchListener iListener, final OFetchContext iContext) throws IOException {
+    if (fieldValue instanceof ORID && !((ORID) fieldValue).isValid()) {
+      // RID NULL: TREAT AS "NULL" VALUE
+      iContext.onBeforeStandardField(fieldValue, fieldName, iRootRecord);
+      iListener.parseLinked(iRootRecord, fieldValue, iUserObject, fieldName, iContext);
+      iContext.onAfterStandardField(fieldValue, fieldName, iRootRecord);
+      return;
+    }
+
     final Integer fieldDepthLevel = parsedRecords.get(fieldValue.getIdentity());
     if (!fieldValue.getIdentity().isValid() || (fieldDepthLevel != null && fieldDepthLevel.intValue() == iLevelFromRoot)) {
       removeParsedFromMap(parsedRecords, fieldValue);
       final ODocument linked = (ODocument) fieldValue.getRecord();
-      if( linked == null )
+      if (linked == null)
         return;
 
       iContext.onBeforeDocument(iRootRecord, linked, fieldName, iUserObject);
