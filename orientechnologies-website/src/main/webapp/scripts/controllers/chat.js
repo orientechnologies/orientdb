@@ -8,7 +8,7 @@
  * Controller of the webappApp
  */
 angular.module('webappApp')
-  .controller('ChatCtrl', function ($scope, Organization, $routeParams, $route, User, $timeout, BreadCrumb) {
+  .controller('ChatCtrl', function ($scope, Organization, $routeParams, $route, User, $timeout, BreadCrumb,$location) {
 
     $scope.isNew = false;
     $scope.placeholder = "Click here to type a message. Ctrl/Command + Enter to send.";
@@ -17,6 +17,10 @@ angular.module('webappApp')
 
     $scope.chatService.onopen = function () {
       console.log("Connected to chat service! ")
+
+      $scope.$apply(function () {
+        $scope.connected = true;
+      })
     };
 
 // called when a message received from server
@@ -39,6 +43,7 @@ angular.module('webappApp')
             })
           });
         }
+        $scope.notify(msg);
       }
     };
 
@@ -174,10 +179,14 @@ angular.module('webappApp')
           "rooms": []
         }
         $scope.clients.forEach(function (c) {
-          if(!c.timestamp) c.timestamp = 0;
+          if (!c.timestamp) c.timestamp = 0;
           msg.rooms.push(c.clientId);
         })
-        $scope.chatService.send(JSON.stringify(msg));
+        $scope.$watch('connected', function (val) {
+          if (val) {
+            $scope.chatService.send(JSON.stringify(msg));
+          }
+        })
 
       })
 
@@ -197,9 +206,45 @@ angular.module('webappApp')
         }
       }
 
+      $scope.notify = function (msg) {
+        if (!("Notification" in window)) {
+          alert("This browser does not support desktop notification");
+        }
 
+        // Let's check if the user is okay to get some notification
+        else if (Notification.permission === "granted") {
+          // If it's okay let's create a notification
+          var notification = new Notification("Room " + $scope.getClientName(msg.clientId), {body: msg.sender.name + ": " + msg.body});
+          notification.onclick = function(){
+            $scope.$apply(function(){
+              $location.path('rooms/' + msg.clientId);
+            })
+          }
+        }
+
+        // Otherwise, we need to ask the user for permission
+        // Note, Chrome does not implement the permission static property
+        // So we have to check for NOT 'denied' instead of 'default'
+        else if (Notification.permission !== 'denied') {
+          Notification.requestPermission(function (permission) {
+            // If the user is okay, let's create a notification
+            if (permission === "granted") {
+
+              var notification = new Notification("Room " + $scope.getClientName(msg.clientId), {body: msg.body});
+            }
+          });
+        }
+      }
     });
 
+    $scope.getClientName = function (clientId) {
+      var name = ''
+      $scope.clients.forEach(function (c) {
+        if (c.clientId == clientId) name = c.name;
+
+      });
+      return name;
+    }
 
     $scope.createChat = function () {
       Organization.all("clients").one($scope.clientId).all("room").post().then(function (data) {
