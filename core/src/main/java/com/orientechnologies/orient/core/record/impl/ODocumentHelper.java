@@ -353,7 +353,7 @@ public class ODocumentHelper {
           final Map<String, ?> map = (Map<String, ?>) value;
           if (indexParts.size() == 1 && indexCondition.size() == 1 && indexRanges.size() == 1)
             // SINGLE VALUE
-            value = map.get(indexAsString);
+            value = map.get(index);
           else if (indexParts.size() > 1) {
             // MULTI VALUE
             final Object[] values = new Object[indexParts.size()];
