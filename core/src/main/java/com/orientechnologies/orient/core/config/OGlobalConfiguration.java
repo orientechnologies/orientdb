@@ -95,11 +95,8 @@ public enum OGlobalConfiguration {
   DISK_WRITE_CACHE_FLUSH_LOCK_TIMEOUT("storage.diskCache.writeCacheFlushLockTimeout",
       "Maximum amount of time till write cache will be wait before page flush in ms.", Integer.class, -1),
 
-  DISK_CACHE_FREE_SPACE_LIMIT(
-      "storage.diskCache.diskFreeSpaceLimit",
-      "Minimum amount of space on disk after which database will "
-          + "work only in read mode, in megabytes. You need free space on disk which is sum of this parameter and maximum size of WAL on disk.",
-      Long.class, 100),
+  DISK_CACHE_FREE_SPACE_LIMIT("storage.diskCache.diskFreeSpaceLimit", "Minimum amount of space on disk after which database will "
+      + "work only in read mode, in megabytes", Long.class, 100),
 
   DISC_CACHE_FREE_SPACE_CHECK_INTERVAL("storage.diskCache.diskFreeSpaceCheckInterval",
       "Interval, in seconds, after which storage periodically "
@@ -529,20 +526,19 @@ public enum OGlobalConfiguration {
 
   @Deprecated
   TX_AUTO_RETRY("tx.autoRetry",
-                 "Maximum number of automatic retry if some resource has been locked in the middle of the transaction (Timeout exception)",
-                 Integer.class, 1),
+      "Maximum number of automatic retry if some resource has been locked in the middle of the transaction (Timeout exception)",
+      Integer.class, 1),
 
   @Deprecated
   TX_LOG_TYPE("tx.log.fileType", "File type to handle transaction logs: mmap or classic", String.class, "classic"),
 
   @Deprecated
   TX_LOG_SYNCH(
-                "tx.log.synch",
-                "Executes a synch against the file-system at every log entry. This slows down transactions but guarantee transaction reliability on unreliable drives",
-                Boolean.class, Boolean.FALSE),
-  @Deprecated
+      "tx.log.synch",
+      "Executes a synch against the file-system at every log entry. This slows down transactions but guarantee transaction reliability on unreliable drives",
+      Boolean.class, Boolean.FALSE), @Deprecated
   TX_USE_LOG("tx.useLog", "Transactions use log file to store temporary data to be rolled back in case of crash", Boolean.class,
-              true),
+      true),
 
   @Deprecated
   INDEX_AUTO_REBUILD_AFTER_NOTSOFTCLOSE("index.auto.rebuildAfterNotSoftClose",
@@ -702,7 +698,10 @@ public enum OGlobalConfiguration {
         // LOW MEMORY: SET IT TO 256MB ONLY
         OLogManager
             .instance()
-            .warn(null, "No enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower Maximum Heap (-Xmx setting on JVM) and restart OrientDB. Now running with DISKCACHE=" + OReadWriteDiskCache.MIN_CACHE_SIZE + "MB", osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
+            .warn(
+                null,
+                "No enough physical memory available for DISKCACHE: %,dMB (heap=%,dMB). Set lower Maximum Heap (-Xmx setting on JVM) and restart OrientDB. Now running with DISKCACHE="
+                    + OReadWriteDiskCache.MIN_CACHE_SIZE + "MB", osMemory / 1024 / 1024, jvmMaxMemory / 1024 / 1024);
         DISK_CACHE_SIZE.setValue(OReadWriteDiskCache.MIN_CACHE_SIZE);
       }
 

@@ -2555,6 +2555,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   private void checkLowDiskSpace() {
+    if (transaction.get() != null)
+      return;
+
     if (lowDiskSpace != null) {
       diskCache.makeFuzzyCheckpoint();
 
@@ -2568,9 +2571,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
               + " MB). The database is now working in read-only mode."
               + " Please close the database (or stop OrientDB), make room on your hard drive and then reopen the database. "
               + "The minimal required space is " + (lowDiskSpace.requiredSpace / (1024 * 1024)) + " MB. "
+<<<<<<< HEAD
               + "Required space is calculated as sum of disk space required by WAL, now set to "
               + OGlobalConfiguration.WAL_MAX_SIZE.getValueAsInteger() + "MB (you can change it by setting parameter "
               + OGlobalConfiguration.WAL_MAX_SIZE.getKey() + ") and space required for data.");
+=======
+              + "Required space is now set to "
+              + OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsInteger() + "MB (you can change it by setting parameter "
+              + OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getKey() + ") .");
+>>>>>>> 2.0.1-hotfix
         } else {
           lowDiskSpace = null;
         }

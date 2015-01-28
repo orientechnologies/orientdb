@@ -169,11 +169,10 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer implemen
     if (waitingWriter != null)
       LockSupport.unpark(waitingWriter);
 
-    for (Thread waitingReader : node.waitingReaders) {
+    Thread waitingReader;
+    while ((waitingReader = node.waitingReaders.poll()) != null) {
       LockSupport.unpark(waitingReader);
     }
-
-    node.waitingReaders.clear();
 
     myNode.set(predNode.get());
     predNode.set(null);

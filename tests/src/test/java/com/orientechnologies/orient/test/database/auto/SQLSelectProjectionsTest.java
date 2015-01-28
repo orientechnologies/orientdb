@@ -15,6 +15,19 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
+<<<<<<< HEAD
+=======
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+>>>>>>> 2.0.1-hotfix
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
@@ -424,6 +437,10 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
     }
   }
 
+<<<<<<< HEAD
+=======
+  @Test
+>>>>>>> 2.0.1-hotfix
   public void testTempRIDsAreNotRecycledInResultSet() {
     final List<OIdentifiable> resultset = database.query(new OSQLSynchQuery<ODocument>(
         "select name, $l as l from OUser let $l = (select name from OuSer)"));
@@ -442,12 +459,19 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
       Assert.assertFalse(embeddedList.isEmpty());
 
       for (OIdentifiable embedded : embeddedList) {
+<<<<<<< HEAD
         if( embedded != null ) {
           final ORID embeddedRid = embedded.getIdentity();
 
           Assert.assertFalse(rids.contains(embeddedRid));
           rids.add(rid);
         }
+=======
+        final ORID embeddedRid = embedded.getIdentity();
+
+        Assert.assertFalse(rids.contains(embeddedRid));
+        rids.add(rid);
+>>>>>>> 2.0.1-hotfix
       }
     }
   }
