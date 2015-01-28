@@ -72,10 +72,7 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
     final OPartitionedObjectPool.PoolEntry<ScriptEngine> entry = scriptManager.acquireDatabaseEngine(db.getName(), f.getLanguage());
     final ScriptEngine scriptEngine = entry.object;
     try {
-      // CREATE A NEW CONTEXT WHERE TO BIND VARIABLES TO AVOID REWRITING GLOBAL/ENGINE SCOPED FUNCTIONS/VARIABLES
-      final ScriptContext newContext = new SimpleScriptContext();
-
-      final Bindings binding = scriptManager.bind(newContext.getBindings(ScriptContext.ENGINE_SCOPE), (ODatabaseDocumentTx) db,
+      final Bindings binding = scriptManager.bind(scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE), (ODatabaseDocumentTx) db,
           iContext, iArgs);
 
       try {
