@@ -239,11 +239,6 @@ public class OScriptManager {
     if (iContext != null) {
       binding.put("ctx", iContext);
       for (Entry<String, Object> a : iContext.getVariables().entrySet()) {
-        final Object prev = binding.get(a.getKey());
-        if (prev != null && a.getValue() != null && !prev.getClass().equals(a.getValue().getClass()))
-          throw new OCommandScriptException("Cannot bind context variable '" + a.getKey()
-              + "' because engine already contains it as: " + prev + ". Rename variable to avoid this conflict");
-
         binding.put(a.getKey(), a.getValue());
       }
     }
@@ -251,11 +246,6 @@ public class OScriptManager {
     // BIND PARAMETERS INTO THE SCRIPT
     if (iArgs != null) {
       for (Entry<Object, Object> a : iArgs.entrySet()) {
-        final Object prev = binding.get(a.getKey());
-        if (prev != null && a.getValue() != null && !prev.getClass().equals(a.getValue().getClass()))
-          throw new OCommandScriptException("Cannot bind parameter '" + a.getKey() + "' because engine already contains it as: "
-              + prev + ". Rename parameter to avoid this conflict");
-
         binding.put(a.getKey().toString(), a.getValue());
       }
 
