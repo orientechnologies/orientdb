@@ -1,13 +1,5 @@
 package com.orientechnologies.orient.test.database.auto;
 
-import java.util.List;
-import java.util.Set;
-
-import org.testng.Assert;
-import org.testng.annotations.Optional;
-import org.testng.annotations.Parameters;
-import org.testng.annotations.Test;
-
 import com.orientechnologies.orient.core.collate.OCaseInsensitiveCollate;
 import com.orientechnologies.orient.core.collate.ODefaultCollate;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -19,6 +11,13 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+import org.testng.Assert;
+import org.testng.annotations.Optional;
+import org.testng.annotations.Parameters;
+import org.testng.annotations.Test;
+
+import java.util.List;
+import java.util.Set;
 
 @Test
 public class CollateTest extends DocumentDBBaseTest {
@@ -289,5 +288,41 @@ public class CollateTest extends DocumentDBBaseTest {
 
     explain = database.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("collateCompositeIndexCollateWasChanged"));
+  }
+
+  public void collateThroughSQL() {
+    final OSchema schema = database.getMetadata().getSchema();
+    OClass clazz = schema.createClass("collateTestViaSQL");
+
+    OProperty csp = clazz.createProperty("csp", OType.STRING);
+    OProperty cip = clazz.createProperty("cip", OType.STRING);
+
+    database.command(new OCommandSQL("create index collateTestViaSQL.index on collateTestViaSQL (cip COLLATE CI) NOTUNIQUE")).execute();
+
+    for (int i = 0; i < 10; i++) {
+      ODocument document = new ODocument("collateTestViaSQL");
+
+      if (i % 2 == 0) {
+        document.field("csp", "VAL");
+        document.field("cip", "VAL");
+      } else {
+        document.field("csp", "val");
+        document.field("cip", "val");
+      }
+
+      document.save();
+    }
+
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from collateTestViaSQL where csp = 'VAL'"));
+    Assert.assertEquals(result.size(), 5);
+
+    for (ODocument document : result)
+      Assert.assertEquals(document.field("csp"), "VAL");
+
+    result = database.query(new OSQLSynchQuery<ODocument>("select from collateTestViaSQL where cip = 'VaL'"));
+    Assert.assertEquals(result.size(), 10);
+
+    for (ODocument document : result)
+      Assert.assertEquals((document.<String> field("cip")).toUpperCase(), "VAL");
   }
 }
