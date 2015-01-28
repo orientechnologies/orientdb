@@ -1145,4 +1145,17 @@ public class JSONTest extends DocumentDBBaseTest {
       Assert.assertTrue(content.hasSameContentOf(o));
     }
   }
+
+  public void testInvalidLink() {
+    ODocument nullRefDoc = new ODocument();
+    nullRefDoc.fromJSON("{\"name\":\"Luca\", \"ref\":\"#-1:-1\"}");
+
+//    Assert.assertNull(nullRefDoc.rawField("ref"));
+
+    String json = nullRefDoc.toJSON();
+    int pos = json.indexOf("\"ref\":");
+
+    Assert.assertTrue(pos > -1);
+    Assert.assertEquals(json.charAt(pos + "\"ref\":".length()), 'n');
+  }
 }

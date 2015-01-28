@@ -24,8 +24,6 @@ import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OPair;
-import com.orientechnologies.orient.core.OOrientListener;
-import com.orientechnologies.orient.core.OOrientListenerAbstract;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -63,7 +61,6 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
   private static final class MemoryChecker extends TimerTask {
     @Override
     public void run() {
-      final java.lang.management.OperatingSystemMXBean mxBean = ManagementFactory.getOperatingSystemMXBean();
       final long jvmTotMemory = Runtime.getRuntime().totalMemory();
       final long jvmMaxMemory = Runtime.getRuntime().maxMemory();
 

@@ -21,6 +21,7 @@
 package com.orientechnologies.common.log;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -35,13 +36,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class OLogManager {
-  private static final String      DEFAULT_LOG  = "com.orientechnologies";
-  private static final OLogManager instance     = new OLogManager();
-  private boolean                  debug        = true;
-  private boolean                  info         = true;
-  private boolean                  warn         = true;
-  private boolean                  error        = true;
-  private Level                    minimumLevel = Level.SEVERE;
+  private static final String      DEFAULT_LOG                  = "com.orientechnologies";
+  private static final String      ENV_INSTALL_CUSTOM_FORMATTER = "orientdb.installCustomFormatter";
+  private static final OLogManager instance                     = new OLogManager();
+  private boolean                  debug                        = true;
+  private boolean                  info                         = true;
+  private boolean                  warn                         = true;
+  private boolean                  error                        = true;
+  private Level                    minimumLevel                 = Level.SEVERE;
 
   protected OLogManager() {
   }
@@ -51,6 +53,12 @@ public class OLogManager {
   }
 
   public static void installCustomFormatter() {
+    final boolean installCustomFormatter = Boolean.parseBoolean(OSystemVariableResolver.resolveSystemVariables("${"
+        + ENV_INSTALL_CUSTOM_FORMATTER + "}", "true"));
+
+    if (!installCustomFormatter)
+      return;
+
     try {
       // ASSURE TO HAVE THE ORIENT LOG FORMATTER TO THE CONSOLE EVEN IF NO CONFIGURATION FILE IS TAKEN
       final Logger log = Logger.getLogger("");

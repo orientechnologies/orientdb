@@ -399,29 +399,30 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
     }
   }
 
-  @Test
   public void testTempRIDsAreNotRecycledInResultSet() {
-    final List<ODocument> resultset = database.query(new OSQLSynchQuery<ODocument>(
+    final List<OIdentifiable> resultset = database.query(new OSQLSynchQuery<ODocument>(
         "select name, $l as l from OUser let $l = (select name from OuSer)"));
 
     Assert.assertNotNull(resultset);
 
     Set<ORID> rids = new HashSet<ORID>();
-    for (ODocument d : resultset) {
+    for (OIdentifiable d : resultset) {
       final ORID rid = d.getIdentity();
       Assert.assertFalse(rids.contains(rid));
 
       rids.add(rid);
 
-      final List<ODocument> embeddedList = d.field("l");
+      final List<OIdentifiable> embeddedList = ((ODocument) d.getRecord()).field("l");
       Assert.assertNotNull(embeddedList);
       Assert.assertFalse(embeddedList.isEmpty());
 
-      for (ODocument embedded : embeddedList) {
-        final ORID embeddedRid = embedded.getIdentity();
+      for (OIdentifiable embedded : embeddedList) {
+        if( embedded != null ) {
+          final ORID embeddedRid = embedded.getIdentity();
 
-        Assert.assertFalse(rids.contains(embeddedRid));
-        rids.add(rid);
+          Assert.assertFalse(rids.contains(embeddedRid));
+          rids.add(rid);
+        }
       }
     }
   }
