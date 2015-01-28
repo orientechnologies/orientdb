@@ -317,28 +317,29 @@ public class OScriptManager {
    * 
    * @param binding
    */
-  public void unbind(Bindings binding, OCommandContext iContext, Map<Object, Object> iArgs) {
+  public void unbind(final Bindings binding, final OCommandContext iContext, final Map<Object, Object> iArgs) {
     for (OScriptInjection i : injections)
       i.unbind(binding);
 
-    binding.put("db", null);
-    binding.put("orient", null);
+    binding.clear();
 
-    binding.put("util", null);
-
-    binding.put("ctx", null);
-    if (iContext != null) {
-      for (Entry<String, Object> a : iContext.getVariables().entrySet())
-        binding.put(a.getKey(), null);
-    }
-
-    if (iArgs != null) {
-      for (Entry<Object, Object> a : iArgs.entrySet())
-        binding.put(a.getKey().toString(), null);
-
-    }
-    binding.put("params", null);
-
+    // binding.put("db", null);
+    // binding.put("orient", null);
+    //
+    // binding.put("util", null);
+    //
+    // binding.put("ctx", null);
+    // if (iContext != null) {
+    // for (Entry<String, Object> a : iContext.getVariables().entrySet())
+    // binding.put(a.getKey(), null);
+    // }
+    //
+    // if (iArgs != null) {
+    // for (Entry<Object, Object> a : iArgs.entrySet())
+    // binding.put(a.getKey().toString(), null);
+    //
+    // }
+    // binding.put("params", null);
   }
 
   public void registerInjection(final OScriptInjection iInj) {
