@@ -5,9 +5,10 @@ import com.orientechnologies.website.OrientDBFactory;
 import com.orientechnologies.website.events.EventManager;
 import com.orientechnologies.website.events.IssueCreatedEvent;
 import com.orientechnologies.website.helper.SecurityHelper;
-import com.orientechnologies.website.model.schema.*;
+import com.orientechnologies.website.model.schema.HasIssue;
+import com.orientechnologies.website.model.schema.HasLabel;
+import com.orientechnologies.website.model.schema.HasMilestone;
 import com.orientechnologies.website.model.schema.dto.*;
-import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.model.schema.dto.web.IssueDTO;
 import com.orientechnologies.website.repository.*;
 import com.orientechnologies.website.services.AutoAssignService;
@@ -121,6 +122,11 @@ public class RepositoryServiceImpl implements RepositoryService {
     if (issue.getPriority() != null) {
       if (original.getPriority() == null || original.getPriority().getNumber() != issue.getPriority()) {
         handlePriority(r, original, issue.getPriority());
+      }
+    }
+    if (issue.getAssignee() != null) {
+      if (original.getAssignee() == null || !original.getAssignee().getName().equalsIgnoreCase(issue.getAssignee())) {
+        handleAssignee(original, issue.getAssignee());
       }
     }
     if (issue.getScope() != null) {

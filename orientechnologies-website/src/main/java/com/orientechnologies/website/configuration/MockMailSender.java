@@ -14,28 +14,41 @@ import javax.mail.internet.MimeMessage;
  */
 public class MockMailSender extends JavaMailSenderImpl {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MockMailSender.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(MockMailSender.class);
 
-    @Override
-    public void send(MimeMessagePreparator mimeMessagePreparator) throws MailException {
-        final MimeMessage message = createMimeMessage();
+  @Override
+  public void send(MimeMessagePreparator mimeMessagePreparator) throws MailException {
+    final MimeMessage message = createMimeMessage();
 
-        try {
-            mimeMessagePreparator.prepare(message);
+    try {
+      mimeMessagePreparator.prepare(message);
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    } catch (Exception e) {
+      e.printStackTrace();
     }
+  }
 
-    @Override
-    public void send(SimpleMailMessage simpleMessage) throws MailException {
-        LOGGER.info(simpleMessage.getText());
-    }
+  @Override
+  public void send(SimpleMailMessage simpleMessage) throws MailException {
 
+//    Session session = Session.getDefaultInstance(getJavaMailProperties());
+//    MimeMessage message = new MimeMessage(session);
+//    try {
+//      message.setText(simpleMessage.getText());
+//      message.setSubject(simpleMessage.getSubject());
+//      InternetAddress address = new InternetAddress(simpleMessage.getTo()[0]);
+//      InternetAddress from = new InternetAddress("prjhub@orientechnologies.com");
+//      message.setFrom(from);
+//      message.setRecipient(Message.RecipientType.TO, address);
+//      Transport.send(message);
+//    } catch (MessagingException e) {
+//      e.printStackTrace();
+//    }
+    LOGGER.info(simpleMessage.getText());
+  }
 
-    @Override
-    public void send(MimeMessage mimeMessage) throws MailException {
+  @Override
+  public void send(MimeMessage mimeMessage) throws MailException {
 
-    }
+  }
 }

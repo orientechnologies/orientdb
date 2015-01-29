@@ -1,6 +1,7 @@
 package com.orientechnologies.website.events;
 
 import com.orientechnologies.website.model.schema.dto.Comment;
+import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.repository.CommentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -44,16 +45,17 @@ public class IssueCommentedEvent extends EventInternal<Comment> {
   public void accept(Event<Comment> issueEvent) {
 
     Comment comment = issueEvent.getData();
-    Issue issue = commentRepository.findIssueByComment(comment);
+    Comment committed = commentRepository.reload(comment);
+    Issue issue = commentRepository.findIssueByComment(committed);
     Context context = new Context();
 
     fillContextVariable(context, issue, comment);
-    String htmlContent = templateEngine.process("newIssue.html", context);
+    String htmlContent = templateEngine.process("newComment.html", context);
     SimpleMailMessage mailMessage = new SimpleMailMessage();
-    mailMessage.setTo("someone@localhost");
-    mailMessage.setReplyTo("someone@localhost");
-    mailMessage.setFrom("someone@localhost");
-    mailMessage.setSubject("Lorem ipsum");
+    OUser owner = issue.getScope().getOwner();
+    mailMessage.setTo(owner.getEmail());
+    mailMessage.setFrom("prjhub@orientechnologies.com");
+    mailMessage.setSubject(issue.getTitle());
     mailMessage.setText(htmlContent);
     sender.send(mailMessage);
 
@@ -61,6 +63,7 @@ public class IssueCommentedEvent extends EventInternal<Comment> {
 
   private void fillContextVariable(Context context, Issue issue, Comment comment) {
     context.setVariable("link", config.endpoint + "/#issues/" + issue.getIid());
+    context.setVariable("body", comment.getBody());
   }
 
 }

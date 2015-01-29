@@ -78,6 +78,7 @@ public enum OComment implements OTypeHolder<com.orientechnologies.website.model.
         comment.setCreatedAt((Date) doc.field(OEvent.CREATED_AT.toString()));
         comment.setCreatedAt((Date) doc.field(OEvent.CREATED_AT.toString()));
         comment.setUser(OUser.NAME.fromDoc((ODocument) doc.field(USER.toString()), graph));
+        comment.setInternal(doc);
         return comment;
     }
 

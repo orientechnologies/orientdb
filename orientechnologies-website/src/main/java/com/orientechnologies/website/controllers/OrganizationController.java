@@ -254,4 +254,10 @@ public class OrganizationController extends ExceptionController {
     return organizationService.registerScope(name, scope, id);
   }
 
+
+  @RequestMapping(value = "{name}/events", method = RequestMethod.GET)
+  @ResponseStatus(HttpStatus.OK)
+  public List<Scope> findEvents(@PathVariable("name") String name) {
+    return orgRepository.findScopes(name);
+  }
 }

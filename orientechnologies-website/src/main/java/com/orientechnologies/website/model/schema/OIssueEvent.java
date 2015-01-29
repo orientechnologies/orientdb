@@ -101,6 +101,7 @@ public enum OIssueEvent implements OTypeHolder<IssueEvent> {
     event.setFrom((String) doc.field(FROM.toString()));
     event.setTo((String) doc.field(TO.toString()));
     event.setCommitId((String) doc.field(COMMIT_ID.toString()));
+    event.setInternal(doc);
     return event;
   }
 

@@ -1,5 +1,7 @@
 package com.orientechnologies.website.events;
 
+import com.orientechnologies.website.model.schema.dto.IssueEvent;
+import com.orientechnologies.website.repository.EventRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.mail.SimpleMailMessage;
@@ -18,7 +20,7 @@ import com.orientechnologies.website.model.schema.dto.OUser;
  * Created by Enrico Risa on 30/12/14.
  */
 @Component
-public class IssueCreatedEvent extends EventInternal<Issue> {
+public class IssueClosedEvent extends EventInternal<IssueEvent> {
 
   @Autowired
   @Lazy
@@ -28,9 +30,11 @@ public class IssueCreatedEvent extends EventInternal<Issue> {
   protected AppConfig          config;
 
   @Autowired
+  protected EventRepository    eventRepository;
+  @Autowired
   private SpringTemplateEngine templateEngine;
 
-  public static String         EVENT = "issue_created";
+  public static String         EVENT = "issue_closed";
 
   @Override
   public String event() {
@@ -38,30 +42,26 @@ public class IssueCreatedEvent extends EventInternal<Issue> {
   }
 
   @Override
-  public void accept(Event<Issue> issueEvent) {
+  public void accept(Event<IssueEvent> issueEvent) {
 
-    Issue issue = issueEvent.getData();
+    IssueEvent comment = issueEvent.getData();
+    IssueEvent committed = eventRepository.reload(comment);
+    Issue issue = eventRepository.findIssueByEvent(committed);
     Context context = new Context();
-    fillContextVariable(context, issue);
-    String htmlContent = templateEngine.process("newIssue.html", context);
+    fillContextVariable(context, issue, comment);
+    String htmlContent = templateEngine.process("newClosed.html", context);
     SimpleMailMessage mailMessage = new SimpleMailMessage();
     OUser owner = issue.getScope().getOwner();
     mailMessage.setTo(owner.getEmail());
-    mailMessage.setFrom("notification@prjhub.com");
+    mailMessage.setFrom("prjhub@orientechnologies.com");
     mailMessage.setSubject(issue.getTitle());
     mailMessage.setText(htmlContent);
     sender.send(mailMessage);
 
   }
 
-  private void fillContextVariable(Context context, Issue issue) {
+  private void fillContextVariable(Context context, Issue issue, IssueEvent comment) {
     context.setVariable("link", config.endpoint + "/#issues/" + issue.getIid());
-    String body = null;
-    if (issue.getBody() != null) {
-      body = issue.getBody();
-    } else {
-      body = "Created issue ";
-    }
-    context.setVariable("link", body);
+    context.setVariable("body", "@" + comment.getActor().getName() + " closed #" + issue.getIid());
   }
 }

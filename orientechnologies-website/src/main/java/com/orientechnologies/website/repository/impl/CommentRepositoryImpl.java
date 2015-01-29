@@ -82,4 +82,10 @@ public class CommentRepositoryImpl extends OrientBaseRepository<Comment> impleme
       return null;
     }
   }
+
+  @Override
+  public Comment reload(Comment event) {
+    OrientGraph graph = dbFactory.getGraph();
+    return OComment.COMMENT_ID.fromDoc(event.getInternal(), graph);
+  }
 }

@@ -3,6 +3,7 @@ package com.orientechnologies.website.services.impl;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.website.OrientDBFactory;
+import com.orientechnologies.website.events.*;
 import com.orientechnologies.website.github.GIssue;
 import com.orientechnologies.website.github.GRepo;
 import com.orientechnologies.website.github.GitHub;
@@ -44,6 +45,8 @@ public class IssueServiceImpl implements IssueService {
   protected CommentRepository  commentRepository;
 
   @Autowired
+  protected EventManager       eventManager;
+  @Autowired
   private RepositoryRepository repoRepository;
   @Autowired
   private EventRepository      eventRepository;
@@ -65,6 +68,7 @@ public class IssueServiceImpl implements IssueService {
     createCommentRelationship(issue, comment);
   }
 
+  @Transactional
   @Override
   public Comment createNewCommentOnIssue(Issue issue, Comment comment) {
 
@@ -75,6 +79,8 @@ public class IssueServiceImpl implements IssueService {
 
       comment = commentRepository.save(comment);
       commentIssue(issue, comment);
+
+      eventManager.pushInternalEvent(IssueCommentedEvent.EVENT, comment);
       return comment;
     } else {
       return githubIssueService.createNewCommentOnIssue(issue, comment);
@@ -180,6 +186,9 @@ public class IssueServiceImpl implements IssueService {
   @Override
   public void assign(Issue issue, OUser assignee, OUser actor, boolean fire) {
 
+    if (issue.getAssignee() != null) {
+      removeAssigneeRelationship(issue, issue.getAssignee());
+    }
     createAssigneeRelationship(issue, assignee);
 
     if (fire) {
@@ -194,6 +203,8 @@ public class IssueServiceImpl implements IssueService {
       }
       e = (IssueEvent) eventRepository.save(e);
       fireEvent(issue, e);
+
+      eventManager.pushInternalEvent(IssueAssignedEvent.EVENT, e);
     }
   }
 
@@ -409,6 +420,12 @@ public class IssueServiceImpl implements IssueService {
       }
       e = (IssueEvent) eventRepository.save(e);
       fireEvent(issue, e);
+
+      if (evt.equals("reopened")) {
+        eventManager.pushInternalEvent(IssueReopenEvent.EVENT, e);
+      } else {
+        eventManager.pushInternalEvent(IssueClosedEvent.EVENT, e);
+      }
     }
 
     return issueRepository.save(issue);
