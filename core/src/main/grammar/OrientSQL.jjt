@@ -350,7 +350,6 @@ TOKEN :
 | < KEY: ( "K" | "k") ( "E" | "e") ( "Y" | "y") >
 | < INSTANCEOF: "instanceof" >
 | < CLUSTER: "cluster" >
-
 }
 
 
@@ -359,7 +358,7 @@ TOKEN :
 {
   < IDENTIFIER: ( (<DOLLAR>)? <LETTER> (<PART_LETTER>)* ) >
 |
-  < INDEX_IDENTIFIER: "index:" <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
+  < INDEX_IDENTIFIER: "index:" ( "__@recordmap@___" )? <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
 |
   < INDEXVALUES_IDENTIFIER: "indexvalues:" <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
 |
@@ -512,7 +511,7 @@ OStatement Statement():
         |
 		result = UpdateStatement()
 
-	) { return result; }
+	) [ <SEMICOLON> ] { return result; }
 }
 
 OSelectWithoutTargetStatement SelectWithoutTargetStatement():
@@ -780,7 +779,7 @@ OCreateVertexStatementEmpty CreateVertexStatementEmpty():
 
 	<CREATE>
 	<VERTEX>
-	Identifier()
+	Identifier() [ <CLUSTER> Identifier() ]
     {return jjtThis;}
 }
 
@@ -793,7 +792,7 @@ OCreateVertexStatement CreateVertexStatement():
 	<VERTEX>
 	(
 	    LOOKAHEAD( Identifier() )
-	    Identifier()
+	    ( Identifier() [<CLUSTER> Identifier()] )
 	    |
 	    LOOKAHEAD( Cluster() )
 	    Cluster()
@@ -820,7 +819,7 @@ OCreateEdgeStatement CreateEdgeStatement():
 (
 	<CREATE>
 	<EDGE>
-	[ Identifier() ]
+	[ Identifier() [ <CLUSTER> Identifier() ]]
 	<FROM>
 	(
 	    Rid()
@@ -1709,7 +1708,7 @@ void FetchPlanItem():
     (
         <STAR>
         |
-        Identifier() ( <DOT> Identifier() )*
+        [ <LBRACKET> Integer() <RBRACKET> ] Identifier() [<STAR>]  ( <DOT> Identifier() [<STAR>] )*
     )
     <COLON> Integer()
 }
@@ -1739,8 +1738,8 @@ void Json():
 {
     <LBRACE>
     [
-        ( Identifier() | <STRING_LITERAL> ) <COLON> Expression()
-        ( <COMMA> ( Identifier() | <STRING_LITERAL> ) <COLON> Expression() )*
+        ( Identifier() | <STRING_LITERAL> | <CHARACTER_LITERAL>) <COLON> Expression()
+        ( <COMMA> ( Identifier() | <STRING_LITERAL> | <CHARACTER_LITERAL> ) <COLON> Expression() )*
     ]
     <RBRACE>
 }

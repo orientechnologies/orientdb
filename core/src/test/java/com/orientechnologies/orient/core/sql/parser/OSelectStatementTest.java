@@ -65,7 +65,7 @@ public class OSelectStatementTest {
 
     checkWrongSyntax("select from Foo bar");
     checkWrongSyntax("select * from Foo bar");
-    checkWrongSyntax("select Foo");
+
     checkWrongSyntax("select * Foo");
 
   }
@@ -103,7 +103,7 @@ public class OSelectStatementTest {
     SimpleNode result = checkRightSyntax("select count(*) from OFunction where name not in [\"a\"]");
     // result.dump("    ");
     assertTrue(result instanceof OStatement);
-    OStatement stm = (OStatement) result.children[0];
+    OStatement stm = (OStatement) result;
 
   }
 
@@ -125,7 +125,7 @@ public class OSelectStatementTest {
 
   public void testMath5() {
     SimpleNode result = checkRightSyntax("" + "select * from sqlSelectIndexReuseTestClass where prop1 = foo + 1 * bar - 5");
-    result.dump("    ");
+
     assertTrue(result instanceof OSelectStatement);
     OSelectStatement select = (OSelectStatement) result;
 
@@ -133,7 +133,7 @@ public class OSelectStatementTest {
 
   public void testFetchPlan1() {
     SimpleNode result = checkRightSyntax("" + "select 'Ay' as a , 'bEE' as b from Foo fetchplan *:1");
-    result.dump("    ");
+
     assertTrue(result instanceof OSelectStatement);
     OSelectStatement select = (OSelectStatement) result;
 
@@ -141,7 +141,7 @@ public class OSelectStatementTest {
 
   public void testFetchPlan2() {
     SimpleNode result = checkRightSyntax("" + "select 'Ay' as a , 'bEE' as b fetchplan *:1");
-    result.dump("    ");
+
     assertTrue(result instanceof OSelectWithoutTargetStatement);
     OSelectWithoutTargetStatement select = (OSelectWithoutTargetStatement) result;
 
@@ -149,7 +149,7 @@ public class OSelectStatementTest {
 
   public void testContainsWithCondition() {
     SimpleNode result = checkRightSyntax("select from Profile where customReferences.values() CONTAINS 'a'");
-    result.dump("    ");
+
     assertTrue(result instanceof OSelectStatement);
     OSelectStatement select = (OSelectStatement) result;
 
@@ -157,7 +157,7 @@ public class OSelectStatementTest {
 
   public void testRange() {
     SimpleNode result = checkRightSyntax("select * from ThisClass where a = b[pippo..pluto]");
-    result.dump("    ");
+
     assertTrue(result instanceof OSelectStatement);
     OSelectStatement select = (OSelectStatement) result;
 
@@ -165,7 +165,7 @@ public class OSelectStatementTest {
 
   public void testNamedParam() {
     SimpleNode result = checkRightSyntax("select from JavaComplexTestClass where enumField = :enumItem");
-    // result.dump("    ");
+
     assertTrue(result instanceof OSelectStatement);
     OSelectStatement select = (OSelectStatement) result;
 
@@ -234,7 +234,7 @@ public class OSelectStatementTest {
     OrientSql osql = getParserFor(s);
     try {
       SimpleNode n = osql.parse();
-      n.dump(" ");
+
     } catch (ParseException e) {
       e.printStackTrace();
     }

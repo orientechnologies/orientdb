@@ -70,7 +70,7 @@ public class OCreateVertexStatementTest {
     OrientSql osql = getParserFor(s);
     try {
       SimpleNode n = osql.parse();
-      n.dump(" ");
+
     } catch (ParseException e) {
       e.printStackTrace();
     }
