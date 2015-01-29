@@ -17,6 +17,18 @@
  */
 package com.orientechnologies.orient.jdbc;
 
+import com.orientechnologies.orient.core.OConstants;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexUnique;
+import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.function.OFunction;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
+import com.orientechnologies.orient.core.metadata.schema.OProperty;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
@@ -29,18 +41,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexUnique;
-import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.metadata.function.OFunction;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
-import com.orientechnologies.orient.core.metadata.schema.OProperty;
-import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
  * @author Roberto Franchini (CELI srl - franchini--at--celi.it)
@@ -112,8 +112,11 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   }
 
   public ResultSet getCatalogs() throws SQLException {
+    final List<ODocument> records = new ArrayList<ODocument>();
+    records.add(new ODocument().field("TABLE_CAT", database.getName()));
 
-    return null;
+    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public ResultSet getClientInfoProperties() throws SQLException {
@@ -371,33 +374,27 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   }
 
   public int getMaxRowSize() throws SQLException {
-
     return 0;
   }
 
   public int getMaxSchemaNameLength() throws SQLException {
-
     return 0;
   }
 
   public int getMaxStatementLength() throws SQLException {
-
     return 0;
   }
 
   public int getMaxStatements() throws SQLException {
-
     return 0;
   }
 
   public int getMaxTableNameLength() throws SQLException {
-
-    return 0;
+    return 1024;
   }
 
   public int getMaxTablesInSelect() throws SQLException {
-
-    return 0;
+    return 1;
   }
 
   public int getMaxUserNameLength() throws SQLException {
@@ -410,7 +407,7 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     return null;
   }
 
-  public ResultSet getPrimaryKeys(String catalog, String schema, String table) throws SQLException {
+  public ResultSet getPrimaryKeys(final String catalog, final String schema, final String table) throws SQLException {
     final Set<OIndex<?>> classIndexes = metadata.getIndexManager().getClassIndexes(table);
 
     final Set<OIndex<?>> uniqueIndexes = new HashSet<OIndex<?>>();
@@ -426,8 +423,8 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       int keyFiledSeq = 1;
       for (String keyFieldName : unique.getDefinition().getFields()) {
         ODocument doc = new ODocument();
-        doc.field("TABLE_CAT", (Object) null);
-        doc.field("TABLE_SCHEM", (Object) null);
+        doc.field("TABLE_CAT", catalog);
+        doc.field("TABLE_SCHEM", catalog);
         doc.field("TABLE_NAME", table);
         doc.field("COLUMN_NAME", keyFieldName);
         doc.field("KEY_SEQ", Integer.valueOf(keyFiledSeq), OType.INTEGER);
@@ -528,8 +525,11 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
   }
 
   public ResultSet getSchemas() throws SQLException {
+    final List<ODocument> records = new ArrayList<ODocument>();
+    records.add(new ODocument().field("TABLE_SCHEM", database.getName()).field("TABLE_CATALOG", database.getName()));
 
-    return null;
+    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
+        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
   }
 
   public ResultSet getSchemas(String catalog, String schemaPattern) throws SQLException {
@@ -547,17 +547,18 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     return "";
   }
 
-  public ResultSet getSuperTables(String catalog, String schemaPattern, String tableNamePattern) throws SQLException {
+  public ResultSet getSuperTables(final String catalog, final String schemaPattern, final String tableNamePattern)
+      throws SQLException {
     final OClass cls = database.getMetadata().getSchema().getClass(tableNamePattern);
     final List<ODocument> records = new ArrayList<ODocument>();
 
     if (cls != null && cls.getSuperClass() != null) {
       final ODocument doc = new ODocument();
-      doc.field("TABLE_CAT", (Object) null);
-      doc.field("TABLE_SCHEM", (Object) null);
+      doc.field("TABLE_CAT", catalog);
+      doc.field("TABLE_SCHEM", catalog);
       doc.field("TABLE_NAME", cls.getName());
-      doc.field("SUPERTABLE_CAT", (Object) null);
-      doc.field("SUPERTABLE_SCHEM", (Object) null);
+      doc.field("SUPERTABLE_CAT", catalog);
+      doc.field("SUPERTABLE_SCHEM", catalog);
       doc.field("SUPERTABLE_NAME", cls.getSuperClass().getName());
       records.add(doc);
     }
@@ -572,11 +573,11 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
 
     if (cls != null && cls.getSuperClass() != null) {
       final ODocument doc = new ODocument();
-      doc.field("TABLE_CAT", (Object) null);
-      doc.field("TABLE_SCHEM", (Object) null);
+      doc.field("TABLE_CAT", catalog);
+      doc.field("TABLE_SCHEM", catalog);
       doc.field("TABLE_NAME", cls.getName());
-      doc.field("SUPERTYPE_CAT", (Object) null);
-      doc.field("SUPERTYPE_SCHEM", (Object) null);
+      doc.field("SUPERTYPE_CAT", catalog);
+      doc.field("SUPERTYPE_SCHEM", catalog);
       doc.field("SUPERTYPE_NAME", cls.getSuperClass().getName());
       records.add(doc);
     }
@@ -608,16 +609,17 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     return result;
   }
 
-  public ResultSet getTables(String catalog, String schemaPattern, String tableNamePattern, String[] types) throws SQLException {
+  public ResultSet getTables(final String catalog, final String schemaPattern, final String tableNamePattern, final String[] types)
+      throws SQLException {
     final Collection<OClass> classes = database.getMetadata().getSchema().getClasses();
     final List<ODocument> records = new ArrayList<ODocument>();
 
     for (OClass cls : classes) {
       final String className = cls.getName();
-      if (tableNamePattern == null || tableNamePattern.equalsIgnoreCase(className)) {
+      if (tableNamePattern == null || tableNamePattern.equals("%") || tableNamePattern.equalsIgnoreCase(className)) {
         final ODocument doc = new ODocument();
-        doc.field("TABLE_CAT", (Object) null);
-        doc.field("TABLE_SCHEM", (Object) null);
+        doc.field("TABLE_CAT", catalog);
+        doc.field("TABLE_SCHEM", catalog);
 
         String type;
         if (SYSTEM_TABLES.contains(cls.getName()))
