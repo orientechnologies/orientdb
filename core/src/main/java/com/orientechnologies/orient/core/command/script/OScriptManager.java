@@ -230,7 +230,7 @@ public class OScriptManager {
       binding.put("db", new OScriptDocumentDatabaseWrapper(db));
       binding.put("orient", new OScriptOrientWrapper(db));
     }
-    binding.put("util", new OFunctionUtilWrapper(null));
+    binding.put("util", new OFunctionUtilWrapper());
 
     for (OScriptInjection i : injections)
       i.bind(binding);
@@ -238,14 +238,16 @@ public class OScriptManager {
     // BIND CONTEXT VARIABLE INTO THE SCRIPT
     if (iContext != null) {
       binding.put("ctx", iContext);
-      for (Entry<String, Object> a : iContext.getVariables().entrySet())
+      for (Entry<String, Object> a : iContext.getVariables().entrySet()) {
         binding.put(a.getKey(), a.getValue());
+      }
     }
 
     // BIND PARAMETERS INTO THE SCRIPT
     if (iArgs != null) {
-      for (Entry<Object, Object> a : iArgs.entrySet())
+      for (Entry<Object, Object> a : iArgs.entrySet()) {
         binding.put(a.getKey().toString(), a.getValue());
+      }
 
       binding.put("params", iArgs.values().toArray());
     } else
@@ -317,7 +319,7 @@ public class OScriptManager {
    * 
    * @param binding
    */
-  public void unbind(Bindings binding, OCommandContext iContext, Map<Object, Object> iArgs) {
+  public void unbind(final Bindings binding, final OCommandContext iContext, final Map<Object, Object> iArgs) {
     for (OScriptInjection i : injections)
       i.unbind(binding);
 
@@ -338,7 +340,6 @@ public class OScriptManager {
 
     }
     binding.put("params", null);
-
   }
 
   public void registerInjection(final OScriptInjection iInj) {

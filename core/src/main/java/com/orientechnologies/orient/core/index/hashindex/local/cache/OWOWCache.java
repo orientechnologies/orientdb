@@ -75,9 +75,8 @@ public class OWOWCache {
 
   public static final long                                  MAGIC_NUMBER          = 0xFACB03FEL;
 
-  private final long                                        freeSpaceLimit        = (OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT
-                                                                                      .getValueAsLong() + OGlobalConfiguration.WAL_MAX_SIZE
-                                                                                      .getValueAsLong()) * 1024L * 1024L;
+  private final long                                        freeSpaceLimit        = OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT
+                                                                                      .getValueAsLong() * 1024L * 1024L;
 
   private final long                                        diskSizeCheckInterval = OGlobalConfiguration.DISC_CACHE_FREE_SPACE_CHECK_INTERVAL
                                                                                       .getValueAsInteger() * 1000;

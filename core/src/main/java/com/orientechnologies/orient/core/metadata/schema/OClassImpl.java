@@ -1428,7 +1428,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       }
 
       final OIndexDefinition indexDefinition = OIndexDefinitionFactory.createIndexDefinition(this, Arrays.asList(fields),
-          extractFieldTypes(fields), null);
+            extractFieldTypes(fields), null);
 
       return getDatabase().getMetadata().getIndexManager()
           .createIndex(name, type, indexDefinition, polymorphicClusterIds, progressListener, metadata, algorithm);
@@ -2160,7 +2160,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     }
   }
 
-  private List<OType> extractFieldTypes(String[] fieldNames) {
+  public List<OType> extractFieldTypes(String[] fieldNames) {
     final List<OType> types = new ArrayList<OType>(fieldNames.length);
 
     for (String fieldName : fieldNames) {
