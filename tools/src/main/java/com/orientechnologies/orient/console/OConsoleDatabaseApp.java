@@ -19,6 +19,21 @@
  */
 package com.orientechnologies.orient.console;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.Map.Entry;
+
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.TTYConsoleReader;
 import com.orientechnologies.common.console.annotation.ConsoleCommand;
@@ -74,30 +89,16 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
-import sun.misc.Signal;
-import sun.misc.SignalHandler;
-
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.Map.Entry;
 
 public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutputListener, OProgressListener {
   protected static final int    DEFAULT_WIDTH      = 150;
-  private int                   windowSize         = DEFAULT_WIDTH;
   protected ODatabaseDocumentTx currentDatabase;
   protected String              currentDatabaseName;
   protected ORecord             currentRecord;
   protected int                 currentRecordIdx;
   protected List<OIdentifiable> currentResultSet;
   protected OServerAdmin        serverAdmin;
+  private int                   windowSize         = DEFAULT_WIDTH;
   private int                   lastPercentStep;
   private String                currentDatabaseUserName;
   private String                currentDatabaseUserPassword;
@@ -1560,13 +1561,11 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
     out.println(new StringBuilder("Backuping current database to: ").append(iText).append("..."));
 
     final String fileName = items.size() <= 0 || items.get(1).charAt(0) == '-' ? null : items.get(1);
-    // final String options = fileName != null ? iText.substring(
-    // ((String) items.get(0)).length() + ((String) items.get(1)).length() + 1).trim() : iText;
 
     int bufferSize = Integer.parseInt(properties.get("backupBufferSize"));
     int compressionLevel = Integer.parseInt(properties.get("backupCompressionLevel"));
 
-    for (int i = 1; i < items.size(); ++i) {
+    for (int i = 2; i < items.size(); ++i) {
       final String item = items.get(i);
       final int sep = item.indexOf('=');
       if (sep == -1) {
