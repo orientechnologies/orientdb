@@ -3,7 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 public
-class OBaseExpression extends SimpleNode {
+class OBaseExpression extends OMathExpression {
   public OBaseExpression(int id) {
     super(id);
   }

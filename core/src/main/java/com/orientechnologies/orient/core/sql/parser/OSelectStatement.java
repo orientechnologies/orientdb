@@ -2,17 +2,17 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.LinkedHashMap;
 
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.OCommandResultListener;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class OSelectStatement extends OStatement {
 
@@ -44,111 +44,45 @@ public class OSelectStatement extends OStatement {
     super(p, id);
   }
 
-  public Object execute(OSQLAsynchQuery<ODocument> request, final Map<Object, Object> iArgs, OCommandContext context,
-      OCommandResultListener listener, boolean sync) {
-    return execute(request, iArgs, context, listener, -1, null, sync);
-  }
+  @Override
+  public OCommandExecutorSQLAbstract buildExecutor(final OCommandRequest iRequest) {
+    getDatabase().checkSecurity(ORule.ResourceGeneric.COMMAND, ORole.PERMISSION_READ);
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
-  public Object execute(OSQLAsynchQuery<ODocument> request, final Map<Object, Object> iArgs, OCommandContext context,
-      OCommandResultListener listener, long timeoutMs, OCommandContext.TIMEOUT_STRATEGY timeoutStrategy, boolean sync) {
-    try {
-      if (iArgs != null)
-      // BIND ARGUMENTS INTO CONTEXT TO ACCESS FROM ANY POINT (EVEN FUNCTIONS)
-      {
-        for (Map.Entry<Object, Object> arg : iArgs.entrySet()) {
-          context.setVariable(arg.getKey().toString(), arg.getValue());
-        }
-      }
+    OSQLAsynchQuery<ODocument> request;
 
-      if (timeoutMs > 0) {
-        context.beginExecution(timeoutMs, timeoutStrategy);
-      }
-
-      Iterator<? extends OIdentifiable> target = getTargetIterator(context, request.isUseCache());
-
-      List<OIdentifiable> result = new ArrayList<OIdentifiable>();
-
-      boolean canContinue = true;
-      while (canContinue && target.hasNext()) {
-        OIdentifiable targetResult = target.next();
-        OIdentifiable projectionResult = this.calculateProjections(targetResult);
-        if (this.matchesFilters(projectionResult)) {
-          if (sync) {
-            return result.add(projectionResult);
-          } else {
-            canContinue = listener.result(projectionResult);
-          }
-        }
-        canContinue = canContinue && checkTimeout();
-      }
-
-      // if (!optimizeExecution()) {
-      // fetchLimit = getQueryFetchLimit();
-      //
-      // executeSearch(iArgs);
-      // applyExpand();
-      // handleNoTarget();
-      // handleGroupBy();
-      // applyOrderBy();
-      // applyLimitAndSkip();
-      // }
-      // return getResult();
-
-      return null;
-    } finally {
-      if (listener != null) {
-        listener.end();
+    if (iRequest instanceof OSQLSynchQuery) {
+      request = (OSQLSynchQuery<ODocument>) iRequest;
+    } else if (iRequest instanceof OSQLAsynchQuery) {
+      request = (OSQLAsynchQuery<ODocument>) iRequest;
+    } else {
+      // BUILD A QUERY OBJECT FROM THE COMMAND REQUEST
+      request = new OSQLSynchQuery<ODocument>(textRequest.getText());
+      if (textRequest.getResultListener() != null) {
+        request.setResultListener(textRequest.getResultListener());
       }
     }
-  }
 
-  private boolean checkTimeout() {
-    return true;// TODO
-  }
+    OCommandExecutorSQLSelect result = new OCommandExecutorSQLSelect();
+    result.setRequest(request);
 
-  public OIdentifiable calculateProjections(OIdentifiable result) {
-    // TODO
+    result.initContext();
+
+    result.setProjections(new LinkedHashMap<String, Object>());
+    result.setProjectionDefinition(new LinkedHashMap<String, String>());
+
+    if (this.projection != null && this.projection.getItems() != null) {
+      for (OProjectionItem item : projection.getItems()) {
+        result.getProjections().put(getAlias(item), item.getExpression().createExecutorFilter());
+        result.getProjectionDefinition().put(getAlias(item), item.toString());
+      }
+    }
+
     return result;
   }
 
-  protected boolean matchesFilters(OIdentifiable currentRecord) {
-    if (getWhereClause() == null) {
-      return true;
-    }
-    return getWhereClause().matchesFilters(currentRecord);
-  }
-
-  public Iterator<? extends OIdentifiable> getTargetIterator(OCommandContext iContext, boolean useCache) {
-
-    if (target != null && target.getClassName() != null)
-      return null;// TODO
-    // else if (parsedTarget.getTargetIndexValues() != null) {
-    // target = new IndexValuesIterator(parsedTarget.getTargetIndexValues(), parsedTarget.isTargetIndexValuesAsc());
-    // } else if (parsedTarget.getTargetClusters() != null)
-    // searchInClusters();
-    // else if (parsedTarget.getTargetRecords() != null) {
-    // if (parsedTarget.getTargetRecords() instanceof OIterableRecordSource) {
-    // target = ((OIterableRecordSource) parsedTarget.getTargetRecords()).iterator(iArgs);
-    // } else {
-    // target = parsedTarget.getTargetRecords().iterator();
-    // }
-    // } else if (parsedTarget.getTargetVariable() != null) {
-    // final Object var = getContext().getVariable(parsedTarget.getTargetVariable());
-    // if (var == null) {
-    // target = Collections.EMPTY_LIST.iterator();
-    // return true;
-    // } else if (var instanceof OIdentifiable) {
-    // final ArrayList<OIdentifiable> list = new ArrayList<OIdentifiable>();
-    // list.add((OIdentifiable) var);
-    // target = list.iterator();
-    // } else if (var instanceof Iterable<?>)
-    // target = ((Iterable<? extends OIdentifiable>) var).iterator();
-
-    return null;
-  }
-
-  protected void assignLetClauses(final ORecord iRecord) {
-
+  private String getAlias(OProjectionItem item) {
+    return null;// TODO
   }
 
   public OProjection getProjection() {

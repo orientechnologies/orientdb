@@ -3,7 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 public
-class OMultExpression extends SimpleNode {
+class OMultExpression extends OMathExpression {
   public OMultExpression(int id) {
     super(id);
   }

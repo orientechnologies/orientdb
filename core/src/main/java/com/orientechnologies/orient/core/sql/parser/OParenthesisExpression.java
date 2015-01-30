@@ -3,7 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 public
-class OParenthesisExpression extends SimpleNode {
+class OParenthesisExpression extends OMathExpression {
   public OParenthesisExpression(int id) {
     super(id);
   }

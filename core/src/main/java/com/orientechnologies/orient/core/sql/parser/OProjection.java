@@ -28,5 +28,23 @@ public class OProjection extends SimpleNode {
   public void setItems(List<OProjectionItem> items) {
     this.items = items;
   }
+
+  @Override
+  public String toString() {
+    if (items == null) {
+      return "";
+    }
+    boolean first = true;
+    StringBuilder builder = new StringBuilder();
+    for (OProjectionItem item : items) {
+      if (!first) {
+        builder.append(", ");
+      }
+      builder.append(item.toString());
+      first = false;
+    }
+
+    return builder.toString();
+  }
 }
 /* JavaCC - OriginalChecksum=3a650307b53bae626dc063c4b35e62c3 (do not edit this line) */

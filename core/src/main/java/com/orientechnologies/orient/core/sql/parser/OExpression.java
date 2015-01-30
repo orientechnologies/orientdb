@@ -2,8 +2,10 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OExpression extends SimpleNode {
+public class OExpression extends SimpleNode {
+
+  protected Object value;
+
   public OExpression(int id) {
     super(id);
   }
@@ -12,10 +14,44 @@ class OExpression extends SimpleNode {
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
+  }
+
+  public Object createExecutorFilter() {
+
+    // TODO create an interface for this;
+
+    if (value instanceof ORid) {
+      return null;// TODO
+    } else if (value instanceof OInputParameter) {
+      return null;// TODO
+    } else if (value instanceof OMathExpression) {
+      return null;// TODO
+    } else if (value instanceof OJson) {
+      return null;// TODO
+    }
+
+    return value;
+
+  }
+
+  @Override
+  public String toString() {
+    if (value == null) {
+      return "null";
+    } else if (value instanceof SimpleNode) {
+      return value.toString();
+    } else if (value instanceof String) {
+      return "\"" + encode("" + value) + "\"";
+    } else {
+      return "" + value;
+    }
+  }
+
+  private String encode(String s) {
+    return null;
   }
 }
 /* JavaCC - OriginalChecksum=9c860224b121acdc89522ae97010be01 (do not edit this line) */

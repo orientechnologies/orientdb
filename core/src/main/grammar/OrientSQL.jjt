@@ -386,14 +386,17 @@ TOKEN :
   >
 }
 
-void Rid():
+ORid Rid():
 {}
 {
-	 LOOKAHEAD(4)
-	 "#" Integer() <COLON> Integer()
-	 |
-	 LOOKAHEAD(3)
-	 Integer() <COLON> Integer()
+    (
+	     LOOKAHEAD(4)
+	    "#" jjtThis.cluster = Integer() <COLON> jjtThis.position = Integer()
+    	 |
+    	 LOOKAHEAD(3)
+    	 jjtThis.cluster = Integer() <COLON> jjtThis.position = Integer()
+    )
+    { return jjtThis; }
 }
 
 /** Root production. */
@@ -966,7 +969,7 @@ void ArraySingleValuesSelector():
     ( ArraySelector() ( <COMMA> ArraySelector() )* )
 }
 
-void ArrayRangeSelector():
+OArrayRangeSelector ArrayRangeSelector():
 {}
 {
     <INTEGER_RANGE>
@@ -1055,107 +1058,148 @@ void BaseIdentifier():
     SuffixIdentifier()
 }
 
-void Modifier():
+OModifier Modifier():
 {}
 {
-
     (
-
         (
-            <LBRACKET>
-                (
-                    LOOKAHEAD( ArrayRangeSelector() )
-                    ArrayRangeSelector()
-                    |
-                    LOOKAHEAD( OrBlock() )
-                    OrBlock()
-                    |
-                    LOOKAHEAD( ArraySingleValuesSelector() )
-                    ArraySingleValuesSelector()
-                )
-            <RBRACKET>
+            (
+                <LBRACKET>
+                    (
+                        LOOKAHEAD( ArrayRangeSelector() )
+                        ArrayRangeSelector()
+                        |
+                        LOOKAHEAD( OrBlock() )
+                        OrBlock()
+                        |
+                        LOOKAHEAD( ArraySingleValuesSelector() )
+                        ArraySingleValuesSelector()
+                    )
+                <RBRACKET>
+            )
+       	    |
+   	        MethodCall()
+       	    |
+            <DOT> SuffixIdentifier()
         )
-   	    |
-   	    LOOKAHEAD( MethodCall() )
-   	    MethodCall()
-   	    |
-        <DOT> SuffixIdentifier()
+        [
+            LOOKAHEAD( Modifier() )
+            Modifier()
+        ]
     )
-    [
-        LOOKAHEAD( Modifier() )
-        Modifier()
-    ]
+    { return jjtThis; }
 }
 
 OExpression Expression():
-{}
+{Token token; }
 {
     (
-        <NULL>
+        <NULL> {jjtThis.value = null;}
         |
         LOOKAHEAD(2)
-        <STRING_LITERAL>
+        token = <STRING_LITERAL> {jjtThis.value = token.image;}
         |
-        <CHARACTER_LITERAL>
+        token = <CHARACTER_LITERAL> {jjtThis.value = token.image;}
         |
         LOOKAHEAD( Rid() )
-        Rid()
+        jjtThis.value = Rid()
         |
         LOOKAHEAD( InputParameter() )
-        InputParameter()
+        jjtThis.value = InputParameter()
         |
-        MathExpression()
+        jjtThis.value = MathExpression()
         |
-        Json()
+        jjtThis.value = Json()
         |
-        <TRUE>
+        <TRUE> {jjtThis.value = true;}
         |
-        <FALSE>
+        <FALSE> {jjtThis.value = false;}
 	)
 	{ return jjtThis; }
 }
 
-void MathExpression():
-{}
+OMathExpression MathExpression():
 {
-	MultExpression() (  LOOKAHEAD( 2 ) ( <PLUS> | <MINUS> ) MultExpression() )*
+    OMathExpression sub;
+    jjtThis.setChildExpressions(new java.util.ArrayList());
 }
-
-
-void MultExpression():
-{}
 {
-    FirstLevelExpression() (  LOOKAHEAD( 2 ) ( <STAR> | <SLASH> | <REM> ) FirstLevelExpression() )*
-}
-
-void FirstLevelExpression():
-{}
-{
-    LOOKAHEAD( ParenthesisExpression() )
-    ParenthesisExpression()
-    |
-    LOOKAHEAD( BaseExpression() )
-    BaseExpression()
-}
-
-void ParenthesisExpression():
-{}
-{
-	<LPAREN> ( Expression() | SelectStatement() ) <RPAREN>
-}
-
-void BaseExpression():
-{}
-{
-    Number()
-    |
     (
-	    BaseIdentifier() [ LOOKAHEAD( Modifier() ) Modifier() ]
+	    sub = MultExpression() { jjtThis.getChildExpressions().add(sub); }
+	    (
+	        LOOKAHEAD( 2 ) ( <PLUS> | <MINUS> )
+	        sub = MultExpression() { jjtThis.getChildExpressions().add(sub); }
+	    )*
 	)
-	|
-	(
-	    InputParameter() [ LOOKAHEAD( Modifier() ) Modifier()  ]
+	{
+	    if(jjtThis.getChildExpressions().size() != 1){
+	        return jjtThis;
+	    }else{
+	        return jjtThis.getChildExpressions().get(0);
+	    }
+	}
+}
+
+
+OMathExpression MultExpression():
+{
+    OMathExpression sub;
+    jjtThis.setChildExpressions(new java.util.ArrayList());
+}
+{
+    (
+        sub = FirstLevelExpression()  { jjtThis.getChildExpressions().add(sub); }
+        (
+            LOOKAHEAD( 2 ) ( <STAR> | <SLASH> | <REM> )
+            sub = FirstLevelExpression()  { jjtThis.getChildExpressions().add(sub); }
+        )*
+    )
+    {
+	    if(jjtThis.getChildExpressions().size() != 1){
+	        return jjtThis;
+	    }else{
+	        return jjtThis.getChildExpressions().get(0);
+	    }
+	}
+}
+
+OMathExpression FirstLevelExpression():
+{ OMathExpression expr;}
+{
+    (
+        LOOKAHEAD( ParenthesisExpression() )
+        expr = ParenthesisExpression()
+        |
+        LOOKAHEAD( BaseExpression() )
+        expr = BaseExpression()
+    )
+    {return expr;}
+}
+
+OMathExpression ParenthesisExpression():
+{}
+{
+    (
+	    <LPAREN> ( Expression() | SelectStatement() ) <RPAREN>
 	)
+	{return jjtThis;}
+}
+
+OBaseExpression BaseExpression():
+{}
+{
+    (
+        Number()
+        |
+        (
+    	    BaseIdentifier() [ LOOKAHEAD( Modifier() ) Modifier() ]
+    	)
+    	|
+    	(
+    	    InputParameter() [ LOOKAHEAD( Modifier() ) Modifier()  ]
+    	)
+	)
+	{return jjtThis;}
 }
 
 
@@ -1733,15 +1777,18 @@ void Array():
 }
 
 
-void Json():
+OJson Json():
 {}
 {
-    <LBRACE>
-    [
-        ( Identifier() | <STRING_LITERAL> | <CHARACTER_LITERAL>) <COLON> Expression()
-        ( <COMMA> ( Identifier() | <STRING_LITERAL> | <CHARACTER_LITERAL> ) <COLON> Expression() )*
-    ]
-    <RBRACE>
+    (
+        <LBRACE>
+        [
+         ( Identifier() | <STRING_LITERAL> | <CHARACTER_LITERAL>) <COLON> Expression()
+         ( <COMMA> ( Identifier() | <STRING_LITERAL> | <CHARACTER_LITERAL> ) <COLON> Expression() )*
+        ]
+        <RBRACE>
+    )
+    {return jjtThis;}
 }
 
 

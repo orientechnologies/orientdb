@@ -2,8 +2,15 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OMathExpression extends SimpleNode {
+import java.util.ArrayList;
+import java.util.List;
+
+public class OMathExpression extends SimpleNode {
+
+  protected List<OMathExpression> childExpressions = new ArrayList<OMathExpression>();
+
+
+
   public OMathExpression(int id) {
     super(id);
   }
@@ -12,10 +19,17 @@ class OMathExpression extends SimpleNode {
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
+  }
+
+  public List<OMathExpression> getChildExpressions() {
+    return childExpressions;
+  }
+
+  public void setChildExpressions(List<OMathExpression> childExpressions) {
+    this.childExpressions = childExpressions;
   }
 }
 /* JavaCC - OriginalChecksum=c255bea24e12493e1005ba2a4d1dbb9d (do not edit this line) */

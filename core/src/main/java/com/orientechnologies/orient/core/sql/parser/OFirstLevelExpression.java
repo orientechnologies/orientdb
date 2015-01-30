@@ -3,7 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 public
-class OFirstLevelExpression extends SimpleNode {
+class OFirstLevelExpression extends OMathExpression {
   public OFirstLevelExpression(int id) {
     super(id);
   }

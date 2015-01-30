@@ -2,12 +2,11 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OProjectionItem extends SimpleNode {
+public class OProjectionItem extends SimpleNode {
 
-  protected boolean all = false;
+  protected boolean     all = false;
 
-  protected String alias;
+  protected String      alias;
 
   protected OExpression expression;
 
@@ -18,7 +17,6 @@ class OProjectionItem extends SimpleNode {
   public OProjectionItem(OrientSql p, int id) {
     super(p, id);
   }
-
 
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
@@ -47,6 +45,21 @@ class OProjectionItem extends SimpleNode {
 
   public void setExpression(OExpression expression) {
     this.expression = expression;
+  }
+
+  @Override
+  public String toString(String prefix) {
+    StringBuilder builder = new StringBuilder();
+
+    if (all) {
+      builder.append("*");
+    }else {
+      builder.append(expression.toString());
+      if (alias != null && alias.trim().length() > 0) {
+        builder.append(" AS " + alias);
+      }
+    }
+    return builder.toString();
   }
 }
 /* JavaCC - OriginalChecksum=6d6010734c7434a6f516e2eac308e9ce (do not edit this line) */

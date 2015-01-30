@@ -111,6 +111,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private boolean                     noCache              = false;
   private int                         tipLimitThreshold    = OGlobalConfiguration.QUERY_LIMIT_THRESHOLD_TIP.getValueAsInteger();
 
+  public OCommandExecutorSQLSelect() {
+
+  }
+
   private final class IndexUsageLog {
     OIndex<?>        index;
     List<Object>     keyParams;
@@ -1271,7 +1275,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return null;
   }
 
-  private void initContext() {
+  public void initContext() {
     if (context == null) {
       context = new OBasicCommandContext();
     }
@@ -2035,6 +2039,42 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         context.setVariable("groupByElapsed", (System.currentTimeMillis() - startGroupBy));
       }
     }
+  }
+
+  public void setProjections(Map<String, Object> projections) {
+    this.projections = projections;
+  }
+
+  public Map<String, String> getProjectionDefinition() {
+    return projectionDefinition;
+  }
+
+  public void setProjectionDefinition(Map<String, String> projectionDefinition) {
+    this.projectionDefinition = projectionDefinition;
+  }
+
+  public void setOrderedFields(List<OPair<String, String>> orderedFields) {
+    this.orderedFields = orderedFields;
+  }
+
+  public void setGroupByFields(List<String> groupByFields) {
+    this.groupByFields = groupByFields;
+  }
+
+  public void setFetchLimit(int fetchLimit) {
+    this.fetchLimit = fetchLimit;
+  }
+
+  public void setFetchPlan(String fetchPlan) {
+    this.fetchPlan = fetchPlan;
+  }
+
+  public void setParallel(boolean parallel) {
+    this.parallel = parallel;
+  }
+
+  public void setNoCache(boolean noCache) {
+    this.noCache = noCache;
   }
 
 }
