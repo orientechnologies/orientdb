@@ -291,7 +291,7 @@ public enum OGlobalConfiguration {
   PREFER_SBTREE_SET("collections.preferSBTreeSet", "This config is experimental.", Boolean.class, false),
 
   // FILE
-  FILE_LOCK("file.lock", "Locks files when used. Default is false", boolean.class, true),
+  FILE_LOCK("file.lock", "Locks files when used. Default is true", boolean.class, true),
 
   FILE_DELETE_DELAY("file.deleteDelay", "Delay time in ms to wait for another attempt to delete a locked file", Integer.class, 10),
 
