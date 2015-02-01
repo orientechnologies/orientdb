@@ -710,9 +710,12 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
       checkForFields();
 
-      final OClass _clazz = getImmutableSchemaClass();
-      if (_clazz != null)
-        buffer.append(_clazz.getStreamableName());
+      final ODatabaseDocument db = getDatabaseIfDefined();
+      if( db != null && !db.isClosed()) {
+        final OClass _clazz = getImmutableSchemaClass();
+        if (_clazz != null)
+          buffer.append(_clazz.getStreamableName());
+      }
 
       if (_recordId != null) {
         if (_recordId.isValid())
@@ -2423,6 +2426,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   protected Set<Entry<String, ODocumentEntry>> getRawEntries() {
+    checkForFields();
     return _fields == null ? new HashSet<Map.Entry<String, ODocumentEntry>>() : _fields.entrySet();
   }
 }
