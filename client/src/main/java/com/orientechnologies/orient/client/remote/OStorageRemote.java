@@ -19,22 +19,6 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.FutureTask;
-
-import javax.naming.NamingException;
-import javax.naming.directory.Attribute;
-import javax.naming.directory.Attributes;
-import javax.naming.directory.DirContext;
-import javax.naming.directory.InitialDirContext;
-
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
@@ -58,6 +42,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -85,6 +70,21 @@ import com.orientechnologies.orient.core.version.OVersionFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ORemoteServerEventListener;
+
+import javax.naming.NamingException;
+import javax.naming.directory.Attribute;
+import javax.naming.directory.Attributes;
+import javax.naming.directory.DirContext;
+import javax.naming.directory.InitialDirContext;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 
 /**
  * This object is bound to each remote ODatabase instances.
@@ -1399,6 +1399,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     synchronized (clusterConfiguration) {
       clusterConfiguration.fromStream(obj);
 
+      clusterConfiguration.toString();
+
       final List<ODocument> members = clusterConfiguration.field("members");
       if (members != null) {
         serverURLs.clear();
@@ -1410,7 +1412,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         for (ODocument m : members)
           if (m != null && !serverURLs.contains((String) m.field("name"))) {
-            for (Map<String, Object> listener : ((Collection<Map<String, Object>>) m.field("listeners"))) {
+            final Collection<Map<String, Object>> listeners = ((Collection<Map<String, Object>>) m.field("listeners"));
+            if (listeners == null)
+              throw new ODatabaseException("Received bad distributed configuration: missing 'listeners' array field");
+
+            for (Map<String, Object> listener : listeners) {
               if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
                 String url = (String) listener.get("listen");
                 if (!serverURLs.contains(url))
