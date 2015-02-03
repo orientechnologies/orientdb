@@ -24,8 +24,10 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
@@ -57,6 +59,16 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     super(iRid, iVersion);
     content = iContent;
     recordType = iRecordType;
+  }
+
+  public OCreateRecordTask(final ORecord record) {
+    this((ORecordId) record.getIdentity(), record.toStream(), record.getRecordVersion(), ORecordInternal.getRecordType(record));
+
+    if (record instanceof ODocument) {
+      // PRE-ASSIGN THE CLUSTER ID ON CALLER NODE
+      final OClass clazz = ((ODocument) record).getSchemaClass();
+      rid.clusterId = clazz.getClusterSelection().getCluster(clazz, (ODocument) record);
+    }
   }
 
   @Override

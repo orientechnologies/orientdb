@@ -84,7 +84,8 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
     ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.IN, "+-> updated record %s/%s v.%s",
         database.getName(), rid.toString(), loadedRecord.getRecordVersion().toString());
 
-    return loadedRecord.getRecordVersion().copy();
+    // RETURN THE SAME OBJECT (NOT A COPY), SO AFTER COMMIT THE VERSIONS IS UPDATED AND SENT TO THE CALLER
+    return loadedRecord.getRecordVersion();
   }
 
   @Override
