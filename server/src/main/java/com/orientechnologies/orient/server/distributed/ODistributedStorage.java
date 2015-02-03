@@ -46,7 +46,6 @@ import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
@@ -799,13 +798,12 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
 
         final ORecord record = op.getRecord();
 
-        final ORecordId rid = (ORecordId) op.record.getIdentity();
+        final ORecordId rid = (ORecordId) record.getIdentity();
 
         switch (op.type) {
         case ORecordOperation.CREATED:
-          final byte[] stream = record.toStream();
           if (rid.isNew()) {
-            task = new OCreateRecordTask(rid, stream, record.getRecordVersion(), ORecordInternal.getRecordType(record));
+            task = new OCreateRecordTask(record);
             break;
           }
           // ELSE TREAT IT AS UPDATE: GO DOWN
