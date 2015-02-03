@@ -57,26 +57,52 @@ angular.module('webappApp').directive('vueEditor', function ($timeout, $compile,
     },
     link: function (scope, elem, attrs, ngModel) {
       var editor;
+
+
       scope.$watch(function () {
         return ngModel.$modelValue;
       }, initialize);
 
       function initialize(value) {
+
         if (value) {
           ngModel.$setViewValue(value);
         }
-        scope.$parent.$watch('actors', function (val) {
-          if (val) {
-            scope.actors = val.map(function (a) {
-              return {label: a.name};
-            });
-          }
-        })
 
 
         if (!editor) {
+          var showing = false;
+
+          scope.$parent.$watch('actors', function (val) {
+            if (val) {
+              scope.actors = val;
+
+              $(elem.children()[0]).suggest('@', {
+                data: scope.actors,
+                map: function (user) {
+                  return {
+                    value: user.name,
+                    text: '<strong>' + user.name + '</strong>'
+                  }
+                },
+                onshow: function (e) {
+                  showing = true;
+                },
+                onselect: function (e) {
+                  showing = false;
+                },
+                onhide: function () {
+                  showing = false;
+                }
+
+              })
+            }
+          })
           scope.placeholder = scope.placeholder || 'Leave a comment'
           var defaultVal = scope.preview ? 'No description' : '';
+          var elementArea = elem[0];
+
+          $(elementArea).focus();
           editor = new Vue({
             el: elem[0],
             data: {
@@ -87,17 +113,22 @@ angular.module('webappApp').directive('vueEditor', function ($timeout, $compile,
             },
             methods: {
               send: function (e) {
-                if ((e.keyCode == 13) && (!e.ctrlKey)) {
+
+                if ((e.keyCode == 13) && (!e.ctrlKey) && !showing) {
                   if (scope.onSend && editor.$data.input && editor.$data.input.length > 0) {
-                    scope.onSend()
+                    scope.onSend();
                   }
                 }
               }
             }
           })
 
+
           scope.$parent.$watch('sending', function (val) {
             scope.sending = val;
+
+
+
           })
           editor.$watch('$data.input', function (newVal, oldval) {
             ngModel.$setViewValue(newVal);
@@ -107,11 +138,7 @@ angular.module('webappApp').directive('vueEditor', function ($timeout, $compile,
           var defaultVal = scope.preview ? 'No description' : '';
           editor.$data.input = value || defaultVal
         }
-        scope.selectActor = function (item) {
-          var selected = item.label;
-          editor.$data.input += " ";
-          return selected;
-        }
+
       }
     }
   }

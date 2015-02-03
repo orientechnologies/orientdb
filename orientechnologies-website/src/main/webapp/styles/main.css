@@ -347,7 +347,7 @@ span.label-dark {
   height: 90%;
   padding-bottom: 10px;
   overflow: auto;
-  width: 82%;
+  width: 83%;
 }
 
 .chat-input {
@@ -383,6 +383,7 @@ span.label-dark {
   position: absolute;
   right: 30px;
 }
+.chat-group .chat-group-msg > div:first-child
 .chat-group > div {
   margin-bottom: 10px;
 }

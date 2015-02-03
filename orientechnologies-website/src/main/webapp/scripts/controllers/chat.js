@@ -8,7 +8,7 @@
  * Controller of the webappApp
  */
 angular.module('webappApp')
-  .controller('ChatCtrl', function ($scope, Organization, $routeParams, $route, User, $timeout, BreadCrumb, $location) {
+  .controller('ChatCtrl', function ($scope, Organization, $routeParams, $route, User, $timeout, BreadCrumb, $location, $rootScope) {
 
     $scope.isNew = false;
     $scope.placeholder = "Click here to type a message. Enter to send.";
@@ -23,6 +23,10 @@ angular.module('webappApp')
       })
     };
 
+
+    $rootScope.$on('$routeChangeSuccess', function (next, current) {
+      $scope.chatService.close();
+    });
 // called when a message received from server
     $scope.chatService.onmessage = function (evt) {
       var msg = JSON.parse(evt.data);
@@ -259,7 +263,6 @@ angular.module('webappApp')
         $scope.current = null;
         addNewMessage(data);
         $scope.sending = false;
-
       }).catch(function () {
         $scope.sending = false;
       })

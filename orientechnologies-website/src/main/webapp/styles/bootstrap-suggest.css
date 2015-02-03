@@ -1,0 +1,1 @@
+.suggest{top:7px;z-index:30;text-align:left}.suggest>.dropdown-menu{margin-top:15px;position:absolute;padding:0}.suggest>.dropdown-menu>li{border-bottom:1px solid #eee}.suggest>.dropdown-menu>li>a{padding:5px 10px;cursor:default}.suggest>.dropdown-menu>li>a:hover *,.suggest>.dropdown-menu>li.active>a *{color:inherit!important}.suggest>.dropdown-menu>li:last-child{border-bottom:0}

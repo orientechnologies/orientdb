@@ -24,7 +24,8 @@ angular
     'ngStorage',
     'mentio',
     'luegg.directives',
-    'scroll'
+    'scroll',
+    'angular-otobox'
   ])
   .config(function ($routeProvider, $httpProvider, RestangularProvider) {
     $routeProvider
