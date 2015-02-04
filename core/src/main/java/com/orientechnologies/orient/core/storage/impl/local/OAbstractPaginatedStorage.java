@@ -20,22 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.lang.ref.ReferenceQueue;
-import java.lang.ref.SoftReference;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.locks.Lock;
-
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OModificationLock;
 import com.orientechnologies.common.concur.lock.ONewLockManager;
@@ -98,6 +82,22 @@ import com.orientechnologies.orient.core.tx.OTxListener;
 import com.orientechnologies.orient.core.type.tree.provider.OMVRBTreeRIDProvider;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.core.version.OVersionFactory;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.lang.ref.ReferenceQueue;
+import java.lang.ref.SoftReference;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.Lock;
 
 /**
  * @author Andrey Lomakin
@@ -891,7 +891,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       try {
         lock.acquireExclusiveLock();
         try {
-          if (writeAheadLog == null)
+          if (writeAheadLog == null && clientTx.isUsingLog())
             throw new OStorageException("WAL mode is not active. Transactions are not supported in given mode");
 
           makeStorageDirty();
