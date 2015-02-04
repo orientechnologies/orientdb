@@ -8,28 +8,17 @@
  * Controller of the webappApp
  */
 angular.module('webappApp')
-  .controller('ChatCtrl', function ($scope, Organization, $routeParams, $route, User, $timeout, BreadCrumb, $location, $rootScope) {
+  .controller('ChatCtrl', function ($scope, Organization, $routeParams, $route, User, $timeout, BreadCrumb, $location, ChatService, $rootScope) {
 
     $scope.isNew = false;
     $scope.placeholder = "Click here to type a message. Enter to send.";
     $scope.clientId = $routeParams.id;
-    $scope.chatService = new WebSocket(WEBSOCKET);
+
     $scope.sending = false;
-    $scope.chatService.onopen = function () {
-      console.log("Connected to chat service! ")
 
-      $scope.$apply(function () {
-        $scope.connected = true;
-      })
-    };
+    $scope.connected = ChatService.connected;
 
-
-    $rootScope.$on('$routeChangeSuccess', function (next, current) {
-      $scope.chatService.close();
-    });
-// called when a message received from server
-    $scope.chatService.onmessage = function (evt) {
-      var msg = JSON.parse(evt.data);
+    $rootScope.$on('msg-received', function (e, msg) {
 
       if (msg.sender.name != $scope.currentUser.name) {
         if ($scope.clientId == msg.clientId) {
@@ -47,9 +36,8 @@ angular.module('webappApp')
             })
           });
         }
-        $scope.notify(msg);
       }
-    };
+    });
 
 
     $scope.loadMore = function () {
@@ -65,10 +53,7 @@ angular.module('webappApp')
 
       });
     }
-// called when socket connection closed
-    $scope.chatService.onclose = function () {
-      console.log("Disconnected from chat service!")
-    };
+
 
     var findGroup = function (groups, date) {
       return groups.filter(function (g) {
@@ -158,12 +143,12 @@ angular.module('webappApp')
       }
     }
     User.whoami().then(function (data) {
-
       $scope.currentUser = data;
-
-      Organization.all("rooms").getList().then(function (data) {
-        $scope.clients = data.plain();
-        if ($scope.clients.length > 0) {
+      $scope.$watch(function () {
+        return ChatService.clients;
+      }, function (clients) {
+        if (clients.length > 0) {
+          $scope.clients = clients;
           if (!$scope.clientId) {
             $scope.clientId = $scope.clients[0].clientId.toString();
             $scope.client = $scope.clients[0];
@@ -176,23 +161,10 @@ angular.module('webappApp')
             })
           }
           BreadCrumb.title = 'Room ' + $scope.client.name;
+          getMessages();
         }
-        getMessages();
-        var msg = {
-          "action": "join",
-          "rooms": []
-        }
-        $scope.clients.forEach(function (c) {
-          if (!c.timestamp) c.timestamp = 0;
-          msg.rooms.push(c.clientId);
-        })
-        $scope.$watch('connected', function (val) {
-          if (val) {
-            $scope.chatService.send(JSON.stringify(msg));
-          }
-        })
-
       })
+
 
       function getMessages() {
         if ($scope.clientId) {
@@ -210,45 +182,8 @@ angular.module('webappApp')
         }
       }
 
-      $scope.notify = function (msg) {
-        if (!("Notification" in window)) {
-          alert("This browser does not support desktop notification");
-        }
-
-        // Let's check if the user is okay to get some notification
-        else if (Notification.permission === "granted") {
-          // If it's okay let's create a notification
-          var notification = new Notification("Room " + $scope.getClientName(msg.clientId), {body: msg.sender.name + ": " + msg.body});
-          notification.onclick = function () {
-            $scope.$apply(function () {
-              $location.path('rooms/' + msg.clientId);
-            })
-          }
-        }
-
-        // Otherwise, we need to ask the user for permission
-        // Note, Chrome does not implement the permission static property
-        // So we have to check for NOT 'denied' instead of 'default'
-        else if (Notification.permission !== 'denied') {
-          Notification.requestPermission(function (permission) {
-            // If the user is okay, let's create a notification
-            if (permission === "granted") {
-
-              var notification = new Notification("Room " + $scope.getClientName(msg.clientId), {body: msg.body});
-            }
-          });
-        }
-      }
     });
 
-    $scope.getClientName = function (clientId) {
-      var name = ''
-      $scope.clients.forEach(function (c) {
-        if (c.clientId == clientId) name = c.name;
-
-      });
-      return name;
-    }
 
     $scope.createChat = function () {
       Organization.all("clients").one($scope.clientId).all("room").post().then(function (data) {

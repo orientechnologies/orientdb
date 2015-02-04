@@ -270,10 +270,13 @@ public class OrganizationServiceImpl implements OrganizationService {
     Client client = organizationRepository.findClient(name, clientId);
     if (client != null) {
       OrientGraph graph = dbFactory.getGraph();
+
       ODatabaseDocumentTx tx = graph.getRawGraph();
+
       tx.commit();
       OClass chat = tx.getMetadata().getSchema().getOrCreateClass("Chat");
       OClass clientChat = tx.getMetadata().getSchema().getClass(("Chat" + clientId));
+
       if (clientChat == null) {
         clientChat = tx.getMetadata().getSchema().createClass(("Chat" + clientId));
         clientChat.setSuperClass(chat);

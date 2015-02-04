@@ -23,7 +23,8 @@
     "marked": "0.3.2",
     "ment.io": "0.9.22",
     "angular-scroll-glue": "~2.0.3",
-    "humane": "~3.2.2"
+    "humane": "~3.2.2",
+    "angular-otobox": "*"
   },
   "devDependencies": {
     "angular-mocks": "1.2.16",
