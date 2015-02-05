@@ -16,7 +16,7 @@
         <jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
         <osgi.import>*</osgi.import>
         <osgi.export>com.orientechnologies.orient.graph.*</osgi.export>
-        <orientdb.version>2.0-SNAPSHOT</orientdb.version>
+        <orientdb.version>2.1-SNAPSHOT</orientdb.version>
         <blueprints.version>2.6.0</blueprints.version>
     </properties>
     <scm>
@@ -54,7 +54,7 @@
         <dependency>
             <groupId>com.hazelcast</groupId>
             <artifactId>hazelcast</artifactId>
-            <version>3.2.1</version>
+            <version>3.3</version>
         </dependency>
     </dependencies>
     <repositories>

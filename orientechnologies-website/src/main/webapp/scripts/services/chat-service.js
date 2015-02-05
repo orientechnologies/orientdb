@@ -107,7 +107,7 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
 
   return chatService;
 }).run(function(ChatService){
-  
+
 });
 
 

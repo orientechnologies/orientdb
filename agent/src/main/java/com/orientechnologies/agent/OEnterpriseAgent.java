@@ -17,14 +17,8 @@
  */
 package com.orientechnologies.agent;
 
-import com.orientechnologies.agent.http.command.OServerCommandConfiguration;
-import com.orientechnologies.agent.http.command.OServerCommandGetDeployDb;
-import com.orientechnologies.agent.http.command.OServerCommandGetDistributed;
-import com.orientechnologies.agent.http.command.OServerCommandGetLog;
-import com.orientechnologies.agent.http.command.OServerCommandGetProfiler;
-import com.orientechnologies.agent.http.command.OServerCommandPostBackupDatabase;
+import com.orientechnologies.agent.http.command.*;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
-import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -172,68 +166,61 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
   }
 
   private boolean checkLicense() {
-    try {
-      // if (!OConstants.ORIENT_VERSION.startsWith(ORIENDB_ENTERPRISE_VERSION))
-      // throw new OLicenseException("enterprise license v." + ORIENDB_ENTERPRISE_VERSION
-      // + " is different than linked jars with OrientDB v." + OConstants.ORIENT_VERSION);
 
-      final int dayLeft = OL.checkDate(license);
+    // final int dayLeft = OL.checkDate(license);
+    final int dayLeft = 50;
 
-      System.out.printf("\n\n********************************************************************");
-      System.out.printf("\n*                 ORIENTDB  -  ENTERPRISE EDITION                  *");
-      System.out.printf("\n*                                                                  *");
-      System.out.printf("\n*            Copyrights (c) 2014 Orient Technologies LTD           *");
-      System.out.printf("\n********************************************************************");
-      System.out.printf("\n* Version...: %-52s *", ORIENDB_ENTERPRISE_VERSION);
-      System.out.printf("\n* License...: %-52s *", license);
-      if (dayLeft < 0) {
-        System.out.printf("\n* Licence expired since: %03d days                                  *", Math.abs(dayLeft));
-        System.out.printf("\n* Enterprise features will be disabled in : %03d days               *", OL.DELAY + dayLeft);
-        System.out.printf("\n* Please contact Orient Technologies at: info@orientechonogies.com *");
-      } else {
-        System.out.printf("\n* Expires in: %03d days                                             *", dayLeft);
-      }
-
-      System.out.printf("\n********************************************************************\n");
-
-      Orient
-          .instance()
-          .getProfiler()
-          .registerHookValue(Orient.instance().getProfiler().getSystemMetric("config.license"), "Enterprise License",
-              METRIC_TYPE.TEXT, new OProfilerHookValue() {
-
-                @Override
-                public Object getValue() {
-                  return license;
-                }
-              });
-      Orient
-          .instance()
-          .getProfiler()
-          .registerHookValue(Orient.instance().getProfiler().getSystemMetric("config.agentVersion"), "Enterprise License",
-              METRIC_TYPE.TEXT, new OProfilerHookValue() {
-
-                @Override
-                public Object getValue() {
-                  return ORIENDB_ENTERPRISE_VERSION;
-                }
-              });
-      Orient
-          .instance()
-          .getProfiler()
-          .registerHookValue(Orient.instance().getProfiler().getSystemMetric("config.dayLeft"), "Enterprise License Day Left",
-              METRIC_TYPE.TEXT, new OProfilerHookValue() {
-
-                @Override
-                public Object getValue() {
-                  return dayLeft;
-                }
-              });
-    } catch (OL.OLicenseException e) {
-      OLogManager.instance().warn(null, "Error on validating Enterprise License (%s): enterprise features will be disabled",
-          e.getMessage());
-      return false;
+    System.out.printf("\n\n********************************************************************");
+    System.out.printf("\n*                 ORIENTDB  -  ENTERPRISE EDITION                  *");
+    System.out.printf("\n*                                                                  *");
+    System.out.printf("\n*            Copyrights (c) 2014 Orient Technologies LTD           *");
+    System.out.printf("\n********************************************************************");
+    System.out.printf("\n* Version...: %-52s *", ORIENDB_ENTERPRISE_VERSION);
+    System.out.printf("\n* License...: %-52s *", license);
+    if (dayLeft < 0) {
+      System.out.printf("\n* Licence expired since: %03d days                                  *", Math.abs(dayLeft));
+      System.out.printf("\n* Enterprise features will be disabled in : %03d days               *", OL.DELAY + dayLeft);
+      System.out.printf("\n* Please contact Orient Technologies at: info@orientechonogies.com *");
+    } else {
+      System.out.printf("\n* Expires in: %03d days                                             *", dayLeft);
     }
+
+    System.out.printf("\n********************************************************************\n");
+
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue(Orient.instance().getProfiler().getSystemMetric("config.license"), "Enterprise License",
+            METRIC_TYPE.TEXT, new OProfilerHookValue() {
+
+              @Override
+              public Object getValue() {
+                return license;
+              }
+            });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue(Orient.instance().getProfiler().getSystemMetric("config.agentVersion"), "Enterprise License",
+            METRIC_TYPE.TEXT, new OProfilerHookValue() {
+
+              @Override
+              public Object getValue() {
+                return ORIENDB_ENTERPRISE_VERSION;
+              }
+            });
+    Orient
+        .instance()
+        .getProfiler()
+        .registerHookValue(Orient.instance().getProfiler().getSystemMetric("config.dayLeft"), "Enterprise License Day Left",
+            METRIC_TYPE.TEXT, new OProfilerHookValue() {
+
+              @Override
+              public Object getValue() {
+                return dayLeft;
+              }
+            });
+
     return true;
   }
 }

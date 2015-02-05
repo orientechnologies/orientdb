@@ -190,6 +190,16 @@ public class OMonitoredCluster {
           public void entryEvicted(EntryEvent<String, Object> stringObjectEntryEvent) {
 
           }
+
+          @Override
+          public void mapEvicted(MapEvent mapEvent) {
+
+          }
+
+          @Override
+          public void mapCleared(MapEvent mapEvent) {
+
+          }
         }, true);
 
       }

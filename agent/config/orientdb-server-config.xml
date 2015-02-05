@@ -67,6 +67,7 @@
                     </command>
                 </commands>
                 <parameters>
+                    <parameter name="network.http.additionalResponseHeaders" value="Access-Control-Allow-Origin: * ;Access-Control-Allow-Credentials: true;Access-Control-Allow-Headers: Content-Type;Access-Control-Allow-Methods: POST, GET, OPTION" />
                     <parameter value="utf-8" name="network.http.charset"/>
                 </parameters>
             </listener>
@@ -75,6 +76,8 @@
     <storages/>
     <users>
         <user resources="*" password="root" name="root"/>
+        <user resources="connect,server.listDatabases" password="guest"
+              name="guest"/>
         <user resources="database.passthrough" password="62A074638C098D90B0A11CCEABDD2B95EC065C252CBA0B0D958F8FD49851C3D7" name="replicator"/>
     </users>
     <properties>

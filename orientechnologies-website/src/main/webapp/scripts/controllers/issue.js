@@ -264,7 +264,7 @@ angular.module('webappApp')
     });
   });
 angular.module('webappApp')
-  .controller('IssueEditCtrl', function ($scope, $routeParams, Organization, Repo, $popover, $route, User, $timeout) {
+  .controller('IssueEditCtrl', function ($scope, $routeParams, Organization, Repo, $popover, $route, User, $timeout,$location) {
 
 
     $scope.githubIssue = GITHUB + "/" + ORGANIZATION;
@@ -287,6 +287,8 @@ angular.module('webappApp')
       });
       refreshEvents();
       initTypologic();
+    }).catch(function (e) {
+      $location.path("/issues");
     });
     //Repo.one(repo).all("issues").one(number).get().then(function (data) {
     //  $scope.issue = data.plain();

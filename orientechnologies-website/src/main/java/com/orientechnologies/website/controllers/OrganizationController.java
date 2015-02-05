@@ -77,6 +77,21 @@ public class OrganizationController extends ExceptionController {
       @PathVariable("number") Long number) {
 
     Issue issue = orgRepository.findSingleOrganizationIssueByNumber(organization, number);
+
+    if (Boolean.TRUE.equals(issue.getConfidential())) {
+
+      OUser user = SecurityHelper.currentUser();
+
+      if (!userService.isMember(user, organization)) {
+
+        Client client = issue.getClient();
+        Client currentClient = userService.getClient(user, organization);
+        if (currentClient == null || client.getClientId() != currentClient.getClientId()) {
+          return new ResponseEntity<Issue>(HttpStatus.NOT_FOUND);
+        }
+      }
+
+    }
     return issue != null ? new ResponseEntity<Issue>(issue, HttpStatus.OK) : new ResponseEntity<Issue>(HttpStatus.NOT_FOUND);
 
   }
@@ -253,7 +268,6 @@ public class OrganizationController extends ExceptionController {
   public Scope patchScope(@PathVariable("name") String name, @PathVariable("id") Integer id, @RequestBody ScopeDTO scope) {
     return organizationService.registerScope(name, scope, id);
   }
-
 
   @RequestMapping(value = "{name}/events", method = RequestMethod.GET)
   @ResponseStatus(HttpStatus.OK)

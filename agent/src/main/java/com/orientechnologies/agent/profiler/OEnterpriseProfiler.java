@@ -24,6 +24,7 @@ import com.orientechnologies.common.profiler.OProfilerEntry;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 
 import java.io.File;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -205,6 +206,11 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
 
   public void resetRealtime(final String iText) {
     realTime.clear(iText);
+  }
+
+  @Override
+  public void dump(PrintStream printStream) {
+
   }
 
   public String toJSON(final String iQuery, final String iPar1) {
