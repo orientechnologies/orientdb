@@ -51,8 +51,7 @@ public class OCommandScript extends OCommandRequestTextAbstract {
   }
 
   public OCommandScript(final String iText) {
-    setLanguage("sql");
-    super(iText);
+    this("sql", iText);
   }
 
   public boolean isIdempotent() {
