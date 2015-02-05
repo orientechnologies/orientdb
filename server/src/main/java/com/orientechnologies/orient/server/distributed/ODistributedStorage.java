@@ -62,6 +62,8 @@ import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionAbstract;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
@@ -790,48 +792,61 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         return;
       }
 
+      OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.BEGUN);
+
       final OTxTask txTask = new OTxTask();
       final Set<String> involvedClusters = new HashSet<String>();
 
-      for (ORecordOperation op : iTx.getCurrentRecordEntries()) {
-        final OAbstractRecordReplicatedTask task;
+      final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
 
-        final ORecord record = op.getRecord();
+      while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
+        for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
+          tmpEntries.add(txEntry);
 
-        final ORecordId rid = (ORecordId) record.getIdentity();
+        iTx.clearRecordEntries();
 
-        switch (op.type) {
-        case ORecordOperation.CREATED:
-          if (rid.isNew()) {
-            task = new OCreateRecordTask(record);
+        for (ORecordOperation op : tmpEntries) {
+          final OAbstractRecordReplicatedTask task;
+
+          final ORecord record = op.getRecord();
+
+          final ORecordId rid = (ORecordId) record.getIdentity();
+
+          switch (op.type) {
+          case ORecordOperation.CREATED:
+            if (rid.isNew()) {
+              task = new OCreateRecordTask(record);
+              break;
+            }
+            // ELSE TREAT IT AS UPDATE: GO DOWN
+
+          case ORecordOperation.UPDATED:
+            // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
+            final OStorageOperationResult<ORawBuffer> previousContent = wrapped.readRecord(rid, null, false, null, false,
+                LOCKING_STRATEGY.DEFAULT);
+
+            if (previousContent.getResult() == null)
+              // DELETED
+              throw new OTransactionException("Cannot update record '" + rid + "' because has been deleted");
+
+            task = new OUpdateRecordTask(rid, previousContent.getResult().getBuffer(), previousContent.getResult().version,
+                record.toStream(), record.getRecordVersion());
             break;
+
+          case ORecordOperation.DELETED:
+            task = new ODeleteRecordTask(rid, record.getRecordVersion());
+            break;
+
+          default:
+            continue;
           }
-          // ELSE TREAT IT AS UPDATE: GO DOWN
 
-        case ORecordOperation.UPDATED:
-          // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
-          final OStorageOperationResult<ORawBuffer> previousContent = wrapped.readRecord(rid, null, false, null, false,
-              LOCKING_STRATEGY.DEFAULT);
-
-          if (previousContent.getResult() == null)
-            // DELETED
-            throw new OTransactionException("Cannot update record '" + rid + "' because has been deleted");
-
-          task = new OUpdateRecordTask(rid, previousContent.getResult().getBuffer(), previousContent.getResult().version,
-              record.toStream(), record.getRecordVersion());
-          break;
-
-        case ORecordOperation.DELETED:
-          task = new ODeleteRecordTask(rid, record.getRecordVersion());
-          break;
-
-        default:
-          continue;
+          involvedClusters.add(getClusterNameByRID(rid));
+          txTask.add(task);
         }
-
-        involvedClusters.add(getClusterNameByRID(rid));
-        txTask.add(task);
       }
+
+      OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.COMMITTING);
 
       final Set<String> nodes = dbCfg.getServers(involvedClusters);
 
