@@ -34,9 +34,10 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.fs.OFileClassic;
+import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInformation;
+import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
@@ -46,13 +47,10 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
-import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -80,7 +78,7 @@ public class OWOWCache {
 
   private final long                                        diskSizeCheckInterval = OGlobalConfiguration.DISC_CACHE_FREE_SPACE_CHECK_INTERVAL
                                                                                       .getValueAsInteger() * 1000;
-  private final List<WeakReference<LowDiskSpaceListener>>   listeners             = new CopyOnWriteArrayList<WeakReference<LowDiskSpaceListener>>();
+  private final List<WeakReference<OLowDiskSpaceListener>>   listeners             = new CopyOnWriteArrayList<WeakReference<OLowDiskSpaceListener>>();
 
   private final AtomicLong                                  lastDiskSpaceCheck    = new AtomicLong(System.currentTimeMillis());
   private final String                                      storagePath;
@@ -149,22 +147,21 @@ public class OWOWCache {
     }
   }
 
-  public void addLowDiskSpaceListener(LowDiskSpaceListener listener) {
-    listeners.add(new WeakReference<LowDiskSpaceListener>(listener));
+  public void addLowDiskSpaceListener(OLowDiskSpaceListener listener) {
+    listeners.add(new WeakReference<OLowDiskSpaceListener>(listener));
   }
 
-  public void removeLowDiskSpaceListener(LowDiskSpaceListener listener) {
-    final Iterator<WeakReference<LowDiskSpaceListener>> iterator = listeners.iterator();
-    List<WeakReference<LowDiskSpaceListener>> itemsToRemove = new ArrayList<WeakReference<LowDiskSpaceListener>>();
+  public void removeLowDiskSpaceListener(OLowDiskSpaceListener listener) {
+    List<WeakReference<OLowDiskSpaceListener>> itemsToRemove = new ArrayList<WeakReference<OLowDiskSpaceListener>>();
 
-    for (WeakReference<LowDiskSpaceListener> ref : listeners) {
-      final LowDiskSpaceListener lowDiskSpaceListener = ref.get();
+    for (WeakReference<OLowDiskSpaceListener> ref : listeners) {
+      final OLowDiskSpaceListener lowDiskSpaceListener = ref.get();
 
       if (lowDiskSpaceListener == null || lowDiskSpaceListener.equals(listener))
         itemsToRemove.add(ref);
     }
 
-    for (WeakReference<LowDiskSpaceListener> ref : itemsToRemove)
+    for (WeakReference<OLowDiskSpaceListener> ref : itemsToRemove)
       listeners.remove(ref);
   }
 
@@ -184,18 +181,18 @@ public class OWOWCache {
       long effectiveFreeSpace = freeSpace - allocatedSpace.get();
 
       if (effectiveFreeSpace < freeSpaceLimit)
-        callLowSpaceListeners(new LowDiskSpaceInformation(effectiveFreeSpace, freeSpaceLimit));
+        callLowSpaceListeners(new OLowDiskSpaceInformation(effectiveFreeSpace, freeSpaceLimit));
 
       lastDiskSpaceCheck.lazySet(ts);
     }
   }
 
-  private void callLowSpaceListeners(final LowDiskSpaceInformation information) {
+  private void callLowSpaceListeners(final OLowDiskSpaceInformation information) {
     lowSpaceEventsPublisher.submit(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
-        for (WeakReference<LowDiskSpaceListener> lowDiskSpaceListenerWeakReference : listeners) {
-          final LowDiskSpaceListener listener = lowDiskSpaceListenerWeakReference.get();
+        for (WeakReference<OLowDiskSpaceListener> lowDiskSpaceListenerWeakReference : listeners) {
+          final OLowDiskSpaceListener listener = lowDiskSpaceListenerWeakReference.get();
           if (listener != null)
             try {
               listener.lowDiskSpace(information);
@@ -1304,21 +1301,7 @@ public class OWOWCache {
     }
   }
 
-  public interface LowDiskSpaceListener {
-    void lowDiskSpace(LowDiskSpaceInformation information);
-  }
-
-  public class LowDiskSpaceInformation {
-    public long freeSpace;
-    public long requiredSpace;
-
-    public LowDiskSpaceInformation(long freeSpace, long requiredSpace) {
-      this.freeSpace = freeSpace;
-      this.requiredSpace = requiredSpace;
-    }
-  }
-
-  private static class FlushThreadFactory implements ThreadFactory {
+	private static class FlushThreadFactory implements ThreadFactory {
     private final String storageName;
 
     private FlushThreadFactory(String storageName) {

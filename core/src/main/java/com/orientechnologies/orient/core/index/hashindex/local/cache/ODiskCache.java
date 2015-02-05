@@ -20,10 +20,9 @@
 package com.orientechnologies.orient.core.index.hashindex.local.cache;
 
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
+import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 
 import java.io.IOException;
-import java.util.Set;
 
 /**
  * This class is heart of OrientDB storage model it presents disk backed data cache which works with direct memory.
@@ -120,9 +119,9 @@ public interface ODiskCache {
 
   void unlock() throws IOException;
 
-  void addLowDiskSpaceListener(OWOWCache.LowDiskSpaceListener listener);
+  void addLowDiskSpaceListener(OLowDiskSpaceListener listener);
 
-  void removeLowDiskSpaceListener(OWOWCache.LowDiskSpaceListener listener);
+  void removeLowDiskSpaceListener(OLowDiskSpaceListener listener);
 
   long getUsedMemory();
 
