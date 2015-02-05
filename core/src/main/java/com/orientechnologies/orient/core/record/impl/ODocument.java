@@ -19,6 +19,17 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import java.io.ByteArrayOutputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.lang.ref.WeakReference;
+import java.text.ParseException;
+import java.util.*;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -56,17 +67,6 @@ import com.orientechnologies.orient.core.serialization.serializer.ONetworkThread
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.lang.ref.WeakReference;
-import java.text.ParseException;
-import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -835,7 +835,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       return null;
 
     // OPTIMIZATION
-    if (iFieldName.charAt(0) != '@' && OStringSerializerHelper.indexOf(iFieldName, 0, '.', '[') == -1)
+    if (!_allowChainedAccess || (iFieldName.charAt(0) != '@' && OStringSerializerHelper.indexOf(iFieldName, 0, '.', '[') == -1))
       return (RET) _fieldValues.get(iFieldName);
 
     // NOT FOUND, PARSE THE FIELD NAME
@@ -1418,13 +1418,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   @Override
-  protected ORecordAbstract fill(ORID iRid, ORecordVersion iVersion, byte[] iBuffer, boolean iDirty) {
-    _schema = null;
-    fetchSchemaIfCan();
-    return super.fill(iRid, iVersion, iBuffer, iDirty);
-  }
-
-  @Override
   public ODocument fromStream(final byte[] iRecordBuffer) {
     removeAllCollectionChangeListeners();
 
@@ -1444,44 +1437,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
 
     return this;
-  }
-
-  @Override
-  protected void clearSource() {
-    super.clearSource();
-    _schema = null;
-  }
-
-  private void fetchSchemaIfCan() {
-    if (_schema == null) {
-      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-      if (db != null && !db.isClosed()) {
-        OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
-        _schema = metadata.getImmutableSchemaSnapshot();
-      }
-    }
-  }
-
-  protected OGlobalProperty getGlobalPropertyById(int id) {
-    if (_schema == null) {
-      OMetadataInternal metadata = (OMetadataInternal) getDatabase().getMetadata();
-      _schema = metadata.getImmutableSchemaSnapshot();
-    }
-    OGlobalProperty prop = _schema.getGlobalPropertyById(id);
-    if (prop == null) {
-      ODatabaseDocument db = getDatabase();
-      if (db == null || db.isClosed())
-        throw new ODatabaseException(
-            "Cannot unmarshall the document because no database is active, use detach for use the document outside the database session scope");
-      OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
-      if (metadata.getImmutableSchemaSnapshot() != null)
-        metadata.clearThreadLocalSchemaSnapshot();
-      metadata.reload();
-      metadata.makeThreadLocalSchemaSnapshot();
-      _schema = metadata.getImmutableSchemaSnapshot();
-      prop = _schema.getGlobalPropertyById(id);
-    }
-    return prop;
   }
 
   /**
@@ -1576,35 +1531,33 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   public ODocument undo() {
     if (!_trackingChanges)
       throw new OConfigurationException("Cannot undo the document because tracking of changes is disabled");
-    if(_fieldOriginalValues!=null)
-    {
-	    for (Entry<String, Object> entry : _fieldOriginalValues.entrySet()) {
-	      final Object value = entry.getValue();
-	      if (value == null)
-	        _fieldValues.remove(entry.getKey());
-	      else
-	        _fieldValues.put(entry.getKey(), entry.getValue());
-	    }
-	    _fieldOriginalValues.clear();
+    if (_fieldOriginalValues != null) {
+      for (Entry<String, Object> entry : _fieldOriginalValues.entrySet()) {
+        final Object value = entry.getValue();
+        if (value == null)
+          _fieldValues.remove(entry.getKey());
+        else
+          _fieldValues.put(entry.getKey(), entry.getValue());
+      }
+      _fieldOriginalValues.clear();
     }
 
     return this;
   }
-  
+
   public ODocument undo(String field) {
-	    if (!_trackingChanges)
-	      throw new OConfigurationException("Cannot undo the document because tracking of changes is disabled");
-	    if(_fieldOriginalValues!=null && _fieldOriginalValues.containsKey(field))
-	    {
-		    final Object value = _fieldOriginalValues.get(field);
-		    if (value == null)
-		        _fieldValues.remove(field);
-		      else
-		        _fieldValues.put(field, value);
-		    _fieldOriginalValues.remove(field);
-	    }
-	    return this;
-	  }
+    if (!_trackingChanges)
+      throw new OConfigurationException("Cannot undo the document because tracking of changes is disabled");
+    if (_fieldOriginalValues != null && _fieldOriginalValues.containsKey(field)) {
+      final Object value = _fieldOriginalValues.get(field);
+      if (value == null)
+        _fieldValues.remove(field);
+      else
+        _fieldValues.put(field, value);
+      _fieldOriginalValues.remove(field);
+    }
+    return this;
+  }
 
   public boolean isLazyLoad() {
     return _lazyLoad;
@@ -1887,11 +1840,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
   }
 
-  protected void fillClassIfNeed(final String iClassName) {
-    if (this._className == null)
-      setClassNameIfExists(iClassName);
-  }
-
   public OClass getSchemaClass() {
     if (_className == null)
       fetchClassName();
@@ -1904,31 +1852,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       return databaseRecord.getMetadata().getSchema().getClass(_className);
 
     return null;
-  }
-
-  protected OClass getImmutableSchemaClass() {
-    if (_className == null)
-      fetchClassName();
-
-    final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
-
-    if (databaseRecord != null) {
-      final OSchema immutableSchema = ((OMetadataInternal) databaseRecord.getMetadata()).getImmutableSchemaSnapshot();
-      if (immutableSchema == null)
-        return null;
-
-      if (_immutableClazz == null) {
-        _immutableSchemaVersion = immutableSchema.getVersion();
-        _immutableClazz = immutableSchema.getClass(_className);
-      } else {
-        if (_immutableSchemaVersion < immutableSchema.getVersion()) {
-          _immutableSchemaVersion = immutableSchema.getVersion();
-          _immutableClazz = immutableSchema.getClass(_className);
-        }
-      }
-    }
-
-    return _immutableClazz;
   }
 
   public String getClassName() {
@@ -1960,7 +1883,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   /**
    * Validates the record following the declared constraints defined in schema such as mandatory, notNull, min, max, regexp, etc. If
    * the schema is not defined for the current class or there are not constraints then the validation is ignored.
-   * 
+   *
    * @see OProperty
    * @throws OValidationException
    *           if the document breaks some validation constraints defined in the schema
@@ -1989,6 +1912,71 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         validateField(this, p);
       }
     }
+  }
+
+  @Override
+  protected ORecordAbstract fill(ORID iRid, ORecordVersion iVersion, byte[] iBuffer, boolean iDirty) {
+    _schema = null;
+    fetchSchemaIfCan();
+    return super.fill(iRid, iVersion, iBuffer, iDirty);
+  }
+
+  @Override
+  protected void clearSource() {
+    super.clearSource();
+    _schema = null;
+  }
+
+  protected OGlobalProperty getGlobalPropertyById(int id) {
+    if (_schema == null) {
+      OMetadataInternal metadata = (OMetadataInternal) getDatabase().getMetadata();
+      _schema = metadata.getImmutableSchemaSnapshot();
+    }
+    OGlobalProperty prop = _schema.getGlobalPropertyById(id);
+    if (prop == null) {
+      ODatabaseDocument db = getDatabase();
+      if (db == null || db.isClosed())
+        throw new ODatabaseException(
+            "Cannot unmarshall the document because no database is active, use detach for use the document outside the database session scope");
+      OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
+      if (metadata.getImmutableSchemaSnapshot() != null)
+        metadata.clearThreadLocalSchemaSnapshot();
+      metadata.reload();
+      metadata.makeThreadLocalSchemaSnapshot();
+      _schema = metadata.getImmutableSchemaSnapshot();
+      prop = _schema.getGlobalPropertyById(id);
+    }
+    return prop;
+  }
+
+  protected void fillClassIfNeed(final String iClassName) {
+    if (this._className == null)
+      setClassNameIfExists(iClassName);
+  }
+
+  protected OClass getImmutableSchemaClass() {
+    if (_className == null)
+      fetchClassName();
+
+    final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
+
+    if (databaseRecord != null) {
+      final OSchema immutableSchema = ((OMetadataInternal) databaseRecord.getMetadata()).getImmutableSchemaSnapshot();
+      if (immutableSchema == null)
+        return null;
+
+      if (_immutableClazz == null) {
+        _immutableSchemaVersion = immutableSchema.getVersion();
+        _immutableClazz = immutableSchema.getClass(_className);
+      } else {
+        if (_immutableSchemaVersion < immutableSchema.getVersion()) {
+          _immutableSchemaVersion = immutableSchema.getVersion();
+          _immutableClazz = immutableSchema.getClass(_className);
+        }
+      }
+    }
+
+    return _immutableClazz;
   }
 
   protected void rawField(final String iFieldName, final Object iFieldValue, final OType iFieldType) {
@@ -2232,6 +2220,16 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     _immutableSchemaVersion = -1;
     if (iClass != null)
       convertFieldsToClass(iClass);
+  }
+
+  private void fetchSchemaIfCan() {
+    if (_schema == null) {
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      if (db != null && !db.isClosed()) {
+        OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
+        _schema = metadata.getImmutableSchemaSnapshot();
+      }
+    }
   }
 
   private void fetchClassName() {
