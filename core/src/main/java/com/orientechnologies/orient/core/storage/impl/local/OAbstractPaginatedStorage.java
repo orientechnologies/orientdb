@@ -52,7 +52,6 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OPageDataVerificationError;
-import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
 import com.orientechnologies.orient.core.metadata.OMetadataDefault;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -103,34 +102,36 @@ import java.util.concurrent.locks.Lock;
  * @author Andrey Lomakin
  * @since 28.03.13
  */
-public abstract class OAbstractPaginatedStorage extends OStorageAbstract implements OWOWCache.LowDiskSpaceListener {
-  private static final int                           RECORD_LOCK_TIMEOUT                        = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT
-                                                                                                    .getValueAsInteger();
+public abstract class OAbstractPaginatedStorage extends OStorageAbstract implements OLowDiskSpaceListener,
+    OFullCheckpointRequestListener {
+  private static final int                       RECORD_LOCK_TIMEOUT                        = OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT
+                                                                                                .getValueAsInteger();
 
-  private final ONewLockManager<ORID>                lockManager;
-  private final String                               PROFILER_CREATE_RECORD;
-  private final String                               PROFILER_READ_RECORD;
-  private final String                               PROFILER_UPDATE_RECORD;
-  private final String                               PROFILER_DELETE_RECORD;
-  private final ConcurrentMap<String, OCluster>      clusterMap                                 = new ConcurrentHashMap<String, OCluster>();
-  private final ThreadLocal<OStorageTransaction>     transaction                                = new ThreadLocal<OStorageTransaction>();
-  private final OModificationLock                    modificationLock                           = new OModificationLock();
-  protected volatile OWriteAheadLog                  writeAheadLog;
-  protected volatile ODiskCache                      diskCache;
-  private ORecordConflictStrategy                    recordConflictStrategy                     = Orient.instance()
-                                                                                                    .getRecordConflictStrategy()
-                                                                                                    .newInstanceOfDefaultClass();
-  private CopyOnWriteArrayList<OCluster>             clusters                                   = new CopyOnWriteArrayList<OCluster>();
-  private volatile int                               defaultClusterId                           = -1;
-  private volatile OAtomicOperationsManager          atomicOperationsManager;
+  private final ONewLockManager<ORID>            lockManager;
+  private final String                           PROFILER_CREATE_RECORD;
+  private final String                           PROFILER_READ_RECORD;
+  private final String                           PROFILER_UPDATE_RECORD;
+  private final String                           PROFILER_DELETE_RECORD;
+  private final ConcurrentMap<String, OCluster>  clusterMap                                 = new ConcurrentHashMap<String, OCluster>();
+  private final ThreadLocal<OStorageTransaction> transaction                                = new ThreadLocal<OStorageTransaction>();
+  private final OModificationLock                modificationLock                           = new OModificationLock();
+  protected volatile OWriteAheadLog              writeAheadLog;
+  protected volatile ODiskCache                  diskCache;
+  private ORecordConflictStrategy                recordConflictStrategy                     = Orient.instance()
+                                                                                                .getRecordConflictStrategy()
+                                                                                                .newInstanceOfDefaultClass();
+  private CopyOnWriteArrayList<OCluster>         clusters                                   = new CopyOnWriteArrayList<OCluster>();
+  private volatile int                           defaultClusterId                           = -1;
+  private volatile OAtomicOperationsManager      atomicOperationsManager;
 
-  private volatile boolean                           wereDataRestoredAfterOpen                  = false;
-  private volatile boolean                           wereNonTxOperationsPerformedInPreviousOpen = false;
+  private volatile boolean                       wereDataRestoredAfterOpen                  = false;
+  private volatile boolean                       wereNonTxOperationsPerformedInPreviousOpen = false;
 
-  private boolean                                    makeFullCheckPointAfterClusterCreate       = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE
-                                                                                                    .getValueAsBoolean();
+  private boolean                                makeFullCheckPointAfterClusterCreate       = OGlobalConfiguration.STORAGE_MAKE_FULL_CHECKPOINT_AFTER_CLUSTER_CREATE
+                                                                                                .getValueAsBoolean();
 
-  private volatile OWOWCache.LowDiskSpaceInformation lowDiskSpace                               = null;
+  private volatile OLowDiskSpaceInformation      lowDiskSpace                               = null;
+  private volatile boolean                       fullCheckpointRequest                      = false;
 
   public OAbstractPaginatedStorage(String name, String filePath, String mode) {
     super(name, filePath, mode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
@@ -399,7 +400,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   public int addCluster(String clusterName, boolean forceListBased, final Object... parameters) {
     checkOpeness();
-    checkLowDiskSpace();
+    checkLowDiskSpaceAndFullCheckpointRequests();
 
     lock.acquireExclusiveLock();
     try {
@@ -415,7 +416,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public int addCluster(String clusterName, int requestedId, boolean forceListBased, Object... parameters) {
-    checkLowDiskSpace();
+    checkLowDiskSpaceAndFullCheckpointRequests();
 
     lock.acquireExclusiveLock();
     try {
@@ -438,7 +439,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   public boolean dropCluster(final int clusterId, final boolean iTruncate) {
-    checkLowDiskSpace();
+    checkLowDiskSpaceAndFullCheckpointRequests();
 
     lock.acquireExclusiveLock();
     try {
@@ -623,7 +624,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   public OStorageOperationResult<OPhysicalPosition> createRecord(final ORecordId rid, final byte[] content,
       ORecordVersion recordVersion, final byte recordType, final int mode, final ORecordCallback<Long> callback) {
     checkOpeness();
-    checkLowDiskSpace();
+    checkLowDiskSpaceAndFullCheckpointRequests();
 
     final OPhysicalPosition ppos = new OPhysicalPosition(recordType);
     final OCluster cluster = getClusterById(rid.clusterId);
@@ -699,7 +700,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId rid, boolean updateContent, byte[] content,
       final ORecordVersion version, final byte recordType, final int mode, ORecordCallback<ORecordVersion> callback) {
     checkOpeness();
-    checkLowDiskSpace();
+    checkLowDiskSpaceAndFullCheckpointRequests();
 
     final OCluster cluster = getClusterById(rid.clusterId);
     if (transaction.get() != null) {
@@ -755,7 +756,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   public OStorageOperationResult<Boolean> deleteRecord(final ORecordId rid, final ORecordVersion version, final int mode,
       ORecordCallback<Boolean> callback) {
     checkOpeness();
-    checkLowDiskSpace();
+    checkLowDiskSpaceAndFullCheckpointRequests();
 
     final OCluster cluster = getClusterById(rid.clusterId);
 
@@ -798,7 +799,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   @Override
   public OStorageOperationResult<Boolean> hideRecord(final ORecordId rid, final int mode, ORecordCallback<Boolean> callback) {
     checkOpeness();
-    checkLowDiskSpace();
+    checkLowDiskSpaceAndFullCheckpointRequests();
 
     final OCluster cluster = getClusterById(rid.clusterId);
 
@@ -880,7 +881,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   public void commit(final OTransaction clientTx, Runnable callback) {
     checkOpeness();
-    checkLowDiskSpace();
+    checkLowDiskSpaceAndFullCheckpointRequests();
 
     final ODatabaseDocumentInternal databaseRecord = ODatabaseRecordThreadLocal.INSTANCE.get();
     if (databaseRecord != null)
@@ -1146,8 +1147,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   @Override
-  public void lowDiskSpace(OWOWCache.LowDiskSpaceInformation information) {
+  public void lowDiskSpace(OLowDiskSpaceInformation information) {
     lowDiskSpace = information;
+  }
+
+  @Override
+  public void requestFullCheckpoint() {
+    fullCheckpointRequest = true;
   }
 
   /**
@@ -2557,7 +2563,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
-  private void checkLowDiskSpace() {
+  private void checkLowDiskSpaceAndFullCheckpointRequests() {
     if (transaction.get() != null)
       return;
 
@@ -2581,6 +2587,11 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         }
       } else
         lowDiskSpace = null;
+    }
+
+    if (fullCheckpointRequest) {
+      synch();
+      fullCheckpointRequest = false;
     }
   }
 }

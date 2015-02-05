@@ -24,8 +24,8 @@ import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.*;
+import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 
 import java.io.IOException;
@@ -33,7 +33,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -413,11 +412,11 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
   }
 
   @Override
-  public void addLowDiskSpaceListener(OWOWCache.LowDiskSpaceListener listener) {
+  public void addLowDiskSpaceListener(OLowDiskSpaceListener listener) {
   }
 
   @Override
-  public void removeLowDiskSpaceListener(OWOWCache.LowDiskSpaceListener listener) {
+  public void removeLowDiskSpaceListener(OLowDiskSpaceListener listener) {
   }
 
   @Override
@@ -433,12 +432,12 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
   public void startFuzzyCheckpoints() {
   }
 
-	@Override
-	public boolean checkLowDiskSpace() {
-		return true;
-	}
+  @Override
+  public boolean checkLowDiskSpace() {
+    return true;
+  }
 
-	@Override
-	public void makeFuzzyCheckpoint() {
-	}
+  @Override
+  public void makeFuzzyCheckpoint() {
+  }
 }
