@@ -19,17 +19,6 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.lang.ref.WeakReference;
-import java.text.ParseException;
-import java.util.*;
-import java.util.Map.Entry;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -66,6 +55,17 @@ import com.orientechnologies.orient.core.serialization.serializer.ONetworkThread
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+
+import java.io.ByteArrayOutputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.lang.ref.WeakReference;
+import java.text.ParseException;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -764,7 +764,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       return null;
 
     // OPTIMIZATION
-    if (iFieldName.charAt(0) != '@' && OStringSerializerHelper.indexOf(iFieldName, 0, '.', '[') == -1) {
+    if (!_allowChainedAccess || (iFieldName.charAt(0) != '@' && OStringSerializerHelper.indexOf(iFieldName, 0, '.', '[') == -1)) {
       ODocumentEntry entry = _fields.get(iFieldName);
       if (entry != null && entry.exist())
         return (RET) entry.value;
