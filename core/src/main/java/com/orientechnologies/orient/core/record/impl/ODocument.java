@@ -19,6 +19,17 @@
  */
 package com.orientechnologies.orient.core.record.impl;
 
+import java.io.ByteArrayOutputStream;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.lang.ref.WeakReference;
+import java.text.ParseException;
+import java.util.*;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -55,17 +66,6 @@ import com.orientechnologies.orient.core.serialization.serializer.ONetworkThread
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
-
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.lang.ref.WeakReference;
-import java.text.ParseException;
-import java.util.*;
-import java.util.Map.Entry;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -696,74 +696,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     return toString(new HashSet<ORecord>());
   }
 
-  protected String toString(Set<ORecord> inspected) {
-    if (inspected.contains(this))
-      return "<recursion:rid=" + (_recordId != null ? _recordId : "null") + ">";
-    else
-      inspected.add(this);
-
-    final boolean saveDirtyStatus = _dirty;
-    final boolean oldUpdateContent = _contentChanged;
-
-    try {
-      final StringBuilder buffer = new StringBuilder(128);
-
-      checkForFields();
-
-      final ODatabaseDocument db = getDatabaseIfDefined();
-      if( db != null && !db.isClosed()) {
-        final OClass _clazz = getImmutableSchemaClass();
-        if (_clazz != null)
-          buffer.append(_clazz.getStreamableName());
-      }
-
-      if (_recordId != null) {
-        if (_recordId.isValid())
-          buffer.append(_recordId);
-      }
-
-      boolean first = true;
-      for (Entry<String, ODocumentEntry> f : _fields.entrySet()) {
-        buffer.append(first ? '{' : ',');
-        buffer.append(f.getKey());
-        buffer.append(':');
-        if (f.getValue().value == null)
-          buffer.append("null");
-        else if (f.getValue().value instanceof Collection<?> || f.getValue().value instanceof Map<?, ?>
-            || f.getValue().value.getClass().isArray()) {
-          buffer.append('[');
-          buffer.append(OMultiValue.getSize(f.getValue().value));
-          buffer.append(']');
-        } else if (f.getValue().value instanceof ORecord) {
-          final ORecord record = (ORecord) f.getValue().value;
-
-          if (record.getIdentity().isValid())
-            record.getIdentity().toString(buffer);
-          else if (record instanceof ODocument)
-            buffer.append(((ODocument) record).toString(inspected));
-          else
-            buffer.append(record.toString());
-        } else
-          buffer.append(f.getValue().value);
-
-        if (first)
-          first = false;
-      }
-      if (!first)
-        buffer.append('}');
-
-      if (_recordId != null && _recordId.isValid()) {
-        buffer.append(" v");
-        buffer.append(_recordVersion);
-      }
-
-      return buffer.toString();
-    } finally {
-      _dirty = saveDirtyStatus;
-      _contentChanged = oldUpdateContent;
-    }
-  }
-
   /**
    * Fills the ODocument directly with the string representation of the document itself. Use it for faster insertion but pay
    * attention to respect the OrientDB record format.
@@ -776,7 +708,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    * record.save();<br>
    * </code>
    * </p>
-   * 
+   *
    * @param iValue
    */
   @Deprecated
@@ -846,7 +778,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   /**
    * Reads the field value.
-   * 
+   *
    * @param iFieldName
    *          field name
    * @return field value if defined, otherwise null
@@ -876,7 +808,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   /**
    * Reads the field value forcing the return type. Use this method to force return of ORID instead of the entire document by
    * passing ORID.class as iFieldType.
-   * 
+   *
    * @param iFieldName
    *          field name
    * @param iFieldType
@@ -894,7 +826,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   /**
    * Reads the field value forcing the return type. Use this method to force return of binary data.
-   * 
+   *
    * @param iFieldName
    *          field name
    * @param iFieldType
@@ -938,7 +870,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   /**
    * Writes the field value. This method sets the current document as dirty.
-   * 
+   *
    * @param iFieldName
    *          field name. If contains dots (.) the change is applied to the nested documents in chain. To disable this feature call
    *          {@link #setAllowChainedAccess(boolean)} to false.
@@ -981,7 +913,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   /**
    * Fills a document passing the field names/values as a Map String,Object where the keys are the field names and the values are
    * the field values. It accepts also @rid for record id and @class for class name.
-   * 
+   *
    * @since 2.0
    */
   public ODocument fromMap(final Map<String, Object> iMap) {
@@ -994,17 +926,17 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   /**
    * Writes the field value forcing the type. This method sets the current document as dirty.
-   * 
+   *
    * if there's a schema definition for the specified field, the value will be converted to respect the schema definition if needed.
    * if the type defined in the schema support less precision than the iPropertyValue provided, the iPropertyValue will be converted
    * following the java casting rules with possible precision loss.
-   * 
+   *
    * @param iFieldName
    *          field name. If contains dots (.) the change is applied to the nested documents in chain. To disable this feature call
    *          {@link #setAllowChainedAccess(boolean)} to false.
    * @param iPropertyValue
    *          field value.
-   * 
+   *
    * @param iFieldType
    *          Forced type (not auto-determined)
    * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain. If the updated
@@ -1224,59 +1156,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     throw new UnsupportedOperationException();
   }
 
-  protected ODocument mergeMap(final Map<String, ODocumentEntry> iOther, final boolean iUpdateOnlyMode,
-      boolean iMergeSingleItemsOfMultiValueFields) {
-    checkForLoading();
-    checkForFields();
-
-    _source = null;
-
-    for (String f : iOther.keySet()) {
-      ODocumentEntry docEntry = iOther.get(f);
-      if (!docEntry.exist()) {
-        continue;
-      }
-      final Object value = field(f);
-      final Object otherValue = docEntry.value;
-
-      if (containsField(f) && iMergeSingleItemsOfMultiValueFields) {
-        if (value instanceof Map<?, ?>) {
-          final Map<String, Object> map = (Map<String, Object>) value;
-          final Map<String, Object> otherMap = (Map<String, Object>) otherValue;
-
-          for (Entry<String, Object> entry : otherMap.entrySet()) {
-            map.put(entry.getKey(), entry.getValue());
-          }
-          continue;
-        } else if (OMultiValue.isMultiValue(value)) {
-          for (Object item : OMultiValue.getMultiValueIterable(otherValue)) {
-            if (!OMultiValue.contains(value, item))
-              OMultiValue.add(value, item);
-          }
-
-          // JUMP RAW REPLACE
-          continue;
-        }
-      }
-
-      boolean bagsMerged = false;
-      if (value instanceof ORidBag && otherValue instanceof ORidBag)
-        bagsMerged = ((ORidBag) value).tryMerge((ORidBag) otherValue, iMergeSingleItemsOfMultiValueFields);
-
-      if (!bagsMerged && (value != null && !value.equals(otherValue)) || (value == null && otherValue != null))
-        field(f, otherValue);
-    }
-
-    if (!iUpdateOnlyMode) {
-      // REMOVE PROPERTIES NOT FOUND IN OTHER DOC
-      for (String f : fieldNames())
-        if (!iOther.containsKey(f) || !iOther.get(f).exist())
-          removeField(f);
-    }
-
-    return this;
-  }
-
   /**
    * Returns list of changed fields. There are two types of changes:
    * <ol>
@@ -1475,13 +1354,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   @Override
-  protected ORecordAbstract fill(ORID iRid, ORecordVersion iVersion, byte[] iBuffer, boolean iDirty) {
-    _schema = null;
-    fetchSchemaIfCan();
-    return super.fill(iRid, iVersion, iBuffer, iDirty);
-  }
-
-  @Override
   public ODocument fromStream(final byte[] iRecordBuffer) {
     removeAllCollectionChangeListeners();
 
@@ -1498,44 +1370,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
 
     return this;
-  }
-
-  @Override
-  protected void clearSource() {
-    super.clearSource();
-    _schema = null;
-  }
-
-  private void fetchSchemaIfCan() {
-    if (_schema == null) {
-      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-      if (db != null && !db.isClosed()) {
-        OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
-        _schema = metadata.getImmutableSchemaSnapshot();
-      }
-    }
-  }
-
-  protected OGlobalProperty getGlobalPropertyById(int id) {
-    if (_schema == null) {
-      OMetadataInternal metadata = (OMetadataInternal) getDatabase().getMetadata();
-      _schema = metadata.getImmutableSchemaSnapshot();
-    }
-    OGlobalProperty prop = _schema.getGlobalPropertyById(id);
-    if (prop == null) {
-      ODatabaseDocument db = getDatabase();
-      if (db == null || db.isClosed())
-        throw new ODatabaseException(
-            "Cannot unmarshall the document because no database is active, use detach for use the document outside the database session scope");
-      OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
-      if (metadata.getImmutableSchemaSnapshot() != null)
-        metadata.clearThreadLocalSchemaSnapshot();
-      metadata.reload();
-      metadata.makeThreadLocalSchemaSnapshot();
-      _schema = metadata.getImmutableSchemaSnapshot();
-      prop = _schema.getGlobalPropertyById(id);
-    }
-    return prop;
   }
 
   /**
@@ -1961,11 +1795,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
   }
 
-  protected void fillClassIfNeed(final String iClassName) {
-    if (this._className == null)
-      setClassNameIfExists(iClassName);
-  }
-
   public OClass getSchemaClass() {
     if (_className == null)
       fetchClassName();
@@ -1978,31 +1807,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       return databaseRecord.getMetadata().getSchema().getClass(_className);
 
     return null;
-  }
-
-  protected OClass getImmutableSchemaClass() {
-    if (_className == null)
-      fetchClassName();
-
-    final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
-
-    if (databaseRecord != null) {
-      final OSchema immutableSchema = ((OMetadataInternal) databaseRecord.getMetadata()).getImmutableSchemaSnapshot();
-      if (immutableSchema == null)
-        return null;
-
-      if (_immutableClazz == null) {
-        _immutableSchemaVersion = immutableSchema.getVersion();
-        _immutableClazz = immutableSchema.getClass(_className);
-      } else {
-        if (_immutableSchemaVersion < immutableSchema.getVersion()) {
-          _immutableSchemaVersion = immutableSchema.getVersion();
-          _immutableClazz = immutableSchema.getClass(_className);
-        }
-      }
-    }
-
-    return _immutableClazz;
   }
 
   public String getClassName() {
@@ -2034,7 +1838,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   /**
    * Validates the record following the declared constraints defined in schema such as mandatory, notNull, min, max, regexp, etc. If
    * the schema is not defined for the current class or there are not constraints then the validation is ignored.
-   * 
+   *
    * @see OProperty
    * @throws OValidationException
    *           if the document breaks some validation constraints defined in the schema
@@ -2063,6 +1867,196 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         validateField(this, p);
       }
     }
+  }
+
+  protected String toString(Set<ORecord> inspected) {
+    if (inspected.contains(this))
+      return "<recursion:rid=" + (_recordId != null ? _recordId : "null") + ">";
+    else
+      inspected.add(this);
+
+    final boolean saveDirtyStatus = _dirty;
+    final boolean oldUpdateContent = _contentChanged;
+
+    try {
+      final StringBuilder buffer = new StringBuilder(128);
+
+      checkForFields();
+
+      final ODatabaseDocument db = getDatabaseIfDefined();
+      if (db != null && !db.isClosed()) {
+        final OClass _clazz = getImmutableSchemaClass();
+        if (_clazz != null)
+          buffer.append(_clazz.getStreamableName());
+      }
+
+      if (_recordId != null) {
+        if (_recordId.isValid())
+          buffer.append(_recordId);
+      }
+
+      boolean first = true;
+      for (Entry<String, ODocumentEntry> f : _fields.entrySet()) {
+        buffer.append(first ? '{' : ',');
+        buffer.append(f.getKey());
+        buffer.append(':');
+        if (f.getValue().value == null)
+          buffer.append("null");
+        else if (f.getValue().value instanceof Collection<?> || f.getValue().value instanceof Map<?, ?>
+            || f.getValue().value.getClass().isArray()) {
+          buffer.append('[');
+          buffer.append(OMultiValue.getSize(f.getValue().value));
+          buffer.append(']');
+        } else if (f.getValue().value instanceof ORecord) {
+          final ORecord record = (ORecord) f.getValue().value;
+
+          if (record.getIdentity().isValid())
+            record.getIdentity().toString(buffer);
+          else if (record instanceof ODocument)
+            buffer.append(((ODocument) record).toString(inspected));
+          else
+            buffer.append(record.toString());
+        } else
+          buffer.append(f.getValue().value);
+
+        if (first)
+          first = false;
+      }
+      if (!first)
+        buffer.append('}');
+
+      if (_recordId != null && _recordId.isValid()) {
+        buffer.append(" v");
+        buffer.append(_recordVersion);
+      }
+
+      return buffer.toString();
+    } finally {
+      _dirty = saveDirtyStatus;
+      _contentChanged = oldUpdateContent;
+    }
+  }
+
+  protected ODocument mergeMap(final Map<String, ODocumentEntry> iOther, final boolean iUpdateOnlyMode,
+      boolean iMergeSingleItemsOfMultiValueFields) {
+    checkForLoading();
+    checkForFields();
+
+    _source = null;
+
+    for (String f : iOther.keySet()) {
+      ODocumentEntry docEntry = iOther.get(f);
+      if (!docEntry.exist()) {
+        continue;
+      }
+      final Object value = field(f);
+      final Object otherValue = docEntry.value;
+
+      if (containsField(f) && iMergeSingleItemsOfMultiValueFields) {
+        if (value instanceof Map<?, ?>) {
+          final Map<String, Object> map = (Map<String, Object>) value;
+          final Map<String, Object> otherMap = (Map<String, Object>) otherValue;
+
+          for (Entry<String, Object> entry : otherMap.entrySet()) {
+            map.put(entry.getKey(), entry.getValue());
+          }
+          continue;
+        } else if (OMultiValue.isMultiValue(value)) {
+          for (Object item : OMultiValue.getMultiValueIterable(otherValue)) {
+            if (!OMultiValue.contains(value, item))
+              OMultiValue.add(value, item);
+          }
+
+          // JUMP RAW REPLACE
+          continue;
+        }
+      }
+
+      boolean bagsMerged = false;
+      if (value instanceof ORidBag && otherValue instanceof ORidBag)
+        bagsMerged = ((ORidBag) value).tryMerge((ORidBag) otherValue, iMergeSingleItemsOfMultiValueFields);
+
+      if (!bagsMerged && (value != null && !value.equals(otherValue)) || (value == null && otherValue != null)) {
+        if (otherValue instanceof ORidBag)
+          // DESERIALIZE IT TO ASSURE TEMPORARY RIDS ARE TREATED CORRECTLY
+          ((ORidBag) otherValue).convertLinks2Records();
+        field(f, otherValue);
+      }
+    }
+
+    if (!iUpdateOnlyMode) {
+      // REMOVE PROPERTIES NOT FOUND IN OTHER DOC
+      for (String f : fieldNames())
+        if (!iOther.containsKey(f) || !iOther.get(f).exist())
+          removeField(f);
+    }
+
+    return this;
+  }
+
+  @Override
+  protected ORecordAbstract fill(ORID iRid, ORecordVersion iVersion, byte[] iBuffer, boolean iDirty) {
+    _schema = null;
+    fetchSchemaIfCan();
+    return super.fill(iRid, iVersion, iBuffer, iDirty);
+  }
+
+  @Override
+  protected void clearSource() {
+    super.clearSource();
+    _schema = null;
+  }
+
+  protected OGlobalProperty getGlobalPropertyById(int id) {
+    if (_schema == null) {
+      OMetadataInternal metadata = (OMetadataInternal) getDatabase().getMetadata();
+      _schema = metadata.getImmutableSchemaSnapshot();
+    }
+    OGlobalProperty prop = _schema.getGlobalPropertyById(id);
+    if (prop == null) {
+      ODatabaseDocument db = getDatabase();
+      if (db == null || db.isClosed())
+        throw new ODatabaseException(
+            "Cannot unmarshall the document because no database is active, use detach for use the document outside the database session scope");
+      OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
+      if (metadata.getImmutableSchemaSnapshot() != null)
+        metadata.clearThreadLocalSchemaSnapshot();
+      metadata.reload();
+      metadata.makeThreadLocalSchemaSnapshot();
+      _schema = metadata.getImmutableSchemaSnapshot();
+      prop = _schema.getGlobalPropertyById(id);
+    }
+    return prop;
+  }
+
+  protected void fillClassIfNeed(final String iClassName) {
+    if (this._className == null)
+      setClassNameIfExists(iClassName);
+  }
+
+  protected OClass getImmutableSchemaClass() {
+    if (_className == null)
+      fetchClassName();
+
+    final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
+
+    if (databaseRecord != null) {
+      final OSchema immutableSchema = ((OMetadataInternal) databaseRecord.getMetadata()).getImmutableSchemaSnapshot();
+      if (immutableSchema == null)
+        return null;
+
+      if (_immutableClazz == null) {
+        _immutableSchemaVersion = immutableSchema.getVersion();
+        _immutableClazz = immutableSchema.getClass(_className);
+      } else {
+        if (_immutableSchemaVersion < immutableSchema.getVersion()) {
+          _immutableSchemaVersion = immutableSchema.getVersion();
+          _immutableClazz = immutableSchema.getClass(_className);
+        }
+      }
+    }
+
+    return _immutableClazz;
   }
 
   protected void rawField(final String iFieldName, final Object iFieldValue, final OType iFieldType) {
@@ -2310,6 +2304,21 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       convertFieldsToClass(iClass);
   }
 
+  protected Set<Entry<String, ODocumentEntry>> getRawEntries() {
+    checkForFields();
+    return _fields == null ? new HashSet<Map.Entry<String, ODocumentEntry>>() : _fields.entrySet();
+  }
+
+  private void fetchSchemaIfCan() {
+    if (_schema == null) {
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
+      if (db != null && !db.isClosed()) {
+        OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
+        _schema = metadata.getImmutableSchemaSnapshot();
+      }
+    }
+  }
+
   private void fetchClassName() {
     final ODatabaseDocumentInternal database = getDatabaseIfDefinedInternal();
     if (database != null && database.getStorageVersions() != null && database.getStorageVersions().classesAreDetectedByClusterId()) {
@@ -2333,7 +2342,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   /**
    * Check and convert the field of the document matching the types specified by the class.
-   * 
+   *
    * @param _clazz
    */
   private void convertFieldsToClass(OClass _clazz) {
@@ -2423,10 +2432,5 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   private void removeCollectionTimeLine(final ODocumentEntry entry) {
     if (entry != null)
       entry.timeLine = null;
-  }
-
-  protected Set<Entry<String, ODocumentEntry>> getRawEntries() {
-    checkForFields();
-    return _fields == null ? new HashSet<Map.Entry<String, ODocumentEntry>>() : _fields.entrySet();
   }
 }
