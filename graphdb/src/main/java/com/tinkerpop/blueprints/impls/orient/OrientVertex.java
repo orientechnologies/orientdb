@@ -1155,7 +1155,11 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    *          Optional array of class names
    * @return The found direction if any
    */
-  protected OPair<Direction, String> getConnection(final Direction iDirection, final String iFieldName, final String... iClassNames) {
+  protected OPair<Direction, String> getConnection(final Direction iDirection, final String iFieldName, String... iClassNames) {
+    if (iClassNames != null && iClassNames.length == 1 && iClassNames[0].equalsIgnoreCase("E"))
+      // DEFAULT CLASS, TREAT IT AS NO CLASS/LABEL
+      iClassNames = null;
+
     final OrientBaseGraph graph = getGraph();
     if (iDirection == Direction.OUT || iDirection == Direction.BOTH) {
       if (settings.isUseVertexFieldsForEdgeLabels()) {
