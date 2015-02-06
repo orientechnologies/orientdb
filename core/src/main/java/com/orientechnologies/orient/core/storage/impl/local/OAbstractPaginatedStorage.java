@@ -96,6 +96,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
 /**
@@ -131,7 +132,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
                                                                                                 .getValueAsBoolean();
 
   private volatile OLowDiskSpaceInformation      lowDiskSpace                               = null;
-  private volatile boolean                       fullCheckpointRequest                      = false;
+  private volatile boolean                       checkpointRequest                          = false;
+  private final AtomicBoolean                    checkpointInProgress                       = new AtomicBoolean();
 
   public OAbstractPaginatedStorage(String name, String filePath, String mode) {
     super(name, filePath, mode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
@@ -1152,8 +1154,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   }
 
   @Override
-  public void requestFullCheckpoint() {
-    fullCheckpointRequest = true;
+  public void requestCheckpoint() {
+    checkpointRequest = true;
   }
 
   /**
@@ -2565,30 +2567,48 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       return;
 
     if (lowDiskSpace != null) {
-      diskCache.makeFuzzyCheckpoint();
+      if (checkpointInProgress.compareAndSet(false, true)) {
+        try {
+          diskCache.makeFuzzyCheckpoint();
 
-      if (diskCache.checkLowDiskSpace()) {
-        synch();
-        diskCache.makeFuzzyCheckpoint();
+          if (diskCache.checkLowDiskSpace()) {
+            synch();
 
-        if (diskCache.checkLowDiskSpace()) {
-          throw new OLowDiskSpaceException("Error occurred while executing a write operation to database '" + name
-              + "' due to limited free space on the disk (" + (lowDiskSpace.freeSpace / (1024 * 1024))
-              + " MB). The database is now working in read-only mode."
-              + " Please close the database (or stop OrientDB), make room on your hard drive and then reopen the database. "
-              + "The minimal required space is " + (lowDiskSpace.requiredSpace / (1024 * 1024)) + " MB. "
-              + "Required space is now set to " + OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsInteger()
-              + "MB (you can change it by setting parameter " + OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getKey() + ") .");
-        } else {
-          lowDiskSpace = null;
+            if (diskCache.checkLowDiskSpace()) {
+              throw new OLowDiskSpaceException("Error occurred while executing a write operation to database '" + name
+                  + "' due to limited free space on the disk (" + (lowDiskSpace.freeSpace / (1024 * 1024))
+                  + " MB). The database is now working in read-only mode."
+                  + " Please close the database (or stop OrientDB), make room on your hard drive and then reopen the database. "
+                  + "The minimal required space is " + (lowDiskSpace.requiredSpace / (1024 * 1024)) + " MB. "
+                  + "Required space is now set to " + OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsInteger()
+                  + "MB (you can change it by setting parameter " + OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getKey()
+                  + ") .");
+            } else {
+              lowDiskSpace = null;
+            }
+          } else
+            lowDiskSpace = null;
+        } finally {
+          checkpointInProgress.set(false);
         }
-      } else
-        lowDiskSpace = null;
+      }
     }
 
-    if (fullCheckpointRequest) {
-      synch();
-      fullCheckpointRequest = false;
+    if (checkpointRequest && writeAheadLog instanceof ODiskWriteAheadLog) {
+      if (checkpointInProgress.compareAndSet(false, true)) {
+        try {
+          final ODiskWriteAheadLog diskWriteAheadLog = (ODiskWriteAheadLog) writeAheadLog;
+          final long size = diskWriteAheadLog.size();
+
+          diskCache.makeFuzzyCheckpoint();
+          if (size >= diskWriteAheadLog.size())
+            synch();
+
+          checkpointRequest = false;
+        } finally {
+          checkpointInProgress.set(false);
+        }
+      }
     }
   }
 }
