@@ -19,6 +19,18 @@
  */
 package com.orientechnologies.orient.server.network.protocol.binary;
 
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
+import java.net.SocketException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.UUID;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
@@ -92,18 +104,6 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
-
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
-import java.net.SocketException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.UUID;
 
 public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
   protected OClientConnection connection;
@@ -1152,8 +1152,6 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
 
     connection.data.commandDetail = command.getText();
 
-    // ENABLES THE CACHE TO IMPROVE PERFORMANCE OF COMPLEX COMMANDS LIKE TRAVERSE
-    // connection.database.getLocalCache().setEnable(true);
     beginResponse();
     try {
       connection.data.command = command;
@@ -1400,13 +1398,12 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     beginResponse();
     try {
       final ORecordMetadata metadata = connection.database.getRecordMetadata(rid);
-      if (metadata!=null) {
+      if (metadata != null) {
         sendOk(clientTxId);
         channel.writeRID(metadata.getRecordId());
         channel.writeVersion(metadata.getRecordVersion());
-      }else
-      {
-        throw new ODatabaseException(String.format("Record metadata for RID: %s, Not found",rid));
+      } else {
+        throw new ODatabaseException(String.format("Record metadata for RID: %s, Not found", rid));
       }
     } finally {
       endResponse();
