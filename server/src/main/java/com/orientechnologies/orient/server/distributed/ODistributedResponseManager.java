@@ -608,7 +608,7 @@ public class ODistributedResponseManager {
           ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
               "fixing response (%s) for request (%s) in server %s to be: %s", r, request, r.getExecutorNodeName(), goodResponse);
 
-          final OAbstractRemoteTask fixTask = ((OAbstractReplicatedTask) request.getTask()).getFixTask(request, r.getPayload(),
+          final OAbstractRemoteTask fixTask = ((OAbstractReplicatedTask) request.getTask()).getFixTask(request, request.getTask(), r.getPayload(),
               goodResponse.getPayload());
 
           if (fixTask != null)

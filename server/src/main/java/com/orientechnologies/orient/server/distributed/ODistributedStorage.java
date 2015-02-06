@@ -34,6 +34,8 @@ import com.orientechnologies.orient.core.command.ODistributedCommand;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
@@ -45,6 +47,8 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
@@ -255,6 +259,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           return null;
 
         result = dManager.sendRequest(getName(), involvedClusters, nodes, task, EXECUTION_MODE.RESPONSE);
+
+        dManager.propagateSchemaChanges(ODatabaseRecordThreadLocal.INSTANCE.get());
+
         break;
       }
 
@@ -415,12 +422,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       String clusterName = getClusterNameByRID(iRecordId);
 
       int clusterId = iRecordId.getClusterId();
-      if (clusterId == ORID.CLUSTER_ID_INVALID) {
+      if (clusterId == ORID.CLUSTER_ID_INVALID)
         throw new IllegalArgumentException("Cluster not valid");
-      }
 
       final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
-      final List<String> nodes = dbCfg.getServers(clusterName, null);
+      List<String> nodes = dbCfg.getServers(clusterName, null);
 
       if (nodes.isEmpty()) {
         // DON'T REPLICATE OR DISTRIBUTE
@@ -432,10 +438,33 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         });
       }
 
-      final String masterNode = nodes.get(0);
-      if (!masterNode.equals(dManager.getLocalNodeName()))
-        throw new ODistributedException("Error on inserting into cluster '" + clusterName + "' where local node '"
-            + dManager.getLocalNodeName() + "' is not the master of it, but it's '" + masterNode + "'");
+      String masterNode = nodes.get(0);
+      if (!masterNode.equals(dManager.getLocalNodeName())) {
+        final OCluster cl = getClusterByName(clusterName);
+        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+        final OClass cls = db.getMetadata().getSchema().getClassByClusterId(cl.getId());
+        String newClusterName = null;
+        if (cls != null) {
+          OClusterSelectionStrategy clSel = cls.getClusterSelection();
+          if (!(clSel instanceof OLocalClusterStrategy)) {
+            dManager.propagateSchemaChanges(db);
+            clSel = cls.getClusterSelection();
+          }
+
+          newClusterName = getPhysicalClusterNameById(clSel.getCluster(cls, null));
+          nodes = dbCfg.getServers(newClusterName, null);
+          masterNode = nodes.get(0);
+        }
+
+        if (!masterNode.equals(dManager.getLocalNodeName()))
+          throw new ODistributedException("Error on inserting into cluster '" + clusterName + "' where local node '"
+              + dManager.getLocalNodeName() + "' is not the master of it, but it's '" + masterNode + "'");
+
+        OLogManager.instance().warn(
+            this,
+            "Local node '" + dManager.getLocalNodeName() + "' is not the master for cluster '" + clusterName + "' (it's '"
+                + masterNode + "'). Switching to a valid cluster of the same class: '" + newClusterName + "'");
+      }
 
       Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
       if (executionModeSynch == null)

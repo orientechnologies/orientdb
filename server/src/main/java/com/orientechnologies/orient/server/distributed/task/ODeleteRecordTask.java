@@ -81,7 +81,7 @@ import java.io.ObjectOutput;
    }
 
    @Override
-   public OResurrectRecordTask getFixTask(final ODistributedRequest iRequest, final Object iBadResponse, final Object iGoodResponse) {
+   public OResurrectRecordTask getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask, final Object iBadResponse, final Object iGoodResponse) {
      return new OResurrectRecordTask(rid, version);
    }
 

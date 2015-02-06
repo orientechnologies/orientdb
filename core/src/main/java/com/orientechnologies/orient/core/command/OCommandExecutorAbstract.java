@@ -55,19 +55,6 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
     return this;
   }
 
-  protected String upperCase(String text) {
-    StringBuilder result = new StringBuilder(text.length());
-    for (char c : text.toCharArray()) {
-      String upper = ("" + c).toUpperCase(Locale.ENGLISH);
-      if (upper.length() > 1) {
-        result.append(c);
-      } else {
-        result.append(upper);
-      }
-    }
-    return result.toString();
-  }
-
   @Override
   public String toString() {
     return getClass().getSimpleName() + " [text=" + parserText + "]";
@@ -118,5 +105,22 @@ public abstract class OCommandExecutorAbstract extends OBaseParser implements OC
   @Override
   public int getSecurityOperationType() {
     return ORole.PERMISSION_READ;
+  }
+
+  public boolean involveSchema() {
+    return false;
+  }
+
+  protected String upperCase(String text) {
+    StringBuilder result = new StringBuilder(text.length());
+    for (char c : text.toCharArray()) {
+      String upper = ("" + c).toUpperCase(Locale.ENGLISH);
+      if (upper.length() > 1) {
+        result.append(c);
+      } else {
+        result.append(upper);
+      }
+    }
+    return result.toString();
   }
 }
