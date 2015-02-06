@@ -119,7 +119,7 @@ public enum OGlobalConfiguration {
   WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single. WAL segment in megabytes.", Integer.class, 128),
 
   WAL_MAX_SIZE("storage.wal.maxSize", "Supposed, maximum size of WAL on disk in megabytes. This size may be more or less. ",
-      Integer.class, 8 * 1024),
+      Integer.class, 1024),
 
   WAL_COMMIT_TIMEOUT("storage.wal.commitTimeout", "Maximum interval between WAL commits (in ms.)", Integer.class, 1000),
 
@@ -666,15 +666,6 @@ public enum OGlobalConfiguration {
       else if (jvmMaxMemory > 512 * OFileUtils.MEGABYTE)
         // INCREASE WAL RESTORE BATCH SIZE TO 10K INSTEAD OF DEFAULT 1K
         WAL_RESTORE_BATCH_SIZE.setValue(10000);
-    }
-
-    if (System.getProperty(WAL_MAX_SIZE.key) == null) {
-      long walSize = DISK_CACHE_SIZE.getValueAsInteger() * 4;
-
-      if (walSize > freeSpaceInMB / 2)
-        walSize = freeSpaceInMB / 2;
-
-      WAL_MAX_SIZE.setValue(walSize);
     }
   }
 

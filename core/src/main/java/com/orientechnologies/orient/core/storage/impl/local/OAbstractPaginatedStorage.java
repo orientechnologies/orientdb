@@ -1965,6 +1965,9 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       super.close(force, onDelete);
 
       diskCache.removeLowDiskSpaceListener(this);
+			if (writeAheadLog != null)
+				writeAheadLog.removeFullCheckpointListener(this);
+
       if (!onDelete)
         diskCache.close();
       else
