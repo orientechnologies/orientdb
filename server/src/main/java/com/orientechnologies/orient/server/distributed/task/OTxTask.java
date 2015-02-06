@@ -84,10 +84,10 @@ public class OTxTask extends OAbstractReplicatedTask {
           // SEND RID + VERSION
           final OCreateRecordTask t = (OCreateRecordTask) task;
           results.set(i, new OPlaceholder(t.getRecord()));
-          // } else if (task instanceof OUpdateRecordTask) {
-          // // SEND VERSION
-          // final OUpdateRecordTask t = (OUpdateRecordTask) task;
-          // results.set(i, new OPlaceholder(t.getRecord()));
+        } else if (task instanceof OUpdateRecordTask) {
+          // SEND VERSION
+          final OUpdateRecordTask t = (OUpdateRecordTask) task;
+          results.set(i, t.getVersion());
         }
       }
 
@@ -109,7 +109,8 @@ public class OTxTask extends OAbstractReplicatedTask {
   }
 
   @Override
-  public OFixTxTask getFixTask(final ODistributedRequest iRequest, final Object iBadResponse, final Object iGoodResponse) {
+  public OFixTxTask getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask, final Object iBadResponse,
+      final Object iGoodResponse) {
     if (!(iBadResponse instanceof List)) {
       // TODO: MANAGE ERROR ON LOCAL NODE
       ODistributedServerLog.debug(this, getNodeSource(), null, DIRECTION.NONE,
@@ -128,8 +129,8 @@ public class OTxTask extends OAbstractReplicatedTask {
 
     for (int i = 0; i < tasks.size(); ++i) {
       final OAbstractRecordReplicatedTask t = tasks.get(i);
-      OAbstractRemoteTask task = t
-          .getFixTask(iRequest, ((List<Object>) iBadResponse).get(i), ((List<Object>) iGoodResponse).get(i));
+      final OAbstractRemoteTask task = t.getFixTask(iRequest, t, ((List<Object>) iBadResponse).get(i),
+          ((List<Object>) iGoodResponse).get(i));
 
       if (task != null)
         fixTask.add(task);

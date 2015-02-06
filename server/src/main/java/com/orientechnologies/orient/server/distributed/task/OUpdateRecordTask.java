@@ -94,11 +94,11 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public OUpdateRecordTask getFixTask(final ODistributedRequest iRequest, final Object iBadResponse, final Object iGoodResponse) {
+  public OUpdateRecordTask getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask, final Object iBadResponse, final Object iGoodResponse) {
     final ORecordVersion versionCopy = version.copy();
     versionCopy.setRollbackMode();
 
-    return new OUpdateRecordTask(rid, null, null, ((OUpdateRecordTask) iRequest.getTask()).content, versionCopy);
+    return new OUpdateRecordTask(rid, null, null, ((OUpdateRecordTask) iOriginalTask).content, versionCopy);
   }
 
   @Override

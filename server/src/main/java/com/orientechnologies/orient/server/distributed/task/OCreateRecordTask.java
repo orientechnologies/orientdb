@@ -19,6 +19,10 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
@@ -34,10 +38,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 
 /**
  * Distributed create record task used for synchronization.
@@ -67,7 +67,8 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
     if (record instanceof ODocument) {
       // PRE-ASSIGN THE CLUSTER ID ON CALLER NODE
       final OClass clazz = ((ODocument) record).getSchemaClass();
-      rid.clusterId = clazz.getClusterSelection().getCluster(clazz, (ODocument) record);
+      if (clazz != null)
+        rid.clusterId = clazz.getClusterSelection().getCluster(clazz, (ODocument) record);
     }
   }
 
@@ -103,7 +104,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public ODeleteRecordTask getFixTask(final ODistributedRequest iRequest, final Object iBadResponse, final Object iGoodResponse) {
+  public ODeleteRecordTask getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask, final Object iBadResponse, final Object iGoodResponse) {
     if (iBadResponse instanceof Throwable)
       return null;
 

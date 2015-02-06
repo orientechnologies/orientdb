@@ -118,4 +118,9 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
   public String getSyntax() {
     return "ALTER CLASS <class> <attribute-name> <attribute-value>";
   }
+
+  @Override
+  public boolean involveSchema() {
+    return true;
+  }
 }

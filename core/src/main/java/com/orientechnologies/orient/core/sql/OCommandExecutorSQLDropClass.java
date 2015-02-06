@@ -132,4 +132,9 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
   public String getSyntax() {
     return "DROP CLASS <class> [UNSAFE]";
   }
+
+  @Override
+  public boolean involveSchema() {
+    return true;
+  }
 }
