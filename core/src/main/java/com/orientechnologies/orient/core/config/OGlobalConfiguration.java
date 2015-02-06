@@ -461,6 +461,12 @@ public enum OGlobalConfiguration {
   DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY("distributed.purgeResponsesTimerDelay",
       "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l),
 
+  DB_MAKE_FULL_CHECKPOINT_ON_INDEX_CHANGE("db.makeFullCheckpointOnIndexChange",
+      "When index metadata is changed full checkpoint is performed", Boolean.class, true),
+
+  DB_MAKE_FULL_CHECKPOINT_ON_SCHEMA_CHANGE("db.makeFullCheckpointOnSchemaChange",
+      "When index schema is changed full checkpoint is performed", Boolean.class, true),
+
   DB_DOCUMENT_SERIALIZER("db.document.serializer", "The default record serializer used by the document database", String.class,
       ORecordSerializerBinary.NAME),
 

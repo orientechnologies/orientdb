@@ -418,8 +418,11 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         // @COMPATIBILITY 1.0RC9
         metadata.getSchema().createClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
 
-      metadata.getSchema().setFullCheckpointOnChange(true);
-      metadata.getIndexManager().setFullCheckpointOnChange(true);
+      if (OGlobalConfiguration.DB_MAKE_FULL_CHECKPOINT_ON_SCHEMA_CHANGE.getValueAsBoolean())
+        metadata.getSchema().setFullCheckpointOnChange(true);
+
+      if (OGlobalConfiguration.DB_MAKE_FULL_CHECKPOINT_ON_INDEX_CHANGE.getValueAsBoolean())
+        metadata.getIndexManager().setFullCheckpointOnChange(true);
       getStorage().synch();
       // WAKE UP DB LIFECYCLE LISTENER
       for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
@@ -2649,8 +2652,12 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       // @COMPATIBILITY 1.0RC9
       metadata.getSchema().createClass(OMVRBTreeRIDProvider.PERSISTENT_CLASS_NAME);
 
-    metadata.getSchema().setFullCheckpointOnChange(true);
-    metadata.getIndexManager().setFullCheckpointOnChange(true);
+    if (OGlobalConfiguration.DB_MAKE_FULL_CHECKPOINT_ON_SCHEMA_CHANGE.getValueAsBoolean())
+      metadata.getSchema().setFullCheckpointOnChange(true);
+
+    if (OGlobalConfiguration.DB_MAKE_FULL_CHECKPOINT_ON_INDEX_CHANGE.getValueAsBoolean())
+      metadata.getIndexManager().setFullCheckpointOnChange(true);
+
     initialized = true;
   }
 

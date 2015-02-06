@@ -903,7 +903,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         for (WeakReference<OFullCheckpointRequestListener> listenerWeakReference : fullCheckpointListeners) {
           final OFullCheckpointRequestListener listener = listenerWeakReference.get();
           if (listener != null)
-            listener.requestFullCheckpoint();
+            listener.requestCheckpoint();
         }
       }
 
