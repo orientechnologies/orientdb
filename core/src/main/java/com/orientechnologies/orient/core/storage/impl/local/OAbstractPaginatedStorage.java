@@ -2604,7 +2604,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           final long size = diskWriteAheadLog.size();
 
           diskCache.makeFuzzyCheckpoint();
-          if (size >= diskWriteAheadLog.size())
+          if (size  <= diskWriteAheadLog.size())
             synch();
 
           checkpointRequest = false;
