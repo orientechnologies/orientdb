@@ -64,7 +64,6 @@ SKIP :
 }
 
 
-
 /* reserved words */
 TOKEN:
 {
@@ -972,11 +971,14 @@ void ArraySingleValuesSelector():
 OArrayRangeSelector ArrayRangeSelector():
 {}
 {
-    <INTEGER_RANGE>
-    |
     (
-        ArrayNumberSelector() <RANGE> ArrayNumberSelector()
+        <INTEGER_RANGE>
+        |
+        (
+            ArrayNumberSelector() <RANGE> ArrayNumberSelector()
+        )
     )
+    { return jjtThis; }
 }
 
 
@@ -1078,6 +1080,7 @@ OModifier Modifier():
                 <RBRACKET>
             )
        	    |
+       	    LOOKAHEAD( MethodCall() )
    	        MethodCall()
        	    |
             <DOT> SuffixIdentifier()
@@ -1097,9 +1100,9 @@ OExpression Expression():
         <NULL> {jjtThis.value = null;}
         |
         LOOKAHEAD(2)
-        token = <STRING_LITERAL> {jjtThis.value = token.image;}
+        token = <STRING_LITERAL> {jjtThis.value = token.image.substring(1, token.image.length() - 1);}
         |
-        token = <CHARACTER_LITERAL> {jjtThis.value = token.image;}
+        token = <CHARACTER_LITERAL> {jjtThis.value = token.image.substring(1, token.image.length() - 1);}
         |
         LOOKAHEAD( Rid() )
         jjtThis.value = Rid()
@@ -1207,7 +1210,7 @@ OBaseExpression BaseExpression():
 OFromClause FromClause():
 {}
 {
-	FromItem()
+	jjtThis.item = FromItem()
 	{ return jjtThis; }
 }
 
@@ -1229,49 +1232,64 @@ OLetItem LetItem():
 
 
 OFromItem FromItem():
-{}
+{
+    jjtThis.rids = new java.util.ArrayList();
+    ORid lastRid;
+}
 {
 (
-	Rid()
+	lastRid = Rid() { jjtThis.rids.add(lastRid); }
 	|
-	<LBRACKET> Rid() ( <COMMA> Rid())* <RBRACKET>
+	(
+	    <LBRACKET> lastRid = Rid() { jjtThis.rids.add(lastRid); }
+	    (
+	        <COMMA> lastRid = Rid() { jjtThis.rids.add(lastRid); }
+	    )* <RBRACKET>
+	)
 	|
-	Cluster()
+	jjtThis.cluster = Cluster()
 	|
-	IndexIdentifier()
+	jjtThis.index = IndexIdentifier()
 	|
-    MetadataIdentifier()
+    jjtThis.metadata = MetadataIdentifier()
 	|
 	jjtThis.className = Identifier()
 	|
-	<LPAREN> ( SelectStatement() | TraverseStatement() ) <RPAREN>
+	<LPAREN> ( jjtThis.statement = SelectStatement() | jjtThis.statement = TraverseStatement() ) <RPAREN>
 ) { return jjtThis; }
 }
 
 OCluster Cluster():
-{}
+{ Token cName; }
 {
-	<CLUSTER_IDENTIFIER>
+    (
+	    cName = <CLUSTER_IDENTIFIER> {jjtThis.clusterName = cName.image.split(":")[1];}
+	)
     { return jjtThis; }
 }
 
-void MetadataIdentifier():
-{}
+OMetadataIdentifier MetadataIdentifier():
+{ Token mdName; }
 {
-	<METADATA_IDENTIFIER>
-
+    (
+	    mdName = <METADATA_IDENTIFIER> {jjtThis.name = mdName.image.split(":")[1];}
+	)
+    { return jjtThis; }
 }
 
-void IndexIdentifier():
+OIndexIdentifier IndexIdentifier():
 {}
 {
-	<INDEX_IDENTIFIER>
-	|
-	<INDEXVALUES_IDENTIFIER>
-	|
-	<INDEXVALUESASC_IDENTIFIER>
-	|
-	<INDEXVALUESDESC_IDENTIFIER>
+    (
+    	<INDEX_IDENTIFIER>
+    	|
+    	<INDEXVALUES_IDENTIFIER>
+    	|
+    	<INDEXVALUESASC_IDENTIFIER>
+    	|
+    	<INDEXVALUESDESC_IDENTIFIER>
+    )
+    {return jjtThis;}
 }
 
 OWhereClause WhereClause():
@@ -1576,17 +1594,17 @@ OBooleanExpression IsNotDefinedCondition():
 OBooleanExpression ContainsCondition():
 {}
 {
-(
-	jjtThis.left = Expression() <CONTAINS>
-
-	(
-	    LOOKAHEAD( 3 )
-	    ( <LPAREN> jjtThis.condition = OrBlock() <RPAREN> )
-	    |
-	    LOOKAHEAD( Expression() )
-	    jjtThis.right = Expression()
-	)
-){return jjtThis;}
+    (
+    	jjtThis.left = Expression() <CONTAINS>
+    	(
+    	    LOOKAHEAD( 3 )
+    	    ( <LPAREN> jjtThis.condition = OrBlock() <RPAREN> )
+    	    |
+    	    LOOKAHEAD( Expression() )
+    	    jjtThis.right = Expression()
+    	)
+    )
+    {return jjtThis;}
 }
 
 OInOperator InOperator():
@@ -1626,50 +1644,54 @@ OBooleanExpression InCondition():
 OBooleanExpression NotInCondition():
 {}
 {
-(
-	Expression() <NOT> InOperator()
-	(
-	    ( <LBRACKET> Expression() (<COMMA> Expression())* <RBRACKET> )
-        |
-        ( <LPAREN> SelectStatement() <RPAREN> )
-	)
-){return jjtThis;}
+    (
+    	Expression() <NOT> InOperator()
+    	(
+    	    ( <LBRACKET> Expression() (<COMMA> Expression())* <RBRACKET> )
+            |
+            ( <LPAREN> SelectStatement() <RPAREN> )
+    	)
+    )
+    {return jjtThis;}
 }
 
 OBooleanExpression ContainsAllCondition():
 {}
 {
-(
-	Expression()
-	<CONTAINSALL>
-	(
-    	LOOKAHEAD( 3 )
-    	( <LPAREN> OrBlock() <RPAREN> )
-    	|
-    	LOOKAHEAD( Expression() )
+    (
     	Expression()
+    	<CONTAINSALL>
+    	(
+        	LOOKAHEAD( 3 )
+        	( <LPAREN> OrBlock() <RPAREN> )
+        	|
+        	LOOKAHEAD( Expression() )
+        	Expression()
+        )
     )
-){return jjtThis;}
+    {return jjtThis;}
 }
 
 OBooleanExpression ContainsTextCondition():
 {}
 {
-(
-	Expression() <CONTAINSTEXT> Expression()
-){return jjtThis;}
+    (
+    	Expression() <CONTAINSTEXT> Expression()
+    )
+    {return jjtThis;}
 }
 
 OBooleanExpression MatchesCondition():
 {}
 {
-(
-	Expression() <MATCHES> <STRING_LITERAL>
-){return jjtThis;}
+    (
+    	Expression() <MATCHES> <STRING_LITERAL>
+    )
+    {return jjtThis;}
 }
 
 OOrderBy OrderBy():
-{}
+{ jjtThis.items = new java.util.ArrayList(); }
 {
 (
 	<ORDER> <BY> ( Identifier() | Rid() | <RECORD_ATTRIBUTE> ) [ <DESC> | <ASC> ]
@@ -1686,42 +1708,53 @@ OGroupBy GroupBy():
 }
 
 
-Integer Limit():
+java.lang.Integer Limit():
 { OInteger value = null; }
 {
-(
-	<LIMIT> value = Integer()
-){ return value.getValue(); }
+    (
+    	<LIMIT> value = Integer()
+    )
+    { return value.getValue(); }
 }
 
-Integer Skip():
+java.lang.Integer Skip():
 { OInteger value = null;}
 {
-(
-	<SKIP2> value = Integer()
-	|
-	<OFFSET> value = Integer()
-) {return value.getValue();}
-}
-
-void Timeout():
-{}
-{
-	<TIMEOUT> Integer()
+    (
+    	<SKIP2> value = Integer()
+    	|
+    	<OFFSET> value = Integer()
+    ) {return value.getValue();}
 }
 
 
-void Wait():
-{}
+java.lang.Integer Timeout():
+{ OInteger val; }
 {
-	<WAIT> Integer()
+    (
+	    <TIMEOUT> val = Integer()
+	)
+	{ return val.getValue(); }
 }
 
 
-void Retry():
-{}
+java.lang.Integer Wait():
+{ OInteger val; }
 {
-	<RETRY> Integer()
+    (
+	    <WAIT> val = Integer()
+	)
+	{ return val.getValue(); }
+}
+
+
+java.lang.Integer Retry():
+{ OInteger val; }
+{
+    (
+	    <RETRY> val = Integer()
+	)
+	{ return val.getValue(); }
 }
 
 
@@ -1770,10 +1803,18 @@ void TraverseProjectionItem():
 
 }
 
-void Array():
-{}
+OArray Array():
 {
-    <LBRACKET> [ Expression() ( <COMMA> Expression() )* ] <RBRACKET>
+    jjtThis.expressions = new java.util.ArrayList();
+    OExpression currentExpr;
+}
+{
+    (
+        <LBRACKET> [ currentExpr = Expression() { jjtThis.expressions.add(currentExpr); }
+        ( <COMMA> currentExpr = Expression() { jjtThis.expressions.add(currentExpr); } )* ] <RBRACKET>
+    )
+    { return jjtThis; }
+
 }
 
 

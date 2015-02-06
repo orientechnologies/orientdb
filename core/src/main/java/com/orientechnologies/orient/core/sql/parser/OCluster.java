@@ -4,6 +4,8 @@ package com.orientechnologies.orient.core.sql.parser;
 
 public
 class OCluster extends SimpleNode {
+  protected String clusterName;
+
   public OCluster(int id) {
     super(id);
   }
@@ -16,6 +18,14 @@ class OCluster extends SimpleNode {
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
+  }
+
+  @Override public String toString(String prefix) {
+    return super.toString(prefix);
+  }
+
+  @Override public String toString() {
+    return "cluster:"+clusterName;
   }
 }
 /* JavaCC - OriginalChecksum=d27abf009fe7db482fbcaac9d52ba192 (do not edit this line) */

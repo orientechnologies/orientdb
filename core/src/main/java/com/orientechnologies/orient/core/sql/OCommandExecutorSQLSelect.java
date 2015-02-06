@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.Future;
@@ -64,6 +66,9 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.orientechnologies.orient.core.sql.functions.coll.OSQLFunctionDistinct;
 import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
 import com.orientechnologies.orient.core.sql.operator.*;
+import com.orientechnologies.orient.core.sql.parser.OStatement;
+import com.orientechnologies.orient.core.sql.parser.OrientSql;
+import com.orientechnologies.orient.core.sql.parser.ParseException;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -191,9 +196,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
     String queryText = textRequest.getText();
     queryText = preParse(queryText);
+    if (!queryText.toUpperCase().equals(textRequest.getText().toUpperCase())) {
+      throwParsingException(queryText + " \nDIFFERENT FROM\n" + textRequest.getText());
+    }
     textRequest.setText(queryText);
 
-    testNewParser(iRequest);
+    // testNewParser(iRequest);
     super.parse(iRequest);
 
     initContext();
@@ -272,7 +280,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private String preParse(String queryText) {
-    return queryText;// TODO
+    InputStream is = new ByteArrayInputStream(queryText.getBytes());
+    OrientSql osql = new OrientSql(is);
+    try {
+      OStatement result = osql.parse();
+      return result.toString();
+    } catch (ParseException e) {
+      System.out.println("NEW PARSER FAILED: " + queryText);
+      e.printStackTrace();
+      throwParsingException(e.getMessage());
+    }
+    return "ERROR!";
   }
 
   /**

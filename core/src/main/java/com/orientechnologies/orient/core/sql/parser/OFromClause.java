@@ -4,7 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 public class OFromClause extends SimpleNode {
 
-  protected OIdentifier className;
+  OFromItem item;
 
   public OFromClause(int id) {
     super(id);
@@ -19,12 +19,13 @@ public class OFromClause extends SimpleNode {
     return visitor.visit(this, data);
   }
 
-  public OIdentifier getClassName() {
-    return className;
-  }
 
-  public void setClassName(OIdentifier className) {
-    this.className = className;
+  @Override
+  public String toString() {
+    if (item != null) {
+      return item.toString();
+    }
+    return "";
   }
 }
 /* JavaCC - OriginalChecksum=051839d20dabfa4cce26ebcbe0d03a86 (do not edit this line) */

@@ -1,13 +1,14 @@
 package com.orientechnologies.orient.core.sql.parser;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 import org.testng.annotations.Test;
+
+import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
+import com.orientechnologies.orient.core.sql.OCommandSQL;
 
 @Test
 public class OSelectStatementTest {
@@ -27,6 +28,10 @@ public class OSelectStatementTest {
       if (!isCorrect) {
         fail();
       }
+      System.out.println(query);
+      System.out.println("->");
+      System.out.println(result.toString());
+      System.out.println("............");
       return result;
     } catch (Exception e) {
       if (isCorrect) {
@@ -215,19 +220,15 @@ public class OSelectStatementTest {
     SimpleNode result = checkRightSyntax("select from cluster:internal where \"\\u005C\\u005C\" = \"\\u005C\\u005C\" ");
     assertTrue(result instanceof OSelectStatement);
 
-
   }
 
   public void testEscape2() {
-    try{
-
+    try {
       SimpleNode result = checkWrongSyntax("select from cluster:internal where \"\\u005C\" = \"\\u005C\" ");
       fail();
-    }catch (Error e){
+    } catch (Error e) {
 
     }
-
-
   }
 
   private void printTree(String s) {

@@ -53,13 +53,24 @@ public class OProjectionItem extends SimpleNode {
 
     if (all) {
       builder.append("*");
-    }else {
+    } else {
       builder.append(expression.toString());
       if (alias != null && alias.trim().length() > 0) {
         builder.append(" AS " + alias);
       }
     }
     return builder.toString();
+  }
+
+  @Override public String toString() {
+    return toString("");
+  }
+
+  public String getDefaultAlias() {
+    if (expression == null) {
+      return "null";
+    }
+    return expression.getDefaultAlias();
   }
 }
 /* JavaCC - OriginalChecksum=6d6010734c7434a6f516e2eac308e9ce (do not edit this line) */

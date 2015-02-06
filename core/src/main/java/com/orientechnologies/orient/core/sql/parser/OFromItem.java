@@ -2,10 +2,16 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OFromItem extends SimpleNode {
+import java.util.List;
 
-  protected OIdentifier className;
+public class OFromItem extends SimpleNode {
+
+  protected List<ORid>          rids;
+  protected OCluster            cluster;
+  protected OIdentifier              className;
+  protected OIndexIdentifier    index;
+  protected OMetadataIdentifier metadata;
+  protected OStatement          statement;
 
   public OFromItem(int id) {
     super(id);
@@ -15,10 +21,41 @@ class OFromItem extends SimpleNode {
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
+  }
+
+  @Override
+  public String toString(String prefix) {
+    if (rids != null && rids.size() > 0) {
+      StringBuilder builder = new StringBuilder();
+      builder.append("[");
+      boolean first = true;
+      for (ORid rid : rids) {
+        if (!first) {
+          builder.append(", ");
+        }
+        builder.append(rid.toString());
+        first = false;
+      }
+      builder.append("]");
+      return builder.toString();
+    } else if (cluster != null) {
+      return cluster.toString();
+    } else if (className != null) {
+      return className.getValue();
+    } else if (metadata != null) {
+      return metadata.toString();
+    } else if (statement != null) {
+      return "(" + statement.toString() + ")";
+    }
+
+    return null;
+  }
+
+  @Override public String toString() {
+    return toString("");
   }
 }
 /* JavaCC - OriginalChecksum=f64e3b4d2a2627a1b5d04a7dcb95fa94 (do not edit this line) */

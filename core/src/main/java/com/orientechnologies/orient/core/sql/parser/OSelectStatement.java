@@ -82,7 +82,12 @@ public class OSelectStatement extends OStatement {
   }
 
   private String getAlias(OProjectionItem item) {
-    return null;// TODO
+    if (item.getAlias() != null) {
+      return item.getAlias();
+    } else {
+      return item.getDefaultAlias();
+    }
+
   }
 
   public OProjection getProjection() {
@@ -165,5 +170,53 @@ public class OSelectStatement extends OStatement {
     this.letClause = letClause;
   }
 
+  @Override
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+    builder.append("SELECT");
+    if (projection != null) {
+      builder.append(" ");
+      builder.append(projection.toString());
+    }
+    if (target != null) {
+      builder.append(" FROM ");
+      builder.append(target.toString());
+    }
+
+    // TODO
+    // protected OLetClause letClause;
+
+    if (whereClause != null) {
+      builder.append(" WHERE ");
+      builder.append(whereClause.toString());
+    }
+
+    if (groupBy != null) {
+      builder.append(" GROUP BY ");
+      builder.append(groupBy.toString());
+    }
+
+    if (orderBy != null) {
+      builder.append(" ");
+      builder.append(orderBy.toString());
+    }
+
+    if (skip != null) {
+      builder.append(" SKIP ");
+      builder.append(skip);
+    }
+
+    if (limit != null) {
+      builder.append(" LIMIT ");
+      builder.append(limit);
+    }
+
+    // TODO
+    // protected Boolean lockRecord;
+
+    // protected OFetchPlan fetchPlan;
+
+    return builder.toString();
+  }
 }
 /* JavaCC - OriginalChecksum=b26959b9726a8cf35d6283eca931da6b (do not edit this line) */

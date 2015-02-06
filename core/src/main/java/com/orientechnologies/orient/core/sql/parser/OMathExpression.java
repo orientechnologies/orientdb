@@ -31,5 +31,10 @@ public class OMathExpression extends SimpleNode {
   public void setChildExpressions(List<OMathExpression> childExpressions) {
     this.childExpressions = childExpressions;
   }
+
+  public Object createExecutorFilter() {
+     //TODO
+    return null;
+  }
 }
 /* JavaCC - OriginalChecksum=c255bea24e12493e1005ba2a4d1dbb9d (do not edit this line) */

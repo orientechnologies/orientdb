@@ -28,12 +28,37 @@ public class OExpression extends SimpleNode {
     } else if (value instanceof OInputParameter) {
       return null;// TODO
     } else if (value instanceof OMathExpression) {
-      return null;// TODO
+      return ((OMathExpression) value).createExecutorFilter();
     } else if (value instanceof OJson) {
       return null;// TODO
+    } else if (value instanceof String) {
+      return value;
+    } else if (value instanceof Number) {
+      return value;
     }
 
     return value;
+
+  }
+
+  public String getDefaultAlias() {
+
+    if (value instanceof String) {
+      return (String) value;
+    }
+    // TODO create an interface for this;
+
+    // if (value instanceof ORid) {
+    // return null;// TODO
+    // } else if (value instanceof OInputParameter) {
+    // return null;// TODO
+    // } else if (value instanceof OMathExpression) {
+    // return null;// TODO
+    // } else if (value instanceof OJson) {
+    // return null;// TODO
+    // }
+
+    return "" + value;
 
   }
 
@@ -51,7 +76,7 @@ public class OExpression extends SimpleNode {
   }
 
   private String encode(String s) {
-    return null;
+    return s.replaceAll("\"", "\\\"");
   }
 }
 /* JavaCC - OriginalChecksum=9c860224b121acdc89522ae97010be01 (do not edit this line) */
