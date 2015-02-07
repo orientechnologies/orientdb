@@ -19,20 +19,6 @@
  */
 package com.orientechnologies.orient.server;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
@@ -46,6 +32,20 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
+
+import java.io.IOException;
+import java.net.Socket;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class OClientConnectionManager {
   private static final OClientConnectionManager       instance         = new OClientConnectionManager();
@@ -299,7 +299,10 @@ public class OClientConnectionManager {
 
       final ONetworkProtocolBinary p = (ONetworkProtocolBinary) c.protocol;
       final OChannelBinary channel = (OChannelBinary) p.getChannel();
-      ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(c.data.serializationImpl);
+      final ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(c.data.serializationImpl);
+      if( ser == null )
+        return;
+
       final byte[] content = ser.toStream(iConfig, false);
 
       try {
