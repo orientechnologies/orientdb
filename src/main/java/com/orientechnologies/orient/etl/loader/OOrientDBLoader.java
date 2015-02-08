@@ -50,17 +50,18 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
   protected List<ODocument> indexes;
   protected OClass          schemaClass;
   protected String          dbURL;
-  protected String          dbUser                 = "admin";
-  protected String          dbPassword             = "admin";
-  protected boolean         dbAutoCreate           = true;
-  protected boolean         dbAutoDropIfExists     = false;
-  protected boolean         dbAutoCreateProperties = false;
-  protected boolean         useLightweightEdges    = false;
-  protected boolean         tx                     = false;
-  protected int             batchCommit            = 0;
-  protected long            batchCounter           = 0;
-  protected DB_TYPE         dbType                 = DB_TYPE.DOCUMENT;
-  protected boolean         wal                    = true;
+  protected String          dbUser                     = "admin";
+  protected String          dbPassword                 = "admin";
+  protected boolean         dbAutoCreate               = true;
+  protected boolean         dbAutoDropIfExists         = false;
+  protected boolean         dbAutoCreateProperties     = false;
+  protected boolean         useLightweightEdges        = false;
+  protected boolean         standardElementConstraints = true;
+  protected boolean         tx                         = false;
+  protected int             batchCommit                = 0;
+  protected long            batchCounter               = 0;
+  protected DB_TYPE         dbType                     = DB_TYPE.DOCUMENT;
+  protected boolean         wal                        = true;
 
   protected enum DB_TYPE {
     DOCUMENT, GRAPH
@@ -183,21 +184,26 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
 
   @Override
   public ODocument getConfiguration() {
-    return new ODocument().fromJSON("{parameters:[" + "{dbUrl:{optional:false,description:'Database URL'}},"
-        + "{dbUser:{optional:true,description:'Database user, default is admin'}},"
-        + "{dbPassword:{optional:true,description:'Database password, default is admin'}},"
-        + "{dbType:{optional:true,description:'Database type, default is document',values:" + stringArray2Json(DB_TYPE.values())
-        + "}}," + "{class:{optional:true,description:'Record class name'}},"
-        + "{tx:{optional:true,description:'Transaction mode: true executes in transaction, false for atomic operations'}},"
-        + "{dbAutoCreate:{optional:true,description:'Auto create the database if not exists. Default is true'}},"
-        + "{dbAutoCreateProperties:{optional:true,description:'Auto create properties in schema'}},"
-        + "{dbAutoDropIfExists:{optional:true,description:'Auto drop the database if already exists. Default is false.'}},"
-        + "{wal:{optional:true,description:'Use the WAL (Write Ahead Log)'}},"
-        + "{useLightweightEdges:{optional:true,description:'Enable/Disable LightweightEdges in Graphs. Default is false'}},"
-        + "{cluster:{optional:true,description:'Cluster name where to store the new record'}},"
-        + "{classes:{optional:true,description:'Classes used. It assure the classes exist or in case create them'}},"
-        + "{indexes:{optional:true,description:'Indexes used. It assure the indexes exist or in case create them'}}],"
-        + "input:['OrientVertex','ODocument']}");
+    return new ODocument()
+        .fromJSON("{parameters:["
+            + "{dbUrl:{optional:false,description:'Database URL'}},"
+            + "{dbUser:{optional:true,description:'Database user, default is admin'}},"
+            + "{dbPassword:{optional:true,description:'Database password, default is admin'}},"
+            + "{dbType:{optional:true,description:'Database type, default is document',values:"
+            + stringArray2Json(DB_TYPE.values())
+            + "}},"
+            + "{class:{optional:true,description:'Record class name'}},"
+            + "{tx:{optional:true,description:'Transaction mode: true executes in transaction, false for atomic operations'}},"
+            + "{dbAutoCreate:{optional:true,description:'Auto create the database if not exists. Default is true'}},"
+            + "{dbAutoCreateProperties:{optional:true,description:'Auto create properties in schema'}},"
+            + "{dbAutoDropIfExists:{optional:true,description:'Auto drop the database if already exists. Default is false.'}},"
+            + "{wal:{optional:true,description:'Use the WAL (Write Ahead Log)'}},"
+            + "{useLightweightEdges:{optional:true,description:'Enable/Disable LightweightEdges in Graphs. Default is false'}},"
+            + "{standardElementConstraints:{optional:true,description:'Enable/Disable Standard Blueprints constraints on names. Default is true'}},"
+            + "{cluster:{optional:true,description:'Cluster name where to store the new record'}},"
+            + "{classes:{optional:true,description:'Classes used. It assure the classes exist or in case create them'}},"
+            + "{indexes:{optional:true,description:'Indexes used. It assure the indexes exist or in case create them'}}],"
+            + "input:['OrientVertex','ODocument']}");
   }
 
   @Override
@@ -226,6 +232,8 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
       dbAutoCreateProperties = (Boolean) iConfiguration.field("dbAutoCreateProperties");
     if (iConfiguration.containsField("useLightweightEdges"))
       useLightweightEdges = (Boolean) iConfiguration.field("useLightweightEdges");
+    if (iConfiguration.containsField("standardElementConstraints"))
+      standardElementConstraints = (Boolean) iConfiguration.field("standardElementConstraints");
 
     clusterName = iConfiguration.field("cluster");
     className = iConfiguration.field("class");
@@ -283,6 +291,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         final OrientGraphFactory factory = new OrientGraphFactory(dbURL);
         final OrientBaseGraph graphDatabase = tx ? factory.getTx() : factory.getNoTx();
         graphDatabase.setUseLightweightEdges(useLightweightEdges);
+        graphDatabase.setStandardElementConstraints(standardElementConstraints);
 
         documentDatabase = graphDatabase.getRawGraph();
         pipeline.setGraphDatabase(graphDatabase);
@@ -349,6 +358,7 @@ public class OOrientDBLoader extends OAbstractLoader implements OLoader {
         final OrientGraphFactory factory = new OrientGraphFactory(dbURL);
         graphDatabase = factory.getNoTx();
         graphDatabase.setUseLightweightEdges(useLightweightEdges);
+        graphDatabase.setStandardElementConstraints(standardElementConstraints);
         pipeline.setGraphDatabase(graphDatabase);
 
         documentDatabase = graphDatabase.getRawGraph();
