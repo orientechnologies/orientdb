@@ -195,11 +195,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   public OCommandExecutorSQLSelect parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
     String queryText = textRequest.getText();
-    queryText = preParse(queryText);
-    if (!queryText.toUpperCase().equals(textRequest.getText().toUpperCase())) {
-      throwParsingException(queryText + " \nDIFFERENT FROM\n" + textRequest.getText());
-    }
-    textRequest.setText(queryText);
+//    queryText = preParse(queryText);
+//    if (!queryText.toUpperCase().equals(textRequest.getText().toUpperCase())) {
+//      throwParsingException(queryText + " \nDIFFERENT FROM\n" + textRequest.getText());
+//    }
+//    textRequest.setText(queryText);
 
     // testNewParser(iRequest);
     super.parse(iRequest);

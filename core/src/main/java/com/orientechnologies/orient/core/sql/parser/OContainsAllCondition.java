@@ -4,8 +4,14 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
-public
-class OContainsAllCondition extends OBooleanExpression {
+public class OContainsAllCondition extends OBooleanExpression {
+
+  protected OExpression left;
+
+  protected OExpression right;
+
+  protected OOrBlock rightBlock;
+
   public OContainsAllCondition(int id) {
     super(id);
   }
@@ -14,14 +20,35 @@ class OContainsAllCondition extends OBooleanExpression {
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override public boolean evaluate(OIdentifiable currentRecord) {
-    return false;
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord) {
+    return false;// TODO
+  }
+
+  @Override
+  public String toString() {
+    return left.toString() + " CONTAINSALL " + right.toString();
+  }
+
+  public OExpression getLeft() {
+    return left;
+  }
+
+  public void setLeft(OExpression left) {
+    this.left = left;
+  }
+
+  public OExpression getRight() {
+    return right;
+  }
+
+  public void setRight(OExpression right) {
+    this.right = right;
   }
 }
 /* JavaCC - OriginalChecksum=ab7b4e192a01cda09a82d5b80ef4ec60 (do not edit this line) */

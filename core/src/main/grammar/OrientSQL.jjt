@@ -1343,11 +1343,12 @@ ONotBlock NotBlock():
 }
 
 OBooleanExpression ParenthesisBlock():
-{OBooleanExpression subElement = null; }
+{}
 {
-(
-	<LPAREN> subElement = OrBlock() <RPAREN>
-){ return subElement; }
+    (
+    	<LPAREN> jjtThis.subElement = OrBlock() <RPAREN>
+    )
+    { return jjtThis; }
 }
 
 OBooleanExpression ConditionBlock():
@@ -1615,7 +1616,9 @@ OInOperator InOperator():
 }
 
 OBooleanExpression InCondition():
-{OExpression lastExpression;}
+{
+    OExpression lastExpression;
+}
 {
 (
 	jjtThis.left = Expression()
@@ -1628,7 +1631,8 @@ OBooleanExpression InCondition():
 	            jjtThis.rightCollection = new java.util.ArrayList();
 	            jjtThis.rightCollection.add(lastExpression);
 	        }
-	        (<COMMA> lastExpression = Expression())* <RBRACKET> )
+	        (<COMMA> lastExpression = Expression())* <RBRACKET>
+	    )
 	    |
 	    LOOKAHEAD(2)
 	    ( <LPAREN> jjtThis.rightStatement = SelectStatement() <RPAREN>)
@@ -1642,14 +1646,30 @@ OBooleanExpression InCondition():
 }
 
 OBooleanExpression NotInCondition():
-{}
+{
+    OExpression lastExpression;
+}
 {
     (
-    	Expression() <NOT> InOperator()
+    	jjtThis.left = Expression() <NOT> InOperator()
     	(
-    	    ( <LBRACKET> Expression() (<COMMA> Expression())* <RBRACKET> )
+            (
+    	        <LBRACKET>
+    	        lastExpression = Expression()
+    	        {
+    	            jjtThis.rightCollection = new java.util.ArrayList();
+    	            jjtThis.rightCollection.add(lastExpression);
+    	        }
+    	        (<COMMA> lastExpression = Expression())* <RBRACKET>
+    	    )
             |
-            ( <LPAREN> SelectStatement() <RPAREN> )
+            LOOKAHEAD(2)
+	        ( <LPAREN> jjtThis.rightStatement = SelectStatement() <RPAREN>)
+	        |
+	        LOOKAHEAD(2)
+	        ( <LPAREN> jjtThis.rightParam = InputParameter() <RPAREN>)
+	        |
+            jjtThis.rightParam = InputParameter()
     	)
     )
     {return jjtThis;}
@@ -1659,14 +1679,14 @@ OBooleanExpression ContainsAllCondition():
 {}
 {
     (
-    	Expression()
+    	jjtThis.left = Expression()
     	<CONTAINSALL>
     	(
         	LOOKAHEAD( 3 )
-        	( <LPAREN> OrBlock() <RPAREN> )
+        	( <LPAREN> jjtThis.rightBlock = OrBlock() <RPAREN> )
         	|
         	LOOKAHEAD( Expression() )
-        	Expression()
+        	jjtThis.right = Expression()
         )
     )
     {return jjtThis;}

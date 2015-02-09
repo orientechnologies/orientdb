@@ -29,7 +29,7 @@ public class OWhereClause extends SimpleNode {
 
   @Override public String toString() {
     if(baseExpression==null){
-      return "TODO";
+      return "";
     }
     return baseExpression.toString();
   }

@@ -4,8 +4,18 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.Collection;
+
 public
 class ONotInCondition extends OBooleanExpression {
+
+  protected OExpression            left;
+  protected OBinaryCompareOperator operator;
+  protected OSelectStatement       rightStatement;
+  protected Collection<Object>     rightCollection;
+  protected Object                 right;
+  protected Object                 rightParam;
+
   public ONotInCondition(int id) {
     super(id);
   }
@@ -13,7 +23,6 @@ class ONotInCondition extends OBooleanExpression {
   public ONotInCondition(OrientSql p, int id) {
     super(p, id);
   }
-
 
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {

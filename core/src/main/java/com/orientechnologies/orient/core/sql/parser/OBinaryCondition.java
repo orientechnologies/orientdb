@@ -4,11 +4,11 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
-public
-class OBinaryCondition extends OBooleanExpression {
-  protected OExpression left;
+public class OBinaryCondition extends OBooleanExpression {
+  protected OExpression            left;
   protected OBinaryCompareOperator operator;
-  protected OExpression right;
+  protected OExpression            right;
+
   public OBinaryCondition(int id) {
     super(id);
   }
@@ -17,14 +17,19 @@ class OBinaryCondition extends OBooleanExpression {
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override public boolean evaluate(OIdentifiable currentRecord) {
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord) {
     return false;
+  }
+
+  @Override
+  public String toString() {
+    return left.toString() + " " + operator.toString() + " " + right.toString();
   }
 }
 /* JavaCC - OriginalChecksum=99ed1dd2812eb730de8e1931b1764da5 (do not edit this line) */

@@ -51,5 +51,10 @@ public class OBetweenCondition extends OBooleanExpression {
   public void setThird(OExpression third) {
     this.third = third;
   }
+
+  @Override
+  public String toString() {
+    return first.toString() + " BETWEEN " + second.toString() + " AND " + third.toString();
+  }
 }
 /* JavaCC - OriginalChecksum=f94f4779c4a6c6d09539446045ceca89 (do not edit this line) */

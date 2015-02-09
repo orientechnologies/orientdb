@@ -39,5 +39,25 @@ public class OOrBlock extends OBooleanExpression {
   public void setSubBlocks(List<OBooleanExpression> subBlocks) {
     this.subBlocks = subBlocks;
   }
+
+  @Override
+  public String toString() {
+    if (subBlocks == null || subBlocks.size() == 0) {
+      return "";
+    }
+    if (subBlocks.size() == 1) {
+      return subBlocks.get(0).toString();
+    }
+    StringBuilder result = new StringBuilder();
+    boolean first = true;
+    for (OBooleanExpression expr : subBlocks) {
+      if (!first) {
+        result.append(" OR ");
+      }
+      result.append(expr.toString());
+      first = false;
+    }
+    return result.toString();
+  }
 }
 /* JavaCC - OriginalChecksum=98d3077303a598705894dbb7bd4e1573 (do not edit this line) */

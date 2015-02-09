@@ -41,5 +41,25 @@ public class OAndBlock extends OBooleanExpression {
   public void setSubBlocks(List<OBooleanExpression> subBlocks) {
     this.subBlocks = subBlocks;
   }
+
+  @Override
+  public String toString() {
+    if (subBlocks == null || subBlocks.size() == 0) {
+      return "";
+    }
+    if (subBlocks.size() == 1) {
+      return subBlocks.get(0).toString();
+    }
+    StringBuilder result = new StringBuilder();
+    boolean first = true;
+    for (OBooleanExpression expr : subBlocks) {
+      if (!first) {
+        result.append(" AND ");
+      }
+      result.append(expr.toString());
+      first = false;
+    }
+    return result.toString();
+  }
 }
 /* JavaCC - OriginalChecksum=cf1f66cc86cfc93d357f9fcdfa4a4604 (do not edit this line) */
