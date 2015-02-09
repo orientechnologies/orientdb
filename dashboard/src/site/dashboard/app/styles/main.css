@@ -1245,6 +1245,9 @@ ul.tcp-members li {
     width: 30px;
 }
 
+.toggle-switch span {
+  line-height: 10px !important;
+}
 
 
 

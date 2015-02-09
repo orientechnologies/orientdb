@@ -100,6 +100,7 @@ public class OMonitoredCluster {
         if (mServer == null) {
           server = new ODocument(OWorkbenchPlugin.CLASS_SERVER);
           server.field("enabled", true);
+          server.field("attached", true);
         } else {
           server = mServer.getConfiguration();
         }
@@ -122,12 +123,14 @@ public class OMonitoredCluster {
     if (mServer == null) {
       server = new ODocument(OWorkbenchPlugin.CLASS_SERVER);
       server.field("enabled", true);
+      server.field("attached", true);
     } else {
       server = mServer.getConfiguration();
     }
     server.field("name", nodeName);
     if (pwd != null)
       server.field("password", pwd);
+
     server.save();
     handler.updateActiveServerList();
   }

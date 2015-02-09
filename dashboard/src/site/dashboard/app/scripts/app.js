@@ -23,7 +23,8 @@ var app = angular.module('MonitorApp',
         'spinner.services',
         'ngRoute',
         'ngAnimate',
-        'angularLocalStorage'
+        'angularLocalStorage',
+        'toggle-switch'
     ]
 );
 app.config(function ($routeProvider) {

@@ -15,10 +15,6 @@
  */
 package com.orientechnologies.workbench.http;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServerMain;
@@ -31,6 +27,10 @@ import com.orientechnologies.workbench.OL;
 import com.orientechnologies.workbench.OMonitoredServer;
 import com.orientechnologies.workbench.OWorkbenchPlugin;
 import com.orientechnologies.workbench.OWorkbenchPurgeMetricLogHelper;
+
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.util.Map;
 
 public class OServerCommandMgrServer extends OServerCommandAuthenticatedDbAbstract {
   private static final String[] NAMES = { "DELETE|monitoredServer/*", "PUT|monitoredServer/*", "POST|monitoredServer/*" };
@@ -54,14 +54,31 @@ public class OServerCommandMgrServer extends OServerCommandAuthenticatedDbAbstra
 
     if ("DELETE".equals(iRequest.httpMethod)) {
       doDelete(iRequest, iResponse, parts[2]);
-    } else {
-      ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
-      ODocument server = new ODocument().fromJSON(iRequest.content);
-      String pwd = server.field("password");
-      String enc = OL.encrypt(pwd);
-      server.field("password", enc);
-      server.save();
-      iResponse.writeResult(server);
+    } else if ("POST".equals(iRequest.httpMethod)) {
+
+      if (parts.length > 3) {
+        ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
+        String serverName = parts[2];
+        final OMonitoredServer server = monitor.getMonitoredServer(serverName);
+        if (server == null)
+          throw new IllegalArgumentException("Invalid server '" + serverName + "'");
+        if (parts[3].equals("connect")) {
+          server.attach();
+        } else if (parts[3].equals("disconnect")) {
+          server.detach();
+        }
+        server.getConfiguration().save();
+        iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
+      } else {
+        ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
+        ODocument server = new ODocument().fromJSON(iRequest.content);
+        String pwd = server.field("password");
+        String enc = OL.encrypt(pwd);
+        server.field("password", enc);
+        server.field("attached", true);
+        server.save();
+        iResponse.writeResult(server);
+      }
     }
     return false;
   }

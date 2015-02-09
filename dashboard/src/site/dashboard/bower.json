@@ -27,7 +27,8 @@
     "angular-ui-codemirror": "~0.0.5",
     "gritter": "1.8.0",
     "spin.js": "latest",
-    "angularLocalStorage": "0.1.7"
+    "angularLocalStorage": "0.1.7",
+    "angular-toggle-switch": "~1.0.0"
   },
   "devDependencies": {
     "angular-mocks": "~1.0.5",
