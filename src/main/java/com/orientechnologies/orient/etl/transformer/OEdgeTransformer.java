@@ -18,6 +18,7 @@
 
 package com.orientechnologies.orient.etl.transformer;
 
+import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -100,8 +101,22 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
 
     final Object joinCurrentValue = joinValue != null ? joinValue : vertex.getProperty(joinFieldName);
 
-    Object result = lookup(joinCurrentValue, false);
+    if (OMultiValue.isMultiValue(joinCurrentValue)) {
+      // RESOLVE SINGLE JOINS
+      for (Object o : OMultiValue.getMultiValueIterable(joinCurrentValue)) {
+        final Object r = lookup(o, false);
+        if (createEdge(vertex, o, r) == null)
+          return null;
+      }
+    } else {
+      final Object result = lookup(joinCurrentValue, false);
+      if (createEdge(vertex, joinCurrentValue, result) == null)
+        return null;
+    }
+    return input;
+  }
 
+  protected OrientEdge createEdge(OrientVertex vertex, Object joinCurrentValue, Object result) {
     log(OETLProcessor.LOG_LEVELS.DEBUG, "joinCurrentValue=%s, lookupResult=%s", joinCurrentValue, result);
 
     if (result == null) {
@@ -146,8 +161,9 @@ public class OEdgeTransformer extends OAbstractLookupTransformer {
         edge = (OrientEdge) targetVertex.addEdge(edgeClass, vertex);
 
       log(OETLProcessor.LOG_LEVELS.DEBUG, "created new edge=%s", edge);
+      return edge;
     }
 
-    return input;
+    return null;
   }
 }
