@@ -125,7 +125,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
     final OClass linkClass = ODocumentInternal.getImmutableSchemaClass(iFromVertex);
     if (linkClass == null)
-      throw new IllegalArgumentException("Class ot found in source vertex: " + iFromVertex);
+      throw new IllegalArgumentException("Class not found in source vertex: " + iFromVertex);
 
     final OProperty prop = linkClass.getProperty(iFieldName);
     final OType propType = prop != null && prop.getType() != OType.ANY ? prop.getType() : null;
