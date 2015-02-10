@@ -20,6 +20,7 @@ public class TestSharding extends AbstractServerClusterTest {
 
   protected final static int SERVERS = 3;
   protected OrientVertex[]   vertices;
+  protected int[]            versions;
 
   @Test
   public void test() throws Exception {
@@ -76,7 +77,12 @@ public class TestSharding extends AbstractServerClusterTest {
         graph.shutdown();
       }
 
+      Assert.assertEquals(product.getRecord().getVersion(), 1);
+      Assert.assertEquals(fishing.getRecord().getVersion(), 1);
+
+      versions = new int[serverInstance.size()];
       vertices = new OrientVertex[serverInstance.size()];
+
       for (int i = 0; i < vertices.length; ++i) {
         final String nodeName = serverInstance.get(i).getServerInstance().getDistributedManager().getLocalNodeName();
 
@@ -111,6 +117,13 @@ public class TestSharding extends AbstractServerClusterTest {
         } finally {
           graph.shutdown();
         }
+
+      }
+
+      // CHECK VERSIONS
+      for (int i = 0; i < vertices.length; ++i) {
+        versions[i] = vertices[i].getRecord().getVersion();
+        Assert.assertTrue(versions[i] > 1);
       }
 
       graph = localFactory.getNoTx();
@@ -134,6 +147,13 @@ public class TestSharding extends AbstractServerClusterTest {
           Assert.assertTrue(result.iterator().hasNext());
           OrientEdge e = result.iterator().next();
           Assert.assertEquals(e.getProperty("real"), true);
+
+          Assert.assertEquals(1, e.getRecord().getVersion());
+          e.getOutVertex().getRecord().reload();
+          Assert.assertEquals(versions[i] + 1, e.getOutVertex().getRecord().getVersion());
+
+          e.getInVertex().getRecord().reload();
+          Assert.assertEquals(fishing.getRecord().getVersion() + i + 1, e.getInVertex().getRecord().getVersion());
 
           final OrientVertex explain = graph.command(new OCommandSQL("explain select from " + e.getIdentity())).execute();
           System.out

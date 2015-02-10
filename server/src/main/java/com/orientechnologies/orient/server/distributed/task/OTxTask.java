@@ -19,23 +19,24 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Distributed create record task used for synchronization.
@@ -86,8 +87,10 @@ public class OTxTask extends OAbstractReplicatedTask {
           results.set(i, new OPlaceholder(t.getRecord()));
         } else if (task instanceof OUpdateRecordTask) {
           // SEND VERSION
-          final OUpdateRecordTask t = (OUpdateRecordTask) task;
-          results.set(i, t.getVersion());
+          if (((OSimpleVersion) o).getCounter() < 0) {
+            results.set(i, task.getRid().getRecord().reload().getRecordVersion());
+          } else
+            results.set(i, o);
         }
       }
 
