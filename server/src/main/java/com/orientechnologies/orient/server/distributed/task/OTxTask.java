@@ -86,8 +86,7 @@ public class OTxTask extends OAbstractReplicatedTask {
           results.set(i, new OPlaceholder(t.getRecord()));
         } else if (task instanceof OUpdateRecordTask) {
           // SEND VERSION
-          final OUpdateRecordTask t = (OUpdateRecordTask) task;
-          results.set(i, t.getVersion());
+          results.set(i, o);
         }
       }
 
