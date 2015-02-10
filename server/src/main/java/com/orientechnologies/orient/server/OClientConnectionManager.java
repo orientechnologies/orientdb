@@ -76,6 +76,10 @@ public class OClientConnectionManager {
             });
   }
 
+  public static OClientConnectionManager instance() {
+    return instance;
+  }
+
   public void cleanExpiredConnections() {
     final Iterator<Entry<Integer, OClientConnection>> iterator = connections.entrySet().iterator();
     while (iterator.hasNext()) {
@@ -104,10 +108,6 @@ public class OClientConnectionManager {
         iterator.remove();
       }
     }
-  }
-
-  public static OClientConnectionManager instance() {
-    return instance;
   }
 
   /**
@@ -294,13 +294,13 @@ public class OClientConnectionManager {
       }
 
       if (!(c.protocol instanceof ONetworkProtocolBinary) || c.data.serializationImpl == null)
-        // INVOLVE ONLY BINAR PROTOCOLS
+        // INVOLVE ONLY BINARY PROTOCOLS
         continue;
 
       final ONetworkProtocolBinary p = (ONetworkProtocolBinary) c.protocol;
       final OChannelBinary channel = (OChannelBinary) p.getChannel();
       final ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(c.data.serializationImpl);
-      if( ser == null )
+      if (ser == null)
         return;
 
       final byte[] content = ser.toStream(iConfig, false);
