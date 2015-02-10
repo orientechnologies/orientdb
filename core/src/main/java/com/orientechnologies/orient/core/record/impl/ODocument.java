@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -87,7 +88,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   protected transient List<WeakReference<ORecordElement>> _owners                 = null;
   protected OImmutableSchema                              _schema;
   private String                                          _className;
-  private OClass                                          _immutableClazz;
+  private OImmutableClass                                 _immutableClazz;
   private int                                             _immutableSchemaVersion = 1;
 
   /**
@@ -2039,7 +2040,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       setClassNameIfExists(iClassName);
   }
 
-  protected OClass getImmutableSchemaClass() {
+  protected OImmutableClass getImmutableSchemaClass() {
     if (_className == null)
       fetchClassName();
 
@@ -2052,11 +2053,11 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
       if (_immutableClazz == null) {
         _immutableSchemaVersion = immutableSchema.getVersion();
-        _immutableClazz = immutableSchema.getClass(_className);
+        _immutableClazz = (OImmutableClass) immutableSchema.getClass(_className);
       } else {
         if (_immutableSchemaVersion < immutableSchema.getVersion()) {
           _immutableSchemaVersion = immutableSchema.getVersion();
-          _immutableClazz = immutableSchema.getClass(_className);
+          _immutableClazz = (OImmutableClass) immutableSchema.getClass(_className);
         }
       }
     }

@@ -17,6 +17,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
+import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -49,6 +50,7 @@ public class OImmutableClass implements OClass {
   private OImmutableClass                 superClass;
   // do not do it volatile it is already SAFE TO USE IT in MT mode.
   private Collection<OImmutableClass>     baseClasses;
+  private boolean                         restricted;
 
   public OImmutableClass(OClass oClass, OImmutableSchema schema) {
     isAbstract = oClass.isAbstract();
@@ -119,6 +121,7 @@ public class OImmutableClass implements OClass {
 
     } while (currentMapClass != null);
     allPropertiesMap = Collections.unmodifiableMap(allPropsMap);
+    this.restricted = isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME);
 
   }
 
@@ -667,4 +670,9 @@ public class OImmutableClass implements OClass {
       baseClasses = result;
     }
   }
+
+  public boolean isRestricted() {
+    return restricted;
+  }
+
 }
