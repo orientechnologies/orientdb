@@ -27,5 +27,19 @@ public class OContainsValueCondition extends OBooleanExpression {
   public boolean evaluate(OIdentifiable currentRecord) {
     return false;
   }
+
+  public String toString() {
+    StringBuilder result = new StringBuilder();
+    result.append(left.toString());
+    result.append(" CONTAINSVALUE ");
+    if (condition != null) {
+      result.append("(");
+      result.append(condition.toString());
+      result.append(")");
+    } else {
+      result.append(expression.toString());
+    }
+    return result.toString();
+  }
 }
 /* JavaCC - OriginalChecksum=6fda752f10c8d8731f43efa706e39459 (do not edit this line) */

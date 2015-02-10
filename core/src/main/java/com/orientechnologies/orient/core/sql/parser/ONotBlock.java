@@ -7,7 +7,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 public class ONotBlock extends OBooleanExpression {
   protected OBooleanExpression sub;
 
-  protected boolean negate = false;
+  protected boolean            negate = false;
 
   public ONotBlock(int id) {
     super(id);
@@ -39,6 +39,14 @@ public class ONotBlock extends OBooleanExpression {
 
   public void setNegate(boolean negate) {
     this.negate = negate;
+  }
+
+  @Override
+  public String toString() {
+    if (negate) {
+      return "NOT " + sub.toString();
+    }
+    return sub.toString();
   }
 }
 /* JavaCC - OriginalChecksum=1926313b3f854235aaa20811c22d583b (do not edit this line) */

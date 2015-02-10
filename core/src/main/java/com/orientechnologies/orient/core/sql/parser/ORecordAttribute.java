@@ -4,6 +4,9 @@ package com.orientechnologies.orient.core.sql.parser;
 
 public
 class ORecordAttribute extends SimpleNode {
+
+  protected String name;
+
   public ORecordAttribute(int id) {
     super(id);
   }
@@ -16,6 +19,10 @@ class ORecordAttribute extends SimpleNode {
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
+  }
+
+  @Override public String toString() {
+    return name;
   }
 }
 /* JavaCC - OriginalChecksum=45ce3cd16399dec7d7ef89f8920d02ae (do not edit this line) */

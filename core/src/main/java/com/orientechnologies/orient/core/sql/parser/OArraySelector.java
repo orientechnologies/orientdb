@@ -2,8 +2,12 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OArraySelector extends SimpleNode {
+public class OArraySelector extends SimpleNode {
+
+  protected ORid            rid;
+  protected OInputParameter inputParam;
+  protected OExpression     expression;
+
   public OArraySelector(int id) {
     super(id);
   }
@@ -12,10 +16,21 @@ class OArraySelector extends SimpleNode {
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
+  }
+
+  @Override
+  public String toString() {
+    if (rid != null) {
+      return rid.toString();
+    } else if (inputParam != null) {
+      return inputParam.toString();
+    } else if (expression != null) {
+      return expression.toString();
+    }
+    return null;
   }
 }
 /* JavaCC - OriginalChecksum=f87a5543b1dad0fb5f6828a0663a7c9e (do not edit this line) */

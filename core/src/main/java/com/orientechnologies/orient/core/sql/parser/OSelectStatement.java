@@ -36,6 +36,12 @@ public class OSelectStatement extends OStatement {
 
   protected OLetClause   letClause;
 
+  protected Integer      timeout;
+
+  protected Boolean      parallel;
+
+  protected Boolean      noCache;
+
   public OSelectStatement(int id) {
     super(id);
   }
@@ -183,8 +189,10 @@ public class OSelectStatement extends OStatement {
       builder.append(target.toString());
     }
 
-    // TODO
-    // protected OLetClause letClause;
+    if (letClause != null) {
+      builder.append(" ");
+      builder.append(letClause.toString());
+    }
 
     if (whereClause != null) {
       builder.append(" WHERE ");
@@ -211,10 +219,26 @@ public class OSelectStatement extends OStatement {
       builder.append(limit);
     }
 
-    // TODO
-    // protected Boolean lockRecord;
+    if (Boolean.TRUE.equals(lockRecord)) {
+      builder.append(" LOCK RECORD");
+    }
 
-    // protected OFetchPlan fetchPlan;
+    if (fetchPlan != null) {
+      builder.append(fetchPlan.toString());
+    }
+
+    if (timeout != null) {
+      builder.append(" TIMEOUT ");
+      builder.append(timeout);
+    }
+
+    if (Boolean.TRUE.equals(parallel)) {
+      builder.append(" PARALLEL");
+    }
+
+    if (Boolean.TRUE.equals(noCache)) {
+      builder.append(" NOCACHE");
+    }
 
     return builder.toString();
   }

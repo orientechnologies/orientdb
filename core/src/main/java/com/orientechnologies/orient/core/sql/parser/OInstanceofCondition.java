@@ -6,6 +6,11 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 public
 class OInstanceofCondition extends OBooleanExpression {
+
+  protected OExpression left;
+  protected OIdentifier right;
+  protected String rightString;
+
   public OInstanceofCondition(int id) {
     super(id);
   }

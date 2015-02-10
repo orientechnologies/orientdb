@@ -27,5 +27,11 @@ public class OContainsCondition extends OBooleanExpression {
   public boolean evaluate(OIdentifiable currentRecord) {
     return false;
   }
+
+  @Override
+  public String toString() {
+    return left.toString() + " CONTAINS " + right.toString();
+  }
+
 }
 /* JavaCC - OriginalChecksum=bad1118296ea74860e88d66bfe9fa222 (do not edit this line) */

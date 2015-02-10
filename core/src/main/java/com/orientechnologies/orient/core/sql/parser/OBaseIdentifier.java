@@ -2,8 +2,12 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OBaseIdentifier extends SimpleNode {
+public class OBaseIdentifier extends SimpleNode {
+
+  protected OLevelZeroIdentifier levelZero;
+
+  protected OSuffixIdentifier    suffix;
+
   public OBaseIdentifier(int id) {
     super(id);
   }
@@ -12,10 +16,19 @@ class OBaseIdentifier extends SimpleNode {
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
+  }
+
+  @Override
+  public String toString() {
+    if (levelZero != null) {
+      return levelZero.toString();
+    } else if (suffix != null) {
+      return suffix.toString();
+    }
+    return super.toString();
   }
 }
 /* JavaCC - OriginalChecksum=ed89af10d8be41a83428c5608a4834f6 (do not edit this line) */

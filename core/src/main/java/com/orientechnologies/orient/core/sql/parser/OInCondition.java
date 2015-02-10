@@ -12,7 +12,7 @@ public class OInCondition extends OBooleanExpression {
   protected OSelectStatement       rightStatement;
   protected Collection<Object>     rightCollection;
   protected Object                 right;
-  protected Object rightParam;
+  protected Object                 rightParam;
 
   public OInCondition(int id) {
     super(id);
@@ -30,6 +30,40 @@ public class OInCondition extends OBooleanExpression {
   @Override
   public boolean evaluate(OIdentifiable currentRecord) {
     return false;
+  }
+
+  public String toString() {
+    StringBuilder result = new StringBuilder();
+    result.append(left.toString());
+    result.append(" IN ");
+    if (rightStatement != null) {
+      result.append("(");
+      result.append(rightStatement.toString());
+      result.append(")");
+    } else if (rightCollection != null) {
+      result.append("[");
+      boolean first = true;
+      for (Object o : rightCollection) {
+        if (!first) {
+          result.append(", ");
+        }
+        result.append(convertToString(o));
+        first = false;
+      }
+      result.append("]");
+    } else if (right != null) {
+      result.append(convertToString(right));
+    } else if (rightParam != null) {
+      result.append(convertToString(rightParam));
+    }
+    return result.toString();
+  }
+
+  private String convertToString(Object o) {
+    if (o instanceof String) {
+      return "\"" + ((String) o).replaceAll("\"", "\\\"") + "\"";
+    }
+    return o.toString();
   }
 }
 /* JavaCC - OriginalChecksum=00df7cb1877c0a12d24205c1700653c7 (do not edit this line) */

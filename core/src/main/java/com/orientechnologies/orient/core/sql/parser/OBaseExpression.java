@@ -2,8 +2,16 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OBaseExpression extends OMathExpression {
+public class OBaseExpression extends OMathExpression {
+
+  protected ONumber         number;
+
+  protected OBaseIdentifier identifier;
+
+  protected OInputParameter inputParam;
+
+  OModifier                 modifier;
+
   public OBaseExpression(int id) {
     super(id);
   }
@@ -12,10 +20,26 @@ class OBaseExpression extends OMathExpression {
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder result = new StringBuilder();
+    if (number != null) {
+      result.append(number.toString());
+    } else if (identifier != null) {
+      result.append(identifier.toString());
+    } else if (inputParam != null) {
+      result.append(inputParam.toString());
+    }
+
+    if (modifier != null) {
+      result.append(modifier.toString());
+    }
+    return result.toString();
   }
 }
 /* JavaCC - OriginalChecksum=71b3e2d1b65c923dc7cfe11f9f449d2b (do not edit this line) */

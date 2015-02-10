@@ -2,8 +2,13 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OLetClause extends SimpleNode {
+import java.util.ArrayList;
+import java.util.List;
+
+public class OLetClause extends SimpleNode {
+
+  protected List<OLetItem> items = new ArrayList<OLetItem>();
+
   public OLetClause(int id) {
     super(id);
   }
@@ -12,10 +17,25 @@ class OLetClause extends SimpleNode {
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
+
+  @Override
+  public String toString() {
+    StringBuilder result = new StringBuilder();
+    result.append("LET ");
+    boolean first = true;
+    for (OLetItem item : items) {
+      if (!first) {
+        result.append(", ");
+      }
+      result.append(item.toString());
+      first = false;
+    }
+    return result.toString();
+  }
 }
+
 /* JavaCC - OriginalChecksum=201a864b5ed7f1fbe0533843a7acd03d (do not edit this line) */

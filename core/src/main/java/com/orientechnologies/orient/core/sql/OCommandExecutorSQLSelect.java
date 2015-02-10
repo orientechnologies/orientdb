@@ -201,7 +201,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 //    }
 //    textRequest.setText(queryText);
 
-    // testNewParser(iRequest);
+    testNewParser(iRequest);
     super.parse(iRequest);
 
     initContext();

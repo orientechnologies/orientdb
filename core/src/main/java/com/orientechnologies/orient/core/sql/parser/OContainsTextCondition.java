@@ -6,6 +6,10 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 public
 class OContainsTextCondition extends OBooleanExpression {
+
+  protected OExpression left;
+  protected OExpression right;
+
   public OContainsTextCondition(int id) {
     super(id);
   }
@@ -23,5 +27,11 @@ class OContainsTextCondition extends OBooleanExpression {
   @Override public boolean evaluate(OIdentifiable currentRecord) {
     return false;
   }
+
+  @Override
+  public String toString() {
+    return left.toString() + " CONTAINSTEXT " + right.toString();
+  }
+
 }
 /* JavaCC - OriginalChecksum=b588492ba2cbd0f932055f1f64bbbecd (do not edit this line) */
