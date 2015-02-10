@@ -128,6 +128,14 @@ public class OSelectStatementTest {
 
   }
 
+  public void testIndex1(){
+    SimpleNode result = checkRightSyntax("select from index:collateCompositeIndexCS where key = ['VAL', 'VaL']");
+    // result.dump("    ");
+    assertTrue(result instanceof OSelectStatement);
+    OSelectStatement select = (OSelectStatement) result;
+
+  }
+
   public void testMath5() {
     SimpleNode result = checkRightSyntax("" + "select * from sqlSelectIndexReuseTestClass where prop1 = foo + 1 * bar - 5");
 

@@ -21,5 +21,10 @@ class OContainsKeyOperator extends SimpleNode  implements OBinaryCompareOperator
   @Override public boolean execute(Object left, Object right) {
     return false;
   }
+
+  @Override public String toString() {
+    return "CONTAINSKEY";
+  }
+
 }
 /* JavaCC - OriginalChecksum=1a03daaa6712eb981b070e8e94960951 (do not edit this line) */

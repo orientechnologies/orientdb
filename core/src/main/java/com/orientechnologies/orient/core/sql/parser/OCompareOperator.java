@@ -17,5 +17,6 @@ class OCompareOperator extends SimpleNode {
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
+
 }
 /* JavaCC - OriginalChecksum=aeef93fd1b053c63a8b92a979ac225df (do not edit this line) */

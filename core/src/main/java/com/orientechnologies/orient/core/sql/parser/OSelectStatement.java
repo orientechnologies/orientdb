@@ -224,6 +224,7 @@ public class OSelectStatement extends OStatement {
     }
 
     if (fetchPlan != null) {
+      builder.append(" ");
       builder.append(fetchPlan.toString());
     }
 

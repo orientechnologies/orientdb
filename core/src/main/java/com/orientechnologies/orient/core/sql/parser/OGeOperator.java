@@ -21,5 +21,10 @@ class OGeOperator extends SimpleNode  implements OBinaryCompareOperator{
   @Override public boolean execute(Object left, Object right) {
     return false;
   }
+
+  @Override public String toString() {
+    return ">=";
+  }
+
 }
 /* JavaCC - OriginalChecksum=960da239569d393eb155f7d8a871e6d5 (do not edit this line) */

@@ -33,5 +33,11 @@ public class OIsNullCondition extends OBooleanExpression {
   public void setExpression(OExpression expression) {
     this.expression = expression;
   }
+
+  @Override
+  public String toString() {
+    return expression.toString() + " IS NULL";
+  }
+
 }
 /* JavaCC - OriginalChecksum=29ebbc506a98f90953af91a66a03aa1e (do not edit this line) */

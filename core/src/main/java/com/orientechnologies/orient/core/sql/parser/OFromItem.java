@@ -49,9 +49,11 @@ public class OFromItem extends SimpleNode {
       return metadata.toString();
     } else if (statement != null) {
       return "(" + statement.toString() + ")";
+    }else if(index!=null){
+      return index.toString();
     }
 
-    return null;
+    return super.toString();
   }
 
   @Override public String toString() {

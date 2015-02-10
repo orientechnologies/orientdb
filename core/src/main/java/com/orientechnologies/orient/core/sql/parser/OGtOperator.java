@@ -2,8 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OGtOperator extends SimpleNode  implements OBinaryCompareOperator{
+public class OGtOperator extends SimpleNode implements OBinaryCompareOperator {
   public OGtOperator(int id) {
     super(id);
   }
@@ -12,14 +11,19 @@ class OGtOperator extends SimpleNode  implements OBinaryCompareOperator{
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override public boolean execute(Object left, Object right) {
+  @Override
+  public boolean execute(Object left, Object right) {
     return false;
+  }
+
+  @Override
+  public String toString() {
+    return ">";
   }
 }
 /* JavaCC - OriginalChecksum=4b96739fc6e9ae496916d542db361376 (do not edit this line) */

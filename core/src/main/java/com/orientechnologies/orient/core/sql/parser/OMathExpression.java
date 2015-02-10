@@ -7,9 +7,12 @@ import java.util.List;
 
 public class OMathExpression extends SimpleNode {
 
+  public enum Operator {
+    PLUS, MINUS, STAR, SLASH, REM
+  }
+
   protected List<OMathExpression> childExpressions = new ArrayList<OMathExpression>();
-
-
+  protected List<Operator>        operators        = new ArrayList<Operator>();
 
   public OMathExpression(int id) {
     super(id);
@@ -33,8 +36,39 @@ public class OMathExpression extends SimpleNode {
   }
 
   public Object createExecutorFilter() {
-     //TODO
+    // TODO
     return null;
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder result = new StringBuilder();
+
+    for (int i = 0; i < childExpressions.size(); i++) {
+      if (i > 0) {
+        result.append(" ");
+        switch (operators.get(i - 1)) {
+        case PLUS:
+          result.append("+");
+          break;
+        case MINUS:
+          result.append("-");
+          break;
+        case STAR:
+          result.append("*");
+          break;
+        case SLASH:
+          result.append("/");
+          break;
+        case REM:
+          result.append("%");
+          break;
+        }
+        result.append(" ");
+      }
+      result.append(childExpressions.get(i).toString());
+    }
+    return result.toString();
   }
 }
 /* JavaCC - OriginalChecksum=c255bea24e12493e1005ba2a4d1dbb9d (do not edit this line) */

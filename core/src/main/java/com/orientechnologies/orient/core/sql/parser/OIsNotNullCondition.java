@@ -25,5 +25,10 @@ public class OIsNotNullCondition extends OBooleanExpression {
   public boolean evaluate(OIdentifiable currentRecord) {
     return false;
   }
+
+  @Override
+  public String toString() {
+    return expression.toString() + " IS NOT NULL";
+  }
 }
 /* JavaCC - OriginalChecksum=a292fa8a629abb7f6fe72a627fc91361 (do not edit this line) */

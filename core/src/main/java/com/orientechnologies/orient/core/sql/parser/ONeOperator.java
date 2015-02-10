@@ -21,5 +21,9 @@ class ONeOperator extends SimpleNode  implements OBinaryCompareOperator{
   @Override public boolean execute(Object left, Object right) {
     return false;
   }
+
+  @Override public String toString() {
+    return "!=";
+  }
 }
 /* JavaCC - OriginalChecksum=ac0ae426fb86c930dea83013ddc202ba (do not edit this line) */

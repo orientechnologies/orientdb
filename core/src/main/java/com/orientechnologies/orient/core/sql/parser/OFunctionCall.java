@@ -7,6 +7,7 @@ import java.util.List;
 
 public class OFunctionCall extends SimpleNode {
 
+  protected OIdentifier       name;
   protected boolean           star   = false;
   protected List<OExpression> params = new ArrayList<OExpression>();
 
@@ -38,5 +39,28 @@ public class OFunctionCall extends SimpleNode {
   public void setParams(List<OExpression> params) {
     this.params = params;
   }
+
+  @Override
+  public String toString() {
+    StringBuilder result = new StringBuilder();
+    result.append(name.toString());
+    result.append("(");
+    if (star) {
+      result.append("*");
+    } else {
+      boolean first = true;
+      for (OExpression expr : params) {
+        if (!first) {
+          result.append(", ");
+        }
+        result.append(expr.toString());
+        first = false;
+      }
+    }
+    result.append(")");
+    return result.toString();
+  }
+
+
 }
 /* JavaCC - OriginalChecksum=290d4e1a3f663299452e05f8db718419 (do not edit this line) */

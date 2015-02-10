@@ -21,5 +21,10 @@ public class OInteger extends ONumber {
   public void setValue(Integer value) {
     this.value = value;
   }
+
+  @Override
+  public String toString() {
+    return "" + value;
+  }
 }
 /* JavaCC - OriginalChecksum=2e6eee6366ff4e864dd6c8184d2766f5 (do not edit this line) */
