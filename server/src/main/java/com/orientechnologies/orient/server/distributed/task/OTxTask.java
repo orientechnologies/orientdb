@@ -69,9 +69,20 @@ public class OTxTask extends OAbstractReplicatedTask {
 
       final List<Object> results = new ArrayList<Object>();
 
+      // EXECUTE CREATE RECORD FIRST TO RESOLVE TEMP RIDS
       for (OAbstractRecordReplicatedTask task : tasks) {
-        final Object taskResult = task.execute(iServer, iManager, database);
-        results.add(taskResult);
+        if (task instanceof OCreateRecordTask) {
+          final Object taskResult = task.execute(iServer, iManager, database);
+          results.add(taskResult);
+        }
+      }
+
+      // EXECUTE ANY OTHER TASK BUT CREATE RECORD
+      for (OAbstractRecordReplicatedTask task : tasks) {
+        if (!(task instanceof OCreateRecordTask)) {
+          final Object taskResult = task.execute(iServer, iManager, database);
+          results.add(taskResult);
+        }
       }
 
       database.commit();
