@@ -1379,11 +1379,12 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    *          name of field to check
    */
   public OType fieldType(final String iFieldName) {
-    if (_fields != null) {
-      ODocumentEntry entry = _fields.get(iFieldName);
-      if (entry != null)
-        return entry.type;
-    }
+    checkForFields(iFieldName);
+
+    ODocumentEntry entry = _fields.get(iFieldName);
+    if (entry != null)
+      return entry.type;
+
     return null;
   }
 
