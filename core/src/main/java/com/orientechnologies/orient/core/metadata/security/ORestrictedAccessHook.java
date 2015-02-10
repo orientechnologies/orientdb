@@ -21,13 +21,11 @@ package com.orientechnologies.orient.core.metadata.security;
 
 import java.util.Set;
 
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
@@ -39,7 +37,9 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
  * @author Luca Garulli
  */
 public class ORestrictedAccessHook extends ODocumentHookAbstract {
-  public ORestrictedAccessHook() {
+
+  public ORestrictedAccessHook(ODatabaseDocument database) {
+    super(database);
   }
 
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
@@ -58,15 +58,13 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
       if (identityType == null)
         identityType = "user";
 
-      final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
-
       OIdentifiable identity = null;
       if (identityType.equals("user")) {
-        final OSecurityUser user = db.getUser();
+        final OSecurityUser user = database.getUser();
         if (user != null)
           identity = user.getIdentity();
       } else if (identityType.equals("role")) {
-        final Set<? extends OSecurityRole> roles = db.getUser().getRoles();
+        final Set<? extends OSecurityRole> roles = database.getUser().getRoles();
         if (!roles.isEmpty())
           identity = roles.iterator().next().getIdentity();
       } else
@@ -75,7 +73,7 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
 
       if (identity != null) {
         for (String f : fields)
-          db.getMetadata().getSecurity().allowIdentity(iDocument, f, identity);
+          database.getMetadata().getSecurity().allowIdentity(iDocument, f, identity);
         return RESULT.RECORD_CHANGED;
       }
     }
@@ -106,24 +104,22 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
     final OImmutableClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
     if (cls != null && cls.isRestricted()) {
 
-      final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
-
-      if (db.getUser() == null)
+      if (database.getUser() == null)
         return true;
 
-      if (db.getUser().isRuleDefined(ORule.ResourceGeneric.BYPASS_RESTRICTED, null))
-        if (db.getUser().checkIfAllowed(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_READ) != null)
+      if (database.getUser().isRuleDefined(ORule.ResourceGeneric.BYPASS_RESTRICTED, null))
+        if (database.getUser().checkIfAllowed(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_READ) != null)
           // BYPASS RECORD LEVEL SECURITY: ONLY "ADMIN" ROLE CAN BY DEFAULT
           return true;
 
       final ODocument doc;
       if (iReadOriginal)
         // RELOAD TO AVOID HACKING OF "_ALLOW" FIELDS
-        doc = (ODocument) db.load(iDocument.getIdentity());
+        doc = (ODocument) database.load(iDocument.getIdentity());
       else
         doc = iDocument;
 
-      return db
+      return database
           .getMetadata()
           .getSecurity()
           .isAllowed((Set<OIdentifiable>) doc.field(OSecurityShared.ALLOW_ALL_FIELD),

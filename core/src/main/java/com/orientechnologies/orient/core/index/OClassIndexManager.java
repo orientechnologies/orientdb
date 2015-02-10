@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
@@ -51,7 +52,8 @@ import static com.orientechnologies.orient.core.hook.ORecordHook.TYPE.BEFORE_UPD
 public class OClassIndexManager extends ODocumentHookAbstract {
   private final ThreadLocal<Deque<TreeMap<OIndex<?>, List<Object>>>> lockedKeys = new ThreadLocal<Deque<TreeMap<OIndex<?>, List<Object>>>>();
 
-  public OClassIndexManager() {
+  public OClassIndexManager(ODatabaseDocument database) {
+    super(database);
   }
 
   private static void processCompositeIndexUpdate(final OIndex<?> index, final Set<String> dirtyFields, final ODocument iRecord) {

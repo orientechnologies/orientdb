@@ -389,7 +389,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       metadata = new OMetadataDefault();
       metadata.create();
 
-      registerHook(new OSecurityTrackerHook(metadata.getSecurity()), ORecordHook.HOOK_POSITION.LAST);
+      registerHook(new OSecurityTrackerHook(metadata.getSecurity(), this), ORecordHook.HOOK_POSITION.LAST);
 
       final OUser usr = getMetadata().getSecurity().getUser(OUser.ADMIN);
 
@@ -2571,10 +2571,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       throw new ODatabaseException("Database '" + getURL() + "' is closed");
   }
 
-  private void setCurrentDatabaseinThreadLocal() {
-    ODatabaseRecordThreadLocal.INSTANCE.set(this);
-  }
-
   private void initAtFirstOpen(String iUserName, String iUserPassword) {
     if (initialized)
       return;
@@ -2624,7 +2620,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       }
 
       installHooks();
-      registerHook(new OSecurityTrackerHook(metadata.getSecurity()), ORecordHook.HOOK_POSITION.LAST);
+      registerHook(new OSecurityTrackerHook(metadata.getSecurity(), this), ORecordHook.HOOK_POSITION.LAST);
 
       user = null;
     } else if (iUserName != null && iUserPassword != null)
@@ -2646,13 +2642,13 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
   }
 
   private void installHooks() {
-    registerHook(new OClassTrigger(), ORecordHook.HOOK_POSITION.FIRST);
-    registerHook(new ORestrictedAccessHook(), ORecordHook.HOOK_POSITION.FIRST);
-    registerHook(new OUserTrigger(), ORecordHook.HOOK_POSITION.EARLY);
-    registerHook(new OFunctionTrigger(), ORecordHook.HOOK_POSITION.REGULAR);
-    registerHook(new OClassIndexManager(), ORecordHook.HOOK_POSITION.LAST);
-    registerHook(new OSchedulerTrigger(), ORecordHook.HOOK_POSITION.LAST);
-    registerHook(new ORidBagDeleteHook(), ORecordHook.HOOK_POSITION.LAST);
+    registerHook(new OClassTrigger(this), ORecordHook.HOOK_POSITION.FIRST);
+    registerHook(new ORestrictedAccessHook(this), ORecordHook.HOOK_POSITION.FIRST);
+    registerHook(new OUserTrigger(this), ORecordHook.HOOK_POSITION.EARLY);
+    registerHook(new OFunctionTrigger(this), ORecordHook.HOOK_POSITION.REGULAR);
+    registerHook(new OClassIndexManager(this), ORecordHook.HOOK_POSITION.LAST);
+    registerHook(new OSchedulerTrigger(this), ORecordHook.HOOK_POSITION.LAST);
+    registerHook(new ORidBagDeleteHook(this), ORecordHook.HOOK_POSITION.LAST);
   }
 
   private void closeOnDelete() {

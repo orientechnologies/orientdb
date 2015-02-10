@@ -18,7 +18,7 @@ package com.orientechnologies.orient.core.schedule;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.schedule.OSchedulerListener.SCHEDULER_STATUS;
@@ -29,7 +29,9 @@ import com.orientechnologies.orient.core.schedule.OSchedulerListener.SCHEDULER_S
  */
 
 public class OSchedulerTrigger extends ODocumentHookAbstract {
-  public OSchedulerTrigger() {
+
+  public OSchedulerTrigger(ODatabaseDocument database) {
+    super(database);
     setIncludeClasses(OScheduler.CLASSNAME);
   }
 
@@ -40,7 +42,7 @@ public class OSchedulerTrigger extends ODocumentHookAbstract {
   @Override
   public RESULT onRecordBeforeCreate(final ODocument iDocument) {
     String name = iDocument.field(OScheduler.PROP_NAME);
-    OScheduler scheduler = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchedulerListener().getScheduler(name);
+    OScheduler scheduler = database.getMetadata().getSchedulerListener().getScheduler(name);
     if (scheduler != null) {
       throw new OException("Duplicate Scheduler");
     }
@@ -56,7 +58,7 @@ public class OSchedulerTrigger extends ODocumentHookAbstract {
   @Override
   public void onRecordAfterCreate(final ODocument iDocument) {
     OScheduler scheduler = new OScheduler(iDocument);
-    ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchedulerListener().addScheduler(scheduler);
+    database.getMetadata().getSchedulerListener().addScheduler(scheduler);
   }
 
   @Override
@@ -65,12 +67,11 @@ public class OSchedulerTrigger extends ODocumentHookAbstract {
       boolean isStart = iDocument.field(OScheduler.PROP_STARTED) == null ? false : ((Boolean) iDocument
           .field(OScheduler.PROP_STARTED));
       String schedulerName = iDocument.field(OScheduler.PROP_NAME);
-      OScheduler scheduler = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchedulerListener()
-          .getScheduler(schedulerName);
+      OScheduler scheduler = database.getMetadata().getSchedulerListener().getScheduler(schedulerName);
       if (isStart) {
         if (scheduler == null) {
           scheduler = new OScheduler(iDocument);
-          ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchedulerListener().addScheduler(scheduler);
+          database.getMetadata().getSchedulerListener().addScheduler(scheduler);
         }
         String currentStatus = iDocument.field(OScheduler.PROP_STATUS);
         if (currentStatus.equals(SCHEDULER_STATUS.STOPPED.name())) {
@@ -93,9 +94,9 @@ public class OSchedulerTrigger extends ODocumentHookAbstract {
   public RESULT onRecordBeforeDelete(final ODocument iDocument) {
     String schedulerName = iDocument.field(OScheduler.PROP_NAME);
     OScheduler scheduler = null;
-    scheduler = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchedulerListener().getScheduler(schedulerName);
+    scheduler = database.getMetadata().getSchedulerListener().getScheduler(schedulerName);
     if (scheduler != null) {
-      ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSchedulerListener().removeScheduler(scheduler);
+      database.getMetadata().getSchedulerListener().removeScheduler(scheduler);
     }
     return RESULT.RECORD_CHANGED;
   }
