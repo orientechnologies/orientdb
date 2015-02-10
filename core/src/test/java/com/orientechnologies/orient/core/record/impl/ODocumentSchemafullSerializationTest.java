@@ -332,4 +332,16 @@ public class ODocumentSchemafullSerializationTest {
     assertEquals(emb.field(CITY), embedded.field(CITY));
   }
 
+  @Test
+  public void simpleTypeKeepingTest() {
+    ODatabaseRecordThreadLocal.INSTANCE.set(databaseDocument);
+    ODocument document = new ODocument();
+    document.field("name", "test");
+
+    byte[] res = serializer.toStream(document, false);
+    ODocument extr = new ODocument().fromStream(res);
+    assertEquals(OType.STRING, extr.fieldType("name"));
+
+  }
+
 }
