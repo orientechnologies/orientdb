@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
@@ -86,7 +87,10 @@ public class OTxTask extends OAbstractReplicatedTask {
           results.set(i, new OPlaceholder(t.getRecord()));
         } else if (task instanceof OUpdateRecordTask) {
           // SEND VERSION
-          results.set(i, o);
+          if (((OSimpleVersion) o).getCounter() < 0) {
+            results.set(i, task.getRid().getRecord().reload().getRecordVersion());
+          } else
+            results.set(i, o);
         }
       }
 
