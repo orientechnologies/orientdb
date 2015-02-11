@@ -454,11 +454,16 @@ public class OSBTree<K, V> extends ODurableComponent {
     try {
       final ODiskCache diskCache = storageLocal.getDiskCache();
 
-      final long fileId = diskCache.openFile(name + dataFileExtension);
-      diskCache.deleteFile(fileId);
+      if (diskCache.exists(name + dataFileExtension)) {
+        final long fileId = diskCache.openFile(name + dataFileExtension);
+        diskCache.deleteFile(fileId);
+      }
 
-      final long nullFileId = diskCache.openFile(name + nullFileExtension);
-      diskCache.deleteFile(nullFileId);
+      if (diskCache.exists(name + nullFileExtension)) {
+        final long nullFileId = diskCache.openFile(name + nullFileExtension);
+        diskCache.deleteFile(nullFileId);
+      }
+
     } catch (IOException ioe) {
       throw new OSBTreeException("Exception during deletion of sbtree " + name, ioe);
     } finally {

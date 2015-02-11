@@ -1,25 +1,26 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.index.hashindex.local;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -391,6 +392,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       } else {
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
+        if (keyHashFunction instanceof OMurmurHash3HashFunction) {
+          ((OMurmurHash3HashFunction) keyHashFunction).setValueSerializer(keySerializer);
+        }
+
         final long hashCode = keyHashFunction.hashCode(key);
 
         BucketPath bucketPath = getBucket(hashCode);
@@ -456,6 +461,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
         final long hashCode = keyHashFunction.hashCode(key);
+
+        if (keyHashFunction instanceof OMurmurHash3HashFunction) {
+          ((OMurmurHash3HashFunction) keyHashFunction).setValueSerializer(keySerializer);
+        }
 
         final BucketPath nodePath = getBucket(hashCode);
         final long bucketPointer = directory.getNodePointer(nodePath.nodeIndex, nodePath.itemIndex + nodePath.hashMapOffset);
@@ -607,6 +616,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     try {
       key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
+      if (keyHashFunction instanceof OMurmurHash3HashFunction) {
+        ((OMurmurHash3HashFunction) keyHashFunction).setValueSerializer(keySerializer);
+      }
+
       final long hashCode = keyHashFunction.hashCode(key);
       BucketPath bucketPath = getBucket(hashCode);
       long bucketPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
@@ -710,27 +723,35 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
       final ODiskCache diskCache = storage.getDiskCache();
 
-      fileStateId = diskCache.openFile(name + metadataConfigurationFileExtension);
-      hashStateEntry = diskCache.load(fileStateId, 0, true);
-      try {
-        OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry,
-            ODurablePage.TrackMode.NONE, false);
-        for (int i = 0; i < HASH_CODE_SIZE; i++) {
-          if (!metadataPage.isRemoved(i)) {
-            diskCache.openFile(metadataPage.getFileId(i));
-            diskCache.deleteFile(metadataPage.getFileId(i));
+      if (diskCache.exists(name + metadataConfigurationFileExtension)) {
+        fileStateId = diskCache.openFile(name + metadataConfigurationFileExtension);
+        hashStateEntry = diskCache.load(fileStateId, 0, true);
+        try {
+          OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry,
+              ODurablePage.TrackMode.NONE, false);
+          for (int i = 0; i < HASH_CODE_SIZE; i++) {
+            if (!metadataPage.isRemoved(i)) {
+              final long fileId = metadataPage.getFileId(i);
+              if (diskCache.exists(fileId)) {
+                diskCache.openFile(fileId);
+                diskCache.deleteFile(fileId);
+              }
+            }
           }
+        } finally {
+          diskCache.release(hashStateEntry);
         }
-      } finally {
-        diskCache.release(hashStateEntry);
+
+        diskCache.deleteFile(fileStateId);
+
+        directory = new OHashTableDirectory(treeStateFileExtension, name, durableInNonTxMode, storage);
+        directory.deleteWithoutOpen();
+
+        if (diskCache.exists(name + nullBucketFileExtension)) {
+          final long nullBucketId = diskCache.openFile(name + nullBucketFileExtension);
+          diskCache.deleteFile(nullBucketId);
+        }
       }
-
-      diskCache.deleteFile(fileStateId);
-      directory = new OHashTableDirectory(treeStateFileExtension, name, durableInNonTxMode, storage);
-      directory.deleteWithoutOpen();
-
-      final long nullBucketId = diskCache.openFile(name + nullBucketFileExtension);
-      diskCache.deleteFile(nullBucketId);
     } catch (IOException ioe) {
       throw new OIndexException("Can not delete hash table with name " + name, ioe);
     } finally {
@@ -854,6 +875,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     acquireSharedLock();
     try {
       key = keySerializer.preprocess(key, (Object[]) keyTypes);
+
+      if (keyHashFunction instanceof OMurmurHash3HashFunction) {
+        ((OMurmurHash3HashFunction) keyHashFunction).setValueSerializer(keySerializer);
+      }
 
       final long hashCode = keyHashFunction.hashCode(key);
       BucketPath bucketPath = getBucket(hashCode);
@@ -991,6 +1016,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     try {
       key = keySerializer.preprocess(key, (Object[]) keyTypes);
 
+      if (keyHashFunction instanceof OMurmurHash3HashFunction) {
+        ((OMurmurHash3HashFunction) keyHashFunction).setValueSerializer(keySerializer);
+      }
+
       final long hashCode = keyHashFunction.hashCode(key);
       BucketPath bucketPath = getBucket(hashCode);
 
@@ -1046,6 +1075,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     acquireSharedLock();
     try {
       key = keySerializer.preprocess(key, (Object[]) keyTypes);
+
+      if (keyHashFunction instanceof OMurmurHash3HashFunction) {
+        ((OMurmurHash3HashFunction) keyHashFunction).setValueSerializer(keySerializer);
+      }
 
       final long hashCode = keyHashFunction.hashCode(key);
       BucketPath bucketPath = getBucket(hashCode);
