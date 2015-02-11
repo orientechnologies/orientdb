@@ -20,7 +20,16 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.comparator.OCaseInsentiveComparator;
 import com.orientechnologies.common.log.OLogManager;
@@ -34,7 +43,11 @@ import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.exception.OSchemaException;
-import com.orientechnologies.orient.core.index.*;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.index.OPropertyIndexDefinition;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -908,17 +921,17 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
 
   @Override
   public int hashCode() {
-		int sh = hashCode;
-		if (sh != 0)
-			return sh;
+    int sh = hashCode;
+    if (sh != 0)
+      return sh;
 
     acquireSchemaReadLock();
     try {
-			sh = hashCode;
+      sh = hashCode;
       if (sh != 0)
-        return  sh;
+        return sh;
 
-			calculateHashCode();
+      calculateHashCode();
       return hashCode;
     } finally {
       releaseSchemaReadLock();
@@ -938,8 +951,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     try {
       if (this == obj)
         return true;
-      if (!super.equals(obj))
-        return false;
       if (!OProperty.class.isAssignableFrom(obj.getClass()))
         return false;
       OProperty other = (OProperty) obj;
@@ -948,7 +959,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
           return false;
       } else if (!owner.equals(other.getOwnerClass()))
         return false;
-      return true;
+      return this.getName().equals(other.getName());
     } finally {
       releaseSchemaReadLock();
     }
@@ -1047,7 +1058,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   }
 
   public void releaseSchemaWriteLock() {
-		calculateHashCode();
+    calculateHashCode();
     owner.releaseSchemaWriteLock();
   }
 
@@ -1069,7 +1080,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       checkEmbedded();
 
       owner.renameProperty(oldName, name);
-      // this.name = name;
       this.globalRef = owner.owner.findOrCreateGlobalProperty(name, this.globalRef.getType());
     } finally {
       releaseSchemaWriteLock();
