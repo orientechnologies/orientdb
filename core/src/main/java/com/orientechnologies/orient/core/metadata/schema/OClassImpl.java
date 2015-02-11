@@ -810,9 +810,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   public void renameProperty(final String iOldName, final String iNewName) {
-    final OProperty p = properties.remove(iOldName);
+    final OProperty p = properties.remove(iOldName.toLowerCase());
     if (p != null)
-      properties.put(iNewName, p);
+      properties.put(iNewName.toLowerCase(), p);
   }
 
   public OClass addClusterId(final int clusterId) {
@@ -1428,7 +1428,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       }
 
       final OIndexDefinition indexDefinition = OIndexDefinitionFactory.createIndexDefinition(this, Arrays.asList(fields),
-            extractFieldTypes(fields), null);
+          extractFieldTypes(fields), null);
 
       return getDatabase().getMetadata().getIndexManager()
           .createIndex(name, type, indexDefinition, polymorphicClusterIds, progressListener, metadata, algorithm);
