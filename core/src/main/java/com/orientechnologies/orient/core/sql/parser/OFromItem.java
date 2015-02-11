@@ -8,7 +8,7 @@ public class OFromItem extends SimpleNode {
 
   protected List<ORid>          rids;
   protected OCluster            cluster;
-  protected OIdentifier              className;
+  protected OIdentifier         className;
   protected OIndexIdentifier    index;
   protected OMetadataIdentifier metadata;
   protected OStatement          statement;
@@ -29,18 +29,22 @@ public class OFromItem extends SimpleNode {
   @Override
   public String toString(String prefix) {
     if (rids != null && rids.size() > 0) {
-      StringBuilder builder = new StringBuilder();
-      builder.append("[");
-      boolean first = true;
-      for (ORid rid : rids) {
-        if (!first) {
-          builder.append(", ");
+      if (rids.size() == 1) {
+        return rids.get(0).toString();
+      } else {
+        StringBuilder builder = new StringBuilder();
+        builder.append("[");
+        boolean first = true;
+        for (ORid rid : rids) {
+          if (!first) {
+            builder.append(", ");
+          }
+          builder.append(rid.toString());
+          first = false;
         }
-        builder.append(rid.toString());
-        first = false;
+        builder.append("]");
+        return builder.toString();
       }
-      builder.append("]");
-      return builder.toString();
     } else if (cluster != null) {
       return cluster.toString();
     } else if (className != null) {
@@ -49,14 +53,15 @@ public class OFromItem extends SimpleNode {
       return metadata.toString();
     } else if (statement != null) {
       return "(" + statement.toString() + ")";
-    }else if(index!=null){
+    } else if (index != null) {
       return index.toString();
     }
 
     return super.toString();
   }
 
-  @Override public String toString() {
+  @Override
+  public String toString() {
     return toString("");
   }
 }

@@ -10,7 +10,7 @@ public class OContainsAllCondition extends OBooleanExpression {
 
   protected OExpression right;
 
-  protected OOrBlock rightBlock;
+  protected OOrBlock    rightBlock;
 
   public OContainsAllCondition(int id) {
     super(id);
@@ -32,7 +32,18 @@ public class OContainsAllCondition extends OBooleanExpression {
 
   @Override
   public String toString() {
-    return left.toString() + " CONTAINSALL " + right.toString();
+    StringBuilder result = new StringBuilder();
+    result.append(left.toString());
+    result.append(" CONTAINSALL ");
+    if (right != null) {
+      result.append(right.toString());
+    } else if (rightBlock != null) {
+      result.append("(");
+      result.append(rightBlock.toString());
+      result.append(")");
+    }
+
+    return result.toString();
   }
 
   public OExpression getLeft() {

@@ -168,13 +168,6 @@ public class OSelectStatementTest {
 
   }
 
-  public void testRange() {
-    SimpleNode result = checkRightSyntax("select * from ThisClass where a = b[pippo..pluto]");
-
-    assertTrue(result instanceof OSelectStatement);
-    OSelectStatement select = (OSelectStatement) result;
-
-  }
 
   public void testNamedParam() {
     SimpleNode result = checkRightSyntax("select from JavaComplexTestClass where enumField = :enumItem");

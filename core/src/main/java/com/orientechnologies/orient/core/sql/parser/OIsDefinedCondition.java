@@ -4,8 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
-public
-class OIsDefinedCondition extends OBooleanExpression {
+public class OIsDefinedCondition extends OBooleanExpression {
 
   protected OExpression expression;
 
@@ -17,14 +16,19 @@ class OIsDefinedCondition extends OBooleanExpression {
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override public boolean evaluate(OIdentifiable currentRecord) {
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord) {
     return false;
+  }
+
+  @Override
+  public String toString() {
+    return expression.toString() + " is defined";
   }
 }
 /* JavaCC - OriginalChecksum=075954b212c8cb44c8538bf5dea047d3 (do not edit this line) */

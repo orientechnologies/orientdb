@@ -2,8 +2,25 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OTraverseStatement extends OStatement {
+import java.util.ArrayList;
+import java.util.List;
+
+public class OTraverseStatement extends OStatement {
+
+  public enum Strategy {
+    DEPTH_FIRST, BREADTH_FIRST
+  }
+
+  protected List<OTraverseProjectionItem> projections = new ArrayList<OTraverseProjectionItem>();
+
+  protected OFromClause                   target;
+
+  protected OWhereClause                  whereClause;
+
+  protected Integer                       limit;
+
+  protected Strategy                      strategy;
+
   public OTraverseStatement(int id) {
     super(id);
   }
@@ -12,5 +29,47 @@ class OTraverseStatement extends OStatement {
     super(p, id);
   }
 
+  @Override
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+    builder.append("TRAVERSE ");
+    boolean first = true;
+    for (OTraverseProjectionItem item : projections) {
+      if (!first) {
+        builder.append(", ");
+      }
+      builder.append(item.toString());
+      first = false;
+    }
+
+    if (target != null) {
+      builder.append(" FROM ");
+      builder.append(target.toString());
+    }
+
+    if (whereClause != null) {
+      builder.append(" WHILE ");
+      builder.append(whereClause.toString());
+    }
+
+    if (limit != null) {
+      builder.append(" LIMIT ");
+      builder.append(limit);
+    }
+
+    if (strategy != null) {
+      builder.append(" strategy ");
+      switch (strategy) {
+      case BREADTH_FIRST:
+        builder.append("breadth_first");
+        break;
+      case DEPTH_FIRST:
+        builder.append("depth_first");
+        break;
+      }
+    }
+
+    return builder.toString();
+  }
 }
 /* JavaCC - OriginalChecksum=47399a3a3d5a423768bbdc70ee957464 (do not edit this line) */

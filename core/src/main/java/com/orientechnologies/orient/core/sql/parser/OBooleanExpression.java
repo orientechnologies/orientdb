@@ -12,6 +12,11 @@ public abstract class OBooleanExpression extends SimpleNode {
                                            public boolean evaluate(OIdentifiable currentRecord) {
                                              return true;
                                            }
+
+                                           @Override
+                                           public String toString() {
+                                             return "true";
+                                           }
                                          };
 
   public static OBooleanExpression FALSE = new OBooleanExpression(0) {
@@ -19,6 +24,12 @@ public abstract class OBooleanExpression extends SimpleNode {
                                            public boolean evaluate(OIdentifiable currentRecord) {
                                              return false;
                                            }
+
+                                           @Override
+                                           public String toString() {
+                                             return "false";
+                                           }
+
                                          };
 
   public OBooleanExpression(int id) {

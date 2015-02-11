@@ -30,7 +30,18 @@ public class OContainsCondition extends OBooleanExpression {
 
   @Override
   public String toString() {
-    return left.toString() + " CONTAINS " + right.toString();
+    StringBuilder result = new StringBuilder();
+    result.append(left.toString());
+    result.append(" CONTAINS ");
+    if (right != null) {
+      result.append(right.toString());
+    } else if (condition != null) {
+      result.append("(");
+      result.append(condition.toString());
+      result.append(")");
+    }
+
+    return result.toString();
   }
 
 }

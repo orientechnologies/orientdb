@@ -167,9 +167,9 @@ TOKEN:
     |
     < STRATEGY: ( "s" | "S" ) ( "t" | "T" ) ( "r" | "R" ) ( "a" | "A" ) ( "t" | "T" ) ( "e" | "E" ) ( "g" | "G" ) ( "y" | "Y" )  >
     |
-    < DEPTH_FIRST: ( "d" | "d" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "h" | "H" ) "_" ( "f" | "F" ) ( "i" | "I" ) ( "r" | "R" ) ( "s" | "S" ) ( "t" | "T" )  >
+    < DEPTH_FIRST: ( "d" | "d" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "h" | "H" ) ( "_" )  ( "f" | "F" ) ( "i" | "I" ) ( "r" | "R" ) ( "s" | "S" ) ( "t" | "T" )  >
     |
-    < BREADTH_FIRST: ( "b" | "B" ) ( "r" | "R" ) ( "e" | "E" ) ( "a" | "A" ) ( "d" | "D" ) ( "t" | "T" )  ( "h" | "H" ) "_" ( "f" | "F" ) ( "i" | "I" ) ( "r" | "R" ) ( "s" | "S" ) ( "t" | "T" )  >
+    < BREADTH_FIRST: ( "b" | "B" ) ( "r" | "R" ) ( "e" | "E" ) ( "a" | "A" ) ( "d" | "D" ) ( "t" | "T" )  ( "h" | "H" ) ( "_" ) ( "f" | "F" ) ( "i" | "I" ) ( "r" | "R" ) ( "s" | "S" ) ( "t" | "T" )  >
 	|
 	< THIS: "@this" >
 	|
@@ -455,6 +455,8 @@ OInteger Integer():
 ) { return jjtThis; }
 }
 
+
+
 OFloatingPoint FloatingPoint():
 {
     String stringValue;
@@ -564,17 +566,27 @@ OSelectStatement SelectStatement():
 }
 
 OTraverseStatement TraverseStatement():
-{}
+{ OTraverseProjectionItem lastProjection;}
 {
     (
     	<TRAVERSE>
-    	[ TraverseProjectionItem() ( <COMMA> TraverseProjectionItem() )* ]
+    	[
+    	    lastProjection = TraverseProjectionItem() { jjtThis.projections.add(lastProjection); }
+    	    ( <COMMA> lastProjection = TraverseProjectionItem()  { jjtThis.projections.add(lastProjection); } )*
+    	]
     	<FROM>
-    	FromClause()
-    	[ <WHILE> WhereClause() ]
-        [ Limit() ]
-        [ <STRATEGY> ( <DEPTH_FIRST> | <BREADTH_FIRST> ) ]
-    ) {return jjtThis;}
+    	jjtThis.target = FromClause()
+    	[ <WHILE> jjtThis.whereClause = WhereClause() ]
+        [ jjtThis.limit = Limit() ]
+        [ <STRATEGY>
+            (
+                <DEPTH_FIRST> { jjtThis.strategy = OTraverseStatement.Strategy.DEPTH_FIRST; }
+                |
+                <BREADTH_FIRST> { jjtThis.strategy = OTraverseStatement.Strategy.BREADTH_FIRST; }
+            )
+        ]
+    )
+    {return jjtThis;}
 }
 
 
@@ -971,23 +983,30 @@ OArraySelector ArraySelector():
 }
 
 OArrayNumberSelector ArrayNumberSelector():
-{}
+{ Token tokenVal; }
 {
     (
     	LOOKAHEAD( InputParameter() )
         jjtThis.inputValue = InputParameter()
         |
+        LOOKAHEAD( Integer() )
+        tokenVal = <INTEGER_LITERAL> { jjtThis.integer = Integer.parseInt(tokenVal.image); }
+        /* TODO for 3.0
+        |
         LOOKAHEAD( MathExpression() )
     	jjtThis.expressionValue = MathExpression()
+    	*/
+
     )
     { return jjtThis; }
 }
 
 OArraySingleValuesSelector ArraySingleValuesSelector():
-{}
+{ OArraySelector lastSelector; }
 {
     (
-        ArraySelector() ( <COMMA> ArraySelector() ) *
+        lastSelector = ArraySelector() { jjtThis.items.add(lastSelector); }
+        ( <COMMA> lastSelector = ArraySelector() { jjtThis.items.add(lastSelector); } ) *
     )
     { return jjtThis; }
 }
@@ -996,6 +1015,8 @@ OArrayRangeSelector ArrayRangeSelector():
 { Token token; }
 {
     (
+
+    /* TODO for 3.0
         token = <INTEGER_RANGE>
         {
             String img = token.image;
@@ -1004,8 +1025,9 @@ OArrayRangeSelector ArrayRangeSelector():
             jjtThis.to = Integer.parseInt(splitted[1], 10);
         }
         |
+        */
         (
-            jjtThis.fromSelector = ArrayNumberSelector() <RANGE> jjtThis.toSelector = ArrayNumberSelector()
+            jjtThis.fromSelector = ArrayNumberSelector() [ <MINUS> | <RANGE>  { jjtThis.newRange = true; } ] jjtThis.toSelector = ArrayNumberSelector()
         )
     )
     { return jjtThis; }
@@ -1243,7 +1265,7 @@ OMathExpression ParenthesisExpression():
 {}
 {
     (
-	    <LPAREN> ( Expression() | SelectStatement() ) <RPAREN>
+	    <LPAREN> ( jjtThis.expression = Expression() | jjtThis.statement = SelectStatement() ) <RPAREN>
 	)
 	{return jjtThis;}
 }
@@ -1721,6 +1743,7 @@ OBooleanExpression InCondition():
                     jjtThis.rightCollection.add(lastExpression);
                 }
             )*
+            <RBRACKET>
 	    )
 	    |
 	    LOOKAHEAD(2)
@@ -1806,19 +1829,59 @@ OBooleanExpression MatchesCondition():
 }
 
 OOrderBy OrderBy():
-{ jjtThis.items = new java.util.ArrayList(); }
+{
+    jjtThis.items = new java.util.ArrayList();
+    OOrderByItem lastItem;
+    OIdentifier lastIdentifier;
+    ORid lastRid;
+    Token lastToken;
+}
 {
 (
-	<ORDER> <BY> ( Identifier() | Rid() | <RECORD_ATTRIBUTE> ) [ <DESC> | <ASC> ]
-	( "," ( Identifier() | Rid() | <RECORD_ATTRIBUTE> )  [ <DESC> | <ASC> ] )*
+	<ORDER> <BY>
+	(
+	    {
+	        lastItem = new OOrderByItem();
+	        jjtThis.items.add(lastItem);
+	    }
+	    (
+	        lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.toString(); }
+	        |
+	        lastItem.rid = Rid()
+	        |
+	        lastToken = <RECORD_ATTRIBUTE> { lastItem.recordAttr = lastToken.image; }
+	    )
+	)
+	[ <DESC> { lastItem.type = OOrderByItem.DESC; }| <ASC>  { lastItem.type = OOrderByItem.ASC; }]
+	(
+	    ","
+	    (
+            {
+                lastItem = new OOrderByItem();
+                jjtThis.items.add(lastItem);
+            }
+        	(
+        	    lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.toString(); }
+        	    |
+        	    lastItem.rid = Rid()
+        	    |
+        	    lastToken = <RECORD_ATTRIBUTE> { lastItem.recordAttr = lastToken.image; }
+        	)
+        )
+        [ <DESC> { lastItem.type = OOrderByItem.DESC; }| <ASC>  { lastItem.type = OOrderByItem.ASC; }]
+	)*
 ) {return jjtThis;}
 }
 
 OGroupBy GroupBy():
-{}
+{ OIdentifier lastIdentifier; }
 {
 (
-	<GROUP> <BY> Identifier() ( "," Identifier() )*
+	<GROUP> <BY> lastIdentifier = Identifier() { jjtThis.items.add(lastIdentifier); }
+	(
+	    ","
+	    lastIdentifier = Identifier() { jjtThis.items.add(lastIdentifier); }
+	)*
 ) {return jjtThis;}
 }
 
@@ -1946,10 +2009,11 @@ OTraverseProjectionItem TraverseProjectionItem():
 {}
 {
     (
-        <STAR>
+        <STAR> { jjtThis.star = true; }
         |
         (
-            BaseIdentifier() [ LOOKAHEAD( Modifier() ) Modifier() ]
+            jjtThis.base = BaseIdentifier()
+            [ LOOKAHEAD( Modifier() ) jjtThis.modifier = Modifier() ]
         )
     )
     { return jjtThis; }

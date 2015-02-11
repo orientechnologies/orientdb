@@ -4,12 +4,11 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
-public
-class OInstanceofCondition extends OBooleanExpression {
+public class OInstanceofCondition extends OBooleanExpression {
 
   protected OExpression left;
   protected OIdentifier right;
-  protected String rightString;
+  protected String      rightString;
 
   public OInstanceofCondition(int id) {
     super(id);
@@ -19,14 +18,27 @@ class OInstanceofCondition extends OBooleanExpression {
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
 
-  @Override public boolean evaluate(OIdentifiable currentRecord) {
+  @Override
+  public boolean evaluate(OIdentifiable currentRecord) {
     return false;
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+    builder.append(left.toString());
+    builder.append(" instanceof ");
+    if (right != null) {
+      builder.append(right.toString());
+    } else if (rightString != null) {
+      builder.append(rightString);
+    }
+    return builder.toString();
   }
 }
 /* JavaCC - OriginalChecksum=0b5eb529744f307228faa6b26f0592dc (do not edit this line) */

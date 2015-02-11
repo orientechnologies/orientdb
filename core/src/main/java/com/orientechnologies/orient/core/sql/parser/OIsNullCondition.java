@@ -36,7 +36,7 @@ public class OIsNullCondition extends OBooleanExpression {
 
   @Override
   public String toString() {
-    return expression.toString() + " IS NULL";
+    return expression.toString() + " is null";
   }
 
 }

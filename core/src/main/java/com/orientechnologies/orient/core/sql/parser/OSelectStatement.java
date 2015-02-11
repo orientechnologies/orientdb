@@ -200,7 +200,7 @@ public class OSelectStatement extends OStatement {
     }
 
     if (groupBy != null) {
-      builder.append(" GROUP BY ");
+      builder.append(" ");
       builder.append(groupBy.toString());
     }
 

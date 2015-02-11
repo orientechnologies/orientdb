@@ -7,6 +7,8 @@ public class OArrayNumberSelector extends SimpleNode {
 
   OMathExpression expressionValue;
 
+  Integer integer;
+
   public OArrayNumberSelector(int id) {
     super(id);
   }
@@ -26,6 +28,8 @@ public class OArrayNumberSelector extends SimpleNode {
       return inputValue.toString();
     } else if (expressionValue != null) {
       return expressionValue.toString();
+    }else if(integer!=null){
+      return integer.toString();
     }
     return super.toString();
   }

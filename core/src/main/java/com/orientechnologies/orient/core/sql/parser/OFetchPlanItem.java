@@ -31,7 +31,7 @@ public class OFetchPlanItem extends SimpleNode {
   @Override
   public String toString() {
     StringBuilder result = new StringBuilder();
-    if (star) {
+    if (Boolean.TRUE.equals(star)) {
       result.append("*");
     } else {
       if (leftDepth != null) {

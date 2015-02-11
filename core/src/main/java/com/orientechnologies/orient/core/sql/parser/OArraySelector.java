@@ -7,6 +7,7 @@ public class OArraySelector extends SimpleNode {
   protected ORid            rid;
   protected OInputParameter inputParam;
   protected OExpression     expression;
+  protected OInteger         integer;
 
   public OArraySelector(int id) {
     super(id);
@@ -29,6 +30,8 @@ public class OArraySelector extends SimpleNode {
       return inputParam.toString();
     } else if (expression != null) {
       return expression.toString();
+    } else if (integer != null) {
+      return integer.toString();
     }
     return null;
   }

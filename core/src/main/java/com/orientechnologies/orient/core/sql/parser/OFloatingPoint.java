@@ -35,5 +35,13 @@ public class OFloatingPoint extends ONumber {
   public void setStringValue(String stringValue) {
     this.stringValue = stringValue;
   }
+
+  @Override
+  public String toString() {
+    if (sign == -1) {
+      return "-" + stringValue;
+    }
+    return stringValue;
+  }
 }
 /* JavaCC - OriginalChecksum=46acfb589f666717595e28f1b19611ae (do not edit this line) */

@@ -5,6 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 public class OArrayRangeSelector extends SimpleNode {
   protected Integer              from;
   protected Integer              to;
+  boolean                        newRange = false;
 
   protected OArrayNumberSelector fromSelector;
   protected OArrayNumberSelector toSelector;
@@ -30,7 +31,12 @@ public class OArrayRangeSelector extends SimpleNode {
     } else {
       result.append(fromSelector.toString());
     }
-    result.append("..");
+    if (newRange) {
+      result.append("-");
+      // TODO in 3.0 result.append("..");
+    } else {
+      result.append("-");
+    }
     if (to != null) {
       result.append(to);
     } else {
