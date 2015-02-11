@@ -34,6 +34,8 @@ import com.orientechnologies.orient.core.command.ODistributedCommand;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal.RUN_MODE;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
@@ -45,8 +47,9 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLDelegate;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLSelect;
@@ -63,6 +66,8 @@ import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
+import com.orientechnologies.orient.core.tx.OTransactionAbstract;
+import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
@@ -254,6 +259,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           return null;
 
         result = dManager.sendRequest(getName(), involvedClusters, nodes, task, EXECUTION_MODE.RESPONSE);
+
+        dManager.propagateSchemaChanges(ODatabaseRecordThreadLocal.INSTANCE.get());
+
         break;
       }
 
@@ -414,12 +422,11 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       String clusterName = getClusterNameByRID(iRecordId);
 
       int clusterId = iRecordId.getClusterId();
-      if (clusterId == ORID.CLUSTER_ID_INVALID) {
+      if (clusterId == ORID.CLUSTER_ID_INVALID)
         throw new IllegalArgumentException("Cluster not valid");
-      }
 
       final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(getName());
-      final List<String> nodes = dbCfg.getServers(clusterName, null);
+      List<String> nodes = dbCfg.getServers(clusterName, null);
 
       if (nodes.isEmpty()) {
         // DON'T REPLICATE OR DISTRIBUTE
@@ -431,10 +438,33 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         });
       }
 
-      final String masterNode = nodes.get(0);
-      if (!masterNode.equals(dManager.getLocalNodeName()))
-        throw new ODistributedException("Error on inserting into cluster '" + clusterName + "' where local node '"
-            + dManager.getLocalNodeName() + "' is not the master of it, but it's '" + masterNode + "'");
+      String masterNode = nodes.get(0);
+      if (!masterNode.equals(dManager.getLocalNodeName())) {
+        final OCluster cl = getClusterByName(clusterName);
+        final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+        final OClass cls = db.getMetadata().getSchema().getClassByClusterId(cl.getId());
+        String newClusterName = null;
+        if (cls != null) {
+          OClusterSelectionStrategy clSel = cls.getClusterSelection();
+          if (!(clSel instanceof OLocalClusterStrategy)) {
+            dManager.propagateSchemaChanges(db);
+            clSel = cls.getClusterSelection();
+          }
+
+          newClusterName = getPhysicalClusterNameById(clSel.getCluster(cls, null));
+          nodes = dbCfg.getServers(newClusterName, null);
+          masterNode = nodes.get(0);
+        }
+
+        if (!masterNode.equals(dManager.getLocalNodeName()))
+          throw new ODistributedException("Error on inserting into cluster '" + clusterName + "' where local node '"
+              + dManager.getLocalNodeName() + "' is not the master of it, but it's '" + masterNode + "'");
+
+        OLogManager.instance().warn(
+            this,
+            "Local node '" + dManager.getLocalNodeName() + "' is not the master for cluster '" + clusterName + "' (it's '"
+                + masterNode + "'). Switching to a valid cluster of the same class: '" + newClusterName + "'");
+      }
 
       Boolean executionModeSynch = dbCfg.isExecutionModeSynchronous(clusterName);
       if (executionModeSynch == null)
@@ -791,49 +821,61 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         return;
       }
 
+      OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.BEGUN);
+
       final OTxTask txTask = new OTxTask();
       final Set<String> involvedClusters = new HashSet<String>();
 
-      for (ORecordOperation op : iTx.getCurrentRecordEntries()) {
-        final OAbstractRecordReplicatedTask task;
+      final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
 
-        final ORecord record = op.getRecord();
+      while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
+        for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
+          tmpEntries.add(txEntry);
 
-        final ORecordId rid = (ORecordId) op.record.getIdentity();
+        iTx.clearRecordEntries();
 
-        switch (op.type) {
-        case ORecordOperation.CREATED:
-          final byte[] stream = record.toStream();
-          if (rid.isNew()) {
-            task = new OCreateRecordTask(rid, stream, record.getRecordVersion(), ORecordInternal.getRecordType(record));
+        for (ORecordOperation op : tmpEntries) {
+          final OAbstractRecordReplicatedTask task;
+
+          final ORecord record = op.getRecord();
+
+          final ORecordId rid = (ORecordId) record.getIdentity();
+
+          switch (op.type) {
+          case ORecordOperation.CREATED:
+            if (rid.isNew()) {
+              task = new OCreateRecordTask(record);
+              break;
+            }
+            // ELSE TREAT IT AS UPDATE: GO DOWN
+
+          case ORecordOperation.UPDATED:
+            // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
+            final OStorageOperationResult<ORawBuffer> previousContent = wrapped.readRecord(rid, null, false, null, false,
+                LOCKING_STRATEGY.DEFAULT);
+
+            if (previousContent.getResult() == null)
+              // DELETED
+              throw new OTransactionException("Cannot update record '" + rid + "' because has been deleted");
+
+            task = new OUpdateRecordTask(rid, previousContent.getResult().getBuffer(), previousContent.getResult().version,
+                record.toStream(), record.getRecordVersion());
             break;
+
+          case ORecordOperation.DELETED:
+            task = new ODeleteRecordTask(rid, record.getRecordVersion());
+            break;
+
+          default:
+            continue;
           }
-          // ELSE TREAT IT AS UPDATE: GO DOWN
 
-        case ORecordOperation.UPDATED:
-          // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
-          final OStorageOperationResult<ORawBuffer> previousContent = wrapped.readRecord(rid, null, false, null, false,
-              LOCKING_STRATEGY.DEFAULT);
-
-          if (previousContent.getResult() == null)
-            // DELETED
-            throw new OTransactionException("Cannot update record '" + rid + "' because has been deleted");
-
-          task = new OUpdateRecordTask(rid, previousContent.getResult().getBuffer(), previousContent.getResult().version,
-              record.toStream(), record.getRecordVersion());
-          break;
-
-        case ORecordOperation.DELETED:
-          task = new ODeleteRecordTask(rid, record.getRecordVersion());
-          break;
-
-        default:
-          continue;
+          involvedClusters.add(getClusterNameByRID(rid));
+          txTask.add(task);
         }
-
-        involvedClusters.add(getClusterNameByRID(rid));
-        txTask.add(task);
       }
+
+      OTransactionInternal.setStatus((OTransactionAbstract) iTx, OTransaction.TXSTATUS.COMMITTING);
 
       final Set<String> nodes = dbCfg.getServers(involvedClusters);
 

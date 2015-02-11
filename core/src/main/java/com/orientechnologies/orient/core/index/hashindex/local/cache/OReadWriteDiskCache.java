@@ -32,9 +32,9 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OAllCacheEntriesAreUsedException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.ODirtyPage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 
 import java.io.IOException;
@@ -628,12 +628,12 @@ public class OReadWriteDiskCache implements ODiskCache {
   }
 
   @Override
-  public void addLowDiskSpaceListener(OWOWCache.LowDiskSpaceListener listener) {
+  public void addLowDiskSpaceListener(OLowDiskSpaceListener listener) {
     writeCache.addLowDiskSpaceListener(listener);
   }
 
   @Override
-  public void removeLowDiskSpaceListener(OWOWCache.LowDiskSpaceListener listener) {
+  public void removeLowDiskSpaceListener(OLowDiskSpaceListener listener) {
     writeCache.removeLowDiskSpaceListener(listener);
   }
 

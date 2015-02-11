@@ -281,7 +281,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
       checkpointExecutor = Executors.newSingleThreadExecutor(new FullCheckpointThreadFactory());
 
       writeAheadLog = new ODiskWriteAheadLog(this);
-
+			writeAheadLog.addFullCheckpointListener(this);
     } else
       writeAheadLog = null;
 

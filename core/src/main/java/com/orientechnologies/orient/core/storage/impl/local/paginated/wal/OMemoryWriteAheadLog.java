@@ -20,6 +20,8 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.orient.core.storage.impl.local.OFullCheckpointRequestListener;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,7 +70,8 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   @Override
-  public OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback, OLogSequenceNumber startLsn) throws IOException {
+  public OLogSequenceNumber logAtomicOperationEndRecord(OOperationUnitId operationUnitId, boolean rollback,
+      OLogSequenceNumber startLsn) throws IOException {
     return log(new OAtomicUnitEndRecord(operationUnitId, rollback, startLsn));
   }
 
@@ -178,5 +181,13 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
     } finally {
       syncObject.unlock();
     }
+  }
+
+  @Override
+  public void addFullCheckpointListener(OFullCheckpointRequestListener listener) {
+  }
+
+  @Override
+  public void removeFullCheckpointListener(OFullCheckpointRequestListener listener) {
   }
 }

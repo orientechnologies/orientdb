@@ -88,6 +88,8 @@
             <jvmarg value="-DstorageType=${test.storageType}"/>
         	<jvmarg value="${serializer}" />
             <jvmarg value="-DtestPath=${project.root.dir}"/>
+            <jvmarg value="-Ddb.makeFullCheckpointOnIndexChange=false"/>
+            <jvmarg value="-Ddb.makeFullCheckpointOnSchemaChange=false"/>
             <!-- debug -->
             <!--<jvmarg value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005"/>-->
 
@@ -129,14 +131,14 @@
         <echo>STARTING REMOTE ORIENTDB SERVER INSTANCE...</echo>
         <exec dir="${orient.path}/bin" executable="cmd" spawn="true" osfamily="windows">
             <env key="JAVA_OPTS"
-                 value="-Xmx3G -XX:+HeapDumpOnOutOfMemoryError -Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false -Dstorage.configuration.syncOnUpdate=false -Dindex.flushAfterCreate=false ${serializer}"/>
+                 value="-Xmx3G -XX:+HeapDumpOnOutOfMemoryError -Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false -Dstorage.configuration.syncOnUpdate=false -Dindex.flushAfterCreate=false ${serializer} -Ddb.makeFullCheckpointOnIndexChange=false -Ddb.makeFullCheckpointOnSchemaChange=false"/>
             <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="/c start server.bat"/>
         </exec>
 
         <exec dir="${orient.path}/bin" executable="sh" spawn="true" osfamily="unix">
             <env key="JAVA_OPTS"
-                 value="-Xmx3G -XX:+HeapDumpOnOutOfMemoryError -Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false -Dstorage.configuration.syncOnUpdate=false -Dindex.flushAfterCreate=false ${serializer} ${spareSerailizer} "/>
+                 value="-Xmx3G -XX:+HeapDumpOnOutOfMemoryError -Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false -Dstorage.configuration.syncOnUpdate=false -Dindex.flushAfterCreate=false ${serializer} ${spareSerailizer} -Ddb.makeFullCheckpointOnIndexChange=false -Ddb.makeFullCheckpointOnSchemaChange=false"/>
             <!-- <env key="JAVA_OPTS" value="-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5006 -Xmx3G -XX:+HeapDumpOnOutOfMemoryError -Djava.rmi.server.hostname=localhost -Dcom.sun.management.jmxremote.port=10005 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dstorage.makeFullCheckpointAfterCreate=false -Dstorage.makeFullCheckpointAfterClusterCreate=false -Dstorage.wal.syncOnPageFlush=false -Dstorage.configuration.syncOnUpdate=false -Dindex.flushAfterCreate=false ${serializer} ${spareSerailizer} "/>-->
             <env key="CONFIG_FILE" value="${basedir}/src/test/resources/orientdb-server-config.xml"/>
             <arg value="./server.sh"/>

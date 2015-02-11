@@ -125,7 +125,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
     final OClass linkClass = ODocumentInternal.getImmutableSchemaClass(iFromVertex);
     if (linkClass == null)
-      throw new IllegalArgumentException("Class ot found in source vertex: " + iFromVertex);
+      throw new IllegalArgumentException("Class not found in source vertex: " + iFromVertex);
 
     final OProperty prop = linkClass.getProperty(iFieldName);
     final OType propType = prop != null && prop.getType() != OType.ANY ? prop.getType() : null;
@@ -541,12 +541,11 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    */
   @Override
   public Set<String> getPropertyKeys() {
-    setCurrentGraphInThreadLocal();
+    final OrientBaseGraph graph = setCurrentGraphInThreadLocal();
 
     final ODocument doc = getRecord();
 
     final Set<String> result = new HashSet<String>();
-    final OrientBaseGraph graph = getGraph();
 
     for (String field : doc.fieldNames())
       if (graph != null && settings.isUseVertexFieldsForEdgeLabels()) {
@@ -638,10 +637,9 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
   public void remove() {
     checkClass();
 
-    checkIfAttached();
+    final OrientBaseGraph graph = checkIfAttached();
 
-    final OrientBaseGraph graph = getGraph();
-    setCurrentGraphInThreadLocal();
+    graph.setCurrentGraphInThreadLocal();
     graph.autoStartTransaction();
 
     final ODocument doc = getRecord();
@@ -867,11 +865,9 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     if (inVertex == null)
       throw new IllegalArgumentException("destination vertex is null");
 
-    final OrientBaseGraph graph = getGraph();
-    if (graph != null) {
-      setCurrentGraphInThreadLocal();
+    final OrientBaseGraph graph = setCurrentGraphInThreadLocal();
+    if (graph != null)
       graph.autoStartTransaction();
-    }
 
     // TEMPORARY STATIC LOCK TO AVOID MT PROBLEMS AGAINST OMVRBTreeRID
     final ODocument outDocument = getRecord();
@@ -1114,9 +1110,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    * Returns a string representation of the vertex.
    */
   public String toString() {
-    final OrientBaseGraph graph = getGraph();
-    if (graph != null)
-      graph.setCurrentGraphInThreadLocal();
+    setCurrentGraphInThreadLocal();
 
     final ODocument record = getRecord();
     if (record == null)
@@ -1161,7 +1155,11 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
    *          Optional array of class names
    * @return The found direction if any
    */
-  protected OPair<Direction, String> getConnection(final Direction iDirection, final String iFieldName, final String... iClassNames) {
+  protected OPair<Direction, String> getConnection(final Direction iDirection, final String iFieldName, String... iClassNames) {
+    if (iClassNames != null && iClassNames.length == 1 && iClassNames[0].equalsIgnoreCase("E"))
+      // DEFAULT CLASS, TREAT IT AS NO CLASS/LABEL
+      iClassNames = null;
+
     final OrientBaseGraph graph = getGraph();
     if (iDirection == Direction.OUT || iDirection == Direction.BOTH) {
       if (settings.isUseVertexFieldsForEdgeLabels()) {

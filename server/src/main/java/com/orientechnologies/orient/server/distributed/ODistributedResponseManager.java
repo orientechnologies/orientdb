@@ -524,7 +524,7 @@ public class ODistributedResponseManager {
     final List<ODistributedResponse> bestResponsesGroup = responseGroups.get(bestResponsesGroupIndex);
 
     final int maxCoherentResponses = bestResponsesGroup.size();
-    final int conflicts = getExpectedResponses() - ( maxCoherentResponses + discardedResponses );
+    final int conflicts = getExpectedResponses() - (maxCoherentResponses + discardedResponses);
 
     if (isMinimumQuorumReached(true)) {
       // QUORUM SATISFIED
@@ -608,7 +608,7 @@ public class ODistributedResponseManager {
           ODistributedServerLog.warn(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
               "fixing response (%s) for request (%s) in server %s to be: %s", r, request, r.getExecutorNodeName(), goodResponse);
 
-          final OAbstractRemoteTask fixTask = ((OAbstractReplicatedTask) request.getTask()).getFixTask(request, r.getPayload(),
+          final OAbstractRemoteTask fixTask = ((OAbstractReplicatedTask) request.getTask()).getFixTask(request, request.getTask(), r.getPayload(),
               goodResponse.getPayload());
 
           if (fixTask != null)
@@ -629,12 +629,22 @@ public class ODistributedResponseManager {
     for (List<ODistributedResponse> responseGroup : responseGroups) {
       if (responseGroup != bestResponsesGroup && responseGroup.size() == maxCoherentResponses) {
         final List<String> a = new ArrayList<String>();
-        for (ODistributedResponse r : bestResponsesGroup)
+        Object aResponse = null;
+        for (ODistributedResponse r : bestResponsesGroup) {
           a.add(r.getExecutorNodeName());
+          aResponse = r.getPayload();
+        }
 
         final List<String> b = new ArrayList<String>();
-        for (ODistributedResponse r : responseGroup)
+        Object bResponse = null;
+        for (ODistributedResponse r : responseGroup) {
           b.add(r.getExecutorNodeName());
+          bResponse = r.getPayload();
+        }
+
+        final StringBuilder details = new StringBuilder();
+        details.append(" A=").append(aResponse);
+        details.append(", B=").append(bResponse);
 
         ODistributedServerLog
             .error(
@@ -642,8 +652,8 @@ public class ODistributedResponseManager {
                 dManager.getLocalNodeName(),
                 null,
                 DIRECTION.NONE,
-                "detected possible split brain network where 2 groups of servers A%s and B%s have different contents. Cannot decide who is the winner even if the quorum (%d) has been reached. Request (%s)",
-                a, b, quorum, request);
+                "detected possible split brain network where 2 groups of servers A%s and B%s have different contents. Cannot decide who is the winner even if the quorum (%d) has been reached. Request (%s) responses:%s",
+                a, b, quorum, request, details);
 
         // DON'T FIX RECORDS BECAUSE THERE ISN'T A CLEAR WINNER
         return true;

@@ -214,7 +214,8 @@ public class OSQLHelper {
     if (beginParenthesis > -1 && (separator == -1 || separator > beginParenthesis)) {
       final int endParenthesis = iWord.indexOf(OStringSerializerHelper.EMBEDDED_END, beginParenthesis);
 
-      if (endParenthesis > -1 && Character.isLetter(iWord.charAt(0)))
+      final char firstChar = iWord.charAt(0);
+      if (endParenthesis > -1 && (firstChar == '_' || Character.isLetter(firstChar)))
         // FUNCTION: CREATE A RUN-TIME CONTAINER FOR IT TO SAVE THE PARAMETERS
         return new OSQLFunctionRuntime(iCommand, iWord);
     }

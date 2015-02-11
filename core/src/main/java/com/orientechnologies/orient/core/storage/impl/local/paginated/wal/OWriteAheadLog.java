@@ -20,6 +20,8 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.orient.core.storage.impl.local.OFullCheckpointRequestListener;
+
 import java.io.IOException;
 import java.util.Set;
 
@@ -67,4 +69,8 @@ public interface OWriteAheadLog {
   OLogSequenceNumber getFlushedLSN();
 
   void cutTill(OLogSequenceNumber lsn) throws IOException;
+
+	public void addFullCheckpointListener(OFullCheckpointRequestListener listener);
+
+	public void removeFullCheckpointListener(OFullCheckpointRequestListener listener);
 }

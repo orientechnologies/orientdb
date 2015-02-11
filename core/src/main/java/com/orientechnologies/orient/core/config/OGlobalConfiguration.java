@@ -118,9 +118,8 @@ public enum OGlobalConfiguration {
 
   WAL_MAX_SEGMENT_SIZE("storage.wal.maxSegmentSize", "Maximum size of single. WAL segment in megabytes.", Integer.class, 128),
 
-  WAL_MAX_SIZE("storage.wal.maxSize", "Supposed, maximum size of WAL on disk in megabytes. This size may be more or less. "
-      + "This parameter is used to calculate required free disk space, if we will have less free"
-      + " disk space then required database will work in read only mode.", Integer.class, 4 * 1024),
+  WAL_MAX_SIZE("storage.wal.maxSize", "Supposed, maximum size of WAL on disk in megabytes. This size may be more or less. ",
+      Integer.class, 4096),
 
   WAL_COMMIT_TIMEOUT("storage.wal.commitTimeout", "Maximum interval between WAL commits (in ms.)", Integer.class, 1000),
 
@@ -461,6 +460,12 @@ public enum OGlobalConfiguration {
 
   DISTRIBUTED_PURGE_RESPONSES_TIMER_DELAY("distributed.purgeResponsesTimerDelay",
       "Maximum timeout in milliseconds to collect all the asynchronous responses from replication", Integer.class, 15000l),
+
+  DB_MAKE_FULL_CHECKPOINT_ON_INDEX_CHANGE("db.makeFullCheckpointOnIndexChange",
+      "When index metadata is changed full checkpoint is performed", Boolean.class, true),
+
+  DB_MAKE_FULL_CHECKPOINT_ON_SCHEMA_CHANGE("db.makeFullCheckpointOnSchemaChange",
+      "When index schema is changed full checkpoint is performed", Boolean.class, true),
 
   DB_DOCUMENT_SERIALIZER("db.document.serializer", "The default record serializer used by the document database", String.class,
       ORecordSerializerBinary.NAME),

@@ -208,7 +208,7 @@ public class OEntityManager {
 
 
   /**
-   * Scans all classes accessible from the context class loader which belong to the given class and all it´ attribut - classes.
+   * Scans all classes accessible from the context class loader which belong to the given class and all it's attributes - classes.
    *
    * @param aClass The class to start from
    * @param recursive Beginning from the class, it will register all classes that are direct or indirect a attribute class

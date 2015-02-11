@@ -29,6 +29,9 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.storage.impl.local.OFullCheckpointRequestListener;
+import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceInformation;
+import com.orientechnologies.orient.core.storage.impl.local.OLowDiskSpaceListener;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OLocalPaginatedStorage;
 
 import java.io.EOFException;
@@ -55,27 +58,37 @@ import java.util.zip.CRC32;
  * @since 25.04.13
  */
 public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
-  public static final String           MASTER_RECORD_EXTENSION = ".wmr";
-  public static final String           WAL_SEGMENT_EXTENSION   = ".wal";
-  private static final long            ONE_KB                  = 1024L;
-  private final List<LogSegment>       logSegments             = new ArrayList<LogSegment>();
-  private final int                    maxPagesCacheSize;
-  private final int                    commitDelay;
-  private final long                   maxSegmentSize;
-  private final File                   walLocation;
-  private final RandomAccessFile       masterRecordLSNHolder;
-  private final OLocalPaginatedStorage storage;
-  private boolean                      useFirstMasterRecord    = true;
-  private long                         logSize;
-  private File                         masterRecordFile;
-  private OLogSequenceNumber           firstMasterRecord;
-  private OLogSequenceNumber           secondMasterRecord;
-  private volatile OLogSequenceNumber  flushedLsn;
+  public static final String                                        MASTER_RECORD_EXTENSION = ".wmr";
+  public static final String                                        WAL_SEGMENT_EXTENSION   = ".wal";
+  private static final long                                         ONE_KB                  = 1024L;
 
-  private boolean                      segmentCreationFlag     = false;
-  private final Condition              segmentCreationComplete = syncObject.newCondition();
+  private final long                                                freeSpaceLimit          = OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT
+                                                                                                .getValueAsLong() * 1024L * 1024L;
+  private final long                                                walSizeLimit            = OGlobalConfiguration.WAL_MAX_SIZE
+                                                                                                .getValueAsLong() * 1024L * 1024L;
 
-  private final Set<OOperationUnitId>  activeOperations        = new HashSet<OOperationUnitId>();
+  private final List<LogSegment>                                    logSegments             = new ArrayList<LogSegment>();
+  private final int                                                 maxPagesCacheSize;
+  private final int                                                 commitDelay;
+  private final long                                                maxSegmentSize;
+  private final File                                                walLocation;
+  private final RandomAccessFile                                    masterRecordLSNHolder;
+  private final OLocalPaginatedStorage                              storage;
+  private boolean                                                   useFirstMasterRecord    = true;
+  private long                                                      logSize;
+  private File                                                      masterRecordFile;
+  private OLogSequenceNumber                                        firstMasterRecord;
+  private OLogSequenceNumber                                        secondMasterRecord;
+  private volatile OLogSequenceNumber                               flushedLsn;
+
+  private boolean                                                   segmentCreationFlag     = false;
+  private final Condition                                           segmentCreationComplete = syncObject.newCondition();
+
+  private final Set<OOperationUnitId>                               activeOperations        = new HashSet<OOperationUnitId>();
+  private final List<WeakReference<OLowDiskSpaceListener>>          lowDiskSpaceListeners   = Collections
+                                                                                                .synchronizedList(new ArrayList<WeakReference<OLowDiskSpaceListener>>());
+  private final List<WeakReference<OFullCheckpointRequestListener>> fullCheckpointListeners = Collections
+                                                                                                .synchronizedList(new ArrayList<WeakReference<OFullCheckpointRequestListener>>());
 
   private final class LogSegment implements Comparable<LogSegment> {
     private final RandomAccessFile                           rndFile;
@@ -199,6 +212,16 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         }
 
         assert !pagesCache.isEmpty();
+
+        final long freeSpace = walLocation.getFreeSpace();
+        if (freeSpace < freeSpaceLimit) {
+          for (WeakReference<OLowDiskSpaceListener> listenerWeakReference : lowDiskSpaceListeners) {
+            final OLowDiskSpaceListener lowDiskSpaceListener = listenerWeakReference.get();
+
+            if (lowDiskSpaceListener != null)
+              lowDiskSpaceListener.lowDiskSpace(new OLowDiskSpaceInformation(freeSpace, freeSpaceLimit));
+          }
+        }
       }
 
       private void flushPage(byte[] content) throws IOException {
@@ -589,6 +612,42 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE.getValueAsInteger() * ONE_KB * ONE_KB, storage);
   }
 
+  public void addLowDiskSpaceListener(OLowDiskSpaceListener listener) {
+    lowDiskSpaceListeners.add(new WeakReference<OLowDiskSpaceListener>(listener));
+  }
+
+  public void removeLowDiskSpaceListener(OLowDiskSpaceListener listener) {
+    List<WeakReference<OLowDiskSpaceListener>> itemsToRemove = new ArrayList<WeakReference<OLowDiskSpaceListener>>();
+
+    for (WeakReference<OLowDiskSpaceListener> ref : lowDiskSpaceListeners) {
+      final OLowDiskSpaceListener lowDiskSpaceListener = ref.get();
+
+      if (lowDiskSpaceListener == null || lowDiskSpaceListener.equals(listener))
+        itemsToRemove.add(ref);
+    }
+
+    for (WeakReference<OLowDiskSpaceListener> ref : itemsToRemove)
+      lowDiskSpaceListeners.remove(ref);
+  }
+
+  public void addFullCheckpointListener(OFullCheckpointRequestListener listener) {
+    fullCheckpointListeners.add(new WeakReference<OFullCheckpointRequestListener>(listener));
+  }
+
+  public void removeFullCheckpointListener(OFullCheckpointRequestListener listener) {
+    List<WeakReference<OFullCheckpointRequestListener>> itemsToRemove = new ArrayList<WeakReference<OFullCheckpointRequestListener>>();
+
+    for (WeakReference<OFullCheckpointRequestListener> ref : fullCheckpointListeners) {
+      final OFullCheckpointRequestListener fullCheckpointRequestListener = ref.get();
+
+      if (fullCheckpointRequestListener == null || fullCheckpointRequestListener.equals(listener))
+        itemsToRemove.add(ref);
+    }
+
+    for (WeakReference<OFullCheckpointRequestListener> ref : itemsToRemove)
+      fullCheckpointListeners.remove(ref);
+  }
+
   public ODiskWriteAheadLog(int maxPagesCacheSize, int commitDelay, long maxSegmentSize, OLocalPaginatedStorage storage)
       throws IOException {
     this.maxPagesCacheSize = maxPagesCacheSize;
@@ -837,6 +896,14 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
           segmentCreationFlag = false;
           segmentCreationComplete.signalAll();
+        }
+      }
+
+      if (logSize > walSizeLimit && logSegments.size() > 1) {
+        for (WeakReference<OFullCheckpointRequestListener> listenerWeakReference : fullCheckpointListeners) {
+          final OFullCheckpointRequestListener listener = listenerWeakReference.get();
+          if (listener != null)
+            listener.requestCheckpoint();
         }
       }
 

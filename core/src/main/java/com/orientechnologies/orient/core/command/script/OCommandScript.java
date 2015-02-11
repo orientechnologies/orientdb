@@ -46,12 +46,12 @@ public class OCommandScript extends OCommandRequestTextAbstract {
 
   public OCommandScript(final String iLanguage, final String iText) {
     super(iText);
-    language = iLanguage;
+    setLanguage(iLanguage);
     useCache = true;
   }
 
   public OCommandScript(final String iText) {
-    super(iText);
+    this("sql", iText);
   }
 
   public boolean isIdempotent() {
@@ -63,6 +63,9 @@ public class OCommandScript extends OCommandRequestTextAbstract {
   }
 
   public OCommandScript setLanguage(String language) {
+    if (language == null || language.isEmpty()) {
+     throw new IllegalArgumentException("Not a valid script language specified: " + language);
+    }
     this.language = language;
     return this;
   }

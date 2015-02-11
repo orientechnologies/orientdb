@@ -88,4 +88,6 @@ public interface OCommandExecutor {
    * @return
    */
   public int getSecurityOperationType();
+
+  boolean involveSchema();
 }
