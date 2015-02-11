@@ -1,5 +1,9 @@
 package com.orientechnologies.workbench;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.orient.core.query.OQueryHelper;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -7,17 +11,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.orient.core.query.OQueryHelper;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
 @SuppressWarnings("unchecked")
 public final class ORealtimeMetric {
   private final OMonitoredServer owner;
   private ODocument              server;
   private long                   maxTTL       = 1000;
   private long                   lastReceived = 0;
-  private Map<String, Object>    lastMetrics;
+  public Map<String, Object>    lastMetrics;
 
   ORealtimeMetric(final OMonitoredServer iOwner, final ODocument iServer) {
     this.owner = iOwner;
@@ -44,7 +44,7 @@ public final class ORealtimeMetric {
     return (Map<String, Object>) lastMetrics.get("counters");
   }
 
-  protected boolean fetch() throws MalformedURLException, IOException {
+  public boolean fetch() throws MalformedURLException, IOException {
     return this.fetch(null);
   }
 

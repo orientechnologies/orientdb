@@ -10,6 +10,130 @@ app.controller('ServerMonitorController', function ($scope, $location, $routePar
 
 });
 
+app.controller('SingleServerController', function ($scope, $location, $routeParams, $timeout, Metric, $i18n, MetricConfig, $q, Server) {
+
+
+  $scope.operations = 0;
+
+  $scope.connections = 0;
+
+  $scope.requests = 0;
+
+  $scope.latency = 0;
+  var lastOps = null;
+  var lastReq = null;
+
+  function initStats() {
+    Server.getStats($scope.server).then(function (data) {
+
+      $scope.server.status = data.result[0].status;
+
+
+      if ($scope.server.status == 'ONLINE') {
+        var snapshot = data.result[0]['snapshot'];
+        var realtime = data.result[0]['realtime'];
+
+
+        var total = snapshot['system.disk./.totalSpace'];
+        var usable = snapshot['system.disk./.usableSpace'];
+        $scope.diskPercent = Math.floor((100 - (usable * 100) / total));
+        $scope.anotherPercent = -45;
+        $scope.diskOptions = {
+          barColor: '#E67E22',
+          scaleColor: false,
+          lineWidth: 3,
+          lineCap: 'butt'
+        };
+
+
+        var maxMemory = realtime['hookValues']['process.runtime.maxMemory'];
+        var totalMemory = realtime['hookValues']['process.runtime.totalMemory'];
+        $scope.ramPercent = Math.floor(((totalMemory * 100) / maxMemory));
+        $scope.anotherPercent = -45;
+        $scope.ramOptions = {
+          barColor: '#E67E22',
+          scaleColor: false,
+          lineWidth: 3,
+          lineCap: 'butt'
+        };
+
+
+        var cpu = realtime['hookValues']['process.runtime.cpu'];
+        $scope.cpuPercent = parseFloat(cpu).toFixed(2);
+
+        $scope.cpuOptions = {
+          barColor: '#E67E22',
+          scaleColor: false,
+          lineWidth: 3,
+          lineCap: 'butt'
+        };
+        $scope.connections = realtime['hookValues']['server.connections.actives'];
+
+        var keys = Object.keys(realtime['chronos']).filter(function (k) {
+          return k.match(/db.*Record/g) != null;
+        })
+        var ops = 0;
+        keys.forEach(function (k) {
+          ops += realtime['chronos'][k].entries;
+        });
+
+        if (lastOps != null) {
+          $scope.operations = Math.abs(lastOps - ops);
+        }
+        lastOps = ops;
+
+
+        var req = realtime['chronos']['server.network.requests'].entries;
+        if (lastReq != null) {
+          $scope.requests = Math.abs(req - lastReq);
+        }
+        lastReq = req;
+
+        if (realtime['chronos']['distributed.node.latency'])
+          $scope.latency = realtime['chronos']['distributed.node.latency'].average;
+
+      } else {
+        $scope.operations = 0;
+        $scope.connections = 0;
+        $scope.requests = 0;
+        $scope.latency = 0;
+        $scope.diskPercent = 0;
+        $scope.cpuPercent = 0;
+        $scope.ramPercent = 0;
+      }
+    });
+  }
+
+  function initCrud() {
+    var params = {
+      server: $scope.server.name,
+      type: 'realtime',
+      kind: 'chrono',
+      names: "db.*.createRecord,db.*.updateRecord,db.*.readRecord,db.*.deleteRecord"
+    };
+
+    var totalLoad = Metric.get(params);
+
+    totalLoad.$promise.then(function (data) {
+      console.log(data);
+      data.result.forEach(function (e) {
+
+      })
+    });
+  }
+
+
+  var statsWatching = function () {
+    $timeout(function () {
+      initStats()
+      statsWatching();
+    }, 2000);
+  }
+
+
+  statsWatching();
+
+});
 app.controller('GeneralMonitorController', function ($scope, $location, $routeParams, Monitor, Metric, Server, MetricConfig, $i18n, ContextNotification, $odialog) {
 
 

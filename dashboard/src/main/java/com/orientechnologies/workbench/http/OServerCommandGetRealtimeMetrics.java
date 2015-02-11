@@ -183,16 +183,9 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
     ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
     ODatabaseRecordThreadLocal.INSTANCE.set(db);
     if (databases.length == 1 && databases[0].equals("all")) {
-      try {
-        final Map<String, Object> mapDb = server.getRealtime().getInformation("system.databases");
-        String dbInfo = (String) mapDb.get("system.databases");
-        dbs = dbInfo.split(",");
-      } catch (MalformedURLException e) {
-        e.printStackTrace();
-      } catch (IOException e) {
-
-      }
-
+      final Map<String, Object> mapDb = server.getDatabasesInfo();
+      String dbInfo = (String) mapDb.get("system.databases");
+      dbs = dbInfo.split(",");
     }
 
     String[] nodes = getNodeList(server);

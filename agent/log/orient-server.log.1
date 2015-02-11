@@ -1,0 +1,688 @@
+
+2015-02-11 17:02:42:813 INFO  OrientDB auto-config DISKCACHE=10,695MB (heap=3,641MB os=16,384MB disk=61,309MB) [orientechnologies]
+2015-02-11 17:02:42:819 INFO  Loading configuration from: config/orientdb-server-config.xml... [OServerConfigurationLoaderXml]
+2015-02-11 17:02:43:236 INFO  OrientDB Server v2.1-SNAPSHOT is starting up... [OServer]
+2015-02-11 17:02:43:287 INFO  Databases directory: /Users/enricorisa/Coding/OrientTech/orientdb-enterprise/agent/databases [OServer]
+2015-02-11 17:02:43:404 INFO  Listening binary connections on 0.0.0.0:2424 (protocol v.28, socket=default) [OServerNetworkListener]
+2015-02-11 17:02:43:406 INFO  Listening http connections on 0.0.0.0:2480 (protocol v.10, socket=default) [OServerNetworkListener]
+2015-02-11 17:02:43:416 INFO  Installing dynamic plugin 'studio-2.0.zip'... [OServerPluginManager]
+2015-02-11 17:02:43:613 INFO  Installing GREMLIN language v.2.6.0 - graph.pool.max=50 [OGraphServerHandler]
+2015-02-11 17:02:43:651 INFO  Starting distributed server 'local1'... [OHazelcastPlugin]
+2015-02-11 17:02:43:702 INFO  Configuring Hazelcast from '/Users/enricorisa/Coding/OrientTech/orientdb-enterprise/agent/config/hazelcast.xml'. [FileSystemXmlConfig]
+2015-02-11 17:02:44:286 INFO  [LOCAL] [orientdb] [3.3] Prefer IPv4 stack is true. [DefaultAddressPicker]
+2015-02-11 17:02:44:302 INFO  [LOCAL] [orientdb] [3.3] Picked Address[10.3.15.68]:2434, using socket ServerSocket[addr=/0:0:0:0:0:0:0:0,localport=2434], bind any local is true [DefaultAddressPicker]
+2015-02-11 17:02:44:365 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Starting with 8 generic operation threads and 8 partition operation threads. [BasicOperationScheduler]
+2015-02-11 17:02:44:462 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Hazelcast 3.3 (20140907) starting at Address[10.3.15.68]:2434 [system]
+2015-02-11 17:02:44:463 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Copyright (C) 2008-2014 Hazelcast.com [system]
+2015-02-11 17:02:44:472 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Creating MulticastJoiner [Node]
+2015-02-11 17:02:44:478 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Address[10.3.15.68]:2434 is STARTING [LifecycleService]
+2015-02-11 17:02:45:241 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Trying to join to discovered node: Address[10.3.15.55]:2434 [MulticastJoiner]
+2015-02-11 17:02:45:246 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connecting to /10.3.15.55:2434, timeout: 0, bind-any: true [SocketConnector]
+2015-02-11 17:02:45:255 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:63094 and /10.3.15.55:2434 [TcpIpConnectionManager]
+2015-02-11 17:02:46:258 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connection [Address[10.3.15.55]:2434] lost. Reason: Socket explicitly closed [TcpIpConnection]
+2015-02-11 17:02:46:259 WARNING [10.3.15.68]:2434 [orientdb] [3.3] Node could not join cluster at node: Address[10.3.15.55]:2434 Cause: the target cluster has a different group-name [cluster]
+2015-02-11 17:02:46:259 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Address[10.3.15.55]:2434 is added to the blacklist. [MulticastJoiner]
+2015-02-11 17:02:47:441 WARNING Distributed server is not yet ONLINE (status=STARTING), reject incoming connection from /0:0:0:0:0:0:0:1:63098 [OServerNetworkListener]
+2015-02-11 17:02:56:453 INFO  [10.3.15.68]:2434 [orientdb] [3.3] 
+
+
+Members [1] {
+	Member [10.3.15.68]:2434 this
+}
+ [MulticastJoiner]
+2015-02-11 17:02:56:488 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Address[10.3.15.68]:2434 is STARTED [LifecycleService]
+2015-02-11 17:02:57:161 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Initializing cluster partition table first arrangement... [InternalPartitionService]
+2015-02-11 17:02:57:206 INFO  [local1] found no previous messages in queue orientdb.node.local1.response [OHazelcastDistributedMessageService]
+2015-02-11 17:02:57:208 WARNING [local1] opening database 'demo'... [OHazelcastPlugin]
+2015-02-11 17:02:57:209 INFO  [local1] loaded database configuration from disk: /Users/enricorisa/Coding/OrientTech/orientdb-enterprise/agent/databases/demo/distributed-config.json [OHazelcastPlugin]
+2015-02-11 17:02:57:238 INFO  [local1] updated distributed configuration for database: demo:
+----------
+{
+  "version": 0,
+  "autoDeploy": true,
+  "hotAlignment": false,
+  "readQuorum": 1,
+  "writeQuorum": 2,
+  "failureAvailableNodesLessQuorum": false,
+  "readYourWrites": true,"clusters":{
+    "internal": {
+},
+    "index": {
+},
+    "*": {
+  "servers": ["local1","<NEW_NODE>"]
+}
+    }
+}
+---------- [OHazelcastPlugin]
+2015-02-11 17:02:57:243 INFO  [local1] updated distributed configuration for database: demo:
+----------
+{
+  "version": 0,
+  "autoDeploy": true,
+  "hotAlignment": false,
+  "readQuorum": 1,
+  "writeQuorum": 2,
+  "failureAvailableNodesLessQuorum": false,
+  "readYourWrites": true,"clusters":{
+    "internal": {
+},
+    "index": {
+},
+    "*": {
+  "servers": ["local1","<NEW_NODE>"]
+}
+    }
+}
+---------- [OHazelcastPlugin]
+2015-02-11 17:02:57:244 INFO  [local1] Saving distributed configuration file for database 'demo' to: /Users/enricorisa/Coding/OrientTech/orientdb-enterprise/agent/databases/demo/distributed-config.json [OHazelcastPlugin]
+2015-02-11 17:02:57:248 INFO  [local1] found no previous messages in queue orientdb.node.local1.demo.request [OHazelcastDistributedMessageService]
+2015-02-11 17:02:57:772 WARNING Distributed server is not yet ONLINE (status=STARTING), reject incoming connection from /0:0:0:0:0:0:0:1:63109 [OServerNetworkListener]
+2015-02-11 17:02:57:922 INFO  {db=demo} [local1] Installing distributed storage on database 'demo' [ODistributedStorage]
+2015-02-11 17:02:57:924 INFO  [local1] Publishing online status for database local1.demo... [OHazelcastDistributedDatabase]
+2015-02-11 17:02:57:927 INFO  [local1] received new status local1.demo=ONLINE [OHazelcastPlugin]
+2015-02-11 17:02:57:927 WARNING [local1] opening database 'distributed'... [OHazelcastPlugin]
+2015-02-11 17:02:57:928 INFO  [local1] loaded database configuration from disk: /Users/enricorisa/Coding/OrientTech/orientdb-enterprise/agent/databases/distributed/distributed-config.json [OHazelcastPlugin]
+2015-02-11 17:02:57:939 INFO  [local1] updated distributed configuration for database: distributed:
+----------
+{
+  "version": 0,
+  "autoDeploy": true,
+  "hotAlignment": false,
+  "readQuorum": 1,
+  "writeQuorum": 2,
+  "failureAvailableNodesLessQuorum": false,
+  "readYourWrites": true,"clusters":{
+    "internal": {
+},
+    "index": {
+},
+    "*": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "e_node2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "_studio_node2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "orole_node2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "ouser_node2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "ofunction_node2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "orids_node2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "oschedule_node2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "v_node2": {
+  "servers": ["local1","<NEW_NODE>"]
+}
+    }
+}
+---------- [OHazelcastPlugin]
+2015-02-11 17:02:57:941 INFO  [local1] found no previous messages in queue orientdb.node.local1.distributed.request [OHazelcastDistributedMessageService]
+2015-02-11 17:02:57:944 INFO  [local1] updated distributed configuration for database: distributed:
+----------
+{
+  "version": 0,
+  "autoDeploy": true,
+  "hotAlignment": false,
+  "readQuorum": 1,
+  "writeQuorum": 2,
+  "failureAvailableNodesLessQuorum": false,
+  "readYourWrites": true,"clusters":{
+    "internal": {
+},
+    "index": {
+},
+    "*": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "e_node2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "_studio_node2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "orole_node2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "ouser_node2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "ofunction_node2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "orids_node2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "oschedule_node2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "v_node2": {
+  "servers": ["local1","<NEW_NODE>"]
+}
+    }
+}
+---------- [OHazelcastPlugin]
+2015-02-11 17:02:57:944 INFO  [local1] Saving distributed configuration file for database 'distributed' to: /Users/enricorisa/Coding/OrientTech/orientdb-enterprise/agent/databases/distributed/distributed-config.json [OHazelcastPlugin]
+2015-02-11 17:02:58:008 INFO  {db=distributed} [local1] Installing distributed storage on database 'distributed' [ODistributedStorage]
+2015-02-11 17:02:58:009 INFO  [local1] Publishing online status for database local1.distributed... [OHazelcastDistributedDatabase]
+2015-02-11 17:02:58:011 INFO  [local1] received new status local1.distributed=ONLINE [OHazelcastPlugin]
+2015-02-11 17:02:58:011 WARNING [local1] updated node status to 'ONLINE' [OHazelcastPlugin]
+2015-02-11 17:02:58:022 INFO  Installing Mail plugin, loaded 1 profile(s): [default] [OMailPlugin]
+2015-02-11 17:02:58:051 INFO  Profiler is recording metrics with configuration: 60,24 [OEnterpriseProfiler]
+2015-02-11 17:02:58:061 INFO  OrientDB Server v2.1-SNAPSHOT is active. [OServer]
+2015-02-11 17:03:10:575 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Accepting socket connection from /10.3.15.68:63131 [SocketAcceptor]
+2015-02-11 17:03:10:577 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:2434 and /10.3.15.68:63131 [TcpIpConnectionManager]
+2015-02-11 17:03:16:616 INFO  [10.3.15.68]:2434 [orientdb] [3.3] 
+
+Members [2] {
+	Member [10.3.15.68]:2434 this
+	Member [10.3.15.68]:2435
+}
+ [ClusterService]
+2015-02-11 17:03:16:617 WARNING [local1] added new node id=Member [10.3.15.68]:2435 name=ext:71af22fd-6e22-43e3-af61-239645bf250c [OHazelcastPlugin]
+2015-02-11 17:03:16:938 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Re-partitioning cluster data... Migration queue size: 135 [InternalPartitionService]
+2015-02-11 17:03:18:345 INFO  [10.3.15.68]:2434 [orientdb] [3.3] All migration tasks have been completed, queues are empty. [InternalPartitionService]
+2015-02-11 17:03:18:713 INFO  [local1]<-[local2] added node configuration id=Member [10.3.15.68]:2435 name=local2, now 2 nodes are configured [OHazelcastPlugin]
+2015-02-11 17:03:18:773 INFO  [local1]<-[local2] received new status local2.demo=SYNCHRONIZING [OHazelcastPlugin]
+2015-02-11 17:03:18:780 INFO  [local1]--[local2] update configuration db=demo [OHazelcastPlugin]
+2015-02-11 17:03:18:796 INFO  [local1] updated distributed configuration for database: demo:
+----------
+{
+  "version": 1,
+  "autoDeploy": true,
+  "hotAlignment": false,
+  "readQuorum": 1,
+  "writeQuorum": 2,
+  "failureAvailableNodesLessQuorum": false,
+  "readYourWrites": true,"clusters":{
+    "internal": {
+},
+    "index": {
+},
+    "*": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+}
+    }
+}
+---------- [OHazelcastPlugin]
+2015-02-11 17:03:18:796 INFO  [local1] Saving distributed configuration file for database 'demo' to: /Users/enricorisa/Coding/OrientTech/orientdb-enterprise/agent/databases/demo/distributed-config.json [OHazelcastPlugin]
+2015-02-11 17:03:22:854 INFO  [local1] received updated status local2.demo=SYNCHRONIZING [OHazelcastPlugin]
+2015-02-11 17:03:22:858 INFO  [local1] received updated status local1.demo=SYNCHRONIZING [OHazelcastPlugin]
+2015-02-11 17:03:22:858 WARNING [local1]->[local2] deploying database demo... [ODeployDatabaseTask]
+2015-02-11 17:03:22:859 INFO  [local1]->[local2] creating backup of database 'demo' in directory: /var/folders/yq/phfxdr_d4sb3d58z8khzq3hr0000gn/T/orientdb/backup_demo.zip... [ODeployDatabaseTask]
+2015-02-11 17:03:22:875 INFO  - Compressing file _studio.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:22:876 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:876 INFO  - Compressing file _studio.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:22:878 INFO  ok size=65.00KB compressedSize=126 ratio=100% elapsed=2ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:878 INFO  - Compressing file database.ocf... [ODeployDatabaseTask]
+2015-02-11 17:03:22:879 INFO  ok size=1.70KB compressedSize=286 ratio=84% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:879 INFO  - Compressing file default.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:22:879 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:880 INFO  - Compressing file default.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:22:880 INFO  ok size=65.00KB compressedSize=125 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:881 INFO  - Compressing file demo.wmr... [ODeployDatabaseTask]
+2015-02-11 17:03:22:881 INFO  ok size=40b compressedSize=22 ratio=45% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:881 INFO  - Compressing file dictionary.nbt... [ODeployDatabaseTask]
+2015-02-11 17:03:22:881 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:882 INFO  - Compressing file dictionary.sbt... [ODeployDatabaseTask]
+2015-02-11 17:03:22:882 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:883 INFO  - Compressing file dirty.fl... [ODeployDatabaseTask]
+2015-02-11 17:03:22:883 INFO  ok size=1b compressedSize=3 ratio=-200% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:883 INFO  - Compressing file distributed-config.json... [ODeployDatabaseTask]
+2015-02-11 17:03:22:884 INFO  ok size=355b compressedSize=183 ratio=49% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:884 INFO  - Compressing file e.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:22:884 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:884 INFO  - Compressing file e.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:22:885 INFO  ok size=65.00KB compressedSize=126 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:885 INFO  - Compressing file index.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:22:886 INFO  ok size=65.00KB compressedSize=128 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:886 INFO  - Compressing file index.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:22:888 INFO  ok size=129.00KB compressedSize=258 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:888 INFO  - Compressing file internal.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:22:889 INFO  ok size=65.00KB compressedSize=133 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:889 INFO  - Compressing file internal.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:22:890 INFO  ok size=129.00KB compressedSize=3322 ratio=98% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:891 INFO  - Compressing file manindex.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:22:891 INFO  ok size=65.00KB compressedSize=123 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:892 INFO  - Compressing file manindex.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:22:893 INFO  ok size=129.00KB compressedSize=245 ratio=100% elapsed=2ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:893 INFO  - Compressing file name_id_map.cm... [ODeployDatabaseTask]
+2015-02-11 17:03:22:893 INFO  ok size=1.09KB compressedSize=291 ratio=75% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:894 INFO  - Compressing file ofunction.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:22:894 INFO  ok size=65.00KB compressedSize=125 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:895 INFO  - Compressing file ofunction.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:22:896 INFO  ok size=129.00KB compressedSize=428 ratio=100% elapsed=2ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:896 INFO  - Compressing file orids.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:22:896 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:897 INFO  - Compressing file orids.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:22:897 INFO  ok size=65.00KB compressedSize=117 ratio=100% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:898 INFO  - Compressing file orole.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:22:899 INFO  ok size=65.00KB compressedSize=136 ratio=100% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:899 INFO  - Compressing file ORole.name.nbt... [ODeployDatabaseTask]
+2015-02-11 17:03:22:899 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:900 INFO  - Compressing file ORole.name.sbt... [ODeployDatabaseTask]
+2015-02-11 17:03:22:900 INFO  ok size=65.00KB compressedSize=180 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:901 INFO  - Compressing file orole.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:22:902 INFO  ok size=129.00KB compressedSize=612 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:902 INFO  - Compressing file oschedule.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:22:903 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:903 INFO  - Compressing file oschedule.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:22:904 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:905 INFO  - Compressing file ouser.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:22:905 INFO  ok size=65.00KB compressedSize=130 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:906 INFO  - Compressing file OUser.name.nbt... [ODeployDatabaseTask]
+2015-02-11 17:03:22:906 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:906 INFO  - Compressing file OUser.name.sbt... [ODeployDatabaseTask]
+2015-02-11 17:03:22:907 INFO  ok size=65.00KB compressedSize=181 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:907 INFO  - Compressing file ouser.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:22:924 INFO  ok size=129.00KB compressedSize=548 ratio=100% elapsed=16ms [ODeployDatabaseTask]
+2015-02-11 17:03:22:924 INFO  - Compressing file v.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:23:368 INFO  ok size=4.38MB compressedSize=622729 ratio=87% elapsed=443ms [ODeployDatabaseTask]
+2015-02-11 17:03:23:368 INFO  - Compressing file v.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:24:302 INFO  ok size=26.94MB compressedSize=1622315 ratio=95% elapsed=934ms [ODeployDatabaseTask]
+2015-02-11 17:03:24:320 INFO  [local1]->[local2] sending the compressed database 'demo' over the NETWORK to node 'local2', size=2.15MB, lastOperationId=0... [ODeployDatabaseTask]
+2015-02-11 17:03:24:323 INFO  [local1]->[local2] - transferring chunk #1 offset=0 size=1048576... [ODeployDatabaseTask]
+2015-02-11 17:03:24:324 INFO  [local1]->[local2] deploy database task completed [ODeployDatabaseTask]
+2015-02-11 17:03:24:361 INFO  [local1]->[local2] - transferring chunk #2 offset=1048576 size=1048576... [OCopyDatabaseChunkTask]
+2015-02-11 17:03:24:386 INFO  [local1]->[local2] - transferring chunk #3 offset=2097152 size=160186... [OCopyDatabaseChunkTask]
+2015-02-11 17:03:24:388 INFO  [local1] received updated status local1.demo=ONLINE [OHazelcastPlugin]
+2015-02-11 17:03:25:799 INFO  [local1]--[local2] update configuration db=demo [OHazelcastPlugin]
+2015-02-11 17:03:25:821 INFO  [local1]<-[local2] received new status local2.distributed=SYNCHRONIZING [OHazelcastPlugin]
+2015-02-11 17:03:25:823 INFO  [local1] updated distributed configuration for database: demo:
+----------
+{
+  "version": 9,
+  "autoDeploy": true,
+  "hotAlignment": false,
+  "readQuorum": 1,
+  "writeQuorum": 2,
+  "failureAvailableNodesLessQuorum": false,
+  "readYourWrites": true,"clusters":{
+    "internal": {
+},
+    "index": {
+},
+    "*": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "orole_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "v_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "_studio_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "oschedule_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "e_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "ofunction_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "orids_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "ouser_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+}
+    }
+}
+---------- [OHazelcastPlugin]
+2015-02-11 17:03:25:823 INFO  [local1] Saving distributed configuration file for database 'demo' to: /Users/enricorisa/Coding/OrientTech/orientdb-enterprise/agent/databases/demo/distributed-config.json [OHazelcastPlugin]
+2015-02-11 17:03:25:831 INFO  [local1]<-[local2] received updated status local2.demo=ONLINE [OHazelcastPlugin]
+2015-02-11 17:03:25:836 INFO  [local1]--[local2] update configuration db=distributed [OHazelcastPlugin]
+2015-02-11 17:03:25:861 INFO  [local1] updated distributed configuration for database: distributed:
+----------
+{
+  "version": 1,
+  "autoDeploy": true,
+  "hotAlignment": false,
+  "readQuorum": 1,
+  "writeQuorum": 2,
+  "failureAvailableNodesLessQuorum": false,
+  "readYourWrites": true,"clusters":{
+    "internal": {
+},
+    "index": {
+},
+    "*": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "e_node2": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "_studio_node2": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "orole_node2": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "ouser_node2": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "ofunction_node2": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "orids_node2": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "oschedule_node2": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "v_node2": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+}
+    }
+}
+---------- [OHazelcastPlugin]
+2015-02-11 17:03:25:862 INFO  [local1] Saving distributed configuration file for database 'distributed' to: /Users/enricorisa/Coding/OrientTech/orientdb-enterprise/agent/databases/distributed/distributed-config.json [OHazelcastPlugin]
+2015-02-11 17:03:29:859 INFO  [local1] received updated status local2.distributed=SYNCHRONIZING [OHazelcastPlugin]
+2015-02-11 17:03:29:859 INFO  [local1] received updated status local1.distributed=SYNCHRONIZING [OHazelcastPlugin]
+2015-02-11 17:03:29:860 WARNING [local1]->[local2] deploying database distributed... [ODeployDatabaseTask]
+2015-02-11 17:03:29:861 INFO  [local1]->[local2] creating backup of database 'distributed' in directory: /var/folders/yq/phfxdr_d4sb3d58z8khzq3hr0000gn/T/orientdb/backup_distributed.zip... [ODeployDatabaseTask]
+2015-02-11 17:03:29:882 INFO  - Compressing file _studio.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:29:882 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:882 INFO  - Compressing file _studio.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:29:883 INFO  ok size=65.00KB compressedSize=126 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:883 INFO  - Compressing file _studio_node2.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:29:884 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:884 INFO  - Compressing file _studio_node2.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:29:885 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:885 INFO  - Compressing file database.ocf... [ODeployDatabaseTask]
+2015-02-11 17:03:29:886 INFO  ok size=2.09KB compressedSize=334 ratio=85% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:886 INFO  - Compressing file default.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:29:886 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:886 INFO  - Compressing file default.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:29:887 INFO  ok size=65.00KB compressedSize=125 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:887 INFO  - Compressing file dictionary.nbt... [ODeployDatabaseTask]
+2015-02-11 17:03:29:888 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:888 INFO  - Compressing file dictionary.sbt... [ODeployDatabaseTask]
+2015-02-11 17:03:29:889 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:889 INFO  - Compressing file dirty.fl... [ODeployDatabaseTask]
+2015-02-11 17:03:29:889 INFO  ok size=1b compressedSize=3 ratio=-200% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:890 INFO  - Compressing file distributed-config.json... [ODeployDatabaseTask]
+2015-02-11 17:03:29:890 INFO  ok size=1.00KB compressedSize=232 ratio=78% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:891 INFO  - Compressing file distributed.wmr... [ODeployDatabaseTask]
+2015-02-11 17:03:29:891 INFO  ok size=40b compressedSize=19 ratio=53% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:891 INFO  - Compressing file e.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:29:892 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:892 INFO  - Compressing file e.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:29:893 INFO  ok size=65.00KB compressedSize=126 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:893 INFO  - Compressing file e_node2.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:29:893 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:894 INFO  - Compressing file e_node2.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:29:894 INFO  ok size=65.00KB compressedSize=125 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:895 INFO  - Compressing file index.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:29:895 INFO  ok size=65.00KB compressedSize=128 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:896 INFO  - Compressing file index.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:29:897 INFO  ok size=129.00KB compressedSize=258 ratio=100% elapsed=2ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:898 INFO  - Compressing file internal.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:29:899 INFO  ok size=65.00KB compressedSize=133 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:899 INFO  - Compressing file internal.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:29:902 INFO  ok size=129.00KB compressedSize=3336 ratio=98% elapsed=3ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:902 INFO  - Compressing file manindex.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:29:904 INFO  ok size=65.00KB compressedSize=123 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:904 INFO  - Compressing file manindex.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:29:905 INFO  ok size=129.00KB compressedSize=245 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:905 INFO  - Compressing file name_id_map.cm... [ODeployDatabaseTask]
+2015-02-11 17:03:29:906 INFO  ok size=1.82KB compressedSize=408 ratio=79% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:906 INFO  - Compressing file ofunction.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:29:906 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:907 INFO  - Compressing file ofunction.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:29:908 INFO  ok size=65.00KB compressedSize=126 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:908 INFO  - Compressing file ofunction_node2.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:29:908 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:909 INFO  - Compressing file ofunction_node2.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:29:910 INFO  ok size=65.00KB compressedSize=125 ratio=100% elapsed=2ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:910 INFO  - Compressing file orids.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:29:911 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:911 INFO  - Compressing file orids.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:29:913 INFO  ok size=65.00KB compressedSize=117 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:913 INFO  - Compressing file orids_node2.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:29:914 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:914 INFO  - Compressing file orids_node2.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:29:915 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:916 INFO  - Compressing file orole.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:29:917 INFO  ok size=65.00KB compressedSize=136 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:917 INFO  - Compressing file ORole.name.nbt... [ODeployDatabaseTask]
+2015-02-11 17:03:29:917 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:918 INFO  - Compressing file ORole.name.sbt... [ODeployDatabaseTask]
+2015-02-11 17:03:29:919 INFO  ok size=65.00KB compressedSize=180 ratio=100% elapsed=2ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:919 INFO  - Compressing file orole.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:29:921 INFO  ok size=129.00KB compressedSize=607 ratio=100% elapsed=2ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:922 INFO  - Compressing file orole_node2.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:29:922 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:923 INFO  - Compressing file orole_node2.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:29:924 INFO  ok size=65.00KB compressedSize=125 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:924 INFO  - Compressing file oschedule.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:29:924 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:924 INFO  - Compressing file oschedule.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:29:925 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:926 INFO  - Compressing file oschedule_node2.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:29:926 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:927 INFO  - Compressing file oschedule_node2.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:29:928 INFO  ok size=65.00KB compressedSize=126 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:928 INFO  - Compressing file ouser.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:29:929 INFO  ok size=65.00KB compressedSize=130 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:929 INFO  - Compressing file OUser.name.nbt... [ODeployDatabaseTask]
+2015-02-11 17:03:29:930 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:930 INFO  - Compressing file OUser.name.sbt... [ODeployDatabaseTask]
+2015-02-11 17:03:29:931 INFO  ok size=65.00KB compressedSize=181 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:931 INFO  - Compressing file ouser.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:29:932 INFO  ok size=129.00KB compressedSize=548 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:932 INFO  - Compressing file ouser_node2.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:29:933 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:933 INFO  - Compressing file ouser_node2.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:29:934 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:934 INFO  - Compressing file v.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:29:935 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:935 INFO  - Compressing file v.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:29:936 INFO  ok size=65.00KB compressedSize=125 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:936 INFO  - Compressing file v_node2.cpm... [ODeployDatabaseTask]
+2015-02-11 17:03:29:936 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:937 INFO  - Compressing file v_node2.pcl... [ODeployDatabaseTask]
+2015-02-11 17:03:29:937 INFO  ok size=65.00KB compressedSize=125 ratio=100% elapsed=0ms [ODeployDatabaseTask]
+2015-02-11 17:03:29:947 INFO  [local1]->[local2] sending the compressed database 'distributed' over the NETWORK to node 'local2', size=15.01KB, lastOperationId=19... [ODeployDatabaseTask]
+2015-02-11 17:03:29:947 INFO  [local1]->[local2] - transferring chunk #1 offset=0 size=15373... [ODeployDatabaseTask]
+2015-02-11 17:03:29:948 INFO  [local1] received updated status local1.distributed=ONLINE [OHazelcastPlugin]
+2015-02-11 17:03:29:950 INFO  [local1]->[local2] deploy database task completed [ODeployDatabaseTask]
+2015-02-11 17:03:30:705 INFO  [local1]--[local2] update configuration db=distributed [OHazelcastPlugin]
+2015-02-11 17:03:30:726 INFO  [local1] updated distributed configuration for database: distributed:
+----------
+{
+  "version": 9,
+  "autoDeploy": true,
+  "hotAlignment": false,
+  "readQuorum": 1,
+  "writeQuorum": 2,
+  "failureAvailableNodesLessQuorum": false,
+  "readYourWrites": true,"clusters":{
+    "internal": {
+},
+    "index": {
+},
+    "*": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "e_node2": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "_studio_node2": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "orole_node2": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "ouser_node2": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "ofunction_node2": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "orids_node2": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "oschedule_node2": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "v_node2": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "ouser_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "_studio_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "e_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "orole_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "oschedule_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "v_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "ofunction_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "orids_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+}
+    }
+}
+---------- [OHazelcastPlugin]
+2015-02-11 17:03:30:727 INFO  [local1] Saving distributed configuration file for database 'distributed' to: /Users/enricorisa/Coding/OrientTech/orientdb-enterprise/agent/databases/distributed/distributed-config.json [OHazelcastPlugin]
+2015-02-11 17:03:30:734 INFO  [local1]<-[local2] received updated status local2.distributed=ONLINE [OHazelcastPlugin]
+2015-02-11 17:03:46:138 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Accepting socket connection from /10.3.15.68:63254 [SocketAcceptor]
+2015-02-11 17:03:46:139 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:2434 and /10.3.15.68:63254 [TcpIpConnectionManager]
+2015-02-11 17:03:52:169 INFO  [10.3.15.68]:2434 [orientdb] [3.3] 
+
+Members [3] {
+	Member [10.3.15.68]:2434 this
+	Member [10.3.15.68]:2435
+	Member [10.3.15.68]:2436
+}
+ [ClusterService]
+2015-02-11 17:03:52:174 WARNING [local1] added new node id=Member [10.3.15.68]:2436 name=ext:c250577e-fd3b-4bc7-9bcf-19aeaae4d801 [OHazelcastPlugin]
+2015-02-11 17:03:52:499 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Re-partitioning cluster data... Migration queue size: 90 [InternalPartitionService]
+2015-02-11 17:03:53:945 INFO  [10.3.15.68]:2434 [orientdb] [3.3] All migration tasks have been completed, queues are empty. [InternalPartitionService]
+2015-02-11 17:04:09:321 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Accepting socket connection from /10.3.15.55:56471 [SocketAcceptor]
+2015-02-11 17:04:09:322 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:2434 and /10.3.15.55:56471 [TcpIpConnectionManager]
+2015-02-11 17:04:09:322 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Accepting socket connection from /10.3.15.55:56472 [SocketAcceptor]
+2015-02-11 17:04:09:322 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:2434 and /10.3.15.55:56472 [TcpIpConnectionManager]
+2015-02-11 17:04:10:272 WARNING [10.3.15.68]:2434 [orientdb] [3.3] Received an invalid join request from Address[10.3.15.55]:2435, cause: clusters part of different cluster-groups [ClusterService]
+2015-02-11 17:04:10:276 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connection [Address[10.3.15.55]:2435] lost. Reason: java.io.EOFException[Remote socket closed!] [TcpIpConnection]
+2015-02-11 17:04:10:277 WARNING [10.3.15.68]:2434 [orientdb] [3.3] hz._hzInstance_1_orientdb.IO.thread-in-0 Closing socket to endpoint Address[10.3.15.55]:2435, Cause:java.io.EOFException: Remote socket closed! [ReadHandler]
+2015-02-11 17:04:10:311 WARNING [10.3.15.68]:2434 [orientdb] [3.3] Received an invalid join request from Address[10.3.15.55]:2434, cause: clusters part of different cluster-groups [ClusterService]
+2015-02-11 17:04:10:314 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connection [Address[10.3.15.55]:2434] lost. Reason: java.io.EOFException[Remote socket closed!] [TcpIpConnection]
+2015-02-11 17:04:10:314 WARNING [10.3.15.68]:2434 [orientdb] [3.3] hz._hzInstance_1_orientdb.IO.thread-in-1 Closing socket to endpoint Address[10.3.15.55]:2434, Cause:java.io.EOFException: Remote socket closed! [ReadHandler]
+2015-02-11 17:06:09:439 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Accepting socket connection from /10.3.15.55:56513 [SocketAcceptor]
+2015-02-11 17:06:09:440 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:2434 and /10.3.15.55:56513 [TcpIpConnectionManager]
+2015-02-11 17:06:10:362 WARNING [10.3.15.68]:2434 [orientdb] [3.3] Received an invalid join request from Address[10.3.15.55]:2434, cause: clusters part of different cluster-groups [ClusterService]
+2015-02-11 17:06:10:365 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connection [Address[10.3.15.55]:2434] lost. Reason: java.io.EOFException[Remote socket closed!] [TcpIpConnection]
+2015-02-11 17:06:10:366 WARNING [10.3.15.68]:2434 [orientdb] [3.3] hz._hzInstance_1_orientdb.IO.thread-in-2 Closing socket to endpoint Address[10.3.15.55]:2434, Cause:java.io.EOFException: Remote socket closed! [ReadHandler]
+2015-02-11 17:06:10:643 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Accepting socket connection from /10.3.15.55:56512 [SocketAcceptor]
+2015-02-11 17:06:10:643 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:2434 and /10.3.15.55:56512 [TcpIpConnectionManager]
+2015-02-11 17:06:11:240 WARNING [10.3.15.68]:2434 [orientdb] [3.3] Received an invalid join request from Address[10.3.15.55]:2435, cause: clusters part of different cluster-groups [ClusterService]
+2015-02-11 17:06:11:244 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connection [Address[10.3.15.55]:2435] lost. Reason: java.io.EOFException[Remote socket closed!] [TcpIpConnection]
+2015-02-11 17:06:11:244 WARNING [10.3.15.68]:2434 [orientdb] [3.3] hz._hzInstance_1_orientdb.IO.thread-in-0 Closing socket to endpoint Address[10.3.15.55]:2435, Cause:java.io.EOFException: Remote socket closed! [ReadHandler]
+2015-02-11 17:08:09:553 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Accepting socket connection from /10.3.15.55:56538 [SocketAcceptor]
+2015-02-11 17:08:09:553 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Accepting socket connection from /10.3.15.55:56539 [SocketAcceptor]
+2015-02-11 17:08:09:554 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:2434 and /10.3.15.55:56538 [TcpIpConnectionManager]
+2015-02-11 17:08:09:554 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:2434 and /10.3.15.55:56539 [TcpIpConnectionManager]
+2015-02-11 17:08:10:166 WARNING [10.3.15.68]:2434 [orientdb] [3.3] Received an invalid join request from Address[10.3.15.55]:2435, cause: clusters part of different cluster-groups [ClusterService]
+2015-02-11 17:08:10:166 WARNING [10.3.15.68]:2434 [orientdb] [3.3] Received an invalid join request from Address[10.3.15.55]:2434, cause: clusters part of different cluster-groups [ClusterService]
+2015-02-11 17:08:10:169 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connection [Address[10.3.15.55]:2435] lost. Reason: java.io.EOFException[Remote socket closed!] [TcpIpConnection]
+2015-02-11 17:08:10:170 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connection [Address[10.3.15.55]:2434] lost. Reason: java.io.EOFException[Remote socket closed!] [TcpIpConnection]
+2015-02-11 17:08:10:170 WARNING [10.3.15.68]:2434 [orientdb] [3.3] hz._hzInstance_1_orientdb.IO.thread-in-1 Closing socket to endpoint Address[10.3.15.55]:2435, Cause:java.io.EOFException: Remote socket closed! [ReadHandler]
+2015-02-11 17:08:10:170 WARNING [10.3.15.68]:2434 [orientdb] [3.3] hz._hzInstance_1_orientdb.IO.thread-in-2 Closing socket to endpoint Address[10.3.15.55]:2434, Cause:java.io.EOFException: Remote socket closed! [ReadHandler]
+2015-02-11 17:09:26:968 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Accepting socket connection from /10.3.15.55:56562 [SocketAcceptor]
+2015-02-11 17:09:26:969 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Accepting socket connection from /10.3.15.55:56563 [SocketAcceptor]
+2015-02-11 17:09:26:969 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:2434 and /10.3.15.55:56562 [TcpIpConnectionManager]
+2015-02-11 17:09:26:969 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:2434 and /10.3.15.55:56563 [TcpIpConnectionManager]
+2015-02-11 17:09:27:581 WARNING [10.3.15.68]:2434 [orientdb] [3.3] Received an invalid join request from Address[10.3.15.55]:2434, cause: clusters part of different cluster-groups [ClusterService]
+2015-02-11 17:09:27:582 WARNING [10.3.15.68]:2434 [orientdb] [3.3] Received an invalid join request from Address[10.3.15.55]:2435, cause: clusters part of different cluster-groups [ClusterService]
+2015-02-11 17:09:27:584 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connection [Address[10.3.15.55]:2435] lost. Reason: java.io.EOFException[Remote socket closed!] [TcpIpConnection]
+2015-02-11 17:09:27:585 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connection [Address[10.3.15.55]:2434] lost. Reason: java.io.EOFException[Remote socket closed!] [TcpIpConnection]
+2015-02-11 17:09:27:585 WARNING [10.3.15.68]:2434 [orientdb] [3.3] hz._hzInstance_1_orientdb.IO.thread-in-0 Closing socket to endpoint Address[10.3.15.55]:2435, Cause:java.io.EOFException: Remote socket closed! [ReadHandler]
+2015-02-11 17:09:27:585 WARNING [10.3.15.68]:2434 [orientdb] [3.3] hz._hzInstance_1_orientdb.IO.thread-in-1 Closing socket to endpoint Address[10.3.15.55]:2434, Cause:java.io.EOFException: Remote socket closed! [ReadHandler]
+2015-02-11 17:10:09:364 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Accepting socket connection from /10.3.15.55:56571 [SocketAcceptor]
+2015-02-11 17:10:09:366 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Accepting socket connection from /10.3.15.55:56570 [SocketAcceptor]
+2015-02-11 17:10:09:366 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:2434 and /10.3.15.55:56571 [TcpIpConnectionManager]
+2015-02-11 17:10:09:367 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:2434 and /10.3.15.55:56570 [TcpIpConnectionManager]
+2015-02-11 17:10:10:088 WARNING [10.3.15.68]:2434 [orientdb] [3.3] Received an invalid join request from Address[10.3.15.55]:2435, cause: clusters part of different cluster-groups [ClusterService]
+2015-02-11 17:10:10:088 WARNING [10.3.15.68]:2434 [orientdb] [3.3] Received an invalid join request from Address[10.3.15.55]:2434, cause: clusters part of different cluster-groups [ClusterService]
+2015-02-11 17:10:10:093 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connection [Address[10.3.15.55]:2434] lost. Reason: java.io.EOFException[Remote socket closed!] [TcpIpConnection]
+2015-02-11 17:10:10:093 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connection [Address[10.3.15.55]:2435] lost. Reason: java.io.EOFException[Remote socket closed!] [TcpIpConnection]
+2015-02-11 17:10:10:095 WARNING [10.3.15.68]:2434 [orientdb] [3.3] hz._hzInstance_1_orientdb.IO.thread-in-0 Closing socket to endpoint Address[10.3.15.55]:2435, Cause:java.io.EOFException: Remote socket closed! [ReadHandler]
+2015-02-11 17:10:10:096 WARNING [10.3.15.68]:2434 [orientdb] [3.3] hz._hzInstance_1_orientdb.IO.thread-in-2 Closing socket to endpoint Address[10.3.15.55]:2434, Cause:java.io.EOFException: Remote socket closed! [ReadHandler]
+2015-02-11 17:12:09:784 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Accepting socket connection from /10.3.15.55:56590 [SocketAcceptor]
+2015-02-11 17:12:09:785 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Accepting socket connection from /10.3.15.55:56591 [SocketAcceptor]
+2015-02-11 17:12:09:785 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:2434 and /10.3.15.55:56590 [TcpIpConnectionManager]
+2015-02-11 17:12:09:786 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:2434 and /10.3.15.55:56591 [TcpIpConnectionManager]
+2015-02-11 17:12:09:894 WARNING [10.3.15.68]:2434 [orientdb] [3.3] Received an invalid join request from Address[10.3.15.55]:2435, cause: clusters part of different cluster-groups [ClusterService]
+2015-02-11 17:12:09:894 WARNING [10.3.15.68]:2434 [orientdb] [3.3] Received an invalid join request from Address[10.3.15.55]:2434, cause: clusters part of different cluster-groups [ClusterService]
+2015-02-11 17:12:09:897 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connection [Address[10.3.15.55]:2435] lost. Reason: java.io.EOFException[Remote socket closed!] [TcpIpConnection]
+2015-02-11 17:12:09:897 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connection [Address[10.3.15.55]:2434] lost. Reason: java.io.EOFException[Remote socket closed!] [TcpIpConnection]
+2015-02-11 17:12:09:898 WARNING [10.3.15.68]:2434 [orientdb] [3.3] hz._hzInstance_1_orientdb.IO.thread-in-2 Closing socket to endpoint Address[10.3.15.55]:2435, Cause:java.io.EOFException: Remote socket closed! [ReadHandler]
+2015-02-11 17:12:09:898 WARNING [10.3.15.68]:2434 [orientdb] [3.3] hz._hzInstance_1_orientdb.IO.thread-in-1 Closing socket to endpoint Address[10.3.15.55]:2434, Cause:java.io.EOFException: Remote socket closed! [ReadHandler]
+2015-02-11 17:15:26:703 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Accepting socket connection from /10.3.15.55:56639 [SocketAcceptor]
+2015-02-11 17:15:26:704 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:2434 and /10.3.15.55:56639 [TcpIpConnectionManager]
+2015-02-11 17:15:26:704 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Accepting socket connection from /10.3.15.55:56640 [SocketAcceptor]
+2015-02-11 17:15:26:705 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:2434 and /10.3.15.55:56640 [TcpIpConnectionManager]
+2015-02-11 17:15:27:625 WARNING [10.3.15.68]:2434 [orientdb] [3.3] Received an invalid join request from Address[10.3.15.55]:2435, cause: clusters part of different cluster-groups [ClusterService]
+2015-02-11 17:15:27:625 WARNING [10.3.15.68]:2434 [orientdb] [3.3] Received an invalid join request from Address[10.3.15.55]:2434, cause: clusters part of different cluster-groups [ClusterService]
+2015-02-11 17:15:27:628 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connection [Address[10.3.15.55]:2434] lost. Reason: java.io.EOFException[Remote socket closed!] [TcpIpConnection]
+2015-02-11 17:15:27:628 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connection [Address[10.3.15.55]:2435] lost. Reason: java.io.EOFException[Remote socket closed!] [TcpIpConnection]
+2015-02-11 17:15:27:628 WARNING [10.3.15.68]:2434 [orientdb] [3.3] hz._hzInstance_1_orientdb.IO.thread-in-1 Closing socket to endpoint Address[10.3.15.55]:2434, Cause:java.io.EOFException: Remote socket closed! [ReadHandler]
+2015-02-11 17:15:27:629 WARNING [10.3.15.68]:2434 [orientdb] [3.3] hz._hzInstance_1_orientdb.IO.thread-in-0 Closing socket to endpoint Address[10.3.15.55]:2435, Cause:java.io.EOFException: Remote socket closed! [ReadHandler]
+2015-02-11 17:18:09:215 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Accepting socket connection from /10.3.15.55:56668 [SocketAcceptor]
+2015-02-11 17:18:09:215 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Accepting socket connection from /10.3.15.55:56669 [SocketAcceptor]
+2015-02-11 17:18:09:216 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:2434 and /10.3.15.55:56668 [TcpIpConnectionManager]
+2015-02-11 17:18:09:216 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:2434 and /10.3.15.55:56669 [TcpIpConnectionManager]
+2015-02-11 17:18:09:978 WARNING [10.3.15.68]:2434 [orientdb] [3.3] Received an invalid join request from Address[10.3.15.55]:2434, cause: clusters part of different cluster-groups [ClusterService]
+2015-02-11 17:18:09:985 WARNING [10.3.15.68]:2434 [orientdb] [3.3] Received an invalid join request from Address[10.3.15.55]:2435, cause: clusters part of different cluster-groups [ClusterService]
+2015-02-11 17:18:09:986 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connection [Address[10.3.15.55]:2434] lost. Reason: java.io.EOFException[Remote socket closed!] [TcpIpConnection]
+2015-02-11 17:18:09:986 WARNING [10.3.15.68]:2434 [orientdb] [3.3] hz._hzInstance_1_orientdb.IO.thread-in-2 Closing socket to endpoint Address[10.3.15.55]:2434, Cause:java.io.EOFException: Remote socket closed! [ReadHandler]
+2015-02-11 17:18:09:989 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connection [Address[10.3.15.55]:2435] lost. Reason: java.io.EOFException[Remote socket closed!] [TcpIpConnection]
+2015-02-11 17:18:09:989 WARNING [10.3.15.68]:2434 [orientdb] [3.3] hz._hzInstance_1_orientdb.IO.thread-in-0 Closing socket to endpoint Address[10.3.15.55]:2435, Cause:java.io.EOFException: Remote socket closed! [ReadHandler]
+2015-02-11 17:22:10:059 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Accepting socket connection from /10.3.15.55:56711 [SocketAcceptor]
+2015-02-11 17:22:10:060 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Accepting socket connection from /10.3.15.55:56712 [SocketAcceptor]
+2015-02-11 17:22:10:060 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:2434 and /10.3.15.55:56711 [TcpIpConnectionManager]
+2015-02-11 17:22:10:060 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:2434 and /10.3.15.55:56712 [TcpIpConnectionManager]
+2015-02-11 17:22:10:168 WARNING [10.3.15.68]:2434 [orientdb] [3.3] Received an invalid join request from Address[10.3.15.55]:2435, cause: clusters part of different cluster-groups [ClusterService]
+2015-02-11 17:22:10:169 WARNING [10.3.15.68]:2434 [orientdb] [3.3] Received an invalid join request from Address[10.3.15.55]:2434, cause: clusters part of different cluster-groups [ClusterService]
+2015-02-11 17:22:10:172 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connection [Address[10.3.15.55]:2435] lost. Reason: java.io.EOFException[Remote socket closed!] [TcpIpConnection]
+2015-02-11 17:22:10:172 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connection [Address[10.3.15.55]:2434] lost. Reason: java.io.EOFException[Remote socket closed!] [TcpIpConnection]
+2015-02-11 17:22:10:173 WARNING [10.3.15.68]:2434 [orientdb] [3.3] hz._hzInstance_1_orientdb.IO.thread-in-2 Closing socket to endpoint Address[10.3.15.55]:2434, Cause:java.io.EOFException: Remote socket closed! [ReadHandler]
+2015-02-11 17:22:10:173 WARNING [10.3.15.68]:2434 [orientdb] [3.3] hz._hzInstance_1_orientdb.IO.thread-in-1 Closing socket to endpoint Address[10.3.15.55]:2435, Cause:java.io.EOFException: Remote socket closed! [ReadHandler]
+2015-02-11 17:26:09:987 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Accepting socket connection from /10.3.15.55:56799 [SocketAcceptor]
+2015-02-11 17:26:09:987 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:2434 and /10.3.15.55:56799 [TcpIpConnectionManager]
+2015-02-11 17:26:10:102 WARNING [10.3.15.68]:2434 [orientdb] [3.3] Received an invalid join request from Address[10.3.15.55]:2434, cause: clusters part of different cluster-groups [ClusterService]
+2015-02-11 17:26:10:105 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connection [Address[10.3.15.55]:2434] lost. Reason: java.io.EOFException[Remote socket closed!] [TcpIpConnection]
+2015-02-11 17:26:10:106 WARNING [10.3.15.68]:2434 [orientdb] [3.3] hz._hzInstance_1_orientdb.IO.thread-in-0 Closing socket to endpoint Address[10.3.15.55]:2434, Cause:java.io.EOFException: Remote socket closed! [ReadHandler]
+2015-02-11 17:26:10:383 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Accepting socket connection from /10.3.15.55:56798 [SocketAcceptor]
+2015-02-11 17:26:10:383 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:2434 and /10.3.15.55:56798 [TcpIpConnectionManager]
+2015-02-11 17:26:11:102 WARNING [10.3.15.68]:2434 [orientdb] [3.3] Received an invalid join request from Address[10.3.15.55]:2435, cause: clusters part of different cluster-groups [ClusterService]
+2015-02-11 17:26:11:105 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connection [Address[10.3.15.55]:2435] lost. Reason: java.io.EOFException[Remote socket closed!] [TcpIpConnection]
+2015-02-11 17:26:11:106 WARNING [10.3.15.68]:2434 [orientdb] [3.3] hz._hzInstance_1_orientdb.IO.thread-in-1 Closing socket to endpoint Address[10.3.15.55]:2435, Cause:java.io.EOFException: Remote socket closed! [ReadHandler]
+2015-02-11 17:32:48:567 INFO  [TIP] Query 'select from V limit -1' returned a result set with more than 10000 records. Reduce it to improve performance and reduce RAM used [OEnterpriseProfiler]
+2015-02-11 17:33:28:794 INFO  Received signal: SIGINT [OSignalHandler]

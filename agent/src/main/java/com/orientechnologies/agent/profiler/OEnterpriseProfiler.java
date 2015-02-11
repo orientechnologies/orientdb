@@ -22,18 +22,14 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfilerEntry;
 import com.orientechnologies.common.profiler.OProfilerMBean;
+import com.sun.management.OperatingSystemMXBean;
 
 import java.io.File;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * Profiling utility class. Handles chronos (times), statistics and counters. By default it's used as Singleton but you can create
@@ -612,6 +608,31 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
             return Runtime.getRuntime().totalMemory();
           }
         });
+
+    registerHookValue(getProcessMetric("runtime.cpu"), "Total cpu used by the process", METRIC_TYPE.SIZE, new OProfilerHookValue() {
+      @Override
+      public Object getValue() {
+
+        OperatingSystemMXBean operatingSystemMXBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+        RuntimeMXBean runtimeMXBean = ManagementFactory.getRuntimeMXBean();
+        int availableProcessors = operatingSystemMXBean.getAvailableProcessors();
+        long prevUpTime = runtimeMXBean.getUptime();
+        long prevProcessCpuTime = operatingSystemMXBean.getProcessCpuTime();
+        double cpuUsage;
+        try {
+          Thread.sleep(500);
+        } catch (Exception ignored) {
+        }
+
+        operatingSystemMXBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+        long upTime = runtimeMXBean.getUptime();
+        long processCpuTime = operatingSystemMXBean.getProcessCpuTime();
+        long elapsedCpu = processCpuTime - prevProcessCpuTime;
+        long elapsedTime = upTime - prevUpTime;
+        cpuUsage = Math.min(99F, elapsedCpu / (elapsedTime * 10000F * availableProcessors));
+        return "" + cpuUsage;
+      }
+    });
 
     final File[] roots = File.listRoots();
     for (final File root : roots) {

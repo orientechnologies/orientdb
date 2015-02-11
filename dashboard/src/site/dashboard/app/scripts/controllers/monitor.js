@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('MonitorApp')
-  .controller('DashboardController', function ($scope, $location, $timeout, $modal, $q, $odialog, Monitor, Server, Notification, Settings, StickyNotification) {
+  .controller('DashboardController', function ($scope, $location, $timeout, $modal, $q,$i18n, $odialog, Monitor, Server, Notification, Settings, StickyNotification,MetricConfig) {
 
 
     $scope.chartHeight = 300;
@@ -21,7 +21,7 @@ angular.module('MonitorApp')
     $scope.$on('$routeChangeStart', function () {
       $scope.stopWatching();
     });
-    $scope.startWatching();
+    //$scope.startWatching();
     $scope.addServer = function () {
 
       var modalScope = $scope.$new(true)
@@ -143,6 +143,7 @@ angular.module('MonitorApp')
         server.attached = false;
       });
     }
+
     $scope.deleteServer = function (server) {
 
       $odialog.confirm({
@@ -165,6 +166,8 @@ angular.module('MonitorApp')
 
       return $scope.over == chart;
     }
+
+
     $scope.refreshConfig();
     $scope.refresh();
   });

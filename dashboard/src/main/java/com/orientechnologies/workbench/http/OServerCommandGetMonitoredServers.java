@@ -15,12 +15,6 @@
  */
 package com.orientechnologies.workbench.http;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -30,8 +24,14 @@ import com.orientechnologies.orient.server.network.protocol.http.command.OServer
 import com.orientechnologies.workbench.OMonitoredServer;
 import com.orientechnologies.workbench.OWorkbenchPlugin;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 public class OServerCommandGetMonitoredServers extends OServerCommandAbstract {
-  private static final String[] NAMES = { "GET|monitoredServers/*" };
+  private static final String[] NAMES = { "GET|serverStats/*" };
 
   private OWorkbenchPlugin      monitor;
 
@@ -45,21 +45,37 @@ public class OServerCommandGetMonitoredServers extends OServerCommandAbstract {
 
     iRequest.data.commandInfo = "Retrieve monitored servers";
 
+    String[] parts = checkSyntax(iRequest.url, 2, "");
     try {
 
-      List<ODocument> results = new ArrayList<ODocument>();
-      Set<Entry<String, OMonitoredServer>> monitoredServers = this.monitor.getMonitoredServers();
-
-      for (Entry<String, OMonitoredServer> s : monitoredServers) {
+      if (parts.length > 2) {
+        OMonitoredServer s = monitor.getMonitoredServer(parts[2]);
         ODocument r = new ODocument();
-        r.field("id", s.getValue().getConfiguration().getIdentity());
-        r.field("name", s.getValue().getConfiguration().field("name"));
-        Map<String, Object> metric = s.getValue().getRealtime().getInformation("system.databases");
+        r.field("id", s.getConfiguration().getIdentity());
+        r.field("name", s.getConfiguration().field("name"));
+        Map<String, Object> metric = s.getDatabasesInfo();
         r.field("databases", metric.get("system.databases"));
-        results.add(r);
-      }
+        r.field("status",s.getConfiguration().field("status"));
+        r.field("realtime", s.getRealtime().lastMetrics);
+        r.field("snapshot", s.getLastSnapshot());
+        iResponse.writeResult(r, "indent:6", null);
+      } else {
+        List<ODocument> results = new ArrayList<ODocument>();
+        Set<Entry<String, OMonitoredServer>> monitoredServers = this.monitor.getMonitoredServers();
 
-      iResponse.writeResult(results, "indent:6", null);
+        for (Entry<String, OMonitoredServer> s : monitoredServers) {
+          ODocument r = new ODocument();
+          r.field("id", s.getValue().getConfiguration().getIdentity());
+          r.field("name", s.getValue().getConfiguration().field("name"));
+          Map<String, Object> metric = s.getValue().getDatabasesInfo();
+          r.field("databases", metric.get("system.databases"));
+          // s.getValue().getRealtime().fetch();
+          r.field("realtime", s.getValue().getRealtime().lastMetrics);
+          r.field("snapshot", s.getValue().getLastSnapshot());
+          results.add(r);
+        }
+        iResponse.writeResult(results, "indent:6", null);
+      }
 
     } catch (Exception e) {
       iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN, e, null);
