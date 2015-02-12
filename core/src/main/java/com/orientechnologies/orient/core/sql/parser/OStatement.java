@@ -8,6 +8,9 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 
 public class OStatement extends SimpleNode {
+
+  public static final String CUSTOM_STRICT_SQL = "strictSql";
+
   public OStatement(int id) {
     super(id);
   }

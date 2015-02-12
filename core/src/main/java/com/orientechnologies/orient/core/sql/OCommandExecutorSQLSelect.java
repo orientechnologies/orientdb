@@ -34,11 +34,9 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -195,15 +193,15 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   public OCommandExecutorSQLSelect parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
     String queryText = textRequest.getText();
-    System.out.println("NEW PARSER FROM: "+queryText);
-    queryText = preParse(queryText);
-    System.out.println("NEW PARSER   TO: "+queryText);
-//    if (!queryText.toUpperCase().equals(textRequest.getText().toUpperCase())) {
-//      throwParsingException(queryText + " \nDIFFERENT FROM\n" + textRequest.getText());
-//    }
+    // System.out.println("NEW PARSER FROM: " + queryText);
+    queryText = preParse(queryText, iRequest);
+    // System.out.println("NEW PARSER   TO: " + queryText);
+    // if (!queryText.toUpperCase().equals(textRequest.getText().toUpperCase())) {
+    // throwParsingException(queryText + " \nDIFFERENT FROM\n" + textRequest.getText());
+    // }
     textRequest.setText(queryText);
 
-//    testNewParser(iRequest);
+    // testNewParser(iRequest);
     super.parse(iRequest);
 
     initContext();
@@ -281,18 +279,37 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return this;
   }
 
-  private String preParse(String queryText) {
-    InputStream is = new ByteArrayInputStream(queryText.getBytes());
-    OrientSql osql = new OrientSql(is);
-    try {
-      OStatement result = osql.parse();
-      return result.toString();
-    } catch (ParseException e) {
-      System.out.println("NEW PARSER FAILED: " + queryText);
-      e.printStackTrace();
-      throwParsingException(e.getMessage());
+  private String preParse(String queryText, OCommandRequest iRequest) {
+    boolean strict = false;
+    for (Iterator<OStorageEntryConfiguration> it = getDatabase().getStorage().getConfiguration().properties.iterator(); it
+        .hasNext();) {
+      final OStorageEntryConfiguration e = it.next();
+      if (e.name.equals(OStatement.CUSTOM_STRICT_SQL)) {
+        strict = "true".equals(("" + e.value).toLowerCase());
+        break;
+      }
     }
-    return "ERROR!";
+    if (strict) {
+      System.out.println("USING NEW PARSER");
+      InputStream is = new ByteArrayInputStream(queryText.getBytes());
+      OrientSql osql = new OrientSql(is);
+      try {
+        OStatement result = osql.parse();
+
+        if (iRequest instanceof OCommandRequestAbstract) {
+          // TODO replace parameters in prepared statement
+        }
+
+        return result.toString();
+      } catch (ParseException e) {
+        System.out.println("NEW PARSER FAILED: " + queryText);
+        e.printStackTrace();
+        throwParsingException(e.getMessage());
+      }
+      return "ERROR!";
+    }
+    System.out.println("USING OLD PARSER");
+    return queryText;
   }
 
   /**
