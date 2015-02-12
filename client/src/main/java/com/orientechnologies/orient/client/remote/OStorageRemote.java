@@ -165,15 +165,21 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public void setSessionId(final String iServerURL, final int iSessionId, byte[] token) {
-    final OStorageRemoteSession tl = OStorageRemoteThreadLocal.INSTANCE.get();
-    tl.serverURL = iServerURL;
-    tl.sessionId = iSessionId;
-    tl.token = token;
+    final OStorageRemoteThreadLocal instance = OStorageRemoteThreadLocal.INSTANCE;
+    if (instance != null) {
+      final OStorageRemoteSession tl = instance.get();
+      tl.serverURL = iServerURL;
+      tl.sessionId = iSessionId;
+      tl.token = token;
+    }
   }
 
   public void clearToken() {
-    final OStorageRemoteSession tl = OStorageRemoteThreadLocal.INSTANCE.get();
-    tl.token = null;
+    final OStorageRemoteThreadLocal instance = OStorageRemoteThreadLocal.INSTANCE;
+    if (instance != null) {
+      final OStorageRemoteSession tl = instance.get();
+      tl.token = null;
+    }
   }
 
   public void clearSession() {
