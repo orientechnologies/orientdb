@@ -48,6 +48,7 @@ app.controller('SingleServerController', function ($scope, $location, $routePara
 
         var maxMemory = realtime['hookValues']['process.runtime.maxMemory'];
         var totalMemory = realtime['hookValues']['process.runtime.totalMemory'];
+
         $scope.ramPercent = Math.floor(((totalMemory * 100) / maxMemory));
         $scope.anotherPercent = -45;
         $scope.ramOptions = {
@@ -83,11 +84,14 @@ app.controller('SingleServerController', function ($scope, $location, $routePara
         lastOps = ops;
 
 
-        var req = realtime['chronos']['server.network.requests'].entries;
-        if (lastReq != null) {
-          $scope.requests = Math.abs(req - lastReq);
+        if (realtime['chronos']['server.network.requests']) {
+
+          var req = realtime['chronos']['server.network.requests'].entries;
+          if (lastReq != null) {
+            $scope.requests = Math.abs(req - lastReq);
+          }
+          lastReq = req;
         }
-        lastReq = req;
 
         if (realtime['chronos']['distributed.node.latency'])
           $scope.latency = realtime['chronos']['distributed.node.latency'].average;
