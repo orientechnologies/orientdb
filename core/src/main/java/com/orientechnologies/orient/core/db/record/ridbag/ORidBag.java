@@ -305,7 +305,7 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
       stream.skip(OUUIDSerializer.UUID_SIZE);
     }
 
-    stream.skip(delegate.deserialize(stream.bytes, stream.offset));
+    stream.skip(delegate.deserialize(stream.bytes, stream.offset) - stream.offset);
   }
 
   @Override
