@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.jdbc;
 
-import org.junit.Test;
+import org.junit.*;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -9,9 +9,7 @@ import java.sql.SQLException;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
 
@@ -46,7 +44,31 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
 
   }
 
-  @Test
+	@Test
+	public void testExecuteUpdateReturnsNumberOfRowsInserted() throws Exception {
+		conn.createStatement().executeQuery("CREATE CLASS Insertable ");
+
+		PreparedStatement statement = conn.prepareStatement("INSERT INTO Insertable ( id ) VALUES (?)");
+		statement.setString(1, "testval");
+		int rowsInserted = statement.executeUpdate();
+
+		assertEquals( 1, rowsInserted );
+	}
+
+	@Test
+	public void testExecuteUpdateReturnsNumberOfRowsInsertedWhenMultipleInserted() throws Exception {
+		conn.createStatement().executeQuery("CREATE CLASS Insertable ");
+		conn.createStatement().executeQuery("INSERT INTO Insertable(id) VALUES(1)");
+		conn.createStatement().executeQuery("INSERT INTO Insertable(id) VALUES(2)");
+
+		PreparedStatement statement = conn.prepareStatement("UPDATE Insertable SET id = ?");
+		statement.setString(1, "testval");
+		int rowsInserted = statement.executeUpdate();
+
+		assertEquals( 2, rowsInserted );
+	}
+
+	@Test
   public void shouldExecutePreparedStatement() throws Exception {
     PreparedStatement stmt = conn.prepareStatement("SELECT  " + "FROM Item " + "WHERE stringKey = ? OR intKey = ?");
     assertNotNull(stmt);
