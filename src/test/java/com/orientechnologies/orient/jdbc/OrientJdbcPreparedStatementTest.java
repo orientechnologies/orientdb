@@ -49,7 +49,7 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
 		conn.createStatement().executeQuery("CREATE CLASS Insertable ");
 
 		PreparedStatement statement = conn.prepareStatement("INSERT INTO Insertable ( id ) VALUES (?)");
-		statement.setString(1, "testval");
+		statement.setString( 1, "testval" );
 		int rowsInserted = statement.executeUpdate();
 
 		assertEquals( 1, rowsInserted );
@@ -74,11 +74,11 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
 		conn.createStatement().executeQuery("INSERT INTO Insertable(id) VALUES(1)");
 		conn.createStatement().executeQuery("INSERT INTO Insertable(id) VALUES(2)");
 
-		PreparedStatement statement = conn.prepareStatement("DELETE FROM Insertable WHERE ID > ?");
-		statement.setInt(1, 0);
-		int rowsInserted = statement.executeUpdate();
+		PreparedStatement statement = conn.prepareStatement("DELETE FROM Insertable WHERE id > ?");
+		statement.setInt( 1, 0 );
+		int rowsDeleted = statement.executeUpdate();
 
-		assertEquals( 2, rowsInserted );
+		assertEquals( 2, rowsDeleted );
 	}
 
 	@Test
