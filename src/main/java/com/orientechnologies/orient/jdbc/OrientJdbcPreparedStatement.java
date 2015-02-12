@@ -17,37 +17,23 @@
  */
 package com.orientechnologies.orient.jdbc;
 
-import java.io.InputStream;
-import java.io.Reader;
-import java.math.BigDecimal;
-import java.net.URL;
-import java.sql.Array;
-import java.sql.Blob;
-import java.sql.Clob;
-import java.sql.Date;
-import java.sql.NClob;
-import java.sql.ParameterMetaData;
-import java.sql.PreparedStatement;
-import java.sql.Ref;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.RowId;
-import java.sql.SQLException;
-import java.sql.SQLSyntaxErrorException;
-import java.sql.SQLXML;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.query.OQuery;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+
+import java.io.InputStream;
+import java.io.Reader;
+import java.math.BigDecimal;
+import java.net.URL;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 
@@ -86,12 +72,17 @@ public class OrientJdbcPreparedStatement extends OrientJdbcStatement implements 
   }
 
   public int executeUpdate() throws SQLException {
-    try {
-      query = new OCommandSQL(sql);
-      return database.command(query).execute(params.values().toArray());
-    } catch (OQueryParsingException e) {
-      throw new SQLSyntaxErrorException("Error on parsing the command", e);
-    }
+    query = new OCommandSQL(sql);
+    rawResult = database.command(query).execute(params.values().toArray());
+
+    if (rawResult instanceof ODocument)
+      return 1;
+    else if (rawResult instanceof Integer)
+      return (Integer) rawResult;
+    else if (rawResult instanceof Collection)
+      return ((Collection) rawResult).size();
+
+    return 0;
   }
 
   public void setNull(int parameterIndex, int sqlType) throws SQLException {
