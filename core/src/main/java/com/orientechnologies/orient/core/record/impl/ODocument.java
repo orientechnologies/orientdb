@@ -1872,13 +1872,17 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
 
     OMetadataInternal metadata = (OMetadataInternal) getDatabase().getMetadata();
-    OClass clazz = metadata.getImmutableSchemaSnapshot().getClass(className);
-    if (clazz != null)
+    this._immutableClazz = metadata.getImmutableSchemaSnapshot().getClass(className);
+    OClass clazz;
+    if (this._immutableClazz != null) {
+      clazz = this._immutableClazz;
+    } else {
+      clazz = metadata.getSchema().getOrCreateClass(className);
+    }
+    if (clazz != null) {
       _className = clazz.getName();
-
-    clazz = metadata.getSchema().getOrCreateClass(className);
-    _className = clazz.getName();
-    convertFieldsToClass(clazz);
+      convertFieldsToClass(clazz);
+    }
   }
 
   /**
