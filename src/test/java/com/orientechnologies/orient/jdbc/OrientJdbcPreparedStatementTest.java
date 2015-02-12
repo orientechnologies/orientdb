@@ -69,6 +69,19 @@ public class OrientJdbcPreparedStatementTest extends OrientJdbcBaseTest {
 	}
 
 	@Test
+	public void testExecuteUpdateReturnsNumberOfRowsDeleted() throws Exception {
+		conn.createStatement().executeQuery("CREATE CLASS Insertable ");
+		conn.createStatement().executeQuery("INSERT INTO Insertable(id) VALUES(1)");
+		conn.createStatement().executeQuery("INSERT INTO Insertable(id) VALUES(2)");
+
+		PreparedStatement statement = conn.prepareStatement("DELETE FROM Insertable WHERE ID > ?");
+		statement.setInt(1, 0);
+		int rowsInserted = statement.executeUpdate();
+
+		assertEquals( 2, rowsInserted );
+	}
+
+	@Test
   public void shouldExecutePreparedStatement() throws Exception {
     PreparedStatement stmt = conn.prepareStatement("SELECT  " + "FROM Item " + "WHERE stringKey = ? OR intKey = ?");
     assertNotNull(stmt);
