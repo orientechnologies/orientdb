@@ -125,24 +125,37 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     return null;
   }
 
-  public ResultSet getColumns(final String catalog, final String schemaPattern, final String tableNamePattern,
-      final String columnNamePattern) throws SQLException {
-
-    final List<ODocument> records = new ArrayList<ODocument>();
-
-    final OClass clazz = database.getMetadata().getSchema().getClass(tableNamePattern);
-    if (clazz != null) {
-      final OProperty prop = clazz.getProperty(columnNamePattern);
-      if (prop != null) {
-        records.add((ODocument) new ODocument().field("TABLE_CAT", database.getName()).field("TABLE_NAME", clazz.getName())
-            .field("COLUMN_NAME", prop.getName()).field("DATA_TYPE", OrientJdbcResultSetMetaData.getSqlType(prop.getType()))
-            .field("COLUMN_SIZE", 1).field("NULLABLE", !prop.isNotNull()).field("IS_NULLABLE", prop.isNotNull() ? "NO" : "YES"));
-      }
+    public ResultSet getColumns(final String catalog, final String schemaPattern, final String tableNamePattern,
+                                final String columnNamePattern) throws SQLException {
+        final List<ODocument> records = new ArrayList<ODocument>();
+        final OClass clazz = database.getMetadata().getSchema().getClass(tableNamePattern);
+        if (clazz != null) {
+            if (columnNamePattern == null){
+                for (OProperty prop : clazz.properties()){
+                    records.add(getPropertyAsDocument(clazz, prop));
+                }
+            } else {
+                final OProperty prop = clazz.getProperty(columnNamePattern);
+                if (prop != null) {
+                    records.add(getPropertyAsDocument(clazz, prop));
+                }
+            }
+        }
+        return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
+                ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
     }
 
-    return new OrientJdbcResultSet(new OrientJdbcStatement(connection), records, ResultSet.TYPE_FORWARD_ONLY,
-        ResultSet.CONCUR_READ_ONLY, ResultSet.HOLD_CURSORS_OVER_COMMIT);
-  }
+    private ODocument getPropertyAsDocument(final OClass clazz, final OProperty prop) {
+        final OType type = prop.getType();
+        return new ODocument().field("TABLE_CAT", database.getName())
+                .field("TABLE_NAME", clazz.getName())
+                .field("COLUMN_NAME", prop.getName())
+                .field("DATA_TYPE", OrientJdbcResultSetMetaData.getSqlType(type))
+                .field("TYPE_NAME", type.name())
+                .field("COLUMN_SIZE", 1)
+                .field("NULLABLE", !prop.isNotNull() ? columnNoNulls : columnNullable)
+                .field("IS_NULLABLE", prop.isNotNull() ? "NO" : "YES");
+    }
 
   public Connection getConnection() throws SQLException {
     return connection;
