@@ -17,142 +17,140 @@ import static org.junit.Assert.assertTrue;
 
 public class OrientJdbcResultSetMetaDataTest extends OrientJdbcBaseTest {
 
-    @Test
-    public void shouldMapReturnTypes() throws Exception {
+  @Test
+  public void shouldMapReturnTypes() throws Exception {
 
-        assertFalse(conn.isClosed());
+    assertFalse(conn.isClosed());
 
-        Statement stmt = conn.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
-        assertEquals(20, rs.getFetchSize());
+    Statement stmt = conn.createStatement();
+    ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
+    assertEquals(20, rs.getFetchSize());
 
-        assertTrue(rs.isBeforeFirst());
+    assertTrue(rs.isBeforeFirst());
 
-        assertTrue(rs.next());
+    assertTrue(rs.next());
 
-        assertEquals(0, rs.getRow());
+    assertEquals(0, rs.getRow());
 
-        assertEquals("1", rs.getString(1));
-        assertEquals("1", rs.getString("stringKey"));
-        assertEquals(1, rs.findColumn("stringKey"));
+    assertEquals("1", rs.getString(1));
+    assertEquals("1", rs.getString("stringKey"));
+    assertEquals(1, rs.findColumn("stringKey"));
 
-        assertEquals(1, rs.getInt(2));
-        assertEquals(1, rs.getInt("intKey"));
+    assertEquals(1, rs.getInt(2));
+    assertEquals(1, rs.getInt("intKey"));
 
-        assertEquals(rs.getString("text").length(), rs.getLong("length"));
+    assertEquals(rs.getString("text").length(), rs.getLong("length"));
 
-        Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
-        cal.add(Calendar.HOUR_OF_DAY, -1);
-        Date date = new Date(cal.getTimeInMillis());
-        assertEquals(date.toString(), rs.getDate("date").toString());
-        assertEquals(date.toString(), rs.getDate(5).toString());
+    Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+    cal.add(Calendar.HOUR_OF_DAY, -1);
+    Date date = new Date(cal.getTimeInMillis());
+    assertEquals(date.toString(), rs.getDate("date").toString());
+    assertEquals(date.toString(), rs.getDate(5).toString());
 
-        rs.last();
+    rs.last();
 
-        assertEquals(19, rs.getRow());
-        rs.close();
+    assertEquals(19, rs.getRow());
+    rs.close();
 
-        assertTrue(rs.isClosed());
-    }
+    assertTrue(rs.isClosed());
+  }
 
-    @Test
-    public void shouldNavigateResultSet() throws Exception {
-        assertFalse(conn.isClosed());
+  @Test
+  public void shouldNavigateResultSet() throws Exception {
+    assertFalse(conn.isClosed());
 
-        Statement stmt = conn.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT * FROM Item");
-        assertEquals(20, rs.getFetchSize());
+    Statement stmt = conn.createStatement();
+    ResultSet rs = stmt.executeQuery("SELECT * FROM Item");
+    assertEquals(20, rs.getFetchSize());
 
-        assertTrue(rs.isBeforeFirst());
+    assertTrue(rs.isBeforeFirst());
 
-        assertTrue(rs.next());
+    assertTrue(rs.next());
 
-        assertEquals(0, rs.getRow());
+    assertEquals(0, rs.getRow());
 
-        rs.last();
+    rs.last();
 
-        assertEquals(19, rs.getRow());
+    assertEquals(19, rs.getRow());
 
-        assertFalse(rs.next());
+    assertFalse(rs.next());
 
-        rs.afterLast();
+    rs.afterLast();
 
-        assertFalse(rs.next());
+    assertFalse(rs.next());
 
-        rs.close();
+    rs.close();
 
-        assertTrue(rs.isClosed());
+    assertTrue(rs.isClosed());
 
-        stmt.close();
+    stmt.close();
 
-        assertTrue(stmt.isClosed());
-    }
+    assertTrue(stmt.isClosed());
+  }
 
-    @Test
-    public void shouldReturnResultSetAfterExecute() throws Exception {
+  @Test
+  public void shouldReturnResultSetAfterExecute() throws Exception {
 
-        assertFalse(conn.isClosed());
+    assertFalse(conn.isClosed());
 
-        Statement stmt = conn.createStatement();
+    Statement stmt = conn.createStatement();
 
-        assertTrue(stmt.execute("SELECT stringKey, intKey, text, length, date FROM Item"));
-        ResultSet rs = stmt.getResultSet();
-        assertNotNull(rs);
-        assertEquals(20, rs.getFetchSize());
+    assertTrue(stmt.execute("SELECT stringKey, intKey, text, length, date FROM Item"));
+    ResultSet rs = stmt.getResultSet();
+    assertNotNull(rs);
+    assertEquals(20, rs.getFetchSize());
 
-    }
+  }
 
-    @Test
-    public void shouldNavigateResultSetByMetadata() throws Exception {
-        assertFalse(conn.isClosed());
+  @Test
+  public void shouldNavigateResultSetByMetadata() throws Exception {
+    assertFalse(conn.isClosed());
 
-        Statement stmt = conn.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
+    Statement stmt = conn.createStatement();
+    ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
 
-        rs.next();
-        ResultSetMetaData metaData = rs.getMetaData();
-        assertEquals(5, metaData.getColumnCount());
+    rs.next();
+    ResultSetMetaData metaData = rs.getMetaData();
+    assertEquals(5, metaData.getColumnCount());
 
-        assertEquals("stringKey", metaData.getColumnName(1));
-        assertTrue(rs.getObject(1) instanceof String);
+    assertEquals("stringKey", metaData.getColumnName(1));
+    assertTrue(rs.getObject(1) instanceof String);
 
-        assertEquals("intKey", metaData.getColumnName(2));
+    assertEquals("intKey", metaData.getColumnName(2));
 
-        assertEquals("text", metaData.getColumnName(3));
-        assertTrue(rs.getObject(3) instanceof String);
+    assertEquals("text", metaData.getColumnName(3));
+    assertTrue(rs.getObject(3) instanceof String);
 
-        assertEquals("length", metaData.getColumnName(4));
+    assertEquals("length", metaData.getColumnName(4));
 
-        assertEquals("date", metaData.getColumnName(5));
+    assertEquals("date", metaData.getColumnName(5));
 
-    }
+  }
 
+  @Test
+  public void shouldMapOrientTypesToJavaSQL() throws Exception {
+    assertFalse(conn.isClosed());
 
-    @Test
-    public void shouldMapOrientTypesToJavaSQL() throws Exception {
-        assertFalse(conn.isClosed());
+    Statement stmt = conn.createStatement();
+    ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
 
-        Statement stmt = conn.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT stringKey, intKey, text, length, date FROM Item");
+    rs.next();
+    ResultSetMetaData metaData = rs.getMetaData();
 
-        rs.next();
-        ResultSetMetaData metaData = rs.getMetaData();
+    assertEquals(5, metaData.getColumnCount());
 
-        assertEquals(5, metaData.getColumnCount());
+    assertEquals(Types.INTEGER, metaData.getColumnType(2));
 
-        assertEquals(Types.INTEGER, metaData.getColumnType(2));
+    assertEquals(Types.VARCHAR, metaData.getColumnType(3));
+    assertTrue(rs.getObject(3) instanceof String);
 
-        assertEquals(Types.VARCHAR, metaData.getColumnType(3));
-        assertTrue(rs.getObject(3) instanceof String);
+    assertEquals(Types.BIGINT, metaData.getColumnType(4));
 
-        assertEquals(Types.BIGINT, metaData.getColumnType(4));
+    assertEquals(Types.TIMESTAMP, metaData.getColumnType(5));
 
-        assertEquals(Types.TIMESTAMP, metaData.getColumnType(5));
+    assertEquals(String.class.getName(), metaData.getColumnClassName(1));
+    assertEquals(Types.VARCHAR, metaData.getColumnType(1));
 
-        assertEquals(String.class.getName(), metaData.getColumnClassName(1));
-        assertEquals(Types.VARCHAR, metaData.getColumnType(1));
-
-    }
-
+  }
 
 }
