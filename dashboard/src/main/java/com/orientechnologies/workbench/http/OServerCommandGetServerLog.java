@@ -84,11 +84,8 @@ public class OServerCommandGetServerLog extends
 		// the name of the server
 		String rid = iRequest.getParameter("name");
 		rid = URLDecoder.decode(rid);
-		// rid = rid.replaceAll("___", " ");
 		OMonitoredServer s = monitor.getMonitoredServer(rid);
 		ODocument server = s.getConfiguration();
-		// rid = iRequest.getParameter("name");
-		// rid = URLDecoder.decode(rid);
 		rid = URLEncoder.encode(rid);
 		String parameters = (rid != null ? "?name=" + rid : "")
 				+ (value != null ? "&searchvalue=" + value : "")
