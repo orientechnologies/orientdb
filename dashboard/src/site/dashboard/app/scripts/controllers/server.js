@@ -6,7 +6,7 @@ app.controller('ServerMonitorController', function ($scope, $location, $routePar
 
   $scope.nav = $routeParams.nav || 'dashboard';
   $scope.template = 'views/server/' + $scope.nav + ".html";
-
+console.log($scope.template);
 
 });
 

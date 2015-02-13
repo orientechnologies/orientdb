@@ -49,7 +49,7 @@ biconsole.factory('DatabaseApi', function ($http, $resource) {
 });
 
 
-biconsole.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
+biconsole.factory('CommandLogApi', function ($http, $resource, DatabaseApi, $httpBackend) {
 
     var current = {
         name: null,
@@ -84,7 +84,7 @@ biconsole.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
         var dateTo = '';
         var hourTo = '';
         var file = '';
-        var server = '&name=' + params.server;
+        var server = '&name=' + encodeURIComponent(params.server);
 
         if (params.searchvalue) {
             searchValue = '&searchvalue=' + params.searchvalue
@@ -111,6 +111,7 @@ biconsole.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
         if (params.file != undefined) {
 
             file = '&file=' + params.file;
+            console.log(params.file);
         }
         $http.get('/log/monitor/' + params.typeofSearch + '?' + 'tail=100000' + server + searchValue + logtype + dateFrom + hourFrom + dateTo + hourTo + file).success(function (data) {
             callback(data);
@@ -121,8 +122,9 @@ biconsole.factory('CommandLogApi', function ($http, $resource, DatabaseApi) {
     }
 
     resource.getListFiles = function (params, callback) {
-        var server = '?name=' + params.server;
-        $http.get('/log/monitor/files' + server).success(function (data) {
+        var server = params.server;
+
+        $http.get('/log/monitor/files?name=' + encodeURIComponent(server)).success(function (data) {
             callback(data);
         }).error(function (data) {
             })

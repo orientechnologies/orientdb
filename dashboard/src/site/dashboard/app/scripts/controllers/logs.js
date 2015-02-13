@@ -106,14 +106,17 @@ dbModule.controller("LogsController", ['$scope', '$http', '$location', '$routePa
         }
         else {
             typeofS = 'file';
-            filess = $scope.selectedFile
+            filess = $scope.selectedFile;
+            console.log(filess);
         }
         if ($scope.server != undefined) {
             CommandLogApi.getLastLogs({server: $scope.server.name, file: filess, typeofSearch: typeofS, searchvalue: $scope.selectedSearch, logtype: $scope.selectedType, dateFrom: $scope.selectedDateFrom, hourFrom: $scope.selectedHourFrom, dateTo: $scope.selectedDateTo, hourTo: $scope.selectedHourTo}, function (data) {
                 if (data) {
                     $scope.resultTotal = data;
                     if (data.logs) {
+                        console.log(data);
                         $scope.results = data.logs.slice(0, $scope.countPage);
+                        console.log($scope.results);
                         $scope.currentPage = 1;
                         $scope.numberOfPage = new Array(Math.ceil(data.logs.length / $scope.countPage));
                     }
@@ -203,6 +206,7 @@ dbModule.controller("LogsJavaController", ['$scope', '$http', '$location', '$rou
         });
     }
     $scope.search = function () {
+
         Spinner.start();
         var day = moment($scope.selectedDateFrom);
 

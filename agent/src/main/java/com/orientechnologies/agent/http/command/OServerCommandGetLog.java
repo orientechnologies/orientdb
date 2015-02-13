@@ -40,19 +40,20 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
-public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstract {
+public class OServerCommandGetLog extends
+		OServerCommandAuthenticatedServerAbstract {
 
-	private static final String[]	NAMES					= { "GET|log/*" };
+	private static final String[] NAMES = { "GET|log/*" };
 
-	private static final String		TAIL					= "tail";
+	private static final String TAIL = "tail";
 
-	private static final String		FILE					= "file";
+	private static final String FILE = "file";
 
-	private static final String		SEARCH				= "search";
+	private static final String SEARCH = "search";
 
-	private static final String		ALLFILES			= "files";
+	private static final String ALLFILES = "files";
 
-	SimpleDateFormat							dateFormatter	= new SimpleDateFormat("yyyy-MM-dd");
+	SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
 
 	public OServerCommandGetLog(final OServerCommandConfiguration iConfiguration) {
 		super(iConfiguration.pattern);
@@ -63,9 +64,11 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 	}
 
 	@Override
-	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+	public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse)
+			throws Exception {
 
-		final String[] urlParts = checkSyntax(iRequest.getUrl(), 1, "Syntax error: log/<type>?<value>");
+		final String[] urlParts = checkSyntax(iRequest.getUrl(), 1,
+				"Syntax error: log/<type>?<value>");
 
 		String type = urlParts[1]; // the type of the log tail search or file
 
@@ -111,14 +114,15 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 			}
 		};
 
-		prop.load(new FileInputStream(System.getProperty("user.dir") + "/config/orientdb-server-log.properties"));
-		String logDir = (String) prop.get("java.util.logging.FileHandler.pattern");
+		prop.load(new FileInputStream(System.getProperty("user.dir")
+				+ "/config/orientdb-server-log.properties"));
+		String logDir = (String) prop
+				.get("java.util.logging.FileHandler.pattern");
 		File directory = new File(logDir).getParentFile();
 		File[] files = directory.listFiles(filter);
-		if(files!=null){
+		if (files != null) {
 			Arrays.sort(files);
-		}
-		else{
+		} else {
 			throw new Exception("logs directory is empty or does not exist");
 		}
 		List<ODocument> subdocuments = new ArrayList<ODocument>();
@@ -133,16 +137,22 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 		ODocument doc = new ODocument();
 
 		if (TAIL.equals(type)) {
-			insertFromFile(value, size, logType, dFrom, hFrom, dTo, hTo, files, subdocuments, line, dayToDoc, hour, typeToDoc, info, doc, files[0]);
+			insertFromFile(value, size, logType, dFrom, hFrom, dTo, hTo, files,
+					subdocuments, line, dayToDoc, hour, typeToDoc, info, doc,
+					files[0]);
 		} else if (FILE.equals(type)) {
 			for (int i = 0; i <= files.length - 1; i++) {
 				if (files[i].getName().equals(selectedFile))
-					insertFromFile(value, size, logType, dFrom, hFrom, dTo, hTo, files, subdocuments, line, dayToDoc, hour, typeToDoc, info, doc, files[i]);
+					insertFromFile(value, size, logType, dFrom, hFrom, dTo,
+							hTo, files, subdocuments, line, dayToDoc, hour,
+							typeToDoc, info, doc, files[i]);
 			}
 		} else if (SEARCH.equals(type)) {
 			for (int i = 0; i <= files.length - 1; i++) {
 				line = "";
-				insertFromFile(value, size, logType, dFrom, hFrom, dTo, hTo, files, subdocuments, line, dayToDoc, hour, typeToDoc, info, doc, files[i]);
+				insertFromFile(value, size, logType, dFrom, hFrom, dTo, hTo,
+						files, subdocuments, line, dayToDoc, hour, typeToDoc,
+						info, doc, files[i]);
 			}
 		} else if (ALLFILES.equals(type)) {
 			for (int i = 0; i <= files.length - 1; i++) {
@@ -155,20 +165,23 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 
 			result.field("files", subdocuments);
 			iResponse.writeRecord(result, null, "");
-
 			return false;
 		}
 
 		iRequest.data.commandInfo = "Load log";
 
 		result.field("logs", subdocuments);
-		iResponse.writeRecord(result, null, "");
+
+		 iResponse.writeRecord(result, null, "");
 
 		return false;
 	}
 
-	private void insertFromFile(String value, String size, String logType, Date dFrom, Time hFrom, Date dTo, Time hTo, File[] files, List<ODocument> subdocuments, String line,
-			String dayToDoc, String hour, String typeToDoc, String info, ODocument doc, File file) throws FileNotFoundException, IOException {
+	private void insertFromFile(String value, String size, String logType,
+			Date dFrom, Time hFrom, Date dTo, Time hTo, File[] files,
+			List<ODocument> subdocuments, String line, String dayToDoc,
+			String hour, String typeToDoc, String info, ODocument doc, File file)
+			throws FileNotFoundException, IOException {
 		File f = file;
 		BufferedReader br = new BufferedReader(new FileReader(f));
 		Date day = null;
@@ -186,7 +199,9 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 						if (doc.field("day") != null) {
 							doc.field("info", info);
 							doc.field("file", f.getName());
-							checkInsert(value, logType, subdocuments, typeToDoc, info, doc, dFrom, day, hFrom, hour, dTo, hTo);
+							checkInsert(value, logType, subdocuments,
+									typeToDoc, info, doc, dFrom, day, hFrom,
+									hour, dTo, hTo);
 							doc = new ODocument();
 						}
 
@@ -215,14 +230,16 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 					addFieldToDoc(dayToDoc, hour, typeToDoc, doc);
 					doc.field("info", info);
 					doc.field("file", f.getName());
-					checkInsert(value, logType, subdocuments, typeToDoc, info, doc, dFrom, day, hFrom, hour, dTo, hTo);
+					checkInsert(value, logType, subdocuments, typeToDoc, info,
+							doc, dFrom, day, hFrom, hour, dTo, hTo);
 				}
 			}
 		}
 		br.close();
 	}
 
-	private Time setTimeFromParameter(String hourFrom) throws UnsupportedEncodingException {
+	private Time setTimeFromParameter(String hourFrom)
+			throws UnsupportedEncodingException {
 		Time hFrom;
 		hourFrom = URLDecoder.decode(hourFrom, "UTF-8");
 		String[] splitHourFrom = hourFrom.split(" ");
@@ -251,11 +268,14 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 		return result;
 	}
 
-	private void checkInsert(String value, String logType, List<ODocument> subdocuments, String typeToDoc, String info, ODocument doc, Date dFrom, Date day, Time hFrom, String hour,
+	private void checkInsert(String value, String logType,
+			List<ODocument> subdocuments, String typeToDoc, String info,
+			ODocument doc, Date dFrom, Date day, Time hFrom, String hour,
 			Date dTo, Time hTo) {
 		Time tHour = setTime(hour);
 
-		if (value == null && logType == null && dFrom == null && hFrom == null && dTo == null && hTo == null) {
+		if (value == null && logType == null && dFrom == null && hFrom == null
+				&& dTo == null && hTo == null) {
 			subdocuments.add(doc);
 			return;
 		}
@@ -285,7 +305,8 @@ public class OServerCommandGetLog extends OServerCommandAuthenticatedServerAbstr
 		return;
 	}
 
-	private void addFieldToDoc(String dayToDoc, String hour, String typeToDoc, ODocument doc) {
+	private void addFieldToDoc(String dayToDoc, String hour, String typeToDoc,
+			ODocument doc) {
 		doc.field("day", dayToDoc);
 		doc.field("hour", hour);
 		doc.field("type", typeToDoc);
