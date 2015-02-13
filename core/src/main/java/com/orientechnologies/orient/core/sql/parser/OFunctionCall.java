@@ -4,10 +4,11 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class OFunctionCall extends SimpleNode {
 
-  protected OIdentifier       name;
+  protected OIdentifier name;
   protected boolean           star   = false;
   protected List<OExpression> params = new ArrayList<OExpression>();
 
@@ -19,7 +20,9 @@ public class OFunctionCall extends SimpleNode {
     super(p, id);
   }
 
-  /** Accept the visitor. **/
+  /**
+   * Accept the visitor. *
+   */
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
@@ -61,6 +64,12 @@ public class OFunctionCall extends SimpleNode {
     return result.toString();
   }
 
-
+  public void replaceParameters(Map<Object, Object> iParams) {
+    if (params != null) {
+      for (OExpression expr : params) {
+        expr.replaceParameters(iParams);
+      }
+    }
+  }
 }
 /* JavaCC - OriginalChecksum=290d4e1a3f663299452e05f8db718419 (do not edit this line) */

@@ -2,6 +2,12 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
+
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 public class OInputParameter extends SimpleNode {
 
   public OInputParameter(int id) {
@@ -12,10 +18,61 @@ public class OInputParameter extends SimpleNode {
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
   }
+
+  public Object bindFromInputParams(Map<Object, Object> params) {
+    return null;
+  }
+
+  protected Object toParsedTree(Object value) {
+    if (value == null) {
+      return null;
+    }
+    if (value instanceof Integer) {
+      OInteger result = new OInteger(-1);
+      result.setValue((Integer) value);
+      return result;
+    }
+    if (value instanceof Number) {
+      OFloatingPoint result = new OFloatingPoint(-1);
+      result.sign = ((Number) value).doubleValue() >= 0 ? 1 : -1;
+      result.stringValue = value.toString();
+      if (result.stringValue.startsWith("-")) {
+        result.stringValue = result.stringValue.substring(1);
+      }
+      return result;
+    }
+    if (value instanceof String) {
+      return value;
+    }
+    if (value instanceof Collection) {
+      OCollection coll = new OCollection(-1);
+      coll.expressions = new ArrayList<OExpression>();
+      for (Object o : (Collection) value) {
+        OExpression exp = new OExpression(-1);
+        exp.value = toParsedTree(o);
+        coll.expressions.add(exp);
+      }
+      return coll;
+    }
+    if (value instanceof ODocument) {
+      ORid rid = new ORid(-1);
+      String stringVal = ((ODocument) value).getIdentity().toString().substring(1);
+      String[] splitted = stringVal.split(":");
+      OInteger c = new OInteger(-1);
+      c.setValue(Integer.parseInt(splitted[0]));
+      rid.cluster = c;
+      OInteger p = new OInteger(-1);
+      p.setValue(Integer.parseInt(splitted[1]));
+      rid.position = p;
+      return rid;
+    }
+    // TODO dates
+    return this;
+  }
+
 }
 /* JavaCC - OriginalChecksum=bb2f3732f5e3be4d954527ee0baa9020 (do not edit this line) */

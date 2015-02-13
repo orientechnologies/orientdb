@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.List;
+import java.util.Map;
 
 public class OFromItem extends SimpleNode {
 
@@ -63,6 +64,12 @@ public class OFromItem extends SimpleNode {
   @Override
   public String toString() {
     return toString("");
+  }
+
+  public void replaceParameters(Map<Object, Object> params) {
+    if(statement!=null) {
+      statement.replaceParameters(params);
+    }
   }
 }
 /* JavaCC - OriginalChecksum=f64e3b4d2a2627a1b5d04a7dcb95fa94 (do not edit this line) */

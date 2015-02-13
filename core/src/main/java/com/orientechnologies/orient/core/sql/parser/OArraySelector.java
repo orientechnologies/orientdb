@@ -2,12 +2,14 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class OArraySelector extends SimpleNode {
 
   protected ORid            rid;
   protected OInputParameter inputParam;
   protected OExpression     expression;
-  protected OInteger         integer;
+  protected OInteger        integer;
 
   public OArraySelector(int id) {
     super(id);
@@ -34,6 +36,15 @@ public class OArraySelector extends SimpleNode {
       return integer.toString();
     }
     return null;
+  }
+
+  public void replaceParameters(Map<Object, Object> params) {
+    if (inputParam != null) {
+      inputParam.bindFromInputParams(params);
+    }
+    if (expression != null) {
+      expression.replaceParameters(params);
+    }
   }
 }
 /* JavaCC - OriginalChecksum=f87a5543b1dad0fb5f6828a0663a7c9e (do not edit this line) */

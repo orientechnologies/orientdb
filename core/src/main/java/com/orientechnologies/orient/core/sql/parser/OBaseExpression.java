@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class OBaseExpression extends OMathExpression {
 
   protected ONumber         number;
@@ -40,6 +42,18 @@ public class OBaseExpression extends OMathExpression {
       result.append(modifier.toString());
     }
     return result.toString();
+  }
+
+  public void replaceParameters(Map<Object, Object> params) {
+    if (identifier != null) {
+      identifier.replaceParameters(params);
+    }
+    if (inputParam != null) {
+      inputParam.bindFromInputParams(params);
+    }
+    if (modifier != null) {
+      modifier.replaceParameters(params);
+    }
   }
 }
 /* JavaCC - OriginalChecksum=71b3e2d1b65c923dc7cfe11f9f449d2b (do not edit this line) */

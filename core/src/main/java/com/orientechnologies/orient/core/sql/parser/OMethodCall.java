@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class OMethodCall extends SimpleNode {
   protected OIdentifier       methodName;
@@ -38,6 +39,14 @@ public class OMethodCall extends SimpleNode {
     }
     result.append(")");
     return result.toString();
+  }
+
+  public void replaceParameters(Map<Object, Object> iParams) {
+    if(this.params!=null){
+      for(OExpression exp:this.params){
+        exp.replaceParameters(iParams);
+      }
+    }
   }
 }
 /* JavaCC - OriginalChecksum=da95662da21ceb8dee3ad88c0d980413 (do not edit this line) */

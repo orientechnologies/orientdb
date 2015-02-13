@@ -25,8 +25,6 @@ import java.util.*;
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
-import com.sun.swing.internal.plaf.metal.resources.metal;
-import sun.misc.resources.Messages_pt_BR;
 
 /**
  * Container for the list of heterogeneous values that are going to be stored in in index as composite keys.

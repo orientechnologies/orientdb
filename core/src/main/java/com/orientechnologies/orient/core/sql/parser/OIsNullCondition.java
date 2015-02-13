@@ -4,6 +4,8 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.Map;
+
 public class OIsNullCondition extends OBooleanExpression {
 
   protected OExpression expression;
@@ -37,6 +39,10 @@ public class OIsNullCondition extends OBooleanExpression {
   @Override
   public String toString() {
     return expression.toString() + " is null";
+  }
+
+  @Override public void replaceParameters(Map<Object, Object> params) {
+    expression.replaceParameters(params);
   }
 
 }

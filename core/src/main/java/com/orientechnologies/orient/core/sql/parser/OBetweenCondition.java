@@ -4,6 +4,8 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.Map;
+
 public class OBetweenCondition extends OBooleanExpression {
 
   protected OExpression first;
@@ -26,6 +28,12 @@ public class OBetweenCondition extends OBooleanExpression {
   @Override
   public boolean evaluate(OIdentifiable currentRecord) {
     return false;
+  }
+
+  @Override public void replaceParameters(Map<Object, Object> params) {
+    first.replaceParameters(params);
+    second.replaceParameters(params);
+    third.replaceParameters(params);
   }
 
   public OExpression getFirst() {

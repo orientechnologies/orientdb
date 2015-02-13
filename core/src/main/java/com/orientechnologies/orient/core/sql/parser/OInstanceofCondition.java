@@ -4,6 +4,8 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.Map;
+
 public class OInstanceofCondition extends OBooleanExpression {
 
   protected OExpression left;
@@ -39,6 +41,10 @@ public class OInstanceofCondition extends OBooleanExpression {
       builder.append(rightString);
     }
     return builder.toString();
+  }
+
+  @Override public void replaceParameters(Map<Object, Object> params) {
+    left.replaceParameters(params);
   }
 }
 /* JavaCC - OriginalChecksum=0b5eb529744f307228faa6b26f0592dc (do not edit this line) */

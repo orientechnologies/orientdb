@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class OBaseIdentifier extends SimpleNode {
 
   protected OLevelZeroIdentifier levelZero;
@@ -29,6 +31,13 @@ public class OBaseIdentifier extends SimpleNode {
       return suffix.toString();
     }
     return super.toString();
+  }
+
+  public void replaceParameters(Map<Object, Object> params) {
+    if (levelZero != null) {
+      levelZero.replaceParameters(params);
+    }
+
   }
 }
 /* JavaCC - OriginalChecksum=ed89af10d8be41a83428c5608a4834f6 (do not edit this line) */

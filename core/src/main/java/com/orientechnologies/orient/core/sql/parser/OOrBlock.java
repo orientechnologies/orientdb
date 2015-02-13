@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
@@ -30,6 +31,12 @@ public class OOrBlock extends OBooleanExpression {
       }
     }
     return false;
+  }
+
+  @Override public void replaceParameters(Map<Object, Object> params) {
+    for(OBooleanExpression block:subBlocks){
+      block.replaceParameters(params);
+    }
   }
 
   public List<OBooleanExpression> getSubBlocks() {

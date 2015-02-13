@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.List;
+import java.util.Map;
 
 public class OProjection extends SimpleNode {
 
@@ -45,6 +46,14 @@ public class OProjection extends SimpleNode {
     }
 
     return builder.toString();
+  }
+
+  public void replaceParameters(Map<Object, Object> params) {
+    if(items!=null){
+      for(OProjectionItem item:items){
+        item.replaceParameters(params);
+      }
+    }
   }
 }
 /* JavaCC - OriginalChecksum=3a650307b53bae626dc063c4b35e62c3 (do not edit this line) */

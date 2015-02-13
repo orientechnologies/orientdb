@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class OLetClause extends SimpleNode {
 
@@ -35,6 +36,10 @@ public class OLetClause extends SimpleNode {
       first = false;
     }
     return result.toString();
+  }
+
+  public void replaceParameters(Map<Object, Object> params) {
+    // TODO
   }
 }
 

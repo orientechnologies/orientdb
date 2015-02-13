@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 public class OWhereClause extends SimpleNode {
@@ -27,11 +29,19 @@ public class OWhereClause extends SimpleNode {
     return baseExpression.evaluate(currentRecord);
   }
 
-  @Override public String toString() {
-    if(baseExpression==null){
+  @Override
+  public String toString() {
+    if (baseExpression == null) {
       return "";
     }
     return baseExpression.toString();
+  }
+
+  public void replaceParameters(Map<Object, Object> params) {
+    if(baseExpression!=null) {
+      baseExpression.replaceParameters(params);
+    }
+
   }
 }
 /* JavaCC - OriginalChecksum=e8015d01ce1ab2bc337062e9e3f2603e (do not edit this line) */

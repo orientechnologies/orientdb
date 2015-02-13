@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class OParenthesisExpression extends OMathExpression {
 
   protected OExpression expression;
@@ -31,6 +33,17 @@ public class OParenthesisExpression extends OMathExpression {
     }
     result.append(")");
     return result.toString();
+  }
+
+  @Override
+  public void replaceParameters(Map<Object, Object> params) {
+    super.replaceParameters(params);
+    if (expression != null) {
+      expression.replaceParameters(params);
+    }
+    if (statement != null) {
+      statement.replaceParameters(params);
+    }
   }
 }
 /* JavaCC - OriginalChecksum=4656e5faf4f54dc3fc45a06d8e375c35 (do not edit this line) */

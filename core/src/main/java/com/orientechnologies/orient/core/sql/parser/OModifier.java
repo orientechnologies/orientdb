@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class OModifier extends SimpleNode {
 
   boolean                    squareBrackets = false;
@@ -51,6 +53,24 @@ public class OModifier extends SimpleNode {
       result.append(next.toString());
     }
     return result.toString();
+  }
+
+  public void replaceParameters(Map<Object, Object> params) {
+    if (arrayRange != null) {
+      arrayRange.replaceParameters(params);
+    }
+    if (condition != null) {
+      condition.replaceParameters(params);
+    }
+    if (arraySingleValues != null) {
+      arraySingleValues.replaceParameters(params);
+    }
+    if (methodCall != null) {
+      methodCall.replaceParameters(params);
+    }
+    if (next != null) {
+      next.replaceParameters(params);
+    }
   }
 }
 /* JavaCC - OriginalChecksum=39c21495d02f9b5007b4a2d6915496e1 (do not edit this line) */

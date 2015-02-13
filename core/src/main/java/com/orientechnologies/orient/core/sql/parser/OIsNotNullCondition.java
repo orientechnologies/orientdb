@@ -4,6 +4,8 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.Map;
+
 public class OIsNotNullCondition extends OBooleanExpression {
 
   protected OExpression expression;
@@ -29,6 +31,9 @@ public class OIsNotNullCondition extends OBooleanExpression {
   @Override
   public String toString() {
     return expression.toString() + " IS NOT NULL";
+  }
+  @Override public void replaceParameters(Map<Object, Object> params) {
+    expression.replaceParameters(params);
   }
 }
 /* JavaCC - OriginalChecksum=a292fa8a629abb7f6fe72a627fc91361 (do not edit this line) */

@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class OTraverseStatement extends OStatement {
 
@@ -70,6 +71,23 @@ public class OTraverseStatement extends OStatement {
     }
 
     return builder.toString();
+  }
+
+  @Override
+  public void replaceParameters(Map<Object, Object> params) {
+    if (target != null) {
+      target.replaceParameters(params);
+    }
+
+    if (projections != null) {
+      for(OTraverseProjectionItem item:projections) {
+        item.replaceParameters(params);
+      }
+    }
+
+    if (whereClause != null) {
+      whereClause.replaceParameters(params);
+    }
   }
 }
 /* JavaCC - OriginalChecksum=47399a3a3d5a423768bbdc70ee957464 (do not edit this line) */

@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class OProjectionItem extends SimpleNode {
 
   protected boolean     all = false;
@@ -71,6 +73,12 @@ public class OProjectionItem extends SimpleNode {
       return "null";
     }
     return expression.getDefaultAlias();
+  }
+
+  public void replaceParameters(Map<Object, Object> params) {
+    if(expression!=null){
+      expression.replaceParameters(params);
+    }
   }
 }
 /* JavaCC - OriginalChecksum=6d6010734c7434a6f516e2eac308e9ce (do not edit this line) */

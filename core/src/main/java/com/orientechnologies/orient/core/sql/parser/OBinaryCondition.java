@@ -4,6 +4,8 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.Map;
+
 public class OBinaryCondition extends OBooleanExpression {
   protected OExpression            left;
   protected OBinaryCompareOperator operator;
@@ -25,6 +27,11 @@ public class OBinaryCondition extends OBooleanExpression {
   @Override
   public boolean evaluate(OIdentifiable currentRecord) {
     return false;
+  }
+
+  @Override public void replaceParameters(Map<Object, Object> params) {
+    left.replaceParameters(params);
+    right.replaceParameters(params);
   }
 
   @Override

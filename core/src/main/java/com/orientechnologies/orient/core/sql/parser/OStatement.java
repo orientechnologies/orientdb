@@ -7,6 +7,8 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 
+import java.util.Map;
+
 public class OStatement extends SimpleNode {
 
   public static final String CUSTOM_STRICT_SQL = "strictSql";
@@ -32,5 +34,8 @@ public class OStatement extends SimpleNode {
     return ODatabaseRecordThreadLocal.INSTANCE.get();
   }
 
+  public void replaceParameters(Map<Object, Object> params) {
+
+  }
 }
 /* JavaCC - OriginalChecksum=589c4dcc8287f430e46d8eb12b0412c5 (do not edit this line) */

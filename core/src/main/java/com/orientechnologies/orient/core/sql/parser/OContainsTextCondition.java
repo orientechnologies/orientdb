@@ -4,6 +4,8 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.Map;
+
 public
 class OContainsTextCondition extends OBooleanExpression {
 
@@ -26,6 +28,13 @@ class OContainsTextCondition extends OBooleanExpression {
 
   @Override public boolean evaluate(OIdentifiable currentRecord) {
     return false;
+  }
+
+  @Override public void replaceParameters(Map<Object, Object> params) {
+    left.replaceParameters(params);
+    if (right != null) {
+      right.replaceParameters(params);
+    }
   }
 
   @Override

@@ -4,6 +4,8 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.Map;
+
 public class OParenthesisBlock extends OBooleanExpression {
 
   OBooleanExpression subElement;
@@ -24,6 +26,12 @@ public class OParenthesisBlock extends OBooleanExpression {
   @Override
   public boolean evaluate(OIdentifiable currentRecord) {
     return subElement.evaluate(currentRecord);
+  }
+
+  @Override public void replaceParameters(Map<Object, Object> params) {
+    if(subElement!=null) {
+      subElement.replaceParameters(params);
+    }
   }
 
   @Override

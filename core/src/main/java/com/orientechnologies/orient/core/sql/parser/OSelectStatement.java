@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
@@ -242,6 +243,24 @@ public class OSelectStatement extends OStatement {
     }
 
     return builder.toString();
+  }
+
+  @Override
+  public void replaceParameters(Map<Object, Object> params) {
+    if (target != null) {
+      target.replaceParameters(params);
+    }
+
+    if (projection != null) {
+      projection.replaceParameters(params);
+    }
+
+    if (whereClause != null) {
+      whereClause.replaceParameters(params);
+    }
+    if (letClause != null) {
+      letClause.replaceParameters(params);
+    }
   }
 }
 /* JavaCC - OriginalChecksum=b26959b9726a8cf35d6283eca931da6b (do not edit this line) */

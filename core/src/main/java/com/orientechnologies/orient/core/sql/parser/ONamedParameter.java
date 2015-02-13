@@ -2,8 +2,11 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class ONamedParameter extends OInputParameter {
 
+  protected int paramNumber;
   protected OIdentifier paramName;
 
   public ONamedParameter(int id) {
@@ -23,5 +26,15 @@ public class ONamedParameter extends OInputParameter {
   public String toString() {
     return ":" + paramName.toString();
   }
+
+  public Object bindFromInputParams(Map<Object, Object> params) {
+    String key = paramName.toString();
+    if(params.containsKey(key)) {
+      return toParsedTree(params.get(key));
+    }
+    return toParsedTree(params.get(paramNumber));
+  }
+
+
 }
 /* JavaCC - OriginalChecksum=8a00a9cf51a15dd75202f6372257fc1c (do not edit this line) */

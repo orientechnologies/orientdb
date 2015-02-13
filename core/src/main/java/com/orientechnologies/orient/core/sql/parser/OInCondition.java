@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.Collection;
+import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
@@ -11,8 +12,8 @@ public class OInCondition extends OBooleanExpression {
   protected OBinaryCompareOperator operator;
   protected OSelectStatement       rightStatement;
   protected Collection<Object>     rightCollection;
-  protected Object                 right;
-  protected Object                 rightParam;
+  protected OInputParameter                 rightParam;
+  protected Object right;
 
   public OInCondition(int id) {
     super(id);
@@ -30,6 +31,23 @@ public class OInCondition extends OBooleanExpression {
   @Override
   public boolean evaluate(OIdentifiable currentRecord) {
     return false;
+  }
+
+  @Override public void replaceParameters(Map<Object, Object> params) {
+    left.replaceParameters(params);
+    if (rightStatement != null) {
+      rightStatement.replaceParameters(params);
+    }
+    if(rightCollection!=null){
+      for(Object o:rightCollection){
+        if(o instanceof OExpression){
+          ((OExpression) o).replaceParameters(params);
+        }
+      }
+    }
+    if(rightParam!=null){
+      rightParam.bindFromInputParams(params);
+    }
   }
 
   public String toString() {

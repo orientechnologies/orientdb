@@ -4,6 +4,8 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.Map;
+
 public class ONotBlock extends OBooleanExpression {
   protected OBooleanExpression sub;
 
@@ -23,6 +25,10 @@ public class ONotBlock extends OBooleanExpression {
       return true;
     }
     return !sub.evaluate(currentRecord);
+  }
+
+  @Override public void replaceParameters(Map<Object, Object> params) {
+    sub.replaceParameters(params);
   }
 
   public OBooleanExpression getSub() {

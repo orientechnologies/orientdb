@@ -4,6 +4,8 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
+import java.util.Map;
+
 public class OIsNotDefinedCondition extends OBooleanExpression {
 
   protected OExpression expression;
@@ -24,6 +26,9 @@ public class OIsNotDefinedCondition extends OBooleanExpression {
   @Override
   public boolean evaluate(OIdentifiable currentRecord) {
     return false;
+  }
+  @Override public void replaceParameters(Map<Object, Object> params) {
+    expression.replaceParameters(params);
   }
 }
 /* JavaCC - OriginalChecksum=1c766d6caf5ccae19c1c291396bb56f2 (do not edit this line) */

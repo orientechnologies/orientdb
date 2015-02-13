@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.Collection;
+import java.util.Map;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
@@ -13,7 +14,7 @@ public class ONotInCondition extends OBooleanExpression {
   protected OSelectStatement       rightStatement;
   protected Collection<Object>     rightCollection;
   protected Object                 right;
-  protected Object                 rightParam;
+  protected OInputParameter                 rightParam;
 
   public ONotInCondition(int id) {
     super(id);
@@ -66,6 +67,23 @@ public class ONotInCondition extends OBooleanExpression {
       return "\"" + ((String) o).replaceAll("\"", "\\\"") + "\"";
     }
     return o.toString();
+  }
+
+  @Override public void replaceParameters(Map<Object, Object> params) {
+    left.replaceParameters(params);
+    if (rightStatement != null) {
+      rightStatement.replaceParameters(params);
+    }
+    if(rightCollection!=null){
+      for(Object o:rightCollection){
+        if(o instanceof OExpression){
+          ((OExpression) o).replaceParameters(params);
+        }
+      }
+    }
+    if(rightParam!=null){
+      rightParam.bindFromInputParams(params);
+    }
   }
 }
 /* JavaCC - OriginalChecksum=8fb82bf72cc7d9cbdf2f9e2323ca8ee1 (do not edit this line) */

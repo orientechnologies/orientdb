@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class OArraySingleValuesSelector extends SimpleNode {
 
@@ -34,6 +35,14 @@ public class OArraySingleValuesSelector extends SimpleNode {
       first = false;
     }
     return result.toString();
+  }
+
+  public void replaceParameters(Map<Object, Object> params) {
+    if(items!=null){
+      for(OArraySelector item:items){
+        item.replaceParameters(params);
+      }
+    }
   }
 }
 /* JavaCC - OriginalChecksum=991998c77a4831184b6dca572513fd8d (do not edit this line) */

@@ -896,7 +896,11 @@ ONamedParameter NamedParameter():
     (
 	    <COLON> jjtThis.paramName = Identifier()
 	)
-	{ return jjtThis; }
+	{
+	 jjtThis.paramNumber = inputParamCount;
+     inputParamCount++;
+	 return jjtThis;
+	}
 }
 
 OProjection Projection():
@@ -1642,14 +1646,40 @@ OBooleanExpression InstanceofCondition():
 }
 
 OBooleanExpression IndexMatchCondition():
-{}
+{
+    Token token;
+    jjtThis.leftExpressions = new ArrayList();
+    OExpression lastExpression;
+}
 {
     (
      	<KEY>
      	(
-     	    CompareOperator() <LBRACKET> [ Expression() ( <COMMA> Expression() )* ] <RBRACKET>
+     	    jjtThis.operator = CompareOperator() <LBRACKET>
+     	    [
+     	        lastExpression = Expression() { jjtThis.leftExpressions.add(lastExpression); }
+     	        ( <COMMA>
+     	            lastExpression = Expression() { jjtThis.leftExpressions.add(lastExpression); }
+     	        )*
+     	    ]
+     	    <RBRACKET>
      	    |
-     	    <BETWEEN> <LBRACKET> [ Expression() ( <COMMA> Expression() )* ] <RBRACKET> <AND> <LBRACKET> [ Expression() ( <COMMA> Expression() )* ] <RBRACKET>
+     	    <BETWEEN> {jjtThis.between = true;} <LBRACKET>
+     	    [
+     	        lastExpression = Expression() { jjtThis.leftExpressions.add(lastExpression); }
+     	        (
+     	            <COMMA>
+     	            lastExpression = Expression() { jjtThis.leftExpressions.add(lastExpression); }
+     	        )*
+     	    ]
+     	    <RBRACKET> <AND> <LBRACKET>
+     	    [
+     	        lastExpression = Expression() { jjtThis.rightExpressions.add(lastExpression); }
+     	        (
+     	            <COMMA>
+     	            lastExpression = Expression() { jjtThis.rightExpressions.add(lastExpression); }
+     	        )*
+     	    ] <RBRACKET>
      	)
     )
     {return jjtThis;}
@@ -1820,10 +1850,10 @@ OBooleanExpression ContainsTextCondition():
 }
 
 OBooleanExpression MatchesCondition():
-{}
+{Token token;}
 {
     (
-    	Expression() <MATCHES> <STRING_LITERAL>
+    	jjtThis.expression = Expression() <MATCHES> token = <STRING_LITERAL> {jjtThis.right = token.image;}
     )
     {return jjtThis;}
 }

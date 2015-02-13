@@ -4,8 +4,10 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class OMathExpression extends SimpleNode {
+
 
   public enum Operator {
     PLUS, MINUS, STAR, SLASH, REM
@@ -21,6 +23,15 @@ public class OMathExpression extends SimpleNode {
   public OMathExpression(OrientSql p, int id) {
     super(p, id);
   }
+
+  public void replaceParameters(Map<Object, Object> params) {
+    if(childExpressions!=null){
+      for(OMathExpression expr:childExpressions){
+        expr.replaceParameters(params);
+      }
+    }
+  }
+
 
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {

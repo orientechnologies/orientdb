@@ -193,87 +193,89 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   public OCommandExecutorSQLSelect parse(final OCommandRequest iRequest) {
     final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
     String queryText = textRequest.getText();
-    // System.out.println("NEW PARSER FROM: " + queryText);
-    queryText = preParse(queryText, iRequest);
-    // System.out.println("NEW PARSER   TO: " + queryText);
-    // if (!queryText.toUpperCase().equals(textRequest.getText().toUpperCase())) {
-    // throwParsingException(queryText + " \nDIFFERENT FROM\n" + textRequest.getText());
-    // }
-    textRequest.setText(queryText);
+    String originalQuery = queryText;
+    try {
+//      System.out.println("NEW PARSER FROM: " + queryText);
+      queryText = preParse(queryText, iRequest);
+//      System.out.println("NEW PARSER   TO: " + queryText);
+      textRequest.setText(queryText);
 
-    // testNewParser(iRequest);
-    super.parse(iRequest);
+      super.parse(iRequest);
 
-    initContext();
+      initContext();
 
-    final int pos = parseProjections();
-    if (pos == -1) {
-      return this;
-    }
+      final int pos = parseProjections();
+      if (pos == -1) {
+        return this;
+      }
 
-    final int endPosition = parserText.length();
+      final int endPosition = parserText.length();
 
-    parserNextWord(true);
-    if (parserGetLastWord().equalsIgnoreCase(KEYWORD_FROM)) {
-      // FROM
-      parsedTarget = OSQLEngine.getInstance().parseTarget(parserText.substring(parserGetCurrentPosition(), endPosition),
-          getContext(), KEYWORD_WHERE);
-      parserSetCurrentPosition(parsedTarget.parserIsEnded() ? endPosition : parsedTarget.parserGetCurrentPosition()
-          + parserGetCurrentPosition());
-    } else {
-      parserGoBack();
-    }
+      parserNextWord(true);
+      if (parserGetLastWord().equalsIgnoreCase(KEYWORD_FROM)) {
+        // FROM
+        parsedTarget = OSQLEngine.getInstance().parseTarget(parserText.substring(parserGetCurrentPosition(), endPosition),
+            getContext(), KEYWORD_WHERE);
+        parserSetCurrentPosition(parsedTarget.parserIsEnded() ? endPosition : parsedTarget.parserGetCurrentPosition()
+            + parserGetCurrentPosition());
+      } else {
+        parserGoBack();
+      }
 
-    if (!parserIsEnded()) {
-      parserSkipWhiteSpaces();
+      if (!parserIsEnded()) {
+        parserSkipWhiteSpaces();
 
-      while (!parserIsEnded()) {
-        parserNextWord(true);
-        final String w = parserGetLastWord();
+        while (!parserIsEnded()) {
+          parserNextWord(true);
+          final String w = parserGetLastWord();
 
-        if (!w.isEmpty()) {
-          if (w.equals(KEYWORD_WHERE)) {
-            compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition(), endPosition),
-                getContext(), KEYWORD_WHERE);
-            optimize();
-            parserSetCurrentPosition(compiledFilter.parserIsEnded() ? endPosition : compiledFilter.parserGetCurrentPosition()
-                + parserGetCurrentPosition());
-          } else if (w.equals(KEYWORD_LET)) {
-            parseLet();
-          } else if (w.equals(KEYWORD_GROUP)) {
-            parseGroupBy();
-          } else if (w.equals(KEYWORD_ORDER)) {
-            parseOrderBy();
-          } else if (w.equals(KEYWORD_LIMIT)) {
-            parseLimit(w);
-          } else if (w.equals(KEYWORD_SKIP) || w.equals(KEYWORD_OFFSET)) {
-            parseSkip(w);
-          } else if (w.equals(KEYWORD_FETCHPLAN)) {
-            parseFetchplan(w);
-          } else if (w.equals(KEYWORD_NOCACHE)) {
-            parseNoCache(w);
-          } else if (w.equals(KEYWORD_TIMEOUT)) {
-            parseTimeout(w);
-          } else if (w.equals(KEYWORD_LOCK)) {
-            final String lock = parseLock();
+          if (!w.isEmpty()) {
+            if (w.equals(KEYWORD_WHERE)) {
+              compiledFilter = OSQLEngine.getInstance()
+                  .parseCondition(parserText.substring(parserGetCurrentPosition(), endPosition),
+                      getContext(), KEYWORD_WHERE);
+              optimize();
+              parserSetCurrentPosition(compiledFilter.parserIsEnded() ? endPosition : compiledFilter.parserGetCurrentPosition()
+                  + parserGetCurrentPosition());
+            } else if (w.equals(KEYWORD_LET)) {
+              parseLet();
+            } else if (w.equals(KEYWORD_GROUP)) {
+              parseGroupBy();
+            } else if (w.equals(KEYWORD_ORDER)) {
+              parseOrderBy();
+            } else if (w.equals(KEYWORD_LIMIT)) {
+              parseLimit(w);
+            } else if (w.equals(KEYWORD_SKIP) || w.equals(KEYWORD_OFFSET)) {
+              parseSkip(w);
+            } else if (w.equals(KEYWORD_FETCHPLAN)) {
+              parseFetchplan(w);
+            } else if (w.equals(KEYWORD_NOCACHE)) {
+              parseNoCache(w);
+            } else if (w.equals(KEYWORD_TIMEOUT)) {
+              parseTimeout(w);
+            } else if (w.equals(KEYWORD_LOCK)) {
+              final String lock = parseLock();
 
-            if (lock.equalsIgnoreCase("DEFAULT")) {
-              lockingStrategy = OStorage.LOCKING_STRATEGY.DEFAULT;
-            } else if (lock.equals("NONE")) {
-              lockingStrategy = OStorage.LOCKING_STRATEGY.NONE;
-            } else if (lock.equals("RECORD")) {
-              lockingStrategy = OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK;
+              if (lock.equalsIgnoreCase("DEFAULT")) {
+                lockingStrategy = OStorage.LOCKING_STRATEGY.DEFAULT;
+              } else if (lock.equals("NONE")) {
+                lockingStrategy = OStorage.LOCKING_STRATEGY.NONE;
+              } else if (lock.equals("RECORD")) {
+                lockingStrategy = OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK;
+              }
+            } else if (w.equals(KEYWORD_PARALLEL)) {
+              parallel = parseParallel(w);
+            } else {
+              throwParsingException("Invalid keyword '" + w + "'");
             }
-          } else if (w.equals(KEYWORD_PARALLEL)) {
-            parallel = parseParallel(w);
-          } else {
-            throwParsingException("Invalid keyword '" + w + "'");
           }
         }
       }
-    }
-    if (limit == 0 || limit < -1) {
-      throw new IllegalArgumentException("Limit must be > 0 or = -1 (no limit)");
+      if (limit == 0 || limit < -1) {
+        throw new IllegalArgumentException("Limit must be > 0 or = -1 (no limit)");
+      }
+    }finally{
+      textRequest.setText(originalQuery);
     }
 
     return this;
@@ -290,14 +292,14 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
     }
     if (strict) {
-      System.out.println("USING NEW PARSER");
       InputStream is = new ByteArrayInputStream(queryText.getBytes());
       OrientSql osql = new OrientSql(is);
       try {
         OStatement result = osql.parse();
 
         if (iRequest instanceof OCommandRequestAbstract) {
-          // TODO replace parameters in prepared statement
+          Map<Object, Object> params = ((OCommandRequestAbstract) iRequest).getParameters();
+          result.replaceParameters(params);
         }
 
         return result.toString();
@@ -308,7 +310,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
       return "ERROR!";
     }
-    System.out.println("USING OLD PARSER");
     return queryText;
   }
 
