@@ -501,7 +501,6 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       context.updateMetric("documentReads", +1);
 
       context.setVariable("current", record);
-      assignLetClauses(record);
 
       if (filter(record)) {
         if (!handleResult(record))
