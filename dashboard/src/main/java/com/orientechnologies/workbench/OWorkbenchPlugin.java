@@ -16,17 +16,12 @@
 
 package com.orientechnologies.workbench;
 
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfilerMBean.METRIC_TYPE;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -44,15 +39,13 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
-import com.orientechnologies.workbench.event.OEventController;
-import com.orientechnologies.workbench.event.OEventLogFunctionExecutor;
-import com.orientechnologies.workbench.event.OEventLogHttpExecutor;
-import com.orientechnologies.workbench.event.OEventLogMailExecutor;
-import com.orientechnologies.workbench.event.OEventMetricFunctionExecutor;
-import com.orientechnologies.workbench.event.OEventMetricHttpExecutor;
-import com.orientechnologies.workbench.event.OEventMetricMailExecutor;
+import com.orientechnologies.workbench.event.*;
 import com.orientechnologies.workbench.hooks.OEventHook;
 import com.orientechnologies.workbench.http.*;
+
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class OWorkbenchPlugin extends OServerPluginAbstract {
 
@@ -144,6 +137,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
 
     registerExecutors(getDb());
     registerCommands();
+    Orient.instance().getTimer().schedule(new OWorkbenchRealtimeTask(this), 5000, 5000);
     Orient.instance().getTimer().schedule(new OWorkbenchTask(this), updateTimer, updateTimer);
     Orient.instance().getTimer().schedule(new OWorkbenchPurgeTask(this), purgeTimer, purgeTimer);
     Orient.instance().getTimer().schedule(new OWorkbenchHazelcastTask(this), updateTimer, updateTimer);

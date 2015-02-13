@@ -24,7 +24,8 @@ var app = angular.module('MonitorApp',
         'ngRoute',
         'ngAnimate',
         'angularLocalStorage',
-        'toggle-switch'
+        'toggle-switch',
+        'easypiechart',
     ]
 );
 app.config(function ($routeProvider) {

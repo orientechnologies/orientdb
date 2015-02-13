@@ -18,7 +18,7 @@
     <div ng-include src="'views/server/license.html'"></div>
   </div>
   <div class="row-fluid">
-    <div class="span6">
+    <div class="span12">
       <div class="widget boxed black mediumH">
         <div class="widget-title">
           <div class="widget-caption">
@@ -39,46 +39,20 @@
           </div>
         </div>
         <div class="widget-body">
-          <table class="table table-striped  table-hover table-condensed table-nocolor">
-            <thead>
-            <tr>
-              <th>{{ 'server.health.status' | i18n }}</th>
-              <th>{{ 'server.health.name' | i18n }}</th>
-              <th>{{ 'server.health.cluster' | i18n }}</th>
-              <th>{{ 'server.health.lastcheck' | i18n }}</th>
-              <th></th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr ng-repeat="server in servers">
-              <td><span ng-class="getStatusLabel(server.status)">{{ server.status }}</span></td>
-              <td><a href="#/dashboard/general/{{ server['@rid'] | nopound }}">{{ server.name }}</a></td>
-              <td><a href="javascript:void(0)" ng-click="editCluster(server.cluster)">{{
-                server.cluster.name }}</a>
-              </td>
-              <td>{{ server.last_success | fromNow }}</td>
-              <td>
-                <a href="javascript:void(0)" class="btn btn-small" ng-show="!server.attached" ng-click="enableServer(server)"><i
-                  class="icon-play"></i></a>
-                <a href="javascript:void(0)" class="btn btn-small" ng-show="server.attached" ng-click="disableServer(server)"><i
-                  class="icon-pause"></i></a>
-                <a href="javascript:void(0)" class="btn btn-small"
-                   ng-click="editServer(server['@rid'])"><i
-                  class="icon-edit"></i></a>
-                <a href="javascript:void(0)" class="btn btn-small" ng-click="deleteServer(server)"><i
-                  class="icon-trash"></i></a>
-              </td>
-            </tr>
-            </tbody>
-          </table>
-          <div class="text-right" ng-show="servers.length == 0">
-            <a href="#/dashboard/gettstart">How to configure first server <i class="icon-share"></i></a>
+          <div class="row-fluid">
+            <div class="span4" ng-repeat="server in servers" >
+              <ng-include src="'views/server/stats.html'">
+
+              </ng-include>
+            </div>
           </div>
         </div>
 
       </div>
     </div>
-    <div class="span6">
+  </div>
+  <div class="row-fluid">
+    <div class="span12">
 
       <div class="widget boxed black mediumH">
         <div class="widget-title">
@@ -118,55 +92,55 @@
           <a href="#/dashboard/logjava">View All Notifications <i class="icon-share"></i></a>
         </div>
       </div>
-
-    </div>
-
-  </div>
-  <div class="row-fluid">
-    <div class="btn-toolbar dashboard-grid pull-right">
-      <div class="btn-group">
-        <a class="btn" bs-tooltip
-           data-toggle="top"
-           data-original-title="{{ 'dashboard.addwidget' | i18n }}" data-placement="top"
-           href="#/dashboard/charts"><i class="icon-plus-sign"></i></a>
-      </div>
-
-      <div class="btn-group">
-        <button class="btn" bs-tooltip
-                data-toggle="top"
-                data-original-title="{{ 'dashboard.apply' | i18n }}" data-placement="top"
-                ng-click="saveConfigAndRefresh()"><i class="icon-save"></i></button>
-      </div>
-      <div class="btn-group">
-        <button class="btn" bs-tooltip
-                data-toggle="top"
-                data-original-title="{{ 'dashboard.grid1' | i18n }}" data-placement="top"
-                ng-click="config.grid = 1"><i class="icon-th-list"></i></button>
-      </div>
-      <div class="btn-group">
-        <button class="btn" bs-tooltip
-                data-toggle="top"
-                data-original-title="{{ 'dashboard.grid2' | i18n }}" data-placement="top"
-                ng-click="config.grid = 2"><i class="icon-th-large"></i></button>
-      </div>
-      <div class="btn-group">
-        <button class="btn" bs-tooltip
-                data-toggle="top"
-                data-original-title="{{ 'dashboard.grid3' | i18n }}" data-placement="top"
-                ng-click="config.grid = 3"><i class="icon-th"></i></button>
-      </div>
     </div>
   </div>
-  <div class="row-fluid">
 
-    <div ng-mouseover="setOver(metr)" ng-mouseout="setOver()" ng-class="getGridClass($index,config.grid)"
-         ng-repeat="metr in config.metrics">
-      <div class="chart-close-container">
-        <div ng-click="removeConfig(metr)" ng-show="isOver(metr)" class="chart-close"></div>
-      </div>
-      <div class="dashboard-metric" metricchart="config.metrics[$index]" chartheight="300"></div>
+</div>
+<div class="row-fluid">
+  <div class="btn-toolbar dashboard-grid pull-right">
+    <div class="btn-group">
+      <a class="btn" bs-tooltip
+         data-toggle="top"
+         data-original-title="{{ 'dashboard.addwidget' | i18n }}" data-placement="top"
+         href="#/dashboard/charts"><i class="icon-plus-sign"></i></a>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn" bs-tooltip
+              data-toggle="top"
+              data-original-title="{{ 'dashboard.apply' | i18n }}" data-placement="top"
+              ng-click="saveConfigAndRefresh()"><i class="icon-save"></i></button>
+    </div>
+    <div class="btn-group">
+      <button class="btn" bs-tooltip
+              data-toggle="top"
+              data-original-title="{{ 'dashboard.grid1' | i18n }}" data-placement="top"
+              ng-click="config.grid = 1"><i class="icon-th-list"></i></button>
+    </div>
+    <div class="btn-group">
+      <button class="btn" bs-tooltip
+              data-toggle="top"
+              data-original-title="{{ 'dashboard.grid2' | i18n }}" data-placement="top"
+              ng-click="config.grid = 2"><i class="icon-th-large"></i></button>
+    </div>
+    <div class="btn-group">
+      <button class="btn" bs-tooltip
+              data-toggle="top"
+              data-original-title="{{ 'dashboard.grid3' | i18n }}" data-placement="top"
+              ng-click="config.grid = 3"><i class="icon-th"></i></button>
     </div>
   </div>
+</div>
+<div class="row-fluid">
+
+  <div ng-mouseover="setOver(metr)" ng-mouseout="setOver()" ng-class="getGridClass($index,config.grid)"
+       ng-repeat="metr in config.metrics">
+    <div class="chart-close-container">
+      <div ng-click="removeConfig(metr)" ng-show="isOver(metr)" class="chart-close"></div>
+    </div>
+    <div class="dashboard-metric" metricchart="config.metrics[$index]" chartheight="300"></div>
+  </div>
+</div>
 
 </div>
 

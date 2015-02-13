@@ -27,7 +27,9 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 import com.orientechnologies.workbench.OMonitoredServer;
 import com.orientechnologies.workbench.OWorkbenchPlugin;
+import org.codehaus.jackson.map.ObjectMapper;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.*;
@@ -151,8 +153,21 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
       }
     }
 
-    ODocument response = new ODocument().setAllowChainedAccess(false).fromMap(result);
-    iResponse.writeResult(response, "indent:6", null);
+    ObjectMapper mapper = new ObjectMapper();
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    Map<String, List<Map<String, Object>>> resultSet = new HashMap<String, List<Map<String, Object>>>();
+    resultSet.put("result", new ArrayList<Map<String, Object>>() {
+      {
+        add(result);
+      }
+    });
+    mapper.writeValue(out, resultSet);
+    // iResponse.writeResult(result, "indent:6", null);
+//    ODocument response = new ODocument().setAllowChainedAccess(false).fromMap(result);
+//    iResponse.writeResult(response, "indent:6", null);
+    // iResponse.writeResult(result.entrySet().iterator(), "indent:6", null);
+//    iResponse.writeResult(out.toString());
+    iResponse.send(OHttpUtils.STATUS_OK_CODE,"OK",OHttpUtils.CONTENT_JSON,out.toString(),null);
   }
 
   private String[] getNodeList(OMonitoredServer server) {
@@ -183,16 +198,9 @@ public class OServerCommandGetRealtimeMetrics extends OServerCommandAuthenticate
     ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
     ODatabaseRecordThreadLocal.INSTANCE.set(db);
     if (databases.length == 1 && databases[0].equals("all")) {
-      try {
-        final Map<String, Object> mapDb = server.getRealtime().getInformation("system.databases");
-        String dbInfo = (String) mapDb.get("system.databases");
-        dbs = dbInfo.split(",");
-      } catch (MalformedURLException e) {
-        e.printStackTrace();
-      } catch (IOException e) {
-
-      }
-
+      final Map<String, Object> mapDb = server.getDatabasesInfo();
+      String dbInfo = (String) mapDb.get("system.databases");
+      dbs = dbInfo.split(",");
     }
 
     String[] nodes = getNodeList(server);

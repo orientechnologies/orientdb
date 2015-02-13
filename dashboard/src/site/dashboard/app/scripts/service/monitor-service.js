@@ -214,6 +214,14 @@ monitor.factory('Server', function ($http, $resource, Metric, $q) {
     });
     server['@class'] = name;
   }
+  resource.getStats = function (server) {
+    var deferred = $q.defer();
+    var url = API + 'serverStats/monitor' + (server != null ? "/" + server.name : "");
+    $http.get(url).success(function (data) {
+      deferred.resolve(data);
+    });
+    return deferred.promise;
+  }
   resource.getConfiguration = function (server, callback, error) {
     var url = API + 'configuration/monitor/' + server.name + '';
 

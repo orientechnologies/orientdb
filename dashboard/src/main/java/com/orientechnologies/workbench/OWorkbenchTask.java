@@ -1,18 +1,5 @@
 package com.orientechnologies.workbench;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TimerTask;
-
 import com.orientechnologies.common.io.OUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -21,6 +8,15 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OBase64Utils;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.workbench.OWorkbenchPlugin.STATUS;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.*;
+import java.util.Map.Entry;
 
 public final class OWorkbenchTask extends TimerTask {
   private final OWorkbenchPlugin handler;
@@ -131,29 +127,48 @@ public final class OWorkbenchTask extends TimerTask {
 
         // STATS VALUES
         final Map<String, Object> statsValues = (Map<String, Object>) snapshot.get("statistics");
-        for (Entry<String, Object> statEntry : statsValues.entrySet())
+        for (Entry<String, Object> statEntry : statsValues.entrySet()) {
 
+          Map<String, Object> serverMetrics = iMonitoredServer.getLastSnapshot();
+          if (serverMetrics == null) {
+            serverMetrics = new HashMap<String, Object>();
+            iMonitoredServer.setLastSnapshot(serverMetrics);
+          }
           if (!Boolean.FALSE.equals(handler.getMetricsEnabled().get(statEntry.getKey()))) {
             new ODocument(OWorkbenchPlugin.CLASS_STATISTIC).field("snapshot", snap).field("name", statEntry.getKey())
                 .field("value", statEntry.getValue()).save();
           }
-
+          serverMetrics.put(statEntry.getKey(), statEntry.getValue());
+        }
         // COUNTERS
         final Map<String, Object> counters = (Map<String, Object>) snapshot.get("counters");
-        for (Entry<String, Object> counterEntry : counters.entrySet())
+        for (Entry<String, Object> counterEntry : counters.entrySet()) {
+          Map<String, Object> serverMetrics = iMonitoredServer.getLastSnapshot();
+          if (serverMetrics == null) {
+            serverMetrics = new HashMap<String, Object>();
+            iMonitoredServer.setLastSnapshot(serverMetrics);
+          }
           if (!Boolean.FALSE.equals(handler.getMetricsEnabled().get(counterEntry.getKey()))) {
             new ODocument(OWorkbenchPlugin.CLASS_COUNTER).field("snapshot", snap).field("name", counterEntry.getKey())
                 .field("value", counterEntry.getValue()).save();
           }
+          serverMetrics.put(counterEntry.getKey(), counterEntry.getValue());
+        }
         // CHRONOS
         final Map<String, Object> chronos = (Map<String, Object>) snapshot.get("chronos");
         for (Entry<String, Object> chronoEntry : chronos.entrySet()) {
           final Map<String, Object> chrono = (Map<String, Object>) chronoEntry.getValue();
 
+          Map<String, Object> serverMetrics = iMonitoredServer.getLastSnapshot();
+          if (serverMetrics == null) {
+            serverMetrics = new HashMap<String, Object>();
+            iMonitoredServer.setLastSnapshot(serverMetrics);
+          }
           if (!Boolean.FALSE.equals(handler.getMetricsEnabled().get(chronoEntry.getKey()))) {
             new ODocument(OWorkbenchPlugin.CLASS_CHRONO).field("snapshot", snap).field("name", chronoEntry.getKey()).fields(chrono)
                 .save();
           }
+          serverMetrics.put(chronoEntry.getKey(), chronoEntry.getValue());
         }
 
         iMonitoredServer.setLastConnection(new Date(to));

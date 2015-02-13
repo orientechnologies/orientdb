@@ -38,7 +38,7 @@
       <file leaf-file-name="monitor-service.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="0" column="4" selection-start="4" selection-end="4" vertical-scroll-proportion="0.0" vertical-offset="165" max-vertical-offset="7830">
+            <state line="9" column="4" selection-start="265" selection-end="265" vertical-scroll-proportion="0.0" vertical-offset="300" max-vertical-offset="7950">
               <folding />
             </state>
           </provider>
@@ -74,7 +74,7 @@
       <file leaf-file-name="workbench-service-logs.js" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="86" column="50" selection-start="3123" selection-end="3123" vertical-scroll-proportion="0.3327645" vertical-offset="1095" max-vertical-offset="3855">
+            <state line="94" column="42" selection-start="3382" selection-end="3382" vertical-scroll-proportion="0.53754264" vertical-offset="1095" max-vertical-offset="3855">
               <folding />
             </state>
           </provider>
@@ -110,7 +110,7 @@
       <file leaf-file-name="server.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/app/scripts/controllers/server.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="8" column="29" selection-start="298" selection-end="298" vertical-scroll-proportion="0.0" vertical-offset="120" max-vertical-offset="2535">
+            <state line="137" column="18" selection-start="3619" selection-end="3619" vertical-scroll-proportion="0.0" vertical-offset="2055" max-vertical-offset="4455">
               <folding />
             </state>
           </provider>
@@ -790,7 +790,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/controllers/server.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="8" column="29" selection-start="298" selection-end="298" vertical-scroll-proportion="0.0" vertical-offset="120" max-vertical-offset="2535">
+        <state line="137" column="18" selection-start="3619" selection-end="3619" vertical-scroll-proportion="0.0" vertical-offset="2055" max-vertical-offset="4455">
           <folding />
         </state>
       </provider>
@@ -804,7 +804,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/service/monitor-service.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="4" selection-start="4" selection-end="4" vertical-scroll-proportion="0.0" vertical-offset="165" max-vertical-offset="7830">
+        <state line="9" column="4" selection-start="265" selection-end="265" vertical-scroll-proportion="0.0" vertical-offset="300" max-vertical-offset="7950">
           <folding />
         </state>
       </provider>
@@ -846,7 +846,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/app/scripts/service/workbench-service-logs.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="86" column="50" selection-start="3123" selection-end="3123" vertical-scroll-proportion="0.3327645" vertical-offset="1095" max-vertical-offset="3855">
+        <state line="94" column="42" selection-start="3382" selection-end="3382" vertical-scroll-proportion="0.53754264" vertical-offset="1095" max-vertical-offset="3855">
           <folding />
         </state>
       </provider>

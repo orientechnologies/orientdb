@@ -1,0 +1,71 @@
+<div ng-controller="SingleServerController">
+  <ul class="thumbnails">
+    <li class="span12">
+      <div class="thumbnail">
+
+
+        <div class="row-fluid">
+          <div class="span4">
+             <span class="chart" easypiechart percent="cpuPercent" options="cpuOptions">
+			          <span class="percent" ng-bind="cpuPercent"></span>
+		        </span>
+
+            <div class="chart-label">
+              <span>CPU</span>
+            </div>
+          </div>
+          <div class="span4">
+             <span class="chart" easypiechart percent="ramPercent" options="ramOptions">
+			    <span class="percent" ng-bind="ramPercent"></span>
+		    </span>
+
+            <div class="chart-label">
+              <span>RAM</span>
+            </div>
+          </div>
+          <div class="span4">
+             <span class="chart" easypiechart percent="diskPercent" options="diskOptions">
+			    <span class="percent" ng-bind="diskPercent"></span>
+		    </span>
+
+            <div class="chart-label">
+              <span>DISK</span>
+            </div>
+          </div>
+        </div>
+        <h4>
+          <a href="#/dashboard/general/{{ server['@rid'] | nopound }}">{{ server.name }}</a>
+
+
+          <a href="javascript:void(0)" class="btn btn-small" ng-show="!server.attached"
+             ng-click="enableServer(server)"><i
+            class="icon-play"></i></a>
+          <a href="javascript:void(0)" class="btn btn-small" ng-show="server.attached"
+             ng-click="disableServer(server)"><i
+            class="icon-pause"></i></a>
+          <a href="javascript:void(0)" class="btn btn-small"
+             ng-click="editServer(server['@rid'])"><i
+            class="icon-edit"></i></a>
+          <a href="javascript:void(0)" class="btn btn-small" ng-click="deleteServer(server)"><i
+            class="icon-trash"></i></a>
+        </h4>
+
+        <div>
+          <i class="icon-angle-right"></i> <b>Status:</b> <span ng-class="getStatusLabel(server.status)">{{ server.status }}</span>
+        </div>
+        <div>
+          <i class="icon-angle-right"></i> <b>Ops/Second:</b> {{operations}}</span>
+        </div>
+        <div>
+          <i class="icon-angle-right"></i> <b>Active Connections:</b> {{connections}}</span>
+        </div>
+        <div>
+          <i class="icon-angle-right"></i> <b>Network Request:</b> {{requests}}</span>
+        </div>
+        <div>
+          <i class="icon-angle-right"></i> <b>Average Latency:</b> {{latency}}</span>
+        </div>
+      </div>
+    </li>
+  </ul>
+</div>
