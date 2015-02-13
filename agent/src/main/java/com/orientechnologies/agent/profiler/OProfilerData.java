@@ -31,6 +31,7 @@ import java.util.Map.Entry;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Profiling utility class. Handles chronos (times), statistics and counters. By default it's used as Singleton but you can create
@@ -45,6 +46,7 @@ public class OProfilerData {
   private final ConcurrentHashMap<String, Long>           counters      = new ConcurrentHashMap<String, Long>();
   private final ConcurrentHashMap<String, OProfilerEntry> chronos       = new ConcurrentHashMap<String, OProfilerEntry>();
   private final ConcurrentHashMap<String, OProfilerEntry> stats         = new ConcurrentHashMap<String, OProfilerEntry>();
+  private ConcurrentHashMap<String, AtomicInteger>        tips          = new ConcurrentHashMap<String, AtomicInteger>();
   private final Map<String, Object>                       hooks         = new WeakHashMap<String, Object>();
   private long                                            recordingFrom = 0;
   private long                                            recordingTo   = Long.MAX_VALUE;
@@ -197,6 +199,19 @@ public class OProfilerData {
         buffer.append(',');
       buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d", OIOUtils.encode(k), counters.get(k)));
     }
+    buffer.append("}");
+
+    buffer.append(",\"tips\":{");
+
+    firstItem = true;
+    for (String s : tips.keySet()) {
+      if (firstItem)
+        firstItem = false;
+      else
+        buffer.append(',');
+      buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d", OIOUtils.encode(s), tips.get(s).get()));
+    }
+
     buffer.append("}");
 
     buffer.append("}");
@@ -444,6 +459,10 @@ public class OProfilerData {
         .format(Locale.ENGLISH, "\n%50s +-------------------------------------------------------------------+", ""));
     return iBuffer.toString();
 
+  }
+
+  public void setTips(ConcurrentHashMap<String, AtomicInteger> tips) {
+    this.tips = tips;
   }
 
   protected String[] getMetricAsString(ConcurrentHashMap<String, ?> iMetrics) {

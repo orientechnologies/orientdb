@@ -1,0 +1,946 @@
+
+2015-02-12 10:42:35:842 INFO  OrientDB auto-config DISKCACHE=10,695MB (heap=3,641MB os=16,384MB disk=60,967MB) [orientechnologies]
+2015-02-12 10:42:35:856 INFO  Loading configuration from: config/orientdb-server-config.xml... [OServerConfigurationLoaderXml]
+2015-02-12 10:42:36:211 INFO  OrientDB Server v2.1-SNAPSHOT is starting up... [OServer]
+2015-02-12 10:42:36:265 INFO  Databases directory: /Users/enricorisa/Coding/OrientTech/orientdb-enterprise/agent/databases [OServer]
+2015-02-12 10:42:36:380 INFO  Listening binary connections on 0.0.0.0:2424 (protocol v.28, socket=default) [OServerNetworkListener]
+2015-02-12 10:42:36:381 INFO  Listening http connections on 0.0.0.0:2480 (protocol v.10, socket=default) [OServerNetworkListener]
+2015-02-12 10:42:36:393 INFO  Installing dynamic plugin 'studio-2.0.zip'... [OServerPluginManager]
+2015-02-12 10:42:36:600 INFO  Installing GREMLIN language v.2.6.0 - graph.pool.max=50 [OGraphServerHandler]
+2015-02-12 10:42:36:631 INFO  Starting distributed server 'local1'... [OHazelcastPlugin]
+2015-02-12 10:42:36:698 INFO  Configuring Hazelcast from '/Users/enricorisa/Coding/OrientTech/orientdb-enterprise/agent/config/hazelcast.xml'. [FileSystemXmlConfig]
+2015-02-12 10:42:37:484 INFO  [LOCAL] [orientdb] [3.3] Prefer IPv4 stack is true. [DefaultAddressPicker]
+2015-02-12 10:42:37:526 INFO  [LOCAL] [orientdb] [3.3] Picked Address[10.3.15.68]:2434, using socket ServerSocket[addr=/0:0:0:0:0:0:0:0,localport=2434], bind any local is true [DefaultAddressPicker]
+2015-02-12 10:42:37:645 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Starting with 8 generic operation threads and 8 partition operation threads. [BasicOperationScheduler]
+2015-02-12 10:42:37:799 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Hazelcast 3.3 (20140907) starting at Address[10.3.15.68]:2434 [system]
+2015-02-12 10:42:37:800 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Copyright (C) 2008-2014 Hazelcast.com [system]
+2015-02-12 10:42:37:809 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Creating MulticastJoiner [Node]
+2015-02-12 10:42:37:816 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Address[10.3.15.68]:2434 is STARTING [LifecycleService]
+2015-02-12 10:42:47:183 INFO  [10.3.15.68]:2434 [orientdb] [3.3] 
+
+
+Members [1] {
+	Member [10.3.15.68]:2434 this
+}
+ [MulticastJoiner]
+2015-02-12 10:42:47:236 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Address[10.3.15.68]:2434 is STARTED [LifecycleService]
+2015-02-12 10:42:47:321 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Initializing cluster partition table first arrangement... [InternalPartitionService]
+2015-02-12 10:42:47:364 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Accepting socket connection from /10.3.15.68:64241 [SocketAcceptor]
+2015-02-12 10:42:47:375 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:2434 and /10.3.15.68:64241 [TcpIpConnectionManager]
+2015-02-12 10:42:47:378 INFO  [local1] found no previous messages in queue orientdb.node.local1.response [OHazelcastDistributedMessageService]
+2015-02-12 10:42:47:381 WARNING [local1] opening database 'demo'... [OHazelcastPlugin]
+2015-02-12 10:42:47:383 INFO  [local1] loaded database configuration from disk: /Users/enricorisa/Coding/OrientTech/orientdb-enterprise/agent/databases/demo/distributed-config.json [OHazelcastPlugin]
+2015-02-12 10:42:47:422 INFO  [local1] updated distributed configuration for database: demo:
+----------
+{
+  "version": 0,
+  "autoDeploy": true,
+  "hotAlignment": false,
+  "readQuorum": 1,
+  "writeQuorum": 2,
+  "failureAvailableNodesLessQuorum": false,
+  "readYourWrites": true,"clusters":{
+    "internal": {
+},
+    "index": {
+},
+    "*": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "orole_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "v_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "_studio_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "oschedule_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "e_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "ofunction_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "orids_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "ouser_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "orids_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "orole_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "e_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "ouser_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "ofunction_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "v_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "_studio_bookmark_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "_studio_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "oschedule_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+}
+    }
+}
+---------- [OHazelcastPlugin]
+2015-02-12 10:42:47:435 INFO  [local1] updated distributed configuration for database: demo:
+----------
+{
+  "version": 0,
+  "autoDeploy": true,
+  "hotAlignment": false,
+  "readQuorum": 1,
+  "writeQuorum": 2,
+  "failureAvailableNodesLessQuorum": false,
+  "readYourWrites": true,"clusters":{
+    "internal": {
+},
+    "index": {
+},
+    "*": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "orole_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "v_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "_studio_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "oschedule_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "e_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "ofunction_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "orids_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "ouser_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "orids_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "orole_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "e_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "ouser_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "ofunction_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "v_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "_studio_bookmark_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "_studio_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "oschedule_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+}
+    }
+}
+---------- [OHazelcastPlugin]
+2015-02-12 10:42:47:436 INFO  [local1] Saving distributed configuration file for database 'demo' to: /Users/enricorisa/Coding/OrientTech/orientdb-enterprise/agent/databases/demo/distributed-config.json [OHazelcastPlugin]
+2015-02-12 10:42:47:445 INFO  [local1] found no previous messages in queue orientdb.node.local1.demo.request [OHazelcastDistributedMessageService]
+2015-02-12 10:42:48:209 INFO  {db=demo} [local1] Installing distributed storage on database 'demo' [ODistributedStorage]
+2015-02-12 10:42:48:212 INFO  [local1] Publishing online status for database local1.demo... [OHazelcastDistributedDatabase]
+2015-02-12 10:42:48:215 INFO  [local1] received new status local1.demo=ONLINE [OHazelcastPlugin]
+2015-02-12 10:42:48:215 WARNING [local1] opening database 'distributed'... [OHazelcastPlugin]
+2015-02-12 10:42:48:216 INFO  [local1] loaded database configuration from disk: /Users/enricorisa/Coding/OrientTech/orientdb-enterprise/agent/databases/distributed/distributed-config.json [OHazelcastPlugin]
+2015-02-12 10:42:48:239 INFO  [local1] updated distributed configuration for database: distributed:
+----------
+{
+  "version": 0,
+  "autoDeploy": true,
+  "hotAlignment": false,
+  "readQuorum": 1,
+  "writeQuorum": 2,
+  "failureAvailableNodesLessQuorum": false,
+  "readYourWrites": true,"clusters":{
+    "internal": {
+},
+    "index": {
+},
+    "*": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "e_node2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "_studio_node2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "orole_node2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "ouser_node2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "ofunction_node2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "orids_node2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "oschedule_node2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "v_node2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "ouser_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "_studio_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "e_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "orole_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "oschedule_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "v_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "ofunction_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "orids_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "ouser_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "e_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "v_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "oschedule_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "_studio_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "ofunction_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "orids_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "orole_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+}
+    }
+}
+---------- [OHazelcastPlugin]
+2015-02-12 10:42:48:250 INFO  [local1] updated distributed configuration for database: distributed:
+----------
+{
+  "version": 0,
+  "autoDeploy": true,
+  "hotAlignment": false,
+  "readQuorum": 1,
+  "writeQuorum": 2,
+  "failureAvailableNodesLessQuorum": false,
+  "readYourWrites": true,"clusters":{
+    "internal": {
+},
+    "index": {
+},
+    "*": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "e_node2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "_studio_node2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "orole_node2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "ouser_node2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "ofunction_node2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "orids_node2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "oschedule_node2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "v_node2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "ouser_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "_studio_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "e_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "orole_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "oschedule_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "v_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "ofunction_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "orids_local2": {
+  "servers": ["local2","local1","<NEW_NODE>"]
+},
+    "ouser_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "e_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "v_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "oschedule_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "_studio_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "ofunction_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "orids_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+},
+    "orole_local1": {
+  "servers": ["local1","local2","<NEW_NODE>"]
+}
+    }
+}
+---------- [OHazelcastPlugin]
+2015-02-12 10:42:48:250 INFO  [local1] Saving distributed configuration file for database 'distributed' to: /Users/enricorisa/Coding/OrientTech/orientdb-enterprise/agent/databases/distributed/distributed-config.json [OHazelcastPlugin]
+2015-02-12 10:42:48:268 INFO  [local1] found no previous messages in queue orientdb.node.local1.distributed.request [OHazelcastDistributedMessageService]
+2015-02-12 10:42:48:409 INFO  {db=distributed} [local1] Installing distributed storage on database 'distributed' [ODistributedStorage]
+2015-02-12 10:42:48:409 INFO  [local1] Publishing online status for database local1.distributed... [OHazelcastDistributedDatabase]
+2015-02-12 10:42:48:411 WARNING [local1] updated node status to 'ONLINE' [OHazelcastPlugin]
+2015-02-12 10:42:48:411 INFO  [local1] received new status local1.distributed=ONLINE [OHazelcastPlugin]
+2015-02-12 10:42:48:426 INFO  Installing Mail plugin, loaded 1 profile(s): [default] [OMailPlugin]
+2015-02-12 10:42:48:455 INFO  Profiler is recording metrics with configuration: 60,24 [OEnterpriseProfiler]
+2015-02-12 10:42:48:466 INFO  OrientDB Server v2.1-SNAPSHOT is active. [OServer]
+2015-02-12 10:42:53:412 INFO  [10.3.15.68]:2434 [orientdb] [3.3] 
+
+Members [2] {
+	Member [10.3.15.68]:2434 this
+	Member [10.3.15.68]:2435
+}
+ [ClusterService]
+2015-02-12 10:42:53:414 WARNING [local1] added new node id=Member [10.3.15.68]:2435 name=ext:f0b93e16-5d49-4d94-9e33-8f762385829f [OHazelcastPlugin]
+2015-02-12 10:42:53:732 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Re-partitioning cluster data... Migration queue size: 135 [InternalPartitionService]
+2015-02-12 10:42:55:312 INFO  [10.3.15.68]:2434 [orientdb] [3.3] All migration tasks have been completed, queues are empty. [InternalPartitionService]
+2015-02-12 10:42:55:629 INFO  [local1]<-[local2] added node configuration id=Member [10.3.15.68]:2435 name=local2, now 2 nodes are configured [OHazelcastPlugin]
+2015-02-12 10:42:59:863 INFO  [local1] received new status local2.demo=SYNCHRONIZING [OHazelcastPlugin]
+2015-02-12 10:42:59:865 WARNING [local1]->[local2] deploying database demo... [ODeployDatabaseTask]
+2015-02-12 10:42:59:865 INFO  [local1] received updated status local1.demo=SYNCHRONIZING [OHazelcastPlugin]
+2015-02-12 10:42:59:866 INFO  [local1]->[local2] creating backup of database 'demo' in directory: /var/folders/yq/phfxdr_d4sb3d58z8khzq3hr0000gn/T/orientdb/backup_demo.zip... [ODeployDatabaseTask]
+2015-02-12 10:42:59:895 INFO  - Compressing file _studio.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:896 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:896 INFO  - Compressing file _studio.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:898 INFO  ok size=65.00KB compressedSize=126 ratio=100% elapsed=2ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:898 INFO  - Compressing file _studio_bookmark.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:899 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:899 INFO  - Compressing file _studio_bookmark.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:900 INFO  ok size=65.00KB compressedSize=126 ratio=100% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:900 INFO  - Compressing file _studio_bookmark_local1.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:900 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:901 INFO  - Compressing file _studio_bookmark_local1.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:901 INFO  ok size=65.00KB compressedSize=128 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:902 INFO  - Compressing file _studio_local1.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:902 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:902 INFO  - Compressing file _studio_local1.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:903 INFO  ok size=65.00KB compressedSize=129 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:904 INFO  - Compressing file _studio_local2.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:904 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:904 INFO  - Compressing file _studio_local2.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:905 INFO  ok size=65.00KB compressedSize=126 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:905 INFO  - Compressing file database.ocf... [ODeployDatabaseTask]
+2015-02-12 10:42:59:906 INFO  ok size=2.62KB compressedSize=394 ratio=86% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:906 INFO  - Compressing file default.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:906 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:906 INFO  - Compressing file default.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:907 INFO  ok size=65.00KB compressedSize=125 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:908 INFO  - Compressing file demo.wmr... [ODeployDatabaseTask]
+2015-02-12 10:42:59:908 INFO  ok size=40b compressedSize=21 ratio=48% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:908 INFO  - Compressing file dictionary.nbt... [ODeployDatabaseTask]
+2015-02-12 10:42:59:909 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:909 INFO  - Compressing file dictionary.sbt... [ODeployDatabaseTask]
+2015-02-12 10:42:59:911 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=2ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:911 INFO  - Compressing file dirty.fl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:911 INFO  ok size=1b compressedSize=3 ratio=-200% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:912 INFO  - Compressing file distributed-config.json... [ODeployDatabaseTask]
+2015-02-12 10:42:59:912 INFO  ok size=1.77KB compressedSize=277 ratio=85% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:912 INFO  - Compressing file e.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:913 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:913 INFO  - Compressing file e.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:914 INFO  ok size=65.00KB compressedSize=126 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:914 INFO  - Compressing file e_local1.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:914 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:915 INFO  - Compressing file e_local1.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:916 INFO  ok size=65.00KB compressedSize=129 ratio=100% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:916 INFO  - Compressing file e_local2.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:916 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:916 INFO  - Compressing file e_local2.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:917 INFO  ok size=65.00KB compressedSize=125 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:917 INFO  - Compressing file index.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:920 INFO  ok size=65.00KB compressedSize=128 ratio=100% elapsed=3ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:920 INFO  - Compressing file index.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:922 INFO  ok size=129.00KB compressedSize=258 ratio=100% elapsed=2ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:923 INFO  - Compressing file internal.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:924 INFO  ok size=65.00KB compressedSize=133 ratio=100% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:924 INFO  - Compressing file internal.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:926 INFO  ok size=129.00KB compressedSize=3431 ratio=98% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:926 INFO  - Compressing file manindex.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:928 INFO  ok size=65.00KB compressedSize=123 ratio=100% elapsed=2ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:929 INFO  - Compressing file manindex.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:931 INFO  ok size=129.00KB compressedSize=245 ratio=100% elapsed=3ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:932 INFO  - Compressing file name_id_map.cm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:932 INFO  ok size=2.86KB compressedSize=558 ratio=81% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:932 INFO  - Compressing file ofunction.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:933 INFO  ok size=65.00KB compressedSize=125 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:933 INFO  - Compressing file ofunction.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:935 INFO  ok size=129.00KB compressedSize=428 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:935 INFO  - Compressing file ofunction_local1.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:936 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:936 INFO  - Compressing file ofunction_local1.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:937 INFO  ok size=65.00KB compressedSize=129 ratio=100% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:937 INFO  - Compressing file ofunction_local2.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:937 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:937 INFO  - Compressing file ofunction_local2.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:938 INFO  ok size=65.00KB compressedSize=124 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:938 INFO  - Compressing file orids.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:939 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:939 INFO  - Compressing file orids.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:940 INFO  ok size=65.00KB compressedSize=117 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:940 INFO  - Compressing file orids_local1.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:940 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:940 INFO  - Compressing file orids_local1.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:941 INFO  ok size=65.00KB compressedSize=129 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:942 INFO  - Compressing file orids_local2.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:942 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:942 INFO  - Compressing file orids_local2.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:943 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:943 INFO  - Compressing file orole.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:945 INFO  ok size=65.00KB compressedSize=136 ratio=100% elapsed=2ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:946 INFO  - Compressing file ORole.name.nbt... [ODeployDatabaseTask]
+2015-02-12 10:42:59:946 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:946 INFO  - Compressing file ORole.name.sbt... [ODeployDatabaseTask]
+2015-02-12 10:42:59:949 INFO  ok size=65.00KB compressedSize=180 ratio=100% elapsed=3ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:949 INFO  - Compressing file orole.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:952 INFO  ok size=129.00KB compressedSize=612 ratio=100% elapsed=2ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:952 INFO  - Compressing file orole_local1.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:952 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:952 INFO  - Compressing file orole_local1.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:953 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:953 INFO  - Compressing file orole_local2.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:954 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:954 INFO  - Compressing file orole_local2.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:955 INFO  ok size=65.00KB compressedSize=123 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:955 INFO  - Compressing file oschedule.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:955 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:955 INFO  - Compressing file oschedule.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:956 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:957 INFO  - Compressing file oschedule_local1.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:957 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:957 INFO  - Compressing file oschedule_local1.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:958 INFO  ok size=65.00KB compressedSize=128 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:959 INFO  - Compressing file oschedule_local2.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:959 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:959 INFO  - Compressing file oschedule_local2.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:960 INFO  ok size=65.00KB compressedSize=126 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:960 INFO  - Compressing file ouser.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:963 INFO  ok size=65.00KB compressedSize=130 ratio=100% elapsed=3ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:963 INFO  - Compressing file OUser.name.nbt... [ODeployDatabaseTask]
+2015-02-12 10:42:59:963 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:964 INFO  - Compressing file OUser.name.sbt... [ODeployDatabaseTask]
+2015-02-12 10:42:59:964 INFO  ok size=65.00KB compressedSize=181 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:964 INFO  - Compressing file ouser.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:967 INFO  ok size=129.00KB compressedSize=548 ratio=100% elapsed=2ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:967 INFO  - Compressing file ouser_local1.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:967 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:968 INFO  - Compressing file ouser_local1.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:969 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:969 INFO  - Compressing file ouser_local2.cpm... [ODeployDatabaseTask]
+2015-02-12 10:42:59:969 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:969 INFO  - Compressing file ouser_local2.pcl... [ODeployDatabaseTask]
+2015-02-12 10:42:59:970 INFO  ok size=65.00KB compressedSize=126 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:42:59:970 INFO  - Compressing file v.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:00:427 INFO  ok size=4.38MB compressedSize=622737 ratio=87% elapsed=457ms [ODeployDatabaseTask]
+2015-02-12 10:43:00:427 INFO  - Compressing file v.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:01:363 INFO  ok size=26.94MB compressedSize=1622376 ratio=95% elapsed=936ms [ODeployDatabaseTask]
+2015-02-12 10:43:01:363 INFO  - Compressing file v_local1.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:01:364 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:01:364 INFO  - Compressing file v_local1.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:01:365 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:01:365 INFO  - Compressing file v_local2.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:01:368 INFO  ok size=65.00KB compressedSize=202 ratio=100% elapsed=2ms [ODeployDatabaseTask]
+2015-02-12 10:43:01:368 INFO  - Compressing file v_local2.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:01:370 INFO  ok size=129.00KB compressedSize=472 ratio=100% elapsed=2ms [ODeployDatabaseTask]
+2015-02-12 10:43:01:393 INFO  [local1]->[local2] sending the compressed database 'demo' over the NETWORK to node 'local2', size=2.16MB, lastOperationId=0... [ODeployDatabaseTask]
+2015-02-12 10:43:01:395 INFO  [local1]->[local2] - transferring chunk #1 offset=0 size=1048576... [ODeployDatabaseTask]
+2015-02-12 10:43:01:397 INFO  [local1]->[local2] deploy database task completed [ODeployDatabaseTask]
+2015-02-12 10:43:01:457 INFO  [local1]->[local2] - transferring chunk #2 offset=1048576 size=1048576... [OCopyDatabaseChunkTask]
+2015-02-12 10:43:01:485 INFO  [local1]->[local2] - transferring chunk #3 offset=2097152 size=168508... [OCopyDatabaseChunkTask]
+2015-02-12 10:43:01:488 INFO  [local1] received updated status local1.demo=ONLINE [OHazelcastPlugin]
+2015-02-12 10:43:02:143 INFO  [local1]<-[local2] received updated status local2.demo=ONLINE [OHazelcastPlugin]
+2015-02-12 10:43:06:177 INFO  [local1] received new status local2.distributed=SYNCHRONIZING [OHazelcastPlugin]
+2015-02-12 10:43:06:178 INFO  [local1] received updated status local1.distributed=SYNCHRONIZING [OHazelcastPlugin]
+2015-02-12 10:43:06:178 WARNING [local1]->[local2] deploying database distributed... [ODeployDatabaseTask]
+2015-02-12 10:43:06:179 INFO  [local1]->[local2] creating backup of database 'distributed' in directory: /var/folders/yq/phfxdr_d4sb3d58z8khzq3hr0000gn/T/orientdb/backup_distributed.zip... [ODeployDatabaseTask]
+2015-02-12 10:43:06:205 INFO  - Compressing file _studio.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:205 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:206 INFO  - Compressing file _studio.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:207 INFO  ok size=65.00KB compressedSize=126 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:207 INFO  - Compressing file _studio_local1.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:207 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:207 INFO  - Compressing file _studio_local1.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:208 INFO  ok size=65.00KB compressedSize=128 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:208 INFO  - Compressing file _studio_local2.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:209 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:209 INFO  - Compressing file _studio_local2.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:209 INFO  ok size=65.00KB compressedSize=125 ratio=100% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:210 INFO  - Compressing file _studio_node2.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:210 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:210 INFO  - Compressing file _studio_node2.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:211 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:211 INFO  - Compressing file database.ocf... [ODeployDatabaseTask]
+2015-02-12 10:43:06:211 INFO  ok size=2.90KB compressedSize=418 ratio=86% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:212 INFO  - Compressing file default.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:212 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:212 INFO  - Compressing file default.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:213 INFO  ok size=65.00KB compressedSize=125 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:213 INFO  - Compressing file dictionary.nbt... [ODeployDatabaseTask]
+2015-02-12 10:43:06:214 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:214 INFO  - Compressing file dictionary.sbt... [ODeployDatabaseTask]
+2015-02-12 10:43:06:217 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=2ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:217 INFO  - Compressing file dirty.fl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:217 INFO  ok size=1b compressedSize=3 ratio=-200% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:217 INFO  - Compressing file distributed-config.json... [ODeployDatabaseTask]
+2015-02-12 10:43:06:218 INFO  ok size=2.34KB compressedSize=303 ratio=88% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:218 INFO  - Compressing file distributed.wmr... [ODeployDatabaseTask]
+2015-02-12 10:43:06:218 INFO  ok size=40b compressedSize=18 ratio=55% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:218 INFO  - Compressing file e.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:219 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:219 INFO  - Compressing file e.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:220 INFO  ok size=65.00KB compressedSize=126 ratio=100% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:220 INFO  - Compressing file e_local1.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:220 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:220 INFO  - Compressing file e_local1.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:221 INFO  ok size=65.00KB compressedSize=129 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:221 INFO  - Compressing file e_local2.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:221 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:222 INFO  - Compressing file e_local2.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:222 INFO  ok size=65.00KB compressedSize=126 ratio=100% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:222 INFO  - Compressing file e_node2.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:223 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:223 INFO  - Compressing file e_node2.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:224 INFO  ok size=65.00KB compressedSize=125 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:224 INFO  - Compressing file index.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:229 INFO  ok size=65.00KB compressedSize=128 ratio=100% elapsed=5ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:230 INFO  - Compressing file index.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:232 INFO  ok size=129.00KB compressedSize=258 ratio=100% elapsed=3ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:233 INFO  - Compressing file internal.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:234 INFO  ok size=65.00KB compressedSize=133 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:234 INFO  - Compressing file internal.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:236 INFO  ok size=129.00KB compressedSize=3376 ratio=98% elapsed=2ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:237 INFO  - Compressing file manindex.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:239 INFO  ok size=65.00KB compressedSize=123 ratio=100% elapsed=3ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:239 INFO  - Compressing file manindex.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:241 INFO  ok size=129.00KB compressedSize=245 ratio=100% elapsed=2ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:242 INFO  - Compressing file name_id_map.cm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:242 INFO  ok size=3.34KB compressedSize=631 ratio=82% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:243 INFO  - Compressing file ofunction.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:243 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:243 INFO  - Compressing file ofunction.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:244 INFO  ok size=65.00KB compressedSize=126 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:244 INFO  - Compressing file ofunction_local1.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:244 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:245 INFO  - Compressing file ofunction_local1.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:245 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:245 INFO  - Compressing file ofunction_local2.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:246 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:246 INFO  - Compressing file ofunction_local2.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:247 INFO  ok size=65.00KB compressedSize=125 ratio=100% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:247 INFO  - Compressing file ofunction_node2.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:247 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:247 INFO  - Compressing file ofunction_node2.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:248 INFO  ok size=65.00KB compressedSize=125 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:248 INFO  - Compressing file orids.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:249 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:249 INFO  - Compressing file orids.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:250 INFO  ok size=65.00KB compressedSize=117 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:250 INFO  - Compressing file orids_local1.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:250 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:251 INFO  - Compressing file orids_local1.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:252 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:252 INFO  - Compressing file orids_local2.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:252 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:252 INFO  - Compressing file orids_local2.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:253 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:253 INFO  - Compressing file orids_node2.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:254 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:254 INFO  - Compressing file orids_node2.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:255 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:255 INFO  - Compressing file orole.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:258 INFO  ok size=65.00KB compressedSize=136 ratio=100% elapsed=3ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:258 INFO  - Compressing file ORole.name.nbt... [ODeployDatabaseTask]
+2015-02-12 10:43:06:258 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:259 INFO  - Compressing file ORole.name.sbt... [ODeployDatabaseTask]
+2015-02-12 10:43:06:261 INFO  ok size=65.00KB compressedSize=180 ratio=100% elapsed=3ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:261 INFO  - Compressing file orole.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:264 INFO  ok size=129.00KB compressedSize=607 ratio=100% elapsed=3ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:264 INFO  - Compressing file orole_local1.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:264 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:265 INFO  - Compressing file orole_local1.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:266 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:266 INFO  - Compressing file orole_local2.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:266 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:266 INFO  - Compressing file orole_local2.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:267 INFO  ok size=65.00KB compressedSize=126 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:268 INFO  - Compressing file orole_node2.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:268 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:268 INFO  - Compressing file orole_node2.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:269 INFO  ok size=65.00KB compressedSize=125 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:269 INFO  - Compressing file oschedule.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:270 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:270 INFO  - Compressing file oschedule.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:271 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:271 INFO  - Compressing file oschedule_local1.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:271 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:271 INFO  - Compressing file oschedule_local1.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:272 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:272 INFO  - Compressing file oschedule_local2.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:272 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:273 INFO  - Compressing file oschedule_local2.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:273 INFO  ok size=65.00KB compressedSize=125 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:273 INFO  - Compressing file oschedule_node2.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:274 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:274 INFO  - Compressing file oschedule_node2.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:275 INFO  ok size=65.00KB compressedSize=126 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:275 INFO  - Compressing file ouser.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:280 INFO  ok size=65.00KB compressedSize=130 ratio=100% elapsed=5ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:280 INFO  - Compressing file OUser.name.nbt... [ODeployDatabaseTask]
+2015-02-12 10:43:06:281 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:281 INFO  - Compressing file OUser.name.sbt... [ODeployDatabaseTask]
+2015-02-12 10:43:06:282 INFO  ok size=65.00KB compressedSize=181 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:282 INFO  - Compressing file ouser.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:285 INFO  ok size=129.00KB compressedSize=548 ratio=100% elapsed=3ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:285 INFO  - Compressing file ouser_local1.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:286 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:286 INFO  - Compressing file ouser_local1.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:287 INFO  ok size=65.00KB compressedSize=129 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:287 INFO  - Compressing file ouser_local2.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:288 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:288 INFO  - Compressing file ouser_local2.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:289 INFO  ok size=65.00KB compressedSize=123 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:289 INFO  - Compressing file ouser_node2.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:289 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:289 INFO  - Compressing file ouser_node2.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:291 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:291 INFO  - Compressing file v.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:291 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:292 INFO  - Compressing file v.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:293 INFO  ok size=65.00KB compressedSize=125 ratio=100% elapsed=2ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:293 INFO  - Compressing file v_local1.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:293 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:294 INFO  - Compressing file v_local1.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:294 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:295 INFO  - Compressing file v_local2.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:295 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=0ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:295 INFO  - Compressing file v_local2.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:296 INFO  ok size=65.00KB compressedSize=127 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:296 INFO  - Compressing file v_node2.cpm... [ODeployDatabaseTask]
+2015-02-12 10:43:06:297 INFO  ok size=1024b compressedSize=18 ratio=99% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:297 INFO  - Compressing file v_node2.pcl... [ODeployDatabaseTask]
+2015-02-12 10:43:06:298 INFO  ok size=65.00KB compressedSize=125 ratio=100% elapsed=1ms [ODeployDatabaseTask]
+2015-02-12 10:43:06:312 INFO  [local1]->[local2] sending the compressed database 'distributed' over the NETWORK to node 'local2', size=21.57KB, lastOperationId=3... [ODeployDatabaseTask]
+2015-02-12 10:43:06:312 INFO  [local1]->[local2] - transferring chunk #1 offset=0 size=22087... [ODeployDatabaseTask]
+2015-02-12 10:43:06:313 INFO  [local1] received updated status local1.distributed=ONLINE [OHazelcastPlugin]
+2015-02-12 10:43:06:315 INFO  [local1]->[local2] deploy database task completed [ODeployDatabaseTask]
+2015-02-12 10:43:06:492 INFO  [local1]<-[local2] received updated status local2.distributed=ONLINE [OHazelcastPlugin][10.3.15.68]:2434 [orientdb] [3.3] You probably have too long Hazelcast configuration!
+java.io.IOException: Network is down
+	at java.net.PlainDatagramSocketImpl.send(Native Method)
+	at java.net.DatagramSocket.send(DatagramSocket.java:676)
+	at com.hazelcast.cluster.MulticastService.send(MulticastService.java:181)
+	at com.hazelcast.cluster.MulticastJoiner.searchForOtherClusters(MulticastJoiner.java:112)
+	at com.hazelcast.cluster.SplitBrainHandler.searchForOtherClusters(SplitBrainHandler.java:47)
+	at com.hazelcast.cluster.SplitBrainHandler.run(SplitBrainHandler.java:37)
+	at com.hazelcast.util.executor.CachedExecutorServiceDelegate$Worker.run(CachedExecutorServiceDelegate.java:209)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:615)
+	at java.lang.Thread.run(Thread.java:744)
+	at com.hazelcast.util.executor.HazelcastManagedThread.executeRun(HazelcastManagedThread.java:76)
+	at com.hazelcast.util.executor.HazelcastManagedThread.run(HazelcastManagedThread.java:92)
+
+2015-02-12 10:50:50:644 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Accepting socket connection from /10.3.15.68:64308 [SocketAcceptor]
+2015-02-12 10:50:50:644 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Established socket connection between /10.3.15.68:2434 and /10.3.15.68:64308 [TcpIpConnectionManager]
+2015-02-12 10:50:56:672 INFO  [10.3.15.68]:2434 [orientdb] [3.3] 
+
+Members [3] {
+	Member [10.3.15.68]:2434 this
+	Member [10.3.15.68]:2435
+	Member [10.3.15.68]:2436
+}
+ [ClusterService]
+2015-02-12 10:50:56:675 WARNING [local1] added new node id=Member [10.3.15.68]:2436 name=ext:492660c5-51b1-4256-85d8-21a70fbc7efb [OHazelcastPlugin]
+2015-02-12 10:50:56:817 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Re-partitioning cluster data... Migration queue size: 90 [InternalPartitionService]
+2015-02-12 10:50:58:261 INFO  [10.3.15.68]:2434 [orientdb] [3.3] All migration tasks have been completed, queues are empty. [InternalPartitionService][10.3.15.68]:2434 [orientdb] [3.3] You probably have too long Hazelcast configuration!
+java.io.IOException: Network is down
+	at java.net.PlainDatagramSocketImpl.send(Native Method)
+	at java.net.DatagramSocket.send(DatagramSocket.java:676)
+	at com.hazelcast.cluster.MulticastService.send(MulticastService.java:181)
+	at com.hazelcast.cluster.MulticastJoiner.searchForOtherClusters(MulticastJoiner.java:112)
+	at com.hazelcast.cluster.SplitBrainHandler.searchForOtherClusters(SplitBrainHandler.java:47)
+	at com.hazelcast.cluster.SplitBrainHandler.run(SplitBrainHandler.java:37)
+	at com.hazelcast.util.executor.CachedExecutorServiceDelegate$Worker.run(CachedExecutorServiceDelegate.java:209)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1145)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:615)
+	at java.lang.Thread.run(Thread.java:744)
+	at com.hazelcast.util.executor.HazelcastManagedThread.executeRun(HazelcastManagedThread.java:76)
+	at com.hazelcast.util.executor.HazelcastManagedThread.run(HazelcastManagedThread.java:92)
+
+2015-02-12 11:10:18:931 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connection [Address[10.3.15.68]:2435] lost. Reason: java.io.EOFException[Remote socket closed!] [TcpIpConnection]
+2015-02-12 11:10:18:933 WARNING [10.3.15.68]:2434 [orientdb] [3.3] hz._hzInstance_1_orientdb.IO.thread-in-0 Closing socket to endpoint Address[10.3.15.68]:2435, Cause:java.io.EOFException: Remote socket closed! [ReadHandler]
+2015-02-12 11:10:19:664 WARNING [10.3.15.68]:2434 [orientdb] [3.3] This node does not have a connection to Member [10.3.15.68]:2435 [ClusterService]
+2015-02-12 11:10:19:664 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connecting to /10.3.15.68:2435, timeout: 0, bind-any: true [SocketConnector]
+2015-02-12 11:10:19:665 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Could not connect to: /10.3.15.68:2435. Reason: SocketException[Connection refused to address /10.3.15.68:2435] [SocketConnector]
+2015-02-12 11:10:19:781 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connecting to /10.3.15.68:2435, timeout: 0, bind-any: true [SocketConnector]
+2015-02-12 11:10:19:781 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Could not connect to: /10.3.15.68:2435. Reason: SocketException[Connection refused to address /10.3.15.68:2435] [SocketConnector]
+2015-02-12 11:10:20:667 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Connecting to /10.3.15.68:2435, timeout: 0, bind-any: true [SocketConnector]
+2015-02-12 11:10:20:667 WARNING [10.3.15.68]:2434 [orientdb] [3.3] This node does not have a connection to Member [10.3.15.68]:2435 [ClusterService]
+2015-02-12 11:10:20:668 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Could not connect to: /10.3.15.68:2435. Reason: SocketException[Connection refused to address /10.3.15.68:2435] [SocketConnector]
+2015-02-12 11:10:20:668 WARNING [10.3.15.68]:2434 [orientdb] [3.3] Removing connection to endpoint Address[10.3.15.68]:2435 Cause => java.net.SocketException {Connection refused to address /10.3.15.68:2435}, Error-Count: 5 [TcpIpConnectionMonitor]
+2015-02-12 11:10:20:669 INFO  [10.3.15.68]:2434 [orientdb] [3.3] Removing Member [10.3.15.68]:2435 [ClusterService]
+2015-02-12 11:10:20:680 INFO  [10.3.15.68]:2434 [orientdb] [3.3] 
+
+Members [2] {
+	Member [10.3.15.68]:2434 this
+	Member [10.3.15.68]:2436
+}
+ [ClusterService]
+2015-02-12 11:10:20:684 INFO  [local1] removing node 'local2' in partitions: db=demo [*, orole_local2, v_local2, _studio_local2, oschedule_local2, e_local2, ofunction_local2, orids_local2, ouser_local2, orids_local1, orole_local1, e_local1, ouser_local1, ofunction_local1, v_local1, _studio_bookmark_local1, _studio_local1, oschedule_local1] [OHazelcastDistributedDatabase]
+2015-02-12 11:10:20:684 INFO  [local1] removing queue 'orientdb.node.local2.demo.request' containing 0 messages [OHazelcastDistributedMessageService]
+2015-02-12 11:10:20:691 INFO  [local1] removing queue 'orientdb.node.local2.demo.insert.request' containing 0 messages [OHazelcastDistributedMessageService]
+2015-02-12 11:10:20:697 INFO  [local1] updated distributed configuration for database: demo:
+----------
+{
+  "version": 1,
+  "autoDeploy": true,
+  "hotAlignment": false,
+  "readQuorum": 1,
+  "writeQuorum": 2,
+  "failureAvailableNodesLessQuorum": false,
+  "readYourWrites": true,"clusters":{
+    "internal": {
+},
+    "index": {
+},
+    "*": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "orole_local2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "v_local2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "_studio_local2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "oschedule_local2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "e_local2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "ofunction_local2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "orids_local2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "ouser_local2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "orids_local1": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "orole_local1": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "e_local1": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "ouser_local1": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "ofunction_local1": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "v_local1": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "_studio_bookmark_local1": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "_studio_local1": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "oschedule_local1": {
+  "servers": ["local1","<NEW_NODE>"]
+}
+    }
+}
+---------- [OHazelcastPlugin]
+2015-02-12 11:10:20:697 INFO  [local1] Saving distributed configuration file for database 'demo' to: /Users/enricorisa/Coding/OrientTech/orientdb-enterprise/agent/databases/demo/distributed-config.json [OHazelcastPlugin]
+2015-02-12 11:10:20:715 INFO  [local1] removing node 'local2' in partitions: db=distributed [*, e_node2, _studio_node2, orole_node2, ouser_node2, ofunction_node2, orids_node2, oschedule_node2, v_node2, ouser_local2, _studio_local2, e_local2, orole_local2, oschedule_local2, v_local2, ofunction_local2, orids_local2, ouser_local1, e_local1, v_local1, oschedule_local1, _studio_local1, ofunction_local1, orids_local1, orole_local1] [OHazelcastDistributedDatabase]
+2015-02-12 11:10:20:717 INFO  [local1] removing queue 'orientdb.node.local2.distributed.request' containing 0 messages [OHazelcastDistributedMessageService]
+2015-02-12 11:10:20:719 INFO  [local1] removing queue 'orientdb.node.local2.distributed.insert.request' containing 0 messages [OHazelcastDistributedMessageService]
+2015-02-12 11:10:20:725 INFO  [local1] updated distributed configuration for database: distributed:
+----------
+{
+  "version": 1,
+  "autoDeploy": true,
+  "hotAlignment": false,
+  "readQuorum": 1,
+  "writeQuorum": 2,
+  "failureAvailableNodesLessQuorum": false,
+  "readYourWrites": true,"clusters":{
+    "internal": {
+},
+    "index": {
+},
+    "*": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "e_node2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "_studio_node2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "orole_node2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "ouser_node2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "ofunction_node2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "orids_node2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "oschedule_node2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "v_node2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "ouser_local2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "_studio_local2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "e_local2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "orole_local2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "oschedule_local2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "v_local2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "ofunction_local2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "orids_local2": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "ouser_local1": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "e_local1": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "v_local1": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "oschedule_local1": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "_studio_local1": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "ofunction_local1": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "orids_local1": {
+  "servers": ["local1","<NEW_NODE>"]
+},
+    "orole_local1": {
+  "servers": ["local1","<NEW_NODE>"]
+}
+    }
+}
+---------- [OHazelcastPlugin]
+2015-02-12 11:10:20:725 INFO  [local1] Saving distributed configuration file for database 'distributed' to: /Users/enricorisa/Coding/OrientTech/orientdb-enterprise/agent/databases/distributed/distributed-config.json [OHazelcastPlugin]
+2015-02-12 11:10:20:736 WARNING [local1] node removed id=Member [10.3.15.68]:2435 name=local2 [OHazelcastPlugin]
+2015-02-12 11:10:21:012 INFO  Received signal: SIGINT [OSignalHandler]

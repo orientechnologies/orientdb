@@ -20,6 +20,8 @@ app.controller('SingleServerController', function ($scope, $location, $routePara
   $scope.requests = 0;
 
   $scope.latency = 0;
+
+  $scope.currentIndex = 0;
   var lastOps = null;
   var lastReq = null;
 
@@ -28,6 +30,8 @@ app.controller('SingleServerController', function ($scope, $location, $routePara
 
       $scope.server.status = data.result[0].status;
 
+
+      $scope.tips = data.result[0]['realtime']['tips'];
 
       if ($scope.server.status == 'ONLINE') {
         var snapshot = data.result[0]['snapshot'];

@@ -1290,4 +1290,10 @@ ul.tcp-members li {
 .thumbnail h4 {
   text-align: center;
 }
+.widget-server .no-margin {
+  padding: 10px;
+}
+.server-thumb hr {
+  margin: 10px 0;
+}
 

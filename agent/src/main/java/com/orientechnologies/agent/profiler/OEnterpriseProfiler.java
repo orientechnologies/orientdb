@@ -129,7 +129,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
       realTime.clear();
       dictionary.clear();
       types.clear();
-
+      tips.clear();
       if (archiverTask != null)
         archiverTask.cancel();
 
@@ -224,10 +224,12 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
     try {
       if (iQuery.equals("realtime")) {
         realTime.setHookValues(hookValuesSnapshots);
+        realTime.setTips(tips);
         realTime.toJSON(buffer, iPar1);
 
       } else if (iQuery.equals("last")) {
         if (lastSnapshot != null) {
+          lastSnapshot.setTips(tips);
           lastSnapshot.setHookValues(hookValuesSnapshots);
           lastSnapshot.toJSON(buffer, iPar1);
         }
