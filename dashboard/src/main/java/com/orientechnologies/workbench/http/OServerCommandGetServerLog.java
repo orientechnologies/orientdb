@@ -17,6 +17,7 @@ package com.orientechnologies.workbench.http;
 
 import java.net.URL;
 import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -83,9 +84,12 @@ public class OServerCommandGetServerLog extends
 		// the name of the server
 		String rid = iRequest.getParameter("name");
 		rid = URLDecoder.decode(rid);
+		// rid = rid.replaceAll("___", " ");
 		OMonitoredServer s = monitor.getMonitoredServer(rid);
 		ODocument server = s.getConfiguration();
-
+		// rid = iRequest.getParameter("name");
+		// rid = URLDecoder.decode(rid);
+		rid = URLEncoder.encode(rid);
 		String parameters = (rid != null ? "?name=" + rid : "")
 				+ (value != null ? "&searchvalue=" + value : "")
 				+ (size != null ? "&size=" + size : "")
@@ -99,12 +103,12 @@ public class OServerCommandGetServerLog extends
 		final URL remoteUrl = new java.net.URL("http://" + server.field("url")
 				+ "/log/" + type + parameters);
 
-		String response = OWorkbenchUtils
-				.fetchFromRemoteServer(server, remoteUrl);
+		String response = OWorkbenchUtils.fetchFromRemoteServer(server,
+				remoteUrl);
 
 		ODocument result = new ODocument();
-		result.fromJSON(response);
-		iResponse.writeRecord(result, null, "");
+		ODocument fromJSON = result.fromJSON(response);
+		iResponse.writeRecord(fromJSON, null, "");
 		return false;
 	}
 
