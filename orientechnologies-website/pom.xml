@@ -238,11 +238,6 @@
             <version>4.3</version>
         </dependency>
         <dependency>
-            <groupId>com.orientechnologies</groupId>
-            <artifactId>agent</artifactId>
-            <version>2.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
             <groupId>com.jcabi</groupId>
             <artifactId>jcabi-http</artifactId>
             <version>1.8.1</version>

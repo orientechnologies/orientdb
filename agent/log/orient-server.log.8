@@ -1,0 +1,80 @@
+
+2015-02-11 13:32:51:383 INFO  OrientDB auto-config DISKCACHE=14.212MB (heap=123MB os=16.384MB disk=41.739MB) [orientechnologies]
+2015-02-11 13:32:51:387 INFO  Loading configuration from: config/orientdb-server-config.xml... [OServerConfigurationLoaderXml]
+2015-02-11 13:32:51:593 INFO  OrientDB Server v2.1-SNAPSHOT is starting up... [OServer]
+2015-02-11 13:32:51:618 INFO  Databases directory: /Users/marco/orientdb-enterprise/orientdb-enterprise/agent/databases [OServer]
+2015-02-11 13:32:51:649 INFO  Listening binary connections on 0.0.0.0:2424 (protocol v.28, socket=default) [OServerNetworkListener]
+2015-02-11 13:32:51:650 INFO  Listening http connections on 0.0.0.0:2480 (protocol v.10, socket=default) [OServerNetworkListener]
+2015-02-11 13:32:51:657 INFO  Installing dynamic plugin 'studio-2.0.zip'... [OServerPluginManager]
+2015-02-11 13:32:51:743 INFO  Installing GREMLIN language v.2.6.0 - graph.pool.max=50 [OGraphServerHandler]
+2015-02-11 13:32:51:764 INFO  Starting distributed server 'local1'... [OHazelcastPlugin]
+2015-02-11 13:32:51:791 INFO  Configuring Hazelcast from '/Users/marco/orientdb-enterprise/orientdb-enterprise/agent/config/hazelcast.xml'. [FileSystemXmlConfig]
+2015-02-11 13:32:52:266 INFO  [LOCAL] [orientdb] [3.3] Prefer IPv4 stack is true. [DefaultAddressPicker]
+2015-02-11 13:32:52:282 INFO  [LOCAL] [orientdb] [3.3] Picked Address[192.168.56.1]:2434, using socket ServerSocket[addr=/0:0:0:0:0:0:0:0%0,localport=2434], bind any local is true [DefaultAddressPicker]
+2015-02-11 13:32:52:402 INFO  [192.168.56.1]:2434 [orientdb] [3.3] Starting with 8 generic operation threads and 8 partition operation threads. [BasicOperationScheduler]
+2015-02-11 13:32:52:586 INFO  [192.168.56.1]:2434 [orientdb] [3.3] Hazelcast 3.3 (20140907) starting at Address[192.168.56.1]:2434 [system]
+2015-02-11 13:32:52:586 INFO  [192.168.56.1]:2434 [orientdb] [3.3] Copyright (C) 2008-2014 Hazelcast.com [system]
+2015-02-11 13:32:52:594 INFO  [192.168.56.1]:2434 [orientdb] [3.3] Creating MulticastJoiner [Node]
+2015-02-11 13:32:52:600 INFO  [192.168.56.1]:2434 [orientdb] [3.3] Address[192.168.56.1]:2434 is STARTING [LifecycleService]
+2015-02-11 13:32:54:841 INFO  [192.168.56.1]:2434 [orientdb] [3.3] 
+
+
+Members [1] {
+	Member [192.168.56.1]:2434 this
+}
+ [MulticastJoiner]
+2015-02-11 13:32:54:870 INFO  [192.168.56.1]:2434 [orientdb] [3.3] Address[192.168.56.1]:2434 is STARTED [LifecycleService]
+2015-02-11 13:32:54:943 INFO  [192.168.56.1]:2434 [orientdb] [3.3] Initializing cluster partition table first arrangement... [InternalPartitionService]
+2015-02-11 13:32:54:984 INFO  [local1] found no previous messages in queue orientdb.node.local1.response [OHazelcastDistributedMessageService]
+2015-02-11 13:32:54:986 WARNING [local1] opening database 'prova'... [OHazelcastPlugin]
+2015-02-11 13:32:54:988 INFO  [local1] loaded database configuration from disk: /Users/marco/orientdb-enterprise/orientdb-enterprise/agent/databases/prova/distributed-config.json [OHazelcastPlugin]
+2015-02-11 13:32:55:008 INFO  [local1] updated distributed configuration for database: prova:
+----------
+{
+  "version": 0,
+  "autoDeploy": true,
+  "hotAlignment": false,
+  "readQuorum": 1,
+  "writeQuorum": 2,
+  "failureAvailableNodesLessQuorum": false,
+  "readYourWrites": true,"clusters":{
+    "internal": {
+},
+    "index": {
+},
+    "*": {
+  "servers": ["local1","<NEW_NODE>"]
+}
+    }
+}
+---------- [OHazelcastPlugin]
+2015-02-11 13:32:55:017 INFO  [local1] updated distributed configuration for database: prova:
+----------
+{
+  "version": 0,
+  "autoDeploy": true,
+  "hotAlignment": false,
+  "readQuorum": 1,
+  "writeQuorum": 2,
+  "failureAvailableNodesLessQuorum": false,
+  "readYourWrites": true,"clusters":{
+    "internal": {
+},
+    "index": {
+},
+    "*": {
+  "servers": ["local1","<NEW_NODE>"]
+}
+    }
+}
+---------- [OHazelcastPlugin]
+2015-02-11 13:32:55:018 INFO  [local1] Saving distributed configuration file for database 'prova' to: /Users/marco/orientdb-enterprise/orientdb-enterprise/agent/databases/prova/distributed-config.json [OHazelcastPlugin]
+2015-02-11 13:32:55:023 INFO  [local1] found no previous messages in queue orientdb.node.local1.prova.request [OHazelcastDistributedMessageService]
+2015-02-11 13:32:55:060 WARNING {db=prova} segment file 'database.ocf' was not closed correctly last time [OSingleFileSegment]
+2015-02-11 13:32:55:436 INFO  {db=prova} [local1] Installing distributed storage on database 'prova' [ODistributedStorage]
+2015-02-11 13:32:55:440 INFO  [local1] Publishing online status for database local1.prova... [OHazelcastDistributedDatabase]
+2015-02-11 13:32:55:443 INFO  [local1] received new status local1.prova=ONLINE [OHazelcastPlugin]
+2015-02-11 13:32:55:445 WARNING [local1] updated node status to 'ONLINE' [OHazelcastPlugin]
+2015-02-11 13:32:55:456 INFO  Installing Mail plugin, loaded 1 profile(s): [default] [OMailPlugin]
+2015-02-11 13:32:55:487 INFO  Profiler is recording metrics with configuration: 60,24 [OEnterpriseProfiler]
+2015-02-11 13:32:55:497 INFO  OrientDB Server v2.1-SNAPSHOT is active. [OServer]

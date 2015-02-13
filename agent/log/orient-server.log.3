@@ -1,0 +1,98 @@
+
+2015-02-12 11:02:32:643 INFO  OrientDB auto-config DISKCACHE=14.212MB (heap=123MB os=16.384MB disk=44.592MB) [orientechnologies]
+2015-02-12 11:02:32:647 INFO  Loading configuration from: config/orientdb-server-config.xml... [OServerConfigurationLoaderXml]
+2015-02-12 11:02:32:936 INFO  OrientDB Server v2.1-SNAPSHOT is starting up... [OServer]
+2015-02-12 11:02:32:964 INFO  Databases directory: /Users/marco/orientdb-enterprise/orientdb-enterprise/agent/databases [OServer]
+2015-02-12 11:02:32:998 INFO  Listening binary connections on 0.0.0.0:2424 (protocol v.28, socket=default) [OServerNetworkListener]
+2015-02-12 11:02:33:000 INFO  Listening http connections on 0.0.0.0:2480 (protocol v.10, socket=default) [OServerNetworkListener]
+2015-02-12 11:02:33:006 INFO  Installing dynamic plugin 'studio-2.0.zip'... [OServerPluginManager]
+2015-02-12 11:02:33:089 INFO  Installing GREMLIN language v.2.6.0 - graph.pool.max=50 [OGraphServerHandler]
+2015-02-12 11:02:33:108 INFO  Starting distributed server 'local1'... [OHazelcastPlugin]
+2015-02-12 11:02:33:131 INFO  Configuring Hazelcast from '/Users/marco/orientdb-enterprise/orientdb-enterprise/agent/config/hazelcast.xml'. [FileSystemXmlConfig]
+2015-02-12 11:02:33:409 INFO  [LOCAL] [orientdb] [3.3] Prefer IPv4 stack is true. [DefaultAddressPicker]
+2015-02-12 11:02:33:422 INFO  [LOCAL] [orientdb] [3.3] Picked Address[10.1.28.119]:2434, using socket ServerSocket[addr=/0:0:0:0:0:0:0:0%0,localport=2434], bind any local is true [DefaultAddressPicker]
+2015-02-12 11:02:33:468 INFO  [10.1.28.119]:2434 [orientdb] [3.3] Starting with 8 generic operation threads and 8 partition operation threads. [BasicOperationScheduler]
+2015-02-12 11:02:33:603 INFO  [10.1.28.119]:2434 [orientdb] [3.3] Hazelcast 3.3 (20140907) starting at Address[10.1.28.119]:2434 [system]
+2015-02-12 11:02:33:604 INFO  [10.1.28.119]:2434 [orientdb] [3.3] Copyright (C) 2008-2014 Hazelcast.com [system]
+2015-02-12 11:02:33:612 INFO  [10.1.28.119]:2434 [orientdb] [3.3] Creating MulticastJoiner [Node]
+2015-02-12 11:02:33:616 INFO  [10.1.28.119]:2434 [orientdb] [3.3] Address[10.1.28.119]:2434 is STARTING [LifecycleService]
+2015-02-12 11:02:37:683 INFO  [10.1.28.119]:2434 [orientdb] [3.3] 
+
+
+Members [1] {
+	Member [10.1.28.119]:2434 this
+}
+ [MulticastJoiner]
+2015-02-12 11:02:37:707 INFO  [10.1.28.119]:2434 [orientdb] [3.3] Address[10.1.28.119]:2434 is STARTED [LifecycleService]
+2015-02-12 11:02:37:774 INFO  [10.1.28.119]:2434 [orientdb] [3.3] Initializing cluster partition table first arrangement... [InternalPartitionService]
+2015-02-12 11:02:37:812 INFO  [local1] found no previous messages in queue orientdb.node.local1.response [OHazelcastDistributedMessageService]
+2015-02-12 11:02:37:814 WARNING [local1] opening database 'prova'... [OHazelcastPlugin]
+2015-02-12 11:02:37:815 INFO  [local1] loaded database configuration from disk: /Users/marco/orientdb-enterprise/orientdb-enterprise/agent/databases/prova/distributed-config.json [OHazelcastPlugin]
+2015-02-12 11:02:37:826 INFO  [local1] updated distributed configuration for database: prova:
+----------
+{
+  "version": 0,
+  "autoDeploy": true,
+  "hotAlignment": false,
+  "readQuorum": 1,
+  "writeQuorum": 2,
+  "failureAvailableNodesLessQuorum": false,
+  "readYourWrites": true,"clusters":{
+    "internal": {
+},
+    "index": {
+},
+    "*": {
+  "servers": ["local1","<NEW_NODE>"]
+}
+    }
+}
+---------- [OHazelcastPlugin]
+2015-02-12 11:02:37:833 INFO  [local1] updated distributed configuration for database: prova:
+----------
+{
+  "version": 0,
+  "autoDeploy": true,
+  "hotAlignment": false,
+  "readQuorum": 1,
+  "writeQuorum": 2,
+  "failureAvailableNodesLessQuorum": false,
+  "readYourWrites": true,"clusters":{
+    "internal": {
+},
+    "index": {
+},
+    "*": {
+  "servers": ["local1","<NEW_NODE>"]
+}
+    }
+}
+---------- [OHazelcastPlugin]
+2015-02-12 11:02:37:834 INFO  [local1] Saving distributed configuration file for database 'prova' to: /Users/marco/orientdb-enterprise/orientdb-enterprise/agent/databases/prova/distributed-config.json [OHazelcastPlugin]
+2015-02-12 11:02:37:867 INFO  [local1] found no previous messages in queue orientdb.node.local1.prova.request [OHazelcastDistributedMessageService]
+2015-02-12 11:02:37:910 WARNING {db=prova} segment file 'database.ocf' was not closed correctly last time [OSingleFileSegment]
+2015-02-12 11:02:38:257 INFO  {db=prova} [local1] Installing distributed storage on database 'prova' [ODistributedStorage]
+2015-02-12 11:02:38:260 INFO  [local1] Publishing online status for database local1.prova... [OHazelcastDistributedDatabase]
+2015-02-12 11:02:38:267 INFO  [local1] received new status local1.prova=ONLINE [OHazelcastPlugin]
+2015-02-12 11:02:38:267 WARNING [local1] updated node status to 'ONLINE' [OHazelcastPlugin]
+2015-02-12 11:02:38:277 INFO  Installing Mail plugin, loaded 1 profile(s): [default] [OMailPlugin]
+2015-02-12 11:02:38:293 INFO  Profiler is recording metrics with configuration: 60,24 [OEnterpriseProfiler]
+2015-02-12 11:02:38:298 INFO  OrientDB Server v2.1-SNAPSHOT is active. [OServer]
+2015-02-12 11:04:42:165 INFO  [10.1.28.119]:2434 [orientdb] [3.3] Accepting socket connection from /10.1.28.119:57781 [SocketAcceptor]
+2015-02-12 11:04:42:180 INFO  [10.1.28.119]:2434 [orientdb] [3.3] Established socket connection between /10.1.28.119:2434 and /10.1.28.119:57781 [TcpIpConnectionManager]
+2015-02-12 11:04:48:191 INFO  [10.1.28.119]:2434 [orientdb] [3.3] 
+
+Members [2] {
+	Member [10.1.28.119]:2434 this
+	Member [10.1.28.119]:2435
+}
+ [ClusterService]
+2015-02-12 11:04:48:216 WARNING [local1] added new node id=Member [10.1.28.119]:2435 name=ext:f629f0e1-1b4a-4036-8161-68a25ad005c5 [OHazelcastPlugin]
+2015-02-12 11:04:48:506 INFO  [10.1.28.119]:2434 [orientdb] [3.3] Re-partitioning cluster data... Migration queue size: 135 [InternalPartitionService]
+2015-02-12 11:04:48:698 INFO  [10.1.28.119]:2434 [orientdb] [3.3] Remaining migration tasks in queue => 112 [InternalPartitionService]
+2015-02-12 11:04:50:268 INFO  [10.1.28.119]:2434 [orientdb] [3.3] All migration tasks have been completed, queues are empty. [InternalPartitionService]
+2015-02-12 11:37:38:878 INFO  [10.1.28.119]:2434 [orientdb] [3.3] Connection [Address[10.1.28.119]:2435] lost. Reason: java.io.EOFException[Remote socket closed!] [TcpIpConnection]
+2015-02-12 11:37:38:879 WARNING [10.1.28.119]:2434 [orientdb] [3.3] hz._hzInstance_1_orientdb.IO.thread-in-0 Closing socket to endpoint Address[10.1.28.119]:2435, Cause:java.io.EOFException: Remote socket closed! [ReadHandler]
+2015-02-12 11:37:39:796 WARNING [10.1.28.119]:2434 [orientdb] [3.3] This node does not have a connection to Member [10.1.28.119]:2435 [ClusterService]
+2015-02-12 11:37:39:797 INFO  [10.1.28.119]:2434 [orientdb] [3.3] Connecting to /10.1.28.119:2435, timeout: 0, bind-any: true [SocketConnector]
+2015-02-12 11:37:39:798 INFO  [10.1.28.119]:2434 [orientdb] [3.3] Could not connect to: /10.1.28.119:2435. Reason: SocketException[Connection refused to address /10.1.28.119:2435] [SocketConnector]
