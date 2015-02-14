@@ -2803,8 +2803,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   private void clearDocumentTracking(final ORecord record) {
     if (record instanceof ODocument && ((ODocument) record).isTrackingChanges()) {
-      ((ODocument) record).setTrackingChanges(false);
-      ((ODocument) record).setTrackingChanges(true);
+      ODocumentInternal.clearTrackData((ODocument) record);
     }
   }
 

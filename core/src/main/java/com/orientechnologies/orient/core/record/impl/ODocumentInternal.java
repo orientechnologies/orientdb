@@ -68,4 +68,8 @@ public class ODocumentInternal {
     return document.getRawEntries();
   }
 
+  public static void clearTrackData(final ODocument document) {
+    document.clearTrackData();
+  }
+
 }

@@ -1556,6 +1556,28 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     return this;
   }
 
+  protected void clearTrackData() {
+    if (_fields != null) {
+      // FREE RESOURCES
+      Iterator<Entry<String, ODocumentEntry>> iter = _fields.entrySet().iterator();
+      while (iter.hasNext()) {
+        Entry<String, ODocumentEntry> cur = iter.next();
+        if (!cur.getValue().exist())
+          iter.remove();
+        else {
+          cur.getValue().setCreated(false);
+          cur.getValue().setChanged(false);
+          cur.getValue().original = null;
+          cur.getValue().timeLine = null;
+          if (cur.getValue().value instanceof OTrackedMultiValue<?, ?>) {
+            removeCollectionChangeListener(cur.getValue(), cur.getValue().value);
+            addCollectionChangeListener(cur.getKey(), cur.getValue(), cur.getValue().value);
+          }
+        }
+      }
+    }
+  }
+
   public boolean isOrdered() {
     return _ordered;
   }
@@ -1828,7 +1850,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
 
     OMetadataInternal metadata = (OMetadataInternal) getDatabase().getMetadata();
-    this._immutableClazz = metadata.getImmutableSchemaSnapshot().getClass(className);
+    this._immutableClazz = (OImmutableClass) metadata.getImmutableSchemaSnapshot().getClass(className);
     OClass clazz;
     if (this._immutableClazz != null) {
       clazz = this._immutableClazz;
