@@ -188,7 +188,9 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
         final OClass cls = metadata.getImmutableSchemaSnapshot().getClass(clazz);
         if (cls != null)
           for (int clId : cls.getClusterIds()) {
-            clusters.add(db.getClusterNameById(clId).toLowerCase());
+            final String clName = db.getClusterNameById(clId);
+            if (clName != null)
+              clusters.add(clName.toLowerCase());
           }
       }
     }
