@@ -23,7 +23,6 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLFactory;
-import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
@@ -78,13 +77,9 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
       final ODatabaseDocumentTx graphDb = result.getRawGraph();
 
       if (!graphDb.isClosed()) {
-        final OrientGraph g = (OrientGraph) result;
-        g.setAutoStartTx(autoStartTx);
-
         ODatabaseRecordThreadLocal.INSTANCE.set(graphDb);
-
         shouldBeShutDown.setValue(false);
-        return g;
+        return (OrientGraph) result;
       }
     }
     // Set it again on ThreadLocal because the getRawGraph() may have set a closed db in the thread-local
