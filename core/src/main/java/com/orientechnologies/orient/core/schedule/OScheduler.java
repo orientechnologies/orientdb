@@ -181,6 +181,8 @@ public OFunction getFunctionSafe()
           int i = 0;
           for (Entry<Object, Object> arg : iArgs.entrySet())
             args[i++] = arg.getValue();
+        } else {
+        	args = new Object[0];
         }
         invocableEngine.invokeFunction(this.function.getName(), args);
       }

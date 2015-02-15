@@ -87,6 +87,8 @@ public class OCommandExecutorFunction extends OCommandExecutorAbstract {
             int i = 0;
             for (Entry<Object, Object> arg : iArgs.entrySet())
               args[i++] = arg.getValue();
+          } else {
+        	  args = new Object[0];
           }
           result = invocableEngine.invokeFunction(parserText, args);
 
