@@ -1977,11 +1977,15 @@ OCollection Collection():
 }
 {
     (
-        <LBRACKET> lastExpression = Expression() { jjtThis.expressions.add(lastExpression); }
-        (
-            <COMMA>
+
+        <LBRACKET>
+        [
             lastExpression = Expression() { jjtThis.expressions.add(lastExpression); }
-        )*
+            (
+                <COMMA>
+                lastExpression = Expression() { jjtThis.expressions.add(lastExpression); }
+            )*
+        ]
         <RBRACKET>
     )
     { return jjtThis; }

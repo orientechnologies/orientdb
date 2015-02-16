@@ -57,6 +57,18 @@ public class OCreateVertexStatementTest {
   }
 
 
+  public void testEmptyArrayCreate() {
+    checkRightSyntax("create vertex Foo set a = 'foo'");
+    checkRightSyntax("create vertex Foo set a = []");
+//    checkRightSyntax("create vertex Foo set a = [ ]");
+  }
+
+
+  public void testEmptyMapCreate() {
+    checkRightSyntax("create vertex Foo set a = {}");
+    checkRightSyntax("create vertex Foo SET a = { }");
+  }
+
 
   public void testInsertIntoCluster() {
     checkRightSyntax("create vertex cluster:default (equaledges, name, list) values ('yes', 'square', ['bottom', 'top','left','right'] )");
