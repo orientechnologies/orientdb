@@ -1,19 +1,27 @@
 package com.orientechnologies.orient.core.record.impl;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
 /**
@@ -28,7 +36,7 @@ public class ODocumentSerializationPersistentTest {
   private ORID                docId;
   private ORID                linkedId;
 
-  @BeforeMethod
+  @BeforeClass
   public void setUp() throws Exception {
 
     db = new ODatabaseDocumentTx("memory:testdocumentserialization");
@@ -68,5 +76,35 @@ public class ODocumentSerializationPersistentTest {
     for (int i = 0; i < numbers.size(); i++) {
       Assert.assertEquals((int) numbers.get(i), i);
     }
+  }
+
+  @Test
+  public void testRidBagInEmbeddedDocument() {
+    ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    ODocument doc = new ODocument();
+    ORidBag rids = new ORidBag();
+    rids.add(new ORecordId(2, 3));
+    rids.add(new ORecordId(2, 4));
+    rids.add(new ORecordId(2, 5));
+    rids.add(new ORecordId(2, 6));
+    List<ODocument> docs = new ArrayList<ODocument>();
+    ODocument doc1 = new ODocument();
+    doc1.field("rids", rids);
+    docs.add(doc1);
+    ODocument doc2 = new ODocument();
+    doc2.field("text", "text");
+    docs.add(doc2);
+    doc.field("emb", docs, OType.EMBEDDEDLIST);
+    doc.field("some", "test");
+
+    byte[] res = db.getSerializer().toStream(doc, false);
+    ODocument extr = (ODocument) db.getSerializer().fromStream(res, new ODocument(), new String[] {});
+
+    List<ODocument> emb = extr.field("emb");
+    assertNotNull(emb);
+    assertEquals(((ORidBag) emb.get(0).field("rids")).size(), rids.size());
+    assertEquals(emb.get(1).field("text"), doc2.field("text"));
+    assertEquals(extr.field("name"), doc.field("name"));
+
   }
 }

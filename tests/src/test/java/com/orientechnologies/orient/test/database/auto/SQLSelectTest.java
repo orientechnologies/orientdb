@@ -914,7 +914,7 @@ public class SQLSelectTest extends AbstractSelectTest {
 
       last = resultset.get(resultset.size() - 1).getIdentity();
 
-//      System.out.printf("\nIterating page %d, last record is %s", iterationCount, last);
+      // System.out.printf("\nIterating page %d, last record is %s", iterationCount, last);
 
       iterationCount++;
       resultset = database.query(query);
@@ -1129,7 +1129,6 @@ public class SQLSelectTest extends AbstractSelectTest {
 
     Assert.assertEquals(result.size(), 1);
   }
-
 
   @Test
   public void testQueryAsClass() {
@@ -1584,12 +1583,23 @@ public class SQLSelectTest extends AbstractSelectTest {
     Assert.assertTrue(classResult.isEmpty());
   }
 
-  public void testQueryPerameterNotPersistent() {
+  public void testQueryParameterNotPersistent() {
     ODocument doc = new ODocument();
     doc.field("test", "test");
     database.query(new OSQLSynchQuery<Object>("select from OUser where @rid = ?"), doc);
     Assert.assertTrue(doc.isDirty());
 
+  }
+
+  public void testQueryLetExecutedOnce() {
+    final List<OIdentifiable> result = database.query(new OSQLSynchQuery<OIdentifiable>(
+        "select name, $counter as counter from OUser let $counter = eval(\"$counter + 1\")"));
+
+    Assert.assertFalse(result.isEmpty());
+    int i = 1;
+    for (OIdentifiable r : result) {
+      Assert.assertEquals(((ODocument) r.getRecord()).field("counter"), i++);
+    }
   }
 
   private List<Long> getValidPositions(int clusterId) {
@@ -1606,4 +1616,5 @@ public class SQLSelectTest extends AbstractSelectTest {
     }
     return positions;
   }
+
 }
