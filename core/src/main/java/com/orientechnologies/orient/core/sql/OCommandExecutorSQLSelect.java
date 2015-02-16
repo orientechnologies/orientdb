@@ -281,37 +281,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     return this;
   }
 
-  private String preParse(String queryText, OCommandRequest iRequest) {
-    boolean strict = false;
-    for (Iterator<OStorageEntryConfiguration> it = getDatabase().getStorage().getConfiguration().properties.iterator(); it
-        .hasNext();) {
-      final OStorageEntryConfiguration e = it.next();
-      if (e.name.equals(OStatement.CUSTOM_STRICT_SQL)) {
-        strict = "true".equals(("" + e.value).toLowerCase());
-        break;
-      }
-    }
-    if (strict) {
-      InputStream is = new ByteArrayInputStream(queryText.getBytes());
-      OrientSql osql = new OrientSql(is);
-      try {
-        OStatement result = osql.parse();
 
-        if (iRequest instanceof OCommandRequestAbstract) {
-          Map<Object, Object> params = ((OCommandRequestAbstract) iRequest).getParameters();
-          result.replaceParameters(params);
-        }
-
-        return result.toString();
-      } catch (ParseException e) {
-        System.out.println("NEW PARSER FAILED: " + queryText);
-        e.printStackTrace();
-        throwParsingException(e.getMessage());
-      }
-      return "ERROR!";
-    }
-    return queryText;
-  }
 
   /**
    * Determine clusters that are used in select operation
