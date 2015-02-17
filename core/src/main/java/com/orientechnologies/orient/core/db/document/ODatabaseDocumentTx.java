@@ -425,7 +425,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       getStorage().getConfiguration().setRecordSerializer(getSerializer().toString());
       getStorage().getConfiguration().setRecordSerializerVersion(getSerializer().getCurrentVersion());
 
-      //since 2.1 newly created databases use strinct SQL validation by default
+      // since 2.1 newly created databases use strinct SQL validation by default
       getStorage().getConfiguration().properties.add(new OStorageEntryConfiguration(OStatement.CUSTOM_STRICT_SQL, "true"));
 
       getStorage().getConfiguration().update();
@@ -924,6 +924,11 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
           hooks.put(e.getKey(), e.getValue());
       }
     }
+    generateHookArray();
+    return (DB) this;
+  }
+
+  private void generateHookArray() {
     List<ORecordHook> defaults = new ArrayList<ORecordHook>();
     List<ORecordHook> distributed = new ArrayList<ORecordHook>();
     for (Map.Entry<ORecordHook, ORecordHook.HOOK_POSITION> oRecordHook : hooks.entrySet()) {
@@ -936,7 +941,6 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
     this.defaultHooks = defaults.toArray(new ORecordHook[defaults.size()]);
     this.distributedHooks = distributed.toArray(new ORecordHook[distributed.size()]);
-    return (DB) this;
   }
 
   /**
@@ -953,6 +957,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     if (iHookImpl != null) {
       iHookImpl.onUnregister();
       hooks.remove(iHookImpl);
+      generateHookArray();
     }
     return (DB) this;
   }
