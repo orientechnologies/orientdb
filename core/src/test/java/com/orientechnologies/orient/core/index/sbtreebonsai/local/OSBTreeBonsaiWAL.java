@@ -305,7 +305,12 @@ public class OSBTreeBonsaiWAL extends OSBTreeBonsaiLocalTest {
           if (!expectedDiskCache.isOpen(fileId))
             expectedDiskCache.openFile(fileId);
 
-          final OCacheEntry cacheEntry = expectedDiskCache.load(fileId, pageIndex, true);
+          OCacheEntry cacheEntry = expectedDiskCache.load(fileId, pageIndex, true);
+          if (cacheEntry == null) {
+            do {
+              cacheEntry = expectedDiskCache.allocateNewPage(fileId);
+            } while (cacheEntry.getPageIndex() != pageIndex);
+          }
           cacheEntry.acquireExclusiveLock();
           try {
             ODurablePage durablePage = new ODurablePage(cacheEntry, ODurablePage.TrackMode.NONE);

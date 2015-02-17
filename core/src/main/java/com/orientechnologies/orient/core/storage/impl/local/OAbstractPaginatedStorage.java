@@ -1965,8 +1965,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       super.close(force, onDelete);
 
       diskCache.removeLowDiskSpaceListener(this);
-			if (writeAheadLog != null)
-				writeAheadLog.removeFullCheckpointListener(this);
+      if (writeAheadLog != null)
+        writeAheadLog.removeFullCheckpointListener(this);
 
       if (!onDelete)
         diskCache.close();
@@ -2479,7 +2479,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           if (!diskCache.isOpen(fileId))
             diskCache.openFile(fileId);
 
-          final OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, true);
+          OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, true);
+          if (cacheEntry == null) {
+            do {
+              cacheEntry = diskCache.allocateNewPage(fileId);
+            } while (cacheEntry.getPageIndex() != pageIndex);
+          }
           final OCachePointer cachePointer = cacheEntry.getCachePointer();
           cachePointer.acquireExclusiveLock();
           try {
@@ -2604,7 +2609,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           final long size = diskWriteAheadLog.size();
 
           diskCache.makeFuzzyCheckpoint();
-          if (size  <= diskWriteAheadLog.size())
+          if (size <= diskWriteAheadLog.size())
             synch();
 
           checkpointRequest = false;

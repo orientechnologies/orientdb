@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.orient.core.index.hashindex.local;
 
@@ -41,26 +41,26 @@ import java.util.List;
  * @since 5/14/14
  */
 public class OHashTableDirectory extends ODurableComponent {
-  public static final int              ITEM_SIZE         = OLongSerializer.LONG_SIZE;
+  public static final int                 ITEM_SIZE         = OLongSerializer.LONG_SIZE;
 
-  public static final int              LEVEL_SIZE        = OLocalHashTable.MAX_LEVEL_SIZE;
+  public static final int                 LEVEL_SIZE        = OLocalHashTable.MAX_LEVEL_SIZE;
 
-  public static final int              BINARY_LEVEL_SIZE = LEVEL_SIZE * ITEM_SIZE + 3 * OByteSerializer.BYTE_SIZE;
+  public static final int                 BINARY_LEVEL_SIZE = LEVEL_SIZE * ITEM_SIZE + 3 * OByteSerializer.BYTE_SIZE;
 
-  private final String                 defaultExtension;
-  private final String                 name;
-  private final ODiskCache             diskCache;
+  private final String                    defaultExtension;
+  private final String                    name;
+  private final ODiskCache                diskCache;
 
-  private long                         fileId;
+  private long                            fileId;
 
-  private OCacheEntry                  firstEntry;
-  private List<OCacheEntry>            entries;
+  private OCacheEntry                     firstEntry;
+  private List<OCacheEntry>               entries;
 
-  private final boolean                durableInNonTxMode;
+  private final boolean                   durableInNonTxMode;
   private final OAbstractPaginatedStorage storage;
 
-  private final ODurablePage.TrackMode txTrackMode       = ODurablePage.TrackMode.valueOf(OGlobalConfiguration.INDEX_TX_MODE
-                                                             .getValueAsString().toUpperCase());
+  private final ODurablePage.TrackMode    txTrackMode       = ODurablePage.TrackMode.valueOf(OGlobalConfiguration.INDEX_TX_MODE
+                                                                .getValueAsString().toUpperCase());
 
   public OHashTableDirectory(String defaultExtension, String name, boolean durableInNonTxMode, OAbstractPaginatedStorage storage) {
     this.defaultExtension = defaultExtension;
@@ -91,7 +91,14 @@ public class OHashTableDirectory extends ODurableComponent {
   private void init() throws IOException {
     startAtomicOperation();
     try {
+      boolean isNewPage = false;
       firstEntry = diskCache.load(fileId, 0, true);
+
+      if (firstEntry == null) {
+        firstEntry = diskCache.allocateNewPage(fileId);
+        isNewPage = true;
+        assert firstEntry.getPageIndex() == 0;
+      }
 
       diskCache.pinPage(firstEntry);
 
@@ -103,7 +110,7 @@ public class OHashTableDirectory extends ODurableComponent {
         firstPage.setTombstone(-1);
 
         firstEntry.markDirty();
-        logPageChanges(firstPage, firstEntry.getFileId(), firstEntry.getPageIndex(), true);
+        logPageChanges(firstPage, firstEntry.getFileId(), firstEntry.getPageIndex(), isNewPage);
       } finally {
         firstEntry.releaseExclusiveLock();
         diskCache.release(firstEntry);
@@ -126,6 +133,9 @@ public class OHashTableDirectory extends ODurableComponent {
     try {
       fileId = diskCache.openFile(name + defaultExtension);
       firstEntry = diskCache.load(fileId, 0, true);
+
+      assert firstEntry != null;
+
       diskCache.pinPage(firstEntry);
       diskCache.release(firstEntry);
 
@@ -135,6 +145,8 @@ public class OHashTableDirectory extends ODurableComponent {
 
       for (int i = 1; i < filledUpTo; i++) {
         final OCacheEntry entry = diskCache.load(fileId, i, true);
+        assert entry != null;
+
         diskCache.pinPage(entry);
         diskCache.release(entry);
 
@@ -213,7 +225,9 @@ public class OHashTableDirectory extends ODurableComponent {
 
           boolean newPage = false;
           while (entries.size() <= pageIndex) {
-            OCacheEntry cacheEntry = diskCache.load(fileId, entries.size() + 1, true);
+            OCacheEntry cacheEntry = diskCache.allocateNewPage(fileId);
+            assert cacheEntry.getPageIndex() == entries.size() + 1;
+
             diskCache.pinPage(cacheEntry);
             diskCache.release(cacheEntry);
 

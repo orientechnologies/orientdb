@@ -97,6 +97,8 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
   public OCacheEntry load(long fileId, long pageIndex, boolean checkPinnedPages) throws IOException {
     final MemoryFile memoryFile = getFile(fileId);
     final OCacheEntry cacheEntry = memoryFile.loadPage(pageIndex);
+    if (cacheEntry == null)
+      return null;
 
     synchronized (cacheEntry) {
       cacheEntry.incrementUsages();
@@ -310,24 +312,7 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
     private OCacheEntry loadPage(long index) {
       clearLock.readLock().lock();
       try {
-        OCacheEntry cacheEntry = content.get(index);
-        if (cacheEntry != null)
-          return cacheEntry;
-
-        ODirectMemoryPointer directMemoryPointer = new ODirectMemoryPointer(new byte[pageSize + 2 * ODurablePage.PAGE_PADDING]);
-        OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(-1, -1));
-        cachePointer.incrementReferrer();
-
-        cacheEntry = new OCacheEntry(id, index, cachePointer, false);
-
-        OCacheEntry oldCacheEntry = content.putIfAbsent(index, cacheEntry);
-
-        if (oldCacheEntry != null) {
-          cacheEntry.getCachePointer().decrementReferrer();
-          cacheEntry = oldCacheEntry;
-        }
-
-        return cacheEntry;
+        return content.get(index);
       } finally {
         clearLock.readLock().unlock();
       }

@@ -55,6 +55,10 @@ public abstract class OSoftThread extends Thread implements OService {
     shutdownFlag = true;
   }
 
+  public boolean isShutdownFlag() {
+    return shutdownFlag;
+  }
+
   @Override
   public void run() {
     startup();
