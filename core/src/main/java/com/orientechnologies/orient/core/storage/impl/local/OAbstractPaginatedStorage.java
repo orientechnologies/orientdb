@@ -2502,7 +2502,12 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           if (!diskCache.isOpen(fileId))
             diskCache.openFile(fileId);
 
-          final OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, true);
+          OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, true);
+          if (cacheEntry == null) {
+            do {
+              cacheEntry = diskCache.allocateNewPage(fileId);
+            } while (cacheEntry.getPageIndex() != pageIndex);
+          }
           final OCachePointer cachePointer = cacheEntry.getCachePointer();
           cachePointer.acquireExclusiveLock();
           try {

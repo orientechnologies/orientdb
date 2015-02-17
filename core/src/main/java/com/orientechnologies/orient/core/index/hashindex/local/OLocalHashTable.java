@@ -514,6 +514,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         V removed = null;
 
         OCacheEntry cacheEntry = diskCache.load(nullBucketFileId, 0, false);
+        if (cacheEntry == null)
+          cacheEntry = diskCache.allocateNewPage(nullBucketFileId);
+
         cacheEntry.acquireExclusiveLock();
         try {
           final ONullBucket<V> nullBucket = new ONullBucket<V>(cacheEntry, getTrackMode(), valueSerializer, false);
@@ -723,20 +726,18 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
       final ODiskCache diskCache = storage.getDiskCache();
 
-      if (diskCache.exists(name + metadataConfigurationFileExtension)) {
-        fileStateId = diskCache.openFile(name + metadataConfigurationFileExtension);
-        hashStateEntry = diskCache.load(fileStateId, 0, true);
-        try {
-          OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry,
-              ODurablePage.TrackMode.NONE, false);
-          for (int i = 0; i < HASH_CODE_SIZE; i++) {
-            if (!metadataPage.isRemoved(i)) {
-              final long fileId = metadataPage.getFileId(i);
-              if (diskCache.exists(fileId)) {
-                diskCache.openFile(fileId);
-                diskCache.deleteFile(fileId);
-              }
-            }
+      fileStateId = diskCache.openFile(name + metadataConfigurationFileExtension);
+      hashStateEntry = diskCache.load(fileStateId, 0, true);
+
+      assert hashStateEntry != null;
+
+      try {
+        OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry,
+            ODurablePage.TrackMode.NONE, false);
+        for (int i = 0; i < HASH_CODE_SIZE; i++) {
+          if (!metadataPage.isRemoved(i)) {
+            diskCache.openFile(metadataPage.getFileId(i));
+            diskCache.deleteFile(metadataPage.getFileId(i));
           }
         } finally {
           diskCache.release(hashStateEntry);
@@ -2115,7 +2116,12 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     } finally {
       diskCache.release(hashStateEntry);
     }
-    return diskCache.load(fileId, pageIndex, false);
+
+    OCacheEntry entry = diskCache.load(fileId, pageIndex, false);
+    if (entry == null)
+      entry = diskCache.allocateNewPage(fileId);
+
+    return entry;
   }
 
   private BucketPath getBucket(final long hashCode) throws IOException {

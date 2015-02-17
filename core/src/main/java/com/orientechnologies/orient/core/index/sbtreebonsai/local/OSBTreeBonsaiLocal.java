@@ -1,22 +1,22 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.orient.core.index.sbtreebonsai.local;
 
@@ -72,7 +72,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
   private final Comparator<? super K>       comparator            = ODefaultComparator.INSTANCE;
 
-  private OAbstractPaginatedStorage storage;
+  private OAbstractPaginatedStorage         storage;
   private String                            name;
 
   private final String                      dataFileExtension;
@@ -117,8 +117,8 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   }
 
   public void create(long fileId, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer) {
-    create(fileId, keySerializer, valueSerializer, (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get().getStorage()
-        .getUnderlying());
+    create(fileId, keySerializer, valueSerializer, (OAbstractPaginatedStorage) ODatabaseRecordThreadLocal.INSTANCE.get()
+        .getStorage().getUnderlying());
   }
 
   public void create(long fileId, OBinarySerializer<K> keySerializer, OBinarySerializer<V> valueSerializer,
@@ -363,7 +363,7 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
         rootBucket.setTreeSize(0);
 
-        logPageChanges(rootBucket, fileId, rootBucketPointer.getPageIndex(), true);
+        logPageChanges(rootBucket, fileId, rootBucketPointer.getPageIndex(), false);
         cacheEntry.markDirty();
       } finally {
         cacheEntry.releaseExclusiveLock();
@@ -1235,7 +1235,12 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   }
 
   private void initSysBucket() throws IOException {
-    final OCacheEntry sysCacheEntry = diskCache.load(fileId, SYS_BUCKET.getPageIndex(), false);
+    OCacheEntry sysCacheEntry = diskCache.load(fileId, SYS_BUCKET.getPageIndex(), false);
+    if (sysCacheEntry == null) {
+      sysCacheEntry = diskCache.allocateNewPage(fileId);
+      assert sysCacheEntry.getPageIndex() == SYS_BUCKET.getPageIndex();
+    }
+
     sysCacheEntry.acquireExclusiveLock();
     try {
       final OSysBucket sysBucket = new OSysBucket(sysCacheEntry, getTrackMode());
@@ -1260,7 +1265,12 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
   }
 
   private AllocationResult allocateBucket() throws IOException {
-    final OCacheEntry sysCacheEntry = diskCache.load(fileId, SYS_BUCKET.getPageIndex(), false);
+    OCacheEntry sysCacheEntry = diskCache.load(fileId, SYS_BUCKET.getPageIndex(), false);
+    if (sysCacheEntry == null) {
+      sysCacheEntry = diskCache.allocateNewPage(fileId);
+      assert sysCacheEntry.getPageIndex() == SYS_BUCKET.getPageIndex();
+    }
+
     sysCacheEntry.acquireExclusiveLock();
     try {
       final OSysBucket sysBucket = new OSysBucket(sysCacheEntry, getTrackMode());

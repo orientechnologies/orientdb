@@ -78,7 +78,7 @@ public class OWOWCache {
 
   private final long                                        diskSizeCheckInterval = OGlobalConfiguration.DISC_CACHE_FREE_SPACE_CHECK_INTERVAL
                                                                                       .getValueAsInteger() * 1000;
-  private final List<WeakReference<OLowDiskSpaceListener>>   listeners             = new CopyOnWriteArrayList<WeakReference<OLowDiskSpaceListener>>();
+  private final List<WeakReference<OLowDiskSpaceListener>>  listeners             = new CopyOnWriteArrayList<WeakReference<OLowDiskSpaceListener>>();
 
   private final AtomicLong                                  lastDiskSpaceCheck    = new AtomicLong(System.currentTimeMillis());
   private final String                                      storagePath;
@@ -400,7 +400,7 @@ public class OWOWCache {
     }
   }
 
-  public OCachePointer load(long fileId, long pageIndex) throws IOException {
+  public OCachePointer load(long fileId, long pageIndex, boolean addNewPages) throws IOException {
     filesLock.acquireReadLock();
     try {
       final GroupKey groupKey = new GroupKey(fileId, pageIndex >>> 4);
@@ -410,9 +410,11 @@ public class OWOWCache {
 
         OCachePointer pagePointer;
         if (writeGroup == null) {
-          pagePointer = cacheFileContent(fileId, pageIndex);
-          pagePointer.incrementReferrer();
+          pagePointer = cacheFileContent(fileId, pageIndex, addNewPages);
+          if (pagePointer == null)
+            return null;
 
+          pagePointer.incrementReferrer();
           return pagePointer;
         }
 
@@ -420,7 +422,10 @@ public class OWOWCache {
         pagePointer = writeGroup.pages[entryIndex];
 
         if (pagePointer == null)
-          pagePointer = cacheFileContent(fileId, pageIndex);
+          pagePointer = cacheFileContent(fileId, pageIndex, addNewPages);
+
+        if (pagePointer == null)
+          return null;
 
         pagePointer.incrementReferrer();
         return pagePointer;
@@ -883,7 +888,7 @@ public class OWOWCache {
     }
   }
 
-  private OCachePointer cacheFileContent(long fileId, long pageIndex) throws IOException {
+  private OCachePointer cacheFileContent(long fileId, long pageIndex, boolean addNewPages) throws IOException {
     final long startPosition = pageIndex * pageSize;
     final long endPosition = startPosition + pageSize;
 
@@ -905,7 +910,7 @@ public class OWOWCache {
       final ODirectMemoryPointer pointer = new ODirectMemoryPointer(content);
 
       dataPointer = new OCachePointer(pointer, lastLsn);
-    } else {
+    } else if (addNewPages) {
       final int space = (int) (endPosition - fileClassic.getFilledUpTo());
       fileClassic.allocateSpace(space);
 
@@ -913,7 +918,8 @@ public class OWOWCache {
 
       final ODirectMemoryPointer pointer = new ODirectMemoryPointer(content);
       dataPointer = new OCachePointer(pointer, lastLsn);
-    }
+    } else
+      return null;
 
     return dataPointer;
   }
@@ -1304,7 +1310,7 @@ public class OWOWCache {
     }
   }
 
-	private static class FlushThreadFactory implements ThreadFactory {
+  private static class FlushThreadFactory implements ThreadFactory {
     private final String storageName;
 
     private FlushThreadFactory(String storageName) {

@@ -141,6 +141,9 @@ public class OClusterPositionMap extends ODurableComponent {
       }
 
       OCacheEntry cacheEntry = diskCache.load(fileId, lastPage, false);
+      if (cacheEntry == null)
+        cacheEntry = diskCache.allocateNewPage(fileId);
+
       cacheEntry.acquireExclusiveLock();
       try {
         startAtomicOperation();

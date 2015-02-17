@@ -91,7 +91,14 @@ public class OHashTableDirectory extends ODurableComponent {
   private void init() throws IOException {
     startAtomicOperation();
     try {
+      boolean isNewPage = false;
       firstEntry = diskCache.load(fileId, 0, true);
+
+      if (firstEntry == null) {
+        firstEntry = diskCache.allocateNewPage(fileId);
+        isNewPage = true;
+        assert firstEntry.getPageIndex() == 0;
+      }
 
       diskCache.pinPage(firstEntry);
 
@@ -103,7 +110,7 @@ public class OHashTableDirectory extends ODurableComponent {
         firstPage.setTombstone(-1);
 
         firstEntry.markDirty();
-        logPageChanges(firstPage, firstEntry.getFileId(), firstEntry.getPageIndex(), true);
+        logPageChanges(firstPage, firstEntry.getFileId(), firstEntry.getPageIndex(), isNewPage);
       } finally {
         firstEntry.releaseExclusiveLock();
         diskCache.release(firstEntry);
@@ -126,6 +133,9 @@ public class OHashTableDirectory extends ODurableComponent {
     try {
       fileId = diskCache.openFile(name + defaultExtension);
       firstEntry = diskCache.load(fileId, 0, true);
+
+      assert firstEntry != null;
+
       diskCache.pinPage(firstEntry);
       diskCache.release(firstEntry);
 
@@ -135,6 +145,8 @@ public class OHashTableDirectory extends ODurableComponent {
 
       for (int i = 1; i < filledUpTo; i++) {
         final OCacheEntry entry = diskCache.load(fileId, i, true);
+        assert entry != null;
+
         diskCache.pinPage(entry);
         diskCache.release(entry);
 
@@ -215,7 +227,9 @@ public class OHashTableDirectory extends ODurableComponent {
 
           boolean newPage = false;
           while (entries.size() <= pageIndex) {
-            OCacheEntry cacheEntry = diskCache.load(fileId, entries.size() + 1, true);
+            OCacheEntry cacheEntry = diskCache.allocateNewPage(fileId);
+            assert cacheEntry.getPageIndex() == entries.size() + 1;
+
             diskCache.pinPage(cacheEntry);
             diskCache.release(cacheEntry);
 
