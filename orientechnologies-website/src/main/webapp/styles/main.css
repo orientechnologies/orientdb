@@ -387,6 +387,11 @@ span.label-dark {
 .chat-group > div {
   margin-bottom: 10px;
 }
+
+.chat-group.odd{
+  background-color: rgb(237, 239, 240);
+}
+
 .fa-green {
   color: #5cb85c;
 }

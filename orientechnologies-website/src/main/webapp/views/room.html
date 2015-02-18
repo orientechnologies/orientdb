@@ -18,7 +18,7 @@
         </div>
       </div>
       <div scroll-glue when-scrolled="loadMore()" class="chat-timeline container-fluid" ng-show="!isNew">
-        <div class="chat-group row" ng-repeat="group in messages">
+        <div class="chat-group row" ng-class-odd="'odd'" ng-repeat="group in messages">
           <div class="col-md-1">
             <avatar dim="40" user="group.sender"></avatar>
           </div>
