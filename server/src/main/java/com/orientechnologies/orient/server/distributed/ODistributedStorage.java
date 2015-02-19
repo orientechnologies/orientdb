@@ -45,6 +45,7 @@ import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollecti
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -845,11 +846,16 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           case ORecordOperation.CREATED:
             if (rid.isNew()) {
               task = new OCreateRecordTask(record);
+              if( record instanceof ODocument )
+                ((ODocument) record).validate();
               break;
             }
             // ELSE TREAT IT AS UPDATE: GO DOWN
 
           case ORecordOperation.UPDATED:
+            if( record instanceof ODocument )
+              ((ODocument) record).validate();
+
             // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
             final OStorageOperationResult<ORawBuffer> previousContent = wrapped.readRecord(rid, null, false, null, false,
                 LOCKING_STRATEGY.DEFAULT);
@@ -947,6 +953,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           asynchronousExecution(new OAsynchDistributedOperation(getName(), involvedClusters, nodes, txTask));
       }
 
+    } catch (OValidationException e) {
+      throw e;
     } catch (Exception e) {
       handleDistributedException("Cannot route TX operation against distributed node", e);
     }

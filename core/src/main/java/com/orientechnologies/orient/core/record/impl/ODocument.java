@@ -1965,7 +1965,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
 
-    if (databaseRecord != null) {
+    if (databaseRecord != null && !databaseRecord.isClosed()) {
       final OSchema immutableSchema = ((OMetadataInternal) databaseRecord.getMetadata()).getImmutableSchemaSnapshot();
       if (immutableSchema == null)
         return null;

@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
@@ -39,6 +35,10 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerLog.DIRECTION;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
+
 /**
  * Distributed create record task used for synchronization.
  *
@@ -51,6 +51,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   protected byte[]            content;
   protected byte              recordType;
   protected transient ORecord record;
+  protected int               clusterId         = -1;
 
   public OCreateRecordTask() {
   }
@@ -64,11 +65,12 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   public OCreateRecordTask(final ORecord record) {
     this((ORecordId) record.getIdentity(), record.toStream(), record.getRecordVersion(), ORecordInternal.getRecordType(record));
 
-    if (record instanceof ODocument) {
-      // PRE-ASSIGN THE CLUSTER ID ON CALLER NODE
+    if (rid.getClusterId() == ORID.CLUSTER_ID_INVALID && record instanceof ODocument) {
       final OClass clazz = ((ODocument) record).getSchemaClass();
-      if (clazz != null)
-        rid.clusterId = clazz.getClusterSelection().getCluster(clazz, (ODocument) record);
+      if (clazz != null) {
+        // PRE-ASSIGN THE CLUSTER ID ON CALLER NODE
+        clusterId = clazz.getClusterSelection().getCluster(clazz, (ODocument) record);
+      }
     }
   }
 
@@ -84,7 +86,9 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       // OVERWRITE RID TO BE TEMPORARY
       ORecordInternal.setIdentity(record, rid.getClusterId(), ORID.CLUSTER_POS_INVALID);
 
-    if (rid.getClusterId() != -1)
+    if (clusterId > -1)
+      record.save(database.getClusterNameById(clusterId), true);
+    else if (rid.getClusterId() != -1)
       record.save(database.getClusterNameById(rid.getClusterId()), true);
     else
       record.save();
@@ -104,7 +108,8 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   }
 
   @Override
-  public ODeleteRecordTask getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask, final Object iBadResponse, final Object iGoodResponse) {
+  public ODeleteRecordTask getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask,
+      final Object iBadResponse, final Object iGoodResponse) {
     if (iBadResponse instanceof Throwable)
       return null;
 
@@ -131,6 +136,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       out.write(content);
     }
     out.write(recordType);
+    out.writeInt(clusterId);
   }
 
   @Override
@@ -144,6 +150,7 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
       in.readFully(content);
     }
     recordType = in.readByte();
+    clusterId = in.readInt();
   }
 
   // @Override

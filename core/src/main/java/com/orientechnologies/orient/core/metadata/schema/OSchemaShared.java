@@ -352,7 +352,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   public OClass createClass(final String className, final OClass superClass, int[] clusterIds) {
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(className);
     if (wrongCharacter != null)
-      throw new OSchemaException("Invalid class name found. Character '" + wrongCharacter + "' cannot be used in class name");
+      throw new OSchemaException("Invalid class name found. Character '" + wrongCharacter + "' cannot be used in class name '"
+          + className + "'");
 
     OClass result;
     int retry = 0;
