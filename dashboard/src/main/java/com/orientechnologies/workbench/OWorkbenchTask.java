@@ -41,18 +41,18 @@ public final class OWorkbenchTask extends TimerTask {
 
           updateDictionary(server);
           Map<String, Object> cfg = server.field("configuration");
-          if (cfg != null) {
-            String license = (String) cfg.get("license");
-            int idC = OL.getClientId(license);
-            int idS = OL.getServerId(license);
-
-            // TO REMOVE
-            if (handler.getKeyMap().size() > 1 && handler.getKeyMap().get(idC).size() > 1) {
-              updateServerStatus(server, OWorkbenchPlugin.STATUS.LICENSE_INVALID);
-              log(server, OWorkbenchPlugin.STATUS.LICENSE_INVALID, "License " + license + " invalid");
-              continue;
-            }
-          }
+//          if (cfg != null) {
+//            String license = (String) cfg.get("license");
+//            int idC = OL.getClientId(license);
+//            int idS = OL.getServerId(license);
+//
+//            // TO REMOVE
+//            if (handler.getKeyMap().size() > 1 && handler.getKeyMap().get(idC).size() > 1) {
+//              updateServerStatus(server, OWorkbenchPlugin.STATUS.LICENSE_INVALID);
+//              log(server, OWorkbenchPlugin.STATUS.LICENSE_INVALID, "License " + license + " invalid");
+//              continue;
+//            }
+//          }
           createSnapshot(serverEntry.getValue(), fetchSnapshots(server, since));
 
           // UPDATE SERVER STATUS TO ONLINE
@@ -70,14 +70,22 @@ public final class OWorkbenchTask extends TimerTask {
               // log(server, LOG_LEVEL.ERROR, e.toString());
               log(server, OWorkbenchPlugin.STATUS.UNAUTHORIZED, "Unauthorized");
             }
-          } else
-          // UPDATE SERVER STATUS TO OFFLINE
-          if (updateServerStatus(server, OWorkbenchPlugin.STATUS.OFFLINE)) {
-            OLogManager.instance().info(this, "MONITOR <-[%s (%s)] Error on reading server metrics", serverName,
-                server.field("url"));
-            // log(server, LOG_LEVEL.ERROR, e.toString());
-            log(server, OWorkbenchPlugin.STATUS.OFFLINE, "Connection refused");
+          } else if (msg.contains("405")) {
+            if (updateServerStatus(server, STATUS.NO_AGENT)) {
+              OLogManager.instance().info(this, "MONITOR <-[%s (%s)] Error on reading server metrics", serverName,
+                  server.field("url"));
 
+              log(server, STATUS.NO_AGENT, "No Agent installed");
+            }
+          } else {
+            // UPDATE SERVER STATUS TO OFFLINE
+            if (updateServerStatus(server, OWorkbenchPlugin.STATUS.OFFLINE)) {
+              OLogManager.instance().info(this, "MONITOR <-[%s (%s)] Error on reading server metrics", serverName,
+                  server.field("url"));
+              // log(server, LOG_LEVEL.ERROR, e.toString());
+              log(server, OWorkbenchPlugin.STATUS.OFFLINE, "Connection refused");
+
+            }
           }
         }
       }

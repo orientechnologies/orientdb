@@ -78,7 +78,7 @@ public class OServerCommandDistributedManager extends OServerCommandAuthenticate
       String cluster = urlParts[3];
       String db = urlParts[4];
       OMonitoredCluster c = monitor.getClusterByName(cluster);
-      IMap<String, Object> config = c.getConfigurationMap();
+        IMap<String, Object> config = c.getConfigurationMap();
 
       Collection<OMonitoredServer> servers = monitor.getServersByClusterName(cluster);
       ODocument dbConf = (ODocument) config.get("database." + db);

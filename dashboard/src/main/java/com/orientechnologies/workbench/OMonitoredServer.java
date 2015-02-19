@@ -79,7 +79,7 @@ public final class OMonitoredServer {
       }
       return lastDatabaseInfo;
     } catch (IOException e) {
-      e.printStackTrace();
+
     }
     return null;
   }

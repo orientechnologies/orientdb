@@ -54,8 +54,10 @@ public class OServerCommandGetMonitoredServers extends OServerCommandAbstract {
         r.field("id", s.getConfiguration().getIdentity());
         r.field("name", s.getConfiguration().field("name"));
         Map<String, Object> metric = s.getDatabasesInfo();
-        r.field("databases", metric.get("system.databases"));
-        r.field("status",s.getConfiguration().field("status"));
+        if (metric != null) {
+          r.field("databases", metric.get("system.databases"));
+        }
+        r.field("status", s.getConfiguration().field("status"));
         r.field("realtime", s.getRealtime().lastMetrics);
         r.field("snapshot", s.getLastSnapshot());
         iResponse.writeResult(r, "indent:6", null);

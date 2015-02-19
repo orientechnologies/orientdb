@@ -1,5 +1,10 @@
 package com.orientechnologies.workbench;
 
+import com.orientechnologies.orient.core.record.ORecordSchemaAware;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.query.OSQLQuery;
+import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
+
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -12,11 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TimerTask;
-
-import com.orientechnologies.orient.core.record.ORecordSchemaAware;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.query.OSQLQuery;
-import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 
 public class OWorkbenchMessageTask extends TimerTask {
 
@@ -43,13 +43,13 @@ public class OWorkbenchMessageTask extends TimerTask {
     for (Entry<String, OMonitoredServer> server : this.handler.getMonitoredServers()) {
       ODocument s = server.getValue().getConfiguration();
 
-      Map<String, Object> cfg = s.field("configuration");
-      if (cfg != null) {
-        String license = (String) cfg.get("license");
-        String version = (String) cfg.get("agentVersion");
-        cId = OL.getClientId(license);
-        agents.put(license, version);
-      }
+//      Map<String, Object> cfg = s.field("configuration");
+//      if (cfg != null) {
+//        String license = (String) cfg.get("license");
+//        String version = (String) cfg.get("agentVersion");
+//        cId = OL.getClientId(license);
+//        agents.put(license, version);
+//      }
     }
     body.field("agents", agents);
 

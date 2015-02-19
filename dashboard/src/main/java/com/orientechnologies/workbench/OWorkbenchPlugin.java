@@ -50,7 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class OWorkbenchPlugin extends OServerPluginAbstract {
 
   public enum STATUS {
-    OFFLINE, ONLINE, UNAUTHORIZED, LICENSE_EXPIRED, LICENSE_INVALID
+    OFFLINE, ONLINE, UNAUTHORIZED, LICENSE_EXPIRED, LICENSE_INVALID, NO_AGENT
   }
 
   public static final String                        VERSION                           = OConstants.ORIENT_VERSION;
@@ -247,22 +247,22 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
         serverCfg = new OMonitoredServer(this, s);
       }
       Map<String, Object> cfg = s.field("configuration");
-      if (cfg != null) {
-        String license = (String) cfg.get("license");
-        int idC = OL.getClientId(license);
-        int idS = OL.getServerId(license);
-        Map<Integer, Set<OMonitoredServer>> serv = keyMap.get(idC);
-        if (serv == null) {
-          serv = new HashMap<Integer, Set<OMonitoredServer>>();
-        }
-        Set<OMonitoredServer> mSer = serv.get(idS);
-        if (mSer == null) {
-          mSer = new HashSet<OMonitoredServer>();
-        }
-        mSer.add(serverCfg);
-        serv.put(idS, mSer);
-        keyMap.put(idC, serv);
-      }
+//      if (cfg != null) {
+//        String license = (String) cfg.get("license");
+//        int idC = OL.getClientId(license);
+//        int idS = OL.getServerId(license);
+//        Map<Integer, Set<OMonitoredServer>> serv = keyMap.get(idC);
+//        if (serv == null) {
+//          serv = new HashMap<Integer, Set<OMonitoredServer>>();
+//        }
+//        Set<OMonitoredServer> mSer = serv.get(idS);
+//        if (mSer == null) {
+//          mSer = new HashSet<OMonitoredServer>();
+//        }
+//        mSer.add(serverCfg);
+//        serv.put(idS, mSer);
+//        keyMap.put(idC, serv);
+//      }
       tmpServers.put(serverName, serverCfg);
     }
     this.keyMap = keyMap;

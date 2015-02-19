@@ -6,7 +6,7 @@ app.controller('ServerMonitorController', function ($scope, $location, $routePar
 
   $scope.nav = $routeParams.nav || 'dashboard';
   $scope.template = 'views/server/' + $scope.nav + ".html";
-console.log($scope.template);
+
 
 });
 
@@ -31,75 +31,80 @@ app.controller('SingleServerController', function ($scope, $location, $routePara
       $scope.server.status = data.result[0].status;
 
 
-      $scope.tips = data.result[0]['realtime']['tips'];
+
 
       if ($scope.server.status == 'ONLINE') {
+
+
         var snapshot = data.result[0]['snapshot'];
         var realtime = data.result[0]['realtime'];
 
 
-        var total = snapshot['system.disk./.totalSpace'];
-        var usable = snapshot['system.disk./.usableSpace'];
-        $scope.diskPercent = Math.floor((100 - (usable * 100) / total));
-        $scope.anotherPercent = -45;
-        $scope.diskOptions = {
-          barColor: '#E67E22',
-          scaleColor: false,
-          lineWidth: 3,
-          lineCap: 'butt'
-        };
-
-
-        var maxMemory = realtime['hookValues']['process.runtime.maxMemory'];
-        var totalMemory = realtime['hookValues']['process.runtime.totalMemory'];
-
-        $scope.ramPercent = Math.floor(((totalMemory * 100) / maxMemory));
-        $scope.anotherPercent = -45;
-        $scope.ramOptions = {
-          barColor: '#E67E22',
-          scaleColor: false,
-          lineWidth: 3,
-          lineCap: 'butt'
-        };
-
-
-        var cpu = realtime['hookValues']['process.runtime.cpu'];
-        $scope.cpuPercent = parseFloat(cpu).toFixed(2);
-
-        $scope.cpuOptions = {
-          barColor: '#E67E22',
-          scaleColor: false,
-          lineWidth: 3,
-          lineCap: 'butt'
-        };
-        $scope.connections = realtime['hookValues']['server.connections.actives'];
-
-        var keys = Object.keys(realtime['chronos']).filter(function (k) {
-          return k.match(/db.*Record/g) != null;
-        })
-        var ops = 0;
-        keys.forEach(function (k) {
-          ops += realtime['chronos'][k].entries;
-        });
-
-        if (lastOps != null) {
-          $scope.operations = Math.abs(lastOps - ops);
+        if (snapshot) {
+          var total = snapshot['system.disk./.totalSpace'];
+          var usable = snapshot['system.disk./.usableSpace'];
+          $scope.diskPercent = Math.floor((100 - (usable * 100) / total));
+          $scope.anotherPercent = -45;
+          $scope.diskOptions = {
+            barColor: '#E67E22',
+            scaleColor: false,
+            lineWidth: 3,
+            lineCap: 'butt'
+          };
         }
-        lastOps = ops;
 
+        if (realtime) {
+          var maxMemory = realtime['hookValues']['process.runtime.maxMemory'];
+          var totalMemory = realtime['hookValues']['process.runtime.totalMemory'];
 
-        if (realtime['chronos']['server.network.requests']) {
+          $scope.ramPercent = Math.floor(((totalMemory * 100) / maxMemory));
+          $scope.anotherPercent = -45;
+          $scope.ramOptions = {
+            barColor: '#E67E22',
+            scaleColor: false,
+            lineWidth: 3,
+            lineCap: 'butt'
+          };
 
-          var req = realtime['chronos']['server.network.requests'].entries;
-          if (lastReq != null) {
-            $scope.requests = Math.abs(req - lastReq);
+          $scope.tips = Object.keys(realtime['tips']).length;
+
+          var cpu = realtime['hookValues']['process.runtime.cpu'];
+          $scope.cpuPercent = parseFloat(cpu).toFixed(2);
+
+          $scope.cpuOptions = {
+            barColor: '#E67E22',
+            scaleColor: false,
+            lineWidth: 3,
+            lineCap: 'butt'
+          };
+          $scope.connections = realtime['hookValues']['server.connections.actives'];
+
+          var keys = Object.keys(realtime['chronos']).filter(function (k) {
+            return k.match(/db.*Record/g) != null;
+          })
+          var ops = 0;
+          keys.forEach(function (k) {
+            ops += realtime['chronos'][k].entries;
+          });
+
+          if (lastOps != null) {
+            $scope.operations = Math.abs(lastOps - ops);
           }
-          lastReq = req;
+          lastOps = ops;
+
+
+          if (realtime['chronos']['server.network.requests']) {
+
+            var req = realtime['chronos']['server.network.requests'].entries;
+            if (lastReq != null) {
+              $scope.requests = Math.abs(req - lastReq);
+            }
+            lastReq = req;
+          }
+
+          if (realtime['chronos']['distributed.node.latency'])
+            $scope.latency = realtime['chronos']['distributed.node.latency'].average;
         }
-
-        if (realtime['chronos']['distributed.node.latency'])
-          $scope.latency = realtime['chronos']['distributed.node.latency'].average;
-
       } else {
         $scope.operations = 0;
         $scope.connections = 0;
@@ -148,9 +153,16 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
   $scope.rid = $routeParams.server;
 
 
+  $scope.tab = $routeParams.db;
+
   $scope.profilerOff = {content: "The Profiler for this server is Off. Just click the switch button above."}
   $scope.error = false;
   $scope.currentTab = 'overview';
+
+  if ($scope.tab) {
+    $scope.currentWarnings = true;
+    $scope.currentTab = $scope.tab;
+  }
   Monitor.getServers(function (data) {
     $scope.servers = data.result;
     if (!$scope.rid && $scope.servers.length > 0) {
@@ -206,7 +218,7 @@ app.controller('GeneralMonitorController', function ($scope, $location, $routePa
   }
 
   $scope.$watch('attached', function (attached) {
-    console.log(attached);
+
     if (attached != null && $scope.server && $scope.server.attached != attached) {
       if (attached) {
         Server.connect($scope.server).then(function () {

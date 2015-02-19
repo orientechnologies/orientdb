@@ -30,6 +30,8 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Profiling utility class. Handles chronos (times), statistics and counters. By default it's used as Singleton but you can create
@@ -43,6 +45,7 @@ import java.util.Map.Entry;
 public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerMBean {
   protected final static Timer        timer                   = new Timer(true);
   protected final static int          BUFFER_SIZE             = 2048;
+  public static final int KEEP_ALIVE =  60 * 1000;
   protected final List<OProfilerData> snapshots               = new ArrayList<OProfilerData>();
   protected final int                 metricProcessors        = Runtime.getRuntime().availableProcessors();
   protected Date                      lastReset               = new Date();
@@ -51,6 +54,10 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
   protected int                       elapsedToCreateSnapshot = 0;
   protected int                       maxSnapshots            = 0;
   protected TimerTask                 archiverTask;
+  protected TimerTask                 autoPause;
+
+  protected AtomicBoolean             paused                  = new AtomicBoolean(false);
+  protected AtomicLong                timestamp               = new AtomicLong(System.currentTimeMillis());
 
   public OEnterpriseProfiler() {
     init();
@@ -75,6 +82,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
       stopRecording();
 
     startRecording();
+
   }
 
   public void shutdown() {
@@ -108,6 +116,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
           }
         };
         timer.schedule(archiverTask, elapsedToCreateSnapshot * 1000, elapsedToCreateSnapshot * 1000);
+
       }
 
     } finally {
@@ -210,8 +219,12 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
   }
 
   public String toJSON(final String iQuery, final String iPar1) {
+    if (Boolean.TRUE.equals(paused.get())) {
+      startRecording();
+      paused.set(false);
+    }
     final StringBuilder buffer = new StringBuilder(BUFFER_SIZE * 5);
-
+    timestamp.set(System.currentTimeMillis());
     Map<String, Object> hookValuesSnapshots = null;
 
     if (iQuery.equals("realtime") || iQuery.equals("last"))
@@ -225,11 +238,13 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
       if (iQuery.equals("realtime")) {
         realTime.setHookValues(hookValuesSnapshots);
         realTime.setTips(tips);
+        realTime.setTipsTimestamp(tipsTimestamp);
         realTime.toJSON(buffer, iPar1);
 
       } else if (iQuery.equals("last")) {
         if (lastSnapshot != null) {
           lastSnapshot.setTips(tips);
+          lastSnapshot.setTipsTimestamp(tipsTimestamp);
           lastSnapshot.setHookValues(hookValuesSnapshots);
           lastSnapshot.toJSON(buffer, iPar1);
         }
@@ -666,5 +681,20 @@ public class OEnterpriseProfiler extends OAbstractProfiler implements OProfilerM
         }
       });
     }
+
+    autoPause = new TimerTask() {
+      @Override
+      public void run() {
+        long current = System.currentTimeMillis();
+
+        long old = timestamp.get();
+
+        if (current - old > KEEP_ALIVE) {
+          stopRecording();
+          paused.set(true);
+        }
+      }
+    };
+    timer.schedule(autoPause,KEEP_ALIVE, KEEP_ALIVE);
   }
 }

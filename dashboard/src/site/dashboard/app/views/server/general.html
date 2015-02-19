@@ -1,4 +1,4 @@
-inde<div class="container-fluid" ng-controller="GeneralMonitorController">
+<div class="container-fluid" ng-controller="GeneralMonitorController">
   <div class="row-fluid title">
     <h3>
       <i class="icon-desktop"></i>
@@ -77,9 +77,10 @@ inde<div class="container-fluid" ng-controller="GeneralMonitorController">
   </div>
 
 
-  <tabset  ng-show="!error && attached">
+  <tabset ng-show="!error && attached">
     <tab title="{{'general.overview' | i18n }}" template-url="views/server/general/overview.html"></tab>
     <tab title="{{'general.databases' | i18n }}" template-url="views/server/general/db.html"></tab>
+    <tab title="{{ 'general.warnings' | i18n }}" template-url="views/server/general/warnings.html"></tab>
     <tab title="{{ 'general.logs' | i18n }}" template-url="views/server/general/log.html"></tab>
     <tab title="{{ 'general.configuration' | i18n }}" template-url="views/server/general/configuration.html"></tab>
   </tabset>

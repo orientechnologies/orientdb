@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('MonitorApp')
-  .controller('DashboardController', function ($scope, $location, $timeout, $modal, $q,$i18n, $odialog, Monitor, Server, Notification, Settings, StickyNotification,MetricConfig) {
+  .controller('DashboardController', function ($scope, $location, $timeout, $modal, $q, $i18n, $odialog, Monitor, Server, Notification, Settings, StickyNotification, MetricConfig) {
 
 
     $scope.chartHeight = 300;
@@ -21,7 +21,7 @@ angular.module('MonitorApp')
     $scope.$on('$routeChangeStart', function () {
       $scope.stopWatching();
     });
-    //$scope.startWatching();
+    $scope.startWatching();
     $scope.addServer = function () {
 
       var modalScope = $scope.$new(true)
@@ -63,11 +63,32 @@ angular.module('MonitorApp')
     }
     $scope.refresh = function () {
       Monitor.getServers(function (data) {
-        $scope.servers = data.result;
-        $scope.healthData = new Array;
-        $scope.servers.forEach(function (elem, idx, arr) {
-          $scope.healthData.push({label: elem.name, value: 100});
-        });
+
+        if (!$scope.servers || $scope.servers.length == 0) {
+          $scope.servers = data.result;
+          $scope.healthData = new Array;
+          $scope.servers.forEach(function (elem, idx, arr) {
+            $scope.healthData.push({label: elem.name, value: 100});
+          });
+        } else {
+          var toAdd = new Array
+
+          data.result.forEach(function (s1) {
+            var found = false;
+            $scope.servers.forEach(function (s) {
+              if (s1.name == s.name) {
+                found = true
+              }
+            })
+            if (!found) {
+              toAdd.push(s1);
+            }
+          });
+          toAdd.forEach(function (a) {
+            $scope.servers.push(a);
+          })
+        }
+
       });
       Notification.latest(function (data) {
         $scope.notifications = data.result;

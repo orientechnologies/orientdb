@@ -7,6 +7,8 @@
         <div class="row-fluid">
           <div class="span6">
             <a href="#/dashboard/general/{{ server['@rid'] | nopound }}">{{ server.name }}</a>
+            -
+            <a href="#/dashboard/cluster/{{ server['cluster'].name  }}">{{ server['cluster'].name }}</a>
           </div>
           <div class="span6">
             <div class="pull-right">
@@ -56,24 +58,31 @@
           </div>
         </div>
         <hr>
-        <div>
-          <b>Status:</b> <span ng-class="getStatusLabel(server.status)">{{ server.status }}</span>
+        <div class="row-fluid">
+          <div class="span6">
+            <b>Status:</b> <span ng-class="getStatusLabel(server.status)">{{ server.status }}</span>
+          </div>
+          <div class="span6">
+            <b>Ops/Sec:</b> {{operations}}</span>
+          </div>
         </div>
-        <div>
-          <b>Ops/Second:</b> {{operations}}</span>
+
+        <div class="row-fluid">
+          <div class="span6">
+            <b>Active Connections:</b> {{connections}}</span>
+          </div>
+          <div class="span6">
+            <b>Network Requests:</b> {{requests}}</span>
+          </div>
         </div>
-        <div>
-          <b>Active Connections:</b> {{connections}}</span>
-        </div>
-        <div>
-          <b>Network Request:</b> {{requests}}</span>
-        </div>
-        <div>
-          <b>Average Latency:</b> {{latency}}</span>
-        </div>
-        <hr>
-        <div class="alert" ng-show="currentIndex == $index" ng-repeat="(key, value) in tips">
-          {{ key }}
+        <div class="row-fluid">
+          <div class="span6">
+            <b>Average Latency:</b> {{latency}}</span>
+          </div>
+          <div class="span6">
+            <b>Warnings:</b> <a
+            href="#/dashboard/general/{{ server['@rid'] | nopound }}">{{ tips }} </a></span>
+          </div>
         </div>
       </div>
     </li>

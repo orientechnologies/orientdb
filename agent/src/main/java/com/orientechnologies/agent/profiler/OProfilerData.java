@@ -47,6 +47,7 @@ public class OProfilerData {
   private final ConcurrentHashMap<String, OProfilerEntry> chronos       = new ConcurrentHashMap<String, OProfilerEntry>();
   private final ConcurrentHashMap<String, OProfilerEntry> stats         = new ConcurrentHashMap<String, OProfilerEntry>();
   private ConcurrentHashMap<String, AtomicInteger>        tips          = new ConcurrentHashMap<String, AtomicInteger>();
+  private ConcurrentHashMap<String, Long>                 tipsTimestamp = new ConcurrentHashMap<String, Long>();
   private final Map<String, Object>                       hooks         = new WeakHashMap<String, Object>();
   private long                                            recordingFrom = 0;
   private long                                            recordingTo   = Long.MAX_VALUE;
@@ -209,7 +210,8 @@ public class OProfilerData {
         firstItem = false;
       else
         buffer.append(',');
-      buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d", OIOUtils.encode(s), tips.get(s).get()));
+      buffer.append(String.format(Locale.ENGLISH, "\"%s\": { \"time\" : %d , \"count\" : %d } ", OIOUtils.encode(s), tipsTimestamp.get(s),
+          tips.get(s).get()));
     }
 
     buffer.append("}");
@@ -463,6 +465,10 @@ public class OProfilerData {
 
   public void setTips(ConcurrentHashMap<String, AtomicInteger> tips) {
     this.tips = tips;
+  }
+
+  public void setTipsTimestamp(ConcurrentHashMap<String, Long> tipsTimestamp) {
+    this.tipsTimestamp = tipsTimestamp;
   }
 
   protected String[] getMetricAsString(ConcurrentHashMap<String, ?> iMetrics) {

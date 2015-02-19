@@ -16,11 +16,6 @@
 
 package com.orientechnologies.workbench.hooks;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.hook.ORecordHookAbstract;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -29,6 +24,11 @@ import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.workbench.OWorkbenchPlugin;
 import com.orientechnologies.workbench.event.OEventController;
 import com.orientechnologies.workbench.event.OEventExecutor;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class OEventHook extends ORecordHookAbstract {
 
@@ -95,6 +95,20 @@ public class OEventHook extends ORecordHookAbstract {
             urlServer = urlServer.split(":")[0];
           metricName = metricName.replaceAll(urlServer + ":" + "[0-9]*.", "*.");
 
+          if (metricName.startsWith("db.")) {
+            String[] split = metricName.split("\\.");
+            int i = 0;
+            String tmpMetric = "";
+            for (String s : split) {
+              if (i != 1) {
+                tmpMetric += s + ".";
+              } else {
+                tmpMetric += "*.";
+              }
+              i++;
+            }
+            metricName = tmpMetric.substring(0, tmpMetric.length() - 1);
+          }
         }
         Map<String, Object> params = new HashMap<String, Object>();
         params.put("name", metricName);

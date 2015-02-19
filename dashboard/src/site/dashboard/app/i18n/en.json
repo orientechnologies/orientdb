@@ -73,6 +73,7 @@
     "general.db": "Databases",
     "general.serverUp": "Server up since",
     "general.overview": "Overview",
+    "general.warnings": "Warnings",
     "general.logs": "Log",
     "db.operations": "CRUD Operations",
     "db.configuration": "Configuration",
