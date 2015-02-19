@@ -139,10 +139,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     super(name, filePath, mode, OGlobalConfiguration.STORAGE_LOCK_TIMEOUT.getValueAsInteger());
     lockManager = new ONewLockManager<ORID>();
 
-    PROFILER_CREATE_RECORD = "db." + name + ".createRecord";
-    PROFILER_READ_RECORD = "db." + name + ".readRecord";
-    PROFILER_UPDATE_RECORD = "db." + name + ".updateRecord";
-    PROFILER_DELETE_RECORD = "db." + name + ".deleteRecord";
+    PROFILER_CREATE_RECORD = "db." + this.name + ".createRecord";
+    PROFILER_READ_RECORD = "db." + this.name + ".readRecord";
+    PROFILER_UPDATE_RECORD = "db." + this.name + ".updateRecord";
+    PROFILER_DELETE_RECORD = "db." + this.name + ".deleteRecord";
   }
 
   public void open(final String iUserName, final String iUserPassword, final Map<String, Object> iProperties) {
