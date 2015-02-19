@@ -1965,8 +1965,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       super.close(force, onDelete);
 
       diskCache.removeLowDiskSpaceListener(this);
-			if (writeAheadLog != null)
-				writeAheadLog.removeFullCheckpointListener(this);
+      if (writeAheadLog != null)
+        writeAheadLog.removeFullCheckpointListener(this);
 
       if (!onDelete)
         diskCache.close();
@@ -2238,7 +2238,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
         if (checkPointRecord != null) {
           OLogManager.instance().warn(this, "Restore will start from the previous checkpoint.");
-					return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
+          return restoreFromCheckPoint((OAbstractCheckPointStartRecord) checkPointRecord);
         } else {
           OLogManager.instance().warn(this, "Restore will start from the beginning.");
           return restoreFromBegging();
@@ -2340,7 +2340,13 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     try {
       restoreLoop: while (lsn != null) {
-        OWALRecord walRecord = writeAheadLog.read(lsn);
+        OWALRecord walRecord;
+        try {
+          walRecord = writeAheadLog.read(lsn);
+        } catch (Exception e) {
+          OLogManager.instance().error(this, "Data restore was paused because of exception during reading of wal record.", e);
+          break restoreLoop;
+        }
 
         batch.add(new SoftReference<OWALRecord>(walRecord, batchQueue));
         if (batchQueue.poll() != null) {
@@ -2604,7 +2610,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           final long size = diskWriteAheadLog.size();
 
           diskCache.makeFuzzyCheckpoint();
-          if (size  <= diskWriteAheadLog.size())
+          if (size <= diskWriteAheadLog.size())
             synch();
 
           checkpointRequest = false;
