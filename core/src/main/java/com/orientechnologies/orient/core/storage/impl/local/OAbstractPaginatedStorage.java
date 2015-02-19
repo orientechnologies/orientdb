@@ -2340,13 +2340,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     try {
       restoreLoop: while (lsn != null) {
-        OWALRecord walRecord;
-        try {
-          walRecord = writeAheadLog.read(lsn);
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Data restore was paused because of exception during reading of wal record.", e);
-          break restoreLoop;
-        }
+        OWALRecord walRecord = writeAheadLog.read(lsn);
 
         batch.add(new SoftReference<OWALRecord>(walRecord, batchQueue));
         if (batchQueue.poll() != null) {

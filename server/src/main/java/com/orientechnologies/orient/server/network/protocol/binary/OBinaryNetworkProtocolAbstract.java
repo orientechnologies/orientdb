@@ -80,7 +80,7 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   protected final Level          logClientExceptions;
   protected final boolean        logClientFullStackTrace;
   protected OChannelBinaryServer channel;
-  protected int                  requestType;
+  protected volatile int         requestType;
   protected int                  clientTxId;
   protected OToken               token;
   protected boolean              okSent;
@@ -194,6 +194,10 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   @Override
   protected void execute() throws Exception {
     requestType = -1;
+
+    // do not remove this or we will get deadlock upon shutdown.
+    if (isShutdownFlag())
+      return;
 
     clientTxId = 0;
     okSent = false;
