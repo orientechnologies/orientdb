@@ -77,7 +77,7 @@ public class OExpression extends SimpleNode {
     }
   }
 
-  private String encode(String s) {
+  public static String encode(String s) {
     return s.replaceAll("\"", "\\\\\"");
   }
 

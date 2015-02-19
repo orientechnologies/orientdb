@@ -39,7 +39,9 @@ public class OLetClause extends SimpleNode {
   }
 
   public void replaceParameters(Map<Object, Object> params) {
-    // TODO
+    for(OLetItem item:items){
+      item.replaceParameters(params);
+    }
   }
 }
 

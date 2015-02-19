@@ -616,51 +616,92 @@ ODeleteVertexStatement DeleteVertexStatement():
 }
 
 OUpdateStatement UpdateStatement():
-{}
+{ OUpdateOperations lastOperations; }
 {
-(
-	<UPDATE>
-	(
-	    Rid()
-	    |
-		Identifier()
-		|
-		Cluster()
-		|
-		IndexIdentifier()
-	)
-	( UpdateOperations() )+
-	[ <UPSERT> ]
-	[ <RETURN> ( <BEFORE> | <AFTER> ) [ Projection() ] ]
-	[ <WHERE> WhereClause() ]
-	[ <LOCK> <RECORD> ]
-	[ Limit() ]
-	[ Timeout() ]
-) {return jjtThis;}
+    (
+    	<UPDATE>
+    	(
+    	    jjtThis.targetRid = Rid()
+    	    |
+    		jjtThis.targetClass = Identifier()
+    		|
+    		jjtThis.targetCluster = Cluster()
+    		|
+    		jjtThis.targetIndex = IndexIdentifier()
+    	)
+    	( lastOperations = UpdateOperations() { jjtThis.operations.add(lastOperations); } )+
+    	[ <UPSERT> { jjtThis.upsert = true; } ]
+    	[
+    	    <RETURN>
+    	    ( <BEFORE> { jjtThis.returnBefore = true; } | <AFTER> { jjtThis.returnAfter = true; } )
+    	    [
+    	        jjtThis.returnProjection = Projection()
+    	    ]
+    	]
+    	[ <WHERE> jjtThis.whereClause = WhereClause() ]
+    	[ <LOCK> <RECORD> { jjtThis.lockRecord = true; } ]
+    	[ jjtThis.limit = Limit() ]
+    	[ jjtThis.timeout = Timeout() ]
+    )
+    {return jjtThis;}
 }
 
-void UpdateOperations():
-{}
+OUpdateOperations UpdateOperations():
 {
-    ( <SET> UpdateItem() ( <COMMA> UpdateItem() )* )
-    |
-    ( <PUT> UpdatePutItem() ( <COMMA> UpdatePutItem() )* )
-    |
-    (
-        ( <MERGE> | <CONTENT> )
-        Json()
-    )
-    |
+    OUpdateItem lastItem;
+    OUpdatePutItem lastPutItem;
+    OUpdateIncrementItem lastIncrementItem;
+    OUpdateRemoveItem lastRemoveItem;
+}
+{
     (
         (
-            <INCREMENT>
-            |
-            <ADD>
+            <SET> { jjtThis.type = OUpdateOperations.TYPE_SET; }
+            lastItem = UpdateItem() { jjtThis.updateItems.add(lastItem); }
+            (
+                <COMMA> lastItem = UpdateItem() { jjtThis.updateItems.add(lastItem); }
+            )*
         )
-        UpdateIncrementItem() ( <COMMA> UpdateIncrementItem() )*
-     )
-     |
-     ( <REMOVE> UpdateRemoveItem() ( <COMMA> UpdateRemoveItem() )* )
+        |
+        (
+            <PUT> { jjtThis.type = OUpdateOperations.TYPE_PUT; }
+            lastPutItem = UpdatePutItem()  { jjtThis.updatePutItems.add(lastPutItem); }
+            (
+                <COMMA> lastPutItem = UpdatePutItem()  { jjtThis.updatePutItems.add(lastPutItem); }
+            )*
+        )
+        |
+        (
+            (
+                <MERGE> { jjtThis.type = OUpdateOperations.TYPE_MERGE; }
+                |
+                <CONTENT> { jjtThis.type = OUpdateOperations.TYPE_CONTENT; }
+            )
+            jjtThis.json = Json()
+        )
+        |
+        (
+            (
+                <INCREMENT> { jjtThis.type = OUpdateOperations.TYPE_INCREMENT; }
+                |
+                <ADD> { jjtThis.type = OUpdateOperations.TYPE_ADD; }
+            )
+            lastIncrementItem = UpdateIncrementItem() { jjtThis.updateIncrementItems.add(lastIncrementItem); }
+            (
+                <COMMA> lastIncrementItem = UpdateIncrementItem() { jjtThis.updateIncrementItems.add(lastIncrementItem); }
+            )*
+         )
+         |
+         (
+            <REMOVE> { jjtThis.type = OUpdateOperations.TYPE_REMOVE; }
+            lastRemoveItem = UpdateRemoveItem()  { jjtThis.updateRemoveItems.add(lastRemoveItem); }
+            (
+                <COMMA>
+                lastRemoveItem = UpdateRemoveItem()  { jjtThis.updateRemoveItems.add(lastRemoveItem); }
+            )*
+         )
+    )
+    { return jjtThis; }
 }
 
 
@@ -668,61 +709,58 @@ OUpdateItem UpdateItem():
 {}
 {
 (
-	Identifier()
+	jjtThis.left = Identifier()
 	(
-	    <EQ>
+	    <EQ> { jjtThis.operator = OUpdateItem.OPERATOR_EQ; }
 	    |
-	    <PLUSASSIGN>
+	    <PLUSASSIGN> { jjtThis.operator = OUpdateItem.OPERATOR_PLUSASSIGN; }
         |
-        <MINUSASSIGN>
+        <MINUSASSIGN> { jjtThis.operator = OUpdateItem.OPERATOR_MINUSASSIGN; }
         |
-        <STARASSIGN>
+        <STARASSIGN> { jjtThis.operator = OUpdateItem.OPERATOR_STARASSIGN; }
         |
-        <SLASHASSIGN>
+        <SLASHASSIGN> { jjtThis.operator = OUpdateItem.OPERATOR_SLASHASSIGN; }
 	)
-	Expression()
+	jjtThis.right = Expression()
 ) { return jjtThis; }
 }
 
-void UpdateIncrementItem():
+OUpdateIncrementItem UpdateIncrementItem():
 {}
 {
-	Identifier() <EQ> Expression()
-}
-
-void UpdateRemoveItem():
-{}
-{
-	Identifier() [ <EQ> Expression() ]
-}
-
-void UpdatePutItem():
-{}
-{
-	Identifier() <EQ> Expression() <COMMA> Expression()
-}
-
-
-void UpdateAddItem():
-{}
-{
-	Identifier() <EQ>
-	(
-		<STRING_LITERAL>
-		|
-		LOOKAHEAD(Rid())
-		Rid()
-		|
-		LOOKAHEAD(3)
-		Integer()
-		|
-		<FLOATING_POINT_LITERAL>
-		|
-		<CHARACTER_LITERAL>
-		|
-		<LBRACKET> Rid() ("," Rid())* <RBRACKET>
+    (
+	    jjtThis.left = Identifier() <EQ> jjtThis.right = Expression()
 	)
+	{ return jjtThis; }
+}
 
+OUpdateRemoveItem UpdateRemoveItem():
+{}
+{
+    (
+	    jjtThis.left = Identifier() [ <EQ> jjtThis.right = Expression() ]
+	)
+    { return jjtThis; }
+}
+
+OUpdatePutItem UpdatePutItem():
+{}
+{
+    (
+	    jjtThis.left = Identifier() <EQ> jjtThis.key = Expression() <COMMA> jjtThis.value = Expression()
+    )
+    { return jjtThis; }
+}
+
+
+OUpdateAddItem UpdateAddItem():
+{}
+{
+    (
+    	jjtThis.left = Identifier() <EQ>
+    	jjtThis.right = Expression()
+    )
+    { return jjtThis; }
 }
 
 
@@ -746,40 +784,43 @@ OInsertStatement InsertStatement():
 }
 
 
-void InsertBody():
+OInsertBody InsertBody():
 {}
 {
     (
-        LOOKAHEAD(3)
         (
-            <LPAREN> Identifier() (<COMMA> Identifier())* <RPAREN>
-            <VALUES>
-            <LPAREN> Expression() (<COMMA> Expression())* <RPAREN>
-            ( <COMMA> <LPAREN> Expression() (<COMMA> Expression())* <RPAREN> )*
-        )
-        |
-        LOOKAHEAD(3)
-        (
-            <SET>
-            Identifier() <EQ> Expression()
-            ( <COMMA> Identifier() <EQ> Expression() )*
-        )
-        |
-        (
-            [ <FROM> ]
+            LOOKAHEAD(3)
             (
-                SelectStatement()
-                |
-                LOOKAHEAD(2)
+                <LPAREN> Identifier() (<COMMA> Identifier())* <RPAREN>
+                <VALUES>
+                <LPAREN> Expression() (<COMMA> Expression())* <RPAREN>
+                ( <COMMA> <LPAREN> Expression() (<COMMA> Expression())* <RPAREN> )*
+            )
+            |
+            LOOKAHEAD(3)
+            (
+                <SET>
+                Identifier() <EQ> Expression()
+                ( <COMMA> Identifier() <EQ> Expression() )*
+            )
+            |
+            (
+                [ <FROM> ]
                 (
-                    <LPAREN> SelectStatement() <RPAREN>
+                     SelectStatement()
+                     |
+                     LOOKAHEAD(2)
+                    (
+                        <LPAREN> SelectStatement() <RPAREN>
+                    )
                 )
             )
-        )
-        |
-        ( <CONTENT> Json() )
+            |
+            ( <CONTENT> Json() )
+         )
+        [ <RETURN> Projection() ]
     )
-    [ <RETURN> Projection() ]
+    { return jjtThis; }
 }
 
 OCreateVertexStatementEmptyNoTarget CreateVertexStatementEmptyNoTarget():
@@ -2069,13 +2110,37 @@ OArray Array():
 
 
 OJson Json():
-{}
+{
+    OJsonItem lastItem;
+    Token token;
+}
 {
     (
         <LBRACE>
         [
-         ( Identifier() | <STRING_LITERAL> | <CHARACTER_LITERAL>) <COLON> Expression()
-         ( <COMMA> ( Identifier() | <STRING_LITERAL> | <CHARACTER_LITERAL> ) <COLON> Expression() )*
+            { lastItem = new OJsonItem(); }
+            (
+                lastItem.leftIdentifier = Identifier()
+                |
+                token = <STRING_LITERAL> { lastItem.leftString = token.image.substring(1, token.image.length() - 1); }
+                |
+                token = <CHARACTER_LITERAL> { lastItem.leftString = token.image.substring(1, token.image.length() - 1); }
+            )
+            <COLON>
+            lastItem.right = Expression() { jjtThis.items.add(lastItem); }
+            (
+                <COMMA>
+                { lastItem = new OJsonItem(); }
+                (
+                    lastItem.leftIdentifier = Identifier()
+                    |
+                    token = <STRING_LITERAL> { lastItem.leftString = token.image.substring(1, token.image.length() - 1); }
+                    |
+                    token = <CHARACTER_LITERAL> { lastItem.leftString = token.image.substring(1, token.image.length() - 1); }
+                )
+                <COLON>
+                lastItem.right = Expression() { jjtThis.items.add(lastItem); }
+            )*
         ]
         <RBRACE>
     )

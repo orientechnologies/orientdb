@@ -2,6 +2,8 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.Map;
+
 public class OLetItem extends SimpleNode {
 
   OIdentifier varName;
@@ -23,6 +25,10 @@ public class OLetItem extends SimpleNode {
   @Override
   public String toString() {
     return varName.toString() + " = " + expression.toString();
+  }
+
+  public void replaceParameters(Map<Object, Object> params) {
+    expression.replaceParameters(params);
   }
 }
 /* JavaCC - OriginalChecksum=bb3cd298d79f50d72f6842e6d6ea4fb2 (do not edit this line) */
