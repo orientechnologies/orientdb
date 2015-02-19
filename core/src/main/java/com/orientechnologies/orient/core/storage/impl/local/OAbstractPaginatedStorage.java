@@ -1411,7 +1411,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (transaction.get() != null) {
       final long timer = Orient.instance().getProfiler().startChrono();
       try {
-        assert iLockingStrategy.equals(LOCKING_STRATEGY.DEFAULT);
+        // Disabled this assert have no meaning anymore
+        // assert iLockingStrategy.equals(LOCKING_STRATEGY.DEFAULT);
         return doReadRecord(clusterSegment, rid);
       } finally {
         Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from database", timer, "db.*.readRecord");
@@ -1965,8 +1966,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       super.close(force, onDelete);
 
       diskCache.removeLowDiskSpaceListener(this);
-			if (writeAheadLog != null)
-				writeAheadLog.removeFullCheckpointListener(this);
+      if (writeAheadLog != null)
+        writeAheadLog.removeFullCheckpointListener(this);
 
       if (!onDelete)
         diskCache.close();
@@ -2017,7 +2018,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       } else if (!version.equals(iDatabaseVersion)) {
         final ORecordConflictStrategy strategy = iCluster.getRecordConflictStrategy() != null ? iCluster
             .getRecordConflictStrategy() : recordConflictStrategy;
-        return strategy.onUpdate(iRecordType, rid, version, iRecordContent, iDatabaseVersion);
+        return strategy.onUpdate(this, iRecordType, rid, version, iRecordContent, iDatabaseVersion);
       } else
         // OK, INCREMENT DB VERSION
         iDatabaseVersion.increment();
@@ -2604,7 +2605,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           final long size = diskWriteAheadLog.size();
 
           diskCache.makeFuzzyCheckpoint();
-          if (size  <= diskWriteAheadLog.size())
+          if (size <= diskWriteAheadLog.size())
             synch();
 
           checkpointRequest = false;
