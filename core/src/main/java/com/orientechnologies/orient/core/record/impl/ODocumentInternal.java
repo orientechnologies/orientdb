@@ -27,6 +27,7 @@ import java.util.Map.Entry;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 
 public class ODocumentInternal {
@@ -51,7 +52,7 @@ public class ODocumentInternal {
     return oDocument.rawContainsField(iFiledName);
   }
 
-  public static OClass getImmutableSchemaClass(final ODocument oDocument) {
+  public static OImmutableClass getImmutableSchemaClass(final ODocument oDocument) {
     return oDocument.getImmutableSchemaClass();
   }
 
@@ -65,6 +66,10 @@ public class ODocumentInternal {
 
   public static Set<Entry<String, ODocumentEntry>> rawEntries(final ODocument document) {
     return document.getRawEntries();
+  }
+
+  public static void clearTrackData(final ODocument document) {
+    document.clearTrackData();
   }
 
 }

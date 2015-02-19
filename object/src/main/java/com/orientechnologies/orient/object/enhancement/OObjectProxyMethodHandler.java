@@ -158,11 +158,11 @@ public class OObjectProxyMethodHandler implements MethodHandler {
           if (nonProxiedInstance) {
             value = OObjectEntitySerializer.getNonProxiedInstance(value);
           }
-          Object detachedValue = alreadyDetached.get(handler.doc.hashCode());
+          Object detachedValue = alreadyDetached.get(handler.doc.getIdentity());
           if (detachedValue != null) {
             value = detachedValue;
           } else {
-            alreadyDetached.put(handler.doc.hashCode(), value);
+            alreadyDetached.put(handler.doc.getIdentity(), value);
             handler.detachAll(value, nonProxiedInstance, alreadyDetached);
           }
         }

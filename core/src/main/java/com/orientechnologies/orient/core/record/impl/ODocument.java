@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.iterator.OEmptyMapEntryIterator;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -87,7 +88,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   protected transient List<WeakReference<ORecordElement>> _owners                 = null;
   protected OImmutableSchema                              _schema;
   private String                                          _className;
-  private OClass                                          _immutableClazz;
+  private OImmutableClass                                 _immutableClazz;
   private int                                             _immutableSchemaVersion = 1;
 
   /**
@@ -1555,6 +1556,28 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     return this;
   }
 
+  protected void clearTrackData() {
+    if (_fields != null) {
+      // FREE RESOURCES
+      Iterator<Entry<String, ODocumentEntry>> iter = _fields.entrySet().iterator();
+      while (iter.hasNext()) {
+        Entry<String, ODocumentEntry> cur = iter.next();
+        if (!cur.getValue().exist())
+          iter.remove();
+        else {
+          cur.getValue().setCreated(false);
+          cur.getValue().setChanged(false);
+          cur.getValue().original = null;
+          cur.getValue().timeLine = null;
+          if (cur.getValue().value instanceof OTrackedMultiValue<?, ?>) {
+            removeCollectionChangeListener(cur.getValue(), cur.getValue().value);
+            addCollectionChangeListener(cur.getKey(), cur.getValue(), cur.getValue().value);
+          }
+        }
+      }
+    }
+  }
+
   public boolean isOrdered() {
     return _ordered;
   }
@@ -1827,7 +1850,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
 
     OMetadataInternal metadata = (OMetadataInternal) getDatabase().getMetadata();
-    this._immutableClazz = metadata.getImmutableSchemaSnapshot().getClass(className);
+    this._immutableClazz = (OImmutableClass) metadata.getImmutableSchemaSnapshot().getClass(className);
     OClass clazz;
     if (this._immutableClazz != null) {
       clazz = this._immutableClazz;
@@ -2039,7 +2062,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       setClassNameIfExists(iClassName);
   }
 
-  protected OClass getImmutableSchemaClass() {
+  protected OImmutableClass getImmutableSchemaClass() {
     if (_className == null)
       fetchClassName();
 
@@ -2052,11 +2075,11 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
       if (_immutableClazz == null) {
         _immutableSchemaVersion = immutableSchema.getVersion();
-        _immutableClazz = immutableSchema.getClass(_className);
+        _immutableClazz = (OImmutableClass) immutableSchema.getClass(_className);
       } else {
         if (_immutableSchemaVersion < immutableSchema.getVersion()) {
           _immutableSchemaVersion = immutableSchema.getVersion();
-          _immutableClazz = immutableSchema.getClass(_className);
+          _immutableClazz = (OImmutableClass) immutableSchema.getClass(_className);
         }
       }
     }

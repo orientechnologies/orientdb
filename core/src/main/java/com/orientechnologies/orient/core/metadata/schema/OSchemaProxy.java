@@ -46,6 +46,7 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
 
   @Override
   public OImmutableSchema makeSnapshot() {
+    setCurrentDatabaseInThreadLocal();
     return delegate.makeSnapshot();
   }
 
