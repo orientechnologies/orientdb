@@ -35,7 +35,7 @@ public interface ODirectMemory {
 
   /**
    * Allocates given amount of memory (in bytes) from pool and returns pointer on allocated memory or {@link #NULL_POINTER} if there
-   * is no enough memory in pool.
+   * is not enough memory in pool.
    * 
    * @param size
    *          Size that is needed to be allocated.
