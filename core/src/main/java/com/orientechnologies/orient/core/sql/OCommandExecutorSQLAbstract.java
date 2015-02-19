@@ -19,26 +19,23 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-
 import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY;
-import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
-import com.orientechnologies.orient.core.command.OCommandRequest;
-import com.orientechnologies.orient.core.command.OCommandRequestText;
+import com.orientechnologies.orient.core.command.*;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.sql.parser.OrientSql;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.*;
 
 /**
  * SQL abstract Command Executor implementation.
@@ -230,6 +227,38 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
       throwParsingException(e.getMessage());
       //      throw new RuntimeException(e);
     }
+  }
+
+  protected String preParse(String queryText, OCommandRequest iRequest) {
+    boolean strict = false;
+    for (Iterator<OStorageEntryConfiguration> it = getDatabase().getStorage().getConfiguration().properties.iterator(); it
+        .hasNext();) {
+      final OStorageEntryConfiguration e = it.next();
+      if (e.name.equals(OStatement.CUSTOM_STRICT_SQL)) {
+        strict = "true".equals(("" + e.value).toLowerCase());
+        break;
+      }
+    }
+    if (strict) {
+      InputStream is = new ByteArrayInputStream(queryText.getBytes());
+      OrientSql osql = new OrientSql(is);
+      try {
+        OStatement result = osql.parse();
+
+        if (iRequest instanceof OCommandRequestAbstract) {
+          Map<Object, Object> params = ((OCommandRequestAbstract) iRequest).getParameters();
+          result.replaceParameters(params);
+        }
+
+        return result.toString();
+      } catch (ParseException e) {
+        System.out.println("NEW PARSER FAILED: " + queryText);
+        e.printStackTrace();
+        throwParsingException(e.getMessage());
+      }
+      return "ERROR!";
+    }
+    return queryText;
   }
 
 

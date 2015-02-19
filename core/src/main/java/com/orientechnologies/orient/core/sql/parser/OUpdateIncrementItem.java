@@ -2,8 +2,12 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OUpdateIncrementItem extends SimpleNode {
+import java.util.Map;
+
+public class OUpdateIncrementItem extends SimpleNode {
+  protected OIdentifier left;
+  protected OExpression right;
+
   public OUpdateIncrementItem(int id) {
     super(id);
   }
@@ -12,10 +16,22 @@ class OUpdateIncrementItem extends SimpleNode {
     super(p, id);
   }
 
-
   /** Accept the visitor. **/
   public Object jjtAccept(OrientSqlVisitor visitor, Object data) {
     return visitor.visit(this, data);
+  }
+
+  public void replaceParameters(Map<Object, Object> params) {
+    right.replaceParameters(params);
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder result = new StringBuilder();
+    result.append(left.toString());
+    result.append(" = ");
+    result.append(right.toString());
+    return result.toString();
   }
 }
 /* JavaCC - OriginalChecksum=94dd82febb904e4e31130bdcbbb48fe3 (do not edit this line) */
