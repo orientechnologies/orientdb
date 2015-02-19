@@ -113,6 +113,8 @@ public class ServerClusterSchemaTest extends AbstractServerClusterTest {
         for (int i = 0; i < SERVERS; ++i) {
           try {
             final OrientVertex v = g.addVertex("class:" + "Client" + i);
+            g.commit();
+
             Assert.assertTrue(false);
           } catch (OValidationException e) {
             // EXPECTED

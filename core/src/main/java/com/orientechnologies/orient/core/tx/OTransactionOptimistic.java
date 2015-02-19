@@ -267,7 +267,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
     status = iStatus;
   }
 
-  protected void addRecord(final ORecord iRecord, final byte iStatus, final String iClusterName) {
+  public void addRecord(final ORecord iRecord, final byte iStatus, final String iClusterName) {
     checkTransaction();
 
     try {
