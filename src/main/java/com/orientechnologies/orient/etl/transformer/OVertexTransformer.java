@@ -31,14 +31,14 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 public class OVertexTransformer extends OAbstractTransformer {
   protected String        vertexClass;
   private OrientBaseGraph graph;
-  private Boolean skipDuplicates;
+  private boolean         skipDuplicates = false;
 
   @Override
   public ODocument getConfiguration() {
     return new ODocument().fromJSON("{parameters:[" + getCommonConfigurationParameters() + ","
-        + "{class:{optional:true,description:'Vertex class name to assign. Default is V'}}]"
-        + ",input:['OrientVertex','ODocument'],output:'OrientVertex'}"
-        + ",skipDuplicates:{optional:true,description:'Vertices with duplicate keys are skipped', default:false}");
+        + "{class:{optional:true,description:'Vertex class name to assign. Default is V'}}"
+        + ",skipDuplicates:{optional:true,description:'Vertices with duplicate keys are skipped', default:false}" + "]"
+        + ",input:['OrientVertex','ODocument'],output:'OrientVertex'}");
   }
 
   @Override
@@ -47,9 +47,8 @@ public class OVertexTransformer extends OAbstractTransformer {
 
     if (iConfiguration.containsField("class"))
       vertexClass = (String) resolve(iConfiguration.field("class"));
-    if (iConfiguration.containsField("skipDuplicates")) {
+    if (iConfiguration.containsField("skipDuplicates"))
       skipDuplicates = (Boolean) resolve(iConfiguration.field("skipDuplicates"));
-    }
   }
 
   @Override
