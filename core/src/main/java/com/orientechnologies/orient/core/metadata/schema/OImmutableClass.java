@@ -1,14 +1,5 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
-import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
-import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,6 +10,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OClassTrigger;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.metadata.function.OFunctionTrigger;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
+import com.orientechnologies.orient.core.metadata.security.OUser;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.schedule.OScheduler;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
@@ -56,6 +61,11 @@ public class OImmutableClass implements OClass {
   private boolean                         restricted;
   private boolean                         isVertexType;
   private boolean                         isEdgeType;
+  private boolean                         triggered;
+  private boolean                         function;
+  private boolean                         scheduler;
+  private boolean                         ouser;
+  private boolean                         orole;
 
   public OImmutableClass(OClass oClass, OImmutableSchema schema) {
     isAbstract = oClass.isAbstract();
@@ -115,6 +125,11 @@ public class OImmutableClass implements OClass {
       this.restricted = isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME);
       this.isVertexType = isSubClassOf(VERTEX_CLASS_NAME);
       this.isEdgeType = isSubClassOf(EDGE_CLASS_NAME);
+      this.triggered = isSubClassOf(OClassTrigger.CLASSNAME);
+      this.function = isSubClassOf(OFunctionTrigger.CLASSNAME);
+      this.scheduler = isSubClassOf(OScheduler.CLASSNAME);
+      this.ouser = isSubClassOf(OUser.CLASS_NAME);
+      this.orole = isSubClassOf(ORole.CLASS_NAME);
       inited = true;
     }
   }
@@ -730,6 +745,26 @@ public class OImmutableClass implements OClass {
 
   public boolean isVertexType() {
     return isVertexType;
+  }
+
+  public boolean isTriggered() {
+    return triggered;
+  }
+
+  public boolean isFunction() {
+    return function;
+  }
+
+  public boolean isScheduler() {
+    return scheduler;
+  }
+
+  public boolean isOuser() {
+    return ouser;
+  }
+
+  public boolean isOrole() {
+    return orole;
   }
 
 }

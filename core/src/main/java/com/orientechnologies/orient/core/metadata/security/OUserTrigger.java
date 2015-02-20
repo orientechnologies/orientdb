@@ -22,7 +22,11 @@ package com.orientechnologies.orient.core.metadata.security;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
+import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.security.OSecurityManager;
 
 /**
@@ -34,7 +38,16 @@ public class OUserTrigger extends ODocumentHookAbstract {
 
   public OUserTrigger(ODatabaseDocument database) {
     super(database);
-    setIncludeClasses("OUser", "ORole");
+  }
+
+  @Override
+  public RESULT onTrigger(TYPE iType, ORecord iRecord) {
+    OImmutableClass clazz = null;
+    if (iRecord instanceof ODocument)
+      clazz = ODocumentInternal.getImmutableSchemaClass((ODocument) iRecord);
+    if (clazz == null || (!clazz.isOuser() && !clazz.isOrole()))
+      return RESULT.RECORD_NOT_CHANGED;
+    return super.onTrigger(iType, iRecord);
   }
 
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {

@@ -20,12 +20,11 @@
 
 package com.orientechnologies.orient.core.record.impl;
 
-import java.util.Collection;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OGlobalProperty;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -70,6 +69,11 @@ public class ODocumentInternal {
 
   public static void clearTrackData(final ODocument document) {
     document.clearTrackData();
+  }
+
+  public static void checkClass(ODocument doc, ODatabaseDocumentTx database) {
+    doc.checkClass(database);
+
   }
 
 }

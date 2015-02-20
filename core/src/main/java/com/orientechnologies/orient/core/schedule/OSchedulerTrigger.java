@@ -20,7 +20,12 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.hook.ODocumentHookAbstract;
+import com.orientechnologies.orient.core.hook.ORecordHook.RESULT;
+import com.orientechnologies.orient.core.hook.ORecordHook.TYPE;
+import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OSchedulerListener.SCHEDULER_STATUS;
 
 /**
@@ -32,11 +37,20 @@ public class OSchedulerTrigger extends ODocumentHookAbstract {
 
   public OSchedulerTrigger(ODatabaseDocument database) {
     super(database);
-    setIncludeClasses(OScheduler.CLASSNAME);
   }
 
   public DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
     return DISTRIBUTED_EXECUTION_MODE.TARGET_NODE;
+  }
+
+  @Override
+  public RESULT onTrigger(TYPE iType, ORecord iRecord) {
+    OImmutableClass clazz = null;
+    if (iRecord instanceof ODocument)
+      clazz = ODocumentInternal.getImmutableSchemaClass((ODocument) iRecord);
+    if (clazz == null || !clazz.isScheduler())
+      return RESULT.RECORD_NOT_CHANGED;
+    return super.onTrigger(iType, iRecord);
   }
 
   @Override

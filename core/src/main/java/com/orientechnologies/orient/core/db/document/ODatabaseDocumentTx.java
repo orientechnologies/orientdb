@@ -1726,6 +1726,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         }
 
         callbackHooks(ORecordHook.TYPE.AFTER_READ, record);
+        if (record instanceof ODocument)
+          ODocumentInternal.checkClass((ODocument) record, this);
         return (RET) record;
       }
 
@@ -1754,6 +1756,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         iRecord = Orient.instance().getRecordFactoryManager().newInstance(recordBuffer.recordType);
 
       ORecordInternal.fill(iRecord, rid, recordBuffer.version, recordBuffer.buffer, false);
+
+      if (iRecord instanceof ODocument)
+        ODocumentInternal.checkClass((ODocument) iRecord, this);
 
       if (iRecord.getRecordVersion().isTombstone())
         return (RET) iRecord;
@@ -1827,6 +1832,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       final OStorageOperationResult<ORecordVersion> operationResult;
 
       ((OMetadataInternal) getMetadata()).makeThreadLocalSchemaSnapshot();
+      if (record instanceof ODocument)
+        ODocumentInternal.checkClass((ODocument) record, this);
       ORecordSerializationContext.pushContext();
       try {
         // STREAM.LENGTH == 0 -> RECORD IN STACK: WILL BE SAVED AFTER
@@ -1979,9 +1986,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     ORecordSerializationContext.pushContext();
     ((OMetadataInternal) getMetadata()).makeThreadLocalSchemaSnapshot();
     try {
-      if (record instanceof ODocument)
+      if (record instanceof ODocument) {
         acquireIndexModificationLock((ODocument) record, lockedIndexes);
-
+        ODocumentInternal.checkClass((ODocument) record, this);
+      }
       try {
         // if cache is switched off record will be unreachable after delete.
         ORecord rec = record.getRecord();
@@ -2060,6 +2068,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_DELETE, getClusterNameById(rid.clusterId));
 
     ((OMetadataInternal) getMetadata()).makeThreadLocalSchemaSnapshot();
+    if (record instanceof ODocument)
+      ODocumentInternal.checkClass((ODocument) record, this);
     ORecordSerializationContext.pushContext();
     try {
 
@@ -2413,10 +2423,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       return (RET) currentTx.saveRecord(iRecord, iClusterName, iMode, iForceCreate, iRecordCreatedCallback, iRecordUpdatedCallback);
 
     ODocument doc = (ODocument) iRecord;
+    ODocumentInternal.checkClass(doc, this);
     if (!getTransaction().isActive() || getTransaction().getStatus() == OTransaction.TXSTATUS.COMMITTING)
       // EXECUTE VALIDATION ONLY IF NOT IN TX
       doc.validate();
-
     ODocumentInternal.convertAllMultiValuesToTrackedVersions(doc);
 
     if (iForceCreate || !doc.getIdentity().isValid()) {

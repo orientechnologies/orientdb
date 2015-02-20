@@ -78,15 +78,15 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  * be added at run-time. Instances can be reused across calls by using the reset() before to re-use.
  */
 @SuppressWarnings({ "unchecked" })
-public class ODocument extends ORecordAbstract implements Iterable<Entry<String, Object>>, ORecordSchemaAware, ODetachable,
-    Externalizable {
+public class ODocument extends ORecordAbstract
+    implements Iterable<Entry<String, Object>>, ORecordSchemaAware, ODetachable, Externalizable {
 
-  public static final byte                                RECORD_TYPE             = 'd';
-  protected static final String[]                         EMPTY_STRINGS           = new String[] {};
-  private static final long                               serialVersionUID        = 1L;
-  protected int                                           _fieldSize;
+  public static final byte        RECORD_TYPE      = 'd';
+  protected static final String[] EMPTY_STRINGS    = new String[] {};
+  private static final long       serialVersionUID = 1L;
+  protected int                   _fieldSize;
 
-  protected Map<String, ODocumentEntry>                   _fields;
+  protected Map<String, ODocumentEntry> _fields;
 
   protected boolean                                       _trackingChanges        = true;
   protected boolean                                       _ordered                = true;
@@ -164,8 +164,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       final OSchema schema = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
       final OClass cls = schema.getClassByClusterId(_recordId.clusterId);
       if (cls != null && !cls.getName().equals(iClassName))
-        throw new IllegalArgumentException("Cluster id does not correspond class name should be " + iClassName + " but found "
-            + cls.getName());
+        throw new IllegalArgumentException(
+            "Cluster id does not correspond class name should be " + iClassName + " but found " + cls.getName());
     }
 
     _dirty = false;
@@ -346,7 +346,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       if (p.getMinComparable().compareTo(fieldValue) > 0) {
         switch (p.getType()) {
         case STRING:
-          throw new OValidationException("The field '" + p.getFullName() + "' contains fewer characters than " + min + " requested");
+          throw new OValidationException(
+              "The field '" + p.getFullName() + "' contains fewer characters than " + min + " requested");
         case DATE:
         case DATETIME:
           throw new OValidationException("The field '" + p.getFullName() + "' contains the date " + fieldValue
@@ -399,8 +400,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         boolean simple = fieldValue != null ? OType.isSimpleType(fieldValue) : OType.isSimpleType(orgVal);
         if ((simple) || (fieldValue != null && orgVal == null) || (fieldValue == null && orgVal != null)
             || (fieldValue != null && !fieldValue.equals(orgVal)))
-          throw new OValidationException("The field '" + p.getFullName() + "' is immutable and cannot be altered. Field value is: "
-              + entry.value);
+          throw new OValidationException(
+              "The field '" + p.getFullName() + "' is immutable and cannot be altered. Field value is: " + entry.value);
       }
     }
   }
@@ -1211,7 +1212,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     final Iterator<Entry<String, ODocumentEntry>> iterator = _fields.entrySet().iterator();
     return new Iterator<Entry<String, Object>>() {
       private Entry<String, ODocumentEntry> current;
-      private boolean                       read = true;
+      private boolean read = true;
 
       public boolean hasNext() {
         while (iterator.hasNext()) {
@@ -2115,27 +2116,17 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   protected OImmutableClass getImmutableSchemaClass() {
-    if (_className == null)
-      fetchClassName();
+    if (_immutableClazz == null) {
+      if (_className == null)
+        fetchClassName();
+      final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
 
-    if (_className == null)
-      return null;
-
-    final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
-
-    if (databaseRecord != null && !databaseRecord.isClosed()) {
-      final OSchema immutableSchema = ((OMetadataInternal) databaseRecord.getMetadata()).getImmutableSchemaSnapshot();
-      if (immutableSchema == null)
-        return null;
-
-      if (_immutableClazz == null) {
+      if (databaseRecord != null && !databaseRecord.isClosed()) {
+        final OSchema immutableSchema = ((OMetadataInternal) databaseRecord.getMetadata()).getImmutableSchemaSnapshot();
+        if (immutableSchema == null)
+          return null;
         _immutableSchemaVersion = immutableSchema.getVersion();
         _immutableClazz = (OImmutableClass) immutableSchema.getClass(_className);
-      } else {
-        if (_immutableSchemaVersion < immutableSchema.getVersion()) {
-          _immutableSchemaVersion = immutableSchema.getVersion();
-          _immutableClazz = (OImmutableClass) immutableSchema.getClass(_className);
-        }
       }
     }
 
@@ -2420,7 +2411,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
   private void fetchClassName() {
     final ODatabaseDocumentInternal database = getDatabaseIfDefinedInternal();
-    if (database != null && database.getStorageVersions() != null && database.getStorageVersions().classesAreDetectedByClusterId()) {
+    if (database != null && database.getStorageVersions() != null
+        && database.getStorageVersions().classesAreDetectedByClusterId()) {
       if (_recordId.clusterId < 0) {
         checkForLoading();
         checkForFields("@class");
@@ -2522,4 +2514,23 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
   }
 
+  protected void checkClass(ODatabaseDocumentTx database) {
+    if (_className == null)
+      fetchClassName();
+
+    final OSchema immutableSchema = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
+    if (immutableSchema == null)
+      return;
+
+    if (_immutableClazz == null) {
+      _immutableSchemaVersion = immutableSchema.getVersion();
+      _immutableClazz = (OImmutableClass) immutableSchema.getClass(_className);
+    } else {
+      if (_immutableSchemaVersion < immutableSchema.getVersion()) {
+        _immutableSchemaVersion = immutableSchema.getVersion();
+        _immutableClazz = (OImmutableClass) immutableSchema.getClass(_className);
+      }
+    }
+
+  }
 }
