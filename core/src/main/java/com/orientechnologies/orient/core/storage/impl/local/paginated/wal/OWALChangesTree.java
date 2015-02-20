@@ -2,7 +2,9 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
 import com.sun.xml.internal.ws.util.NoCloseOutputStream;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class OWALChangesTree {
   private static final boolean BLACK   = false;
@@ -71,6 +73,26 @@ public class OWALChangesTree {
 
   public void applyChanges(byte[] values, int start, int end) {
 
+  }
+
+  private void findIntervals(Node node, int start, int end, List<Node> result) {
+    if (node == null)
+      return;
+
+    if (start >= node.maxEnd)
+      return;
+
+    if (node.left != null)
+      findIntervals(node.left, start, end, result);
+
+    if (node.overlapsWith(start, end))
+      result.add(node);
+
+    if (end <= node.start)
+      return;
+
+    if (node.right != null)
+      findIntervals(node.right, start, end, result);
   }
 
   private Node bsearch(int start) {
@@ -269,6 +291,14 @@ public class OWALChangesTree {
       this.start = start;
       this.end = start + value.length;
       this.maxEnd = end;
+    }
+
+    private boolean overlapsWith(Node other) {
+      return start < other.end && end > other.start;
+    }
+
+    private boolean overlapsWith(int start, int end) {
+      return this.start < end && this.end > start;
     }
   }
 }
