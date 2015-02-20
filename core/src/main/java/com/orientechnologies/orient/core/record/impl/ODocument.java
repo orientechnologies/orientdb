@@ -793,9 +793,8 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         if (!iFieldName.contains(".")) {
           ODocumentEntry entry = _fields.get(iFieldName);
           removeCollectionChangeListener(entry, entry.value);
-          removeCollectionTimeLine(entry);
           entry.value = value;
-          addCollectionChangeListener(iFieldName, entry, value);
+          addCollectionChangeListener(entry);
         }
       }
     }
@@ -1064,13 +1063,12 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
         entry.type = fieldType;
     }
     removeCollectionChangeListener(entry, oldValue);
-    removeCollectionTimeLine(entry);
     entry.value = iPropertyValue;
     if (!entry.exist()) {
       entry.setExist(true);
       _fieldSize++;
     }
-    addCollectionChangeListener(iFieldName, entry, iPropertyValue);
+    addCollectionChangeListener(entry);
 
     if (_status != STATUS.UNMARSHALLING) {
       setDirty();
@@ -1112,7 +1110,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
     _fieldSize--;
 
-    removeCollectionTimeLine(entry);
     removeCollectionChangeListener(entry, oldValue);
 
     setDirty();
@@ -1267,7 +1264,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
           iterator.remove();
         _fieldSize--;
         removeCollectionChangeListener(current.getValue(), current.getValue().value);
-        removeCollectionTimeLine(current.getValue());
       }
     };
   }
@@ -1612,7 +1608,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
           cur.getValue().timeLine = null;
           if (cur.getValue().value instanceof OTrackedMultiValue<?, ?>) {
             removeCollectionChangeListener(cur.getValue(), cur.getValue().value);
-            addCollectionChangeListener(cur.getKey(), cur.getValue(), cur.getValue().value);
+            addCollectionChangeListener(cur.getValue());
           }
         }
       }
@@ -2153,7 +2149,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     ODocumentEntry entry = getOrCreate(iFieldName);
     entry.value = iFieldValue;
     entry.type = iFieldType;
-    addCollectionChangeListener(iFieldName, entry, iFieldValue);
+    addCollectionChangeListener(entry);
   }
 
   protected ODocumentEntry getOrCreate(String key) {
@@ -2295,8 +2291,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       final Object fieldValue = fieldEntry.getValue().value;
       if (!(fieldValue instanceof Collection<?>) && !(fieldValue instanceof Map<?, ?>))
         continue;
-      if (fieldValue instanceof OTrackedMultiValue) {
-        addCollectionChangeListener(fieldEntry.getKey(), fieldEntry.getValue(), (OTrackedMultiValue<Object, Object>) fieldValue);
+      if (addCollectionChangeListener(fieldEntry.getValue())) {
         continue;
       }
 
@@ -2311,25 +2306,38 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       if (fieldType == null)
         fieldType = OType.getTypeByValue(fieldValue);
 
-      if (fieldType == null
-          || !(OType.EMBEDDEDLIST.equals(fieldType) || OType.EMBEDDEDMAP.equals(fieldType) || OType.EMBEDDEDSET.equals(fieldType)
-              || OType.LINKSET.equals(fieldType) || OType.LINKLIST.equals(fieldType) || OType.LINKMAP.equals(fieldType)))
-        continue;
       Object newValue = null;
-      if (fieldValue instanceof List && fieldType.equals(OType.EMBEDDEDLIST))
-        newValue = new OTrackedList<Object>(this, (List<?>) fieldValue, null);
-      else if (fieldValue instanceof Set && fieldType.equals(OType.EMBEDDEDSET))
-        newValue = new OTrackedSet<Object>(this, (Set<OIdentifiable>) fieldValue, null);
-      else if (fieldValue instanceof Map && fieldType.equals(OType.EMBEDDEDMAP))
-        newValue = new OTrackedMap<OIdentifiable>(this, (Map<Object, OIdentifiable>) fieldValue, null);
-      else if (fieldValue instanceof Set && fieldType.equals(OType.LINKSET))
-        newValue = new ORecordLazySet(this, (Collection<OIdentifiable>) fieldValue);
-      else if (fieldValue instanceof List && fieldType.equals(OType.LINKLIST))
-        newValue = new ORecordLazyList(this, (List<OIdentifiable>) fieldValue);
-      else if (fieldValue instanceof Map && fieldType.equals(OType.LINKMAP))
-        newValue = new ORecordLazyMap(this, (Map<Object, OIdentifiable>) fieldValue);
+      switch (fieldType) {
+      case EMBEDDEDLIST:
+        if (fieldValue instanceof List<?>)
+          newValue = new OTrackedList<Object>(this, (List<?>) fieldValue, null);
+        break;
+      case EMBEDDEDSET:
+        if (fieldValue instanceof Set<?>)
+          newValue = new OTrackedSet<Object>(this, (Set<OIdentifiable>) fieldValue, null);
+        break;
+      case EMBEDDEDMAP:
+        if (fieldValue instanceof Map<?, ?>)
+          newValue = new OTrackedMap<OIdentifiable>(this, (Map<Object, OIdentifiable>) fieldValue, null);
+        break;
+      case LINKLIST:
+        if (fieldValue instanceof List<?>)
+          newValue = new ORecordLazyList(this, (List<OIdentifiable>) fieldValue);
+        break;
+      case LINKSET:
+        if (fieldValue instanceof Set<?>)
+          newValue = new ORecordLazySet(this, (Collection<OIdentifiable>) fieldValue);
+        break;
+      case LINKMAP:
+        if (fieldValue instanceof Map<?, ?>)
+          newValue = new ORecordLazyMap(this, (Map<Object, OIdentifiable>) fieldValue);
+        break;
+      default:
+        break;
+      }
+
       if (newValue != null) {
-        addCollectionChangeListener(fieldEntry.getKey(), fieldEntry.getValue(), (OTrackedMultiValue<Object, Object>) newValue);
+        addCollectionChangeListener(fieldEntry.getValue());
         fieldEntry.getValue().value = newValue;
       }
     }
@@ -2471,21 +2479,16 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     return fieldType;
   }
 
-  private void addCollectionChangeListener(final String fieldName, final ODocumentEntry entry, final Object fieldValue) {
-    if (!(fieldValue instanceof OTrackedMultiValue))
-      return;
-    addCollectionChangeListener(fieldName, entry, (OTrackedMultiValue<Object, Object>) fieldValue);
-  }
-
-  private void addCollectionChangeListener(final String fieldName, final ODocumentEntry entry,
-      final OTrackedMultiValue<Object, Object> multiValue) {
-
+  private boolean addCollectionChangeListener(final ODocumentEntry entry) {
+    if (!(entry.value instanceof OTrackedMultiValue))
+      return false;
     if (entry.changeListener == null) {
       final OSimpleMultiValueChangeListener<Object, Object> listener = new OSimpleMultiValueChangeListener<Object, Object>(this,
           entry);
-      multiValue.addChangeListener(listener);
+      ((OTrackedMultiValue<Object, Object>) entry.value).addChangeListener(listener);
       entry.changeListener = listener;
     }
+    return true;
   }
 
   private void removeAllCollectionChangeListeners() {
@@ -2502,26 +2505,21 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       return;
 
     for (final Map.Entry<String, ODocumentEntry> field : _fields.entrySet()) {
-      addCollectionChangeListener(field.getKey(), field.getValue(), field.getValue().value);
+      addCollectionChangeListener(field.getValue());
     }
   }
 
   private void removeCollectionChangeListener(ODocumentEntry entry, Object fieldValue) {
-    if (entry != null) {
+    if (entry != null && entry.changeListener != null) {
       final OMultiValueChangeListener<Object, Object> changeListener = entry.changeListener;
       entry.changeListener = null;
+      entry.timeLine = null;
       if (!(fieldValue instanceof OTrackedMultiValue))
         return;
 
-      if (changeListener != null) {
-        final OTrackedMultiValue<Object, Object> multiValue = (OTrackedMultiValue<Object, Object>) fieldValue;
-        multiValue.removeRecordChangeListener(changeListener);
-      }
+      final OTrackedMultiValue<Object, Object> multiValue = (OTrackedMultiValue<Object, Object>) fieldValue;
+      multiValue.removeRecordChangeListener(changeListener);
     }
   }
 
-  private void removeCollectionTimeLine(final ODocumentEntry entry) {
-    if (entry != null)
-      entry.timeLine = null;
-  }
 }
