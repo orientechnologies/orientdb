@@ -1989,7 +1989,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
             map.put(entry.getKey(), entry.getValue());
           }
           continue;
-        } else if (OMultiValue.isMultiValue(value)) {
+        } else if (OMultiValue.isMultiValue(value) && !(value instanceof ORidBag)) {
           for (Object item : OMultiValue.getMultiValueIterable(otherValue)) {
             if (!OMultiValue.contains(value, item))
               OMultiValue.add(value, item);
