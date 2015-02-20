@@ -30,7 +30,12 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
+import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OTransactionException;
+import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.version.OSimpleVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
@@ -66,23 +71,37 @@ public class OTxTask extends OAbstractReplicatedTask {
 
     try {
       database.begin();
+      final OTransactionOptimistic tx = (OTransactionOptimistic) database.getTransaction();
 
       final List<Object> results = new ArrayList<Object>();
 
-      // EXECUTE CREATE RECORD FIRST TO RESOLVE TEMP RIDS
+      // REGISTER CREATE FIRST TO RESOLVE TEMP RIDS
       for (OAbstractRecordReplicatedTask task : tasks) {
         if (task instanceof OCreateRecordTask) {
-          final Object taskResult = task.execute(iServer, iManager, database);
-          results.add(taskResult);
+          final OCreateRecordTask createRT = (OCreateRecordTask) task;
+          final String clusterName = createRT.getRid().isValid() ? database.getClusterNameById(createRT.getRid().getClusterId())
+              : null;
+          tx.addRecord(createRT.getRecord(), ORecordOperation.CREATED, clusterName);
         }
       }
 
-      // EXECUTE ANY OTHER TASK BUT CREATE RECORD
       for (OAbstractRecordReplicatedTask task : tasks) {
-        if (!(task instanceof OCreateRecordTask)) {
-          final Object taskResult = task.execute(iServer, iManager, database);
-          results.add(taskResult);
+        // ASSURE ALL RIDBAGS ARE UNMARSHALLED TO AVOID STORING TEMP RIDS
+        if (task instanceof OCreateRecordTask) {
+          final ORecord record = ((OCreateRecordTask) task).getRecord();
+
+          for (String f : ((ODocument) record).fieldNames()) {
+            final Object fValue = ((ODocument) record).field(f);
+            if (fValue instanceof ORidBag)
+              // DESERIALIZE IT TO ASSURE TEMPORARY RIDS ARE TREATED CORRECTLY
+              ((ORidBag) fValue).convertLinks2Records();
+          }
         }
+      }
+
+      for (OAbstractRecordReplicatedTask task : tasks) {
+        final Object taskResult = task.execute(iServer, iManager, database);
+        results.add(taskResult);
       }
 
       database.commit();
