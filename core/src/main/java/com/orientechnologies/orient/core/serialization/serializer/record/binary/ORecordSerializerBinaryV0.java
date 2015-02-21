@@ -225,14 +225,15 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
     final Entry<String, ODocumentEntry> values[] = new Entry[fields.size()];
     for (Entry<String, ODocumentEntry> entry : fields) {
-      if (!entry.getValue().exist())
+      ODocumentEntry docEntry = entry.getValue();
+      if (!docEntry.exist())
         continue;
-      if (entry.getValue().property == null && props != null)
-        entry.getValue().property = props.get(entry.getKey());
+      if (docEntry.property == null && props != null)
+        docEntry.property = props.get(entry.getKey());
 
-      if (entry.getValue().property != null) {
-        OVarIntSerializer.write(bytes, (entry.getValue().property.getId() + 1) * -1);
-        if (entry.getValue().property.getType() != OType.ANY)
+      if (docEntry.property != null) {
+        OVarIntSerializer.write(bytes, (docEntry.property.getId() + 1) * -1);
+        if (docEntry.property.getType() != OType.ANY)
           pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE);
         else
           pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE + 1);
