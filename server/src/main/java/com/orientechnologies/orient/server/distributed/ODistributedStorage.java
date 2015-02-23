@@ -846,14 +846,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           case ORecordOperation.CREATED:
             if (rid.isNew()) {
               task = new OCreateRecordTask(record);
-              if( record instanceof ODocument )
+              if (record instanceof ODocument)
                 ((ODocument) record).validate();
               break;
             }
             // ELSE TREAT IT AS UPDATE: GO DOWN
 
           case ORecordOperation.UPDATED:
-            if( record instanceof ODocument )
+            if (record instanceof ODocument)
               ((ODocument) record).validate();
 
             // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO

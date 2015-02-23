@@ -20,7 +20,7 @@ public class AlterPropertyTest {
     assertNull(classA.getProperty("propertyNew"));
     property.setName("propertyNew");
     assertNull(classA.getProperty("propertyOld"));
-    assertEquals(property, classA.getProperty("propertyNew")); 
+    assertEquals(property, classA.getProperty("propertyNew"));
     db.drop();
   }
 

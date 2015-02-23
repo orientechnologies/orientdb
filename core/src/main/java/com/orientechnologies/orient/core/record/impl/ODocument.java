@@ -2332,16 +2332,6 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       convertFieldsToClass(iClass);
   }
 
-  private void fetchSchemaIfCan() {
-    if (_schema == null) {
-      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-      if (db != null && !db.isClosed()) {
-        OMetadataInternal metadata = (OMetadataInternal) db.getMetadata();
-        _schema = metadata.getImmutableSchemaSnapshot();
-      }
-    }
-  }
-
   protected Set<Entry<String, ODocumentEntry>> getRawEntries() {
     checkForFields();
     return _fields == null ? new HashSet<Map.Entry<String, ODocumentEntry>>() : _fields.entrySet();
