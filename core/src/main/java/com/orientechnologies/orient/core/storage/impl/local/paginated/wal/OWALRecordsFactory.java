@@ -20,8 +20,11 @@
 
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.common.serialization.types.OIntegerSerializer;
+
 import java.util.HashMap;
 import java.util.Map;
+import java.util.zip.CRC32;
 
 /**
  * @author Andrey Lomakin
@@ -34,7 +37,7 @@ public class OWALRecordsFactory {
   public static final OWALRecordsFactory INSTANCE    = new OWALRecordsFactory();
 
   public byte[] toStream(OWALRecord walRecord) {
-    int contentSize = walRecord.serializedSize() + 1;
+    int contentSize = walRecord.serializedSize() + 1 + OIntegerSerializer.INT_SIZE; // content + record type + CRC32
     byte[] content = new byte[contentSize];
 
     if (walRecord instanceof OUpdatePageRecord)
@@ -60,12 +63,15 @@ public class OWALRecordsFactory {
     } else
       throw new IllegalArgumentException(walRecord.getClass().getName() + " class can not be serialized.");
 
-    walRecord.toStream(content, 1);
+    final int offset = walRecord.toStream(content, 1);
+    final CRC32 crc32 = new CRC32();
+    crc32.update(content, 1, offset - 1);
+    OIntegerSerializer.INSTANCE.serializeNative((int) crc32.getValue(), content, offset);
 
     return content;
   }
 
-  public OWALRecord fromStream(byte[] content) {
+  public OWALRecord fromStream(byte[] content, OLogSequenceNumber lsn) {
     OWALRecord walRecord;
     switch (content[0]) {
     case 0:
@@ -107,6 +113,13 @@ public class OWALRecordsFactory {
       else
         throw new IllegalStateException("Can not deserialize passed in wal record.");
     }
+
+    final CRC32 crc32 = new CRC32();
+    crc32.update(content, 1, content.length - OIntegerSerializer.INT_SIZE - 1);
+
+    final int crc = OIntegerSerializer.INSTANCE.deserializeNative(content, content.length - OIntegerSerializer.INT_SIZE);
+    if (crc != (int) crc32.getValue())
+      throw new OWALPageBrokenException("Record with LSN " + lsn + " is broken");
 
     walRecord.fromStream(content, 1);
 
