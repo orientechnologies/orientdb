@@ -1027,6 +1027,7 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           } catch (InterruptedException e) {
           }
 
+          wrapped.reload();
           continue;
         }
       }

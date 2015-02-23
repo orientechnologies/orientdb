@@ -335,6 +335,7 @@ public class OClientConnectionManager {
     while (iterator.hasNext()) {
       final Entry<Integer, OClientConnection> entry = iterator.next();
       entry.getValue().protocol.sendShutdown();
+
       OCommandRequestText command = entry.getValue().data.command;
       if (command != null && command.isIdempotent()) {
         entry.getValue().protocol.interrupt();
@@ -360,8 +361,19 @@ public class OClientConnectionManager {
                   entry.getValue().getRemoteAddress());
             }
           }
-          if (entry.getValue().protocol.isAlive())
+          if (entry.getValue().protocol.isAlive()) {
+            if (entry.getValue().protocol instanceof ONetworkProtocolBinary
+                && ((ONetworkProtocolBinary) entry.getValue().protocol).getRequestType() == -1) {
+              try {
+                entry.getValue().protocol.getChannel().close();
+              } catch (Exception e) {
+                OLogManager.instance().error(this, "Error during chanel close at shutdown", e);
+              }
+              entry.getValue().protocol.interrupt();
+            }
+
             entry.getValue().protocol.join();
+          }
         } catch (InterruptedException e) {
           // NOT Needed to handle
         }

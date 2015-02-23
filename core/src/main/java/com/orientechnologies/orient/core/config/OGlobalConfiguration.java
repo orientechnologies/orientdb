@@ -290,7 +290,7 @@ public enum OGlobalConfiguration {
   PREFER_SBTREE_SET("collections.preferSBTreeSet", "This config is experimental.", Boolean.class, false),
 
   // FILE
-  FILE_LOCK("file.lock", "Locks files when used. Default is false", boolean.class, true),
+  FILE_LOCK("file.lock", "Locks files when used. Default is true", boolean.class, true),
 
   FILE_DELETE_DELAY("file.deleteDelay", "Delay time in ms to wait for another attempt to delete a locked file", Integer.class, 10),
 
@@ -666,15 +666,6 @@ public enum OGlobalConfiguration {
       else if (jvmMaxMemory > 512 * OFileUtils.MEGABYTE)
         // INCREASE WAL RESTORE BATCH SIZE TO 10K INSTEAD OF DEFAULT 1K
         WAL_RESTORE_BATCH_SIZE.setValue(10000);
-    }
-
-    if (System.getProperty(WAL_MAX_SIZE.key) == null) {
-      long walSize = DISK_CACHE_SIZE.getValueAsInteger() * 4;
-
-      if (walSize > freeSpaceInMB / 2)
-        walSize = freeSpaceInMB / 2;
-
-      WAL_MAX_SIZE.setValue(walSize);
     }
   }
 

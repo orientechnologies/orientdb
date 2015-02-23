@@ -31,7 +31,7 @@ import java.util.NoSuchElementException;
 
 /**
  * Iterator that allow to iterate against multiple collection of elements.
- * 
+ *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class OMultiCollectionIterator<T> implements Iterator<T>, Iterable<T>, OResettable, OSizeable {

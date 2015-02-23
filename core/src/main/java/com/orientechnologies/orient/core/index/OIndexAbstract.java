@@ -219,6 +219,14 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         this.clustersToIndex = new HashSet<String>();
 
       markStorageDirty();
+      // do not remove this, it is needed to remove index garbage if such one exists
+      try {
+        indexEngine.deleteWithoutLoad(name);
+        removeValuesContainer();
+      } catch (Exception e) {
+        OLogManager.instance().error(this, "Error during deletion of index %s .", name);
+      }
+
       indexEngine.create(this.name, indexDefinition, clusterIndexName, valueSerializer, isAutomatic());
 
       if (rebuild)
@@ -264,17 +272,18 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       try {
         indexEngine.load(rid, name, indexDefinition, determineValueSerializer(), isAutomatic());
       } catch (Exception e) {
-        if (onCorruptionRepairDatabase(null, "load", "Index will be rebuilt")) {
-          if (isAutomatic() && getStorage() instanceof OAbstractPaginatedStorage)
-            // AUTOMATIC REBUILD IT
-            OLogManager.instance().warn(this, "Cannot load index '%s' from storage (rid=%s): rebuilt it from scratch", getName(),
-                rid);
+        OLogManager.instance().error(this, "Error during load of index %s .", e, name != null ? name : "null");
+
+        if (isAutomatic() && getStorage() instanceof OAbstractPaginatedStorage) {
+          // AUTOMATIC REBUILD IT
+          OLogManager.instance()
+              .warn(this, "Cannot load index '%s' from storage (rid=%s): rebuilt it from scratch", getName(), rid);
           try {
             rebuild();
           } catch (Throwable t) {
             OLogManager.instance().error(this,
                 "Cannot rebuild index '%s' from storage (rid=%s) because '" + t + "'. The index will be removed in configuration",
-                getName(), rid);
+                e, getName(), rid);
             // REMOVE IT
             return false;
           }
@@ -371,12 +380,15 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         rebuilding = true;
 
         try {
-          indexEngine.clear();
+          indexEngine.deleteWithoutLoad(name);
         } catch (Exception e) {
-          // IGNORE EXCEPTION: IF THE REBUILD WAS LAUNCHED IN CASE OF RID INVALID CLEAR ALWAYS GOES IN ERROR
+          OLogManager.instance().error(this, "Error during index %s delete .", name);
         }
 
         removeValuesContainer();
+
+        indexEngine.create(name, indexDefinition, getDatabase().getMetadata().getIndexManager().getDefaultClusterName(),
+            determineValueSerializer(), isAutomatic());
 
         long documentNum = 0;
         long documentTotal = 0;
@@ -725,12 +737,6 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
     } finally {
       releaseSharedLock();
     }
-  }
-
-  public boolean onCorruptionRepairDatabase(final ODatabase database, final String reason, String whatWillbeFixed) {
-    if (reason.equals("load"))
-      return true;
-    return false;
   }
 
   public OType[] getKeyTypes() {

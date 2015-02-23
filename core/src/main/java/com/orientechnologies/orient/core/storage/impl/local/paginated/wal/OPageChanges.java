@@ -34,8 +34,8 @@ public class OPageChanges {
 
     changeUnits.add(new ChangeUnit(pageOffset, oldValues, newValues));
 
-    serializedSize += compressedIntegerSize(pageOffset) + compressedIntegerSize(oldValues.length)
-        + (newValues == null ? 0 : newValues.length) + oldValues.length + OByteSerializer.BYTE_SIZE;
+    serializedSize += 2 * OIntegerSerializer.INT_SIZE + (newValues == null ? 0 : newValues.length) + oldValues.length
+        + OByteSerializer.BYTE_SIZE;
   }
 
   public boolean isEmpty() {
@@ -67,8 +67,11 @@ public class OPageChanges {
     offset += OIntegerSerializer.INT_SIZE;
 
     for (ChangeUnit changeUnit : changeUnits) {
-      offset = serializeCompressedInteger(content, offset, changeUnit.pageOffset);
-      offset = serializeCompressedInteger(content, offset, changeUnit.oldValues.length);
+      OIntegerSerializer.INSTANCE.serializeNative(changeUnit.pageOffset, content, offset);
+      offset += OIntegerSerializer.INT_SIZE;
+
+      OIntegerSerializer.INSTANCE.serializeNative(changeUnit.oldValues.length, content, offset);
+      offset += OIntegerSerializer.INT_SIZE;
 
       if (changeUnit.newValues != null) {
         content[offset] = 1;
@@ -92,16 +95,12 @@ public class OPageChanges {
 
     changeUnits = new ArrayList<ChangeUnit>(changesSize);
 
-    int[] decompressResult;
     for (int i = 0; i < changesSize; i++) {
-      decompressResult = deserializeCompressedInteger(content, offset);
+      int pageOffset = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
+      offset += OIntegerSerializer.INT_SIZE;
 
-      int pageOffset = decompressResult[0];
-      offset = decompressResult[1];
-
-      decompressResult = deserializeCompressedInteger(content, offset);
-      int dataLength = decompressResult[0];
-      offset = decompressResult[1];
+      int dataLength = OIntegerSerializer.INSTANCE.deserializeNative(content, offset);
+      offset += OIntegerSerializer.INT_SIZE;
 
       boolean newValuesIsPresent = content[offset++] > 0;
 
@@ -121,63 +120,6 @@ public class OPageChanges {
     }
 
     return offset;
-  }
-
-  private int compressedIntegerSize(int value) {
-    if (value <= 127)
-      return 1;
-    if (value <= 16383)
-      return 2;
-    if (value <= 2097151)
-      return 3;
-
-    throw new IllegalArgumentException("Values more than 2097151 are not supported.");
-  }
-
-  private int serializeCompressedInteger(byte[] content, int offset, int value) {
-    if (value <= 127) {
-      content[offset] = (byte) value;
-      return offset + 1;
-    }
-
-    if (value <= 16383) {
-      content[offset + 1] = (byte) (0xFF & value);
-
-      value = value >>> 8;
-      content[offset] = (byte) (0x80 | value);
-      return offset + 2;
-    }
-
-    if (value <= 2097151) {
-      content[offset + 2] = (byte) (0xFF & value);
-      value = value >>> 8;
-
-      content[offset + 1] = (byte) (0xFF & value);
-      value = value >>> 8;
-
-      content[offset] = (byte) (0xC0 | value);
-
-      return offset + 3;
-    }
-
-    throw new IllegalArgumentException("Values more than 2097151 are not supported.");
-  }
-
-  private int[] deserializeCompressedInteger(byte[] content, int offset) {
-    if ((content[offset] & 0x80) == 0)
-      return new int[] { content[offset], offset + 1 };
-
-    if ((content[offset] & 0xC0) == 0x80) {
-      final int value = (0xFF & content[offset + 1]) | ((content[offset] & 0x3F) << 8);
-      return new int[] { value, offset + 2 };
-    }
-
-    if ((content[offset] & 0xE0) == 0xC0) {
-      final int value = (0xFF & content[offset + 2]) | ((0xFF & content[offset + 1]) << 8) | ((content[offset] & 0x1F) << 16);
-      return new int[] { value, offset + 3 };
-    }
-
-    throw new IllegalArgumentException("Invalid integer format.");
   }
 
   private final static class ChangeUnit {

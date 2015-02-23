@@ -20,6 +20,8 @@
 
 package com.tinkerpop.blueprints.impls.orient;
 
+import java.util.Iterator;
+
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.iterator.OLazyWrapperIterator;
@@ -28,8 +30,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Vertex;
-
-import java.util.Iterator;
 
 public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
   private final OrientVertex             vertex;
@@ -73,6 +73,9 @@ public class OrientVertexIterator extends OLazyWrapperIterator<Vertex> {
   }
 
   public boolean filter(final Vertex iObject) {
+    if (iObject instanceof OrientVertex && ((OrientVertex) iObject).getRecord() == null) {
+      return false;
+    }
     return true;
   }
 }

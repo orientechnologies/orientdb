@@ -1131,6 +1131,56 @@ public class SQLSelectTest extends AbstractSelectTest {
   }
 
   @Test
+  public void testTraverse() {
+    OrientGraph graph = new OrientGraph(url);
+    graph.setAutoStartTx(false);
+    graph.commit();
+
+    OClass oc = graph.getVertexType("vertexA");
+    if (oc == null)
+      oc = graph.createVertexType("vertexA");
+
+    if (!oc.existsProperty("name"))
+      oc.createProperty("name", OType.STRING);
+
+    if (oc.getClassIndex("vertexA_name_idx") == null)
+      oc.createIndex("vertexA_name_idx", OClass.INDEX_TYPE.UNIQUE, "name");
+
+    OClass ocb = graph.getVertexType("vertexB");
+    if (ocb == null)
+      ocb = graph.createVertexType("vertexB");
+
+    ocb.createProperty("name", OType.STRING);
+    ocb.createProperty("map", OType.EMBEDDEDMAP);
+    ocb.createIndex("vertexB_name_idx", OClass.INDEX_TYPE.UNIQUE, "name");
+    graph.setAutoStartTx(true);
+
+    // FIRST: create a root vertex
+    ODocument docA = graph.addVertex("class:vertexA").getRecord();
+    docA.field("name", "valueA");
+    docA.save();
+
+    Map<String, String> map = new HashMap<String, String>();
+    map.put("key", "value");
+
+    createAndLink(graph, "valueB1", map, docA);
+    createAndLink(graph, "valueB2", map, docA);
+
+    StringBuilder sb = new StringBuilder("select from vertexB");
+    sb.append(" where any() traverse(0, -1) (@class = '");
+    sb.append("vertexA");
+    sb.append("' AND name = 'valueA')");
+
+    List<ODocument> recordDocs = executeQuery(sb.toString(), graph.getRawGraph());
+
+    for (ODocument doc : recordDocs) {
+//      System.out.println(doc);
+    }
+
+    graph.shutdown();
+  }
+
+  @Test
   public void testQueryAsClass() {
 
     List<ODocument> result = executeQuery("select from Account where addresses.@class in [ 'Address' ]", database);
