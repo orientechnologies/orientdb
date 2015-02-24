@@ -47,6 +47,8 @@ public class JavaAttachDetachTestClass {
   public ODocument             document;
   public ORecordBytes          byteArray;
   public String                name;
+  public Child                 specialChild;
+  public Child                 specialChild2;
   public Map<String, Child>    children     = new HashMap<String, Child>();
   public List<EnumTest>        enumList     = new ArrayList<EnumTest>();
   public Set<EnumTest>         enumSet      = new HashSet<EnumTest>();
@@ -114,6 +116,22 @@ public class JavaAttachDetachTestClass {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public Child getSpecialChild() {
+    return specialChild;
+  }
+
+  public void setSpecialChild(Child specialChild) {
+    this.specialChild = specialChild;
+  }
+
+  public Child getSpecialChild2() {
+      return specialChild;
+    }
+
+  public void setSpecialChild2(Child specialChild2) {
+    this.specialChild2 = specialChild2;
   }
 
   public Map<String, Child> getChildren() {
