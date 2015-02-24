@@ -2,8 +2,16 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class OCreateVertexStatement extends OStatement {
+import java.util.Map;
+
+public class OCreateVertexStatement extends OStatement {
+
+  OIdentifier targetClass;
+  OIdentifier targetClusterName;
+  OCluster    targetCluster;
+  OProjection returnStatement;
+  OInsertBody insertBody;
+
   public OCreateVertexStatement(int id) {
     super(id);
   }
@@ -12,5 +20,40 @@ class OCreateVertexStatement extends OStatement {
     super(p, id);
   }
 
+  @Override
+  public String toString() {
+    StringBuilder result = new StringBuilder();
+    result.append("CREATE VERTEX ");
+    if (targetClass != null) {
+      result.append(targetClass.toString());
+      if (targetClusterName != null) {
+        result.append(" CLUSTER ");
+        result.append(targetClusterName.toString());
+      }
+    }
+    if (targetCluster != null) {
+      result.append(targetCluster.toString());
+    }
+    if (returnStatement != null) {
+      result.append(" RETURN ");
+      result.append(returnStatement.toString());
+    }
+    if (insertBody != null) {
+      if (targetClass != null || targetCluster != null || returnStatement != null) {
+        result.append(" ");
+      }
+      result.append(insertBody.toString());
+    }
+    return result.toString();
+  }
+
+  public void replaceParameters(Map<Object, Object> params) {
+    if (returnStatement != null) {
+      returnStatement.replaceParameters(params);
+    }
+    if (insertBody != null) {
+      insertBody.replaceParameters(params);
+    }
+  }
 }
 /* JavaCC - OriginalChecksum=0ac3d3f09a76b9924a17fd05bc293863 (do not edit this line) */

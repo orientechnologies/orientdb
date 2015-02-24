@@ -893,7 +893,11 @@ OCreateVertexStatementEmpty CreateVertexStatementEmpty():
 
 	<CREATE>
 	<VERTEX>
-	Identifier() [ <CLUSTER> Identifier() ]
+	jjtThis.targetClass = Identifier()
+    [
+        <CLUSTER>
+        jjtThis.targetClusterName = Identifier()
+    ]
     {return jjtThis;}
 }
 
@@ -906,12 +910,19 @@ OCreateVertexStatement CreateVertexStatement():
 	<VERTEX>
 	(
 	    LOOKAHEAD( Identifier() )
-	    ( Identifier() [<CLUSTER> Identifier()] )
+	    (
+	        jjtThis.targetClass = Identifier()
+	        [
+	            <CLUSTER>
+	            jjtThis.targetClusterName = Identifier()
+	        ]
+	    )
 	    |
 	    LOOKAHEAD( Cluster() )
-	    Cluster()
+	    jjtThis.targetCluster = Cluster()
 	)
-	[ LOOKAHEAD(InsertBody()) InsertBody() ]
+	[ <RETURN> jjtThis.returnStatement = Projection() ]
+	[ LOOKAHEAD(InsertBody()) jjtThis.insertBody = InsertBody() ]
 ) {return jjtThis;}
 }
 
@@ -922,7 +933,7 @@ OCreateVertexStatementNoTarget CreateVertexStatementNoTarget():
 (
 	<CREATE>
 	<VERTEX>
-	InsertBody()
+	jjtThis.insertBody = InsertBody()
 ) {return jjtThis;}
 }
 
@@ -1276,9 +1287,19 @@ OExpression Expression():
         <NULL> {jjtThis.value = null;}
         |
         LOOKAHEAD(2)
-        token = <STRING_LITERAL> {jjtThis.value = token.image.substring(1, token.image.length() - 1);}
+        token = <STRING_LITERAL>
+        {
+            jjtThis.value = token.image.substring(1, token.image.length() - 1);
+            if(token.image.startsWith("'")) {
+                jjtThis.singleQuotes = true;
+            }else{
+                jjtThis.doubleQuotes = true;
+            }
+
+        }
+
         |
-        token = <CHARACTER_LITERAL> {jjtThis.value = token.image.substring(1, token.image.length() - 1);}
+        token = <CHARACTER_LITERAL> {jjtThis.value = token.image.substring(1, token.image.length() - 1);  jjtThis.singleQuotes = true;}
         |
         LOOKAHEAD( Rid() )
         jjtThis.value = Rid()
