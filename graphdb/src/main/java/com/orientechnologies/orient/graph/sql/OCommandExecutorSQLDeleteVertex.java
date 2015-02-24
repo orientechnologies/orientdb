@@ -19,9 +19,6 @@
  */
 package com.orientechnologies.orient.graph.sql;
 
-import java.util.List;
-import java.util.Map;
-
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -40,11 +37,13 @@ import com.orientechnologies.orient.core.serialization.serializer.OStringSeriali
 import com.orientechnologies.orient.core.sql.OCommandExecutorSQLAbstract;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
-import com.tinkerpop.blueprints.Graph;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * SQL DELETE VERTEX command.
@@ -69,7 +68,6 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
 
     init((OCommandRequestText) iRequest);
 
-    testNewParser(iRequest);
 
     parserRequiredKeyword("DELETE");
     parserRequiredKeyword("VERTEX");

@@ -88,9 +88,9 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
     String queryText = textRequest.getText();
     String originalQuery = queryText;
     try {
-      System.out.println("NEW PARSER FROM: " + queryText);
+//      System.out.println("NEW PARSER FROM: " + queryText);
       queryText = preParse(queryText, iRequest);
-      System.out.println("NEW PARSER   TO: " + queryText);
+//      System.out.println("NEW PARSER   TO: " + queryText);
       textRequest.setText(queryText);
 
       final ODatabaseDocument database = getDatabase();

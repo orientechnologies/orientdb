@@ -214,21 +214,6 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     }
   }
 
-  protected void testNewParser(OCommandRequest iRequest){
-    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
-    String text = textRequest.getText();
-    InputStream is = new ByteArrayInputStream(text.getBytes());
-    OrientSql osql = new OrientSql(is);
-    try {
-      osql.parse();
-    } catch (ParseException e) {
-      System.out.println("NEW PARSER FAILED: "+text);
-      e.printStackTrace();
-      throwParsingException(e.getMessage());
-      //      throw new RuntimeException(e);
-    }
-  }
-
   protected String preParse(String queryText, OCommandRequest iRequest) {
     boolean strict = false;
     for (Iterator<OStorageEntryConfiguration> it = getDatabase().getStorage().getConfiguration().properties.iterator(); it

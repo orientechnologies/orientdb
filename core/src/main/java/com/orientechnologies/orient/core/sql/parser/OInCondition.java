@@ -2,18 +2,21 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+
 import java.util.Collection;
 import java.util.Map;
-
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 
 public class OInCondition extends OBooleanExpression {
   protected OExpression            left;
   protected OBinaryCompareOperator operator;
   protected OSelectStatement       rightStatement;
   protected Collection<Object>     rightCollection;
-  protected OInputParameter                 rightParam;
-  protected Object right;
+  protected OInputParameter        rightParam;
+  protected Object                 right;
+
+  private static final Object      UNSET           = new Object();
+  private Object                   inputFinalValue = UNSET;
 
   public OInCondition(int id) {
     super(id);
@@ -33,20 +36,24 @@ public class OInCondition extends OBooleanExpression {
     return false;
   }
 
-  @Override public void replaceParameters(Map<Object, Object> params) {
+  @Override
+  public void replaceParameters(Map<Object, Object> params) {
     left.replaceParameters(params);
     if (rightStatement != null) {
       rightStatement.replaceParameters(params);
     }
-    if(rightCollection!=null){
-      for(Object o:rightCollection){
-        if(o instanceof OExpression){
+    if (rightCollection != null) {
+      for (Object o : rightCollection) {
+        if (o instanceof OExpression) {
           ((OExpression) o).replaceParameters(params);
         }
       }
     }
-    if(rightParam!=null){
-      rightParam.bindFromInputParams(params);
+    if (rightParam != null) {
+      Object result = rightParam.bindFromInputParams(params);
+      if (rightParam != result) {
+        inputFinalValue = result;
+      }
     }
   }
 
@@ -72,7 +79,13 @@ public class OInCondition extends OBooleanExpression {
     } else if (right != null) {
       result.append(convertToString(right));
     } else if (rightParam != null) {
-      result.append(convertToString(rightParam));
+      if (inputFinalValue == UNSET) {
+        result.append( rightParam.toString());
+      } else if (inputFinalValue == null) {
+        result.append("NULL");
+      } else {
+        result.append(inputFinalValue.toString());
+      }
     }
     return result.toString();
   }

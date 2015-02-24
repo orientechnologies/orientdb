@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.core.sql;
 
-import java.util.*;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
@@ -29,6 +27,8 @@ import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+
+import java.util.*;
 
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
@@ -71,7 +71,6 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
       textRequest.setText(queryText);
 
       super.parse(iRequest);
-      testNewParser(iRequest);
 
       final int pos = parseFields();
       if (pos == -1)

@@ -33,6 +33,9 @@ PARSER_BEGIN(OrientSql)
 
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.util.List;
+import java.util.ArrayList;
+
 /** Orient Database Sql grammar. */
 public class OrientSql {
 
@@ -596,11 +599,11 @@ ODeleteStatement DeleteStatement():
 (
 	<DELETE>
 	<FROM>
-	FromClause()
-	[ <WHERE> WhereClause() ]
-	[ <RETURN> <BEFORE> ]
-	[ <LIMIT> Integer() ]
-	[ <UNSAFE> ]
+	jjtThis.fromClause = FromClause()
+	[ <WHERE> jjtThis.whereClause = WhereClause() ]
+	[ <RETURN> <BEFORE> { jjtThis.returnBefore = true; } ]
+	[ <LIMIT> jjtThis.limit = Integer() ]
+	[ <UNSAFE> { jjtThis.unsafe = true; }]
 ) {return jjtThis;}
 }
 
@@ -771,54 +774,106 @@ OInsertStatement InsertStatement():
 	<INSERT>
 	<INTO>
 	(
-	    Identifier() [<CLUSTER> Identifier()]
+	    jjtThis.targetClass = Identifier() [<CLUSTER> jjtThis.targetClusterName = Identifier()]
 	    |
-	    Cluster()
+	    jjtThis.targetCluster = Cluster()
 	    |
-	    IndexIdentifier()
+	    jjtThis.targetIndex = IndexIdentifier()
 	)
-	[ <RETURN> Projection() ]
-    InsertBody()
-    [ <UNSAFE> ]
+	[ <RETURN> jjtThis.returnStatement = Projection() ]
+    jjtThis.insertBody = InsertBody()
+    [ <UNSAFE> { jjtThis.unsafe = true; }]
 ) {return jjtThis;}
 }
 
 
 OInsertBody InsertBody():
-{}
 {
+    OIdentifier lastIdentifier;
+    OExpression lastExpression;
+    List<OExpression> lastExpressionList;
+}
+{
+//TODO
     (
         (
             LOOKAHEAD(3)
             (
-                <LPAREN> Identifier() (<COMMA> Identifier())* <RPAREN>
+                <LPAREN>
+                lastIdentifier = Identifier()
+                {
+                    jjtThis.identifierList = new ArrayList<OIdentifier>();
+                    jjtThis.identifierList.add(lastIdentifier);
+                }
+                (
+                    <COMMA>
+                    lastIdentifier = Identifier() { jjtThis.identifierList.add(lastIdentifier); }
+                )*
+                <RPAREN>
                 <VALUES>
-                <LPAREN> Expression() (<COMMA> Expression())* <RPAREN>
-                ( <COMMA> <LPAREN> Expression() (<COMMA> Expression())* <RPAREN> )*
+                <LPAREN>
+                {
+                    jjtThis.valueExpressions = new ArrayList<List<OExpression>>();
+                    lastExpressionList = new ArrayList<OExpression>();
+                    jjtThis.valueExpressions.add(lastExpressionList);
+                }
+                lastExpression = Expression() { lastExpressionList.add(lastExpression); }
+                (
+                    <COMMA>
+                    lastExpression = Expression() { lastExpressionList.add(lastExpression); }
+                )*
+                <RPAREN>
+                (
+                    <COMMA>
+                    <LPAREN>
+                    {
+                        lastExpressionList = new ArrayList<OExpression>();
+                        jjtThis.valueExpressions.add(lastExpressionList);
+                    }
+                    lastExpression = Expression() { lastExpressionList.add(lastExpression); }
+                    (
+                        <COMMA>
+                        lastExpression = Expression() { lastExpressionList.add(lastExpression); }
+                    )*
+                    <RPAREN>
+                )*
             )
             |
             LOOKAHEAD(3)
             (
                 <SET>
-                Identifier() <EQ> Expression()
-                ( <COMMA> Identifier() <EQ> Expression() )*
+                {
+                    jjtThis.setExpressions = new ArrayList<OInsertSetExpression>();
+                    OInsertSetExpression lastSetExpr = new OInsertSetExpression();
+                    jjtThis.setExpressions.add(lastSetExpr);
+                }
+                lastSetExpr.left = Identifier() <EQ> lastSetExpr.right = Expression()
+
+                (
+                    <COMMA>
+                    {
+                         lastSetExpr = new OInsertSetExpression();
+                         jjtThis.setExpressions.add(lastSetExpr);
+                    }
+                    lastSetExpr.left = Identifier() <EQ> lastSetExpr.right = Expression()
+                )*
             )
             |
             (
                 [ <FROM> ]
                 (
-                     SelectStatement()
+                     jjtThis.selectStatement = SelectStatement()
                      |
                      LOOKAHEAD(2)
                     (
-                        <LPAREN> SelectStatement() <RPAREN>
+                        <LPAREN> jjtThis.selectStatement = SelectStatement() { jjtThis.selectInParentheses = true; } <RPAREN>
                     )
                 )
             )
             |
-            ( <CONTENT> Json() )
+            ( <CONTENT> jjtThis.content = Json() )
          )
-        [ <RETURN> Projection() ]
+        [ <RETURN> jjtThis.returnProjection = Projection() ]
     )
     { return jjtThis; }
 }

@@ -2,8 +2,16 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class ODeleteStatement extends OStatement {
+import java.util.Map;
+
+public class ODeleteStatement extends OStatement {
+
+  protected OFromClause  fromClause;
+  protected OWhereClause whereClause;
+  protected boolean      returnBefore = false;
+  protected OInteger     limit        = null;
+  protected boolean      unsafe       = false;
+
   public ODeleteStatement(int id) {
     super(id);
   }
@@ -12,6 +20,35 @@ class ODeleteStatement extends OStatement {
     super(p, id);
   }
 
+  @Override
+  public String toString() {
+    StringBuilder result = new StringBuilder();
+    result.append("DELETE FROM ");
+    result.append(fromClause.toString());
+    if (whereClause != null) {
+      result.append(" WHERE ");
+      result.append(whereClause.toString());
+    }
+    if (returnBefore) {
+      result.append(" RETURN BEFORE");
+    }
+    if (limit != null) {
+      result.append(" LIMIT ");
+      result.append(limit);
+    }
+    if (unsafe) {
+      result.append(" UNSAFE");
+    }
+    return result.toString();
+  }
 
+  public void replaceParameters(Map<Object, Object> params) {
+    fromClause.replaceParameters(params);
+
+    if (whereClause != null) {
+      whereClause.replaceParameters(params);
+    }
+
+  }
 }
 /* JavaCC - OriginalChecksum=5fb4ca5ba648e6c9110f41d806206a6f (do not edit this line) */

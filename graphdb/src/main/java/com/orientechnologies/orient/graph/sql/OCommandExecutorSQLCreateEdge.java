@@ -65,7 +65,6 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
     final ODatabaseDocument database = getDatabase();
 
     init((OCommandRequestText) iRequest);
-    testNewParser(iRequest);
 
     parserRequiredKeyword("CREATE");
     parserRequiredKeyword("EDGE");
