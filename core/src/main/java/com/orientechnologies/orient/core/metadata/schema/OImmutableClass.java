@@ -1,13 +1,5 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
-import com.orientechnologies.common.listener.OProgressListener;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexManager;
-import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
-import com.orientechnologies.orient.core.record.impl.ODocument;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,34 +11,46 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.orientechnologies.common.listener.OProgressListener;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexManager;
+import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClusterSelectionStrategy;
+import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 10/21/14
  */
 public class OImmutableClass implements OClass {
-  private final boolean isAbstract;
-  private final boolean strictMode;
+  private final boolean                   isAbstract;
+  private final boolean                   strictMode;
 
-  private final String                      superClassName;
-  private final String                      name;
-  private final String                      streamAbleName;
-  private final Map<String, OProperty>      properties;
-  private final Class<?>                    javaClass;
-  private final OClusterSelectionStrategy   clusterSelection;
-  private final int                         defaultClusterId;
-  private final int[]                       clusterIds;
-  private final int[]                       polymorphicClusterIds;
-  private final Collection<String>          baseClassesNames;
-  private final float                       overSize;
-  private final float                       classOverSize;
-  private final String                      shortName;
-  private final Map<String, String>         customFields;
+  private final String                    superClassName;
+  private final String                    name;
+  private final String                    streamAbleName;
+  private final Map<String, OProperty>    properties;
+  private Map<String, OProperty>          allPropertiesMap;
+  private Collection<OProperty>           allProperties;
+  private final Class<?>                  javaClass;
+  private final OClusterSelectionStrategy clusterSelection;
+  private final int                       defaultClusterId;
+  private final int[]                     clusterIds;
+  private final int[]                     polymorphicClusterIds;
+  private final Collection<String>        baseClassesNames;
+  private final float                     overSize;
+  private final float                     classOverSize;
+  private final String                    shortName;
+  private final Map<String, String>       customFields;
 
-	private final OImmutableSchema            schema;
+  private final OImmutableSchema          schema;
   // do not do it volatile it is already SAFE TO USE IT in MT mode.
-  private       OImmutableClass             superClass;
+  private OImmutableClass                 superClass;
   // do not do it volatile it is already SAFE TO USE IT in MT mode.
-  private       Collection<OImmutableClass> baseClasses;
+  private Collection<OImmutableClass>     baseClasses;
+  private boolean                         restricted;
 
   public OImmutableClass(OClass oClass, OImmutableSchema schema) {
     isAbstract = oClass.isAbstract();
@@ -78,9 +82,47 @@ public class OImmutableClass implements OClass {
     for (OProperty p : oClass.declaredProperties())
       properties.put(p.getName().toLowerCase(), new OImmutableProperty(p, this));
 
-    customFields = new HashMap<String, String>();
+    Map<String, String> customFields = new HashMap<String, String>();
     for (String key : oClass.getCustomKeys())
       customFields.put(key, oClass.getCustom(key));
+
+    this.customFields = Collections.unmodifiableMap(customFields);
+  }
+
+  public void init() {
+    initSuperClass();
+
+    final Collection<OProperty> allProperties = new ArrayList<OProperty>();
+
+    OImmutableClass currentClass = this;
+    do {
+      allProperties.addAll(currentClass.properties.values());
+
+      currentClass.initSuperClass();
+      currentClass = currentClass.superClass;
+
+    } while (currentClass != null);
+    this.allProperties = Collections.unmodifiableCollection(allProperties);
+
+    final Map<String, OProperty> allPropsMap = new HashMap<String, OProperty>(20);
+
+    OImmutableClass currentMapClass = this;
+    do {
+
+      for (OProperty p : currentMapClass.properties.values()) {
+        final String propName = p.getName();
+
+        if (!allPropsMap.containsKey(propName))
+          allPropsMap.put(propName, p);
+      }
+
+      currentMapClass.initSuperClass();
+      currentMapClass = currentMapClass.superClass;
+
+    } while (currentMapClass != null);
+    allPropertiesMap = Collections.unmodifiableMap(allPropsMap);
+    this.restricted = isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME);
+
   }
 
   @Override
@@ -142,42 +184,12 @@ public class OImmutableClass implements OClass {
 
   @Override
   public Collection<OProperty> properties() {
-    final Collection<OProperty> props = new ArrayList<OProperty>();
-
-    initSuperClass();
-    OImmutableClass currentClass = this;
-    do {
-      props.addAll(currentClass.properties.values());
-
-      currentClass.initSuperClass();
-      currentClass = currentClass.superClass;
-
-    } while (currentClass != null);
-
-    return Collections.unmodifiableCollection(props);
+    return allProperties;
   }
 
   @Override
   public Map<String, OProperty> propertiesMap() {
-    final Map<String, OProperty> props = new HashMap<String, OProperty>(20);
-
-    initSuperClass();
-    OImmutableClass currentClass = this;
-    do {
-
-      for (OProperty p : currentClass.properties.values()) {
-        final String propName = p.getName();
-
-        if (!props.containsKey(propName))
-          props.put(propName, p);
-      }
-
-      currentClass.initSuperClass();
-      currentClass = currentClass.superClass;
-
-    } while (currentClass != null);
-
-    return Collections.unmodifiableMap(props);
+    return allPropertiesMap;
   }
 
   @Override
@@ -201,7 +213,8 @@ public class OImmutableClass implements OClass {
 
     } while (currentClass != null);
 
-    return (Collection<OProperty>) (indexedProps != null ? Collections.unmodifiableCollection(indexedProps) : Collections.emptyList());
+    return (Collection<OProperty>) (indexedProps != null ? Collections.unmodifiableCollection(indexedProps) : Collections
+        .emptyList());
   }
 
   @Override
@@ -323,11 +336,11 @@ public class OImmutableClass implements OClass {
     return polymorphicClusterIds;
   }
 
-	public OImmutableSchema getSchema() {
-		return schema;
-	}
+  public OImmutableSchema getSchema() {
+    return schema;
+  }
 
-	@Override
+  @Override
   public Collection<OClass> getBaseClasses() {
     initBaseClasses();
 
@@ -487,12 +500,14 @@ public class OImmutableClass implements OClass {
   }
 
   @Override
-  public OIndex<?> createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata, String algorithm, String... fields) {
+  public OIndex<?> createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata,
+      String algorithm, String... fields) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public OIndex<?> createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata, String... fields) {
+  public OIndex<?> createIndex(String iName, String iType, OProgressListener iProgressListener, ODocument metadata,
+      String... fields) {
     throw new UnsupportedOperationException();
   }
 
@@ -624,7 +639,7 @@ public class OImmutableClass implements OClass {
 
   @Override
   public boolean hasClusterId(int clusterId) {
-    return Arrays.binarySearch(clusterIds, clusterId)>=0;
+    return Arrays.binarySearch(clusterIds, clusterId) >= 0;
   }
 
   @Override
@@ -637,7 +652,7 @@ public class OImmutableClass implements OClass {
   }
 
   private Map<String, String> getCustomInternal() {
-    return Collections.unmodifiableMap(customFields);
+    return customFields;
   }
 
   private void initSuperClass() {
@@ -655,4 +670,9 @@ public class OImmutableClass implements OClass {
       baseClasses = result;
     }
   }
+
+  public boolean isRestricted() {
+    return restricted;
+  }
+
 }

@@ -56,6 +56,10 @@ public class OImmutableSchema implements OSchema {
     properties = new ArrayList<OGlobalProperty>();
     for (OGlobalProperty globalProperty : schemaShared.getGlobalProperties())
       properties.add(globalProperty);
+
+    for (OClass cl : classes.values()) {
+      ((OImmutableClass) cl).init();
+    }
   }
 
   @Override

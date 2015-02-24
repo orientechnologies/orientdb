@@ -209,8 +209,8 @@ public class GraphTests {
 
       g.commit();
 
-      g.command(new OCommandSQL("delete from "+vertexTwo.getRecord().getIdentity()+" unsafe")).execute();
-//      g.command(new OCommandSQL("update BrokenVertex1E set out = null")).execute();
+      g.command(new OCommandSQL("delete from " + vertexTwo.getRecord().getIdentity() + " unsafe")).execute();
+      // g.command(new OCommandSQL("update BrokenVertex1E set out = null")).execute();
 
       g.shutdown();
       g = new OrientGraph(URL, "admin", "admin");

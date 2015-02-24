@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
@@ -153,6 +154,25 @@ public class SQLCreateVertexAndEdgeTest {
     }
 
     System.out.println("done in " + (System.currentTimeMillis() - start) + "ms");
+
+  }
+
+  @Test
+  public void testNewParser() {
+    ODocument v1 = database.command(new OCommandSQL("create vertex")).execute();
+
+    Assert.assertEquals(v1.getClassName(), OrientVertexType.CLASS_NAME);
+
+    ORID vid = v1.getIdentity();
+    // TODO remove this
+    database.command(new OCommandSQL("create edge from " + vid + " to " + vid)).execute();
+
+    database.command(new OCommandSQL("create edge E from " + vid + " to " + vid)).execute();
+
+    database.command(new OCommandSQL("create edge from " + vid + " to " + vid + " set foo = 'bar'")).execute();
+
+    database.command(new OCommandSQL("create edge E from " + vid + " to " + vid + " set bar = 'foo'")).execute();
+
 
   }
 }

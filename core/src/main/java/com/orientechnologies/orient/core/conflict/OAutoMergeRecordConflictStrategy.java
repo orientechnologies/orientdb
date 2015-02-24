@@ -22,6 +22,10 @@ package com.orientechnologies.orient.core.conflict;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
+import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
@@ -33,11 +37,13 @@ public class OAutoMergeRecordConflictStrategy extends OVersionRecordConflictStra
   public static final String NAME = "automerge";
 
   @Override
-  public byte[] onUpdate(byte iRecordType, final ORecordId rid, final ORecordVersion iRecordVersion, final byte[] iRecordContent,
-      final ORecordVersion iDatabaseVersion) {
+  public byte[] onUpdate(OStorage storage, byte iRecordType, final ORecordId rid, final ORecordVersion iRecordVersion,
+      final byte[] iRecordContent, final ORecordVersion iDatabaseVersion) {
 
     if (iRecordType == ODocument.RECORD_TYPE) {
-      final ODocument storedRecord = rid.getRecord();
+      // No need lock, is already inside a lock.
+      OStorageOperationResult<ORawBuffer> res = storage.readRecord(rid, null, false, null, false, LOCKING_STRATEGY.NONE);
+      final ODocument storedRecord = new ODocument(rid).fromStream(res.getResult().getBuffer());
       final ODocument newRecord = new ODocument(rid).fromStream(iRecordContent);
 
       storedRecord.merge(newRecord, false, true);

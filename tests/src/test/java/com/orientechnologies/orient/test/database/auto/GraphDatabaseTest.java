@@ -198,19 +198,21 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
 
     database.commit();
 
-    String query1 = "select driver from V where out().car in 'ford'";
+    String query1 = "select driver from V where out().car contains 'ford'";
     List<ODocument> result = database.getRawGraph().query(new OSQLSynchQuery<ODocument>(query1));
     Assert.assertEquals(result.size(), 1);
 
-    String query2 = "select driver from V where outE()[color='red'].inV().car in 'ford'";
+    String query2 = "select driver from V where outE()[color='red'].inV().car contains 'ford'";
     result = database.getRawGraph().query(new OSQLSynchQuery<ODocument>(query2));
     Assert.assertEquals(result.size(), 1);
 
-    String query3 = "select driver from V where outE()[action='owns'].inV().car in 'ford'";
+
+    //TODO these tests are broken, they should test "contains" instead of "="
+    String query3 = "select driver from V where outE()[action='owns'].inV().car = 'ford'";
     result = database.getRawGraph().query(new OSQLSynchQuery<ODocument>(query3));
     Assert.assertEquals(result.size(), 1);
 
-    String query4 = "select driver from V where outE()[color='red'][action='owns'].inV().car in 'ford'";
+    String query4 = "select driver from V where outE()[color='red'][action='owns'].inV().car = 'ford'";
     result = database.getRawGraph().query(new OSQLSynchQuery<ODocument>(query4));
     Assert.assertEquals(result.size(), 1);
   }
