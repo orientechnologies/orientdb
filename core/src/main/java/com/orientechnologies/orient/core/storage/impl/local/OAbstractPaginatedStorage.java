@@ -1411,7 +1411,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (transaction.get() != null) {
       final long timer = Orient.instance().getProfiler().startChrono();
       try {
-        assert iLockingStrategy.equals(LOCKING_STRATEGY.DEFAULT);
+        // Disabled this assert have no meaning anymore
+        // assert iLockingStrategy.equals(LOCKING_STRATEGY.DEFAULT);
         return doReadRecord(clusterSegment, rid);
       } finally {
         Orient.instance().getProfiler().stopChrono(PROFILER_READ_RECORD, "Read a record from database", timer, "db.*.readRecord");
@@ -2017,7 +2018,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       } else if (!version.equals(iDatabaseVersion)) {
         final ORecordConflictStrategy strategy = iCluster.getRecordConflictStrategy() != null ? iCluster
             .getRecordConflictStrategy() : recordConflictStrategy;
-        return strategy.onUpdate(iRecordType, rid, version, iRecordContent, iDatabaseVersion);
+        return strategy.onUpdate(this, iRecordType, rid, version, iRecordContent, iDatabaseVersion);
       } else
         // OK, INCREMENT DB VERSION
         iDatabaseVersion.increment();
@@ -2146,19 +2147,23 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     OLogSequenceNumber lsn = startLSN;
     while (lsn != null) {
-      OWALRecord record = writeAheadLog.read(lsn);
-      if (!(record instanceof OOperationUnitRecord)) {
-        lsn = writeAheadLog.next(lsn);
-        continue;
-      }
+      try {
+        OWALRecord record = writeAheadLog.read(lsn);
+        if (!(record instanceof OOperationUnitRecord)) {
+          lsn = writeAheadLog.next(lsn);
+          continue;
+        }
 
-      OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) record;
-      if (operationUnitRecord.getOperationUnitId().equals(unitId)) {
-        operationUnit.add(lsn);
-        if (record instanceof OAtomicUnitEndRecord)
-          break;
+        OOperationUnitRecord operationUnitRecord = (OOperationUnitRecord) record;
+        if (operationUnitRecord.getOperationUnitId().equals(unitId)) {
+          operationUnit.add(lsn);
+          if (record instanceof OAtomicUnitEndRecord)
+            break;
+        }
+        lsn = writeAheadLog.next(lsn);
+      } catch (OWALPageBrokenException e) {
+        break;
       }
-      lsn = writeAheadLog.next(lsn);
     }
 
     return operationUnit;
@@ -2436,6 +2441,24 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     } catch (OWALPageBrokenException e) {
       OLogManager.instance().error(this,
           "Data restore was paused because broken WAL page was found. The rest of changes will be rolled back.");
+
+      final List<OWALRecord> hardBatch = new ArrayList<OWALRecord>();
+      for (SoftReference<OWALRecord> reference : batch) {
+        final OWALRecord record = reference.get();
+
+        if (record == null) {
+          System.gc();
+
+          OLogManager.instance().error(this, "You have not enough amount of heap to operate with restore buffer of size %d",
+              batchSize);
+          break;
+        } else {
+          hardBatch.add(record);
+        }
+      }
+
+      OLogManager.instance().info(this, "Apply last batch of operations are read from WAL.");
+      restoreWALBatch(hardBatch, operationUnits, recordsProcessed, reportInterval, atLeastOnePageUpdate);
     }
 
     rollbackAllUnfinishedWALOperations(operationUnits);
@@ -2539,16 +2562,20 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       if (operationUnit.isEmpty())
         continue;
 
-      final OOperationUnitRecord atomicOperationRecord = (OOperationUnitRecord) writeAheadLog.read(operationUnit.get(0));
-      if (atomicOperationRecord == null) {
-        writeAheadLog.read(operationUnit.get(0));
+      final OOperationUnitRecord atomicOperationRecord;
+      try {
+        atomicOperationRecord = (OOperationUnitRecord) writeAheadLog.read(operationUnit.get(0));
+        if (atomicOperationRecord == null)
+          continue;
+      } catch (OWALPageBrokenException e) {
+        continue;
       }
+
       final OAtomicUnitStartRecord startRecord;
 
       if (atomicOperationRecord instanceof OAtomicUnitStartRecord)
         startRecord = (OAtomicUnitStartRecord) atomicOperationRecord;
       else {
-
         OLogManager.instance().info(this, "Rollback operation with id %s  and lsn %s", atomicOperationRecord.getOperationUnitId(),
             ((OOperationUnitBodyRecord) atomicOperationRecord).getStartLsn());
         startRecord = (OAtomicUnitStartRecord) writeAheadLog.read(((OOperationUnitBodyRecord) atomicOperationRecord).getStartLsn());

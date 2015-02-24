@@ -430,6 +430,18 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         try {
           OWALPage page = new OWALPage(pointer, false);
 
+          if (page.isEmpty()) {
+            if (record != null)
+              // we need to merge with next page but page is empty because of app crash
+              throw new OWALPageBrokenException("WAL page with index " + pageIndex + " is broken.");
+            else if (pageIndex < pageCount - 1)
+              // we have append only log so all pages
+              throw new OWALPageBrokenException("WAL page with index " + pageIndex + " is broken.");
+
+            // last page in index nothing to return.
+            return null;
+          }
+
           byte[] content = page.getRecord(pageOffset);
           if (record == null)
             record = content;
@@ -1006,7 +1018,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       if (recordEntry == null)
         return null;
 
-      final OWALRecord record = OWALRecordsFactory.INSTANCE.fromStream(recordEntry);
+      final OWALRecord record = OWALRecordsFactory.INSTANCE.fromStream(recordEntry, lsn);
       record.setLsn(lsn);
 
       return record;

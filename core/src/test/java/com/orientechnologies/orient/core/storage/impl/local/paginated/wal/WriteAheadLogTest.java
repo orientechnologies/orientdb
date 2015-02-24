@@ -517,7 +517,8 @@ public class WriteAheadLogTest {
 
     OLogSequenceNumber end = null;
     for (int writtenSize = 0; writtenSize < 16 * OWALPage.PAGE_SIZE;) {
-      int contentSize = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 2 * OIntegerSerializer.INT_SIZE + 5;;
+      int contentSize = random.nextInt(2 * OWALPage.PAGE_SIZE - 1) + 2 * OIntegerSerializer.INT_SIZE + 5;
+      ;
       OWALRecord walRecord = new TestRecord(contentSize, false);
 
       end = writeAheadLog.log(walRecord);
@@ -1645,7 +1646,7 @@ public class WriteAheadLogTest {
 
     public TestRecord(int size, boolean updateMasterRecord) {
       Random random = new Random();
-      data = new byte[size - OIntegerSerializer.INT_SIZE - (OIntegerSerializer.INT_SIZE + 3) - 1];
+      data = new byte[size - 2 * OIntegerSerializer.INT_SIZE - (OIntegerSerializer.INT_SIZE + 3) - 1];
       random.nextBytes(data);
       this.updateMasterRecord = updateMasterRecord;
     }
