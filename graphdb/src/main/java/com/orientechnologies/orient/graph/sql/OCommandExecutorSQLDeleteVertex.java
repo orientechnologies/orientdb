@@ -64,63 +64,75 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDeleteVertex parse(final OCommandRequest iRequest) {
-    database = getDatabase();
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
-    init((OCommandRequestText) iRequest);
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
+    try {
+      // System.out.println("NEW PARSER FROM: " + queryText);
+      queryText = preParse(queryText, iRequest);
+      // System.out.println("NEW PARSER   TO: " + queryText);
+      textRequest.setText(queryText);
+      database = getDatabase();
 
+      init((OCommandRequestText) iRequest);
 
-    parserRequiredKeyword("DELETE");
-    parserRequiredKeyword("VERTEX");
+      parserRequiredKeyword("DELETE");
+      parserRequiredKeyword("VERTEX");
 
-    OClass clazz = null;
-    String where = null;
+      OClass clazz = null;
+      String where = null;
 
-    String word = parseOptionalWord(true);
-    while (word != null) {
+      String word = parseOptionalWord(true);
+      while (word != null) {
 
-      if (word.startsWith("#")) {
-        rid = new ORecordId(word);
+        if (word.startsWith("#")) {
+          rid = new ORecordId(word);
 
-      } else if (word.equalsIgnoreCase("from")) {
-        final StringBuilder q = new StringBuilder();
-        final int newPos = OStringSerializerHelper.getEmbedded(parserText, parserGetCurrentPosition(), -1, q);
+        } else if (word.equalsIgnoreCase("from")) {
+          final StringBuilder q = new StringBuilder();
+          final int newPos = OStringSerializerHelper.getEmbedded(parserText, parserGetCurrentPosition(), -1, q);
 
-        query = database.command(new OSQLAsynchQuery<ODocument>(q.toString(), this));
+          query = database.command(new OSQLAsynchQuery<ODocument>(q.toString(), this));
 
-        parserSetCurrentPosition(newPos);
+          parserSetCurrentPosition(newPos);
 
-      } else if (word.equals(KEYWORD_WHERE)) {
-        if (clazz == null)
-          // ASSIGN DEFAULT CLASS
-          clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(OrientVertexType.CLASS_NAME);
+        } else if (word.equals(KEYWORD_WHERE)) {
+          if (clazz == null)
+            // ASSIGN DEFAULT CLASS
+            clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(OrientVertexType.CLASS_NAME);
 
-        where = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetPreviousPosition()) : "";
-        query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + where, this));
-        break;
+          where = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetPreviousPosition()) : "";
+          query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + where, this));
+          break;
 
-      } else if (word.length() > 0) {
-        // GET/CHECK CLASS NAME
-        clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(word);
-        if (clazz == null)
-          throw new OCommandSQLParsingException("Class '" + word + " was not found");
+        } else if (word.length() > 0) {
+          // GET/CHECK CLASS NAME
+          clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(word);
+          if (clazz == null)
+            throw new OCommandSQLParsingException("Class '" + word + " was not found");
+        }
+
+        word = parseOptionalWord(true);
+        if (parserIsEnded())
+          break;
       }
 
-      word = parseOptionalWord(true);
-      if (parserIsEnded())
-        break;
-    }
-
-    if (where == null)
-      where = "";
-    else
-      where = " WHERE " + where;
-
-    if (query == null && rid == null)
-      if (clazz == null)
-        // DELETE ALL VERTEXES
-        query = database.command(new OSQLAsynchQuery<ODocument>("select from V" + where, this));
+      if (where == null)
+        where = "";
       else
-        query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + where, this));
+        where = " WHERE " + where;
+
+      if (query == null && rid == null)
+        if (clazz == null)
+          // DELETE ALL VERTEXES
+          query = database.command(new OSQLAsynchQuery<ODocument>("select from V" + where, this));
+        else
+          query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + where, this));
+
+    } finally {
+      textRequest.setText(originalQuery);
+    }
 
     return this;
   }

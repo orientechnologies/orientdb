@@ -855,14 +855,33 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     try {
       jj_consume_token(DELETE);
       jj_consume_token(VERTEX);
-      FromClause();
+      jjtn000.fromClause = FromClause();
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case WHERE:
         jj_consume_token(WHERE);
-        WhereClause();
+        jjtn000.whereClause = WhereClause();
         break;
       default:
         jj_la1[37] = jj_gen;
+        ;
+      }
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case RETURN:
+        jj_consume_token(RETURN);
+        jj_consume_token(BEFORE);
+                              jjtn000.returnBefore = true;
+        break;
+      default:
+        jj_la1[38] = jj_gen;
+        ;
+      }
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case LIMIT:
+        jj_consume_token(LIMIT);
+        jjtn000.limit = Integer();
+        break;
+      default:
+        jj_la1[39] = jj_gen;
         ;
       }
     jjtree.closeNodeScope(jjtn000, true);
@@ -933,7 +952,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         jjtn000.targetIndex = IndexIdentifier();
         break;
       default:
-        jj_la1[38] = jj_gen;
+        jj_la1[40] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -952,7 +971,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           ;
           break;
         default:
-          jj_la1[39] = jj_gen;
+          jj_la1[41] = jj_gen;
           break label_2;
         }
       }
@@ -962,7 +981,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                      jjtn000.upsert = true;
         break;
       default:
-        jj_la1[40] = jj_gen;
+        jj_la1[42] = jj_gen;
         ;
       }
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -978,7 +997,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                                                                     jjtn000.returnAfter = true;
           break;
         default:
-          jj_la1[41] = jj_gen;
+          jj_la1[43] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
@@ -1018,12 +1037,12 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           jjtn000.returnProjection = Projection();
           break;
         default:
-          jj_la1[42] = jj_gen;
+          jj_la1[44] = jj_gen;
           ;
         }
         break;
       default:
-        jj_la1[43] = jj_gen;
+        jj_la1[45] = jj_gen;
         ;
       }
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -1032,7 +1051,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         jjtn000.whereClause = WhereClause();
         break;
       default:
-        jj_la1[44] = jj_gen;
+        jj_la1[46] = jj_gen;
         ;
       }
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -1042,7 +1061,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                             jjtn000.lockRecord = true;
         break;
       default:
-        jj_la1[45] = jj_gen;
+        jj_la1[47] = jj_gen;
         ;
       }
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -1050,7 +1069,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         jjtn000.limit = Limit();
         break;
       default:
-        jj_la1[46] = jj_gen;
+        jj_la1[48] = jj_gen;
         ;
       }
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -1058,7 +1077,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         jjtn000.timeout = Timeout();
         break;
       default:
-        jj_la1[47] = jj_gen;
+        jj_la1[49] = jj_gen;
         ;
       }
       jjtree.closeNodeScope(jjtn000, true);
@@ -1111,7 +1130,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
             ;
             break;
           default:
-            jj_la1[48] = jj_gen;
+            jj_la1[50] = jj_gen;
             break label_3;
           }
           jj_consume_token(COMMA);
@@ -1131,7 +1150,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
             ;
             break;
           default:
-            jj_la1[49] = jj_gen;
+            jj_la1[51] = jj_gen;
             break label_4;
           }
           jj_consume_token(COMMA);
@@ -1151,7 +1170,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                             jjtn000.type = OUpdateOperations.TYPE_CONTENT;
           break;
         default:
-          jj_la1[50] = jj_gen;
+          jj_la1[52] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
@@ -1169,7 +1188,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                         jjtn000.type = OUpdateOperations.TYPE_ADD;
           break;
         default:
-          jj_la1[51] = jj_gen;
+          jj_la1[53] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
@@ -1182,7 +1201,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
             ;
             break;
           default:
-            jj_la1[52] = jj_gen;
+            jj_la1[54] = jj_gen;
             break label_5;
           }
           jj_consume_token(COMMA);
@@ -1202,7 +1221,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
             ;
             break;
           default:
-            jj_la1[53] = jj_gen;
+            jj_la1[55] = jj_gen;
             break label_6;
           }
           jj_consume_token(COMMA);
@@ -1211,7 +1230,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         }
         break;
       default:
-        jj_la1[54] = jj_gen;
+        jj_la1[56] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -1272,7 +1291,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                         jjtn000.operator = OUpdateItem.OPERATOR_SLASHASSIGN;
         break;
       default:
-        jj_la1[55] = jj_gen;
+        jj_la1[57] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -1355,7 +1374,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         jjtn000.right = Expression();
         break;
       default:
-        jj_la1[56] = jj_gen;
+        jj_la1[58] = jj_gen;
         ;
       }
       jjtree.closeNodeScope(jjtn000, true);
@@ -1493,7 +1512,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           jjtn000.targetClusterName = Identifier();
           break;
         default:
-          jj_la1[57] = jj_gen;
+          jj_la1[59] = jj_gen;
           ;
         }
         break;
@@ -1507,7 +1526,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         jjtn000.targetIndex = IndexIdentifier();
         break;
       default:
-        jj_la1[58] = jj_gen;
+        jj_la1[60] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -1517,7 +1536,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         jjtn000.returnStatement = Projection();
         break;
       default:
-        jj_la1[59] = jj_gen;
+        jj_la1[61] = jj_gen;
         ;
       }
       jjtn000.insertBody = InsertBody();
@@ -1527,7 +1546,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                  jjtn000.unsafe = true;
         break;
       default:
-        jj_la1[60] = jj_gen;
+        jj_la1[62] = jj_gen;
         ;
       }
     jjtree.closeNodeScope(jjtn000, true);
@@ -1578,7 +1597,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
             ;
             break;
           default:
-            jj_la1[61] = jj_gen;
+            jj_la1[63] = jj_gen;
             break label_7;
           }
           jj_consume_token(COMMA);
@@ -1600,7 +1619,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
             ;
             break;
           default:
-            jj_la1[62] = jj_gen;
+            jj_la1[64] = jj_gen;
             break label_8;
           }
           jj_consume_token(COMMA);
@@ -1615,7 +1634,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
             ;
             break;
           default:
-            jj_la1[63] = jj_gen;
+            jj_la1[65] = jj_gen;
             break label_9;
           }
           jj_consume_token(COMMA);
@@ -1631,7 +1650,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
               ;
               break;
             default:
-              jj_la1[64] = jj_gen;
+              jj_la1[66] = jj_gen;
               break label_10;
             }
             jj_consume_token(COMMA);
@@ -1655,7 +1674,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
             ;
             break;
           default:
-            jj_la1[65] = jj_gen;
+            jj_la1[67] = jj_gen;
             break label_11;
           }
           jj_consume_token(COMMA);
@@ -1675,7 +1694,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
             jj_consume_token(FROM);
             break;
           default:
-            jj_la1[66] = jj_gen;
+            jj_la1[68] = jj_gen;
             ;
           }
           switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -1683,7 +1702,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
             jjtn000.selectStatement = SelectStatement();
             break;
           default:
-            jj_la1[67] = jj_gen;
+            jj_la1[69] = jj_gen;
             if (jj_2_13(2)) {
               jj_consume_token(LPAREN);
               jjtn000.selectStatement = SelectStatement();
@@ -1700,7 +1719,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           jjtn000.content = Json();
           break;
         default:
-          jj_la1[68] = jj_gen;
+          jj_la1[70] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
@@ -1711,7 +1730,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         jjtn000.returnProjection = Projection();
         break;
       default:
-        jj_la1[69] = jj_gen;
+        jj_la1[71] = jj_gen;
         ;
       }
       jjtree.closeNodeScope(jjtn000, true);
@@ -1779,7 +1798,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         Identifier();
         break;
       default:
-        jj_la1[70] = jj_gen;
+        jj_la1[72] = jj_gen;
         ;
       }
       jjtree.closeNodeScope(jjtn000, true);
@@ -1826,7 +1845,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           Identifier();
           break;
         default:
-          jj_la1[71] = jj_gen;
+          jj_la1[73] = jj_gen;
           ;
         }
       } else if (jj_2_17(2147483647)) {
@@ -1936,12 +1955,12 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           Identifier();
           break;
         default:
-          jj_la1[72] = jj_gen;
+          jj_la1[74] = jj_gen;
           ;
         }
         break;
       default:
-        jj_la1[73] = jj_gen;
+        jj_la1[75] = jj_gen;
         ;
       }
       jj_consume_token(FROM);
@@ -1965,7 +1984,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
               ;
               break;
             default:
-              jj_la1[74] = jj_gen;
+              jj_la1[76] = jj_gen;
               break label_12;
             }
             jj_consume_token(COMMA);
@@ -1973,7 +1992,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           }
           break;
         default:
-          jj_la1[75] = jj_gen;
+          jj_la1[77] = jj_gen;
           ;
         }
         jj_consume_token(RBRACKET);
@@ -2012,7 +2031,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         Identifier();
         break;
       default:
-        jj_la1[76] = jj_gen;
+        jj_la1[78] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -2037,7 +2056,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
               ;
               break;
             default:
-              jj_la1[77] = jj_gen;
+              jj_la1[79] = jj_gen;
               break label_13;
             }
             jj_consume_token(COMMA);
@@ -2045,7 +2064,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           }
           break;
         default:
-          jj_la1[78] = jj_gen;
+          jj_la1[80] = jj_gen;
           ;
         }
         jj_consume_token(RBRACKET);
@@ -2084,7 +2103,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         Identifier();
         break;
       default:
-        jj_la1[79] = jj_gen;
+        jj_la1[81] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -2097,7 +2116,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         InsertBody();
         break;
       default:
-        jj_la1[80] = jj_gen;
+        jj_la1[82] = jj_gen;
         ;
       }
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -2105,7 +2124,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         Retry();
         break;
       default:
-        jj_la1[81] = jj_gen;
+        jj_la1[83] = jj_gen;
         ;
       }
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -2113,7 +2132,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         Wait();
         break;
       default:
-        jj_la1[82] = jj_gen;
+        jj_la1[84] = jj_gen;
         ;
       }
     jjtree.closeNodeScope(jjtn000, true);
@@ -2158,7 +2177,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         result = NamedParameter();
         break;
       default:
-        jj_la1[83] = jj_gen;
+        jj_la1[85] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -2267,7 +2286,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           ;
           break;
         default:
-          jj_la1[84] = jj_gen;
+          jj_la1[86] = jj_gen;
           break label_14;
         }
         jj_consume_token(COMMA);
@@ -2352,12 +2371,12 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           jjtn000.alias = Alias();
           break;
         default:
-          jj_la1[85] = jj_gen;
+          jj_la1[87] = jj_gen;
           ;
         }
         break;
       default:
-        jj_la1[86] = jj_gen;
+        jj_la1[88] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -2403,7 +2422,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         jj_consume_token(FLOATING_POINT_LITERAL);
         break;
       default:
-        jj_la1[88] = jj_gen;
+        jj_la1[90] = jj_gen;
         if (jj_2_28(2147483647)) {
           Integer();
         } else {
@@ -2446,7 +2465,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                 jj_consume_token(CHARACTER_LITERAL);
                 break;
               default:
-                jj_la1[87] = jj_gen;
+                jj_la1[89] = jj_gen;
                 if (jj_2_24(2)) {
                   jj_consume_token(STRING_LITERAL);
                 } else if (jj_2_25(2147483647)) {
@@ -2466,7 +2485,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
             }
             break;
           default:
-            jj_la1[89] = jj_gen;
+            jj_la1[91] = jj_gen;
             if (jj_2_29(2)) {
               jj_consume_token(LPAREN);
               SelectStatement();
@@ -2603,7 +2622,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           ;
           break;
         default:
-          jj_la1[90] = jj_gen;
+          jj_la1[92] = jj_gen;
           break label_15;
         }
         jj_consume_token(COMMA);
@@ -2657,13 +2676,13 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                                                                                 jjtn000.newRange = true;
           break;
         default:
-          jj_la1[91] = jj_gen;
+          jj_la1[93] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
         break;
       default:
-        jj_la1[92] = jj_gen;
+        jj_la1[94] = jj_gen;
         ;
       }
       jjtn000.toSelector = ArrayNumberSelector();
@@ -2766,7 +2785,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           ;
           break;
         default:
-          jj_la1[93] = jj_gen;
+          jj_la1[95] = jj_gen;
           break label_16;
         }
         MethodCall();
@@ -2808,7 +2827,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                          jjtn000.star = true;
         break;
       default:
-        jj_la1[96] = jj_gen;
+        jj_la1[98] = jj_gen;
         switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
         case TO:
         case VALUES:
@@ -2850,7 +2869,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
               ;
               break;
             default:
-              jj_la1[94] = jj_gen;
+              jj_la1[96] = jj_gen;
               break label_17;
             }
             jj_consume_token(COMMA);
@@ -2859,7 +2878,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           }
           break;
         default:
-          jj_la1[95] = jj_gen;
+          jj_la1[97] = jj_gen;
           ;
         }
       }
@@ -2942,7 +2961,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
             ;
             break;
           default:
-            jj_la1[97] = jj_gen;
+            jj_la1[99] = jj_gen;
             break label_18;
           }
           jj_consume_token(COMMA);
@@ -2951,7 +2970,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         }
         break;
       default:
-        jj_la1[98] = jj_gen;
+        jj_la1[100] = jj_gen;
         ;
       }
       jj_consume_token(RPAREN);
@@ -2998,7 +3017,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                  jjtn000.self = true;
           break;
         default:
-          jj_la1[99] = jj_gen;
+          jj_la1[101] = jj_gen;
           if (jj_2_36(2147483647)) {
             jjtn000.collection = Collection();
           } else {
@@ -3142,7 +3161,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         jj_consume_token(RBRACKET);
         break;
       default:
-        jj_la1[100] = jj_gen;
+        jj_la1[102] = jj_gen;
         if (jj_2_44(2147483647)) {
           jjtn000.methodCall = MethodCall();
         } else {
@@ -3152,7 +3171,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
             jjtn000.suffix = SuffixIdentifier();
             break;
           default:
-            jj_la1[101] = jj_gen;
+            jj_la1[103] = jj_gen;
             jj_consume_token(-1);
             throw new ParseException();
           }
@@ -3203,7 +3222,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                 jjtn000.value = null;
         break;
       default:
-        jj_la1[102] = jj_gen;
+        jj_la1[104] = jj_gen;
         if (jj_2_46(2)) {
           token = jj_consume_token(STRING_LITERAL);
                                   jjtn000.value = token.image.substring(1, token.image.length() - 1);
@@ -3214,7 +3233,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                                      jjtn000.value = token.image.substring(1, token.image.length() - 1);
             break;
           default:
-            jj_la1[103] = jj_gen;
+            jj_la1[105] = jj_gen;
             if (jj_2_47(2147483647)) {
               jjtn000.value = Rid();
             } else if (jj_2_48(2147483647)) {
@@ -3259,7 +3278,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                  jjtn000.value = false;
                 break;
               default:
-                jj_la1[104] = jj_gen;
+                jj_la1[106] = jj_gen;
                 jj_consume_token(-1);
                 throw new ParseException();
               }
@@ -3321,7 +3340,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                                                                                                                jjtn000.operators.add(OMathExpression.Operator.MINUS);
           break;
         default:
-          jj_la1[105] = jj_gen;
+          jj_la1[107] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
@@ -3390,7 +3409,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                         jjtn000.operators.add( OMathExpression.Operator.REM);
           break;
         default:
-          jj_la1[106] = jj_gen;
+          jj_la1[108] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
@@ -3516,7 +3535,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         jjtn000.statement = SelectStatement();
         break;
       default:
-        jj_la1[107] = jj_gen;
+        jj_la1[109] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -3596,7 +3615,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         }
         break;
       default:
-        jj_la1[108] = jj_gen;
+        jj_la1[110] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -3679,7 +3698,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           ;
           break;
         default:
-          jj_la1[109] = jj_gen;
+          jj_la1[111] = jj_gen;
           break label_21;
         }
         jj_consume_token(COMMA);
@@ -3776,7 +3795,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
             ;
             break;
           default:
-            jj_la1[110] = jj_gen;
+            jj_la1[112] = jj_gen;
             break label_22;
           }
           jj_consume_token(COMMA);
@@ -3824,14 +3843,14 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           jjtn000.statement = TraverseStatement();
           break;
         default:
-          jj_la1[111] = jj_gen;
+          jj_la1[113] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
         jj_consume_token(RPAREN);
         break;
       default:
-        jj_la1[112] = jj_gen;
+        jj_la1[114] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -3931,7 +3950,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                                                jjtn000.type = OIndexIdentifier.Type.VALUESDESC;
         break;
       default:
-        jj_la1[113] = jj_gen;
+        jj_la1[115] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -4000,7 +4019,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           ;
           break;
         default:
-          jj_la1[114] = jj_gen;
+          jj_la1[116] = jj_gen;
           break label_23;
         }
         jj_consume_token(OR);
@@ -4050,7 +4069,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           ;
           break;
         default:
-          jj_la1[115] = jj_gen;
+          jj_la1[117] = jj_gen;
           break label_24;
         }
         jj_consume_token(AND);
@@ -4145,7 +4164,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         }
         break;
       default:
-        jj_la1[116] = jj_gen;
+        jj_la1[118] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -4261,7 +4280,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
               result = OBooleanExpression.FALSE;
           break;
         default:
-          jj_la1[117] = jj_gen;
+          jj_la1[119] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
@@ -4329,7 +4348,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         result = ContainsKeyOperator();
         break;
       default:
-        jj_la1[118] = jj_gen;
+        jj_la1[120] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -4685,7 +4704,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                                                                                                              jjtn000.rightString = token.image;
         break;
       default:
-        jj_la1[119] = jj_gen;
+        jj_la1[121] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -4779,7 +4798,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
               ;
               break;
             default:
-              jj_la1[120] = jj_gen;
+              jj_la1[122] = jj_gen;
               break label_25;
             }
             jj_consume_token(COMMA);
@@ -4788,7 +4807,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           }
           break;
         default:
-          jj_la1[121] = jj_gen;
+          jj_la1[123] = jj_gen;
           ;
         }
         jj_consume_token(RBRACKET);
@@ -4838,7 +4857,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
               ;
               break;
             default:
-              jj_la1[122] = jj_gen;
+              jj_la1[124] = jj_gen;
               break label_26;
             }
             jj_consume_token(COMMA);
@@ -4847,7 +4866,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           }
           break;
         default:
-          jj_la1[123] = jj_gen;
+          jj_la1[125] = jj_gen;
           ;
         }
         jj_consume_token(RBRACKET);
@@ -4894,7 +4913,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
               ;
               break;
             default:
-              jj_la1[124] = jj_gen;
+              jj_la1[126] = jj_gen;
               break label_27;
             }
             jj_consume_token(COMMA);
@@ -4903,13 +4922,13 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           }
           break;
         default:
-          jj_la1[125] = jj_gen;
+          jj_la1[127] = jj_gen;
           ;
         }
         jj_consume_token(RBRACKET);
         break;
       default:
-        jj_la1[126] = jj_gen;
+        jj_la1[128] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -5218,7 +5237,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
             ;
             break;
           default:
-            jj_la1[127] = jj_gen;
+            jj_la1[129] = jj_gen;
             break label_28;
           }
           jj_consume_token(COMMA);
@@ -5228,7 +5247,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         jj_consume_token(RBRACKET);
         break;
       default:
-        jj_la1[128] = jj_gen;
+        jj_la1[130] = jj_gen;
         if (jj_2_78(2)) {
           jj_consume_token(LPAREN);
           jjtn000.rightStatement = SelectStatement();
@@ -5244,7 +5263,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
             jjtn000.rightParam = InputParameter();
             break;
           default:
-            jj_la1[129] = jj_gen;
+            jj_la1[131] = jj_gen;
             jj_consume_token(-1);
             throw new ParseException();
           }
@@ -5300,7 +5319,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
             ;
             break;
           default:
-            jj_la1[130] = jj_gen;
+            jj_la1[132] = jj_gen;
             break label_29;
           }
           jj_consume_token(COMMA);
@@ -5310,7 +5329,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         jj_consume_token(RBRACKET);
         break;
       default:
-        jj_la1[131] = jj_gen;
+        jj_la1[133] = jj_gen;
         if (jj_2_80(2)) {
           jj_consume_token(LPAREN);
           jjtn000.rightStatement = SelectStatement();
@@ -5326,7 +5345,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
             jjtn000.rightParam = InputParameter();
             break;
           default:
-            jj_la1[132] = jj_gen;
+            jj_la1[134] = jj_gen;
             jj_consume_token(-1);
             throw new ParseException();
           }
@@ -5524,7 +5543,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                                                  lastItem.recordAttr = lastToken.image;
         break;
       default:
-        jj_la1[133] = jj_gen;
+        jj_la1[135] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -5541,13 +5560,13 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                                                                   lastItem.type = OOrderByItem.ASC;
           break;
         default:
-          jj_la1[134] = jj_gen;
+          jj_la1[136] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
         break;
       default:
-        jj_la1[135] = jj_gen;
+        jj_la1[137] = jj_gen;
         ;
       }
       label_30:
@@ -5557,7 +5576,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           ;
           break;
         default:
-          jj_la1[136] = jj_gen;
+          jj_la1[138] = jj_gen;
           break label_30;
         }
         jj_consume_token(COMMA);
@@ -5592,7 +5611,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                                                      lastItem.recordAttr = lastToken.image;
           break;
         default:
-          jj_la1[137] = jj_gen;
+          jj_la1[139] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
@@ -5609,13 +5628,13 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                                                                   lastItem.type = OOrderByItem.ASC;
             break;
           default:
-            jj_la1[138] = jj_gen;
+            jj_la1[140] = jj_gen;
             jj_consume_token(-1);
             throw new ParseException();
           }
           break;
         default:
-          jj_la1[139] = jj_gen;
+          jj_la1[141] = jj_gen;
           ;
         }
       }
@@ -5664,7 +5683,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           ;
           break;
         default:
-          jj_la1[140] = jj_gen;
+          jj_la1[142] = jj_gen;
           break label_31;
         }
         jj_consume_token(COMMA);
@@ -5751,7 +5770,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         value = Integer();
         break;
       default:
-        jj_la1[141] = jj_gen;
+        jj_la1[143] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -5939,7 +5958,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
             ;
             break;
           default:
-            jj_la1[142] = jj_gen;
+            jj_la1[144] = jj_gen;
             break label_32;
           }
           jj_consume_token(COMMA);
@@ -5948,7 +5967,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         }
         break;
       default:
-        jj_la1[143] = jj_gen;
+        jj_la1[145] = jj_gen;
         ;
       }
       jj_consume_token(RBRACKET);
@@ -6012,7 +6031,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           ;
           break;
         default:
-          jj_la1[144] = jj_gen;
+          jj_la1[146] = jj_gen;
           break label_33;
         }
         lastItem = FetchPlanItem();
@@ -6081,7 +6100,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
           jj_consume_token(RBRACKET);
           break;
         default:
-          jj_la1[145] = jj_gen;
+          jj_la1[147] = jj_gen;
           ;
         }
         lastIdentifier = Identifier();
@@ -6092,7 +6111,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                                                                              lastStarred = true;
           break;
         default:
-          jj_la1[146] = jj_gen;
+          jj_la1[148] = jj_gen;
           ;
         }
                 String field = lastIdentifier.getValue();
@@ -6107,7 +6126,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
             ;
             break;
           default:
-            jj_la1[147] = jj_gen;
+            jj_la1[149] = jj_gen;
             break label_34;
           }
           jj_consume_token(DOT);
@@ -6119,7 +6138,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                                                                                         lastStarred = true;
             break;
           default:
-            jj_la1[148] = jj_gen;
+            jj_la1[150] = jj_gen;
             ;
           }
                      field = lastIdentifier.getValue();
@@ -6130,7 +6149,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         }
         break;
       default:
-        jj_la1[149] = jj_gen;
+        jj_la1[151] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -6201,7 +6220,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         }
         break;
       default:
-        jj_la1[150] = jj_gen;
+        jj_la1[152] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -6282,7 +6301,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
             ;
             break;
           default:
-            jj_la1[151] = jj_gen;
+            jj_la1[153] = jj_gen;
             break label_35;
           }
           jj_consume_token(COMMA);
@@ -6291,7 +6310,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         }
         break;
       default:
-        jj_la1[152] = jj_gen;
+        jj_la1[154] = jj_gen;
         ;
       }
       jj_consume_token(RBRACKET);
@@ -6377,7 +6396,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                                               lastItem.leftString = token.image.substring(1, token.image.length() - 1);
           break;
         default:
-          jj_la1[153] = jj_gen;
+          jj_la1[155] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
@@ -6391,7 +6410,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
             ;
             break;
           default:
-            jj_la1[154] = jj_gen;
+            jj_la1[156] = jj_gen;
             break label_36;
           }
           jj_consume_token(COMMA);
@@ -6423,7 +6442,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
                                                   lastItem.leftString = token.image.substring(1, token.image.length() - 1);
             break;
           default:
-            jj_la1[155] = jj_gen;
+            jj_la1[157] = jj_gen;
             jj_consume_token(-1);
             throw new ParseException();
           }
@@ -6433,7 +6452,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
         }
         break;
       default:
-        jj_la1[156] = jj_gen;
+        jj_la1[158] = jj_gen;
         ;
       }
       jj_consume_token(RBRACE);
@@ -7438,12 +7457,6 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     return false;
   }
 
-  private boolean jj_3R_41() {
-    if (jj_scan_token(DELETE)) return true;
-    if (jj_scan_token(VERTEX)) return true;
-    return false;
-  }
-
   private boolean jj_3R_73() {
     Token xsp;
     xsp = jj_scanpos;
@@ -7454,6 +7467,12 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     if (jj_3R_154()) return true;
     }
     }
+    return false;
+  }
+
+  private boolean jj_3R_41() {
+    if (jj_scan_token(DELETE)) return true;
+    if (jj_scan_token(VERTEX)) return true;
     return false;
   }
 
@@ -7477,11 +7496,6 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     return false;
   }
 
-  private boolean jj_3R_328() {
-    if (jj_scan_token(BREADTH_FIRST)) return true;
-    return false;
-  }
-
   private boolean jj_3R_72() {
     if (jj_scan_token(LPAREN)) return true;
     Token xsp;
@@ -7491,6 +7505,11 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     if (jj_3R_151()) return true;
     }
     if (jj_scan_token(RPAREN)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_328() {
+    if (jj_scan_token(BREADTH_FIRST)) return true;
     return false;
   }
 
@@ -7513,14 +7532,14 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     return false;
   }
 
-  private boolean jj_3R_40() {
-    if (jj_scan_token(DELETE)) return true;
-    if (jj_scan_token(FROM)) return true;
+  private boolean jj_3R_149() {
+    if (jj_3R_73()) return true;
     return false;
   }
 
-  private boolean jj_3R_149() {
-    if (jj_3R_73()) return true;
+  private boolean jj_3R_40() {
+    if (jj_scan_token(DELETE)) return true;
+    if (jj_scan_token(FROM)) return true;
     return false;
   }
 
@@ -7579,16 +7598,6 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     return false;
   }
 
-  private boolean jj_3R_320() {
-    if (jj_3R_325()) return true;
-    Token xsp;
-    while (true) {
-      xsp = jj_scanpos;
-      if (jj_3R_326()) { jj_scanpos = xsp; break; }
-    }
-    return false;
-  }
-
   private boolean jj_3R_296() {
     Token xsp;
     xsp = jj_scanpos;
@@ -7599,6 +7608,16 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     while (true) {
       xsp = jj_scanpos;
       if (jj_3R_315()) { jj_scanpos = xsp; break; }
+    }
+    return false;
+  }
+
+  private boolean jj_3R_320() {
+    if (jj_3R_325()) return true;
+    Token xsp;
+    while (true) {
+      xsp = jj_scanpos;
+      if (jj_3R_326()) { jj_scanpos = xsp; break; }
     }
     return false;
   }
@@ -7651,11 +7670,6 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     return false;
   }
 
-  private boolean jj_3R_104() {
-    if (jj_scan_token(NOCACHE)) return true;
-    return false;
-  }
-
   private boolean jj_3_50() {
     Token xsp;
     xsp = jj_scanpos;
@@ -7667,6 +7681,11 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     }
     }
     if (jj_3R_71()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_104() {
+    if (jj_scan_token(NOCACHE)) return true;
     return false;
   }
 
@@ -7683,12 +7702,6 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     return false;
   }
 
-  private boolean jj_3R_102() {
-    if (jj_scan_token(LOCK)) return true;
-    if (jj_scan_token(RECORD)) return true;
-    return false;
-  }
-
   private boolean jj_3R_65() {
     if (jj_scan_token(PLUS)) return true;
     return false;
@@ -7696,6 +7709,12 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
 
   private boolean jj_3R_258() {
     if (jj_3R_257()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_102() {
+    if (jj_scan_token(LOCK)) return true;
+    if (jj_scan_token(RECORD)) return true;
     return false;
   }
 
@@ -7753,14 +7772,14 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     return false;
   }
 
-  private boolean jj_3R_97() {
-    if (jj_3R_189()) return true;
-    return false;
-  }
-
   private boolean jj_3R_210() {
     if (jj_scan_token(COMMA)) return true;
     if (jj_3R_56()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_97() {
+    if (jj_3R_189()) return true;
     return false;
   }
 
@@ -7852,17 +7871,17 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     return false;
   }
 
-  private boolean jj_3R_114() {
-    if (jj_3R_193()) return true;
-    return false;
-  }
-
   private boolean jj_3R_57() {
     if (jj_scan_token(LBRACKET)) return true;
     Token xsp;
     xsp = jj_scanpos;
     if (jj_3R_135()) jj_scanpos = xsp;
     if (jj_scan_token(RBRACKET)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_114() {
+    if (jj_3R_193()) return true;
     return false;
   }
 
@@ -7891,18 +7910,23 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     return false;
   }
 
-  private boolean jj_3_9() {
-    if (jj_3R_43()) return true;
-    return false;
-  }
-
   private boolean jj_3_48() {
     if (jj_3R_53()) return true;
     return false;
   }
 
+  private boolean jj_3_9() {
+    if (jj_3R_43()) return true;
+    return false;
+  }
+
   private boolean jj_3_12() {
     if (jj_3R_46()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_134() {
+    if (jj_scan_token(FALSE)) return true;
     return false;
   }
 
@@ -7925,18 +7949,13 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     return false;
   }
 
-  private boolean jj_3R_134() {
-    if (jj_scan_token(FALSE)) return true;
+  private boolean jj_3_47() {
+    if (jj_3R_52()) return true;
     return false;
   }
 
   private boolean jj_3_8() {
     if (jj_3R_42()) return true;
-    return false;
-  }
-
-  private boolean jj_3_47() {
-    if (jj_3R_52()) return true;
     return false;
   }
 
@@ -7990,11 +8009,6 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     return false;
   }
 
-  private boolean jj_3_5() {
-    if (jj_3R_39()) return true;
-    return false;
-  }
-
   private boolean jj_3_43() {
     if (jj_3R_63()) return true;
     return false;
@@ -8002,6 +8016,11 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
 
   private boolean jj_3R_127() {
     if (jj_scan_token(NULL)) return true;
+    return false;
+  }
+
+  private boolean jj_3_5() {
+    if (jj_3R_39()) return true;
     return false;
   }
 
@@ -8056,14 +8075,14 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     return false;
   }
 
-  private boolean jj_3_6() {
-    if (jj_3R_40()) return true;
-    return false;
-  }
-
   private boolean jj_3R_194() {
     if (jj_scan_token(TIMEOUT)) return true;
     if (jj_3R_37()) return true;
+    return false;
+  }
+
+  private boolean jj_3_6() {
+    if (jj_3R_40()) return true;
     return false;
   }
 
@@ -8121,11 +8140,6 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     return false;
   }
 
-  private boolean jj_3_3() {
-    if (jj_3R_37()) return true;
-    return false;
-  }
-
   private boolean jj_3R_253() {
     Token xsp;
     xsp = jj_scanpos;
@@ -8133,6 +8147,11 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     jj_scanpos = xsp;
     if (jj_3R_294()) return true;
     }
+    return false;
+  }
+
+  private boolean jj_3_3() {
+    if (jj_3R_37()) return true;
     return false;
   }
 
@@ -8354,16 +8373,16 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     return false;
   }
 
+  private boolean jj_3R_139() {
+    if (jj_3R_47()) return true;
+    return false;
+  }
+
   private boolean jj_3R_37() {
     Token xsp;
     xsp = jj_scanpos;
     if (jj_3R_91()) jj_scanpos = xsp;
     if (jj_scan_token(INTEGER_LITERAL)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_139() {
-    if (jj_3R_47()) return true;
     return false;
   }
 
@@ -9818,7 +9837,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
   private Token jj_scanpos, jj_lastpos;
   private int jj_la;
   private int jj_gen;
-  final private int[] jj_la1 = new int[157];
+  final private int[] jj_la1 = new int[159];
   static private int[] jj_la1_0;
   static private int[] jj_la1_1;
   static private int[] jj_la1_2;
@@ -9832,19 +9851,19 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
       jj_la1_init_4();
    }
    private static void jj_la1_init_0() {
-      jj_la1_0 = new int[] {0x83f88000,0x0,0x0,0x60,0x80,0x1000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0xa3f88000,0x0,0x10000,0x0,0x80000000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x83f88000,0x20000,0x0,0x0,0x0,0x10000,0x0,0x0,0x0,0x10000,0x83f88000,0x7f00000,0x2000,0x0,0xa3f88000,0x0,0x10000,0x0,0x0,0x0,0x0,0x0,0x1800000,0x4200000,0x0,0x0,0x7f00000,0x0,0x0,0x0,0x83f88000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x4000,0x20,0x1004020,0x0,0x0,0x0,0x0,0x83f88000,0x0,0x0,0x83f88000,0x0,0x0,0x83f88000,0x1104020,0x0,0x0,0x0,0x0,0x0,0xa3f88000,0x0,0x20000000,0x83f88000,0x0,0x0,0x0,0x0,0x0,0xa3f88000,0x0,0x0,0xa3f88000,0x0,0x0,0x0,0x20000000,0x0,0x83f88000,0x0,0x0,0xa3f88020,0x83f88000,0x0,0x0,0x60,0x83f88000,0x0,0x10000000,0x8000000,0xa3f88000,0x0,0x0,0x83f88000,0x0,0xa3f88000,0x0,0xa3f88000,0x0,0xa3f88000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x83f88000,0x0,0x0,0x0,0x83f88000,0x0,0x0,0x0,0x0,0x0,0xa3f88000,0x83f88000,0x0,0x0,0x0,0x0,0x83f88000,0x83f88000,0x0,0xa3f88000,0x83f88000,0x0,0x83f88000,0x83f88000,};
+      jj_la1_0 = new int[] {0x83f88000,0x0,0x0,0x60,0x80,0x1000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0xa3f88000,0x0,0x10000,0x0,0x80000000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x83f88000,0x20000,0x0,0x0,0x0,0x10000,0x0,0x0,0x0,0x10000,0x0,0x0,0x83f88000,0x7f00000,0x2000,0x0,0xa3f88000,0x0,0x10000,0x0,0x0,0x0,0x0,0x0,0x1800000,0x4200000,0x0,0x0,0x7f00000,0x0,0x0,0x0,0x83f88000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x4000,0x20,0x1004020,0x0,0x0,0x0,0x0,0x83f88000,0x0,0x0,0x83f88000,0x0,0x0,0x83f88000,0x1104020,0x0,0x0,0x0,0x0,0x0,0xa3f88000,0x0,0x20000000,0x83f88000,0x0,0x0,0x0,0x0,0x0,0xa3f88000,0x0,0x0,0xa3f88000,0x0,0x0,0x0,0x20000000,0x0,0x83f88000,0x0,0x0,0xa3f88020,0x83f88000,0x0,0x0,0x60,0x83f88000,0x0,0x10000000,0x8000000,0xa3f88000,0x0,0x0,0x83f88000,0x0,0xa3f88000,0x0,0xa3f88000,0x0,0xa3f88000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x83f88000,0x0,0x0,0x0,0x83f88000,0x0,0x0,0x0,0x0,0x0,0xa3f88000,0x83f88000,0x0,0x0,0x0,0x0,0x83f88000,0x83f88000,0x0,0xa3f88000,0x83f88000,0x0,0x83f88000,0x83f88000,};
    }
    private static void jj_la1_init_1() {
-      jj_la1_1 = new int[] {0x4011,0x0,0x0,0x0,0x0,0x0,0x0,0x20000,0x200,0x20,0x2000,0x100000,0x40000,0x3004011,0x20000,0x0,0x1,0x0,0x4,0x18,0x1c,0x1c,0x200,0x20,0x2000,0x100000,0x40000,0x0,0x3004011,0x0,0x4,0xc00000,0x200000,0x0,0x400,0x4,0x80000,0x0,0x4011,0x0,0x0,0x1800,0x3004011,0x400,0x0,0x2000,0x4,0x20,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x4011,0x400,0x80000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x400,0x0,0x0,0x0,0x4011,0x0,0x0,0x4011,0x0,0x0,0x4011,0x0,0x10000,0x8000,0x0,0x0,0x80,0x3004011,0x0,0x0,0x4011,0x0,0x0,0x0,0x0,0x0,0x3004011,0x0,0x0,0x3004011,0x1000000,0x0,0x0,0x0,0x0,0x3004011,0x0,0x0,0x3004011,0x3004011,0x0,0x0,0x0,0x4011,0x0,0x0,0x0,0x3004011,0x0,0x0,0x4011,0x0,0x3004011,0x0,0x3004011,0x0,0x3004011,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x2004011,0x140,0x140,0x0,0x2004011,0x140,0x140,0x0,0x18,0x0,0x3004011,0x4011,0x0,0x0,0x0,0x0,0x4011,0x3004011,0x0,0x3004011,0x4011,0x0,0x4011,0x4011,};
+      jj_la1_1 = new int[] {0x4011,0x0,0x0,0x0,0x0,0x0,0x0,0x20000,0x200,0x20,0x2000,0x100000,0x40000,0x3004011,0x20000,0x0,0x1,0x0,0x4,0x18,0x1c,0x1c,0x200,0x20,0x2000,0x100000,0x40000,0x0,0x3004011,0x0,0x4,0xc00000,0x200000,0x0,0x400,0x4,0x80000,0x0,0x400,0x4,0x4011,0x0,0x0,0x1800,0x3004011,0x400,0x0,0x2000,0x4,0x20,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x4011,0x400,0x80000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x400,0x0,0x0,0x0,0x4011,0x0,0x0,0x4011,0x0,0x0,0x4011,0x0,0x10000,0x8000,0x0,0x0,0x80,0x3004011,0x0,0x0,0x4011,0x0,0x0,0x0,0x0,0x0,0x3004011,0x0,0x0,0x3004011,0x1000000,0x0,0x0,0x0,0x0,0x3004011,0x0,0x0,0x3004011,0x3004011,0x0,0x0,0x0,0x4011,0x0,0x0,0x0,0x3004011,0x0,0x0,0x4011,0x0,0x3004011,0x0,0x3004011,0x0,0x3004011,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x2004011,0x140,0x140,0x0,0x2004011,0x140,0x140,0x0,0x18,0x0,0x3004011,0x4011,0x0,0x0,0x0,0x0,0x4011,0x3004011,0x0,0x3004011,0x4011,0x0,0x4011,0x4011,};
    }
    private static void jj_la1_init_2() {
-      jj_la1_2 = new int[] {0x0,0x0,0x0,0x0,0x0,0x0,0x100000,0x0,0x0,0x0,0x0,0x0,0x0,0xc0057611,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x200000,0x40000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x1,0x0,0x0,0x0,0xc0057611,0x0,0x0,0x0,0x0,0x0,0x200000,0x200000,0x0,0x0,0x200000,0x200000,0x0,0x2000000,0x2000000,0x0,0x0,0x0,0x0,0x200000,0x200000,0x200000,0x200000,0x200000,0x0,0x0,0x4000,0x0,0x0,0x0,0x0,0x0,0x200000,0x1,0xc0044001,0x200000,0x1,0xc0044001,0x4000,0x0,0x0,0xc0000000,0x200000,0x0,0xc0057611,0x50200,0x10,0xc0050601,0x200000,0x0,0x0,0x400000,0x200000,0xc0057611,0x0,0x200000,0xc0057611,0x0,0x40000,0x400000,0x0,0x200,0xc0057011,0x0,0x0,0xc0057611,0xc0040011,0x200000,0x200000,0x0,0x44001,0x0,0x0,0x0,0xc0057611,0x3000,0xe000000,0x400,0x200000,0xc0057611,0x200000,0xc0057611,0x200000,0xc0057611,0xe000000,0x200000,0x40000,0xc0000000,0x200000,0x40000,0xc0000000,0x1,0x0,0x0,0x200000,0x1,0x0,0x0,0x200000,0x0,0x200000,0xc0057611,0x40000,0x40000,0x0,0x400000,0x0,0x40000,0x40000,0x200000,0xc0057611,0x600,0x200000,0x600,0x600,};
+      jj_la1_2 = new int[] {0x0,0x0,0x0,0x0,0x0,0x0,0x100000,0x0,0x0,0x0,0x0,0x0,0x0,0xc0057611,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x200000,0x40000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x1,0x0,0x0,0x0,0xc0057611,0x0,0x0,0x0,0x0,0x0,0x200000,0x200000,0x0,0x0,0x200000,0x200000,0x0,0x2000000,0x2000000,0x0,0x0,0x0,0x0,0x200000,0x200000,0x200000,0x200000,0x200000,0x0,0x0,0x4000,0x0,0x0,0x0,0x0,0x0,0x200000,0x1,0xc0044001,0x200000,0x1,0xc0044001,0x4000,0x0,0x0,0xc0000000,0x200000,0x0,0xc0057611,0x50200,0x10,0xc0050601,0x200000,0x0,0x0,0x400000,0x200000,0xc0057611,0x0,0x200000,0xc0057611,0x0,0x40000,0x400000,0x0,0x200,0xc0057011,0x0,0x0,0xc0057611,0xc0040011,0x200000,0x200000,0x0,0x44001,0x0,0x0,0x0,0xc0057611,0x3000,0xe000000,0x400,0x200000,0xc0057611,0x200000,0xc0057611,0x200000,0xc0057611,0xe000000,0x200000,0x40000,0xc0000000,0x200000,0x40000,0xc0000000,0x1,0x0,0x0,0x200000,0x1,0x0,0x0,0x200000,0x0,0x200000,0xc0057611,0x40000,0x40000,0x0,0x400000,0x0,0x40000,0x40000,0x200000,0xc0057611,0x600,0x200000,0x600,0x600,};
    }
    private static void jj_la1_init_3() {
-      jj_la1_3 = new int[] {0x80000000,0x200,0x200,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x80000600,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x80000400,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x80000200,0x0,0x0,0x0,0x80000600,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x1e0000,0x0,0x0,0x80000000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x80000000,0x0,0x200,0x80000200,0x0,0x200,0x80000200,0x0,0x0,0x0,0x0,0x0,0x0,0x80000600,0x0,0x0,0x80000200,0x0,0x20000200,0x20000200,0x0,0x0,0x80000200,0x400,0x0,0x80000200,0x0,0x0,0x0,0x0,0x0,0x80000200,0x300,0x8c00,0x80000200,0x80000200,0x0,0x0,0x0,0x80000200,0x0,0x0,0x0,0xc0000200,0x0,0xf,0x80000000,0x0,0x80000200,0x0,0x80000200,0x0,0x80000200,0xf,0x0,0x0,0x0,0x0,0x0,0x0,0x80000200,0x0,0x0,0x0,0x80000200,0x0,0x0,0x0,0x0,0x0,0x80000200,0x80000400,0x0,0x400,0x0,0x400,0x80000400,0x80000400,0x0,0x80000200,0x80000000,0x0,0x80000000,0x80000000,};
+      jj_la1_3 = new int[] {0x80000000,0x200,0x200,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x80000600,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x80000400,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x80000200,0x0,0x0,0x0,0x80000600,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x1e0000,0x0,0x0,0x80000000,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x80000000,0x0,0x200,0x80000200,0x0,0x200,0x80000200,0x0,0x0,0x0,0x0,0x0,0x0,0x80000600,0x0,0x0,0x80000200,0x0,0x20000200,0x20000200,0x0,0x0,0x80000200,0x400,0x0,0x80000200,0x0,0x0,0x0,0x0,0x0,0x80000200,0x300,0x8c00,0x80000200,0x80000200,0x0,0x0,0x0,0x80000200,0x0,0x0,0x0,0xc0000200,0x0,0xf,0x80000000,0x0,0x80000200,0x0,0x80000200,0x0,0x80000200,0xf,0x0,0x0,0x0,0x0,0x0,0x0,0x80000200,0x0,0x0,0x0,0x80000200,0x0,0x0,0x0,0x0,0x0,0x80000200,0x80000400,0x0,0x400,0x0,0x400,0x80000400,0x80000400,0x0,0x80000200,0x80000000,0x0,0x80000000,0x80000000,};
    }
    private static void jj_la1_init_4() {
-      jj_la1_4 = new int[] {0x1200,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x201200,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x1200,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x23f200,0x0,0x0,0x0,0x201200,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x800,0x3f200,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x800,0x800,0x800,0x1200,0x0,0x200000,0x201200,0x0,0x200000,0x201200,0x0,0x0,0x0,0x0,0x0,0x0,0x201200,0x0,0x0,0x201200,0x0,0x0,0x0,0x0,0x0,0x201200,0x0,0x0,0x201200,0x0,0x0,0x0,0x0,0x0,0x1200,0x0,0x0,0x201200,0x1200,0x0,0x0,0x0,0x27f200,0x1e000,0x0,0x0,0x201200,0x0,0x21,0x1200,0x0,0x201200,0x0,0x201200,0x0,0x201200,0x25,0x0,0x0,0x0,0x0,0x0,0x0,0x201200,0x0,0x0,0x0,0x201200,0x0,0x0,0x0,0x0,0x0,0x201200,0x1200,0x0,0x0,0x0,0x0,0x1200,0x1200,0x0,0x201200,0x1200,0x0,0x1200,0x1200,};
+      jj_la1_4 = new int[] {0x1200,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x201200,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x1200,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x23f200,0x0,0x0,0x0,0x201200,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x800,0x3f200,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x800,0x800,0x800,0x1200,0x0,0x200000,0x201200,0x0,0x200000,0x201200,0x0,0x0,0x0,0x0,0x0,0x0,0x201200,0x0,0x0,0x201200,0x0,0x0,0x0,0x0,0x0,0x201200,0x0,0x0,0x201200,0x0,0x0,0x0,0x0,0x0,0x1200,0x0,0x0,0x201200,0x1200,0x0,0x0,0x0,0x27f200,0x1e000,0x0,0x0,0x201200,0x0,0x21,0x1200,0x0,0x201200,0x0,0x201200,0x0,0x201200,0x25,0x0,0x0,0x0,0x0,0x0,0x0,0x201200,0x0,0x0,0x0,0x201200,0x0,0x0,0x0,0x0,0x0,0x201200,0x1200,0x0,0x0,0x0,0x0,0x1200,0x1200,0x0,0x201200,0x1200,0x0,0x1200,0x1200,};
    }
   final private JJCalls[] jj_2_rtns = new JJCalls[84];
   private boolean jj_rescan = false;
@@ -9861,7 +9880,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 157; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 159; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -9877,7 +9896,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     jj_ntk = -1;
     jjtree.reset();
     jj_gen = 0;
-    for (int i = 0; i < 157; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 159; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -9888,7 +9907,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 157; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 159; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -9900,7 +9919,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     jj_ntk = -1;
     jjtree.reset();
     jj_gen = 0;
-    for (int i = 0; i < 157; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 159; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -9910,7 +9929,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 157; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 159; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -9921,7 +9940,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
     jj_ntk = -1;
     jjtree.reset();
     jj_gen = 0;
-    for (int i = 0; i < 157; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 159; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -10038,7 +10057,7 @@ public class OrientSql/*@bgen(jjtree)*/implements OrientSqlTreeConstants, Orient
       la1tokens[jj_kind] = true;
       jj_kind = -1;
     }
-    for (int i = 0; i < 157; i++) {
+    for (int i = 0; i < 159; i++) {
       if (jj_la1[i] == jj_gen) {
         for (int j = 0; j < 32; j++) {
           if ((jj_la1_0[i] & (1<<j)) != 0) {

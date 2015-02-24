@@ -613,8 +613,10 @@ ODeleteVertexStatement DeleteVertexStatement():
 (
 	<DELETE>
 	<VERTEX>
-	FromClause()
-	[ <WHERE> WhereClause() ]
+	jjtThis.fromClause = FromClause()
+	[ <WHERE> jjtThis.whereClause = WhereClause() ]
+	[ <RETURN> <BEFORE> { jjtThis.returnBefore = true; } ]
+    [ <LIMIT> jjtThis.limit = Integer() ]
 ) {return jjtThis;}
 }
 
@@ -794,7 +796,6 @@ OInsertBody InsertBody():
     List<OExpression> lastExpressionList;
 }
 {
-//TODO
     (
         (
             LOOKAHEAD(3)

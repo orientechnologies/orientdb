@@ -2,8 +2,15 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-public
-class ODeleteVertexStatement extends OStatement {
+import java.util.Map;
+
+public class ODeleteVertexStatement extends OStatement {
+
+  protected OFromClause  fromClause;
+  protected OWhereClause whereClause;
+  protected boolean      returnBefore = false;
+  protected OInteger     limit        = null;
+
   public ODeleteVertexStatement(int id) {
     super(id);
   }
@@ -12,5 +19,32 @@ class ODeleteVertexStatement extends OStatement {
     super(p, id);
   }
 
+  @Override
+  public String toString() {
+    StringBuilder result = new StringBuilder();
+    result.append("DELETE VERTEX ");
+    result.append(fromClause.toString());
+    if (whereClause != null) {
+      result.append(" WHERE ");
+      result.append(whereClause.toString());
+    }
+    if (returnBefore) {
+      result.append(" RETURN BEFORE");
+    }
+    if (limit != null) {
+      result.append(" LIMIT ");
+      result.append(limit);
+    }
+    return result.toString();
+  }
+
+  public void replaceParameters(Map<Object, Object> params) {
+    fromClause.replaceParameters(params);
+
+    if (whereClause != null) {
+      whereClause.replaceParameters(params);
+    }
+
+  }
 }
 /* JavaCC - OriginalChecksum=b62d3046f4bd1b9c1f78ed4f125b06d3 (do not edit this line) */
