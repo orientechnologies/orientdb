@@ -34,7 +34,7 @@ import java.util.Set;
 public interface OProperty extends Comparable<OProperty> {
 
   public static enum ATTRIBUTES {
-    LINKEDTYPE, LINKEDCLASS, MIN, MAX, MANDATORY, NAME, NOTNULL, REGEXP, TYPE, CUSTOM, READONLY, COLLATE, DEFAULTVALUE
+    LINKEDTYPE, LINKEDCLASS, MIN, MAX, MANDATORY, NAME, NOTNULL, REGEXP, TYPE, CUSTOM, READONLY, COLLATE, DEFAULT
   }
 
   public String getName();

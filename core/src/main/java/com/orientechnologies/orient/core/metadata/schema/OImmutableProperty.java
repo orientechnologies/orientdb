@@ -298,7 +298,7 @@ public class OImmutableProperty implements OProperty {
       return isReadonly();
     case MAX:
       return getMax();
-    case DEFAULTVALUE:
+    case DEFAULT:
       return getDefaultValue();
     case NAME:
       return getName();

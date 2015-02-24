@@ -263,7 +263,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     } else {
       String defValue = p.getDefaultValue();
       if (!("".equals(defValue))) {
-        fieldValue = OSQLHelper.parseValue(defValue, null);
+        fieldValue = OSQLHelper.parseDefaultValue(iRecord, defValue);
         iRecord.rawField(p.getName(), fieldValue, null);
       } else  {
         if (p.isMandatory()) {

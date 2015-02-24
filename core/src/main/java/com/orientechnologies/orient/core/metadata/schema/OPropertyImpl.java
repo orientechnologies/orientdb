@@ -661,10 +661,10 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
           final OStorage storage = database.getStorage();
 
           if (storage instanceof OStorageProxy) {
-              final String cmd = String.format("alter property %s defaultvalue %s", getFullName(), defaultValue);
+              final String cmd = String.format("alter property %s default %s", getFullName(), defaultValue);
               database.command(new OCommandSQL(cmd)).execute();
           } else if (isDistributedCommand()) {
-              final String cmd = String.format("alter property %s defaultvalue %s", getFullName(), defaultValue);
+              final String cmd = String.format("alter property %s default %s", getFullName(), defaultValue);
               final OCommandSQL commandSQL = new OCommandSQL(cmd);
 
               commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
@@ -870,7 +870,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     case MAX:
       setMax(stringValue);
       break;
-    case DEFAULTVALUE:
+    case DEFAULT:
       setDefaultValue(stringValue);
       break;
     case NAME:
