@@ -26,6 +26,7 @@ public class OImmutableProperty implements OProperty {
   private final boolean             mandatory;
   private final String              min;
   private final String              max;
+  private final String              defaultValue;
   private final String              regexp;
   private final Map<String, String> customProperties;
   private final OClass              owner;
@@ -48,6 +49,7 @@ public class OImmutableProperty implements OProperty {
     mandatory = property.isMandatory();
     min = property.getMin();
     max = property.getMax();
+    defaultValue = property.getDefaultValue();
     regexp = property.getRegexp();
     customProperties = new HashMap<String, String>();
 
@@ -174,6 +176,14 @@ public class OImmutableProperty implements OProperty {
   }
 
   @Override
+  public String getDefaultValue() { return defaultValue; }
+
+  @Override
+  public OProperty setDefaultValue(String defaultValue) {
+      throw new UnsupportedOperationException();
+  }
+
+  @Override
   public OProperty setMax(String max) {
     throw new UnsupportedOperationException();
   }
@@ -288,6 +298,8 @@ public class OImmutableProperty implements OProperty {
       return isReadonly();
     case MAX:
       return getMax();
+    case DEFAULTVALUE:
+      return getDefaultValue();
     case NAME:
       return getName();
     case NOTNULL:
