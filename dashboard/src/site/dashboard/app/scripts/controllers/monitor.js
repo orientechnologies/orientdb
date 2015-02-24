@@ -42,6 +42,11 @@ angular.module('MonitorApp')
 
       var modalScope = $scope.$new(true)
       modalScope.refresh = $scope.refresh;
+
+
+      modalScope.onError = function(e){
+
+      }
       var modalPromise = $modal({
         template: 'views/cluster/newCluster.html',
         persist: true,

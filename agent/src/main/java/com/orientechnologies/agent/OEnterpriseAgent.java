@@ -42,7 +42,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
   private String              license;
   private String              version;
   private boolean             enabled                    = false;
-  private static final String ORIENDB_ENTERPRISE_VERSION = "1.7.8"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH
+  private static final String ORIENDB_ENTERPRISE_VERSION = "2.0.3"; // CHECK IF THE ORIENTDB COMMUNITY EDITION STARTS WITH
                                                                     // THIS
 
   public OEnterpriseAgent() {
@@ -176,14 +176,14 @@ public class OEnterpriseAgent extends OServerPluginAbstract {
     System.out.printf("\n*            Copyrights (c) 2014 Orient Technologies LTD           *");
     System.out.printf("\n********************************************************************");
     System.out.printf("\n* Version...: %-52s *", ORIENDB_ENTERPRISE_VERSION);
-    System.out.printf("\n* License...: %-52s *", license);
-    if (dayLeft < 0) {
-      System.out.printf("\n* Licence expired since: %03d days                                  *", Math.abs(dayLeft));
-      System.out.printf("\n* Enterprise features will be disabled in : %03d days               *", OL.DELAY + dayLeft);
-      System.out.printf("\n* Please contact Orient Technologies at: info@orientechonogies.com *");
-    } else {
-      System.out.printf("\n* Expires in: %03d days                                             *", dayLeft);
-    }
+//    System.out.printf("\n* License...: %-52s *", license);
+//    if (dayLeft < 0) {
+//      System.out.printf("\n* Licence expired since: %03d days                                  *", Math.abs(dayLeft));
+//      System.out.printf("\n* Enterprise features will be disabled in : %03d days               *", OL.DELAY + dayLeft);
+//      System.out.printf("\n* Please contact Orient Technologies at: info@orientechonogies.com *");
+//    } else {
+//      System.out.printf("\n* Expires in: %03d days                                             *", dayLeft);
+//    }
 
     System.out.printf("\n********************************************************************\n");
 

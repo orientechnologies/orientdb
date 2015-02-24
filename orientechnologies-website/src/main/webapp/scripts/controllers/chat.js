@@ -20,6 +20,8 @@ angular.module('webappApp')
 
     $rootScope.$on('msg-received', function (e, msg) {
 
+
+
       if (msg.sender.name != $scope.currentUser.name) {
         if ($scope.clientId == msg.clientId) {
           $scope.$apply(function () {

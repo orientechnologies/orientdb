@@ -118,13 +118,16 @@ public class OEventHook extends ORecordHookAbstract {
 
           ODocument when = oDocument.field("when");
           ODocument what = oDocument.field("what");
-          String classWhen = when.field("@class");
-          String classWhat = what.field("@class");
 
-          OLogManager.instance().info(this, "EVENT when=%s -> %s", when, what);
+          if (when != null && what != null) {
+            String classWhen = when.field("@class");
+            String classWhat = what.field("@class");
 
-          OEventExecutor executor = OEventController.getInstance().getExecutor(classWhen, classWhat);
-          executor.execute(doc, when, what);
+            OLogManager.instance().info(this, "EVENT when=%s -> %s", when, what);
+
+            OEventExecutor executor = OEventController.getInstance().getExecutor(classWhen, classWhat);
+            executor.execute(doc, when, what);
+          }
 
         }
       }

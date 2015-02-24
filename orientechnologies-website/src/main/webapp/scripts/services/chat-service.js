@@ -1,8 +1,12 @@
 'use strict';
 
 
-angular.module('webappApp').factory("ChatService", function ($rootScope, $location,$timeout ,User, Organization) {
+angular.module('webappApp').factory("ChatService", function ($rootScope, $location, $timeout,$window, User, Organization) {
 
+
+  var favicon = new Favico({
+    animation: 'popFade'
+  });
 
   var charSocketWrapper = {
     socket: null,
@@ -17,6 +21,11 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
   var chatService = {
     connected: false,
     clients: [],
+    badge: 0,
+    clean: function () {
+      this.badge = 0;
+      favicon.badge(0);
+    },
     notify: function (msg) {
       if (!("Notification" in window)) {
         alert("This browser does not support desktop notification");
@@ -38,6 +47,7 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
         Notification.requestPermission(function (permission) {
           // If the user is okay, let's create a notification
           if (permission === "granted") {
+
             var notification = new Notification("Room " + this.getClientName(msg.clientId), {body: msg.body});
           }
         });
@@ -66,6 +76,9 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
     }, 1000);
   }
 
+  $window.onfocus = function(){
+    chatService.clean();
+  }
   function initializer() {
 
     charSocketWrapper.socket.onopen = function () {
@@ -91,6 +104,8 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
       var msg = JSON.parse(evt.data);
       if (msg.sender.name != chatService.currentUser.name) {
         chatService.notify(msg);
+        chatService.badge += 1;
+        favicon.badge(chatService.badge);
         $rootScope.$broadcast('msg-received', msg);
       }
     };
@@ -106,7 +121,7 @@ angular.module('webappApp').factory("ChatService", function ($rootScope, $locati
   poll();
 
   return chatService;
-}).run(function(ChatService){
+}).run(function (ChatService) {
 
 });
 

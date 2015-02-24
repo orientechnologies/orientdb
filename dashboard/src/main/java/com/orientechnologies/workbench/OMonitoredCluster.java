@@ -21,13 +21,13 @@ public class OMonitoredCluster {
   private OWorkbenchPlugin   handler;
   private HazelcastInstance  hazelcast;
 
-  OMonitoredCluster(final OWorkbenchPlugin iHandler, final ODocument cluster) {
+  public OMonitoredCluster(final OWorkbenchPlugin iHandler, final ODocument cluster) throws Exception {
     this.handler = iHandler;
     this.clusterConfig = cluster;
     init();
   }
 
-  private void init() {
+  private void init() throws Exception {
     createHazelcastFromConfig();
     retrievePwd();
     registerMemberChangeListener();
@@ -37,7 +37,7 @@ public class OMonitoredCluster {
     getMemberInfo();
   }
 
-  private void createHazelcastFromConfig() {
+  private void createHazelcastFromConfig() throws Exception {
     try {
 
       String cName = clusterConfig.field("name");
@@ -63,8 +63,14 @@ public class OMonitoredCluster {
       join.getMulticastConfig().setEnabled((Boolean) multicast.field("enabled"))
           .setMulticastGroup((String) multicast.field("group")).setMulticastPort((Integer) multicast.field("port"));
       hazelcast = Hazelcast.newHazelcastInstance(cfg);
+      if (hazelcast.getCluster().getMembers().size() == 1) {
+        hazelcast.shutdown();
+        throw new OClusterException();
+      }
     } catch (Exception e) {
-      e.printStackTrace();
+      if (e instanceof OClusterException) {
+        throw e;
+      }
     }
   }
 
@@ -231,7 +237,11 @@ public class OMonitoredCluster {
   public void refreshConfig(ODocument res) {
     clusterConfig = res;
     shutdownDistributed();
-    init();
+    try {
+      init();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   public void shutdownDistributed() {
@@ -245,6 +255,10 @@ public class OMonitoredCluster {
   public void reInit() {
     clusterConfig.reload();
     clusterConfig = clusterConfig.field("status", "CONNECTED").save();
-    init();
+    try {
+      init();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 }

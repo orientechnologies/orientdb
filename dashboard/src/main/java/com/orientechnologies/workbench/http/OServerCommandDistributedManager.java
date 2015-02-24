@@ -78,7 +78,7 @@ public class OServerCommandDistributedManager extends OServerCommandAuthenticate
       String cluster = urlParts[3];
       String db = urlParts[4];
       OMonitoredCluster c = monitor.getClusterByName(cluster);
-        IMap<String, Object> config = c.getConfigurationMap();
+      IMap<String, Object> config = c.getConfigurationMap();
 
       Collection<OMonitoredServer> servers = monitor.getServersByClusterName(cluster);
       ODocument dbConf = (ODocument) config.get("database." + db);
@@ -139,28 +139,51 @@ public class OServerCommandDistributedManager extends OServerCommandAuthenticate
   private void doPost(OHttpRequest iRequest, OHttpResponse iResponse, String[] urlParts) throws InterruptedException, IOException {
     String type = urlParts[2];
     if ("configuration".equals(type)) {
-      ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
-      ODatabaseRecordThreadLocal.INSTANCE.set(db);
-      ODocument doc = new ODocument().fromJSON(iRequest.content, NO_MAP);
-      OMonitoredCluster c = monitor.getClusterByName((String) doc.field("name"));
 
-      String pwd = doc.field("password");
-      if (pwd != null) {
-        try {
-          doc.field("password", OL.encrypt(pwd));
-        } catch (Exception e) {
-          e.printStackTrace();
+      try {
+
+        monitor.pauseClusterInspection();
+        ODatabaseDocumentTx db = getProfiledDatabaseInstance(iRequest);
+        ODatabaseRecordThreadLocal.INSTANCE.set(db);
+        ODocument doc = new ODocument().fromJSON(iRequest.content, NO_MAP);
+        OMonitoredCluster c = monitor.getClusterByName((String) doc.field("name"));
+
+        String pwd = doc.field("password");
+        if (pwd != null) {
+          try {
+            doc.field("password", OL.encrypt(pwd));
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
         }
+        String status = doc.field("status");
+        if (status == null) {
+          doc.field("status", "CONNECTED");
+        }
+        ODocument res = doc.save();
+        if (c != null) {
+          c.refreshConfig(res);
+        }
+        OMonitoredCluster monitoredCluster = null;
+        try {
+
+          monitoredCluster = new OMonitoredCluster(monitor, res);
+          monitor.addCluster(monitoredCluster);
+
+        } catch (Exception e) {
+          if (e instanceof OClusterException) {
+            res.delete();
+            iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, null, null, "Error joining cluster " + doc.field("name")
+                + ". Please check your cluster configuration", null);
+          } else {
+            iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, null, null, e, null);
+          }
+        }
+        iResponse.writeResult(res);
+      } finally {
+        monitor.resumeClusterInspection();
       }
-      String status = doc.field("status");
-      if (status == null) {
-        doc.field("status", "CONNECTED");
-      }
-      ODocument res = doc.save();
-      if (c != null) {
-        c.refreshConfig(res);
-      }
-      iResponse.writeResult(res);
+
     } else if ("dbconfig".equals(type)) {
       String cluster = urlParts[3];
       String db = urlParts[4];

@@ -1,7 +1,7 @@
 'use strict';
 
 var module = angular.module('MonitorApp');
-module.controller('ClusterNewController', function ($scope, Cluster) {
+module.controller('ClusterNewController', function ($scope, Cluster,Spinner) {
 
   $scope.cluster = new Object;
   $scope.cluster['@rid'] = '#-1:-1';
@@ -37,8 +37,14 @@ module.controller('ClusterNewController', function ($scope, Cluster) {
   });
 
   $scope.save = function () {
+    Spinner.start();
+    $scope.hide();
     Cluster.saveCluster($scope.cluster).then(function (data) {
-
+      $scope.refresh();
+      Spinner.stopSpinner();
+    }).catch(function (e) {
+      Spinner.stopSpinner();
+      $scope.onError(e);
     })
   }
 

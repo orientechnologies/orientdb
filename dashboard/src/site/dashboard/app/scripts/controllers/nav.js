@@ -21,7 +21,7 @@ app.controller('NavController', function ($scope, $routeParams, $location, Login
         {name: 'general', i18n: 'dashboard.general', link: '#/dashboard/general/', icon: 'icon-desktop' },
         {name: 'cluster', i18n: 'dashboard.cluster', link: '#/dashboard/cluster/', icon: 'icon-sitemap' },
         {name: 'query', i18n: 'dashboard.query', link: '#/dashboard/query', icon: 'icon-rocket' },
-        {name: 'logjava', i18n: 'dashboard.javalog', link: '#/dashboard/logjava/', icon: 'icon-bug' },
+        {name: 'logjava', i18n: 'dashboard.javalog', link: '#/dashboard/logjava/', icon: 'icon-archive' },
         {name: 'events', i18n: 'dashboard.events', link: '#/dashboard/events/', icon: 'icon-bell' },
         {name: 'charts', i18n: 'dashboard.metrics', link: '#/dashboard/charts/' + $scope.rid, icon: 'icon-bar-chart' },
         {name: 'settings', i18n: 'dashboard.settings', link: '#/dashboard/settings/', icon: 'icon-gear' },

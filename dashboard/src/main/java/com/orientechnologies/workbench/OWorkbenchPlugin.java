@@ -105,6 +105,7 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
   public String                                     version;
   private OWorkbenchUpdateTask                      updater;
   private OWorkbenchMessageTask                     messageTask;
+  private OWorkbenchHazelcastTask                   hazelcastTask;
 
   @Override
   public void config(OServer iServer, OServerParameterConfiguration[] iParams) {
@@ -140,7 +141,8 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     Orient.instance().getTimer().schedule(new OWorkbenchRealtimeTask(this), 5000, 5000);
     Orient.instance().getTimer().schedule(new OWorkbenchTask(this), updateTimer, updateTimer);
     Orient.instance().getTimer().schedule(new OWorkbenchPurgeTask(this), purgeTimer, purgeTimer);
-    Orient.instance().getTimer().schedule(new OWorkbenchHazelcastTask(this), updateTimer, updateTimer);
+    hazelcastTask = new OWorkbenchHazelcastTask(this);
+    Orient.instance().getTimer().schedule(hazelcastTask, updateTimer, updateTimer);
     messageTask = new OWorkbenchMessageTask(this);
     Orient.instance().getTimer().schedule(messageTask, 600000, 600000);
     updater = new OWorkbenchUpdateTask(this);
@@ -173,6 +175,14 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
     OEventController.getInstance().register(new OEventMetricFunctionExecutor(database));
     OEventController.getInstance().register(new OEventLogHttpExecutor(database));
     OEventController.getInstance().register(new OEventMetricHttpExecutor(database));
+  }
+
+  public void pauseClusterInspection() {
+    hazelcastTask.pause();
+  }
+
+  public void resumeClusterInspection() {
+    hazelcastTask.resume();
   }
 
   private void registerCommands() {
@@ -247,22 +257,22 @@ public class OWorkbenchPlugin extends OServerPluginAbstract {
         serverCfg = new OMonitoredServer(this, s);
       }
       Map<String, Object> cfg = s.field("configuration");
-//      if (cfg != null) {
-//        String license = (String) cfg.get("license");
-//        int idC = OL.getClientId(license);
-//        int idS = OL.getServerId(license);
-//        Map<Integer, Set<OMonitoredServer>> serv = keyMap.get(idC);
-//        if (serv == null) {
-//          serv = new HashMap<Integer, Set<OMonitoredServer>>();
-//        }
-//        Set<OMonitoredServer> mSer = serv.get(idS);
-//        if (mSer == null) {
-//          mSer = new HashSet<OMonitoredServer>();
-//        }
-//        mSer.add(serverCfg);
-//        serv.put(idS, mSer);
-//        keyMap.put(idC, serv);
-//      }
+      // if (cfg != null) {
+      // String license = (String) cfg.get("license");
+      // int idC = OL.getClientId(license);
+      // int idS = OL.getServerId(license);
+      // Map<Integer, Set<OMonitoredServer>> serv = keyMap.get(idC);
+      // if (serv == null) {
+      // serv = new HashMap<Integer, Set<OMonitoredServer>>();
+      // }
+      // Set<OMonitoredServer> mSer = serv.get(idS);
+      // if (mSer == null) {
+      // mSer = new HashSet<OMonitoredServer>();
+      // }
+      // mSer.add(serverCfg);
+      // serv.put(idS, mSer);
+      // keyMap.put(idC, serv);
+      // }
       tmpServers.put(serverName, serverCfg);
     }
     this.keyMap = keyMap;
