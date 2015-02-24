@@ -63,6 +63,7 @@ import com.orientechnologies.orient.core.version.ORecordVersion;
  *
  */
 public interface ODatabase<T> extends OBackupable, Closeable, OUserObject2RecordHandler {
+
   public static enum OPTIONS {
     SECURITY
   }

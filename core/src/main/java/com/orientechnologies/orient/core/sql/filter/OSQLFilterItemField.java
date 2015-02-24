@@ -80,6 +80,10 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
     }
   }
 
+  public OSQLFilterItemField(final String iName) {
+    this.name = iName;
+  }
+
   public OSQLFilterItemField(final OBaseParser iQueryToParse, final String iName) {
     super(iQueryToParse, iName);
   }

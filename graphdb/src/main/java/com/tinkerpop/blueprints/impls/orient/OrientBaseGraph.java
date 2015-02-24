@@ -511,7 +511,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * Creates a new unconnected vertex with no fields in the Graph.
    *
    * @param id
-   *          Optional, can contains the Edge's class name by prefixing with "class:"
+   *          Optional, can contains the Vertex's class name by prefixing with "class:"
    * @return The new OrientVertex created
    */
   @Override
@@ -545,7 +545,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
    * (Blueprints Extension) Creates a new unconnected vertex in the Graph setting the initial field values.
    *
    * @param id
-   *          Optional, can contains the Edge's class name by prefixing with "class:"
+   *          Optional, can contains the Vertex's class name by prefixing with "class:"
    * @param prop
    *          Fields must be a odd pairs of key/value or a single object as Map containing entries as key/value pairs
    * @return The new OrientVertex created

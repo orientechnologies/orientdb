@@ -167,9 +167,7 @@ public class OrientEdge extends OrientElement implements Edge {
    */
   @Override
   public OrientVertex getVertex(final Direction direction) {
-    final OrientBaseGraph graph = getGraph();
-    if (graph != null)
-      graph.setCurrentGraphInThreadLocal();
+    final OrientBaseGraph graph = setCurrentGraphInThreadLocal();
 
     if (direction.equals(Direction.OUT))
       return new OrientVertex(graph, getOutVertex());
@@ -183,13 +181,11 @@ public class OrientEdge extends OrientElement implements Edge {
    * (Blueprints Extension) Returns the outgoing vertex in form of record.
    */
   public OIdentifiable getOutVertex() {
-    final OrientBaseGraph graph = getGraph();
     if (vOut != null)
       // LIGHTWEIGHT EDGE
       return vOut;
 
-    if (graph != null)
-      graph.setCurrentGraphInThreadLocal();
+    setCurrentGraphInThreadLocal();
 
     final ODocument doc = getRecord();
     if (doc == null)
@@ -206,13 +202,11 @@ public class OrientEdge extends OrientElement implements Edge {
    * (Blueprints Extension) Returns the incoming vertex in form of record.
    */
   public OIdentifiable getInVertex() {
-    final OrientBaseGraph graph = getGraph();
     if (vIn != null)
       // LIGHTWEIGHT EDGE
       return vIn;
 
-    if (graph != null)
-      graph.setCurrentGraphInThreadLocal();
+    setCurrentGraphInThreadLocal();
 
     final ODocument doc = getRecord();
     if (doc == null)
@@ -244,8 +238,7 @@ public class OrientEdge extends OrientElement implements Edge {
           return OrientBaseGraph.decodeClassName(clsName);
       }
 
-      if (graph != null)
-        graph.setCurrentGraphInThreadLocal();
+      setCurrentGraphInThreadLocal();
 
       final ODocument doc = (ODocument) rawElement.getRecord();
       if (doc == null)
@@ -277,8 +270,7 @@ public class OrientEdge extends OrientElement implements Edge {
       // CREATE A TEMPORARY ID
       return vOut.getIdentity() + "->" + vIn.getIdentity();
 
-    if (graph != null)
-      graph.setCurrentGraphInThreadLocal();
+    setCurrentGraphInThreadLocal();
 
     return super.getId();
   }
@@ -292,8 +284,7 @@ public class OrientEdge extends OrientElement implements Edge {
    */
   @Override
   public <T> T getProperty(final String key) {
-    final OrientBaseGraph graph = getGraph();
-    graph.setCurrentGraphInThreadLocal();
+    setCurrentGraphInThreadLocal();
 
     if (rawElement == null)
       // LIGHTWEIGHT EDGE
@@ -312,12 +303,11 @@ public class OrientEdge extends OrientElement implements Edge {
    */
   @Override
   public Set<String> getPropertyKeys() {
-    final OrientBaseGraph graph = getGraph();
     if (rawElement == null)
       // LIGHTWEIGHT EDGE
       return Collections.emptySet();
 
-    graph.setCurrentGraphInThreadLocal();
+    setCurrentGraphInThreadLocal();
 
     final Set<String> result = new HashSet<String>();
 
@@ -339,8 +329,7 @@ public class OrientEdge extends OrientElement implements Edge {
    */
   @Override
   public void setProperty(final String key, final Object value) {
-    final OrientBaseGraph graph = getGraph();
-    graph.setCurrentGraphInThreadLocal();
+    setCurrentGraphInThreadLocal();
 
     if (rawElement == null)
       // LIGHTWEIGHT EDGE
@@ -358,8 +347,7 @@ public class OrientEdge extends OrientElement implements Edge {
    */
   @Override
   public <T> T removeProperty(String key) {
-    final OrientBaseGraph graph = getGraph();
-    graph.setCurrentGraphInThreadLocal();
+    setCurrentGraphInThreadLocal();
 
     if (rawElement != null)
       // NON LIGHTWEIGHT EDGE
@@ -372,12 +360,13 @@ public class OrientEdge extends OrientElement implements Edge {
    */
   @Override
   public void remove() {
-    final OrientBaseGraph graph = getGraph();
+    final OrientBaseGraph graph = checkIfAttached();
     if (!isLightweight())
       checkClass();
 
     graph.setCurrentGraphInThreadLocal();
     graph.autoStartTransaction();
+
     for (final Index<? extends Element> index : graph.getIndices()) {
       if (Edge.class.isAssignableFrom(index.getIndexClass())) {
         OrientIndex<OrientEdge> idx = (OrientIndex<OrientEdge>) index;
@@ -444,9 +433,7 @@ public class OrientEdge extends OrientElement implements Edge {
    * Returns a string representation of the edge.
    */
   public String toString() {
-    final OrientBaseGraph graph = getGraph();
-    if (graph != null)
-      graph.setCurrentGraphInThreadLocal();
+    setCurrentGraphInThreadLocal();
 
     if (getLabel() == null)
       return StringFactory.E + StringFactory.L_BRACKET + getId() + StringFactory.R_BRACKET + StringFactory.L_BRACKET
@@ -479,7 +466,7 @@ public class OrientEdge extends OrientElement implements Edge {
    * properties.
    */
   public void convertToDocument() {
-    final OrientBaseGraph graph = getGraph();
+    final OrientBaseGraph graph = checkIfAttached();
     if (rawElement != null)
       // ALREADY CONVERTED
       return;

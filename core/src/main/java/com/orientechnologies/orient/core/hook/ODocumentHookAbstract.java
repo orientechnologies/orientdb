@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.hook;
 
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -33,10 +34,17 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
  * @see ORecordHook
  */
 public abstract class ODocumentHookAbstract implements ORecordHook {
-  private String[] includeClasses;
-  private String[] excludeClasses;
+  private String[]            includeClasses;
+  private String[]            excludeClasses;
 
-  protected ODocumentHookAbstract() {
+  protected ODatabaseDocument database;
+
+  public ODocumentHookAbstract() {
+    this.database = ODatabaseRecordThreadLocal.INSTANCE.get();
+  }
+
+  public ODocumentHookAbstract(ODatabaseDocument database) {
+    this.database = database;
   }
 
   @Override
@@ -202,7 +210,7 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
   }
 
   public RESULT onTrigger(final TYPE iType, final ORecord iRecord) {
-    if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && ODatabaseRecordThreadLocal.INSTANCE.get().getStatus() != STATUS.OPEN)
+    if (database.getStatus() != STATUS.OPEN)
       return RESULT.RECORD_NOT_CHANGED;
 
     if (!(iRecord instanceof ODocument))

@@ -1,38 +1,34 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.traverse.OTraverse;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
@@ -65,65 +61,76 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
    * Compile the filter conditions only the first time.
    */
   public OCommandExecutorSQLTraverse parse(final OCommandRequest iRequest) {
-    super.parse(iRequest);
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
+    try {
+      // System.out.println("NEW PARSER FROM: " + queryText);
+      queryText = preParse(queryText, iRequest);
+      // System.out.println("NEW PARSER   TO: " + queryText);
+      textRequest.setText(queryText);
 
-    final int pos = parseFields();
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Traverse must have the field list. Use " + getSyntax());
-    parserSetCurrentPosition(pos);
+      super.parse(iRequest);
 
-    int endPosition = parserText.length();
+      final int pos = parseFields();
+      if (pos == -1)
+        throw new OCommandSQLParsingException("Traverse must have the field list. Use " + getSyntax());
+      parserSetCurrentPosition(pos);
 
-    parsedTarget = OSQLEngine.getInstance().parseTarget(parserText.substring(pos, endPosition), getContext(), KEYWORD_WHILE);
+      int endPosition = parserText.length();
 
-    if (parsedTarget.parserIsEnded())
-      parserSetCurrentPosition(endPosition);
-    else
-      parserMoveCurrentPosition(parsedTarget.parserGetCurrentPosition());
+      parsedTarget = OSQLEngine.getInstance().parseTarget(parserText.substring(pos, endPosition), getContext(), KEYWORD_WHILE);
 
-    if (!parserIsEnded()) {
-      parserNextWord(true);
+      if (parsedTarget.parserIsEnded())
+        parserSetCurrentPosition(endPosition);
+      else
+        parserMoveCurrentPosition(parsedTarget.parserGetCurrentPosition());
 
-      if (parserGetLastWord().equalsIgnoreCase(KEYWORD_WHERE))
-        // // TODO Remove the additional management of WHERE for TRAVERSE after a while
-        warnDeprecatedWhere();
+      if (!parserIsEnded()) {
+        parserNextWord(true);
 
-      if (parserGetLastWord().equalsIgnoreCase(KEYWORD_WHERE) || parserGetLastWord().equalsIgnoreCase(KEYWORD_WHILE)) {
+        if (parserGetLastWord().equalsIgnoreCase(KEYWORD_WHERE))
+          // // TODO Remove the additional management of WHERE for TRAVERSE after a while
+          warnDeprecatedWhere();
 
-        compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition(), endPosition),
-            getContext(), KEYWORD_WHILE);
+        if (parserGetLastWord().equalsIgnoreCase(KEYWORD_WHERE) || parserGetLastWord().equalsIgnoreCase(KEYWORD_WHILE)) {
 
-        traverse.predicate(compiledFilter);
-        optimize();
-        parserSetCurrentPosition(compiledFilter.parserIsEnded() ? endPosition : compiledFilter.parserGetCurrentPosition()
-            + parserGetCurrentPosition());
-      } else
-        parserGoBack();
-    }
+          compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition(), endPosition),
+              getContext(), KEYWORD_WHILE);
 
-    parserSkipWhiteSpaces();
-
-    if (!parserIsEnded()) {
-      if (parserOptionalKeyword(KEYWORD_LIMIT, KEYWORD_SKIP, KEYWORD_OFFSET, KEYWORD_TIMEOUT, KEYWORD_STRATEGY)) {
-        final String w = parserGetLastWord();
-        if (w.equals(KEYWORD_LIMIT))
-          parseLimit(w);
-        else if (w.equals(KEYWORD_SKIP) || w.equals(KEYWORD_OFFSET))
-          parseSkip(w);
-        else if (w.equals(KEYWORD_TIMEOUT))
-          parseTimeout(w);
-        else if (w.equals(KEYWORD_STRATEGY))
-          parseStrategy(w);
+          traverse.predicate(compiledFilter);
+          optimize();
+          parserSetCurrentPosition(compiledFilter.parserIsEnded() ? endPosition : compiledFilter.parserGetCurrentPosition()
+              + parserGetCurrentPosition());
+        } else
+          parserGoBack();
       }
+
+      parserSkipWhiteSpaces();
+
+      if (!parserIsEnded()) {
+        if (parserOptionalKeyword(KEYWORD_LIMIT, KEYWORD_SKIP, KEYWORD_OFFSET, KEYWORD_TIMEOUT, KEYWORD_STRATEGY)) {
+          final String w = parserGetLastWord();
+          if (w.equals(KEYWORD_LIMIT))
+            parseLimit(w);
+          else if (w.equals(KEYWORD_SKIP) || w.equals(KEYWORD_OFFSET))
+            parseSkip(w);
+          else if (w.equals(KEYWORD_TIMEOUT))
+            parseTimeout(w);
+          else if (w.equals(KEYWORD_STRATEGY))
+            parseStrategy(w);
+        }
+      }
+
+      if (limit == 0 || limit < -1)
+        throw new IllegalArgumentException("Limit must be > 0 or = -1 (no limit)");
+      else
+        traverse.limit(limit);
+
+      iRequest.getContext().setChild(traverse.getContext());
+    } finally {
+      textRequest.setText(originalQuery);
     }
-
-    if (limit == 0 || limit < -1)
-      throw new IllegalArgumentException("Limit must be > 0 or = -1 (no limit)");
-    else
-      traverse.limit(limit);
-
-    iRequest.getContext().setChild(traverse.getContext());
-
     return this;
   }
 

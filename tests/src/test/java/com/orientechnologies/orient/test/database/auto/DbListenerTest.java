@@ -67,8 +67,9 @@ public class DbListenerTest extends DocumentDBBaseTest {
       this(g.getRawGraph());
     }
 
-    public DocumentChangeListener(ODatabaseDocumentTx db) {
-      db.registerHook(new ODocumentHookAbstract() {
+    public DocumentChangeListener(final ODatabaseDocumentTx db) {
+      db.registerHook(new ODocumentHookAbstract(db) {
+       
         @Override
         public ORecordHook.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
           return ORecordHook.DISTRIBUTED_EXECUTION_MODE.SOURCE_NODE;
@@ -83,7 +84,7 @@ public class DbListenerTest extends DocumentDBBaseTest {
             final Object oldValue = iDocument.getOriginalValue(f);
             final Object newValue = iDocument.field(f);
 
-//            System.out.println("Field " + f + " Old: " + oldValue + " -> " + newValue);
+            // System.out.println("Field " + f + " Old: " + oldValue + " -> " + newValue);
           }
           changes.put(iDocument, changedFields);
         }

@@ -169,13 +169,11 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
       // DUMP THE MESSAGE ONLY THE FIRST TIME
       OLogManager.instance().info(this, "[TIP] " + iMessage);
 
-
-
       tips.put(iMessage, new AtomicInteger(1));
-      tipsTimestamp.put(iMessage,System.currentTimeMillis());
+      tipsTimestamp.put(iMessage, System.currentTimeMillis());
       return 1;
     }
-    tipsTimestamp.put(iMessage,System.currentTimeMillis());
+    tipsTimestamp.put(iMessage, System.currentTimeMillis());
     return counter.incrementAndGet();
   }
 

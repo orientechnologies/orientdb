@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.db.record.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -1404,6 +1405,8 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     synchronized (clusterConfiguration) {
       clusterConfiguration.fromStream(obj);
 
+      clusterConfiguration.toString();
+
       final List<ODocument> members = clusterConfiguration.field("members");
       if (members != null) {
         serverURLs.clear();
@@ -1415,7 +1418,11 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         for (ODocument m : members)
           if (m != null && !serverURLs.contains((String) m.field("name"))) {
-            for (Map<String, Object> listener : ((Collection<Map<String, Object>>) m.field("listeners"))) {
+            final Collection<Map<String, Object>> listeners = ((Collection<Map<String, Object>>) m.field("listeners"));
+            if (listeners == null)
+              throw new ODatabaseException("Received bad distributed configuration: missing 'listeners' array field");
+
+            for (Map<String, Object> listener : listeners) {
               if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
                 String url = (String) listener.get("listen");
                 if (!serverURLs.contains(url))
