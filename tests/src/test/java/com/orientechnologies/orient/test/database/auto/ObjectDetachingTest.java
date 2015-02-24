@@ -621,6 +621,8 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
 
     attach.children = new HashMap<String, Child>();
     attach.children.put("first", c);
+    attach.specialChild = c;
+    attach.specialChild2 = c;
 
     attach.enumList = new ArrayList<EnumTest>();
     attach.enumList.add(EnumTest.ENUM1);
@@ -684,6 +686,14 @@ public class ObjectDetachingTest extends ObjectDBBaseTest {
     Assert.assertTrue(loadedJavaObj.children.get("first") instanceof Child);
     Assert.assertTrue(!(loadedJavaObj.children.get("first") instanceof Proxy));
     Assert.assertEquals(loadedJavaObj.children.get("first").getName(), "Jesus");
+
+    Child cDetached = loadedJavaObj.children.get("first");
+    Assert.assertTrue(cDetached instanceof Child);
+    Assert.assertEquals(cDetached.getName(), "Jesus");
+    Assert.assertSame(loadedJavaObj.specialChild, loadedJavaObj.specialChild2);
+    Assert.assertEquals(cDetached, loadedJavaObj.specialChild);
+    Assert.assertSame(cDetached, loadedJavaObj.specialChild);
+    Assert.assertSame(cDetached, loadedJavaObj.specialChild2);
 
     Assert.assertEquals(loadedJavaObj.enumSet.size(), 2);
     it = loadedJavaObj.enumSet.iterator();
