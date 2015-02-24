@@ -1,10 +1,8 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
-import com.sun.xml.internal.ws.util.NoCloseOutputStream;
+import com.orientechnologies.common.types.OModifiableInteger;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class OWALChangesTree {
   private static final boolean BLACK   = false;
@@ -69,10 +67,182 @@ public class OWALChangesTree {
         }
       }
     }
+
+    assertInvariants();
   }
 
   public void applyChanges(byte[] values, int start, int end) {
+    final List<Node> result = new ArrayList<Node>();
+    findIntervals(root, start, end, result);
 
+    if (result.isEmpty())
+      return;
+
+    final Queue<Node> processedNodes = new ArrayDeque<Node>();
+
+    for (Node activeNode : result) {
+      int activeStart = activeNode.start;
+
+      final Iterator<Node> pNodesIterator = processedNodes.iterator();
+      while (pNodesIterator.hasNext()) {
+        final Node pNode = pNodesIterator.next();
+        if (pNode.end > activeStart && pNode.version > activeNode.version)
+          activeStart = pNode.end;
+
+        if (pNode.end <= activeNode.start)
+          pNodesIterator.remove();
+      }
+
+      processedNodes.add(activeNode);
+
+      if (activeStart >= activeNode.end)
+        continue;
+
+      final int deltaStart = activeStart - start;
+
+      System.arraycopy(activeNode.value, deltaStart >= 0 ? 0 : -deltaStart, values, deltaStart >= 0 ? deltaStart : 0,
+          deltaStart < 0 ? activeNode.value.length + deltaStart : activeNode.value.length);
+    }
+  }
+
+  private void assertInvariants() {
+    assert rootIsBlack();
+    assert redHaveBlackChildNodes();
+    assert allBlackPathsAreEqual();
+    assert maxEndIsPresent();
+    assert maxEndValueIsCorrect();
+  }
+
+  private boolean allBlackPathsAreEqual() {
+    List<OModifiableInteger> paths = new ArrayList<OModifiableInteger>();
+    OModifiableInteger currentPath = new OModifiableInteger();
+    paths.add(currentPath);
+
+    calculateBlackPathsFromNode(root, paths, currentPath);
+
+    final int basePath = paths.get(0).getValue();
+    for (OModifiableInteger path : paths) {
+      if (path.getValue() != basePath)
+        return false;
+    }
+
+    return true;
+  }
+
+  private void calculateBlackPathsFromNode(Node node, List<OModifiableInteger> paths, OModifiableInteger currentPath) {
+    if (node.color == BLACK) {
+      currentPath.increment();
+    }
+
+    if (node.left != null) {
+      calculateBlackPathsFromNode(node.left, paths, currentPath);
+    }
+
+    if (node.right != null) {
+      OModifiableInteger newPath = new OModifiableInteger(currentPath.getValue());
+      paths.add(newPath);
+
+      calculateBlackPathsFromNode(node.right, paths, newPath);
+    }
+  }
+
+  private boolean redHaveBlackChildNodes() {
+    return redHaveBlackChildNodes(root);
+  }
+
+  private boolean redHaveBlackChildNodes(Node node) {
+    if (node.color == RED) {
+      if (node.left != null && node.left.color == RED)
+        return false;
+
+      if (node.right != null && node.right.color == RED)
+        return false;
+    }
+
+    if (node.left != null && !redHaveBlackChildNodes(node.left))
+      return false;
+
+    if (node.right != null && redHaveBlackChildNodes(node.right))
+      return false;
+
+    return true;
+  }
+
+  private boolean rootIsBlack() {
+    if (root == null)
+      return true;
+
+    return root.color == BLACK;
+  }
+
+  private boolean maxEndIsPresent() {
+    if (root == null)
+      return true;
+
+    return maxEndIsPresent(root);
+  }
+
+  private boolean maxEndIsPresent(Node node) {
+    boolean result = endValueIsPresentAmongChildren(node.maxEnd, node);
+    if (!result)
+      return false;
+
+    if (node.left != null)
+      result = maxEndIsPresent(node.left);
+
+    if (!result)
+      return false;
+
+    if (node.right != null)
+      result = maxEndIsPresent(node.right);
+
+    return result;
+  }
+
+  private boolean endValueIsPresentAmongChildren(int value, Node node) {
+    if (node.end == value)
+      return true;
+
+    if (node.left != null && endValueIsPresentAmongChildren(value, node.left))
+      return true;
+
+    if (node.right != null && endValueIsPresentAmongChildren(value, node.right))
+      return true;
+
+    return false;
+  }
+
+  private boolean maxEndValueIsCorrect() {
+    if (root == null)
+      return true;
+
+    return maxEndValueIsCorrect(root);
+  }
+
+  private boolean maxEndValueIsCorrect(Node node) {
+    if (!valueIsMaxEndValueAmongChildren(node, node.maxEnd))
+      return false;
+
+    if (node.left != null && !maxEndIsPresent(node.left))
+      return false;
+
+    if (node.right != null && !maxEndIsPresent(node.right))
+      return false;
+
+    return true;
+  }
+
+  private boolean valueIsMaxEndValueAmongChildren(Node node, int value) {
+    if (node.end > value)
+      return false;
+
+    if (node.left != null && !valueIsMaxEndValueAmongChildren(node.left, value))
+      return false;
+
+    if (node.right != null && !valueIsMaxEndValueAmongChildren(node.right, value))
+      return false;
+
+    return true;
   }
 
   private void findIntervals(Node node, int start, int end, List<Node> result) {
