@@ -17,17 +17,17 @@ app.controller('NavController', function ($scope, $routeParams, $location, Login
     $scope.hideClass = "nav navbar-nav side-nav";
 
     $scope.menus = [
-        {name: 'dashboard', i18n: 'dashboard', link: '#/dashboard/', icon: 'icon-dashboard' },
-        {name: 'general', i18n: 'dashboard.general', link: '#/dashboard/general/', icon: 'icon-desktop' },
-        {name: 'cluster', i18n: 'dashboard.cluster', link: '#/dashboard/cluster/', icon: 'icon-sitemap' },
-        {name: 'query', i18n: 'dashboard.query', link: '#/dashboard/query', icon: 'icon-rocket' },
-        {name: 'logjava', i18n: 'dashboard.javalog', link: '#/dashboard/logjava/', icon: 'icon-archive' },
-        {name: 'events', i18n: 'dashboard.events', link: '#/dashboard/events/', icon: 'icon-bell' },
-        {name: 'charts', i18n: 'dashboard.metrics', link: '#/dashboard/charts/' + $scope.rid, icon: 'icon-bar-chart' },
-        {name: 'settings', i18n: 'dashboard.settings', link: '#/dashboard/settings/', icon: 'icon-gear' },
+        {name: 'dashboard', i18n: 'dashboard', link: '#/dashboard/', icon: 'icon-dashboard icon-2x' },
+        {name: 'general', i18n: 'dashboard.general', link: '#/dashboard/general/', icon: 'icon-desktop icon-2x' },
+        {name: 'cluster', i18n: 'dashboard.cluster', link: '#/dashboard/cluster/', icon: 'icon-sitemap icon-2x' },
+        {name: 'query', i18n: 'dashboard.query', link: '#/dashboard/query', icon: 'icon-rocket icon-2x' },
+        {name: 'logjava', i18n: 'dashboard.javalog', link: '#/dashboard/logjava/', icon: 'icon-archive icon-2x' },
+        {name: 'events', i18n: 'dashboard.events', link: '#/dashboard/events/', icon: 'icon-bell icon-2x' },
+        {name: 'charts', i18n: 'dashboard.metrics', link: '#/dashboard/charts/' + $scope.rid, icon: 'icon-bar-chart icon-2x' },
+        {name: 'settings', i18n: 'dashboard.settings', link: '#/dashboard/settings/', icon: 'icon-gear icon-2x' },
 //        {name: 'messages', i18n: 'dashboard.messages', link: '#/dashboard/messages/', icon: 'icon-envelope' },
 //        {name: 'gettstart', i18n: 'dashboard.gettstart', link: '#/dashboard/gettstart/', icon: 'icon-info-sign' },
-        {name: 'help', i18n: 'dashboard.help', link: '#/dashboard/help/', icon: 'icon-question' }
+        {name: 'help', i18n: 'dashboard.help', link: '#/dashboard/help/', icon: 'icon-question icon-2x' }
 
 
     ]

@@ -1,5 +1,8 @@
 package com.orientechnologies.workbench;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.OBase64Utils;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -7,9 +10,6 @@ import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.net.URL;
-
-import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.OBase64Utils;
 
 public final class OWorkbenchUtils {
 
@@ -56,7 +56,8 @@ public final class OWorkbenchUtils {
     try {
       pwd = OL.decrypt(enc);
     } catch (Exception e) {
-      e.printStackTrace();
+//      e.printStackTrace();
+      pwd = enc;
     }
     String authString = server.field("user") + ":" + pwd;
     String authStringEnc = OBase64Utils.encodeBytes(authString.getBytes());

@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('MonitorApp')
-  .controller('DashboardController', function ($scope, $location, $timeout, $modal, $q, $i18n, $odialog, Monitor, Server, Notification, Settings, StickyNotification, MetricConfig) {
+  .controller('DashboardController', function ($scope,$rootScope, $location, $timeout, $modal, $q, $i18n, $odialog, Monitor, Server, Notification, Settings, StickyNotification, MetricConfig) {
 
 
     $scope.chartHeight = 300;
@@ -44,7 +44,7 @@ angular.module('MonitorApp')
       modalScope.refresh = $scope.refresh;
 
 
-      modalScope.onError = function(e){
+      modalScope.onError = function (e) {
 
       }
       var modalPromise = $modal({
@@ -177,6 +177,9 @@ angular.module('MonitorApp')
         body: 'You are removing Server ' + server.name + '. Are you sure?',
         success: function () {
           Server.delete(server.name, function (data) {
+            var idx = $scope.servers.indexOf(server);
+            $scope.servers.splice(idx, 1);
+            $rootScope.$broadcast("server.removed", server);
             $scope.refresh();
             $scope.refreshConfig();
           });

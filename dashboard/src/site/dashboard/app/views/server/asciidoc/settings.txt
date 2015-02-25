@@ -16,12 +16,6 @@ In this panel you can configure some settings for the entire Workbench. There ar
 
 
 
-.Grid Configuration
-image::{icondir}dashboard_setting_2.png[width="70%"]
-
-NOTE: remember to click on the Save button to make the changes permanent
-
-
 Metrics Configuration
 ~~~~~~~~~~~~~~~~~~~~~
 

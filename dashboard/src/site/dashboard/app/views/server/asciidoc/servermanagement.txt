@@ -89,4 +89,4 @@ In the last tab you can modify orientdb-server-config.xml. Click save to send th
 image::{icondir}configuration.png[width="80%"]
 
 
-CAUTION: Auto-reload isn't supported until 2.0.
+CAUTION: Auto-reload isn't supported.

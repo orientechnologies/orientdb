@@ -10,7 +10,7 @@ app.controller('ServerMonitorController', function ($scope, $location, $routePar
 
 });
 
-app.controller('SingleServerController', function ($scope, $location, $routeParams, $timeout, Metric, $i18n, MetricConfig, $q, Server) {
+app.controller('SingleServerController', function ($scope,$rootScope, $location, $routeParams, $timeout, Metric, $i18n, MetricConfig, $q, Server) {
 
 
   $scope.operations = 0;
@@ -29,8 +29,6 @@ app.controller('SingleServerController', function ($scope, $location, $routePara
     Server.getStats($scope.server).then(function (data) {
 
       $scope.server.status = data.result[0].status;
-
-
 
 
       if ($scope.server.status == 'ONLINE') {
@@ -136,11 +134,19 @@ app.controller('SingleServerController', function ($scope, $location, $routePara
   }
 
 
+  $rootScope.$on("server.removed", function (e,server) {
+    console.log(server);
+    if ($scope.server.name == server.name) {
+      $scope.removed = true;
+    }
+  });
   var statsWatching = function () {
-    $timeout(function () {
-      initStats()
-      statsWatching();
-    }, 2000);
+    if (!$scope.removed) {
+      $timeout(function () {
+        initStats()
+        statsWatching();
+      }, 2000);
+    }
   }
 
 
