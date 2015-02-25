@@ -592,6 +592,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
             saveInternal();
           else
             reload();
+        else
+          snapshot = new OImmutableSchema(this);
 
         version++;
       }
