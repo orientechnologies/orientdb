@@ -939,7 +939,9 @@ OCreateVertexStatementNoTarget CreateVertexStatementNoTarget():
 
 
 OCreateEdgeStatement CreateEdgeStatement():
-{}
+{
+    //TODO implement this
+}
 {
 (
 	<CREATE>
@@ -1039,44 +1041,6 @@ OProjectionItem ProjectionItem():
 ){return jjtThis;}
 }
 
-void ValueItem():
-{}
-{
-    (
-        <NULL>
-        |
-        <FLOATING_POINT_LITERAL>
-        |
-        LOOKAHEAD( Integer() )
-        Integer()
-        |
-        (
-            (
-                LOOKAHEAD( Rid() )
-                Rid()
-                |
-                Array()
-                |
-                Json()
-                |
-                <CHARACTER_LITERAL>
-                |
-                LOOKAHEAD(2)
-                <STRING_LITERAL>
-                |
-                LOOKAHEAD( InputParameter() )
-                InputParameter()
-                |
-                LOOKAHEAD( FunctionCall() )
-                FunctionCall()
-            )
-            [ LOOKAHEAD( Modifier() ) Modifier() ]
-        )
-        |
-        LOOKAHEAD(2)
-        (<LPAREN> SelectStatement() <RPAREN> )
-    )
-}
 
 OArraySelector ArraySelector():
 {}
@@ -1160,12 +1124,6 @@ ORecordAttribute RecordAttribute():
 	    token = <RECORD_ATTRIBUTE> { jjtThis.name = token.image; }
 	)
 	{ return jjtThis; }
-}
-
-void ThisOperation():
-{}
-{
-	<THIS> ( MethodCall() )*
 }
 
 OFunctionCall FunctionCall():
