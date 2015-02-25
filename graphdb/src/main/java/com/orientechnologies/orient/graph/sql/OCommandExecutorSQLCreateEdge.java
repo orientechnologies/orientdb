@@ -28,23 +28,14 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.sql.OCommandExecutorSQLRetryAbstract;
-import com.orientechnologies.orient.core.sql.OCommandParameters;
-import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-import com.orientechnologies.orient.core.sql.OSQLEngine;
-import com.orientechnologies.orient.core.sql.OSQLHelper;
+import com.orientechnologies.orient.core.sql.*;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientEdge;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * SQL CREATE EDGE command.
@@ -62,57 +53,70 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLCreateEdge parse(final OCommandRequest iRequest) {
-    final ODatabaseDocument database = getDatabase();
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
-    init((OCommandRequestText) iRequest);
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
+    try {
+      // System.out.println("NEW PARSER FROM: " + queryText);
+      queryText = preParse(queryText, iRequest);
+      // System.out.println("NEW PARSER   TO: " + queryText);
+      textRequest.setText(queryText);
 
-    parserRequiredKeyword("CREATE");
-    parserRequiredKeyword("EDGE");
+      final ODatabaseDocument database = getDatabase();
 
-    String className = null;
+      init((OCommandRequestText) iRequest);
 
-    String temp = parseOptionalWord(true);
+      parserRequiredKeyword("CREATE");
+      parserRequiredKeyword("EDGE");
 
-    while (temp != null) {
-      if (temp.equals("CLUSTER")) {
-        clusterName = parserRequiredWord(false);
+      String className = null;
 
-      } else if (temp.equals(KEYWORD_FROM)) {
-        from = parserRequiredWord(false, "Syntax error", " =><,\r\n");
+      String temp = parseOptionalWord(true);
 
-      } else if (temp.equals("TO")) {
-        to = parserRequiredWord(false, "Syntax error", " =><,\r\n");
+      while (temp != null) {
+        if (temp.equals("CLUSTER")) {
+          clusterName = parserRequiredWord(false);
 
-      } else if (temp.equals(KEYWORD_SET)) {
-        fields = new LinkedHashMap<String, Object>();
-        parseSetFields(clazz, fields);
+        } else if (temp.equals(KEYWORD_FROM)) {
+          from = parserRequiredWord(false, "Syntax error", " =><,\r\n");
 
-      } else if (temp.equals(KEYWORD_CONTENT)) {
-        parseContent();
+        } else if (temp.equals("TO")) {
+          to = parserRequiredWord(false, "Syntax error", " =><,\r\n");
 
-      } else if (temp.equals(KEYWORD_RETRY)) {
-        parseRetry();
+        } else if (temp.equals(KEYWORD_SET)) {
+          fields = new LinkedHashMap<String, Object>();
+          parseSetFields(clazz, fields);
 
-      } else if (className == null && temp.length() > 0) {
-        className = temp;
+        } else if (temp.equals(KEYWORD_CONTENT)) {
+          parseContent();
+
+        } else if (temp.equals(KEYWORD_RETRY)) {
+          parseRetry();
+
+        } else if (className == null && temp.length() > 0) {
+          className = temp;
+          clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(className);
+        }
+
+        temp = parseOptionalWord(true);
+        if (parserIsEnded())
+          break;
+      }
+
+      if (className == null) {
+        // ASSIGN DEFAULT CLASS
+        className = "E";
         clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(className);
       }
 
-      temp = parseOptionalWord(true);
-      if (parserIsEnded())
-        break;
+      // GET/CHECK CLASS NAME
+      if (clazz == null)
+        throw new OCommandSQLParsingException("Class '" + className + "' was not found");
+
+    } finally {
+      textRequest.setText(originalQuery);
     }
-
-    if (className == null) {
-      // ASSIGN DEFAULT CLASS
-      className = "E";
-      clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(className);
-    }
-
-    // GET/CHECK CLASS NAME
-    if (clazz == null)
-      throw new OCommandSQLParsingException("Class '" + className + "' was not found");
-
     return this;
   }
 
