@@ -11,6 +11,12 @@ public class OWALChangesTree {
   private Node                 root    = null;
   private int                  version = 0;
 
+  private boolean              debug;
+
+  public void setDebug(boolean debug) {
+    this.debug = debug;
+  }
+
   public void add(byte[] value, int start) {
     version++;
 
@@ -18,9 +24,22 @@ public class OWALChangesTree {
   }
 
   private void add(byte[] value, int start, int version, boolean updateSerializedSize) {
+    if (value == null || value.length == 0)
+      return;
+
     final Node fnode = bsearch(start);
 
     final Node node = new Node(value, start, RED, version);
+
+    if (fnode == null) {
+      root = node;
+      root.color = BLACK;
+
+      if (debug)
+        assertInvariants();
+
+      return;
+    }
 
     if (start < fnode.start) {
       fnode.left = node;
@@ -41,7 +60,7 @@ public class OWALChangesTree {
           fnode.value = value;
       } else if (end < fnode.end) {
         if (fnode.version < version) {
-          final byte[] cvalue = Arrays.copyOfRange(fnode.value, end, fnode.end);
+          final byte[] cvalue = Arrays.copyOfRange(fnode.value, end - start, fnode.end - start);
           final int cversion = fnode.version;
           final int cstart = end;
 
@@ -54,7 +73,7 @@ public class OWALChangesTree {
         }
       } else {
         if (fnode.version > version) {
-          final byte[] cvalue = Arrays.copyOfRange(value, fnode.end, end);
+          final byte[] cvalue = Arrays.copyOfRange(value, fnode.end - start, end - start);
           final int cversion = version;
           final int cstart = fnode.end;
 
@@ -68,10 +87,12 @@ public class OWALChangesTree {
       }
     }
 
-    assertInvariants();
+    if (debug)
+      assertInvariants();
   }
 
-  public void applyChanges(byte[] values, int start, int end) {
+  public void applyChanges(byte[] values, int start) {
+    final int end = start + values.length;
     final List<Node> result = new ArrayList<Node>();
     findIntervals(root, start, end, result);
 
@@ -100,8 +121,27 @@ public class OWALChangesTree {
 
       final int deltaStart = activeStart - start;
 
-      System.arraycopy(activeNode.value, deltaStart >= 0 ? 0 : -deltaStart, values, deltaStart >= 0 ? deltaStart : 0,
-          deltaStart < 0 ? activeNode.value.length + deltaStart : activeNode.value.length);
+      final int vStart;
+      if (deltaStart > 0)
+        vStart = start + deltaStart;
+      else
+        vStart = start;
+
+      int vLength;
+      if (deltaStart > 0)
+        vLength = (activeNode.end - activeStart);
+      else
+        vLength = (activeNode.end - activeStart) + deltaStart;
+
+      final int vEnd = vLength + vStart;
+      if (vEnd > end)
+        vLength = vLength - (vEnd - end);
+
+      if (vLength <= 0)
+        continue;
+
+      System.arraycopy(activeNode.value, deltaStart >= 0 ? activeStart - activeNode.start : activeStart - activeNode.start
+          - deltaStart, values, deltaStart >= 0 ? deltaStart : 0, vLength);
     }
   }
 
@@ -134,15 +174,15 @@ public class OWALChangesTree {
       currentPath.increment();
     }
 
-    if (node.left != null) {
-      calculateBlackPathsFromNode(node.left, paths, currentPath);
-    }
-
     if (node.right != null) {
       OModifiableInteger newPath = new OModifiableInteger(currentPath.getValue());
       paths.add(newPath);
 
       calculateBlackPathsFromNode(node.right, paths, newPath);
+    }
+
+    if (node.left != null) {
+      calculateBlackPathsFromNode(node.left, paths, currentPath);
     }
   }
 
@@ -162,7 +202,7 @@ public class OWALChangesTree {
     if (node.left != null && !redHaveBlackChildNodes(node.left))
       return false;
 
-    if (node.right != null && redHaveBlackChildNodes(node.right))
+    if (node.right != null && !redHaveBlackChildNodes(node.right))
       return false;
 
     return true;
@@ -356,6 +396,9 @@ public class OWALChangesTree {
     if (b != null)
       b.parent = q;
 
+    if (node == root)
+      root = p;
+
     updateMaxEndAccordingToChildren(q);
   }
 
@@ -381,6 +424,9 @@ public class OWALChangesTree {
 
     if (b != null)
       b.parent = p;
+
+    if (node == root)
+      root = q;
 
     updateMaxEndAccordingToChildren(p);
   }
