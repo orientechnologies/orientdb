@@ -25,6 +25,7 @@ options {
   	MULTI=true;
   	VISITOR=true;
   	STATIC=false;
+  	USER_CHAR_STREAM = true ;
   	JAVA_UNICODE_ESCAPE=true;
   	NODE_PREFIX="O";
 }
@@ -33,6 +34,7 @@ PARSER_BEGIN(OrientSql)
 
 package com.orientechnologies.orient.core.sql.parser;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -55,6 +57,10 @@ public class OrientSql {
       e.printStackTrace();
     }
   }
+
+    public OrientSql(InputStream stream) {
+      this(new JavaCharStream(stream));
+    }
 
 }
 
@@ -503,6 +509,9 @@ OStatement Statement():
 		LOOKAHEAD(2)
 		result = DeleteVertexStatement()
 		|
+		LOOKAHEAD(2)
+        result = DeleteEdgeStatement()
+		|
 		result = InsertStatement()
 		|
 		LOOKAHEAD(CreateVertexStatementNoTarget())
@@ -618,6 +627,261 @@ ODeleteVertexStatement DeleteVertexStatement():
 	[ <RETURN> <BEFORE> { jjtThis.returnBefore = true; } ]
     [ <LIMIT> jjtThis.limit = Integer() ]
 ) {return jjtThis;}
+}
+
+ODeleteEdgeStatement DeleteEdgeStatement():
+{ ODeleteEdgeStatement result; }
+{
+    (
+        LOOKAHEAD(DeleteEdgeByRidStatement())
+        result = DeleteEdgeByRidStatement()
+        |
+        LOOKAHEAD(DeleteEdgeFromToStatement())
+        result = DeleteEdgeFromToStatement()
+        |
+        LOOKAHEAD(DeleteEdgeVToStatement())
+        result = DeleteEdgeVToStatement()
+        |
+        LOOKAHEAD(DeleteEdgeToStatement())
+        result = DeleteEdgeToStatement()
+        |
+        LOOKAHEAD(DeleteEdgeWhereStatement())
+        result = DeleteEdgeWhereStatement()
+    )
+    {return result;}
+}
+
+
+ODeleteEdgeStatement DeleteEdgeByRidStatement():
+{
+    ORid lastRid;
+}
+{
+(
+	<DELETE>
+	<EDGE>
+	jjtThis.rid = Rid()
+
+) {return jjtThis;}
+}
+
+
+
+ODeleteEdgeStatement DeleteEdgeFromToStatement():
+{
+    ORid lastRid;
+}
+{
+(
+	<DELETE>
+	<EDGE>
+
+	[ jjtThis.className = Identifier() ]
+
+
+        <FROM>
+        (
+            jjtThis.leftRid = Rid()
+            |
+            (
+                <LBRACKET>
+                [
+                    lastRid = Rid()
+                    {
+                        jjtThis.leftRids=new ArrayList();
+                        jjtThis.leftRids.add(lastRid);
+                    }
+                    (
+                        <COMMA>
+                        lastRid = Rid() { jjtThis.leftRids.add(lastRid); }
+                    )*
+                ] <RBRACKET>
+            )
+            |
+            (
+                <LPAREN>
+                (
+                    LOOKAHEAD(SelectStatement()) jjtThis.leftStatement = SelectStatement()
+                    |
+                    LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.leftStatement = SelectWithoutTargetStatement()
+                )
+                <RPAREN>
+            )
+            |
+            jjtThis.leftParam = InputParameter()
+            |
+            jjtThis.leftIdentifier = Identifier()
+        )
+
+        [
+            <TO>
+            (
+                 jjtThis.rightRid = Rid()
+                |
+                (
+                    <LBRACKET>
+                    [
+                        lastRid = Rid()
+                        {
+                            jjtThis.rightRids=new ArrayList();
+                            jjtThis.rightRids.add(lastRid);
+                        }
+                        (
+                            <COMMA>
+                            lastRid = Rid() { jjtThis.rightRids.add(lastRid); }
+                        )*
+                    ] <RBRACKET>
+                )
+                |
+                (
+                    <LPAREN>
+                    (
+                        LOOKAHEAD(SelectStatement()) jjtThis.rightStatement = SelectStatement()
+                        |
+                        LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.rightStatement = SelectWithoutTargetStatement()
+                    )
+                    <RPAREN>
+                )
+                |
+                jjtThis.rightParam = InputParameter()
+                |
+                jjtThis.rightIdentifier = Identifier()
+            )
+        ]
+
+
+
+    [ <WHERE> jjtThis.whereClause = WhereClause() ]
+    [ jjtThis.limit = Limit() ]
+
+	//TODO
+) {return jjtThis;}
+}
+
+
+ODeleteEdgeStatement DeleteEdgeToStatement():
+{
+    ORid lastRid;
+}
+{
+    (
+        <DELETE>
+        <EDGE>
+
+        jjtThis.className = Identifier()
+
+        <TO>
+        (
+             jjtThis.rightRid = Rid()
+            |
+            (
+                <LBRACKET>
+                [
+                    lastRid = Rid()
+                    {
+                        jjtThis.rightRids=new ArrayList();
+                        jjtThis.rightRids.add(lastRid);
+                    }
+                    (
+                        <COMMA>
+                        lastRid = Rid() { jjtThis.rightRids.add(lastRid); }
+                    )*
+                ] <RBRACKET>
+            )
+            |
+            (
+                <LPAREN>
+                (
+                    LOOKAHEAD(SelectStatement()) jjtThis.rightStatement = SelectStatement()
+                    |
+                    LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.rightStatement = SelectWithoutTargetStatement()
+                )
+                <RPAREN>
+            )
+            |
+            jjtThis.rightParam = InputParameter()
+            |
+            jjtThis.rightIdentifier = Identifier()
+        )
+
+
+        [ <WHERE> jjtThis.whereClause = WhereClause() ]
+        [ jjtThis.limit = Limit() ]
+
+	)
+	//TODO
+     {return jjtThis;}
+}
+
+ODeleteEdgeStatement DeleteEdgeVToStatement():
+{
+    ORid lastRid;
+}
+{
+    (
+        <DELETE>
+        <EDGE>
+
+        <TO>
+        (
+             jjtThis.rightRid = Rid()
+            |
+            (
+                <LBRACKET>
+                [
+                    lastRid = Rid()
+                    {
+                        jjtThis.rightRids=new ArrayList();
+                        jjtThis.rightRids.add(lastRid);
+                    }
+                    (
+                        <COMMA>
+                        lastRid = Rid() { jjtThis.rightRids.add(lastRid); }
+                    )*
+                ] <RBRACKET>
+            )
+            |
+            (
+                <LPAREN>
+                (
+                    LOOKAHEAD(SelectStatement()) jjtThis.rightStatement = SelectStatement()
+                    |
+                    LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.rightStatement = SelectWithoutTargetStatement()
+                )
+                <RPAREN>
+            )
+            |
+            jjtThis.rightParam = InputParameter()
+            |
+            jjtThis.rightIdentifier = Identifier()
+        )
+
+
+        [ <WHERE> jjtThis.whereClause = WhereClause() ]
+        [ jjtThis.limit = Limit() ]
+
+	)
+	//TODO
+     {return jjtThis;}
+}
+
+ODeleteEdgeStatement DeleteEdgeWhereStatement():
+{
+    ORid lastRid;
+}
+{
+    (
+        <DELETE>
+        <EDGE>
+
+        [ jjtThis.className = Identifier() ]
+
+        [ <WHERE> jjtThis.whereClause = WhereClause() ]
+        [ jjtThis.limit = Limit() ]
+
+	)
+	//TODO
+     {return jjtThis;}
 }
 
 OUpdateStatement UpdateStatement():
@@ -940,7 +1204,6 @@ OCreateVertexStatementNoTarget CreateVertexStatementNoTarget():
 
 OCreateEdgeStatement CreateEdgeStatement():
 {
-    //TODO implement this
     ORid lastRid;
 }
 {

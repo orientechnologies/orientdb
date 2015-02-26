@@ -8,7 +8,7 @@ package com.orientechnologies.orient.core.sql.parser;
  */
 
 public
-class JavaCharStream
+class JavaCharStream implements CharStream
 {
   /** Whether parser is static. */
   public static final boolean staticFlag = false;
