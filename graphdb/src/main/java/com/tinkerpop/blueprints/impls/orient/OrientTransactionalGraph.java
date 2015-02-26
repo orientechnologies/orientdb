@@ -78,7 +78,8 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     super(pool, configuration);
     setCurrentGraphInThreadLocal();
 
-    begin();
+    if (configuration.isAutoStartTx())
+      begin();
   }
 
   protected OrientTransactionalGraph(final String url) {
