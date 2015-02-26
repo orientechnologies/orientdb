@@ -187,6 +187,32 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
   }
 
   /**
+   * Creates a new instance in memory of the specified class.
+   * New instances are not persistent until {@link #save()} is called.
+   *
+   * @param object4iClassName
+   *          Class name
+   */
+  public ODocument(final Object object4iClassName) {
+    setClassName(object4iClassName.getClass().getName());
+    setup();
+  }
+
+   /**
+   * Creates a new instance in memory of the specified class.
+   * New instances are not persistent until {@link #save()} is called.
+   *
+   * @param class4iClassName
+   *          Class name
+   */
+  public ODocument(final Class class4iClassName) {
+    setClassName(class4iClassName.getName());
+    setup();
+  }
+
+
+
+  /**
    * Creates a new instance in memory of the specified schema class. New instances are not persistent until {@link #save()} is
    * called. The database reference is taken from the thread local.
    * 
