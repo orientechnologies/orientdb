@@ -56,7 +56,24 @@ public class SQLCreateVertexTest extends DocumentDBBaseTest {
       resultMessages.add(document.<String> field("message"));
     }
 
-    Assert.assertEqualsNoOrder(messages.toArray(), resultMessages.toArray());
+    Assert.assertEqualsNoOrder(messages.toArray(), resultMessages.toArray(), "arrays are different: "+toString(messages)+" - "+toString(resultMessages) );
+  }
+
+  private String toString(List<String> resultMessages) {
+    StringBuilder result = new StringBuilder();
+    result.append("[");
+    boolean first = true;
+    for (String msg : resultMessages) {
+      if (!first) {
+        result.append(", ");
+      }
+      result.append("\"");
+      result.append(msg);
+      result.append("\"");
+      first = false;
+    }
+    result.append("]");
+    return result.toString();
   }
 
   public void testCreateVertexBooleanProp() {
