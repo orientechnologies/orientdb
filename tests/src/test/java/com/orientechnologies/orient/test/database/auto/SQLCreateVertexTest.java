@@ -56,6 +56,7 @@ public class SQLCreateVertexTest extends DocumentDBBaseTest {
       resultMessages.add(document.<String> field("message"));
     }
 
+    System.out.println("arrays are different: "+toString(messages)+" - "+toString(resultMessages));
     Assert.assertEqualsNoOrder(messages.toArray(), resultMessages.toArray(), "arrays are different: "+toString(messages)+" - "+toString(resultMessages) );
   }
 
