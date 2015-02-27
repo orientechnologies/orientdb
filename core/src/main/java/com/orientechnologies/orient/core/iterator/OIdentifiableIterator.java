@@ -277,7 +277,7 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
         } else
           iRecord = lowLevelDatabase.load(current, fetchPlan, !useCache, iterateThroughTombstones, lockingStrategy);
       } catch (ODatabaseException e) {
-        if (Thread.interrupted())
+        if (Thread.interrupted() || lowLevelDatabase.isClosed())
           // THREAD INTERRUPTED: RETURN
           throw e;
 
