@@ -19,13 +19,6 @@
  */
 package com.orientechnologies.common.console;
 
-import com.orientechnologies.common.console.annotation.ConsoleCommand;
-import com.orientechnologies.common.console.annotation.ConsoleParameter;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.parser.OStringParser;
-import com.orientechnologies.common.util.OArrays;
-
-import javax.imageio.spi.ServiceRegistry;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -40,9 +33,16 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.ServiceLoader;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.orientechnologies.common.console.annotation.ConsoleCommand;
+import com.orientechnologies.common.console.annotation.ConsoleParameter;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.parser.OStringParser;
+import com.orientechnologies.common.util.OArrays;
 
 public class OConsoleApplication {
   protected static final String[] COMMENT_PREFIXS = new String[] { "#", "--", "//" };
@@ -454,7 +454,7 @@ public class OConsoleApplication {
   protected Map<Method, Object> getConsoleMethods() {
 
     // search for declared command collections
-    final Iterator<OConsoleCommandCollection> ite = ServiceRegistry.lookupProviders(OConsoleCommandCollection.class);
+    final Iterator<OConsoleCommandCollection> ite = ServiceLoader.load(OConsoleCommandCollection.class).iterator();
     final Collection<Object> candidates = new ArrayList<Object>();
     candidates.add(this);
     while (ite.hasNext()) {
