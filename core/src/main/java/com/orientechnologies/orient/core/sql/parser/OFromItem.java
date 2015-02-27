@@ -66,6 +66,9 @@ public class OFromItem extends SimpleNode {
       } else if (inputFinalValue == null) {
         return "NULL";
       } else {
+        if (inputFinalValue instanceof String) {
+          inputFinalValue = ((String) inputFinalValue).replaceAll(" ", "");// avoid SQL injection, temporary patch
+        }
         return inputFinalValue.toString();
       }
     }
@@ -82,7 +85,7 @@ public class OFromItem extends SimpleNode {
     if (statement != null) {
       statement.replaceParameters(params);
     }
-    if(inputParam!=null) {
+    if (inputParam != null) {
       Object result = inputParam.bindFromInputParams(params);
       if (inputParam != result) {
         inputFinalValue = result;

@@ -24,7 +24,10 @@ import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 @Test
 public class PreparedStatementTest extends DocumentDBBaseTest {
@@ -89,7 +92,6 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
     params.put("inputRid", record.getIdentity());
     result = database.command(new OSQLSynchQuery<ODocument>("select from :inputRid")).execute(params);
 
-
     boolean found = false;
     for (ODocument doc : result) {
       found = true;
@@ -108,7 +110,6 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
 
     ODocument record = result.iterator().next();
     result = database.command(new OSQLSynchQuery<ODocument>("select from ?")).execute(record.getIdentity());
-
 
     boolean found = false;
     for (ODocument doc : result) {
@@ -132,7 +133,6 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
     params.put("inputRid", record);
     result = database.command(new OSQLSynchQuery<ODocument>("select from :inputRid")).execute(params);
 
-
     boolean found = false;
     for (ODocument doc : result) {
       found = true;
@@ -151,7 +151,6 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
 
     ODocument record = result.iterator().next();
     result = database.command(new OSQLSynchQuery<ODocument>("select from ?")).execute(record);
-
 
     boolean found = false;
     for (ODocument doc : result) {
@@ -298,6 +297,19 @@ public class PreparedStatementTest extends DocumentDBBaseTest {
       Assert.assertEquals(doc.field("maximo"), 3);
     }
     Assert.assertTrue(found);
+
+  }
+
+  @Test
+  public void testSqlInjectionOnTarget() {
+
+    try {
+      Iterable<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select from ?")).execute(
+          "PreparedStatementTest1 where name = 'foo'");
+      Assert.fail();
+    } catch (Exception e) {
+
+    }
 
   }
 
