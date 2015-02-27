@@ -18,7 +18,9 @@ public class OJsonItem {
   public String toString() {
     StringBuilder result = new StringBuilder();
     if (leftIdentifier != null) {
+      result.append("\"");
       result.append(leftIdentifier.toString());
+      result.append("\"");
     }
     if (leftString != null) {
       result.append("\"");
