@@ -6,7 +6,7 @@ import java.util.Map;
 
 public class ONamedParameter extends OInputParameter {
 
-  protected int paramNumber;
+  protected int         paramNumber;
   protected OIdentifier paramName;
 
   public ONamedParameter(int id) {
@@ -28,13 +28,15 @@ public class ONamedParameter extends OInputParameter {
   }
 
   public Object bindFromInputParams(Map<Object, Object> params) {
-    String key = paramName.toString();
-    if(params.containsKey(key)) {
-      return toParsedTree(params.get(key));
+    if (params != null) {
+      String key = paramName.toString();
+      if (params.containsKey(key)) {
+        return toParsedTree(params.get(key));
+      }
+      return toParsedTree(params.get(paramNumber));
     }
-    return toParsedTree(params.get(paramNumber));
+    return this;
   }
-
 
 }
 /* JavaCC - OriginalChecksum=8a00a9cf51a15dd75202f6372257fc1c (do not edit this line) */

@@ -13,6 +13,10 @@ public class OFromItem extends SimpleNode {
   protected OIndexIdentifier    index;
   protected OMetadataIdentifier metadata;
   protected OStatement          statement;
+  protected OInputParameter     inputParam;
+
+  private static final Object   UNSET           = new Object();
+  private Object                inputFinalValue = UNSET;
 
   public OFromItem(int id) {
     super(id);
@@ -56,6 +60,14 @@ public class OFromItem extends SimpleNode {
       return "(" + statement.toString() + ")";
     } else if (index != null) {
       return index.toString();
+    } else if (inputParam != null) {
+      if (inputFinalValue == UNSET) {
+        return inputParam.toString();
+      } else if (inputFinalValue == null) {
+        return "NULL";
+      } else {
+        return inputFinalValue.toString();
+      }
     }
 
     return super.toString();
@@ -67,8 +79,14 @@ public class OFromItem extends SimpleNode {
   }
 
   public void replaceParameters(Map<Object, Object> params) {
-    if(statement!=null) {
+    if (statement != null) {
       statement.replaceParameters(params);
+    }
+    if(inputParam!=null) {
+      Object result = inputParam.bindFromInputParams(params);
+      if (inputParam != result) {
+        inputFinalValue = result;
+      }
     }
   }
 }
