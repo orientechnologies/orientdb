@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.wal;
 
+import com.orientechnologies.common.directmemory.ODirectMemory;
+import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
 import com.orientechnologies.common.types.OModifiableInteger;
 
 import java.util.*;
@@ -147,6 +149,41 @@ public class OWALChangesTree {
       System.arraycopy(activeNode.value, deltaStart >= 0 ? activeStart - activeNode.start : activeStart - activeNode.start
           - deltaStart, values, deltaStart >= 0 ? deltaStart : 0, vLength);
     }
+  }
+
+  public void applyChanges(ODirectMemoryPointer pointer) {
+    if (root == null)
+      return;
+
+    final Queue<Node> processedNodes = new ArrayDeque<Node>();
+    applyChanges(pointer, root, processedNodes);
+  }
+
+  private void applyChanges(ODirectMemoryPointer pointer, Node node, Queue<Node> processedNodes) {
+    if (node.left != null)
+      applyChanges(pointer, node.left, processedNodes);
+
+    int activeStart = node.start;
+
+    final Iterator<Node> pNodesIterator = processedNodes.iterator();
+    while (pNodesIterator.hasNext()) {
+      final Node pNode = pNodesIterator.next();
+      if (pNode.end > activeStart && pNode.version > node.version)
+        activeStart = pNode.end;
+
+      if (pNode.end <= node.start)
+        pNodesIterator.remove();
+    }
+
+    processedNodes.add(node);
+
+    if (activeStart < node.end) {
+      final int vLength = node.end - activeStart;
+      pointer.set(activeStart, node.value, activeStart - node.start, vLength);
+    }
+
+    if (node.right != null)
+      applyChanges(pointer, node.right, processedNodes);
   }
 
   private void assertInvariants() {
