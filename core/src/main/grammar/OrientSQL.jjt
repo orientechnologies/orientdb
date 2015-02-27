@@ -180,6 +180,8 @@ TOKEN:
     |
     < BREADTH_FIRST: ( "b" | "B" ) ( "r" | "R" ) ( "e" | "E" ) ( "a" | "A" ) ( "d" | "D" ) ( "t" | "T" )  ( "h" | "H" ) ( "_" ) ( "f" | "F" ) ( "i" | "I" ) ( "r" | "R" ) ( "s" | "S" ) ( "t" | "T" )  >
 	|
+	< LUCENE: ( "l" | "L" ) ( "u" | "U" ) ( "c" | "C" ) ( "e" | "E" ) ( "n" | "N" ) ( "e" | "E" ) >
+	|
 	< THIS: "@this" >
 	|
 	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> >
@@ -450,6 +452,8 @@ OIdentifier Identifier():
     token = <RECORD>
     |
     token = <TO>
+    |
+    token = <LUCENE>
 ) { jjtThis.value = token.image; return jjtThis; }
 }
 
@@ -754,7 +758,6 @@ ODeleteEdgeStatement DeleteEdgeFromToStatement():
     [ <WHERE> jjtThis.whereClause = WhereClause() ]
     [ jjtThis.limit = Limit() ]
 
-	//TODO
 ) {return jjtThis;}
 }
 
@@ -809,7 +812,6 @@ ODeleteEdgeStatement DeleteEdgeToStatement():
         [ jjtThis.limit = Limit() ]
 
 	)
-	//TODO
      {return jjtThis;}
 }
 
@@ -861,7 +863,6 @@ ODeleteEdgeStatement DeleteEdgeVToStatement():
         [ jjtThis.limit = Limit() ]
 
 	)
-	//TODO
      {return jjtThis;}
 }
 
@@ -880,7 +881,6 @@ ODeleteEdgeStatement DeleteEdgeWhereStatement():
         [ jjtThis.limit = Limit() ]
 
 	)
-	//TODO
      {return jjtThis;}
 }
 
@@ -1906,6 +1906,7 @@ OBinaryCompareOperator CompareOperator():
       | result = LeOperator()
       | result = LikeOperator()
       | result = ContainsKeyOperator()
+      | result = LuceneOperator()
 ){return result;}
 }
 
@@ -1963,6 +1964,14 @@ OLikeOperator LikeOperator():
 {
 (
 	<LIKE>
+){return jjtThis;}
+}
+
+OLuceneOperator LuceneOperator():
+{}
+{
+(
+	<LUCENE>
 ){return jjtThis;}
 }
 

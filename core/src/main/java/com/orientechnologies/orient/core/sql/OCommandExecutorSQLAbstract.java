@@ -20,7 +20,10 @@
 package com.orientechnologies.orient.core.sql;
 
 import com.orientechnologies.orient.core.command.OCommandContext.TIMEOUT_STRATEGY;
-import com.orientechnologies.orient.core.command.*;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
+import com.orientechnologies.orient.core.command.OCommandRequest;
+import com.orientechnologies.orient.core.command.OCommandRequestAbstract;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -237,14 +240,12 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
         return result.toString();
       } catch (ParseException e) {
-        System.out.println("NEW PARSER FAILED: " + queryText);
-        e.printStackTrace();
+        e.printStackTrace();// TODO remove this
         throwParsingException(e.getMessage());
       }
       return "ERROR!";
     }
     return queryText;
   }
-
 
 }
