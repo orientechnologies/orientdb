@@ -56,8 +56,10 @@ public class OWALChangesTree {
     } else {
       final int end = start + value.length;
       if (end == fnode.end) {
-        if (fnode.version < version)
+        if (fnode.version < version) {
           fnode.value = value;
+          fnode.version = version;
+        }
       } else if (end < fnode.end) {
         if (fnode.version < version) {
           final byte[] cvalue = Arrays.copyOfRange(fnode.value, end - start, fnode.end - start);
@@ -66,6 +68,7 @@ public class OWALChangesTree {
 
           fnode.end = end;
           fnode.value = value;
+          fnode.version = version;
 
           updateMaxEndAccordingToChildren(fnode);
 
@@ -81,6 +84,7 @@ public class OWALChangesTree {
         } else {
           fnode.end = end;
           fnode.value = value;
+          fnode.version = version;
 
           updateMaxEndAccordingToChildren(fnode);
         }
