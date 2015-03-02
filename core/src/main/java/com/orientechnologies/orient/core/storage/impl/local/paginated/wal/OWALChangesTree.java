@@ -11,13 +11,15 @@ import com.orientechnologies.common.types.OModifiableInteger;
 import java.util.*;
 
 public class OWALChangesTree {
-  private static final boolean BLACK   = false;
-  private static final boolean RED     = true;
+  private static final boolean BLACK          = false;
+  private static final boolean RED            = true;
 
-  private Node                 root    = null;
-  private int                  version = 0;
+  private Node                 root           = null;
+  private int                  version        = 0;
 
   private boolean              debug;
+
+  private int                  serializedSize = OIntegerSerializer.INT_SIZE;
 
   public void setDebug(boolean debug) {
     this.debug = debug;
@@ -118,6 +120,9 @@ public class OWALChangesTree {
       if (debug)
         assertInvariants();
 
+      if (updateSerializedSize)
+        serializedSize += serializedSize(value.length);
+
       return;
     }
 
@@ -125,11 +130,17 @@ public class OWALChangesTree {
       fnode.left = node;
       node.parent = fnode;
 
+      if (updateSerializedSize)
+        serializedSize += serializedSize(value.length);
+
       updateMaxEndAfterAppend(node);
       insertCaseOne(node);
     } else if (start > fnode.start) {
       fnode.right = node;
       node.parent = fnode;
+
+      if (updateSerializedSize)
+        serializedSize += serializedSize(value.length);
 
       updateMaxEndAfterAppend(node);
       insertCaseOne(node);
@@ -137,8 +148,14 @@ public class OWALChangesTree {
       final int end = start + value.length;
       if (end == fnode.end) {
         if (fnode.version < version) {
+          if (updateSerializedSize)
+            serializedSize -= fnode.value.length;
+
           fnode.value = value;
           fnode.version = version;
+
+          if (updateSerializedSize)
+            serializedSize += fnode.value.length;
         }
       } else if (end < fnode.end) {
         if (fnode.version < version) {
@@ -146,9 +163,15 @@ public class OWALChangesTree {
           final int cversion = fnode.version;
           final int cstart = end;
 
+          if (updateSerializedSize)
+            serializedSize -= fnode.value.length;
+
           fnode.end = end;
           fnode.value = value;
           fnode.version = version;
+
+          if (updateSerializedSize)
+            serializedSize += fnode.value.length;
 
           updateMaxEndAccordingToChildren(fnode);
 
@@ -162,9 +185,15 @@ public class OWALChangesTree {
 
           add(cvalue, cstart, cversion, updateSerializedSize);
         } else {
+          if (updateSerializedSize)
+            serializedSize -= fnode.value.length;
+
           fnode.end = end;
           fnode.value = value;
           fnode.version = version;
+
+          if (updateSerializedSize)
+            serializedSize += fnode.value.length;
 
           updateMaxEndAccordingToChildren(fnode);
         }
@@ -181,6 +210,10 @@ public class OWALChangesTree {
     findIntervals(root, start, end, result);
 
     applyChanges(values, start, end, result);
+  }
+
+  private int serializedSize(int content) {
+    return content + 4 * OIntegerSerializer.INT_SIZE; // start, end, version, content size + content
   }
 
   private void applyChanges(byte[] values, int start, int end, List<Node> result) {
@@ -243,6 +276,41 @@ public class OWALChangesTree {
 
   public PointerWrapper wrap(final ODirectMemoryPointer pointer) {
     return new PointerWrapper(pointer);
+  }
+
+  public int getSerializedSize() {
+    return serializedSize;
+  }
+
+  public int toStream(int offset, byte[] stream) {
+    OIntegerSerializer.INSTANCE.serializeNative(serializedSize, stream, offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    offset = toStream(root, offset, stream);
+
+    return offset;
+  }
+
+  private int toStream(Node node, int offset, byte[] stream) {
+    if (node.left != null)
+      offset = toStream(node.left, offset, stream);
+
+    OIntegerSerializer.INSTANCE.serializeNative(node.start, stream, offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    OIntegerSerializer.INSTANCE.serializeNative(node.end, stream, offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    OIntegerSerializer.INSTANCE.serializeNative(node.version, stream, offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    OIntegerSerializer.INSTANCE.serializeNative(node.value.length, stream, offset);
+    offset += OIntegerSerializer.INT_SIZE;
+
+    if (node.right != null)
+      offset = toStream(node.right, offset, stream);
+
+    return offset;
   }
 
   private void applyChanges(ODirectMemoryPointer pointer, Node node, Queue<Node> processedNodes) {
