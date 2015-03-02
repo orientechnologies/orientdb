@@ -1,26 +1,27 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 
 package com.orientechnologies.common.serialization.types;
 
 import com.orientechnologies.common.directmemory.ODirectMemoryPointer;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 
 /**
  * This interface is used for serializing OrientDB datatypes in binary format. Serialized content is written into buffer that will
@@ -35,8 +36,10 @@ public interface OBinarySerializer<T> {
    * Obtain size of the serialized object Size is the amount of bites that required for storing object (for example: for storing
    * integer we need 4 bytes)
    *
-   * @param object is the object to measure its size
-   * @param hints  List of parameters which may be used to choose appropriate serialization approach.
+   * @param object
+   *          is the object to measure its size
+   * @param hints
+   *          List of parameters which may be used to choose appropriate serialization approach.
    * @return size of the serialized object
    */
   int getObjectSize(T object, Object... hints);
@@ -44,8 +47,10 @@ public interface OBinarySerializer<T> {
   /**
    * Return size serialized presentation of given object.
    *
-   * @param stream        Serialized content.
-   * @param startPosition Position from which serialized presentation of given object is stored.
+   * @param stream
+   *          Serialized content.
+   * @param startPosition
+   *          Position from which serialized presentation of given object is stored.
    * @return Size serialized presentation of given object in bytes.
    */
   int getObjectSize(byte[] stream, int startPosition);
@@ -53,21 +58,26 @@ public interface OBinarySerializer<T> {
   /**
    * Writes object to the stream starting from the startPosition
    *
-   * @param object        is the object to serialize
-   * @param stream        is the stream where object will be written
+   * @param object
+   *          is the object to serialize
+   * @param stream
+   *          is the stream where object will be written
    * @param startPosition
-   * @param hints         List of parameters which may be used to choose appropriate serialization approach.
+   * @param hints
+   *          List of parameters which may be used to choose appropriate serialization approach.
    */
   void serialize(T object, byte[] stream, int startPosition, Object... hints);
 
   /**
    * Reads object from the stream starting from the startPosition
    *
-   * @param stream        is the stream from object will be read
-   * @param startPosition is the position to start reading from
+   * @param stream
+   *          is the stream from object will be read
+   * @param startPosition
+   *          is the position to start reading from
    * @return instance of the deserialized object
    */
-   T deserialize(byte[] stream, int startPosition);
+  T deserialize(byte[] stream, int startPosition);
 
   /**
    * @return Identifier of given serializer.
@@ -89,10 +99,13 @@ public interface OBinarySerializer<T> {
    * Writes object to the stream starting from the startPosition using native acceleration. Serialized object presentation is
    * platform dependant.
    *
-   * @param object        is the object to serialize
-   * @param stream        is the stream where object will be written
+   * @param object
+   *          is the object to serialize
+   * @param stream
+   *          is the stream where object will be written
    * @param startPosition
-   * @param hints         List of parameters which may be used to choose appropriate serialization approach.
+   * @param hints
+   *          List of parameters which may be used to choose appropriate serialization approach.
    */
   void serializeNativeObject(T object, byte[] stream, int startPosition, Object... hints);
 
@@ -100,8 +113,10 @@ public interface OBinarySerializer<T> {
    * Reads object from the stream starting from the startPosition, in case there were serialized using
    * {@link #serializeNativeObject(T, byte[], int, Object...)} method.
    *
-   * @param stream        is the stream from object will be read
-   * @param startPosition is the position to start reading from
+   * @param stream
+   *          is the stream from object will be read
+   * @param startPosition
+   *          is the position to start reading from
    * @return instance of the deserialized object
    */
   T deserializeNativeObject(byte[] stream, int startPosition);
@@ -110,8 +125,10 @@ public interface OBinarySerializer<T> {
    * Return size serialized presentation of given object, if it was serialized using
    * {@link #serializeNativeObject(T, byte[], int, Object...)} method.
    *
-   * @param stream        Serialized content.
-   * @param startPosition Position from which serialized presentation of given object is stored.
+   * @param stream
+   *          Serialized content.
+   * @param startPosition
+   *          Position from which serialized presentation of given object is stored.
    * @return Size serialized presentation of given object in bytes.
    */
   int getObjectSizeNative(byte[] stream, int startPosition);
@@ -121,6 +138,10 @@ public interface OBinarySerializer<T> {
   T deserializeFromDirectMemoryObject(ODirectMemoryPointer pointer, long offset);
 
   int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset);
+
+  T deserializeFromDirectMemoryObject(OWALChangesTree.PointerWrapper wrapper, long offset);
+
+  int getObjectSizeInDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset);
 
   T preprocess(T value, Object... hints);
 }
