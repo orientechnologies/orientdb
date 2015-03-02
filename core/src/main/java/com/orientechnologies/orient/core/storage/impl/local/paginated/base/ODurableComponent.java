@@ -55,7 +55,6 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
  * provide efficient multi core scalability feature. It is recommended to always call it just after start of atomic operation but
  * always remember it is not replacement of thread safety mechanics for current data structure it is a mean to provide isolation
  * between atomic operations.</li>
- * <li>Log all page changes in WAL by calling of {@link #logPageChanges(ODurablePage, long, long, boolean)}</li>
  * <li>Call {@link #endAtomicOperation(boolean)} method when atomic operation completes, passed in parameter should be
  * <code>false</code> if atomic operation completes with success and <code>true</code> if there were some exceptions and it is
  * needed to rollback given operation.</li>
@@ -95,67 +94,43 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     atomicOperationsManager.endAtomicOperation(rollback);
   }
 
-  protected void startAtomicOperation() throws IOException {
-    atomicOperationsManager.startAtomicOperation();
+  protected OAtomicOperation startAtomicOperation() throws IOException {
+    return atomicOperationsManager.startAtomicOperation();
   }
 
-  protected void logPageChanges(ODurablePage localPage, long fileId, long pageIndex, boolean isNewPage) throws IOException {
-    if (writeAheadLog != null) {
-      final OPageChanges pageChanges = localPage.getPageChanges();
-      if (pageChanges.isEmpty())
-        return;
+  // protected void logPageChanges(ODurablePage localPage, long fileId, long pageIndex, boolean isNewPage) throws IOException {
+  // if (writeAheadLog != null) {
+  // final OPageChanges pageChanges = localPage.getChangesTree();
+  // if (pageChanges.isEmpty())
+  // return;
+  //
+  // final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+  // assert atomicOperation != null;
+  //
+  // final OOperationUnitId unitId = atomicOperation.getOperationUnitId();
+  // final OLogSequenceNumber prevLsn;
+  // if (isNewPage)
+  // prevLsn = atomicOperation.getStartLSN();
+  // else
+  // prevLsn = localPage.getLsn();
+  //
+  // final OLogSequenceNumber lsn = writeAheadLog.log(new OUpdatePageRecord(pageIndex, fileId, unitId, pageChanges, prevLsn,
+  // atomicOperation.getStartLSN()));
+  // localPage.setLsn(lsn);
+  // }
+  // }
 
-      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-      assert atomicOperation != null;
-
-      final OOperationUnitId unitId = atomicOperation.getOperationUnitId();
-      final OLogSequenceNumber prevLsn;
-      if (isNewPage)
-        prevLsn = atomicOperation.getStartLSN();
-      else
-        prevLsn = localPage.getLsn();
-
-      final OLogSequenceNumber lsn = writeAheadLog.log(new OUpdatePageRecord(pageIndex, fileId, unitId, pageChanges, prevLsn, atomicOperation.getStartLSN()));
-      localPage.setLsn(lsn);
-    }
-  }
-
-  protected void logFileCreation(String fileName, long fileId) throws IOException {
-    if (writeAheadLog != null) {
-      final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
-      assert atomicOperation != null;
-
-      final OOperationUnitId unitId = atomicOperation.getOperationUnitId();
-      writeAheadLog.log(new OFileCreatedCreatedWALRecord(unitId, fileName, fileId, atomicOperation.getStartLSN()));
-    }
-  }
+  // protected void logFileCreation(String fileName, long fileId) throws IOException {
+  // if (writeAheadLog != null) {
+  // final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
+  // assert atomicOperation != null;
+  //
+  // final OOperationUnitId unitId = atomicOperation.getOperationUnitId();
+  // writeAheadLog.log(new OFileCreatedCreatedWALRecord(unitId, fileName, fileId, atomicOperation.getStartLSN()));
+  // }
+  // }
 
   protected void lockTillAtomicOperationCompletes() {
     atomicOperationsManager.lockTillOperationComplete(this);
-  }
-
-  protected ODurablePage.TrackMode getTrackMode() {
-    final ODurablePage.TrackMode trackMode;
-
-    final OStorageTransaction transaction = storage.getStorageTransaction();
-
-    final OTransaction clientTx;
-    if (transaction != null)
-      clientTx = transaction.getClientTx();
-    else
-      clientTx = null;
-
-    if (storage instanceof ODirectMemoryStorage && transaction == null)
-      return ODurablePage.TrackMode.NONE;
-
-    // very risky and not durable case which may lead to data corruption.
-    if (clientTx instanceof OTransactionOptimistic && !clientTx.isUsingLog())
-      trackMode = ODurablePage.TrackMode.NONE;
-    else if (writeAheadLog == null)
-      trackMode = ODurablePage.TrackMode.NONE;
-    else
-      trackMode = ODurablePage.TrackMode.FULL;
-
-    return trackMode;
   }
 }

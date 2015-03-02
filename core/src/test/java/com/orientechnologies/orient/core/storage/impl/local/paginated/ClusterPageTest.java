@@ -932,7 +932,8 @@ public class ClusterPageTest {
   }
 
   private void assertChangesTracking(OClusterPage localPage, ODirectMemoryPointer pagePointer) throws IOException {
-    ODirectMemoryPointer restoredPagePointer = new ODirectMemoryPointer(new byte[OClusterPage.PAGE_SIZE + ODurablePage.PAGE_PADDING]);
+    ODirectMemoryPointer restoredPagePointer = new ODirectMemoryPointer(
+        new byte[OClusterPage.PAGE_SIZE + ODurablePage.PAGE_PADDING]);
     OCachePointer cachePointer = new OCachePointer(restoredPagePointer, new OLogSequenceNumber(0, 0));
     cachePointer.incrementReferrer();
 
@@ -940,7 +941,7 @@ public class ClusterPageTest {
     try {
       OClusterPage restoredPage = new OClusterPage(cacheEntry, false, ODurablePage.TrackMode.FULL);
 
-      OPageChanges changes = localPage.getPageChanges();
+      OPageChanges changes = localPage.getChangesTree();
       restoredPage.restoreChanges(changes);
 
       Assert.assertEquals(restoredPagePointer.get(SYSTEM_OFFSET, OClusterPage.PAGE_SIZE - SYSTEM_OFFSET),
