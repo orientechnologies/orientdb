@@ -1003,6 +1003,8 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         return ORecordHook.RESULT.RECORD_NOT_CHANGED;
 
       final OScenarioThreadLocal.RUN_MODE runMode = OScenarioThreadLocal.INSTANCE.get();
+      if (runMode != RUN_MODE.RUNNING_DISTRIBUTED && getStorage().isDistributed())
+        return ORecordHook.RESULT.RECORD_NOT_CHANGED;
 
       ORecordHook[] hooksToRun = null;
       if (runMode == RUN_MODE.RUNNING_DISTRIBUTED)
