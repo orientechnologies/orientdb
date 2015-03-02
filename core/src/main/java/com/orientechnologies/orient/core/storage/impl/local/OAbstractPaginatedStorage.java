@@ -2427,8 +2427,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     // RESET TRACKING
     if (rec instanceof ODocument && ((ODocument) rec).isTrackingChanges()) {
-      ((ODocument) rec).setTrackingChanges(false);
-      ((ODocument) rec).setTrackingChanges(true);
+      ODocumentInternal.clearTrackData(((ODocument) rec));
     }
 
     ORecordInternal.unsetDirty(rec);

@@ -550,8 +550,7 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
         // RESET TRACKING
         if (iRecord instanceof ODocument && ((ODocument) iRecord).isTrackingChanges()) {
-          ((ODocument) iRecord).setTrackingChanges(false);
-          ((ODocument) iRecord).setTrackingChanges(true);
+          ODocumentInternal.clearTrackData(((ODocument) iRecord));
         }
 
       } catch (Throwable t) {
