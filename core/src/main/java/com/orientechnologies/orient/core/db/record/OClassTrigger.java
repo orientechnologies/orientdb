@@ -16,14 +16,6 @@
 
 package com.orientechnologies.orient.core.db.record;
 
-import java.lang.reflect.Method;
-
-import javax.script.Bindings;
-import javax.script.Invocable;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
-
 import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -40,11 +32,17 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
+
+import javax.script.Bindings;
+import javax.script.Invocable;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
+import javax.script.ScriptException;
+import java.lang.reflect.Method;
 
 /**
  * Author : henryzhao81@gmail.com Feb 19, 2013
@@ -285,6 +283,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
       final Bindings binding = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE);
 
       scriptManager.bind(binding, (ODatabaseDocumentTx) db, null, null);
+      binding.put("doc", iDocument);
 
       String result = null;
       try {
