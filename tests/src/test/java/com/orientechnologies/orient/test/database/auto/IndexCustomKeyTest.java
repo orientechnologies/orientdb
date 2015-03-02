@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -145,7 +146,17 @@ public class IndexCustomKeyTest extends DocumentDBBaseTest {
     }
 
     @Override
+    public ComparableBinary deserializeFromDirectMemoryObject(OWALChangesTree.PointerWrapper wrapper, long offset) {
+      return new ComparableBinary(wrapper.get(offset, LENGTH));
+    }
+
+    @Override
     public int getObjectSizeInDirectMemory(ODirectMemoryPointer pointer, long offset) {
+      return LENGTH;
+    }
+
+    @Override
+    public int getObjectSizeInDirectMemory(OWALChangesTree.PointerWrapper wrapper, long offset) {
       return LENGTH;
     }
 
@@ -176,7 +187,7 @@ public class IndexCustomKeyTest extends DocumentDBBaseTest {
       database.open("admin", "admin");
 
     database.getMetadata().getIndexManager().dropIndex("custom-hash");
-		database.close();
+    database.close();
 
     super.afterClass();
   }
