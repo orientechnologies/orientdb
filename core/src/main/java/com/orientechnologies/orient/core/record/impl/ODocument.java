@@ -27,8 +27,18 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.lang.ref.WeakReference;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
@@ -38,7 +48,19 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
-import com.orientechnologies.orient.core.db.record.*;
+import com.orientechnologies.orient.core.db.record.ODetachable;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeListener;
+import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
+import com.orientechnologies.orient.core.db.record.ORecordElement;
+import com.orientechnologies.orient.core.db.record.ORecordLazyList;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMap;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.db.record.ORecordLazySet;
+import com.orientechnologies.orient.core.db.record.OTrackedList;
+import com.orientechnologies.orient.core.db.record.OTrackedMap;
+import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
+import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -1154,7 +1176,55 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    */
   public ODocument merge(final Map<String, Object> iOther, final boolean iUpdateOnlyMode,
       boolean iMergeSingleItemsOfMultiValueFields) {
-    throw new UnsupportedOperationException();
+    checkForLoading();
+    checkForFields();
+
+    _source = null;
+
+    for (String f : iOther.keySet()) {
+      final Object value = field(f);
+      final Object otherValue = iOther.get(f);
+
+      if (containsField(f) && iMergeSingleItemsOfMultiValueFields) {
+        if (value instanceof Map<?, ?>) {
+          final Map<String, Object> map = (Map<String, Object>) value;
+          final Map<String, Object> otherMap = (Map<String, Object>) otherValue;
+
+          for (Entry<String, Object> entry : otherMap.entrySet()) {
+            map.put(entry.getKey(), entry.getValue());
+          }
+          continue;
+        } else if (OMultiValue.isMultiValue(value)) {
+          for (Object item : OMultiValue.getMultiValueIterable(otherValue)) {
+            if (!OMultiValue.contains(value, item))
+              OMultiValue.add(value, item);
+          }
+
+          // JUMP RAW REPLACE
+          continue;
+        }
+      }
+
+      // RESET THE FIELD TYPE
+      setFieldType(f, null);
+
+      boolean bagsMerged = false;
+      if (value instanceof ORidBag && otherValue instanceof ORidBag)
+        bagsMerged = ((ORidBag) value).tryMerge((ORidBag) otherValue, iMergeSingleItemsOfMultiValueFields);
+
+      if (!bagsMerged && (value != null && !value.equals(otherValue)) || (value == null && otherValue != null))
+        field(f, otherValue);
+    }
+
+    if (!iUpdateOnlyMode) {
+      // REMOVE PROPERTIES NOT FOUND IN OTHER DOC
+      for (String f : fieldNames())
+        if (!iOther.containsKey(f))
+          removeField(f);
+    }
+
+    return this;
+
   }
 
   /**
