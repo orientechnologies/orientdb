@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OCachePointer;
 import com.orientechnologies.orient.core.index.hashindex.local.cache.OWOWCache;
 import com.orientechnologies.orient.core.sql.parser.OInteger;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OPageChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChangesTree;
@@ -49,8 +50,6 @@ import java.io.IOException;
  * 
  * Developer which will extend this class should use all page memory starting from {@link #NEXT_FREE_POSITION} offset.
  * 
- * To make page changes durable method {@link ODurableComponent#logPageChanges(ODurablePage, long, long, boolean)} should be called
- * just before release of page
  * {@link com.orientechnologies.orient.core.index.hashindex.local.cache.ODiskCache#release(com.orientechnologies.orient.core.index.hashindex.local.cache.OCacheEntry)}
  * back to the cache.
  * 
@@ -185,7 +184,14 @@ public class ODurablePage {
     cacheEntry.markDirty();
   }
 
-  public OWALChangesTree getPageChanges() {
+  protected static OWALChangesTree getChangesTree(OAtomicOperation atomicOperation, long fileId, long pageIndex) {
+    if (atomicOperation == null)
+      return null;
+
+    return atomicOperation.getChangesTree(fileId, pageIndex);
+  }
+
+  public OWALChangesTree getChangesTree() {
     return changesTree;
   }
 
