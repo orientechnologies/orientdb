@@ -281,6 +281,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
       final Bindings binding = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE);
 
       scriptManager.bind(binding, (ODatabaseDocumentTx) database, null, null);
+      binding.put("doc", iDocument);
 
       String result = null;
       try {
