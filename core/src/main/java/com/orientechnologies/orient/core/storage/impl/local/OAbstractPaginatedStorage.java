@@ -808,7 +808,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     if (transaction.get() != null) {
       final long timer = Orient.instance().getProfiler().startChrono();
       try {
-        return doHideMethod(rid, cluster);
+        return doHideRecord(rid, cluster);
       } finally {
         Orient.instance().getProfiler()
             .stopChrono(PROFILER_DELETE_RECORD, "Delete a record from database", timer, "db.*.deleteRecord");
@@ -824,7 +824,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         try {
           lock.acquireSharedLock();
           try {
-            return doHideMethod(rid, cluster);
+            return doHideRecord(rid, cluster);
           } finally {
             lock.releaseSharedLock();
           }
@@ -1733,14 +1733,8 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     }
   }
 
-  private OStorageOperationResult<Boolean> doHideMethod(ORecordId rid, OCluster cluster) {
+  private OStorageOperationResult<Boolean> doHideRecord(ORecordId rid, OCluster cluster) {
     try {
-      final OPhysicalPosition ppos = cluster.getPhysicalPosition(new OPhysicalPosition(rid.clusterPosition));
-
-      if (ppos == null)
-        // ALREADY HIDDEN
-        return new OStorageOperationResult<Boolean>(false);
-
       makeStorageDirty();
       atomicOperationsManager.startAtomicOperation();
       try {
@@ -1748,7 +1742,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         if (context != null)
           context.executeOperations(this);
 
-        cluster.hideRecord(ppos.clusterPosition);
+        cluster.hideRecord(rid.clusterPosition);
         atomicOperationsManager.endAtomicOperation(false);
       } catch (Throwable e) {
         atomicOperationsManager.endAtomicOperation(true);
