@@ -19,6 +19,14 @@
  */
 package com.orientechnologies.orient.core.sql;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.parser.OBaseParser;
@@ -41,13 +49,6 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemParameter;
 import com.orientechnologies.orient.core.sql.filter.OSQLFilterItemVariable;
 import com.orientechnologies.orient.core.sql.filter.OSQLPredicate;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionRuntime;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 /**
  * SQL Helper class
@@ -166,6 +167,8 @@ public class OSQLHelper {
       return Byte.parseByte(iValue);
     else if (t == OType.DOUBLE)
       return Double.parseDouble(iValue);
+    else if (t == OType.DECIMAL)
+      return new BigDecimal(iValue);
     else if (t == OType.DATE || t == OType.DATETIME)
       return new Date(Long.parseLong(iValue));
 
