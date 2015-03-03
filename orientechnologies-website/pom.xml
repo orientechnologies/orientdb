@@ -21,9 +21,9 @@
                 <directory>src/main/resources</directory>
             </resource>
             <resource>
-            <directory>src/main/webapp/dist
-            </directory>
-            <targetPath>static</targetPath>
+                <directory>src/main/webapp/dist
+                </directory>
+                <targetPath>static</targetPath>
             </resource>
         </resources>
         <plugins>
@@ -93,15 +93,21 @@
             <scope>test</scope>
         </dependency>
         <!-- tag::jetty[] -->
+
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-email</artifactId>
+            <version>1.2</version>
+        </dependency>
+
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
             <version>${spring-boot.version}</version>
             <exclusions>
-                <!--<exclusion>-->
-                <!--<groupId>org.springframework.boot</groupId>-->
-                <!--<artifactId>spring-boot-starter-tomcat</artifactId>-->
-                <!--</exclusion>-->
+
                 <exclusion>
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -118,18 +124,7 @@
             <artifactId>spring-boot-starter-websocket</artifactId>
             <version>${spring-boot.version}</version>
         </dependency>
-        <!--<dependency>-->
-            <!--<groupId>org.springframework</groupId>-->
-            <!--<artifactId>spring-messaging</artifactId>-->
-            <!--<version>${spring-boot.version}</version>-->
-        <!--</dependency>-->
-        <!--<dependency>-->
-        <!--<groupId>org.springframework.boot</groupId>-->
-        <!--<artifactId>spring-boot-starter-jetty</artifactId>-->
-        <!--<version>${spring-boot.version}</version>-->
-        <!--</dependency>-->
-        <!-- end::jetty[] -->
-        <!-- tag::actuator[] -->
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
@@ -187,6 +182,12 @@
             <groupId>com.orientechnologies</groupId>
             <artifactId>orientdb-server</artifactId>
             <version>${orientdb.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>javax.mail</groupId>
+                    <artifactId>mail</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- Reactor -->
@@ -215,6 +216,7 @@
             <artifactId>json</artifactId>
             <version>20140107</version>
         </dependency>
+
 
         <dependency>
             <groupId>javax.json</groupId>

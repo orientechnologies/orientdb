@@ -56,19 +56,18 @@ public class IssueAssignedEvent extends EventInternal<IssueEvent> {
       fillContextVariable(context, issue, comment);
       String htmlContent = templateEngine.process("newAssign.html", context);
       SimpleMailMessage mailMessage = new SimpleMailMessage();
-      mailMessage.setTo("maggiolo00@gmail.com");
-      // mailMessage.setTo(assignee.getEmail());
+      mailMessage.setTo(assignee.getEmail());
       mailMessage.setFrom("prjhub@orientechnologies.com");
       mailMessage.setSubject(issue.getTitle());
       mailMessage.setText(htmlContent);
 
       sender.send(mailMessage);
 
-
     }
   }
 
   private void fillContextVariable(Context context, Issue issue, IssueEvent issueEvent) {
+    context.setVariable("author", "@" + issueEvent.getActor().getName());
     context.setVariable("link", config.endpoint + "/#issues/" + issue.getIid());
     context.setVariable("body", "Assigned #" + issue.getIid() + " to @" + issueEvent.getAssignee().getName());
   }

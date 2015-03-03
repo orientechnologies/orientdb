@@ -10,10 +10,15 @@
 angular.module('webappApp')
   .controller('UserCtrl', function ($scope, User) {
 
-    $scope.tabs = [{
-      title: 'Environment',
-      url: 'views/users/environment.html'
-    }]
+    $scope.tabs = [
+      {
+        title: 'Profile',
+        url: 'views/users/profile.html'
+      },
+      {
+        title: 'Environment',
+        url: 'views/users/environment.html'
+      }]
 
     $scope.currentTab = $scope.tabs[0].url;
 
@@ -188,6 +193,28 @@ angular.module('webappApp')
   });
 
 
+angular.module('webappApp')
+  .controller('UserProfileCtrl', function ($scope, User, Repo) {
+
+
+    $scope.message = 'Please fill this information to use PrjHub';
+    User.whoami().then(function (user) {
+      $scope.user = user;
+
+      $scope.member = User.isMember(ORGANIZATION);
+      $scope.isClient = User.isClient(ORGANIZATION);
+      $scope.viewMessage = !$scope.user.confirmed && !$scope.member && !$scope.isClient;
+    });
+
+    $scope.save = function () {
+
+      User.save($scope.user).then(function (data) {
+
+        var jacked = humane.create({baseCls: 'humane-jackedup', addnCls: 'humane-jackedup-success'})
+        jacked.log("Profile saved.");
+      });
+    }
+  })
 angular.module('webappApp')
   .controller('ChangeSelectEnvironmentCtrl', function ($scope, User, Repo) {
 

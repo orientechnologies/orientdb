@@ -51,6 +51,15 @@ angular.module('webappApp').factory("User", function (Restangular, $q) {
       }
       return deferred.promise;
     },
+    save: function (user) {
+      var deferred = $q.defer();
+      var self = this;
+      allUserService.one(user.name).patch(user).then(function (data) {
+        self.current = data;
+        deferred.resolve(data);
+      });
+      return deferred.promise;
+    },
     environments: function () {
       var deferred = $q.defer();
       allUserService.one(this.current.name).all('environments').getList().then(function (data) {

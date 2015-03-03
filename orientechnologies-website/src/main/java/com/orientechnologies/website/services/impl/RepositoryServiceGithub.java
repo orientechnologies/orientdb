@@ -3,6 +3,7 @@ package com.orientechnologies.website.services.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.website.events.IssueCreatedEvent;
 import com.orientechnologies.website.github.GIssue;
 import com.orientechnologies.website.github.GRepo;
 import com.orientechnologies.website.github.GitHub;
@@ -71,8 +72,10 @@ public class RepositoryServiceGithub implements RepositoryService {
       repositoryService.handleScope(repository, i, issue.getScope());
       repositoryService.handleVersion(repository, i, issue.getVersion());
       repositoryService.handlePriority(repository, i, issue.getPriority());
-      repositoryService.handleClient(repository,i,issue.getClient());
-      return repositoryService.issueRepository.save(i);
+      repositoryService.handleClient(repository, i, issue.getClient());
+      Issue issue1 = repositoryService.issueRepository.save(i);
+      repositoryService.eventManager.pushInternalEvent(IssueCreatedEvent.EVENT, issue1);
+      return issue1;
     } catch (IOException e) {
       e.printStackTrace();
     }

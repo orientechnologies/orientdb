@@ -1,5 +1,8 @@
 package com.orientechnologies.website.configuration;
 
+import org.apache.commons.mail.DefaultAuthenticator;
+import org.apache.commons.mail.Email;
+import org.apache.commons.mail.HtmlEmail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.mail.MailException;
@@ -15,6 +18,14 @@ import javax.mail.internet.MimeMessage;
 public class MockMailSender extends JavaMailSenderImpl {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(MockMailSender.class);
+  private MailConfiguration   mailConfiguration;
+  private Boolean             mock;
+
+  public MockMailSender(MailConfiguration mailConfiguration, Boolean mock) {
+
+    this.mailConfiguration = mailConfiguration;
+    this.mock = mock;
+  }
 
   @Override
   public void send(MimeMessagePreparator mimeMessagePreparator) throws MailException {
@@ -31,20 +42,30 @@ public class MockMailSender extends JavaMailSenderImpl {
   @Override
   public void send(SimpleMailMessage simpleMessage) throws MailException {
 
-//    Session session = Session.getDefaultInstance(getJavaMailProperties());
-//    MimeMessage message = new MimeMessage(session);
-//    try {
-//      message.setText(simpleMessage.getText());
-//      message.setSubject(simpleMessage.getSubject());
-//      InternetAddress address = new InternetAddress(simpleMessage.getTo()[0]);
-//      InternetAddress from = new InternetAddress("prjhub@orientechnologies.com");
-//      message.setFrom(from);
-//      message.setRecipient(Message.RecipientType.TO, address);
-//      Transport.send(message);
-//    } catch (MessagingException e) {
-//      e.printStackTrace();
-//    }
-    LOGGER.info(simpleMessage.getText());
+    if (!mock) {
+      try {
+        Email email = new HtmlEmail();
+        email.setSmtpPort(587);
+        email.setAuthenticator(new DefaultAuthenticator("prjhub@orientechnologies.com", "Prj_Hubb_WoW945"));
+        email.setDebug(false);
+
+        email.setHostName("mail.orientechnologies.com");
+        email.setFrom("prjhub@orientechnologies.com", "PrjHub");
+        email.setSubject(simpleMessage.getSubject());
+        email.setMsg(simpleMessage.getText());
+        for (String s : simpleMessage.getTo()) {
+          email.addTo(s);
+        }
+        email.setTLS(false);
+        email.send();
+        email.setSSL(false);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+
+    } else {
+      LOGGER.info(simpleMessage.getText());
+    }
   }
 
   @Override

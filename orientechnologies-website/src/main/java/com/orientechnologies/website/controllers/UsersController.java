@@ -46,4 +46,12 @@ public class UsersController {
       @RequestBody Environment environment) {
     return userService.patchUserEnvironment(SecurityHelper.currentUser(), id, environment);
   }
+
+  @RequestMapping(value = "users/{username}", method = RequestMethod.PATCH)
+  public com.orientechnologies.website.model.schema.dto.OUser patchUser(@PathVariable("username") String username,
+      @RequestBody UserDTO user) {
+
+
+    return userService.patchUser(SecurityHelper.currentUser(), user);
+  }
 }

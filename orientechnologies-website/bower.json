@@ -24,7 +24,9 @@
     "ment.io": "0.9.22",
     "angular-scroll-glue": "~2.0.3",
     "humane": "~3.2.2",
-    "angular-otobox": "*"
+    "angular-otobox": "*",
+    "favico.js": "~0.3.5",
+    "ifvisible.js": "~1.0.1"
   },
   "devDependencies": {
     "angular-mocks": "1.2.16",

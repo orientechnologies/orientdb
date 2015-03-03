@@ -3,6 +3,7 @@ package com.orientechnologies.website.events;
 import com.orientechnologies.website.model.schema.dto.Comment;
 import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.repository.CommentRepository;
+import com.orientechnologies.website.repository.IssueRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.mail.SimpleMailMessage;
@@ -15,6 +16,8 @@ import reactor.event.Event;
 
 import com.orientechnologies.website.configuration.AppConfig;
 import com.orientechnologies.website.model.schema.dto.Issue;
+
+import java.util.List;
 
 /**
  * Created by Enrico Risa on 30/12/14.
@@ -31,6 +34,8 @@ public class IssueCommentedEvent extends EventInternal<Comment> {
   @Autowired
   protected AppConfig          config;
 
+  @Autowired
+  private IssueRepository      issueRepository;
   @Autowired
   private SpringTemplateEngine templateEngine;
 
@@ -52,18 +57,23 @@ public class IssueCommentedEvent extends EventInternal<Comment> {
     fillContextVariable(context, issue, comment);
     String htmlContent = templateEngine.process("newComment.html", context);
     SimpleMailMessage mailMessage = new SimpleMailMessage();
-    OUser owner = issue.getScope().getOwner();
-    mailMessage.setTo(owner.getEmail());
-    mailMessage.setFrom("prjhub@orientechnologies.com");
-    mailMessage.setSubject(issue.getTitle());
-    mailMessage.setText(htmlContent);
-    sender.send(mailMessage);
+    OUser owner = comment.getUser();
+    List<OUser> involvedActors = issueRepository.findToNotifyActors(issue);
+    String[] actors = getActorsEmail(owner, involvedActors);
+    if (actors.length > 0) {
+      mailMessage.setTo(actors);
+      mailMessage.setFrom("prjhub@orientechnologies.com");
+      mailMessage.setSubject(issue.getTitle());
+      mailMessage.setText(htmlContent);
+      sender.send(mailMessage);
+    }
 
   }
 
   private void fillContextVariable(Context context, Issue issue, Comment comment) {
     context.setVariable("link", config.endpoint + "/#issues/" + issue.getIid());
     context.setVariable("body", comment.getBody());
+    context.setVariable("author", "@" + comment.getUser().getName() + ": commented issue #" + issue.getIid());
   }
 
 }

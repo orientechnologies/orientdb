@@ -21,7 +21,6 @@ angular.module('webappApp')
     $rootScope.$on('msg-received', function (e, msg) {
 
 
-
       if (msg.sender.name != $scope.currentUser.name) {
         if ($scope.clientId == msg.clientId) {
           $scope.$apply(function () {
@@ -196,12 +195,18 @@ angular.module('webappApp')
     }
     $scope.sendMessage = function () {
       $scope.sending = true;
-      Organization.all("clients").one($scope.clientId).all("room").patch({body: $scope.current}).then(function (data) {
-        $scope.current = null;
-        addNewMessage(data);
-        $scope.sending = false;
-      }).catch(function () {
-        $scope.sending = false;
-      })
+
+      var last = $scope.current;
+      $scope.current = null;
+      if (last != null) {
+        Organization.all("clients").one($scope.clientId).all("room").patch({body: last}).then(function (data) {
+          $scope.current = null;
+          addNewMessage(data);
+          $scope.sending = false;
+        }).catch(function () {
+          $scope.current = last;
+          $scope.sending = false;
+        })
+      }
     }
   });

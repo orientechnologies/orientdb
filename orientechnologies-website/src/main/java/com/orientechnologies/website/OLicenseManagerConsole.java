@@ -1,6 +1,6 @@
 package com.orientechnologies.website;
 
-import com.orientechnologies.agent.OL;
+//import com.orientechnologies.agent.OL;
 
 public class OLicenseManagerConsole {
 
@@ -33,10 +33,11 @@ public class OLicenseManagerConsole {
 
     final String key = "@Ld" + "ks#2" + new Integer(7 - 4) + "dsLvc" + (35 - 18 - 6) + "a!Po" + "weRr";
 
-    final String license = OL.OCry.encrypt(plaintext, key);
-    if (license.endsWith("\n"))
-      return license.substring(0, license.length() - 1);
-    return license;
+//    final String license = OL.OCry.encrypt(plaintext, key);
+//    if (license.endsWith("\n"))
+//      return license.substring(0, license.length() - 1);
+//    return license;
+    return "";
   }
 
   private static void syntaxError() {

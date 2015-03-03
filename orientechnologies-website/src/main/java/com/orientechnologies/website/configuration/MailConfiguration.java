@@ -14,62 +14,67 @@ import java.util.Properties;
 @PropertySource("classpath:mail-${spring.profiles.active}.properties")
 public class MailConfiguration {
 
-    @Value("${mail.protocol}")
-    private String protocol;
-    @Value("${mail.host}")
-    private String host;
-    @Value("${mail.port}")
-    private int port;
-    @Value("${mail.smtp.port}")
-    private int port1;
-    @Value("${mail.smtp.host}")
-    private String host1;
-    @Value("${mail.smtp.auth}")
-    private boolean auth;
-    @Value("${mail.smtp.starttls.enable}")
-    private boolean starttls;
-    @Value("${mail.from}")
-    private String from;
-    @Value("${mail.username}")
-    private String username;
-    @Value("${mail.password}")
-    private String password;
-    @Value("${mock}")
-    private boolean mock;
+  @Value("${mail.protocol}")
+  protected String  protocol;
+  @Value("${mail.host}")
+  protected String  host;
+  @Value("${mail.port}")
+  protected int     port;
+  @Value("${mail.smtp.port}")
+  protected int     port1;
+  @Value("${mail.smtp.host}")
+  protected String  host1;
+  @Value("${mail.smtp.auth}")
+  protected boolean auth;
+  @Value("${mail.smtp.starttls.enable}")
+  protected boolean starttls;
+  @Value("${mail.from}")
+  protected String  from;
+  @Value("${mail.username}")
+  protected String  username;
+  @Value("${mail.password}")
+  protected String  password;
+  @Value("${mock}")
+  private boolean   mock;
 
-    @Bean
-    public JavaMailSender javaMailSender() {
-        JavaMailSenderImpl mailSender = null;
-        if (mock) {
-            mailSender = new MockMailSender();
-        } else {
-            mailSender = new JavaMailSenderImpl();
-        }
-        Properties mailProperties = new Properties();
-        mailProperties.put("mail.smtp.auth", auth);
-        mailProperties.put("mail.smtp.starttls.enable", starttls);
-        mailProperties.put("mail.smtp.host",host1);
-        mailProperties.put("mail.smtp.port",port1);
-        mailProperties.put("mail.smtp.debug", "true");
-        mailSender.setJavaMailProperties(mailProperties);
-        mailSender.setHost(host);
-        mailSender.setPort(port);
-        mailSender.setProtocol(protocol);
-        mailSender.setUsername(username);
-        mailSender.setPassword(password);
-        return mailSender;
-    }
+  @Bean
+  public JavaMailSender javaMailSender() {
+    JavaMailSenderImpl mailSender = new MockMailSender(this, mock);
 
-    //=================================== email beans
-    @Bean
-    public ClassLoaderTemplateResolver emailTemplateResolver() {
-        ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
-        templateResolver.setPrefix("mail/");
-        templateResolver.setTemplateMode("HTML5");
-        templateResolver.setCharacterEncoding("UTF-8");
-        templateResolver.setOrder(1);
+    Properties mailProperties = new Properties();
 
-        return templateResolver;
-    }
+    mailProperties.put("mail.smtp.auth", "true");
+    mailProperties.put("mail.smtp.host", host);
+    mailProperties.put("mail.smtp.user", username);
+    mailProperties.put("mail.smtp.password", password);
+    mailProperties.put("mail.smtp.user", username);
+    mailProperties.put("mail.smtp.password", password);
+    mailProperties.put("mail.smtp.auth", auth);
+    mailProperties.put("mail.smtp.starttls.enable", "true");
+    mailProperties.put("mail.smtp.host", host1);
+    mailProperties.put("mail.smtp.port", port1);
+    mailProperties.put("mail.smtp.debug", "true");
+    mailProperties.put("mail.smtp.ssl.trust", "*");
+
+    mailSender.setJavaMailProperties(mailProperties);
+    mailSender.setHost(host);
+    mailSender.setPort(port);
+    mailSender.setProtocol(protocol);
+    mailSender.setUsername(username);
+    mailSender.setPassword(password);
+    return mailSender;
+  }
+
+  // =================================== email beans
+  @Bean
+  public ClassLoaderTemplateResolver emailTemplateResolver() {
+    ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
+    templateResolver.setPrefix("mail/");
+    templateResolver.setTemplateMode("HTML5");
+    templateResolver.setCharacterEncoding("UTF-8");
+    templateResolver.setOrder(1);
+
+    return templateResolver;
+  }
 
 }

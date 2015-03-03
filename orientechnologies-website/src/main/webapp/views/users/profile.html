@@ -1,0 +1,62 @@
+<div class="container-fluid" ng-controller="UserProfileCtrl">
+  <br>
+
+  <div class="row">
+
+    <div class="col-md-8">
+      <div ng-show="viewMessage" class="alert alert-warning alert-dismissible fade in" role="alert">
+        {{message}}
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="btn-group pull-right">
+        <button class="btn btn-success" ng-disabled="envForm.$invalid" ng-click="save()">Save Profile</button>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <form class="form-horizontal" name="envForm" role="form">
+      <div class="form-group">
+        <label for="inputName" class="col-sm-2 control-label">First Name</label>
+
+        <div class="col-sm-8">
+          <input type="text" class="form-control" id="inputName" required ng-model="user.firstName"
+                 placeholder="Name">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="inputSecond" class="col-sm-2 control-label">Second Name</label>
+
+        <div class="col-sm-8">
+          <input type="text" class="form-control" id="inputSecond" required ng-model="user.secondName"
+                 placeholder="Second Name">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="inputCompany" class="col-sm-2 control-label">Company Name</label>
+
+        <div class="col-sm-8">
+          <input type="text" class="form-control" id="inputCompany" required ng-model="user.company"
+                 placeholder="Company Name">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="inputEmail" class="col-sm-2 control-label">Working Email</label>
+
+        <div class="col-sm-8">
+          <input type="text" class="form-control" id="inputEmail" required ng-model="user.workingEmail"
+                 placeholder="Working Email">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="inputNotification" class="col-sm-2 control-label">Receive Email</label>
+
+        <div class="col-sm-8">
+          <input type="checkbox" class="form-control" id="inputNotification"  ng-model="user.notification"
+                 placeholder="Company Name">
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

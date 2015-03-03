@@ -3,6 +3,7 @@ package com.orientechnologies.website.services.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.website.events.IssueCommentedEvent;
 import com.orientechnologies.website.github.GComment;
 import com.orientechnologies.website.github.GRepo;
 import com.orientechnologies.website.github.GUser;
@@ -55,6 +56,7 @@ public class IssueServiceGithub implements IssueService {
       persistentComment.setCreatedAt(gComment.getCreatedAt());
       persistentComment.setUpdatedAt(gComment.getUpdatedAt());
       persistentComment = issueService.commentRepository.save(persistentComment);
+      issueService.eventManager.pushInternalEvent(IssueCommentedEvent.EVENT, persistentComment);
       issueService.commentIssue(issue, persistentComment);
       return persistentComment;
     } catch (IOException e) {

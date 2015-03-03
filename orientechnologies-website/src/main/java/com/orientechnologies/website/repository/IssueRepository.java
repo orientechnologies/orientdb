@@ -10,4 +10,7 @@ import java.util.List;
  */
 public interface IssueRepository extends BaseRepository<Issue> {
     List<OUser> findInvolvedActors(Issue issue);
+
+
+    List<OUser> findToNotifyActors(Issue issue);
 }

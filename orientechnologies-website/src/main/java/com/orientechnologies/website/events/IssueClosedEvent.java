@@ -1,7 +1,11 @@
 package com.orientechnologies.website.events;
 
+import com.orientechnologies.website.configuration.AppConfig;
+import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.model.schema.dto.IssueEvent;
+import com.orientechnologies.website.model.schema.dto.OUser;
 import com.orientechnologies.website.repository.EventRepository;
+import com.orientechnologies.website.repository.IssueRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.mail.SimpleMailMessage;
@@ -9,12 +13,9 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring4.SpringTemplateEngine;
-
 import reactor.event.Event;
 
-import com.orientechnologies.website.configuration.AppConfig;
-import com.orientechnologies.website.model.schema.dto.Issue;
-import com.orientechnologies.website.model.schema.dto.OUser;
+import java.util.List;
 
 /**
  * Created by Enrico Risa on 30/12/14.
@@ -28,6 +29,9 @@ public class IssueClosedEvent extends EventInternal<IssueEvent> {
 
   @Autowired
   protected AppConfig          config;
+
+  @Autowired
+  private IssueRepository      issueRepository;
 
   @Autowired
   protected EventRepository    eventRepository;
@@ -51,12 +55,17 @@ public class IssueClosedEvent extends EventInternal<IssueEvent> {
     fillContextVariable(context, issue, comment);
     String htmlContent = templateEngine.process("newClosed.html", context);
     SimpleMailMessage mailMessage = new SimpleMailMessage();
-    OUser owner = issue.getScope().getOwner();
-    mailMessage.setTo(owner.getEmail());
-    mailMessage.setFrom("prjhub@orientechnologies.com");
-    mailMessage.setSubject(issue.getTitle());
-    mailMessage.setText(htmlContent);
-    sender.send(mailMessage);
+
+    OUser owner = comment.getActor();
+    List<OUser> involvedActors = issueRepository.findToNotifyActors(issue);
+    String[] actors = getActorsEmail(owner, involvedActors);
+    if (actors.length > 0) {
+      mailMessage.setTo(actors);
+      mailMessage.setFrom("prjhub@orientechnologies.com");
+      mailMessage.setSubject(issue.getTitle());
+      mailMessage.setText(htmlContent);
+      sender.send(mailMessage);
+    }
 
   }
 

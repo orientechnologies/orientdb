@@ -143,7 +143,13 @@ public class OrganizationController extends ExceptionController {
   @ResponseStatus(HttpStatus.OK)
   public ResponseEntity<List<Message>> getRoomMessages(@PathVariable("name") String name, @PathVariable("id") Integer clientId,
       @RequestParam(value = "before", defaultValue = "") String beforeUuid) {
-    return new ResponseEntity(organizationService.getClientRoomMessage(name, clientId, beforeUuid), HttpStatus.OK);
+    OUser user = SecurityHelper.currentUser();
+    Client client = userService.getClient(user, name);
+    if (userService.isMember(user, name) || (userService.isClient(user, name) && client.getClientId().equals(clientId))) {
+      return new ResponseEntity(organizationService.getClientRoomMessage(name, clientId, beforeUuid), HttpStatus.OK);
+    } else {
+      return new ResponseEntity(null, HttpStatus.NOT_FOUND);
+    }
   }
 
   @RequestMapping(value = "{name}/clients/{id}/room/actors", method = RequestMethod.GET)
@@ -157,7 +163,13 @@ public class OrganizationController extends ExceptionController {
   @ResponseStatus(HttpStatus.OK)
   public ResponseEntity<Message> registerMessage(@PathVariable("name") String name, @PathVariable("id") Integer clientId,
       @RequestBody Message message) {
-    return new ResponseEntity(organizationService.registerMessage(name, clientId, message), HttpStatus.OK);
+    OUser user = SecurityHelper.currentUser();
+    Client client = userService.getClient(user, name);
+    if (userService.isMember(user, name) || (userService.isClient(user, name) && client.getClientId().equals(clientId))) {
+      return new ResponseEntity(organizationService.registerMessage(name, clientId, message), HttpStatus.OK);
+    } else {
+      return new ResponseEntity(null, HttpStatus.NOT_FOUND);
+    }
   }
 
   @RequestMapping(value = "{name}/clients/{id}/room/checkin", method = RequestMethod.PATCH)

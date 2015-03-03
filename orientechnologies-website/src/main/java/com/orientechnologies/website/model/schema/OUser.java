@@ -34,6 +34,42 @@ public enum OUser implements OTypeHolder<com.orientechnologies.website.model.sch
     public OType getType() {
       return OType.STRING;
     }
+  },
+  CONFIRMED("confirmed") {
+    @Override
+    public OType getType() {
+      return OType.BOOLEAN;
+    }
+  },
+  NOTIFICATION("notification") {
+    @Override
+    public OType getType() {
+      return OType.BOOLEAN;
+    }
+  },
+  FIRSTNAME("firstName") {
+    @Override
+    public OType getType() {
+      return OType.BOOLEAN;
+    }
+  },
+  SECONDNAME("secondName") {
+    @Override
+    public OType getType() {
+      return OType.BOOLEAN;
+    }
+  },
+  WORKINGEMAIL("workingEmail") {
+    @Override
+    public OType getType() {
+      return OType.BOOLEAN;
+    }
+  },
+  COMPANY("company") {
+    @Override
+    public OType getType() {
+      return OType.BOOLEAN;
+    }
   };
 
   @Override
@@ -47,6 +83,14 @@ public enum OUser implements OTypeHolder<com.orientechnologies.website.model.sch
     user.setId((Long) doc.field(ID.toString()));
     user.setName((String) doc.field(NAME.toString()));
     user.setToken((String) doc.field(TOKEN.toString()));
+    Boolean confirmed = doc.field(CONFIRMED.toString());
+    user.setFirstName((String) doc.field(FIRSTNAME.toString()));
+    user.setNotification((Boolean) doc.field(NOTIFICATION.toString()));
+    user.setSecondName((String) doc.field(SECONDNAME.toString()));
+    user.setCompany((String) doc.field(COMPANY.toString()));
+    user.setWorkingEmail((String) doc.field(WORKINGEMAIL.toString()));
+    user.setConfirmed(confirmed != null ? confirmed : false);
+
     return user;
   }
 
@@ -60,8 +104,18 @@ public enum OUser implements OTypeHolder<com.orientechnologies.website.model.sch
     }
     doc.field(NAME.toString(), entity.getName());
     doc.field(ID.toString(), entity.getId());
-    doc.field(TOKEN.toString(), entity.getToken());
-    doc.field(EMAIL.toString(), entity.getEmail());
+    if (entity.getToken() != null) {
+      doc.field(TOKEN.toString(), entity.getToken());
+    }
+    if (entity.getEmail() != null) {
+      doc.field(EMAIL.toString(), entity.getEmail());
+    }
+    doc.field(CONFIRMED.toString(), entity.getConfirmed());
+    doc.field(COMPANY.toString(), entity.getCompany());
+    doc.field(FIRSTNAME.toString(), entity.getFirstName());
+    doc.field(SECONDNAME.toString(), entity.getSecondName());
+    doc.field(WORKINGEMAIL.toString(), entity.getWorkingEmail());
+    doc.field(NOTIFICATION.toString(), entity.getNotification());
     doc.field("status", "active");
     doc.field("password", "test");
     return doc;

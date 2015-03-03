@@ -22,6 +22,9 @@ public class UserDTO extends OUser {
 
   private List<Client> clients;
 
+  private Boolean      confirmed;
+
+
   public void setRepositories(List<Repository> repositories) {
     this.repositories = repositories;
   }
@@ -40,5 +43,13 @@ public class UserDTO extends OUser {
 
   public List<Organization> getClientsOf() {
     return clientsOf;
+  }
+
+  public Boolean getConfirmed() {
+    return confirmed;
+  }
+
+  public void setConfirmed(Boolean confirmed) {
+    this.confirmed = confirmed;
   }
 }

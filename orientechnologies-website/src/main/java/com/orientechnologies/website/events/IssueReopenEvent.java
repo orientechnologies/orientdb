@@ -2,6 +2,7 @@ package com.orientechnologies.website.events;
 
 import com.orientechnologies.website.model.schema.dto.IssueEvent;
 import com.orientechnologies.website.repository.EventRepository;
+import com.orientechnologies.website.repository.IssueRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.mail.SimpleMailMessage;
@@ -15,6 +16,8 @@ import reactor.event.Event;
 import com.orientechnologies.website.configuration.AppConfig;
 import com.orientechnologies.website.model.schema.dto.Issue;
 import com.orientechnologies.website.model.schema.dto.OUser;
+
+import java.util.List;
 
 /**
  * Created by Enrico Risa on 30/12/14.
@@ -35,6 +38,9 @@ public class IssueReopenEvent extends EventInternal<IssueEvent> {
   @Autowired
   private SpringTemplateEngine templateEngine;
 
+  @Autowired
+  private IssueRepository      issueRepository;
+
   public static String         EVENT = "issue_reopen";
 
   @Override
@@ -53,13 +59,16 @@ public class IssueReopenEvent extends EventInternal<IssueEvent> {
     fillContextVariable(context, issue, comment);
     String htmlContent = templateEngine.process("newReopen.html", context);
     SimpleMailMessage mailMessage = new SimpleMailMessage();
-    OUser owner = issue.getScope().getOwner();
-    mailMessage.setTo(owner.getEmail());
-    mailMessage.setFrom("prjhub@orientechnologies.com");
-    mailMessage.setSubject(issue.getTitle());
-    mailMessage.setText(htmlContent);
-    sender.send(mailMessage);
-
+    OUser owner = comment.getActor();
+    List<OUser> involvedActors = issueRepository.findToNotifyActors(issue);
+    String[] actors = getActorsEmail(owner, involvedActors);
+    if (actors.length > 0) {
+      mailMessage.setTo(actors);
+      mailMessage.setFrom("prjhub@orientechnologies.com");
+      mailMessage.setSubject(issue.getTitle());
+      mailMessage.setText(htmlContent);
+      sender.send(mailMessage);
+    }
   }
 
   private void fillContextVariable(Context context, Issue issue, IssueEvent comment) {

@@ -2,6 +2,7 @@ package com.orientechnologies.website.services.impl;
 
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.website.OrientDBFactory;
+import com.orientechnologies.website.exception.ServiceException;
 import com.orientechnologies.website.github.GUser;
 import com.orientechnologies.website.github.GitHub;
 import com.orientechnologies.website.model.schema.HasEnvironment;
@@ -74,10 +75,16 @@ public class UserServiceImpl implements UserService {
     UserDTO userDTO = new UserDTO();
     userDTO.setId(user.getId());
     userDTO.setName(user.getName());
+    userDTO.setCompany(user.getCompany());
+    userDTO.setWorkingEmail(user.getWorkingEmail());
+    userDTO.setFirstName(user.getFirstName());
+    userDTO.setSecondName(user.getSecondName());
     List<Repository> repositoryList = userRepository.findMyRepositories(user.getUsername());
     userDTO.setClientsOf(userRepository.findMyClientOrganization(user.getUsername()));
     userDTO.setClients(userRepository.findAllMyClientMember(user.getUsername()));
     userDTO.setRepositories(repositoryList);
+    userDTO.setConfirmed(user.getConfirmed());
+    userDTO.setNotification(user.getNotification());
     return userDTO;
   }
 
@@ -166,6 +173,17 @@ public class UserServiceImpl implements UserService {
   @Override
   public List<Environment> getUserEnvironments(OUser user) {
     return userRepository.findMyEnvironment(user);
+  }
+
+  @Transactional
+  @Override
+  public OUser patchUser(OUser current, UserDTO user) {
+    if (user.getName().equalsIgnoreCase(current.getName())) {
+      user.setRid(current.getRid());
+      user.setConfirmed(true);
+      return userRepository.save(user);
+    }
+    throw ServiceException.create(401);
   }
 
   private void createUserEnvironmentRelationship(OUser client, Environment environment) {
