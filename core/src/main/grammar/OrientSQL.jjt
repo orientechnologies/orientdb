@@ -1,0 +1,2504 @@
+/*
+  *
+  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+  *  *
+  *  *  Licensed under the Apache License, Version 2.0 (the "License");
+  *  *  you may not use this file except in compliance with the License.
+  *  *  You may obtain a copy of the License at
+  *  *
+  *  *       http://www.apache.org/licenses/LICENSE-2.0
+  *  *
+  *  *  Unless required by applicable law or agreed to in writing, software
+  *  *  distributed under the License is distributed on an "AS IS" BASIS,
+  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  *  *  See the License for the specific language governing permissions and
+  *  *  limitations under the License.
+  *  *
+  *  * For more information: http://www.orientechnologies.com
+  *
+  */
+
+
+options {
+	TRACK_TOKENS = true;
+  	JDK_VERSION = "1.6";
+  	MULTI=true;
+  	VISITOR=true;
+  	STATIC=false;
+  	USER_CHAR_STREAM = true ;
+  	JAVA_UNICODE_ESCAPE=true;
+  	NODE_PREFIX="O";
+}
+
+PARSER_BEGIN(OrientSql)
+
+package com.orientechnologies.orient.core.sql.parser;
+
+import java.io.InputStream;
+import java.util.List;
+import java.util.ArrayList;
+
+/** Orient Database Sql grammar. */
+public class OrientSql {
+
+  private int inputParamCount = 0;
+
+    /** Main entry point. For development purpose only */
+  public static void main(String args[]) {
+    System.out.println("Reading from standard input...");
+    OrientSql t = new OrientSql(System.in);
+    try {
+      OStatement n = t.parse();
+      n.dump("");
+      System.out.println("Thank you.");
+    } catch (Exception e) {
+      System.out.println("Oops.");
+      System.out.println(e.getMessage());
+      e.printStackTrace();
+    }
+  }
+
+    public OrientSql(InputStream stream) {
+      this(new JavaCharStream(stream));
+    }
+
+}
+
+PARSER_END(OrientSql)
+
+SKIP :
+{
+  " "
+| "\t"
+| "\n"
+| "\r"
+}
+
+
+/* reserved words */
+TOKEN:
+{
+	< SELECT: ( "s" | "S" ) ( "e" | "E" ) ( "l" | "L" ) ( "e" | "E" ) ( "c" | "C" ) ( "t" | "T" ) >
+	|
+	< TRAVERSE: ( "t" | "T") ( "r" | "R") ( "a" | "A") ( "v" | "V") ( "e" | "E") ( "r" | "R") ( "s" | "S") ( "e" | "E") >
+	|
+	< INSERT: ( "i" | "I" ) ( "n" | "N" ) ( "s" | "S" ) ( "e" | "E" ) ( "r" | "R" ) ( "t" | "T" ) >
+	|
+	< CREATE: ( "c" | "C" ) ( "r" | "R" ) ( "e" | "E" ) ( "a" | "A" ) ( "t" | "T" ) ( "e" | "E" ) >
+	|
+	< DELETE: ( "d" | "D" ) ( "e" | "E" ) ( "l" | "L" ) ( "e" | "E" ) ( "t" | "T" ) ( "e" | "E" ) >
+	|
+	< VERTEX: ( "v" | "V" ) ( "e" | "E" ) ( "r" | "R" ) ( "t" | "T" ) ( "e" | "E" ) ( "x" | "X" ) >
+	|
+	< EDGE: ( "e" | "E" ) ( "d" | "D" ) ( "g" | "G" ) ( "e" | "E" ) >
+	|
+	< UPDATE: ( "u" | "U" ) ( "p" | "P" ) ( "d" | "D" ) ( "a" | "A" ) ( "t" | "T" ) ( "e" | "E" ) >
+	|
+	< UPSERT: ( "u" | "U" ) ( "p" | "P" ) ( "s" | "S" ) ( "e" | "E" ) ( "r" | "R" ) ( "t" | "T" ) >
+	|
+	< FROM: ( "f" | "F" ) ( "r" | "R" ) ( "o" | "O" ) ( "m" | "M" ) >
+	|
+	< TO: ( "t" | "T" ) ( "o" | "O" ) >
+	|
+	< WHERE: ( "w" | "W" ) ( "h" | "H" ) ( "e" | "E" ) ( "r" | "R" ) ( "e" | "E" ) >
+	|
+	< WHILE: ( "w" | "W" ) ( "h" | "H" ) ( "i" | "I" ) ( "l" | "L" ) ( "e" | "E" ) >
+	|
+	< INTO: ( "i" | "I" ) ( "n" | "N" ) ( "t" | "T" ) ( "o" | "O" ) >
+	|
+	< VALUES: ( "v" | "V" ) ( "a" | "A" ) ( "l" | "L" ) ( "u" | "U" ) ( "e" | "E" ) ( "s" | "S" )>
+	|
+	< SET: ( "s" | "S" ) ( "e" | "E" ) ( "t" | "T" ) >
+	|
+	< ADD: ( "a" | "A" ) ( "d" | "D" ) ( "d" | "D" ) >
+	|
+	< PUT: ( "p" | "P" ) ( "u" | "U" ) ( "t" | "T" ) >
+	|
+	< MERGE: ( "m" | "M" ) ( "e" | "E" ) ( "r" | "R" ) ( "g" | "G" ) ( "e" | "E" ) >
+	|
+	< CONTENT: ( "c" | "C" ) ( "o" | "O" ) ( "n" | "N" ) ( "t" | "T" ) ( "e" | "E" ) ( "n" | "N" ) ( "t" | "T" )  >
+	|
+	< REMOVE: ( "r" | "R" ) ( "e" | "E" ) ( "m" | "M" ) ( "o" | "O" ) ( "v" | "V" ) ( "e" | "E" ) >
+	|
+	< INCREMENT: ( "i" | "I" ) ( "n" | "N" ) ( "c" | "C" ) ( "r" | "R" ) ( "e" | "E" ) ( "m" | "M" ) ( "e" | "E" ) ( "n" | "N" ) ( "t" | "T" ) >
+	|
+	< AND: ( "a" | "A" ) ( "n" | "N" ) ( "d" | "D" ) >
+	|
+	< OR: ( "o" | "O" ) ( "r" | "R" ) >
+	|
+	< NULL: ( "N" | "n" ) ( "U" | "u" ) ( "L" | "l" ) ( "L" | "l" ) >
+	|
+	< DEFINED: ( "D" | "d" ) ( "E" | "e" ) ( "F" | "f" ) ( "I" | "i" ) ( "N" | "n" ) ( "E" | "e" ) ( "D" | "d" ) >
+    |
+    < ORDER: ( "o" | "O" ) ( "r" | "R" ) ( "d" | "D" ) ( "e" | "E" ) ( "r" | "R" ) >
+	|
+	< GROUP: ( "g" | "G" ) ( "r" | "R" ) ( "o" | "O" ) ( "u" | "U" ) ( "p" | "P" ) >
+	|
+	< BY: ( "b" | "B" ) ( "y" | "Y" ) >
+	|
+	< LIMIT: ( "l" | "L" ) ( "i" | "I" ) ( "m" | "M" ) ( "i" | "I" ) ( "t" | "T" ) >
+	|
+	< SKIP2: ( "s" | "S" ) ( "k" | "K" ) ( "i" | "I" ) ( "p" | "P" ) >
+	|
+	< OFFSET: ( "o" | "O" ) ( "f" | "F" ) ( "f" | "F" ) ( "s" | "S" ) ( "e" | "E" ) ( "t" | "T" ) >
+	|
+	< TIMEOUT: ( "t" | "T" ) ( "i" | "I" ) ( "m" | "M" ) ( "e" | "E" ) ( "o" | "O" ) ( "u" | "U" ) ( "t" | "T" ) >
+	|
+	< ASC: ( "a" | "A" ) ( "s" | "S" ) ( "c" | "C" ) >
+	|
+	< AS: ( "a" | "A" ) ( "s" | "S" ) >
+	|
+	< DESC: ( "d" | "D" ) ( "e" | "E" ) ( "s" | "S" ) ( "c" | "C" ) >
+	|
+	< FETCHPLAN: ( "f" | "F" ) ( "e" | "E" ) ( "t" | "T" ) ( "c" | "C" ) ( "h" | "H" ) ( "p" | "P" ) ( "l" | "L" ) ( "a" | "A" ) ( "n" | "N" ) >
+	|
+	< RETURN: ( "r" | "R" ) ( "e" | "E" ) ( "t" | "T" ) ( "u" | "U" ) ( "r" | "R" ) ( "n" | "N" ) >
+	|
+	< BEFORE: ( "b" | "B" ) ( "e" | "E" ) ( "f" | "F" ) ( "o" | "O" ) ( "r" | "R" ) ( "e" | "E" ) >
+	|
+	< AFTER: ( "a" | "A" ) ( "f" | "F" ) ( "t" | "T" ) ( "e" | "E" ) ( "r" | "R" ) >
+	|
+	< LOCK: ( "l" | "L" ) ( "o" | "O" ) ( "c" | "C" ) ( "k" | "K" ) >
+    |
+    < RECORD: ( "r" | "R" ) ( "e" | "E" ) ( "c" | "C" ) ( "o" | "O" ) ( "r" | "R" ) ( "d" | "D" ) >
+    |
+    < WAIT: ( "w" | "W" ) ( "a" | "A" ) ( "i" | "I" ) ( "t" | "T" ) >
+    |
+    < RETRY: ( "r" | "R" ) ( "e" | "E" ) ( "t" | "T" ) ( "r" | "R" ) ( "y" | "Y" ) >
+    |
+    < LET: ( "l" | "L" ) ( "e" | "E" ) ( "t" | "T" ) >
+    |
+    < NOCACHE: ( "n" | "N" ) ( "o" | "O" ) ( "c" | "C" ) ( "a" | "A" ) ( "c" | "C" ) ( "h" | "H" ) ( "e" | "E" ) >
+    |
+    < UNSAFE: ( "u" | "U" ) ( "n" | "N" ) ( "s" | "S" ) ( "a" | "A" ) ( "f" | "F" ) ( "e" | "E" ) >
+    |
+    < PARALLEL: ( "p" | "P" ) ( "a" | "A" ) ( "r" | "R" ) ( "a" | "A" ) ( "l" | "L" ) ( "l" | "L" ) ( "e" | "E" ) ( "l" | "L" ) >
+    |
+    < STRATEGY: ( "s" | "S" ) ( "t" | "T" ) ( "r" | "R" ) ( "a" | "A" ) ( "t" | "T" ) ( "e" | "E" ) ( "g" | "G" ) ( "y" | "Y" )  >
+    |
+    < DEPTH_FIRST: ( "d" | "d" ) ( "e" | "E" ) ( "p" | "P" ) ( "t" | "T" ) ( "h" | "H" ) ( "_" )  ( "f" | "F" ) ( "i" | "I" ) ( "r" | "R" ) ( "s" | "S" ) ( "t" | "T" )  >
+    |
+    < BREADTH_FIRST: ( "b" | "B" ) ( "r" | "R" ) ( "e" | "E" ) ( "a" | "A" ) ( "d" | "D" ) ( "t" | "T" )  ( "h" | "H" ) ( "_" ) ( "f" | "F" ) ( "i" | "I" ) ( "r" | "R" ) ( "s" | "S" ) ( "t" | "T" )  >
+	|
+	< LUCENE: ( "l" | "L" ) ( "u" | "U" ) ( "c" | "C" ) ( "e" | "E" ) ( "n" | "N" ) ( "e" | "E" ) >
+	|
+	< THIS: "@this" >
+	|
+	< RECORD_ATTRIBUTE: <RID_ATTR> | <CLASS_ATTR> | <VERSION_ATTR> | <SIZE_ATTR> | <TYPE_ATTR> | <RAW_ATTR> >
+	|
+	< #RID_ATTR: "@" ( ( "r" | "R" ) ( "i" | "I" ) ( "d" | "D" )) >
+	|
+	< #CLASS_ATTR: "@class" >
+	|
+	< #VERSION_ATTR: "@version" >
+	|
+	< #SIZE_ATTR: "@size" >
+	|
+	< #TYPE_ATTR: "@type" >
+    |
+	< #RAW_ATTR: "@raw" >
+}
+
+
+/* LITERALS */
+
+TOKEN :
+{
+  < INTEGER_LITERAL:
+        <DECIMAL_LITERAL> (["l","L"])?
+      | <HEX_LITERAL> (["l","L"])?
+      | <OCTAL_LITERAL> (["l","L"])?
+  >
+|
+  < #DECIMAL_LITERAL: ["1"-"9"] (["0"-"9"])* >
+|
+  < #HEX_LITERAL: "0" ["x","X"] (["0"-"9","a"-"f","A"-"F"])+ >
+|
+  < #OCTAL_LITERAL: "0" (["0"-"7"])* >
+|
+  < FLOATING_POINT_LITERAL:
+        <DECIMAL_FLOATING_POINT_LITERAL>
+      | <HEXADECIMAL_FLOATING_POINT_LITERAL>
+  >
+|
+  < #DECIMAL_FLOATING_POINT_LITERAL:
+        (["0"-"9"])+ "." (["0"-"9"])* (<DECIMAL_EXPONENT>)? (["f","F","d","D"])?
+      | "." (["0"-"9"])+ (<DECIMAL_EXPONENT>)? (["f","F","d","D"])?
+      | (["0"-"9"])+ <DECIMAL_EXPONENT> (["f","F","d","D"])?
+      | (["0"-"9"])+ (<DECIMAL_EXPONENT>)? ["f","F","d","D"]
+  >
+|
+  < #DECIMAL_EXPONENT: ["e","E"] (["+","-"])? (["0"-"9"])+ >
+|
+  < #HEXADECIMAL_FLOATING_POINT_LITERAL:
+        "0" ["x", "X"] (["0"-"9","a"-"f","A"-"F"])+ (".")? <HEXADECIMAL_EXPONENT> (["f","F","d","D"])?
+      | "0" ["x", "X"] (["0"-"9","a"-"f","A"-"F"])* "." (["0"-"9","a"-"f","A"-"F"])+ <HEXADECIMAL_EXPONENT> (["f","F","d","D"])?
+  >
+|
+  < #HEXADECIMAL_EXPONENT: ["p","P"] (["+","-"])? (["0"-"9"])+ >
+|
+  < CHARACTER_LITERAL:
+      "'"
+      (   (~["'","\\","\n","\r"])
+        | ("\\"
+            ( ["n","t","b","r","f","\\","'","\""]
+            | ["0"-"7"] ( ["0"-"7"] )?
+            | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+            )
+          )
+      )
+      "'"
+  >
+|
+  < STRING_LITERAL:
+      (
+	      "\""
+	      (   (~["\"","\\","\n","\r"])
+	        | ("\\"
+	            ( ["n","t","b","r","f","\\","'","\""]
+	            | ["0"-"7"] ( ["0"-"7"] )?
+	            | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+	            )
+	          )
+	      )*
+	      "\""
+      )
+      |
+      (
+	      "'"
+	      (   (~["\'","\\","\n","\r"])
+	        | ("\\"
+	            ( ["n","t","b","r","f","\\","'","\""]
+	            | ["0"-"7"] ( ["0"-"7"] )?
+	            | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+	            )
+	          )
+	      )*
+	      "'"
+      )
+  >
+  |
+  < INTEGER_RANGE:
+    (<MINUS>)? <INTEGER_LITERAL> <RANGE> (<MINUS>)?<INTEGER_LITERAL>
+  >
+  |
+  < TRUE: "true" >
+  |
+  < FALSE: "false" >
+}
+
+
+
+/* SEPARATORS */
+
+TOKEN :
+{
+  < LPAREN: "(" >
+| < RPAREN: ")" >
+| < LBRACE: "{" >
+| < RBRACE: "}" >
+| < LBRACKET: "[" >
+| < RBRACKET: "]" >
+| < SEMICOLON: ";" >
+| < COMMA: "," >
+| < DOT: "." >
+| < AT: "@" >
+| < DOLLAR: "$" >
+}
+
+/* OPERATORS */
+
+TOKEN :
+{
+
+  < EQ: "=" >
+| < LT: "<" >
+| < GT: ">" >
+| < BANG: "!" >
+| < TILDE: "~" >
+| < HOOK: "?" >
+| < COLON: ":" >
+| < LE: "<=" >
+| < GE: ">=" >
+| < NE: "!=" >
+| < NEQ: "<>" >
+| < SC_OR: "||" >
+| < SC_AND: "&&" >
+| < INCR: "++" >
+| < DECR: "--" >
+| < PLUS: "+" >
+| < MINUS: "-" >
+| < STAR: "*" >
+| < SLASH: "/" >
+| < BIT_AND: "&" >
+| < BIT_OR: "|" >
+| < XOR: "^" >
+| < REM: "%" >
+| < LSHIFT: "<<" >
+| < PLUSASSIGN: "+=" >
+| < MINUSASSIGN: "-=" >
+| < STARASSIGN: "*=" >
+| < SLASHASSIGN: "/=" >
+| < ANDASSIGN: "&=" >
+| < ORASSIGN: "|=" >
+| < XORASSIGN: "^=" >
+| < REMASSIGN: "%=" >
+| < LSHIFTASSIGN: "<<=" >
+| < RSIGNEDSHIFTASSIGN: ">>=" >
+| < RUNSIGNEDSHIFTASSIGN: ">>>=" >
+| < ELLIPSIS: "..." >
+| < RANGE: ".." >
+| < NOT: ( "N" | "n") ( "O" | "o") ( "T" | "t")  >
+| < IN: ( "I" | "i") ( "N" | "n") >
+| < LIKE: ( "L" | "l") ( "I" | "i") ( "K" | "k") ( "E" | "e") >
+| < IS: "is" | "IS" | "Is" | "iS" >
+| < BETWEEN: ( "B" | "b") ( "E" | "e") ( "T" | "t") ( "W" | "w") ( "E" | "e") ( "E" | "e") ( "N" | "n")>
+| < CONTAINS: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) >
+| < CONTAINSALL: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) ( "A" | "a" ) ( "L" | "l" ) ( "L" | "l" ) >
+| < CONTAINSKEY: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) ( "K" | "k" ) ( "E" | "e" ) ( "Y" | "y" ) >
+| < CONTAINSVALUE: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) ( "V" | "v" ) ( "A" | "a" ) ( "L" | "l" ) ( "U" | "u" ) ( "E" | "e" ) >
+| < CONTAINSTEXT: ( "C" | "c" ) ( "O" | "o" ) ( "N" | "n" ) ( "T" | "t" ) ( "A" | "a" ) ( "I" | "i" ) ( "N" | "n" ) ( "S" | "s" ) ( "T" | "t" ) ( "E" | "e" ) ( "X" | "x" ) ( "T" | "t" ) >
+| < MATCHES: ( "M" | "m") ( "A" | "a") ( "T" | "t") ( "C" | "c") ( "H" | "h") ( "E" | "e") ( "S" | "s") >
+| < KEY: ( "K" | "k") ( "E" | "e") ( "Y" | "y") >
+| < INSTANCEOF: "instanceof" >
+| < CLUSTER: "cluster" >
+}
+
+
+
+TOKEN :
+{
+  < IDENTIFIER: ( (<DOLLAR>)? <LETTER> (<PART_LETTER>)* ) >
+|
+  < INDEX_IDENTIFIER: "index:" ( "__@recordmap@___" )? <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
+|
+  < INDEXVALUES_IDENTIFIER: "indexvalues:" <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
+|
+  < INDEXVALUESASC_IDENTIFIER: "indexvaluesasc:" <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
+|
+  < INDEXVALUESDESC_IDENTIFIER: "indexvaluesdesc:" <IDENTIFIER> ( ( <DOT> | <MINUS> ) <IDENTIFIER> )*  >
+|
+  < CLUSTER_IDENTIFIER: <CLUSTER> <COLON> <IDENTIFIER>  >
+|
+  < METADATA_IDENTIFIER: "metadata:" <IDENTIFIER>  >
+|
+  < #LETTER:
+      [  "A"-"Z",
+         "_",
+         "a"-"z"
+      ]
+  >
+|
+  < #PART_LETTER:
+      [  "0"-"9",
+         "A"-"Z",
+         "_",
+         "a"-"z"
+      ]
+  >
+}
+
+ORid Rid():
+{}
+{
+    (
+	     LOOKAHEAD(4)
+	    "#" jjtThis.cluster = Integer() <COLON> jjtThis.position = Integer()
+    	 |
+    	 LOOKAHEAD(3)
+    	 jjtThis.cluster = Integer() <COLON> jjtThis.position = Integer()
+    )
+    { return jjtThis; }
+}
+
+/** Root production. */
+OStatement parse() :
+{OStatement result;}
+{
+  result = Statement() <EOF>
+  { return result; }
+}
+
+OIdentifier Identifier():
+{Token token;}
+{
+(
+    token = <IDENTIFIER>
+    |
+    token = <IN>
+    |
+    token = <SET>
+    |
+    token = <PUT>
+    |
+    token = <ADD>
+    |
+    token = <REMOVE>
+    |
+    token = <MERGE>
+    |
+    token = <CONTENT>
+    |
+    token = <ORDER>
+    |
+    token = <KEY>
+    |
+    token = <OFFSET>
+    |
+    token = <GROUP>
+    |
+    token = <VALUES>
+    |
+    token = <RECORD>
+    |
+    token = <TO>
+    |
+    token = <LUCENE>
+) { jjtThis.value = token.image; return jjtThis; }
+}
+
+OInteger Integer():
+{
+    int sign = 1;
+    Token tokenVal;
+}
+{
+(
+    [ <MINUS> {sign = -1;} ] tokenVal = <INTEGER_LITERAL> {jjtThis.value = sign * Integer.parseInt(tokenVal.image);}
+) { return jjtThis; }
+}
+
+
+
+OFloatingPoint FloatingPoint():
+{
+    String stringValue;
+    Token tokenVal;
+}
+{
+    (
+        [ <MINUS> { jjtThis.sign = -1; } ] tokenVal = <FLOATING_POINT_LITERAL> { jjtThis.stringValue = tokenVal.image; }
+    )
+    { return jjtThis; }
+}
+
+ONumber Number():
+{ ONumber result; }
+{
+    (
+        LOOKAHEAD( Integer() )
+        result = Integer()
+        |
+        LOOKAHEAD( FloatingPoint() )
+        result = FloatingPoint()
+    )
+    { return result; }
+}
+
+
+OStatement Statement():
+{ OStatement result = null;}
+{
+	(
+	    LOOKAHEAD( SelectStatement() )
+		result = SelectStatement()
+		|
+		result = SelectWithoutTargetStatement()
+		|
+		result = TraverseStatement()
+        |
+        LOOKAHEAD(2)
+		result = DeleteStatement()
+		|
+		LOOKAHEAD(2)
+		result = DeleteVertexStatement()
+		|
+		LOOKAHEAD(2)
+        result = DeleteEdgeStatement()
+		|
+		result = InsertStatement()
+		|
+		LOOKAHEAD(CreateVertexStatementNoTarget())
+		result = CreateVertexStatementNoTarget()
+		|
+		LOOKAHEAD(CreateVertexStatement())
+        result = CreateVertexStatement()
+        |
+		LOOKAHEAD(CreateVertexStatementEmpty())
+        result = CreateVertexStatementEmpty()
+        |
+		LOOKAHEAD(CreateVertexStatementEmptyNoTarget())
+        result = CreateVertexStatementEmptyNoTarget()
+        |
+		LOOKAHEAD(2)
+        result = CreateEdgeStatement()
+        |
+		result = UpdateStatement()
+
+	) [ <SEMICOLON> ] { return result; }
+}
+
+OSelectWithoutTargetStatement SelectWithoutTargetStatement():
+{}
+{
+    (
+    	<SELECT>
+        jjtThis.projection = Projection()
+    	[ jjtThis.letClause = LetClause() ]
+    	[ jjtThis.fetchPlan = FetchPlan() ]
+    	[ jjtThis.timeout = Timeout() ]
+        [ <LOCK>  <RECORD> {jjtThis.lockRecord = true;} ]
+        [ <PARALLEL> { jjtThis.parallel = true; } ]
+        [ <NOCACHE> { jjtThis.noCache = true; } ]
+    ) { return jjtThis; }
+}
+
+OSelectStatement SelectStatement():
+{}
+{
+    (
+   	    <SELECT>
+        [ jjtThis.projection = Projection() ]
+        <FROM>
+        jjtThis.target = FromClause()
+        [ jjtThis.letClause = LetClause() ]
+        [ <WHERE> jjtThis.whereClause = WhereClause() ]
+        [ jjtThis.groupBy = GroupBy() ]
+        [ jjtThis.orderBy = OrderBy() ]
+        (
+            [
+                jjtThis.skip = Skip() [ jjtThis.limit = Limit() ]
+                |
+                jjtThis.limit = Limit() [ jjtThis.skip = Skip() ]
+            ]
+        )
+        [ jjtThis.fetchPlan = FetchPlan() ]
+        [ jjtThis.timeout = Timeout() ]
+        [ <LOCK>  <RECORD> {jjtThis.lockRecord = true;} ]
+        [ <PARALLEL> { jjtThis.parallel = true; } ]
+        [ <NOCACHE> { jjtThis.noCache = true; } ]
+    )
+    {return jjtThis;}
+}
+
+OTraverseStatement TraverseStatement():
+{ OTraverseProjectionItem lastProjection;}
+{
+    (
+    	<TRAVERSE>
+    	[
+    	    lastProjection = TraverseProjectionItem() { jjtThis.projections.add(lastProjection); }
+    	    ( <COMMA> lastProjection = TraverseProjectionItem()  { jjtThis.projections.add(lastProjection); } )*
+    	]
+    	<FROM>
+    	jjtThis.target = FromClause()
+    	[ <WHILE> jjtThis.whereClause = WhereClause() ]
+        [ jjtThis.limit = Limit() ]
+        [ <STRATEGY>
+            (
+                <DEPTH_FIRST> { jjtThis.strategy = OTraverseStatement.Strategy.DEPTH_FIRST; }
+                |
+                <BREADTH_FIRST> { jjtThis.strategy = OTraverseStatement.Strategy.BREADTH_FIRST; }
+            )
+        ]
+    )
+    {return jjtThis;}
+}
+
+
+ODeleteStatement DeleteStatement():
+{}
+{
+(
+	<DELETE>
+	<FROM>
+	jjtThis.fromClause = FromClause()
+	[ <WHERE> jjtThis.whereClause = WhereClause() ]
+	[ <RETURN> <BEFORE> { jjtThis.returnBefore = true; } ]
+	[ <LIMIT> jjtThis.limit = Integer() ]
+	[ <UNSAFE> { jjtThis.unsafe = true; }]
+) {return jjtThis;}
+}
+
+ODeleteVertexStatement DeleteVertexStatement():
+{}
+{
+(
+	<DELETE>
+	<VERTEX>
+	jjtThis.fromClause = FromClause()
+	[ <WHERE> jjtThis.whereClause = WhereClause() ]
+	[ <RETURN> <BEFORE> { jjtThis.returnBefore = true; } ]
+    [ <LIMIT> jjtThis.limit = Integer() ]
+) {return jjtThis;}
+}
+
+ODeleteEdgeStatement DeleteEdgeStatement():
+{ ODeleteEdgeStatement result; }
+{
+    (
+        LOOKAHEAD(DeleteEdgeByRidStatement())
+        result = DeleteEdgeByRidStatement()
+        |
+        LOOKAHEAD(DeleteEdgeFromToStatement())
+        result = DeleteEdgeFromToStatement()
+        |
+        LOOKAHEAD(DeleteEdgeVToStatement())
+        result = DeleteEdgeVToStatement()
+        |
+        LOOKAHEAD(DeleteEdgeToStatement())
+        result = DeleteEdgeToStatement()
+        |
+        LOOKAHEAD(DeleteEdgeWhereStatement())
+        result = DeleteEdgeWhereStatement()
+    )
+    {return result;}
+}
+
+
+ODeleteEdgeStatement DeleteEdgeByRidStatement():
+{
+    ORid lastRid;
+}
+{
+(
+	<DELETE>
+	<EDGE>
+	jjtThis.rid = Rid()
+
+) {return jjtThis;}
+}
+
+
+
+ODeleteEdgeStatement DeleteEdgeFromToStatement():
+{
+    ORid lastRid;
+}
+{
+(
+	<DELETE>
+	<EDGE>
+
+	[ jjtThis.className = Identifier() ]
+
+
+        <FROM>
+        (
+            jjtThis.leftRid = Rid()
+            |
+            (
+                <LBRACKET>
+                [
+                    lastRid = Rid()
+                    {
+                        jjtThis.leftRids=new ArrayList();
+                        jjtThis.leftRids.add(lastRid);
+                    }
+                    (
+                        <COMMA>
+                        lastRid = Rid() { jjtThis.leftRids.add(lastRid); }
+                    )*
+                ] <RBRACKET>
+            )
+            |
+            (
+                <LPAREN>
+                (
+                    LOOKAHEAD(SelectStatement()) jjtThis.leftStatement = SelectStatement()
+                    |
+                    LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.leftStatement = SelectWithoutTargetStatement()
+                )
+                <RPAREN>
+            )
+            |
+            jjtThis.leftParam = InputParameter()
+            |
+            jjtThis.leftIdentifier = Identifier()
+        )
+
+        [
+            <TO>
+            (
+                 jjtThis.rightRid = Rid()
+                |
+                (
+                    <LBRACKET>
+                    [
+                        lastRid = Rid()
+                        {
+                            jjtThis.rightRids=new ArrayList();
+                            jjtThis.rightRids.add(lastRid);
+                        }
+                        (
+                            <COMMA>
+                            lastRid = Rid() { jjtThis.rightRids.add(lastRid); }
+                        )*
+                    ] <RBRACKET>
+                )
+                |
+                (
+                    <LPAREN>
+                    (
+                        LOOKAHEAD(SelectStatement()) jjtThis.rightStatement = SelectStatement()
+                        |
+                        LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.rightStatement = SelectWithoutTargetStatement()
+                    )
+                    <RPAREN>
+                )
+                |
+                jjtThis.rightParam = InputParameter()
+                |
+                jjtThis.rightIdentifier = Identifier()
+            )
+        ]
+
+
+
+    [ <WHERE> jjtThis.whereClause = WhereClause() ]
+    [ jjtThis.limit = Limit() ]
+
+) {return jjtThis;}
+}
+
+
+ODeleteEdgeStatement DeleteEdgeToStatement():
+{
+    ORid lastRid;
+}
+{
+    (
+        <DELETE>
+        <EDGE>
+
+        jjtThis.className = Identifier()
+
+        <TO>
+        (
+             jjtThis.rightRid = Rid()
+            |
+            (
+                <LBRACKET>
+                [
+                    lastRid = Rid()
+                    {
+                        jjtThis.rightRids=new ArrayList();
+                        jjtThis.rightRids.add(lastRid);
+                    }
+                    (
+                        <COMMA>
+                        lastRid = Rid() { jjtThis.rightRids.add(lastRid); }
+                    )*
+                ] <RBRACKET>
+            )
+            |
+            (
+                <LPAREN>
+                (
+                    LOOKAHEAD(SelectStatement()) jjtThis.rightStatement = SelectStatement()
+                    |
+                    LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.rightStatement = SelectWithoutTargetStatement()
+                )
+                <RPAREN>
+            )
+            |
+            jjtThis.rightParam = InputParameter()
+            |
+            jjtThis.rightIdentifier = Identifier()
+        )
+
+
+        [ <WHERE> jjtThis.whereClause = WhereClause() ]
+        [ jjtThis.limit = Limit() ]
+
+	)
+     {return jjtThis;}
+}
+
+ODeleteEdgeStatement DeleteEdgeVToStatement():
+{
+    ORid lastRid;
+}
+{
+    (
+        <DELETE>
+        <EDGE>
+
+        <TO>
+        (
+             jjtThis.rightRid = Rid()
+            |
+            (
+                <LBRACKET>
+                [
+                    lastRid = Rid()
+                    {
+                        jjtThis.rightRids=new ArrayList();
+                        jjtThis.rightRids.add(lastRid);
+                    }
+                    (
+                        <COMMA>
+                        lastRid = Rid() { jjtThis.rightRids.add(lastRid); }
+                    )*
+                ] <RBRACKET>
+            )
+            |
+            (
+                <LPAREN>
+                (
+                    LOOKAHEAD(SelectStatement()) jjtThis.rightStatement = SelectStatement()
+                    |
+                    LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.rightStatement = SelectWithoutTargetStatement()
+                )
+                <RPAREN>
+            )
+            |
+            jjtThis.rightParam = InputParameter()
+            |
+            jjtThis.rightIdentifier = Identifier()
+        )
+
+
+        [ <WHERE> jjtThis.whereClause = WhereClause() ]
+        [ jjtThis.limit = Limit() ]
+
+	)
+     {return jjtThis;}
+}
+
+ODeleteEdgeStatement DeleteEdgeWhereStatement():
+{
+    ORid lastRid;
+}
+{
+    (
+        <DELETE>
+        <EDGE>
+
+        [ jjtThis.className = Identifier() ]
+
+        [ <WHERE> jjtThis.whereClause = WhereClause() ]
+        [ jjtThis.limit = Limit() ]
+
+	)
+     {return jjtThis;}
+}
+
+OUpdateStatement UpdateStatement():
+{ OUpdateOperations lastOperations; }
+{
+    (
+    	<UPDATE>
+    	(
+    	    jjtThis.targetRid = Rid()
+    	    |
+    		jjtThis.targetClass = Identifier()
+    		|
+    		jjtThis.targetCluster = Cluster()
+    		|
+    		jjtThis.targetIndex = IndexIdentifier()
+    	)
+    	( lastOperations = UpdateOperations() { jjtThis.operations.add(lastOperations); } )+
+    	[ <UPSERT> { jjtThis.upsert = true; } ]
+    	[
+    	    <RETURN>
+    	    ( <BEFORE> { jjtThis.returnBefore = true; } | <AFTER> { jjtThis.returnAfter = true; } )
+    	    [
+    	        jjtThis.returnProjection = Projection()
+    	    ]
+    	]
+    	[ <WHERE> jjtThis.whereClause = WhereClause() ]
+    	[ <LOCK> <RECORD> { jjtThis.lockRecord = true; } ]
+    	[ jjtThis.limit = Limit() ]
+    	[ jjtThis.timeout = Timeout() ]
+    )
+    {return jjtThis;}
+}
+
+OUpdateOperations UpdateOperations():
+{
+    OUpdateItem lastItem;
+    OUpdatePutItem lastPutItem;
+    OUpdateIncrementItem lastIncrementItem;
+    OUpdateRemoveItem lastRemoveItem;
+}
+{
+    (
+        (
+            <SET> { jjtThis.type = OUpdateOperations.TYPE_SET; }
+            lastItem = UpdateItem() { jjtThis.updateItems.add(lastItem); }
+            (
+                <COMMA> lastItem = UpdateItem() { jjtThis.updateItems.add(lastItem); }
+            )*
+        )
+        |
+        (
+            <PUT> { jjtThis.type = OUpdateOperations.TYPE_PUT; }
+            lastPutItem = UpdatePutItem()  { jjtThis.updatePutItems.add(lastPutItem); }
+            (
+                <COMMA> lastPutItem = UpdatePutItem()  { jjtThis.updatePutItems.add(lastPutItem); }
+            )*
+        )
+        |
+        (
+            (
+                <MERGE> { jjtThis.type = OUpdateOperations.TYPE_MERGE; }
+                |
+                <CONTENT> { jjtThis.type = OUpdateOperations.TYPE_CONTENT; }
+            )
+            jjtThis.json = Json()
+        )
+        |
+        (
+            (
+                <INCREMENT> { jjtThis.type = OUpdateOperations.TYPE_INCREMENT; }
+                |
+                <ADD> { jjtThis.type = OUpdateOperations.TYPE_ADD; }
+            )
+            lastIncrementItem = UpdateIncrementItem() { jjtThis.updateIncrementItems.add(lastIncrementItem); }
+            (
+                <COMMA> lastIncrementItem = UpdateIncrementItem() { jjtThis.updateIncrementItems.add(lastIncrementItem); }
+            )*
+         )
+         |
+         (
+            <REMOVE> { jjtThis.type = OUpdateOperations.TYPE_REMOVE; }
+            lastRemoveItem = UpdateRemoveItem()  { jjtThis.updateRemoveItems.add(lastRemoveItem); }
+            (
+                <COMMA>
+                lastRemoveItem = UpdateRemoveItem()  { jjtThis.updateRemoveItems.add(lastRemoveItem); }
+            )*
+         )
+    )
+    { return jjtThis; }
+}
+
+
+OUpdateItem UpdateItem():
+{}
+{
+(
+	jjtThis.left = Identifier()
+	(
+	    <EQ> { jjtThis.operator = OUpdateItem.OPERATOR_EQ; }
+	    |
+	    <PLUSASSIGN> { jjtThis.operator = OUpdateItem.OPERATOR_PLUSASSIGN; }
+        |
+        <MINUSASSIGN> { jjtThis.operator = OUpdateItem.OPERATOR_MINUSASSIGN; }
+        |
+        <STARASSIGN> { jjtThis.operator = OUpdateItem.OPERATOR_STARASSIGN; }
+        |
+        <SLASHASSIGN> { jjtThis.operator = OUpdateItem.OPERATOR_SLASHASSIGN; }
+	)
+	jjtThis.right = Expression()
+) { return jjtThis; }
+}
+
+OUpdateIncrementItem UpdateIncrementItem():
+{}
+{
+    (
+	    jjtThis.left = Identifier() <EQ> jjtThis.right = Expression()
+	)
+	{ return jjtThis; }
+}
+
+OUpdateRemoveItem UpdateRemoveItem():
+{}
+{
+    (
+	    jjtThis.left = Identifier() [ <EQ> jjtThis.right = Expression() ]
+	)
+    { return jjtThis; }
+}
+
+OUpdatePutItem UpdatePutItem():
+{}
+{
+    (
+	    jjtThis.left = Identifier() <EQ> jjtThis.key = Expression() <COMMA> jjtThis.value = Expression()
+    )
+    { return jjtThis; }
+}
+
+
+OUpdateAddItem UpdateAddItem():
+{}
+{
+    (
+    	jjtThis.left = Identifier() <EQ>
+    	jjtThis.right = Expression()
+    )
+    { return jjtThis; }
+}
+
+
+OInsertStatement InsertStatement():
+{}
+{
+(
+	<INSERT>
+	<INTO>
+	(
+	    jjtThis.targetClass = Identifier() [<CLUSTER> jjtThis.targetClusterName = Identifier()]
+	    |
+	    jjtThis.targetCluster = Cluster()
+	    |
+	    jjtThis.targetIndex = IndexIdentifier()
+	)
+	[ <RETURN> jjtThis.returnStatement = Projection() ]
+    jjtThis.insertBody = InsertBody()
+    [ <UNSAFE> { jjtThis.unsafe = true; }]
+) {return jjtThis;}
+}
+
+
+OInsertBody InsertBody():
+{
+    OIdentifier lastIdentifier;
+    OExpression lastExpression;
+    List<OExpression> lastExpressionList;
+}
+{
+    (
+        (
+            LOOKAHEAD(3)
+            (
+                <LPAREN>
+                lastIdentifier = Identifier()
+                {
+                    jjtThis.identifierList = new ArrayList<OIdentifier>();
+                    jjtThis.identifierList.add(lastIdentifier);
+                }
+                (
+                    <COMMA>
+                    lastIdentifier = Identifier() { jjtThis.identifierList.add(lastIdentifier); }
+                )*
+                <RPAREN>
+                <VALUES>
+                <LPAREN>
+                {
+                    jjtThis.valueExpressions = new ArrayList<List<OExpression>>();
+                    lastExpressionList = new ArrayList<OExpression>();
+                    jjtThis.valueExpressions.add(lastExpressionList);
+                }
+                lastExpression = Expression() { lastExpressionList.add(lastExpression); }
+                (
+                    <COMMA>
+                    lastExpression = Expression() { lastExpressionList.add(lastExpression); }
+                )*
+                <RPAREN>
+                (
+                    <COMMA>
+                    <LPAREN>
+                    {
+                        lastExpressionList = new ArrayList<OExpression>();
+                        jjtThis.valueExpressions.add(lastExpressionList);
+                    }
+                    lastExpression = Expression() { lastExpressionList.add(lastExpression); }
+                    (
+                        <COMMA>
+                        lastExpression = Expression() { lastExpressionList.add(lastExpression); }
+                    )*
+                    <RPAREN>
+                )*
+            )
+            |
+            LOOKAHEAD(3)
+            (
+                <SET>
+                {
+                    jjtThis.setExpressions = new ArrayList<OInsertSetExpression>();
+                    OInsertSetExpression lastSetExpr = new OInsertSetExpression();
+                    jjtThis.setExpressions.add(lastSetExpr);
+                }
+                lastSetExpr.left = Identifier() <EQ> lastSetExpr.right = Expression()
+
+                (
+                    <COMMA>
+                    {
+                         lastSetExpr = new OInsertSetExpression();
+                         jjtThis.setExpressions.add(lastSetExpr);
+                    }
+                    lastSetExpr.left = Identifier() <EQ> lastSetExpr.right = Expression()
+                )*
+            )
+            |
+            (
+                [ <FROM> ]
+                (
+                     jjtThis.selectStatement = SelectStatement()
+                     |
+                     LOOKAHEAD(2)
+                    (
+                        <LPAREN> jjtThis.selectStatement = SelectStatement() { jjtThis.selectInParentheses = true; } <RPAREN>
+                    )
+                )
+            )
+            |
+            ( <CONTENT> jjtThis.content = Json() )
+         )
+        [ <RETURN> jjtThis.returnProjection = Projection() ]
+    )
+    { return jjtThis; }
+}
+
+OCreateVertexStatementEmptyNoTarget CreateVertexStatementEmptyNoTarget():
+{}
+{
+	<CREATE>
+	<VERTEX>
+	{return jjtThis;}
+}
+
+OCreateVertexStatementEmpty CreateVertexStatementEmpty():
+{}
+{
+
+	<CREATE>
+	<VERTEX>
+	jjtThis.targetClass = Identifier()
+    [
+        <CLUSTER>
+        jjtThis.targetClusterName = Identifier()
+    ]
+    {return jjtThis;}
+}
+
+
+OCreateVertexStatement CreateVertexStatement():
+{}
+{
+(
+	<CREATE>
+	<VERTEX>
+	(
+	    LOOKAHEAD( Identifier() )
+	    (
+	        jjtThis.targetClass = Identifier()
+	        [
+	            <CLUSTER>
+	            jjtThis.targetClusterName = Identifier()
+	        ]
+	    )
+	    |
+	    LOOKAHEAD( Cluster() )
+	    jjtThis.targetCluster = Cluster()
+	)
+	[ <RETURN> jjtThis.returnStatement = Projection() ]
+	[ LOOKAHEAD(InsertBody()) jjtThis.insertBody = InsertBody() ]
+) {return jjtThis;}
+}
+
+
+OCreateVertexStatementNoTarget CreateVertexStatementNoTarget():
+{}
+{
+(
+	<CREATE>
+	<VERTEX>
+	jjtThis.insertBody = InsertBody()
+) {return jjtThis;}
+}
+
+
+OCreateEdgeStatement CreateEdgeStatement():
+{
+    ORid lastRid;
+}
+{
+(
+	<CREATE>
+	<EDGE>
+	[ jjtThis.targetClass = Identifier() [<CLUSTER> jjtThis.targetClusterName = Identifier()]]
+	<FROM>
+	(
+	    jjtThis.leftRid = Rid()
+	    |
+	    (
+	        <LBRACKET>
+	        [
+	            lastRid = Rid()
+	            {
+	                jjtThis.leftRids=new ArrayList();
+	                jjtThis.leftRids.add(lastRid);
+	            }
+	            (
+	                <COMMA>
+	                lastRid = Rid() { jjtThis.leftRids.add(lastRid); }
+	            )*
+	        ] <RBRACKET>
+	    )
+	    |
+	    (
+	        <LPAREN>
+	        (
+	            LOOKAHEAD(SelectStatement()) jjtThis.leftStatement = SelectStatement()
+	            |
+	            LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.leftStatement = SelectWithoutTargetStatement()
+	        )
+	        <RPAREN>
+	    )
+	    |
+	    jjtThis.leftParam = InputParameter()
+	    |
+	    jjtThis.leftIdentifier = Identifier()
+	)
+	<TO>
+	(
+        jjtThis.rightRid = Rid()
+	    |
+	    (
+	        <LBRACKET>
+	        [
+	            lastRid = Rid()
+	            {
+	                jjtThis.rightRids=new ArrayList();
+	                jjtThis.rightRids.add(lastRid);
+	            }
+	            (
+	                <COMMA>
+	                lastRid = Rid() { jjtThis.rightRids.add(lastRid); }
+	            )*
+	        ] <RBRACKET>
+	    )
+	    |
+	    (
+	        <LPAREN>
+	        (
+	            LOOKAHEAD(SelectStatement()) jjtThis.rightStatement = SelectStatement()
+	            |
+	            LOOKAHEAD(SelectWithoutTargetStatement()) jjtThis.rightStatement = SelectWithoutTargetStatement()
+	        )
+	        <RPAREN>
+	    )
+	    |
+	    jjtThis.rightParam = InputParameter()
+	    |
+	    jjtThis.rightIdentifier = Identifier()
+	)
+    [ jjtThis.body = InsertBody() ]
+    [ jjtThis.retry = Retry() ]
+    [ jjtThis.wait = Wait() ]
+) {return jjtThis;}
+}
+
+
+OInputParameter InputParameter():
+{ OInputParameter result; }
+{
+    (
+	    result = PositionalParameter()
+	    |
+	    result = NamedParameter()
+    )
+    { return result; }
+}
+
+OPositionalParameter PositionalParameter():
+{}
+{
+	<HOOK>
+	{
+	    jjtThis.paramNumber = inputParamCount;
+	    inputParamCount++;
+	    return jjtThis;
+	}
+}
+
+ONamedParameter NamedParameter():
+{}
+{
+    (
+	    <COLON> jjtThis.paramName = Identifier()
+	)
+	{
+	 jjtThis.paramNumber = inputParamCount;
+     inputParamCount++;
+	 return jjtThis;
+	}
+}
+
+OProjection Projection():
+{
+    java.util.List<OProjectionItem> items = new java.util.ArrayList<OProjectionItem>();
+    OProjectionItem lastItem = null;
+}
+{
+    (
+	 	lastItem = ProjectionItem() {items.add(lastItem);} ( "," lastItem = ProjectionItem() {items.add(lastItem);} )*
+	)
+	{
+	    jjtThis.items = items;
+	    return jjtThis;
+	}
+}
+
+OProjectionItem ProjectionItem():
+{}
+{
+(
+	"*" {jjtThis.all = true;}
+	|
+	(
+        jjtThis.expression = Expression()
+		[ <AS> jjtThis.alias = Alias() ]
+	)
+){return jjtThis;}
+}
+
+
+OArraySelector ArraySelector():
+{}
+{
+    (
+    	LOOKAHEAD( Rid() )
+    	jjtThis.rid = Rid()
+    	|
+    	LOOKAHEAD( InputParameter() )
+        jjtThis.inputParam = InputParameter()
+        |
+        LOOKAHEAD( Expression() )
+    	jjtThis.expression = Expression()
+    )
+    { return jjtThis; }
+}
+
+OArrayNumberSelector ArrayNumberSelector():
+{ Token tokenVal; }
+{
+    (
+    	LOOKAHEAD( InputParameter() )
+        jjtThis.inputValue = InputParameter()
+        |
+        LOOKAHEAD( Integer() )
+        tokenVal = <INTEGER_LITERAL> { jjtThis.integer = Integer.parseInt(tokenVal.image); }
+        /* TODO for 3.0
+        |
+        LOOKAHEAD( MathExpression() )
+    	jjtThis.expressionValue = MathExpression()
+    	*/
+
+    )
+    { return jjtThis; }
+}
+
+OArraySingleValuesSelector ArraySingleValuesSelector():
+{ OArraySelector lastSelector; }
+{
+    (
+        lastSelector = ArraySelector() { jjtThis.items.add(lastSelector); }
+        ( <COMMA> lastSelector = ArraySelector() { jjtThis.items.add(lastSelector); } ) *
+    )
+    { return jjtThis; }
+}
+
+OArrayRangeSelector ArrayRangeSelector():
+{ Token token; }
+{
+    (
+
+    /* TODO for 3.0
+        token = <INTEGER_RANGE>
+        {
+            String img = token.image;
+            String[] splitted = img.split("..");
+            jjtThis.from = Integer.parseInt(splitted[0], 10);
+            jjtThis.to = Integer.parseInt(splitted[1], 10);
+        }
+        |
+        */
+        (
+            jjtThis.fromSelector = ArrayNumberSelector() [ <MINUS> | <RANGE>  { jjtThis.newRange = true; } ] jjtThis.toSelector = ArrayNumberSelector()
+        )
+    )
+    { return jjtThis; }
+}
+
+
+String Alias():
+{ OIdentifier identifier; }
+{
+	identifier = Identifier()
+	{return identifier.getValue();}
+}
+
+ORecordAttribute RecordAttribute():
+{ Token token; }
+{
+    (
+	    token = <RECORD_ATTRIBUTE> { jjtThis.name = token.image; }
+	)
+	{ return jjtThis; }
+}
+
+OFunctionCall FunctionCall():
+{
+    OExpression lastExpression = null;
+}
+{
+    (
+    	(
+    	    jjtThis.name = Identifier()
+    	)
+    	<LPAREN>
+    	(
+    		<STAR> { jjtThis.star = true;}
+    		|
+    		(
+    			[
+    			lastExpression = Expression() {jjtThis.params.add(lastExpression);} ( <COMMA> lastExpression = Expression() {jjtThis.params.add(lastExpression);})*
+    			]
+    		)
+    	)
+    	<RPAREN>
+    )
+    { return jjtThis; }
+}
+
+OMethodCall MethodCall():
+{ OExpression lastExpression; }
+{
+    (
+        <DOT> jjtThis.methodName = Identifier()
+        <LPAREN> [
+            lastExpression = Expression() { jjtThis.params.add(lastExpression); }
+            ( <COMMA> lastExpression = Expression() { jjtThis.params.add(lastExpression); } )*
+        ] <RPAREN>
+    )
+    { return jjtThis; }
+}
+
+OLevelZeroIdentifier LevelZeroIdentifier():
+{}
+{
+    (
+        LOOKAHEAD( FunctionCall() )
+        jjtThis.functionCall = FunctionCall()
+        |
+        <THIS> { jjtThis.self = true; }
+        |
+        LOOKAHEAD( Collection() )
+        jjtThis.collection = Collection()
+    )
+    { return jjtThis; }
+}
+
+OSuffixIdentifier SuffixIdentifier():
+{}
+{
+    (
+        LOOKAHEAD( Identifier() )
+        jjtThis.identifier = Identifier()
+        |
+        LOOKAHEAD( RecordAttribute() )
+        jjtThis.recordAttribute = RecordAttribute()
+    )
+    { return jjtThis; }
+}
+
+
+OBaseIdentifier BaseIdentifier():
+{}
+{
+    (
+        LOOKAHEAD( LevelZeroIdentifier() )
+        jjtThis.levelZero = LevelZeroIdentifier()
+        |
+        LOOKAHEAD( SuffixIdentifier() )
+        jjtThis.suffix = SuffixIdentifier()
+    )
+    { return jjtThis; }
+}
+
+OModifier Modifier():
+{}
+{
+    (
+        (
+            (
+                <LBRACKET> { jjtThis.squareBrackets = true; }
+                (
+                    LOOKAHEAD( ArrayRangeSelector() )
+                    jjtThis.arrayRange = ArrayRangeSelector()
+                    |
+                    LOOKAHEAD( OrBlock() )
+                    jjtThis.condition = OrBlock()
+                    |
+                    LOOKAHEAD( ArraySingleValuesSelector() )
+                    jjtThis.arraySingleValues = ArraySingleValuesSelector()
+                )
+                <RBRACKET>
+            )
+       	    |
+       	    LOOKAHEAD( MethodCall() )
+   	        jjtThis.methodCall = MethodCall()
+       	    |
+            <DOT> jjtThis.suffix = SuffixIdentifier()
+        )
+        [
+            LOOKAHEAD( Modifier() )
+            jjtThis.next = Modifier()
+        ]
+    )
+    { return jjtThis; }
+}
+
+OExpression Expression():
+{Token token; }
+{
+    (
+        <NULL> {jjtThis.value = null;}
+        |
+        LOOKAHEAD(2)
+        token = <STRING_LITERAL>
+        {
+            jjtThis.value = token.image.substring(1, token.image.length() - 1);
+            if(token.image.startsWith("'")) {
+                jjtThis.singleQuotes = true;
+            }else{
+                jjtThis.doubleQuotes = true;
+            }
+
+        }
+
+        |
+        token = <CHARACTER_LITERAL> {jjtThis.value = token.image.substring(1, token.image.length() - 1);  jjtThis.singleQuotes = true;}
+        |
+        LOOKAHEAD( Rid() )
+        jjtThis.value = Rid()
+        |
+        LOOKAHEAD( InputParameter() )
+        jjtThis.value = InputParameter()
+        |
+        jjtThis.value = MathExpression()
+        |
+        jjtThis.value = Json()
+        |
+        <TRUE> {jjtThis.value = true;}
+        |
+        <FALSE> {jjtThis.value = false;}
+	)
+	{ return jjtThis; }
+}
+
+OMathExpression MathExpression():
+{
+    OMathExpression sub;
+    jjtThis.setChildExpressions(new java.util.ArrayList());
+}
+{
+    (
+	    sub = MultExpression() { jjtThis.getChildExpressions().add(sub); }
+	    (
+	        LOOKAHEAD( 2 ) ( <PLUS> { jjtThis.operators.add( OMathExpression.Operator.PLUS); } | <MINUS> { jjtThis.operators.add(OMathExpression.Operator.MINUS); })
+	        sub = MultExpression() { jjtThis.getChildExpressions().add(sub); }
+	    )*
+	)
+	{
+	    if(jjtThis.getChildExpressions().size() != 1){
+	        return jjtThis;
+	    }else{
+	        return jjtThis.getChildExpressions().get(0);
+	    }
+	}
+}
+
+
+OMathExpression MultExpression():
+{
+    OMathExpression sub;
+    jjtThis.setChildExpressions(new java.util.ArrayList());
+}
+{
+    (
+        sub = FirstLevelExpression()  { jjtThis.getChildExpressions().add(sub); }
+        (
+            LOOKAHEAD( 2 )
+            (
+                <STAR> { jjtThis.operators.add( OMathExpression.Operator.STAR); }
+                |
+                <SLASH> { jjtThis.operators.add( OMathExpression.Operator.SLASH); }
+                |
+                <REM> { jjtThis.operators.add( OMathExpression.Operator.REM); }
+            )
+            sub = FirstLevelExpression()  { jjtThis.getChildExpressions().add(sub); }
+        )*
+    )
+    {
+	    if(jjtThis.getChildExpressions().size() != 1){
+	        return jjtThis;
+	    }else{
+	        return jjtThis.getChildExpressions().get(0);
+	    }
+	}
+}
+
+OMathExpression FirstLevelExpression():
+{ OMathExpression expr;}
+{
+    (
+        LOOKAHEAD( ParenthesisExpression() )
+        expr = ParenthesisExpression()
+        |
+        LOOKAHEAD( BaseExpression() )
+        expr = BaseExpression()
+    )
+    {return expr;}
+}
+
+OMathExpression ParenthesisExpression():
+{}
+{
+    (
+	    <LPAREN> ( jjtThis.expression = Expression() | jjtThis.statement = SelectStatement() ) <RPAREN>
+	)
+	{return jjtThis;}
+}
+
+OBaseExpression BaseExpression():
+{}
+{
+    (
+        jjtThis.number = Number()
+        |
+        (
+    	    jjtThis.identifier = BaseIdentifier()
+    	    [
+    	        LOOKAHEAD( Modifier() )
+    	        jjtThis.modifier = Modifier()
+    	    ]
+    	)
+    	|
+    	(
+    	    jjtThis.inputParam = InputParameter()
+    	    [
+    	        LOOKAHEAD( Modifier() )
+    	        jjtThis.modifier = Modifier()
+    	    ]
+    	)
+	)
+	{return jjtThis;}
+}
+
+
+
+OFromClause FromClause():
+{}
+{
+	jjtThis.item = FromItem()
+	{ return jjtThis; }
+}
+
+OLetClause LetClause():
+{
+    OLetItem lastItem;
+}
+{
+    (
+        <LET> lastItem = LetItem() { jjtThis.items.add(lastItem); } ( <COMMA> lastItem = LetItem() { jjtThis.items.add(lastItem); } )*
+    )
+    { return jjtThis; }
+}
+
+OLetItem LetItem():
+{}
+{
+    (
+    	jjtThis.varName = Identifier() <EQ> jjtThis.expression = Expression()
+    )
+    { return jjtThis; }
+}
+
+
+OFromItem FromItem():
+{
+    jjtThis.rids = new java.util.ArrayList();
+    ORid lastRid;
+}
+{
+    (
+    	lastRid = Rid() { jjtThis.rids.add(lastRid); }
+    	|
+    	(
+    	    <LBRACKET> lastRid = Rid() { jjtThis.rids.add(lastRid); }
+    	    (
+    	        <COMMA> lastRid = Rid() { jjtThis.rids.add(lastRid); }
+    	    )* <RBRACKET>
+    	)
+    	|
+    	jjtThis.cluster = Cluster()
+    	|
+    	jjtThis.index = IndexIdentifier()
+    	|
+        jjtThis.metadata = MetadataIdentifier()
+    	|
+    	jjtThis.className = Identifier()
+    	|
+    	<LPAREN> ( jjtThis.statement = SelectStatement() | jjtThis.statement = TraverseStatement() ) <RPAREN>
+    	|
+    	jjtThis.inputParam = InputParameter()
+    )
+    { return jjtThis; }
+}
+
+OCluster Cluster():
+{ Token cName; }
+{
+    (
+	    cName = <CLUSTER_IDENTIFIER> {jjtThis.clusterName = cName.image.split(":")[1];}
+	)
+    { return jjtThis; }
+}
+
+OMetadataIdentifier MetadataIdentifier():
+{ Token mdName; }
+{
+    (
+	    mdName = <METADATA_IDENTIFIER> {jjtThis.name = mdName.image.split(":")[1];}
+	)
+    { return jjtThis; }
+}
+
+OIndexIdentifier IndexIdentifier():
+{
+    Token token;
+}
+{
+    (
+    	token = <INDEX_IDENTIFIER> { jjtThis.type = OIndexIdentifier.Type.INDEX; }
+    	|
+    	token = <INDEXVALUES_IDENTIFIER> { jjtThis.type = OIndexIdentifier.Type.VALUES; }
+    	|
+    	token = <INDEXVALUESASC_IDENTIFIER> { jjtThis.type = OIndexIdentifier.Type.VALUESASC; }
+    	|
+    	token = <INDEXVALUESDESC_IDENTIFIER> { jjtThis.type = OIndexIdentifier.Type.VALUESDESC; }
+    )
+    {
+        jjtThis.indexName = token.image.split(":")[1];
+        return jjtThis;
+    }
+}
+
+OWhereClause WhereClause():
+{}
+{
+	jjtThis.baseExpression = OrBlock()
+	{return jjtThis;}
+}
+
+OOrBlock OrBlock():
+{ OAndBlock lastAnd = null; }
+{
+    (
+    	lastAnd = AndBlock() { jjtThis.getSubBlocks().add(lastAnd); }
+    	( <OR> lastAnd = AndBlock() { jjtThis.getSubBlocks().add(lastAnd); } )*
+    )
+    { return jjtThis; }
+}
+
+OAndBlock AndBlock():
+{ONotBlock lastNot = null; }
+{
+(
+    lastNot = NotBlock() { jjtThis.getSubBlocks().add(lastNot); }
+    ( <AND> lastNot = NotBlock() { jjtThis.getSubBlocks().add(lastNot); } )*
+) { return jjtThis; }
+}
+
+ONotBlock NotBlock():
+{}
+{
+(
+    (
+        <NOT> {jjtThis.negate = true;}
+        (
+            LOOKAHEAD( ConditionBlock() )
+            jjtThis.sub = ConditionBlock()
+            |
+            LOOKAHEAD( ParenthesisBlock() )
+            jjtThis.sub = ParenthesisBlock()
+        )
+    )
+    |
+    (
+        LOOKAHEAD( ConditionBlock() )
+        jjtThis.sub = ConditionBlock()
+        |
+        LOOKAHEAD( ParenthesisBlock() )
+        jjtThis.sub = ParenthesisBlock()
+    )
+) { return jjtThis; }
+}
+
+OBooleanExpression ParenthesisBlock():
+{}
+{
+    (
+    	<LPAREN> jjtThis.subElement = OrBlock() <RPAREN>
+    )
+    { return jjtThis; }
+}
+
+OBooleanExpression ConditionBlock():
+{OBooleanExpression result = null;}
+{
+(
+	LOOKAHEAD( IsNotNullCondition() )
+	result = IsNotNullCondition()
+	|
+	LOOKAHEAD( IsNullCondition() )
+	result = IsNullCondition()
+	|
+	LOOKAHEAD( IsNotDefinedCondition() )
+	result = IsNotDefinedCondition()
+	|
+	LOOKAHEAD( IsDefinedCondition() )
+	result = IsDefinedCondition()
+	|
+	LOOKAHEAD( InCondition() )
+    result = InCondition()
+    |
+    LOOKAHEAD( NotInCondition() )
+    result = NotInCondition()
+	|
+	LOOKAHEAD( BinaryCondition() )
+	result = BinaryCondition()
+	|
+	LOOKAHEAD( BetweenCondition() )
+	result = BetweenCondition()
+	|
+	LOOKAHEAD( ContainsCondition() )
+	result = ContainsCondition()
+	|
+	LOOKAHEAD( ContainsValueCondition() )
+	result = ContainsValueCondition()
+	|
+	LOOKAHEAD( ContainsAllCondition() )
+    result = ContainsAllCondition()
+    |
+    LOOKAHEAD( ContainsTextCondition() )
+	result = ContainsTextCondition()
+	|
+	LOOKAHEAD( MatchesCondition() )
+	result = MatchesCondition()
+	|
+	LOOKAHEAD( IndexMatchCondition() )
+	result = IndexMatchCondition()
+	|
+    LOOKAHEAD( InstanceofCondition() )
+    result = InstanceofCondition()
+    |
+    <TRUE> { result = OBooleanExpression.TRUE;}
+    |
+    <FALSE> { result = OBooleanExpression.FALSE;}
+){ return result; }
+}
+
+OBinaryCompareOperator CompareOperator():
+{  OBinaryCompareOperator result;}
+{
+(
+		result = EqualsCompareOperator()
+      | result = LtOperator()
+      | result = GtOperator()
+      | result = NeOperator()
+      | result = NeqOperator()
+      | result = GeOperator()
+      | result = LeOperator()
+      | result = LikeOperator()
+      | result = ContainsKeyOperator()
+      | result = LuceneOperator()
+){return result;}
+}
+
+
+OLtOperator LtOperator():
+{}
+{
+(
+	<LT>
+){return jjtThis;}
+}
+
+OGtOperator GtOperator():
+{}
+{
+(
+	<GT>
+){return jjtThis;}
+}
+
+ONeOperator NeOperator():
+{}
+{
+(
+	<NE>
+){return jjtThis;}
+}
+
+ONeqOperator NeqOperator():
+{}
+{
+(
+	<NEQ>
+){return jjtThis;}
+}
+
+OGeOperator GeOperator():
+{}
+{
+(
+	<GE>
+){return jjtThis;}
+}
+
+OLeOperator LeOperator():
+{}
+{
+(
+	<LE>
+){return jjtThis;}
+}
+
+OLikeOperator LikeOperator():
+{}
+{
+(
+	<LIKE>
+){return jjtThis;}
+}
+
+OLuceneOperator LuceneOperator():
+{}
+{
+(
+	<LUCENE>
+){return jjtThis;}
+}
+
+OContainsKeyOperator ContainsKeyOperator():
+{}
+{
+(
+	<CONTAINSKEY>
+){return jjtThis;}
+}
+
+OContainsValueOperator ContainsValueOperator():
+{}
+{
+(
+	<CONTAINSVALUE>
+){return jjtThis;}
+}
+
+OEqualsCompareOperator EqualsCompareOperator():
+{}
+{
+(
+	<EQ>
+){return jjtThis;}
+}
+
+OBooleanExpression BinaryCondition():
+{}
+{
+(
+ 	jjtThis.left = Expression()
+ 	jjtThis.operator = CompareOperator()
+ 	jjtThis.right = Expression()
+){return jjtThis;}
+}
+
+OBooleanExpression ContainsValueCondition():
+{}
+{
+(
+    jjtThis.left = Expression()
+    jjtThis.operator = ContainsValueOperator()
+    (
+        LOOKAHEAD( 3 )
+        <LPAREN> jjtThis.condition = OrBlock() <RPAREN>
+        |
+        LOOKAHEAD( Expression() )
+        jjtThis.expression = Expression()
+    )
+) { return jjtThis;}
+}
+
+OBooleanExpression InstanceofCondition():
+{
+    Token token;
+}
+{
+    (
+        jjtThis.left = Expression() <INSTANCEOF> ( jjtThis.right = Identifier() | token = <STRING_LITERAL> { jjtThis.rightString = token.image; } )
+    )
+    {return jjtThis;}
+}
+
+OBooleanExpression IndexMatchCondition():
+{
+    Token token;
+    jjtThis.leftExpressions = new ArrayList();
+    OExpression lastExpression;
+}
+{
+    (
+     	<KEY>
+     	(
+     	    jjtThis.operator = CompareOperator() <LBRACKET>
+     	    [
+     	        lastExpression = Expression() { jjtThis.leftExpressions.add(lastExpression); }
+     	        ( <COMMA>
+     	            lastExpression = Expression() { jjtThis.leftExpressions.add(lastExpression); }
+     	        )*
+     	    ]
+     	    <RBRACKET>
+     	    |
+     	    <BETWEEN> {jjtThis.between = true;} <LBRACKET>
+     	    [
+     	        lastExpression = Expression() { jjtThis.leftExpressions.add(lastExpression); }
+     	        (
+     	            <COMMA>
+     	            lastExpression = Expression() { jjtThis.leftExpressions.add(lastExpression); }
+     	        )*
+     	    ]
+     	    <RBRACKET> <AND> <LBRACKET>
+     	    [
+     	        lastExpression = Expression() { jjtThis.rightExpressions.add(lastExpression); }
+     	        (
+     	            <COMMA>
+     	            lastExpression = Expression() { jjtThis.rightExpressions.add(lastExpression); }
+     	        )*
+     	    ] <RBRACKET>
+     	)
+    )
+    {return jjtThis;}
+}
+
+OBooleanExpression BetweenCondition():
+{}
+{
+(
+	jjtThis.first = Expression() <BETWEEN>
+	jjtThis.second = Expression() <AND>
+	jjtThis.third = Expression()
+){return jjtThis;}
+}
+
+OBooleanExpression IsNullCondition():
+{}
+{
+    (
+    	jjtThis.expression = Expression() <IS> <NULL>
+    )
+    {return jjtThis;}
+}
+
+OBooleanExpression IsNotNullCondition():
+{}
+{
+(
+	jjtThis.expression = Expression() <IS> <NOT> <NULL>
+){return jjtThis;}
+}
+
+OBooleanExpression IsDefinedCondition():
+{}
+{
+(
+	jjtThis.expression = Expression() <IS> <DEFINED>
+){return jjtThis;}
+}
+
+OBooleanExpression IsNotDefinedCondition():
+{}
+{
+(
+	jjtThis.expression = Expression() <IS> <NOT> <DEFINED>
+){return jjtThis;}
+}
+
+OBooleanExpression ContainsCondition():
+{}
+{
+    (
+    	jjtThis.left = Expression() <CONTAINS>
+    	(
+    	    LOOKAHEAD( 3 )
+    	    ( <LPAREN> jjtThis.condition = OrBlock() <RPAREN> )
+    	    |
+    	    LOOKAHEAD( Expression() )
+    	    jjtThis.right = Expression()
+    	)
+    )
+    {return jjtThis;}
+}
+
+OInOperator InOperator():
+{}
+{
+    <IN>
+    {return jjtThis;}
+}
+
+OBooleanExpression InCondition():
+{
+    OExpression lastExpression;
+}
+{
+(
+	jjtThis.left = Expression()
+	jjtThis.operator = InOperator()
+	(
+	    (
+	        <LBRACKET>
+	        lastExpression = Expression()
+	        {
+	            jjtThis.rightCollection = new java.util.ArrayList();
+	            jjtThis.rightCollection.add(lastExpression);
+	        }
+	        (
+                <COMMA> lastExpression = Expression()
+                {
+                    jjtThis.rightCollection.add(lastExpression);
+                }
+            )*
+            <RBRACKET>
+	    )
+	    |
+	    LOOKAHEAD(2)
+	    ( <LPAREN> jjtThis.rightStatement = SelectStatement() <RPAREN>)
+	    |
+	    LOOKAHEAD(2)
+	    ( <LPAREN> jjtThis.rightParam = InputParameter() <RPAREN>)
+	    |
+        jjtThis.rightParam = InputParameter()
+	)
+){return jjtThis;}
+}
+
+OBooleanExpression NotInCondition():
+{
+    OExpression lastExpression;
+}
+{
+    (
+    	jjtThis.left = Expression() <NOT> InOperator()
+    	(
+            (
+    	        <LBRACKET>
+    	        lastExpression = Expression()
+    	        {
+    	            jjtThis.rightCollection = new java.util.ArrayList();
+    	            jjtThis.rightCollection.add(lastExpression);
+    	        }
+    	        (
+    	            <COMMA> lastExpression = Expression()
+    	            {
+                        jjtThis.rightCollection.add(lastExpression);
+                    }
+    	        )*
+    	        <RBRACKET>
+    	    )
+            |
+            LOOKAHEAD(2)
+	        ( <LPAREN> jjtThis.rightStatement = SelectStatement() <RPAREN>)
+	        |
+	        LOOKAHEAD(2)
+	        ( <LPAREN> jjtThis.rightParam = InputParameter() <RPAREN>)
+	        |
+            jjtThis.rightParam = InputParameter()
+    	)
+    )
+    {return jjtThis;}
+}
+
+OBooleanExpression ContainsAllCondition():
+{}
+{
+    (
+    	jjtThis.left = Expression()
+    	<CONTAINSALL>
+    	(
+        	LOOKAHEAD( 3 )
+        	( <LPAREN> jjtThis.rightBlock = OrBlock() <RPAREN> )
+        	|
+        	LOOKAHEAD( Expression() )
+        	jjtThis.right = Expression()
+        )
+    )
+    {return jjtThis;}
+}
+
+OBooleanExpression ContainsTextCondition():
+{}
+{
+    (
+    	jjtThis.left = Expression() <CONTAINSTEXT> jjtThis.right = Expression()
+    )
+    {return jjtThis;}
+}
+
+OBooleanExpression MatchesCondition():
+{Token token;}
+{
+    (
+    	jjtThis.expression = Expression() <MATCHES> token = <STRING_LITERAL> {jjtThis.right = token.image;}
+    )
+    {return jjtThis;}
+}
+
+OOrderBy OrderBy():
+{
+    jjtThis.items = new java.util.ArrayList();
+    OOrderByItem lastItem;
+    OIdentifier lastIdentifier;
+    ORid lastRid;
+    Token lastToken;
+}
+{
+(
+	<ORDER> <BY>
+	(
+	    {
+	        lastItem = new OOrderByItem();
+	        jjtThis.items.add(lastItem);
+	    }
+	    (
+	        lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.toString(); }
+	        |
+	        lastItem.rid = Rid()
+	        |
+	        lastToken = <RECORD_ATTRIBUTE> { lastItem.recordAttr = lastToken.image; }
+	    )
+	)
+	[ <DESC> { lastItem.type = OOrderByItem.DESC; }| <ASC>  { lastItem.type = OOrderByItem.ASC; }]
+	(
+	    ","
+	    (
+            {
+                lastItem = new OOrderByItem();
+                jjtThis.items.add(lastItem);
+            }
+        	(
+        	    lastIdentifier = Identifier() { lastItem.alias = lastIdentifier.toString(); }
+        	    |
+        	    lastItem.rid = Rid()
+        	    |
+        	    lastToken = <RECORD_ATTRIBUTE> { lastItem.recordAttr = lastToken.image; }
+        	)
+        )
+        [ <DESC> { lastItem.type = OOrderByItem.DESC; }| <ASC>  { lastItem.type = OOrderByItem.ASC; }]
+	)*
+) {return jjtThis;}
+}
+
+OGroupBy GroupBy():
+{ OIdentifier lastIdentifier; }
+{
+(
+	<GROUP> <BY> lastIdentifier = Identifier() { jjtThis.items.add(lastIdentifier); }
+	(
+	    ","
+	    lastIdentifier = Identifier() { jjtThis.items.add(lastIdentifier); }
+	)*
+) {return jjtThis;}
+}
+
+
+java.lang.Integer Limit():
+{ OInteger value = null; }
+{
+    (
+    	<LIMIT> value = Integer()
+    )
+    { return value.getValue(); }
+}
+
+java.lang.Integer Skip():
+{ OInteger value = null;}
+{
+    (
+    	<SKIP2> value = Integer()
+    	|
+    	<OFFSET> value = Integer()
+    ) {return value.getValue();}
+}
+
+
+java.lang.Integer Timeout():
+{ OInteger val; }
+{
+    (
+	    <TIMEOUT> val = Integer()
+	)
+	{ return val.getValue(); }
+}
+
+
+java.lang.Integer Wait():
+{ OInteger val; }
+{
+    (
+	    <WAIT> val = Integer()
+	)
+	{ return val.getValue(); }
+}
+
+
+java.lang.Integer Retry():
+{ OInteger val; }
+{
+    (
+	    <RETRY> val = Integer()
+	)
+	{ return val.getValue(); }
+}
+
+
+
+
+
+
+
+OCollection Collection():
+{
+    OExpression lastExpression;
+}
+{
+    (
+
+        <LBRACKET>
+        [
+            lastExpression = Expression() { jjtThis.expressions.add(lastExpression); }
+            (
+                <COMMA>
+                lastExpression = Expression() { jjtThis.expressions.add(lastExpression); }
+            )*
+        ]
+        <RBRACKET>
+    )
+    { return jjtThis; }
+}
+
+
+
+OFetchPlan FetchPlan():
+{ OFetchPlanItem lastItem; }
+{
+    (
+        <FETCHPLAN> lastItem = FetchPlanItem() { jjtThis.items.add(lastItem); }
+        ( lastItem = FetchPlanItem() { jjtThis.items.add(lastItem); } )*
+    )
+    { return jjtThis; }
+}
+
+OFetchPlanItem FetchPlanItem():
+{ OIdentifier lastIdentifier;
+  boolean lastStarred = false;
+}
+{
+    (
+        (
+            <STAR> { jjtThis.star = true; }
+            |
+            [ <LBRACKET> jjtThis.leftDepth = Integer() <RBRACKET> ]
+            lastIdentifier = Identifier() { lastStarred = false; } [<STAR> { lastStarred = true; }]
+            {
+                String field = lastIdentifier.getValue();
+                if(lastStarred){
+                    field += "*";
+                }
+                jjtThis.fieldChain.add(field);
+            }
+            (
+                <DOT> lastIdentifier = Identifier()  { lastStarred = false; } [<STAR> { lastStarred = true; } ]
+                 {
+                     field = lastIdentifier.getValue();
+                     if(lastStarred){
+                         field += "*";
+                     }
+                     jjtThis.fieldChain.add(field);
+                 }
+            )*
+        )
+        <COLON> jjtThis.rightDepth = Integer()
+    )
+    { return jjtThis; }
+}
+
+
+
+OTraverseProjectionItem TraverseProjectionItem():
+{}
+{
+    (
+        <STAR> { jjtThis.star = true; }
+        |
+        (
+            jjtThis.base = BaseIdentifier()
+            [ LOOKAHEAD( Modifier() ) jjtThis.modifier = Modifier() ]
+        )
+    )
+    { return jjtThis; }
+}
+
+OArray Array():
+{
+    jjtThis.expressions = new java.util.ArrayList();
+    OExpression currentExpr;
+}
+{
+    (
+        <LBRACKET> [ currentExpr = Expression() { jjtThis.expressions.add(currentExpr); }
+        ( <COMMA> currentExpr = Expression() { jjtThis.expressions.add(currentExpr); } )* ] <RBRACKET>
+    )
+    { return jjtThis; }
+
+}
+
+
+OJson Json():
+{
+    OJsonItem lastItem;
+    Token token;
+}
+{
+    (
+        <LBRACE>
+        [
+            { lastItem = new OJsonItem(); }
+            (
+                lastItem.leftIdentifier = Identifier()
+                |
+                token = <STRING_LITERAL> { lastItem.leftString = token.image.substring(1, token.image.length() - 1); }
+                |
+                token = <CHARACTER_LITERAL> { lastItem.leftString = token.image.substring(1, token.image.length() - 1); }
+            )
+            <COLON>
+            lastItem.right = Expression() { jjtThis.items.add(lastItem); }
+            (
+                <COMMA>
+                { lastItem = new OJsonItem(); }
+                (
+                    lastItem.leftIdentifier = Identifier()
+                    |
+                    token = <STRING_LITERAL> { lastItem.leftString = token.image.substring(1, token.image.length() - 1); }
+                    |
+                    token = <CHARACTER_LITERAL> { lastItem.leftString = token.image.substring(1, token.image.length() - 1); }
+                )
+                <COLON>
+                lastItem.right = Expression() { jjtThis.items.add(lastItem); }
+            )*
+        ]
+        <RBRACE>
+    )
+    {return jjtThis;}
+}
+
+
+
+

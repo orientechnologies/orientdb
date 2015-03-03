@@ -52,15 +52,7 @@ import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Executes a TRAVERSE crossing records. Returns a List<OIdentifiable> containing all the traversed records that match the WHERE
@@ -93,7 +85,7 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   protected Iterator<? extends OIdentifiable> target;
   protected Iterable<OIdentifiable>           tempResult;
   protected int                               resultCount;
-  protected int                               serialTempRID = 0;
+  protected int                               serialTempRID      = 0;
   protected int                               skip               = 0;
 
   private static final class IndexValuesIterator implements Iterator<OIdentifiable> {
@@ -634,5 +626,19 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     }
 
     return new ORID[] { beginRange, endRange };
+  }
+
+
+
+  public void setRequest(OSQLAsynchQuery<ODocument> request) {
+    this.request = request;
+  }
+
+  public void setParsedTarget(OSQLTarget parsedTarget) {
+    this.parsedTarget = parsedTarget;
+  }
+
+  public void setCompiledFilter(OSQLFilter compiledFilter) {
+    this.compiledFilter = compiledFilter;
   }
 }

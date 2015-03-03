@@ -46,13 +46,7 @@ import com.orientechnologies.orient.core.sql.filter.OSQLFilterItem;
 import com.orientechnologies.orient.core.sql.query.OSQLAsynchQuery;
 import com.orientechnologies.orient.core.storage.OStorage;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 /**
@@ -89,97 +83,110 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLUpdate parse(final OCommandRequest iRequest) {
-    final ODatabaseDocument database = getDatabase();
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
-    init((OCommandRequestText) iRequest);
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
+    try {
+//      System.out.println("NEW PARSER FROM: " + queryText);
+      queryText = preParse(queryText, iRequest);
+//      System.out.println("NEW PARSER   TO: " + queryText);
+      textRequest.setText(queryText);
 
-    setEntries.clear();
-    addEntries.clear();
-    putEntries.clear();
-    removeEntries.clear();
-    incrementEntries.clear();
-    content = null;
-    merge = null;
+      final ODatabaseDocument database = getDatabase();
 
-    query = null;
+      init((OCommandRequestText) iRequest);
 
-    parserRequiredKeyword(KEYWORD_UPDATE);
+      setEntries.clear();
+      addEntries.clear();
+      putEntries.clear();
+      removeEntries.clear();
+      incrementEntries.clear();
+      content = null;
+      merge = null;
 
-    subjectName = parserRequiredWord(false, "Invalid target", " =><,\r\n");
-    if (subjectName == null)
-      throwSyntaxErrorException("Invalid subject name. Expected cluster, class, index or sub-query");
+      query = null;
 
-    parserNextWord(true);
-    String word = parserGetLastWord();
+      parserRequiredKeyword(KEYWORD_UPDATE);
 
-    if (parserIsEnded()
-        || (!word.equals(KEYWORD_SET) && !word.equals(KEYWORD_ADD) && !word.equals(KEYWORD_PUT) && !word.equals(KEYWORD_REMOVE)
-            && !word.equals(KEYWORD_INCREMENT) && !word.equals(KEYWORD_CONTENT) && !word.equals(KEYWORD_MERGE)
-            && !word.equals(KEYWORD_LOCK) && !word.equals(KEYWORD_RETURN) && !word.equals(KEYWORD_UPSERT)))
-      throwSyntaxErrorException("Expected keyword " + KEYWORD_SET + "," + KEYWORD_ADD + "," + KEYWORD_CONTENT + "," + KEYWORD_MERGE
-          + "," + KEYWORD_PUT + "," + KEYWORD_REMOVE + "," + KEYWORD_INCREMENT + "," + KEYWORD_LOCK + " or " + KEYWORD_RETURN
-          + " or " + KEYWORD_UPSERT);
-
-    while ((!parserIsEnded() && !parserGetLastWord().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE))
-        || parserGetLastWord().equals(KEYWORD_UPSERT)) {
-      word = parserGetLastWord();
-
-      if (word.equals(KEYWORD_CONTENT))
-        parseContent();
-      else if (word.equals(KEYWORD_MERGE))
-        parseMerge();
-      else if (word.equals(KEYWORD_SET))
-        parseSetFields(null, setEntries);
-      else if (word.equals(KEYWORD_ADD))
-        parseAddFields();
-      else if (word.equals(KEYWORD_PUT))
-        parsePutFields();
-      else if (word.equals(KEYWORD_REMOVE))
-        parseRemoveFields();
-      else if (word.equals(KEYWORD_INCREMENT))
-        parseIncrementFields();
-      else if (word.equals(KEYWORD_LOCK))
-        lockStrategy = parseLock();
-      else if (word.equals(KEYWORD_UPSERT))
-        upsertMode = true;
-      else if (word.equals(KEYWORD_RETURN))
-        parseReturn();
-      else if (word.equals(KEYWORD_RETRY))
-        parseRetry();
-      else
-        break;
+      subjectName = parserRequiredWord(false, "Invalid target", " =><,\r\n");
+      if (subjectName == null)
+        throwSyntaxErrorException("Invalid subject name. Expected cluster, class, index or sub-query");
 
       parserNextWord(true);
+      String word = parserGetLastWord();
+
+      if (parserIsEnded()
+          || (!word.equals(KEYWORD_SET) && !word.equals(KEYWORD_ADD) && !word.equals(KEYWORD_PUT) && !word.equals(KEYWORD_REMOVE)
+              && !word.equals(KEYWORD_INCREMENT) && !word.equals(KEYWORD_CONTENT) && !word.equals(KEYWORD_MERGE)
+              && !word.equals(KEYWORD_LOCK) && !word.equals(KEYWORD_RETURN) && !word.equals(KEYWORD_UPSERT)))
+        throwSyntaxErrorException("Expected keyword " + KEYWORD_SET + "," + KEYWORD_ADD + "," + KEYWORD_CONTENT + ","
+            + KEYWORD_MERGE + "," + KEYWORD_PUT + "," + KEYWORD_REMOVE + "," + KEYWORD_INCREMENT + "," + KEYWORD_LOCK + " or "
+            + KEYWORD_RETURN + " or " + KEYWORD_UPSERT);
+
+      while ((!parserIsEnded() && !parserGetLastWord().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE))
+          || parserGetLastWord().equals(KEYWORD_UPSERT)) {
+        word = parserGetLastWord();
+
+        if (word.equals(KEYWORD_CONTENT))
+          parseContent();
+        else if (word.equals(KEYWORD_MERGE))
+          parseMerge();
+        else if (word.equals(KEYWORD_SET))
+          parseSetFields(null, setEntries);
+        else if (word.equals(KEYWORD_ADD))
+          parseAddFields();
+        else if (word.equals(KEYWORD_PUT))
+          parsePutFields();
+        else if (word.equals(KEYWORD_REMOVE))
+          parseRemoveFields();
+        else if (word.equals(KEYWORD_INCREMENT))
+          parseIncrementFields();
+        else if (word.equals(KEYWORD_LOCK))
+          lockStrategy = parseLock();
+        else if (word.equals(KEYWORD_UPSERT))
+          upsertMode = true;
+        else if (word.equals(KEYWORD_RETURN))
+          parseReturn();
+        else if (word.equals(KEYWORD_RETRY))
+          parseRetry();
+        else
+          break;
+
+        parserNextWord(true);
+      }
+
+      final String additionalStatement = parserGetLastWord();
+
+      if (subjectName.startsWith("(")) {
+        subjectName = subjectName.trim();
+        query = database.command(new OSQLAsynchQuery<ODocument>(subjectName.substring(1, subjectName.length() - 1), this)
+            .setContext(context));
+
+        if (additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)
+            || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT))
+          compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition()), getContext(),
+              KEYWORD_WHERE);
+
+      } else if (additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)
+          || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT)
+          || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LET) || additionalStatement.equals(KEYWORD_LOCK)) {
+        query = new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + additionalStatement + " "
+            + parserText.substring(parserGetCurrentPosition()), this);
+        isUpsertAllowed = (((OMetadataInternal) getDatabase().getMetadata()).getImmutableSchemaSnapshot().getClass(subjectName) != null);
+      } else if (!additionalStatement.isEmpty())
+        throwSyntaxErrorException("Invalid keyword " + additionalStatement);
+      else
+        query = new OSQLAsynchQuery<ODocument>("select from " + subjectName, this);
+
+      if (upsertMode && !isUpsertAllowed)
+        throwSyntaxErrorException("Upsert only works with class names ");
+
+      if (upsertMode && !additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE))
+        throwSyntaxErrorException("Upsert only works with WHERE keyword");
+    } finally {
+      textRequest.setText(originalQuery);
     }
-
-    final String additionalStatement = parserGetLastWord();
-
-    if (subjectName.startsWith("(")) {
-      subjectName = subjectName.trim();
-      query = database.command(new OSQLAsynchQuery<ODocument>(subjectName.substring(1, subjectName.length() - 1), this)
-          .setContext(context));
-
-      if (additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)
-          || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT))
-        compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition()), getContext(),
-            KEYWORD_WHERE);
-
-    } else if (additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)
-        || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT)
-        || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LET) || additionalStatement.equals(KEYWORD_LOCK)) {
-      query = new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + additionalStatement + " "
-          + parserText.substring(parserGetCurrentPosition()), this);
-      isUpsertAllowed = (((OMetadataInternal) getDatabase().getMetadata()).getImmutableSchemaSnapshot().getClass(subjectName) != null);
-    } else if (!additionalStatement.isEmpty())
-      throwSyntaxErrorException("Invalid keyword " + additionalStatement);
-    else
-      query = new OSQLAsynchQuery<ODocument>("select from " + subjectName, this);
-
-    if (upsertMode && !isUpsertAllowed)
-      throwSyntaxErrorException("Upsert only works with class names ");
-
-    if (upsertMode && !additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE))
-      throwSyntaxErrorException("Upsert only works with WHERE keyword");
 
     return this;
   }
@@ -279,6 +286,11 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
   @Override
   public String getSyntax() {
     return "UPDATE <class>|cluster:<cluster>> [SET|ADD|PUT|REMOVE|INCREMENT|CONTENT {<JSON>}|MERGE {<JSON>}] [[,] <field-name> = <expression>|<sub-command>]* [LOCK <NONE|RECORD>] [UPSERT] [RETURN <COUNT|BEFORE|AFTER>] [WHERE <conditions>]";
+  }
+
+  @Override
+  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return upsertMode ? DISTRIBUTED_EXECUTION_MODE.LOCAL : DISTRIBUTED_EXECUTION_MODE.REPLICATE;
   }
 
   @Override

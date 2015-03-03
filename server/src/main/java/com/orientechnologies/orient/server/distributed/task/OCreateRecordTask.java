@@ -20,6 +20,8 @@
 package com.orientechnologies.orient.server.distributed.task;
 
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
 import com.orientechnologies.orient.core.id.ORID;
@@ -28,6 +30,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
@@ -65,11 +68,14 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   public OCreateRecordTask(final ORecord record) {
     this((ORecordId) record.getIdentity(), record.toStream(), record.getRecordVersion(), ORecordInternal.getRecordType(record));
 
-    if (rid.getClusterId() == ORID.CLUSTER_ID_INVALID && record instanceof ODocument) {
-      final OClass clazz = ((ODocument) record).getSchemaClass();
-      if (clazz != null) {
+    if (rid.getClusterId() == ORID.CLUSTER_ID_INVALID) {
+      final OClass clazz;
+      if (record instanceof ODocument && (clazz = ODocumentInternal.getImmutableSchemaClass((ODocument) record)) != null) {
         // PRE-ASSIGN THE CLUSTER ID ON CALLER NODE
         clusterId = clazz.getClusterSelection().getCluster(clazz, (ODocument) record);
+      } else {
+        ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
+        clusterId = db.getDefaultClusterId();
       }
     }
   }

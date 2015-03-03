@@ -21,13 +21,14 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
@@ -54,6 +55,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.record.impl.ODocumentEntry;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
 import com.orientechnologies.orient.core.serialization.OSerializableStream;
@@ -64,12 +66,11 @@ import com.orientechnologies.orient.core.util.ODateHelper;
 
 public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
+  private static final String    CHARSET_UTF_8    = "UTF-8";
   private static final ORecordId NULL_RECORD_ID   = new ORecordId(-2, ORID.CLUSTER_POS_INVALID);
   private static final long      MILLISEC_PER_DAY = 86400000;
-  private Charset                utf8;
 
   public ORecordSerializerBinaryV0() {
-    utf8 = Charset.forName("UTF-8");
   }
 
   public void deserializePartial(final ODocument document, final BytesContainer bytes, final String[] iFields) {
@@ -160,19 +161,20 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     int valuePos;
     OType type;
     while (true) {
+      OGlobalProperty prop = null;
       final int len = OVarIntSerializer.readAsInteger(bytes);
       if (len == 0) {
         // SCAN COMPLETED
         break;
       } else if (len > 0) {
         // PARSE FIELD NAME
-        fieldName = new String(bytes.bytes, bytes.offset, len, utf8);
+        fieldName = stringFromBytes(bytes.bytes, bytes.offset, len).intern();
         bytes.skip(len);
         valuePos = readInteger(bytes);
         type = readOType(bytes);
       } else {
         // LOAD GLOBAL PROPERTY BY ID
-        OGlobalProperty prop = getGlobalProperty(document, len);
+        prop = getGlobalProperty(document, len);
         fieldName = prop.getName();
         valuePos = readInteger(bytes);
         if (prop.getType() != OType.ANY)
@@ -215,21 +217,22 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
     final Map<String, OProperty> props = clazz != null ? clazz.propertiesMap() : null;
 
-    final String[] fields = document.fieldNames();
+    final Set<Entry<String, ODocumentEntry>> fields = ODocumentInternal.rawEntries(document);
 
-    final int[] pos = new int[fields.length];
-    final OProperty[] properties = new OProperty[fields.length];
+    final int[] pos = new int[fields.size()];
 
     int i = 0;
 
-    final Entry<String, ?> values[] = new Entry[fields.length];
-    for (Entry<String, Object> entry : document) {
-      if (props != null)
-        properties[i] = props.get(entry.getKey());
+    final Entry<String, ODocumentEntry> values[] = new Entry[fields.size()];
+    for (Entry<String, ODocumentEntry> entry : fields) {
+      if (!entry.getValue().exist())
+        continue;
+      if (entry.getValue().property == null && props != null)
+        entry.getValue().property = props.get(entry.getKey());
 
-      if (properties[i] != null) {
-        OVarIntSerializer.write(bytes, (properties[i].getId() + 1) * -1);
-        if (properties[i].getType() != OType.ANY)
+      if (entry.getValue().property != null) {
+        OVarIntSerializer.write(bytes, (entry.getValue().property.getId() + 1) * -1);
+        if (entry.getValue().property.getType() != OType.ANY)
           pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE);
         else
           pos[i] = bytes.alloc(OIntegerSerializer.INT_SIZE + 1);
@@ -241,20 +244,20 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
       i++;
     }
     writeEmptyString(bytes);
+    int size = i;
 
-    for (i = 0; i < values.length; i++) {
+    for (i = 0; i < size; i++) {
       int pointer = 0;
-      final Object value = values[i].getValue();
+      final Object value = values[i].getValue().value;
       if (value != null) {
-        final OType type = getFieldType(document, values[i].getKey(), value, props);
+        final OType type = getFieldType(values[i].getValue());
         if (type == null) {
           throw new OSerializationException("Impossible serialize value of type " + value.getClass()
               + " with the ODocument binary serializer");
         }
-
         pointer = writeSingleValue(bytes, value, type, getLinkedType(document, type, values[i].getKey()));
         OIntegerSerializer.INSTANCE.serializeLiteral(pointer, bytes.bytes, pos[i]);
-        if (properties[i] == null || properties[i].getType() == OType.ANY)
+        if (values[i].getValue().property == null || values[i].getValue().property.getType() == OType.ANY)
           writeOType(bytes, (pos[i] + OIntegerSerializer.INT_SIZE), type);
       }
     }
@@ -725,16 +728,15 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
     return pos;
   }
 
-  private OType getFieldType(final ODocument document, final String key, final Object fieldValue,
-      final Map<String, OProperty> properties) {
-    OType type = document.fieldType(key);
+  private OType getFieldType(final ODocumentEntry entry) {
+    OType type = entry.type;
     if (type == null) {
-      final OProperty prop = properties != null ? properties.get(key) : null;
+      final OProperty prop = entry.property;
       if (prop != null)
         type = prop.getType();
 
       if (type == null || OType.ANY == type)
-        type = OType.getTypeByValue(fieldValue);
+        type = OType.getTypeByValue(entry.value);
     }
     return type;
   }
@@ -748,7 +750,7 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
   private String readString(final BytesContainer bytes) {
     final int len = OVarIntSerializer.readAsInteger(bytes);
-    final String res = new String(bytes.bytes, bytes.offset, len, utf8);
+    final String res = stringFromBytes(bytes.bytes, bytes.offset, len);
     bytes.skip(len);
     return res;
   }
@@ -774,11 +776,26 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
   }
 
   private int writeString(final BytesContainer bytes, final String toWrite) {
-    final byte[] nameBytes = toWrite.getBytes(utf8);
+    final byte[] nameBytes = bytesFromString(toWrite);
     final int pointer = OVarIntSerializer.write(bytes, nameBytes.length);
     final int start = bytes.alloc(nameBytes.length);
     System.arraycopy(nameBytes, 0, bytes.bytes, start, nameBytes.length);
     return pointer;
   }
 
+  private byte[] bytesFromString(final String toWrite) {
+    try {
+      return toWrite.getBytes(CHARSET_UTF_8);
+    } catch (UnsupportedEncodingException e) {
+      throw new OSerializationException("Error on string encoding", e);
+    }
+  }
+
+  private String stringFromBytes(final byte[] bytes, final int offset, final int len) {
+    try {
+      return new String(bytes, offset, len, CHARSET_UTF_8);
+    } catch (UnsupportedEncodingException e) {
+      throw new OSerializationException("Error on string decoding", e);
+    }
+  }
 }

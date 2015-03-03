@@ -22,11 +22,7 @@ package com.orientechnologies.orient.core.config;
 import java.io.IOException;
 import java.text.DecimalFormatSymbols;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.TimeZone;
+import java.util.*;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -94,6 +90,7 @@ public class OStorageConfiguration implements OSerializableStream {
   private volatile int                               minimumClusters               = 1;
   private volatile String                            recordSerializer;
   private volatile int                               recordSerializerVersion;
+
 
   public OStorageConfiguration(final OStorage iStorage) {
     storage = iStorage;

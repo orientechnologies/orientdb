@@ -231,7 +231,12 @@ public class OObjectEntitySerializer {
         if (returnNonProxiedInstance) {
           o = getNonProxiedInstance(o);
         }
-        alreadyDetached.put(handler.getDoc().getIdentity(), o);
+        ORID identity = handler.getDoc().getIdentity();
+          if (!alreadyDetached.containsKey(identity)){
+          alreadyDetached.put(identity, o);
+        } else if (returnNonProxiedInstance){
+          return (T) alreadyDetached.get(identity);
+        }
         handler.detachAll(o, returnNonProxiedInstance, alreadyDetached);
       } catch (IllegalArgumentException e) {
         throw new OSerializationException("Error detaching object of class " + o.getClass(), e);

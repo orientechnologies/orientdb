@@ -173,7 +173,7 @@ function ODatabase(databasePath) {
 		}
 		$.ajax({
 			beforeSend: function(xhr){
-					if( userName != '' && userPass != '' )
+					if( userName != '' )
       					return xhr.setRequestHeader('Authorization', 'BASIC ' + btoa(userName+':'+userPass));
     			},
 			type : type,

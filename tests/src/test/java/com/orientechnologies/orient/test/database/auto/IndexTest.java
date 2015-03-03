@@ -1334,7 +1334,7 @@ public class IndexTest extends ObjectDBBaseTest {
     }
 
     List<ODocument> result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
-        "select from index:IndexPaginationTest limit 5 order by key"));
+        "select from index:IndexPaginationTest order by key limit 5"));
 
     Assert.assertEquals(result.size(), 5);
 
@@ -1353,7 +1353,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
     while (true) {
       result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
-          "select from index:IndexPaginationTest where key > ? limit 5  order by key"), new OCompositeKey(lastKey, lastRid));
+          "select from index:IndexPaginationTest where key > ? order by key limit 5"), new OCompositeKey(lastKey, lastRid));
       if (result.isEmpty())
         break;
 
@@ -1393,7 +1393,7 @@ public class IndexTest extends ObjectDBBaseTest {
     }
 
     List<ODocument> result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
-        "select from index:IndexPaginationTestDescOrder limit 5 order by key desc"));
+        "select from index:IndexPaginationTestDescOrder order by key desc limit 5"));
 
     Assert.assertEquals(result.size(), 5);
 
@@ -1412,7 +1412,7 @@ public class IndexTest extends ObjectDBBaseTest {
 
     while (true) {
       result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
-          "select from index:IndexPaginationTestDescOrder where key < ? limit 5  order by key desc"), new OCompositeKey(lastKey,
+          "select from index:IndexPaginationTestDescOrder where key < ? order by key desc limit 5"), new OCompositeKey(lastKey,
           lastRid));
       if (result.isEmpty())
         break;

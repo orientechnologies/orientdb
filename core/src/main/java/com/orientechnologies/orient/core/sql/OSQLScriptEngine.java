@@ -20,8 +20,7 @@
 
 package com.orientechnologies.orient.core.sql;
 
-import java.io.IOException;
-import java.io.Reader;
+import com.orientechnologies.orient.core.command.script.OCommandScript;
 
 import javax.script.Bindings;
 import javax.script.ScriptContext;
@@ -29,6 +28,8 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
 import javax.script.SimpleBindings;
+import java.io.IOException;
+import java.io.Reader;
 
 /**
  * Dynamic script engine for OrientDB SQL commands. This implementation is multi-threads.
@@ -67,7 +68,7 @@ public class OSQLScriptEngine implements ScriptEngine {
 
   @Override
   public Object eval(String script, Bindings n) throws ScriptException {
-    return new OCommandSQL(script).execute(n);
+    return new OCommandScript(script).execute(n);
   }
 
   @Override
@@ -80,7 +81,7 @@ public class OSQLScriptEngine implements ScriptEngine {
       throw new ScriptException(e);
     }
 
-    return new OCommandSQL(buffer.toString()).execute(n);
+    return new OCommandScript(buffer.toString()).execute(n);
   }
 
   @Override

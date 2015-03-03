@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.exception.OFastConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 
 /**
@@ -36,8 +37,8 @@ public class OVersionRecordConflictStrategy implements ORecordConflictStrategy {
   public static final String NAME = "version";
 
   @Override
-  public byte[] onUpdate(final byte iRecordType, final ORecordId rid, final ORecordVersion iRecordVersion,
-      final byte[] iRecordContent, final ORecordVersion iDatabaseVersion) {
+  public byte[] onUpdate(OStorage storage, final byte iRecordType, final ORecordId rid,
+      final ORecordVersion iRecordVersion, final byte[] iRecordContent, final ORecordVersion iDatabaseVersion) {
     checkVersions(rid, iRecordVersion, iDatabaseVersion);
     return null;
   }

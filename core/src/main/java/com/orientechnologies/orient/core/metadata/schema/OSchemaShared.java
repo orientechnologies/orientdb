@@ -19,6 +19,16 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
@@ -53,16 +63,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedSt
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 /**
  * Shared schema class. It's shared by all the database instances that point to the same storage.
  * 
@@ -96,6 +96,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   private final Map<String, OGlobalProperty>    propertiesByNameType    = new HashMap<String, OGlobalProperty>();
   private volatile int                          version                 = 0;
   private volatile boolean                      fullCheckpointOnChange  = false;
+  private volatile OImmutableSchema             snapshot;
 
   private static final class ClusterIdsAreEmptyException extends Exception {
   }
@@ -157,12 +158,18 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
 
   @Override
   public OImmutableSchema makeSnapshot() {
-    acquireSchemaReadLock();
-    try {
-      return new OImmutableSchema(this);
-    } finally {
-      releaseSchemaReadLock();
+    if (snapshot == null) {
+      // Is null only in the case that is asked while the schema is created
+      // all the other cases are already protected by a write lock
+      acquireSchemaReadLock();
+      try {
+        if (snapshot == null)
+          snapshot = new OImmutableSchema(this);
+      } finally {
+        releaseSchemaReadLock();
+      }
     }
+    return snapshot;
   }
 
   public boolean isClustersCanNotBeSharedAmongClasses() {
@@ -509,7 +516,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     rwSpinLock.acquireWriteLock();
     try {
       reload(null);
-
+      snapshot = new OImmutableSchema(this);
       return (RET) this;
     } finally {
       rwSpinLock.releaseWriteLock();
@@ -585,6 +592,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
             saveInternal();
           else
             reload();
+        else
+          snapshot = new OImmutableSchema(this);
 
         version++;
       }
@@ -785,6 +794,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       ((ORecordId) document.getIdentity()).fromString(getDatabase().getStorage().getConfiguration().schemaRecordId);
       reload("*:-1 index:0");
 
+      snapshot = new OImmutableSchema(this);
+
       return this;
     } finally {
       rwSpinLock.releaseWriteLock();
@@ -798,6 +809,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       super.save(OMetadataDefault.CLUSTER_INTERNAL_NAME);
       db.getStorage().getConfiguration().schemaRecordId = document.getIdentity().toString();
       db.getStorage().getConfiguration().update();
+      snapshot = new OImmutableSchema(this);
     } finally {
       rwSpinLock.releaseWriteLock();
     }
@@ -1122,6 +1134,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       reload(null, true);
       throw e;
     }
+    snapshot = new OImmutableSchema(this);
   }
 
   private void addClusterClassMap(final OClass cls) {

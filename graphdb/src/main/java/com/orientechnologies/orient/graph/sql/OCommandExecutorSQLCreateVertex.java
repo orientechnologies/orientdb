@@ -54,45 +54,59 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLCreateVertex parse(final OCommandRequest iRequest) {
-    final ODatabaseDocument database = getDatabase();
 
-    init((OCommandRequestText) iRequest);
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
-    String className = null;
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
+    try {
+//      System.out.println("NEW PARSER FROM: " + queryText);
+      queryText = preParse(queryText, iRequest);
+//      System.out.println("NEW PARSER   TO: " + queryText);
+      textRequest.setText(queryText);
 
-    parserRequiredKeyword("CREATE");
-    parserRequiredKeyword("VERTEX");
+      final ODatabaseDocument database = getDatabase();
 
-    String temp = parseOptionalWord(true);
+      init((OCommandRequestText) iRequest);
 
-    while (temp != null) {
-      if (temp.equals("CLUSTER")) {
-        clusterName = parserRequiredWord(false);
+      String className = null;
 
-      } else if (temp.equals(KEYWORD_SET)) {
-        fields = new LinkedHashMap<String, Object>();
-        parseSetFields(clazz, fields);
+      parserRequiredKeyword("CREATE");
+      parserRequiredKeyword("VERTEX");
 
-      } else if (temp.equals(KEYWORD_CONTENT)) {
-        parseContent();
+      String temp = parseOptionalWord(true);
 
-      } else if (className == null && temp.length() > 0)
-        className = temp;
+      while (temp != null) {
+        if (temp.equals("CLUSTER")) {
+          clusterName = parserRequiredWord(false);
 
-      temp = parserOptionalWord(true);
-      if (parserIsEnded())
-        break;
+        } else if (temp.equals(KEYWORD_SET)) {
+          fields = new LinkedHashMap<String, Object>();
+          parseSetFields(clazz, fields);
+
+        } else if (temp.equals(KEYWORD_CONTENT)) {
+          parseContent();
+
+        } else if (className == null && temp.length() > 0)
+          className = temp;
+
+        temp = parserOptionalWord(true);
+        if (parserIsEnded())
+          break;
+      }
+
+      if (className == null)
+        // ASSIGN DEFAULT CLASS
+        className = "V";
+
+      // GET/CHECK CLASS NAME
+      clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(className);
+      if (clazz == null)
+        throw new OCommandSQLParsingException("Class '" + className + "' was not found");
+
+    } finally {
+      textRequest.setText(originalQuery);
     }
-
-    if (className == null)
-      // ASSIGN DEFAULT CLASS
-      className = "V";
-
-    // GET/CHECK CLASS NAME
-    clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(className);
-    if (clazz == null)
-      throw new OCommandSQLParsingException("Class '" + className + "' was not found");
-
     return this;
   }
 

@@ -19,21 +19,6 @@
  */
 package com.orientechnologies.orient.server.network.protocol.http;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.net.Socket;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.net.URLDecoder;
-import java.nio.charset.Charset;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.IllegalFormatException;
-import java.util.InputMismatchException;
-import java.util.Map;
-import java.util.zip.GZIPInputStream;
-
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.Orient;
@@ -64,40 +49,29 @@ import com.orientechnologies.orient.server.network.protocol.http.command.delete.
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteIndex;
 import com.orientechnologies.orient.server.network.protocol.http.command.delete.OServerCommandDeleteProperty;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetClass;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetCluster;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetConnect;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetConnections;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDatabase;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDictionary;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDisconnect;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDocument;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetDocumentByClass;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetExportDatabase;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetFileDownload;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetIndex;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetListDatabases;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetQuery;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetServer;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStorageAllocation;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetSupportedLanguages;
-import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandKillDbConnection;
+import com.orientechnologies.orient.server.network.protocol.http.command.get.*;
 import com.orientechnologies.orient.server.network.protocol.http.command.options.OServerCommandOptions;
 import com.orientechnologies.orient.server.network.protocol.http.command.patch.OServerCommandPatchDocument;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostAuthToken;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostBatch;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostClass;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostCommand;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostDatabase;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostDocument;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostImportRecords;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostInstallDatabase;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostProperty;
-import com.orientechnologies.orient.server.network.protocol.http.command.post.OServerCommandPostStudio;
+import com.orientechnologies.orient.server.network.protocol.http.command.post.*;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPostConnection;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutDocument;
 import com.orientechnologies.orient.server.network.protocol.http.command.put.OServerCommandPutIndex;
 import com.orientechnologies.orient.server.network.protocol.http.multipart.OHttpMultipartBaseInputStream;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.IllegalFormatException;
+import java.util.InputMismatchException;
+import java.util.Map;
+import java.util.zip.GZIPInputStream;
 
 public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
   private static final String          COMMAND_SEPARATOR = "|";
@@ -531,7 +505,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
 
   @Override
   protected void execute() throws Exception {
-    if (channel.socket.isInputShutdown()) {
+    if (channel.socket.isInputShutdown() || channel.socket.isClosed()) {
       connectionClosed();
       return;
     }

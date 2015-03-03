@@ -27,11 +27,7 @@ import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
-import com.orientechnologies.orient.core.index.OCompositeKey;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexCursor;
-import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.*;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -75,31 +71,66 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
 
   @SuppressWarnings("unchecked")
   public OCommandExecutorSQLDelete parse(final OCommandRequest iRequest) {
-    final ODatabaseDocument database = getDatabase();
+    final OCommandRequestText textRequest = (OCommandRequestText) iRequest;
 
-    init((OCommandRequestText) iRequest);
+    String queryText = textRequest.getText();
+    String originalQuery = queryText;
+    try {
+//      System.out.println("NEW PARSER FROM: " + queryText);
+      queryText = preParse(queryText, iRequest);
+//      System.out.println("NEW PARSER   TO: " + queryText);
+      textRequest.setText(queryText);
+      final ODatabaseDocument database = getDatabase();
 
-    query = null;
-    recordCount = 0;
+      init((OCommandRequestText) iRequest);
 
-    if (parserTextUpperCase.endsWith(KEYWORD_UNSAFE)) {
-      unsafe = true;
-      parserText = parserText.substring(0, parserText.length() - KEYWORD_UNSAFE.length() - 1);
-      parserTextUpperCase = parserTextUpperCase.substring(0, parserTextUpperCase.length() - KEYWORD_UNSAFE.length() - 1);
-    }
+      query = null;
+      recordCount = 0;
 
-    parserRequiredKeyword(OCommandExecutorSQLDelete.KEYWORD_DELETE);
-    parserRequiredKeyword(OCommandExecutorSQLDelete.KEYWORD_FROM);
+      if (parserTextUpperCase.endsWith(KEYWORD_UNSAFE)) {
+        unsafe = true;
+        parserText = parserText.substring(0, parserText.length() - KEYWORD_UNSAFE.length() - 1);
+        parserTextUpperCase = parserTextUpperCase.substring(0, parserTextUpperCase.length() - KEYWORD_UNSAFE.length() - 1);
+      }
 
-    String subjectName = parserRequiredWord(false, "Syntax error", " =><,\r\n");
-    if (subjectName == null)
-      throwSyntaxErrorException("Invalid subject name. Expected cluster, class, index or sub-query");
+      parserRequiredKeyword(OCommandExecutorSQLDelete.KEYWORD_DELETE);
+      parserRequiredKeyword(OCommandExecutorSQLDelete.KEYWORD_FROM);
 
-    if (OStringParser.startsWithIgnoreCase(subjectName, OCommandExecutorSQLAbstract.INDEX_PREFIX)) {
-      // INDEX
-      indexName = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_PREFIX.length());
+      String subjectName = parserRequiredWord(false, "Syntax error", " =><,\r\n");
+      if (subjectName == null)
+        throwSyntaxErrorException("Invalid subject name. Expected cluster, class, index or sub-query");
 
-      if (!parserIsEnded()) {
+      if (OStringParser.startsWithIgnoreCase(subjectName, OCommandExecutorSQLAbstract.INDEX_PREFIX)) {
+        // INDEX
+        indexName = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_PREFIX.length());
+
+        if (!parserIsEnded()) {
+          while (!parserIsEnded()) {
+            final String word = parserGetLastWord();
+
+            if (word.equals(KEYWORD_LOCK))
+              lockStrategy = parseLock();
+            else if (word.equals(KEYWORD_RETURN))
+              returning = parseReturn();
+            else if (word.equals(KEYWORD_UNSAFE))
+              unsafe = true;
+            else if (word.equalsIgnoreCase(KEYWORD_WHERE))
+              compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition()),
+                  getContext(), KEYWORD_WHERE);
+
+            parserNextWord(true);
+          }
+
+        } else
+          parserSetCurrentPosition(-1);
+
+      } else if (subjectName.startsWith("(")) {
+        subjectName = subjectName.trim();
+        query = database.command(new OSQLAsynchQuery<ODocument>(subjectName.substring(1, subjectName.length() - 1), this));
+
+      } else {
+        parserNextWord(true);
+
         while (!parserIsEnded()) {
           final String word = parserGetLastWord();
 
@@ -107,42 +138,19 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
             lockStrategy = parseLock();
           else if (word.equals(KEYWORD_RETURN))
             returning = parseReturn();
-          else if (word.equals(KEYWORD_UNSAFE))
-            unsafe = true;
-          else if (word.equalsIgnoreCase(KEYWORD_WHERE))
-            compiledFilter = OSQLEngine.getInstance().parseCondition(parserText.substring(parserGetCurrentPosition()),
-                getContext(), KEYWORD_WHERE);
+          else {
+            parserGoBack();
+            break;
+          }
 
           parserNextWord(true);
         }
 
-      } else
-        parserSetCurrentPosition(-1);
-
-    } else if (subjectName.startsWith("(")) {
-      subjectName = subjectName.trim();
-      query = database.command(new OSQLAsynchQuery<ODocument>(subjectName.substring(1, subjectName.length() - 1), this));
-
-    } else {
-      parserNextWord(true);
-
-      while (!parserIsEnded()) {
-        final String word = parserGetLastWord();
-
-        if (word.equals(KEYWORD_LOCK))
-          lockStrategy = parseLock();
-        else if (word.equals(KEYWORD_RETURN))
-          returning = parseReturn();
-        else {
-          parserGoBack();
-          break;
-        }
-
-        parserNextWord(true);
+        final String condition = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetCurrentPosition()) : "";
+        query = database.command(new OSQLAsynchQuery<ODocument>("select from " + subjectName + condition, this));
       }
-
-      final String condition = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetCurrentPosition()) : "";
-      query = database.command(new OSQLAsynchQuery<ODocument>("select from " + subjectName + condition, this));
+    } finally {
+      textRequest.setText(originalQuery);
     }
 
     return this;
