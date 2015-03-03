@@ -21,7 +21,6 @@ package com.orientechnologies.orient.object.db;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
@@ -111,7 +110,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   public <T> T newInstance(final Class<T> iType) {
-    return (T) newInstance(iType.getSimpleName(), null, OCommonConst.EMPTY_OBJECT_ARRAY);
+    return (T) newInstance(iType.getSimpleName(), null, new Object[0]);
   }
 
   public <T> T newInstance(final Class<T> iType, Object... iArgs) {
@@ -119,7 +118,7 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   public <RET> RET newInstance(String iClassName) {
-    return (RET) newInstance(iClassName, null, OCommonConst.EMPTY_OBJECT_ARRAY);
+    return (RET) newInstance(iClassName, null, new Object[0]);
   }
 
   @Override

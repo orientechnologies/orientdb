@@ -44,7 +44,7 @@ public class OQueryBlock extends OAbstractBlock {
 
     debug(iContext, "Executing: " + (iReadOnly ? "query" : "command") + ": " + command.replace("%", "%%") + "...");
 
-    final OCommandRequestText cmd = new OSQLSynchQuery<OIdentifiable>(command);
+    final OCommandRequestText cmd = new OSQLSynchQuery<OIdentifiable>(command.toString());
 
     cmd.getContext().setParent(iContext);
 

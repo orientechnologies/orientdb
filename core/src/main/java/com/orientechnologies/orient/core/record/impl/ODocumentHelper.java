@@ -686,7 +686,7 @@ public class ODocumentHelper {
       result = new Float(currentValue.toString());
     else if (function.startsWith("ASBOOLEAN(")) {
       if (currentValue instanceof String)
-        result = Boolean.valueOf((String) currentValue);
+        result = new Boolean((String) currentValue);
       else if (currentValue instanceof Number) {
         final int bValue = ((Number) currentValue).intValue();
         if (bValue == 0)

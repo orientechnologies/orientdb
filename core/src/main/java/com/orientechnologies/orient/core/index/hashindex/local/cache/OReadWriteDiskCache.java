@@ -960,7 +960,7 @@ public class OReadWriteDiskCache implements ODiskCache {
     }
   }
 
-  private static class PinnedPage implements Comparable<PinnedPage> {
+  private class PinnedPage implements Comparable<PinnedPage> {
     private final long fileId;
     private final long pageIndex;
 

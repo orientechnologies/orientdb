@@ -25,12 +25,12 @@ import javax.script.*;
 
 import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
@@ -182,7 +182,7 @@ public OFunction getFunctionSafe()
           for (Entry<Object, Object> arg : iArgs.entrySet())
             args[i++] = arg.getValue();
         } else {
-        	args = OCommonConst.EMPTY_OBJECT_ARRAY;
+        	args = new Object[0];
         }
         invocableEngine.invokeFunction(this.function.getName(), args);
       }

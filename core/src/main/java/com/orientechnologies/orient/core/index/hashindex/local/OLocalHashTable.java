@@ -21,7 +21,6 @@ package com.orientechnologies.orient.core.index.hashindex.local;
 
 import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.OIndexException;
@@ -635,7 +634,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         while (bucket.size() == 0 || comparator.compare(bucket.getKey(bucket.size() - 1), key) <= 0) {
           bucketPath = nextBucketToFind(bucketPath, bucket.getDepth());
           if (bucketPath == null)
-            return OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
+            return new OHashIndexBucket.Entry[0];
 
           diskCache.release(cacheEntry);
 
@@ -895,7 +894,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         while (bucket.size() == 0) {
           bucketPath = nextBucketToFind(bucketPath, bucket.getDepth());
           if (bucketPath == null)
-            return OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
+            return new OHashIndexBucket.Entry[0];
 
           diskCache.release(cacheEntry);
           final long nextPointer = directory.getNodePointer(bucketPath.nodeIndex, bucketPath.itemIndex + bucketPath.hashMapOffset);
@@ -1035,7 +1034,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         while (bucket.size() == 0 || comparator.compare(bucket.getKey(0), key) >= 0) {
           final BucketPath prevBucketPath = prevBucketToFind(bucketPath, bucket.getDepth());
           if (prevBucketPath == null)
-            return OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
+            return new OHashIndexBucket.Entry[0];
 
           diskCache.release(cacheEntry);
 
@@ -1095,7 +1094,7 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         while (bucket.size() == 0) {
           final BucketPath prevBucketPath = prevBucketToFind(bucketPath, bucket.getDepth());
           if (prevBucketPath == null)
-            return OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
+            return new OHashIndexBucket.Entry[0];
 
           diskCache.release(cacheEntry);
 

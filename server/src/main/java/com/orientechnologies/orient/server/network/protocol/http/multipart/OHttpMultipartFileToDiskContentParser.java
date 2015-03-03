@@ -59,8 +59,8 @@ public class OHttpMultipartFileToDiskContentParser implements OHttpMultipartCont
     if (!overwrite)
       // CHANGE THE FILE NAME TO AVOID OVERWRITING
       if (new File(fileName).exists()) {
-        final String fileExt = fileName.substring(fileName.lastIndexOf('.'));
-        final String fileNoExt = fileName.substring(0, fileName.lastIndexOf('.'));
+        final String fileExt = fileName.substring(fileName.lastIndexOf("."));
+        final String fileNoExt = fileName.substring(0, fileName.lastIndexOf("."));
 
         for (int i = 1;; ++i) {
           if (!new File(fileNoExt + "_" + i + fileExt).exists()) {
@@ -71,7 +71,7 @@ public class OHttpMultipartFileToDiskContentParser implements OHttpMultipartCont
       }
 
     // WRITE THE FILE
-    final OutputStream out = new BufferedOutputStream(new FileOutputStream(fileName));
+    final OutputStream out = new BufferedOutputStream(new FileOutputStream(fileName.toString()));
     try {
       int b;
       while ((b = in.read()) > -1) {

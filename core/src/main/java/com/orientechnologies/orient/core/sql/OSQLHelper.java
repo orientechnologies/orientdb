@@ -187,23 +187,6 @@ public class OSQLHelper {
       return parseValue(iCommand, iWord, iContext);
   }
 
-  public static Object parseDefaultValue(ODocument iRecord, final String iWord) {
-      final Object v = OSQLHelper.parseValue(iWord, null);
-
-      if (v != VALUE_NOT_PARSED) {
-          return v;
-      }
-
-      // TRY TO PARSE AS FUNCTION
-      final OSQLFunctionRuntime func = OSQLHelper.getFunction(null, iWord);
-      if (func != null) {
-          return func.execute(iRecord, iRecord, null, null);
-      }
-
-      // PARSE AS FIELD
-      return new OSQLFilterItemField(null, iWord);
-  }
-
   public static Object parseValue(final OBaseParser iCommand, final String iWord, final OCommandContext iContext) {
     if (iWord.equals("*"))
       return "*";

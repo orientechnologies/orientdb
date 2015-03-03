@@ -255,10 +255,10 @@ public class OServerNetworkListener extends Thread {
   }
 
   public String getListeningAddress(final boolean resolveMultiIfcWithLocal) {
-    String address = serverSocket.getInetAddress().getHostAddress();
+    String address = serverSocket.getInetAddress().getHostAddress().toString();
     if (resolveMultiIfcWithLocal && address.equals("0.0.0.0"))
       try {
-        address = InetAddress.getLocalHost().getHostAddress();
+        address = InetAddress.getLocalHost().getHostAddress().toString();
       } catch (UnknownHostException e) {
         try {
           address = OChannel.getLocalIpAddress(true);
