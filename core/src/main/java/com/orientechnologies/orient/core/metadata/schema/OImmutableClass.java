@@ -1,16 +1,5 @@
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -20,20 +9,23 @@ import com.orientechnologies.orient.core.metadata.schema.clusterselection.OClust
 import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
+import java.io.IOException;
+import java.util.*;
+
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientechnologies.com)
  * @since 10/21/14
  */
 public class OImmutableClass implements OClass {
-  private final boolean                   isAbstract;
-  private final boolean                   strictMode;
+  private final boolean isAbstract;
+  private final boolean strictMode;
 
   private final String                    superClassName;
   private final String                    name;
   private final String                    streamAbleName;
   private final Map<String, OProperty>    properties;
-  private Map<String, OProperty>          allPropertiesMap;
-  private Collection<OProperty>           allProperties;
+  private       Map<String, OProperty>    allPropertiesMap;
+  private       Collection<OProperty>     allProperties;
   private final Class<?>                  javaClass;
   private final OClusterSelectionStrategy clusterSelection;
   private final int                       defaultClusterId;
@@ -45,12 +37,12 @@ public class OImmutableClass implements OClass {
   private final String                    shortName;
   private final Map<String, String>       customFields;
 
-  private final OImmutableSchema          schema;
+  private final OImmutableSchema            schema;
   // do not do it volatile it is already SAFE TO USE IT in MT mode.
-  private OImmutableClass                 superClass;
+  private       OImmutableClass             superClass;
   // do not do it volatile it is already SAFE TO USE IT in MT mode.
-  private Collection<OImmutableClass>     baseClasses;
-  private boolean                         restricted;
+  private       Collection<OImmutableClass> subclasses;
+  private       boolean                     restricted;
 
   public OImmutableClass(OClass oClass, OImmutableSchema schema) {
     isAbstract = oClass.isAbstract();
@@ -70,7 +62,7 @@ public class OImmutableClass implements OClass {
     polymorphicClusterIds = oClass.getPolymorphicClusterIds();
 
     baseClassesNames = new ArrayList<String>();
-    for (OClass baseClass : oClass.getBaseClasses())
+    for (OClass baseClass : oClass.getSubclasses())
       baseClassesNames.add(baseClass.getName());
 
     overSize = oClass.getOverSize();
@@ -341,27 +333,36 @@ public class OImmutableClass implements OClass {
   }
 
   @Override
-  public Collection<OClass> getBaseClasses() {
+  public Collection<OClass> getSubclasses() {
     initBaseClasses();
 
     ArrayList<OClass> result = new ArrayList<OClass>();
-    for (OClass c : baseClasses)
+    for (OClass c : subclasses)
       result.add(c);
 
     return result;
   }
 
   @Override
-  public Collection<OClass> getAllBaseClasses() {
+  public Collection<OClass> getAllSubclasses() {
     initBaseClasses();
 
     final Set<OClass> set = new HashSet<OClass>();
-    set.addAll(getBaseClasses());
+    set.addAll(getSubclasses());
 
-    for (OImmutableClass c : baseClasses)
-      set.addAll(c.getAllBaseClasses());
+    for (OImmutableClass c : subclasses)
+      set.addAll(c.getAllSubclasses());
 
     return set;
+  }
+  @Override
+  public Collection<OClass> getBaseClasses() {
+    return getSubclasses();
+  }
+
+  @Override
+  public Collection<OClass> getAllBaseClasses() {
+    return getAllSubclasses();
   }
 
   @Override
@@ -662,12 +663,12 @@ public class OImmutableClass implements OClass {
   }
 
   private void initBaseClasses() {
-    if (baseClasses == null) {
+    if (subclasses == null) {
       final List<OImmutableClass> result = new ArrayList<OImmutableClass>(baseClassesNames.size());
       for (String clsName : baseClassesNames)
         result.add((OImmutableClass) schema.getClass(clsName));
 
-      baseClasses = result;
+      subclasses = result;
     }
   }
 

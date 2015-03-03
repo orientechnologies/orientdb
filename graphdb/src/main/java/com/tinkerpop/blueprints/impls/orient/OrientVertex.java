@@ -1178,7 +1178,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
             // GO DOWN THROUGH THE INHERITANCE TREE
             OrientEdgeType type = graph.getEdgeType(clsName);
             if (type != null) {
-              for (OClass subType : type.getAllBaseClasses()) {
+              for (OClass subType : type.getAllSubclasses()) {
                 clsName = subType.getName();
 
                 if (iFieldName.equals(CONNECTION_OUT_PREFIX + clsName))
@@ -1208,7 +1208,7 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
             // GO DOWN THROUGH THE INHERITANCE TREE
             OrientEdgeType type = graph.getEdgeType(clsName);
             if (type != null) {
-              for (OClass subType : type.getAllBaseClasses()) {
+              for (OClass subType : type.getAllSubclasses()) {
                 clsName = subType.getName();
 
                 if (iFieldName.equals(CONNECTION_IN_PREFIX + clsName))

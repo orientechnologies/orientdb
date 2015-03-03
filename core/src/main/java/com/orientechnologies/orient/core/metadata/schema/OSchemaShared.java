@@ -19,16 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.schema;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.orientechnologies.common.concur.lock.OReadersWriterSpinLock;
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
@@ -62,6 +52,8 @@ import com.orientechnologies.orient.core.storage.OStorageProxy;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.type.ODocumentWrapper;
 import com.orientechnologies.orient.core.type.ODocumentWrapperNoClass;
+
+import java.util.*;
 
 /**
  * Shared schema class. It's shared by all the database instances that point to the same storage.
@@ -481,7 +473,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       if (cls == null)
         throw new OSchemaException("Class " + className + " was not found in current database");
 
-      if (!cls.getBaseClasses().isEmpty())
+      if (!cls.getSubclasses().isEmpty())
         throw new OSchemaException("Class " + className
             + " cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
 
@@ -592,6 +584,8 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
             saveInternal();
           else
             reload();
+        else
+          snapshot = new OImmutableSchema(this);
 
         version++;
       }
@@ -1079,7 +1073,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       if (cls == null)
         throw new OSchemaException("Class " + className + " was not found in current database");
 
-      if (!cls.getBaseClasses().isEmpty())
+      if (!cls.getSubclasses().isEmpty())
         throw new OSchemaException("Class " + className
             + " cannot be dropped because it has sub classes. Remove the dependencies before trying to drop it again");
 

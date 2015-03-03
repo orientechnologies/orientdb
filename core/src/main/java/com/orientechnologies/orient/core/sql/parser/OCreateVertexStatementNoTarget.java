@@ -3,7 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 public
-class OCreateVertexStatementNoTarget extends OStatement {
+class OCreateVertexStatementNoTarget extends OCreateVertexStatement {
   public OCreateVertexStatementNoTarget(int id) {
     super(id);
   }

@@ -7,6 +7,10 @@ import java.util.List;
 public class OOrderBy extends SimpleNode {
   protected List<OOrderByItem> items;
 
+  public OOrderBy() {
+    super(-1);
+  }
+
   public OOrderBy(int id) {
     super(id);
   }

@@ -289,6 +289,11 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
   }
 
   @Override
+  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return upsertMode ? DISTRIBUTED_EXECUTION_MODE.LOCAL : DISTRIBUTED_EXECUTION_MODE.REPLICATE;
+  }
+
+  @Override
   public void end() {
   }
 

@@ -22,10 +22,11 @@ public interface OrientSqlVisitor
   public Object visit(OUpdateIncrementItem node, Object data);
   public Object visit(OUpdateRemoveItem node, Object data);
   public Object visit(OUpdatePutItem node, Object data);
-  public Object visit(OUpdateMergeItem node, Object data);
   public Object visit(OUpdateAddItem node, Object data);
   public Object visit(OInsertStatement node, Object data);
   public Object visit(OInsertBody node, Object data);
+  public Object visit(OCreateVertexStatementEmptyNoTarget node, Object data);
+  public Object visit(OCreateVertexStatementEmpty node, Object data);
   public Object visit(OCreateVertexStatement node, Object data);
   public Object visit(OCreateVertexStatementNoTarget node, Object data);
   public Object visit(OCreateEdgeStatement node, Object data);
@@ -34,14 +35,12 @@ public interface OrientSqlVisitor
   public Object visit(ONamedParameter node, Object data);
   public Object visit(OProjection node, Object data);
   public Object visit(OProjectionItem node, Object data);
-  public Object visit(OValueItem node, Object data);
   public Object visit(OArraySelector node, Object data);
   public Object visit(OArrayNumberSelector node, Object data);
   public Object visit(OArraySingleValuesSelector node, Object data);
   public Object visit(OArrayRangeSelector node, Object data);
   public Object visit(OAlias node, Object data);
   public Object visit(ORecordAttribute node, Object data);
-  public Object visit(OThisOperation node, Object data);
   public Object visit(OFunctionCall node, Object data);
   public Object visit(OMethodCall node, Object data);
   public Object visit(OLevelZeroIdentifier node, Object data);
@@ -108,4 +107,4 @@ public interface OrientSqlVisitor
   public Object visit(OArray node, Object data);
   public Object visit(OJson node, Object data);
 }
-/* JavaCC - OriginalChecksum=02532e4374bbd318f9463d31f747539e (do not edit this line) */
+/* JavaCC - OriginalChecksum=900313f618d8b7cf29fd126e7e1dd2da (do not edit this line) */

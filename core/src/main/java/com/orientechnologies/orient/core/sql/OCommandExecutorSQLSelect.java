@@ -25,6 +25,7 @@ import com.orientechnologies.common.concur.resource.OSharedResource;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfilerMBean;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.common.util.OPatternConst;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -60,7 +61,6 @@ import com.orientechnologies.orient.core.sql.functions.misc.OSQLFunctionCount;
 import com.orientechnologies.orient.core.sql.operator.*;
 import com.orientechnologies.orient.core.sql.query.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLQuery;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
 
 import java.util.*;
@@ -104,7 +104,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private String                      fetchPlan;
   private volatile boolean            executing;
   private boolean                     fullySortedByIndex   = false;
-  private OStorage.LOCKING_STRATEGY   lockingStrategy      = OStorage.LOCKING_STRATEGY.DEFAULT;
+  private LOCKING_STRATEGY   lockingStrategy      = LOCKING_STRATEGY.DEFAULT;
   private boolean                     parallel             = false;
   private Lock                        parallelLock         = new ReentrantLock();
   private Set<ORID>                   uniqueResult;
@@ -192,9 +192,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     String queryText = textRequest.getText();
     String originalQuery = queryText;
     try {
-//      System.out.println("NEW PARSER FROM: " + queryText);
+      // System.out.println("NEW PARSER FROM: " + queryText);
       queryText = preParse(queryText, iRequest);
-//      System.out.println("NEW PARSER   TO: " + queryText);
+      // System.out.println("NEW PARSER   TO: " + queryText);
       textRequest.setText(queryText);
 
       super.parse(iRequest);
@@ -228,9 +228,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
           if (!w.isEmpty()) {
             if (w.equals(KEYWORD_WHERE)) {
-              compiledFilter = OSQLEngine.getInstance()
-                  .parseCondition(parserText.substring(parserGetCurrentPosition(), endPosition),
-                      getContext(), KEYWORD_WHERE);
+              compiledFilter = OSQLEngine.getInstance().parseCondition(
+                  parserText.substring(parserGetCurrentPosition(), endPosition), getContext(), KEYWORD_WHERE);
               optimize();
               parserSetCurrentPosition(compiledFilter.parserIsEnded() ? endPosition : compiledFilter.parserGetCurrentPosition()
                   + parserGetCurrentPosition());
@@ -254,11 +253,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               final String lock = parseLock();
 
               if (lock.equalsIgnoreCase("DEFAULT")) {
-                lockingStrategy = OStorage.LOCKING_STRATEGY.DEFAULT;
+                lockingStrategy = LOCKING_STRATEGY.DEFAULT;
               } else if (lock.equals("NONE")) {
-                lockingStrategy = OStorage.LOCKING_STRATEGY.NONE;
+                lockingStrategy = LOCKING_STRATEGY.NONE;
               } else if (lock.equals("RECORD")) {
-                lockingStrategy = OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK;
+                lockingStrategy = LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK;
               }
             } else if (w.equals(KEYWORD_PARALLEL)) {
               parallel = parseParallel(w);
@@ -271,14 +270,12 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       if (limit == 0 || limit < -1) {
         throw new IllegalArgumentException("Limit must be > 0 or = -1 (no limit)");
       }
-    }finally{
+    } finally {
       textRequest.setText(originalQuery);
     }
 
     return this;
   }
-
-
 
   /**
    * Determine clusters that are used in select operation
@@ -457,10 +454,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       return false;
     }
 
-    final OStorage.LOCKING_STRATEGY contextLockingStrategy = context.getVariable("$locking") != null ? (OStorage.LOCKING_STRATEGY) context
+    final LOCKING_STRATEGY contextLockingStrategy = context.getVariable("$locking") != null ? (LOCKING_STRATEGY) context
         .getVariable("$locking") : null;
 
-    final OStorage.LOCKING_STRATEGY localLockingStrategy = contextLockingStrategy != null ? contextLockingStrategy
+    final LOCKING_STRATEGY localLockingStrategy = contextLockingStrategy != null ? contextLockingStrategy
         : lockingStrategy;
 
     ORecord record = null;
@@ -469,9 +466,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         record = (ORecord) id;
 
         // LOCK THE RECORD IF NEEDED
-        if (localLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
+        if (localLockingStrategy == LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK) {
           record.lock(true);
-        } else if (localLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
+        } else if (localLockingStrategy == LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
           record.lock(false);
         }
 
@@ -516,8 +513,8 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         if (localLockingStrategy != null)
         // CONTEXT LOCK: lock must be released (no matter if filtered or not)
         {
-          if (localLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
-              || localLockingStrategy == OStorage.LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
+          if (localLockingStrategy == LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
+              || localLockingStrategy == LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
             record.unlock();
           }
         }
@@ -763,7 +760,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   protected void searchInClasses() {
     final OClass cls = parsedTarget.getTargetClasses().keySet().iterator().next();
 
-    if (!searchForIndexes(cls)) {
+    if (!searchForSubclassIndexes(cls) && !searchForIndexes(cls)) {
       // CHECK FOR INVERSE ORDER
       final boolean browsingOrderAsc = !(orderedFields.size() == 1 && orderedFields.get(0).getKey().equalsIgnoreCase("@rid") && orderedFields
           .get(0).getValue().equalsIgnoreCase("DESC"));
@@ -960,7 +957,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       parserNextWord(true);
 
       final String word = OStringSerializerHelper.getStringContent(parserGetLastWord());
-      if (!word.matches(".*:-?\\d+")) {
+      if (!OPatternConst.PATTERN_FETCH_PLAN.matcher(word).matches()) {
         break;
       }
 
@@ -993,7 +990,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       final long startOptimization = System.currentTimeMillis();
       try {
 
-        final Map.Entry<String, Object> entry = projections.entrySet().iterator().next();
+        final Entry<String, Object> entry = projections.entrySet().iterator().next();
 
         if (entry.getValue() instanceof OSQLFunctionRuntime) {
           final OSQLFunctionRuntime rf = (OSQLFunctionRuntime) entry.getValue();
@@ -1436,6 +1433,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     } else {
       return optimizeSort(iSchemaClass);
     }
+  }
+
+  private boolean searchForSubclassIndexes(final OClass iSchemaClass) {
+    // TODO
+    return false;
   }
 
   @SuppressWarnings("rawtypes")
