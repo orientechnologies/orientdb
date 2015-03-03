@@ -26,7 +26,8 @@ import java.io.IOException;
  import java.util.Map;
  import java.util.Map.Entry;
 
- import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
+import com.orientechnologies.common.util.OPatternConst;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
  import com.orientechnologies.orient.core.id.ORecordId;
  import com.orientechnologies.orient.core.index.OIndex;
  import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -44,7 +45,7 @@ import java.io.IOException;
  public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstract {
    private static final String[] NAMES = { "POST|studio/*" };
 
-   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
+  public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
      ODatabaseDocumentTx db = null;
 
      try {
@@ -299,7 +300,7 @@ import java.io.IOException;
        iRequest.data.commandInfo = "Studio add index";
 
        try {
-         final String[] fieldNames = fields.get("fields").trim().split("\\s*,\\s*");
+         final String[] fieldNames = OPatternConst.PATTERN_COMMA_SEPARATED.split(fields.get("fields").trim());
          final String indexType = fields.get("type");
 
          cls.createIndex(fields.get("name"), indexType, fieldNames);

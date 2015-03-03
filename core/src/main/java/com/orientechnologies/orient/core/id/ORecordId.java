@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.id;
 
+import com.orientechnologies.common.util.OPatternConst;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -98,7 +99,7 @@ public class ORecordId implements ORID {
   }
 
   public static boolean isA(final String iString) {
-    return iString.matches("#(-?[0-9]+):(-?[0-9]+)");
+    return OPatternConst.PATTERN_RID.matcher(iString).matches();
   }
 
   public void reset() {
