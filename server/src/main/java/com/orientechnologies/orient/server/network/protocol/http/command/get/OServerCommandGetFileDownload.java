@@ -18,6 +18,7 @@ package com.orientechnologies.orient.server.network.protocol.http.command.get;
 import java.io.IOException;
 import java.util.Date;
 
+import com.orientechnologies.common.util.OPatternConst;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -122,8 +123,8 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
   }
 
   private String encodeResponseText(String iText) {
-    iText = new String(iText.replaceAll(" ", "%20"));
-    iText = new String(iText.replaceAll("&", "%26"));
+    iText = OPatternConst.PATTERN_SINGLE_SPACE.matcher(iText).replaceAll("%20");
+    iText = OPatternConst.PATTERN_AMP.matcher(iText).replaceAll("%26");
     return iText;
   }
 
