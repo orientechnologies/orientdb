@@ -978,11 +978,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
       if (storage instanceof OStorageProxy) {
         // FORMAT FLOAT LOCALE AGNOSTIC
-        final String cmd = String.format("alter class %s oversize %s", name, new Float(overSize).toString());
+        final String cmd = String.format("alter class %s oversize %s", name, Float.toString(overSize));
         database.command(new OCommandSQL(cmd)).execute();
       } else if (isDistributedCommand()) {
         // FORMAT FLOAT LOCALE AGNOSTIC
-        final String cmd = String.format("alter class %s oversize %s", name, new Float(overSize).toString());
+        final String cmd = String.format("alter class %s oversize %s", name, Float.toString(overSize));
         final OCommandSQL commandSQL = new OCommandSQL(cmd);
         commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
 

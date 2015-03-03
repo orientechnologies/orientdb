@@ -1728,7 +1728,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       lastHost = url;
       name = url;
     } else {
-      name = url.substring(url.lastIndexOf("/") + 1);
+      name = url.substring(url.lastIndexOf('/') + 1);
       for (String host : url.substring(0, dbPos).split(ADDRESS_SEPARATOR)) {
         lastHost = host;
         addHost(host);
@@ -1749,7 +1749,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT.getValueAsString());
         final DirContext ictx = new InitialDirContext(env);
         final String hostName = !primaryServer.contains(":") ? primaryServer : primaryServer.substring(0,
-            primaryServer.indexOf(":"));
+            primaryServer.indexOf(':'));
         final Attributes attrs = ictx.getAttributes(hostName, new String[] { "TXT" });
         final Attribute attr = attrs.get("TXT");
         if (attr != null) {
@@ -1786,7 +1786,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           + (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL) ? getDefaultSSLPort() : getDefaultPort());
 
     if (host.contains("/"))
-      host = host.substring(0, host.indexOf("/"));
+      host = host.substring(0, host.indexOf('/'));
 
     if (!serverURLs.contains(host))
       serverURLs.add(host);

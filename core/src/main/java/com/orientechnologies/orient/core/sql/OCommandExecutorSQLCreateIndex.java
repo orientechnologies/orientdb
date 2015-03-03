@@ -109,7 +109,7 @@ public class OCommandExecutorSQLCreateIndex extends OCommandExecutorSQLAbstract 
       if (oClass == null)
         throw new OCommandExecutionException("Class " + word + " not found");
 
-      pos = parserTextUpperCase.indexOf(")");
+      pos = parserTextUpperCase.indexOf(')');
       if (pos == -1) {
         throw new OCommandSQLParsingException("No right bracket found. Use " + getSyntax(), parserText, oldPos);
       }

@@ -273,7 +273,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       if (iDatabaseURL.startsWith(OEngineRemote.NAME + ":"))
         throw new IllegalArgumentException("Missing storage type for remote database");
 
-      int pos = iDatabaseURL.indexOf(":");
+      int pos = iDatabaseURL.indexOf(':');
       if (pos == -1)
         throw new IllegalArgumentException("Invalid URL");
       iStorageType = iDatabaseURL.substring(0, pos);
@@ -314,7 +314,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
       final Map<String, String> databases = serverAdmin.listDatabases();
       message("\nFound %d databases:\n", databases.size());
       for (Entry<String, String> database : databases.entrySet()) {
-        message("\n* %s (%s)", database.getKey(), database.getValue().substring(0, database.getValue().indexOf(":")));
+        message("\n* %s (%s)", database.getKey(), database.getValue().substring(0, database.getValue().indexOf(':')));
       }
     } else {
       message("\nNot connected to the Server instance. You've to connect to the Server using server's credentials (look at orientdb-*server-config.xml file)");
@@ -785,7 +785,7 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
   @ConsoleCommand(splitInWords = false, description = "Execute a script containing multiple commands separated by ; or new line")
   public void script(@ConsoleParameter(name = "text", description = "Commands to execute, one per line") String iText) {
     final String language;
-    final int languageEndPos = iText.indexOf(";");
+    final int languageEndPos = iText.indexOf(';');
     if (languageEndPos > -1) {
       // EXTRACT THE SCRIPT LANGUAGE
       language = iText.substring(0, languageEndPos);

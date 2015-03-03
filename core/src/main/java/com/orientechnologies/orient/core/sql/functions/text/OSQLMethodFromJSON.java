@@ -52,7 +52,7 @@ public class OSQLMethodFromJSON extends OAbstractSQLMethod {
         return doc;
       }
 
-      return new ODocument().fromJSON(iThis.toString().toString());
+      return new ODocument().fromJSON(iThis.toString());
     }
 
     return null;

@@ -106,7 +106,7 @@ public class OHttpUtils {
   public static final String STATUS_NOTIMPL_DESCRIPTION          = "Not Implemented";
 
   protected static Map<String, String> getParameters(final String iURL) {
-    int begin = iURL.indexOf("?");
+    int begin = iURL.indexOf('?');
     if (begin > -1) {
       Map<String, String> params = new HashMap<String, String>();
       String parameters = iURL.substring(begin + 1);
@@ -130,6 +130,6 @@ public class OHttpUtils {
       return iCurrentUrl;
 
     return iCurrentUrl.startsWith("/") ? iCurrentUrl.substring(iCurrentUrl.indexOf('/', 1)) : iCurrentUrl.substring(iCurrentUrl
-        .indexOf("/"));
+        .indexOf('/'));
   }
 }

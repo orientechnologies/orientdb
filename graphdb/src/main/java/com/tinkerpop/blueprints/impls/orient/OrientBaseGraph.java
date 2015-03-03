@@ -837,7 +837,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       final Collection<? extends OIndex<?>> indexes = clazz.getIndexes();
       for (OIndex<?> index : indexes) {
         final String oInName = index.getName();
-        final int point = oInName.indexOf(".");
+        final int point = oInName.indexOf('.');
         final String okey = oInName.substring(point + 1);
         if (okey.equals(key)) {
           indexName = oInName;
@@ -1585,7 +1585,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     final Collection<? extends OIndex<?>> indexes = getRawGraph().getMetadata().getIndexManager().getIndexes();
     for (OIndex<?> index : indexes) {
       String indexName = index.getName();
-      int point = indexName.indexOf(".");
+      int point = indexName.indexOf('.');
       if (point > 0) {
         String oClassName = indexName.substring(0, point);
         OClass oClass = schema.getClass(oClassName);

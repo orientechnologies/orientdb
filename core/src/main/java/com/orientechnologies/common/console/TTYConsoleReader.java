@@ -417,7 +417,7 @@ public class TTYConsoleReader implements OConsoleReader {
   }
 
   private int getHintedHistoryIndexUp(int historyNum) {
-    if (historyBuffer != null && !historyBuffer.equals("")) {
+    if (historyBuffer != null && !historyBuffer.isEmpty()) {
       for (int i = (historyNum - 1); i >= 0; i--) {
         if (history.get(i).startsWith(historyBuffer)) {
           return i;
@@ -429,7 +429,7 @@ public class TTYConsoleReader implements OConsoleReader {
   }
 
   private int getHintedHistoryIndexDown(int historyNum) throws IOException {
-    if (historyBuffer != null && !historyBuffer.equals("")) {
+    if (historyBuffer != null && !historyBuffer.isEmpty()) {
       for (int i = historyNum + 1; i < history.size(); i++) {
         if (history.get(i).startsWith(historyBuffer)) {
           return i;

@@ -314,7 +314,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
                   stringValue = stringValue.trim();
 
                   Object value;
-                  if (stringValue.toString().startsWith("$"))
+                  if (stringValue.startsWith("$"))
                     value = getContext().getVariable(stringValue);
                   else
                     value = stringValue;

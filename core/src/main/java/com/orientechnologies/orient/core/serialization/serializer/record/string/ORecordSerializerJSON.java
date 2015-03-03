@@ -496,7 +496,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         return fromString(iFieldValueAsString);
 
       case DATE:
-        if (iFieldValueAsString == null || iFieldValueAsString.equals(""))
+        if (iFieldValueAsString == null || iFieldValueAsString.isEmpty())
           return null;
         try {
           // TRY TO PARSE AS LONG
@@ -512,7 +512,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         }
 
       case DATETIME:
-        if (iFieldValueAsString == null || iFieldValueAsString.equals(""))
+        if (iFieldValueAsString == null || iFieldValueAsString.isEmpty())
           return null;
         try {
           // TRY TO PARSE AS LONG

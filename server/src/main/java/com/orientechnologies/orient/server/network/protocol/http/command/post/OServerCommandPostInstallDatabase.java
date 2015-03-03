@@ -96,7 +96,7 @@ public class OServerCommandPostInstallDatabase extends OServerCommandAuthenticat
   protected String getDbName(String url) {
     String name = null;
     if (url != null) {
-      int idx = url.lastIndexOf("/");
+      int idx = url.lastIndexOf('/');
       if (idx != -1) {
         name = url.substring(idx + 1).replace(".zip", "");
       }
