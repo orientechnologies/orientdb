@@ -90,6 +90,7 @@ import com.orientechnologies.orient.core.serialization.serializer.ONetworkThread
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.sql.OSQLHelper;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -274,9 +275,16 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       }
 
     } else {
-      if (p.isMandatory())
-        throw new OValidationException("The field '" + p.getFullName() + "' is mandatory, but not found on record: " + iRecord);
-      fieldValue = null;
+      String defValue = p.getDefaultValue();
+      if (!("".equals(defValue))) {
+        fieldValue = OSQLHelper.parseDefaultValue(iRecord, defValue);
+        iRecord.rawField(p.getName(), fieldValue, null);
+      } else  {
+        if (p.isMandatory()) {
+            throw new OValidationException("The field '" + p.getFullName() + "' is mandatory, but not found on record: " + iRecord);
+        }
+        fieldValue = null;
+      }
     }
 
     final OType type = p.getType();
