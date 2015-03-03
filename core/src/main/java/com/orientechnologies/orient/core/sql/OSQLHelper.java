@@ -65,6 +65,23 @@ public class OSQLHelper {
 
   private static ClassLoader orientClassLoader = OSQLFilterItemAbstract.class.getClassLoader();
 
+  public static Object parseDefaultValue(ODocument iRecord, final String iWord) {
+    final Object v = OSQLHelper.parseValue(iWord, null);
+
+    if (v != VALUE_NOT_PARSED) {
+      return v;
+    }
+
+    // TRY TO PARSE AS FUNCTION
+    final OSQLFunctionRuntime func = OSQLHelper.getFunction(null, iWord);
+    if (func != null) {
+      return func.execute(iRecord, iRecord, null, null);
+    }
+
+    // PARSE AS FIELD
+    return new OSQLFilterItemField(null, iWord);
+  }
+
   /**
    * Convert fields from text to real value. Supports: String, RID, Boolean, Float, Integer and NULL.
    * 

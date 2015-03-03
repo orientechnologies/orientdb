@@ -34,7 +34,7 @@ import java.util.Set;
 public interface OProperty extends Comparable<OProperty> {
 
   public static enum ATTRIBUTES {
-    LINKEDTYPE, LINKEDCLASS, MIN, MAX, MANDATORY, NAME, NOTNULL, REGEXP, TYPE, CUSTOM, READONLY, COLLATE
+    LINKEDTYPE, LINKEDCLASS, MIN, MAX, MANDATORY, NAME, NOTNULL, REGEXP, TYPE, CUSTOM, READONLY, COLLATE, DEFAULT,
   }
 
   public String getName();
@@ -126,6 +126,21 @@ public interface OProperty extends Comparable<OProperty> {
    * @return this property
    */
   public OProperty setMax(String max);
+
+  /**
+   * Default value for the property; can be function
+   *
+   * @return String, can be null
+   */
+   public String getDefaultValue();
+
+  /**
+   * @see OProperty#getDefaultValue()
+   * @param defaultValue
+   *          can be null
+   * @return this property
+   */
+  public OProperty setDefaultValue(String defaultValue);
 
   /**
    * Creates an index on this property. Indexes speed up queries but slow down insert and update operations. For massive inserts we
