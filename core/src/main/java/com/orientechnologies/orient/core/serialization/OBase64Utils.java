@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.serialization;
 
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OCommonConst;
 
 /**
  * <p>
@@ -1541,7 +1542,7 @@ public class OBase64Utils {
     } // end if
 
     if (len == 0) {
-      return new byte[0];
+      return OCommonConst.EMPTY_BYTE_ARRAY;
     } else if (len < 4) {
       throw new IllegalArgumentException("Base64-encoded string must have at least four characters, but length specified was "
           + len);

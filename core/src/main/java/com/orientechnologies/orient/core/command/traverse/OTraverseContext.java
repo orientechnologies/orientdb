@@ -127,7 +127,7 @@ public class OTraverseContext extends OBasicCommandContext {
     boolean isEmpty();
   }
 
-  private abstract class AbstractMemory implements Memory {
+  private abstract static class AbstractMemory implements Memory {
     protected Deque<OTraverseAbstractProcess<?>> deque = new ArrayDeque<OTraverseAbstractProcess<?>>();
 
     public AbstractMemory() {
@@ -164,7 +164,7 @@ public class OTraverseContext extends OBasicCommandContext {
     }
   }
 
-  private class StackMemory extends AbstractMemory {
+  private static class StackMemory extends AbstractMemory {
     public StackMemory() {
       super();
     }
@@ -179,7 +179,7 @@ public class OTraverseContext extends OBasicCommandContext {
     }
   }
 
-  private class QueueMemory extends AbstractMemory {
+  private static class QueueMemory extends AbstractMemory {
     public QueueMemory(Memory memory) {
       super(memory);
     }

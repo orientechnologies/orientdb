@@ -23,6 +23,7 @@ import com.orientechnologies.common.concur.lock.OModificationOperationProhibited
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThreadLocal.OStorageRemoteSession;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
@@ -108,7 +109,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private int                           connectionRetryDelay;
   @Deprecated
   private int                           networkPoolCursor    = 0;
-  private OCluster[]                    clusters             = new OCluster[0];
+  private OCluster[]                    clusters             = OCommonConst.EMPTY_CLUSTER_ARRAY;
   private int                           defaultClusterId;
   @Deprecated
   private int                           minPool;
@@ -736,7 +737,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           final int positionsCount = network.readInt();
 
           if (positionsCount == 0) {
-            return new OPhysicalPosition[0];
+            return OCommonConst.EMPTY_PHYSICAL_POSITIONS_ARRAY;
           } else {
             return readPhysicalPositions(network, positionsCount);
           }
@@ -772,7 +773,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           final int positionsCount = network.readInt();
 
           if (positionsCount == 0) {
-            return new OPhysicalPosition[0];
+            return OCommonConst.EMPTY_PHYSICAL_POSITIONS_ARRAY;
           } else {
             return readPhysicalPositions(network, positionsCount);
           }
@@ -809,7 +810,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           final int positionsCount = network.readInt();
 
           if (positionsCount == 0) {
-            return new OPhysicalPosition[0];
+            return OCommonConst.EMPTY_PHYSICAL_POSITIONS_ARRAY;
           } else {
             return readPhysicalPositions(network, positionsCount);
           }
@@ -847,7 +848,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           final int positionsCount = network.readInt();
 
           if (positionsCount == 0) {
-            return new OPhysicalPosition[0];
+            return OCommonConst.EMPTY_PHYSICAL_POSITIONS_ARRAY;
           } else {
             return readPhysicalPositions(network, positionsCount);
           }

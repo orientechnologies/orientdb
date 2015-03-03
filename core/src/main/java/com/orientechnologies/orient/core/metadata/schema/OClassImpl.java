@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.metadata.schema;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OArrays;
+import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -98,7 +99,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       abstractClass = true;
 
     if (abstractClass)
-      setPolymorphicClusterIds(new int[0]);
+      setPolymorphicClusterIds(OCommonConst.EMPTY_INT_ARRAY);
     else
       setPolymorphicClusterIds(iClusterIds);
 
@@ -679,7 +680,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     Arrays.sort(clusterIds);
 
     if (clusterIds.length == 1 && clusterIds[0] == -1)
-      setPolymorphicClusterIds(new int[0]);
+      setPolymorphicClusterIds(OCommonConst.EMPTY_INT_ARRAY);
     else
       setPolymorphicClusterIds(clusterIds);
 

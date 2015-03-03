@@ -30,7 +30,7 @@ import javax.xml.bind.annotation.XmlTransient;
 public class OServerConfiguration {
   public static final String               FILE_NAME            = "server-config.xml";
   // private static final String HEADER = "OrientDB Server configuration";
-
+  public static final OServerStorageConfiguration[] EMPTY_CONFIG_ARRAY = new OServerStorageConfiguration[0];
   @XmlTransient
   public String                            location;
 
@@ -76,7 +76,7 @@ public class OServerConfiguration {
   public OServerConfiguration(OServerConfigurationLoaderXml iFactory) {
     location = FILE_NAME;
     network = new OServerNetworkConfiguration(iFactory);
-    storages = new OServerStorageConfiguration[0];
+    storages = EMPTY_CONFIG_ARRAY;
     security = new OServerSecurityConfiguration(iFactory);
   }
 

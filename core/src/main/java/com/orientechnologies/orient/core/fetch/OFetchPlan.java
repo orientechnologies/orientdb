@@ -32,7 +32,7 @@ public class OFetchPlan {
   final Map<String, OFetchPlanLevel> fetchPlan           = new HashMap<String, OFetchPlanLevel>();
   final Map<String, OFetchPlanLevel> fetchPlanStartsWith = new HashMap<String, OFetchPlanLevel>();
 
-  private class OFetchPlanLevel {
+  private static class OFetchPlanLevel {
     public int depthLevelFrom;
     public int depthLevelTo;
     public int level;

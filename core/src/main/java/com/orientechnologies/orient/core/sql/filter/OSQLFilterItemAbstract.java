@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.sql.filter;
 
 import com.orientechnologies.common.parser.OBaseParser;
+import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -56,7 +57,7 @@ public abstract class OSQLFilterItemAbstract implements OSQLFilterItem {
 
   public OSQLFilterItemAbstract(final OBaseParser iQueryToParse, final String iText) {
     final List<String> parts = OStringSerializerHelper.smartSplit(iText, new char[] { '.', '[', ']' }, new boolean[] { false,
-        false, true }, new boolean[] { false, true, false }, 0, -1, false, true, false, false, new char[] {});
+        false, true }, new boolean[] { false, true, false }, 0, -1, false, true, false, false, OCommonConst.EMPTY_CHAR_ARRAY);
 
     setRoot(iQueryToParse, parts.get(0));
 
