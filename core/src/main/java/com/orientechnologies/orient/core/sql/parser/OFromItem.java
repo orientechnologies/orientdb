@@ -5,6 +5,8 @@ package com.orientechnologies.orient.core.sql.parser;
 import java.util.List;
 import java.util.Map;
 
+import com.orientechnologies.common.util.OPatternConst;
+
 public class OFromItem extends SimpleNode {
 
   protected List<ORid>          rids;
@@ -67,7 +69,7 @@ public class OFromItem extends SimpleNode {
         return "NULL";
       } else {
         if (inputFinalValue instanceof String) {
-          inputFinalValue = ((String) inputFinalValue).replaceAll(" ", "");// avoid SQL injection, temporary patch
+          inputFinalValue = OPatternConst.PATTERN_SINGLE_SPACE.matcher(((String) inputFinalValue)).replaceAll("");// avoid SQL injection, temporary patch
         }
         return inputFinalValue.toString();
       }

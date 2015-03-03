@@ -16,6 +16,7 @@
  */
 package com.orientechnologies.orient.core.sql.method.misc;
 
+import com.orientechnologies.common.util.OPatternConst;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -45,7 +46,7 @@ public class OSQLMethodNormalize extends OAbstractSQLMethod {
             if (iParams != null && iParams.length > 1) {
                 normalized = normalized.replaceAll(OStringSerializerHelper.getStringContent(iParams[0].toString()), "");
             } else {
-                normalized = normalized.replaceAll("\\p{InCombiningDiacriticalMarks}+", "");
+                normalized = OPatternConst.PATTERN_DIACRITICAL_MARKS.matcher(normalized).replaceAll("");
             }
             ioResult = normalized;
         }
