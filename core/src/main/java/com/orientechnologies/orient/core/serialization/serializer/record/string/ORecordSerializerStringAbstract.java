@@ -327,7 +327,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     final double dou = Double.parseDouble(iValue);
     if ((dou <= Float.MAX_VALUE || dou >= Float.MIN_VALUE) && new Double(new Double(dou).floatValue()).doubleValue() == dou) {
       return OType.FLOAT;
-    } else if (!Double.toString(dou).equals(iValue)) {
+    } else if (!new Double(dou).toString().equals(iValue)) {
       return OType.DECIMAL;
     }
 
@@ -508,7 +508,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     case BOOLEAN:
       if (iValue instanceof Boolean)
         return iValue;
-      return Boolean.valueOf(iValue.toString());
+      return new Boolean(iValue.toString());
 
     case FLOAT:
       if (iValue instanceof Float)

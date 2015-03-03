@@ -211,7 +211,7 @@ public class ORemoteConnectionManager implements OChannelListener {
 
       final String serverURL;
       final String databaseName;
-      int sepPos = iServerURL.indexOf('/');
+      int sepPos = iServerURL.indexOf("/");
       if (sepPos > -1) {
         // REMOVE DATABASE NAME IF ANY
         serverURL = iServerURL.substring(0, sepPos);
@@ -221,7 +221,7 @@ public class ORemoteConnectionManager implements OChannelListener {
         databaseName = null;
       }
 
-      sepPos = serverURL.indexOf(':');
+      sepPos = serverURL.indexOf(":");
       final String remoteHost = serverURL.substring(0, sepPos);
       final int remotePort = Integer.parseInt(serverURL.substring(sepPos + 1));
 

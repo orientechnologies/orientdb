@@ -332,7 +332,7 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
       Set<String> poolToClose = null;
 
       for (Entry<String, OReentrantResourcePool<String, DB>> e : pools.entrySet()) {
-        final int pos = e.getKey().indexOf('@');
+        final int pos = e.getKey().indexOf("@");
         final String dbName = e.getKey().substring(pos + 1);
         if (storageURL.equals(dbName)) {
           if (poolToClose == null)

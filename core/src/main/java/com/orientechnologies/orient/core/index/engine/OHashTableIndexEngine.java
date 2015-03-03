@@ -24,7 +24,6 @@ import java.util.Iterator;
 import java.util.Map;
 
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
-import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -233,7 +232,7 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
       {
         OHashIndexBucket.Entry<Object, V> firstEntry = hashTable.firstEntry();
         if (firstEntry == null)
-          entries = OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
+          entries = new OHashIndexBucket.Entry[0];
         else
           entries = hashTable.ceilingEntries(firstEntry.key);
 
@@ -316,7 +315,7 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
       {
         OHashIndexBucket.Entry<Object, V> lastEntry = hashTable.lastEntry();
         if (lastEntry == null)
-          entries = OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
+          entries = new OHashIndexBucket.Entry[0];
         else
           entries = hashTable.floorEntries(lastEntry.key);
 
@@ -396,7 +395,7 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
       {
         OHashIndexBucket.Entry<Object, V> firstEntry = hashTable.firstEntry();
         if (firstEntry == null)
-          entries = OCommonConst.EMPTY_BUCKET_ENTRY_ARRAY;
+          entries = new OHashIndexBucket.Entry[0];
         else
           entries = hashTable.ceilingEntries(firstEntry.key);
       }

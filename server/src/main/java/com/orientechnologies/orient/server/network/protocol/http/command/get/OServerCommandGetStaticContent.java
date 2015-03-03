@@ -175,7 +175,7 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
    protected OStaticContent getVirtualFolderContent(final OHttpRequest iRequest) {
      if (iRequest.url != null) {
        final int beginPos = iRequest.url.startsWith("/") ? 1 : 0;
-       final int endPos = iRequest.url.indexOf('/', beginPos);
+       final int endPos = iRequest.url.indexOf("/", beginPos);
        final String firstFolderName = endPos > -1 ? iRequest.url.substring(beginPos, endPos) : iRequest.url.substring(beginPos);
        final OCallable<Object, String> virtualFolderCallback = virtualFolders.get(firstFolderName);
        if (virtualFolderCallback != null) {

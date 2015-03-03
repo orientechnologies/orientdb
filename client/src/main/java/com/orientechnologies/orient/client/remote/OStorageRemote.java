@@ -23,7 +23,6 @@ import com.orientechnologies.common.concur.lock.OModificationOperationProhibited
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.client.remote.OStorageRemoteThreadLocal.OStorageRemoteSession;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
@@ -109,7 +108,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   private int                           connectionRetryDelay;
   @Deprecated
   private int                           networkPoolCursor    = 0;
-  private OCluster[]                    clusters             = OCommonConst.EMPTY_CLUSTER_ARRAY;
+  private OCluster[]                    clusters             = new OCluster[0];
   private int                           defaultClusterId;
   @Deprecated
   private int                           minPool;
@@ -737,7 +736,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           final int positionsCount = network.readInt();
 
           if (positionsCount == 0) {
-            return OCommonConst.EMPTY_PHYSICAL_POSITIONS_ARRAY;
+            return new OPhysicalPosition[0];
           } else {
             return readPhysicalPositions(network, positionsCount);
           }
@@ -773,7 +772,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           final int positionsCount = network.readInt();
 
           if (positionsCount == 0) {
-            return OCommonConst.EMPTY_PHYSICAL_POSITIONS_ARRAY;
+            return new OPhysicalPosition[0];
           } else {
             return readPhysicalPositions(network, positionsCount);
           }
@@ -810,7 +809,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           final int positionsCount = network.readInt();
 
           if (positionsCount == 0) {
-            return OCommonConst.EMPTY_PHYSICAL_POSITIONS_ARRAY;
+            return new OPhysicalPosition[0];
           } else {
             return readPhysicalPositions(network, positionsCount);
           }
@@ -848,7 +847,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           final int positionsCount = network.readInt();
 
           if (positionsCount == 0) {
-            return OCommonConst.EMPTY_PHYSICAL_POSITIONS_ARRAY;
+            return new OPhysicalPosition[0];
           } else {
             return readPhysicalPositions(network, positionsCount);
           }
@@ -1729,7 +1728,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       lastHost = url;
       name = url;
     } else {
-      name = url.substring(url.lastIndexOf('/') + 1);
+      name = url.substring(url.lastIndexOf("/") + 1);
       for (String host : url.substring(0, dbPos).split(ADDRESS_SEPARATOR)) {
         lastHost = host;
         addHost(host);
@@ -1750,7 +1749,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT.getValueAsString());
         final DirContext ictx = new InitialDirContext(env);
         final String hostName = !primaryServer.contains(":") ? primaryServer : primaryServer.substring(0,
-            primaryServer.indexOf(':'));
+            primaryServer.indexOf(":"));
         final Attributes attrs = ictx.getAttributes(hostName, new String[] { "TXT" });
         final Attribute attr = attrs.get("TXT");
         if (attr != null) {
@@ -1787,7 +1786,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           + (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL) ? getDefaultSSLPort() : getDefaultPort());
 
     if (host.contains("/"))
-      host = host.substring(0, host.indexOf('/'));
+      host = host.substring(0, host.indexOf("/"));
 
     if (!serverURLs.contains(host))
       serverURLs.add(host);

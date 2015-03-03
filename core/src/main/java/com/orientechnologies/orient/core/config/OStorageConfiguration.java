@@ -397,7 +397,7 @@ public class OStorageConfiguration implements OSerializableStream {
         if (version > 24)
           write(buffer, paginatedClusterConfiguration.conflictStrategy);
         if (version > 25)
-          write(buffer, paginatedClusterConfiguration.getStatus().name());
+          write(buffer, paginatedClusterConfiguration.getStatus().name().toString());
       }
     }
     if (version <= 25) {

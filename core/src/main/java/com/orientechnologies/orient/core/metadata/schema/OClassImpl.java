@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.metadata.schema;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.util.OArrays;
-import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
 import com.orientechnologies.orient.core.db.ODatabase;
@@ -99,7 +98,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       abstractClass = true;
 
     if (abstractClass)
-      setPolymorphicClusterIds(OCommonConst.EMPTY_INT_ARRAY);
+      setPolymorphicClusterIds(new int[0]);
     else
       setPolymorphicClusterIds(iClusterIds);
 
@@ -680,7 +679,7 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     Arrays.sort(clusterIds);
 
     if (clusterIds.length == 1 && clusterIds[0] == -1)
-      setPolymorphicClusterIds(OCommonConst.EMPTY_INT_ARRAY);
+      setPolymorphicClusterIds(new int[0]);
     else
       setPolymorphicClusterIds(clusterIds);
 
@@ -979,11 +978,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
       if (storage instanceof OStorageProxy) {
         // FORMAT FLOAT LOCALE AGNOSTIC
-        final String cmd = String.format("alter class %s oversize %s", name, Float.toString(overSize));
+        final String cmd = String.format("alter class %s oversize %s", name, new Float(overSize).toString());
         database.command(new OCommandSQL(cmd)).execute();
       } else if (isDistributedCommand()) {
         // FORMAT FLOAT LOCALE AGNOSTIC
-        final String cmd = String.format("alter class %s oversize %s", name, Float.toString(overSize));
+        final String cmd = String.format("alter class %s oversize %s", name, new Float(overSize).toString());
         final OCommandSQL commandSQL = new OCommandSQL(cmd);
         commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
 

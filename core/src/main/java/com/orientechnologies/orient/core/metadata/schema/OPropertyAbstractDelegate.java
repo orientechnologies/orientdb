@@ -143,17 +143,6 @@ public class OPropertyAbstractDelegate implements OProperty {
   }
 
   @Override
-  public String getDefaultValue() {
-    return delegate.getDefaultValue();
-  }
-
-  @Override
-  public OProperty setDefaultValue(final String defaultValue) {
-    delegate.setDefaultValue(defaultValue);
-    return this;
-  }
-
-  @Override
   public OIndex<?> createIndex(final OClass.INDEX_TYPE iType) {
     return delegate.createIndex(iType);
   }

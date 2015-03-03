@@ -38,7 +38,7 @@ public class OServerCommandForward extends OServerCommandAbstract {
 
   public OServerCommandForward(final OServerCommandConfiguration iConfiguration) {
     pattern = new String[] { iConfiguration.pattern };
-    prefix = iConfiguration.pattern.substring(iConfiguration.pattern.indexOf('|') + 1);
+    prefix = iConfiguration.pattern.substring(iConfiguration.pattern.indexOf("|") + 1);
 
     // LOAD HTTP CACHE CONFIGURATION
     for (OServerEntryConfiguration par : iConfiguration.parameters) {

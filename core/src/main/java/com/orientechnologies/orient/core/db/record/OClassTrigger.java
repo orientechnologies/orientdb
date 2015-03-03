@@ -27,7 +27,6 @@ import javax.script.ScriptException;
 import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
@@ -298,7 +297,7 @@ public class OClassTrigger extends ODocumentHookAbstract {
         }
         if (scriptEngine instanceof Invocable) {
           final Invocable invocableEngine = (Invocable) scriptEngine;
-          Object[] EMPTY = OCommonConst.EMPTY_OBJECT_ARRAY;
+          Object[] EMPTY = new Object[0];
           result = (String) invocableEngine.invokeFunction(func.getName(), EMPTY);
         }
       } catch (ScriptException e) {

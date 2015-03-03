@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.sql.query;
 import java.util.*;
 import java.util.Map.Entry;
 
-import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -156,7 +155,7 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
   protected byte[] serializeQueryParameters(final Map<Object, Object> params) {
     if (params == null || params.size() == 0)
       // NO PARAMETER, JUST SEND 0
-      return OCommonConst.EMPTY_BYTE_ARRAY;
+      return new byte[0];
 
     final ODocument param = new ODocument();
     param.field("params", convertToRIDsIfPossible(params));

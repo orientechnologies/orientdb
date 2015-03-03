@@ -115,7 +115,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   }
 
-  private static final class IndexUsageLog {
+  private final class IndexUsageLog {
     OIndex<?>        index;
     List<Object>     keyParams;
     OIndexDefinition indexDefinition;

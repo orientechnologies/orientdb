@@ -79,7 +79,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   private boolean             notNull = false;
   private String              min;
   private String              max;
-  private String              defaultValue;
   private String              regexp;
   private boolean             readonly;
   private Map<String, String> customFields;
@@ -643,45 +642,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     return this;
   }
 
-  public String getDefaultValue() {
-      acquireSchemaReadLock();
-      try {
-          return defaultValue;
-      } finally {
-          releaseSchemaReadLock();
-      }
-  }
-
-  public OPropertyImpl setDefaultValue(final String defaultValue) {
-      getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-      acquireSchemaWriteLock();
-      try {
-          final ODatabaseDocumentInternal database = getDatabase();
-          final OStorage storage = database.getStorage();
-
-          if (storage instanceof OStorageProxy) {
-              final String cmd = String.format("alter property %s default %s", getFullName(), defaultValue);
-              database.command(new OCommandSQL(cmd)).execute();
-          } else if (isDistributedCommand()) {
-              final String cmd = String.format("alter property %s default %s", getFullName(), defaultValue);
-              final OCommandSQL commandSQL = new OCommandSQL(cmd);
-
-              commandSQL.addExcludedNode(((OAutoshardedStorage) storage).getNodeId());
-
-              database.command(commandSQL).execute();
-
-              setDefaultValueInternal(defaultValue);
-          } else {
-              setDefaultValueInternal(defaultValue);
-          }
-      } finally {
-          releaseSchemaWriteLock();
-      }
-
-      return this;
-  }
-
   public String getRegexp() {
     acquireSchemaReadLock();
     try {
@@ -869,9 +829,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       break;
     case MAX:
       setMax(stringValue);
-      break;
-    case DEFAULT:
-      setDefaultValue(stringValue);
       break;
     case NAME:
       setName(stringValue);
@@ -1179,20 +1136,6 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
     } finally {
       releaseSchemaWriteLock();
     }
-  }
-
-  private void setDefaultValueInternal(final String defaultValue) {
-      getDatabase().checkSecurity(ORule.ResourceGeneric.SCHEMA, ORole.PERMISSION_UPDATE);
-
-      acquireSchemaWriteLock();
-      try {
-          checkEmbedded();
-
-          //checkForDateFormat(max);
-          this.defaultValue = defaultValue;
-      } finally {
-          releaseSchemaWriteLock();
-      }
   }
 
   private void setMaxInternal(final String max) {

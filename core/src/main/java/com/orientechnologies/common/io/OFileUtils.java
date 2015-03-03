@@ -121,7 +121,7 @@ public class OFileUtils {
 
   public static String getDirectory(String iPath) {
     iPath = getPath(iPath);
-    int pos = iPath.lastIndexOf('/');
+    int pos = iPath.lastIndexOf("/");
     if (pos == -1)
       return "";
 

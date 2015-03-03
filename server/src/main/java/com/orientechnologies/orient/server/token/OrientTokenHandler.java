@@ -12,7 +12,6 @@ import java.util.UUID;
 import javax.crypto.Mac;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -268,7 +267,7 @@ public class OrientTokenHandler extends OServerPluginAbstract implements OTokenH
       final long currTime = System.currentTimeMillis();
       token.setExpiry(currTime + expiryMinutes);
     }
-    return OCommonConst.EMPTY_BYTE_ARRAY;
+    return new byte[] {};
   }
 
   public long getSessionInMills() {

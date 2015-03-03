@@ -20,7 +20,6 @@ import java.io.StringWriter;
 import java.util.HashMap;
 
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
@@ -105,6 +104,6 @@ public class OServerCommandPostImportDatabase extends OHttpMultipartRequestComma
   @Override
   public void onMessage(String iText) {
     final String msg = iText.startsWith("\n") ? iText.substring(1) : iText;
-    OLogManager.instance().info(this, msg, OCommonConst.EMPTY_OBJECT_ARRAY);
+    OLogManager.instance().info(this, msg, new Object[0]);
   }
 }

@@ -90,7 +90,7 @@ public abstract class OStringSerializerHelper {
     case BOOLEAN:
       if (iValue instanceof Boolean)
         return iValue;
-      return Boolean.valueOf(getStringContent(iValue));
+      return new Boolean(getStringContent(iValue));
 
     case DECIMAL:
       if (iValue instanceof BigDecimal)

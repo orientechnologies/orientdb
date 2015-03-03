@@ -46,7 +46,6 @@ import java.util.concurrent.Callable;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OCacheLevelOneLocatorImpl;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
@@ -1745,7 +1744,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         try {
           // SAVE IT
           boolean updateContent = ORecordInternal.isContentChanged(record);
-          byte[] content = (stream == null) ? OCommonConst.EMPTY_BYTE_ARRAY : stream;
+          byte[] content = (stream == null) ? new byte[0] : stream;
           byte recordType = ORecordInternal.getRecordType(record);
           final int modeIndex = mode.ordinal();
 

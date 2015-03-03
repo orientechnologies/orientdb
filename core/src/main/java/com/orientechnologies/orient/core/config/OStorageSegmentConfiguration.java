@@ -21,8 +21,6 @@ package com.orientechnologies.orient.core.config;
 
 import java.io.Serializable;
 
-import com.orientechnologies.common.util.OCommonConst;
-
 @SuppressWarnings("serial")
 public class OStorageSegmentConfiguration implements Serializable {
   public transient OStorageConfiguration root;
@@ -43,14 +41,14 @@ public class OStorageSegmentConfiguration implements Serializable {
   }
 
   public OStorageSegmentConfiguration() {
-    infoFiles = OCommonConst.EMPTY_FILE_CONFIGURATIONS_ARRAY;
+    infoFiles = new OStorageFileConfiguration[0];
   }
 
   public OStorageSegmentConfiguration(final OStorageConfiguration iRoot, final String iSegmentName, final int iId) {
     root = iRoot;
     name = iSegmentName;
     id = iId;
-    infoFiles = OCommonConst.EMPTY_FILE_CONFIGURATIONS_ARRAY;
+    infoFiles = new OStorageFileConfiguration[0];
   }
 
   public OStorageSegmentConfiguration(final OStorageConfiguration iRoot, final String iSegmentName, final int iId,
@@ -59,7 +57,7 @@ public class OStorageSegmentConfiguration implements Serializable {
     name = iSegmentName;
     id = iId;
     location = iDirectory;
-    infoFiles = OCommonConst.EMPTY_FILE_CONFIGURATIONS_ARRAY;
+    infoFiles = new OStorageFileConfiguration[0];
   }
 
   public void setRoot(OStorageConfiguration iRoot) {
