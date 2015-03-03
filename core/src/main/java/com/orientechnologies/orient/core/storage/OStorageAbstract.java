@@ -52,7 +52,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
 
   public OStorageAbstract(final String name, final String iURL, final String mode, final int timeout) {
     if (OStringSerializerHelper.contains(name, '/'))
-      this.name = name.substring(name.lastIndexOf("/") + 1);
+      this.name = name.substring(name.lastIndexOf('/') + 1);
     else
       this.name = name;
 

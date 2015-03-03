@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.parser.OStringParser;
+import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
@@ -81,7 +82,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     void visitItem(Object item);
   }
 
-  public class FormatSettings {
+  public static class FormatSettings {
     public boolean includeVer;
     public boolean includeType;
     public boolean includeId;
@@ -242,7 +243,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           } else if (fieldName.equals("value") && !(iRecord instanceof ODocument)) {
             // RECORD VALUE(S)
             if ("null".equals(fieldValue))
-              iRecord.fromStream(new byte[] {});
+              iRecord.fromStream(OCommonConst.EMPTY_BYTE_ARRAY);
             else if (iRecord instanceof ORecordBytes) {
               // BYTES
               iRecord.fromStream(OBase64Utils.decode(fieldValueAsString));
@@ -496,7 +497,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         return fromString(iFieldValueAsString);
 
       case DATE:
-        if (iFieldValueAsString == null || iFieldValueAsString.equals(""))
+        if (iFieldValueAsString == null || iFieldValueAsString.isEmpty())
           return null;
         try {
           // TRY TO PARSE AS LONG
@@ -512,7 +513,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         }
 
       case DATETIME:
-        if (iFieldValueAsString == null || iFieldValueAsString.equals(""))
+        if (iFieldValueAsString == null || iFieldValueAsString.isEmpty())
           return null;
         try {
           // TRY TO PARSE AS LONG

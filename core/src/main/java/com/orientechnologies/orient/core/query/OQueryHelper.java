@@ -35,8 +35,7 @@ public class OQueryHelper {
 			// NO WILDCARDS: DO EQUALS
 			return currentValue.equals(iValue);
 
-		final String value = currentValue.toString();
-		if (value == null || value.length() == 0)
+		if (currentValue.length() == 0)
 			// NOTHING TO MATCH
 			return false;
 
@@ -48,18 +47,18 @@ public class OQueryHelper {
 		} else if (iValue.startsWith(WILDCARD_ANY)) {
 			// %XXXXX
 			iValue = iValue.substring(WILDCARD_ANY.length());
-			return value.endsWith(iValue);
+			return currentValue.endsWith(iValue);
 
 		} else if (iValue.endsWith(WILDCARD_ANY)) {
 			// XXXXX%
 			iValue = iValue.substring(0, iValue.length() - WILDCARD_ANY.length());
-			return value.startsWith(iValue);
+			return currentValue.startsWith(iValue);
 
 		} else {
 			final int pos = iValue.indexOf(WILDCARD_ANY);
 			if (pos > -1) {
 				// XX%XXX
-				return value.startsWith(iValue.substring(0, pos)) && value.endsWith(iValue.substring(pos + 1));
+				return currentValue.startsWith(iValue.substring(0, pos)) && currentValue.endsWith(iValue.substring(pos + 1));
 			}
 		}
 

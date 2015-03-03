@@ -74,7 +74,7 @@ public class OHttpRequest {
   }
 
   public String getUser() {
-    return authorization != null ? authorization.substring(0, authorization.indexOf(":")) : null;
+    return authorization != null ? authorization.substring(0, authorization.indexOf(':')) : null;
   }
 
   public InputStream getInputStream() {

@@ -125,7 +125,7 @@ public class OClusterPositionMapBucket extends ODurablePage {
     return getByteValue(position) == FILLED;
   }
 
-  public class PositionEntry {
+  public static class PositionEntry {
     private final long pageIndex;
     private final int  recordPosition;
 

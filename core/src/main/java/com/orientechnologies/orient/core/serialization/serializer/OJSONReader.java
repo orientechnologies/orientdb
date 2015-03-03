@@ -93,7 +93,7 @@ public class OJSONReader {
       return null;
 
     if (!iInclude && value.startsWith("\"")) {
-      return value.substring(1, value.lastIndexOf("\""));
+      return value.substring(1, value.lastIndexOf('\"'));
     }
 
     return value;

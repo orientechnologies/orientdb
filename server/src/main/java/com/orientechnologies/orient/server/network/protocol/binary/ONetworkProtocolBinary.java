@@ -40,6 +40,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.ONullSerializer;
+import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
 import com.orientechnologies.orient.client.remote.OEngineRemote;
 import com.orientechnologies.orient.core.OConstants;
@@ -664,7 +665,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
             byte[] token = tokenHandler.getSignedBinaryToken(connection.database, connection.database.getUser(), connection.data);
             channel.writeBytes(token);
           } else
-            channel.writeBytes(new byte[] {});
+            channel.writeBytes(OCommonConst.EMPTY_BYTE_ARRAY);
         }
 
         sendDatabaseInformation();
@@ -701,7 +702,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
         if (Boolean.TRUE.equals(tokenBased)) {
           token = tokenHandler.getSignedBinaryToken(null, null, connection.data);
         } else
-          token = new byte[] {};
+          token = OCommonConst.EMPTY_BYTE_ARRAY;
         channel.writeBytes(token);
       }
 
@@ -1752,7 +1753,7 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
       OLogManager.instance().warn(this, "Can't serialize an exception object", e);
 
       // Write empty stream for binary compatibility
-      channel.writeBytes(new byte[0]);
+      channel.writeBytes(OCommonConst.EMPTY_BYTE_ARRAY);
     }
   }
 

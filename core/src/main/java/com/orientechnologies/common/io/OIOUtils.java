@@ -73,19 +73,19 @@ public class OIOUtils {
       if (pos > -1)
         return Long.parseLong(timeAsNumber);
 
-      pos = time.indexOf("S");
+      pos = time.indexOf('S');
       if (pos > -1)
         return Long.parseLong(timeAsNumber) * SECOND;
 
-      pos = time.indexOf("M");
+      pos = time.indexOf('M');
       if (pos > -1)
         return Long.parseLong(timeAsNumber) * MINUTE;
 
-      pos = time.indexOf("H");
+      pos = time.indexOf('H');
       if (pos > -1)
         return Long.parseLong(timeAsNumber) * HOUR;
 
-      pos = time.indexOf("D");
+      pos = time.indexOf('D');
       if (pos > -1)
         return Long.parseLong(timeAsNumber) * DAY;
 

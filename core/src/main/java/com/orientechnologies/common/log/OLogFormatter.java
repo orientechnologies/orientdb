@@ -98,6 +98,6 @@ public class OLogFormatter extends Formatter {
   }
 
   private String getSourceClassSimpleName(final String iSourceClassName) {
-    return iSourceClassName.substring(iSourceClassName.lastIndexOf(".") + 1);
+    return iSourceClassName.substring(iSourceClassName.lastIndexOf('.') + 1);
   }
 }

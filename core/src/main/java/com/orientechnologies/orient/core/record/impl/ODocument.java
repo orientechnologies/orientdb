@@ -43,6 +43,7 @@ import java.util.Set;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -89,6 +90,7 @@ import com.orientechnologies.orient.core.serialization.serializer.ONetworkThread
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.version.ORecordVersion;
+import com.orientechnologies.orient.core.sql.OSQLHelper;
 
 /**
  * Document representation to handle values dynamically. Can be used in schema-less, schema-mixed and schema-full modes. Fields can
@@ -273,9 +275,16 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       }
 
     } else {
-      if (p.isMandatory())
-        throw new OValidationException("The field '" + p.getFullName() + "' is mandatory, but not found on record: " + iRecord);
-      fieldValue = null;
+      String defValue = p.getDefaultValue();
+      if (!("".equals(defValue))) {
+        fieldValue = OSQLHelper.parseDefaultValue(iRecord, defValue);
+        iRecord.rawField(p.getName(), fieldValue, null);
+      } else  {
+        if (p.isMandatory()) {
+            throw new OValidationException("The field '" + p.getFullName() + "' is mandatory, but not found on record: " + iRecord);
+        }
+        fieldValue = null;
+      }
     }
 
     final OType type = p.getType();
@@ -902,7 +911,7 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    * @return The Record instance itself giving a "fluent interface". Useful to call multiple methods in chain.
    */
   public ODocument field(final String iFieldName, Object iPropertyValue) {
-    return field(iFieldName, iPropertyValue, new OType[0]);
+    return field(iFieldName, iPropertyValue, OCommonConst.EMPTY_TYPES_ARRAY);
   }
 
   /**

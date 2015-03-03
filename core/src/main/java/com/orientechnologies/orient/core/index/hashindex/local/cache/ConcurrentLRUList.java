@@ -301,7 +301,7 @@ public class ConcurrentLRUList implements LRUList {
     return new OCacheEntryIterator(tailReference.get());
   }
 
-  private class OCacheEntryIterator implements Iterator<OCacheEntry> {
+  private static class OCacheEntryIterator implements Iterator<OCacheEntry> {
 
     private ListNode current;
 
