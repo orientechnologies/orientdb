@@ -1,23 +1,30 @@
 /*
-  *
-  *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
-  *  *
-  *  *  Licensed under the Apache License, Version 2.0 (the "License");
-  *  *  you may not use this file except in compliance with the License.
-  *  *  You may obtain a copy of the License at
-  *  *
-  *  *       http://www.apache.org/licenses/LICENSE-2.0
-  *  *
-  *  *  Unless required by applicable law or agreed to in writing, software
-  *  *  distributed under the License is distributed on an "AS IS" BASIS,
-  *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  *  *  See the License for the specific language governing permissions and
-  *  *  limitations under the License.
-  *  *
-  *  * For more information: http://www.orientechnologies.com
-  *
-  */
+ *
+ *  *  Copyright 2014 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.core.sql.filter;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 import com.orientechnologies.common.parser.OBaseParser;
 import com.orientechnologies.orient.core.command.OCommandContext;
@@ -34,14 +41,6 @@ import com.orientechnologies.orient.core.sql.OSQLHelper;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperator;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorNot;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 /**
  * Parses text in SQL format and build a tree of conditions.
@@ -73,7 +72,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
   }
 
   protected String upperCase(String text) {
-    //TODO remove and refactor (see same method in OCommandExecutorAbstract)
+    // TODO remove and refactor (see same method in OCommandExecutorAbstract)
     StringBuilder result = new StringBuilder(text.length());
     for (char c : text.toCharArray()) {
       String upper = ("" + c).toUpperCase(Locale.ENGLISH);
@@ -289,7 +288,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
           braces--;
           parserMoveCurrentPosition(+1);
         }
-        if(subCondition instanceof OSQLFilterCondition){
+        if (subCondition instanceof OSQLFilterCondition) {
           ((OSQLFilterCondition) subCondition).inBraces = true;
         }
         result[i] = subCondition;
@@ -375,17 +374,12 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
     if (parameterItems == null || iArgs == null || iArgs.size() == 0)
       return;
 
-    for (Entry<Object, Object> entry : iArgs.entrySet()) {
-      if (entry.getKey() instanceof Integer)
-        parameterItems.get(((Integer) entry.getKey())).setValue(entry.setValue(entry.getValue()));
-      else {
-        String paramName = entry.getKey().toString();
-        for (OSQLFilterItemParameter value : parameterItems) {
-          if (value.getName().equalsIgnoreCase(paramName)) {
-            value.setValue(entry.getValue());
-            break;
-          }
-        }
+    for (int i = 0; i < parameterItems.size(); i++) {
+      OSQLFilterItemParameter value = parameterItems.get(i);
+      if ("?".equals(value.getName())) {
+        value.setValue(iArgs.get(i));
+      } else {
+        value.setValue(iArgs.get(value.getName()));
       }
     }
   }

@@ -30,9 +30,6 @@ public class OPositionalParameter extends OInputParameter {
     if (params != null) {
       Object value = params.get(paramNumber);
       Object result = toParsedTree(value);
-      if (!this.equals(result)) {
-        params.remove(paramNumber);
-      }
       return result;
     }
     return this;
