@@ -24,8 +24,8 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.db.record.OPlaceholder;
+import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -92,9 +92,9 @@ public class OTxTask extends OAbstractReplicatedTask {
 
           for (String f : ((ODocument) record).fieldNames()) {
             final Object fValue = ((ODocument) record).field(f);
-            if (fValue instanceof ORidBag)
+            if (fValue instanceof ORecordLazyMultiValue)
               // DESERIALIZE IT TO ASSURE TEMPORARY RIDS ARE TREATED CORRECTLY
-              ((ORidBag) fValue).convertLinks2Records();
+              ((ORecordLazyMultiValue) fValue).convertLinks2Records();
           }
         }
       }
