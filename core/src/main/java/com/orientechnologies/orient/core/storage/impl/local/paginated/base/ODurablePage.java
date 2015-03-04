@@ -184,12 +184,6 @@ public class ODurablePage {
     cacheEntry.markDirty();
   }
 
-  protected static OWALChangesTree getChangesTree(OAtomicOperation atomicOperation, long fileId, long pageIndex) {
-    if (atomicOperation == null)
-      return null;
-
-    return atomicOperation.getChangesTree(fileId, pageIndex);
-  }
 
   public OWALChangesTree getChangesTree() {
     return changesTree;
