@@ -19,6 +19,9 @@
  */
 package com.orientechnologies.orient.core.metadata;
 
+import java.io.IOException;
+import java.util.concurrent.Callable;
+
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
@@ -26,7 +29,6 @@ import com.orientechnologies.orient.core.cache.OCommandCache;
 import com.orientechnologies.orient.core.cache.OCommandCacheSoftRefs;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.index.OIndexManager;
 import com.orientechnologies.orient.core.index.OIndexManagerProxy;
@@ -47,29 +49,31 @@ import com.orientechnologies.orient.core.schedule.OSchedulerListenerImpl;
 import com.orientechnologies.orient.core.schedule.OSchedulerListenerProxy;
 import com.orientechnologies.orient.core.storage.OStorageProxy;
 
-import java.io.IOException;
-import java.util.concurrent.Callable;
-
 public class OMetadataDefault implements OMetadataInternal {
-  public static final String        CLUSTER_INTERNAL_NAME     = "internal";
-  public static final String        CLUSTER_INDEX_NAME        = "index";
-  public static final String        CLUSTER_MANUAL_INDEX_NAME = "manindex";
+  public static final String            CLUSTER_INTERNAL_NAME     = "internal";
+  public static final String            CLUSTER_INDEX_NAME        = "index";
+  public static final String            CLUSTER_MANUAL_INDEX_NAME = "manindex";
 
-  protected int                     schemaClusterId;
+  protected int                         schemaClusterId;
 
-  protected OSchemaProxy            schema;
-  protected OSecurity               security;
-  protected OIndexManagerProxy      indexManager;
-  protected OFunctionLibraryProxy   functionLibrary;
-  protected OSchedulerListenerProxy scheduler;
+  protected OSchemaProxy                schema;
+  protected OSecurity                   security;
+  protected OIndexManagerProxy          indexManager;
+  protected OFunctionLibraryProxy       functionLibrary;
+  protected OSchedulerListenerProxy     scheduler;
 
-  protected OCommandCache           commandCache;
-  protected static final OProfiler  PROFILER                  = Orient.instance().getProfiler();
+  protected OCommandCache               commandCache;
+  protected static final OProfiler      PROFILER                  = Orient.instance().getProfiler();
 
-  private OImmutableSchema          immutableSchema           = null;
-  private int                       immutableCount            = 0;
+  private OImmutableSchema              immutableSchema           = null;
+  private int                           immutableCount            = 0;
+  private ODatabaseDocumentInternal     database;
 
   public OMetadataDefault() {
+  }
+
+  public OMetadataDefault(ODatabaseDocumentInternal databaseDocument) {
+    this.database = databaseDocument;
   }
 
   public void load() {
@@ -260,7 +264,7 @@ public class OMetadataDefault implements OMetadataInternal {
   }
 
   protected ODatabaseDocumentInternal getDatabase() {
-    return ODatabaseRecordThreadLocal.INSTANCE.get();
+    return database;
   }
 
   public OFunctionLibrary getFunctionLibrary() {

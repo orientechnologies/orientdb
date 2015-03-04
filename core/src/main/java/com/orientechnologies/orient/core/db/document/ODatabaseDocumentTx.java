@@ -411,7 +411,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         installHooks();
 
       // CREATE THE DEFAULT SCHEMA WITH DEFAULT USER
-      metadata = new OMetadataDefault();
+      metadata = new OMetadataDefault(this);
       metadata.create();
 
       if (!(getStorage() instanceof OStorageProxy))
@@ -2880,7 +2880,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     user = null;
 
-    metadata = new OMetadataDefault();
+    metadata = new OMetadataDefault(this);
     metadata.load();
 
     recordFormat = DEF_RECORD_FORMAT;
