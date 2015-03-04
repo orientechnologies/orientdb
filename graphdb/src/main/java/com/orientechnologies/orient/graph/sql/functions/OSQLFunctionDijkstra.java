@@ -25,6 +25,8 @@ import java.util.LinkedList;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -58,6 +60,7 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
   public LinkedList<OrientVertex> execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult,
       final Object[] iParams, OCommandContext iContext) {
     final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
+    ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
     try {
 
@@ -87,6 +90,7 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
     } finally {
       if (shutdownFlag.getValue())
         graph.shutdown(false);
+      ODatabaseRecordThreadLocal.INSTANCE.set(curDb);
     }
   }
 
