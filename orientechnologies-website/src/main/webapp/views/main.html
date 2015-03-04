@@ -1,19 +1,31 @@
 <div class="container-fluid">
   <div class="row">
+    <div class="col-md-10 ">
+      <h3>Board</h3>
+    </div>
+    <div class="col-md-2">
+      <div class="btn-group">
+        <button class="btn btn-transparent" data-placement="bottom-right" data-auto-close="1"
+                data-animation="none"
+                data-template="views/issues/popover/assignee.html" title="Filter by assignee"
+                data-content="{{popover.content}}" data-trigger="click" bs-popover>Member <i
+          class="fa fa-caret-square-o-down"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="row">
     <div class="col-md-6">
       <div class="panel panel-default">
         <div class="panel-heading">
           <div class="row">
             <div class="col-md-9">
-              <h3 class="panel-title">My Issues</h3>
-            </div>
-            <div class="col-md-2">
-              <a href="#/issues/new" class="btn btn-sm btn-success">New Issue</a>
+              <h3 class="panel-title">Backlog</h3>
             </div>
           </div>
         </div>
         <div class="list-group">
-          <div class="list-group-item" ng-repeat="issue in issues">
+          <div class="list-group-item" ng-repeat="issue in backlogs">
             <div class="row">
               <div class="col-md-1">
                 <div class="col-md-6">
@@ -26,10 +38,7 @@
                   <span class="label" style="background-color: #{{issue.priority.color}}">{{issue.priority.name}}</span>
                   <span class="label label-default">{{issue.scope.name}}</span>
                 </h5>
-                <!--<p class="issue-info">#{{issue.number}} opened {{issue.createdAt | fromNow}} by {{issue.user.name}}-->
-                <!--<i ng-show="issue.milestone" class="fa fa-milestoned"> {{ issue.milestone.title }}</i>-->
-                <!--<i ng-show="issue.version" class="fa fa-versioned"> {{ issue.version.title }}</i>-->
-                <!--</p>-->
+
               </div>
               <div class="col-md-4">
                 <div class="col-md-12">
@@ -44,14 +53,83 @@
       </div>
     </div>
     <div class="col-md-6">
-      <!--<div class="panel panel-default">-->
-      <!--<div class="panel-heading">-->
-      <!--<h3 class="panel-title">Panel title</h3>-->
-      <!--</div>-->
-      <!--<div class="panel-body">-->
-      <!--Panel content-->
-      <!--</div>-->
-      <!--</div>-->
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">In Progress</h3>
+        </div>
+        <div class="list-group">
+          <div class="list-group-item" ng-repeat="issue in inProgress">
+            <div class="row">
+              <div class="col-md-1">
+                <div class="col-md-6">
+                  <i class="fa fa-check-circle-o" ng-class="'issue-' + issue.state.toLowerCase()"></i>
+                </div>
+              </div>
+              <div class="col-md-7">
+                <h5 class="list-group-item-heading"><a href="#issues/{{issue.iid}}">
+                  {{issue.title}}</a>
+                  <span class="label" style="background-color: #{{issue.priority.color}}">{{issue.priority.name}}</span>
+                  <span class="label label-default">{{issue.scope.name}}</span>
+                </h5>
+
+              </div>
+              <div class="col-md-4">
+                <div class="col-md-12">
+                  <div ng-if="issue.assignee">
+                    <avatar dim="20" name="true" user="issue.assignee"></avatar>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
+  <!--<div class="row">-->
+  <!--<div class="col-md-6">-->
+  <!--<div class="panel panel-default">-->
+  <!--<div class="panel-heading">-->
+
+  <!--<div class="row">-->
+  <!--<div class="col-md-9">-->
+  <!--<h3 class="panel-title">My Issues</h3>-->
+  <!--</div>-->
+  <!--<div class="col-md-2">-->
+  <!--<a href="#/issues/new" class="btn btn-sm btn-success">New Issue</a>-->
+  <!--</div>-->
+  <!--</div>-->
+  <!--</div>-->
+  <!--<div class="list-group">-->
+  <!--<div class="list-group-item" ng-repeat="issue in issues">-->
+  <!--<div class="row">-->
+  <!--<div class="col-md-1">-->
+  <!--<div class="col-md-6">-->
+  <!--<i class="fa fa-check-circle-o" ng-class="'issue-' + issue.state.toLowerCase()"></i>-->
+  <!--</div>-->
+  <!--</div>-->
+  <!--<div class="col-md-7">-->
+  <!--<h5 class="list-group-item-heading"><a href="#issues/{{issue.iid}}">-->
+  <!--{{issue.title}}</a>-->
+  <!--<span class="label" style="background-color: #{{issue.priority.color}}">{{issue.priority.name}}</span>-->
+  <!--<span class="label label-default">{{issue.scope.name}}</span>-->
+  <!--</h5>-->
+
+  <!--</div>-->
+  <!--<div class="col-md-4">-->
+  <!--<div class="col-md-12">-->
+  <!--<div ng-if="issue.assignee">-->
+  <!--<avatar dim="20" name="true" user="issue.assignee"></avatar>-->
+  <!--</div>-->
+  <!--</div>-->
+  <!--</div>-->
+  <!--</div>-->
+  <!--</div>-->
+  <!--</div>-->
+  <!--</div>-->
+  <!--</div>-->
+  <!--<div class="col-md-6">-->
+
+  <!--</div>-->
+  <!--</div>-->
 </div>

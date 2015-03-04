@@ -72,6 +72,15 @@ public class OrganizationController extends ExceptionController {
         HttpStatus.OK);
   }
 
+  @RequestMapping(value = "{name}/board/issues", method = RequestMethod.GET)
+  public ResponseEntity<PagedResources<IssueResource>> getBoardIssues(@PathVariable("name") String name,
+      @RequestParam(value = "q", defaultValue = "") String q, @RequestParam(value = "page", defaultValue = "1") String page,
+      @RequestParam(value = "per_page", defaultValue = "10") String perPage) {
+    Page<Issue> issues = orgRepository.findOrganizationIssuesPagedProfiled(name, q, page, perPage);
+    return new ResponseEntity<PagedResources<IssueResource>>(pagedResourceAssembler.toResource(issues, issueAssembler),
+        HttpStatus.OK);
+  }
+
   @RequestMapping(value = "{name}/issues/{number}", method = RequestMethod.GET)
   public ResponseEntity<Issue> getOrganizationSingleIssue(@PathVariable("name") String organization,
       @PathVariable("number") Long number) {

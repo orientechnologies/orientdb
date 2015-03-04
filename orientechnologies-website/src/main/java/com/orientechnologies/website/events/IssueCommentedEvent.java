@@ -73,7 +73,7 @@ public class IssueCommentedEvent extends EventInternal<Comment> {
   private void fillContextVariable(Context context, Issue issue, Comment comment) {
     context.setVariable("link", config.endpoint + "/#issues/" + issue.getIid());
     context.setVariable("body", comment.getBody());
-    context.setVariable("author", "@" + comment.getUser().getName() + ": commented issue #" + issue.getIid());
+    context.setVariable("author", "@" + comment.getUser().getName() + " commented issue #" + issue.getIid());
   }
 
 }

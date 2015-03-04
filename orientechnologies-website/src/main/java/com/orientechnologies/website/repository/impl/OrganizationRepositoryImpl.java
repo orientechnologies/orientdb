@@ -103,6 +103,7 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     int idx = 0;
     String fullText = "";
     String sort = "";
+    Boolean first = true;
     if (q != null && !q.isEmpty()) {
       String[] queries = q.split(" (?=(([^'\"]*['\"]){2})*[^'\"]*$)");
       for (String s : queries) {
@@ -113,7 +114,8 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
           fullText += " " + values[0];
         } else {
           if (values[0].equalsIgnoreCase("sort")) {
-            sort = applySort(values[1].replace("\"", ""));
+            sort += applySort(values[1].replace("\"", ""), first);
+            first = false;
           } else {
             query = applyParam(query, values[0], values[1].replace("\"", ""), idx++);
 
@@ -133,12 +135,16 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     return query;
   }
 
-  private String applySort(String field) {
+  private String applySort(String field, Boolean first) {
     String[] values = field.split("-");
+    String order = "";
     if ("priority".equalsIgnoreCase(values[0])) {
-      return "order by $priority " + values[1];
+      order = " $priority " + values[1];
     }
-    return "";
+    if ("createdAt".equalsIgnoreCase(values[0])) {
+      order = " createdAt " + values[1];
+    }
+    return !first ? ("," + order) : "order by " + order;
   }
 
   private String addProfilation(String orgName, String query, int idx) {
@@ -191,6 +197,10 @@ public class OrganizationRepositoryImpl extends OrientBaseRepository<Organizatio
     if ("label".equals(name)) {
       val = value.replace("\"", "");
       query = query + " out('HasLabel').name CONTAINS '%s'";
+    }
+    if ("!label".equals(name)) {
+      val = value.replace("\"", "");
+      query = query + "'%s' not in out('HasLabel').name";
     }
     if ("milestone".equals(name)) {
       val = value;
