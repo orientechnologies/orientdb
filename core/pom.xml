@@ -45,6 +45,7 @@
             javax.imageio.spi,sun.misc;resolution:=optional,
             com.orientechnologies.orient.client.remote;resolution:=optional,
             com.sun.jna;resolution:=optional,
+            org.xerial.snappy;resolution:=optional,
             *
         </osgi.import>
         <osgi.export>com.orientechnologies.orient.core.*,
