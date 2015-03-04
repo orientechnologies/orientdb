@@ -24,6 +24,8 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.OCommandResultListener;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
@@ -69,10 +71,11 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
 
     String queryText = textRequest.getText();
     String originalQuery = queryText;
+
     try {
-//      System.out.println("NEW PARSER FROM: " + queryText);
+      // System.out.println("NEW PARSER FROM: " + queryText);
       queryText = preParse(queryText, iRequest);
-//      System.out.println("NEW PARSER   TO: " + queryText);
+      // System.out.println("NEW PARSER   TO: " + queryText);
       textRequest.setText(queryText);
 
       init((OCommandRequestText) iRequest);
@@ -90,6 +93,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
         originalTemp = parserText.substring(parserGetPreviousPosition(), parserGetCurrentPosition()).trim();
 
       final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
+      ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
       final OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
       try {
         while (temp != null) {
@@ -151,6 +155,7 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
       } finally {
         if (shutdownFlag.getValue())
           graph.shutdown(false);
+        ODatabaseRecordThreadLocal.INSTANCE.set(curDb);
       }
     } finally {
       textRequest.setText(originalQuery);

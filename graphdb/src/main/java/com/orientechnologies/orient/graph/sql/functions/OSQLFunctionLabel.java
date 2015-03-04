@@ -22,6 +22,8 @@ package com.orientechnologies.orient.graph.sql.functions;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -51,6 +53,7 @@ public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
   public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParameters,
       OCommandContext iContext) {
     final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
+    ODatabaseDocumentInternal curDb = ODatabaseRecordThreadLocal.INSTANCE.get();
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
     try {
       if (iCurrentResult != null) {
@@ -65,6 +68,7 @@ public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
     } finally {
       if (shutdownFlag.getValue())
         graph.shutdown(false);
+      ODatabaseRecordThreadLocal.INSTANCE.set(curDb);
     }
   }
 
