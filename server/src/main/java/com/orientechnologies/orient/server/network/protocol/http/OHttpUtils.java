@@ -132,4 +132,7 @@ public class OHttpUtils {
     return iCurrentUrl.startsWith("/") ? iCurrentUrl.substring(iCurrentUrl.indexOf('/', 1)) : iCurrentUrl.substring(iCurrentUrl
         .indexOf("/"));
   }
+
+  private OHttpUtils() {
+  }
 }

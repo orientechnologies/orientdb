@@ -25,7 +25,7 @@ public class OrientTest {
 	protected static String	url;
 
 	@Parameters(value = "url")
-	public OrientTest(String iURL) {
+	private OrientTest(String iURL) {
 		url = iURL;
 	}
 

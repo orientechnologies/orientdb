@@ -162,4 +162,7 @@ public class OFindReferenceHelper {
     if (iSourceRIDs.contains(value.getIdentity()))
       map.get(value.getIdentity()).add(iRootObject.getIdentity());
   }
+
+  private OFindReferenceHelper() {
+  }
 }

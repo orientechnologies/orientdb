@@ -343,4 +343,7 @@ public class OSQLHelper {
     }
     return iDocument;
   }
+
+  private OSQLHelper() {
+  }
 }

@@ -35,4 +35,7 @@ public abstract class AbstractCompressionTest {
     System.out.println("Compression/Decompression test against " + name + " took: " + (System.currentTimeMillis() - seed)
         + "ms, total byte size: " + compressedSize);
   }
+
+  protected AbstractCompressionTest() {
+  }
 }

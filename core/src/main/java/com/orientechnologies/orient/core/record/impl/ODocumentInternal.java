@@ -59,4 +59,7 @@ public class ODocumentInternal {
     oDocument.fillClassIfNeed(className);
   }
 
+  private ODocumentInternal() {
+  }
+
 }

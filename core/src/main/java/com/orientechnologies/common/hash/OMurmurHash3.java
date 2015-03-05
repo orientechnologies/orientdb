@@ -143,4 +143,7 @@ public class OMurmurHash3 {
 
     return state.h1;
   }
+
+  private OMurmurHash3() {
+  }
 }

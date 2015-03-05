@@ -44,4 +44,7 @@ public class OFileUtilsJava7 {
 			return false;
 		}
 	}
+
+  private OFileUtilsJava7() {
+  }
 }

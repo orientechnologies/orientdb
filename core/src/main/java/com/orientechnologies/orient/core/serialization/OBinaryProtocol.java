@@ -318,4 +318,7 @@ public class OBinaryProtocol {
   public static char bytes2char(final byte[] b, final int offset) {
     return (char) ((b[offset] << 8) + (b[offset + 1] & 0xff));
   }
+
+  private OBinaryProtocol() {
+  }
 }

@@ -50,4 +50,7 @@ public class OBinaryConverterFactory {
 
     return OSafeBinaryConverter.INSTANCE;
   }
+
+  private OBinaryConverterFactory() {
+  }
 }

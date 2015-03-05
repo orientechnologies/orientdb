@@ -56,4 +56,7 @@ public class OClassLoaderHelper {
     }
   }
 
+  private OClassLoaderHelper() {
+  }
+
 }

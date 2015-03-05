@@ -1398,4 +1398,7 @@ public class ODocumentHelper {
     ODatabaseRecordThreadLocal.INSTANCE.set(databaseRecord);
     return function.call();
   }
+
+  private ODocumentHelper() {
+  }
 }
