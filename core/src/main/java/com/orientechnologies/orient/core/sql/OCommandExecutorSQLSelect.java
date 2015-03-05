@@ -107,7 +107,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   private String                      fetchPlan;
   private volatile boolean            executing;
   private boolean                     fullySortedByIndex   = false;
-  private LOCKING_STRATEGY   lockingStrategy      = LOCKING_STRATEGY.DEFAULT;
+  private LOCKING_STRATEGY            lockingStrategy      = LOCKING_STRATEGY.DEFAULT;
   private boolean                     parallel             = false;
   private Lock                        parallelLock         = new ReentrantLock();
   private Set<ORID>                   uniqueResult;
@@ -460,8 +460,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     final LOCKING_STRATEGY contextLockingStrategy = context.getVariable("$locking") != null ? (LOCKING_STRATEGY) context
         .getVariable("$locking") : null;
 
-    final LOCKING_STRATEGY localLockingStrategy = contextLockingStrategy != null ? contextLockingStrategy
-        : lockingStrategy;
+    final LOCKING_STRATEGY localLockingStrategy = contextLockingStrategy != null ? contextLockingStrategy : lockingStrategy;
 
     ORecord record = null;
     try {
@@ -1447,9 +1446,11 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private boolean searchForSubclassIndexes(final OClass iSchemaClass) {
-    if (!iSchemaClass.isAbstract()) {
-      return false;// TODO remove this limitation!
+    Collection<OClass> subclasses = iSchemaClass.getSubclasses();
+    if (subclasses.size() == 0) {
+      return false;
     }
+
     OOrderBy order = new OOrderBy();
     order.setItems(new ArrayList<OOrderByItem>());
     if (this.orderedFields != null) {
@@ -1465,11 +1466,20 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
     }
     OSortedMultiIterator<OIdentifiable> cursor = new OSortedMultiIterator<OIdentifiable>(order);
-    Collection<OClass> subclasses = iSchemaClass.getSubclasses();
-    if (uniqueResult != null)
-      uniqueResult.clear();
-
     boolean fullySorted = true;
+
+    if (!iSchemaClass.isAbstract()) {
+      Iterator<OIdentifiable> parentClassIterator = (Iterator<OIdentifiable>) searchInClasses(iSchemaClass, false, true);
+      if (parentClassIterator.hasNext()) {
+        cursor.add(parentClassIterator);
+        fullySorted = false;
+      }
+    }
+
+    if (uniqueResult != null) {
+      uniqueResult.clear();
+    }
+
     for (OClass zz : subclasses) {
       List<OIndexCursor> subcursors = getIndexCursors(zz);
       fullySorted = fullySorted && fullySortedByIndex;
@@ -1477,6 +1487,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         return false;
       }
       for (OIndexCursor c : subcursors) {
+        if (!fullySortedByIndex) {
+          // TODO sort every iterator
+        }
         cursor.add(c);
       }
 
@@ -1504,7 +1517,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     // fetch all possible variants of subqueries that can be used in indexes.
     if (compiledFilter == null) {
       OIndexCursor cursor = tryGetOptimizedSortCursor(iSchemaClass);
-      if(cursor==null){
+      if (cursor == null) {
         return null;
       }
       List<OIndexCursor> result = new ArrayList<OIndexCursor>();
@@ -1624,7 +1637,7 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
       if (!indexUsed) {
         OIndexCursor cursor = tryGetOptimizedSortCursor(iSchemaClass);
-        if(cursor==null){
+        if (cursor == null) {
           return null;
         }
         List<OIndexCursor> result = new ArrayList<OIndexCursor>();
@@ -1952,21 +1965,25 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
     final long startOrderBy = System.currentTimeMillis();
     try {
-
-      if (tempResult instanceof OMultiCollectionIterator) {
-        final List<OIdentifiable> list = new ArrayList<OIdentifiable>();
-        for (OIdentifiable o : tempResult) {
-          list.add(o);
-        }
-        tempResult = list;
-      }
-
-      ODocumentHelper.sort((List<? extends OIdentifiable>) tempResult, orderedFields, context);
+      tempResult = applySort((List<OIdentifiable>) tempResult, orderedFields, context);
       orderedFields.clear();
-
     } finally {
       metricRecorder.orderByElapsed(startOrderBy);
     }
+  }
+
+  private Iterable<OIdentifiable> applySort(List<OIdentifiable> iCollection, List<OPair<String, String>> iOrderFields,
+      OCommandContext iContext) {
+    if (iCollection instanceof OMultiCollectionIterator) {
+      final List<OIdentifiable> list = new ArrayList<OIdentifiable>();
+      for (OIdentifiable o : iCollection) {
+        list.add(o);
+      }
+      iCollection = list;
+    }
+
+    ODocumentHelper.sort(iCollection, iOrderFields, iContext);
+    return iCollection;
   }
 
   /**
