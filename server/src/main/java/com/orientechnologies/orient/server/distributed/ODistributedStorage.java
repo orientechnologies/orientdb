@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OCommandRequestText;
 import com.orientechnologies.orient.core.command.ODistributedCommand;
+import com.orientechnologies.orient.core.command.script.OCommandScript;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
@@ -72,14 +73,7 @@ import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.version.ORecordVersion;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRecordReplicatedTask;
-import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.OCreateRecordTask;
-import com.orientechnologies.orient.server.distributed.task.ODeleteRecordTask;
-import com.orientechnologies.orient.server.distributed.task.OReadRecordTask;
-import com.orientechnologies.orient.server.distributed.task.OSQLCommandTask;
-import com.orientechnologies.orient.server.distributed.task.OTxTask;
-import com.orientechnologies.orient.server.distributed.task.OUpdateRecordTask;
+import com.orientechnologies.orient.server.distributed.task.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -231,7 +225,8 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
         .getDelegate() : executor;
 
     try {
-      final OSQLCommandTask task = new OSQLCommandTask(iCommand);
+      final OAbstractCommandTask task = iCommand instanceof OCommandScript ? new OScriptTask(iCommand) : new OSQLCommandTask(
+          iCommand);
 
       Object result = null;
       OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE executionMode = OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE.LOCAL;
@@ -846,14 +841,14 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
           case ORecordOperation.CREATED:
             if (rid.isNew()) {
               task = new OCreateRecordTask(record);
-              if( record instanceof ODocument )
+              if (record instanceof ODocument)
                 ((ODocument) record).validate();
               break;
             }
             // ELSE TREAT IT AS UPDATE: GO DOWN
 
           case ORecordOperation.UPDATED:
-            if( record instanceof ODocument )
+            if (record instanceof ODocument)
               ((ODocument) record).validate();
 
             // LOAD PREVIOUS CONTENT TO BE USED IN CASE OF UNDO
@@ -1267,14 +1262,16 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
   }
 
   protected void handleDistributedException(final String iMessage, final Exception e, final Object... iParams) {
-    OLogManager.instance().error(this, iMessage, e, iParams);
-    final Throwable t = e.getCause();
-    if (t != null) {
-      if (t instanceof OException)
-        throw (OException) t;
-      else if (t.getCause() instanceof OException)
-        throw (OException) t.getCause();
+    if (e != null) {
+      if (e instanceof OException)
+        throw (OException) e;
+      else if (e.getCause() instanceof OException)
+        throw (OException) e.getCause();
+      else if (e.getCause() != null && e.getCause().getCause() instanceof OException)
+        throw (OException) e.getCause().getCause();
     }
+
+    OLogManager.instance().error(this, iMessage, e, iParams);
     throw new OStorageException(String.format(iMessage, iParams), e);
   }
 
