@@ -55,24 +55,29 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
 
     int oldPos = 0;
     int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_DROP))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_DROP)) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), parserText, oldPos);
+    }
 
     pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY)) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found. Use " + getSyntax(), parserText, oldPos);
+    }
 
     pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
+    if (pos == -1) {
+        throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
+    }
 
     String[] parts = word.toString().split("\\.");
-    if (parts.length != 2)
-      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
+    if (parts.length != 2) {
+        throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
+    }
 
     className = parts[0];
-    if (className == null)
-      throw new OCommandSQLParsingException("Class not found", parserText, pos);
+    if (className == null) {
+        throw new OCommandSQLParsingException("Class not found", parserText, pos);
+    }
     fieldName = parts[1];
 
     pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
@@ -92,13 +97,15 @@ public class OCommandExecutorSQLDropProperty extends OCommandExecutorSQLAbstract
    * Execute the CREATE PROPERTY.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (fieldName == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not yet been parsed");
+    if (fieldName == null) {
+        throw new OCommandExecutionException("Cannot execute the command because it has not yet been parsed");
+    }
 
     final ODatabaseDocument database = getDatabase();
     final OClassImpl sourceClass = (OClassImpl) database.getMetadata().getSchema().getClass(className);
-    if (sourceClass == null)
-      throw new OCommandExecutionException("Source class '" + className + "' not found");
+    if (sourceClass == null) {
+        throw new OCommandExecutionException("Source class '" + className + "' not found");
+    }
 
     final List<OIndex<?>> indexes = relatedIndexes(fieldName);
     if (!indexes.isEmpty()) {

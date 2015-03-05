@@ -92,8 +92,9 @@ public class LocalPaginatedStorageUpdateCrashRestore {
 
             counter++;
 
-            if (counter % 50000 == 0)
-              System.out.println(counter + " records were updated.");
+            if (counter % 50000 == 0) {
+                System.out.println(counter + " records were updated.");
+            }
           } finally {
             idLockManager.releaseLock(Thread.currentThread(), idToUpdate, OLockManager.LOCK.EXCLUSIVE);
           }
@@ -111,8 +112,9 @@ public class LocalPaginatedStorageUpdateCrashRestore {
     buildDirectory += "/localPaginatedStorageUpdateCrashRestore";
 
     buildDir = new File(buildDirectory);
-    if (buildDir.exists())
-      buildDir.delete();
+    if (buildDir.exists()) {
+        buildDir.delete();
+    }
 
     buildDir.mkdir();
 
@@ -231,8 +233,9 @@ public class LocalPaginatedStorageUpdateCrashRestore {
 
       saveDoc(document, baseDocumentTx, testDocumentTx);
 
-      if (i % 10000 == 0)
-        System.out.println(i + " documents were created.");
+      if (i % 10000 == 0) {
+          System.out.println(i + " documents were created.");
+      }
     }
   }
 
@@ -277,14 +280,16 @@ public class LocalPaginatedStorageUpdateCrashRestore {
             && testDocument.field("stringValue").equals(baseDocument.field("stringValue"))) {
           recordsRestored++;
         } else {
-          if (((Long) baseDocument.field("timestamp")) < minTs)
-            minTs = baseDocument.field("timestamp");
+          if (((Long) baseDocument.field("timestamp")) < minTs) {
+              minTs = baseDocument.field("timestamp");
+          }
         }
 
         recordsTested++;
 
-        if (recordsTested % 10000 == 0)
-          System.out.println(recordsTested + " were tested, " + recordsRestored + " were restored ...");
+        if (recordsTested % 10000 == 0) {
+            System.out.println(recordsTested + " were tested, " + recordsRestored + " were restored ...");
+        }
       }
 
       physicalPositions = baseStorage.higherPhysicalPositions(clusterId, physicalPositions[physicalPositions.length - 1]);

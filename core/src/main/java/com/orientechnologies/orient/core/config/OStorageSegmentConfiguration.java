@@ -67,8 +67,9 @@ public class OStorageSegmentConfiguration implements Serializable {
   }
 
   public String getLocation() {
-    if (location != null)
-      return location;
+    if (location != null) {
+        return location;
+    }
 
     return root != null ? root.getDirectory() : null;
   }

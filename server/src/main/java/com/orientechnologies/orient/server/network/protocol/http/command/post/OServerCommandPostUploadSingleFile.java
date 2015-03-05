@@ -71,20 +71,24 @@ public class OServerCommandPostUploadSingleFile extends OHttpMultipartRequestCom
           iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
         }
       } finally {
-        if (database != null)
-          database.close();
+        if (database != null) {
+            database.close();
+        }
         database = null;
-        if (buffer != null)
-          buffer.close();
+        if (buffer != null) {
+            buffer.close();
+        }
         buffer = null;
-        if (writer != null)
-          writer.close();
+        if (writer != null) {
+            writer.close();
+        }
         writer = null;
         fileDocument = null;
         fileName = null;
         fileType = null;
-        if (fileRID != null)
-          fileRID.reset();
+        if (fileRID != null) {
+            fileRID.reset();
+        }
         fileRID = null;
       }
     }

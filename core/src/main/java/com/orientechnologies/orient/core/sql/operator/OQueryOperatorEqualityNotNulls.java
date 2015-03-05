@@ -49,8 +49,9 @@ public abstract class OQueryOperatorEqualityNotNulls extends OQueryOperatorEqual
   @Override
   public Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult, final OSQLFilterCondition iCondition,
       final Object iLeft, final Object iRight, OCommandContext iContext) {
-    if (iLeft == null || iRight == null)
-      return false;
+    if (iLeft == null || iRight == null) {
+        return false;
+    }
 
     return super.evaluateRecord(iRecord, iCurrentResult, iCondition, iLeft, iRight, iContext);
   }

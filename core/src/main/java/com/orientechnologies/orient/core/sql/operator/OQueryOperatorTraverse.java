@@ -80,13 +80,15 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
   @SuppressWarnings("unchecked")
   private boolean traverse(Object iTarget, final OSQLFilterCondition iCondition, final int iLevel,
       final Set<ORID> iEvaluatedRecords, final OCommandContext iContext) {
-    if (endDeepLevel > -1 && iLevel > endDeepLevel)
-      return false;
+    if (endDeepLevel > -1 && iLevel > endDeepLevel) {
+        return false;
+    }
 
     if (iTarget instanceof OIdentifiable) {
-      if (iEvaluatedRecords.contains(((OIdentifiable) iTarget).getIdentity()))
-        // ALREADY EVALUATED
-        return false;
+      if (iEvaluatedRecords.contains(((OIdentifiable) iTarget).getIdentity())) {
+          // ALREADY EVALUATED
+          return false;
+      }
 
       // TRANSFORM THE ORID IN ODOCUMENT
       iTarget = ((OIdentifiable) iTarget).getRecord();
@@ -97,62 +99,72 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 
       iEvaluatedRecords.add(target.getIdentity());
 
-      if (target.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
-        try {
-          target.load();
-        } catch (final ORecordNotFoundException e) {
-          // INVALID RID
-          return false;
-        }
+      if (target.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+          try {
+              target.load();
+          } catch (final ORecordNotFoundException e) {
+              // INVALID RID
+              return false;
+          }
+      }
 
-      if (iLevel >= startDeepLevel && (Boolean) iCondition.evaluate(target, null, iContext) == Boolean.TRUE)
-        return true;
+      if (iLevel >= startDeepLevel && (Boolean) iCondition.evaluate(target, null, iContext) == Boolean.TRUE) {
+          return true;
+      }
 
       // TRAVERSE THE DOCUMENT ITSELF
-      if (cfgFields != null)
-        for (final String cfgField : cfgFields) {
-          if (cfgField.equalsIgnoreCase(OSQLFilterItemFieldAny.FULL_NAME)) {
-            // ANY
-            for (final String fieldName : target.fieldNames())
-              if (traverse(target.rawField(fieldName), iCondition, iLevel + 1, iEvaluatedRecords, iContext))
-                return true;
-          } else if (cfgField.equalsIgnoreCase(OSQLFilterItemFieldAny.FULL_NAME)) {
-            // ALL
-            for (final String fieldName : target.fieldNames())
-              if (!traverse(target.rawField(fieldName), iCondition, iLevel + 1, iEvaluatedRecords, iContext))
-                return false;
-            return true;
-          } else {
-            if (traverse(target.rawField(cfgField), iCondition, iLevel + 1, iEvaluatedRecords, iContext))
-              return true;
+      if (cfgFields != null) {
+          for (final String cfgField : cfgFields) {
+              if (cfgField.equalsIgnoreCase(OSQLFilterItemFieldAny.FULL_NAME)) {
+                  for (final String fieldName : target.fieldNames()) {
+                      if (traverse(target.rawField(fieldName), iCondition, iLevel + 1, iEvaluatedRecords, iContext)) {
+                          return true;
+                      }
+                  }
+              } else if (cfgField.equalsIgnoreCase(OSQLFilterItemFieldAny.FULL_NAME)) {
+                  for (final String fieldName : target.fieldNames()) {
+                      if (!traverse(target.rawField(fieldName), iCondition, iLevel + 1, iEvaluatedRecords, iContext)) {
+                          return false;
+                      }
+                  }
+                  return true;
+              } else {
+                  if (traverse(target.rawField(cfgField), iCondition, iLevel + 1, iEvaluatedRecords, iContext)) {
+                      return true;
+                  }
+              }
           }
-        }
+      }
 
     } else if (iTarget instanceof OQueryRuntimeValueMulti) {
 
       final OQueryRuntimeValueMulti multi = (OQueryRuntimeValueMulti) iTarget;
       for (final Object o : multi.getValues()) {
-        if (traverse(o, iCondition, iLevel + 1, iEvaluatedRecords, iContext) == Boolean.TRUE)
-          return true;
+        if (traverse(o, iCondition, iLevel + 1, iEvaluatedRecords, iContext) == Boolean.TRUE) {
+            return true;
+        }
       }
     } else if (iTarget instanceof Map<?, ?>) {
 
       final Map<Object, Object> map = (Map<Object, Object>) iTarget;
       for (final Object o : map.values()) {
-        if (traverse(o, iCondition, iLevel + 1, iEvaluatedRecords, iContext) == Boolean.TRUE)
-          return true;
+        if (traverse(o, iCondition, iLevel + 1, iEvaluatedRecords, iContext) == Boolean.TRUE) {
+            return true;
+        }
       }
     } else if (OMultiValue.isMultiValue(iTarget)) {
       final Iterable<Object> collection = OMultiValue.getMultiValueIterable(iTarget);
       for (final Object o : collection) {
-        if (traverse(o, iCondition, iLevel + 1, iEvaluatedRecords, iContext) == Boolean.TRUE)
-          return true;
+        if (traverse(o, iCondition, iLevel + 1, iEvaluatedRecords, iContext) == Boolean.TRUE) {
+            return true;
+        }
       }
     } else if (iTarget instanceof Iterator) {
       final Iterator iterator = (Iterator) iTarget;
       while (iterator.hasNext()) {
-        if (traverse(iterator.next(), iCondition, iLevel + 1, iEvaluatedRecords, iContext) == Boolean.TRUE)
-          return true;
+        if (traverse(iterator.next(), iCondition, iLevel + 1, iEvaluatedRecords, iContext) == Boolean.TRUE) {
+            return true;
+        }
       }
     }
 
@@ -161,8 +173,9 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
 
   @Override
   public OQueryOperator configure(final List<String> iParams) {
-    if (iParams == null)
-      return this;
+    if (iParams == null) {
+        return this;
+    }
 
     final int start = !iParams.isEmpty() ? Integer.parseInt(iParams.get(0)) : startDeepLevel;
     final int end = iParams.size() > 1 ? Integer.parseInt(iParams.get(1)) : endDeepLevel;
@@ -170,8 +183,9 @@ public class OQueryOperatorTraverse extends OQueryOperatorEqualityNotNulls {
     String[] fields = new String[] { "any()" };
     if (iParams.size() > 2) {
       String f = iParams.get(2);
-      if (f.startsWith("'") || f.startsWith("\""))
-        f = f.substring(1, f.length() - 1);
+      if (f.startsWith("'") || f.startsWith("\"")) {
+          f = f.substring(1, f.length() - 1);
+      }
       fields = f.split(",");
     }
 

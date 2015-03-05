@@ -50,11 +50,12 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       OCommandContext iContext) {
     if (iParams.length == 1) {
-      if (iParams[0] instanceof Number)
-        sum((Number) iParams[0]);
-      else if (OMultiValue.isMultiValue(iParams[0]))
-        for (Object n : OMultiValue.getMultiValueIterable(iParams[0]))
-          sum((Number) n);
+      if (iParams[0] instanceof Number) {
+          sum((Number) iParams[0]);
+      } else if (OMultiValue.isMultiValue(iParams[0])) {
+          for (Object n : OMultiValue.getMultiValueIterable(iParams[0]))
+              sum((Number) n);
+      }
 
     } else {
       sum = null;
@@ -68,11 +69,12 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
   protected void sum(Number value) {
     if (value != null) {
       total++;
-      if (sum == null)
-        // FIRST TIME
-        sum = value;
-      else
-        sum = OType.increment(sum, value);
+      if (sum == null) {
+          // FIRST TIME
+          sum = value;
+      } else {
+          sum = OType.increment(sum, value);
+      }
     }
   }
 
@@ -99,10 +101,11 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
     int dTotal = 0;
     for (Object iParameter : resultsToMerge) {
       final Map<String, Object> item = (Map<String, Object>) iParameter;
-      if (dSum == null)
-        dSum = (Number) item.get("sum");
-      else
-        dSum = OType.increment(dSum, (Number) item.get("sum"));
+      if (dSum == null) {
+          dSum = (Number) item.get("sum");
+      } else {
+          dSum = OType.increment(dSum, (Number) item.get("sum"));
+      }
 
       dTotal += (Integer) item.get("total");
     }
@@ -116,16 +119,17 @@ public class OSQLFunctionAverage extends OSQLFunctionMathAbstract {
   }
   
   private Object computeAverage(Number iSum, int iTotal) {
-  	if (iSum instanceof Integer)
-      return iSum.intValue() / iTotal;
-    else if (iSum instanceof Long)
-      return iSum.longValue() / iTotal;
-    else if (iSum instanceof Float)
-      return iSum.floatValue() / iTotal;
-    else if (iSum instanceof Double)
-      return iSum.doubleValue() / iTotal;
-    else if (iSum instanceof BigDecimal)
-      return ((BigDecimal) iSum).divide(new BigDecimal(iTotal), RoundingMode.HALF_UP);
+  	if (iSum instanceof Integer) {
+            return iSum.intValue() / iTotal;
+          } else if (iSum instanceof Long) {
+              return iSum.longValue() / iTotal;
+          } else if (iSum instanceof Float) {
+              return iSum.floatValue() / iTotal;
+          } else if (iSum instanceof Double) {
+              return iSum.doubleValue() / iTotal;
+          } else if (iSum instanceof BigDecimal) {
+              return ((BigDecimal) iSum).divide(new BigDecimal(iTotal), RoundingMode.HALF_UP);
+          }
   	
   	return null;
   }

@@ -116,10 +116,11 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
       stream.set(keySerializer.getId());
       stream.setCustom(valueSerializer.getName());
 
-      if (streamKeySerializer != null)
-        stream.setCustom(streamKeySerializer.getName());
-      else
-        stream.setCustom("");
+      if (streamKeySerializer != null) {
+          stream.setCustom(streamKeySerializer.getName());
+      } else {
+          stream.setCustom("");
+      }
 
       final byte[] result = stream.toByteArray();
       record.fromStream(result);
@@ -141,32 +142,35 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
       if (protocolVersion != -1) {
         // @COMPATIBILITY BEFORE 0.9.25
         stream.getAsByte();
-        if (protocolVersion != CURRENT_PROTOCOL_VERSION)
-          OLogManager
-              .instance()
-              .debug(
-                  this,
-                  "Found tree %s created with MVRBTree protocol version %d while current one supports the version %d. The tree will be migrated transparently",
-                  getRecord().getIdentity(), protocolVersion, CURRENT_PROTOCOL_VERSION);
+        if (protocolVersion != CURRENT_PROTOCOL_VERSION) {
+            OLogManager
+                    .instance()
+                    .debug(
+                            this,
+                            "Found tree %s created with MVRBTree protocol version %d while current one supports the version %d. The tree will be migrated transparently",
+                            getRecord().getIdentity(), protocolVersion, CURRENT_PROTOCOL_VERSION);
+        }
       }
 
       root = new ORecordId();
       root.fromStream(stream.getAsByteArrayFixed(ORecordId.PERSISTENT_SIZE));
 
       size = stream.getAsInteger();
-      if (protocolVersion == -1)
-        // @COMPATIBILITY BEFORE 0.9.25
-        pageSize = stream.getAsShort();
-      else
-        pageSize = stream.getAsInteger();
+      if (protocolVersion == -1) {
+          // @COMPATIBILITY BEFORE 0.9.25
+          pageSize = stream.getAsShort();
+      } else {
+          pageSize = stream.getAsInteger();
+      }
 
       // @COMPATIBILITY BEFORE 1.0
       if (protocolVersion < 1) {
         keySize = 1;
         OLogManager.instance().warn(this,
             "Previous index version was found, partial composite index queries may do not work if you " + "do not recreate index.");
-      } else
-        keySize = stream.getAsInteger();
+      } else {
+          keySize = stream.getAsInteger();
+      }
 
       // @COMPATIBILITY BEFORE 1.0
       if (protocolVersion < 3) {
@@ -179,8 +183,9 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
         valueSerializer = OStreamSerializerFactory.get(stream.getAsStringCustom());
 
         final String oldKeySerializerName = stream.getAsStringCustom();
-        if (oldKeySerializerName != null && oldKeySerializerName.length() > 0)
-          streamKeySerializer = OStreamSerializerFactory.get(oldKeySerializerName);
+        if (oldKeySerializerName != null && oldKeySerializerName.length() > 0) {
+            streamKeySerializer = OStreamSerializerFactory.get(oldKeySerializerName);
+        }
       }
     } catch (Exception e) {
       OLogManager.instance().error(this, "Error on unmarshalling OMVRBTreeMapProvider object from record: %s", e,
@@ -193,14 +198,17 @@ public class OMVRBTreeMapProvider<K, V> extends OMVRBTreeProviderAbstract<K, V> 
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public OBinarySerializer<K> createRelatedSerializer(final OStreamSerializer streamKeySerializer) {
-    if (streamKeySerializer instanceof OBinarySerializer)
-      return (OBinarySerializer<K>) streamKeySerializer;
+    if (streamKeySerializer instanceof OBinarySerializer) {
+        return (OBinarySerializer<K>) streamKeySerializer;
+    }
 
-    if (streamKeySerializer instanceof OStreamSerializerLiteral)
-      return (OBinarySerializer<K>) new OSimpleKeySerializer();
+    if (streamKeySerializer instanceof OStreamSerializerLiteral) {
+        return (OBinarySerializer<K>) new OSimpleKeySerializer();
+    }
 
-    if (streamKeySerializer instanceof OStreamSerializerLong)
-      return (OBinarySerializer<K>) OLongSerializer.INSTANCE;
+    if (streamKeySerializer instanceof OStreamSerializerLong) {
+        return (OBinarySerializer<K>) OLongSerializer.INSTANCE;
+    }
 
     throw new OSerializationException("Given serializer " + streamKeySerializer.getClass().getName()
         + " can not be converted into " + OBinarySerializer.class.getName() + ".");

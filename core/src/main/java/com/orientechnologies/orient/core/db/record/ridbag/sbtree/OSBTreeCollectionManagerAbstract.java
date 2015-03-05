@@ -133,23 +133,26 @@ public abstract class OSBTreeCollectionManagerAbstract implements OCloseable, OS
       SBTreeBonsaiContainer container = treeCache.getQuietly(collectionPointer);
       assert container != null;
 
-      if (container.usagesCounter != 0)
-        throw new IllegalStateException("Can not delete SBTreeBonsai instance because it is used in other thread.");
+      if (container.usagesCounter != 0) {
+          throw new IllegalStateException("Can not delete SBTreeBonsai instance because it is used in other thread.");
+      }
 
       treeCache.remove(collectionPointer);
     }
   }
 
   private void evict() {
-    if (treeCache.size() <= cacheMaxSize)
-      return;
+    if (treeCache.size() <= cacheMaxSize) {
+        return;
+    }
 
     for (OBonsaiCollectionPointer collectionPointer : treeCache.ascendingKeySetWithLimit(evictionThreshold)) {
       final Object treeLock = treesSubsetLock(collectionPointer);
       synchronized (treeLock) {
         SBTreeBonsaiContainer container = treeCache.getQuietly(collectionPointer);
-        if (container != null && container.usagesCounter == 0)
-          treeCache.remove(collectionPointer);
+        if (container != null && container.usagesCounter == 0) {
+            treeCache.remove(collectionPointer);
+        }
       }
     }
   }

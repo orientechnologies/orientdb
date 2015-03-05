@@ -32,8 +32,9 @@ public class OStorageRemoteThreadLocal extends ThreadLocal<OStorageRemoteSession
     Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onStartup() {
-        if (INSTANCE == null)
-          INSTANCE = new OStorageRemoteThreadLocal();
+        if (INSTANCE == null) {
+            INSTANCE = new OStorageRemoteThreadLocal();
+        }
       }
 
       @Override

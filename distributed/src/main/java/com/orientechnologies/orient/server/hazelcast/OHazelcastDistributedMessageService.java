@@ -80,9 +80,10 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     final String queueName = getResponseQueueName(manager.getLocalNodeName());
     nodeResponseQueue = getQueue(queueName);
 
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, getLocalNodeNameAndThread(), null, DIRECTION.NONE,
-          "listening for incoming responses on queue: %s", queueName);
+    if (ODistributedServerLog.isDebugEnabled()) {
+        ODistributedServerLog.debug(this, getLocalNodeNameAndThread(), null, DIRECTION.NONE,
+                "listening for incoming responses on queue: %s", queueName);
+    }
 
     // TODO: CHECK IF SET TO TRUE (UNQUEUE MSG) WHEN HOT-ALIGNMENT = TRUE
     checkForPendingMessages(nodeResponseQueue, queueName, false);
@@ -111,8 +112,9 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
               senderNode = message.getSenderNodeName();
               final long responseTime = dispatchResponseToThread(message);
 
-              if (responseTime > -1)
-                collectMetric(responseTime);
+              if (responseTime > -1) {
+                  collectMetric(responseTime);
+              }
             }
 
           } catch (InterruptedException e) {
@@ -126,11 +128,12 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
             Thread.interrupted();
             break;
           } catch (HazelcastException e) {
-            if (e.getCause() instanceof InterruptedException)
-              Thread.interrupted();
-            else
-              ODistributedServerLog.error(this, manager.getLocalNodeName(), senderNode, DIRECTION.IN,
-                  "error on reading distributed response", e, message != null ? message.getPayload() : "-");
+            if (e.getCause() instanceof InterruptedException) {
+                Thread.interrupted();
+            } else {
+                ODistributedServerLog.error(this, manager.getLocalNodeName(), senderNode, DIRECTION.IN,
+                        "error on reading distributed response", e, message != null ? message.getPayload() : "-");
+            }
           } catch (Throwable e) {
             ODistributedServerLog.error(this, manager.getLocalNodeName(), senderNode, DIRECTION.IN,
                 "error on reading distributed response", e, message != null ? message.getPayload() : "-");
@@ -185,11 +188,12 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
     if (responseThread != null) {
       responseThread.interrupt();
-      if (!nodeResponseQueue.isEmpty())
-        try {
-          responseThread.join();
-        } catch (InterruptedException e) {
-        }
+      if (!nodeResponseQueue.isEmpty()) {
+          try {
+              responseThread.join();
+          } catch (InterruptedException e) {
+          }
+      }
       responseThread = null;
     }
 
@@ -211,9 +215,10 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
 
   public void handleUnreachableNode(final String nodeName) {
     final Set<String> dbs = getDatabases();
-    if (dbs != null)
-      for (String dbName : dbs)
-        getDatabase(dbName).removeNodeInConfiguration(nodeName, false);
+    if (dbs != null) {
+        for (String dbName : dbs)
+            getDatabase(dbName).removeNodeInConfiguration(nodeName, false);
+    }
 
     // REMOVE THE SERVER'S RESPONSE QUEUE
     // removeQueue(OHazelcastDistributedMessageService.getResponseQueueName(nodeName));
@@ -226,8 +231,9 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   public List<String> getManagedQueueNames() {
     List<String> queueNames = new ArrayList<String>();
     for (String q : manager.getHazelcastInstance().getConfig().getQueueConfigs().keySet()) {
-      if (q.startsWith(NODE_QUEUE_PREFIX))
-        queueNames.add(q);
+      if (q.startsWith(NODE_QUEUE_PREFIX)) {
+          queueNames.add(q);
+      }
     }
     return queueNames;
   }
@@ -244,8 +250,9 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   @Override
   public ODocument getQueueStats(final String iQueueName) {
     final IQueue<Object> queue = manager.getHazelcastInstance().getQueue(iQueueName);
-    if (queue == null)
-      throw new IllegalArgumentException("Queue '" + iQueueName + "' not found");
+    if (queue == null) {
+        throw new IllegalArgumentException("Queue '" + iQueueName + "' not found");
+    }
 
     final ODocument doc = new ODocument();
 
@@ -274,11 +281,13 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     List<Object> nextMessages = new ArrayList<Object>(STATS_MAX_MESSAGES);
     for (Iterator<Object> it = queue.iterator(); it.hasNext();) {
       Object next = it.next();
-      if (next != null)
-        nextMessages.add(next.toString());
+      if (next != null) {
+          nextMessages.add(next.toString());
+      }
 
-      if (nextMessages.size() >= STATS_MAX_MESSAGES)
-        break;
+      if (nextMessages.size() >= STATS_MAX_MESSAGES) {
+          break;
+      }
     }
 
     doc.field("nextMessages", nextMessages);
@@ -322,10 +331,11 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
       // GET ASYNCHRONOUS MSG MANAGER IF ANY
       final ODistributedResponseManager asynchMgr = responsesByRequestIds.get(reqId);
       if (asynchMgr == null) {
-        if (ODistributedServerLog.isDebugEnabled())
-          ODistributedServerLog.debug(this, manager.getLocalNodeName(), response.getExecutorNodeName(), DIRECTION.IN,
-              "received response for message %d after the timeout (%dms)", reqId,
-              OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong());
+        if (ODistributedServerLog.isDebugEnabled()) {
+            ODistributedServerLog.debug(this, manager.getLocalNodeName(), response.getExecutorNodeName(), DIRECTION.IN,
+                    "received response for message %d after the timeout (%dms)", reqId,
+                    OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong());
+        }
       } else if (asynchMgr.collectResponse(response)) {
         // ALL RESPONSE RECEIVED, REMOVE THE RESPONSE MANAGER WITHOUT WAITING THE PURGE THREAD REMOVE THEM FOR TIMEOUT
         responsesByRequestIds.remove(reqId);
@@ -404,9 +414,10 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
             "found %d messages in queue %s, aligning the database...", queueSize, iQueueName);
         return true;
       }
-    } else
-      ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "found no previous messages in queue %s",
-          iQueueName);
+    } else {
+        ODistributedServerLog.info(this, manager.getLocalNodeName(), null, DIRECTION.NONE, "found no previous messages in queue %s",
+                iQueueName);
+    }
 
     return false;
   }
@@ -438,8 +449,9 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   }
 
   protected void collectMetric(final long iTime) {
-    if (responseTimeMetricIndex >= responseTimeMetrics.length)
-      responseTimeMetricIndex = 0;
+    if (responseTimeMetricIndex >= responseTimeMetrics.length) {
+        responseTimeMetricIndex = 0;
+    }
     responseTimeMetrics[responseTimeMetricIndex++] = iTime;
   }
 }

@@ -36,12 +36,14 @@ public class WriteAheadLogTest {
   @BeforeClass
   public void beforeClass() {
     String buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null || buildDirectory.isEmpty())
-      buildDirectory = ".";
+    if (buildDirectory == null || buildDirectory.isEmpty()) {
+        buildDirectory = ".";
+    }
 
     testDir = new File(buildDirectory, "writeAheadLogTest");
-    if (!testDir.exists())
-      testDir.mkdir();
+    if (!testDir.exists()) {
+        testDir.mkdir();
+    }
 
     OWALRecordsFactory.INSTANCE.registerNewRecord((byte) 128, TestRecord.class);
   }
@@ -65,14 +67,16 @@ public class WriteAheadLogTest {
 
   @AfterMethod
   public void afterMethod() throws Exception {
-    if (writeAheadLog != null)
-      writeAheadLog.delete();
+    if (writeAheadLog != null) {
+        writeAheadLog.delete();
+    }
   }
 
   @AfterClass
   public void afterClass() {
-    if (testDir.exists())
-      testDir.delete();
+    if (testDir.exists()) {
+        testDir.delete();
+    }
   }
 
   public void testLogCheckpoints() throws Exception {
@@ -1629,12 +1633,13 @@ public class WriteAheadLogTest {
     }
 
     OLogSequenceNumber nextLsn = writeAheadLog.next(readRecord.getLsn());
-    if (nextLsn != null)
-      try {
-        writeAheadLog.read(nextLsn);
-        Assert.fail();
-      } catch (OWALPageBrokenException e) {
-      }
+    if (nextLsn != null) {
+        try {
+            writeAheadLog.read(nextLsn);
+            Assert.fail();
+        } catch (OWALPageBrokenException e) {
+        }
+    }
   }
 
   public static final class TestRecord extends OAbstractWALRecord {
@@ -1692,17 +1697,21 @@ public class WriteAheadLogTest {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
+      if (this == o) {
+          return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+          return false;
+      }
 
       TestRecord that = (TestRecord) o;
 
-      if (updateMasterRecord != that.updateMasterRecord)
-        return false;
-      if (!Arrays.equals(data, that.data))
-        return false;
+      if (updateMasterRecord != that.updateMasterRecord) {
+          return false;
+      }
+      if (!Arrays.equals(data, that.data)) {
+          return false;
+      }
 
       return true;
     }

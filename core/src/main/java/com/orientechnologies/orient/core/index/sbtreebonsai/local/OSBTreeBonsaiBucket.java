@@ -94,21 +94,27 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
+      if (this == o) {
+          return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+          return false;
+      }
 
       SBTreeEntry that = (SBTreeEntry) o;
 
-      if (!leftChild.equals(that.leftChild))
-        return false;
-      if (!rightChild.equals(that.rightChild))
-        return false;
-      if (!key.equals(that.key))
-        return false;
-      if (value != null ? !value.equals(that.value) : that.value != null)
-        return false;
+      if (!leftChild.equals(that.leftChild)) {
+          return false;
+      }
+      if (!rightChild.equals(that.rightChild)) {
+          return false;
+      }
+      if (!key.equals(that.key)) {
+          return false;
+      }
+      if (value != null ? !value.equals(that.value) : that.value != null) {
+          return false;
+      }
 
       return true;
     }
@@ -202,12 +208,13 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
       K midVal = getKey(mid);
       int cmp = comparator.compare(midVal, key);
 
-      if (cmp < 0)
-        low = mid + 1;
-      else if (cmp > 0)
-        high = mid - 1;
-      else
-        return mid; // key found
+      if (cmp < 0) {
+          low = mid + 1;
+      } else if (cmp > 0) {
+          high = mid - 1;
+      } else {
+          return mid; // key found
+      }
     }
     return -(low + 1); // key not found.
   }
@@ -242,8 +249,9 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
 
     for (int i = 0; i < size; i++) {
       int currentEntryPosition = getIntValue(currentPositionOffset);
-      if (currentEntryPosition < entryPosition)
-        setIntValue(currentPositionOffset, currentEntryPosition + entrySize);
+      if (currentEntryPosition < entryPosition) {
+          setIntValue(currentPositionOffset, currentEntryPosition + entrySize);
+      }
       currentPositionOffset += OIntegerSerializer.INT_SIZE;
     }
   }
@@ -278,8 +286,9 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
   public K getKey(int index) {
     int entryPosition = getIntValue(offset + index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
 
-    if (!isLeaf)
-      entryPosition += 2 * (OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE);
+    if (!isLeaf) {
+        entryPosition += 2 * (OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE);
+    }
 
     return deserializeFromDirectMemory(keySerializer, offset + entryPosition);
   }
@@ -322,19 +331,21 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
       entrySize += valueSize;
 
       checkEntreeSize(entrySize);
-    } else
-      entrySize += 2 * (OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE);
+    } else {
+        entrySize += 2 * (OLongSerializer.LONG_SIZE + OIntegerSerializer.INT_SIZE);
+    }
 
     int size = size();
     int freePointer = getIntValue(offset + FREE_POINTER_OFFSET);
     if (freePointer - entrySize < (size + 1) * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET) {
-      if (size > 1)
-        return false;
-      else
-        throw new OSBTreeException("Entry size ('key + value') is more than is more than allowed "
-            + (freePointer - 2 * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET)
-            + " bytes, either increase page size using '" + OGlobalConfiguration.SBTREEBONSAI_BUCKET_SIZE.getKey()
-            + "' parameter, or decrease 'key + value' size.");
+      if (size > 1) {
+          return false;
+      } else {
+          throw new OSBTreeException("Entry size ('key + value') is more than is more than allowed "
+                  + (freePointer - 2 * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET)
+                  + " bytes, either increase page size using '" + OGlobalConfiguration.SBTREEBONSAI_BUCKET_SIZE.getKey()
+                  + "' parameter, or decrease 'key + value' size.");
+      }
     }
 
     if (index <= size - 1) {
@@ -402,8 +413,9 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
 
     byte[] oldSerializedValue = getBinaryValue(offset + entryPosition, size);
 
-    if (ODefaultComparator.INSTANCE.compare(oldSerializedValue, serializedValue) == 0)
-      return 0;
+    if (ODefaultComparator.INSTANCE.compare(oldSerializedValue, serializedValue) == 0) {
+        return 0;
+    }
 
     setBinaryValue(offset + entryPosition, serializedValue);
 
@@ -435,8 +447,9 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
   }
 
   private void checkEntreeSize(int entreeSize) {
-    if (entreeSize > MAX_ENTREE_SIZE)
-      throw new OSBTreeException("Serialized key-value pair size bigger than allowed " + entreeSize + " vs " + MAX_ENTREE_SIZE
-          + ".");
+    if (entreeSize > MAX_ENTREE_SIZE) {
+        throw new OSBTreeException("Serialized key-value pair size bigger than allowed " + entreeSize + " vs " + MAX_ENTREE_SIZE
+                + ".");
+    }
   }
 }

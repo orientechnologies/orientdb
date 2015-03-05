@@ -49,15 +49,17 @@ public class OCompressionFactory {
 
   public OCompression getCompression(String name) {
     OCompression compression = compressions.get(name);
-    if (compression == null)
-      throw new IllegalArgumentException("Compression with name  " + name + " is absent.");
+    if (compression == null) {
+        throw new IllegalArgumentException("Compression with name  " + name + " is absent.");
+    }
 
     return compression;
   }
 
   public void register(OCompression compression) {
-    if (compressions.containsKey(compression.name()))
-      throw new IllegalArgumentException("Compression with name " + compression.name() + " was already registered.");
+    if (compressions.containsKey(compression.name())) {
+        throw new IllegalArgumentException("Compression with name " + compression.name() + " was already registered.");
+    }
 
     compressions.put(compression.name(), compression);
   }

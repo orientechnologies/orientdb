@@ -55,12 +55,13 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
   protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
       final Object iRight, OCommandContext iContext) {
     final OSQLFilterCondition condition;
-    if (iCondition.getLeft() instanceof OSQLFilterCondition)
-      condition = (OSQLFilterCondition) iCondition.getLeft();
-    else if (iCondition.getRight() instanceof OSQLFilterCondition)
-      condition = (OSQLFilterCondition) iCondition.getRight();
-    else
-      condition = null;
+    if (iCondition.getLeft() instanceof OSQLFilterCondition) {
+        condition = (OSQLFilterCondition) iCondition.getLeft();
+    } else if (iCondition.getRight() instanceof OSQLFilterCondition) {
+        condition = (OSQLFilterCondition) iCondition.getRight();
+    } else {
+        condition = null;
+    }
 
     if (iLeft instanceof Iterable<?>) {
 
@@ -70,31 +71,35 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
         // CHECK AGAINST A CONDITION
         for (final Object o : iterable) {
           final OIdentifiable id;
-          if (o instanceof OIdentifiable)
-            id = (OIdentifiable) o;
-          else if (o instanceof Map<?, ?>) {
+          if (o instanceof OIdentifiable) {
+              id = (OIdentifiable) o;
+          } else if (o instanceof Map<?, ?>) {
             final Iterator<Object> iter = ((Map<?, Object>) o).values().iterator();
             final Object v = iter.hasNext() ? iter.next() : null;
-            if (v instanceof OIdentifiable)
-              id = (OIdentifiable) v;
-            else
-              // TRANSFORM THE ENTIRE MAP IN A DOCUMENT. PROBABLY HAS BEEN IMPORTED FROM JSON
-              id = new ODocument((Map) o);
+            if (v instanceof OIdentifiable) {
+                id = (OIdentifiable) v;
+              } else {
+                // TRANSFORM THE ENTIRE MAP IN A DOCUMENT. PROBABLY HAS BEEN IMPORTED FROM JSON
+                id = new ODocument((Map) o);
+            }
 
           } else if (o instanceof Iterable<?>) {
             final Iterator<OIdentifiable> iter = ((Iterable<OIdentifiable>) o).iterator();
             id = iter.hasNext() ? iter.next() : null;
-          } else
-            continue;
+          } else {
+              continue;
+          }
 
-          if ((Boolean) condition.evaluate(id, null, iContext) == Boolean.TRUE)
-            return true;
+          if ((Boolean) condition.evaluate(id, null, iContext) == Boolean.TRUE) {
+              return true;
+          }
         }
       } else {
         // CHECK AGAINST A SINGLE VALUE
         for (final Object o : iterable) {
-          if (OQueryOperatorEquals.equals(iRight, o))
-            return true;
+          if (OQueryOperatorEquals.equals(iRight, o)) {
+              return true;
+          }
         }
       }
     } else if (iRight instanceof Iterable<?>) {
@@ -104,14 +109,16 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 
       if (condition != null) {
         for (final OIdentifiable o : iterable) {
-          if ((Boolean) condition.evaluate(o, null, iContext) == Boolean.TRUE)
-            return true;
+          if ((Boolean) condition.evaluate(o, null, iContext) == Boolean.TRUE) {
+              return true;
+          }
         }
       } else {
         // CHECK AGAINST A SINGLE VALUE
         for (final Object o : iterable) {
-          if (OQueryOperatorEquals.equals(iLeft, o))
-            return true;
+          if (OQueryOperatorEquals.equals(iLeft, o)) {
+              return true;
+          }
         }
       }
     }
@@ -120,8 +127,9 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 
   @Override
   public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
-    if (!(iLeft instanceof OSQLFilterCondition) && !(iRight instanceof OSQLFilterCondition))
-      return OIndexReuseType.INDEX_METHOD;
+    if (!(iLeft instanceof OSQLFilterCondition) && !(iRight instanceof OSQLFilterCondition)) {
+        return OIndexReuseType.INDEX_METHOD;
+    }
 
     return OIndexReuseType.NO_INDEX;
   }
@@ -132,27 +140,31 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 
     OIndexCursor cursor;
     final OIndexInternal<?> internalIndex = index.getInternal();
-    if (!internalIndex.canBeUsedInEqualityOperators())
-      return null;
+    if (!internalIndex.canBeUsedInEqualityOperators()) {
+        return null;
+    }
 
     if (indexDefinition.getParamCount() == 1) {
       final Object key;
-      if (indexDefinition instanceof OIndexDefinitionMultiValue)
-        key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
-      else
-        key = indexDefinition.createValue(keyParams);
+      if (indexDefinition instanceof OIndexDefinitionMultiValue) {
+          key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
+      } else {
+          key = indexDefinition.createValue(keyParams);
+      }
 
-      if (key == null)
-        return null;
+      if (key == null) {
+          return null;
+      }
 
       final Object indexResult;
 
       indexResult = index.get(key);
 
-      if (indexResult == null || indexResult instanceof OIdentifiable)
-        cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, key);
-      else
-        cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
+      if (indexResult == null || indexResult instanceof OIdentifiable) {
+          cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, key);
+      } else {
+          cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
+      }
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
@@ -161,8 +173,9 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
 
       final Object keyOne = compositeIndexDefinition.createSingleValue(keyParams);
 
-      if (keyOne == null)
-        return null;
+      if (keyOne == null) {
+          return null;
+      }
 
       final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
       if (internalIndex.hasRangeQuerySupport()) {
@@ -173,12 +186,14 @@ public class OQueryOperatorContains extends OQueryOperatorEqualityNotNulls {
           final Object indexResult;
           indexResult = index.get(keyOne);
 
-          if (indexResult == null || indexResult instanceof OIdentifiable)
-            cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
-          else
-            cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), keyOne);
-        } else
-          return null;
+          if (indexResult == null || indexResult instanceof OIdentifiable) {
+              cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
+          } else {
+              cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), keyOne);
+          }
+        } else {
+            return null;
+        }
       }
     }
 

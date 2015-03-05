@@ -114,13 +114,14 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       availableNodes = 0;
       int i = 0;
       for (String node : iNodes) {
-        if (reqQueues[i] != null && manager.isNodeAvailable(node, databaseName))
-          availableNodes++;
-        else {
-          if (ODistributedServerLog.isDebugEnabled())
-            ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
-                "skip expected response from node '%s' for request %s because it's not online (queue=%s)", node, iRequest,
-                reqQueues[i] != null);
+        if (reqQueues[i] != null && manager.isNodeAvailable(node, databaseName)) {
+            availableNodes++;
+        } else {
+          if (ODistributedServerLog.isDebugEnabled()) {
+              ODistributedServerLog.debug(this, getLocalNodeName(), node, DIRECTION.OUT,
+                      "skip expected response from node '%s' for request %s because it's not online (queue=%s)", node, iRequest,
+                      reqQueues[i] != null);
+            }
         }
         ++i;
       }
@@ -128,8 +129,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       // EXPECT ANSWER FROM ALL NODES WITH A QUEUE
       availableNodes = 0;
       for (IQueue<ODistributedRequest> q : reqQueues)
-        if (q != null)
-          availableNodes++;
+        if (q != null) {
+            availableNodes++;
+      }
     }
 
     final int quorum = calculateQuorum(iRequest, iClusterNames, cfg, availableNodes, iExecutionMode);
@@ -164,23 +166,26 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
         // TODO: CAN I MOVE THIS OUTSIDE?
         iRequest.setId(msgService.getMessageIdCounter().getAndIncrement());
 
-        if (ODistributedServerLog.isDebugEnabled())
-          ODistributedServerLog.debug(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT, "sending request %s", iRequest);
+        if (ODistributedServerLog.isDebugEnabled()) {
+            ODistributedServerLog.debug(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT, "sending request %s", iRequest);
+        }
 
         // TODO: CAN I MOVE THIS OUTSIDE?
         msgService.registerRequest(iRequest.getId(), currentResponseMgr);
 
         for (IQueue<ODistributedRequest> queue : reqQueues) {
-          if (queue != null)
-            queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
+          if (queue != null) {
+              queue.offer(iRequest, timeout, TimeUnit.MILLISECONDS);
+          }
         }
 
       } finally {
         requestLock.unlock();
       }
 
-      if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT, "sent request %s", iRequest);
+      if (ODistributedServerLog.isDebugEnabled()) {
+          ODistributedServerLog.debug(this, getLocalNodeName(), iNodes.toString(), DIRECTION.OUT, "sent request %s", iRequest);
+      }
 
       Orient
           .instance()
@@ -208,12 +213,13 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     unqueuePendingMessages(iRestoreMessages, iUnqueuePendingMessages, queueName, requestQueue);
 
-    if (iCallback != null)
-      try {
-        iCallback.call();
-      } catch (Exception e) {
-        throw new ODistributedException(e);
-      }
+    if (iCallback != null) {
+        try {
+            iCallback.call();
+        } catch (Exception e) {
+            throw new ODistributedException(e);
+        }
+    }
 
     setOnline();
 
@@ -251,9 +257,10 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
   protected void unqueuePendingMessages(boolean iRestoreMessages, boolean iUnqueuePendingMessages, String queueName,
       IQueue<ODistributedRequest> requestQueue) {
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE, "listening for incoming requests on queue: %s",
-          queueName);
+    if (ODistributedServerLog.isDebugEnabled()) {
+        ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE, "listening for incoming requests on queue: %s",
+                queueName);
+    }
 
     // UNDO PREVIOUS MESSAGE IF ANY
     restoreMessagesBeforeFailure(iRestoreMessages);
@@ -287,27 +294,30 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   protected boolean waitForLocalNode(final ODistributedConfiguration cfg, final Collection<String> iClusterNames,
       final Collection<String> iNodes) {
     boolean waitLocalNode = false;
-    if (iNodes.contains(getLocalNodeName()))
-      if (iClusterNames == null || iClusterNames.isEmpty()) {
-        // DEFAULT CLUSTER (*)
-        if (cfg.isReadYourWrites(null))
-          waitLocalNode = true;
-      } else
-        // BROWSE FOR ALL CLUSTER TO GET THE FIRST 'waitLocalNode'
-        for (String clName : iClusterNames) {
-          if (cfg.isReadYourWrites(clName)) {
-            waitLocalNode = true;
-            break;
-          }
+    if (iNodes.contains(getLocalNodeName())) {
+        if (iClusterNames == null || iClusterNames.isEmpty()) {
+            if (cfg.isReadYourWrites(null)) {
+                waitLocalNode = true;
+            }
+        } else {
+            // BROWSE FOR ALL CLUSTER TO GET THE FIRST 'waitLocalNode'
+            for (String clName : iClusterNames) {
+                if (cfg.isReadYourWrites(clName)) {
+                    waitLocalNode = true;
+                    break;
+                }
+            }
         }
+    }
     return waitLocalNode;
   }
 
   protected int calculateQuorum(final ODistributedRequest iRequest, final Collection<String> clusterNames,
       final ODistributedConfiguration cfg, final int iAvailableNodes, final ODistributedRequest.EXECUTION_MODE iExecutionMode) {
 
-    if (iAvailableNodes == 0 && iExecutionMode == ODistributedRequest.EXECUTION_MODE.RESPONSE)
-      throw new ODistributedException("Quorum cannot be reached because there are no nodes available");
+    if (iAvailableNodes == 0 && iExecutionMode == ODistributedRequest.EXECUTION_MODE.RESPONSE) {
+        throw new ODistributedException("Quorum cannot be reached because there are no nodes available");
+    }
 
     final String clusterName = clusterNames == null || clusterNames.isEmpty() ? null : clusterNames.iterator().next();
 
@@ -332,10 +342,10 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
     if (quorum > iAvailableNodes) {
       final boolean failureAvailableNodesLessQuorum = cfg.getFailureAvailableNodesLessQuorum(clusterName);
-      if (failureAvailableNodesLessQuorum)
-        throw new ODistributedException(
-            "Quorum cannot be reached because it is major than available nodes and failureAvailableNodesLessQuorum=true");
-      else {
+      if (failureAvailableNodesLessQuorum) {
+          throw new ODistributedException(
+                  "Quorum cannot be reached because it is major than available nodes and failureAvailableNodesLessQuorum=true");
+      } else {
         // SET THE QUORUM TO THE AVAILABLE NODE SIZE
         ODistributedServerLog.debug(this, getLocalNodeName(), null, DIRECTION.NONE,
             "quorum less then available nodes, downgrade quorum to %d", iAvailableNodes);
@@ -348,8 +358,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
 
   protected ODistributedResponse waitForResponse(final ODistributedRequest iRequest,
       final ODistributedResponseManager currentResponseMgr) throws InterruptedException {
-    if (iRequest.getExecutionMode() == ODistributedRequest.EXECUTION_MODE.NO_RESPONSE)
-      return null;
+    if (iRequest.getExecutionMode() == ODistributedRequest.EXECUTION_MODE.NO_RESPONSE) {
+        return null;
+    }
 
     final long beginTime = System.currentTimeMillis();
 
@@ -445,8 +456,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       }
     }
 
-    if (distribCfgDirty)
-      manager.updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
+    if (distribCfgDirty) {
+        manager.updateCachedDatabaseConfiguration(databaseName, cfg.serialize(), true, true);
+    }
   }
 
   protected void removeNodeInConfiguration(final String iNode, final boolean iForce) {
@@ -484,12 +496,13 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
       executeLastPendingRequest = ((ODeleteRecordTask) task).getRid().getRecord() != null;
     } else if (task instanceof OUpdateRecordTask) {
       final ORecord rec = ((OUpdateRecordTask) task).getRid().getRecord();
-      if (rec == null)
-        ODistributedServerLog.warn(this, getLocalNodeName(), lastPendingRequest.getSenderNodeName(), DIRECTION.IN,
-            "- cannot update deleted record %s, database could be not aligned", ((OUpdateRecordTask) task).getRid());
-      else
-        // EXECUTE ONLY IF VERSIONS DIFFER
-        executeLastPendingRequest = !rec.getRecordVersion().equals(((OUpdateRecordTask) task).getVersion());
+      if (rec == null) {
+          ODistributedServerLog.warn(this, getLocalNodeName(), lastPendingRequest.getSenderNodeName(), DIRECTION.IN,
+                  "- cannot update deleted record %s, database could be not aligned", ((OUpdateRecordTask) task).getRid());
+      } else {
+          // EXECUTE ONLY IF VERSIONS DIFFER
+          executeLastPendingRequest = !rec.getRecordVersion().equals(((OUpdateRecordTask) task).getVersion());
+      }
     } else if (task instanceof OCreateRecordTask) {
       // EXECUTE ONLY IF THE RECORD HASN'T BEEN CREATED YET
       executeLastPendingRequest = ((OCreateRecordTask) task).getRid().getRecord() == null;
@@ -499,28 +512,32 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
             ((OSQLCommandTask) task).getPayload());
       }
     } else if (task instanceof OResurrectRecordTask) {
-      if (((OResurrectRecordTask) task).getRid().getRecord() == null)
-        // ALREADY DELETED: CANNOT RESTORE IT
-        hotAlignmentError(lastPendingRequest, "Not able to resurrect deleted record '%s'", ((OResurrectRecordTask) task).getRid());
+      if (((OResurrectRecordTask) task).getRid().getRecord() == null) {
+          // ALREADY DELETED: CANNOT RESTORE IT
+          hotAlignmentError(lastPendingRequest, "Not able to resurrect deleted record '%s'", ((OResurrectRecordTask) task).getRid());
+      }
     } else if (task instanceof OTxTask) {
       // CHECK EACH TX ITEM IF HAS BEEN COMMITTED
       for (OAbstractRemoteTask t : ((OTxTask) task).getTasks()) {
         executeLastPendingRequest = checkIfOperationHasBeenExecuted(lastPendingRequest, t);
-        if (executeLastPendingRequest)
-          // REPEAT THE ENTIRE TX
-          return true;
+        if (executeLastPendingRequest) {
+            // REPEAT THE ENTIRE TX
+            return true;
+        }
       }
     } else if (task instanceof OFixTxTask) {
       // CHECK EACH FIX-TX ITEM IF HAS BEEN COMMITTED
       for (OAbstractRemoteTask t : ((OFixTxTask) task).getTasks()) {
         executeLastPendingRequest = checkIfOperationHasBeenExecuted(lastPendingRequest, t);
-        if (executeLastPendingRequest)
-          // REPEAT THE ENTIRE TX
-          return true;
+        if (executeLastPendingRequest) {
+            // REPEAT THE ENTIRE TX
+            return true;
+        }
       }
-    } else
-      hotAlignmentError(lastPendingRequest, "Not able to assure last operation has been completed before last crash. Task='%s'",
-          task);
+    } else {
+        hotAlignmentError(lastPendingRequest, "Not able to assure last operation has been completed before last crash. Task='%s'",
+                task);
+    }
     return executeLastPendingRequest;
   }
 }

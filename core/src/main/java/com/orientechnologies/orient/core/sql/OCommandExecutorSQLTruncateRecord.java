@@ -52,28 +52,32 @@ public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLAbstra
 
     int oldPos = 0;
     int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_TRUNCATE))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_TRUNCATE + " not found. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_TRUNCATE)) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_TRUNCATE + " not found. Use " + getSyntax(), parserText, oldPos);
+    }
 
     oldPos = pos;
     pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_RECORD))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_RECORD + " not found. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_RECORD)) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_RECORD + " not found. Use " + getSyntax(), parserText, oldPos);
+    }
 
     oldPos = pos;
     pos = nextWord(parserText, parserText, oldPos, word, true);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Expected one or more records. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1) {
+        throw new OCommandSQLParsingException("Expected one or more records. Use " + getSyntax(), parserText, oldPos);
+    }
 
-    if (word.charAt(0) == '[')
-      // COLLECTION
-      OStringSerializerHelper.getCollection(parserText, oldPos, records);
-    else {
+    if (word.charAt(0) == '[') {
+        // COLLECTION
+        OStringSerializerHelper.getCollection(parserText, oldPos, records);
+    } else {
       records.add(word.toString());
     }
 
-    if (records.isEmpty())
-      throw new OCommandSQLParsingException("Missed record(s). Use " + getSyntax(), parserText, oldPos);
+    if (records.isEmpty()) {
+        throw new OCommandSQLParsingException("Missed record(s). Use " + getSyntax(), parserText, oldPos);
+    }
     return this;
   }
 
@@ -81,8 +85,9 @@ public class OCommandExecutorSQLTruncateRecord extends OCommandExecutorSQLAbstra
    * Execute the command.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (records.isEmpty())
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    if (records.isEmpty()) {
+        throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    }
 
     final ODatabaseDocumentInternal database = getDatabase();
     for (String rec : records) {

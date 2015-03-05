@@ -45,8 +45,9 @@ public class OBinaryConverterFactory {
   public static OBinaryConverter getConverter() {
     boolean useUnsafe = OGlobalConfiguration.MEMORY_USE_UNSAFE.getValueAsBoolean();
 
-    if (useUnsafe && unsafeWasDetected)
-      return OUnsafeBinaryConverter.INSTANCE;
+    if (useUnsafe && unsafeWasDetected) {
+        return OUnsafeBinaryConverter.INSTANCE;
+    }
 
     return OSafeBinaryConverter.INSTANCE;
   }

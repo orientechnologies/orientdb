@@ -191,15 +191,18 @@ public class BlueprintsConcurrentAddEdgeTest {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
+      if (this == o) {
+          return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+          return false;
+      }
 
       TestEdge testEdge = (TestEdge) o;
 
-      if (uuid != null ? !uuid.equals(testEdge.uuid) : testEdge.uuid != null)
-        return false;
+      if (uuid != null ? !uuid.equals(testEdge.uuid) : testEdge.uuid != null) {
+          return false;
+      }
 
       return true;
     }
@@ -319,8 +322,9 @@ public class BlueprintsConcurrentAddEdgeTest {
           }
 
           currentUUID = vertexesToCreate.higherKey(currentUUID);
-          if (currentUUID == null)
-            currentUUID = vertexesToCreate.firstKey();
+          if (currentUUID == null) {
+              currentUUID = vertexesToCreate.firstKey();
+          }
         } while (!startUUID.equals(currentUUID));
       } catch (Exception e) {
         e.printStackTrace();

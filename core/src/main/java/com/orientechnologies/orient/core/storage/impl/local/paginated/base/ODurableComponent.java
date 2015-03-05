@@ -102,18 +102,20 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
   protected void logPageChanges(ODurablePage localPage, long fileId, long pageIndex, boolean isNewPage) throws IOException {
     if (writeAheadLog != null) {
       final OPageChanges pageChanges = localPage.getPageChanges();
-      if (pageChanges.isEmpty())
-        return;
+      if (pageChanges.isEmpty()) {
+          return;
+      }
 
       final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
       assert atomicOperation != null;
 
       final OOperationUnitId unitId = atomicOperation.getOperationUnitId();
       final OLogSequenceNumber prevLsn;
-      if (isNewPage)
-        prevLsn = atomicOperation.getStartLSN();
-      else
-        prevLsn = localPage.getLsn();
+      if (isNewPage) {
+          prevLsn = atomicOperation.getStartLSN();
+      } else {
+          prevLsn = localPage.getLsn();
+      }
 
       final OLogSequenceNumber lsn = writeAheadLog.log(new OUpdatePageRecord(pageIndex, fileId, unitId, pageChanges, prevLsn, atomicOperation.getStartLSN()));
       localPage.setLsn(lsn);
@@ -140,21 +142,24 @@ public abstract class ODurableComponent extends OSharedResourceAdaptive {
     final OStorageTransaction transaction = storage.getStorageTransaction();
 
     final OTransaction clientTx;
-    if (transaction != null)
-      clientTx = transaction.getClientTx();
-    else
-      clientTx = null;
+    if (transaction != null) {
+        clientTx = transaction.getClientTx();
+    } else {
+        clientTx = null;
+    }
 
-    if (storage instanceof ODirectMemoryStorage && transaction == null)
-      return ODurablePage.TrackMode.NONE;
+    if (storage instanceof ODirectMemoryStorage && transaction == null) {
+        return ODurablePage.TrackMode.NONE;
+    }
 
     // very risky and not durable case which may lead to data corruption.
-    if (clientTx instanceof OTransactionOptimistic && !clientTx.isUsingLog())
-      trackMode = ODurablePage.TrackMode.NONE;
-    else if (writeAheadLog == null)
-      trackMode = ODurablePage.TrackMode.NONE;
-    else
-      trackMode = ODurablePage.TrackMode.FULL;
+    if (clientTx instanceof OTransactionOptimistic && !clientTx.isUsingLog()) {
+        trackMode = ODurablePage.TrackMode.NONE;
+    } else if (writeAheadLog == null) {
+        trackMode = ODurablePage.TrackMode.NONE;
+    } else {
+        trackMode = ODurablePage.TrackMode.FULL;
+    }
 
     return trackMode;
   }

@@ -56,12 +56,14 @@ public class OObjectSerializerHelperDocument implements OObjectSerializerHelperI
   }
 
   private void getClassFields(final Class<?> iClass) {
-    if (iClass.getName().startsWith("java.lang"))
-      return;
+    if (iClass.getName().startsWith("java.lang")) {
+        return;
+    }
 
     synchronized (classes) {
-      if (classes.contains(iClass.getName()))
-        return;
+      if (classes.contains(iClass.getName())) {
+          return;
+      }
 
       analyzeClass(iClass);
     }
@@ -75,23 +77,27 @@ public class OObjectSerializerHelperDocument implements OObjectSerializerHelperI
     for (Class<?> currentClass = iClass; currentClass != Object.class; ) {
       for (Field f : currentClass.getDeclaredFields()) {
         fieldModifier = f.getModifiers();
-        if (Modifier.isStatic(fieldModifier) || Modifier.isNative(fieldModifier) || Modifier.isTransient(fieldModifier))
-          continue;
+        if (Modifier.isStatic(fieldModifier) || Modifier.isNative(fieldModifier) || Modifier.isTransient(fieldModifier)) {
+            continue;
+        }
 
-        if (f.getName().equals("this$0"))
-          continue;
+        if (f.getName().equals("this$0")) {
+            continue;
+        }
 
         // CHECK FOR AUTO-BINDING
-        if (f.getAnnotation(ODocumentInstance.class) != null)
-          // BOUND DOCUMENT ON IT
-          boundDocumentFields.put(iClass, f);
+        if (f.getAnnotation(ODocumentInstance.class) != null) {
+            // BOUND DOCUMENT ON IT
+            boundDocumentFields.put(iClass, f);
+        }
       }
       currentClass = currentClass.getSuperclass();
 
-      if (currentClass.equals(ODocument.class))
-        // POJO EXTENDS ODOCUMENT: SPECIAL CASE: AVOID TO CONSIDER
-        // ODOCUMENT FIELDS
-        break;
+      if (currentClass.equals(ODocument.class)) {
+          // POJO EXTENDS ODOCUMENT: SPECIAL CASE: AVOID TO CONSIDER
+          // ODOCUMENT FIELDS
+          break;
+      }
     }
   }
 

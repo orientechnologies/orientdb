@@ -55,11 +55,13 @@ public class OServerCommandPostImportRecords extends OServerCommandDocumentAbstr
      try {
 
        final OClass cls = db.getMetadata().getSchema().getClass(urlParts[3]);
-       if (cls == null)
-         throw new IllegalArgumentException("Class '" + urlParts[3] + " is not defined");
+       if (cls == null) {
+           throw new IllegalArgumentException("Class '" + urlParts[3] + " is not defined");
+       }
 
-       if (iRequest.content == null)
-         throw new IllegalArgumentException("Empty content");
+       if (iRequest.content == null) {
+           throw new IllegalArgumentException("Empty content");
+       }
 
        if (urlParts[2].equalsIgnoreCase("csv")) {
          final char separator = urlParts.length > 4 ? urlParts[4].charAt(0) : CSV_SEPARATOR;
@@ -68,8 +70,9 @@ public class OServerCommandPostImportRecords extends OServerCommandDocumentAbstr
 
          final BufferedReader reader = new BufferedReader(new StringReader(iRequest.content));
          String header = reader.readLine();
-         if (header==null || (header=header.trim()).length() == 0)
-           throw new InputMismatchException("Missing CSV file header");
+         if (header==null || (header=header.trim()).length() == 0) {
+             throw new InputMismatchException("Missing CSV file header");
+         }
 
          final List<String> columns = OStringSerializerHelper.smartSplit(header, separator);
          for (int i = 0; i < columns.size(); ++i)
@@ -89,8 +92,9 @@ public class OServerCommandPostImportRecords extends OServerCommandDocumentAbstr
          for (line = 2; reader.ready(); line++) {
            try {
              final String parsedRow = reader.readLine();
-             if (parsedRow == null)
-               break;
+             if (parsedRow == null) {
+                 break;
+             }
 
              final ODocument doc = new ODocument(cls);
              final String row = parsedRow.trim();
@@ -102,14 +106,15 @@ public class OServerCommandPostImportRecords extends OServerCommandDocumentAbstr
 
                String cellValue = parsedCell.trim();
 
-               if (cellValue.length() == 0 || cellValue.equalsIgnoreCase("null"))
-                 continue;
+               if (cellValue.length() == 0 || cellValue.equalsIgnoreCase("null")) {
+                   continue;
+               }
 
                Object value;
                if (cellValue.length() >= 2 && cellValue.charAt(0) == stringDelimiter
-                   && cellValue.charAt(cellValue.length() - 1) == stringDelimiter)
-                 value = OStringSerializerHelper.getStringContent(cellValue);
-               else {
+                   && cellValue.charAt(cellValue.length() - 1) == stringDelimiter) {
+                   value = OStringSerializerHelper.getStringContent(cellValue);
+               } else {
                  try {
                    value = numberFormat.parse(cellValue);
                  } catch (Exception e) {
@@ -141,12 +146,14 @@ public class OServerCommandPostImportRecords extends OServerCommandDocumentAbstr
              message, null);
          return false;
 
-       } else
-         throw new UnsupportedOperationException("Unsupported format on importing record. Available formats are: csv");
+       } else {
+           throw new UnsupportedOperationException("Unsupported format on importing record. Available formats are: csv");
+       }
 
      } finally {
-       if (db != null)
-         db.close();
+       if (db != null) {
+           db.close();
+       }
      }
    }
 

@@ -65,8 +65,9 @@ public class OSBTreeBonsaiNonLeafBucketTest {
     for (Long key : keys) {
       if (!treeBucket.addEntry(index,
           new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(new OBonsaiBucketPointer(random.nextInt(Integer.MAX_VALUE),
-              8192 * 2), new OBonsaiBucketPointer(random.nextInt(Integer.MAX_VALUE), 8192 * 2), key, null), true))
-        break;
+              8192 * 2), new OBonsaiBucketPointer(random.nextInt(Integer.MAX_VALUE), 8192 * 2), key, null), true)) {
+          break;
+      }
 
       keyIndexMap.put(key, index);
       index++;
@@ -83,8 +84,9 @@ public class OSBTreeBonsaiNonLeafBucketTest {
     for (int i = 0; i < treeBucket.size(); i++) {
       OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable> entry = treeBucket.getEntry(i);
 
-      if (prevRight.getPageIndex() > 0)
-        Assert.assertEquals(entry.leftChild, prevRight);
+      if (prevRight.getPageIndex() > 0) {
+          Assert.assertEquals(entry.leftChild, prevRight);
+      }
 
       prevRight = entry.rightChild;
     }
@@ -93,8 +95,9 @@ public class OSBTreeBonsaiNonLeafBucketTest {
     for (int i = treeBucket.size() - 1; i >= 0; i--) {
       OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable> entry = treeBucket.getEntry(i);
 
-      if (prevLeft.getPageIndex() > 0)
-        Assert.assertEquals(entry.rightChild, prevLeft);
+      if (prevLeft.getPageIndex() > 0) {
+          Assert.assertEquals(entry.rightChild, prevLeft);
+      }
 
       prevLeft = entry.leftChild;
     }
@@ -123,8 +126,9 @@ public class OSBTreeBonsaiNonLeafBucketTest {
     int index = 0;
     for (Long key : keys) {
       if (!treeBucket.addEntry(index, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(new OBonsaiBucketPointer(index,
-          8192 * 2), new OBonsaiBucketPointer(index + 1, 8192 * 2), key, null), true))
-        break;
+          8192 * 2), new OBonsaiBucketPointer(index + 1, 8192 * 2), key, null), true)) {
+          break;
+      }
 
       index++;
     }
@@ -163,8 +167,9 @@ public class OSBTreeBonsaiNonLeafBucketTest {
       Long key = keysIterator.next();
 
       if (!treeBucket.addEntry(index, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(new OBonsaiBucketPointer(index,
-          8192 * 2), new OBonsaiBucketPointer(index + 1, 8192 * 2), key, null), true))
-        break;
+          8192 * 2), new OBonsaiBucketPointer(index + 1, 8192 * 2), key, null), true)) {
+          break;
+      }
 
       keyIndexMap.put(key, index);
       index++;

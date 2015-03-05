@@ -49,19 +49,24 @@ public class ODirtyPage {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
 
     ODirtyPage that = (ODirtyPage) o;
 
-    if (pageIndex != that.pageIndex)
-      return false;
-    if (!fileName.equals(that.fileName))
-      return false;
-    if (!lsn.equals(that.lsn))
-      return false;
+    if (pageIndex != that.pageIndex) {
+        return false;
+    }
+    if (!fileName.equals(that.fileName)) {
+        return false;
+    }
+    if (!lsn.equals(that.lsn)) {
+        return false;
+    }
 
     return true;
   }

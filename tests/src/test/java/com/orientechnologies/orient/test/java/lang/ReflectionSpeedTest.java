@@ -30,8 +30,9 @@ public class ReflectionSpeedTest extends SpeedTestMonoThread {
 	public ReflectionSpeedTest() throws SecurityException, NoSuchFieldException {
 		super(10000000);
 		field = Account.class.getDeclaredField("name");
-		if (!field.isAccessible())
-			field.setAccessible(true);
+		if (!field.isAccessible()) {
+                    field.setAccessible(true);
+                }
 	}
 
 	@Override

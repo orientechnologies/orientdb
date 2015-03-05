@@ -397,8 +397,9 @@ public class OrientCommitMT {
         ORID newRecordId = vertex.getIdentity();
         return new IdPair(newRecordId, id);
       } finally {
-        if (closeDb)
-          graph.shutdown();
+        if (closeDb) {
+            graph.shutdown();
+        }
       }
     }
 
@@ -438,8 +439,9 @@ public class OrientCommitMT {
         int index = random.nextInt(size);
         return idsInDb.get(index);
       } finally {
-        if (closeDb)
-          graph.shutdown();
+        if (closeDb) {
+            graph.shutdown();
+        }
       }
 
     }

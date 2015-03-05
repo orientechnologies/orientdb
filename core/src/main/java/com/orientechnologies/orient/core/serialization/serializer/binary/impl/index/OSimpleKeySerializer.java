@@ -84,23 +84,26 @@ public class OSimpleKeySerializer<T extends Comparable<?>> implements OBinarySer
     if (binarySerializer == null) {
       final OType[] types;
 
-      if (hints != null && hints.length > 0)
-        types = (OType[]) hints;
-      else
-        types = new OType[0];
+      if (hints != null && hints.length > 0) {
+          types = (OType[]) hints;
+      } else {
+          types = new OType[0];
+      }
 
-      if (types.length > 0)
-        type = types[0];
-      else
-        type = OType.getTypeByClass(key.getClass());
+      if (types.length > 0) {
+          type = types[0];
+      } else {
+          type = OType.getTypeByClass(key.getClass());
+      }
 
       binarySerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(type);
     }
   }
 
   protected void init(byte serializerId) {
-    if (binarySerializer == null)
-      binarySerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(serializerId);
+    if (binarySerializer == null) {
+        binarySerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(serializerId);
+    }
   }
 
   public int getObjectSizeNative(byte[] stream, int startPosition) {

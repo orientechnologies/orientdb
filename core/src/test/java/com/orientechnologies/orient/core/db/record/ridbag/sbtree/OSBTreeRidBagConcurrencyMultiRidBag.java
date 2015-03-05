@@ -67,10 +67,12 @@ public class OSBTreeRidBagConcurrencyMultiRidBag {
         while (true) {
           final long position = lastClusterPosition.get();
           if (position < document.getIdentity().getClusterPosition()) {
-            if (lastClusterPosition.compareAndSet(position, document.getIdentity().getClusterPosition()))
+            if (lastClusterPosition.compareAndSet(position, document.getIdentity().getClusterPosition())) {
+                break;
+            }
+          } else {
               break;
-          } else
-            break;
+          }
         }
       } catch (RuntimeException e) {
         e.printStackTrace();
@@ -183,8 +185,9 @@ public class OSBTreeRidBagConcurrencyMultiRidBag {
                 ridsToDelete.add(identifiable.getIdentity());
               }
 
-              if (counter >= 5)
-                break;
+              if (counter >= 5) {
+                  break;
+              }
             }
 
             try {

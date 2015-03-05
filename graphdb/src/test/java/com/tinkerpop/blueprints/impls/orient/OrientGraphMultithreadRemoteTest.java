@@ -54,10 +54,11 @@ public class OrientGraphMultithreadRemoteTest  {
     server.shutdown();
     Thread.sleep(1000);
 
-    if (oldOrientDBHome != null)
-      System.setProperty("ORIENTDB_HOME", oldOrientDBHome);
-    else
-      System.clearProperty("ORIENTDB_HOME");
+    if (oldOrientDBHome != null) {
+        System.setProperty("ORIENTDB_HOME", oldOrientDBHome);
+    } else {
+        System.clearProperty("ORIENTDB_HOME");
+    }
 
     final File file = new File(serverHome);
     deleteDirectory(file);
@@ -72,8 +73,9 @@ public class OrientGraphMultithreadRemoteTest  {
     try {
       final OServerAdmin serverAdmin = new OServerAdmin(url);
       serverAdmin.connect("root", "root");
-      if (!serverAdmin.existsDatabase(OrientGraphTest.getStorageType()))
-        serverAdmin.createDatabase("graph", OrientGraphTest.getStorageType());
+      if (!serverAdmin.existsDatabase(OrientGraphTest.getStorageType())) {
+          serverAdmin.createDatabase("graph", OrientGraphTest.getStorageType());
+      }
 
       serverAdmin.close();
 

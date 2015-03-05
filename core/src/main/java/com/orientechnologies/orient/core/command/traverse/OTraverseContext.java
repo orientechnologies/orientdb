@@ -56,17 +56,18 @@ public class OTraverseContext extends OBasicCommandContext {
   public Object getVariable(final String iName) {
     final String name = iName.trim().toUpperCase();
 
-    if ("DEPTH".startsWith(name))
-      return getDepth();
-    else if (name.startsWith("PATH"))
-      return ODocumentHelper.getFieldValue(getPath(), iName.substring("PATH".length()));
-    else if (name.startsWith("STACK"))
-      return ODocumentHelper.getFieldValue(memory.getUnderlying(), iName.substring("STACK".length()));
-    else if (name.startsWith("HISTORY"))
-      return ODocumentHelper.getFieldValue(history, iName.substring("HISTORY".length()));
-    else
-      // DELEGATE
-      return super.getVariable(iName);
+    if ("DEPTH".startsWith(name)) {
+        return getDepth();
+    } else if (name.startsWith("PATH")) {
+        return ODocumentHelper.getFieldValue(getPath(), iName.substring("PATH".length()));
+    } else if (name.startsWith("STACK")) {
+        return ODocumentHelper.getFieldValue(memory.getUnderlying(), iName.substring("STACK".length()));
+    } else if (name.startsWith("HISTORY")) {
+        return ODocumentHelper.getFieldValue(history, iName.substring("HISTORY".length()));
+    } else {
+        // DELEGATE
+        return super.getVariable(iName);
+    }
   }
 
   public void pop() {
@@ -107,10 +108,11 @@ public class OTraverseContext extends OBasicCommandContext {
   }
 
   public void setStrategy(OTraverse.STRATEGY strategy) {
-    if (strategy == OTraverse.STRATEGY.BREADTH_FIRST)
-      memory = new QueueMemory(memory);
-    else
-      memory = new StackMemory(memory);
+    if (strategy == OTraverse.STRATEGY.BREADTH_FIRST) {
+        memory = new QueueMemory(memory);
+    } else {
+        memory = new StackMemory(memory);
+    }
   }
 
   private interface Memory {

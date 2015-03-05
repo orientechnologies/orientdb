@@ -53,8 +53,9 @@ public class OServerConfigurationLoaderXml {
       if (file != null) {
         String path = OFileUtils.getPath(file.getAbsolutePath());
         String current = OFileUtils.getPath(new File("").getAbsolutePath());
-        if (path.startsWith(current))
-          path = path.substring(current.length() + 1);
+        if (path.startsWith(current)) {
+            path = path.substring(current.length() + 1);
+        }
         OLogManager.instance().info(this, "Loading configuration from: %s...", path);
       } else {
         OLogManager.instance().info(this, "Loading configuration from input stream");
@@ -67,9 +68,9 @@ public class OServerConfigurationLoaderXml {
       final OServerConfiguration obj;
 
       if (file != null) {
-        if (file.exists())
-          obj = rootClass.cast(unmarshaller.unmarshal(file));
-        else {
+        if (file.exists()) {
+            obj = rootClass.cast(unmarshaller.unmarshal(file));
+        } else {
           OLogManager.instance().error(this, "Server configuration file not found: %s", file);
           return rootClass.getConstructor(OServerConfigurationLoaderXml.class).newInstance(this);
         }
@@ -81,16 +82,17 @@ public class OServerConfigurationLoaderXml {
 
       // AUTO CONFIGURE SYSTEM CONFIGURATION
       OGlobalConfiguration config;
-      if (obj.properties != null)
-        for (OServerEntryConfiguration prop : obj.properties) {
-          try {
-            config = OGlobalConfiguration.findByKey(prop.name);
-            if (config != null) {
-              config.setValue(prop.value);
-            }
-          } catch (Exception e) {
+      if (obj.properties != null) {
+          for (OServerEntryConfiguration prop : obj.properties) {
+              try {
+                  config = OGlobalConfiguration.findByKey(prop.name);
+                  if (config != null) {
+                      config.setValue(prop.value);
+                  }
+              } catch (Exception e) {
+              }
           }
-        }
+      }
 
       return obj;
     } catch (Exception e) {
@@ -111,15 +113,16 @@ public class OServerConfigurationLoaderXml {
   }
 
   public void save(final OServerConfiguration iRootObject) throws IOException {
-    if (file != null)
-      try {
-        context = JAXBContext.newInstance(rootClass);
-        Marshaller marshaller = context.createMarshaller();
-        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
-        marshaller.marshal(iRootObject, new FileWriter(file));
-      } catch (JAXBException e) {
-        throw new IOException(e);
-      }
+    if (file != null) {
+        try {
+            context = JAXBContext.newInstance(rootClass);
+            Marshaller marshaller = context.createMarshaller();
+            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+            marshaller.marshal(iRootObject, new FileWriter(file));
+        } catch (JAXBException e) {
+            throw new IOException(e);
+        }
+    }
   }
 
   public File getFile() {

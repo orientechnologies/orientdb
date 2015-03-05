@@ -32,17 +32,21 @@ public class SimplePerson {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (!(o instanceof SimplePerson))
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (!(o instanceof SimplePerson)) {
+        return false;
+    }
 
     SimplePerson person = (SimplePerson) o;
 
-    if (!getAnimals().equals(person.getAnimals()))
-      return false;
-    if (!getName().equals(person.getName()))
-      return false;
+    if (!getAnimals().equals(person.getAnimals())) {
+        return false;
+    }
+    if (!getName().equals(person.getName())) {
+        return false;
+    }
 
     return true;
   }

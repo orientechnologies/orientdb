@@ -112,12 +112,14 @@ public class TestNetworkSerializerIndipendency {
   }
 
   private void deleteDirectory(File iDirectory) {
-    if (iDirectory.isDirectory())
-      for (File f : iDirectory.listFiles()) {
-        if (f.isDirectory())
-          deleteDirectory(f);
-        else if (!f.delete())
-          throw new OConfigurationException("Can't delete the file: " + f);
-      }
+    if (iDirectory.isDirectory()) {
+        for (File f : iDirectory.listFiles()) {
+            if (f.isDirectory()) {
+                deleteDirectory(f);
+            } else if (!f.delete()) {
+                throw new OConfigurationException("Can't delete the file: " + f);
+            }
+        }
+    }
   }
 }

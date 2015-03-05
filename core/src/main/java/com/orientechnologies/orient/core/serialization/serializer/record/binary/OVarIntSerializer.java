@@ -126,8 +126,9 @@ public class OVarIntSerializer {
     while (((b = bytes.bytes[bytes.offset++]) & 0x80L) != 0) {
       value |= (b & 0x7F) << i;
       i += 7;
-      if (i > 63)
-        throw new IllegalArgumentException("Variable length quantity is too long (must be <= 63)");
+      if (i > 63) {
+          throw new IllegalArgumentException("Variable length quantity is too long (must be <= 63)");
+      }
     }
     return value | (b << i);
   }

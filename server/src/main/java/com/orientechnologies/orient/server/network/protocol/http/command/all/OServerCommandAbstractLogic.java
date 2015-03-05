@@ -43,8 +43,9 @@ public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenti
       db = getProfiledDatabaseInstance(iRequest);
 
       final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(parts[2]);
-      if (f == null)
-        throw new IllegalArgumentException("Function '" + parts[2] + "' is not configured");
+      if (f == null) {
+          throw new IllegalArgumentException("Function '" + parts[2] + "' is not configured");
+      }
 
       if (iRequest.httpMethod.equalsIgnoreCase("GET") && !f.isIdempotent()) {
         iResponse.send(OHttpUtils.STATUS_BADREQ_CODE, OHttpUtils.STATUS_BADREQ_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
@@ -70,8 +71,9 @@ public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenti
 
       final StringBuilder msg = new StringBuilder(256);
       for (Exception currentException = e; currentException != null; currentException = (Exception) currentException.getCause()) {
-        if (msg.length() > 0)
-          msg.append("\n");
+        if (msg.length() > 0) {
+            msg.append("\n");
+        }
         msg.append(currentException.getMessage());
       }
 
@@ -79,8 +81,9 @@ public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenti
           msg.toString(), null);
 
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) {
+          db.close();
+      }
     }
 
     return false;

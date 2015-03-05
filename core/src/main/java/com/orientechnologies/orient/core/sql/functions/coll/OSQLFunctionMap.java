@@ -44,31 +44,33 @@ public class OSQLFunctionMap extends OSQLFunctionMultiValueAbstract<Map<Object, 
   public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       OCommandContext iContext) {
 
-    if (iParams.length > 2)
-      // IN LINE MODE
-      context = new HashMap<Object, Object>();
+    if (iParams.length > 2) {
+        // IN LINE MODE
+        context = new HashMap<Object, Object>();
+    }
 
     if (iParams.length == 1) {
-      if (iParams[0] instanceof Map<?, ?>)
-        // INSERT EVERY SINGLE COLLECTION ITEM
-        context.putAll((Map<Object, Object>) iParams[0]);
-      else
-        throw new IllegalArgumentException("Map function: expected a map or pairs of parameters as key, value");
-    } else if (iParams.length % 2 != 0)
-      throw new IllegalArgumentException("Map function: expected a map or pairs of parameters as key, value");
-    else
-      for (int i = 0; i < iParams.length; i += 2) {
-        final Object key = iParams[i];
-        final Object value = iParams[i + 1];
-
-        if (value != null) {
-          if (iParams.length <= 2 && context == null)
-            // AGGREGATION MODE (STATEFULL)
-            context = new HashMap<Object, Object>();
-
-          context.put(key, value);
-        }
+      if (iParams[0] instanceof Map<?, ?>) {
+          // INSERT EVERY SINGLE COLLECTION ITEM
+          context.putAll((Map<Object, Object>) iParams[0]);
+      } else {
+          throw new IllegalArgumentException("Map function: expected a map or pairs of parameters as key, value");
       }
+    } else if (iParams.length % 2 != 0) {
+        throw new IllegalArgumentException("Map function: expected a map or pairs of parameters as key, value");
+    } else {
+        for (int i = 0; i < iParams.length; i += 2) {
+            final Object key = iParams[i];
+            final Object value = iParams[i + 1];
+            if (value != null) {
+                if (iParams.length <= 2 && context == null) {
+                    // AGGREGATION MODE (STATEFULL)
+                    context = new HashMap<Object, Object>();
+                }
+                context.put(key, value);
+            }
+        }
+    }
 
     return prepareResult(context);
   }

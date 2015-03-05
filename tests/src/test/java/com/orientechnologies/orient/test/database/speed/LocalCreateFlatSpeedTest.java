@@ -47,10 +47,11 @@ public class LocalCreateFlatSpeedTest extends OrientMonoThreadTest {
     Orient.instance().getProfiler().startRecording();
 
     database = new ODatabaseDocumentTx(System.getProperty("url"));
-    if (database.exists())
-      database.open("admin", "admin");
-    else
-      database.create();
+    if (database.exists()) {
+        database.open("admin", "admin");
+    } else {
+        database.create();
+    }
 
     record = new ORecordFlat();
 
@@ -65,14 +66,16 @@ public class LocalCreateFlatSpeedTest extends OrientMonoThreadTest {
         "Account@id:" + data.getCyclesDone() + ",name:'Luca',surname:'Garulli',birthDate:" + date + "salary:"
             + (data.getCyclesDone() + 3000) + ".00").save("flat");
 
-    if (data.getCyclesDone() == data.getCycles() - 1)
-      database.commit();
+    if (data.getCyclesDone() == data.getCycles() - 1) {
+        database.commit();
+    }
   }
 
   @Override
   public void deinit() {
-    if (database != null)
-      database.close();
+    if (database != null) {
+        database.close();
+    }
     super.deinit();
   }
 }

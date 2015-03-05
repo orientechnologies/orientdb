@@ -19,8 +19,9 @@ public class MemoryLeaksTest {
       ODocument vDoc = new ODocument();
       vDoc.field("test", new byte[100000]);
       vDoc.save();
-      if (i % 10 == 0)
-        System.out.println("Records created:" + i + " cacheSize: " + vDb.getLocalCache().getSize());
+      if (i % 10 == 0) {
+          System.out.println("Records created:" + i + " cacheSize: " + vDb.getLocalCache().getSize());
+      }
     }
   }
 }

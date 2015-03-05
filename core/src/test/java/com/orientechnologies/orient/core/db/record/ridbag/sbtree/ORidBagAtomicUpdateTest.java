@@ -679,8 +679,9 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
           k++;
         }
 
-        if (!iterator.hasNext())
-          iterator = staleRidBag.iterator();
+        if (!iterator.hasNext()) {
+            iterator = staleRidBag.iterator();
+        }
       }
 
       for (k = 0; k < amountOfAddedDocsAfterSave; k++) {
@@ -1211,8 +1212,9 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
       addedDocs.add(docToAdd.getIdentity());
       ridBag.add(docToAdd);
 
-      if (level + 1 < levels)
-        createDocsForLevel(amountOfAddedDocsPerLevel, level + 1, levels, addedDocPerLevel, docToAdd);
+      if (level + 1 < levels) {
+          createDocsForLevel(amountOfAddedDocsPerLevel, level + 1, levels, addedDocPerLevel, docToAdd);
+      }
     }
 
     rootDoc.save();
@@ -1222,8 +1224,9 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     ORidBag ridBag = rootDoc.field("ridBag");
     for (OIdentifiable identifiable : ridBag) {
       ODocument doc = identifiable.getRecord();
-      if (level + 1 < levels)
-        deleteDocsForLevel(amountOfDeletedDocsPerLevel, level + 1, levels, doc, rnd);
+      if (level + 1 < levels) {
+          deleteDocsForLevel(amountOfDeletedDocsPerLevel, level + 1, levels, doc, rnd);
+      }
     }
 
     int docs = amountOfDeletedDocsPerLevel.get(level);
@@ -1238,8 +1241,9 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
         k++;
       }
 
-      if (!iterator.hasNext())
-        iterator = ridBag.iterator();
+      if (!iterator.hasNext()) {
+          iterator = ridBag.iterator();
+      }
     }
     rootDoc.save();
 
@@ -1250,8 +1254,9 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
 
     for (OIdentifiable identifiable : ridBag) {
       ODocument doc = identifiable.getRecord();
-      if (level + 1 < levels)
-        addDocsForLevel(amountOfAddedDocsAfterSavePerLevel, level + 1, levels, doc);
+      if (level + 1 < levels) {
+          addDocsForLevel(amountOfAddedDocsAfterSavePerLevel, level + 1, levels, doc);
+      }
     }
 
     int docs = amountOfAddedDocsAfterSavePerLevel.get(level);
@@ -1272,10 +1277,11 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     Iterator<OIdentifiable> iterator = ridBag.iterator();
     while (iterator.hasNext()) {
       ODocument doc = iterator.next().getRecord();
-      if (level + 1 < levels)
-        assertDocsAfterRollback(level + 1, levels, addedDocPerLevel, doc);
-      else
-        Assert.assertNull(doc.field("ridBag"));
+      if (level + 1 < levels) {
+          assertDocsAfterRollback(level + 1, levels, addedDocPerLevel, doc);
+      } else {
+          Assert.assertNull(doc.field("ridBag"));
+      }
 
       Assert.assertTrue(addedDocs.remove(doc));
     }
@@ -1294,17 +1300,21 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
+      if (this == o) {
+          return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+          return false;
+      }
 
       LevelKey levelKey = (LevelKey) o;
 
-      if (level != levelKey.level)
-        return false;
-      if (!rid.equals(levelKey.rid))
-        return false;
+      if (level != levelKey.level) {
+          return false;
+      }
+      if (!rid.equals(levelKey.rid)) {
+          return false;
+      }
 
       return true;
     }

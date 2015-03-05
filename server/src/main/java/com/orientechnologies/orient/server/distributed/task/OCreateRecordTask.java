@@ -88,16 +88,18 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
     getRecord();
 
-    if (ORecordId.isPersistent(rid.getClusterPosition()))
-      // OVERWRITE RID TO BE TEMPORARY
-      ORecordInternal.setIdentity(record, rid.getClusterId(), ORID.CLUSTER_POS_INVALID);
+    if (ORecordId.isPersistent(rid.getClusterPosition())) {
+        // OVERWRITE RID TO BE TEMPORARY
+        ORecordInternal.setIdentity(record, rid.getClusterId(), ORID.CLUSTER_POS_INVALID);
+    }
 
-    if (clusterId > -1)
-      record.save(database.getClusterNameById(clusterId), true);
-    else if (rid.getClusterId() != -1)
-      record.save(database.getClusterNameById(rid.getClusterId()), true);
-    else
-      record.save();
+    if (clusterId > -1) {
+        record.save(database.getClusterNameById(clusterId), true);
+    } else if (rid.getClusterId() != -1) {
+        record.save(database.getClusterNameById(rid.getClusterId()), true);
+    } else {
+        record.save();
+    }
 
     rid = (ORecordId) record.getIdentity();
 
@@ -116,8 +118,9 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public ODeleteRecordTask getFixTask(final ODistributedRequest iRequest, OAbstractRemoteTask iOriginalTask,
       final Object iBadResponse, final Object iGoodResponse) {
-    if (iBadResponse instanceof Throwable)
-      return null;
+    if (iBadResponse instanceof Throwable) {
+        return null;
+    }
 
     final OPlaceholder badResult = (OPlaceholder) iBadResponse;
     return new ODeleteRecordTask(new ORecordId(badResult.getIdentity()), badResult.getRecordVersion()).setDelayed(false);
@@ -125,8 +128,9 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
 
   @Override
   public ODeleteRecordTask getUndoTask(final ODistributedRequest iRequest, final Object iBadResponse) {
-    if (iBadResponse instanceof Throwable)
-      return null;
+    if (iBadResponse instanceof Throwable) {
+        return null;
+    }
 
     final OPlaceholder badResult = (OPlaceholder) iBadResponse;
     return new ODeleteRecordTask(new ORecordId(badResult.getIdentity()), badResult.getRecordVersion()).setDelayed(false);
@@ -135,9 +139,9 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
     super.writeExternal(out);
-    if (content == null)
-      out.writeInt(0);
-    else {
+    if (content == null) {
+        out.writeInt(0);
+    } else {
       out.writeInt(content.length);
       out.write(content);
     }
@@ -149,9 +153,9 @@ public class OCreateRecordTask extends OAbstractRecordReplicatedTask {
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     super.readExternal(in);
     final int contentSize = in.readInt();
-    if (contentSize == 0)
-      content = null;
-    else {
+    if (contentSize == 0) {
+        content = null;
+    } else {
       content = new byte[contentSize];
       in.readFully(content);
     }

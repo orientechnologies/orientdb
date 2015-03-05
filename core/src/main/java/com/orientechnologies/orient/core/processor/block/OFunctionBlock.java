@@ -49,14 +49,16 @@ public class OFunctionBlock extends OAbstractBlock {
       for (Object arg : configuredArgs) {
         Object value = resolveValue(iContext, arg, true);
 
-        if (value instanceof List<?>)
-          // RHINO DOESN'T TREAT LIST AS ARRAY: CONVERT IT
-          value = ((List<?>) value).toArray();
+        if (value instanceof List<?>) {
+            // RHINO DOESN'T TREAT LIST AS ARRAY: CONVERT IT
+            value = ((List<?>) value).toArray();
+        }
 
         args[argIdx++] = value;
       }
-    } else
-      args = null;
+    } else {
+        args = null;
+    }
 
     final OFunction f = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getFunctionLibrary().getFunction(function);
     if (f != null) {
@@ -105,10 +107,11 @@ public class OFunctionBlock extends OAbstractBlock {
           if (m.getName().equals(methodName)) {
             candidates.append("-" + m + "\n");
           }
-          if (candidates.length() > 0)
-            debug(iContext, "Candidate methods were: \n" + candidates);
-          else
-            debug(iContext, "No candidate methods were found");
+          if (candidates.length() > 0) {
+              debug(iContext, "Candidate methods were: \n" + candidates);
+          } else {
+              debug(iContext, "No candidate methods were found");
+          }
         }
 
       } catch (ClassNotFoundException e) {

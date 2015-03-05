@@ -149,8 +149,9 @@ public class OGraphMLReader {
 
       final OrientBaseGraph graph = (OrientBaseGraph) inputGraph;
 
-      if (storeVertexIds)
-        graph.setSaveOriginalIds(storeVertexIds);
+      if (storeVertexIds) {
+          graph.setSaveOriginalIds(storeVertexIds);
+      }
 
       Map<String, String> keyIdMap = new HashMap<String, String>();
       Map<String, String> keyTypesMaps = new HashMap<String, String>();
@@ -191,16 +192,18 @@ public class OGraphMLReader {
             vertexId = reader.getAttributeValue(null, GraphMLTokens.ID);
             vertexLabel = reader.getAttributeValue(null, LABELS);
             if (vertexLabel != null) {
-              if (vertexLabel.startsWith(":"))
-                // REMOVE : AS PREFIX
-                vertexLabel = vertexLabel.substring(1);
+              if (vertexLabel.startsWith(":")) {
+                  // REMOVE : AS PREFIX
+                  vertexLabel = vertexLabel.substring(1);
+              }
 
               final String[] vertexLabels = vertexLabel.split(":");
 
               // GET ONLY FIRST LABEL AS CLASS
               vertexLabel = vertexId + ",class:" + vertexLabels[vertexLabelIndex];
-            } else
-              vertexLabel = vertexId;
+            } else {
+                vertexLabel = vertexId;
+            }
 
             inVertex = true;
             vertexProps = new HashMap<String, Object>();
@@ -246,15 +249,17 @@ public class OGraphMLReader {
                 if ((vertexIdKey != null) && (key.equals(vertexIdKey))) {
                   // Should occur at most once per Vertex
                   vertexId = value;
-                } else
-                  vertexProps.put(attributeName, typeCastValue(key, value, keyTypesMaps));
+                } else {
+                    vertexProps.put(attributeName, typeCastValue(key, value, keyTypesMaps));
+                }
               } else if (inEdge == true) {
-                if ((edgeLabelKey != null) && (key.equals(edgeLabelKey)))
-                  edgeLabel = value;
-                else if ((edgeIdKey != null) && (key.equals(edgeIdKey)))
-                  edgeId = value;
-                else
-                  edgeProps.put(attributeName, typeCastValue(key, value, keyTypesMaps));
+                if ((edgeLabelKey != null) && (key.equals(edgeLabelKey))) {
+                    edgeLabel = value;
+                } else if ((edgeIdKey != null) && (key.equals(edgeIdKey))) {
+                    edgeId = value;
+                } else {
+                    edgeProps.put(attributeName, typeCastValue(key, value, keyTypesMaps));
+                }
               }
             }
 
@@ -265,13 +270,15 @@ public class OGraphMLReader {
           if (elementName.equals(GraphMLTokens.NODE)) {
             ORID currentVertex = null;
 
-            if (vertexIdKey != null)
-              vertexMappedIdMap.get(vertexId);
+            if (vertexIdKey != null) {
+                vertexMappedIdMap.get(vertexId);
+            }
 
             if (currentVertex == null) {
               final OrientVertex v = graph.addVertex(vertexLabel, vertexProps);
-              if (vertexIdKey != null)
-                mapId(vertexMappedIdMap, vertexId, v.getIdentity());
+              if (vertexIdKey != null) {
+                  mapId(vertexMappedIdMap, vertexId, v.getIdentity());
+              }
               bufferCounter++;
             }
 
@@ -402,26 +409,28 @@ public class OGraphMLReader {
   }
 
   protected void mapId(final Map<String, ORID> vertexMappedIdMap, final String vertexId, final ORID rid) {
-    if (vertexMappedIdMap.containsKey(vertexId))
-      throw new IllegalArgumentException("Vertex with id '" + vertexId + "' has been already loaded");
+    if (vertexMappedIdMap.containsKey(vertexId)) {
+        throw new IllegalArgumentException("Vertex with id '" + vertexId + "' has been already loaded");
+    }
     vertexMappedIdMap.put(vertexId, rid);
   }
 
   private Object typeCastValue(String key, String value, Map<String, String> keyTypes) {
     String type = keyTypes.get(key);
-    if (null == type || type.equals(GraphMLTokens.STRING))
-      return value;
-    else if (type.equals(GraphMLTokens.FLOAT))
-      return Float.valueOf(value);
-    else if (type.equals(GraphMLTokens.INT))
-      return Integer.valueOf(value);
-    else if (type.equals(GraphMLTokens.DOUBLE))
-      return Double.valueOf(value);
-    else if (type.equals(GraphMLTokens.BOOLEAN))
-      return Boolean.valueOf(value);
-    else if (type.equals(GraphMLTokens.LONG))
-      return Long.valueOf(value);
-    else
-      return value;
+    if (null == type || type.equals(GraphMLTokens.STRING)) {
+        return value;
+    } else if (type.equals(GraphMLTokens.FLOAT)) {
+        return Float.valueOf(value);
+    } else if (type.equals(GraphMLTokens.INT)) {
+        return Integer.valueOf(value);
+    } else if (type.equals(GraphMLTokens.DOUBLE)) {
+        return Double.valueOf(value);
+    } else if (type.equals(GraphMLTokens.BOOLEAN)) {
+        return Boolean.valueOf(value);
+    } else if (type.equals(GraphMLTokens.LONG)) {
+        return Long.valueOf(value);
+    } else {
+        return value;
+    }
   }
 }

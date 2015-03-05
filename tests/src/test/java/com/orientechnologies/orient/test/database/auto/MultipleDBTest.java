@@ -265,10 +265,11 @@ public class MultipleDBTest extends DocumentDBBaseTest {
   }
 
   private String getDbId(ODatabaseInternal tx) {
-    if (tx.getStorage() instanceof OStorageRemote)
-      return tx.getURL() + " - sessionId: " + ((OStorageRemote) tx.getStorage()).getSessionId();
-    else
-      return tx.getURL();
+    if (tx.getStorage() instanceof OStorageRemote) {
+        return tx.getURL() + " - sessionId: " + ((OStorageRemote) tx.getStorage()).getSessionId();
+    } else {
+        return tx.getURL();
+    }
   }
 
 }

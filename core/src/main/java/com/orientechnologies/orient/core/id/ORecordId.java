@@ -128,8 +128,9 @@ public class ORecordId implements ORID {
   }
 
   public StringBuilder toString(StringBuilder iBuffer) {
-    if (iBuffer == null)
-      iBuffer = new StringBuilder();
+    if (iBuffer == null) {
+        iBuffer = new StringBuilder();
+    }
 
     iBuffer.append(PREFIX);
     iBuffer.append(clusterId);
@@ -140,18 +141,23 @@ public class ORecordId implements ORID {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (!(obj instanceof OIdentifiable))
-      return false;
+    if (this == obj) {
+        return true;
+    }
+    if (obj == null) {
+        return false;
+    }
+    if (!(obj instanceof OIdentifiable)) {
+        return false;
+    }
     final ORecordId other = (ORecordId) ((OIdentifiable) obj).getIdentity();
 
-    if (clusterId != other.clusterId)
-      return false;
-    if (clusterPosition != other.clusterPosition)
-      return false;
+    if (clusterId != other.clusterId) {
+        return false;
+    }
+    if (clusterPosition != other.clusterPosition) {
+        return false;
+    }
     return true;
   }
 
@@ -163,29 +169,34 @@ public class ORecordId implements ORID {
   }
 
   public int compareTo(final OIdentifiable iOther) {
-    if (iOther == this)
-      return 0;
+    if (iOther == this) {
+        return 0;
+    }
 
-    if (iOther == null)
-      return 1;
+    if (iOther == null) {
+        return 1;
+    }
 
     final int otherClusterId = iOther.getIdentity().getClusterId();
     if (clusterId == otherClusterId) {
       final long otherClusterPos = iOther.getIdentity().getClusterPosition();
 
       return (clusterPosition < otherClusterPos) ? -1 : ((clusterPosition == otherClusterPos) ? 0 : 1);
-    } else if (clusterId > otherClusterId)
-      return 1;
+    } else if (clusterId > otherClusterId) {
+        return 1;
+    }
 
     return -1;
   }
 
   public int compare(final OIdentifiable iObj1, final OIdentifiable iObj2) {
-    if (iObj1 == iObj2)
-      return 0;
+    if (iObj1 == iObj2) {
+        return 0;
+    }
 
-    if (iObj1 != null)
-      return iObj1.compareTo(iObj2);
+    if (iObj1 != null) {
+        return iObj1.compareTo(iObj2);
+    }
 
     return -1;
   }
@@ -244,8 +255,9 @@ public class ORecordId implements ORID {
   }
 
   public void fromString(String iRecordId) {
-    if (iRecordId != null)
-      iRecordId = iRecordId.trim();
+    if (iRecordId != null) {
+        iRecordId = iRecordId.trim();
+    }
 
     if (iRecordId == null || iRecordId.isEmpty()) {
       clusterId = CLUSTER_ID_INVALID;
@@ -253,15 +265,17 @@ public class ORecordId implements ORID {
       return;
     }
 
-    if (!OStringSerializerHelper.contains(iRecordId, SEPARATOR))
-      throw new IllegalArgumentException("Argument '" + iRecordId
-          + "' is not a RecordId in form of string. Format must be: <cluster-id>:<cluster-position>");
+    if (!OStringSerializerHelper.contains(iRecordId, SEPARATOR)) {
+        throw new IllegalArgumentException("Argument '" + iRecordId
+                + "' is not a RecordId in form of string. Format must be: <cluster-id>:<cluster-position>");
+    }
 
     final List<String> parts = OStringSerializerHelper.split(iRecordId, SEPARATOR, PREFIX);
 
-    if (parts.size() != 2)
-      throw new IllegalArgumentException("Argument received '" + iRecordId
-          + "' is not a RecordId in form of string. Format must be: #<cluster-id>:<cluster-position>. Example: #3:12");
+    if (parts.size() != 2) {
+        throw new IllegalArgumentException("Argument received '" + iRecordId
+                + "' is not a RecordId in form of string. Format must be: #<cluster-id>:<cluster-position>. Example: #3:12");
+    }
 
     clusterId = Integer.parseInt(parts.get(0));
     checkClusterLimits();
@@ -269,8 +283,9 @@ public class ORecordId implements ORID {
   }
 
   public void copyFrom(final ORID iSource) {
-    if (iSource == null)
-      throw new IllegalArgumentException("Source is null");
+    if (iSource == null) {
+        throw new IllegalArgumentException("Source is null");
+    }
 
     clusterId = iSource.getClusterId();
     clusterPosition = iSource.getClusterPosition();
@@ -302,22 +317,26 @@ public class ORecordId implements ORID {
 
   @SuppressWarnings("unchecked")
   public <T extends ORecord> T getRecord() {
-    if (!isValid())
-      return null;
+    if (!isValid()) {
+        return null;
+    }
 
     final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
-    if (db == null)
-      throw new ODatabaseException(
-          "No database found in current thread local space. If you manually control databases over threads assure to set the current database before to use it by calling: ODatabaseRecordThreadLocal.INSTANCE.set(db);");
+    if (db == null) {
+        throw new ODatabaseException(
+                "No database found in current thread local space. If you manually control databases over threads assure to set the current database before to use it by calling: ODatabaseRecordThreadLocal.INSTANCE.set(db);");
+    }
 
     return (T) db.load(this);
   }
 
   private void checkClusterLimits() {
-    if (clusterId < -2)
-      throw new ODatabaseException("RecordId cannot support negative cluster id. You've used: " + clusterId);
+    if (clusterId < -2) {
+        throw new ODatabaseException("RecordId cannot support negative cluster id. You've used: " + clusterId);
+    }
 
-    if (clusterId > CLUSTER_MAX)
-      throw new ODatabaseException("RecordId cannot support cluster id major than 32767. You've used: " + clusterId);
+    if (clusterId > CLUSTER_MAX) {
+        throw new ODatabaseException("RecordId cannot support cluster id major than 32767. You've used: " + clusterId);
+    }
   }
 }

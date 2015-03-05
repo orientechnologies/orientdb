@@ -45,8 +45,9 @@ public class OIndexCursorSingleValue extends OIndexAbstractCursor {
 
   @Override
   public OIdentifiable next() {
-    if (identifiable == null)
-      return null;
+    if (identifiable == null) {
+        return null;
+    }
 
     final OIdentifiable value = identifiable;
     identifiable = null;
@@ -55,8 +56,9 @@ public class OIndexCursorSingleValue extends OIndexAbstractCursor {
 
   @Override
   public Map.Entry<Object, OIdentifiable> nextEntry() {
-    if (identifiable == null)
-      return null;
+    if (identifiable == null) {
+        return null;
+    }
 
     final OIdentifiable value = identifiable;
     identifiable = null;

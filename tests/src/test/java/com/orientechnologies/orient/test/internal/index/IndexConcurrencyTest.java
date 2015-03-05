@@ -109,8 +109,9 @@ public class IndexConcurrencyTest {
   }
 
   public static void buildTree(PersonTree tree, ORID rid, String name, int childCount, int level, char startLetter) {
-    if (level == 0)
-      return;
+    if (level == 0) {
+        return;
+    }
 
     for (int i = 0; i < childCount; i++) {
       String newName = name;
@@ -284,8 +285,9 @@ public class IndexConcurrencyTest {
         System.out.println("Interrupted");
       }
 
-      if (!checkIndexConsistency(db))
-        cnt = tries;
+      if (!checkIndexConsistency(db)) {
+          cnt = tries;
+      }
       db.close();
     }
   }

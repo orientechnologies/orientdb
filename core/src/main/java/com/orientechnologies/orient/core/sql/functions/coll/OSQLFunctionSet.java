@@ -48,20 +48,23 @@ public class OSQLFunctionSet extends OSQLFunctionMultiValueAbstract<Set<Object>>
 
   public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       OCommandContext iContext) {
-    if (iParams.length > 1)
-      // IN LINE MODE
-      context = new HashSet<Object>();
+    if (iParams.length > 1) {
+        // IN LINE MODE
+        context = new HashSet<Object>();
+    }
 
     for (Object value : iParams) {
       if (value != null) {
-        if (iParams.length == 1 && context == null)
-          // AGGREGATION MODE (STATEFULL)
-          context = new HashSet<Object>();
+        if (iParams.length == 1 && context == null) {
+            // AGGREGATION MODE (STATEFULL)
+            context = new HashSet<Object>();
+        }
 
-        if (value instanceof ODocument)
-          context.add(value);
-        else
-          OMultiValue.add(context, value);
+        if (value instanceof ODocument) {
+            context.add(value);
+        } else {
+            OMultiValue.add(context, value);
+        }
       }
     }
 

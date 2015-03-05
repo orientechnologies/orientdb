@@ -56,25 +56,29 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
 
     int oldPos = 0;
     int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_ALTER))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found", parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_ALTER)) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found", parserText, oldPos);
+    }
 
     oldPos = pos;
     pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_CLASS))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found", parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_CLASS)) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLASS + " not found", parserText, oldPos);
+    }
 
     oldPos = pos;
     pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Expected <class>", parserText, oldPos);
+    if (pos == -1) {
+        throw new OCommandSQLParsingException("Expected <class>", parserText, oldPos);
+    }
 
     className = word.toString();
 
     oldPos = pos;
     pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Missed the class's attribute to change", parserText, oldPos);
+    if (pos == -1) {
+        throw new OCommandSQLParsingException("Missed the class's attribute to change", parserText, oldPos);
+    }
 
     final String attributeAsString = word.toString();
 
@@ -87,12 +91,14 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
 
     value = parserText.substring(pos + 1).trim();
 
-    if (value.length() == 0)
-      throw new OCommandSQLParsingException("Missed the property's value to change for attribute '" + attribute + "'", parserText,
-          oldPos);
+    if (value.length() == 0) {
+        throw new OCommandSQLParsingException("Missed the property's value to change for attribute '" + attribute + "'", parserText,
+                oldPos);
+    }
 
-    if (value.equalsIgnoreCase("null"))
-      value = null;
+    if (value.equalsIgnoreCase("null")) {
+        value = null;
+    }
 
     return this;
   }
@@ -103,12 +109,14 @@ public class OCommandExecutorSQLAlterClass extends OCommandExecutorSQLAbstract i
   public Object execute(final Map<Object, Object> iArgs) {
     final ODatabaseDocument database = getDatabase();
 
-    if (attribute == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    if (attribute == null) {
+        throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    }
 
     final OClassImpl cls = (OClassImpl) database.getMetadata().getSchema().getClass(className);
-    if (cls == null)
-      throw new OCommandExecutionException("Cannot alter class '" + className + "' because not found");
+    if (cls == null) {
+        throw new OCommandExecutionException("Cannot alter class '" + className + "' because not found");
+    }
 
     cls.set(attribute, value);
 

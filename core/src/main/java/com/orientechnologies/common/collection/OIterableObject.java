@@ -63,8 +63,9 @@ public class OIterableObject<T> implements Iterable<T>, OResettable, Iterator<T>
     if (!alreadyRead) {
       alreadyRead = true;
       return object;
-    } else
-      throw new NoSuchElementException();
+    } else {
+        throw new NoSuchElementException();
+    }
   }
 
   @Override

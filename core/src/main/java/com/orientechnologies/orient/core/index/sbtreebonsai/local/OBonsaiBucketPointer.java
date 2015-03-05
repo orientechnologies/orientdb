@@ -50,17 +50,21 @@ public class OBonsaiBucketPointer {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
 
     OBonsaiBucketPointer that = (OBonsaiBucketPointer) o;
 
-    if (pageIndex != that.pageIndex)
-      return false;
-    if (pageOffset != that.pageOffset)
-      return false;
+    if (pageIndex != that.pageIndex) {
+        return false;
+    }
+    if (pageOffset != that.pageOffset) {
+        return false;
+    }
 
     return true;
   }

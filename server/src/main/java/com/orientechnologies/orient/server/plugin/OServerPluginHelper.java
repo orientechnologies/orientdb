@@ -28,55 +28,65 @@ public class OServerPluginHelper {
 
   public static void invokeHandlerCallbackOnClientConnection(final OServer iServer, final OClientConnection connection) {
     final Collection<OServerPluginInfo> plugins = iServer.getPlugins();
-    if (plugins != null)
-      for (OServerPluginInfo plugin : plugins) {
-        final OServerPlugin pluginInstance = plugin.getInstance();
-        if (pluginInstance != null)
-          plugin.getInstance().onClientConnection(connection);
-      }
+    if (plugins != null) {
+        for (OServerPluginInfo plugin : plugins) {
+            final OServerPlugin pluginInstance = plugin.getInstance();
+            if (pluginInstance != null) {
+                plugin.getInstance().onClientConnection(connection);
+            }
+        }
+    }
   }
 
   public static void invokeHandlerCallbackOnClientDisconnection(final OServer iServer, final OClientConnection connection) {
     final Collection<OServerPluginInfo> plugins = iServer.getPlugins();
-    if (plugins != null)
-      for (OServerPluginInfo plugin : plugins) {
-        final OServerPlugin pluginInstance = plugin.getInstance();
-        if (pluginInstance != null)
-          pluginInstance.onClientDisconnection(connection);
-      }
+    if (plugins != null) {
+        for (OServerPluginInfo plugin : plugins) {
+            final OServerPlugin pluginInstance = plugin.getInstance();
+            if (pluginInstance != null) {
+                pluginInstance.onClientDisconnection(connection);
+            }
+        }
+    }
   }
 
   public static void invokeHandlerCallbackOnBeforeClientRequest(final OServer iServer, final OClientConnection connection,
       final byte iRequestType) {
     final Collection<OServerPluginInfo> plugins = iServer.getPlugins();
-    if (plugins != null)
-      for (OServerPluginInfo plugin : plugins) {
-        final OServerPlugin pluginInstance = plugin.getInstance();
-        if (pluginInstance != null)
-          pluginInstance.onBeforeClientRequest(connection, iRequestType);
-      }
+    if (plugins != null) {
+        for (OServerPluginInfo plugin : plugins) {
+            final OServerPlugin pluginInstance = plugin.getInstance();
+            if (pluginInstance != null) {
+                pluginInstance.onBeforeClientRequest(connection, iRequestType);
+            }
+        }
+    }
   }
 
   public static void invokeHandlerCallbackOnAfterClientRequest(final OServer iServer, final OClientConnection connection,
       final byte iRequestType) {
     final Collection<OServerPluginInfo> plugins = iServer.getPlugins();
-    if (plugins != null)
-      for (OServerPluginInfo plugin : plugins) {
-        final OServerPlugin pluginInstance = plugin.getInstance();
-        if (pluginInstance != null)
-          pluginInstance.onAfterClientRequest(connection, iRequestType);
-      }
+    if (plugins != null) {
+        for (OServerPluginInfo plugin : plugins) {
+            final OServerPlugin pluginInstance = plugin.getInstance();
+            if (pluginInstance != null) {
+                pluginInstance.onAfterClientRequest(connection, iRequestType);
+            }
+        }
+    }
   }
 
   public static void invokeHandlerCallbackOnClientError(final OServer iServer, final OClientConnection connection,
       final Throwable iThrowable) {
     final Collection<OServerPluginInfo> plugins = iServer.getPlugins();
-    if (plugins != null)
-      for (OServerPluginInfo plugin : plugins) {
-        final OServerPlugin pluginInstance = plugin.getInstance();
-        if (pluginInstance != null)
-          pluginInstance.onClientError(connection, iThrowable);
-      }
+    if (plugins != null) {
+        for (OServerPluginInfo plugin : plugins) {
+            final OServerPlugin pluginInstance = plugin.getInstance();
+            if (pluginInstance != null) {
+                pluginInstance.onClientError(connection, iThrowable);
+            }
+        }
+    }
   }
 
 }

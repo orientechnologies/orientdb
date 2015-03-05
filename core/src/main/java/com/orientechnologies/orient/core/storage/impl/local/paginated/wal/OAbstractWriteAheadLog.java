@@ -90,7 +90,8 @@ public abstract class OAbstractWriteAheadLog implements OWriteAheadLog {
   }
 
   protected void checkForClose() {
-    if (closed)
-      throw new OStorageException("WAL has been closed");
+    if (closed) {
+        throw new OStorageException("WAL has been closed");
+    }
   }
 }

@@ -80,8 +80,9 @@ public class LocalPaginateStorageSpeedTest extends OrientMonoThreadTest {
   public void deinit() {
     System.out.println(Orient.instance().getProfiler().dump());
 
-    if (database != null)
-      database.close();
+    if (database != null) {
+        database.close();
+    }
     super.deinit();
     OGlobalConfiguration.USE_WAL.setValue(true);
   }

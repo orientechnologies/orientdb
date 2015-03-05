@@ -31,8 +31,9 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
   public void beforeClass() throws Exception {
 		super.beforeClass();
 
-    if (database.isClosed())
-      database.open("admin", "admin");
+    if (database.isClosed()) {
+        database.open("admin", "admin");
+                }
 
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.createClass("sqlCreateIndexTestClass");
@@ -50,8 +51,9 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
 
   @AfterClass
   public void afterClass() throws Exception {
-    if (database.isClosed())
-      database.open("admin", "admin");
+    if (database.isClosed()) {
+        database.open("admin", "admin");
+    }
 
     database.command(new OCommandSQL("delete from sqlCreateIndexTestClass")).execute();
     database.command(new OCommandSQL("drop class sqlCreateIndexTestClass")).execute();
@@ -448,19 +450,21 @@ public class SQLCreateIndexTest extends DocumentDBBaseTest {
       Assert.assertTrue(exception.getMessage().contains(
           "Error on execution of command: sql.CREATE INDEX sqlCreateIndexCompositeIndex3 ON"));
 
-      if (exception.getCause() instanceof OCommandExecutionException)
-        Assert.assertEquals(exception.getCause().getCause().getClass(), IllegalArgumentException.class);
-      else
-        Assert.assertEquals(exception.getCause().getClass(), IllegalArgumentException.class);
+      if (exception.getCause() instanceof OCommandExecutionException) {
+          Assert.assertEquals(exception.getCause().getCause().getClass(), IllegalArgumentException.class);
+      } else {
+          Assert.assertEquals(exception.getCause().getClass(), IllegalArgumentException.class);
+      }
 
     } catch (OCommandExecutionException e) {
       Assert
           .assertTrue(e.getMessage().contains("Error on execution of command: sql.CREATE INDEX sqlCreateIndexCompositeIndex3 ON"));
 
-      if (e.getCause() instanceof OCommandExecutionException)
-        Assert.assertEquals(e.getCause().getCause().getClass(), IllegalArgumentException.class);
-      else
-        Assert.assertEquals(e.getCause().getClass(), IllegalArgumentException.class);
+      if (e.getCause() instanceof OCommandExecutionException) {
+          Assert.assertEquals(e.getCause().getCause().getClass(), IllegalArgumentException.class);
+      } else {
+          Assert.assertEquals(e.getCause().getClass(), IllegalArgumentException.class);
+      }
 
     }
     final OIndex<?> index = database.getMetadata().getSchema().getClass("sqlCreateIndexTestClass")

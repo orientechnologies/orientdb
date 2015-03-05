@@ -42,26 +42,29 @@ public class OIterateBlock extends OAbstractBlock {
 
     if (range != null) {
       final String[] fromTo = range.split("-");
-      if (fromTo.length < 2)
-        throw new IllegalArgumentException("Invalid range for: " + range);
+      if (fromTo.length < 2) {
+          throw new IllegalArgumentException("Invalid range for: " + range);
+      }
 
       final int from = Integer.parseInt(fromTo[0]);
       final int to = Integer.parseInt(fromTo[1]);
 
       final Integer[] values = new Integer[Math.abs(to - from + 1)];
-      if (from < to)
-        for (int i = from; i <= to; ++i) {
-          values[i - from] = i;
-        }
-      else
-        for (int i = to; i >= from; --i) {
-          values[to - i] = i;
-        }
+      if (from < to) {
+          for (int i = from; i <= to; ++i) {
+              values[i - from] = i;
+          }
+      } else {
+          for (int i = to; i >= from; --i) {
+              values[to - i] = i;
+          }
+      }
 
       result = new OIterateBlockIterable(values, iContext, var);
     } else if (value != null) {
-      if (OMultiValue.isIterable(value))
-        result = OMultiValue.getMultiValueIterable(value);
+      if (OMultiValue.isIterable(value)) {
+          result = OMultiValue.getMultiValueIterable(value);
+      }
     }
 
     return result;

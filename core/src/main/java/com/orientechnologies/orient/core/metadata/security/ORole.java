@@ -99,15 +99,17 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
     final StringBuilder returnValue = new StringBuilder(128);
     for (Entry<Integer, String> p : PERMISSION_BIT_NAMES.entrySet()) {
       if ((permission & p.getKey()) == p.getKey()) {
-        if (returnValue.length() > 0)
-          returnValue.append(", ");
+        if (returnValue.length() > 0) {
+            returnValue.append(", ");
+        }
         returnValue.append(p.getValue());
         permission &= ~p.getKey();
       }
     }
     if (permission != 0) {
-      if (returnValue.length() > 0)
-        returnValue.append(", ");
+      if (returnValue.length() > 0) {
+          returnValue.append(", ");
+      }
       returnValue.append("Unknown 0x");
       returnValue.append(Integer.toHexString(permission));
     }
@@ -116,15 +118,18 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
   }
 
   public static int registerPermissionBit(final int iBitNo, final String iName) {
-    if (iBitNo < 0 || iBitNo > 31)
-      throw new IndexOutOfBoundsException("Permission bit number must be positive and less than 32");
+    if (iBitNo < 0 || iBitNo > 31) {
+        throw new IndexOutOfBoundsException("Permission bit number must be positive and less than 32");
+    }
 
     final int value = 1 << iBitNo;
-    if (PERMISSION_BIT_NAMES == null)
-      PERMISSION_BIT_NAMES = new HashMap<Integer, String>();
+    if (PERMISSION_BIT_NAMES == null) {
+        PERMISSION_BIT_NAMES = new HashMap<Integer, String>();
+    }
 
-    if (PERMISSION_BIT_NAMES.containsKey(value))
-      throw new IndexOutOfBoundsException("Permission bit number " + String.valueOf(iBitNo) + " already in use");
+    if (PERMISSION_BIT_NAMES.containsKey(value)) {
+        throw new IndexOutOfBoundsException("Permission bit number " + String.valueOf(iBitNo) + " already in use");
+    }
 
     PERMISSION_BIT_NAMES.put(value, iName);
     return value;
@@ -133,8 +138,9 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
   @Override
   @OBeforeDeserialization
   public void fromStream(final ODocument iSource) {
-    if (document != null)
-      return;
+    if (document != null) {
+        return;
+    }
 
     document = iSource;
 
@@ -159,7 +165,9 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
       if (storedRules != null) {
         for (ODocument ruleDoc : storedRules) {
           final ORule.ResourceGeneric resourceGeneric = ORule.ResourceGeneric.valueOf(ruleDoc.<String> field("resourceGeneric"));
-          if(resourceGeneric==null) continue;
+          if(resourceGeneric==null) {
+              continue;
+          }
           final Map<String, Byte> specificResources = ruleDoc.field("specificResources");
           final Byte access = ruleDoc.field("access");
 
@@ -172,9 +180,10 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
       rolesNeedToBeUpdated = true;
     }
 
-    if (getName().equals("admin") && !hasRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null))
-      // FIX 1.5.1 TO ASSIGN database.bypassRestricted rule to the role
-      addRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_ALL).save();
+    if (getName().equals("admin") && !hasRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null)) {
+        // FIX 1.5.1 TO ASSIGN database.bypassRestricted rule to the role
+        addRule(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_ALL).save();
+    }
 
     if (rolesNeedToBeUpdated) {
       updateRolesDocumentContent();
@@ -186,13 +195,15 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
     final ORule rule = rules.get(resourceGeneric);
     if (rule != null) {
       final Boolean allowed = rule.isAllowed(resourceSpecific, iCRUDOperation);
-      if (allowed != null)
-        return allowed;
+      if (allowed != null) {
+          return allowed;
+      }
     }
 
-    if (parentRole != null)
-      // DELEGATE TO THE PARENT ROLE IF ANY
-      return parentRole.allow(resourceGeneric, resourceSpecific, iCRUDOperation);
+    if (parentRole != null) {
+        // DELEGATE TO THE PARENT ROLE IF ANY
+        return parentRole.allow(resourceGeneric, resourceSpecific, iCRUDOperation);
+    }
 
     return mode == ALLOW_MODES.ALLOW_ALL_BUT;
   }
@@ -200,11 +211,13 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
   public boolean hasRule(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific) {
     ORule rule = rules.get(resourceGeneric);
 
-    if (rule == null)
-      return false;
+    if (rule == null) {
+        return false;
+    }
 
-    if (resourceSpecific != null && !rule.containsSpecificResource(resourceSpecific))
-      return false;
+    if (resourceSpecific != null && !rule.containsSpecificResource(resourceSpecific)) {
+        return false;
+    }
 
     return true;
   }
@@ -232,8 +245,9 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
     final String specificResource = ORule.mapLegacyResourceToSpecificResource(iResource);
     final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
 
-    if (specificResource == null || specificResource.equals("*"))
-      return allow(resourceGeneric, null, iCRUDOperation);
+    if (specificResource == null || specificResource.equals("*")) {
+        return allow(resourceGeneric, null, iCRUDOperation);
+    }
 
     return allow(resourceGeneric, specificResource, iCRUDOperation);
   }
@@ -244,8 +258,9 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
     final String specificResource = ORule.mapLegacyResourceToSpecificResource(iResource);
     final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
 
-    if (specificResource == null || specificResource.equals("*"))
-      return hasRule(resourceGeneric, null);
+    if (specificResource == null || specificResource.equals("*")) {
+        return hasRule(resourceGeneric, null);
+    }
 
     return hasRule(resourceGeneric, specificResource);
   }
@@ -256,8 +271,9 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
     final String specificResource = ORule.mapLegacyResourceToSpecificResource(iResource);
     final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
 
-    if (specificResource == null || specificResource.equals("*"))
-      return addRule(resourceGeneric, null, iOperation);
+    if (specificResource == null || specificResource.equals("*")) {
+        return addRule(resourceGeneric, null, iOperation);
+    }
 
     return addRule(resourceGeneric, specificResource, iOperation);
   }
@@ -268,8 +284,9 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
     final String specificResource = ORule.mapLegacyResourceToSpecificResource(iResource);
     final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
 
-    if (specificResource == null || specificResource.equals("*"))
-      return grant(resourceGeneric, null, iOperation);
+    if (specificResource == null || specificResource.equals("*")) {
+        return grant(resourceGeneric, null, iOperation);
+    }
 
     return grant(resourceGeneric, specificResource, iOperation);
   }
@@ -280,8 +297,9 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
     final String specificResource = ORule.mapLegacyResourceToSpecificResource(iResource);
     final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
 
-    if (specificResource == null || specificResource.equals("*"))
-      return revoke(resourceGeneric, null, iOperation);
+    if (specificResource == null || specificResource.equals("*")) {
+        return revoke(resourceGeneric, null, iOperation);
+    }
 
     return revoke(resourceGeneric, specificResource, iOperation);
   }
@@ -310,8 +328,9 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
    * Revoke a permission to the resource.
    */
   public ORole revoke(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation) {
-    if (iOperation == PERMISSION_NONE)
-      return this;
+    if (iOperation == PERMISSION_NONE) {
+        return this;
+    }
 
     ORule rule = rules.get(resourceGeneric);
 
@@ -392,22 +411,23 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
   }
 
   private void loadOldVersionOfRules(final Map<String, Number> storedRules) {
-    if (storedRules != null)
-      for (Entry<String, Number> a : storedRules.entrySet()) {
-        ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(a.getKey());
-        ORule rule = rules.get(resourceGeneric);
-        if (rule == null) {
-          rule = new ORule(resourceGeneric, null, null);
-          rules.put(resourceGeneric, rule);
+    if (storedRules != null) {
+        for (Entry<String, Number> a : storedRules.entrySet()) {
+            ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(a.getKey());
+            ORule rule = rules.get(resourceGeneric);
+            if (rule == null) {
+                rule = new ORule(resourceGeneric, null, null);
+                rules.put(resourceGeneric, rule);
+            }
+            
+            String specificResource = ORule.mapLegacyResourceToSpecificResource(a.getKey());
+            if (specificResource == null || specificResource.equals("*")) {
+                rule.grantAccess(null, a.getValue().intValue());
+            } else {
+                rule.grantAccess(specificResource, a.getValue().intValue());
+            }
         }
-
-        String specificResource = ORule.mapLegacyResourceToSpecificResource(a.getKey());
-        if (specificResource == null || specificResource.equals("*")) {
-          rule.grantAccess(null, a.getValue().intValue());
-        } else {
-          rule.grantAccess(specificResource, a.getValue().intValue());
-        }
-      }
+    }
   }
 
   private ODocument updateRolesDocumentContent() {

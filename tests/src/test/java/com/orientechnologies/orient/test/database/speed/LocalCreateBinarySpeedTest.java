@@ -61,14 +61,16 @@ public class LocalCreateBinarySpeedTest extends OrientMonoThreadTest {
   public void cycle() {
     record.reset(recordContent).save("binary");
 
-    if (data.getCyclesDone() == data.getCycles() - 1)
-      database.commit();
+    if (data.getCyclesDone() == data.getCycles() - 1) {
+        database.commit();
+    }
   }
 
   @Override
   public void deinit() {
-    if (database != null)
-      database.close();
+    if (database != null) {
+        database.close();
+    }
     super.deinit();
   }
 }

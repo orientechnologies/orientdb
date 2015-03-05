@@ -77,8 +77,9 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
       for (int i = 0; i < count; i++) {
         final ODatabaseDocumentTx database = poolFactory.get(databaseUrl, "admin", "admin").acquire();
         try {
-          if ((i + 1) % 100 == 0)
-            System.out.println("\nWriter " + database.getURL() + " managed " + (i + 1) + "/" + count + " records so far");
+          if ((i + 1) % 100 == 0) {
+              System.out.println("\nWriter " + database.getURL() + " managed " + (i + 1) + "/" + count + " records so far");
+          }
 
           final ODocument person = createRecord(database, i);
           updateRecord(database, i);
@@ -142,10 +143,11 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
 
       List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from Person where name = 'Billy" + uniqueId
           + "'"));
-      if (result.size() == 0)
-        Assert.assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
-      else if (result.size() > 1)
-        Assert.assertTrue(result.size() + " records found with name = 'Billy" + uniqueId + "'!", false);
+      if (result.size() == 0) {
+          Assert.assertTrue("No record found with name = 'Billy" + uniqueId + "'!", false);
+      } else if (result.size() > 1) {
+          Assert.assertTrue(result.size() + " records found with name = 'Billy" + uniqueId + "'!", false);
+      }
 
       return result.get(0);
     }
@@ -403,16 +405,17 @@ public abstract class AbstractServerClusterInsertTest extends AbstractServerClus
       System.out.println("\nReader " + name + " sql count: " + result.get(0) + " counting class: " + database.countClass("Person")
           + " counting cluster: " + database.countClusterElements("Person"));
 
-      if (((OMetadataInternal)database.getMetadata()).getImmutableSchemaSnapshot().existsClass("ODistributedConflict"))
-        try {
-          List<ODocument> conflicts = database
-              .query(new OSQLSynchQuery<OIdentifiable>("select count(*) from ODistributedConflict"));
-          long totalConflicts = conflicts.get(0).field("count");
-          Assert.assertEquals(0l, totalConflicts);
-          System.out.println("\nReader " + name + " conflicts: " + totalConflicts);
-        } catch (OQueryParsingException e) {
-          // IGNORE IT
-        }
+      if (((OMetadataInternal)database.getMetadata()).getImmutableSchemaSnapshot().existsClass("ODistributedConflict")) {
+          try {
+              List<ODocument> conflicts = database
+                      .query(new OSQLSynchQuery<OIdentifiable>("select count(*) from ODistributedConflict"));
+              long totalConflicts = conflicts.get(0).field("count");
+              Assert.assertEquals(0l, totalConflicts);
+              System.out.println("\nReader " + name + " conflicts: " + totalConflicts);
+          } catch (OQueryParsingException e) {
+              // IGNORE IT
+          }
+      }
 
     } finally {
       database.close();

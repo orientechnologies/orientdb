@@ -123,10 +123,11 @@ public class TrackedListTest {
 
     trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
-        if (firedEvents.get(0).equals(event))
-          firedEvents.remove(0);
-        else
-          Assert.fail();
+        if (firedEvents.get(0).equals(event)) {
+            firedEvents.remove(0);
+        } else {
+            Assert.fail();
+        }
       }
     });
 
@@ -524,10 +525,11 @@ public class TrackedListTest {
 
     trackedList.addChangeListener(new OMultiValueChangeListener<Integer, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<Integer, String> event) {
-        if (firedEvents.get(0).equals(event))
-          firedEvents.remove(0);
-        else
-          Assert.fail();
+        if (firedEvents.get(0).equals(event)) {
+            firedEvents.remove(0);
+        } else {
+            Assert.fail();
+        }
       }
     });
 

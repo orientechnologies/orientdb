@@ -42,14 +42,16 @@ public class MersenneTwisterTest {
     for (j = 0; j < 1000; j++) {
       // first, convert the int from signed to "unsigned"
       long l = (long) r.nextInt();
-      if (l < 0)
-        l += 4294967296L; // max int value
+      if (l < 0) {
+          l += 4294967296L; // max int value
+      }
       String s = String.valueOf(l);
       while (s.length() < 10)
         s = " " + s; // buffer
       System.out.print(s + " ");
-      if (j % 5 == 4)
-        System.out.println();
+      if (j % 5 == 4) {
+          System.out.println();
+      }
     }
 
     // SPEED TEST
@@ -79,31 +81,37 @@ public class MersenneTwisterTest {
     r = new MersenneTwister(SEED);
     for (j = 0; j < 1000; j++) {
       System.out.print(r.nextBoolean() + " ");
-      if (j % 8 == 7)
+      if (j % 8 == 7) {
+          System.out.println();
+      }
+    }
+    if (!(j % 8 == 7)) {
         System.out.println();
     }
-    if (!(j % 8 == 7))
-      System.out.println();
 
     System.out.println("\nGrab 1000 booleans of increasing probability using nextBoolean(double)");
     r = new MersenneTwister(SEED);
     for (j = 0; j < 1000; j++) {
       System.out.print(r.nextBoolean((double) (j / 999.0)) + " ");
-      if (j % 8 == 7)
+      if (j % 8 == 7) {
+          System.out.println();
+      }
+    }
+    if (!(j % 8 == 7)) {
         System.out.println();
     }
-    if (!(j % 8 == 7))
-      System.out.println();
 
     System.out.println("\nGrab 1000 booleans of increasing probability using nextBoolean(float)");
     r = new MersenneTwister(SEED);
     for (j = 0; j < 1000; j++) {
       System.out.print(r.nextBoolean((float) (j / 999.0f)) + " ");
-      if (j % 8 == 7)
+      if (j % 8 == 7) {
+          System.out.println();
+      }
+    }
+    if (!(j % 8 == 7)) {
         System.out.println();
     }
-    if (!(j % 8 == 7))
-      System.out.println();
 
     byte[] bytes = new byte[1000];
     System.out.println("\nGrab the first 1000 bytes using nextBytes");
@@ -111,44 +119,53 @@ public class MersenneTwisterTest {
     r.nextBytes(bytes);
     for (j = 0; j < 1000; j++) {
       System.out.print(bytes[j] + " ");
-      if (j % 16 == 15)
+      if (j % 16 == 15) {
+          System.out.println();
+      }
+    }
+    if (!(j % 16 == 15)) {
         System.out.println();
     }
-    if (!(j % 16 == 15))
-      System.out.println();
 
     byte b;
     System.out.println("\nGrab the first 1000 bytes -- must be same as nextBytes");
     r = new MersenneTwister(SEED);
     for (j = 0; j < 1000; j++) {
       System.out.print((b = r.nextByte()) + " ");
-      if (b != bytes[j])
-        System.out.print("BAD ");
-      if (j % 16 == 15)
+      if (b != bytes[j]) {
+          System.out.print("BAD ");
+      }
+      if (j % 16 == 15) {
+          System.out.println();
+      }
+    }
+    if (!(j % 16 == 15)) {
         System.out.println();
     }
-    if (!(j % 16 == 15))
-      System.out.println();
 
     System.out.println("\nGrab the first 1000 shorts");
     r = new MersenneTwister(SEED);
     for (j = 0; j < 1000; j++) {
       System.out.print(r.nextShort() + " ");
-      if (j % 8 == 7)
+      if (j % 8 == 7) {
+          System.out.println();
+      }
+    }
+    if (!(j % 8 == 7)) {
         System.out.println();
     }
-    if (!(j % 8 == 7))
-      System.out.println();
 
     System.out.println("\nGrab the first 1000 ints");
     r = new MersenneTwister(SEED);
     for (j = 0; j < 1000; j++) {
       System.out.print(r.nextInt() + " ");
-      if (j % 4 == 3)
+      if (j % 4 == 3) {
+          System.out.println();
+      }
+    }
+    if (!(j % 4 == 3)) {
         System.out.println();
     }
-    if (!(j % 4 == 3))
-      System.out.println();
 
     System.out.println("\nGrab the first 1000 ints of different sizes");
     r = new MersenneTwister(SEED);
@@ -156,23 +173,28 @@ public class MersenneTwisterTest {
     for (j = 0; j < 1000; j++) {
       System.out.print(r.nextInt(max) + " ");
       max *= 2;
-      if (max <= 0)
-        max = 1;
-      if (j % 4 == 3)
+      if (max <= 0) {
+          max = 1;
+      }
+      if (j % 4 == 3) {
+          System.out.println();
+      }
+    }
+    if (!(j % 4 == 3)) {
         System.out.println();
     }
-    if (!(j % 4 == 3))
-      System.out.println();
 
     System.out.println("\nGrab the first 1000 longs");
     r = new MersenneTwister(SEED);
     for (j = 0; j < 1000; j++) {
       System.out.print(r.nextLong() + " ");
-      if (j % 3 == 2)
+      if (j % 3 == 2) {
+          System.out.println();
+      }
+    }
+    if (!(j % 3 == 2)) {
         System.out.println();
     }
-    if (!(j % 3 == 2))
-      System.out.println();
 
     System.out.println("\nGrab the first 1000 longs of different sizes");
     r = new MersenneTwister(SEED);
@@ -180,43 +202,52 @@ public class MersenneTwisterTest {
     for (j = 0; j < 1000; j++) {
       System.out.print(r.nextLong(max2) + " ");
       max2 *= 2;
-      if (max2 <= 0)
-        max2 = 1;
-      if (j % 4 == 3)
+      if (max2 <= 0) {
+          max2 = 1;
+      }
+      if (j % 4 == 3) {
+          System.out.println();
+      }
+    }
+    if (!(j % 4 == 3)) {
         System.out.println();
     }
-    if (!(j % 4 == 3))
-      System.out.println();
 
     System.out.println("\nGrab the first 1000 floats");
     r = new MersenneTwister(SEED);
     for (j = 0; j < 1000; j++) {
       System.out.print(r.nextFloat() + " ");
-      if (j % 4 == 3)
+      if (j % 4 == 3) {
+          System.out.println();
+      }
+    }
+    if (!(j % 4 == 3)) {
         System.out.println();
     }
-    if (!(j % 4 == 3))
-      System.out.println();
 
     System.out.println("\nGrab the first 1000 doubles");
     r = new MersenneTwister(SEED);
     for (j = 0; j < 1000; j++) {
       System.out.print(r.nextDouble() + " ");
-      if (j % 3 == 2)
+      if (j % 3 == 2) {
+          System.out.println();
+      }
+    }
+    if (!(j % 3 == 2)) {
         System.out.println();
     }
-    if (!(j % 3 == 2))
-      System.out.println();
 
     System.out.println("\nGrab the first 1000 gaussian doubles");
     r = new MersenneTwister(SEED);
     for (j = 0; j < 1000; j++) {
       System.out.print(r.nextGaussian() + " ");
-      if (j % 3 == 2)
+      if (j % 3 == 2) {
+          System.out.println();
+      }
+    }
+    if (!(j % 3 == 2)) {
         System.out.println();
     }
-    if (!(j % 3 == 2))
-      System.out.println();
 
   }
 }

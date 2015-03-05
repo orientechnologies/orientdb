@@ -224,12 +224,13 @@ public class IndexTest extends ObjectDBBaseTest {
       Assert.assertTrue(d.containsField("key"));
       Assert.assertTrue(d.containsField("rid"));
 
-      if (d.field("key").equals(10))
-        Assert.assertEquals(d.rawField("rid"), new ORecordId(3, positions.get(0)));
-      else if (d.field("key").equals(20))
-        Assert.assertEquals(d.rawField("rid"), new ORecordId(3, positions.get(1)));
-      else
-        Assert.assertTrue(false);
+      if (d.field("key").equals(10)) {
+          Assert.assertEquals(d.rawField("rid"), new ORecordId(3, positions.get(0)));
+      } else if (d.field("key").equals(20)) {
+          Assert.assertEquals(d.rawField("rid"), new ORecordId(3, positions.get(1)));
+      } else {
+          Assert.assertTrue(false);
+      }
     }
 
     result = database.command(new OCommandSQL("select key, rid from index:IDX")).execute();
@@ -239,12 +240,13 @@ public class IndexTest extends ObjectDBBaseTest {
       Assert.assertTrue(d.containsField("key"));
       Assert.assertTrue(d.containsField("rid"));
 
-      if (d.field("key").equals(10))
-        Assert.assertEquals(d.rawField("rid"), new ORecordId(3, positions.get(0)));
-      else if (d.field("key").equals(20))
-        Assert.assertEquals(d.rawField("rid"), new ORecordId(3, positions.get(1)));
-      else
-        Assert.assertTrue(false);
+      if (d.field("key").equals(10)) {
+          Assert.assertEquals(d.rawField("rid"), new ORecordId(3, positions.get(0)));
+      } else if (d.field("key").equals(20)) {
+          Assert.assertEquals(d.rawField("rid"), new ORecordId(3, positions.get(1)));
+      } else {
+          Assert.assertTrue(false);
+      }
     }
 
     result = database.command(new OCommandSQL("select key from index:IDX")).execute();
@@ -988,8 +990,9 @@ public class IndexTest extends ObjectDBBaseTest {
     ODocument firstProfile = null;
 
     for (ODocument d : result) {
-      if (firstProfile == null)
-        firstProfile = d.field("rid");
+      if (firstProfile == null) {
+          firstProfile = d.field("rid");
+      }
 
       Assert.assertFalse(d.containsField("key"));
       Assert.assertTrue(d.containsField("rid"));
@@ -1019,10 +1022,12 @@ public class IndexTest extends ObjectDBBaseTest {
         OClass childClass = db.getMetadata().getSchema().createClass("ChildTestClass");
         OClass anotherChildClass = db.getMetadata().getSchema().createClass("AnotherChildTestClass");
 
-        if (!baseClass.isSuperClassOf(childClass))
-          childClass.setSuperClass(baseClass);
-        if (!baseClass.isSuperClassOf(anotherChildClass))
-          anotherChildClass.setSuperClass(baseClass);
+        if (!baseClass.isSuperClassOf(childClass)) {
+            childClass.setSuperClass(baseClass);
+        }
+        if (!baseClass.isSuperClassOf(anotherChildClass)) {
+            anotherChildClass.setSuperClass(baseClass);
+        }
 
         baseClass.createProperty("testParentProperty", OType.LONG).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
 
@@ -1063,8 +1068,9 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test
   public void testManualIndexInTx() {
-    if (database.getURL().startsWith("remote:"))
-      return;
+    if (database.getURL().startsWith("remote:")) {
+        return;
+    }
 
     ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
 
@@ -1103,8 +1109,9 @@ public class IndexTest extends ObjectDBBaseTest {
 
   @Test
   public void testManualIndexInTxRecursiveStore() {
-    if (database.getURL().startsWith("remote:"))
-      return;
+    if (database.getURL().startsWith("remote:")) {
+        return;
+    }
 
     ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getUnderlying();
 
@@ -1169,10 +1176,11 @@ public class IndexTest extends ObjectDBBaseTest {
 
       idx.put(key, doc);
 
-      if (keyDocsCount.containsKey(key))
-        keyDocsCount.put(key, keyDocsCount.get(key) + 1);
-      else
-        keyDocsCount.put(key, 1L);
+      if (keyDocsCount.containsKey(key)) {
+          keyDocsCount.put(key, keyDocsCount.get(key) + 1);
+      } else {
+          keyDocsCount.put(key, 1L);
+      }
     }
 
     for (Map.Entry<Integer, Long> entry : keyDocsCount.entrySet()) {
@@ -1342,8 +1350,9 @@ public class IndexTest extends ObjectDBBaseTest {
     ORID lastRid = null;
     for (ODocument document : result) {
       document.setLazyLoad(false);
-      if (lastKey > -1)
-        Assert.assertTrue(lastKey <= (Integer) document.<OCompositeKey> field("key").getKeys().get(0));
+      if (lastKey > -1) {
+          Assert.assertTrue(lastKey <= (Integer) document.<OCompositeKey> field("key").getKeys().get(0));
+      }
 
       lastKey = (Integer) document.<OCompositeKey> field("key").getKeys().get(0);
       lastRid = document.field("rid");
@@ -1354,15 +1363,17 @@ public class IndexTest extends ObjectDBBaseTest {
     while (true) {
       result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
           "select from index:IndexPaginationTest where key > ? limit 5  order by key"), new OCompositeKey(lastKey, lastRid));
-      if (result.isEmpty())
-        break;
+      if (result.isEmpty()) {
+          break;
+      }
 
       Assert.assertEquals(result.size(), 5);
 
       for (ODocument document : result) {
         document.setLazyLoad(false);
-        if (lastKey > -1)
-          Assert.assertTrue(lastKey <= (Integer) document.<OCompositeKey> field("key").getKeys().get(0));
+        if (lastKey > -1) {
+            Assert.assertTrue(lastKey <= (Integer) document.<OCompositeKey> field("key").getKeys().get(0));
+        }
 
         lastKey = (Integer) document.<OCompositeKey> field("key").getKeys().get(0);
         lastRid = document.field("rid", OType.LINK);
@@ -1401,8 +1412,9 @@ public class IndexTest extends ObjectDBBaseTest {
     ORID lastRid = null;
     for (ODocument document : result) {
       document.setLazyLoad(false);
-      if (lastKey > -1)
-        Assert.assertTrue(lastKey >= (Integer) document.<OCompositeKey> field("key").getKeys().get(0));
+      if (lastKey > -1) {
+          Assert.assertTrue(lastKey >= (Integer) document.<OCompositeKey> field("key").getKeys().get(0));
+      }
 
       lastKey = (Integer) document.<OCompositeKey> field("key").getKeys().get(0);
       lastRid = document.field("rid");
@@ -1414,15 +1426,17 @@ public class IndexTest extends ObjectDBBaseTest {
       result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>(
           "select from index:IndexPaginationTestDescOrder where key < ? limit 5  order by key desc"), new OCompositeKey(lastKey,
           lastRid));
-      if (result.isEmpty())
-        break;
+      if (result.isEmpty()) {
+          break;
+      }
 
       Assert.assertEquals(result.size(), 5);
 
       for (ODocument document : result) {
         document.setLazyLoad(false);
-        if (lastKey > -1)
-          Assert.assertTrue(lastKey >= (Integer) document.<OCompositeKey> field("key").getKeys().get(0));
+        if (lastKey > -1) {
+            Assert.assertTrue(lastKey >= (Integer) document.<OCompositeKey> field("key").getKeys().get(0));
+        }
 
         lastKey = (Integer) document.<OCompositeKey> field("key").getKeys().get(0);
         lastRid = document.field("rid", OType.LINK);
@@ -1564,8 +1578,9 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void testNullIndexKeysSupportInMiddleTx() {
-    if (database.getURL().startsWith("remote:"))
-      return;
+    if (database.getURL().startsWith("remote:")) {
+        return;
+    }
 
     final ODatabaseDocumentTx databaseDocumentTx = (ODatabaseDocumentTx) database.getUnderlying();
 
@@ -1651,8 +1666,9 @@ public class IndexTest extends ObjectDBBaseTest {
   }
 
   public void testValuesContainerIsRemovedIfIndexIsRemoved() {
-    if (database.getURL().startsWith("remote:"))
-      return;
+    if (database.getURL().startsWith("remote:")) {
+        return;
+    }
 
     final OSchema schema = database.getMetadata().getSchema();
     OClass clazz = schema.createClass("ValuesContainerIsRemovedIfIndexIsRemovedClass");
@@ -1763,8 +1779,9 @@ public class IndexTest extends ObjectDBBaseTest {
         .browseCluster(database.getClusterNameById(clusterId));
 
     for (int i = 0; i < 7; i++) {
-      if (!iteratorCluster.hasNext())
-        break;
+      if (!iteratorCluster.hasNext()) {
+          break;
+      }
 
       ORecord doc = iteratorCluster.next();
       positions.add(doc.getIdentity().getClusterPosition());

@@ -126,8 +126,9 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OTrackedMultiValue<O
   }
 
   public boolean remove(final Object o) {
-    if (o == null)
-      return clearDeletedRecords();
+    if (o == null) {
+        return clearDeletedRecords();
+    }
 
     return tree.remove(o) != null;
   }
@@ -152,16 +153,18 @@ public class OMVRBTreeRIDSet implements Set<OIdentifiable>, OTrackedMultiValue<O
 
   public boolean containsAll(final Collection<?> c) {
     for (Object o : c)
-      if (!tree.containsKey(o))
-        return false;
+      if (!tree.containsKey(o)) {
+          return false;
+    }
     return true;
   }
 
   public boolean addAll(final Collection<? extends OIdentifiable> c) {
     boolean changed = false;
     for (OIdentifiable o : c)
-      if (add(o) && !changed)
-        changed = true;
+      if (add(o) && !changed) {
+          changed = true;
+    }
     return changed;
   }
 

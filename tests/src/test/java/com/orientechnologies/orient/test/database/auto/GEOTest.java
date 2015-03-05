@@ -119,8 +119,9 @@ public class GEOTest extends DocumentDBBaseTest {
 
     Double lastDistance = null;
     for (ODocument d : result) {
-      if (lastDistance != null && d.field("distance") != null)
-        Assert.assertTrue(((Double) d.field("distance")).compareTo(lastDistance) <= 0);
+      if (lastDistance != null && d.field("distance") != null) {
+          Assert.assertTrue(((Double) d.field("distance")).compareTo(lastDistance) <= 0);
+      }
       lastDistance = d.field("distance");
     }
   }

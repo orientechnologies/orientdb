@@ -132,28 +132,32 @@ public class OObjectCustomSerializerMap<TYPE> extends HashMap<Object, Object> im
   }
 
   public void setDirty() {
-    if (sourceRecord != null)
-      sourceRecord.setDirty();
+    if (sourceRecord != null) {
+        sourceRecord.setDirty();
+    }
   }
 
   /**
    * Assure that the requested key is converted.
    */
   private void convert(final Object iKey) {
-    if (converted)
-      return;
+    if (converted) {
+        return;
+    }
 
-    if (super.containsKey(iKey))
-      return;
+    if (super.containsKey(iKey)) {
+        return;
+    }
 
     Object o = underlying.get(String.valueOf(iKey));
-		if (o != null)
-    	super.put(iKey, OObjectEntitySerializer.deserializeFieldValue(deserializeClass, o));
-		else {
+		if (o != null) {
+                    super.put(iKey, OObjectEntitySerializer.deserializeFieldValue(deserializeClass, o));
+    } else {
 			o = underlying.get(iKey);
 
-			if (o != null)
-				super.put(iKey, OObjectEntitySerializer.deserializeFieldValue(deserializeClass, o));
+			if (o != null) {
+                            super.put(iKey, OObjectEntitySerializer.deserializeFieldValue(deserializeClass, o));
+        }
 		}
 
   }
@@ -187,8 +191,9 @@ public class OObjectCustomSerializerMap<TYPE> extends HashMap<Object, Object> im
    * Converts all the items
    */
   protected void convertAll() {
-    if (converted)
-      return;
+    if (converted) {
+        return;
+    }
 
     for (java.util.Map.Entry<Object, Object> e : underlying.entrySet())
       super.put(e.getKey(), OObjectEntitySerializer.deserializeFieldValue(deserializeClass, e.getValue()));

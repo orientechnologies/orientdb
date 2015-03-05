@@ -56,8 +56,9 @@ public class OGraphMigration {
   public void execute() {
     List<ODocument> vertexes = database.query(new OSQLSynchQuery<ODocument>("select from V"));
 
-    if (commandOutputListener != null)
-      commandOutputListener.onMessage(vertexes.size() + " vertexes were fetched to process.");
+    if (commandOutputListener != null) {
+        commandOutputListener.onMessage(vertexes.size() + " vertexes were fetched to process.");
+    }
     for (int i = 0; i < vertexes.size(); i++) {
       final ODocument vertex = vertexes.get(i);
 
@@ -75,12 +76,14 @@ public class OGraphMigration {
       }
       vertex.save();
 
-      if (commandOutputListener != null && i % 10000 == 0)
-        commandOutputListener.onMessage(i + " vertexes were processed.");
+      if (commandOutputListener != null && i % 10000 == 0) {
+          commandOutputListener.onMessage(i + " vertexes were processed.");
+      }
     }
 
-    if (commandOutputListener != null)
-      commandOutputListener.onMessage("All vertexes were processed, looking for manual indexes to update.");
+    if (commandOutputListener != null) {
+        commandOutputListener.onMessage("All vertexes were processed, looking for manual indexes to update.");
+    }
 
     final OIndexManager indexManager = database.getMetadata().getIndexManager();
 
@@ -91,8 +94,9 @@ public class OGraphMigration {
       ODocument metadata = index.getMetadata();
 
       if (config.field(OrientIndex.CONFIG_CLASSNAME) != null && metadata == null) {
-        if (commandOutputListener != null)
-          commandOutputListener.onMessage("Index " + index.getName() + " uses out of dated index format and will be updated.");
+        if (commandOutputListener != null) {
+            commandOutputListener.onMessage("Index " + index.getName() + " uses out of dated index format and will be updated.");
+        }
 
         final OIndex<OIdentifiable> recordKeyValueIndex = (OIndex<OIdentifiable>) database
             .getMetadata()
@@ -119,16 +123,19 @@ public class OGraphMigration {
 
         indexWasMigrated = true;
 
-        if (commandOutputListener != null)
-          commandOutputListener.onMessage("Index " + index.getName() + " structure was updated.");
+        if (commandOutputListener != null) {
+            commandOutputListener.onMessage("Index " + index.getName() + " structure was updated.");
+        }
       }
     }
 
-    if (indexWasMigrated)
-      indexManager.save();
+    if (indexWasMigrated) {
+        indexManager.save();
+    }
 
-    if (commandOutputListener != null)
-      commandOutputListener.onMessage("Graph database update is completed");
+    if (commandOutputListener != null) {
+        commandOutputListener.onMessage("Graph database update is completed");
+    }
 
   }
 }

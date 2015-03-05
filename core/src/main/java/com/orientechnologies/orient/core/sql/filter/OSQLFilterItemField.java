@@ -85,8 +85,9 @@ public class OSQLFilterItemField extends OSQLFilterItemAbstract {
   }
 
   public Object getValue(final OIdentifiable iRecord, final Object iCurrentResult, final OCommandContext iContext) {
-    if (iRecord == null)
-      throw new OCommandExecutionException("expression item '" + name + "' cannot be resolved because current record is NULL");
+    if (iRecord == null) {
+        throw new OCommandExecutionException("expression item '" + name + "' cannot be resolved because current record is NULL");
+    }
 
     final ODocument doc = (ODocument) iRecord.getRecord();
 

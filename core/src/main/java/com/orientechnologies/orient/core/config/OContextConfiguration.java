@@ -50,8 +50,9 @@ public class OContextConfiguration implements Serializable {
   }
 
   public OContextConfiguration(final OContextConfiguration iParent) {
-    if (iParent != null)
-      config.putAll(iParent.config);
+    if (iParent != null) {
+        config.putAll(iParent.config);
+    }
   }
 
   public Object setValue(final OGlobalConfiguration iConfig, final Object iValue) {
@@ -63,19 +64,22 @@ public class OContextConfiguration implements Serializable {
   }
 
   public Object getValue(final OGlobalConfiguration iConfig) {
-    if (config != null && config.containsKey(iConfig.getKey()))
-      return config.get(iConfig.getKey());
+    if (config != null && config.containsKey(iConfig.getKey())) {
+        return config.get(iConfig.getKey());
+    }
     return iConfig.getValue();
   }
 
   @SuppressWarnings("unchecked")
   public <T> T getValue(final String iName, final T iDefaultValue) {
-    if (config != null && config.containsKey(iName))
-      return (T) config.get(iName);
+    if (config != null && config.containsKey(iName)) {
+        return (T) config.get(iName);
+    }
 
     final String sysProperty = System.getProperty(iName);
-    if (sysProperty != null)
-      return (T) sysProperty;
+    if (sysProperty != null) {
+        return (T) sysProperty;
+    }
 
     return iDefaultValue;
   }

@@ -40,8 +40,9 @@ public class SQLIndexWithoutSchemaTest extends AbstractIndexReuseTest {
   public void beforeClass() throws Exception {
     super.beforeClass();
 
-    if (database.isClosed())
-      database.open("admin", "admin");
+    if (database.isClosed()) {
+        database.open("admin", "admin");
+    }
 
     final OSchema schema = database.getMetadata().getSchema();
     schema.createClass(TEST_CLASS);
@@ -52,8 +53,9 @@ public class SQLIndexWithoutSchemaTest extends AbstractIndexReuseTest {
 
   @AfterClass
   public void afterClass() throws Exception {
-    if (database.isClosed())
-      database.open("admin", "admin");
+    if (database.isClosed()) {
+        database.open("admin", "admin");
+    }
 
     database.getMetadata().getSchema().dropClass(TEST_CLASS);
 

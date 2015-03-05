@@ -49,15 +49,17 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
     try {
       boolean tty = false;
       try {
-        if (setTerminalToCBreak())
-          tty = true;
+        if (setTerminalToCBreak()) {
+            tty = true;
+        }
 
       } catch (Exception e) {
       }
 
       final OConsoleDatabaseApp console = new OGremlinConsole(args);
-      if (tty)
-        console.setReader(new TTYConsoleReader());
+      if (tty) {
+          console.setReader(new TTYConsoleReader());
+      }
 
       result = console.run();
 
@@ -74,8 +76,9 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
   public void gremlin(@ConsoleParameter(name = "script-text", description = "The script text to execute") final String iScriptText) {
     checkForDatabase();
 
-    if (iScriptText == null || iScriptText.length() == 0)
-      return;
+    if (iScriptText == null || iScriptText.length() == 0) {
+        return;
+    }
 
     currentResultSet.clear();
 
@@ -90,8 +93,9 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
       out.printf("\nScript executed in %f sec(s).", elapsedSeconds);
     } catch (OStorageException e) {
       final Throwable cause = e.getCause();
-      if (cause instanceof OCommandExecutorNotFoundException)
-        out.printf("\nError: the GREMLIN command executor is not installed, check your configuration");
+      if (cause instanceof OCommandExecutorNotFoundException) {
+          out.printf("\nError: the GREMLIN command executor is not installed, check your configuration");
+      }
     }
   }
 
@@ -120,8 +124,9 @@ public class OGremlinConsole extends OConsoleDatabaseApp {
       } catch (ODatabaseImportException e) {
         printError(e);
       }
-    } else
-      super.importDatabase(text);
+    } else {
+        super.importDatabase(text);
+    }
   }
 
   @ConsoleCommand(description = "Migrates graph from OMVRBTree to ORidBag")

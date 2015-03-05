@@ -178,8 +178,9 @@ public class ComplexTypesTest extends DocumentDBBaseTest {
       ODocument d = it.next();
       Assert.assertTrue(d instanceof ODocument);
 
-      if (d.field("name").equals("Marcus"))
-        Assert.assertEquals(d.getClassName(), "Account");
+      if (d.field("name").equals("Marcus")) {
+          Assert.assertEquals(d.getClassName(), "Account");
+      }
 
       ++tot;
     }
@@ -214,8 +215,9 @@ public class ComplexTypesTest extends DocumentDBBaseTest {
       ODocument d = it.next();
       Assert.assertTrue(d instanceof ODocument);
 
-      if (d.field("name").equals("Marcus"))
-        Assert.assertEquals(d.getClassName(), "Account");
+      if (d.field("name").equals("Marcus")) {
+          Assert.assertEquals(d.getClassName(), "Account");
+      }
 
       ++tot;
     }

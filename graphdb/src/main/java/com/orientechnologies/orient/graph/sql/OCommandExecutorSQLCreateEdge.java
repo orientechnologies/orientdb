@@ -99,8 +99,9 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
       }
 
       temp = parseOptionalWord(true);
-      if (parserIsEnded())
-        break;
+      if (parserIsEnded()) {
+          break;
+      }
     }
 
     if (className == null) {
@@ -110,8 +111,9 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
     }
 
     // GET/CHECK CLASS NAME
-    if (clazz == null)
-      throw new OCommandSQLParsingException("Class '" + className + "' was not found");
+    if (clazz == null) {
+        throw new OCommandSQLParsingException("Class '" + className + "' was not found");
+    }
 
     return this;
   }
@@ -120,8 +122,9 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
    * Execute the command and return the ODocument object created.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (clazz == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    if (clazz == null) {
+        throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    }
 
     return OGraphCommandExecutorSQLFactory.runInTx(new OGraphCommandExecutorSQLFactory.GraphCallBack<List<Object>>() {
       @Override
@@ -133,8 +136,9 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
         final List<Object> edges = new ArrayList<Object>();
         for (OIdentifiable from : fromIds) {
           final OrientVertex fromVertex = graph.getVertex(from);
-          if (fromVertex == null)
-            throw new OCommandExecutionException("Source vertex '" + from + "' not exists");
+          if (fromVertex == null) {
+              throw new OCommandExecutionException("Source vertex '" + from + "' not exists");
+          }
 
           for (OIdentifiable to : toIds) {
             final OrientVertex toVertex;
@@ -146,29 +150,32 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
 
             final String clsName = clazz.getName();
 
-            if (fields != null)
-              // EVALUATE FIELDS
-              for (Entry<String, Object> f : fields.entrySet()) {
-                if (f.getValue() instanceof OSQLFunctionRuntime)
-                  fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(to, null, context));
-              }
+            if (fields != null) {
+                for (Entry<String, Object> f : fields.entrySet()) {
+                    if (f.getValue() instanceof OSQLFunctionRuntime) {
+                        fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(to, null, context));
+                    }
+                }
+            }
 
             OrientEdge edge = null;
             for (int r = 0; r < retry; ++r) {
               try {
                 if (content != null) {
-                  if (fields != null)
-                    // MERGE CONTENT WITH FIELDS
-                    fields.putAll(content.toMap());
-                  else
-                    fields = content.toMap();
+                  if (fields != null) {
+                      // MERGE CONTENT WITH FIELDS
+                      fields.putAll(content.toMap());
+                  } else {
+                      fields = content.toMap();
+                  }
                 }
 
                 edge = fromVertex.addEdge(null, toVertex, clsName, clusterName, fields);
 
                 if (fields != null && !fields.isEmpty()) {
-                  if (edge.isLightweight())
-                    edge.convertToDocument();
+                  if (edge.isLightweight()) {
+                      edge.convertToDocument();
+                  }
 
                   OSQLHelper.bindParameters(edge.getRecord(), fields, new OCommandParameters(iArgs), context);
                 }
@@ -179,16 +186,18 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
                 break;
 
               } catch (OConcurrentModificationException e) {
-                if (r + 1 >= retry)
-                  // NO RETRY; PROPAGATE THE EXCEPTION
-                  throw e;
+                if (r + 1 >= retry) {
+                    // NO RETRY; PROPAGATE THE EXCEPTION
+                    throw e;
+                }
 
                 // RETRY?
-                if (wait > 0)
-                  try {
-                    Thread.sleep(wait);
-                  } catch (InterruptedException e1) {
-                  }
+                if (wait > 0) {
+                    try {
+                        Thread.sleep(wait);
+                    } catch (InterruptedException e1) {
+                    }
+                }
 
                 // RELOAD LAST VERSION
                 fromVertex.getRecord().reload(null, true);
@@ -207,10 +216,11 @@ public class OCommandExecutorSQLCreateEdge extends OCommandExecutorSQLRetryAbstr
 
   @Override
   public Set<String> getInvolvedClusters() {
-    if (clazz != null)
-      return Collections.singleton(getDatabase().getClusterNameById(clazz.getClusterSelection().getCluster(clazz, null)));
-    else if (clusterName != null)
-      return getInvolvedClustersOfClusters(Collections.singleton(clusterName));
+    if (clazz != null) {
+        return Collections.singleton(getDatabase().getClusterNameById(clazz.getClusterSelection().getCluster(clazz, null)));
+    } else if (clusterName != null) {
+        return getInvolvedClustersOfClusters(Collections.singleton(clusterName));
+    }
 
     return Collections.EMPTY_SET;
   }

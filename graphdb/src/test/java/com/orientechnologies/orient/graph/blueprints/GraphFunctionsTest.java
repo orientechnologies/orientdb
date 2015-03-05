@@ -27,10 +27,12 @@ public class GraphFunctionsTest {
   public static void before() {
     graph = new OrientGraph(DB_URL);
 
-    if (graph.getEdgeType("SubEdge") == null)
-      graph.createEdgeType("SubEdge");
-    if (graph.getVertexType("SubVertex") == null)
-      graph.createVertexType("SubVertex");
+    if (graph.getEdgeType("SubEdge") == null) {
+        graph.createEdgeType("SubEdge");
+    }
+    if (graph.getVertexType("SubVertex") == null) {
+        graph.createVertexType("SubVertex");
+    }
 
     v1 = graph.addVertex("class:SubVertex");
     v2 = graph.addVertex("class:SubVertex");

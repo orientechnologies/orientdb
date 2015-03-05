@@ -44,25 +44,29 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
   }
 
   public OIdentifiable process() {
-    if (target == null)
-      return drop();
-
-    if (command.getContext().isAlreadyTraversed(target))
-      // ALREADY EVALUATED, DON'T GO IN DEEP
-      return drop();
-
-    if (target.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
-      try {
-        target.reload();
-      } catch (final ORecordNotFoundException e) {
-        // INVALID RID
+    if (target == null) {
         return drop();
-      }
+    }
+
+    if (command.getContext().isAlreadyTraversed(target)) {
+        // ALREADY EVALUATED, DON'T GO IN DEEP
+        return drop();
+    }
+
+    if (target.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+        try {
+            target.reload();
+        } catch (final ORecordNotFoundException e) {
+            // INVALID RID
+            return drop();
+        }
+    }
 
     if (command.getPredicate() != null) {
       final Object conditionResult = command.getPredicate().evaluate(target, null, command.getContext());
-      if (conditionResult != Boolean.TRUE)
-        return drop();
+      if (conditionResult != Boolean.TRUE) {
+          return drop();
+      }
     }
 
     // UPDATE ALL TRAVERSED RECORD TO AVOID RECURSION
@@ -89,27 +93,31 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
         if (pos > -1) {
           // FOUND <CLASS>.<FIELD>
           final OClass cls = ODocumentInternal.getImmutableSchemaClass(target);
-          if (cls == null)
-            // JUMP IT BECAUSE NO SCHEMA
-            continue;
+          if (cls == null) {
+              // JUMP IT BECAUSE NO SCHEMA
+              continue;
+          }
 
           final String className = cfgField.substring(0, pos);
-          if (!cls.isSubClassOf(className))
-            // JUMP IT BECAUSE IT'S NOT A INSTANCEOF THE CLASS
-            continue;
+          if (!cls.isSubClassOf(className)) {
+              // JUMP IT BECAUSE IT'S NOT A INSTANCEOF THE CLASS
+              continue;
+          }
 
           cfgField = cfgField.substring(pos + 1);
 
           fields.add(cfgField);
-        } else
-          fields.add(cfgFieldObject);
+        } else {
+            fields.add(cfgFieldObject);
+        }
       }
     }
 
     processFields(fields.iterator());
 
-    if (target.isEmbedded())
-      return null;
+    if (target.isEmbedded()) {
+        return null;
+    }
 
     return target;
   }
@@ -121,10 +129,11 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
       Object field = target.next();
 
       final Object fieldValue;
-      if (field instanceof OSQLFilterItem)
-        fieldValue = ((OSQLFilterItem) field).getValue(doc, null, null);
-      else
-        fieldValue = doc.rawField(field.toString());
+      if (field instanceof OSQLFilterItem) {
+          fieldValue = ((OSQLFilterItem) field).getValue(doc, null, null);
+      } else {
+          fieldValue = doc.rawField(field.toString());
+      }
 
       if (fieldValue != null) {
         final OTraverseAbstractProcess<?> subProcess;
@@ -136,8 +145,9 @@ public class OTraverseRecordProcess extends OTraverseAbstractProcess<ODocument> 
         } else if (fieldValue instanceof OIdentifiable && ((OIdentifiable) fieldValue).getRecord() instanceof ODocument) {
           subProcess = new OTraverseRecordProcess(command, (ODocument) ((OIdentifiable) fieldValue).getRecord(), getPath()
               .appendField(field.toString()));
-        } else
-          continue;
+        } else {
+            continue;
+        }
 
         command.getContext().push(subProcess);
       }

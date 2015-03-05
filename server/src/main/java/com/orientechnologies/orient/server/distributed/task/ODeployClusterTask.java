@@ -68,15 +68,17 @@ public class ODeployClusterTask extends OAbstractReplicatedTask implements OComm
       throws Exception {
 
     if (!getNodeSource().equals(iManager.getLocalNodeName())) {
-      if (database == null)
-        throw new ODistributedException("Database instance is null");
+      if (database == null) {
+          throw new ODistributedException("Database instance is null");
+      }
 
       final String databaseName = database.getName();
 
       final ODistributedConfiguration dCfg = iManager.getDatabaseConfiguration(databaseName);
-      if (!clusterName.equalsIgnoreCase(dCfg.getMasterServer(clusterName)))
-        // NOT MASTER SERVER FOR THIS CLUSTER, SKIP IT
-        return Boolean.FALSE;
+      if (!clusterName.equalsIgnoreCase(dCfg.getMasterServer(clusterName))) {
+          // NOT MASTER SERVER FOR THIS CLUSTER, SKIP IT
+          return Boolean.FALSE;
+      }
 
       final Long lastDeployment = (Long) iManager.getConfigurationMap().get(DEPLOYCLUSTER + databaseName + "." + clusterName);
       if (lastDeployment != null && lastDeployment.longValue() == random) {
@@ -92,10 +94,11 @@ public class ODeployClusterTask extends OAbstractReplicatedTask implements OComm
           databaseName);
 
       final File f = new File(Orient.getTempPath() + "/backup_" + database.getName() + "_" + clusterName + ".zip");
-      if (f.exists())
-        f.delete();
-      else
-        f.getParentFile().mkdirs();
+      if (f.exists()) {
+          f.delete();
+      } else {
+          f.getParentFile().mkdirs();
+      }
       f.createNewFile();
 
       ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
@@ -121,9 +124,10 @@ public class ODeployClusterTask extends OAbstractReplicatedTask implements OComm
         ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
             "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
 
-        if (chunk.last)
-          // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
-          iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+        if (chunk.last) {
+            // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
+            iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+        }
 
         return chunk;
 
@@ -131,9 +135,10 @@ public class ODeployClusterTask extends OAbstractReplicatedTask implements OComm
         fileOutputStream.close();
       }
 
-    } else
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-          "skip deploying cluster %s.%s from the same node");
+    } else {
+        ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
+                "skip deploying cluster %s.%s from the same node");
+    }
 
     return Boolean.FALSE;
   }
@@ -182,8 +187,9 @@ public class ODeployClusterTask extends OAbstractReplicatedTask implements OComm
 
   @Override
   public void onMessage(String iText) {
-    if (iText.startsWith("\n"))
-      iText = iText.substring(1);
+    if (iText.startsWith("\n")) {
+        iText = iText.substring(1);
+    }
 
     OLogManager.instance().info(this, iText);
   }

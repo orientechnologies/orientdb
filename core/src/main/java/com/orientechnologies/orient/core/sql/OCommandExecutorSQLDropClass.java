@@ -114,10 +114,11 @@ public class OCommandExecutorSQLDropClass extends OCommandExecutorSQLAbstract im
       // NOT EMPTY, CHECK IF CLASS IS OF VERTEX OR EDGES
       if (cls.isSubClassOf("V")) {
         // FOUND VERTICES
-        if (unsafe)
-          OLogManager.instance().warn(this,
-              "Dropped class '%s' containing %d vertices using UNSAFE mode. Database could contain broken edges", className,
-              records);
+        if (unsafe) {
+            OLogManager.instance().warn(this,
+                    "Dropped class '%s' containing %d vertices using UNSAFE mode. Database could contain broken edges", className,
+                    records);
+        }
       } else if (cls.isSubClassOf("E")) {
         // FOUND EDGES
         OLogManager.instance().warn(this,

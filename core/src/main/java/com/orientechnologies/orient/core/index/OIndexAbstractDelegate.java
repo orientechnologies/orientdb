@@ -156,15 +156,18 @@ public class OIndexAbstractDelegate<T> implements OIndex<T> {
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
 
     final OIndexAbstractDelegate<?> that = (OIndexAbstractDelegate<?>) o;
 
-    if (!delegate.equals(that.delegate))
-      return false;
+    if (!delegate.equals(that.delegate)) {
+        return false;
+    }
 
     return true;
   }

@@ -64,8 +64,9 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
   }
 
   public boolean result(final Object iRecord) {
-    if (iRecord != null)
-      result.add((T) iRecord);
+    if (iRecord != null) {
+        result.add((T) iRecord);
+    }
     return true;
   }
 
@@ -142,10 +143,11 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
     super.queryFromStream(buffer);
 
     final String rid = buffer.getAsString();
-    if ("".equals(rid))
-      nextPageRID = null;
-    else
-      nextPageRID = new ORecordId(rid);
+    if ("".equals(rid)) {
+        nextPageRID = null;
+    } else {
+        nextPageRID = new ORecordId(rid);
+    }
 
     final byte[] serializedPrevParams = buffer.getAsByteArray();
     previousQueryParams = deserializeQueryParameters(serializedPrevParams);
@@ -153,17 +155,20 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
   }
 
   private void resetNextRIDIfParametersWereChanged(final Map<Object, Object> queryParams) {
-    if (!queryParams.equals(previousQueryParams))
-      nextPageRID = null;
+    if (!queryParams.equals(previousQueryParams)) {
+        nextPageRID = null;
+    }
   }
 
   private Map<Object, Object> fetchQueryParams(final Object... iArgs) {
-    if (iArgs != null && iArgs.length > 0)
-      return convertToParameters(iArgs);
+    if (iArgs != null && iArgs.length > 0) {
+        return convertToParameters(iArgs);
+    }
 
     Map<Object, Object> queryParams = getParameters();
-    if (queryParams == null)
-      queryParams = new HashMap<Object, Object>();
+    if (queryParams == null) {
+        queryParams = new HashMap<Object, Object>();
+    }
     return queryParams;
   }
 

@@ -122,8 +122,9 @@ public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OObjectLaz
 
   public boolean containsAll(Collection<?> c) {
     for (Object o : c) {
-      if (!contains(o))
-        return false;
+      if (!contains(o)) {
+          return false;
+      }
     }
     return true;
   }
@@ -133,8 +134,9 @@ public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OObjectLaz
     for (TYPE element : c) {
       dirty = add(element) || dirty;
     }
-    if (dirty)
-      setDirty();
+    if (dirty) {
+        setDirty();
+    }
     return dirty;
   }
 
@@ -143,8 +145,9 @@ public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OObjectLaz
       add(index, element);
       index++;
     }
-    if (c.size() > 0)
-      setDirty();
+    if (c.size() > 0) {
+        setDirty();
+    }
     return c.size() > 0;
   }
 
@@ -153,8 +156,9 @@ public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OObjectLaz
     for (Object o : c) {
       dirty = dirty || remove(o);
     }
-    if (dirty)
-      setDirty();
+    if (dirty) {
+        setDirty();
+    }
     return dirty;
   }
 
@@ -215,8 +219,9 @@ public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OObjectLaz
   }
 
   protected void convertAll() {
-    if (converted)
-      return;
+    if (converted) {
+        return;
+    }
 
     for (int i = 0; i < size(); ++i)
       convert(i);
@@ -225,8 +230,9 @@ public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OObjectLaz
   }
 
   public void setDirty() {
-    if (sourceRecord != null)
-      sourceRecord.setDirty();
+    if (sourceRecord != null) {
+        sourceRecord.setDirty();
+    }
   }
 
   @Override
@@ -243,8 +249,9 @@ public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OObjectLaz
    *          Position of the item to convert
    */
   private void convert(final int iIndex) {
-    if (converted)
-      return;
+    if (converted) {
+        return;
+    }
 
     Object o = list.get(iIndex);
     if (o == null) {

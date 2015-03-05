@@ -47,8 +47,9 @@ public class ONullBucket<V> extends ODurablePage {
     super(cacheEntry, trackMode);
     this.valueSerializer = valueSerializer;
 
-    if (isNew)
-      setByteValue(NEXT_FREE_POSITION, (byte) 0);
+    if (isNew) {
+        setByteValue(NEXT_FREE_POSITION, (byte) 0);
+    }
   }
 
   public void setValue(OSBTreeValue<V> value) throws IOException {
@@ -69,12 +70,14 @@ public class ONullBucket<V> extends ODurablePage {
   }
 
   public OSBTreeValue<V> getValue() {
-    if (getByteValue(NEXT_FREE_POSITION) == 0)
-      return null;
+    if (getByteValue(NEXT_FREE_POSITION) == 0) {
+        return null;
+    }
 
     final boolean isLink = getByteValue(NEXT_FREE_POSITION + 1) == 0;
-    if (isLink)
-      return new OSBTreeValue<V>(true, getLongValue(NEXT_FREE_POSITION + 2), null);
+    if (isLink) {
+        return new OSBTreeValue<V>(true, getLongValue(NEXT_FREE_POSITION + 2), null);
+    }
 
     return new OSBTreeValue<V>(false, -1, deserializeFromDirectMemory(valueSerializer, NEXT_FREE_POSITION + 2));
   }

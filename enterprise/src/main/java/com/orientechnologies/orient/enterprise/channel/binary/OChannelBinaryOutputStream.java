@@ -40,8 +40,9 @@ public class OChannelBinaryOutputStream extends OutputStream {
 
   @Override
   public void write(final int iByte) throws IOException {
-    if (pos >= buffer.length)
-      flush(true);
+    if (pos >= buffer.length) {
+        flush(true);
+    }
 
     buffer[pos++] = (byte) iByte;
   }

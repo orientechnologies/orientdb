@@ -154,10 +154,11 @@ public class OObjectProxyMethodHandlerTest {
         Object defaultValue = m.invoke(handler, field);
         Object expectedValue = fieldsAndThereDefaultValue.get(fieldName);
 
-        if (expectedValue == null)
-          assertTrue(defaultValue == null);
-        else
-          assertTrue(expectedValue.equals(defaultValue));
+        if (expectedValue == null) {
+            assertTrue(defaultValue == null);
+        } else {
+            assertTrue(expectedValue.equals(defaultValue));
+        }
       } catch (Exception e) {
         e.printStackTrace();
         fail("Unexpected exception");

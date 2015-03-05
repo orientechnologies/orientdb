@@ -68,23 +68,26 @@ public class ODatabaseHelper {
       if (database.getURL().startsWith("remote:")) {
         new OServerAdmin(database.getURL()).connect("root", getServerRootPassword(directory)).dropDatabase(storageType);
       } else {
-        if (database.isClosed())
-          database.open("admin", "admin");
+        if (database.isClosed()) {
+            database.open("admin", "admin");
+        }
         database.drop();
       }
     }
   }
 
   public static boolean existsDatabase(final ODatabase database, String storageType) throws IOException {
-    if (database.getURL().startsWith("remote"))
-      return new OServerAdmin(database.getURL()).connect("root", getServerRootPassword()).existsDatabase(storageType);
+    if (database.getURL().startsWith("remote")) {
+        return new OServerAdmin(database.getURL()).connect("root", getServerRootPassword()).existsDatabase(storageType);
+    }
 
     return database.exists();
   }
 
   public static boolean existsDatabase(final String url) throws IOException {
-    if (url.startsWith("remote"))
-      return new OServerAdmin(url).connect("root", getServerRootPassword()).existsDatabase();
+    if (url.startsWith("remote")) {
+        return new OServerAdmin(url).connect("root", getServerRootPassword()).existsDatabase();
+    }
     return new ODatabaseDocumentTx(url).exists();
   }
 
@@ -139,26 +142,33 @@ public class ODatabaseHelper {
       sysProperty = System.getenv("CONFIG_FILE");
       file = new File(sysProperty != null ? sysProperty : "");
     }
-    if (!file.exists())
-      file = new File("../releases/orientdb-" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
-    if (!file.exists())
-      file = new File("../releases/orientdb-community-" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
-    if (!file.exists())
-      file = new File("../../releases/orientdb-" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
-    if (!file.exists())
-      file = new File("../../releases/orientdb-community-" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
+    if (!file.exists()) {
+        file = new File("../releases/orientdb-" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
+    }
+    if (!file.exists()) {
+        file = new File("../releases/orientdb-community-" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
+    }
+    if (!file.exists()) {
+        file = new File("../../releases/orientdb-" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
+    }
+    if (!file.exists()) {
+        file = new File("../../releases/orientdb-community-" + OConstants.ORIENT_VERSION + "/config/orientdb-server-config.xml");
+    }
     if (!file.exists() && iDirectory != null) {
       file = new File(iDirectory + "/config/orientdb-server-config.xml");
-      if (!file.exists())
-        file = new File("../" + iDirectory + "/config/orientdb-server-config.xml");
+      if (!file.exists()) {
+          file = new File("../" + iDirectory + "/config/orientdb-server-config.xml");
+      }
     }
-    if (!file.exists())
-      file = new File(OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME
-          + "}/config/orientdb-server-config.xml"));
-    if (!file.exists())
-      throw new OConfigurationException(
-          "Cannot load file orientdb-server-config.xml to execute remote tests. Current directory is "
-              + new File(".").getAbsolutePath());
+    if (!file.exists()) {
+        file = new File(OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME
+                + "}/config/orientdb-server-config.xml"));
+    }
+    if (!file.exists()) {
+        throw new OConfigurationException(
+                "Cannot load file orientdb-server-config.xml to execute remote tests. Current directory is "
+                        + new File(".").getAbsolutePath());
+    }
     return file;
   }
 }

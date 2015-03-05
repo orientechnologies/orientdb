@@ -62,8 +62,9 @@ public abstract class OServerCommandAbstract implements OServerCommand {
       catch ( UnsupportedEncodingException e ) {
         throw new OHttpRequestException(e);
       }
-      if (parts.size() < iArgumentCount)
-       throw new OHttpRequestException(iSyntax);
+      if (parts.size() < iArgumentCount) {
+          throw new OHttpRequestException(iSyntax);
+     }
 
      return parts.toArray(new String[parts.size()]);
    }

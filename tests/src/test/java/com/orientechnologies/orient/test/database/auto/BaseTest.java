@@ -29,8 +29,9 @@ public abstract class BaseTest<T extends ODatabase> {
   public BaseTest(@Optional String url) {
     storageType = System.getProperty("storageType");
 
-    if (storageType == null)
-      storageType = "memory";
+    if (storageType == null) {
+        storageType = "memory";
+    }
 
     if (url == null) {
       if ("remote".equals(storageType)) {
@@ -52,8 +53,9 @@ public abstract class BaseTest<T extends ODatabase> {
       final String buildDirectory = System.getProperty("buildDirectory", ".");
       url = getStorageType() + ":" + buildDirectory + "/test-db/demo" + prefix;
       dropDb = true;
-    } else
-      url = url + prefix;
+    } else {
+        url = url + prefix;
+    }
 
     this.url = url;
   }
@@ -66,8 +68,9 @@ public abstract class BaseTest<T extends ODatabase> {
     String remoteStorageType = storageType;
 
     if (dropDb) {
-      if (storageType.equals("remote"))
-        remoteStorageType = "plocal";
+      if (storageType.equals("remote")) {
+          remoteStorageType = "plocal";
+      }
 
       if (ODatabaseHelper.existsDatabase(database, remoteStorageType)) {
         database.open("admin", "admin");
@@ -83,30 +86,35 @@ public abstract class BaseTest<T extends ODatabase> {
   @AfterClass
   public void afterClass() throws Exception {
     if (dropDb) {
-      if (database.isClosed())
-        database.open("admin", "admin");
+      if (database.isClosed()) {
+          database.open("admin", "admin");
+      }
 
       String remoteStorageType = storageType;
-      if (storageType.equals("remote"))
-        remoteStorageType = "plocal";
+      if (storageType.equals("remote")) {
+          remoteStorageType = "plocal";
+      }
 
       ODatabaseHelper.dropDatabase(database, remoteStorageType);
     } else {
-      if (!database.isClosed())
-        database.close();
+      if (!database.isClosed()) {
+          database.close();
+      }
     }
   }
 
   @BeforeMethod
   public void beforeMethod() throws Exception {
-    if (database.isClosed())
-      database.open("admin", "admin");
+    if (database.isClosed()) {
+        database.open("admin", "admin");
+    }
   }
 
   @AfterMethod
   public void afterMethod() throws Exception {
-    if (!database.isClosed())
-      database.close();
+    if (!database.isClosed()) {
+        database.close();
+    }
   }
 
   protected abstract T createDatabaseInstance(String url);
@@ -121,11 +129,13 @@ public abstract class BaseTest<T extends ODatabase> {
 
   protected void createBasicTestSchema() {
     ODatabase database = this.database;
-    if (database instanceof OObjectDatabaseTx)
-      database = ((OObjectDatabaseTx) database).getUnderlying();
+    if (database instanceof OObjectDatabaseTx) {
+        database = ((OObjectDatabaseTx) database).getUnderlying();
+    }
 
-    if (database.getMetadata().getSchema().existsClass("Whiz"))
-      return;
+    if (database.getMetadata().getSchema().existsClass("Whiz")) {
+        return;
+    }
 
     database.addCluster("csv");
     database.addCluster("flat");

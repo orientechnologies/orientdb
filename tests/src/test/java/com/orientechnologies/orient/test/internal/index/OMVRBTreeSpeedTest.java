@@ -57,15 +57,17 @@ public class OMVRBTreeSpeedTest extends SpeedTestMonoThread {
 		System.out.println("Check each value in sequence...");
 		for (int i = 0; i < NUMS; i++) {
 			// System.out.println("Checking " + i + "...");
-			if (tree.get(getKey(i)) != i)
-				System.err.println("Find error at " + i + "!!!");
+			if (tree.get(getKey(i)) != i) {
+                            System.err.println("Find error at " + i + "!!!");
+                        }
 		}
 		data.printSnapshot();
 
 		System.out.println("Check each value in inverse order...");
 		for (int i = NUMS - 1; i >= 0; i--) {
-			if (tree.get(getKey(i)) != i)
-				System.err.println("Find error at " + i + "!!!");
+			if (tree.get(getKey(i)) != i) {
+                            System.err.println("Find error at " + i + "!!!");
+                        }
 		}
 		data.printSnapshot();
 

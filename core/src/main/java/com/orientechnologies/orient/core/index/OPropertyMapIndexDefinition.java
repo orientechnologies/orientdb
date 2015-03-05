@@ -52,8 +52,9 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
   public OPropertyMapIndexDefinition(final String iClassName, final String iField, final OType iType, final INDEX_BY indexBy) {
     super(iClassName, iField, iType);
 
-    if (indexBy == null)
-      throw new NullPointerException("You have to provide way by which map entries should be mapped");
+    if (indexBy == null) {
+        throw new NullPointerException("You have to provide way by which map entries should be mapped");
+    }
 
     this.indexBy = indexBy;
   }
@@ -65,8 +66,9 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
 
   @Override
   public Object createValue(List<?> params) {
-    if (!(params.get(0) instanceof Map))
-      return null;
+    if (!(params.get(0) instanceof Map)) {
+        return null;
+    }
 
     final Collection<?> mapParams = extractMapParams((Map<?, ?>) params.get(0));
     final List<Object> result = new ArrayList<Object>(mapParams.size());
@@ -79,8 +81,9 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
 
   @Override
   public Object createValue(Object... params) {
-    if (!(params[0] instanceof Map))
-      return null;
+    if (!(params[0] instanceof Map)) {
+        return null;
+    }
 
     final Collection<?> mapParams = extractMapParams((Map<?, ?>) params[0]);
 
@@ -109,25 +112,30 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
   }
 
   private Collection<?> extractMapParams(Map<?, ?> map) {
-    if (indexBy == INDEX_BY.KEY)
-      return map.keySet();
+    if (indexBy == INDEX_BY.KEY) {
+        return map.keySet();
+    }
 
     return map.values();
   }
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
-    if (!super.equals(o))
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
+    if (!super.equals(o)) {
+        return false;
+    }
 
     OPropertyMapIndexDefinition that = (OPropertyMapIndexDefinition) o;
 
-    if (indexBy != that.indexBy)
-      return false;
+    if (indexBy != that.indexBy) {
+        return false;
+    }
 
     return true;
   }
@@ -139,13 +147,15 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
   public void processChangeEvent(final OMultiValueChangeEvent<?, ?> changeEvent, final Map<Object, Integer> keysToAdd,
       final Map<Object, Integer> keysToRemove) {
     final boolean result;
-    if (indexBy.equals(INDEX_BY.KEY))
-      result = processKeyChangeEvent(changeEvent, keysToAdd, keysToRemove);
-    else
-      result = processValueChangeEvent(changeEvent, keysToAdd, keysToRemove);
+    if (indexBy.equals(INDEX_BY.KEY)) {
+        result = processKeyChangeEvent(changeEvent, keysToAdd, keysToRemove);
+    } else {
+        result = processValueChangeEvent(changeEvent, keysToAdd, keysToRemove);
+    }
 
-    if (!result)
-      throw new IllegalArgumentException("Invalid change type :" + changeEvent.getChangeType());
+    if (!result) {
+        throw new IllegalArgumentException("Invalid change type :" + changeEvent.getChangeType());
+    }
   }
 
   private boolean processKeyChangeEvent(final OMultiValueChangeEvent<?, ?> changeEvent, final Map<Object, Integer> keysToAdd,
@@ -182,8 +192,9 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
 
   @Override
   public List<String> getFieldsToIndex() {
-    if (indexBy == INDEX_BY.KEY)
-      return Collections.singletonList(field + " by key");
+    if (indexBy == INDEX_BY.KEY) {
+        return Collections.singletonList(field + " by key");
+    }
     return Collections.singletonList(field + " by value");
   }
 
@@ -206,10 +217,11 @@ public class OPropertyMapIndexDefinition extends OAbstractIndexDefinitionMultiVa
     ddl.append(indexName).append(" on ");
     ddl.append(className).append(" ( ").append(field);
 
-    if (indexBy == INDEX_BY.KEY)
-      ddl.append(" by key");
-    else
-      ddl.append(" by value");
+    if (indexBy == INDEX_BY.KEY) {
+        ddl.append(" by key");
+    } else {
+        ddl.append(" by value");
+    }
 
     ddl.append(" ) ");
     ddl.append(indexType);

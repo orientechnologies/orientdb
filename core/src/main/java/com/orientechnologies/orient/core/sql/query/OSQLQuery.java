@@ -62,8 +62,9 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
   @SuppressWarnings("unchecked")
   public List<T> run(final Object... iArgs) {
     final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
-    if (database == null)
-      throw new OQueryParsingException("No database configured");
+    if (database == null) {
+        throw new OQueryParsingException("No database configured");
+    }
 
     ((OMetadataInternal) database.getMetadata()).makeThreadLocalSchemaSnapshot();
     try {
@@ -134,8 +135,9 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
   }
 
   protected Map<Object, Object> deserializeQueryParameters(final byte[] paramBuffer) {
-    if (paramBuffer == null || paramBuffer.length == 0)
-      return Collections.emptyMap();
+    if (paramBuffer == null || paramBuffer.length == 0) {
+        return Collections.emptyMap();
+    }
 
     final ODocument param = new ODocument();
     param.fromStream(paramBuffer);
@@ -144,18 +146,20 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
 
     final Map<Object, Object> result = new HashMap<Object, Object>();
     for (Entry<String, Object> p : params.entrySet()) {
-      if (Character.isDigit(p.getKey().charAt(0)))
-        result.put(Integer.parseInt(p.getKey()), p.getValue());
-      else
-        result.put(p.getKey(), p.getValue());
+      if (Character.isDigit(p.getKey().charAt(0))) {
+          result.put(Integer.parseInt(p.getKey()), p.getValue());
+      } else {
+          result.put(p.getKey(), p.getValue());
+      }
     }
     return result;
   }
 
   protected byte[] serializeQueryParameters(final Map<Object, Object> params) {
-    if (params == null || params.size() == 0)
-      // NO PARAMETER, JUST SEND 0
-      return new byte[0];
+    if (params == null || params.size() == 0) {
+        // NO PARAMETER, JUST SEND 0
+        return new byte[0];
+    }
 
     final ODocument param = new ODocument();
     param.field("params", convertToRIDsIfPossible(params));
@@ -194,8 +198,9 @@ public abstract class OSQLQuery<T> extends OQueryAbstract<T> implements OCommand
         newParams.put(entry.getKey(), newMap);
       } else if (entry.getValue() instanceof ORecord) {
         newParams.put(entry.getKey(), ((OIdentifiable) entry.getValue()).getIdentity());
-      } else
-        newParams.put(entry.getKey(), entry.getValue());
+      } else {
+          newParams.put(entry.getKey(), entry.getValue());
+      }
     }
 
     return newParams;

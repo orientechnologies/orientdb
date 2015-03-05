@@ -88,9 +88,9 @@ public class OrientGraphNoTxTest extends GraphTest {
     OrientGraphNoTx graph = currentGraphs.get(url);
 
     if (graph != null) {
-      if (graph.isClosed())
-        currentGraphs.remove(url);
-      else {
+      if (graph.isClosed()) {
+          currentGraphs.remove(url);
+      } else {
         ODatabaseRecordThreadLocal.INSTANCE.set(graph.getRawGraph());
         return graph;
       }
@@ -126,8 +126,9 @@ public class OrientGraphNoTxTest extends GraphTest {
     final String url = OrientGraphTest.getStorageType() +  ":" + graphDirectory;
     try {
       OrientGraphNoTx graph = currentGraphs.remove(url);
-      if (graph == null || graph.isClosed())
-        graph = new OrientGraphNoTx(url);
+      if (graph == null || graph.isClosed()) {
+          graph = new OrientGraphNoTx(url);
+      }
 
       graph.drop();
     } catch (Exception e) {

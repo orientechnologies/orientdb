@@ -45,8 +45,9 @@ public class OSerializationSetThreadLocal extends ThreadLocal<Map<ODocument, Boo
     Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onStartup() {
-        if (INSTANCE == null)
-          INSTANCE = new OSerializationSetThreadLocal();
+        if (INSTANCE == null) {
+            INSTANCE = new OSerializationSetThreadLocal();
+        }
       }
 
       @Override
@@ -76,8 +77,9 @@ public class OSerializationSetThreadLocal extends ThreadLocal<Map<ODocument, Boo
     // CHECK IF THE RECORD IS PENDING TO BE MARSHALLED
     if (iMarshalledRecords.containsKey(document)) {
       return false;
-    } else
-      iMarshalledRecords.put(document, Boolean.FALSE);
+    } else {
+        iMarshalledRecords.put(document, Boolean.FALSE);
+    }
     return true;
   }
 

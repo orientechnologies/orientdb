@@ -48,8 +48,9 @@ public class OMemoryInputStream extends InputStream {
   }
 
   public byte[] getAsByteArrayFixed(final int iSize) throws IOException {
-    if (position >= length)
-      return null;
+    if (position >= length) {
+        return null;
+    }
 
     final byte[] portion = OArrays.copyOfRange(buffer, position, position + iSize);
     position += iSize;
@@ -67,8 +68,9 @@ public class OMemoryInputStream extends InputStream {
    * 
    */
   public int getAsByteArrayOffset() {
-    if (position >= length)
-      return -1;
+    if (position >= length) {
+        return -1;
+    }
 
     final int begin = position;
 
@@ -80,8 +82,9 @@ public class OMemoryInputStream extends InputStream {
 
   @Override
   public int read() throws IOException {
-    if (position >= length)
-      return -1;
+    if (position >= length) {
+        return -1;
+    }
 
     return buffer[position++] & 0xFF;
   }
@@ -93,20 +96,24 @@ public class OMemoryInputStream extends InputStream {
 
   @Override
   public int read(final byte[] b, final int off, final int len) throws IOException {
-    if (position >= length)
-      return -1;
+    if (position >= length) {
+        return -1;
+    }
 
     int newLen;
-    if (position + len >= length)
-      newLen = length - position;
-    else
-      newLen = len;
+    if (position + len >= length) {
+        newLen = length - position;
+    } else {
+        newLen = len;
+    }
 
-    if (off + newLen >= b.length)
-      newLen = b.length - off;
+    if (off + newLen >= b.length) {
+        newLen = b.length - off;
+    }
 
-    if (newLen <= 0)
-      return 0;
+    if (newLen <= 0) {
+        return 0;
+    }
 
     System.arraycopy(buffer, position, b, off, newLen);
     position += newLen;
@@ -115,13 +122,15 @@ public class OMemoryInputStream extends InputStream {
   }
 
   public byte[] getAsByteArray(int iOffset) throws IOException {
-    if (buffer == null || iOffset >= length)
-      return null;
+    if (buffer == null || iOffset >= length) {
+        return null;
+    }
 
     final int size = OBinaryProtocol.bytes2int(buffer, iOffset);
 
-    if (size == 0)
-      return null;
+    if (size == 0) {
+        return null;
+    }
 
     iOffset += OBinaryProtocol.SIZE_INT;
 
@@ -129,8 +138,9 @@ public class OMemoryInputStream extends InputStream {
   }
 
   public byte[] getAsByteArray() throws IOException {
-    if (position >= length)
-      return null;
+    if (position >= length) {
+        return null;
+    }
 
     final int size = OBinaryProtocol.bytes2int(buffer, position);
     position += OBinaryProtocol.SIZE_INT;
@@ -201,8 +211,9 @@ public class OMemoryInputStream extends InputStream {
   }
 
   public byte[] copy() {
-    if (buffer == null)
-      return null;
+    if (buffer == null) {
+        return null;
+    }
 
     final int size = position > 0 ? position : buffer.length;
 
@@ -212,8 +223,9 @@ public class OMemoryInputStream extends InputStream {
   }
 
   public int getVariableSize() throws IOException {
-    if (position >= length)
-      return -1;
+    if (position >= length) {
+        return -1;
+    }
 
     final int size = OBinaryProtocol.bytes2int(buffer, position);
     position += OBinaryProtocol.SIZE_INT;

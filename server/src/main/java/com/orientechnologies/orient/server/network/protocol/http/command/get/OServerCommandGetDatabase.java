@@ -77,10 +77,12 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       for (final OProperty prop : cls.properties()) {
         json.beginObject();
         json.writeAttribute("name", prop.getName());
-        if (prop.getLinkedClass() != null)
-          json.writeAttribute("linkedClass", prop.getLinkedClass().getName());
-        if (prop.getLinkedType() != null)
-          json.writeAttribute("linkedType", prop.getLinkedType().toString());
+        if (prop.getLinkedClass() != null) {
+            json.writeAttribute("linkedClass", prop.getLinkedClass().getName());
+        }
+        if (prop.getLinkedType() != null) {
+            json.writeAttribute("linkedType", prop.getLinkedType().toString());
+        }
         json.writeAttribute("type", prop.getType().toString());
         json.writeAttribute("mandatory", prop.isMandatory());
         json.writeAttribute("readonly", prop.isReadonly());
@@ -110,8 +112,9 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
         json.writeAttribute("type", index.getType());
 
         final OIndexDefinition indexDefinition = index.getDefinition();
-        if (indexDefinition != null && !indexDefinition.getFields().isEmpty())
-          json.writeAttribute("fields", indexDefinition.getFields());
+        if (indexDefinition != null && !indexDefinition.getFields().isEmpty()) {
+            json.writeAttribute("fields", indexDefinition.getFields());
+        }
         json.endObject();
       }
       json.endCollection();
@@ -147,8 +150,9 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
     try {
       if (urlParts.length > 2) {
         db = server.getDatabasePoolFactory().get(urlParts[1], urlParts[2], urlParts[3]).acquire();
-      } else
-        db = getProfiledDatabaseInstance(iRequest);
+      } else {
+          db = getProfiledDatabaseInstance(iRequest);
+      }
 
       final StringWriter buffer = new StringWriter();
       final OJSONWriter json = new OJSONWriter(buffer);
@@ -156,8 +160,9 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
 
       json.beginObject("server");
       json.writeAttribute("version", OConstants.ORIENT_VERSION);
-      if (OConstants.getBuildNumber() != null)
-        json.writeAttribute("build", OConstants.getBuildNumber());
+      if (OConstants.getBuildNumber() != null) {
+          json.writeAttribute("build", OConstants.getBuildNumber());
+      }
       json.writeAttribute("osName", System.getProperty("os.name"));
       json.writeAttribute("osVersion", System.getProperty("os.version"));
       json.writeAttribute("osArch", System.getProperty("os.arch"));
@@ -288,15 +293,16 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
       json.endCollection();
 
       json.beginCollection("properties");
-      if (db.getStorage().getConfiguration().properties != null)
-        for (OStorageEntryConfiguration entry : db.getStorage().getConfiguration().properties) {
-          if (entry != null) {
-            json.beginObject();
-            json.writeAttribute("name", entry.name);
-            json.writeAttribute("value", entry.value);
-            json.endObject();
+      if (db.getStorage().getConfiguration().properties != null) {
+          for (OStorageEntryConfiguration entry : db.getStorage().getConfiguration().properties) {
+              if (entry != null) {
+                  json.beginObject();
+                  json.writeAttribute("name", entry.name);
+                  json.writeAttribute("value", entry.value);
+                  json.endObject();
+              }
           }
-        }
+      }
       json.endCollection();
 
       json.endObject();
@@ -305,8 +311,9 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
 
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) {
+          db.close();
+      }
     }
   }
 }

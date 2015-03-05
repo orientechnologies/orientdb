@@ -40,8 +40,9 @@ public class ClassIteratorTest {
 
   @AfterClass
   public void tearDown() throws Exception {
-    if (!db.isClosed())
-      db.close();
+    if (!db.isClosed()) {
+        db.close();
+    }
   }
 
   @Test

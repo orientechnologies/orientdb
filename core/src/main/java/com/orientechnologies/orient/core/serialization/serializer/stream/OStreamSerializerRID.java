@@ -38,15 +38,17 @@ public class OStreamSerializerRID implements OStreamSerializer, OBinarySerialize
   }
 
   public Object fromStream(final byte[] iStream) throws IOException {
-    if (iStream == null)
-      return null;
+    if (iStream == null) {
+        return null;
+    }
 
     return new ORecordId().fromStream(iStream);
   }
 
   public byte[] toStream(final Object iObject) throws IOException {
-    if (iObject == null)
-      return null;
+    if (iObject == null) {
+        return null;
+    }
 
     return ((OIdentifiable) iObject).getIdentity().toStream();
   }

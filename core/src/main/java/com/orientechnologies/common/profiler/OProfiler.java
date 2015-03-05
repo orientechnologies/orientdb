@@ -37,11 +37,13 @@ public class OProfiler extends OAbstractProfiler {
   }
 
   public void configure(final String iConfiguration) {
-    if (iConfiguration == null || iConfiguration.length() == 0)
-      return;
+    if (iConfiguration == null || iConfiguration.length() == 0) {
+        return;
+    }
 
-    if (isRecording())
-      stopRecording();
+    if (isRecording()) {
+        stopRecording();
+    }
 
     startRecording();
   }
@@ -65,8 +67,9 @@ public class OProfiler extends OAbstractProfiler {
   }
 
   public void updateCounter(final String statName, final String description, final long plus, final String metadata) {
-    if (statName == null || !isRecording())
-      return;
+    if (statName == null || !isRecording()) {
+        return;
+    }
 
     Long oldValue;
     Long newValue;
@@ -83,12 +86,14 @@ public class OProfiler extends OAbstractProfiler {
   }
 
   public long getCounter(final String statName) {
-    if (statName == null || !isRecording())
-      return -1;
+    if (statName == null || !isRecording()) {
+        return -1;
+    }
 
     final Long stat = counters.get(statName);
-    if (stat == null)
-      return -1;
+    if (stat == null) {
+        return -1;
+    }
 
     return stat;
   }
@@ -170,7 +175,8 @@ public class OProfiler extends OAbstractProfiler {
    * Updates the metric metadata.
    */
   protected void updateMetadata(final String iName, final String iDescription, final METRIC_TYPE iType) {
-    if (iDescription != null && dictionary.putIfAbsent(iName, iDescription) == null)
-      types.put(iName, iType);
+    if (iDescription != null && dictionary.putIfAbsent(iName, iDescription) == null) {
+        types.put(iName, iType);
+    }
   }
 }

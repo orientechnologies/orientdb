@@ -52,25 +52,28 @@ import java.io.IOException;
 
    protected boolean authenticate(final OHttpRequest iRequest, final OHttpResponse iResponse, final boolean iAskForAuthentication)
        throws IOException {
-     if (checkGuestAccess())
-       // GUEST ACCESSES TO THE RESOURCE: OK ALSO WITHOUT AN AUTHENTICATION
-       return true;
+     if (checkGuestAccess()) {
+         // GUEST ACCESSES TO THE RESOURCE: OK ALSO WITHOUT AN AUTHENTICATION
+         return true;
+     }
 
-     if (iAskForAuthentication)
-       if (iRequest.authorization == null || SESSIONID_LOGOUT.equals(iRequest.sessionId)) {
-         // NO AUTHENTICATION AT ALL
-         sendAuthorizationRequest(iRequest, iResponse);
-         return false;
-       }
+     if (iAskForAuthentication) {
+         if (iRequest.authorization == null || SESSIONID_LOGOUT.equals(iRequest.sessionId)) {
+             // NO AUTHENTICATION AT ALL
+             sendAuthorizationRequest(iRequest, iResponse);
+             return false;
+         }
+     }
 
      if (iRequest.authorization != null) {
        // GET CREDENTIALS
        final String[] authParts = iRequest.authorization.split(":");
        serverUser = authParts[0];
        serverPassword = authParts[1];
-       if (authParts.length == 2 && server.authenticate(serverUser, serverPassword, resource))
-         // AUTHORIZED
-         return true;
+       if (authParts.length == 2 && server.authenticate(serverUser, serverPassword, resource)) {
+           // AUTHORIZED
+           return true;
+       }
      }
 
      // NON AUTHORIZED FOR RESOURCE

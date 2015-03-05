@@ -55,8 +55,9 @@ public class DbClosedTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = { "testDoubleDb", "testDoubleDbWindowsPath" })
   public void testStorageClosed() {
-    if (SetupTest.instance().isReuseDatabase())
-      return;
+    if (SetupTest.instance().isReuseDatabase()) {
+        return;
+    }
 
     ODatabaseDocumentPool.global().close();
     OObjectDatabasePool.global().close();
@@ -64,8 +65,9 @@ public class DbClosedTest extends DocumentDBBaseTest {
 
   @Test
   public void testRemoteConns() {
-    if (!url.startsWith("remote:"))
-      return;
+    if (!url.startsWith("remote:")) {
+        return;
+    }
 
     final int max = OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS.getValueAsInteger();
     for (int i = 0; i < max * 2; ++i) {

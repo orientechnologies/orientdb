@@ -41,8 +41,9 @@ public class OIndexCursorCollectionValue extends OIndexAbstractCursor {
 
   @Override
   public boolean hasNext() {
-    if (iterator == null)
-      return false;
+    if (iterator == null) {
+        return false;
+    }
 
     if (!iterator.hasNext()) {
       iterator = null;
@@ -59,8 +60,9 @@ public class OIndexCursorCollectionValue extends OIndexAbstractCursor {
 
   @Override
   public Map.Entry<Object, OIdentifiable> nextEntry() {
-    if (iterator == null)
-      return null;
+    if (iterator == null) {
+        return null;
+    }
 
     if (!iterator.hasNext()) {
       iterator = null;

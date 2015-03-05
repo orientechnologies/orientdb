@@ -142,8 +142,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   @Override
   public OMetadataObject getMetadata() {
     checkOpeness();
-    if (metadata == null)
-      metadata = new OMetadataObject((OMetadataInternal) underlying.getMetadata());
+    if (metadata == null) {
+        metadata = new OMetadataObject((OMetadataInternal) underlying.getMetadata());
+    }
     return metadata;
   }
 
@@ -205,8 +206,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   public <RET> OObjectIteratorClass<RET> browseClass(final Class<RET> iClusterClass, final boolean iPolymorphic) {
-    if (iClusterClass == null)
-      return null;
+    if (iClusterClass == null) {
+        return null;
+    }
 
     return browseClass(iClusterClass.getSimpleName(), iPolymorphic);
   }
@@ -244,8 +246,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   public <RET> RET reload(Object iPojo, final String iFetchPlan, final boolean iIgnoreCache) {
     checkOpeness();
-    if (iPojo == null)
-      return null;
+    if (iPojo == null) {
+        return null;
+    }
 
     // GET THE ASSOCIATED DOCUMENT
     final ODocument record = getRecordByUserObject(iPojo, true);
@@ -323,8 +326,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   public <RET> RET load(Object iPojo, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
       OStorage.LOCKING_STRATEGY iLockingStrategy) {
     checkOpeness();
-    if (iPojo == null)
-      return null;
+    if (iPojo == null) {
+        return null;
+    }
 
     // GET THE ASSOCIATED DOCUMENT
     ODocument record = getRecordByUserObject(iPojo, true);
@@ -355,14 +359,16 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   public <RET> RET load(ORID iRecordId, String iFetchPlan, boolean iIgnoreCache, boolean loadTombstone,
       OStorage.LOCKING_STRATEGY iLockingStrategy) {
     checkOpeness();
-    if (iRecordId == null)
-      return null;
+    if (iRecordId == null) {
+        return null;
+    }
 
     // GET THE ASSOCIATED DOCUMENT
     final ODocument record = (ODocument) underlying.load(iRecordId, iFetchPlan, iIgnoreCache, loadTombstone,
         OStorage.LOCKING_STRATEGY.DEFAULT);
-    if (record == null)
-      return null;
+    if (record == null) {
+        return null;
+    }
 
     return (RET) OObjectEntityEnhancer.getInstance().getProxiedInstance(record.getClassName(), entityManager, record, null);
   }
@@ -417,9 +423,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   public <RET> RET save(final Object iPojo, final String iClusterName, OPERATION_MODE iMode, boolean iForceCreate,
       final ORecordCallback<? extends Number> iRecordCreatedCallback, ORecordCallback<ORecordVersion> iRecordUpdatedCallback) {
     checkOpeness();
-    if (iPojo == null)
-      return (RET) iPojo;
-    else if (OMultiValue.isMultiValue(iPojo)) {
+    if (iPojo == null) {
+        return (RET) iPojo;
+    } else if (OMultiValue.isMultiValue(iPojo)) {
       // MULTI VALUE OBJECT: STORE SINGLE POJOS
       for (Object pojo : OMultiValue.getMultiValueIterable(iPojo)) {
         save(pojo, iClusterName);
@@ -457,14 +463,16 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   public ODatabaseObject delete(final Object iPojo) {
     checkOpeness();
 
-    if (iPojo == null)
-      return this;
+    if (iPojo == null) {
+        return this;
+    }
 
     ODocument record = getRecordByUserObject(iPojo, false);
     if (record == null) {
       final ORecordId rid = OObjectSerializerHelper.getObjectID(this, iPojo);
-      if (rid == null)
-        throw new OObjectNotDetachedException("Cannot retrieve the object's ID for '" + iPojo + "' because has not been detached");
+      if (rid == null) {
+          throw new OObjectNotDetachedException("Cannot retrieve the object's ID for '" + iPojo + "' because has not been detached");
+      }
 
       record = (ODocument) underlying.load(rid);
     }
@@ -472,8 +480,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
     underlying.delete(record);
 
-    if (getTransaction() instanceof OTransactionNoTx)
-      unregisterPojo(iPojo, record);
+    if (getTransaction() instanceof OTransactionNoTx) {
+        unregisterPojo(iPojo, record);
+    }
 
     return this;
   }
@@ -482,8 +491,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   public ODatabaseObject delete(final ORID iRID) {
     checkOpeness();
 
-    if (iRID == null)
-      return this;
+    if (iRID == null) {
+        return this;
+    }
 
     final ORecord record = iRID.getRecord();
     if (record instanceof ODocument) {
@@ -493,8 +503,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
       underlying.delete(record);
 
-      if (getTransaction() instanceof OTransactionNoTx)
-        unregisterPojo(iPojo, (ODocument) record);
+      if (getTransaction() instanceof OTransactionNoTx) {
+          unregisterPojo(iPojo, (ODocument) record);
+      }
 
     }
     return this;
@@ -534,8 +545,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   public ODictionary<Object> getDictionary() {
     checkOpeness();
-    if (dictionary == null)
-      dictionary = new ODictionaryWrapper(this, underlying.getDictionary().getIndex());
+    if (dictionary == null) {
+        dictionary = new ODictionaryWrapper(this, underlying.getDictionary().getIndex());
+    }
 
     return dictionary;
   }
@@ -550,8 +562,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   public ODatabasePojoAbstract<Object> commit(boolean force) throws OTransactionException {
     underlying.commit(force);
 
-    if (getTransaction().isActive())
-      return this;
+    if (getTransaction().isActive()) {
+        return this;
+    }
 
     if (getTransaction().getAllRecordEntries() != null) {
       // UPDATE ID & VERSION FOR ALL THE RECORDS
@@ -564,8 +577,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
         case ORecordOperation.DELETED:
           final ORecord rec = entry.getRecord();
-          if (rec instanceof ODocument)
-            unregisterPojo(pojo, (ODocument) rec);
+          if (rec instanceof ODocument) {
+              unregisterPojo(pojo, (ODocument) rec);
+        }
           break;
         }
       }
@@ -590,10 +604,12 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
       if (getTransaction().getCurrentRecordEntries() != null) {
         newEntries = new ArrayList<ORecordOperation>();
         for (ORecordOperation entry : getTransaction().getCurrentRecordEntries())
-          if (entry.type == ORecordOperation.CREATED)
-            newEntries.add(entry);
-      } else
-        newEntries = null;
+          if (entry.type == ORecordOperation.CREATED) {
+              newEntries.add(entry);
+        }
+      } else {
+          newEntries = null;
+      }
     }
 
     return this;
@@ -618,8 +634,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   public ORecordVersion getVersion(final Object iPojo) {
     checkOpeness();
     final ODocument record = getRecordByUserObject(iPojo, false);
-    if (record != null)
-      return record.getRecordVersion();
+    if (record != null) {
+        return record.getRecordVersion();
+    }
 
     return OObjectSerializerHelper.getObjectVersion(iPojo);
   }
@@ -633,11 +650,13 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   @Override
   public ORID getIdentity(final Object iPojo) {
     checkOpeness();
-    if (iPojo instanceof OIdentifiable)
-      return ((OIdentifiable) iPojo).getIdentity();
+    if (iPojo instanceof OIdentifiable) {
+        return ((OIdentifiable) iPojo).getIdentity();
+    }
     final ODocument record = getRecordByUserObject(iPojo, false);
-    if (record != null)
-      return record.getIdentity();
+    if (record != null) {
+        return record.getIdentity();
+    }
     return OObjectSerializerHelper.getObjectID(this, iPojo);
   }
 
@@ -692,22 +711,26 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   public Object stream2pojo(ODocument iRecord, final Object iPojo, final String iFetchPlan, boolean iReload) {
-    if (iRecord.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
-      iRecord = (ODocument) iRecord.load();
+    if (iRecord.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+        iRecord = (ODocument) iRecord.load();
+    }
     if (iReload) {
       if (iPojo != null) {
         if (iPojo instanceof Proxy) {
           ((OObjectProxyMethodHandler) ((ProxyObject) iPojo).getHandler()).setDoc(iRecord);
           ((OObjectProxyMethodHandler) ((ProxyObject) iPojo).getHandler()).updateLoadedFieldMap(iPojo, iReload);
           return iPojo;
-        } else
-          return OObjectEntityEnhancer.getInstance().getProxiedInstance(iPojo.getClass(), iRecord);
-      } else
-        return OObjectEntityEnhancer.getInstance().getProxiedInstance(iRecord.getClassName(), entityManager, iRecord, null);
-    } else if (!(iPojo instanceof Proxy))
-      return OObjectEntityEnhancer.getInstance().getProxiedInstance(iPojo.getClass(), iRecord);
-    else
-      return iPojo;
+        } else {
+            return OObjectEntityEnhancer.getInstance().getProxiedInstance(iPojo.getClass(), iRecord);
+        }
+      } else {
+          return OObjectEntityEnhancer.getInstance().getProxiedInstance(iRecord.getClassName(), entityManager, iRecord, null);
+      }
+    } else if (!(iPojo instanceof Proxy)) {
+        return OObjectEntityEnhancer.getInstance().getProxiedInstance(iPojo.getClass(), iRecord);
+    } else {
+        return iPojo;
+    }
   }
 
   public boolean isLazyLoading() {
@@ -741,8 +764,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
   @Override
   public ODocument getRecordByUserObject(final Object iPojo, final boolean iCreateIfNotAvailable) {
-    if (iPojo instanceof Proxy)
-      return OObjectEntitySerializer.getDocument((Proxy) iPojo);
+    if (iPojo instanceof Proxy) {
+        return OObjectEntitySerializer.getDocument((Proxy) iPojo);
+    }
     return OObjectEntitySerializer.getDocument((Proxy) OObjectEntitySerializer.serializeObject(iPojo, this));
   }
 
@@ -782,24 +806,28 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   }
 
   protected void deleteCascade(final ODocument record) {
-    if (record == null)
-      return;
+    if (record == null) {
+        return;
+    }
     List<String> toDeleteCascade = OObjectEntitySerializer.getCascadeDeleteFields(record.getClassName());
     if (toDeleteCascade != null) {
       for (String field : toDeleteCascade) {
         Object toDelete = record.field(field);
         if (toDelete instanceof OIdentifiable) {
-          if (toDelete != null)
-            delete(((OIdentifiable) toDelete).getIdentity());
+          if (toDelete != null) {
+              delete(((OIdentifiable) toDelete).getIdentity());
+          }
         } else if (toDelete instanceof Collection) {
           for (OIdentifiable cascadeRecord : ((Collection<OIdentifiable>) toDelete)) {
-            if (cascadeRecord != null)
-              delete(((OIdentifiable) cascadeRecord).getIdentity());
+            if (cascadeRecord != null) {
+                delete(((OIdentifiable) cascadeRecord).getIdentity());
+            }
           }
         } else if (toDelete instanceof Map) {
           for (OIdentifiable cascadeRecord : ((Map<Object, OIdentifiable>) toDelete).values()) {
-            if (cascadeRecord != null)
-              delete(((OIdentifiable) cascadeRecord).getIdentity());
+            if (cascadeRecord != null) {
+                delete(((OIdentifiable) cascadeRecord).getIdentity());
+            }
           }
         }
       }
@@ -830,8 +858,9 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
   private boolean deleteRecord(ORID iRID, ORecordVersion iVersion, boolean prohibitTombstones) {
     checkOpeness();
 
-    if (iRID == null)
-      return true;
+    if (iRID == null) {
+        return true;
+    }
 
     ODocument record = iRID.getRecord();
     if (record != null) {
@@ -839,13 +868,15 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
 
       deleteCascade(record);
 
-      if (prohibitTombstones)
-        underlying.cleanOutRecord(iRID, iVersion);
-      else
-        underlying.delete(iRID, iVersion);
+      if (prohibitTombstones) {
+          underlying.cleanOutRecord(iRID, iVersion);
+      } else {
+          underlying.delete(iRID, iVersion);
+      }
 
-      if (getTransaction() instanceof OTransactionNoTx)
-        unregisterPojo(iPojo, record);
+      if (getTransaction() instanceof OTransactionNoTx) {
+          unregisterPojo(iPojo, record);
+      }
 
     }
     return false;

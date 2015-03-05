@@ -92,18 +92,20 @@ public class LocalPaginatedStorageMixCrashRestore {
           int actionType = -1;
 
           if (rndOutcome <= 0.2) {
-            if (addedIds.size() + updatedIds.size() >= 100000)
-              actionType = 2;
-            else
-              actionType = 0;
+            if (addedIds.size() + updatedIds.size() >= 100000) {
+                actionType = 2;
+            } else {
+                actionType = 0;
+            }
 
-          } else if (rndOutcome > 0.2 && rndOutcome <= 0.6)
-            actionType = 1;
-          else if (rndOutcome > 0.6) {
-            if (addedIds.size() + updatedIds.size() <= 2000000)
-              actionType = 0;
-            else
-              actionType = 2;
+          } else if (rndOutcome > 0.2 && rndOutcome <= 0.6) {
+              actionType = 1;
+          } else if (rndOutcome > 0.6) {
+            if (addedIds.size() + updatedIds.size() <= 2000000) {
+                actionType = 0;
+              } else {
+                actionType = 2;
+            }
           }
 
           switch (actionType) {
@@ -147,8 +149,9 @@ public class LocalPaginatedStorageMixCrashRestore {
       int closeId = random.nextInt(idGen.get());
 
       Integer idToDelete = addedIds.ceiling(closeId);
-      if (idToDelete == null)
-        idToDelete = addedIds.first();
+      if (idToDelete == null) {
+          idToDelete = addedIds.first();
+      }
 
       idLockManager.acquireLock(Thread.currentThread(), idToDelete, OLockManager.LOCK.EXCLUSIVE);
 
@@ -157,8 +160,9 @@ public class LocalPaginatedStorageMixCrashRestore {
         closeId = random.nextInt(idGen.get());
 
         idToDelete = addedIds.ceiling(closeId);
-        if (idToDelete == null)
-          idToDelete = addedIds.first();
+        if (idToDelete == null) {
+            idToDelete = addedIds.first();
+        }
         idLockManager.acquireLock(Thread.currentThread(), idToDelete, OLockManager.LOCK.EXCLUSIVE);
       }
 
@@ -186,8 +190,9 @@ public class LocalPaginatedStorageMixCrashRestore {
       int closeId = random.nextInt(idGen.get());
 
       Integer idToUpdate = addedIds.ceiling(closeId);
-      if (idToUpdate == null)
-        idToUpdate = addedIds.first();
+      if (idToUpdate == null) {
+          idToUpdate = addedIds.first();
+      }
 
       idLockManager.acquireLock(Thread.currentThread(), idToUpdate, OLockManager.LOCK.EXCLUSIVE);
 
@@ -196,8 +201,9 @@ public class LocalPaginatedStorageMixCrashRestore {
         closeId = random.nextInt(idGen.get());
 
         idToUpdate = addedIds.ceiling(closeId);
-        if (idToUpdate == null)
-          idToUpdate = addedIds.first();
+        if (idToUpdate == null) {
+            idToUpdate = addedIds.first();
+        }
 
         idLockManager.acquireLock(Thread.currentThread(), idToUpdate, OLockManager.LOCK.EXCLUSIVE);
       }
@@ -226,8 +232,9 @@ public class LocalPaginatedStorageMixCrashRestore {
     buildDirectory += "/localPaginatedStorageMixCrashRestore";
 
     buildDir = new File(buildDirectory);
-    if (buildDir.exists())
-      buildDir.delete();
+    if (buildDir.exists()) {
+        buildDir.delete();
+    }
 
     buildDir.mkdir();
 
@@ -342,8 +349,9 @@ public class LocalPaginatedStorageMixCrashRestore {
       saveDoc(document, baseDocumentTx, testDocumentTx);
       addedIds.add(document.<Integer> field("id"));
 
-      if (i % 10000 == 0)
-        System.out.println(i + " documents were created.");
+      if (i % 10000 == 0) {
+          System.out.println(i + " documents were created.");
+      }
     }
   }
 
@@ -385,8 +393,9 @@ public class LocalPaginatedStorageMixCrashRestore {
           List<ODocument> testDocuments = testDocumentTx.query(new OSQLSynchQuery<ODocument>("select from TestClass where id  = "
               + baseDocument.field("id")));
           if (testDocuments.size() == 0) {
-            if (((Long) baseDocument.field("timestamp")) < minTs)
-              minTs = baseDocument.field("timestamp");
+            if (((Long) baseDocument.field("timestamp")) < minTs) {
+                minTs = baseDocument.field("timestamp");
+            }
           } else {
             ODocument testDocument = testDocuments.get(0);
             Assert.assertEquals(testDocument.field("id"), baseDocument.field("id"));
@@ -401,24 +410,27 @@ public class LocalPaginatedStorageMixCrashRestore {
           List<ODocument> testDocuments = testDocumentTx.query(new OSQLSynchQuery<ODocument>("select from TestClass where id  = "
               + baseDocument.field("id")));
           if (testDocuments.size() == 0) {
-            if (((Long) baseDocument.field("timestamp")) < minTs)
-              minTs = baseDocument.field("timestamp");
+            if (((Long) baseDocument.field("timestamp")) < minTs) {
+                minTs = baseDocument.field("timestamp");
+            }
           } else {
             ODocument testDocument = testDocuments.get(0);
             if (testDocument.field("timestamp").equals(baseDocument.field("timestamp"))
                 && testDocument.field("stringValue").equals(baseDocument.field("stringValue"))) {
               recordsRestored++;
             } else {
-              if (((Long) baseDocument.field("timestamp")) < minTs)
-                minTs = baseDocument.field("timestamp");
+              if (((Long) baseDocument.field("timestamp")) < minTs) {
+                  minTs = baseDocument.field("timestamp");
+              }
             }
           }
 
           recordsTested++;
         }
 
-        if (recordsTested % 10000 == 0)
-          System.out.println(recordsTested + " were tested, " + recordsRestored + " were restored ...");
+        if (recordsTested % 10000 == 0) {
+            System.out.println(recordsTested + " were tested, " + recordsRestored + " were restored ...");
+        }
       }
 
       physicalPositions = baseStorage.higherPhysicalPositions(clusterId, physicalPositions[physicalPositions.length - 1]);
@@ -431,10 +443,12 @@ public class LocalPaginatedStorageMixCrashRestore {
       List<ODocument> testDocuments = testDocumentTx.query(new OSQLSynchQuery<ODocument>("select from TestClass where id  = "
           + deletedId));
       if (!testDocuments.isEmpty()) {
-        if (deletedEntry.getValue() < minTs)
-          minTs = deletedEntry.getValue();
-      } else
-        recordsRestored++;
+        if (deletedEntry.getValue() < minTs) {
+            minTs = deletedEntry.getValue();
+        }
+      } else {
+          recordsRestored++;
+      }
 
       recordsTested++;
     }

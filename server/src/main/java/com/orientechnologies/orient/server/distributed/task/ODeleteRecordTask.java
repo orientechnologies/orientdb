@@ -61,15 +61,17 @@ import java.io.ObjectOutput;
 
      final ORecord record = database.load(rid);
      if (record != null) {
-       if (delayed)
-         if (record.getRecordVersion().equals(version))
-           // POSTPONE DELETION TO BE UNDO IN CASE QUORUM IS NOT RESPECTED
-           ((ODistributedStorage) database.getStorage()).pushDeletedRecord(rid, version);
-         else
-           throw new OConcurrentModificationException(rid, record.getRecordVersion(), version, ORecordOperation.DELETED);
-       else
-         // DELETE IT RIGHT NOW
-         record.delete();
+       if (delayed) {
+           if (record.getRecordVersion().equals(version)) {
+               // POSTPONE DELETION TO BE UNDO IN CASE QUORUM IS NOT RESPECTED
+               ((ODistributedStorage) database.getStorage()).pushDeletedRecord(rid, version);
+           } else {
+               throw new OConcurrentModificationException(rid, record.getRecordVersion(), version, ORecordOperation.DELETED);
+           }
+       } else {
+           // DELETE IT RIGHT NOW
+           record.delete();
+       }
      }
 
      return true;

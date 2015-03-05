@@ -45,20 +45,23 @@ public class OSQLFunctionList extends OSQLFunctionMultiValueAbstract<List<Object
 
   public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       OCommandContext iContext) {
-    if (iParams.length > 1)
-      // IN LINE MODE
-      context = new ArrayList<Object>();
+    if (iParams.length > 1) {
+        // IN LINE MODE
+        context = new ArrayList<Object>();
+    }
 
     for (Object value : iParams) {
       if (value != null) {
-        if (iParams.length == 1 && context == null)
-          // AGGREGATION MODE (STATEFULL)
-          context = new ArrayList<Object>();
+        if (iParams.length == 1 && context == null) {
+            // AGGREGATION MODE (STATEFULL)
+            context = new ArrayList<Object>();
+        }
 
-        if (value instanceof Map)
-          context.add(value);
-        else
-          OMultiValue.add(context, value);
+        if (value instanceof Map) {
+            context.add(value);
+        } else {
+            OMultiValue.add(context, value);
+        }
       }
     }
     return prepareResult(context);

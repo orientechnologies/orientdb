@@ -113,13 +113,15 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     @Override
     public int applyTo(Integer value) {
       int result;
-      if (value == null)
-        result = delta;
-      else
-        result = value + delta;
+      if (value == null) {
+          result = delta;
+      } else {
+          result = value + delta;
+      }
 
-      if (result < 0)
-        result = 0;
+      if (result < 0) {
+          result = 0;
+      }
 
       return result;
     }
@@ -189,8 +191,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     }
 
     private void checkPositive() {
-      if (value < 0)
-        value = 0;
+      if (value < 0) {
+          value = 0;
+      }
     }
   }
 
@@ -221,10 +224,11 @@ public class OSBTreeRidBag implements ORidBagDelegate {
         offset += Change.SIZE;
 
         final OIdentifiable identifiable;
-        if (rid.isTemporary() && rid.getRecord() != null)
-          identifiable = rid.getRecord();
-        else
-          identifiable = rid;
+        if (rid.isTemporary() && rid.getRecord() != null) {
+            identifiable = rid.getRecord();
+        } else {
+            identifiable = rid;
+        }
 
         res.put(identifiable, change);
       }
@@ -272,8 +276,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
       nextChange = nextChangedNotRemovedEntry(changedValuesIterator);
 
-      if (sbTreeIterator != null)
-        nextSBTreeEntry = nextChangedNotRemovedSBTreeEntry(sbTreeIterator);
+      if (sbTreeIterator != null) {
+          nextSBTreeEntry = nextChangedNotRemovedSBTreeEntry(sbTreeIterator);
+      }
     }
 
     @Override
@@ -311,8 +316,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
           currentCounter = 1;
 
           nextSBTreeEntry = nextChangedNotRemovedSBTreeEntry(sbTreeIterator);
-          if (nextChange != null && nextChange.getKey().equals(currentValue))
-            nextChange = nextChangedNotRemovedEntry(changedValuesIterator);
+          if (nextChange != null && nextChange.getKey().equals(currentValue)) {
+              nextChange = nextChangedNotRemovedEntry(changedValuesIterator);
+          }
         }
       } else if (nextChange != null) {
         currentValue = nextChange.getKey();
@@ -326,35 +332,42 @@ public class OSBTreeRidBag implements ORidBagDelegate {
         currentCounter = 1;
 
         nextSBTreeEntry = nextChangedNotRemovedSBTreeEntry(sbTreeIterator);
-      } else
-        throw new NoSuchElementException();
+      } else {
+          throw new NoSuchElementException();
+      }
 
-      if (convertToRecord)
-        return currentValue.getRecord();
+      if (convertToRecord) {
+          return currentValue.getRecord();
+      }
 
       return currentValue;
     }
 
     @Override
     public void remove() {
-      if (currentRemoved)
-        throw new IllegalStateException("Current element has already been removed");
+      if (currentRemoved) {
+          throw new IllegalStateException("Current element has already been removed");
+      }
 
-      if (currentValue == null)
-        throw new IllegalStateException("Next method was not called for given iterator");
+      if (currentValue == null) {
+          throw new IllegalStateException("Next method was not called for given iterator");
+      }
 
       if (removeFromNewEntries(currentValue)) {
-        if (size >= 0)
-          size--;
+        if (size >= 0) {
+            size--;
+        }
       } else {
         Change counter = changedValues.get(currentValue);
         if (counter != null) {
           counter.decrement();
-          if (size >= 0)
-            if (counter.isUndefined())
-              size = -1;
-            else
-              size--;
+          if (size >= 0) {
+              if (counter.isUndefined()) {
+                  size = -1;
+              } else {
+                  size--;
+              }
+          }
         } else {
           if (nextChange != null) {
             changedValues.put(currentValue, new DiffChange(-1));
@@ -367,9 +380,10 @@ public class OSBTreeRidBag implements ORidBagDelegate {
         }
       }
 
-      if (updateOwner && !changeListeners.isEmpty())
-        fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-            OMultiValueChangeEvent.OChangeType.REMOVE, currentValue, null, currentValue, false));
+      if (updateOwner && !changeListeners.isEmpty()) {
+          fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+                  OMultiValueChangeEvent.OChangeType.REMOVE, currentValue, null, currentValue, false));
+      }
       currentRemoved = true;
     }
 
@@ -378,13 +392,15 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       newEntryIterator = newEntries.entrySet().iterator();
 
       this.changedValuesIterator = changedValues.entrySet().iterator();
-      if (sbTreeIterator != null)
-        this.sbTreeIterator.reset();
+      if (sbTreeIterator != null) {
+          this.sbTreeIterator.reset();
+      }
 
       nextChange = nextChangedNotRemovedEntry(changedValuesIterator);
 
-      if (sbTreeIterator != null)
-        nextSBTreeEntry = nextChangedNotRemovedSBTreeEntry(sbTreeIterator);
+      if (sbTreeIterator != null) {
+          nextSBTreeEntry = nextChangedNotRemovedSBTreeEntry(sbTreeIterator);
+      }
     }
 
     @Override
@@ -398,8 +414,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       while (iterator.hasNext()) {
         entry = iterator.next();
         // TODO workaround
-        if (entry.getValue().applyTo(0) > 0)
-          return entry;
+        if (entry.getValue().applyTo(0) > 0) {
+            return entry;
+        }
       }
 
       return null;
@@ -425,8 +442,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     @Override
     public Map.Entry<OIdentifiable, Integer> next() {
       final Map.Entry<OIdentifiable, Integer> entry = preFetchedValues.removeFirst();
-      if (preFetchedValues.isEmpty())
-        prefetchData(false);
+      if (preFetchedValues.isEmpty()) {
+          prefetchData(false);
+      }
 
       return entry;
     }
@@ -471,10 +489,11 @@ public class OSBTreeRidBag implements ORidBagDelegate {
         releaseTree();
       }
 
-      if (preFetchedValues.isEmpty())
-        preFetchedValues = null;
-      else
-        firstKey = preFetchedValues.getLast().getKey();
+      if (preFetchedValues.isEmpty()) {
+          preFetchedValues = null;
+      } else {
+          firstKey = preFetchedValues.getLast().getKey();
+      }
     }
 
     private void init() {
@@ -551,8 +570,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
         }
 
         newChangedValues.put(identity, entry.getValue());
-      } else
-        newChangedValues.put(entry.getKey().getIdentity(), entry.getValue());
+      } else {
+          newChangedValues.put(entry.getKey().getIdentity(), entry.getValue());
+      }
     }
 
     for (Map.Entry<OIdentifiable, Change> entry : newChangedValues.entrySet()) {
@@ -561,8 +581,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
         record.save();
 
         newChangedValues.put(record, entry.getValue());
-      } else
-        return false;
+      } else {
+          return false;
+      }
     }
 
     newEntries.clear();
@@ -582,12 +603,13 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       final OIdentifiable rec = entry.getKey();
       final Change change = entry.getValue();
       final int diff;
-      if (change instanceof DiffChange)
-        diff = ((DiffChange) change).delta;
-      else if (change instanceof AbsoluteChange)
-        diff = ((AbsoluteChange) change).value - getAbsoluteValue(rec).value;
-      else
-        throw new IllegalArgumentException("change type is not supported");
+      if (change instanceof DiffChange) {
+          diff = ((DiffChange) change).delta;
+      } else if (change instanceof AbsoluteChange) {
+          diff = ((AbsoluteChange) change).value - getAbsoluteValue(rec).value;
+      } else {
+          throw new IllegalArgumentException("change type is not supported");
+      }
 
       mergeDiffEntry(rec, diff);
     }
@@ -617,9 +639,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   public void add(final OIdentifiable identifiable) {
     if (identifiable.getIdentity().isValid()) {
       Change counter = changes.get(identifiable);
-      if (counter == null)
-        changes.put(identifiable, new DiffChange(1));
-      else {
+      if (counter == null) {
+          changes.put(identifiable, new DiffChange(1));
+      } else {
         if (counter.isUndefined()) {
           counter = getAbsoluteValue(identifiable);
           changes.put(identifiable, counter);
@@ -628,24 +650,28 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       }
     } else {
       final OModifiableInteger counter = newEntries.get(identifiable);
-      if (counter == null)
-        newEntries.put(identifiable, new OModifiableInteger(1));
-      else
-        counter.increment();
+      if (counter == null) {
+          newEntries.put(identifiable, new OModifiableInteger(1));
+      } else {
+          counter.increment();
+      }
     }
 
-    if (size >= 0)
-      size++;
+    if (size >= 0) {
+        size++;
+    }
 
-    if (updateOwner && !changeListeners.isEmpty())
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
-          identifiable, identifiable, null, false));
+    if (updateOwner && !changeListeners.isEmpty()) {
+        fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
+                identifiable, identifiable, null, false));
+    }
   }
 
   public void remove(OIdentifiable identifiable) {
     if (removeFromNewEntries(identifiable)) {
-      if (size >= 0)
-        size--;
+      if (size >= 0) {
+          size--;
+      }
     } else {
       final Change counter = changes.get(identifiable);
       if (counter == null) {
@@ -653,29 +679,33 @@ public class OSBTreeRidBag implements ORidBagDelegate {
         if (identifiable.getIdentity().isPersistent()) {
           changes.put(identifiable, new DiffChange(-1));
           size = -1;
-        } else
-          // Return immediately to prevent firing of event
-          return;
+        } else {
+            // Return immediately to prevent firing of event
+            return;
+        }
       } else {
         counter.decrement();
 
-        if (size >= 0)
-          if (counter.isUndefined())
-            size = -1;
-          else
-            size--;
+        if (size >= 0) {
+            if (counter.isUndefined()) {
+                size = -1;
+            } else {
+                size--;
+            }
+        }
       }
     }
 
-    if (updateOwner && !changeListeners.isEmpty())
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-          OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable, false));
+    if (updateOwner && !changeListeners.isEmpty()) {
+        fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+                OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable, false));
+    }
   }
 
   public int size() {
-    if (size >= 0)
-      return size;
-    else {
+    if (size >= 0) {
+        return size;
+    } else {
       return updateSize();
     }
   }
@@ -732,8 +762,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   public int getSerializedSize() {
     int result = 2 * OLongSerializer.LONG_SIZE + 3 * OIntegerSerializer.INT_SIZE;
     if (ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy
-        || ORecordSerializationContext.getContext() == null)
-      result += getChangesSerializedSize();
+        || ORecordSerializationContext.getContext() == null) {
+        result += getChangesSerializedSize();
+    }
     return result;
   }
 
@@ -761,10 +792,11 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       Change c = changes.get(identifiable);
 
       final int delta = entry.getValue().intValue();
-      if (c == null)
-        changes.put(identifiable, new DiffChange(delta));
-      else
-        c.applyDiff(delta);
+      if (c == null) {
+          changes.put(identifiable, new DiffChange(delta));
+      } else {
+          c.applyDiff(delta);
+      }
     }
     newEntries.clear();
 
@@ -772,8 +804,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     boolean remoteMode = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage() instanceof OStorageProxy;
     if (remoteMode) {
       context = null;
-    } else
-      context = ORecordSerializationContext.getContext();
+    } else {
+        context = ORecordSerializationContext.getContext();
+    }
 
     // make sure that we really save underlying record.
     if (collectionPointer == null) {
@@ -786,9 +819,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     }
 
     OBonsaiCollectionPointer collectionPointer;
-    if (this.collectionPointer != null)
-      collectionPointer = this.collectionPointer;
-    else {
+    if (this.collectionPointer != null) {
+        collectionPointer = this.collectionPointer;
+    } else {
       collectionPointer = OBonsaiCollectionPointer.INVALID;
     }
 
@@ -826,8 +859,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   @Override
   public void requestDelete() {
     final ORecordSerializationContext context = ORecordSerializationContext.getContext();
-    if (context != null && collectionPointer != null)
-      context.push(new ORidBagDeleteSerializationOperation(collectionPointer, this));
+    if (context != null && collectionPointer != null) {
+        context.push(new ORidBagDeleteSerializationOperation(collectionPointer, this));
+    }
   }
 
   public void confirmDelete() {
@@ -852,10 +886,11 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     // Cached bag size. Not used after 1.7.5
     offset += OIntegerSerializer.INT_SIZE;
 
-    if (fileId == -1)
-      collectionPointer = null;
-    else
-      collectionPointer = new OBonsaiCollectionPointer(fileId, new OBonsaiBucketPointer(pageIndex, pageOffset));
+    if (fileId == -1) {
+        collectionPointer = null;
+    } else {
+        collectionPointer = new OBonsaiCollectionPointer(fileId, new OBonsaiBucketPointer(pageIndex, pageOffset));
+    }
 
     this.size = -1;
 
@@ -879,21 +914,24 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
     for (final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener : changeListeners) {
-      if (changeListener != null)
-        changeListener.onAfterRecordChanged(event);
+      if (changeListener != null) {
+          changeListener.onAfterRecordChanged(event);
+      }
     }
   }
 
   private OSBTreeBonsai<OIdentifiable, Integer> loadTree() {
-    if (collectionPointer == null)
-      return null;
+    if (collectionPointer == null) {
+        return null;
+    }
 
     return collectionManager.loadSBTree(collectionPointer);
   }
 
   private void releaseTree() {
-    if (collectionPointer == null)
-      return;
+    if (collectionPointer == null) {
+        return;
+    }
 
     collectionManager.releaseSBTree(collectionPointer);
   }
@@ -914,10 +952,11 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     final OSBTreeBonsai<OIdentifiable, Integer> tree = loadTree();
     try {
       final Integer oldValue;
-      if (tree == null)
-        oldValue = 0;
-      else
-        oldValue = tree.get(identifiable);
+      if (tree == null) {
+          oldValue = 0;
+      } else {
+          oldValue = tree.get(identifiable);
+      }
 
       final Change change = changes.get(identifiable);
 
@@ -967,8 +1006,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       owner = owner.getOwner();
     }
 
-    if (owner != null)
-      return ((OIdentifiable) owner).getIdentity().getClusterId();
+    if (owner != null) {
+        return ((OIdentifiable) owner).getIdentity().getClusterId();
+    }
 
     return -1;
   }
@@ -982,13 +1022,14 @@ public class OSBTreeRidBag implements ORidBagDelegate {
    */
   private boolean removeFromNewEntries(final OIdentifiable identifiable) {
     OModifiableInteger counter = newEntries.get(identifiable);
-    if (counter == null)
-      return false;
-    else {
-      if (counter.getValue() == 1)
-        newEntries.remove(identifiable);
-      else
-        counter.decrement();
+    if (counter == null) {
+        return false;
+    } else {
+      if (counter.getValue() == 1) {
+          newEntries.remove(identifiable);
+        } else {
+          counter.decrement();
+      }
       return true;
     }
   }
@@ -997,28 +1038,30 @@ public class OSBTreeRidBag implements ORidBagDelegate {
     while (iterator.hasNext()) {
       final Map.Entry<OIdentifiable, Integer> entry = iterator.next();
       final Change change = changes.get(entry.getKey());
-      if (change == null)
-        return entry;
+      if (change == null) {
+          return entry;
+      }
 
       final int newValue = change.applyTo(entry.getValue());
 
-      if (newValue > 0)
-        return new Map.Entry<OIdentifiable, Integer>() {
-          @Override
-          public OIdentifiable getKey() {
-            return entry.getKey();
-          }
-
-          @Override
-          public Integer getValue() {
-            return newValue;
-          }
-
-          @Override
-          public Integer setValue(Integer value) {
-            throw new UnsupportedOperationException();
-          }
-        };
+      if (newValue > 0) {
+          return new Map.Entry<OIdentifiable, Integer>() {
+              @Override
+              public OIdentifiable getKey() {
+                  return entry.getKey();
+              }
+              
+              @Override
+              public Integer getValue() {
+                  return newValue;
+              }
+              
+              @Override
+              public Integer setValue(Integer value) {
+                  throw new UnsupportedOperationException();
+              }
+          };
+      }
     }
 
     return null;

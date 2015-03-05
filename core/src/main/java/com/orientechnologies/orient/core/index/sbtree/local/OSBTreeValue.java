@@ -49,19 +49,24 @@ public class OSBTreeValue<V> {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
 
     OSBTreeValue that = (OSBTreeValue) o;
 
-    if (isLink != that.isLink)
-      return false;
-    if (link != that.link)
-      return false;
-    if (value != null ? !value.equals(that.value) : that.value != null)
-      return false;
+    if (isLink != that.isLink) {
+        return false;
+    }
+    if (link != that.link) {
+        return false;
+    }
+    if (value != null ? !value.equals(that.value) : that.value != null) {
+        return false;
+    }
 
     return true;
   }

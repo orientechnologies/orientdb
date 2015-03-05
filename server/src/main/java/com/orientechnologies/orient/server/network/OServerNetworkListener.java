@@ -84,12 +84,13 @@ public class OServerNetworkListener extends Thread {
 
     if (iCommands != null) {
       for (int i = 0; i < iCommands.length; ++i) {
-        if (iCommands[i].stateful)
-          // SAVE STATEFUL COMMAND CFG
-          registerStatefulCommand(iCommands[i]);
-        else
-          // EARLY CREATE STATELESS COMMAND
-          registerStatelessCommand(OServerNetworkListener.createCommand(server, iCommands[i]));
+        if (iCommands[i].stateful) {
+            // SAVE STATEFUL COMMAND CFG
+            registerStatefulCommand(iCommands[i]);
+        } else {
+            // EARLY CREATE STATELESS COMMAND
+            registerStatelessCommand(OServerNetworkListener.createCommand(server, iCommands[i]));
+        }
       }
     }
 
@@ -115,9 +116,10 @@ public class OServerNetworkListener extends Thread {
       for (int i = 0; i < upperLimit - lowerLimit + 1; ++i)
         ports[i] = lowerLimit + i;
 
-    } else
-      // SINGLE PORT SPECIFIED
-      ports = new int[] { Integer.parseInt(iHostPortRange) };
+    } else {
+        // SINGLE PORT SPECIFIED
+        ports = new int[] { Integer.parseInt(iHostPortRange) };
+    }
     return ports;
   }
 
@@ -171,11 +173,12 @@ public class OServerNetworkListener extends Thread {
   public void shutdown() {
     this.active = false;
 
-    if (serverSocket != null)
-      try {
-        serverSocket.close();
-      } catch (IOException e) {
-      }
+    if (serverSocket != null) {
+        try {
+            serverSocket.close();
+        } catch (IOException e) {
+        }
+    }
   }
 
   public boolean isActive() {
@@ -232,15 +235,17 @@ public class OServerNetworkListener extends Thread {
           protocol.config(this, server, socket, configuration);
 
         } catch (Throwable e) {
-          if (active)
-            OLogManager.instance().error(this, "Error on client connection", e);
+          if (active) {
+              OLogManager.instance().error(this, "Error on client connection", e);
+          }
         } finally {
         }
       }
     } finally {
       try {
-        if (serverSocket != null && !serverSocket.isClosed())
-          serverSocket.close();
+        if (serverSocket != null && !serverSocket.isClosed()) {
+            serverSocket.close();
+        }
       } catch (IOException ioe) {
       }
     }
@@ -256,15 +261,16 @@ public class OServerNetworkListener extends Thread {
 
   public String getListeningAddress(final boolean resolveMultiIfcWithLocal) {
     String address = serverSocket.getInetAddress().getHostAddress().toString();
-    if (resolveMultiIfcWithLocal && address.equals("0.0.0.0"))
-      try {
-        address = InetAddress.getLocalHost().getHostAddress().toString();
-      } catch (UnknownHostException e) {
+    if (resolveMultiIfcWithLocal && address.equals("0.0.0.0")) {
         try {
-          address = OChannel.getLocalIpAddress(true);
-        } catch (Exception ex) {
+            address = InetAddress.getLocalHost().getHostAddress().toString();
+        } catch (UnknownHostException e) {
+            try {
+                address = OChannel.getLocalIpAddress(true);
+            } catch (Exception ex) {
+            }
         }
-      }
+    }
     return address + ":" + serverSocket.getLocalPort();
   }
 
@@ -278,14 +284,16 @@ public class OServerNetworkListener extends Thread {
   public Object getCommand(final Class<?> iCommandClass) {
     // SEARCH IN STATELESS COMMANDS
     for (OServerCommand cmd : statelessCommands) {
-      if (cmd.getClass().equals(iCommandClass))
-        return cmd;
+      if (cmd.getClass().equals(iCommandClass)) {
+          return cmd;
+      }
     }
 
     // SEARCH IN STATEFUL COMMANDS
     for (OServerCommandConfiguration cmd : statefulCommands) {
-      if (cmd.implementation.equals(iCommandClass.getName()))
-        return cmd;
+      if (cmd.implementation.equals(iCommandClass.getName())) {
+          return cmd;
+      }
     }
 
     return null;

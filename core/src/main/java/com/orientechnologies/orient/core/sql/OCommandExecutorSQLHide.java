@@ -58,8 +58,9 @@ public class OCommandExecutorSQLHide extends OCommandExecutorSQLAbstract {
   @Override
   public Object execute(Map<Object, Object> iArgs) {
     final ODatabaseDocument database = getDatabase();
-    if (database.hide(recordIdToHide))
-      return 1;
+    if (database.hide(recordIdToHide)) {
+        return 1;
+    }
 
     return 0;
   }

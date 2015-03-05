@@ -63,9 +63,10 @@ public abstract class SpeedTestGroup {
 				if (i == 1) {
 					System.out.println(" " + i++ + ": " + entry.getValue() + " = " + entry.getKey());
 					refValue = entry.getKey();
-				} else
-					System.out.println(" " + i++ + ": " + entry.getValue() + " = " + entry.getKey() + " (+"
-							+ (entry.getKey() * 100 / refValue - 100) + "%)");
+				} else {
+                                    System.out.println(" " + i++ + ": " + entry.getValue() + " = " + entry.getKey() + " (+"
+                                            + (entry.getKey() * 100 / refValue - 100) + "%)");
+                        }
 
 			System.out.println();
 		}

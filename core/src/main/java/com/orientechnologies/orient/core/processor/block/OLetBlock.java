@@ -38,8 +38,9 @@ public class OLetBlock extends OAbstractBlock {
     final Boolean flatMultivalues = getFieldOfClass(iContext, iConfig, "flatMultivalues", Boolean.class);
 
     Object target = getField(iContext, iConfig, "target");
-    if (target != null && target.equals("null"))
-      target = new ODocument();
+    if (target != null && target.equals("null")) {
+        target = new ODocument();
+    }
 
     final Object value = getRawField(iConfig, "value");
     if (value != null) {
@@ -50,8 +51,9 @@ public class OLetBlock extends OAbstractBlock {
           if (target != null) {
             debug(iContext, "Set value %s in document field '%s'", v, fieldName);
             ((ODocument) target).field(fieldName, v);
-          } else
-            assignVariable(iContext, fieldName, v);
+          } else {
+              assignVariable(iContext, fieldName, v);
+          }
         }
       } else if (value instanceof Map<?, ?>) {
         for (Entry<Object, Object> entry : ((Map<Object, Object>) value).entrySet()) {
@@ -59,8 +61,9 @@ public class OLetBlock extends OAbstractBlock {
           if (target != null) {
             debug(iContext, "Set value %s in document field '%s'", v, entry.getKey());
             ((ODocument) target).field(entry.getKey().toString(), v);
-          } else
-            assignVariable(iContext, entry.getKey().toString(), v);
+          } else {
+              assignVariable(iContext, entry.getKey().toString(), v);
+          }
         }
 
       } else {
@@ -81,11 +84,13 @@ public class OLetBlock extends OAbstractBlock {
             }
           }
 
-          if (name != null)
-            assignVariable(iContext, name, target);
+          if (name != null) {
+              assignVariable(iContext, name, target);
+          }
 
-        } else
-          assignVariable(iContext, name, v);
+        } else {
+            assignVariable(iContext, name, v);
+        }
       }
     }
 

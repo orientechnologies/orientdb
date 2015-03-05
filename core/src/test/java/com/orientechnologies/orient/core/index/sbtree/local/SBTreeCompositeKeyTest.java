@@ -173,8 +173,9 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
     for (int i = 2; i <= 3; i++) {
       for (int j = 1; j <= 9; j++) {
-        if (i == 2 && j < 4)
-          continue;
+        if (i == 2 && j < 4) {
+            continue;
+        }
         assertTrue(orids.contains(new ORecordId(i, j)));
       }
     }
@@ -186,8 +187,9 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
     for (int i = 2; i <= 3; i++) {
       for (int j = 1; j <= 9; j++) {
-        if (i == 2 && j < 4)
-          continue;
+        if (i == 2 && j < 4) {
+            continue;
+        }
         assertTrue(orids.contains(new ORecordId(i, j)));
       }
     }
@@ -223,8 +225,9 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
     for (int i = 2; i <= 3; i++) {
       for (int j = 1; j <= 9; j++) {
-        if (i == 2 && j <= 4)
-          continue;
+        if (i == 2 && j <= 4) {
+            continue;
+        }
         assertTrue(orids.contains(new ORecordId(i, j)));
       }
     }
@@ -235,8 +238,9 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
     for (int i = 2; i <= 3; i++) {
       for (int j = 1; j <= 9; j++) {
-        if (i == 2 && j <= 4)
-          continue;
+        if (i == 2 && j <= 4) {
+            continue;
+        }
         assertTrue(orids.contains(new ORecordId(i, j)));
       }
     }
@@ -313,8 +317,9 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
     for (int i = 2; i <= 3; i++)
       for (int j = 1; j <= 9; j++) {
-        if (i == 2 && j < 3)
-          continue;
+        if (i == 2 && j < 3) {
+            continue;
+        }
         assertTrue(orids.contains(new ORecordId(i, j)));
       }
 
@@ -325,8 +330,9 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
     for (int i = 2; i <= 3; i++)
       for (int j = 1; j <= 9; j++) {
-        if (i == 2 && j < 3)
-          continue;
+        if (i == 2 && j < 3) {
+            continue;
+        }
         assertTrue(orids.contains(new ORecordId(i, j)));
       }
   }
@@ -339,8 +345,9 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
     for (int i = 2; i <= 3; i++)
       for (int j = 1; j <= 9; j++) {
-        if (i == 2 && j <= 3)
-          continue;
+        if (i == 2 && j <= 3) {
+            continue;
+        }
         assertTrue(orids.contains(new ORecordId(i, j)));
       }
 
@@ -351,8 +358,9 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
     for (int i = 2; i <= 3; i++)
       for (int j = 1; j <= 9; j++) {
-        if (i == 2 && j <= 3)
-          continue;
+        if (i == 2 && j <= 3) {
+            continue;
+        }
         assertTrue(orids.contains(new ORecordId(i, j)));
       }
   }
@@ -408,8 +416,9 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
     for (int i = 1; i <= 3; i++)
       for (int j = 1; j <= 9; j++) {
-        if (i == 3 && j > 2)
-          continue;
+        if (i == 3 && j > 2) {
+            continue;
+        }
 
         assertTrue(orids.contains(new ORecordId(i, j)));
       }
@@ -421,8 +430,9 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
 
     for (int i = 1; i <= 3; i++)
       for (int j = 1; j <= 9; j++) {
-        if (i == 3 && j > 2)
-          continue;
+        if (i == 3 && j > 2) {
+            continue;
+        }
 
         assertTrue(orids.contains(new ORecordId(i, j)));
       }
@@ -459,10 +469,11 @@ public class SBTreeCompositeKeyTest extends DatabaseAbstractTest {
     final Set<ORID> orids = new HashSet<ORID>();
     while (true) {
       Map.Entry<OCompositeKey, OIdentifiable> entry = cursor.next(-1);
-      if (entry != null)
-        orids.add(entry.getValue().getIdentity());
-      else
-        break;
+      if (entry != null) {
+          orids.add(entry.getValue().getIdentity());
+      } else {
+          break;
+      }
     }
     return orids;
   }

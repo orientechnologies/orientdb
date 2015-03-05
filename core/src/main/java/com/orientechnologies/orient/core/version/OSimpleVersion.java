@@ -53,16 +53,18 @@ public final class OSimpleVersion implements ORecordVersion {
 
   @Override
   public void increment() {
-    if (isTombstone())
-      throw new IllegalStateException("Record was deleted and can not be updated.");
+    if (isTombstone()) {
+        throw new IllegalStateException("Record was deleted and can not be updated.");
+    }
 
     version++;
   }
 
   @Override
   public void decrement() {
-    if (isTombstone())
-      throw new IllegalStateException("Record was deleted and can not be updated.");
+    if (isTombstone()) {
+        throw new IllegalStateException("Record was deleted and can not be updated.");
+    }
 
     version--;
   }
@@ -89,8 +91,9 @@ public final class OSimpleVersion implements ORecordVersion {
 
   @Override
   public void convertToTombstone() {
-    if (isTombstone())
-      throw new IllegalStateException("Record was deleted and can not be updated.");
+    if (isTombstone()) {
+        throw new IllegalStateException("Record was deleted and can not be updated.");
+    }
 
     version++;
     version = -version;
@@ -153,10 +156,12 @@ public final class OSimpleVersion implements ORecordVersion {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (!(o instanceof OSimpleVersion))
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (!(o instanceof OSimpleVersion)) {
+        return false;
+    }
     OSimpleVersion that = (OSimpleVersion) o;
 
     return version == that.version;
@@ -185,22 +190,26 @@ public final class OSimpleVersion implements ORecordVersion {
   @Override
   public int compareTo(ORecordVersion o) {
     final int myVersion;
-    if (isTombstone())
-      myVersion = -version;
-    else
-      myVersion = version;
+    if (isTombstone()) {
+        myVersion = -version;
+    } else {
+        myVersion = version;
+    }
 
     final int otherVersion;
-    if (o.isTombstone())
-      otherVersion = -o.getCounter();
-    else
-      otherVersion = o.getCounter();
+    if (o.isTombstone()) {
+        otherVersion = -o.getCounter();
+    } else {
+        otherVersion = o.getCounter();
+    }
 
-    if (myVersion == otherVersion)
-      return 0;
+    if (myVersion == otherVersion) {
+        return 0;
+    }
 
-    if (myVersion < otherVersion)
-      return -1;
+    if (myVersion < otherVersion) {
+        return -1;
+    }
 
     return 1;
   }

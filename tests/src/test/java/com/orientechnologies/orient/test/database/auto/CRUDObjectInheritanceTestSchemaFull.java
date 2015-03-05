@@ -120,16 +120,21 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
       Assert.fail("Export import didn't go as expected", e);
     }
     database.open("admin", "admin");
-    if (database.getMetadata().getSchema().existsClass("Company"))
-      database.command(new OCommandSQL("delete from Company")).execute();
-    if (database.getMetadata().getSchema().existsClass("Account"))
-      database.command(new OCommandSQL("delete from Account")).execute();
-    if (database.getMetadata().getSchema().existsClass("JavaComplexTestClass"))
-      database.command(new OCommandSQL("delete from JavaComplexTestClass")).execute();
-    if (database.getMetadata().getSchema().existsClass("Profile"))
-      database.command(new OCommandSQL("delete from Profile")).execute();
-    if (database.getMetadata().getSchema().existsClass("IdentityChild"))
-      database.command(new OCommandSQL("delete from IdentityChild")).execute();
+    if (database.getMetadata().getSchema().existsClass("Company")) {
+        database.command(new OCommandSQL("delete from Company")).execute();
+    }
+    if (database.getMetadata().getSchema().existsClass("Account")) {
+        database.command(new OCommandSQL("delete from Account")).execute();
+    }
+    if (database.getMetadata().getSchema().existsClass("JavaComplexTestClass")) {
+        database.command(new OCommandSQL("delete from JavaComplexTestClass")).execute();
+    }
+    if (database.getMetadata().getSchema().existsClass("Profile")) {
+        database.command(new OCommandSQL("delete from Profile")).execute();
+    }
+    if (database.getMetadata().getSchema().existsClass("IdentityChild")) {
+        database.command(new OCommandSQL("delete from IdentityChild")).execute();
+    }
     database.close();
   }
 
@@ -179,8 +184,9 @@ public class CRUDObjectInheritanceTestSchemaFull extends ObjectDBBaseTest {
     for (int i = 0; i < result.size(); ++i) {
       account = result.get(i);
 
-      if (account instanceof Company)
-        companyRecords++;
+      if (account instanceof Company) {
+          companyRecords++;
+      }
 
       Assert.assertNotSame(account.getName().length(), 0);
     }

@@ -48,15 +48,17 @@ public class OQueryOperatorMinor extends OQueryOperatorEqualityNotNulls {
   protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
       final Object iRight, OCommandContext iContext) {
     final Object right = OType.convert(iRight, iLeft.getClass());
-    if (right == null)
-      return false;
+    if (right == null) {
+        return false;
+    }
     return ((Comparable<Object>) iLeft).compareTo(right) < 0;
   }
 
   @Override
   public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
-    if (iRight == null || iLeft == null)
-      return OIndexReuseType.NO_INDEX;
+    if (iRight == null || iLeft == null) {
+        return OIndexReuseType.NO_INDEX;
+    }
     return OIndexReuseType.INDEX_METHOD;
   }
 
@@ -65,19 +67,22 @@ public class OQueryOperatorMinor extends OQueryOperatorEqualityNotNulls {
     final OIndexDefinition indexDefinition = index.getDefinition();
 
     final OIndexInternal<?> internalIndex = index.getInternal();
-    if (!internalIndex.canBeUsedInEqualityOperators() || !internalIndex.hasRangeQuerySupport())
-      return null;
+    if (!internalIndex.canBeUsedInEqualityOperators() || !internalIndex.hasRangeQuerySupport()) {
+        return null;
+    }
 
     final OIndexCursor cursor;
     if (indexDefinition.getParamCount() == 1) {
       final Object key;
-      if (indexDefinition instanceof OIndexDefinitionMultiValue)
-        key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
-      else
-        key = indexDefinition.createValue(keyParams);
+      if (indexDefinition instanceof OIndexDefinitionMultiValue) {
+          key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
+      } else {
+          key = indexDefinition.createValue(keyParams);
+      }
 
-      if (key == null)
-        return null;
+      if (key == null) {
+          return null;
+      }
 
       cursor = index.iterateEntriesMinor(key, false, ascSortOrder);
     } else {
@@ -90,13 +95,15 @@ public class OQueryOperatorMinor extends OQueryOperatorEqualityNotNulls {
 
       final Object keyOne = compositeIndexDefinition.createSingleValue(keyParams.subList(0, keyParams.size() - 1));
 
-      if (keyOne == null)
-        return null;
+      if (keyOne == null) {
+          return null;
+      }
 
       final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
 
-      if (keyTwo == null)
-        return null;
+      if (keyTwo == null) {
+          return null;
+      }
 
       cursor = index.iterateEntriesBetween(keyOne, true, keyTwo, false, ascSortOrder);
     }
@@ -112,14 +119,16 @@ public class OQueryOperatorMinor extends OQueryOperatorEqualityNotNulls {
 
   @Override
   public ORID getEndRidRange(final Object iLeft, final Object iRight) {
-    if (iLeft instanceof OSQLFilterItemField && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iLeft).getRoot()))
-      if (iRight instanceof ORID)
-        return (ORID) iRight;
-      else {
-        if (iRight instanceof OSQLFilterItemParameter
-            && ((OSQLFilterItemParameter) iRight).getValue(null, null, null) instanceof ORID)
-          return (ORID) ((OSQLFilterItemParameter) iRight).getValue(null, null, null);
-      }
+    if (iLeft instanceof OSQLFilterItemField && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iLeft).getRoot())) {
+        if (iRight instanceof ORID) {
+            return (ORID) iRight;
+        } else {
+            if (iRight instanceof OSQLFilterItemParameter
+                    && ((OSQLFilterItemParameter) iRight).getValue(null, null, null) instanceof ORID) {
+                return (ORID) ((OSQLFilterItemParameter) iRight).getValue(null, null, null);
+            }
+        }
+    }
 
     return null;
   }

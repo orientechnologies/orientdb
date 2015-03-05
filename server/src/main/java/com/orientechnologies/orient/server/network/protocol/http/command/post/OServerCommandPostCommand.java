@@ -47,12 +47,14 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     String fetchPlan = urlParts.length > 5 ? urlParts[5] : null;
     final String accept = iRequest.getHeader("accept");
 
-    if (iRequest.content != null)
-      // CONTENT REPLACES TEXT
-      text = iRequest.content;
+    if (iRequest.content != null) {
+        // CONTENT REPLACES TEXT
+        text = iRequest.content;
+    }
 
-    if (text == null)
-      throw new IllegalArgumentException("text cannot be null");
+    if (text == null) {
+        throw new IllegalArgumentException("text cannot be null");
+    }
 
     iRequest.data.commandInfo = "Command";
     iRequest.data.commandDetail = text;
@@ -75,22 +77,26 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
       executor.setProgressListener(cmd.getProgressListener());
       executor.parse(cmd);
 
-      if (!executor.isIdempotent() && iRequest.httpMethod.equals("GET"))
-        throw new OCommandExecutionException("Cannot execute non idempotent command using HTTP GET");
+      if (!executor.isIdempotent() && iRequest.httpMethod.equals("GET")) {
+          throw new OCommandExecutionException("Cannot execute non idempotent command using HTTP GET");
+      }
 
       response = db.command(cmd).execute();
 
       fetchPlan = executor.getFetchPlan();
 
       String format = null;
-      if (iRequest.parameters.get("format") != null)
-        format = iRequest.parameters.get("format");
+      if (iRequest.parameters.get("format") != null) {
+          format = iRequest.parameters.get("format");
+      }
 
-      if (fetchPlan != null)
-        if (format != null)
-          format += ",fetchPlan:" + fetchPlan;
-        else
-          format = "fetchPlan:" + fetchPlan;
+      if (fetchPlan != null) {
+          if (format != null) {
+              format += ",fetchPlan:" + fetchPlan;
+          } else {
+              format = "fetchPlan:" + fetchPlan;
+          }
+      }
 
       Map<String, Object> additionalContent = null;
 
@@ -103,8 +109,9 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
       iResponse.writeResult(response, format, accept, additionalContent);
 
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) {
+          db.close();
+      }
     }
 
     return false;

@@ -121,18 +121,23 @@ public class ODocumentWrapper implements Serializable {
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
-      return false;
+    if (this == obj) {
+        return true;
+    }
+    if (obj == null) {
+        return false;
+    }
+    if (getClass() != obj.getClass()) {
+        return false;
+    }
     final ODocumentWrapper other = (ODocumentWrapper) obj;
     if (document == null) {
-      if (other.document != null)
+      if (other.document != null) {
+          return false;
+      }
+    } else if (!document.equals(other.document)) {
         return false;
-    } else if (!document.equals(other.document))
-      return false;
+    }
     return true;
   }
 

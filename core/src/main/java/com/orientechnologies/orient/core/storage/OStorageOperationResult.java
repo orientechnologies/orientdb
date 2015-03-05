@@ -80,8 +80,9 @@ public class OStorageOperationResult<RET> implements Externalizable {
     if (modifiedRecordContent != null) {
       out.writeInt(modifiedRecordContent.length);
       out.write(modifiedRecordContent);
-    } else
-      out.writeInt(-1);
+    } else {
+        out.writeInt(-1);
+    }
   }
 
   @SuppressWarnings("unchecked")

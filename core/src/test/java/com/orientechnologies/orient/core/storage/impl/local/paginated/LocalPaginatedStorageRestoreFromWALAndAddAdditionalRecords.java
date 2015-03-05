@@ -61,8 +61,9 @@ public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
     buildDirectory += "/localPaginatedStorageRestoreFromWALAndAddAdditionalRecords";
 
     buildDir = new File(buildDirectory);
-    if (buildDir.exists())
-      buildDir.delete();
+    if (buildDir.exists()) {
+        buildDir.delete();
+    }
 
     buildDir.mkdir();
   }
@@ -159,10 +160,11 @@ public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
       @Override
       public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
         Path fileToCopy = copyTo.resolve(testStoragePath.relativize(file));
-        if (fileToCopy.endsWith("baseLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.wmr"))
-          fileToCopy = fileToCopy.getParent().resolve("testLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.wmr");
-        else if (fileToCopy.endsWith("baseLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.0.wal"))
-          fileToCopy = fileToCopy.getParent().resolve("testLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.0.wal");
+        if (fileToCopy.endsWith("baseLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.wmr")) {
+            fileToCopy = fileToCopy.getParent().resolve("testLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.wmr");
+        } else if (fileToCopy.endsWith("baseLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.0.wal")) {
+            fileToCopy = fileToCopy.getParent().resolve("testLocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords.0.wal");
+        }
 
         Files.copy(file, fileToCopy);
 
@@ -277,8 +279,9 @@ public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
         }
       } finally {
         baseDB.close();
-        if (testDB != null)
-          testDB.close();
+        if (testDB != null) {
+            testDB.close();
+        }
       }
 
       return null;

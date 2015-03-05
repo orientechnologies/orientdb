@@ -48,7 +48,8 @@ public class ORecordTrackedIterator implements Iterator<OIdentifiable> {
 
   public void remove() {
     underlying.remove();
-    if (sourceRecord != null)
-      sourceRecord.setDirty();
+    if (sourceRecord != null) {
+        sourceRecord.setDirty();
+    }
   }
 }

@@ -52,19 +52,21 @@ public class OServerCommandGetDocumentByClass extends OServerCommandAuthenticate
       final String rid = db.getClusterIdByName(urlParts[2]) + ":" + urlParts[3];
       rec = db.load(new ORecordId(rid), fetchPlan);
 
-      if (rec == null)
-        iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, "Not Found", OHttpUtils.CONTENT_JSON, "Record with id '" + rid
-            + "' was not found.", null);
-      else if (iRequest.httpMethod.equals("HEAD"))
-        // JUST SEND HTTP CODE 200
-        iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, null, null);
-      else
-        // SEND THE DOCUMENT BACK
-        iResponse.writeRecord(rec, fetchPlan, null);
+      if (rec == null) {
+          iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, "Not Found", OHttpUtils.CONTENT_JSON, "Record with id '" + rid
+                  + "' was not found.", null);
+      } else if (iRequest.httpMethod.equals("HEAD")) {
+          // JUST SEND HTTP CODE 200
+          iResponse.send(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, null, null, null);
+      } else {
+          // SEND THE DOCUMENT BACK
+          iResponse.writeRecord(rec, fetchPlan, null);
+      }
 
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) {
+          db.close();
+      }
     }
 
     return false;

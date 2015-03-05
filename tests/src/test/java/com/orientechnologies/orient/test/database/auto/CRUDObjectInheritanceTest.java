@@ -88,8 +88,9 @@ public class CRUDObjectInheritanceTest extends ObjectDBBaseTest {
     for (int i = 0; i < result.size(); ++i) {
       account = result.get(i);
 
-      if (account instanceof Company)
-        companyRecords++;
+      if (account instanceof Company) {
+          companyRecords++;
+      }
 
       Assert.assertNotSame(account.getName().length(), 0);
     }

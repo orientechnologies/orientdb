@@ -89,14 +89,16 @@ public class DbCreationTest extends ObjectDBBaseTest {
 
   @AfterMethod
   public void tearDown() {
-    if (url.contains("remote:"))
-      ODatabaseDocumentPool.global().close();
+    if (url.contains("remote:")) {
+        ODatabaseDocumentPool.global().close();
+    }
   }
 
   @Test(dependsOnMethods = { "testDbCreationNoSecurity" })
   public void testDbCreationDefault() throws IOException {
-    if (ODatabaseHelper.existsDatabase(url))
-      ODatabaseHelper.dropDatabase(new OObjectDatabaseTx(url), url, getStorageType());
+    if (ODatabaseHelper.existsDatabase(url)) {
+        ODatabaseHelper.dropDatabase(new OObjectDatabaseTx(url), url, getStorageType());
+    }
 
     ODatabaseHelper.createDatabase(new OObjectDatabaseTx(url), url, getStorageType());
   }
@@ -151,9 +153,9 @@ public class DbCreationTest extends ObjectDBBaseTest {
     int pos = url.lastIndexOf("/");
 
     final String u;
-    if (pos > -1)
-      u = url.substring(0, pos) + "/sub/subTest";
-    else {
+    if (pos > -1) {
+        u = url.substring(0, pos) + "/sub/subTest";
+    } else {
       pos = url.lastIndexOf(":");
       u = url.substring(0, pos + 1) + "sub/subTest";
     }
@@ -173,9 +175,9 @@ public class DbCreationTest extends ObjectDBBaseTest {
     int pos = url.lastIndexOf("/");
 
     final String u;
-    if (pos > -1)
-      u = url.substring(0, pos) + "/sub/subTest";
-    else {
+    if (pos > -1) {
+        u = url.substring(0, pos) + "/sub/subTest";
+    } else {
       pos = url.lastIndexOf(":");
       u = url.substring(0, pos + 1) + "sub/subTest";
     }
@@ -186,8 +188,9 @@ public class DbCreationTest extends ObjectDBBaseTest {
     ODatabaseHelper.createDatabase(db, u, getStorageType());
 
     db = ODatabaseDocumentPool.global().acquire(u, "admin", "admin");
-    if (u.startsWith("remote:"))
-      db.close();
+    if (u.startsWith("remote:")) {
+        db.close();
+    }
 
     ODatabaseHelper.dropDatabase(db, getStorageType());
   }
@@ -237,9 +240,9 @@ public class DbCreationTest extends ObjectDBBaseTest {
     int pos = url.lastIndexOf("/");
     String u = url;
 
-    if (pos > -1)
-      u = url.substring(0, pos);
-    else {
+    if (pos > -1) {
+        u = url.substring(0, pos);
+    } else {
       pos = url.lastIndexOf(":");
       u = url.substring(0, pos + 1);
     }
@@ -268,8 +271,9 @@ public class DbCreationTest extends ObjectDBBaseTest {
   }
 
   public void testZipCompression() {
-    if (database == null || !database.getURL().startsWith("plocal:"))
-      return;
+    if (database == null || !database.getURL().startsWith("plocal:")) {
+        return;
+    }
 
     OGlobalConfiguration.STORAGE_COMPRESSION_METHOD.setValue("gzip");
 
@@ -277,8 +281,9 @@ public class DbCreationTest extends ObjectDBBaseTest {
     String dburl = "plocal:" + buildDirectory + "/test-db/" + this.getClass().getSimpleName();
 
     final OrientGraphFactory factory = new OrientGraphFactory(dburl, "admin", "admin");
-    if (factory.exists())
-      factory.drop();
+    if (factory.exists()) {
+        factory.drop();
+    }
     factory.close();
     OrientGraphNoTx db = factory.getNoTx();
     db.drop();

@@ -60,14 +60,17 @@ public class OStringForwardReader implements CharSequence {
 	}
 
 	public char charAt(final int iIndex) {
-		if (iIndex < start)
-			throw new IllegalStateException("Cannot read backward");
+		if (iIndex < start) {
+                    throw new IllegalStateException("Cannot read backward");
+                }
 
-		if (iIndex >= end)
-			read(iIndex);
+		if (iIndex >= end) {
+                    read(iIndex);
+                }
 
-		if (iIndex > current)
-			current = iIndex;
+		if (iIndex > current) {
+                    current = iIndex;
+                }
 		
 		return buffer[(int) (iIndex - start)];
 	}
@@ -88,8 +91,9 @@ public class OStringForwardReader implements CharSequence {
 	}
 
 	public void close() throws IOException {
-		if (input != null)
-			input.close();
+		if (input != null) {
+                    input.close();
+                }
 
 		start = end = -1;
 		current = size = 0;
@@ -122,8 +126,9 @@ public class OStringForwardReader implements CharSequence {
 
 	public int indexOf(final char iToFind) {
 		for (int i = (int) current; i < size; ++i) {
-			if (charAt(i) == iToFind)
-				return i;
+			if (charAt(i) == iToFind) {
+                            return i;
+                        }
 		}
 		return -1;
 	}
@@ -135,8 +140,9 @@ public class OStringForwardReader implements CharSequence {
 		for (int i = iOffset; i < size; ++i) {
 			c = charAt(i);
 			if (c == iToFind) {
-				if (iIncluded)
-					buffer.append(c);
+				if (iIncluded) {
+                                    buffer.append(c);
+                                }
 
 				return buffer.toString();
 			}

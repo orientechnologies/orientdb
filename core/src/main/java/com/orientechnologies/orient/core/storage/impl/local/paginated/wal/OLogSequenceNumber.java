@@ -38,17 +38,21 @@ public class OLogSequenceNumber implements Comparable<OLogSequenceNumber> {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
 
     OLogSequenceNumber that = (OLogSequenceNumber) o;
 
-    if (position != that.position)
-      return false;
-    if (segment != that.segment)
-      return false;
+    if (position != that.position) {
+        return false;
+    }
+    if (segment != that.segment) {
+        return false;
+    }
 
     return true;
   }
@@ -62,15 +66,18 @@ public class OLogSequenceNumber implements Comparable<OLogSequenceNumber> {
 
   @Override
   public int compareTo(OLogSequenceNumber otherNumber) {
-    if (segment > otherNumber.segment)
-      return 1;
-    if (segment < otherNumber.segment)
-      return -1;
+    if (segment > otherNumber.segment) {
+        return 1;
+    }
+    if (segment < otherNumber.segment) {
+        return -1;
+    }
 
-    if (position > otherNumber.position)
-      return 1;
-    else if (position < otherNumber.position)
-      return -1;
+    if (position > otherNumber.position) {
+        return 1;
+    } else if (position < otherNumber.position) {
+        return -1;
+    }
 
     return 0;
   }

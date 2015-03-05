@@ -65,8 +65,9 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
       final Set<OIdentifiable> values = indexEngine.get(key);
 
-      if (values == null)
-        return Collections.emptySet();
+      if (values == null) {
+          return Collections.emptySet();
+      }
 
       return new HashSet<OIdentifiable>(values);
 
@@ -85,8 +86,9 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
       final Set<OIdentifiable> values = indexEngine.get(key);
 
-      if (values == null)
-        return 0;
+      if (values == null) {
+          return 0;
+      }
 
       return values.size();
 
@@ -103,8 +105,9 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     final ODatabase database = getDatabase();
     final boolean txIsActive = database.getTransaction().isActive();
 
-    if (txIsActive)
-      keyLockManager.acquireSharedLock(key);
+    if (txIsActive) {
+        keyLockManager.acquireSharedLock(key);
+    }
     try {
       modificationLock.requestModificationLock();
       try {
@@ -117,8 +120,9 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
           if (values == null) {
             if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
               boolean durable = false;
-              if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
-                durable = true;
+              if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode"))) {
+                  durable = true;
+              }
 
               values = new OIndexRIDContainer(getName(), durable);
             } else {
@@ -127,8 +131,9 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
             }
           }
 
-          if (!iSingleValue.getIdentity().isValid())
-            ((ORecord) iSingleValue).save();
+          if (!iSingleValue.getIdentity().isValid()) {
+              ((ORecord) iSingleValue).save();
+          }
 
           values.add(iSingleValue.getIdentity());
           indexEngine.put(key, values);
@@ -146,8 +151,9 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
         modificationLock.releaseModificationLock();
       }
     } finally {
-      if (txIsActive)
-        keyLockManager.releaseSharedLock(key);
+      if (txIsActive) {
+          keyLockManager.releaseSharedLock(key);
+      }
     }
   }
 
@@ -158,18 +164,20 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     Object snapshotValue = snapshot.get(key);
 
     Set<OIdentifiable> values;
-    if (snapshotValue == null)
-      values = indexEngine.get(key);
-    else if (snapshotValue.equals(RemovedValue.INSTANCE))
-      values = null;
-    else
-      values = (Set<OIdentifiable>) snapshotValue;
+    if (snapshotValue == null) {
+        values = indexEngine.get(key);
+    } else if (snapshotValue.equals(RemovedValue.INSTANCE)) {
+        values = null;
+    } else {
+        values = (Set<OIdentifiable>) snapshotValue;
+    }
 
     if (values == null) {
       if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
         boolean durable = false;
-        if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
-          durable = true;
+        if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode"))) {
+            durable = true;
+        }
 
         values = new OIndexRIDContainer(getName(), durable);
       } else {
@@ -193,8 +201,9 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     final ODatabase database = getDatabase();
     final boolean txIsActive = database.getTransaction().isActive();
 
-    if (txIsActive)
-      keyLockManager.acquireSharedLock(key);
+    if (txIsActive) {
+        keyLockManager.acquireSharedLock(key);
+    }
 
     try {
       modificationLock.requestModificationLock();
@@ -214,10 +223,11 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
             indexEngine.remove(key);
           }
           else if (values.remove(value)) {
-            if (values.isEmpty())
-              indexEngine.remove(key);
-            else
-              indexEngine.put(key, values);
+            if (values.isEmpty()) {
+                indexEngine.remove(key);
+            } else {
+                indexEngine.put(key, values);
+            }
 
             commitStorageAtomicOperation();
             return true;
@@ -236,8 +246,9 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
         modificationLock.releaseModificationLock();
       }
     } finally {
-      if (txIsActive)
-        keyLockManager.releaseSharedLock(key);
+      if (txIsActive) {
+          keyLockManager.releaseSharedLock(key);
+      }
     }
 
   }
@@ -249,21 +260,24 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
     final Object snapshotValue = snapshot.get(key);
 
     Set<OIdentifiable> values;
-    if (snapshotValue == null)
-      values = indexEngine.get(key);
-    else if (snapshotValue.equals(RemovedValue.INSTANCE))
-      values = null;
-    else
-      values = (Set<OIdentifiable>) snapshotValue;
+    if (snapshotValue == null) {
+        values = indexEngine.get(key);
+    } else if (snapshotValue.equals(RemovedValue.INSTANCE)) {
+        values = null;
+    } else {
+        values = (Set<OIdentifiable>) snapshotValue;
+    }
 
-    if (values == null)
-      return;
+    if (values == null) {
+        return;
+    }
 
     if (values.remove(value)) {
-      if (values.isEmpty())
-        snapshot.put(key, RemovedValue.INSTANCE);
-      else
-        snapshot.put(key, values);
+      if (values.isEmpty()) {
+          snapshot.put(key, RemovedValue.INSTANCE);
+      } else {
+          snapshot.put(key, values);
+      }
     }
   }
 
@@ -274,10 +288,11 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
       Object value = snapshotEntry.getValue();
       checkForKeyType(key);
 
-      if (value.equals(RemovedValue.INSTANCE))
-        indexEngine.remove(key);
-      else
-        indexEngine.put(key, (Set<OIdentifiable>) value);
+      if (value.equals(RemovedValue.INSTANCE)) {
+          indexEngine.remove(key);
+      } else {
+          indexEngine.put(key, (Set<OIdentifiable>) value);
+      }
     }
   }
 
@@ -289,11 +304,12 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
   }
 
   protected OStreamSerializer determineValueSerializer() {
-    if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm))
-      return (OStreamSerializer) getDatabase().getSerializerFactory().getObjectSerializer(
-          OStreamSerializerSBTreeIndexRIDContainer.ID);
-    else
-      return OStreamSerializerListRID.INSTANCE;
+    if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
+        return (OStreamSerializer) getDatabase().getSerializerFactory().getObjectSerializer(
+                OStreamSerializerSBTreeIndexRIDContainer.ID);
+    } else {
+        return OStreamSerializerListRID.INSTANCE;
+    }
   }
 
   @Override
@@ -348,10 +364,11 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
     final List<Object> sortedKeys = new ArrayList<Object>(keys);
     final Comparator<Object> comparator;
-    if (ascSortOrder)
-      comparator = ODefaultComparator.INSTANCE;
-    else
-      comparator = Collections.reverseOrder(ODefaultComparator.INSTANCE);
+    if (ascSortOrder) {
+        comparator = ODefaultComparator.INSTANCE;
+    } else {
+        comparator = Collections.reverseOrder(ODefaultComparator.INSTANCE);
+    }
 
     Collections.sort(sortedKeys, comparator);
 
@@ -363,8 +380,9 @@ public abstract class OIndexMultiValues extends OIndexAbstract<Set<OIdentifiable
 
       @Override
       public Map.Entry<Object, OIdentifiable> nextEntry() {
-        if (currentIterator == null)
-          return null;
+        if (currentIterator == null) {
+            return null;
+        }
 
         Object key = null;
         if (!currentIterator.hasNext()) {

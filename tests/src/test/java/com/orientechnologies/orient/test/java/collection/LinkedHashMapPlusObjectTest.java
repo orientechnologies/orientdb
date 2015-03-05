@@ -31,8 +31,9 @@ public class LinkedHashMapPlusObjectTest {
 			for (int i = 0; i < 3000000; ++i) {
 				final TestEntry entry = lhme.get(i);
 				v = entry.value;
-				if (v == null)
-					System.out.println("WOW");
+				if (v == null) {
+                                    System.out.println("WOW");
+                                }
 			}
 
 			System.out.println("Elapsed entry: " + (System.currentTimeMillis() - start));
@@ -40,8 +41,9 @@ public class LinkedHashMapPlusObjectTest {
 			start = System.currentTimeMillis();
 			for (int i = 0; i < 3000000; ++i) {
 				v = lhm.get(i);
-				if (v == null)
-					System.out.println("WOW");
+				if (v == null) {
+                                    System.out.println("WOW");
+                                }
 			}
 
 			System.out.println("Elapsed simple: " + (System.currentTimeMillis() - start));

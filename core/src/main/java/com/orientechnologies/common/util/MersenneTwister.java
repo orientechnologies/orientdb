@@ -232,19 +232,24 @@ public strictfp class MersenneTwister extends java.util.Random implements Serial
   }
 
   public boolean stateEquals(Object o) {
-    if (o == this)
-      return true;
-    if (o == null || !(o instanceof MersenneTwister))
-      return false;
+    if (o == this) {
+        return true;
+    }
+    if (o == null || !(o instanceof MersenneTwister)) {
+        return false;
+    }
     MersenneTwister other = (MersenneTwister) o;
-    if (mti != other.mti)
-      return false;
+    if (mti != other.mti) {
+        return false;
+    }
     for (int x = 0; x < mag01.length; x++)
-      if (mag01[x] != other.mag01[x])
-        return false;
+      if (mag01[x] != other.mag01[x]) {
+          return false;
+    }
     for (int x = 0; x < mt.length; x++)
-      if (mt[x] != other.mt[x])
-        return false;
+      if (mt[x] != other.mt[x]) {
+          return false;
+    }
     return true;
   }
 
@@ -315,8 +320,9 @@ public strictfp class MersenneTwister extends java.util.Random implements Serial
    */
 
   synchronized public void setSeed(final int[] array) {
-    if (array.length == 0)
-      throw new IllegalArgumentException("Array length must be greater than zero");
+    if (array.length == 0) {
+        throw new IllegalArgumentException("Array length must be greater than zero");
+    }
     int i, j, k;
     setSeed(19650218);
     i = 1;
@@ -331,8 +337,9 @@ public strictfp class MersenneTwister extends java.util.Random implements Serial
         mt[0] = mt[N - 1];
         i = 1;
       }
-      if (j >= array.length)
-        j = 0;
+      if (j >= array.length) {
+          j = 0;
+      }
     }
     for (k = N - 1; k != 0; k--) {
       mt[i] = (mt[i] ^ ((mt[i - 1] ^ (mt[i - 1] >>> 30)) * 1566083941)) - i; /* non linear */
@@ -364,12 +371,14 @@ public strictfp class MersenneTwister extends java.util.Random implements Serial
    */
 
   public boolean nextBoolean(final float probability) {
-    if (probability < 0.0f || probability > 1.0f)
-      throw new IllegalArgumentException("probability must be between 0.0 and 1.0 inclusive.");
-    if (probability == 0.0f)
-      return false; // fix half-open issues
-    else if (probability == 1.0f)
-      return true; // fix half-open issues
+    if (probability < 0.0f || probability > 1.0f) {
+        throw new IllegalArgumentException("probability must be between 0.0 and 1.0 inclusive.");
+    }
+    if (probability == 0.0f) {
+        return false; // fix half-open issues
+    } else if (probability == 1.0f) {
+        return true; // fix half-open issues
+    }
     return nextFloat() < probability;
   }
 
@@ -379,12 +388,14 @@ public strictfp class MersenneTwister extends java.util.Random implements Serial
    */
 
   public boolean nextBoolean(final double probability) {
-    if (probability < 0.0 || probability > 1.0)
-      throw new IllegalArgumentException("probability must be between 0.0 and 1.0 inclusive.");
-    if (probability == 0.0)
-      return false; // fix half-open issues
-    else if (probability == 1.0)
-      return true; // fix half-open issues
+    if (probability < 0.0 || probability > 1.0) {
+        throw new IllegalArgumentException("probability must be between 0.0 and 1.0 inclusive.");
+    }
+    if (probability == 0.0) {
+        return false; // fix half-open issues
+    } else if (probability == 1.0) {
+        return true; // fix half-open issues
+    }
     return nextDouble() < probability;
   }
 
@@ -393,11 +404,13 @@ public strictfp class MersenneTwister extends java.util.Random implements Serial
    */
 
   public int nextInt(final int n) {
-    if (n <= 0)
-      throw new IllegalArgumentException("n must be positive, got: " + n);
+    if (n <= 0) {
+        throw new IllegalArgumentException("n must be positive, got: " + n);
+    }
 
-    if ((n & -n) == n)
-      return (int) ((n * (long) next(31)) >> 31);
+    if ((n & -n) == n) {
+        return (int) ((n * (long) next(31)) >> 31);
+    }
 
     int bits, val;
     do {
@@ -413,8 +426,9 @@ public strictfp class MersenneTwister extends java.util.Random implements Serial
    */
 
   public long nextLong(final long n) {
-    if (n <= 0)
-      throw new IllegalArgumentException("n must be positive, got: " + n);
+    if (n <= 0) {
+        throw new IllegalArgumentException("n must be positive, got: " + n);
+    }
 
     long bits, val;
     do {
@@ -460,8 +474,9 @@ public strictfp class MersenneTwister extends java.util.Random implements Serial
     double d = 0.0;
     do {
       d = nextDouble(); // grab a value, initially from half-open [0.0, 1.0)
-      if (includeOne && nextBoolean())
-        d += 1.0; // if includeOne, with 1/2 probability, push to [1.0, 2.0)
+      if (includeOne && nextBoolean()) {
+          d += 1.0; // if includeOne, with 1/2 probability, push to [1.0, 2.0)
+      }
     } while ((d > 1.0) || // everything above 1.0 is always invalid
         (!includeZero && d == 0.0)); // if we're not including zero, 0.0 is invalid
     return d;
@@ -504,8 +519,9 @@ public strictfp class MersenneTwister extends java.util.Random implements Serial
     float d = 0.0f;
     do {
       d = nextFloat(); // grab a value, initially from half-open [0.0f, 1.0f)
-      if (includeOne && nextBoolean())
-        d += 1.0f; // if includeOne, with 1/2 probability, push to [1.0f, 2.0f)
+      if (includeOne && nextBoolean()) {
+          d += 1.0f; // if includeOne, with 1/2 probability, push to [1.0f, 2.0f)
+      }
     } while ((d > 1.0f) || // everything above 1.0f is always invalid
         (!includeZero && d == 0.0f)); // if we're not including zero, 0.0f is invalid
     return d;

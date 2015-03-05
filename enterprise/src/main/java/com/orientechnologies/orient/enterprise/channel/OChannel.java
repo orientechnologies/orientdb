@@ -92,17 +92,20 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
     final Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
     while (interfaces.hasMoreElements()) {
       final NetworkInterface current = interfaces.nextElement();
-      if (!current.isUp() || current.isLoopback() || current.isVirtual())
-        continue;
+      if (!current.isUp() || current.isLoopback() || current.isVirtual()) {
+          continue;
+      }
       Enumeration<InetAddress> addresses = current.getInetAddresses();
       while (addresses.hasMoreElements()) {
         final InetAddress current_addr = addresses.nextElement();
-        if (current_addr.isLoopbackAddress())
-          continue;
+        if (current_addr.isLoopbackAddress()) {
+            continue;
+        }
 
-        if (bestAddress == null || (iFavoriteIp4 && current_addr instanceof Inet4Address))
-          // FAVORITE IP4 ADDRESS
-          bestAddress = current_addr.getHostAddress();
+        if (bestAddress == null || (iFavoriteIp4 && current_addr instanceof Inet4Address)) {
+            // FAVORITE IP4 ADDRESS
+            bestAddress = current_addr.getHostAddress();
+        }
       }
     }
     return bestAddress;
@@ -125,8 +128,9 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
   }
 
   public void flush() throws IOException {
-    if (outStream != null)
-      outStream.flush();
+    if (outStream != null) {
+        outStream.flush();
+    }
   }
 
   public OAdaptiveLock getLockRead() {

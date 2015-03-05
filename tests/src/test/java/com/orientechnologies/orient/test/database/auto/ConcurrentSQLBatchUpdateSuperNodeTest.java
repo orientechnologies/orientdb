@@ -148,8 +148,9 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest extends DocumentDBBaseTest {
   public void init() {
     mvccEnabled = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
 
-    if (!mvccEnabled)
-      OGlobalConfiguration.DB_MVCC.setValue(true);
+    if (!mvccEnabled) {
+        OGlobalConfiguration.DB_MVCC.setValue(true);
+    }
   }
 
   @AfterClass

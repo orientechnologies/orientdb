@@ -78,17 +78,18 @@ public class ORuntimeResult {
     // APPLY PROJECTIONS
     final ODocument inputDocument = (ODocument) (iRecord != null ? iRecord.getRecord() : null);
 
-    if (iProjections.isEmpty())
-      // SELECT * CASE
-      inputDocument.copyTo(iValue);
-    else {
+    if (iProjections.isEmpty()) {
+        // SELECT * CASE
+        inputDocument.copyTo(iValue);
+    } else {
 
       for (Entry<String, Object> projection : iProjections.entrySet()) {
         final String prjName = projection.getKey();
         final Object v = projection.getValue();
 
-        if (v == null)
-          continue;
+        if (v == null) {
+            continue;
+            }
 
         final Object projectionValue;
         if (v.equals("*")) {
@@ -110,9 +111,10 @@ public class ORuntimeResult {
               }
             }
             projectionValue = null;
-          } else
-            // RETURN A VARIABLE FROM THE CONTEXT
-            projectionValue = ((OSQLFilterItemAbstract) v).getValue(inputDocument, iValue, iContext);
+          } else {
+              // RETURN A VARIABLE FROM THE CONTEXT
+              projectionValue = ((OSQLFilterItemAbstract) v).getValue(inputDocument, iValue, iContext);
+          }
 
         } else if (v instanceof OSQLFunctionRuntime) {
           final OSQLFunctionRuntime f = (OSQLFunctionRuntime) v;
@@ -126,53 +128,56 @@ public class ORuntimeResult {
           projectionValue = v;
         }
 
-        if (projectionValue != null)
-          if (projectionValue instanceof ORidBag)
-            iValue.field(prjName, new ORidBag((ORidBag) projectionValue));
-          else if (projectionValue instanceof OIdentifiable && !(projectionValue instanceof ORID)
-              && !(projectionValue instanceof ORecord))
-            iValue.field(prjName, ((OIdentifiable) projectionValue).getRecord());
-          else if (projectionValue instanceof Iterator) {
-            boolean link = true;
-            // make temporary value typical case graph database elemenet's iterator edges
-            if (projectionValue instanceof OResettable)
-              ((OResettable) projectionValue).reset();
-
-            final List<Object> iteratorValues = new ArrayList<Object>();
-            final Iterator projectionValueIterator = (Iterator) projectionValue;
-            while (projectionValueIterator.hasNext()) {
-              Object value = projectionValueIterator.next();
-              if (value instanceof OIdentifiable) {
-                value = ((OIdentifiable) value).getRecord();
-                if (!((OIdentifiable) value).getIdentity().isPersistent())
-                  link = false;
-              }
-
-              if (value != null)
-                iteratorValues.add(value);
+        if (projectionValue != null) {
+                if (projectionValue instanceof ORidBag) {
+                    iValue.field(prjName, new ORidBag((ORidBag) projectionValue));
+                } else if (projectionValue instanceof OIdentifiable && !(projectionValue instanceof ORID)
+                        && !(projectionValue instanceof ORecord)) {
+                    iValue.field(prjName, ((OIdentifiable) projectionValue).getRecord());
+                } else if (projectionValue instanceof Iterator) {
+                    boolean link = true;
+                    if (projectionValue instanceof OResettable) {
+                        ((OResettable) projectionValue).reset();
+                    }
+                    final List<Object> iteratorValues = new ArrayList<Object>();
+                    final Iterator projectionValueIterator = (Iterator) projectionValue;
+                    while (projectionValueIterator.hasNext()) {
+                        Object value = projectionValueIterator.next();
+                        if (value instanceof OIdentifiable) {
+                            value = ((OIdentifiable) value).getRecord();
+                            if (!((OIdentifiable) value).getIdentity().isPersistent()) {
+                                link = false;
+                            }
+                        }
+                        if (value != null) {
+                            iteratorValues.add(value);
+                        }
+                    }
+                    iValue.field(prjName, iteratorValues, link ? OType.LINKLIST : OType.EMBEDDEDLIST);
+                } else if (projectionValue instanceof ODocument && !((ODocument) projectionValue).getIdentity().isPersistent()) {
+                    iValue.field(prjName, projectionValue, OType.EMBEDDED);
+                } else if (projectionValue instanceof Set<?>) {
+                    OType type = OType.getTypeByValue(projectionValue);
+                    if (type == OType.LINKSET && !entriesPersistent((Collection<OIdentifiable>) projectionValue)) {
+                        type = OType.EMBEDDEDSET;
+                    }
+                    iValue.field(prjName, projectionValue, type);
+                } else if (projectionValue instanceof Map<?, ?>) {
+                    OType type = OType.getTypeByValue(projectionValue);
+                    if (type == OType.LINKMAP && !entriesPersistent(((Map<?, OIdentifiable>) projectionValue).values())) {
+                        type = OType.EMBEDDEDMAP;
+                    }
+                    iValue.field(prjName, projectionValue, type);
+                } else if (projectionValue instanceof List<?>) {
+                    OType type = OType.getTypeByValue(projectionValue);
+                    if (type == OType.LINKLIST && !entriesPersistent((Collection<OIdentifiable>) projectionValue)) {
+                        type = OType.EMBEDDEDLIST;
+                    }
+                    iValue.field(prjName, projectionValue, type);
+                } else {
+                    iValue.field(prjName, projectionValue);
+                }
             }
-
-            iValue.field(prjName, iteratorValues, link ? OType.LINKLIST : OType.EMBEDDEDLIST);
-          } else if (projectionValue instanceof ODocument && !((ODocument) projectionValue).getIdentity().isPersistent()) {
-            iValue.field(prjName, projectionValue, OType.EMBEDDED);
-          } else if (projectionValue instanceof Set<?>) {
-            OType type = OType.getTypeByValue(projectionValue);
-            if (type == OType.LINKSET && !entriesPersistent((Collection<OIdentifiable>) projectionValue))
-              type = OType.EMBEDDEDSET;
-            iValue.field(prjName, projectionValue, type);
-          } else if (projectionValue instanceof Map<?, ?>) {
-            OType type = OType.getTypeByValue(projectionValue);
-            if (type == OType.LINKMAP && !entriesPersistent(((Map<?, OIdentifiable>) projectionValue).values()))
-              type = OType.EMBEDDEDMAP;
-            iValue.field(prjName, projectionValue, type);
-          } else if (projectionValue instanceof List<?>) {
-            OType type = OType.getTypeByValue(projectionValue);
-            if (type == OType.LINKLIST && !entriesPersistent((Collection<OIdentifiable>) projectionValue))
-              type = OType.EMBEDDEDLIST;
-            iValue.field(prjName, projectionValue, type);
-
-          } else
-            iValue.field(prjName, projectionValue);
 
       }
     }
@@ -182,8 +187,9 @@ public class ORuntimeResult {
 
   private static boolean entriesPersistent(Collection<OIdentifiable> projectionValue) {
     for (OIdentifiable rec : projectionValue) {
-      if (!rec.getIdentity().isPersistent())
-        return false;
+      if (!rec.getIdentity().isPersistent()) {
+          return false;
+      }
     }
     return true;
   }
@@ -203,15 +209,17 @@ public class ORuntimeResult {
 
             Object fieldValue = f.getResult();
 
-            if (fieldValue != null)
-              iValue.field(projection.getKey(), fieldValue);
+            if (fieldValue != null) {
+                iValue.field(projection.getKey(), fieldValue);
+            }
           }
         }
       }
 
-      if (canExcludeResult && iValue.isEmpty())
-        // RESULT EXCLUDED FOR EMPTY RECORD
-        return null;
+      if (canExcludeResult && iValue.isEmpty()) {
+          // RESULT EXCLUDED FOR EMPTY RECORD
+          return null;
+      }
 
       // AVOID SAVING OF TEMP RECORD
       ORecordInternal.unsetDirty(iValue);

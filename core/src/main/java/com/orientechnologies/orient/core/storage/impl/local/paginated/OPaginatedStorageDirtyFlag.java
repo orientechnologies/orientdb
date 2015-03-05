@@ -51,13 +51,15 @@ public class OPaginatedStorageDirtyFlag {
       if (dirtyFile.exists()) {
         final boolean fileDeleted = dirtyFile.delete();
 
-        if (!fileDeleted)
-          throw new IllegalStateException("Can not delete file : " + dirtyFilePath);
+        if (!fileDeleted) {
+            throw new IllegalStateException("Can not delete file : " + dirtyFilePath);
+        }
       }
 
       final boolean fileCreated = dirtyFile.createNewFile();
-      if (!fileCreated)
-        throw new IllegalStateException("Can not create file : " + dirtyFilePath);
+      if (!fileCreated) {
+          throw new IllegalStateException("Can not create file : " + dirtyFilePath);
+      }
 
       dirtyFileData = new RandomAccessFile(dirtyFile, "rwd");
 
@@ -83,8 +85,9 @@ public class OPaginatedStorageDirtyFlag {
     lock.lock();
     try {
       dirtyFile = new File(dirtyFilePath);
-      if (!dirtyFile.exists())
-        throw new IllegalStateException("File '" + dirtyFilePath + "' does not exist.");
+      if (!dirtyFile.exists()) {
+          throw new IllegalStateException("File '" + dirtyFilePath + "' does not exist.");
+      }
 
       dirtyFileData = new RandomAccessFile(dirtyFile, "rwd");
 
@@ -98,11 +101,13 @@ public class OPaginatedStorageDirtyFlag {
   public void close() throws IOException {
     lock.lock();
     try {
-      if (dirtyFile == null)
-        return;
+      if (dirtyFile == null) {
+          return;
+      }
 
-      if (dirtyFile.exists())
-        dirtyFileData.close();
+      if (dirtyFile.exists()) {
+          dirtyFileData.close();
+      }
 
     } finally {
       lock.unlock();
@@ -112,8 +117,9 @@ public class OPaginatedStorageDirtyFlag {
   public void delete() throws IOException {
     lock.lock();
     try {
-      if (dirtyFile == null)
-        return;
+      if (dirtyFile == null) {
+          return;
+      }
 
       if (dirtyFile.exists()) {
 
@@ -130,13 +136,15 @@ public class OPaginatedStorageDirtyFlag {
   }
 
   public void makeDirty() throws IOException {
-    if (dirtyFlag)
-      return;
+    if (dirtyFlag) {
+        return;
+    }
 
     lock.lock();
     try {
-      if (dirtyFlag)
-        return;
+      if (dirtyFlag) {
+          return;
+      }
 
       dirtyFileData.seek(0);
       dirtyFileData.writeBoolean(true);
@@ -147,13 +155,15 @@ public class OPaginatedStorageDirtyFlag {
   }
 
   public void clearDirty() throws IOException {
-    if (!dirtyFlag)
-      return;
+    if (!dirtyFlag) {
+        return;
+    }
 
     lock.lock();
     try {
-      if (!dirtyFlag)
-        return;
+      if (!dirtyFlag) {
+          return;
+      }
 
       dirtyFileData.seek(0);
       dirtyFileData.writeBoolean(false);

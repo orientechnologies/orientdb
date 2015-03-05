@@ -68,8 +68,9 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
   @Override
   public Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult, final OSQLFilterCondition iCondition,
       final Object iLeft, final Object iRight, OCommandContext iContext) {
-    if (iLeft == null || iRight == null)
-      return false;
+    if (iLeft == null || iRight == null) {
+        return false;
+    }
 
     return iLeft.toString().indexOf(iRight.toString()) > -1;
   }
@@ -80,24 +81,27 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
       final OSQLFilterCondition iCondition, final Object iLeft, final Object iRight) {
 
     final String fieldName;
-    if (iCondition.getLeft() instanceof OSQLFilterItemField)
-      fieldName = iCondition.getLeft().toString();
-    else
-      fieldName = iCondition.getRight().toString();
+    if (iCondition.getLeft() instanceof OSQLFilterItemField) {
+        fieldName = iCondition.getLeft().toString();
+    } else {
+        fieldName = iCondition.getRight().toString();
+    }
 
     final String fieldValue;
-    if (iCondition.getLeft() instanceof OSQLFilterItemField)
-      fieldValue = iCondition.getRight().toString();
-    else
-      fieldValue = iCondition.getLeft().toString();
+    if (iCondition.getLeft() instanceof OSQLFilterItemField) {
+        fieldValue = iCondition.getRight().toString();
+    } else {
+        fieldValue = iCondition.getLeft().toString();
+    }
 
     final String className = iTargetClasses.get(0);
 
     final OProperty prop = ((OMetadataInternal) iDatabase.getMetadata()).getImmutableSchemaSnapshot().getClass(className)
         .getProperty(fieldName);
-    if (prop == null)
-      // NO PROPERTY DEFINED
-      return null;
+    if (prop == null) {
+        // NO PROPERTY DEFINED
+        return null;
+    }
 
     OIndex<?> fullTextIndex = null;
     for (final OIndex<?> indexDefinition : prop.getIndexes()) {
@@ -127,8 +131,9 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
   public OIndexCursor executeIndexQuery(OCommandContext iContext, OIndex<?> index, List<Object> keyParams, boolean ascSortOrder) {
 
     final OIndexDefinition indexDefinition = index.getDefinition();
-    if (indexDefinition.getParamCount() > 1)
-      return null;
+    if (indexDefinition.getParamCount() > 1) {
+        return null;
+    }
 
     final OIndex<?> internalIndex = index.getInternal();
 
@@ -137,12 +142,14 @@ public class OQueryOperatorContainsText extends OQueryTargetOperator {
       final Object key = indexDefinition.createValue(keyParams);
       final Object indexResult = index.get(key);
 
-      if (indexResult == null || indexResult instanceof OIdentifiable)
-        cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, key);
-      else
-        cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
-    } else
-      return null;
+      if (indexResult == null || indexResult instanceof OIdentifiable) {
+          cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, key);
+      } else {
+          cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
+      }
+    } else {
+        return null;
+    }
 
     updateProfiler(iContext, internalIndex, keyParams, indexDefinition);
 

@@ -453,10 +453,11 @@ public class OMVRBTreeSet<E> extends AbstractSet<E> implements ONavigableSet<E>,
 
 		// Create backing OMVRBTree
 		OMVRBTree<E, Object> tm;
-		if (c == null)
-			tm = new OMVRBTreeMemory<E, Object>();
-		else
-			tm = new OMVRBTreeMemory<E, Object>(c);
+		if (c == null) {
+                    tm = new OMVRBTreeMemory<E, Object>();
+                } else {
+                    tm = new OMVRBTreeMemory<E, Object>(c);
+                }
 		m = tm;
 
 		// Read in size

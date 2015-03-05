@@ -48,8 +48,9 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
   }
 
   protected OCommandRequestTextAbstract(final String iText) {
-    if (iText == null)
-      throw new IllegalArgumentException("Text cannot be null");
+    if (iText == null) {
+        throw new IllegalArgumentException("Text cannot be null");
+    }
 
     text = iText.trim();
   }
@@ -104,8 +105,9 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
         if (paramEntry.getValue() instanceof OCompositeKey) {
           final OCompositeKey compositeKey = (OCompositeKey) paramEntry.getValue();
           compositeKeyParams.put(paramEntry.getKey(), compositeKey.getKeys());
-        } else
-          params.put(paramEntry.getKey(), paramEntry.getValue());
+        } else {
+            params.put(paramEntry.getKey(), paramEntry.getValue());
+      }
 
       buffer.set(!params.isEmpty());
       if (!params.isEmpty()) {
@@ -141,23 +143,26 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
       if (params != null) {
         for (Entry<Object, Object> p : params.entrySet()) {
           final Object value;
-          if (p.getValue() instanceof String)
-            value = ORecordSerializerStringAbstract.getTypeValue((String) p.getValue());
-          else
-            value = p.getValue();
+          if (p.getValue() instanceof String) {
+              value = ORecordSerializerStringAbstract.getTypeValue((String) p.getValue());
+          } else {
+              value = p.getValue();
+          }
 
-          if (p.getKey() instanceof String && Character.isDigit(((String) p.getKey()).charAt(0)))
-            parameters.put(Integer.parseInt((String) p.getKey()), value);
-          else
-            parameters.put(p.getKey(), value);
+          if (p.getKey() instanceof String && Character.isDigit(((String) p.getKey()).charAt(0))) {
+              parameters.put(Integer.parseInt((String) p.getKey()), value);
+          } else {
+              parameters.put(p.getKey(), value);
+          }
         }
       } else {
         params = param.field("parameters");
         for (Entry<Object, Object> p : params.entrySet()) {
-          if (p.getKey() instanceof String && Character.isDigit(((String) p.getKey()).charAt(0)))
-            parameters.put(Integer.parseInt((String) p.getKey()), p.getValue());
-          else
-            parameters.put(p.getKey(), p.getValue());
+          if (p.getKey() instanceof String && Character.isDigit(((String) p.getKey()).charAt(0))) {
+              parameters.put(Integer.parseInt((String) p.getKey()), p.getValue());
+          } else {
+              parameters.put(p.getKey(), p.getValue());
+          }
         }
       }
     }
@@ -170,25 +175,28 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
 
       final Map<Object, Object> compositeKeyParams = param.field("compositeKeyParams");
 
-      if (parameters == null)
-        parameters = new HashMap<Object, Object>();
+      if (parameters == null) {
+          parameters = new HashMap<Object, Object>();
+      }
 
       for (final Entry<Object, Object> p : compositeKeyParams.entrySet()) {
         if (p.getValue() instanceof List) {
           final OCompositeKey compositeKey = new OCompositeKey((List<?>) p.getValue());
-          if (p.getKey() instanceof String && Character.isDigit(((String) p.getKey()).charAt(0)))
-            parameters.put(Integer.parseInt((String) p.getKey()), compositeKey);
-          else
-            parameters.put(p.getKey(), compositeKey);
+          if (p.getKey() instanceof String && Character.isDigit(((String) p.getKey()).charAt(0))) {
+              parameters.put(Integer.parseInt((String) p.getKey()), compositeKey);
+          } else {
+              parameters.put(p.getKey(), compositeKey);
+          }
 
         } else {
           final Object value = OCompositeKeySerializer.INSTANCE.deserialize(OStringSerializerHelper.getBinaryContent(p.getValue()),
               0);
 
-          if (p.getKey() instanceof String && Character.isDigit(((String) p.getKey()).charAt(0)))
-            parameters.put(Integer.parseInt((String) p.getKey()), value);
-          else
-            parameters.put(p.getKey(), value);
+          if (p.getKey() instanceof String && Character.isDigit(((String) p.getKey()).charAt(0))) {
+              parameters.put(Integer.parseInt((String) p.getKey()), value);
+          } else {
+              parameters.put(p.getKey(), value);
+          }
         }
       }
     }

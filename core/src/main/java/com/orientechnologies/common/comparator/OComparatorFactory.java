@@ -61,8 +61,9 @@ public class OComparatorFactory {
     boolean useUnsafe = OGlobalConfiguration.MEMORY_USE_UNSAFE.getValueAsBoolean();
 
     if (clazz.equals(byte[].class)) {
-      if (useUnsafe && unsafeWasDetected)
-        return (Comparator<T>) OUnsafeByteArrayComparator.INSTANCE;
+      if (useUnsafe && unsafeWasDetected) {
+          return (Comparator<T>) OUnsafeByteArrayComparator.INSTANCE;
+      }
 
       return (Comparator<T>) OByteArrayComparator.INSTANCE;
     }

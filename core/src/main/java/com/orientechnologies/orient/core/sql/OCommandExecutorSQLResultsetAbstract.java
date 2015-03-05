@@ -102,16 +102,18 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     private boolean       noItems;
 
     private IndexValuesIterator(String indexName, boolean ascOrder) {
-      if (ascOrder)
-        indexCursor = getDatabase().getMetadata().getIndexManager().getIndex(indexName).cursor();
-      else
-        indexCursor = getDatabase().getMetadata().getIndexManager().getIndex(indexName).descCursor();
+      if (ascOrder) {
+          indexCursor = getDatabase().getMetadata().getIndexManager().getIndex(indexName).cursor();
+      } else {
+          indexCursor = getDatabase().getMetadata().getIndexManager().getIndex(indexName).descCursor();
+      }
     }
 
     @Override
     public boolean hasNext() {
-      if (noItems)
-        return false;
+      if (noItems) {
+          return false;
+      }
 
       if (nextValue == null) {
         final Map.Entry<Object, OIdentifiable> entry = indexCursor.nextEntry();
@@ -128,8 +130,9 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     @Override
     public OIdentifiable next() {
-      if (!hasNext())
-        throw new NoSuchElementException();
+      if (!hasNext()) {
+          throw new NoSuchElementException();
+      }
 
       final OIdentifiable value = nextValue;
       nextValue = null;
@@ -153,13 +156,14 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     if (iRequest instanceof OSQLSynchQuery) {
       request = (OSQLSynchQuery<ODocument>) iRequest;
-    } else if (iRequest instanceof OSQLAsynchQuery)
-      request = (OSQLAsynchQuery<ODocument>) iRequest;
-    else {
+    } else if (iRequest instanceof OSQLAsynchQuery) {
+        request = (OSQLAsynchQuery<ODocument>) iRequest;
+    } else {
       // BUILD A QUERY OBJECT FROM THE COMMAND REQUEST
       request = new OSQLSynchQuery<ODocument>(textRequest.getText());
-      if (textRequest.getResultListener() != null)
-        request.setResultListener(textRequest.getResultListener());
+      if (textRequest.getResultListener() != null) {
+          request.setResultListener(textRequest.getResultListener());
+        }
     }
     return this;
   }
@@ -183,20 +187,22 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
    */
   protected boolean assignTarget(final Map<Object, Object> iArgs) {
     parameters = iArgs;
-    if (parsedTarget == null)
-      return true;
+    if (parsedTarget == null) {
+        return true;
+    }
 
-    if (iArgs != null && iArgs.size() > 0 && compiledFilter != null)
-      compiledFilter.bindParameters(iArgs);
+    if (iArgs != null && iArgs.size() > 0 && compiledFilter != null) {
+        compiledFilter.bindParameters(iArgs);
+    }
 
     if (target == null) {
-      if (parsedTarget.getTargetClasses() != null)
-        searchInClasses();
-      else if (parsedTarget.getTargetIndexValues() != null) {
+      if (parsedTarget.getTargetClasses() != null) {
+          searchInClasses();
+      } else if (parsedTarget.getTargetIndexValues() != null) {
         target = new IndexValuesIterator(parsedTarget.getTargetIndexValues(), parsedTarget.isTargetIndexValuesAsc());
-      } else if (parsedTarget.getTargetClusters() != null)
-        searchInClusters();
-      else if (parsedTarget.getTargetRecords() != null) {
+      } else if (parsedTarget.getTargetClusters() != null) {
+          searchInClusters();
+      } else if (parsedTarget.getTargetRecords() != null) {
         if (parsedTarget.getTargetRecords() instanceof OIterableRecordSource) {
           target = ((OIterableRecordSource) parsedTarget.getTargetRecords()).iterator(iArgs);
         } else {
@@ -211,10 +217,12 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
           final ArrayList<OIdentifiable> list = new ArrayList<OIdentifiable>();
           list.add((OIdentifiable) var);
           target = list.iterator();
-        } else if (var instanceof Iterable<?>)
-          target = ((Iterable<? extends OIdentifiable>) var).iterator();
-      } else
-        return false;
+        } else if (var instanceof Iterable<?>) {
+            target = ((Iterable<? extends OIdentifiable>) var).iterator();
+          }
+      } else {
+          return false;
+      }
     }
 
     return true;
@@ -226,24 +234,28 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
       for (Object d : tempResult)
         if (d != null) {
-          if (!(d instanceof OIdentifiable))
-            // NON-DOCUMENT AS RESULT, COMES FROM EXPAND? CREATE A DOCUMENT AT THE FLY
-            d = new ODocument().field("value", d);
-          else if (!(d instanceof ORID || d instanceof ORecord))
-            d = ((OIdentifiable) d).getRecord();
+          if (!(d instanceof OIdentifiable)) {
+              // NON-DOCUMENT AS RESULT, COMES FROM EXPAND? CREATE A DOCUMENT AT THE FLY
+              d = new ODocument().field("value", d);
+          } else if (!(d instanceof ORID || d instanceof ORecord)) {
+              d = ((OIdentifiable) d).getRecord();
+          }
 
-          if (limit > -1 && fetched >= limit)
-            break;
+          if (limit > -1 && fetched >= limit) {
+              break;
+          }
 
-          if (!request.getResultListener().result(d))
-            break;
+          if (!request.getResultListener().result(d)) {
+              break;
+          }
 
           ++fetched;
         }
     }
 
-    if (request instanceof OSQLSynchQuery)
-      return ((OSQLSynchQuery<ODocument>) request).getResult();
+    if (request instanceof OSQLSynchQuery) {
+        return ((OSQLSynchQuery<ODocument>) request).getResult();
+    }
 
     return null;
   }
@@ -257,13 +269,15 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       // CALL THE LISTENER NOW
       if (identifiable != null && request.getResultListener() != null) {
         final boolean result = request.getResultListener().result(identifiable);
-        if (!result)
-          return false;
+        if (!result) {
+            return false;
+        }
       }
 
-      if (limit > -1 && resultCount >= limit)
-        // BREAK THE EXECUTION
-        return false;
+      if (limit > -1 && resultCount >= limit) {
+          // BREAK THE EXECUTION
+          return false;
+      }
     }
     return true;
   }
@@ -287,12 +301,13 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
       // TRY TO PARSE AS FUNCTION
       final Object func = OSQLHelper.getFunction(parsedTarget, letValueAsString);
-      if (func != null)
-        letValue = func;
-      else if (letValueAsString.startsWith("(")) {
+      if (func != null) {
+          letValue = func;
+      } else if (letValueAsString.startsWith("(")) {
         letValue = new OSQLSynchQuery<Object>(letValueAsString.substring(1, letValueAsString.length() - 1));
-      } else
-        letValue = letValueAsString;
+      } else {
+          letValue = letValueAsString;
+      }
 
       let.put(letName, letValue);
       stop = parserGetLastSeparator() == ' ';
@@ -309,8 +324,9 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
    *           if no valid limit has been found
    */
   protected int parseLimit(final String w) throws OCommandSQLParsingException {
-    if (!w.equals(KEYWORD_LIMIT))
-      return -1;
+    if (!w.equals(KEYWORD_LIMIT)) {
+        return -1;
+    }
 
     parserNextWord(true);
     final String word = parserGetLastWord();
@@ -321,8 +337,9 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       throwParsingException("Invalid LIMIT value setted to '" + word + "' but it should be a valid integer. Example: LIMIT 10");
     }
 
-    if (limit == 0)
-      throwParsingException("Invalid LIMIT value setted to ZERO. Use -1 to ignore the limit or use a positive number. Example: LIMIT 10");
+    if (limit == 0) {
+        throwParsingException("Invalid LIMIT value setted to ZERO. Use -1 to ignore the limit or use a positive number. Example: LIMIT 10");
+    }
 
     return limit;
   }
@@ -337,8 +354,9 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
    *           if no valid skip has been found
    */
   protected int parseSkip(final String w) throws OCommandSQLParsingException {
-    if (!w.equals(KEYWORD_SKIP) && !w.equals(KEYWORD_OFFSET))
-      return -1;
+    if (!w.equals(KEYWORD_SKIP) && !w.equals(KEYWORD_OFFSET)) {
+        return -1;
+    }
 
     parserNextWord(true);
     final String word = parserGetLastWord();
@@ -351,9 +369,10 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
           + "' but it should be a valid positive integer. Example: SKIP 10");
     }
 
-    if (skip < 0)
-      throwParsingException("Invalid SKIP value setted to the negative number '" + word
-          + "'. Only positive numbers are valid. Example: SKIP 10");
+    if (skip < 0) {
+        throwParsingException("Invalid SKIP value setted to the negative number '" + word
+                + "'. Only positive numbers are valid. Example: SKIP 10");
+    }
 
     return skip;
   }
@@ -366,8 +385,9 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       // check only classes that specified in query will go to result set
       if ((targetClasses != null) && (!targetClasses.isEmpty())) {
         for (OClass targetClass : targetClasses.keySet()) {
-          if (!targetClass.isSuperClassOf(ODocumentInternal.getImmutableSchemaClass(recordSchemaAware)))
-            return false;
+          if (!targetClass.isSuperClassOf(ODocumentInternal.getImmutableSchemaClass(recordSchemaAware))) {
+              return false;
+          }
         }
         context.updateMetric("documentAnalyzedCompatibleClass", +1);
       }
@@ -381,8 +401,9 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     context.updateMetric("evaluated", +1);
 
     assignLetClauses(iRecord);
-    if (compiledFilter == null)
-      return true;
+    if (compiledFilter == null) {
+        return true;
+    }
     return (Boolean) compiledFilter.evaluate(iRecord, null, context);
   }
 
@@ -391,8 +412,9 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
       // BIND CONTEXT VARIABLES
       for (Map.Entry<String, Object> entry : let.entrySet()) {
         String varName = entry.getKey();
-        if (varName.startsWith("$"))
-          varName = varName.substring(1);
+        if (varName.startsWith("$")) {
+            varName = varName.substring(1);
+        }
 
         final Object letValue = entry.getValue();
 
@@ -415,12 +437,14 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
           if (f.getFunction().aggregateResults()) {
             f.execute(iRecord, iRecord, null, context);
             varValue = f.getFunction().getResult();
-          } else
-            varValue = f.execute(iRecord, iRecord, null, context);
-        } else if (letValue instanceof String)
-          varValue = ODocumentHelper.getFieldValue(iRecord, ((String) letValue).trim(), context);
-        else
-          varValue = letValue;
+          } else {
+              varValue = f.execute(iRecord, iRecord, null, context);
+          }
+        } else if (letValue instanceof String) {
+            varValue = ODocumentHelper.getFieldValue(iRecord, ((String) letValue).trim(), context);
+        } else {
+            varValue = letValue;
+        }
 
         context.setVariable(varName, varValue);
       }
@@ -443,12 +467,13 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
         .getVariable("$locking") : OStorage.LOCKING_STRATEGY.DEFAULT;
 
     final ORID[] range = getRange();
-    if (iAscendentOrder)
-      target = new ORecordIteratorClass<ORecord>(database, database, cls.getName(), true, request.isUseCache(), false, locking)
-          .setRange(range[0], range[1]);
-    else
-      target = new ORecordIteratorClassDescendentOrder<ORecord>(database, database, cls.getName(), true, request.isUseCache(),
-          false, locking).setRange(range[0], range[1]);
+    if (iAscendentOrder) {
+        target = new ORecordIteratorClass<ORecord>(database, database, cls.getName(), true, request.isUseCache(), false, locking)
+                .setRange(range[0], range[1]);
+    } else {
+        target = new ORecordIteratorClassDescendentOrder<ORecord>(database, database, cls.getName(), true, request.isUseCache(),
+                false, locking).setRange(range[0], range[1]);
+    }
   }
 
   protected void searchInClusters() {
@@ -456,24 +481,27 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     final Set<Integer> clusterIds = new HashSet<Integer>();
     for (String clusterName : parsedTarget.getTargetClusters().keySet()) {
-      if (clusterName == null || clusterName.length() == 0)
-        throw new OCommandExecutionException("No cluster or schema class selected in query");
+      if (clusterName == null || clusterName.length() == 0) {
+          throw new OCommandExecutionException("No cluster or schema class selected in query");
+      }
 
       database.checkSecurity(ORule.ResourceGeneric.CLUSTER, ORole.PERMISSION_READ, clusterName.toLowerCase());
 
       if (Character.isDigit(clusterName.charAt(0))) {
         // GET THE CLUSTER NUMBER
         for (int clusterId : OStringSerializerHelper.splitIntArray(clusterName)) {
-          if (clusterId == -1)
-            throw new OCommandExecutionException("Cluster '" + clusterName + "' not found");
+          if (clusterId == -1) {
+              throw new OCommandExecutionException("Cluster '" + clusterName + "' not found");
+          }
 
           clusterIds.add(clusterId);
         }
       } else {
         // GET THE CLUSTER NUMBER BY THE CLASS NAME
         final int clusterId = database.getClusterIdByName(clusterName.toLowerCase());
-        if (clusterId == -1)
-          throw new OCommandExecutionException("Cluster '" + clusterName + "' not found");
+        if (clusterId == -1) {
+            throw new OCommandExecutionException("Cluster '" + clusterName + "' not found");
+        }
 
         clusterIds.add(clusterId);
       }
@@ -516,8 +544,9 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
    * Optimizes the condition tree.
    */
   protected void optimize() {
-    if (compiledFilter != null)
-      optimizeBranch(null, compiledFilter.getRootCondition());
+    if (compiledFilter != null) {
+        optimizeBranch(null, compiledFilter.getRootCondition());
+    }
   }
 
   /**
@@ -550,8 +579,9 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
   }
 
   protected void optimizeBranch(final OSQLFilterCondition iParentCondition, OSQLFilterCondition iCondition) {
-    if (iCondition == null)
-      return;
+    if (iCondition == null) {
+        return;
+    }
 
     Object left = iCondition.getLeft();
 
@@ -579,25 +609,28 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     if (left instanceof OSQLFilterItemField && right instanceof OSQLFilterItemField) {
       if (((OSQLFilterItemField) left).getRoot().equals(((OSQLFilterItemField) right).getRoot())) {
-        if (oper instanceof OQueryOperatorEquals)
-          result = Boolean.TRUE;
-        else if (oper instanceof OQueryOperatorNotEquals)
-          result = Boolean.FALSE;
+        if (oper instanceof OQueryOperatorEquals) {
+            result = Boolean.TRUE;
+        } else if (oper instanceof OQueryOperatorNotEquals) {
+            result = Boolean.FALSE;
+        }
       }
     }
 
     if (result != null) {
-      if (iParentCondition != null)
-        if (iCondition == iParentCondition.getLeft())
-          // REPLACE LEFT
-          iCondition.setLeft(result);
-        else
-          // REPLACE RIGHT
-          iCondition.setRight(result);
-      else {
+      if (iParentCondition != null) {
+          if (iCondition == iParentCondition.getLeft()) {
+              // REPLACE LEFT
+              iCondition.setLeft(result);
+          } else {
+              // REPLACE RIGHT
+              iCondition.setRight(result);
+          }
+      } else {
         // REPLACE ROOT CONDITION
-        if (result instanceof Boolean && ((Boolean) result))
-          compiledFilter.setRootCondition(null);
+        if (result instanceof Boolean && ((Boolean) result)) {
+            compiledFilter.setRootCondition(null);
+          }
       }
     }
   }
@@ -608,27 +641,30 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
 
     final OSQLFilterCondition rootCondition = compiledFilter == null ? null : compiledFilter.getRootCondition();
     if (compiledFilter == null || rootCondition == null) {
-      if (request instanceof OSQLSynchQuery)
-        beginRange = ((OSQLSynchQuery<ODocument>) request).getNextPageRID();
-      else
-        beginRange = null;
+      if (request instanceof OSQLSynchQuery) {
+          beginRange = ((OSQLSynchQuery<ODocument>) request).getNextPageRID();
+      } else {
+          beginRange = null;
+      }
       endRange = null;
     } else {
       final ORID conditionBeginRange = rootCondition.getBeginRidRange();
       final ORID conditionEndRange = rootCondition.getEndRidRange();
       final ORID nextPageRid;
 
-      if (request instanceof OSQLSynchQuery)
-        nextPageRid = ((OSQLSynchQuery<ODocument>) request).getNextPageRID();
-      else
-        nextPageRid = null;
+      if (request instanceof OSQLSynchQuery) {
+          nextPageRid = ((OSQLSynchQuery<ODocument>) request).getNextPageRID();
+      } else {
+          nextPageRid = null;
+      }
 
-      if (conditionBeginRange != null && nextPageRid != null)
-        beginRange = conditionBeginRange.compareTo(nextPageRid) > 0 ? conditionBeginRange : nextPageRid;
-      else if (conditionBeginRange != null)
-        beginRange = conditionBeginRange;
-      else
-        beginRange = nextPageRid;
+      if (conditionBeginRange != null && nextPageRid != null) {
+          beginRange = conditionBeginRange.compareTo(nextPageRid) > 0 ? conditionBeginRange : nextPageRid;
+      } else if (conditionBeginRange != null) {
+          beginRange = conditionBeginRange;
+      } else {
+          beginRange = nextPageRid;
+      }
 
       endRange = conditionEndRange;
     }

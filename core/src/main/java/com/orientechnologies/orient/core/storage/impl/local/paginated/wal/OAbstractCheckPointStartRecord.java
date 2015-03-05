@@ -82,8 +82,9 @@ public abstract class OAbstractCheckPointStartRecord extends OAbstractWALRecord 
 
   @Override
   public int serializedSize() {
-    if (previousCheckpoint == null)
-      return 1;
+    if (previousCheckpoint == null) {
+        return 1;
+    }
 
     return 2 * OLongSerializer.LONG_SIZE + 1;
   }
@@ -95,15 +96,18 @@ public abstract class OAbstractCheckPointStartRecord extends OAbstractWALRecord 
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
 
     OAbstractCheckPointStartRecord that = (OAbstractCheckPointStartRecord) o;
 
-    if (previousCheckpoint != null ? !previousCheckpoint.equals(that.previousCheckpoint) : that.previousCheckpoint != null)
-      return false;
+    if (previousCheckpoint != null ? !previousCheckpoint.equals(that.previousCheckpoint) : that.previousCheckpoint != null) {
+        return false;
+    }
 
     return true;
   }

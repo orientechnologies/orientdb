@@ -69,15 +69,17 @@ public class ORecordFactoryManager {
 
   public String getRecordTypeName(final byte iRecordType) {
     String name = recordTypeNames[iRecordType];
-    if (name == null)
-      throw new IllegalArgumentException("Unsupported record type: " + iRecordType);
+    if (name == null) {
+        throw new IllegalArgumentException("Unsupported record type: " + iRecordType);
+    }
     return name;
   }
 
   public Class<? extends ORecord> getRecordTypeClass(final byte iRecordType) {
     Class<? extends ORecord> cls = recordTypes[iRecordType];
-    if (cls == null)
-      throw new IllegalArgumentException("Unsupported record type: " + iRecordType);
+    if (cls == null) {
+        throw new IllegalArgumentException("Unsupported record type: " + iRecordType);
+    }
     return cls;
   }
 
@@ -99,8 +101,9 @@ public class ORecordFactoryManager {
   }
 
   public void declareRecordType(byte iByte, String iName, Class<? extends ORecord> iClass, final ORecordFactory iFactory) {
-    if (recordTypes[iByte] != null)
-      throw new OException("Record type byte '" + iByte + "' already in use : " + recordTypes[iByte].getName());
+    if (recordTypes[iByte] != null) {
+        throw new OException("Record type byte '" + iByte + "' already in use : " + recordTypes[iByte].getName());
+    }
     recordTypeNames[iByte] = iName;
     recordTypes[iByte] = iClass;
     recordFactories[iByte] = iFactory;
@@ -108,8 +111,9 @@ public class ORecordFactoryManager {
 
   protected ORecordFactory getFactory(final byte iRecordType) {
     final ORecordFactory factory = recordFactories[iRecordType];
-    if (factory == null)
-      throw new IllegalArgumentException("Record type '" + iRecordType + "' is not supported");
+    if (factory == null) {
+        throw new IllegalArgumentException("Record type '" + iRecordType + "' is not supported");
+    }
     return factory;
   }
 }

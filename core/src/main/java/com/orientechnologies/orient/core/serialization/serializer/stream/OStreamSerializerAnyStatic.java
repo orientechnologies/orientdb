@@ -44,9 +44,10 @@ public class OStreamSerializerAnyStatic implements OStreamSerializer {
 	 */
 
 	public Object fromStream(final byte[] iStream) throws IOException {
-		if (iStream == null || iStream.length == 0)
-			// NULL VALUE
-			return null;
+		if (iStream == null || iStream.length == 0) {
+                    // NULL VALUE
+                    return null;
+                }
 
 		try {
 			return constructor.newInstance(iStream);
@@ -58,8 +59,9 @@ public class OStreamSerializerAnyStatic implements OStreamSerializer {
 	}
 
 	public byte[] toStream(final Object iObject) throws IOException {
-		if (iObject == null)
-			return null;
+		if (iObject == null) {
+                    return null;
+                }
 		return OBinaryProtocol.string2bytes(iObject.toString());
 	}
 }

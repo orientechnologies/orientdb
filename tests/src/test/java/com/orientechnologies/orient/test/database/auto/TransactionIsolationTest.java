@@ -70,9 +70,10 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
 
       Assert.assertEquals(record1.field("name"), "This is the first version");
     } catch (IllegalArgumentException e) {
-      if (!url.startsWith("remote:"))
-        // NOT SUPPORTED IN REMOTE MODE
-        Assert.assertFalse(true);
+      if (!url.startsWith("remote:")) {
+          // NOT SUPPORTED IN REMOTE MODE
+          Assert.assertFalse(true);
+      }
     }
     db1.close();
     db2.close();

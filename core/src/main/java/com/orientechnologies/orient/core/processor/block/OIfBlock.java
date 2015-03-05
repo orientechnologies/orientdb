@@ -36,15 +36,17 @@ public class OIfBlock extends OAbstractBlock {
     Object ifResult = delegate("if", iManager, ifClause, iContext, iOutput, iReadOnly);
 
     final boolean execute;
-    if (ifResult instanceof Boolean)
-      execute = (Boolean) ifResult;
-    else
-      execute = Boolean.parseBoolean(thenClause.toString());
+    if (ifResult instanceof Boolean) {
+        execute = (Boolean) ifResult;
+    } else {
+        execute = Boolean.parseBoolean(thenClause.toString());
+    }
 
-    if (execute)
-      return delegate("then", iManager, thenClause, iContext, iOutput, iReadOnly);
-    else if (elseClause != null)
-      return delegate("else", iManager, elseClause, iContext, iOutput, iReadOnly);
+    if (execute) {
+        return delegate("then", iManager, thenClause, iContext, iOutput, iReadOnly);
+    } else if (elseClause != null) {
+        return delegate("else", iManager, elseClause, iContext, iOutput, iReadOnly);
+    }
 
     return null;
   }

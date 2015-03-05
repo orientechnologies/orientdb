@@ -73,8 +73,9 @@ public class OSQLMethodRuntime extends OSQLFilterItemAbstract implements Compara
    */
   public Object execute(final Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult,
       final OCommandContext iContext) {
-    if (iThis == null)
-      return null;
+    if (iThis == null) {
+        return null;
+    }
 
     if (configuredParameters != null) {
       // RESOLVE VALUES USING THE CURRENT RECORD
@@ -85,23 +86,25 @@ public class OSQLMethodRuntime extends OSQLFilterItemAbstract implements Compara
           if (configuredParameters[i] instanceof OSQLFilterItemField) {
             runtimeParameters[i] = ((OSQLFilterItemField) configuredParameters[i]).getValue(iCurrentRecord, iCurrentResult,
                 iContext);
-            if (runtimeParameters[i] == null && iCurrentResult instanceof OIdentifiable)
-              // LOOK INTO THE CURRENT RESULT
-              runtimeParameters[i] = ((OSQLFilterItemField) configuredParameters[i]).getValue((OIdentifiable) iCurrentResult,
-                  iCurrentResult, iContext);
-          } else if (configuredParameters[i] instanceof OSQLMethodRuntime)
-            runtimeParameters[i] = ((OSQLMethodRuntime) configuredParameters[i]).execute(iThis, iCurrentRecord, iCurrentResult,
-                                                                                          iContext);
-          else if (configuredParameters[i] instanceof OSQLFunctionRuntime)
-            runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(iThis, iCurrentRecord, iCurrentResult,
-                iContext);
-          else if (configuredParameters[i] instanceof OSQLFilterItemVariable) {
+            if (runtimeParameters[i] == null && iCurrentResult instanceof OIdentifiable) {
+                // LOOK INTO THE CURRENT RESULT
+                runtimeParameters[i] = ((OSQLFilterItemField) configuredParameters[i]).getValue((OIdentifiable) iCurrentResult,
+                        iCurrentResult, iContext);
+            }
+          } else if (configuredParameters[i] instanceof OSQLMethodRuntime) {
+              runtimeParameters[i] = ((OSQLMethodRuntime) configuredParameters[i]).execute(iThis, iCurrentRecord, iCurrentResult,
+                      iContext);
+          } else if (configuredParameters[i] instanceof OSQLFunctionRuntime) {
+              runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(iThis, iCurrentRecord, iCurrentResult,
+                      iContext);
+          } else if (configuredParameters[i] instanceof OSQLFilterItemVariable) {
             runtimeParameters[i] = ((OSQLFilterItemVariable) configuredParameters[i]).getValue(iCurrentRecord, iCurrentResult,
                 iContext);
-            if (runtimeParameters[i] == null && iCurrentResult instanceof OIdentifiable)
-              // LOOK INTO THE CURRENT RESULT
-              runtimeParameters[i] = ((OSQLFilterItemVariable) configuredParameters[i]).getValue((OIdentifiable) iCurrentResult,
-                  iCurrentResult, iContext);
+            if (runtimeParameters[i] == null && iCurrentResult instanceof OIdentifiable) {
+                  // LOOK INTO THE CURRENT RESULT
+                runtimeParameters[i] = ((OSQLFilterItemVariable) configuredParameters[i]).getValue((OIdentifiable) iCurrentResult,
+                        iCurrentResult, iContext);
+            }
           } else if (configuredParameters[i] instanceof OCommandSQL) {
             try {
               runtimeParameters[i] = ((OCommandSQL) configuredParameters[i]).setContext(iContext).execute();
@@ -115,24 +118,26 @@ public class OSQLMethodRuntime extends OSQLFilterItemAbstract implements Compara
               configuredParameters[i] = pred;
 
             }
-          } else if (configuredParameters[i] instanceof OSQLPredicate)
-            runtimeParameters[i] = ((OSQLPredicate) configuredParameters[i]).evaluate(iCurrentRecord.getRecord(),
-                (iCurrentRecord instanceof ODocument ? (ODocument) iCurrentResult : null), iContext);
-          else if (configuredParameters[i] instanceof String) {
-            if (configuredParameters[i].toString().startsWith("\"") || configuredParameters[i].toString().startsWith("'"))
-              runtimeParameters[i] = OStringSerializerHelper.getStringContent(configuredParameters[i]);
+          } else if (configuredParameters[i] instanceof OSQLPredicate) {
+              runtimeParameters[i] = ((OSQLPredicate) configuredParameters[i]).evaluate(iCurrentRecord.getRecord(),
+                      (iCurrentRecord instanceof ODocument ? (ODocument) iCurrentResult : null), iContext);
+          } else if (configuredParameters[i] instanceof String) {
+            if (configuredParameters[i].toString().startsWith("\"") || configuredParameters[i].toString().startsWith("'")) {
+                runtimeParameters[i] = OStringSerializerHelper.getStringContent(configuredParameters[i]);
+            }
           }
         }
       }
 
       if (method.getMaxParams() == -1 || method.getMaxParams() > 0) {
         if (runtimeParameters.length < method.getMinParams()
-            || (method.getMaxParams() > -1 && runtimeParameters.length > method.getMaxParams()))
-          throw new OCommandExecutionException("Syntax error: function '"
-              + method.getName()
-              + "' needs "
-              + (method.getMinParams() == method.getMaxParams() ? method.getMinParams() : method.getMinParams() + "-"
-                  + method.getMaxParams()) + " argument(s) while has been received " + runtimeParameters.length);
+            || (method.getMaxParams() > -1 && runtimeParameters.length > method.getMaxParams())) {
+            throw new OCommandExecutionException("Syntax error: function '"
+                    + method.getName()
+                    + "' needs "
+                    + (method.getMinParams() == method.getMaxParams() ? method.getMinParams() : method.getMinParams() + "-"
+                            + method.getMaxParams()) + " argument(s) while has been received " + runtimeParameters.length);
+        }
       }
     }
 
@@ -162,8 +167,9 @@ public class OSQLMethodRuntime extends OSQLFilterItemAbstract implements Compara
     final List<String> funcParamsText = OStringSerializerHelper.getParameters(iText);
 
     method = OSQLEngine.getInstance().getMethod(funcName);
-    if (method == null)
-      throw new OCommandSQLParsingException("Unknown method " + funcName + "()");
+    if (method == null) {
+        throw new OCommandSQLParsingException("Unknown method " + funcName + "()");
+    }
 
     // PARSE PARAMETERS
     this.configuredParameters = new Object[funcParamsText.size()];
@@ -183,20 +189,23 @@ public class OSQLMethodRuntime extends OSQLFilterItemAbstract implements Compara
           if (iParameters[i] instanceof String && !iParameters[i].toString().startsWith("[")) {
             final Object v = OSQLHelper.parseValue(null, null, iParameters[i].toString(), null);
             if (v == OSQLHelper.VALUE_NOT_PARSED
-                || (v != null && OMultiValue.isMultiValue(v) && OMultiValue.getFirstValue(v) == OSQLHelper.VALUE_NOT_PARSED))
-              continue;
+                || (v != null && OMultiValue.isMultiValue(v) && OMultiValue.getFirstValue(v) == OSQLHelper.VALUE_NOT_PARSED)) {
+                continue;
+            }
 
             configuredParameters[i] = v;
           }
-        } else
-          this.configuredParameters[i] = null;
+        } else {
+            this.configuredParameters[i] = null;
+        }
       }
 
       // COPY STATIC VALUES
       this.runtimeParameters = new Object[configuredParameters.length];
       for (int i = 0; i < configuredParameters.length; ++i) {
-        if (!(configuredParameters[i] instanceof OSQLFilterItemField) && !(configuredParameters[i] instanceof OSQLMethodRuntime))
-          runtimeParameters[i] = configuredParameters[i];
+        if (!(configuredParameters[i] instanceof OSQLFilterItemField) && !(configuredParameters[i] instanceof OSQLMethodRuntime)) {
+            runtimeParameters[i] = configuredParameters[i];
+        }
       }
     }
 

@@ -34,27 +34,31 @@ public class OTableBlock extends OAbstractBlock {
   @Override
   public Object processBlock(OComposableProcessor iManager, final OCommandContext iContext, final ODocument iConfig,
       ODocument iOutput, final boolean iReadOnly) {
-    if (!(iConfig instanceof ODocument))
-      throw new OProcessException("Content in not a JSON");
+    if (!(iConfig instanceof ODocument)) {
+        throw new OProcessException("Content in not a JSON");
+    }
 
     final ODocument table = new ODocument();
 
     // HEADER
     header = getRequiredField(iContext, iConfig, "header");
-    if (isBlock(header))
-      header = delegate("header", iManager, header, iContext, iOutput, iReadOnly);
+    if (isBlock(header)) {
+        header = delegate("header", iManager, header, iContext, iOutput, iReadOnly);
+    }
     table.field("header", header);
 
     // BODY
     body = getRequiredField(iContext, iConfig, "body");
-    if (isBlock(body))
-      body = delegate("body", iManager, body, iContext, iOutput, iReadOnly);
+    if (isBlock(body)) {
+        body = delegate("body", iManager, body, iContext, iOutput, iReadOnly);
+    }
     table.field("body", body);
 
     // FOOTER
     footer = getRequiredField(iContext, iConfig, "footer");
-    if (isBlock(footer))
-      footer = delegate("footer", iManager, footer, iContext, iOutput, iReadOnly);
+    if (isBlock(footer)) {
+        footer = delegate("footer", iManager, footer, iContext, iOutput, iReadOnly);
+    }
     table.field("footer", footer);
 
     return table;

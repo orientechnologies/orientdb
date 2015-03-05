@@ -31,8 +31,9 @@ public class OClassImplTest {
     db = new ODatabaseDocumentTx("memory:" + OClassImplTest.class.getSimpleName());
     if (db.exists()) {
       db.open("admin", "admin");
-    } else
-      db.create();
+    } else {
+        db.create();
+    }
   }
 
   @AfterMethod

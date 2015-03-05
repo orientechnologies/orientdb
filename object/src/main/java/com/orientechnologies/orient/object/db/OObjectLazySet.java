@@ -96,14 +96,16 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
     if (underlying != null && underlying.size() > 0 && !converted) {
       convertAllInternal();
     }
-    if (converted && e instanceof ORID)
-      converted = false;
+    if (converted && e instanceof ORID) {
+        converted = false;
+    }
     setDirty();
     boolean thisModified = super.add(e);
     if (thisModified) {
       OIdentifiable record = getDatabase().getRecordByUserObject(e, false);
-      if (sourceRecord != null)
-        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
+      if (sourceRecord != null) {
+          ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
+      }
       underlying.add(record);
       return true;
     }
@@ -113,8 +115,9 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
   public boolean remove(final Object o) {
     setDirty();
     OIdentifiable record = getDatabase().getRecordByUserObject(o, false);
-    if (orphanRemoval && record != null && sourceRecord != null)
-      ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(record.getIdentity());
+    if (orphanRemoval && record != null && sourceRecord != null) {
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(record.getIdentity());
+    }
     boolean thisModified = super.remove(o);
     boolean underlyingModified = underlying.remove(record);
     return thisModified || underlyingModified;
@@ -123,8 +126,9 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
   public boolean containsAll(final Collection<?> c) {
     convertAll();
     for (Object o : c)
-      if (!contains(o))
-        return false;
+      if (!contains(o)) {
+          return false;
+    }
 
     return true;
   }
@@ -151,8 +155,9 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
       if (toRetain.contains(underlyingRec) && sourceRecord != null) {
         ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(underlyingRec.getIdentity());
       } else {
-        if (sourceRecord != null)
-          ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(underlyingRec.getIdentity());
+        if (sourceRecord != null) {
+            ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(underlyingRec.getIdentity());
+        }
         toRemove.add(underlyingRec);
         modified = true;
       }
@@ -166,10 +171,11 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
   public void clear() {
     setDirty();
     super.clear();
-    if (orphanRemoval && sourceRecord != null)
-      for (OIdentifiable value : underlying) {
-        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(value.getIdentity());
-      }
+    if (orphanRemoval && sourceRecord != null) {
+        for (OIdentifiable value : underlying) {
+            ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(value.getIdentity());
+        }
+    }
     underlying.clear();
   }
 
@@ -179,10 +185,12 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
     boolean modified = super.removeAll(c);
     for (Object o : c) {
       OIdentifiable record = database.getRecordByUserObject(o, false);
-      if (orphanRemoval && record != null && sourceRecord != null)
-        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(record.getIdentity());
-      if (!underlying.remove(database.getRecordByUserObject(o, false)))
-        modified = true;
+      if (orphanRemoval && record != null && sourceRecord != null) {
+          ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(record.getIdentity());
+      }
+      if (!underlying.remove(database.getRecordByUserObject(o, false))) {
+          modified = true;
+      }
     }
     return modified;
   }
@@ -214,8 +222,9 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
   }
 
   public void setDirty() {
-    if (sourceRecord != null)
-      ((OObjectProxyMethodHandler) sourceRecord.getHandler()).setDirty();
+    if (sourceRecord != null) {
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).setDirty();
+    }
   }
 
   public void detach() {
@@ -243,21 +252,23 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
   }
 
   protected void convertAll() {
-    if (converted || !convertToRecord)
-      return;
+    if (converted || !convertToRecord) {
+        return;
+    }
 
     final Set<Object> copy = new HashSet<Object>(underlying);
     super.clear();
     final ODatabasePojoAbstract<TYPE> database = getDatabase();
     for (Object e : copy) {
       if (e != null) {
-        if (e instanceof ORID)
-          add(database.getUserObjectByRecord(((ODatabaseDocument) getDatabase().getUnderlying()).load((ORID) e, fetchPlan),
-                  fetchPlan));
-        else if (e instanceof ODocument)
-          add(database.getUserObjectByRecord((ORecord) e, fetchPlan));
-        else
-          add((TYPE) e);
+        if (e instanceof ORID) {
+            add(database.getUserObjectByRecord(((ODatabaseDocument) getDatabase().getUnderlying()).load((ORID) e, fetchPlan),
+                    fetchPlan));
+        } else if (e instanceof ODocument) {
+            add(database.getUserObjectByRecord((ORecord) e, fetchPlan));
+        } else {
+            add((TYPE) e);
+        }
       }
     }
 
@@ -265,29 +276,32 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
   }
 
   protected void convertAllInternal() {
-    if (converted || !convertToRecord)
-      return;
+    if (converted || !convertToRecord) {
+        return;
+    }
 
     final Set<Object> copy = new HashSet<Object>(underlying);
     super.clear();
     final ODatabasePojoAbstract<TYPE> database = getDatabase();
     for (Object e : copy) {
       if (e != null) {
-        if (e instanceof ORID)
-          super.add(database.getUserObjectByRecord(((ODatabaseDocument) getDatabase().getUnderlying()).load((ORID) e, fetchPlan),
-              fetchPlan));
-        else if (e instanceof ODocument)
-          super.add(database.getUserObjectByRecord((ORecord) e, fetchPlan));
-        else
-          super.add((TYPE) e);
+        if (e instanceof ORID) {
+            super.add(database.getUserObjectByRecord(((ODatabaseDocument) getDatabase().getUnderlying()).load((ORID) e, fetchPlan),
+                    fetchPlan));
+        } else if (e instanceof ODocument) {
+            super.add(database.getUserObjectByRecord((ORecord) e, fetchPlan));
+        } else {
+            super.add((TYPE) e);
+        }
       }
     }
     converted = true;
   }
 
   protected void convertAndDetachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached) {
-    if (converted || !convertToRecord)
-      return;
+    if (converted || !convertToRecord) {
+        return;
+    }
 
     final Set<Object> copy = new HashSet<Object>(underlying);
     super.clear();
@@ -301,8 +315,9 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
         } else if (e instanceof ODocument) {
           e = database.getUserObjectByRecord((ORecord) e, fetchPlan);
           super.add((TYPE) ((OObjectDatabaseTx) getDatabase()).detachAll(e, nonProxiedInstance, alreadyDetached));
-        } else
-          add((TYPE) e);
+        } else {
+            add((TYPE) e);
+        }
       }
     }
 

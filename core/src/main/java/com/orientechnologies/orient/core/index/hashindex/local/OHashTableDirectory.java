@@ -189,9 +189,9 @@ public class OHashTableDirectory extends ODurableComponent {
 
         final int tombstone = firstPage.getTombstone();
 
-        if (tombstone >= 0)
-          nodeIndex = tombstone;
-        else {
+        if (tombstone >= 0) {
+            nodeIndex = tombstone;
+        } else {
           nodeIndex = firstPage.getTreeSize();
           firstPage.setTreeSize(nodeIndex + 1);
         }
@@ -203,8 +203,9 @@ public class OHashTableDirectory extends ODurableComponent {
           firstPage.setMaxRightChildDepth(localNodeIndex, maxRightChildDepth);
           firstPage.setNodeLocalDepth(localNodeIndex, nodeLocalDepth);
 
-          if (tombstone >= 0)
-            firstPage.setTombstone((int) firstPage.getPointer(nodeIndex, 0));
+          if (tombstone >= 0) {
+              firstPage.setTombstone((int) firstPage.getPointer(nodeIndex, 0));
+          }
 
           for (int i = 0; i < newNode.length; i++)
             firstPage.setPointer(localNodeIndex, i, newNode[i]);
@@ -236,8 +237,9 @@ public class OHashTableDirectory extends ODurableComponent {
             page.setMaxRightChildDepth(localLevel, maxRightChildDepth);
             page.setNodeLocalDepth(localLevel, nodeLocalDepth);
 
-            if (tombstone >= 0)
-              firstPage.setTombstone((int) page.getPointer(localLevel, 0));
+            if (tombstone >= 0) {
+                firstPage.setTombstone((int) page.getPointer(localLevel, 0));
+            }
 
             for (int i = 0; i < newNode.length; i++)
               page.setPointer(localLevel, i, newNode[i]);
@@ -563,8 +565,9 @@ public class OHashTableDirectory extends ODurableComponent {
   private ODirectoryPage loadPage(int nodeIndex, boolean exclusiveLock) throws IOException {
     if (nodeIndex < ODirectoryFirstPage.NODES_PER_PAGE) {
       diskCache.loadPinnedPage(firstEntry);
-      if (exclusiveLock)
-        firstEntry.acquireExclusiveLock();
+      if (exclusiveLock) {
+          firstEntry.acquireExclusiveLock();
+      }
 
       return new ODirectoryFirstPage(firstEntry, getTrackMode(), firstEntry);
     }
@@ -573,8 +576,9 @@ public class OHashTableDirectory extends ODurableComponent {
     final OCacheEntry cacheEntry = entries.get(pageIndex);
     diskCache.loadPinnedPage(cacheEntry);
 
-    if (exclusiveLock)
-      cacheEntry.acquireExclusiveLock();
+    if (exclusiveLock) {
+        cacheEntry.acquireExclusiveLock();
+    }
 
     return new ODirectoryPage(cacheEntry, getTrackMode(), cacheEntry);
   }
@@ -583,14 +587,16 @@ public class OHashTableDirectory extends ODurableComponent {
     final OCacheEntry cacheEntry = page.getEntry();
     final OCachePointer cachePointer = cacheEntry.getCachePointer();
 
-    if (exclusiveLock)
-      cachePointer.releaseExclusiveLock();
+    if (exclusiveLock) {
+        cachePointer.releaseExclusiveLock();
+    }
     diskCache.release(cacheEntry);
   }
 
   private int getLocalNodeIndex(int nodeIndex) {
-    if (nodeIndex < ODirectoryFirstPage.NODES_PER_PAGE)
-      return nodeIndex;
+    if (nodeIndex < ODirectoryFirstPage.NODES_PER_PAGE) {
+        return nodeIndex;
+    }
 
     return (nodeIndex - ODirectoryFirstPage.NODES_PER_PAGE) % ODirectoryPage.NODES_PER_PAGE;
   }
@@ -599,36 +605,41 @@ public class OHashTableDirectory extends ODurableComponent {
   protected ODurablePage.TrackMode getTrackMode() {
     final OStorageTransaction transaction = storage.getStorageTransaction();
 
-    if (transaction == null && !durableInNonTxMode)
-      return ODurablePage.TrackMode.NONE;
+    if (transaction == null && !durableInNonTxMode) {
+        return ODurablePage.TrackMode.NONE;
+    }
 
     final ODurablePage.TrackMode trackMode = super.getTrackMode();
-    if (!trackMode.equals(ODurablePage.TrackMode.NONE))
-      return txTrackMode;
+    if (!trackMode.equals(ODurablePage.TrackMode.NONE)) {
+        return txTrackMode;
+    }
 
     return trackMode;
   }
 
   @Override
   protected void endAtomicOperation(boolean rollback) throws IOException {
-    if (storage.getStorageTransaction() == null && !durableInNonTxMode)
-      return;
+    if (storage.getStorageTransaction() == null && !durableInNonTxMode) {
+        return;
+    }
 
     super.endAtomicOperation(rollback);
   }
 
   @Override
   protected void startAtomicOperation() throws IOException {
-    if (storage.getStorageTransaction() == null && !durableInNonTxMode)
-      return;
+    if (storage.getStorageTransaction() == null && !durableInNonTxMode) {
+        return;
+    }
 
     super.startAtomicOperation();
   }
 
   @Override
   protected void logFileCreation(String fileName, long fileId) throws IOException {
-    if (storage.getStorageTransaction() == null && !durableInNonTxMode)
-      return;
+    if (storage.getStorageTransaction() == null && !durableInNonTxMode) {
+        return;
+    }
 
     super.logFileCreation(fileName, fileId);
   }

@@ -75,9 +75,9 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
     try {
 
       final Iterable<OrientVertex> vertices;
-      if (language.equals("sql"))
-        vertices = graph.command(new OSQLSynchQuery<OrientVertex>(text, limit).setFetchPlan(fetchPlan)).execute();
-      else if (language.equals("gremlin")) {
+      if (language.equals("sql")) {
+          vertices = graph.command(new OSQLSynchQuery<OrientVertex>(text, limit).setFetchPlan(fetchPlan)).execute();
+      } else if (language.equals("gremlin")) {
         List<Object> result = new ArrayList<Object>();
         OGremlinHelper.execute(graph, text, null, null, result, null, null);
 
@@ -86,17 +86,20 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
         for (Object o : result) {
           ((ArrayList<OrientVertex>) vertices).add(graph.getVertex((OIdentifiable) o));
         }
-      } else
-        throw new IllegalArgumentException("Language '" + language + "' is not supported. Use 'sql' or 'gremlin'");
+      } else {
+          throw new IllegalArgumentException("Language '" + language + "' is not supported. Use 'sql' or 'gremlin'");
+      }
 
       sendRecordsContent(iRequest, iResponse, vertices, fetchPlan);
 
     } finally {
-      if (graph != null && shutdownFlag.getValue())
-        graph.shutdown();
+      if (graph != null && shutdownFlag.getValue()) {
+          graph.shutdown();
+      }
 
-      if (db != null)
-        db.close();
+      if (db != null) {
+          db.close();
+      }
     }
 
     return false;
@@ -114,8 +117,9 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
   }
 
   protected void generateGraphDbOutput(final Iterable<OrientVertex> iVertices, final OJSONWriter json) throws IOException {
-    if (iVertices == null)
-      return;
+    if (iVertices == null) {
+        return;
+    }
 
     // CREATE A SET TO SPEED UP SEARCHES ON VERTICES
     final Set<OrientVertex> vertexes = new HashSet<OrientVertex>();
@@ -137,8 +141,9 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
       // ADD ALL THE PROPERTIES
       for (String field : vertex.getPropertyKeys()) {
         final Object v = vertex.getProperty(field);
-        if (v != null)
-          json.writeAttribute(3, false, field, v);
+        if (v != null) {
+            json.writeAttribute(3, false, field, v);
+        }
       }
       json.endObject(2, false);
       json.endObject(1, false);
@@ -159,8 +164,9 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
 
       for (String field : edge.getPropertyKeys()) {
         final Object v = edge.getProperty(field);
-        if (v != null)
-          json.writeAttribute(3, false, field, v);
+        if (v != null) {
+            json.writeAttribute(3, false, field, v);
+        }
       }
 
       json.endObject(2, false);

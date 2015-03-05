@@ -130,8 +130,9 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
       try {
         for (int i = 0; i < PESSIMISTIC_CYCLES; i++) {
           String cmd = "update " + rid + " increment total = 1";
-          if (lock)
-            cmd += " lock record";
+          if (lock) {
+              cmd += " lock record";
+          }
 
           for (int retry = 0; retry < MAX_RETRIES; ++retry) {
             try {
@@ -170,8 +171,9 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
     mvccEnabled = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
 
 
-    if (!mvccEnabled)
-      OGlobalConfiguration.DB_MVCC.setValue(true);
+    if (!mvccEnabled) {
+        OGlobalConfiguration.DB_MVCC.setValue(true);
+    }
   }
 
   @AfterClass

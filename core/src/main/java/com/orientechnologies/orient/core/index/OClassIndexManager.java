@@ -65,30 +65,34 @@ public class OClassIndexManager extends ODocumentHookAbstract {
         final List<Object> origValues = new ArrayList<Object>(indexFields.size());
 
         for (final String field : indexFields) {
-          if (!field.equals(multiValueField))
-            if (dirtyFields.contains(field)) {
-              origValues.add(iRecord.getOriginalValue(field));
-            } else {
-              origValues.add(iRecord.<Object> field(field));
-            }
+          if (!field.equals(multiValueField)) {
+              if (dirtyFields.contains(field)) {
+                  origValues.add(iRecord.getOriginalValue(field));
+              } else {
+                  origValues.add(iRecord.<Object> field(field));
+              }
+          }
         }
 
         if (multiValueField == null) {
           final Object origValue = indexDefinition.createValue(origValues);
           final Object newValue = indexDefinition.getDocumentValueToIndex(iRecord);
 
-          if (!indexDefinition.isNullValuesIgnored() || origValue != null)
-            index.remove(origValue, iRecord);
+          if (!indexDefinition.isNullValuesIgnored() || origValue != null) {
+              index.remove(origValue, iRecord);
+          }
 
-          if (!indexDefinition.isNullValuesIgnored() || newValue != null)
-            index.put(newValue, iRecord.getIdentity());
+          if (!indexDefinition.isNullValuesIgnored() || newValue != null) {
+              index.put(newValue, iRecord.getIdentity());
+          }
         } else {
           final OMultiValueChangeTimeLine<?, ?> multiValueChangeTimeLine = iRecord.getCollectionTimeLine(multiValueField);
           if (multiValueChangeTimeLine == null) {
-            if (dirtyFields.contains(multiValueField))
-              origValues.add(indexDefinition.getMultiValueDefinitionIndex(), iRecord.getOriginalValue(multiValueField));
-            else
-              origValues.add(indexDefinition.getMultiValueDefinitionIndex(), iRecord.field(multiValueField));
+            if (dirtyFields.contains(multiValueField)) {
+                origValues.add(indexDefinition.getMultiValueDefinitionIndex(), iRecord.getOriginalValue(multiValueField));
+            } else {
+                origValues.add(indexDefinition.getMultiValueDefinitionIndex(), iRecord.field(multiValueField));
+            }
 
             final Object origValue = indexDefinition.createValue(origValues);
             final Object newValue = indexDefinition.getDocumentValueToIndex(iRecord);
@@ -131,12 +135,14 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     final OIndexDefinition indexDefinition = index.getDefinition();
     final List<String> indexFields = indexDefinition.getFields();
 
-    if (indexFields.isEmpty())
-      return;
+    if (indexFields.isEmpty()) {
+        return;
+    }
 
     final String indexField = indexFields.get(0);
-    if (!dirtyFields.contains(indexField))
-      return;
+    if (!dirtyFields.contains(indexField)) {
+        return;
+    }
 
     final OMultiValueChangeTimeLine<?, ?> multiValueChangeTimeLine = iRecord.getCollectionTimeLine(indexField);
     if (multiValueChangeTimeLine != null) {
@@ -209,11 +215,13 @@ public class OClassIndexManager extends ODocumentHookAbstract {
         final List<Object> origValues = new ArrayList<Object>(indexFields.size());
 
         for (final String field : indexFields) {
-          if (!field.equals(multiValueField))
-            if (dirtyFields.contains(field))
-              origValues.add(iRecord.getOriginalValue(field));
-            else
-              origValues.add(iRecord.<Object> field(field));
+          if (!field.equals(multiValueField)) {
+              if (dirtyFields.contains(field)) {
+                  origValues.add(iRecord.getOriginalValue(field));
+              } else {
+                  origValues.add(iRecord.<Object> field(field));
+              }
+          }
         }
 
         if (multiValueField != null) {
@@ -222,10 +230,11 @@ public class OClassIndexManager extends ODocumentHookAbstract {
             final OTrackedMultiValue fieldValue = iRecord.field(multiValueField);
             final Object restoredMultiValue = fieldValue.returnOriginalState(multiValueChangeTimeLine.getMultiValueChangeEvents());
             origValues.add(indexDefinition.getMultiValueDefinitionIndex(), restoredMultiValue);
-          } else if (dirtyFields.contains(multiValueField))
-            origValues.add(indexDefinition.getMultiValueDefinitionIndex(), iRecord.getOriginalValue(multiValueField));
-          else
-            origValues.add(indexDefinition.getMultiValueDefinitionIndex(), iRecord.field(multiValueField));
+          } else if (dirtyFields.contains(multiValueField)) {
+              origValues.add(indexDefinition.getMultiValueDefinitionIndex(), iRecord.getOriginalValue(multiValueField));
+          } else {
+              origValues.add(indexDefinition.getMultiValueDefinitionIndex(), iRecord.field(multiValueField));
+          }
         }
 
         final Object origValue = indexDefinition.createValue(origValues);
@@ -242,8 +251,9 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
     if (origValue instanceof Collection) {
       for (final Object valueItem : (Collection<?>) origValue) {
-        if (!indexDefinition.isNullValuesIgnored() || valueItem != null)
-          index.remove(valueItem, iRecord);
+        if (!indexDefinition.isNullValuesIgnored() || valueItem != null) {
+            index.remove(valueItem, iRecord);
+        }
       }
     } else if (!indexDefinition.isNullValuesIgnored() || origValue != null) {
       index.remove(origValue, iRecord);
@@ -268,8 +278,9 @@ public class OClassIndexManager extends ODocumentHookAbstract {
         final OTrackedMultiValue fieldValue = iRecord.field(indexField);
         final Object restoredMultiValue = fieldValue.returnOriginalState(multiValueChangeTimeLine.getMultiValueChangeEvents());
         origValue = indexDefinition.createValue(restoredMultiValue);
-      } else
-        origValue = indexDefinition.createValue(iRecord.getOriginalValue(indexField));
+      } else {
+          origValue = indexDefinition.createValue(iRecord.getOriginalValue(indexField));
+      }
 
       deleteIndexKey(index, iRecord, origValue);
       return true;
@@ -320,12 +331,13 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
       for (Object keyItem : entry.getValue()) {
         final ODocument r = index.checkEntry(record, keyItem);
-        if (r != null)
-          if (replaced == null)
-            replaced = r;
-          else {
-            throw new OIndexException("Cannot merge record from multiple indexes. Use this strategy when you have only one index");
-          }
+        if (r != null) {
+            if (replaced == null) {
+                replaced = r;
+            } else {
+                throw new OIndexException("Cannot merge record from multiple indexes. Use this strategy when you have only one index");
+            }
+        }
       }
     }
 
@@ -342,8 +354,9 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     final TreeMap<OIndex<?>, List<Object>> indexKeysMap = new TreeMap<OIndex<?>, List<Object>>();
 
     final Set<String> dirtyFields = new HashSet<String>(Arrays.asList(record.getDirtyFields()));
-    if (dirtyFields.isEmpty())
-      return;
+    if (dirtyFields.isEmpty()) {
+        return;
+    }
 
     for (final OIndex<?> index : indexes) {
       final List<Object> keys = new ArrayList<Object>();
@@ -389,9 +402,9 @@ public class OClassIndexManager extends ODocumentHookAbstract {
   }
 
   private Object copyKeyIfNeeded(Object object) {
-    if (object instanceof ORecordId)
-      return new ORecordId((ORecordId) object);
-    else if (object instanceof OCompositeKey) {
+    if (object instanceof ORecordId) {
+        return new ORecordId((ORecordId) object);
+    } else if (object instanceof OCompositeKey) {
       final OCompositeKey copy = new OCompositeKey();
       for (Object key : ((OCompositeKey) object).getKeys()) {
         copy.addKey(copyKeyIfNeeded(key));
@@ -452,8 +465,9 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     iDocument = checkForLoading(iDocument);
 
     final OClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
-    if (cls == null)
-      return;
+    if (cls == null) {
+        return;
+    }
 
     final Collection<OIndex<?>> indexes = cls.getIndexes();
 
@@ -462,10 +476,11 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
       if (!dirtyFields.isEmpty()) {
         for (final OIndex<?> index : indexes) {
-          if (index.getDefinition() instanceof OCompositeIndexDefinition)
-            processCompositeIndexUpdate(index, dirtyFields, iDocument);
-          else
-            processSingleIndexUpdate(index, dirtyFields, iDocument);
+          if (index.getDefinition() instanceof OCompositeIndexDefinition) {
+              processCompositeIndexUpdate(index, dirtyFields, iDocument);
+          } else {
+              processSingleIndexUpdate(index, dirtyFields, iDocument);
+          }
         }
       }
     }
@@ -485,12 +500,14 @@ public class OClassIndexManager extends ODocumentHookAbstract {
     if (iDocument.fields() == 0 && iDocument.getIdentity().isPersistent()) {
       // FORCE LOADING OF CLASS+FIELDS TO USE IT AFTER ON onRecordAfterDelete METHOD
       iDocument.reload();
-      if (version.getCounter() > -1 && iDocument.getRecordVersion().compareTo(version) != 0) // check for record version errors
-        if (OFastConcurrentModificationException.enabled())
-          throw OFastConcurrentModificationException.instance();
-        else
-          throw new OConcurrentModificationException(iDocument.getIdentity(), iDocument.getRecordVersion(), version,
-              ORecordOperation.DELETED);
+      if (version.getCounter() > -1 && iDocument.getRecordVersion().compareTo(version) != 0) { // check for record version errors
+          if (OFastConcurrentModificationException.enabled()) {
+              throw OFastConcurrentModificationException.instance();
+          } else {
+              throw new OConcurrentModificationException(iDocument.getIdentity(), iDocument.getRecordVersion(), version,
+                      ORecordOperation.DELETED);
+          }
+      }
     }
 
     return RESULT.RECORD_NOT_CHANGED;
@@ -523,10 +540,12 @@ public class OClassIndexManager extends ODocumentHookAbstract {
         final Object key = indexDefinition.getDocumentValueToIndex(document);
         if (key instanceof Collection) {
           for (final Object keyItem : (Collection<?>) key)
-            if (!indexDefinition.isNullValuesIgnored() || keyItem != null)
-              index.put(keyItem, rid);
-        } else if (!indexDefinition.isNullValuesIgnored() || key != null)
-          index.put(key, rid);
+            if (!indexDefinition.isNullValuesIgnored() || keyItem != null) {
+                index.put(keyItem, rid);
+          }
+        } else if (!indexDefinition.isNullValuesIgnored() || key != null) {
+            index.put(key, rid);
+        }
       }
 
     }
@@ -534,8 +553,9 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
   private void deleteIndexEntries(ODocument iDocument) {
     final OClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
-    if (cls == null)
-      return;
+    if (cls == null) {
+        return;
+    }
 
     final Collection<OIndex<?>> indexes = new ArrayList<OIndex<?>>(cls.getIndexes());
 
@@ -550,13 +570,15 @@ public class OClassIndexManager extends ODocumentHookAbstract {
           final OIndex<?> index = indexIterator.next();
 
           final boolean result;
-          if (index.getDefinition() instanceof OCompositeIndexDefinition)
-            result = processCompositeIndexDelete(index, dirtyFields, iDocument);
-          else
-            result = processSingleIndexDelete(index, dirtyFields, iDocument);
+          if (index.getDefinition() instanceof OCompositeIndexDefinition) {
+              result = processCompositeIndexDelete(index, dirtyFields, iDocument);
+          } else {
+              result = processSingleIndexDelete(index, dirtyFields, iDocument);
+          }
 
-          if (result)
-            indexIterator.remove();
+          if (result) {
+              indexIterator.remove();
+          }
         }
       }
 
@@ -603,12 +625,14 @@ public class OClassIndexManager extends ODocumentHookAbstract {
 
   private void unlockKeys() {
     Deque<TreeMap<OIndex<?>, List<Object>>> indexKeysMapQueue = lockedKeys.get();
-    if (indexKeysMapQueue == null)
-      return;
+    if (indexKeysMapQueue == null) {
+        return;
+    }
 
     final TreeMap<OIndex<?>, List<Object>> indexKeyMap = indexKeysMapQueue.poll();
-    if (indexKeyMap == null)
-      return;
+    if (indexKeyMap == null) {
+        return;
+    }
 
     for (Map.Entry<OIndex<?>, List<Object>> entry : indexKeyMap.entrySet()) {
       final OIndexInternal<?> index = entry.getKey().getInternal();

@@ -95,8 +95,9 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
 
     for (ODocument d : result) {
       Assert.assertTrue(d.fieldNames().length <= 2);
-      if (d.field("name") != null)
-        Assert.assertTrue(d.field("name").equals(((String) d.field("name")).toUpperCase()));
+      if (d.field("name") != null) {
+          Assert.assertTrue(d.field("name").equals(((String) d.field("name")).toUpperCase()));
+      }
 
       Assert.assertNull(d.getClassName());
       Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);

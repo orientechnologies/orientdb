@@ -59,8 +59,9 @@ public class LocalCreateObjectSpeedTest extends OrientMonoThreadTest {
 
     database.save(account);
 
-    if (data.getCyclesDone() == data.getCycles() - 1)
-      database.commit();
+    if (data.getCyclesDone() == data.getCycles() - 1) {
+        database.commit();
+    }
 
     account = null;
   }

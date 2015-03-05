@@ -92,12 +92,13 @@ public class OObjectSerializerContext implements OObjectSerializer<Object, Objec
 	}
 
 	public Object unserializeFieldValue(final Class<?> iClass, final Object iFieldValue) {
-		if (iClass != null)
-			for (Class<?> type : customSerializers.keySet()) {
-				if (type.isAssignableFrom(iClass) || type == Void.class) {
-					return customSerializers.get(type).unserializeFieldValue(iClass, iFieldValue);
-				}
-			}
+		if (iClass != null) {
+                    for (Class<?> type : customSerializers.keySet()) {
+                        if (type.isAssignableFrom(iClass) || type == Void.class) {
+                            return customSerializers.get(type).unserializeFieldValue(iClass, iFieldValue);
+                        }
+                    }
+                }
 
 		return iFieldValue;
 	}

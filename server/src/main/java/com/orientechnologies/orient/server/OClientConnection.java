@@ -46,8 +46,9 @@ public class OClientConnection {
 
   public void close() {
     if (database != null) {
-      if (!database.isClosed())
-        database.close();
+      if (!database.isClosed()) {
+          database.close();
+      }
 
       database = null;
     }
@@ -81,15 +82,19 @@ public class OClientConnection {
 
   @Override
   public boolean equals(final Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
-      return false;
+    if (this == obj) {
+        return true;
+    }
+    if (obj == null) {
+        return false;
+    }
+    if (getClass() != obj.getClass()) {
+        return false;
+    }
     final OClientConnection other = (OClientConnection) obj;
-    if (id != other.id)
-      return false;
+    if (id != other.id) {
+        return false;
+    }
     return true;
   }
 

@@ -31,9 +31,10 @@ public class ORoundRobinClusterSelectionStrategy implements OClusterSelectionStr
 
   public int getCluster(final OClass clazz, final ODocument doc) {
     final int[] clusters = clazz.getClusterIds();
-    if (clusters.length == 1)
-      // ONLY ONE: RETURN THE FIRST ONE
-      return clusters[0];
+    if (clusters.length == 1) {
+        // ONLY ONE: RETURN THE FIRST ONE
+        return clusters[0];
+    }
 
     return clusters[(int) (pointer.getAndIncrement() % clusters.length)];
   }

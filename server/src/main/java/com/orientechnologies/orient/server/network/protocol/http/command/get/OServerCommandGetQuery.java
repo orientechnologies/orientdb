@@ -74,8 +74,9 @@ public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstrac
       iResponse.writeRecords(response, fetchPlan, null, null, additionalContent);
 
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) {
+          db.close();
+      }
     }
 
     return false;

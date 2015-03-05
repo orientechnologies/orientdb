@@ -94,11 +94,13 @@ public class ODefaultIndexFactory implements OIndexFactory {
 
   public OIndexInternal<?> createIndex(ODatabaseDocumentInternal database, String indexType, String algorithm,
       String valueContainerAlgorithm, ODocument metadata) throws OConfigurationException {
-    if (valueContainerAlgorithm == null)
-      valueContainerAlgorithm = NONE_VALUE_CONTAINER;
+    if (valueContainerAlgorithm == null) {
+        valueContainerAlgorithm = NONE_VALUE_CONTAINER;
+    }
 
-    if (SBTREE_ALGORITHM.equals(algorithm))
-      return createSBTreeIndex(indexType, valueContainerAlgorithm, metadata);
+    if (SBTREE_ALGORITHM.equals(algorithm)) {
+        return createSBTreeIndex(indexType, valueContainerAlgorithm, metadata);
+    }
 
     throw new OConfigurationException("Unsupported type : " + indexType);
   }
@@ -121,10 +123,11 @@ public class ODefaultIndexFactory implements OIndexFactory {
       }
     }
 
-    if (durable instanceof Boolean)
-      durableInNonTxMode = (Boolean) durable;
-    else
-      durableInNonTxMode = null;
+    if (durable instanceof Boolean) {
+        durableInNonTxMode = (Boolean) durable;
+    } else {
+        durableInNonTxMode = null;
+    }
 
     if (OClass.INDEX_TYPE.UNIQUE.toString().equals(indexType)) {
       return new OIndexUnique(indexType, SBTREE_ALGORITHM, new OSBTreeIndexEngine<OIdentifiable>(durableInNonTxMode, trackMode),

@@ -84,8 +84,9 @@ import java.io.IOException;
    @Override
    public void writeExternal(final ObjectOutput out) throws IOException {
      out.writeUTF(rid.toString());
-     if (version == null)
-       version = OVersionFactory.instance().createUntrackedVersion();
+     if (version == null) {
+         version = OVersionFactory.instance().createUntrackedVersion();
+     }
      version.getSerializer().writeTo(out, version);
    }
 
@@ -93,8 +94,9 @@ import java.io.IOException;
    public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
      rid = new ORecordId(in.readUTF());
      final int contentSize = in.readInt();
-     if (version == null)
-       version = OVersionFactory.instance().createUntrackedVersion();
+     if (version == null) {
+         version = OVersionFactory.instance().createUntrackedVersion();
+     }
      version.getSerializer().readFrom(in, version);
    }
 

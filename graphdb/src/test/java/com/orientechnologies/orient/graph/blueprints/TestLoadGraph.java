@@ -36,11 +36,13 @@ public class TestLoadGraph {
   public void testImport() throws IOException, FileNotFoundException {
     String storageType = System.getProperty("storageType");
 
-    if (storageType == null)
-      storageType = "memory";
+    if (storageType == null) {
+        storageType = "memory";
+    }
 
-    if (dbURL == null)
-      dbURL = storageType + ":" + "target/databases/GratefulDeadConcerts";
+    if (dbURL == null) {
+        dbURL = storageType + ":" + "target/databases/GratefulDeadConcerts";
+    }
 
 
     ODatabaseDocumentTx db = new ODatabaseDocumentTx(dbURL);

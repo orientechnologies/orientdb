@@ -19,12 +19,14 @@ public class DirtyPagesRecordTest {
     for (int i = 0; i < 10; i++) {
       long pagIndex = rnd.nextLong();
       long position = rnd.nextLong();
-      if (position < 0)
-        position = -position;
+      if (position < 0) {
+          position = -position;
+      }
 
       int segment = rnd.nextInt();
-      if (segment < 0)
-        segment = -segment;
+      if (segment < 0) {
+          segment = -segment;
+      }
 
       dirtyPages.add(new ODirtyPage("test", pagIndex, new OLogSequenceNumber(segment, position)));
     }

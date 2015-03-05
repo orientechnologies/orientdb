@@ -69,8 +69,9 @@ public class SpeedTestData {
     currentTestName = iTarget.getClass().getSimpleName();
 
     try {
-      if (SpeedTestData.executeInit(iTarget, configuration))
-        executeTest(iTarget, configuration);
+      if (SpeedTestData.executeInit(iTarget, configuration)) {
+          executeTest(iTarget, configuration);
+      }
     } finally {
       collectResults(takeTimer());
 

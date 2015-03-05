@@ -92,8 +92,9 @@ public class OObjectEnumLazySet<TYPE extends Enum> extends HashSet<TYPE> impleme
 
   public boolean containsAll(final Collection<?> c) {
     for (Object o : c)
-      if (!super.contains(o) && !underlying.contains(o.toString()))
-        return false;
+      if (!super.contains(o) && !underlying.contains(o.toString())) {
+          return false;
+    }
 
     return true;
   }
@@ -142,8 +143,9 @@ public class OObjectEnumLazySet<TYPE extends Enum> extends HashSet<TYPE> impleme
   }
 
   public void setDirty() {
-    if (sourceRecord != null)
-      sourceRecord.setDirty();
+    if (sourceRecord != null) {
+        sourceRecord.setDirty();
+    }
   }
 
   public void detach() {
@@ -171,15 +173,17 @@ public class OObjectEnumLazySet<TYPE extends Enum> extends HashSet<TYPE> impleme
   }
 
   protected void convertAll() {
-    if (converted)
-      return;
+    if (converted) {
+        return;
+    }
 
     super.clear();
     for (Object o : underlying) {
-      if (o instanceof Number)
-        o = enumClass.getEnumConstants()[((Number) o).intValue()];
-      else
-        o = Enum.valueOf(enumClass, o.toString());
+      if (o instanceof Number) {
+          o = enumClass.getEnumConstants()[((Number) o).intValue()];
+      } else {
+          o = Enum.valueOf(enumClass, o.toString());
+      }
       super.add((TYPE) o);
     }
 

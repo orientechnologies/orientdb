@@ -81,10 +81,13 @@ public class OServerConfiguration {
   }
 
   public String getStoragePath(String iURL) {
-    if (storages != null)
-      for (OServerStorageConfiguration stg : storages)
-        if (stg.name.equals(iURL))
-          return stg.path;
+    if (storages != null) {
+        for (OServerStorageConfiguration stg : storages) {
+            if (stg.name.equals(iURL)) {
+                return stg.path;
+            }
+        }
+    }
 
     return null;
   }
@@ -108,12 +111,14 @@ public class OServerConfiguration {
    *          Default value returned if not found
    */
   public String getProperty(final String iName, final String iDefaultValue) {
-    if (properties == null)
-      return null;
+    if (properties == null) {
+        return null;
+    }
 
     for (OServerEntryConfiguration p : properties) {
-      if (p.name.equals(iName))
-        return p.value;
+      if (p.name.equals(iName)) {
+          return p.value;
+      }
     }
 
     return null;
@@ -121,8 +126,9 @@ public class OServerConfiguration {
 
   public OServerUserConfiguration getUser(final String iName) {
     for (OServerUserConfiguration u : users) {
-      if (u.name.equals(iName))
-        return u;
+      if (u.name.equals(iName)) {
+          return u;
+      }
     }
     return null;
   }

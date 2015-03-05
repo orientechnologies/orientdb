@@ -41,11 +41,13 @@ public class OScriptOrientWrapper {
   }
 
   public OScriptDocumentDatabaseWrapper getDatabase() {
-    if (db == null)
-      throw new OConfigurationException("No database instance found in context");
+    if (db == null) {
+        throw new OConfigurationException("No database instance found in context");
+    }
 
-    if (db instanceof ODatabaseDocumentTx)
-      return new OScriptDocumentDatabaseWrapper((ODatabaseDocumentTx) db);
+    if (db instanceof ODatabaseDocumentTx) {
+        return new OScriptDocumentDatabaseWrapper((ODatabaseDocumentTx) db);
+    }
 
     throw new OConfigurationException("No valid database instance found in context: " + db + ", class: " + db.getClass());
   }

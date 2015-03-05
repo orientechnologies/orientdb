@@ -836,8 +836,9 @@ public class ODocumentSchemalessBinarySerializationTest {
     boolean ok = false;
     for (ODocument inSet : setEmb) {
       assertNotNull(inSet);
-      if (embeddedInSet.field("name").equals(inSet.field("name")) && embeddedInSet.field("surname").equals(inSet.field("surname")))
-        ok = true;
+      if (embeddedInSet.field("name").equals(inSet.field("name")) && embeddedInSet.field("surname").equals(inSet.field("surname"))) {
+          ok = true;
+      }
     }
     assertTrue(ok, "not found record in the set after serilize");
   }

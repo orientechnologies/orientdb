@@ -35,8 +35,9 @@ public class OQueryBlock extends OAbstractBlock {
   @Override
   public Object processBlock(final OComposableProcessor iManager, final OCommandContext iContext, final ODocument iConfig,
       ODocument iOutput, final boolean iReadOnly) {
-    if (!(iConfig instanceof ODocument))
-      throw new OTransactionException("QueryBlock: expected document as content");
+    if (!(iConfig instanceof ODocument)) {
+        throw new OTransactionException("QueryBlock: expected document as content");
+    }
 
     String command = parse(iContext, (ODocument) iConfig);
 
@@ -69,9 +70,10 @@ public class OQueryBlock extends OAbstractBlock {
 
   protected String parse(final OCommandContext iContext, final ODocument iContent) {
     final Object code = getField(iContext, iContent, "code");
-    if (code != null)
-      // CODE MODE
-      return code.toString();
+    if (code != null) {
+        // CODE MODE
+        return code.toString();
+    }
 
     // SINGLE FIELDS MODE
     final StringBuilder command = new StringBuilder(256);
@@ -93,17 +95,18 @@ public class OQueryBlock extends OAbstractBlock {
   private void generateProjections(final OCommandContext iContext, ODocument iInput, final StringBuilder iCommandText) {
     final Object fields = getField(iContext, iInput, "fields");
 
-    if (fields instanceof String)
-      iCommandText.append(fields.toString());
-    else {
+    if (fields instanceof String) {
+        iCommandText.append(fields.toString());
+    } else {
       final List<ODocument> fieldList = (List<ODocument>) fields;
       if (fieldList != null) {
         boolean first = true;
         for (Object field : fieldList) {
-          if (first)
-            first = false;
-          else
-            iCommandText.append(", ");
+          if (first) {
+              first = false;
+                } else {
+              iCommandText.append(", ");
+          }
 
           if (field instanceof ODocument) {
             final ODocument fieldDoc = (ODocument) field;
@@ -112,8 +115,9 @@ public class OQueryBlock extends OAbstractBlock {
               iCommandText.append(" as ");
               iCommandText.append(fieldDoc.field(f));
             }
-          } else
-            iCommandText.append(field.toString());
+          } else {
+              iCommandText.append(field.toString());
+          }
         }
       }
     }

@@ -86,10 +86,11 @@ public class OClientConnectionManager {
       final Entry<Integer, OClientConnection> entry = iterator.next();
 
       final Socket socket;
-      if (entry.getValue().protocol == null || entry.getValue().protocol.getChannel() == null)
-        socket = null;
-      else
-        socket = entry.getValue().protocol.getChannel().socket;
+      if (entry.getValue().protocol == null || entry.getValue().protocol.getChannel() == null) {
+          socket = null;
+      } else {
+          socket = entry.getValue().protocol.getChannel().socket;
+      }
 
       if (socket == null || socket.isClosed() || socket.isInputShutdown()) {
         OLogManager.instance().debug(this, "[OClientConnectionManager] found and removed pending closed channel %d (%s)",
@@ -141,8 +142,9 @@ public class OClientConnectionManager {
   public OClientConnection getConnection(final int iChannelId, ONetworkProtocol protocol) {
     // SEARCH THE CONNECTION BY ID
     OClientConnection connection = connections.get(iChannelId);
-    if (connection != null)
-      connection.protocol = protocol;
+    if (connection != null) {
+        connection.protocol = protocol;
+    }
 
     return connection;
   }
@@ -156,8 +158,9 @@ public class OClientConnectionManager {
    */
   public OClientConnection getConnection(final String iAddress) {
     for (OClientConnection conn : connections.values()) {
-      if (iAddress.equals(conn.getRemoteAddress()))
-        return conn;
+      if (iAddress.equals(conn.getRemoteAddress())) {
+          return conn;
+      }
     }
     return null;
   }
@@ -209,9 +212,10 @@ public class OClientConnectionManager {
     final OClientConnection connection = connections.get(iChannelId);
     if (connection != null) {
       final ONetworkProtocol protocol = connection.protocol;
-      if (protocol != null)
-        // INTERRUPT THE NEWTORK MANAGER
-        protocol.interrupt();
+      if (protocol != null) {
+          // INTERRUPT THE NEWTORK MANAGER
+          protocol.interrupt();
+      }
     }
   }
 
@@ -277,31 +281,35 @@ public class OClientConnectionManager {
    * Pushes the distributed configuration to all the connected clients.
    */
   public void pushDistribCfg2Clients(final ODocument iConfig) {
-    if (iConfig == null)
-      return;
+    if (iConfig == null) {
+        return;
+    }
 
     final Set<String> pushed = new HashSet<String>();
     for (OClientConnection c : connections.values()) {
       try {
         final String remoteAddress = c.getRemoteAddress();
-        if (pushed.contains(remoteAddress))
-          // ALREADY SENT: JUMP IT
-          continue;
+        if (pushed.contains(remoteAddress)) {
+            // ALREADY SENT: JUMP IT
+            continue;
+        }
 
       } catch (Exception e) {
         // SOCKET EXCEPTION SKIP IT
         continue;
       }
 
-      if (!(c.protocol instanceof ONetworkProtocolBinary) || c.data.serializationImpl == null)
-        // INVOLVE ONLY BINARY PROTOCOLS
-        continue;
+      if (!(c.protocol instanceof ONetworkProtocolBinary) || c.data.serializationImpl == null) {
+          // INVOLVE ONLY BINARY PROTOCOLS
+          continue;
+      }
 
       final ONetworkProtocolBinary p = (ONetworkProtocolBinary) c.protocol;
       final OChannelBinary channel = (OChannelBinary) p.getChannel();
       final ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(c.data.serializationImpl);
-      if (ser == null)
-        return;
+      if (ser == null) {
+          return;
+      }
 
       final byte[] content = ser.toStream(iConfig, false);
 
@@ -348,10 +356,11 @@ public class OClientConnectionManager {
 
         try {
           final Socket socket;
-          if (entry.getValue().protocol == null || entry.getValue().protocol.getChannel() == null)
-            socket = null;
-          else
-            socket = entry.getValue().protocol.getChannel().socket;
+          if (entry.getValue().protocol == null || entry.getValue().protocol.getChannel() == null) {
+              socket = null;
+          } else {
+              socket = entry.getValue().protocol.getChannel().socket;
+          }
 
           if (socket != null && !socket.isClosed() && !socket.isInputShutdown()) {
             try {

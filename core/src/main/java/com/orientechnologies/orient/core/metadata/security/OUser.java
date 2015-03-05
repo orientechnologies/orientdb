@@ -81,22 +81,24 @@ public class OUser extends ODocumentWrapper implements OSecurityUser {
   @Override
   @OAfterDeserialization
   public void fromStream(final ODocument iSource) {
-    if (document != null)
-      return;
+    if (document != null) {
+        return;
+    }
 
     document = iSource;
 
     roles = new HashSet<ORole>();
     final Collection<ODocument> loadedRoles = iSource.field("roles");
-    if (loadedRoles != null)
-      for (final ODocument d : loadedRoles) {
-        if (d != null) {
-          roles.add(new ORole(d));
-        } else
-          OLogManager.instance()
-              .warn(this, "User '%s' declare to have a role that does not exist in database, skipt it", getName());
-
-      }
+    if (loadedRoles != null) {
+        for (final ODocument d : loadedRoles) {
+            if (d != null) {
+                roles.add(new ORole(d));
+            } else {
+                OLogManager.instance()
+                        .warn(this, "User '%s' declare to have a role that does not exist in database, skipt it", getName());
+            }
+        }
+    }
   }
 
   /**
@@ -113,17 +115,19 @@ public class OUser extends ODocumentWrapper implements OSecurityUser {
         final ODocument doc = document;
         document = null;
         fromStream(doc);
-      } else
-        throw new OSecurityAccessException(document.getDatabase().getName(), "User '" + document.field("name")
-            + "' has no role defined");
+      } else {
+          throw new OSecurityAccessException(document.getDatabase().getName(), "User '" + document.field("name")
+                  + "' has no role defined");
+      }
     }
 
     final ORole role = checkIfAllowed(resourceGeneric, resourceSpecific, iOperation);
 
-    if (role == null)
-      throw new OSecurityAccessException(document.getDatabase().getName(), "User '" + document.field("name")
-          + "' has no the permission to execute the operation '" + ORole.permissionToString(iOperation)
-          + "' against the resource: " + resourceGeneric + "." + resourceSpecific);
+    if (role == null) {
+        throw new OSecurityAccessException(document.getDatabase().getName(), "User '" + document.field("name")
+                + "' has no the permission to execute the operation '" + ORole.permissionToString(iOperation)
+                + "' against the resource: " + resourceGeneric + "." + resourceSpecific);
+    }
 
     return role;
   }
@@ -137,11 +141,12 @@ public class OUser extends ODocumentWrapper implements OSecurityUser {
    */
   public ORole checkIfAllowed(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific, final int iOperation) {
     for (ORole r : roles) {
-      if (r == null)
-        OLogManager.instance().warn(this,
-            "User '%s' has a null role, bypass it. Consider to fix this user roles before to continue", getName());
-      else if (r.allow(resourceGeneric, resourceSpecific, iOperation))
-        return r;
+      if (r == null) {
+          OLogManager.instance().warn(this,
+                  "User '%s' has a null role, bypass it. Consider to fix this user roles before to continue", getName());
+      } else if (r.allow(resourceGeneric, resourceSpecific, iOperation)) {
+          return r;
+      }
     }
 
     return null;
@@ -153,8 +158,9 @@ public class OUser extends ODocumentWrapper implements OSecurityUser {
     final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
     final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
 
-    if (resourceSpecific == null || resourceSpecific.equals("*"))
-      return allow(resourceGeneric, null, iOperation);
+    if (resourceSpecific == null || resourceSpecific.equals("*")) {
+        return allow(resourceGeneric, null, iOperation);
+    }
 
     return allow(resourceGeneric, resourceSpecific, iOperation);
   }
@@ -165,8 +171,9 @@ public class OUser extends ODocumentWrapper implements OSecurityUser {
     final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
     final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
 
-    if (resourceSpecific == null || resourceSpecific.equals("*"))
-      return checkIfAllowed(resourceGeneric, null, iOperation);
+    if (resourceSpecific == null || resourceSpecific.equals("*")) {
+        return checkIfAllowed(resourceGeneric, null, iOperation);
+    }
 
     return checkIfAllowed(resourceGeneric, resourceSpecific, iOperation);
   }
@@ -177,8 +184,9 @@ public class OUser extends ODocumentWrapper implements OSecurityUser {
     final String resourceSpecific = ORule.mapLegacyResourceToSpecificResource(iResource);
     final ORule.ResourceGeneric resourceGeneric = ORule.mapLegacyResourceToGenericResource(iResource);
 
-    if (resourceSpecific == null || resourceSpecific.equals("*"))
-      return isRuleDefined(resourceGeneric, null);
+    if (resourceSpecific == null || resourceSpecific.equals("*")) {
+        return isRuleDefined(resourceGeneric, null);
+    }
 
     return isRuleDefined(resourceGeneric, resourceSpecific);
   }
@@ -190,11 +198,12 @@ public class OUser extends ODocumentWrapper implements OSecurityUser {
    */
   public boolean isRuleDefined(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific) {
     for (ORole r : roles)
-      if (r == null)
-        OLogManager.instance().warn(this,
-            "User '%s' has a null role, bypass it. Consider to fix this user roles before to continue", getName());
-      else if (r.hasRule(resourceGeneric, resourceSpecific))
+      if (r == null) {
+          OLogManager.instance().warn(this,
+                  "User '%s' has a null role, bypass it. Consider to fix this user roles before to continue", getName());
+    } else if (r.hasRule(resourceGeneric, resourceSpecific)) {
         return true;
+    }
 
     return false;
   }
@@ -223,8 +232,9 @@ public class OUser extends ODocumentWrapper implements OSecurityUser {
 
   public STATUSES getAccountStatus() {
     final String status = (String) document.field("status");
-    if (status == null)
-      throw new OSecurityException("User '" + getName() + "' has no status");
+    if (status == null) {
+        throw new OSecurityException("User '" + getName() + "' has no status");
+    }
     return STATUSES.valueOf(status);
   }
 
@@ -237,14 +247,16 @@ public class OUser extends ODocumentWrapper implements OSecurityUser {
   }
 
   public OUser addRole(final String iRole) {
-    if (iRole != null)
-      addRole(document.getDatabase().getMetadata().getSecurity().getRole(iRole));
+    if (iRole != null) {
+        addRole(document.getDatabase().getMetadata().getSecurity().getRole(iRole));
+    }
     return this;
   }
 
   public OUser addRole(final OSecurityRole iRole) {
-    if (iRole != null)
-      roles.add((ORole) iRole);
+    if (iRole != null) {
+        roles.add((ORole) iRole);
+    }
 
     final HashSet<ODocument> persistentRoles = new HashSet<ODocument>();
     for (ORole r : roles) {
@@ -266,14 +278,16 @@ public class OUser extends ODocumentWrapper implements OSecurityUser {
   public boolean hasRole(final String iRoleName, final boolean iIncludeInherited) {
     for (Iterator<ORole> it = roles.iterator(); it.hasNext();) {
       final ORole role = it.next();
-      if (role.getName().equals(iRoleName))
-        return true;
+      if (role.getName().equals(iRoleName)) {
+          return true;
+      }
 
       if (iIncludeInherited) {
         ORole r = role.getParentRole();
         while (r != null) {
-          if (r.getName().equals(iRoleName))
-            return true;
+          if (r.getName().equals(iRoleName)) {
+              return true;
+          }
           r = r.getParentRole();
         }
       }

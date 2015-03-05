@@ -68,8 +68,9 @@ import com.orientechnologies.common.log.OLogManager;
              }
            }
          }
-       } else
-         rootPassword = iRootPassword;
+       } else {
+           rootPassword = iRootPassword;
+       }
 
        if (iServerAddress == null) {
          // LOAD SERVER HOST AND PORT FROM FILE
@@ -92,9 +93,10 @@ import com.orientechnologies.common.log.OLogManager;
    }
 
    private void loadConfiguration() throws IOException {
-     if (configurationLoader != null)
-       // AREADY LOADED
-       return;
+     if (configurationLoader != null) {
+         // AREADY LOADED
+         return;
+     }
 
      configurationLoader = new OServerConfigurationLoaderXml(OServerConfiguration.class, ODatabaseHelper.getConfigurationFile());
      configuration = configurationLoader.load();
@@ -110,9 +112,10 @@ import com.orientechnologies.common.log.OLogManager;
          OLogManager.instance().error(this, "Error on connecting to %s:%d", e, networkAddress, port);
        }
 
-     if (channel == null)
-       throw new ONetworkProtocolException("Cannot connect to server host '" + networkAddress + "', ports: "
-           + Arrays.toString(networkPort));
+     if (channel == null) {
+         throw new ONetworkProtocolException("Cannot connect to server host '" + networkAddress + "', ports: "
+                 + Arrays.toString(networkPort));
+     }
 
      channel.writeByte(OChannelBinaryProtocol.REQUEST_SHUTDOWN);
      channel.writeInt(0);

@@ -101,8 +101,9 @@ public class ServerRun {
   }
 
   protected void shutdownServer() {
-    if (server != null)
-      server.shutdown();
+    if (server != null) {
+        server.shutdown();
+    }
   }
 
   protected String getServerHome() {

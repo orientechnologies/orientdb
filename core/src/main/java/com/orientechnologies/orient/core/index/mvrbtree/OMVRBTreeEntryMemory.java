@@ -95,8 +95,9 @@ public class OMVRBTreeEntryMemory<K, V> extends OMVRBTreeEntry<K, V> {
 	@Override
 	public void setLeft(final OMVRBTreeEntry<K, V> iLeft) {
 		left = (OMVRBTreeEntryMemory<K, V>) iLeft;
-		if (iLeft != null && iLeft.getParent() != this)
-			iLeft.setParent(this);
+		if (iLeft != null && iLeft.getParent() != this) {
+                    iLeft.setParent(this);
+                }
 	}
 
 	@Override
@@ -107,8 +108,9 @@ public class OMVRBTreeEntryMemory<K, V> extends OMVRBTreeEntry<K, V> {
 	@Override
 	public void setRight(final OMVRBTreeEntry<K, V> iRight) {
 		right = (OMVRBTreeEntryMemory<K, V>) iRight;
-		if (iRight != null && iRight.getParent() != this)
-			iRight.setParent(this);
+		if (iRight != null && iRight.getParent() != this) {
+                    iRight.setParent(this);
+                }
 	}
 
 	@Override
@@ -236,8 +238,9 @@ public class OMVRBTreeEntryMemory<K, V> extends OMVRBTreeEntry<K, V> {
 
 	@Override
 	public String toString() {
-		if (keys == null)
-			return "?";
+		if (keys == null) {
+                    return "?";
+                }
 
 		final StringBuilder buffer = new StringBuilder(256);
 

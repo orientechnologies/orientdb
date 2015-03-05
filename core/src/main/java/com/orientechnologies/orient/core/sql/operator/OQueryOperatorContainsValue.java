@@ -56,8 +56,9 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
 
   @Override
   public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
-    if (!(iRight instanceof OSQLFilterCondition) && !(iLeft instanceof OSQLFilterCondition))
-      return OIndexReuseType.INDEX_METHOD;
+    if (!(iRight instanceof OSQLFilterCondition) && !(iLeft instanceof OSQLFilterCondition)) {
+        return OIndexReuseType.INDEX_METHOD;
+    }
 
     return OIndexReuseType.NO_INDEX;
   }
@@ -68,37 +69,43 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
 
     final OIndexInternal<?> internalIndex = index.getInternal();
     OIndexCursor cursor;
-    if (!internalIndex.canBeUsedInEqualityOperators())
-      return null;
+    if (!internalIndex.canBeUsedInEqualityOperators()) {
+        return null;
+    }
 
     if (indexDefinition.getParamCount() == 1) {
       if (!((indexDefinition instanceof OPropertyMapIndexDefinition) && ((OPropertyMapIndexDefinition) indexDefinition)
-          .getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.VALUE))
-        return null;
+          .getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.VALUE)) {
+          return null;
+      }
 
       final Object key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
 
-      if (key == null)
-        return null;
+      if (key == null) {
+          return null;
+      }
 
       final Object indexResult = index.get(key);
-      if (indexResult == null || indexResult instanceof OIdentifiable)
-        cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, key);
-      else
-        cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
+      if (indexResult == null || indexResult instanceof OIdentifiable) {
+          cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, key);
+      } else {
+          cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
+      }
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
       final OCompositeIndexDefinition compositeIndexDefinition = (OCompositeIndexDefinition) indexDefinition;
 
       if (!((compositeIndexDefinition.getMultiValueDefinition() instanceof OPropertyMapIndexDefinition) && ((OPropertyMapIndexDefinition) compositeIndexDefinition
-          .getMultiValueDefinition()).getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.VALUE))
-        return null;
+          .getMultiValueDefinition()).getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.VALUE)) {
+          return null;
+      }
 
       final Object keyOne = compositeIndexDefinition.createSingleValue(keyParams);
 
-      if (keyOne == null)
-        return null;
+      if (keyOne == null) {
+          return null;
+      }
 
       if (internalIndex.hasRangeQuerySupport()) {
         final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
@@ -107,12 +114,14 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
       } else {
         if (indexDefinition.getParamCount() == keyParams.size()) {
           final Object indexResult = index.get(keyOne);
-          if (indexResult == null || indexResult instanceof OIdentifiable)
-            cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
-          else
-            cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), keyOne);
-        } else
-          return null;
+          if (indexResult == null || indexResult instanceof OIdentifiable) {
+              cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
+          } else {
+              cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), keyOne);
+          }
+        } else {
+            return null;
+        }
       }
 
     }
@@ -136,12 +145,13 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
   protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
       final Object iRight, OCommandContext iContext) {
     final OSQLFilterCondition condition;
-    if (iCondition.getLeft() instanceof OSQLFilterCondition)
-      condition = (OSQLFilterCondition) iCondition.getLeft();
-    else if (iCondition.getRight() instanceof OSQLFilterCondition)
-      condition = (OSQLFilterCondition) iCondition.getRight();
-    else
-      condition = null;
+    if (iCondition.getLeft() instanceof OSQLFilterCondition) {
+        condition = (OSQLFilterCondition) iCondition.getLeft();
+    } else if (iCondition.getRight() instanceof OSQLFilterCondition) {
+        condition = (OSQLFilterCondition) iCondition.getRight();
+    } else {
+        condition = null;
+    }
 
     if (iLeft instanceof Map<?, ?>) {
       final Map<String, ?> map = (Map<String, ?>) iLeft;
@@ -150,24 +160,27 @@ public class OQueryOperatorContainsValue extends OQueryOperatorEqualityNotNulls 
         // CHECK AGAINST A CONDITION
         for (Object o : map.values()) {
           o = loadIfNeed(o);
-          if ((Boolean) condition.evaluate((ODocument) o, null, iContext))
-            return true;
+          if ((Boolean) condition.evaluate((ODocument) o, null, iContext)) {
+              return true;
+          }
         }
-      } else
-        return map.containsValue(iRight);
+      } else {
+          return map.containsValue(iRight);
+      }
 
     } else if (iRight instanceof Map<?, ?>) {
       final Map<String, ?> map = (Map<String, ?>) iRight;
 
-      if (condition != null)
-        // CHECK AGAINST A CONDITION
-        for (Object o : map.values()) {
-          o = loadIfNeed(o);
-          if ((Boolean) condition.evaluate((ODocument) o, null, iContext))
-            return true;
-          else
-            return map.containsValue(iLeft);
-        }
+      if (condition != null) {
+          for (Object o : map.values()) {
+              o = loadIfNeed(o);
+              if ((Boolean) condition.evaluate((ODocument) o, null, iContext)) {
+                  return true;
+              } else {
+                  return map.containsValue(iLeft);
+              }
+          }
+      }
     }
     return false;
   }

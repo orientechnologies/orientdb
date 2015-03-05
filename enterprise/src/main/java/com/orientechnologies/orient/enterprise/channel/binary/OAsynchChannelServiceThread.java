@@ -56,8 +56,9 @@ public class OAsynchChannelServiceThread extends OSoftThread {
         break;
       }
 
-      if (remoteServerEventListener != null)
-        remoteServerEventListener.onRequest(request, obj);
+      if (remoteServerEventListener != null) {
+          remoteServerEventListener.onRequest(request, obj);
+      }
 
     } catch (IOException ioe) {
       // EXCEPTION RECEIVED (THE SOCKET HAS BEEN CLOSED?) ASSURE TO UNLOCK THE READ AND EXIT THIS THREAD
@@ -69,8 +70,9 @@ public class OAsynchChannelServiceThread extends OSoftThread {
       }
 
     } finally {
-      if (network != null)
-        network.endResponse();
+      if (network != null) {
+          network.endResponse();
+      }
     }
   }
 

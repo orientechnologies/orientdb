@@ -51,8 +51,9 @@ public class OIndexUnique extends OIndexOneValue {
 		final ODatabase database = getDatabase();
 		final boolean txIsActive = database.getTransaction().isActive();
 
-		if (txIsActive)
-			keyLockManager.acquireSharedLock(key);
+		if (txIsActive) {
+                    keyLockManager.acquireSharedLock(key);
+    }
 
     try {
       modificationLock.requestModificationLock();
@@ -69,16 +70,19 @@ public class OIndexUnique extends OIndexOneValue {
               if (mergeSameKey != null && mergeSameKey)
                 // IGNORE IT, THE EXISTENT KEY HAS BEEN MERGED
                 ;
-              else
-                throw new ORecordDuplicatedException(String.format(
-                    "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
-                    iSingleValue.getIdentity(), key, getName(), value.getIdentity()), value.getIdentity());
-            } else
-              return this;
+              else {
+                  throw new ORecordDuplicatedException(String.format(
+                          "Cannot index record %s: found duplicated key '%s' in index '%s' previously assigned to the record %s",
+                          iSingleValue.getIdentity(), key, getName(), value.getIdentity()), value.getIdentity());
+              }
+            } else {
+                return this;
+            }
           }
 
-          if (!iSingleValue.getIdentity().isPersistent())
-            ((ORecord) iSingleValue.getRecord()).save();
+          if (!iSingleValue.getIdentity().isPersistent()) {
+              ((ORecord) iSingleValue.getRecord()).save();
+          }
 
           markStorageDirty();
 
@@ -93,8 +97,9 @@ public class OIndexUnique extends OIndexOneValue {
       }
 
     } finally {
-			if (txIsActive)
-      	keyLockManager.releaseSharedLock(key);
+			if (txIsActive) {
+                            keyLockManager.releaseSharedLock(key);
+                        }
     }
   }
 
@@ -118,8 +123,9 @@ public class OIndexUnique extends OIndexOneValue {
 
       final Set<OIdentifiable> values = new LinkedHashSet<OIdentifiable>();
 
-      if (storedValue != null)
-        values.add(storedValue.getIdentity());
+      if (storedValue != null) {
+          values.add(storedValue.getIdentity());
+      }
 
       values.add(value.getIdentity());
 
@@ -144,12 +150,14 @@ public class OIndexUnique extends OIndexOneValue {
 
     if (snapshotValue instanceof Set) {
       final Set<OIdentifiable> values = (Set<OIdentifiable>) snapshotValue;
-      if (values.isEmpty())
+      if (values.isEmpty()) {
+          snapshot.put(key, RemovedValue.INSTANCE);
+      } else {
+          values.remove(value);
+      }
+    } else {
         snapshot.put(key, RemovedValue.INSTANCE);
-      else
-        values.remove(value);
-    } else
-      snapshot.put(key, RemovedValue.INSTANCE);
+    }
   }
 
   @Override
@@ -161,8 +169,9 @@ public class OIndexUnique extends OIndexOneValue {
       Object snapshotValue = snapshotEntry.getValue();
       if (snapshotValue instanceof Set) {
         Set<OIdentifiable> values = (Set<OIdentifiable>) snapshotValue;
-        if (values.isEmpty())
-          continue;
+        if (values.isEmpty()) {
+            continue;
+        }
 
         final Iterator<OIdentifiable> valuesIterator = values.iterator();
         if (values.size() > 1) {
@@ -175,10 +184,11 @@ public class OIndexUnique extends OIndexOneValue {
 
         final OIdentifiable value = valuesIterator.next();
         indexEngine.put(key, value.getIdentity());
-      } else if (snapshotValue.equals(RemovedValue.INSTANCE))
-        indexEngine.remove(key);
-      else
-        assert false : "Provided value can not be committed";
+      } else if (snapshotValue.equals(RemovedValue.INSTANCE)) {
+          indexEngine.remove(key);
+      } else {
+          assert false : "Provided value can not be committed";
+      }
     }
   }
 }

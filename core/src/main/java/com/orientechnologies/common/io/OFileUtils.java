@@ -50,11 +50,13 @@ public class OFileUtils {
   }
 
   public static long getSizeAsNumber(final Object iSize) {
-    if (iSize == null)
-      throw new IllegalArgumentException("Size is null");
+    if (iSize == null) {
+        throw new IllegalArgumentException("Size is null");
+    }
 
-    if (iSize instanceof Number)
-      return ((Number) iSize).longValue();
+    if (iSize instanceof Number) {
+        return ((Number) iSize).longValue();
+    }
 
     String size = iSize.toString();
 
@@ -66,55 +68,66 @@ public class OFileUtils {
       }
     }
 
-    if (number)
-      return string2number(size).longValue();
-    else {
+    if (number) {
+        return string2number(size).longValue();
+    } else {
       size = size.toUpperCase(Locale.ENGLISH);
       int pos = size.indexOf("KB");
-      if (pos > -1)
-        return (long) (string2number(size.substring(0, pos)).floatValue() * KILOBYTE);
+      if (pos > -1) {
+          return (long) (string2number(size.substring(0, pos)).floatValue() * KILOBYTE);
+        }
 
       pos = size.indexOf("MB");
-      if (pos > -1)
-        return (long) (string2number(size.substring(0, pos)).floatValue() * MEGABYTE);
+      if (pos > -1) {
+          return (long) (string2number(size.substring(0, pos)).floatValue() * MEGABYTE);
+      }
 
       pos = size.indexOf("GB");
-      if (pos > -1)
-        return (long) (string2number(size.substring(0, pos)).floatValue() * GIGABYTE);
+      if (pos > -1) {
+          return (long) (string2number(size.substring(0, pos)).floatValue() * GIGABYTE);
+      }
 
       pos = size.indexOf("TB");
-      if (pos > -1)
-        return (long) (string2number(size.substring(0, pos)).floatValue() * TERABYTE);
+      if (pos > -1) {
+          return (long) (string2number(size.substring(0, pos)).floatValue() * TERABYTE);
+      }
 
       pos = size.indexOf('B');
-      if (pos > -1)
-        return (long) string2number(size.substring(0, pos)).floatValue();
-
+      if (pos > -1) {
+          return (long) string2number(size.substring(0, pos)).floatValue();
+      }
+      
       pos = size.indexOf('%');
-      if (pos > -1)
-        return (long) (-1 * string2number(size.substring(0, pos)).floatValue());
-
+      if (pos > -1) {
+          return (long) (-1 * string2number(size.substring(0, pos)).floatValue());
+      }
+      
       // RE-THROW THE EXCEPTION
       throw new IllegalArgumentException("Size " + size + " has a unrecognizable format");
     }
   }
 
   public static Number string2number(final String iText) {
-    if (iText.indexOf('.') > -1)
-      return Double.parseDouble(iText);
-    else
-      return Long.parseLong(iText);
+    if (iText.indexOf('.') > -1) {
+        return Double.parseDouble(iText);
+    } else {
+        return Long.parseLong(iText);
+    }
   }
 
   public static String getSizeAsString(final long iSize) {
-    if (iSize > TERABYTE)
-      return String.format("%2.2fTB", (float) iSize / TERABYTE);
-    if (iSize > GIGABYTE)
-      return String.format("%2.2fGB", (float) iSize / GIGABYTE);
-    if (iSize > MEGABYTE)
-      return String.format("%2.2fMB", (float) iSize / MEGABYTE);
-    if (iSize > KILOBYTE)
-      return String.format("%2.2fKB", (float) iSize / KILOBYTE);
+    if (iSize > TERABYTE) {
+        return String.format("%2.2fTB", (float) iSize / TERABYTE);
+    }
+    if (iSize > GIGABYTE) {
+        return String.format("%2.2fGB", (float) iSize / GIGABYTE);
+    }
+    if (iSize > MEGABYTE) {
+        return String.format("%2.2fMB", (float) iSize / MEGABYTE);
+    }
+    if (iSize > KILOBYTE) {
+        return String.format("%2.2fKB", (float) iSize / KILOBYTE);
+    }
 
     return String.valueOf(iSize) + "b";
   }
@@ -122,8 +135,9 @@ public class OFileUtils {
   public static String getDirectory(String iPath) {
     iPath = getPath(iPath);
     int pos = iPath.lastIndexOf("/");
-    if (pos == -1)
-      return "";
+    if (pos == -1) {
+        return "";
+    }
 
     return iPath.substring(0, pos);
   }
@@ -135,24 +149,27 @@ public class OFileUtils {
   }
 
   public static String getPath(final String iPath) {
-    if (iPath == null)
-      return null;
+    if (iPath == null) {
+        return null;
+    }
     return iPath.replace('\\', '/');
   }
 
   public static void checkValidName(final String iFileName) throws IOException {
-    if (iFileName.contains("..") || iFileName.contains("/") || iFileName.contains("\\"))
-      throw new IOException("Invalid file name '" + iFileName + "'");
+    if (iFileName.contains("..") || iFileName.contains("/") || iFileName.contains("\\")) {
+        throw new IOException("Invalid file name '" + iFileName + "'");
+    }
   }
 
   public static void deleteRecursively(final File iRootFile) {
     if (iRootFile.exists()) {
       if (iRootFile.isDirectory()) {
         for (File f : iRootFile.listFiles()) {
-          if (f.isFile())
-            f.delete();
-          else
-            deleteRecursively(f);
+          if (f.isFile()) {
+              f.delete();
+          } else {
+              deleteRecursively(f);
+          }
         }
       }
       iRootFile.delete();
@@ -169,21 +186,24 @@ public class OFileUtils {
   }
 
   public static final void copyDirectory(final File source, final File destination) throws IOException {
-    if (!destination.exists())
-      destination.mkdirs();
+    if (!destination.exists()) {
+        destination.mkdirs();
+    }
 
     for (File f : source.listFiles()) {
       final File target = new File(destination.getAbsolutePath() + "/" + f.getName());
-      if (f.isFile())
-        copyFile(f, target);
-      else
-        copyDirectory(f, target);
+      if (f.isFile()) {
+          copyFile(f, target);
+      } else {
+          copyDirectory(f, target);
+      }
     }
   }
 
   public static boolean renameFile(File from, File to) throws IOException {
-    if (useOldFileAPI)
-      return from.renameTo(to);
+    if (useOldFileAPI) {
+        return from.renameTo(to);
+    }
 
     final FileSystem fileSystem = FileSystems.getDefault();
 
@@ -195,11 +215,13 @@ public class OFileUtils {
   }
 
   public static boolean delete(File file) throws IOException {
-    if (!file.exists())
-      return true;
+    if (!file.exists()) {
+        return true;
+    }
 
-    if (useOldFileAPI)
-      return file.delete();
+    if (useOldFileAPI) {
+        return file.delete();
+    }
 
     return OFileUtilsJava7.delete(file);
   }

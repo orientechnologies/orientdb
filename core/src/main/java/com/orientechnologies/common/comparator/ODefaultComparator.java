@@ -37,20 +37,24 @@ public class ODefaultComparator implements Comparator<Object> {
   @SuppressWarnings("unchecked")
   public int compare(final Object objectOne, final Object objectTwo) {
     if (objectOne == null) {
-      if (objectTwo == null)
-        return 0;
-      else
-        return -1;
-    } else if (objectTwo == null)
-      return 1;
+      if (objectTwo == null) {
+          return 0;
+      } else {
+          return -1;
+      }
+    } else if (objectTwo == null) {
+        return 1;
+    }
 
-    if (objectOne instanceof Comparable)
-      return ((Comparable<Object>) objectOne).compareTo(objectTwo);
+    if (objectOne instanceof Comparable) {
+        return ((Comparable<Object>) objectOne).compareTo(objectTwo);
+    }
 
     final Comparator<?> comparator = OComparatorFactory.INSTANCE.getComparator(objectOne.getClass());
 
-    if (comparator != null)
-      return ((Comparator<Object>) comparator).compare(objectOne, objectTwo);
+    if (comparator != null) {
+        return ((Comparator<Object>) comparator).compare(objectOne, objectTwo);
+    }
 
     throw new IllegalStateException("Object of class" + objectOne.getClass().getName() + " can not be compared");
   }

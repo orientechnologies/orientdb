@@ -104,8 +104,9 @@ public class OIndexManagerProxy extends OProxedResource<OIndexManager> implement
   }
 
   public void flush() {
-    if (delegate != null)
-      delegate.flush();
+    if (delegate != null) {
+        delegate.flush();
+    }
   }
 
   public Set<OIndex<?>> getClassInvolvedIndexes(final String className, final Collection<String> fields) {

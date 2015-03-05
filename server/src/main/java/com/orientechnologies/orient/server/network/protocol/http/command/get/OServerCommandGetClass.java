@@ -44,16 +44,18 @@ public class OServerCommandGetClass extends OServerCommandAuthenticatedDbAbstrac
     try {
       db = getProfiledDatabaseInstance(iRequest);
 
-      if (((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().getClass(urlParts[2]) == null)
-        throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");
+      if (((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().getClass(urlParts[2]) == null) {
+          throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");
+      }
 
       final StringWriter buffer = new StringWriter();
       final OJSONWriter json = new OJSONWriter(buffer, OHttpResponse.JSON_FORMAT);
       OServerCommandGetDatabase.exportClass(db, json, db.getMetadata().getSchema().getClass(urlParts[2]));
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, buffer.toString(), null);
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) {
+          db.close();
+      }
     }
     return false;
   }

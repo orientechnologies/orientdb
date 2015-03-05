@@ -33,8 +33,9 @@ public class SuperNodeGraphSpeedTest extends SpeedTestMonoThread {
 
     final OrientGraphFactory factory = new OrientGraphFactory("plocal:" + buildDirectory + "/SuperNodeGraphSpeedTest", "admin",
         "admin");
-    if (factory.exists())
-      factory.drop();
+    if (factory.exists()) {
+        factory.drop();
+    }
 
     graph = factory.getNoTx();
 

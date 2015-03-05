@@ -57,21 +57,24 @@ public class ORecordSerializerBinary implements ORecordSerializer {
 
   @Override
   public ORecord fromStream(final byte[] iSource, ORecord iRecord, final String[] iFields) {
-    if (iSource.length == 0)
-      return iRecord;
-    if (iRecord == null)
-      iRecord = new ODocument();
-    else
-      checkTypeODocument(iRecord);
+    if (iSource.length == 0) {
+        return iRecord;
+    }
+    if (iRecord == null) {
+        iRecord = new ODocument();
+    } else {
+        checkTypeODocument(iRecord);
+    }
 
     BytesContainer container = new BytesContainer(iSource);
     container.skip(1);
 
     try {
-      if (iFields != null && iFields.length > 0)
-        serializerByVersion[iSource[0]].deserializePartial((ODocument) iRecord, container, iFields);
-      else
-        serializerByVersion[iSource[0]].deserialize((ODocument) iRecord, container);
+      if (iFields != null && iFields.length > 0) {
+          serializerByVersion[iSource[0]].deserializePartial((ODocument) iRecord, container, iFields);
+      } else {
+          serializerByVersion[iSource[0]].deserialize((ODocument) iRecord, container);
+      }
     } catch (IndexOutOfBoundsException e) {
       OLogManager.instance().warn(this, "Error deserializing record %s send this data for debugging",
           OBase64Utils.encodeBytes(iSource));

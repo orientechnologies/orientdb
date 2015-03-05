@@ -44,29 +44,34 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
       final int[] iClusterIdsToIndex, final OProgressListener progressListener, ODocument metadata, String engine) {
 
     String createIndexDDL;
-    if (iIndexDefinition != null)
-      createIndexDDL = iIndexDefinition.toCreateIndexDDL(iName, iType);
-    else
-      createIndexDDL = new OSimpleKeyIndexDefinition().toCreateIndexDDL(iName, iType);
+    if (iIndexDefinition != null) {
+        createIndexDDL = iIndexDefinition.toCreateIndexDDL(iName, iType);
+    } else {
+        createIndexDDL = new OSimpleKeyIndexDefinition().toCreateIndexDDL(iName, iType);
+    }
 
-    if (engine != null)
-      createIndexDDL += " " + OCommandExecutorSQLCreateIndex.KEYWORD_ENGINE + " " + engine;
+    if (engine != null) {
+        createIndexDDL += " " + OCommandExecutorSQLCreateIndex.KEYWORD_ENGINE + " " + engine;
+    }
 
-    if (metadata != null)
-      createIndexDDL += " " + OCommandExecutorSQLCreateIndex.KEYWORD_METADATA + " " + metadata.toJSON();
+    if (metadata != null) {
+        createIndexDDL += " " + OCommandExecutorSQLCreateIndex.KEYWORD_METADATA + " " + metadata.toJSON();
+    }
 
     acquireExclusiveLock();
     try {
-      if (progressListener != null)
-        progressListener.onBegin(this, 0, false);
+      if (progressListener != null) {
+          progressListener.onBegin(this, 0, false);
+      }
 
       getDatabase().command(new OCommandSQL(createIndexDDL)).execute();
 
       ORecordInternal.setIdentity(document, new ORecordId(
           ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().indexMgrRecordId));
 
-      if (progressListener != null)
-        progressListener.onCompletition(this, true);
+      if (progressListener != null) {
+          progressListener.onCompletition(this, true);
+      }
 
       reload();
       return preProcessBeforeReturn(indexes.get(iName.toLowerCase()));
@@ -122,8 +127,9 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
 
   protected OIndex<?> getRemoteIndexInstance(boolean isMultiValueIndex, String type, String name, Set<String> clustersToIndex,
       OIndexDefinition indexDefinition, ORID identity, ODocument configuration) {
-    if (isMultiValueIndex)
-      return new OIndexRemoteMultiValue(name, type, identity, indexDefinition, configuration, clustersToIndex);
+    if (isMultiValueIndex) {
+        return new OIndexRemoteMultiValue(name, type, identity, indexDefinition, configuration, clustersToIndex);
+    }
 
     return new OIndexRemoteOneValue(name, type, identity, indexDefinition, configuration, clustersToIndex);
   }

@@ -49,31 +49,37 @@ class OrientElementIterator<T extends Element> implements Iterator<T> {
   public T next() {
     OrientElement currentElement = null;
 
-    if (!hasNext())
-      throw new NoSuchElementException();
+    if (!hasNext()) {
+        throw new NoSuchElementException();
+    }
 
     Object current = itty.next();
 
-    if (null == current)
-      throw new NoSuchElementException();
+    if (null == current) {
+        throw new NoSuchElementException();
+    }
 
-    if (current instanceof OIdentifiable)
-      current = ((OIdentifiable) current).getRecord();
+    if (current instanceof OIdentifiable) {
+        current = ((OIdentifiable) current).getRecord();
+    }
 
     if (current instanceof ODocument) {
       final ODocument currentDocument = (ODocument) current;
 
-      if (currentDocument.getInternalStatus() == ODocument.STATUS.NOT_LOADED)
-        currentDocument.load();
+      if (currentDocument.getInternalStatus() == ODocument.STATUS.NOT_LOADED) {
+          currentDocument.load();
+      }
 
-      if (ODocumentInternal.getImmutableSchemaClass(currentDocument) == null)
-        throw new IllegalArgumentException(
-            "Cannot determine the graph element type because the document class is null. Probably this is a projection, use the EXPAND() function");
+      if (ODocumentInternal.getImmutableSchemaClass(currentDocument) == null) {
+          throw new IllegalArgumentException(
+                  "Cannot determine the graph element type because the document class is null. Probably this is a projection, use the EXPAND() function");
+      }
 
-      if (ODocumentInternal.getImmutableSchemaClass(currentDocument).isSubClassOf(graph.getEdgeBaseType()))
-        currentElement = new OrientEdge(graph, currentDocument);
-      else
-        currentElement = new OrientVertex(graph, currentDocument);
+      if (ODocumentInternal.getImmutableSchemaClass(currentDocument).isSubClassOf(graph.getEdgeBaseType())) {
+          currentElement = new OrientEdge(graph, currentDocument);
+      } else {
+          currentElement = new OrientVertex(graph, currentDocument);
+      }
     }
 
     return (T) currentElement;

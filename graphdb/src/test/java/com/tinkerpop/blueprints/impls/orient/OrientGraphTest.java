@@ -141,9 +141,9 @@ public abstract class OrientGraphTest extends GraphTest {
     OrientGraph graph = currentGraphs.get(url);
 
     if (graph != null) {
-      if (graph.isClosed())
-        currentGraphs.remove(url);
-      else {
+      if (graph.isClosed()) {
+          currentGraphs.remove(url);
+      } else {
         ODatabaseRecordThreadLocal.INSTANCE.set(graph.getRawGraph());
         return graph;
       }
@@ -177,8 +177,9 @@ public abstract class OrientGraphTest extends GraphTest {
     final String url = getStorageType() + ":" + graphDirectory;
     try {
       OrientGraph graph = currentGraphs.remove(url);
-      if (graph == null || graph.isClosed())
-        graph = new OrientGraph(url);
+      if (graph == null || graph.isClosed()) {
+          graph = new OrientGraph(url);
+      }
 
       graph.drop();
     } catch (Exception e) {
@@ -204,15 +205,17 @@ public abstract class OrientGraphTest extends GraphTest {
     } catch (IllegalArgumentException e) {
     }
 
-    if (result == null)
-      result = ENV.DEV;
+    if (result == null) {
+        result = ENV.DEV;
+    }
 
     return result;
   }
 
   public static String getStorageType() {
-    if (getEnvironment().equals(ENV.DEV))
-      return "memory";
+    if (getEnvironment().equals(ENV.DEV)) {
+        return "memory";
+    }
 
     return "plocal";
   }

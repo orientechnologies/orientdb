@@ -36,8 +36,9 @@ public class BlueprintsTest {
 
   @Test
   public void testSubVertex() {
-    if (graph.getVertexType("SubVertex") == null)
-      graph.createVertexType("SubVertex");
+    if (graph.getVertexType("SubVertex") == null) {
+        graph.createVertexType("SubVertex");
+    }
 
     Vertex v = graph.addVertex("class:SubVertex");
     v.setProperty("key", "subtype");
@@ -58,10 +59,12 @@ public class BlueprintsTest {
 
   @Test
   public void testSubEdge() {
-    if (graph.getEdgeType("SubEdge") == null)
-      graph.createEdgeType("SubEdge");
-    if (graph.getVertexType("SubVertex") == null)
-      graph.createVertexType("SubVertex");
+    if (graph.getEdgeType("SubEdge") == null) {
+        graph.createEdgeType("SubEdge");
+    }
+    if (graph.getVertexType("SubVertex") == null) {
+        graph.createVertexType("SubVertex");
+    }
 
     Vertex v1 = graph.addVertex("class:SubVertex");
     v1.setProperty("key", "subtype+subedge");

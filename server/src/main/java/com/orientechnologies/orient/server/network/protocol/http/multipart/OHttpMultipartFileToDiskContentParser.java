@@ -34,8 +34,9 @@ public class OHttpMultipartFileToDiskContentParser implements OHttpMultipartCont
 
   public OHttpMultipartFileToDiskContentParser(String iPath) {
     path = iPath;
-    if (!path.endsWith("/"))
-      path += "/";
+    if (!path.endsWith("/")) {
+        path += "/";
+    }
     new File(path).mkdirs();
   }
 
@@ -48,27 +49,30 @@ public class OHttpMultipartFileToDiskContentParser implements OHttpMultipartCont
     String fileName = headers.get(OHttpUtils.MULTIPART_CONTENT_FILENAME);
     int fileSize = 0;
 
-    if (fileName.charAt(0) == '"')
-      fileName = fileName.substring(1);
+    if (fileName.charAt(0) == '"') {
+        fileName = fileName.substring(1);
+    }
 
-    if (fileName.charAt(fileName.length() - 1) == '"')
-      fileName = fileName.substring(0, fileName.length() - 1);
+    if (fileName.charAt(fileName.length() - 1) == '"') {
+        fileName = fileName.substring(0, fileName.length() - 1);
+    }
 
     fileName = path + fileName;
 
-    if (!overwrite)
-      // CHANGE THE FILE NAME TO AVOID OVERWRITING
-      if (new File(fileName).exists()) {
-        final String fileExt = fileName.substring(fileName.lastIndexOf("."));
-        final String fileNoExt = fileName.substring(0, fileName.lastIndexOf("."));
-
-        for (int i = 1;; ++i) {
-          if (!new File(fileNoExt + "_" + i + fileExt).exists()) {
-            fileName = fileNoExt + "_" + i + fileExt;
-            break;
-          }
+    if (!overwrite) {
+        // CHANGE THE FILE NAME TO AVOID OVERWRITING
+        if (new File(fileName).exists()) {
+            final String fileExt = fileName.substring(fileName.lastIndexOf("."));
+            final String fileNoExt = fileName.substring(0, fileName.lastIndexOf("."));
+            
+            for (int i = 1;; ++i) {
+                if (!new File(fileNoExt + "_" + i + fileExt).exists()) {
+                    fileName = fileNoExt + "_" + i + fileExt;
+                    break;
+                }
+            }
         }
-      }
+    }
 
     // WRITE THE FILE
     final OutputStream out = new BufferedOutputStream(new FileOutputStream(fileName.toString()));

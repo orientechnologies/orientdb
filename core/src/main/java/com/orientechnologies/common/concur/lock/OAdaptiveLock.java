@@ -68,34 +68,34 @@ public class OAdaptiveLock extends OAbstractLock {
   }
 
   public void lock() {
-    if (concurrent)
-      if (timeout > 0) {
-        try {
-          if (lock.tryLock(timeout, TimeUnit.MILLISECONDS))
-            // OK
-            return;
-        } catch (InterruptedException e) {
-          if (ignoreThreadInterruption) {
-            // IGNORE THE THREAD IS INTERRUPTED: TRY TO RE-LOCK AGAIN
+    if (concurrent) {
+        if (timeout > 0) {
             try {
-              if (lock.tryLock(timeout, TimeUnit.MILLISECONDS)) {
-                // OK, RESET THE INTERRUPTED STATE
-                Thread.currentThread().interrupt();
-                return;
-              }
-            } catch (InterruptedException e2) {
-              Thread.currentThread().interrupt();
-            }
-          }
-
-          throw new OLockException("Thread interrupted while waiting for resource of class '" + getClass() + "' with timeout="
-              + timeout);
+                if (lock.tryLock(timeout, TimeUnit.MILLISECONDS)) {
+                    // OK
+                    return;
+                }
+            }catch (InterruptedException e) {
+                if (ignoreThreadInterruption) {
+                    // IGNORE THE THREAD IS INTERRUPTED: TRY TO RE-LOCK AGAIN
+                    try {
+                        if (lock.tryLock(timeout, TimeUnit.MILLISECONDS)) {
+                            // OK, RESET THE INTERRUPTED STATE
+                            Thread.currentThread().interrupt();
+                            return;
+                        }
+                    } catch (InterruptedException e2) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+                
+                throw new OLockException("Thread interrupted while waiting for resource of class '" + getClass() + "' with timeout="
+                        + timeout);
+            }   throwTimeoutException(lock);
+        } else {
+            lock.lock();
         }
-
-        throwTimeoutException(lock);
-
-      } else
-        lock.lock();
+    }
   }
 
   public boolean tryAcquireLock() {
@@ -103,30 +103,34 @@ public class OAdaptiveLock extends OAbstractLock {
   }
 
   public boolean tryAcquireLock(final long iTimeout, final TimeUnit iUnit) {
-    if (concurrent)
-      if (timeout > 0)
-        try {
-          return lock.tryLock(iTimeout, iUnit);
-        } catch (InterruptedException e) {
-          throw new OLockException("Thread interrupted while waiting for resource of class '" + getClass() + "' with timeout="
-              + timeout);
+    if (concurrent) {
+        if (timeout > 0) {
+            try {
+                return lock.tryLock(iTimeout, iUnit);
+            } catch (InterruptedException e) {
+                throw new OLockException("Thread interrupted while waiting for resource of class '" + getClass() + "' with timeout="
+                        + timeout);
+            }
+        } else {
+            return lock.tryLock();
         }
-      else
-        return lock.tryLock();
+    }
 
     return true;
   }
 
   public void unlock() {
-    if (concurrent)
-      lock.unlock();
+    if (concurrent) {
+        lock.unlock();
+    }
   }
 
   @Override
   public void close() {
     try {
-      if (lock.isLocked())
-        lock.unlock();
+      if (lock.isLocked()) {
+          lock.unlock();
+      }
     } catch (Exception e) {
     }
   }
@@ -148,8 +152,9 @@ public class OAdaptiveLock extends OAbstractLock {
       getOwner.setAccessible(true);
 
       final Thread owner = (Thread) getOwner.invoke(sync);
-      if (owner == null)
-        return null;
+      if (owner == null) {
+          return null;
+      }
 
       StringWriter stringWriter = new StringWriter();
       PrintWriter printWriter = new PrintWriter(stringWriter);

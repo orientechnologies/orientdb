@@ -69,15 +69,17 @@ public class OStreamSerializerSBTreeIndexRIDContainer_1_7_9 implements OStreamSe
   public static final OLinkSerializer                                LINK_SERIALIZER          = OLinkSerializer.INSTANCE;
 
   public Object fromStream(final byte[] iStream) throws IOException {
-    if (iStream == null)
-      return null;
+    if (iStream == null) {
+        return null;
+    }
 
     throw new UnsupportedOperationException("not implemented yet");
   }
 
   public byte[] toStream(final Object iObject) throws IOException {
-    if (iObject == null)
-      return null;
+    if (iObject == null) {
+        return null;
+    }
 
     throw new UnsupportedOperationException("not implemented yet");
   }

@@ -169,11 +169,13 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
             ORidBag ridBag = document.field("ridBag");
 
             for (OIdentifiable identifiable : ridBag) {
-              if (random.nextBoolean())
-                ridsToRemove.add(identifiable.getIdentity());
+              if (random.nextBoolean()) {
+                  ridsToRemove.add(identifiable.getIdentity());
+              }
 
-              if (ridsToRemove.size() >= 5)
-                break;
+              if (ridsToRemove.size() >= 5) {
+                  break;
+              }
             }
 
             for (ORID ridToRemove : ridsToRemove)
@@ -217,8 +219,9 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
     buildDirectory += "/localPaginatedStorageLinkBagCrashRestore";
 
     buildDir = new File(buildDirectory);
-    if (buildDir.exists())
-      buildDir.delete();
+    if (buildDir.exists()) {
+        buildDir.delete();
+    }
 
     buildDir.mkdir();
 
@@ -328,8 +331,9 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
 
         if (testDocument == null) {
           ODatabaseRecordThreadLocal.INSTANCE.set(base_db);
-          if (((Long) baseDocument.field("ts")) < minTs)
-            minTs = baseDocument.field("ts");
+          if (((Long) baseDocument.field("ts")) < minTs) {
+              minTs = baseDocument.field("ts");
+          }
         } else {
           long baseTs;
           long testTs;
@@ -360,17 +364,20 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
             equals = baseRids.equals(testRids);
           }
 
-          if (!equals)
-            if (((Long) baseDocument.field("ts")) < minTs)
-              minTs = baseDocument.field("ts");
-            else
-              recordsRestored++;
+          if (!equals) {
+              if (((Long) baseDocument.field("ts")) < minTs) {
+                  minTs = baseDocument.field("ts");
+              } else {
+                  recordsRestored++;
+              }
+          }
         }
 
         recordsTested++;
 
-        if (recordsTested % 10000 == 0)
-          System.out.println(recordsTested + " were tested, " + recordsRestored + " were restored ...");
+        if (recordsTested % 10000 == 0) {
+            System.out.println(recordsTested + " were tested, " + recordsRestored + " were restored ...");
+        }
       }
 
       physicalPositions = baseStorage.higherPhysicalPositions(defaultClusterId, physicalPositions[physicalPositions.length - 1]);

@@ -79,16 +79,18 @@ public class OSecurityShared implements OSecurity, OCloseable {
 
   public OIdentifiable allowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName) {
     final OUser user = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getUser(iUserName);
-    if (user == null)
-      throw new IllegalArgumentException("User '" + iUserName + "' not found");
+    if (user == null) {
+        throw new IllegalArgumentException("User '" + iUserName + "' not found");
+    }
 
     return allowIdentity(iDocument, iAllowFieldName, user.getDocument().getIdentity());
   }
 
   public OIdentifiable allowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName) {
     final ORole role = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getRole(iRoleName);
-    if (role == null)
-      throw new IllegalArgumentException("Role '" + iRoleName + "' not found");
+    if (role == null) {
+        throw new IllegalArgumentException("Role '" + iRoleName + "' not found");
+    }
 
     return allowIdentity(iDocument, iAllowFieldName, role.getDocument().getIdentity());
   }
@@ -106,55 +108,64 @@ public class OSecurityShared implements OSecurity, OCloseable {
 
   public OIdentifiable disallowUser(final ODocument iDocument, final String iAllowFieldName, final String iUserName) {
     final OUser user = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getUser(iUserName);
-    if (user == null)
-      throw new IllegalArgumentException("User '" + iUserName + "' not found");
+    if (user == null) {
+        throw new IllegalArgumentException("User '" + iUserName + "' not found");
+    }
 
     return disallowIdentity(iDocument, iAllowFieldName, user.getDocument().getIdentity());
   }
 
   public OIdentifiable disallowRole(final ODocument iDocument, final String iAllowFieldName, final String iRoleName) {
     final ORole role = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getSecurity().getRole(iRoleName);
-    if (role == null)
-      throw new IllegalArgumentException("Role '" + iRoleName + "' not found");
+    if (role == null) {
+        throw new IllegalArgumentException("Role '" + iRoleName + "' not found");
+    }
 
     return disallowIdentity(iDocument, iAllowFieldName, role.getDocument().getIdentity());
   }
 
   public OIdentifiable disallowIdentity(final ODocument iDocument, final String iAllowFieldName, final OIdentifiable iId) {
     Set<OIdentifiable> field = iDocument.field(iAllowFieldName);
-    if (field != null)
-      field.remove(iId);
+    if (field != null) {
+        field.remove(iId);
+    }
     return iId;
   }
 
   public boolean isAllowed(final Set<OIdentifiable> iAllowAll, final Set<OIdentifiable> iAllowOperation) {
-    if (iAllowAll == null || iAllowAll.isEmpty())
-      return true;
+    if (iAllowAll == null || iAllowAll.isEmpty()) {
+        return true;
+    }
 
     final OSecurityUser currentUser = ODatabaseRecordThreadLocal.INSTANCE.get().getUser();
     if (currentUser != null) {
       // CHECK IF CURRENT USER IS ENLISTED
       if (!iAllowAll.contains(currentUser.getIdentity())) {
         // CHECK AGAINST SPECIFIC _ALLOW OPERATION
-        if (iAllowOperation != null && iAllowOperation.contains(currentUser.getIdentity()))
-          return true;
+        if (iAllowOperation != null && iAllowOperation.contains(currentUser.getIdentity())) {
+            return true;
+        }
 
         // CHECK IF AT LEAST ONE OF THE USER'S ROLES IS ENLISTED
         for (OSecurityRole r : currentUser.getRoles()) {
           // CHECK AGAINST GENERIC _ALLOW
-          if (iAllowAll.contains(r.getIdentity()))
-            return true;
+          if (iAllowAll.contains(r.getIdentity())) {
+              return true;
+          }
           // CHECK AGAINST SPECIFIC _ALLOW OPERATION
-          if (iAllowOperation != null && iAllowOperation.contains(r.getIdentity()))
-            return true;
+          if (iAllowOperation != null && iAllowOperation.contains(r.getIdentity())) {
+              return true;
+          }
           // CHECK inherited permissions from parent roles, fixes #1980: Record Level Security: permissions don't follow role's
           // inheritance
           OSecurityRole parentRole = r.getParentRole();
           while (parentRole != null) {
-            if (iAllowAll.contains(parentRole.getIdentity()))
-              return true;
-            if (iAllowOperation != null && iAllowOperation.contains(parentRole.getIdentity()))
-              return true;
+            if (iAllowAll.contains(parentRole.getIdentity())) {
+                return true;
+            }
+            if (iAllowOperation != null && iAllowOperation.contains(parentRole.getIdentity())) {
+                return true;
+            }
             parentRole = parentRole.getParentRole();
           }
         }
@@ -167,11 +178,13 @@ public class OSecurityShared implements OSecurity, OCloseable {
   public OUser authenticate(final String iUserName, final String iUserPassword) {
     final String dbName = getDatabase().getName();
     final OUser user = getUser(iUserName);
-    if (user == null)
-      throw new OSecurityAccessException(dbName, "User or password not valid for database: '" + dbName + "'");
+    if (user == null) {
+        throw new OSecurityAccessException(dbName, "User or password not valid for database: '" + dbName + "'");
+    }
 
-    if (user.getAccountStatus() != OSecurityUser.STATUSES.ACTIVE)
-      throw new OSecurityAccessException(dbName, "User '" + iUserName + "' is not active");
+    if (user.getAccountStatus() != OSecurityUser.STATUSES.ACTIVE) {
+        throw new OSecurityAccessException(dbName, "User '" + iUserName + "' is not active");
+    }
 
     if (!(getDatabase().getStorage() instanceof OStorageProxy)) {
       // CHECK USER & PASSWORD
@@ -205,8 +218,9 @@ public class OSecurityShared implements OSecurity, OCloseable {
     if (user == null) {
       throw new OSecurityAccessException(dbName, "Authentication failed, could not load user from token");
     }
-    if (user.getAccountStatus() != STATUSES.ACTIVE)
-      throw new OSecurityAccessException(dbName, "User '" + user.getName() + "' is not active");
+    if (user.getAccountStatus() != STATUSES.ACTIVE) {
+        throw new OSecurityAccessException(dbName, "User '" + user.getName() + "' is not active");
+    }
 
     return user;
   }
@@ -227,10 +241,11 @@ public class OSecurityShared implements OSecurity, OCloseable {
   public OUser createUser(final String iUserName, final String iUserPassword, final String... iRoles) {
     final OUser user = new OUser(iUserName, iUserPassword);
 
-    if (iRoles != null)
-      for (String r : iRoles) {
-        user.addRole(r);
-      }
+    if (iRoles != null) {
+        for (String r : iRoles) {
+            user.addRole(r);
+        }
+    }
 
     return user.save();
   }
@@ -238,10 +253,11 @@ public class OSecurityShared implements OSecurity, OCloseable {
   public OUser createUser(final String userName, final String userPassword, final ORole... roles) {
     final OUser user = new OUser(userName, userPassword);
 
-    if (roles != null)
-      for (ORole r : roles) {
-        user.addRole(r);
-      }
+    if (roles != null) {
+        for (ORole r : roles) {
+            user.addRole(r);
+        }
+    }
 
     return user.save();
   }
@@ -255,8 +271,9 @@ public class OSecurityShared implements OSecurity, OCloseable {
 
   public ORole getRole(final OIdentifiable iRole) {
     final ODocument doc = iRole.getRecord();
-    if ("ORole".equals(doc.getClassName()))
-      return new ORole(doc);
+    if ("ORole".equals(doc.getClassName())) {
+        return new ORole(doc);
+    }
 
     return null;
   }
@@ -269,8 +286,9 @@ public class OSecurityShared implements OSecurity, OCloseable {
     List<ODocument> result = getDatabase().<OCommandRequest> command(
         new OSQLSynchQuery<ODocument>("select from ORole where name = '" + roleName + "' limit 1")).execute();
 
-    if (result != null && !result.isEmpty())
-      return new ORole(result.get(0));
+    if (result != null && !result.isEmpty()) {
+        return new ORole(result.get(0));
+    }
 
     return null;
 
@@ -301,8 +319,9 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   public OUser create() {
-    if (!getDatabase().getMetadata().getSchema().getClasses().isEmpty())
-      return null;
+    if (!getDatabase().getMetadata().getSchema().getClasses().isEmpty()) {
+        return null;
+    }
 
     final OUser adminUser = createMetadata();
 
@@ -350,54 +369,65 @@ public class OSecurityShared implements OSecurity, OCloseable {
     final ODatabaseDocument database = getDatabase();
 
     OClass identityClass = database.getMetadata().getSchema().getClass(IDENTITY_CLASSNAME); // SINCE 1.2.0
-    if (identityClass == null)
-      identityClass = database.getMetadata().getSchema().createAbstractClass(IDENTITY_CLASSNAME);
+    if (identityClass == null) {
+        identityClass = database.getMetadata().getSchema().createAbstractClass(IDENTITY_CLASSNAME);
+    }
 
     OClass roleClass = database.getMetadata().getSchema().getClass("ORole");
-    if (roleClass == null)
-      roleClass = database.getMetadata().getSchema().createClass("ORole", identityClass);
-    else if (roleClass.getSuperClass() == null)
-      // MIGRATE AUTOMATICALLY TO 1.2.0
-      roleClass.setSuperClass(identityClass);
+    if (roleClass == null) {
+        roleClass = database.getMetadata().getSchema().createClass("ORole", identityClass);
+    } else if (roleClass.getSuperClass() == null) {
+        // MIGRATE AUTOMATICALLY TO 1.2.0
+        roleClass.setSuperClass(identityClass);
+    }
 
     if (!roleClass.existsProperty("name")) {
       roleClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true).setCollate("ci");
       roleClass.createIndex("ORole.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
     } else {
       final OProperty name = roleClass.getProperty("name");
-      if (name.getAllIndexes().isEmpty())
-        roleClass.createIndex("ORole.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
+      if (name.getAllIndexes().isEmpty()) {
+          roleClass.createIndex("ORole.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
+      }
     }
 
-    if (!roleClass.existsProperty("mode"))
-      roleClass.createProperty("mode", OType.BYTE);
+    if (!roleClass.existsProperty("mode")) {
+        roleClass.createProperty("mode", OType.BYTE);
+    }
 
-    if (!roleClass.existsProperty("rules"))
-      roleClass.createProperty("rules", OType.EMBEDDEDMAP, OType.BYTE);
-    if (!roleClass.existsProperty("inheritedRole"))
-      roleClass.createProperty("inheritedRole", OType.LINK, roleClass);
+    if (!roleClass.existsProperty("rules")) {
+        roleClass.createProperty("rules", OType.EMBEDDEDMAP, OType.BYTE);
+    }
+    if (!roleClass.existsProperty("inheritedRole")) {
+        roleClass.createProperty("inheritedRole", OType.LINK, roleClass);
+    }
 
     OClass userClass = database.getMetadata().getSchema().getClass("OUser");
-    if (userClass == null)
-      userClass = database.getMetadata().getSchema().createClass("OUser", identityClass);
-    else if (userClass.getSuperClass() == null)
-      // MIGRATE AUTOMATICALLY TO 1.2.0
-      userClass.setSuperClass(identityClass);
+    if (userClass == null) {
+        userClass = database.getMetadata().getSchema().createClass("OUser", identityClass);
+    } else if (userClass.getSuperClass() == null) {
+        // MIGRATE AUTOMATICALLY TO 1.2.0
+        userClass.setSuperClass(identityClass);
+    }
 
     if (!userClass.existsProperty("name")) {
       userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true).setCollate("ci");
       userClass.createIndex("OUser.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
     } else {
       final OProperty name = userClass.getProperty("name");
-      if (name.getAllIndexes().isEmpty())
-        userClass.createIndex("OUser.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
+      if (name.getAllIndexes().isEmpty()) {
+          userClass.createIndex("OUser.name", INDEX_TYPE.UNIQUE, ONullOutputListener.INSTANCE, "name");
+      }
     }
-    if (!userClass.existsProperty("password"))
-      userClass.createProperty("password", OType.STRING).setMandatory(true).setNotNull(true);
-    if (!userClass.existsProperty("roles"))
-      userClass.createProperty("roles", OType.LINKSET, roleClass);
-    if (!userClass.existsProperty("status"))
-      userClass.createProperty("status", OType.STRING).setMandatory(true).setNotNull(true);
+    if (!userClass.existsProperty("password")) {
+        userClass.createProperty("password", OType.STRING).setMandatory(true).setNotNull(true);
+    }
+    if (!userClass.existsProperty("roles")) {
+        userClass.createProperty("roles", OType.LINKSET, roleClass);
+    }
+    if (!userClass.existsProperty("status")) {
+        userClass.createProperty("status", OType.STRING).setMandatory(true).setNotNull(true);
+    }
 
     // CREATE ROLES AND USERS
     ORole adminRole = getRole(ORole.ADMIN, false);
@@ -407,25 +437,31 @@ public class OSecurityShared implements OSecurity, OCloseable {
     }
 
     OUser adminUser = getUser(OUser.ADMIN, false);
-    if (adminUser == null)
-      adminUser = createUser(OUser.ADMIN, OUser.ADMIN, adminRole);
+    if (adminUser == null) {
+        adminUser = createUser(OUser.ADMIN, OUser.ADMIN, adminRole);
+    }
 
     // SINCE 1.2.0
     OClass restrictedClass = database.getMetadata().getSchema().getClass(RESTRICTED_CLASSNAME);
-    if (restrictedClass == null)
-      restrictedClass = database.getMetadata().getSchema().createAbstractClass(RESTRICTED_CLASSNAME);
-    if (!restrictedClass.existsProperty(ALLOW_ALL_FIELD))
-      restrictedClass.createProperty(ALLOW_ALL_FIELD, OType.LINKSET, database.getMetadata().getSchema()
-          .getClass(IDENTITY_CLASSNAME));
-    if (!restrictedClass.existsProperty(ALLOW_READ_FIELD))
-      restrictedClass.createProperty(ALLOW_READ_FIELD, OType.LINKSET,
-          database.getMetadata().getSchema().getClass(IDENTITY_CLASSNAME));
-    if (!restrictedClass.existsProperty(ALLOW_UPDATE_FIELD))
-      restrictedClass.createProperty(ALLOW_UPDATE_FIELD, OType.LINKSET,
-          database.getMetadata().getSchema().getClass(IDENTITY_CLASSNAME));
-    if (!restrictedClass.existsProperty(ALLOW_DELETE_FIELD))
-      restrictedClass.createProperty(ALLOW_DELETE_FIELD, OType.LINKSET,
-          database.getMetadata().getSchema().getClass(IDENTITY_CLASSNAME));
+    if (restrictedClass == null) {
+        restrictedClass = database.getMetadata().getSchema().createAbstractClass(RESTRICTED_CLASSNAME);
+    }
+    if (!restrictedClass.existsProperty(ALLOW_ALL_FIELD)) {
+        restrictedClass.createProperty(ALLOW_ALL_FIELD, OType.LINKSET, database.getMetadata().getSchema()
+                .getClass(IDENTITY_CLASSNAME));
+    }
+    if (!restrictedClass.existsProperty(ALLOW_READ_FIELD)) {
+        restrictedClass.createProperty(ALLOW_READ_FIELD, OType.LINKSET,
+                database.getMetadata().getSchema().getClass(IDENTITY_CLASSNAME));
+    }
+    if (!restrictedClass.existsProperty(ALLOW_UPDATE_FIELD)) {
+        restrictedClass.createProperty(ALLOW_UPDATE_FIELD, OType.LINKSET,
+                database.getMetadata().getSchema().getClass(IDENTITY_CLASSNAME));
+    }
+    if (!restrictedClass.existsProperty(ALLOW_DELETE_FIELD)) {
+        restrictedClass.createProperty(ALLOW_DELETE_FIELD, OType.LINKSET,
+                database.getMetadata().getSchema().getClass(IDENTITY_CLASSNAME));
+    }
 
     return adminUser;
   }
@@ -441,11 +477,13 @@ public class OSecurityShared implements OSecurity, OCloseable {
         userClass.createProperty("status", OType.STRING).setMandatory(true).setNotNull(true);
       }
       OProperty p = userClass.getProperty("name");
-      if (p == null)
-        p = userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
+      if (p == null) {
+          p = userClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
+      }
 
-      if (userClass.getInvolvedIndexes("name") == null)
-        p.createIndex(INDEX_TYPE.UNIQUE);
+      if (userClass.getInvolvedIndexes("name") == null) {
+          p.createIndex(INDEX_TYPE.UNIQUE);
+      }
 
       // ROLE
       final OClass roleClass = getDatabase().getMetadata().getSchema().getClass("ORole");
@@ -460,11 +498,13 @@ public class OSecurityShared implements OSecurity, OCloseable {
       }
 
       p = roleClass.getProperty("name");
-      if (p == null)
-        p = roleClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
+      if (p == null) {
+          p = roleClass.createProperty("name", OType.STRING).setMandatory(true).setNotNull(true);
+      }
 
-      if (roleClass.getInvolvedIndexes("name") == null)
-        p.createIndex(INDEX_TYPE.UNIQUE);
+      if (roleClass.getInvolvedIndexes("name") == null) {
+          p.createIndex(INDEX_TYPE.UNIQUE);
+      }
     }
 
   }
@@ -472,8 +512,9 @@ public class OSecurityShared implements OSecurity, OCloseable {
   public void createClassTrigger() {
     final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
     OClass classTrigger = db.getMetadata().getSchema().getClass(OClassTrigger.CLASSNAME);
-    if (classTrigger == null)
-      classTrigger = db.getMetadata().getSchema().createAbstractClass(OClassTrigger.CLASSNAME);
+    if (classTrigger == null) {
+        classTrigger = db.getMetadata().getSchema().createAbstractClass(OClassTrigger.CLASSNAME);
+    }
   }
 
   @Override
@@ -482,15 +523,17 @@ public class OSecurityShared implements OSecurity, OCloseable {
   }
 
   protected OUser getUser(final String iUserName, final boolean iAllowRepair) {
-    if (iUserName == null)
-      return null;
+    if (iUserName == null) {
+        return null;
+    }
 
     List<ODocument> result = getDatabase().<OCommandRequest> command(
         new OSQLSynchQuery<ODocument>("select from OUser where name = '" + iUserName + "' limit 1").setFetchPlan("roles:1"))
         .execute();
 
-    if (result != null && !result.isEmpty())
-      return new OUser(result.get(0));
+    if (result != null && !result.isEmpty()) {
+        return new OUser(result.get(0));
+    }
 
     return null;
   }

@@ -90,8 +90,9 @@ public class FreezeMultiThreadingTestNonTX {
           document.field("counter", value);
           document.save();
 
-          if (value % 10 == 0)
-            System.out.println(Thread.currentThread() + " : document " + value + " added");
+          if (value % 10 == 0) {
+              System.out.println(Thread.currentThread() + " : document " + value + " added");
+          }
 
           value = createCounter.getAndIncrement();
         }
@@ -128,8 +129,9 @@ public class FreezeMultiThreadingTestNonTX {
           document.save();
 
           database.commit();
-          if (value % 10 == 0)
-            System.out.println(Thread.currentThread() + " : document " + value + " added");
+          if (value % 10 == 0) {
+              System.out.println(Thread.currentThread() + " : document " + value + " added");
+          }
 
           value = transactionalCreateCounter.getAndIncrement();
         }
@@ -166,8 +168,9 @@ public class FreezeMultiThreadingTestNonTX {
           }
 
           List<ODocument> execute = null;
-          if (updateCounter % 10 == 0)
-            System.out.println(Thread.currentThread() + " : before search cycle(update)" + updateCounter);
+          if (updateCounter % 10 == 0) {
+              System.out.println(Thread.currentThread() + " : before search cycle(update)" + updateCounter);
+          }
           do {
             try {
               execute = database.command(new OSQLSynchQuery<Object>("select * from " + STUDENT_CLASS_NAME + " where counter = ?"))
@@ -191,16 +194,18 @@ public class FreezeMultiThreadingTestNonTX {
             }
           } while (!deleted.contains(updateCounter) && (execute == null || execute.isEmpty()));
           if (!deleted.contains(updateCounter)) {
-            if (updateCounter % 10 == 0)
-              System.out.println(Thread.currentThread() + " : after search cycle(update) " + updateCounter);
+            if (updateCounter % 10 == 0) {
+                System.out.println(Thread.currentThread() + " : after search cycle(update) " + updateCounter);
+            }
 
             ODocument document = execute.get(0);
             document.field("counter2", document.field("counter"));
             try {
               document.save();
 
-              if (updateCounter % 10 == 0)
-                System.out.println(Thread.currentThread() + " : document " + updateCounter + " updated");
+              if (updateCounter % 10 == 0) {
+                  System.out.println(Thread.currentThread() + " : document " + updateCounter + " updated");
+              }
 
               updateCounter++;
             } catch (ORecordNotFoundException ornfe) {
@@ -243,8 +248,9 @@ public class FreezeMultiThreadingTestNonTX {
             continue;
           }
           List<ODocument> execute = null;
-          if (updateCounter % 10 == 0)
-            System.out.println(Thread.currentThread() + " : before search cycle(update)" + updateCounter);
+          if (updateCounter % 10 == 0) {
+              System.out.println(Thread.currentThread() + " : before search cycle(update)" + updateCounter);
+          }
           do {
             try {
               execute = database.command(
@@ -269,8 +275,9 @@ public class FreezeMultiThreadingTestNonTX {
             }
           } while (!deletedInTransaction.contains(updateCounter) && (execute == null || execute.isEmpty()));
           if (!deletedInTransaction.contains(updateCounter)) {
-            if (updateCounter % 10 == 0)
-              System.out.println(Thread.currentThread() + " : after search cycle(update) " + updateCounter);
+            if (updateCounter % 10 == 0) {
+                System.out.println(Thread.currentThread() + " : after search cycle(update) " + updateCounter);
+            }
 
             database.begin();
 
@@ -280,8 +287,9 @@ public class FreezeMultiThreadingTestNonTX {
               document.save();
 
               database.commit();
-              if (updateCounter % 10 == 0)
-                System.out.println(Thread.currentThread() + " : document " + updateCounter + " updated");
+              if (updateCounter % 10 == 0) {
+                  System.out.println(Thread.currentThread() + " : document " + updateCounter + " updated");
+              }
 
               updateCounter++;
             } catch (ORecordNotFoundException ornfe) {
@@ -327,23 +335,26 @@ public class FreezeMultiThreadingTestNonTX {
           try {
 
             List<ODocument> execute;
-            if (number % 10 == 0)
-              System.out.println(Thread.currentThread() + " : before search cycle (delete) " + number);
+            if (number % 10 == 0) {
+                System.out.println(Thread.currentThread() + " : before search cycle (delete) " + number);
+            }
             do {
               execute = database.command(new OSQLSynchQuery<Object>("select * from " + STUDENT_CLASS_NAME + " where counter2 = ?"))
                   .execute(number);
             } while (execute == null || execute.isEmpty());
 
-            if (number % 10 == 0)
-              System.out.println(Thread.currentThread() + " : after search cycle (delete)" + number);
+            if (number % 10 == 0) {
+                System.out.println(Thread.currentThread() + " : after search cycle (delete)" + number);
+            }
 
             ODocument document = execute.get(0);
             document.delete();
 
             deleted.add(number);
 
-            if (number % 10 == 0)
-              System.out.println(Thread.currentThread() + " : document deleted " + number);
+            if (number % 10 == 0) {
+                System.out.println(Thread.currentThread() + " : document deleted " + number);
+            }
 
             number = deleteCounter.getAndIncrement();
           } catch (OConcurrentModificationException e) {
@@ -384,16 +395,18 @@ public class FreezeMultiThreadingTestNonTX {
           try {
 
             List<ODocument> execute;
-            if (number % 10 == 0)
-              System.out.println(Thread.currentThread() + " : before search cycle (delete) " + number);
+            if (number % 10 == 0) {
+                System.out.println(Thread.currentThread() + " : before search cycle (delete) " + number);
+            }
             do {
               execute = database.command(
                   new OSQLSynchQuery<Object>("select * from " + TRANSACTIONAL_WORD + STUDENT_CLASS_NAME + " where counter2 = ?"))
                   .execute(number);
             } while (execute == null || execute.isEmpty());
 
-            if (number % 10 == 0)
-              System.out.println(Thread.currentThread() + " : after search cycle (delete)" + number);
+            if (number % 10 == 0) {
+                System.out.println(Thread.currentThread() + " : after search cycle (delete)" + number);
+            }
 
             database.begin();
 
@@ -404,8 +417,9 @@ public class FreezeMultiThreadingTestNonTX {
 
             deletedInTransaction.add(number);
 
-            if (number % 10 == 0)
-              System.out.println(Thread.currentThread() + " : document deleted " + number);
+            if (number % 10 == 0) {
+                System.out.println(Thread.currentThread() + " : document deleted " + number);
+            }
 
             number = transactionalDeleteCounter.getAndIncrement();
           } catch (OConcurrentModificationException e) {
@@ -569,8 +583,9 @@ public class FreezeMultiThreadingTestNonTX {
   }
 
   private void assertDocumentAreEquals(List<ODocument> firstDocs, List<ODocument> secondDocs) {
-    if (firstDocs.size() != secondDocs.size())
-      Assert.fail();
+    if (firstDocs.size() != secondDocs.size()) {
+        Assert.fail();
+    }
 
     outer: for (final ODocument firstDoc : firstDocs) {
       for (final ODocument secondDoc : secondDocs) {

@@ -40,12 +40,14 @@ public class WriteAheadLogConcurrencyTest {
     OWALRecordsFactory.INSTANCE.registerNewRecord((byte) 128, WriteAheadLogTest.TestRecord.class);
 
     String buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null || buildDirectory.isEmpty())
-      buildDirectory = ".";
+    if (buildDirectory == null || buildDirectory.isEmpty()) {
+        buildDirectory = ".";
+    }
 
     testDir = new File(buildDirectory, "WriteAheadLogConcurrencyTest");
-    if (!testDir.exists())
-      testDir.mkdir();
+    if (!testDir.exists()) {
+        testDir.mkdir();
+    }
 
     OLocalPaginatedStorage localPaginatedStorage = mock(OLocalPaginatedStorage.class);
     when(localPaginatedStorage.getStoragePath()).thenReturn(testDir.getAbsolutePath());
@@ -95,8 +97,9 @@ public class WriteAheadLogConcurrencyTest {
   public void afterClass() throws Exception {
     writeAheadLog.delete();
 
-    if (testDir.exists())
-      testDir.delete();
+    if (testDir.exists()) {
+        testDir.delete();
+    }
   }
 
   private static final class ConcurrentWriter implements Callable<Void> {
@@ -129,8 +132,9 @@ public class WriteAheadLogConcurrencyTest {
           if (testRecord.isUpdateMasterRecord()) {
             OLogSequenceNumber checkpoint = lastCheckpoint.get();
             while (checkpoint == null || checkpoint.compareTo(testRecord.getLsn()) < 0) {
-              if (lastCheckpoint.compareAndSet(checkpoint, testRecord.getLsn()))
-                break;
+              if (lastCheckpoint.compareAndSet(checkpoint, testRecord.getLsn())) {
+                  break;
+              }
 
               checkpoint = lastCheckpoint.get();
             }

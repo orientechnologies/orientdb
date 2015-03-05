@@ -47,18 +47,21 @@ public class OCommandExecutorSQLDropIndex extends OCommandExecutorSQLAbstract im
 
     int oldPos = 0;
     int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_DROP))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_DROP)) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), parserText, oldPos);
+    }
 
     oldPos = pos;
     pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_INDEX))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_INDEX + " not found. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_INDEX)) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_INDEX + " not found. Use " + getSyntax(), parserText, oldPos);
+    }
 
     oldPos = pos;
     pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Expected index name. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1) {
+        throw new OCommandSQLParsingException("Expected index name. Use " + getSyntax(), parserText, oldPos);
+    }
 
     name = word.toString();
 
@@ -69,8 +72,9 @@ public class OCommandExecutorSQLDropIndex extends OCommandExecutorSQLAbstract im
    * Execute the REMOVE INDEX.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (name == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    if (name == null) {
+        throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    }
 
     if (name.equals("*")) {
       long totalIndexed = 0;
@@ -81,8 +85,9 @@ public class OCommandExecutorSQLDropIndex extends OCommandExecutorSQLAbstract im
 
       return totalIndexed;
 
-    } else
-      getDatabase().getMetadata().getIndexManager().dropIndex(name);
+    } else {
+        getDatabase().getMetadata().getIndexManager().dropIndex(name);
+    }
 
     return 1;
   }

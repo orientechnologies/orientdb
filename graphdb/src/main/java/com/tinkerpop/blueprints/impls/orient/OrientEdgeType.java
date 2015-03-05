@@ -36,12 +36,14 @@ public class OrientEdgeType extends OrientElementType {
   }
 
   protected static final void checkType(final OClass iType) {
-    if (iType == null)
-      throw new IllegalArgumentException("Edge class is null");
+    if (iType == null) {
+        throw new IllegalArgumentException("Edge class is null");
+    }
 
-    if (!iType.isSubClassOf(CLASS_NAME))
-      throw new IllegalArgumentException("Type error. The class " + iType + " does not extend class '" + CLASS_NAME
-          + "' and therefore cannot be considered an Edge");
+    if (!iType.isSubClassOf(CLASS_NAME)) {
+        throw new IllegalArgumentException("Type error. The class " + iType + " does not extend class '" + CLASS_NAME
+                + "' and therefore cannot be considered an Edge");
+    }
   }
 
   @Override

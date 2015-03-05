@@ -67,45 +67,51 @@ public class OAutomaticBackup extends OServerPluginAbstract {
 
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("enabled")) {
-        if (!Boolean.parseBoolean(param.value))
-          // DISABLE IT
-          return;
-      } else if (param.name.equalsIgnoreCase("delay"))
-        delay = OIOUtils.getTimeAsMillisecs(param.value);
-      else if (param.name.equalsIgnoreCase("firsttime")) {
+        if (!Boolean.parseBoolean(param.value)) {
+            // DISABLE IT
+            return;
+        }
+      } else if (param.name.equalsIgnoreCase("delay")) {
+          delay = OIOUtils.getTimeAsMillisecs(param.value);
+      } else if (param.name.equalsIgnoreCase("firsttime")) {
         try {
           firstTime = OIOUtils.getTodayWithTime(param.value);
         } catch (ParseException e) {
           throw new OConfigurationException("Parameter 'firstTime' has invalid format, expected: HH:mm:ss", e);
         }
-      } else if (param.name.equalsIgnoreCase("target.directory"))
-        targetDirectory = param.value;
-      else if (param.name.equalsIgnoreCase("db.include") && param.value.trim().length() > 0)
-        for (String db : param.value.split(","))
-          includeDatabases.add(db);
-      else if (param.name.equalsIgnoreCase("db.exclude") && param.value.trim().length() > 0)
-        for (String db : param.value.split(","))
-          excludeDatabases.add(db);
-      else if (param.name.equalsIgnoreCase("target.fileName"))
-        targetFileName = param.value;
-      else if (param.name.equalsIgnoreCase("buffer"))
-        bufferSize = Integer.parseInt(param.value);
-      else if (param.name.equalsIgnoreCase("compressionLevel"))
-        compressionLevel = Integer.parseInt(param.value);
+      } else if (param.name.equalsIgnoreCase("target.directory")) {
+          targetDirectory = param.value;
+      } else if (param.name.equalsIgnoreCase("db.include") && param.value.trim().length() > 0) {
+          for (String db : param.value.split(","))
+              includeDatabases.add(db);
+      } else if (param.name.equalsIgnoreCase("db.exclude") && param.value.trim().length() > 0) {
+          for (String db : param.value.split(","))
+              excludeDatabases.add(db);
+      } else if (param.name.equalsIgnoreCase("target.fileName")) {
+          targetFileName = param.value;
+      } else if (param.name.equalsIgnoreCase("buffer")) {
+          bufferSize = Integer.parseInt(param.value);
+      } else if (param.name.equalsIgnoreCase("compressionLevel")) {
+          compressionLevel = Integer.parseInt(param.value);
+      }
     }
 
-    if (delay <= 0)
-      throw new OConfigurationException("Cannot find mandatory parameter 'delay'");
-    if (!targetDirectory.endsWith("/"))
-      targetDirectory += "/";
+    if (delay <= 0) {
+        throw new OConfigurationException("Cannot find mandatory parameter 'delay'");
+    }
+    if (!targetDirectory.endsWith("/")) {
+        targetDirectory += "/";
+    }
 
     final File filePath = new File(targetDirectory);
     if (filePath.exists()) {
-      if (!filePath.isDirectory())
-        throw new OConfigurationException("Parameter 'path' points to a file, not a directory");
-    } else
-      // CREATE BACKUP FOLDER(S) IF ANY
-      filePath.mkdirs();
+      if (!filePath.isDirectory()) {
+          throw new OConfigurationException("Parameter 'path' points to a file, not a directory");
+      }
+    } else {
+        // CREATE BACKUP FOLDER(S) IF ANY
+        filePath.mkdirs();
+    }
 
     OLogManager.instance().info(this, "Automatic backup plugin installed and active: delay=%dms, firstTime=%s, targetDirectory=%s",
         delay, firstTime, targetDirectory);
@@ -121,22 +127,24 @@ public class OAutomaticBackup extends OServerPluginAbstract {
         for (final Entry<String, String> dbName : databaseNames.entrySet()) {
           boolean include;
 
-          if (includeDatabases.size() > 0)
-            include = includeDatabases.contains(dbName.getKey());
-          else
-            include = true;
+          if (includeDatabases.size() > 0) {
+              include = includeDatabases.contains(dbName.getKey());
+          } else {
+              include = true;
+          }
 
-          if (excludeDatabases.contains(dbName.getKey()))
-            include = false;
+          if (excludeDatabases.contains(dbName.getKey())) {
+              include = false;
+          }
 
           if (include) {
             final String fileName = (String) OVariableParser.resolveVariables(targetFileName, OSystemVariableResolver.VAR_BEGIN,
                 OSystemVariableResolver.VAR_END, new OVariableParserListener() {
                   @Override
                   public String resolve(final String iVariable) {
-                    if (iVariable.equalsIgnoreCase(VARIABLES.DBNAME.toString()))
-                      return dbName.getKey();
-                    else if (iVariable.startsWith(VARIABLES.DATE.toString())) {
+                    if (iVariable.equalsIgnoreCase(VARIABLES.DBNAME.toString())) {
+                        return dbName.getKey();
+                    } else if (iVariable.startsWith(VARIABLES.DATE.toString())) {
                       return new SimpleDateFormat(iVariable.substring(VARIABLES.DATE.toString().length() + 1)).format(new Date());
                     }
 
@@ -175,8 +183,9 @@ public class OAutomaticBackup extends OServerPluginAbstract {
               errors++;
 
             } finally {
-              if (db != null)
-                db.close();
+              if (db != null) {
+                  db.close();
+              }
             }
           }
         }
@@ -184,10 +193,11 @@ public class OAutomaticBackup extends OServerPluginAbstract {
       }
     };
 
-    if (firstTime == null)
-      Orient.instance().scheduleTask(timerTask, delay, delay);
-    else
-      Orient.instance().scheduleTask(timerTask, firstTime, delay);
+    if (firstTime == null) {
+        Orient.instance().scheduleTask(timerTask, delay, delay);
+    } else {
+        Orient.instance().scheduleTask(timerTask, firstTime, delay);
+    }
   }
 
   @Override

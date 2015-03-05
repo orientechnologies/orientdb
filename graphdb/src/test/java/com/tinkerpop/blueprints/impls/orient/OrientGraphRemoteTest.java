@@ -49,10 +49,11 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
     server.shutdown();
     Thread.sleep(1000);
 
-    if (oldOrientDBHome != null)
-      System.setProperty("ORIENTDB_HOME", oldOrientDBHome);
-    else
-      System.clearProperty("ORIENTDB_HOME");
+    if (oldOrientDBHome != null) {
+        System.setProperty("ORIENTDB_HOME", oldOrientDBHome);
+    } else {
+        System.clearProperty("ORIENTDB_HOME");
+    }
 
     final File file = new File(serverHome);
     deleteDirectory(file);
@@ -65,17 +66,19 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
     OrientGraph graph = currentGraphs.get(url);
 
     if (graph != null) {
-      if (graph.isClosed())
-        currentGraphs.remove(url);
-      else
-        return graph;
+      if (graph.isClosed()) {
+          currentGraphs.remove(url);
+      } else {
+          return graph;
+      }
     }
 
     try {
       final OServerAdmin serverAdmin = new OServerAdmin(url);
       serverAdmin.connect("root", "root");
-      if (!serverAdmin.existsDatabase(OrientGraphTest.getStorageType()))
-        serverAdmin.createDatabase("graph", OrientGraphTest.getStorageType());
+      if (!serverAdmin.existsDatabase(OrientGraphTest.getStorageType())) {
+          serverAdmin.createDatabase("graph", OrientGraphTest.getStorageType());
+      }
 
       serverAdmin.close();
 
@@ -106,18 +109,21 @@ public abstract class OrientGraphRemoteTest extends OrientGraphTest {
     try {
       final String url = "remote:localhost:3080/" + graphDirectoryName;
       final OrientGraph graph = currentGraphs.get(url);
-      if (graph != null)
-        graph.shutdown();
+      if (graph != null) {
+          graph.shutdown();
+      }
 
       final OrientGraphFactory factory = graphFactories.remove(url);
-      if (factory != null)
-        factory.close();
+      if (factory != null) {
+          factory.close();
+      }
 
       final OServerAdmin serverAdmin = new OServerAdmin(url);
       serverAdmin.connect("root", "root");
 
-      if (serverAdmin.existsDatabase(OrientGraphTest.getStorageType()))
-        serverAdmin.dropDatabase(OrientGraphTest.getStorageType());
+      if (serverAdmin.existsDatabase(OrientGraphTest.getStorageType())) {
+          serverAdmin.dropDatabase(OrientGraphTest.getStorageType());
+      }
 
       serverAdmin.close();
     } catch (Exception e) {

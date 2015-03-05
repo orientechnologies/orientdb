@@ -21,8 +21,9 @@ public class OHashTableDirectoryTest {
   @BeforeClass
   public void beforeClass() throws IOException {
     String buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null)
-      buildDirectory = ".";
+    if (buildDirectory == null) {
+        buildDirectory = ".";
+    }
 
     databaseDocumentTx = new ODatabaseDocumentTx("memory:" + OHashTableDirectoryTest.class.getSimpleName());
     if (databaseDocumentTx.exists()) {
@@ -219,8 +220,9 @@ public class OHashTableDirectoryTest {
         level[i] = i + n * 100;
 
       int index = directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level);
-      if (firsIndex < 0)
-        firsIndex = index;
+      if (firsIndex < 0) {
+          firsIndex = index;
+      }
     }
 
     for (int n = 0; n < ODirectoryPage.NODES_PER_PAGE; n++) {
@@ -228,8 +230,9 @@ public class OHashTableDirectoryTest {
         level[i] = i + n * 100;
 
       int index = directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level);
-      if (secondIndex < 0)
-        secondIndex = index;
+      if (secondIndex < 0) {
+          secondIndex = index;
+      }
     }
 
     for (int n = 0; n < ODirectoryPage.NODES_PER_PAGE; n++) {
@@ -237,8 +240,9 @@ public class OHashTableDirectoryTest {
         level[i] = i + n * 100;
 
       int index = directory.addNewNode((byte) 5, (byte) 6, (byte) 7, level);
-      if (thirdIndex < 0)
-        thirdIndex = index;
+      if (thirdIndex < 0) {
+          thirdIndex = index;
+      }
     }
 
     Assert.assertEquals(firsIndex, 0);

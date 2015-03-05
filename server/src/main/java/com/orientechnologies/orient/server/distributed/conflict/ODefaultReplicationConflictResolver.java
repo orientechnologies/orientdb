@@ -83,16 +83,18 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
     cluster = iCluster;
 
     synchronized (this) {
-      if (index != null)
-        return;
+      if (index != null) {
+          return;
+      }
 
       final OServerUserConfiguration replicatorUser = serverInstance.getUser(ODistributedAbstractPlugin.REPLICATOR_USER);
 
       final ODatabaseDocumentInternal threadDb = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-      if (threadDb != null && !threadDb.isClosed() && threadDb.getStorage().getName().equals(iDatabaseName))
-        database = threadDb;
-      else
-        database = serverInstance.openDatabase("document", iDatabaseName, replicatorUser.name, replicatorUser.password);
+      if (threadDb != null && !threadDb.isClosed() && threadDb.getStorage().getName().equals(iDatabaseName)) {
+          database = threadDb;
+      } else {
+          database = serverInstance.openDatabase("document", iDatabaseName, replicatorUser.name, replicatorUser.password);
+      }
 
       if (database.getMetadata() != null) {
         OClass cls = database.getMetadata().getSchema().getClass(DISTRIBUTED_CONFLICT_CLASS);
@@ -102,9 +104,9 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
           index = cls.createProperty(FIELD_RECORD, OType.LINK).createIndex(INDEX_TYPE.UNIQUE);
         } else {
           p = cls.getProperty(FIELD_RECORD);
-          if (p == null)
-            index = cls.createProperty(FIELD_RECORD, OType.LINK).createIndex(INDEX_TYPE.UNIQUE);
-          else {
+          if (p == null) {
+              index = cls.createProperty(FIELD_RECORD, OType.LINK).createIndex(INDEX_TYPE.UNIQUE);
+          } else {
             index = p.getIndex();
           }
         }
@@ -113,11 +115,13 @@ public class ODefaultReplicationConflictResolver implements OReplicationConflict
   }
 
   public void shutdown() {
-    if (database != null)
-      database.close();
+    if (database != null) {
+        database.close();
+    }
 
-    if (index != null)
-      index = null;
+    if (index != null) {
+        index = null;
+    }
   }
 
   @Override

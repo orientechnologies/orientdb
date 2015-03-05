@@ -42,8 +42,9 @@ public class OHostInfo {
       while (networkInterfaces.hasMoreElements()) {
         NetworkInterface networkInterface = networkInterfaces.nextElement();
         final byte[] mac = networkInterface.getHardwareAddress();
-        if (mac != null && mac.length == 6)
-          return mac;
+        if (mac != null && mac.length == 6) {
+            return mac;
+        }
       }
     } catch (SocketException e) {
       throw new IllegalStateException("Error during MAC address retrieval.", e);

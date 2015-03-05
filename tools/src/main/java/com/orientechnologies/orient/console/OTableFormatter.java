@@ -58,8 +58,9 @@ public class OTableFormatter {
     int fetched = 0;
     for (OIdentifiable record : resultSet) {
       dumpRecordInTable(fetched++, record, columns);
-      if (iAfterDump != null)
-        iAfterDump.call(record);
+      if (iAfterDump != null) {
+          iAfterDump.call(record);
+      }
 
       if (limit > -1 && fetched >= limit) {
         printHeaderLine(columns);
@@ -68,8 +69,9 @@ public class OTableFormatter {
       }
     }
 
-    if (fetched > 0)
-      printHeaderLine(columns);
+    if (fetched > 0) {
+        printHeaderLine(columns);
+    }
   }
 
   public int getMaxWidthSize() {
@@ -82,19 +84,22 @@ public class OTableFormatter {
   }
 
   public void dumpRecordInTable(final int iIndex, final OIdentifiable iRecord, final Map<String, Integer> iColumns) {
-    if (iIndex == 0)
-      printHeader(iColumns);
+    if (iIndex == 0) {
+        printHeader(iColumns);
+    }
 
     // FORMAT THE LINE DYNAMICALLY
     List<Object> vargs = new ArrayList<Object>();
     try {
-      if (iRecord instanceof ODocument)
-        ((ODocument) iRecord).setLazyLoad(false);
+      if (iRecord instanceof ODocument) {
+          ((ODocument) iRecord).setLazyLoad(false);
+      }
 
       final StringBuilder format = new StringBuilder(maxWidthSize);
       for (Entry<String, Integer> col : iColumns.entrySet()) {
-        if (format.length() > 0)
-          format.append('|');
+        if (format.length() > 0) {
+            format.append('|');
+        }
         format.append("%-" + col.getValue() + "s");
 
         Object value = getFieldValue(iIndex, iRecord, col.getKey());
@@ -120,29 +125,30 @@ public class OTableFormatter {
   private Object getFieldValue(final int iIndex, final OIdentifiable iRecord, final String iColumnName) {
     Object value = null;
 
-    if (iColumnName.equals("#"))
-      // RECORD NUMBER
-      value = iIndex;
-    else if (iColumnName.equals("@RID"))
-      // RID
-      value = iRecord.getIdentity().toString();
-    else if (iRecord instanceof ODocument)
-      value = ((ODocument) iRecord).field(iColumnName);
-    else if (iRecord instanceof ORecordBytes)
-      value = "<binary> (size=" + ((ORecordBytes) iRecord).toStream().length + " bytes)";
-    else if (iRecord instanceof OIdentifiable) {
+    if (iColumnName.equals("#")) {
+        // RECORD NUMBER
+        value = iIndex;
+    } else if (iColumnName.equals("@RID")) {
+        // RID
+        value = iRecord.getIdentity().toString();
+    } else if (iRecord instanceof ODocument) {
+        value = ((ODocument) iRecord).field(iColumnName);
+    } else if (iRecord instanceof ORecordBytes) {
+        value = "<binary> (size=" + ((ORecordBytes) iRecord).toStream().length + " bytes)";
+    } else if (iRecord instanceof OIdentifiable) {
       final ORecord rec = iRecord.getRecord();
-      if (rec instanceof ODocument)
-        value = ((ODocument) rec).field(iColumnName);
-      else if (rec instanceof ORecordBytes)
-        value = "<binary> (size=" + ((ORecordBytes) rec).toStream().length + " bytes)";
+      if (rec instanceof ODocument) {
+          value = ((ODocument) rec).field(iColumnName);
+        } else if (rec instanceof ORecordBytes) {
+            value = "<binary> (size=" + ((ORecordBytes) rec).toStream().length + " bytes)";
+        }
     }
 
-    if (value instanceof OMultiCollectionIterator<?>)
-      value = "[" + ((OMultiCollectionIterator<?>) value).size() + "]";
-    else if (value instanceof Collection<?>)
-      value = "[" + ((Collection<?>) value).size() + "]";
-    else if (value instanceof ORecord) {
+    if (value instanceof OMultiCollectionIterator<?>) {
+        value = "[" + ((OMultiCollectionIterator<?>) value).size() + "]";
+    } else if (value instanceof Collection<?>) {
+        value = "[" + ((Collection<?>) value).size() + "]";
+    } else if (value instanceof ORecord) {
       if (((ORecord) value).getIdentity().equals(ORecordId.EMPTY_RECORD_ID)) {
         value = ((ORecord) value).toString();
       } else {
@@ -150,13 +156,14 @@ public class OTableFormatter {
       }
     } else if (value instanceof Date) {
       final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-      if (db != null)
-        value = db.getStorage().getConfiguration().getDateTimeFormatInstance().format((Date) value);
-      else {
+      if (db != null) {
+          value = db.getStorage().getConfiguration().getDateTimeFormatInstance().format((Date) value);
+        } else {
         value = DEF_DATEFORMAT.format((Date) value);
       }
-    } else if (value instanceof byte[])
-      value = "byte[" + ((byte[]) value).length + "]";
+    } else if (value instanceof byte[]) {
+        value = "byte[" + ((byte[]) value).length + "]";
+    }
 
     return value;
   }
@@ -167,11 +174,13 @@ public class OTableFormatter {
     printHeaderLine(iColumns);
     int i = 0;
     for (Entry<String, Integer> column : iColumns.entrySet()) {
-      if (i++ > 0)
-        buffer.append('|');
+      if (i++ > 0) {
+          buffer.append('|');
+      }
       String colName = column.getKey();
-      if (colName.length() > column.getValue())
-        colName = colName.substring(0, column.getValue());
+      if (colName.length() > column.getValue()) {
+          colName = colName.substring(0, column.getValue());
+      }
       buffer.append(String.format("%-" + column.getValue() + "s", colName));
     }
     out.message(buffer.toString());
@@ -185,8 +194,9 @@ public class OTableFormatter {
     if (iColumns.size() > 0) {
       int i = 0;
       for (Entry<String, Integer> col : iColumns.entrySet()) {
-        if (i++ > 0)
-          buffer.append("+");
+        if (i++ > 0) {
+            buffer.append("+");
+        }
 
         for (int k = 0; k < col.getValue(); ++k)
           buffer.append("-");
@@ -230,15 +240,18 @@ public class OTableFormatter {
         columns.put("value", maxWidthSize - 15);
       }
 
-      if (!tempRids && !rec.getIdentity().isPersistent())
-        tempRids = true;
+      if (!tempRids && !rec.getIdentity().isPersistent()) {
+          tempRids = true;
+      }
 
-      if (limit > -1 && fetched++ >= limit)
-        break;
+      if (limit > -1 && fetched++ >= limit) {
+          break;
+      }
     }
 
-    if (tempRids)
-      columns.remove("@RID");
+    if (tempRids) {
+        columns.remove("@RID");
+    }
 
     // COMPUTE MAXIMUM WIDTH
     int width = 0;
@@ -264,20 +277,23 @@ public class OTableFormatter {
         for (Map.Entry<String, Integer> entry : orderedColumns) {
           final int redux = entry.getValue() * 10 / 100;
 
-          if (entry.getValue() - redux < minColumnSize)
-            // RESTART FROM THE LARGEST COLUMN
-            break;
+          if (entry.getValue() - redux < minColumnSize) {
+              // RESTART FROM THE LARGEST COLUMN
+              break;
+          }
 
           entry.setValue(entry.getValue() - redux);
 
           width -= redux;
-          if (width <= maxWidthSize)
-            break;
+          if (width <= maxWidthSize) {
+              break;
+          }
         }
 
-        if (width == oldWidth)
-          // REACHED THE MINIMUM
-          break;
+        if (width == oldWidth) {
+            // REACHED THE MINIMUM
+            break;
+        }
       }
 
       // POPULATE THE COLUMNS WITH THE REDUXED VALUES
@@ -291,31 +307,35 @@ public class OTableFormatter {
 
     }
 
-    if (tempRids)
-      columns.remove("@RID");
+    if (tempRids) {
+        columns.remove("@RID");
+    }
 
     return columns;
   }
 
   private Integer getColumnSize(final Integer iIndex, final ORecord iRecord, final String fieldName, final Integer origSize) {
     Integer newColumnSize;
-    if (origSize == null)
-      // START FROM THE FIELD NAME SIZE
-      newColumnSize = fieldName.length();
-    else
-      newColumnSize = Math.max(origSize, fieldName.length());
+    if (origSize == null) {
+        // START FROM THE FIELD NAME SIZE
+        newColumnSize = fieldName.length();
+    } else {
+        newColumnSize = Math.max(origSize, fieldName.length());
+    }
 
     final Object fieldValue = getFieldValue(iIndex, iRecord, fieldName);
 
     if (fieldValue != null) {
       final String fieldValueAsString = fieldValue.toString();
-      if (fieldValueAsString.length() > newColumnSize)
-        newColumnSize = fieldValueAsString.length();
+      if (fieldValueAsString.length() > newColumnSize) {
+          newColumnSize = fieldValueAsString.length();
+      }
     }
 
-    if (newColumnSize < minColumnSize)
-      // SET THE MINIMUM SIZE
-      newColumnSize = minColumnSize;
+    if (newColumnSize < minColumnSize) {
+        // SET THE MINIMUM SIZE
+        newColumnSize = minColumnSize;
+    }
 
     return newColumnSize;
   }

@@ -171,8 +171,9 @@ public class OGraphBatchInsertBasic {
    */
   public void begin() {
     walActive = OGlobalConfiguration.USE_WAL.getValueAsBoolean();
-    if (walActive)
-      OGlobalConfiguration.USE_WAL.setValue(false);
+    if (walActive) {
+        OGlobalConfiguration.USE_WAL.setValue(false);
+    }
     if (averageEdgeNumberPerNode > 0) {
       OGlobalConfiguration.RID_BAG_EMBEDDED_DEFAULT_SIZE.setValue(averageEdgeNumberPerNode);
       OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(bonsaiThreshold);
@@ -241,8 +242,9 @@ public class OGraphBatchInsertBasic {
     } finally {
       db.declareIntent(null);
       db.close();
-      if (walActive)
-        OGlobalConfiguration.USE_WAL.setValue(walActive);
+      if (walActive) {
+          OGlobalConfiguration.USE_WAL.setValue(walActive);
+      }
     }
   }
 

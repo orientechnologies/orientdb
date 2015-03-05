@@ -57,8 +57,9 @@ public class OHttpMultipartBaseInputStream extends InputStream {
 
   @Override
   public synchronized int read() throws IOException {
-    if (contentLength < 1)
-      return -1;
+    if (contentLength < 1) {
+        return -1;
+    }
 
     contentLength--;
     if (this.buffer.size() > 0) {

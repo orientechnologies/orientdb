@@ -45,11 +45,13 @@ public class OIndexRebuildOutputListener implements OProgressListener {
     lastDump = startTime;
 
     rebuild = (Boolean) iRebuild;
-    if (iTotal > 0)
-      if (rebuild)
-        OLogManager.instance().info(this, "- Rebuilding index %s.%s (estimated %d items)...", idx.getDatabaseName(), idx.getName(), iTotal);
-      else
-        OLogManager.instance().debug(this, "- Building index %s.%s (estimated %d items)...", idx.getDatabaseName(), idx.getName(), iTotal);
+    if (iTotal > 0) {
+        if (rebuild) {
+            OLogManager.instance().info(this, "- Rebuilding index %s.%s (estimated %d items)...", idx.getDatabaseName(), idx.getName(), iTotal);
+        } else {
+            OLogManager.instance().debug(this, "- Building index %s.%s (estimated %d items)...", idx.getDatabaseName(), idx.getName(), iTotal);
+        }
+    }
   }
 
   @Override
@@ -57,12 +59,13 @@ public class OIndexRebuildOutputListener implements OProgressListener {
     final long now = System.currentTimeMillis();
     if (now - lastDump > 10000) {
       // DUMP EVERY 5 SECONDS FOR LARGE INDEXES
-      if (rebuild)
-        OLogManager.instance().info(this, "--> %3.2f%% progress, %,d indexed so far (%,d items/sec)", iPercent, iCounter,
-            ((iCounter - lastCounter) / 10));
-      else
-        OLogManager.instance().debug(this, "--> %3.2f%% progress, %,d indexed so far (%,d items/sec)", iPercent, iCounter,
-            ((iCounter - lastCounter) / 10));
+      if (rebuild) {
+          OLogManager.instance().info(this, "--> %3.2f%% progress, %,d indexed so far (%,d items/sec)", iPercent, iCounter,
+                  ((iCounter - lastCounter) / 10));
+      } else {
+          OLogManager.instance().debug(this, "--> %3.2f%% progress, %,d indexed so far (%,d items/sec)", iPercent, iCounter,
+                  ((iCounter - lastCounter) / 10));
+      }
       lastDump = now;
       lastCounter = iCounter;
     }
@@ -73,11 +76,13 @@ public class OIndexRebuildOutputListener implements OProgressListener {
   public void onCompletition(final Object iTask, final boolean iSucceed) {
     final long idxSize = idx.getSize();
 
-    if (idxSize > 0)
-      if (rebuild)
-        OLogManager.instance().info(this, "--> OK, indexed %,d items in %,d ms", idxSize, (System.currentTimeMillis() - startTime));
-      else
-        OLogManager.instance()
-            .debug(this, "--> OK, indexed %,d items in %,d ms", idxSize, (System.currentTimeMillis() - startTime));
+    if (idxSize > 0) {
+        if (rebuild) {
+            OLogManager.instance().info(this, "--> OK, indexed %,d items in %,d ms", idxSize, (System.currentTimeMillis() - startTime));
+        } else {
+            OLogManager.instance()
+                    .debug(this, "--> OK, indexed %,d items in %,d ms", idxSize, (System.currentTimeMillis() - startTime));
+        }
+    }
   }
 }

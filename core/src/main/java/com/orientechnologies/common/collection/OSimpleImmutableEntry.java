@@ -102,8 +102,9 @@ public class OSimpleImmutableEntry<K, V> implements Entry<K, V>, java.io.Seriali
 	 */
 	@Override
 	public boolean equals(Object o) {
-		if (!(o instanceof Map.Entry))
-			return false;
+		if (!(o instanceof Map.Entry)) {
+                    return false;
+                }
 		Map.Entry<?, ?> e = (Map.Entry<?, ?>) o;
 		return eq(key, e.getKey()) && eq(value, e.getValue());
 	}

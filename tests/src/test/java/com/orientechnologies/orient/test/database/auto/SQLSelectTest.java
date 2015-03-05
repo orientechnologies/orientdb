@@ -295,8 +295,9 @@ public class SQLSelectTest extends AbstractSelectTest {
       Assert.assertEquals(customReferencesBack.size(), 2);
       Assert.assertTrue(customReferencesBack.get(0) instanceof ODocument);
       Assert.assertTrue(customReferencesBack.get(1) instanceof ODocument);
-    } else
-      Assert.assertTrue(false, "Wrong type received: " + resultset.get(0).field("customReferences"));
+    } else {
+        Assert.assertTrue(false, "Wrong type received: " + resultset.get(0).field("customReferences"));
+    }
 
     resultset = executeQuery(
         "select customReferences[second]['name'] from Profile where customReferences[second]['name'] is not null", database);
@@ -603,13 +604,15 @@ public class SQLSelectTest extends AbstractSelectTest {
     boolean isNullSegment = true; // NULL VALUES AT THE BEGINNING!
     for (ODocument d : result) {
       final String fieldValue = d.field("name");
-      if (fieldValue != null)
-        isNullSegment = false;
-      else
-        Assert.assertTrue(isNullSegment);
+      if (fieldValue != null) {
+          isNullSegment = false;
+      } else {
+          Assert.assertTrue(isNullSegment);
+      }
 
-      if (lastName != null && fieldValue != null)
-        Assert.assertTrue(fieldValue.compareTo(lastName) >= 0);
+      if (lastName != null && fieldValue != null) {
+          Assert.assertTrue(fieldValue.compareTo(lastName) >= 0);
+      }
       lastName = fieldValue;
     }
   }
@@ -706,8 +709,9 @@ public class SQLSelectTest extends AbstractSelectTest {
 
     String lastName = null;
     for (ODocument d : result) {
-      if (lastName != null && d.field("name") != null)
-        Assert.assertTrue(((String) d.field("name")).compareTo(lastName) >= 0);
+      if (lastName != null && d.field("name") != null) {
+          Assert.assertTrue(((String) d.field("name")).compareTo(lastName) >= 0);
+      }
       lastName = d.field("name");
     }
   }
@@ -720,8 +724,9 @@ public class SQLSelectTest extends AbstractSelectTest {
 
     String lastName = null;
     for (ODocument d : result) {
-      if (lastName != null && d.field("name") != null)
-        Assert.assertTrue(((String) d.field("name")).compareTo(lastName) >= 0);
+      if (lastName != null && d.field("name") != null) {
+          Assert.assertTrue(((String) d.field("name")).compareTo(lastName) >= 0);
+      }
       lastName = d.field("name");
     }
   }
@@ -734,8 +739,9 @@ public class SQLSelectTest extends AbstractSelectTest {
 
     String lastName = null;
     for (ODocument d : result) {
-      if (lastName != null && d.field("name") != null)
-        Assert.assertTrue(((String) d.field("name")).compareTo(lastName) <= 0);
+      if (lastName != null && d.field("name") != null) {
+          Assert.assertTrue(((String) d.field("name")).compareTo(lastName) <= 0);
+      }
       lastName = d.field("name");
     }
   }
@@ -1052,8 +1058,9 @@ public class SQLSelectTest extends AbstractSelectTest {
 
     for (ODocument d : resultset) {
       Assert.assertTrue(d.fields() <= 1);
-      if (d.fields() == 1)
-        Assert.assertTrue(d.containsField("name"));
+      if (d.fields() == 1) {
+          Assert.assertTrue(d.containsField("name"));
+      }
     }
   }
 
@@ -1188,18 +1195,22 @@ public class SQLSelectTest extends AbstractSelectTest {
     graph.commit();
 
     OClass oc = graph.getVertexType("vertexA");
-    if (oc == null)
-      oc = graph.createVertexType("vertexA");
+    if (oc == null) {
+        oc = graph.createVertexType("vertexA");
+    }
 
-    if (!oc.existsProperty("name"))
-      oc.createProperty("name", OType.STRING);
+    if (!oc.existsProperty("name")) {
+        oc.createProperty("name", OType.STRING);
+    }
 
-    if (oc.getClassIndex("vertexA_name_idx") == null)
-      oc.createIndex("vertexA_name_idx", OClass.INDEX_TYPE.UNIQUE, "name");
+    if (oc.getClassIndex("vertexA_name_idx") == null) {
+        oc.createIndex("vertexA_name_idx", OClass.INDEX_TYPE.UNIQUE, "name");
+    }
 
     OClass ocb = graph.getVertexType("vertexB");
-    if (ocb == null)
-      ocb = graph.createVertexType("vertexB");
+    if (ocb == null) {
+        ocb = graph.createVertexType("vertexB");
+    }
 
     ocb.createProperty("name", OType.STRING);
     ocb.createProperty("map", OType.EMBEDDEDMAP);
@@ -1595,8 +1606,9 @@ public class SQLSelectTest extends AbstractSelectTest {
     for (ODocument d : result) {
       ORID rid = d.getIdentity();
 
-      if (lastRid != null)
-        Assert.assertTrue(rid.compareTo(lastRid) < 0);
+      if (lastRid != null) {
+          Assert.assertTrue(rid.compareTo(lastRid) < 0);
+      }
       lastRid = rid;
     }
 
@@ -1621,8 +1633,9 @@ public class SQLSelectTest extends AbstractSelectTest {
     for (ODocument document : indexValuesResult) {
       String name = document.field("name");
 
-      if (lastName != null)
-        Assert.assertTrue(lastName.compareTo(name) <= 0);
+      if (lastName != null) {
+          Assert.assertTrue(lastName.compareTo(name) <= 0);
+      }
 
       lastName = name;
       Assert.assertTrue(classResult.remove(document));
@@ -1647,8 +1660,9 @@ public class SQLSelectTest extends AbstractSelectTest {
     for (ODocument document : indexValuesResult) {
       String name = document.field("name");
 
-      if (lastName != null)
-        Assert.assertTrue(lastName.compareTo(name) <= 0);
+      if (lastName != null) {
+          Assert.assertTrue(lastName.compareTo(name) <= 0);
+      }
 
       lastName = name;
       Assert.assertTrue(classResult.remove(document));
@@ -1674,8 +1688,9 @@ public class SQLSelectTest extends AbstractSelectTest {
     for (ODocument document : indexValuesResult) {
       String name = document.field("name");
 
-      if (lastName != null)
-        Assert.assertTrue(lastName.compareTo(name) >= 0);
+      if (lastName != null) {
+          Assert.assertTrue(lastName.compareTo(name) >= 0);
+      }
 
       lastName = name;
       Assert.assertTrue(classResult.remove(document));
@@ -1709,8 +1724,9 @@ public class SQLSelectTest extends AbstractSelectTest {
     final ORecordIteratorCluster<ODocument> iteratorCluster = database.browseCluster(database.getClusterNameById(clusterId));
 
     for (int i = 0; i < 100; i++) {
-      if (!iteratorCluster.hasNext())
-        break;
+      if (!iteratorCluster.hasNext()) {
+          break;
+      }
 
       ODocument doc = iteratorCluster.next();
       positions.add(doc.getIdentity().getClusterPosition());

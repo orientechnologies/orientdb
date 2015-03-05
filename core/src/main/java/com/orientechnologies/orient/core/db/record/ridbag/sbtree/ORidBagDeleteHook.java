@@ -47,12 +47,14 @@ public class ORidBagDeleteHook extends ODocumentHookAbstract {
     if (document.fields() == 0 && document.getIdentity().isPersistent()) {
       // FORCE LOADING OF CLASS+FIELDS TO USE IT AFTER ON onRecordAfterDelete METHOD
       document.reload();
-      if (version.getCounter() > -1 && document.getRecordVersion().compareTo(version) != 0) // check for record version errors
-        if (OFastConcurrentModificationException.enabled())
-          throw OFastConcurrentModificationException.instance();
-        else
-          throw new OConcurrentModificationException(document.getIdentity(), document.getRecordVersion(), version,
-              ORecordOperation.DELETED);
+      if (version.getCounter() > -1 && document.getRecordVersion().compareTo(version) != 0) { // check for record version errors
+          if (OFastConcurrentModificationException.enabled()) {
+              throw OFastConcurrentModificationException.instance();
+          } else {
+              throw new OConcurrentModificationException(document.getIdentity(), document.getRecordVersion(), version,
+                      ORecordOperation.DELETED);
+          }
+      }
     }
 
     final ODocumentFieldWalker documentFieldWalker = new ODocumentFieldWalker();
@@ -64,8 +66,9 @@ public class ORidBagDeleteHook extends ODocumentHookAbstract {
 
     @Override
     public Object visitField(OType type, OType linkedType, Object value) {
-      if (value instanceof ORidBag)
-        ((ORidBag) value).delete();
+      if (value instanceof ORidBag) {
+          ((ORidBag) value).delete();
+      }
 
       return value;
     }

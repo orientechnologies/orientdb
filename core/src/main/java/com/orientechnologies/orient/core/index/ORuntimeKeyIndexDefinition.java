@@ -44,9 +44,10 @@ public class ORuntimeKeyIndexDefinition<T> extends OAbstractIndexDefinition {
   @SuppressWarnings("unchecked")
   public ORuntimeKeyIndexDefinition(final byte iId) {
     serializer = (OBinarySerializer<T>) OBinarySerializerFactory.getInstance().getObjectSerializer(iId);
-    if (serializer == null)
-      throw new OConfigurationException("Runtime index definition cannot find binary serializer with id=" + iId
-          + ". Assure to plug custom serializer into the server.");
+    if (serializer == null) {
+        throw new OConfigurationException("Runtime index definition cannot find binary serializer with id=" + iId
+                + ". Assure to plug custom serializer into the server.");
+    }
   }
 
   public ORuntimeKeyIndexDefinition() {
@@ -98,13 +99,15 @@ public class ORuntimeKeyIndexDefinition<T> extends OAbstractIndexDefinition {
   protected void fromStream() {
     final byte keySerializerId = ((Number) document.field("keySerializerId")).byteValue();
     serializer = (OBinarySerializer<T>) OBinarySerializerFactory.getInstance().getObjectSerializer(keySerializerId);
-    if (serializer == null)
-      throw new OConfigurationException("Runtime index definition cannot find binary serializer with id=" + keySerializerId
-          + ". Assure to plug custom serializer into the server.");
+    if (serializer == null) {
+        throw new OConfigurationException("Runtime index definition cannot find binary serializer with id=" + keySerializerId
+                + ". Assure to plug custom serializer into the server.");
+    }
 
     String collateField = document.field("collate");
-    if (collateField == null)
-      collateField = ODefaultCollate.NAME;
+    if (collateField == null) {
+        collateField = ODefaultCollate.NAME;
+    }
     setNullValuesIgnored(!Boolean.FALSE.equals(document.<Boolean> field("nullValuesIgnored")));
   }
 
@@ -114,10 +117,12 @@ public class ORuntimeKeyIndexDefinition<T> extends OAbstractIndexDefinition {
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
 
     final ORuntimeKeyIndexDefinition<?> that = (ORuntimeKeyIndexDefinition<?>) o;
     return serializer.equals(that.serializer);

@@ -61,8 +61,9 @@ public class OLocalRecordCache extends OAbstractRecordCache {
   public void updateRecord(final ORecord record) {
     if (record.getIdentity().getClusterId() != excludedCluster && record.getIdentity().isValid()
         && !record.getRecordVersion().isTombstone()) {
-      if (underlying.get(record.getIdentity()) != record)
-        underlying.put(record);
+      if (underlying.get(record.getIdentity()) != record) {
+          underlying.put(record);
+      }
     }
   }
 
@@ -77,11 +78,12 @@ public class OLocalRecordCache extends OAbstractRecordCache {
     ORecord record;
     record = underlying.get(rid);
 
-    if (record != null)
-      Orient.instance().getProfiler().updateCounter(CACHE_HIT, "Record found in Level1 Cache", 1L, "db.*.cache.level1.cache.found");
-    else
-      Orient.instance().getProfiler()
-          .updateCounter(CACHE_MISS, "Record not found in Level1 Cache", 1L, "db.*.cache.level1.cache.notFound");
+    if (record != null) {
+        Orient.instance().getProfiler().updateCounter(CACHE_HIT, "Record found in Level1 Cache", 1L, "db.*.cache.level1.cache.found");
+    } else {
+        Orient.instance().getProfiler()
+                .updateCounter(CACHE_MISS, "Record not found in Level1 Cache", 1L, "db.*.cache.level1.cache.notFound");
+    }
 
     return record;
   }

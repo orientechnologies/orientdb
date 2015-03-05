@@ -313,32 +313,37 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseDocumen
   }
 
   public ORecord getRecordByUserObject(final Object iUserObject, final boolean iCreateIfNotAvailable) {
-    if (databaseOwner != this)
-      return getDatabaseOwner().getRecordByUserObject(iUserObject, false);
+    if (databaseOwner != this) {
+        return getDatabaseOwner().getRecordByUserObject(iUserObject, false);
+    }
 
     return (ORecord) iUserObject;
   }
 
   public void registerUserObject(final Object iObject, final ORecord iRecord) {
-    if (databaseOwner != this)
-      getDatabaseOwner().registerUserObject(iObject, iRecord);
+    if (databaseOwner != this) {
+        getDatabaseOwner().registerUserObject(iObject, iRecord);
+    }
   }
 
   public void registerUserObjectAfterLinkSave(ORecord iRecord) {
-    if (databaseOwner != this)
-      getDatabaseOwner().registerUserObjectAfterLinkSave(iRecord);
+    if (databaseOwner != this) {
+        getDatabaseOwner().registerUserObjectAfterLinkSave(iRecord);
+    }
   }
 
   public Object getUserObjectByRecord(final OIdentifiable iRecord, final String iFetchPlan) {
-    if (databaseOwner != this)
-      return databaseOwner.getUserObjectByRecord(iRecord, iFetchPlan);
+    if (databaseOwner != this) {
+        return databaseOwner.getUserObjectByRecord(iRecord, iFetchPlan);
+    }
 
     return iRecord;
   }
 
   public boolean existsUserObjectByRID(final ORID iRID) {
-    if (databaseOwner != this)
-      return databaseOwner.existsUserObjectByRID(iRID);
+    if (databaseOwner != this) {
+        return databaseOwner.existsUserObjectByRID(iRID);
+    }
     return false;
   }
 
@@ -408,8 +413,9 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseDocumen
         for (OIndex<?> index : getMetadata().getIndexManager().getIndexes()) {
           index.flush();
         }
-        if (callable != null)
-          return callable.call();
+        if (callable != null) {
+            return callable.call();
+        }
         return null;
       }
     }, iListener, compressionLevel, bufferSize);
@@ -509,18 +515,20 @@ public abstract class ODatabaseRecordWrapperAbstract<DB extends ODatabaseDocumen
   }
 
   protected void checkClusterBoundedToClass(final int iClusterId) {
-    if (iClusterId == -1)
-      return;
+    if (iClusterId == -1) {
+        return;
+    }
 
     for (OClass clazz : ((OMetadataInternal)getMetadata()).getImmutableSchemaSnapshot().getClasses()) {
-      if (clazz.getDefaultClusterId() == iClusterId)
-        throw new OSchemaException("Cannot drop the cluster '" + getClusterNameById(iClusterId) + "' because the classes ['"
-            + clazz.getName() + "'] are bound to it. Drop these classes before dropping the cluster");
-      else if (clazz.getClusterIds().length > 1) {
+      if (clazz.getDefaultClusterId() == iClusterId) {
+          throw new OSchemaException("Cannot drop the cluster '" + getClusterNameById(iClusterId) + "' because the classes ['"
+                  + clazz.getName() + "'] are bound to it. Drop these classes before dropping the cluster");
+      } else if (clazz.getClusterIds().length > 1) {
         for (int i : clazz.getClusterIds()) {
-          if (i == iClusterId)
-            throw new OSchemaException("Cannot drop the cluster '" + getClusterNameById(iClusterId) + "' because the classes ['"
-                + clazz.getName() + "'] are bound to it. Drop these classes before dropping the cluster");
+          if (i == iClusterId) {
+              throw new OSchemaException("Cannot drop the cluster '" + getClusterNameById(iClusterId) + "' because the classes ['"
+                      + clazz.getName() + "'] are bound to it. Drop these classes before dropping the cluster");
+              }
         }
       }
     }

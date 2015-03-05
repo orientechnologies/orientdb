@@ -71,8 +71,9 @@ public class OSBTreeBonsaiLeafBucketTest {
     Map<Long, Integer> keyIndexMap = new HashMap<Long, Integer>();
     for (Long key : keys) {
       if (!treeBucket.addEntry(index, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(OBonsaiBucketPointer.NULL,
-          OBonsaiBucketPointer.NULL, key, new ORecordId(index, index)), true))
-        break;
+          OBonsaiBucketPointer.NULL, key, new ORecordId(index, index)), true)) {
+          break;
+      }
       keyIndexMap.put(key, index);
       index++;
     }
@@ -111,8 +112,9 @@ public class OSBTreeBonsaiLeafBucketTest {
     int index = 0;
     for (Long key : keys) {
       if (!treeBucket.addEntry(index, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(OBonsaiBucketPointer.NULL,
-          OBonsaiBucketPointer.NULL, key, new ORecordId(index, index)), true))
-        break;
+          OBonsaiBucketPointer.NULL, key, new ORecordId(index, index)), true)) {
+          break;
+      }
 
       keyIndexMap.put(key, index);
       index++;
@@ -158,8 +160,9 @@ public class OSBTreeBonsaiLeafBucketTest {
     int index = 0;
     for (Long key : keys) {
       if (!treeBucket.addEntry(index, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(OBonsaiBucketPointer.NULL,
-          OBonsaiBucketPointer.NULL, key, new ORecordId(index, index)), true))
-        break;
+          OBonsaiBucketPointer.NULL, key, new ORecordId(index, index)), true)) {
+          break;
+      }
 
       index++;
     }
@@ -190,8 +193,9 @@ public class OSBTreeBonsaiLeafBucketTest {
       Long key = keysIterator.next();
 
       if (!treeBucket.addEntry(index, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(OBonsaiBucketPointer.NULL,
-          OBonsaiBucketPointer.NULL, key, new ORecordId(index, index)), true))
-        break;
+          OBonsaiBucketPointer.NULL, key, new ORecordId(index, index)), true)) {
+          break;
+      }
 
       keyIndexMap.put(key, index);
       index++;
@@ -234,8 +238,9 @@ public class OSBTreeBonsaiLeafBucketTest {
     int index = 0;
     for (Long key : keys) {
       if (!treeBucket.addEntry(index, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(OBonsaiBucketPointer.NULL,
-          OBonsaiBucketPointer.NULL, key, new ORecordId(index, index)), true))
-        break;
+          OBonsaiBucketPointer.NULL, key, new ORecordId(index, index)), true)) {
+          break;
+      }
 
       index++;
     }
@@ -270,8 +275,9 @@ public class OSBTreeBonsaiLeafBucketTest {
       Long key = keysIterator.next();
 
       if (!treeBucket.addEntry(index, new OSBTreeBonsaiBucket.SBTreeEntry<Long, OIdentifiable>(OBonsaiBucketPointer.NULL,
-          OBonsaiBucketPointer.NULL, key, new ORecordId(index, index)), true))
-        break;
+          OBonsaiBucketPointer.NULL, key, new ORecordId(index, index)), true)) {
+          break;
+      }
 
       keyIndexMap.put(key, index);
       index++;

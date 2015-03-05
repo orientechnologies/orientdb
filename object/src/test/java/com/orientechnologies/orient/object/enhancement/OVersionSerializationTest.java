@@ -44,8 +44,9 @@ public class OVersionSerializationTest {
     database.getEntityManager().registerEntityClass(EntityStringVersion.class);
     database.getEntityManager().registerEntityClass(EntityObjectVersion.class);
     database.getEntityManager().registerEntityClass(EntityExactVersionType.class);
-    if (!OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean())
-      database.getEntityManager().registerEntityClass(EntityLongVersion.class);
+    if (!OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean()) {
+        database.getEntityManager().registerEntityClass(EntityLongVersion.class);
+    }
   }
 
   @AfterClass
@@ -98,8 +99,9 @@ public class OVersionSerializationTest {
 
   @Test
   public void testIntegerSerialization() throws Exception {
-    if (OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean())
-      return;
+    if (OGlobalConfiguration.DB_USE_DISTRIBUTED_VERSION.getValueAsBoolean()) {
+        return;
+    }
 
     final EntityLongVersion object = database.save(new EntityLongVersion());
     final EntityLongVersion loadedObject = database.load(object.getRid());

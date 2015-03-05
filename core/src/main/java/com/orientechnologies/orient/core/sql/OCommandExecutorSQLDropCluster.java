@@ -49,20 +49,24 @@ public class OCommandExecutorSQLDropCluster extends OCommandExecutorSQLAbstract 
 
     int oldPos = 0;
     int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_DROP))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_DROP)) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_DROP + " not found. Use " + getSyntax(), parserText, oldPos);
+    }
 
     pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_CLUSTER))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_CLUSTER)) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), parserText, oldPos);
+    }
 
     pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Expected <cluster>. Use " + getSyntax(), parserText, pos);
+    if (pos == -1) {
+        throw new OCommandSQLParsingException("Expected <cluster>. Use " + getSyntax(), parserText, pos);
+    }
 
     clusterName = word.toString();
-    if (clusterName == null)
-      throw new OCommandSQLParsingException("Cluster is null. Use " + getSyntax(), parserText, pos);
+    if (clusterName == null) {
+        throw new OCommandSQLParsingException("Cluster is null. Use " + getSyntax(), parserText, pos);
+    }
 
     return this;
   }
@@ -71,8 +75,9 @@ public class OCommandExecutorSQLDropCluster extends OCommandExecutorSQLAbstract 
    * Execute the DROP CLUSTER.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (clusterName == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    if (clusterName == null) {
+        throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    }
 
     final ODatabaseDocumentInternal database = getDatabase();
 
@@ -80,9 +85,10 @@ public class OCommandExecutorSQLDropCluster extends OCommandExecutorSQLAbstract 
     final int clusterId = database.getStorage().getClusterIdByName(clusterName);
     for (OClass iClass : database.getMetadata().getSchema().getClasses()) {
       for (int i : iClass.getClusterIds()) {
-        if (i == clusterId)
-          // IN USE
-          return false;
+        if (i == clusterId) {
+            // IN USE
+            return false;
+        }
       }
     }
 
@@ -94,8 +100,9 @@ public class OCommandExecutorSQLDropCluster extends OCommandExecutorSQLAbstract 
     final ODatabaseDocument database = getDatabase();
     for (OClass iClass : database.getMetadata().getSchema().getClasses()) {
       for (int i : iClass.getClusterIds()) {
-        if (i == clusterId)
-          return false;
+        if (i == clusterId) {
+            return false;
+        }
       }
     }
     return true;

@@ -50,8 +50,9 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
 
   public void reuse(final Object iOwner, final Object[] iAdditionalArgs) {
     ownerPool = (OObjectDatabasePool) iOwner;
-    if (isClosed())
-      open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
+    if (isClosed()) {
+        open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1]);
+    }
     init();
     // getMetadata().reload();
     ODatabaseRecordThreadLocal.INSTANCE.set(getUnderlying());
@@ -93,8 +94,9 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
    */
   @Override
   public void close() {
-    if (isClosed())
-      return;
+    if (isClosed()) {
+        return;
+    }
 
     checkOpeness();
     if (ownerPool.getConnectionsInCurrentThread(getURL(), userName) > 1) {
@@ -133,9 +135,10 @@ public class OObjectDatabaseTxPooled extends OObjectDatabaseTx implements ODatab
 
   @Override
   protected void checkOpeness() {
-    if (ownerPool == null)
-      throw new ODatabaseException(
-          "Database instance has been released to the pool. Get another database instance from the pool with the right username and password");
+    if (ownerPool == null) {
+        throw new ODatabaseException(
+                "Database instance has been released to the pool. Get another database instance from the pool with the right username and password");
+    }
 
     super.checkOpeness();
   }

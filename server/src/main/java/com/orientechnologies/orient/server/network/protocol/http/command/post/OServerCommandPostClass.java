@@ -40,8 +40,9 @@ public class OServerCommandPostClass extends OServerCommandAuthenticatedDbAbstra
      try {
        db = getProfiledDatabaseInstance(iRequest);
 
-       if (db.getMetadata().getSchema().getClass(urlParts[2]) != null)
-         throw new IllegalArgumentException("Class '" + urlParts[2] + "' already exists");
+       if (db.getMetadata().getSchema().getClass(urlParts[2]) != null) {
+           throw new IllegalArgumentException("Class '" + urlParts[2] + "' already exists");
+       }
 
        db.getMetadata().getSchema().createClass(urlParts[2]);
 
@@ -49,8 +50,9 @@ public class OServerCommandPostClass extends OServerCommandAuthenticatedDbAbstra
            .getMetadata().getSchema().getClasses().size(), null);
 
      } finally {
-       if (db != null)
-         db.close();
+       if (db != null) {
+           db.close();
+       }
      }
      return false;
    }

@@ -46,8 +46,9 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
    public boolean beforeExecute(OHttpRequest iRequest, OHttpResponse iResponse) throws IOException {
      final String[] urlParts = checkSyntax(iRequest.url, 2, "Syntax error: connect/<database>[/<user>/<password>]");
 
-     if (urlParts == null || urlParts.length < 3)
-       return super.beforeExecute(iRequest, iResponse);
+     if (urlParts == null || urlParts.length < 3) {
+         return super.beforeExecute(iRequest, iResponse);
+     }
 
      // USER+PASSWD AS PARAMETERS
      setNoCache(iResponse);

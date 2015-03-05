@@ -40,10 +40,11 @@ public class AbstractClassTest extends DocumentDBBaseTest {
 	@BeforeClass
   public void createSchema() throws IOException {
     database = new ODatabaseDocumentTx(url);
-    if (ODatabaseHelper.existsDatabase(database, "plocal"))
-      database.open("admin", "admin");
-    else
-      database.create();
+    if (ODatabaseHelper.existsDatabase(database, "plocal")) {
+        database.open("admin", "admin");
+    } else {
+        database.create();
+    }
 
     OClass abstractPerson = database.getMetadata().getSchema().createAbstractClass("AbstractPerson");
     abstractPerson.createProperty("name", OType.STRING);

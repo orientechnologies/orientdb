@@ -44,32 +44,38 @@ public abstract class OAbstractIndexDefinition extends ODocumentWrapperNoClass i
   }
 
   public void setCollate(final OCollate collate) {
-    if (collate == null)
-      throw new IllegalArgumentException("COLLATE cannot be null");
+    if (collate == null) {
+        throw new IllegalArgumentException("COLLATE cannot be null");
+    }
     this.collate = collate;
   }
 
   public void setCollate(String iCollate) {
-    if (iCollate == null)
-      iCollate = ODefaultCollate.NAME;
+    if (iCollate == null) {
+        iCollate = ODefaultCollate.NAME;
+    }
 
     setCollate(OSQLEngine.getCollate(iCollate));
   }
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
 
     OAbstractIndexDefinition that = (OAbstractIndexDefinition) o;
 
-    if (!collate.equals(that.collate))
-      return false;
+    if (!collate.equals(that.collate)) {
+        return false;
+    }
 
-    if (nullValuesIgnored != that.nullValuesIgnored)
-      return false;
+    if (nullValuesIgnored != that.nullValuesIgnored) {
+        return false;
+    }
 
     return true;
   }

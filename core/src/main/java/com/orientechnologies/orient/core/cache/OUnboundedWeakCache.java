@@ -57,9 +57,10 @@ public class OUnboundedWeakCache extends OAbstractMapCache<WeakHashMap<ORID, Wea
   }
 
   private ORecord get(WeakReference<ORecord> value) {
-    if (value == null)
-      return null;
-    else
-      return value.get();
+    if (value == null) {
+        return null;
+    } else {
+        return value.get();
+    }
   }
 }

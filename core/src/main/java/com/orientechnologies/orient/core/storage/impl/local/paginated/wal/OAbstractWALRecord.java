@@ -46,15 +46,18 @@ public abstract class OAbstractWALRecord implements OWALRecord {
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
 
     final OAbstractWALRecord that = (OAbstractWALRecord) o;
 
-    if (lsn != null ? !lsn.equals(that.lsn) : that.lsn != null)
-      return false;
+    if (lsn != null ? !lsn.equals(that.lsn) : that.lsn != null) {
+        return false;
+    }
 
     return true;
   }

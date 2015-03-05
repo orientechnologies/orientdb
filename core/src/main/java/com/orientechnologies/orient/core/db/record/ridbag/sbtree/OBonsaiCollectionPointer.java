@@ -57,17 +57,21 @@ public class OBonsaiCollectionPointer {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
 
     OBonsaiCollectionPointer that = (OBonsaiCollectionPointer) o;
 
-    if (fileId != that.fileId)
-      return false;
-    if (!rootPointer.equals(that.rootPointer))
-      return false;
+    if (fileId != that.fileId) {
+        return false;
+    }
+    if (!rootPointer.equals(that.rootPointer)) {
+        return false;
+    }
 
     return true;
   }

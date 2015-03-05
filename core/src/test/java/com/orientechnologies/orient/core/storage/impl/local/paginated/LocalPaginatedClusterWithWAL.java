@@ -67,12 +67,14 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     when(storage.getComponentsFactory()).thenReturn(new OCurrentStorageComponentsFactory(storageConfiguration));
 
     File buildDir = new File(buildDirectory);
-    if (!buildDir.exists())
-      buildDir.mkdirs();
+    if (!buildDir.exists()) {
+        buildDir.mkdirs();
+    }
 
     File storageDirOneFile = new File(storageDir);
-    if (!storageDirOneFile.exists())
-      storageDirOneFile.mkdirs();
+    if (!storageDirOneFile.exists()) {
+        storageDirOneFile.mkdirs();
+    }
 
     writeAheadLog = new ODiskWriteAheadLog(6000, -1, 10 * 1024L * OWALPage.PAGE_SIZE, storage);
 
@@ -110,12 +112,14 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
     when(testStorage.getName()).thenReturn("localPaginatedClusterWithWALTestTwo");
 
     File buildDir = new File(buildDirectory);
-    if (!buildDir.exists())
-      buildDir.mkdirs();
+    if (!buildDir.exists()) {
+        buildDir.mkdirs();
+    }
 
     File storageDirTwoFile = new File(testStorageDir);
-    if (!storageDirTwoFile.exists())
-      storageDirTwoFile.mkdirs();
+    if (!storageDirTwoFile.exists()) {
+        storageDirTwoFile.mkdirs();
+    }
 
     testDiskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 1648L * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, testStorage, null, false, false);
@@ -382,16 +386,18 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
         atomicChangeIsProcessed = false;
 
         for (OWALRecord restoreRecord : atomicUnit) {
-          if (restoreRecord instanceof OAtomicUnitStartRecord || restoreRecord instanceof OAtomicUnitEndRecord)
-            continue;
+          if (restoreRecord instanceof OAtomicUnitStartRecord || restoreRecord instanceof OAtomicUnitEndRecord) {
+              continue;
+          }
 
           final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) restoreRecord;
 
           final long fileId = updatePageRecord.getFileId();
           final long pageIndex = updatePageRecord.getPageIndex();
 
-          if (!testDiskCache.isOpen(fileId))
-            testDiskCache.openFile(fileId);
+          if (!testDiskCache.isOpen(fileId)) {
+              testDiskCache.openFile(fileId);
+          }
 
           final OCacheEntry cacheEntry = testDiskCache.load(fileId, pageIndex, true);
           cacheEntry.acquireExclusiveLock();

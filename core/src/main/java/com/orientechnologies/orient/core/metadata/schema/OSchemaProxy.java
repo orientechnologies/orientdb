@@ -78,12 +78,14 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   }
 
   public OClass getOrCreateClass(final String iClassName, final OClass iSuperClass) {
-    if (iClassName == null)
-      return null;
+    if (iClassName == null) {
+        return null;
+    }
 
     OClass cls = delegate.getClass(iClassName.toLowerCase());
-    if (cls != null)
-      return cls;
+    if (cls != null) {
+        return cls;
+    }
 
     setCurrentDatabaseInThreadLocal();
     cls = delegate.getOrCreateClass(iClassName, iSuperClass);
@@ -135,22 +137,25 @@ public class OSchemaProxy extends OProxedResource<OSchemaShared> implements OSch
   }
 
   public boolean existsClass(final String iClassName) {
-    if (iClassName == null)
-      return false;
+    if (iClassName == null) {
+        return false;
+    }
 
     return delegate.existsClass(iClassName.toLowerCase());
   }
 
   public OClass getClass(final Class<?> iClass) {
-    if (iClass == null)
-      return null;
+    if (iClass == null) {
+        return null;
+    }
 
     return delegate.getClass(iClass);
   }
 
   public OClass getClass(final String iClassName) {
-    if (iClassName == null)
-      return null;
+    if (iClassName == null) {
+        return null;
+    }
 
     return delegate.getClass(iClassName);
   }

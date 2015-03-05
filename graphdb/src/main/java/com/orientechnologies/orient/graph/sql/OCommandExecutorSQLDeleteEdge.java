@@ -80,8 +80,9 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
     String temp = parseOptionalWord(true);
     String originalTemp = null;
 
-    if (temp != null && !parserIsEnded())
-      originalTemp = parserText.substring(parserGetPreviousPosition(), parserGetCurrentPosition()).trim();
+    if (temp != null && !parserIsEnded()) {
+        originalTemp = parserText.substring(parserGetPreviousPosition(), parserGetCurrentPosition()).trim();
+    }
 
     final OModifiableBoolean shutdownFlag = new OModifiableBoolean();
     final OrientGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
@@ -90,23 +91,27 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
 
         if (temp.equals("FROM")) {
           fromExpr = parserRequiredWord(false, "Syntax error", " =><,\r\n");
-          if (rid != null)
-            throwSyntaxErrorException("FROM '" + fromExpr + "' is not allowed when specify a RID (" + rid + ")");
+          if (rid != null) {
+              throwSyntaxErrorException("FROM '" + fromExpr + "' is not allowed when specify a RID (" + rid + ")");
+          }
 
         } else if (temp.equals("TO")) {
           toExpr = parserRequiredWord(false, "Syntax error", " =><,\r\n");
-          if (rid != null)
-            throwSyntaxErrorException("TO '" + toExpr + "' is not allowed when specify a RID (" + rid + ")");
+          if (rid != null) {
+              throwSyntaxErrorException("TO '" + toExpr + "' is not allowed when specify a RID (" + rid + ")");
+          }
 
         } else if (temp.startsWith("#")) {
           rid = new ORecordId(temp);
-          if (fromExpr != null || toExpr != null)
-            throwSyntaxErrorException("Specifying the RID " + rid + " is not allowed with FROM/TO");
+          if (fromExpr != null || toExpr != null) {
+              throwSyntaxErrorException("Specifying the RID " + rid + " is not allowed with FROM/TO");
+          }
 
         } else if (temp.equals(KEYWORD_WHERE)) {
-          if (clazz == null)
-            // ASSIGN DEFAULT CLASS
-            clazz = graph.getEdgeType(OrientEdgeType.CLASS_NAME);
+          if (clazz == null) {
+              // ASSIGN DEFAULT CLASS
+              clazz = graph.getEdgeType(OrientEdgeType.CLASS_NAME);
+          }
 
           where = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetCurrentPosition()) : "";
 
@@ -119,32 +124,38 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
           // GET/CHECK CLASS NAME
           label = originalTemp;
           clazz = graph.getEdgeType(temp);
-          if (clazz == null)
-            throw new OCommandSQLParsingException("Class '" + temp + " was not found");
+          if (clazz == null) {
+              throw new OCommandSQLParsingException("Class '" + temp + " was not found");
+          }
         }
 
         temp = parseOptionalWord(true);
-        if (parserIsEnded())
-          break;
+        if (parserIsEnded()) {
+            break;
+        }
       }
 
-      if (where == null)
-        where = "";
-      else
-        where = " WHERE " + where;
+      if (where == null) {
+          where = "";
+      } else {
+          where = " WHERE " + where;
+      }
 
-      if (fromExpr == null && toExpr == null && rid == null)
-        if (clazz == null)
-          // DELETE ALL THE EDGES
-          query = graph.getRawGraph().command(new OSQLAsynchQuery<ODocument>("select from E" + where, this));
-        else
-          // DELETE EDGES OF CLASS X
-          query = graph.getRawGraph().command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + where, this));
+      if (fromExpr == null && toExpr == null && rid == null) {
+          if (clazz == null) {
+              // DELETE ALL THE EDGES
+              query = graph.getRawGraph().command(new OSQLAsynchQuery<ODocument>("select from E" + where, this));
+          } else {
+              // DELETE EDGES OF CLASS X
+              query = graph.getRawGraph().command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + where, this));
+          }
+      }
 
       return this;
     } finally {
-      if (shutdownFlag.getValue())
-        graph.shutdown(false);
+      if (shutdownFlag.getValue()) {
+          graph.shutdown(false);
+      }
     }
 
   }
@@ -153,8 +164,9 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
    * Execute the command and return the ODocument object created.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (fromExpr == null && toExpr == null && rid == null && query == null && compiledFilter == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    if (fromExpr == null && toExpr == null && rid == null && query == null && compiledFilter == null) {
+        throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    }
 
     for (int r = 0; r < retry; ++r) {
       try {
@@ -181,25 +193,29 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
               @Override
               public Object call(OrientBaseGraph graph) {
                 Set<OIdentifiable> fromIds = null;
-                if (fromExpr != null)
-                  fromIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), fromExpr, context, iArgs);
+                if (fromExpr != null) {
+                    fromIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), fromExpr, context, iArgs);
+                }
                 Set<OIdentifiable> toIds = null;
-                if (toExpr != null)
-                  toIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), toExpr, context, iArgs);
+                if (toExpr != null) {
+                    toIds = OSQLEngine.getInstance().parseRIDTarget(graph.getRawGraph(), toExpr, context, iArgs);
+                }
 
                 if (fromIds != null && toIds != null) {
                   // REMOVE ALL THE EDGES BETWEEN VERTICES
                   for (OIdentifiable fromId : fromIds) {
                     final OrientVertex v = graph.getVertex(fromId);
-                    if (v != null)
-                      for (Edge e : v.getEdges(Direction.OUT)) {
-                        if (label != null && !label.equals(e.getLabel()))
-                          continue;
-
-                        final OIdentifiable inV = ((OrientEdge) e).getInVertex();
-                        if (inV != null && toIds.contains(inV.getIdentity()))
-                          edges.add((OrientEdge) e);
-                      }
+                    if (v != null) {
+                        for (Edge e : v.getEdges(Direction.OUT)) {
+                            if (label != null && !label.equals(e.getLabel())) {
+                                continue;
+                            }
+                            final OIdentifiable inV = ((OrientEdge) e).getInVertex();
+                            if (inV != null && toIds.contains(inV.getIdentity())) {
+                                edges.add((OrientEdge) e);
+                            }
+                        }
+                    }
                   }
                 } else if (fromIds != null) {
                   // REMOVE ALL THE EDGES THAT START FROM A VERTEXES
@@ -207,8 +223,9 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
                     final OrientVertex v = graph.getVertex(fromId);
                     if (v != null) {
                       for (Edge e : v.getEdges(Direction.OUT)) {
-                        if (label != null && !label.equals(e.getLabel()))
-                          continue;
+                        if (label != null && !label.equals(e.getLabel())) {
+                            continue;
+                        }
 
                         edges.add((OrientEdge) e);
                       }
@@ -220,22 +237,25 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
                     final OrientVertex v = graph.getVertex(toId);
                     if (v != null) {
                       for (Edge e : v.getEdges(Direction.IN)) {
-                        if (label != null && !label.equals(e.getLabel()))
-                          continue;
+                        if (label != null && !label.equals(e.getLabel())) {
+                            continue;
+                        }
 
                         edges.add((OrientEdge) e);
                       }
                     }
                   }
-                } else
-                  throw new OCommandExecutionException("Invalid target: " + toIds);
+                } else {
+                    throw new OCommandExecutionException("Invalid target: " + toIds);
+                }
 
                 if (compiledFilter != null) {
                   // ADDITIONAL FILTERING
                   for (Iterator<OrientEdge> it = edges.iterator(); it.hasNext();) {
                     final OrientEdge edge = it.next();
-                    if (!(Boolean) compiledFilter.evaluate((ODocument) edge.getRecord(), null, context))
-                      it.remove();
+                    if (!(Boolean) compiledFilter.evaluate((ODocument) edge.getRecord(), null, context)) {
+                        it.remove();
+                    }
                   }
                 }
 
@@ -263,16 +283,18 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
         break;
 
       } catch (OConcurrentModificationException e) {
-        if (r + 1 >= retry)
-          // NO RETRY; PROPAGATE THE EXCEPTION
-          throw e;
+        if (r + 1 >= retry) {
+            // NO RETRY; PROPAGATE THE EXCEPTION
+            throw e;
+        }
 
         // RETRY?
-        if (wait > 0)
-          try {
-            Thread.sleep(wait);
-          } catch (InterruptedException e1) {
-          }
+        if (wait > 0) {
+            try {
+                Thread.sleep(wait);
+            } catch (InterruptedException e1) {
+            }
+        }
       }
     }
 
@@ -287,8 +309,9 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
 
     if (compiledFilter != null) {
       // ADDITIONAL FILTERING
-      if (!(Boolean) compiledFilter.evaluate((ODocument) id.getRecord(), null, context))
-        return true;
+      if (!(Boolean) compiledFilter.evaluate((ODocument) id.getRecord(), null, context)) {
+          return true;
+      }
     }
 
     if (id.getIdentity().isValid()) {
@@ -310,8 +333,9 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
 
   @Override
   public void end() {
-    if (graph != null && shutdownFlag.getValue())
-      graph.shutdown(false);
+    if (graph != null && shutdownFlag.getValue()) {
+        graph.shutdown(false);
+    }
   }
 
   @Override

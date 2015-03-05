@@ -58,11 +58,12 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
   @Test(dependsOnMethods = "testDbExport")
   public void testDbImport() throws IOException {
     final File importDir = new File(testPath + "/" + NEW_DB_PATH);
-    if (importDir.exists())
-      for (File f : importDir.listFiles())
-        f.delete();
-    else
-      importDir.mkdir();
+    if (importDir.exists()) {
+        for (File f : importDir.listFiles())
+            f.delete();
+    } else {
+        importDir.mkdir();
+    }
 
     ODatabaseDocumentTx database = new ODatabaseDocumentTx(getStorageType() + ":" + testPath + "/" + NEW_DB_URL);
     database.create();

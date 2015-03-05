@@ -63,8 +63,9 @@ public class LocalPaginatedClusterTest {
 
     System.out.println("Start LocalPaginatedClusterTest");
     buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null || buildDirectory.isEmpty())
-      buildDirectory = ".";
+    if (buildDirectory == null || buildDirectory.isEmpty()) {
+        buildDirectory = ".";
+    }
 
     buildDirectory += "/localPaginatedClusterTest";
 
@@ -1141,9 +1142,9 @@ public class LocalPaginatedClusterTest {
 
       physicalPosition = paginatedCluster.getPhysicalPosition(physicalPosition);
 
-      if (removedPositions.contains(position))
-        Assert.assertNull(physicalPosition);
-      else {
+      if (removedPositions.contains(position)) {
+          Assert.assertNull(physicalPosition);
+      } else {
         Assert.assertEquals(physicalPosition.clusterPosition, position.clusterPosition);
         Assert.assertEquals(physicalPosition.recordType, position.recordType);
 

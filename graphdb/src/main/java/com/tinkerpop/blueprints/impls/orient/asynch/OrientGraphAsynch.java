@@ -153,8 +153,9 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
               case ERROR:
                 throw new ORecordDuplicatedException("Cannot create a new vertices", v.getIdentity());
               case RETRY:
-                if (retry > maxRetries)
-                  break;
+                if (retry > maxRetries) {
+                    break;
+              }
               }
             }
           }
@@ -174,9 +175,10 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
           for (int retry = 0;; retry++) {
             indexUniqueException.incrementAndGet();
 
-            if (OLogManager.instance().isDebugEnabled())
-              OLogManager.instance().debug(this, "Vertex %s already created, merge it and retry again (retry=%d/%d)", id, retry,
-                  maxRetries);
+            if (OLogManager.instance().isDebugEnabled()) {
+                OLogManager.instance().debug(this, "Vertex %s already created, merge it and retry again (retry=%d/%d)", id, retry,
+                        maxRetries);
+            }
 
             final ODocument existent = e.getRid().getRecord();
 
@@ -226,8 +228,9 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
     final OrientBaseGraph g = acquire();
     try {
       OrientVertex v = getFromCache(id);
-      if (v != null)
-        return v;
+      if (v != null) {
+          return v;
+      }
 
       v = g.addVertex(id);
 
@@ -270,16 +273,19 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
 
   @Override
   public Vertex getVertex(final Object id) {
-    if (id == null)
-      return null;
+    if (id == null) {
+        return null;
+    }
 
-    if (id instanceof OrientVertex)
-      return (Vertex) id;
+    if (id instanceof OrientVertex) {
+        return (Vertex) id;
+    }
 
     init();
 
-    if (id instanceof OIdentifiable)
-      return new OrientVertex((OrientBaseGraph) null, (OIdentifiable) id);
+    if (id instanceof OIdentifiable) {
+        return new OrientVertex((OrientBaseGraph) null, (OIdentifiable) id);
+    }
 
     OrientVertex v = getFromCache(id);
     if (v != null) {
@@ -312,8 +318,9 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
         try {
           if (vertexCache != null) {
             final Object field = vertex.getProperty(keyFieldName);
-            if (field != null)
-              vertexCache.remove(field);
+            if (field != null) {
+                vertexCache.remove(field);
+            }
           }
 
           g.removeVertex(vertex);
@@ -693,8 +700,9 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
       }
     }
 
-    if (vertexCache != null)
-      vertexCache.clear();
+    if (vertexCache != null) {
+        vertexCache.clear();
+    }
 
     dumpStats();
 
@@ -779,15 +787,17 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
   public OrientBaseGraph acquire() {
     init();
     final OrientBaseGraph g;
-    if (transactional)
-      g = factory.getTx();
-    else
-      g = factory.getNoTx();
+    if (transactional) {
+        g = factory.getTx();
+    } else {
+        g = factory.getNoTx();
+    }
 
     if (conflictStrategy != null) {
       final OStorage stg = g.getRawGraph().getStorage().getUnderlying();
-      if (stg instanceof OAbstractPaginatedStorage)
-        stg.setConflictStrategy(conflictStrategy);
+      if (stg instanceof OAbstractPaginatedStorage) {
+          stg.setConflictStrategy(conflictStrategy);
+      }
     }
 
     return g;
@@ -900,8 +910,9 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
   protected void init() {
     if (factory == null) {
       synchronized (this) {
-        if (factory == null)
-          factory = new OrientGraphFactory(url, userName, userPassword).setupPool(1, maxPoolSize);
+        if (factory == null) {
+            factory = new OrientGraphFactory(url, userName, userPassword).setupPool(1, maxPoolSize);
+        }
       }
     }
   }
@@ -919,8 +930,9 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
           verticesReloaded.incrementAndGet();
           existent.reload(null, true);
           return MERGE_RESULT.RETRY;
-        } else
-          return MERGE_RESULT.ERROR;
+        } else {
+            return MERGE_RESULT.ERROR;
+        }
       }
     }
 
@@ -930,16 +942,18 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
   protected void reloadVertices(final OrientExtendedVertex vOut, final OrientExtendedVertex vIn, final String iLabel,
       final int retry, final OException e) {
     if (retry < maxRetries) {
-      if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().debug(this, "Conflict on addEdge(%s,%s,%s), retrying (retry=%d/%d). Cause: %s. Thread: %d);", e,
-            vOut, vIn, iLabel, retry, maxRetries, e, Thread.currentThread().getId());
+      if (OLogManager.instance().isDebugEnabled()) {
+          OLogManager.instance().debug(this, "Conflict on addEdge(%s,%s,%s), retrying (retry=%d/%d). Cause: %s. Thread: %d);", e,
+                  vOut, vIn, iLabel, retry, maxRetries, e, Thread.currentThread().getId());
+      }
 
       if (e instanceof OConcurrentModificationException) {
         // LOAD ONLY THE CONFLICTED RECORD ONLY
-        if (((OConcurrentModificationException) e).getRid().equals(vOut.getIdentity()))
-          vOut.reload();
-        else
-          vIn.reload();
+        if (((OConcurrentModificationException) e).getRid().equals(vOut.getIdentity())) {
+            vOut.reload();
+        } else {
+            vIn.reload();
+        }
 
         verticesReloaded.incrementAndGet();
       } else {
@@ -957,13 +971,15 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
         }
       }
 
-    } else
-      throw e;
+    } else {
+        throw e;
+    }
   }
 
   protected void dumpStats() {
-    if (outStats == null)
-      return;
+    if (outStats == null) {
+        return;
+    }
 
     outStats.printf("\n---------------------------------");
     outStats.printf("\nOrientGraphAsynch stats");
@@ -1026,8 +1042,9 @@ public class OrientGraphAsynch implements OrientExtendedGraph {
         v.save();
       }
 
-      if (!v.getRecord().getIdentity().isPersistent())
-        OLogManager.instance().warn(this, "Cannot put a non persistent object in cache, key=%s, vertex=%s", id, v);
+      if (!v.getRecord().getIdentity().isPersistent()) {
+          OLogManager.instance().warn(this, "Cannot put a non persistent object in cache, key=%s, vertex=%s", id, v);
+      }
 
       vertexCache.put(id, v);
       // System.out.printf("\nPut in cache key=%s v=%s", id, v);

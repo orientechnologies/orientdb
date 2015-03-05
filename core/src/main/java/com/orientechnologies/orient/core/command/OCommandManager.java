@@ -66,8 +66,9 @@ public class OCommandManager {
   public OCommandRequest getRequester(final String iType) {
     final Class<? extends OCommandRequest> reqClass = commandRequesters.get(iType);
 
-    if (reqClass == null)
-      throw new IllegalArgumentException("Cannot find a command requester for type: " + iType);
+    if (reqClass == null) {
+        throw new IllegalArgumentException("Cannot find a command requester for type: " + iType);
+    }
 
     try {
       return reqClass.newInstance();
@@ -98,15 +99,17 @@ public class OCommandManager {
   public OCommandExecutor getExecutor(OCommandRequestInternal iCommand) {
     final Class<? extends OCommandExecutor> executorClass = commandReqExecMap.get(iCommand.getClass());
 
-    if (executorClass == null)
-      throw new OCommandExecutorNotFoundException("Cannot find a command executor for the command request: " + iCommand);
+    if (executorClass == null) {
+        throw new OCommandExecutorNotFoundException("Cannot find a command executor for the command request: " + iCommand);
+    }
 
     try {
       final OCommandExecutor exec = executorClass.newInstance();
 
       final OCallable<Void, OCommandRequest> callback = configCallbacks.get(iCommand.getClass());
-      if (callback != null)
-        callback.call(iCommand);
+      if (callback != null) {
+          callback.call(iCommand);
+      }
 
       return exec;
 

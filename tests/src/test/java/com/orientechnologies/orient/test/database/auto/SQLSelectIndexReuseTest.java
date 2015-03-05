@@ -2418,8 +2418,9 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
   @Test
   public void testIndexUsedOnOrClause() {
     long oldIndexUsage = profiler.getCounter("db.demo.query.indexUsed");
-    if (oldIndexUsage < 0)
-      oldIndexUsage = 0;
+    if (oldIndexUsage < 0) {
+        oldIndexUsage = 0;
+    }
 
     final List<ODocument> result = database.command(
         new OSQLSynchQuery<ODocument>(

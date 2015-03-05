@@ -48,8 +48,9 @@ public class OJNADirectMemory implements ODirectMemory {
   @Override
   public long allocate(long size) {
     final long pointer = Native.malloc(size);
-    if (pointer == 0)
-      throw new OutOfMemoryError();
+    if (pointer == 0) {
+        throw new OutOfMemoryError();
+    }
 
     return pointer;
   }
@@ -77,11 +78,13 @@ public class OJNADirectMemory implements ODirectMemory {
   @Override
   public int getInt(long pointer) {
     final Pointer ptr = new Pointer(pointer);
-    if (unaligned)
-      return ptr.getInt(0);
+    if (unaligned) {
+        return ptr.getInt(0);
+    }
 
-    if (alignedOrder.equals(ByteOrder.BIG_ENDIAN))
-      return (0xFF & ptr.getByte(0)) << 24 | (0xFF & ptr.getByte(1)) << 16 | (0xFF & ptr.getByte(2)) << 8 | (0xFF & ptr.getByte(3));
+    if (alignedOrder.equals(ByteOrder.BIG_ENDIAN)) {
+        return (0xFF & ptr.getByte(0)) << 24 | (0xFF & ptr.getByte(1)) << 16 | (0xFF & ptr.getByte(2)) << 8 | (0xFF & ptr.getByte(3));
+    }
 
     return (0xFF & ptr.getByte(0)) | (0xFF & ptr.getByte(1)) << 8 | (0xFF & ptr.getByte(2)) << 16 | (0xFF & ptr.getByte(3)) << 24;
   }
@@ -89,9 +92,9 @@ public class OJNADirectMemory implements ODirectMemory {
   @Override
   public void setInt(long pointer, int value) {
     final Pointer ptr = new Pointer(pointer);
-    if (unaligned)
-      ptr.setInt(0, value);
-    else {
+    if (unaligned) {
+        ptr.setInt(0, value);
+    } else {
       if (alignedOrder.equals(ByteOrder.BIG_ENDIAN)) {
         ptr.setByte(0, (byte) (value >>> 24));
         ptr.setByte(1, (byte) (value >>> 16));
@@ -110,9 +113,9 @@ public class OJNADirectMemory implements ODirectMemory {
   @Override
   public void setShort(long pointer, short value) {
     final Pointer ptr = new Pointer(pointer);
-    if (unaligned)
-      ptr.setShort(0, value);
-    else {
+    if (unaligned) {
+        ptr.setShort(0, value);
+    } else {
       if (alignedOrder.equals(ByteOrder.BIG_ENDIAN)) {
         ptr.setByte(0, (byte) (value >>> 8));
         ptr.setByte(1, (byte) value);
@@ -126,11 +129,13 @@ public class OJNADirectMemory implements ODirectMemory {
   @Override
   public short getShort(long pointer) {
     final Pointer ptr = new Pointer(pointer);
-    if (unaligned)
-      return ptr.getShort(0);
+    if (unaligned) {
+        return ptr.getShort(0);
+    }
 
-    if (alignedOrder.equals(ByteOrder.BIG_ENDIAN))
-      return (short) (ptr.getByte(0) << 8 | (ptr.getByte(1) & 0xff));
+    if (alignedOrder.equals(ByteOrder.BIG_ENDIAN)) {
+        return (short) (ptr.getByte(0) << 8 | (ptr.getByte(1) & 0xff));
+    }
 
     return (short) ((ptr.getByte(0) & 0xff) | (ptr.getByte(1) << 8));
   }
@@ -138,13 +143,15 @@ public class OJNADirectMemory implements ODirectMemory {
   @Override
   public long getLong(long pointer) {
     final Pointer ptr = new Pointer(pointer);
-    if (unaligned)
-      return ptr.getLong(0);
+    if (unaligned) {
+        return ptr.getLong(0);
+    }
 
-    if (alignedOrder.equals(ByteOrder.BIG_ENDIAN))
-      return (0xFFL & ptr.getByte(0)) << 56 | (0xFFL & ptr.getByte(1)) << 48 | (0xFFL & ptr.getByte(2)) << 40
-          | (0xFFL & ptr.getByte(3)) << 32 | (0xFFL & ptr.getByte(4)) << 24 | (0xFFL & ptr.getByte(5)) << 16
-          | (0xFFL & ptr.getByte(6)) << 8 | (0xFFL & ptr.getByte(7));
+    if (alignedOrder.equals(ByteOrder.BIG_ENDIAN)) {
+        return (0xFFL & ptr.getByte(0)) << 56 | (0xFFL & ptr.getByte(1)) << 48 | (0xFFL & ptr.getByte(2)) << 40
+                | (0xFFL & ptr.getByte(3)) << 32 | (0xFFL & ptr.getByte(4)) << 24 | (0xFFL & ptr.getByte(5)) << 16
+                | (0xFFL & ptr.getByte(6)) << 8 | (0xFFL & ptr.getByte(7));
+    }
 
     return (0xFFL & ptr.getByte(0)) | (0xFFL & ptr.getByte(1)) << 8 | (0xFFL & ptr.getByte(2)) << 16
         | (0xFFL & ptr.getByte(3)) << 24 | (0xFFL & ptr.getByte(4)) << 32 | (0xFFL & ptr.getByte(5)) << 40
@@ -155,9 +162,9 @@ public class OJNADirectMemory implements ODirectMemory {
   public void setLong(long pointer, long value) {
     final Pointer ptr = new Pointer(pointer);
 
-    if (unaligned)
-      ptr.setLong(0, value);
-    else {
+    if (unaligned) {
+        ptr.setLong(0, value);
+    } else {
       if (alignedOrder.equals(ByteOrder.BIG_ENDIAN)) {
         ptr.setByte(0, (byte) (value >>> 56));
         ptr.setByte(1, (byte) (value >>> 48));

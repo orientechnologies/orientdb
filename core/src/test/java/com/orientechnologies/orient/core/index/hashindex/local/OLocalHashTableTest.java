@@ -32,8 +32,9 @@ public class OLocalHashTableTest {
   @BeforeClass
   public void beforeClass() {
     String buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null)
-      buildDirectory = ".";
+    if (buildDirectory == null) {
+        buildDirectory = ".";
+    }
 
     databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localHashTableTest");
     if (databaseDocumentTx.exists()) {
@@ -131,8 +132,9 @@ public class OLocalHashTableTest {
     }
 
     for (int key : keys) {
-      if (key % 3 == 0)
-        localHashTable.remove(key);
+      if (key % 3 == 0) {
+          localHashTable.remove(key);
+      }
     }
 
     for (int key : keys) {
@@ -156,8 +158,9 @@ public class OLocalHashTableTest {
     }
 
     for (int key : keys) {
-      if (key % 3 == 0)
-        localHashTable.remove(key);
+      if (key % 3 == 0) {
+          localHashTable.remove(key);
+      }
     }
 
     for (int key : keys) {
@@ -175,15 +178,17 @@ public class OLocalHashTableTest {
     }
 
     for (int i = 0; i < KEYS_COUNT; i++) {
-      if (i % 3 == 0)
-        Assert.assertEquals(localHashTable.remove(i), "" + i);
+      if (i % 3 == 0) {
+          Assert.assertEquals(localHashTable.remove(i), "" + i);
+      }
     }
 
     for (int i = 0; i < KEYS_COUNT; i++) {
-      if (i % 3 == 0)
-        Assert.assertNull(localHashTable.get(i));
-      else
-        Assert.assertEquals(localHashTable.get(i), i + "");
+      if (i % 3 == 0) {
+          Assert.assertNull(localHashTable.get(i));
+      } else {
+          Assert.assertEquals(localHashTable.get(i), i + "");
+      }
     }
   }
 
@@ -192,21 +197,25 @@ public class OLocalHashTableTest {
       localHashTable.put(i, i + "");
 
     for (int i = 0; i < KEYS_COUNT; i++) {
-      if (i % 3 == 0)
-        Assert.assertEquals(localHashTable.remove(i), i + "");
+      if (i % 3 == 0) {
+          Assert.assertEquals(localHashTable.remove(i), i + "");
+      }
 
-      if (i % 2 == 0)
-        localHashTable.put(KEYS_COUNT + i, (KEYS_COUNT + i) + "");
+      if (i % 2 == 0) {
+          localHashTable.put(KEYS_COUNT + i, (KEYS_COUNT + i) + "");
+      }
     }
 
     for (int i = 0; i < KEYS_COUNT; i++) {
-      if (i % 3 == 0)
-        Assert.assertNull(localHashTable.get(i));
-      else
-        Assert.assertEquals(localHashTable.get(i), i + "");
+      if (i % 3 == 0) {
+          Assert.assertNull(localHashTable.get(i));
+      } else {
+          Assert.assertEquals(localHashTable.get(i), i + "");
+      }
 
-      if (i % 2 == 0)
-        Assert.assertEquals(localHashTable.get(KEYS_COUNT + i), "" + (KEYS_COUNT + i));
+      if (i % 2 == 0) {
+          Assert.assertEquals(localHashTable.get(KEYS_COUNT + i), "" + (KEYS_COUNT + i));
+      }
     }
   }
 

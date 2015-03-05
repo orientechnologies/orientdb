@@ -52,8 +52,9 @@ public class OSecurityManager {
 
   public static String digest2String(final String iInput, String iAlgorithm) throws NoSuchAlgorithmException,
       UnsupportedEncodingException {
-    if (iAlgorithm == null)
-      iAlgorithm = ALGORITHM;
+    if (iAlgorithm == null) {
+        iAlgorithm = ALGORITHM;
+    }
 
     final MessageDigest msgDigest = MessageDigest.getInstance(iAlgorithm);
 
@@ -65,8 +66,9 @@ public class OSecurityManager {
   }
 
   private static String byteArrayToHexStr(final byte[] data) {
-    if (data == null)
-      return null;
+    if (data == null) {
+        return null;
+    }
 
     final char[] chars = new char[data.length * 2];
     for (int i = 0; i < data.length; i++) {
@@ -111,8 +113,9 @@ public class OSecurityManager {
 
     // OPTIMIZE STRING BUILDE CREATION PASSING THE SIZE
     final StringBuilder buffer = new StringBuilder(ALGORITHM_PREFIX.length() + transformed.length());
-    if (iIncludeAlgorithm)
-      buffer.append(ALGORITHM_PREFIX);
+    if (iIncludeAlgorithm) {
+        buffer.append(ALGORITHM_PREFIX);
+    }
 
     buffer.append(transformed);
 
@@ -120,8 +123,9 @@ public class OSecurityManager {
   }
 
   public synchronized byte[] digest(final String iInput) {
-    if (iInput == null)
-      return null;
+    if (iInput == null) {
+        return null;
+    }
 
     try {
       return md.digest(iInput.getBytes("UTF-8"));

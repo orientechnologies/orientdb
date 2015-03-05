@@ -32,10 +32,11 @@ public class OCLibraryFactory {
   private static final CLibrary        C_LIBRARY;
 
   static {
-    if (Platform.isAIX())
-      C_LIBRARY = new AIXCLibrary();
-    else
-      C_LIBRARY = new GeneralCLibrary();
+    if (Platform.isAIX()) {
+        C_LIBRARY = new AIXCLibrary();
+    } else {
+        C_LIBRARY = new GeneralCLibrary();
+    }
   }
 
   public CLibrary library() {

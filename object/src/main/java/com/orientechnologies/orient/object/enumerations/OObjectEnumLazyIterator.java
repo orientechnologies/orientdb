@@ -44,10 +44,11 @@ public class OObjectEnumLazyIterator<TYPE extends Enum> implements Iterator<TYPE
 
 	public TYPE next() {
 		final Object value = underlying.next();
-		if (value instanceof Number)
-			return (TYPE) enumClass.getEnumConstants()[((Number) value).intValue()];
-		else
-			return (TYPE) Enum.valueOf(enumClass, value.toString());
+		if (value instanceof Number) {
+                    return (TYPE) enumClass.getEnumConstants()[((Number) value).intValue()];
+                } else {
+                    return (TYPE) Enum.valueOf(enumClass, value.toString());
+                }
 	}
 
 	public boolean hasNext() {
@@ -56,8 +57,9 @@ public class OObjectEnumLazyIterator<TYPE extends Enum> implements Iterator<TYPE
 
 	public void remove() {
 		underlying.remove();
-		if (sourceRecord != null)
-			sourceRecord.setDirty();
+		if (sourceRecord != null) {
+                    sourceRecord.setDirty();
+                }
 	}
 
 }

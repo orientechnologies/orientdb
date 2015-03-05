@@ -41,8 +41,9 @@ public class OAtomicOperationsManager {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onStartup() {
-        if (currentOperation == null)
-          currentOperation = new ThreadLocal<OAtomicOperation>();
+        if (currentOperation == null) {
+            currentOperation = new ThreadLocal<OAtomicOperation>();
+        }
       }
 
       @Override
@@ -63,8 +64,9 @@ public class OAtomicOperationsManager {
   }
 
   public OAtomicOperation startAtomicOperation() throws IOException {
-    if (writeAheadLog == null)
-      return null;
+    if (writeAheadLog == null) {
+        return null;
+    }
 
     OAtomicOperation operation = currentOperation.get();
     if (operation != null) {
@@ -78,8 +80,9 @@ public class OAtomicOperationsManager {
     operation = new OAtomicOperation(lsn, unitId);
     currentOperation.set(operation);
 
-    if (storage.getStorageTransaction() == null)
-      writeAheadLog.log(new ONonTxOperationPerformedWALRecord());
+    if (storage.getStorageTransaction() == null) {
+        writeAheadLog.log(new ONonTxOperationPerformedWALRecord());
+    }
 
     return operation;
   }
@@ -89,17 +92,20 @@ public class OAtomicOperationsManager {
   }
 
   public OAtomicOperation endAtomicOperation(boolean rollback) throws IOException {
-    if (writeAheadLog == null)
-      return null;
+    if (writeAheadLog == null) {
+        return null;
+    }
 
     final OAtomicOperation operation = currentOperation.get();
     assert operation != null;
 
-    if (rollback)
-      operation.rollback();
+    if (rollback) {
+        operation.rollback();
+    }
 
-    if (operation.isRollback() && !rollback)
-      throw new ONestedRollbackException("Atomic operation was rolled back by internal component");
+    if (operation.isRollback() && !rollback) {
+        throw new ONestedRollbackException("Atomic operation was rolled back by internal component");
+    }
 
     final int counter = operation.decrementCounter();
     assert counter >= 0;
@@ -117,11 +123,13 @@ public class OAtomicOperationsManager {
 
   public void lockTillOperationComplete(Object lockObject) {
     final OAtomicOperation operation = currentOperation.get();
-    if (operation == null)
-      return;
+    if (operation == null) {
+        return;
+    }
 
-    if (operation.containsInLockedObjects(lockObject))
-      return;
+    if (operation.containsInLockedObjects(lockObject)) {
+        return;
+    }
 
     lockManager.acquireLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
     operation.addLockedObject(lockObject);

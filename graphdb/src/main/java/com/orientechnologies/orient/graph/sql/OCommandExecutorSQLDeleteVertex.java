@@ -90,9 +90,10 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
         parserSetCurrentPosition(newPos);
 
       } else if (word.equals(KEYWORD_WHERE)) {
-        if (clazz == null)
-          // ASSIGN DEFAULT CLASS
-          clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(OrientVertexType.CLASS_NAME);
+        if (clazz == null) {
+            // ASSIGN DEFAULT CLASS
+            clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(OrientVertexType.CLASS_NAME);
+        }
 
         where = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetPreviousPosition()) : "";
         query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + where, this));
@@ -101,26 +102,31 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
       } else if (word.length() > 0) {
         // GET/CHECK CLASS NAME
         clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(word);
-        if (clazz == null)
-          throw new OCommandSQLParsingException("Class '" + word + " was not found");
+        if (clazz == null) {
+            throw new OCommandSQLParsingException("Class '" + word + " was not found");
+        }
       }
 
       word = parseOptionalWord(true);
-      if (parserIsEnded())
-        break;
+      if (parserIsEnded()) {
+          break;
+      }
     }
 
-    if (where == null)
-      where = "";
-    else
-      where = " WHERE " + where;
+    if (where == null) {
+        where = "";
+    } else {
+        where = " WHERE " + where;
+    }
 
-    if (query == null && rid == null)
-      if (clazz == null)
-        // DELETE ALL VERTEXES
-        query = database.command(new OSQLAsynchQuery<ODocument>("select from V" + where, this));
-      else
-        query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + where, this));
+    if (query == null && rid == null) {
+        if (clazz == null) {
+            // DELETE ALL VERTEXES
+            query = database.command(new OSQLAsynchQuery<ODocument>("select from V" + where, this));
+        } else {
+            query = database.command(new OSQLAsynchQuery<ODocument>("select from " + clazz.getName() + where, this));
+        }
+    }
 
     return this;
   }
@@ -129,8 +135,9 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
    * Execute the command and return the ODocument object created.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (rid == null && query == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    if (rid == null && query == null) {
+        throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    }
 
     if (rid != null) {
       // REMOVE PUNCTUAL RID
@@ -156,8 +163,9 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
           return query.execute(iArgs);
         }
       });
-    } else
-      throw new OCommandExecutionException("Invalid target");
+    } else {
+        throw new OCommandExecutionException("Invalid target");
+    }
 
     return removed;
   }
@@ -185,8 +193,9 @@ public class OCommandExecutorSQLDeleteVertex extends OCommandExecutorSQLAbstract
 
   @Override
   public void end() {
-    if (graph != null && shutdownFlag.getValue())
-      graph.shutdown(false);
+    if (graph != null && shutdownFlag.getValue()) {
+        graph.shutdown(false);
+    }
   }
 
   @Override

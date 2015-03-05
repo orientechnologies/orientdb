@@ -43,12 +43,14 @@ public class OIOUtils {
   }
 
   public static long getTimeAsMillisecs(final Object iSize) {
-    if (iSize == null)
-      throw new IllegalArgumentException("Time is null");
+    if (iSize == null) {
+        throw new IllegalArgumentException("Time is null");
+    }
 
-    if (iSize instanceof Number)
-      // MILLISECS
-      return ((Number) iSize).longValue();
+    if (iSize instanceof Number) {
+        // MILLISECS
+        return ((Number) iSize).longValue();
+    }
 
     String time = iSize.toString();
 
@@ -60,59 +62,72 @@ public class OIOUtils {
       }
     }
 
-    if (number)
-      // MILLISECS
-      return Long.parseLong(time);
-    else {
+    if (number) {
+        // MILLISECS
+        return Long.parseLong(time);
+    } else {
       time = time.toUpperCase(Locale.ENGLISH);
 
       int pos = time.indexOf("MS");
       final String timeAsNumber = time.replaceAll("[^\\d]", "");
-      if (pos > -1)
-        return Long.parseLong(timeAsNumber);
+      if (pos > -1) {
+          return Long.parseLong(timeAsNumber);
+        }
 
       pos = time.indexOf("S");
-      if (pos > -1)
-        return Long.parseLong(timeAsNumber) * SECOND;
+      if (pos > -1) {
+          return Long.parseLong(timeAsNumber) * SECOND;
+        }
 
       pos = time.indexOf("M");
-      if (pos > -1)
-        return Long.parseLong(timeAsNumber) * MINUTE;
+      if (pos > -1) {
+          return Long.parseLong(timeAsNumber) * MINUTE;
+      }
 
       pos = time.indexOf("H");
-      if (pos > -1)
-        return Long.parseLong(timeAsNumber) * HOUR;
+      if (pos > -1) {
+          return Long.parseLong(timeAsNumber) * HOUR;
+      }
 
       pos = time.indexOf("D");
-      if (pos > -1)
-        return Long.parseLong(timeAsNumber) * DAY;
+      if (pos > -1) {
+          return Long.parseLong(timeAsNumber) * DAY;
+      }
 
       pos = time.indexOf('W');
-      if (pos > -1)
-        return Long.parseLong(timeAsNumber) * WEEK;
-
+      if (pos > -1) {
+          return Long.parseLong(timeAsNumber) * WEEK;
+      }
+      
       pos = time.indexOf('Y');
-      if (pos > -1)
-        return Long.parseLong(timeAsNumber) * YEAR;
-
+      if (pos > -1) {
+          return Long.parseLong(timeAsNumber) * YEAR;
+      }
+      
       // RE-THROW THE EXCEPTION
       throw new IllegalArgumentException("Time '" + time + "' has a unrecognizable format");
     }
   }
 
   public static String getTimeAsString(final long iTime) {
-    if (iTime > YEAR && iTime % YEAR == 0)
-      return String.format("%dy", iTime / YEAR);
-    if (iTime > WEEK && iTime % WEEK == 0)
-      return String.format("%dw", iTime / WEEK);
-    if (iTime > DAY && iTime % DAY == 0)
-      return String.format("%dd", iTime / DAY);
-    if (iTime > HOUR && iTime % HOUR == 0)
-      return String.format("%dh", iTime / HOUR);
-    if (iTime > MINUTE && iTime % MINUTE == 0)
-      return String.format("%dm", iTime / MINUTE);
-    if (iTime > SECOND && iTime % SECOND == 0)
-      return String.format("%ds", iTime / SECOND);
+    if (iTime > YEAR && iTime % YEAR == 0) {
+        return String.format("%dy", iTime / YEAR);
+    }
+    if (iTime > WEEK && iTime % WEEK == 0) {
+        return String.format("%dw", iTime / WEEK);
+    }
+    if (iTime > DAY && iTime % DAY == 0) {
+        return String.format("%dd", iTime / DAY);
+    }
+    if (iTime > HOUR && iTime % HOUR == 0) {
+        return String.format("%dh", iTime / HOUR);
+    }
+    if (iTime > MINUTE && iTime % MINUTE == 0) {
+        return String.format("%dm", iTime / MINUTE);
+    }
+    if (iTime > SECOND && iTime % SECOND == 0) {
+        return String.format("%ds", iTime / SECOND);
+    }
 
     // MILLISECONDS
     return String.format("%dms", iTime);
@@ -147,8 +162,9 @@ public class OIOUtils {
   }
 
   public static long copyStream(final InputStream in, final OutputStream out, long iMax) throws java.io.IOException {
-    if (iMax < 0)
-      iMax = Long.MAX_VALUE;
+    if (iMax < 0) {
+        iMax = Long.MAX_VALUE;
+    }
 
     final byte[] buf = new byte[8192];
     int byteRead = 0;
@@ -170,12 +186,14 @@ public class OIOUtils {
   public static String getRelativePathIfAny(final String iDatabaseURL, final String iBasePath) {
     if (iBasePath == null) {
       final int pos = iDatabaseURL.lastIndexOf('/');
-      if (pos > -1)
-        return iDatabaseURL.substring(pos + 1);
+      if (pos > -1) {
+          return iDatabaseURL.substring(pos + 1);
+      }
     } else {
       final int pos = iDatabaseURL.indexOf(iBasePath);
-      if (pos > -1)
-        return iDatabaseURL.substring(pos + iBasePath.length() + 1);
+      if (pos > -1) {
+          return iDatabaseURL.substring(pos + iBasePath.length() + 1);
+      }
     }
 
     return iDatabaseURL;
@@ -194,18 +212,21 @@ public class OIOUtils {
   }
 
   public static String getStringMaxLength(final String iText, final int iMax, final String iOther) {
-    if (iText == null)
-      return null;
-    if (iMax > iText.length())
-      return iText;
+    if (iText == null) {
+        return null;
+    }
+    if (iMax > iText.length()) {
+        return iText;
+    }
     return iText.substring(0, iMax) + iOther;
   }
 
   public static Object encode(final Object iValue) {
     if (iValue instanceof String) {
       return java2unicode(((String) iValue).replace("\\", "\\\\").replace("\"", "\\\""));
-    } else
-      return iValue;
+    } else {
+        return iValue;
+    }
   }
 
   public static String java2unicode(final String iInput) {
@@ -217,9 +238,9 @@ public class OIOUtils {
     for (int i = 0; i < inputSize; i++) {
       ch = iInput.charAt(i);
 
-      if (ch >= 0x0020 && ch <= 0x007e) // Does the char need to be converted to unicode?
-        result.append(ch); // No.
-      else // Yes.
+      if (ch >= 0x0020 && ch <= 0x007e) { // Does the char need to be converted to unicode?
+          result.append(ch); // No.
+      } else // Yes.
       {
         result.append("\\u"); // standard unicode format.
         hex = Integer.toHexString(ch & 0xFFFF); // Get hex value of the char.
@@ -235,41 +256,48 @@ public class OIOUtils {
   }
 
   public static boolean isStringContent(final Object iValue) {
-    if (iValue == null)
-      return false;
+    if (iValue == null) {
+        return false;
+    }
 
     final String s = iValue.toString();
 
-    if (s == null)
-      return false;
+    if (s == null) {
+        return false;
+    }
 
     return s.length() > 1
         && (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\'' || s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"');
   }
 
   public static String getStringContent(final Object iValue) {
-    if (iValue == null)
-      return null;
+    if (iValue == null) {
+        return null;
+    }
 
     final String s = iValue.toString();
 
-    if (s == null)
-      return null;
+    if (s == null) {
+        return null;
+    }
 
     if (s.length() > 1
-        && (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\'' || s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"'))
-      return s.substring(1, s.length() - 1);
+        && (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\'' || s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"')) {
+        return s.substring(1, s.length() - 1);
+    }
 
     return s;
   }
 
   public static boolean equals(final byte[] buffer, final byte[] buffer2) {
-    if (buffer == null || buffer2 == null || buffer.length != buffer2.length)
-      return false;
+    if (buffer == null || buffer2 == null || buffer.length != buffer2.length) {
+        return false;
+    }
 
     for (int i = 0; i < buffer.length; ++i)
-      if (buffer[i] != buffer2[i])
-        return false;
+      if (buffer[i] != buffer2[i]) {
+          return false;
+    }
 
     return true;
   }

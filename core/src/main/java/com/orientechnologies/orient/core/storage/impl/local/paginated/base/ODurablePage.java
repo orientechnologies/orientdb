@@ -133,8 +133,9 @@ public class ODurablePage {
       OIntegerSerializer.INSTANCE.serializeInDirectMemory(value, pagePointer, pageOffset + PAGE_PADDING);
 
       pageChanges.addChanges(pageOffset, null, oldValues);
-    } else
-      OIntegerSerializer.INSTANCE.serializeInDirectMemory(value, pagePointer, pageOffset + PAGE_PADDING);
+    } else {
+        OIntegerSerializer.INSTANCE.serializeInDirectMemory(value, pagePointer, pageOffset + PAGE_PADDING);
+    }
 
     cacheEntry.markDirty();
 
@@ -154,8 +155,9 @@ public class ODurablePage {
       pagePointer.setByte(pageOffset + PAGE_PADDING, value);
 
       pageChanges.addChanges(pageOffset, null, oldValues);
-    } else
-      pagePointer.setByte(pageOffset + PAGE_PADDING, value);
+    } else {
+        pagePointer.setByte(pageOffset + PAGE_PADDING, value);
+    }
 
     cacheEntry.markDirty();
 
@@ -174,8 +176,9 @@ public class ODurablePage {
       OLongSerializer.INSTANCE.serializeInDirectMemory(value, pagePointer, pageOffset + PAGE_PADDING);
 
       pageChanges.addChanges(pageOffset, null, oldValues);
-    } else
-      OLongSerializer.INSTANCE.serializeInDirectMemory(value, pagePointer, pageOffset + PAGE_PADDING);
+    } else {
+        OLongSerializer.INSTANCE.serializeInDirectMemory(value, pagePointer, pageOffset + PAGE_PADDING);
+    }
 
     cacheEntry.markDirty();
 
@@ -183,8 +186,9 @@ public class ODurablePage {
   }
 
   protected int setBinaryValue(int pageOffset, byte[] value) throws IOException {
-    if (value.length == 0)
-      return 0;
+    if (value.length == 0) {
+        return 0;
+    }
 
     if (trackMode.equals(TrackMode.FULL)) {
       byte[] oldValues = pagePointer.get(pageOffset + PAGE_PADDING, value.length);
@@ -196,8 +200,9 @@ public class ODurablePage {
       pagePointer.set(pageOffset + PAGE_PADDING, value, 0, value.length);
 
       pageChanges.addChanges(pageOffset, null, oldValues);
-    } else
-      pagePointer.set(pageOffset + PAGE_PADDING, value, 0, value.length);
+    } else {
+        pagePointer.set(pageOffset + PAGE_PADDING, value, 0, value.length);
+    }
 
     cacheEntry.markDirty();
 
@@ -205,8 +210,9 @@ public class ODurablePage {
   }
 
   protected void moveData(int from, int to, int len) throws IOException {
-    if (len == 0)
-      return;
+    if (len == 0) {
+        return;
+    }
 
     if (trackMode.equals(TrackMode.FULL)) {
       byte[] content = pagePointer.get(from + PAGE_PADDING, len);
@@ -222,8 +228,9 @@ public class ODurablePage {
 
       pageChanges.addChanges(to, null, oldContent);
 
-    } else
-      pagePointer.moveData(from + PAGE_PADDING, pagePointer, to + PAGE_PADDING, len);
+    } else {
+        pagePointer.moveData(from + PAGE_PADDING, pagePointer, to + PAGE_PADDING, len);
+    }
 
     cacheEntry.markDirty();
   }

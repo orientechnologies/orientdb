@@ -94,9 +94,9 @@ public class TestSharding extends AbstractServerClusterTest {
 
           final int clId = vertices[i].getIdentity().getClusterId();
 
-          if (i == 0)
-            Assert.assertEquals("Error on assigning cluster client", clId, graph.getRawGraph().getClusterIdByName("client"));
-          else {
+          if (i == 0) {
+              Assert.assertEquals("Error on assigning cluster client", clId, graph.getRawGraph().getClusterIdByName("client"));
+          } else {
             final int clusterId = graph.getRawGraph().getClusterIdByName("client_" + nodeName);
             Assert.assertEquals("Error on assigning cluster client_" + nodeName, clId, clusterId);
           }
@@ -107,9 +107,10 @@ public class TestSharding extends AbstractServerClusterTest {
           System.out.println("Create vertex, class: " + vertices[i].getLabel() + ", cluster: " + clId + " -> "
               + vertices[i].getRecord());
 
-          if (i > 1)
-            // CREATE A LIGHT-WEIGHT EDGE
-            vertices[i].addEdge("Knows", vertices[i - 1]);
+          if (i > 1) {
+              // CREATE A LIGHT-WEIGHT EDGE
+              vertices[i].addEdge("Knows", vertices[i - 1]);
+          }
 
           // CREATE A REGULAR EDGE
           final Edge edge = vertices[i].addEdge("Buy", product, new Object[] { "price", 1000 * i });
@@ -182,8 +183,9 @@ public class TestSharding extends AbstractServerClusterTest {
             final String nodeName = serverInstance.get(i).getServerInstance().getDistributedManager().getLocalNodeName();
 
             String clusterName = "client";
-            if (i > 0)
-              clusterName += "_" + nodeName;
+            if (i > 0) {
+                clusterName += "_" + nodeName;
+            }
 
             String query = "select from cluster:" + clusterName;
 

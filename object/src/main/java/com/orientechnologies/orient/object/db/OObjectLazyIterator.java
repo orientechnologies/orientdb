@@ -67,8 +67,9 @@ public class OObjectLazyIterator<TYPE> implements Iterator<TYPE>, Serializable {
   public TYPE next(final String iFetchPlan) {
     final Object value = underlying.next();
 
-    if (value == null)
-      return null;
+    if (value == null) {
+        return null;
+    }
 
     if (value instanceof ORID && autoConvert2Object) {
       currentElement = (OIdentifiable) value;
@@ -92,8 +93,9 @@ public class OObjectLazyIterator<TYPE> implements Iterator<TYPE>, Serializable {
       currentElement = database.getRecordByUserObject(value, false);
     }
 
-    if (OObjectEntitySerializer.isToSerialize(value.getClass()))
-      return (TYPE) OObjectEntitySerializer.deserializeFieldValue(value.getClass(), value);
+    if (OObjectEntitySerializer.isToSerialize(value.getClass())) {
+        return (TYPE) OObjectEntitySerializer.deserializeFieldValue(value.getClass(), value);
+    }
     return (TYPE) value;
   }
 
@@ -104,8 +106,9 @@ public class OObjectLazyIterator<TYPE> implements Iterator<TYPE>, Serializable {
   public void remove() {
     underlying.remove();
     if (sourceRecord != null) {
-      if (orphanRemoval)
-        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(currentElement.getIdentity());
+      if (orphanRemoval) {
+          ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(currentElement.getIdentity());
+      }
       ((OObjectProxyMethodHandler) sourceRecord.getHandler()).setDirty();
     }
   }

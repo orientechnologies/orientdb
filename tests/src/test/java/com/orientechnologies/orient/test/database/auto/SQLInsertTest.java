@@ -221,8 +221,9 @@ public class SQLInsertTest extends DocumentDBBaseTest {
   @Test
   public void insertAvoidingSubQuery() {
     final OSchema schema = database.getMetadata().getSchema();
-    if (schema.getClass("test") == null)
-      schema.createClass("test");
+    if (schema.getClass("test") == null) {
+        schema.createClass("test");
+    }
 
     ODocument doc = (ODocument) database.command(new OCommandSQL("INSERT INTO test(text) VALUES ('(Hello World)')")).execute();
 
@@ -233,8 +234,9 @@ public class SQLInsertTest extends DocumentDBBaseTest {
   @Test
   public void insertSubQuery() {
     final OSchema schema = database.getMetadata().getSchema();
-    if (schema.getClass("test") == null)
-      schema.createClass("test");
+    if (schema.getClass("test") == null) {
+        schema.createClass("test");
+    }
 
     final List<ODocument> usersCount = database.query(new OSQLSynchQuery<ODocument>("select count(*) from OUser"));
     final long uCount = usersCount.get(0).field("count");
@@ -495,8 +497,9 @@ public class SQLInsertTest extends DocumentDBBaseTest {
     final ORecordIteratorCluster<?> iteratorCluster = database.browseCluster(database.getClusterNameById(clusterId));
 
     for (int i = 0; i < 100; i++) {
-      if (!iteratorCluster.hasNext())
-        break;
+      if (!iteratorCluster.hasNext()) {
+          break;
+      }
       ORecord doc = iteratorCluster.next();
       positions.add(doc.getIdentity().getClusterPosition());
     }

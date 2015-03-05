@@ -77,19 +77,22 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
   }
 
   public Object createValue(final Object... params) {
-    if (params == null || params.length == 0)
-      return null;
+    if (params == null || params.length == 0) {
+        return null;
+    }
 
-    if (keyTypes.length == 1)
-      return OType.convert(params[0], keyTypes[0].getDefaultJavaType());
+    if (keyTypes.length == 1) {
+        return OType.convert(params[0], keyTypes[0].getDefaultJavaType());
+    }
 
     final OCompositeKey compositeKey = new OCompositeKey();
 
     for (int i = 0; i < params.length; ++i) {
       final Comparable<?> paramValue = (Comparable<?>) OType.convert(params[i], keyTypes[i].getDefaultJavaType());
 
-      if (paramValue == null)
-        return null;
+      if (paramValue == null) {
+          return null;
+      }
       compositeKey.addKey(paramValue);
     }
 
@@ -120,8 +123,9 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
         for (OCollate curCollate : ((OCompositeCollate) this.collate).getCollates())
           collatesNames.add(curCollate.getName());
         document.field("collates", collatesNames, OType.EMBEDDEDLIST);
-      } else
-        document.field("collate", collate.getName());
+      } else {
+          document.field("collate", collate.getName());
+      }
       document.field("nullValuesIgnored", isNullValuesIgnored());
 
       return document;
@@ -160,14 +164,17 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
 
     final OSimpleKeyIndexDefinition that = (OSimpleKeyIndexDefinition) o;
-    if (!Arrays.equals(keyTypes, that.keyTypes))
-      return false;
+    if (!Arrays.equals(keyTypes, that.keyTypes)) {
+        return false;
+    }
 
     return true;
   }

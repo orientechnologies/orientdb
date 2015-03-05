@@ -53,8 +53,9 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   public OTrackedSet(final ORecord iRecord, final Collection<? extends T> iOrigin, final Class<?> cls) {
     this(iRecord);
     genericClass = cls;
-    if (iOrigin != null && !iOrigin.isEmpty())
-      addAll(iOrigin);
+    if (iOrigin != null && !iOrigin.isEmpty()) {
+        addAll(iOrigin);
+    }
   }
 
   public OTrackedSet(final ORecord iSourceRecord) {
@@ -105,8 +106,9 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   @Override
   public boolean remove(final Object o) {
     if (super.remove(o)) {
-      if (o instanceof ODocument)
-        ODocumentInternal.removeOwner((ODocument) o, this);
+      if (o instanceof ODocument) {
+          ODocumentInternal.removeOwner((ODocument) o, this);
+      }
 
       fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.REMOVE, (T) o, null, (T) o));
       return true;
@@ -117,15 +119,17 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   @Override
   public void clear() {
     final Set<T> origValues;
-    if (changeListeners.isEmpty())
-      origValues = null;
-    else
-      origValues = new HashSet<T>(this);
+    if (changeListeners.isEmpty()) {
+        origValues = null;
+    } else {
+        origValues = new HashSet<T>(this);
+    }
 
     if (origValues == null) {
       for (final T item : this) {
-        if (item instanceof ODocument)
-          ODocumentInternal.removeOwner((ODocument) item, this);
+        if (item instanceof ODocument) {
+            ODocumentInternal.removeOwner((ODocument) item, this);
+        }
       }
     }
 
@@ -133,28 +137,32 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
 
     if (origValues != null) {
       for (final T item : origValues) {
-        if (item instanceof ODocument)
-          ODocumentInternal.removeOwner((ODocument) item, this);
+        if (item instanceof ODocument) {
+            ODocumentInternal.removeOwner((ODocument) item, this);
+        }
 
         fireCollectionChangedEvent(new OMultiValueChangeEvent<T, T>(OMultiValueChangeEvent.OChangeType.REMOVE, item, null, item));
       }
 
-    } else
-      setDirty();
+    } else {
+        setDirty();
+    }
   }
 
   @SuppressWarnings("unchecked")
   public OTrackedSet<T> setDirty() {
     if (status != STATUS.UNMARSHALLING && sourceRecord != null
-        && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord)))
-      sourceRecord.setDirty();
+        && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord))) {
+        sourceRecord.setDirty();
+    }
     return this;
   }
 
   @Override
   public void setDirtyNoChanged() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null)
-      sourceRecord.setDirtyNoChanged();
+    if (status != STATUS.UNMARSHALLING && sourceRecord != null) {
+        sourceRecord.setDirtyNoChanged();
+    }
   }
 
    public STATUS getInternalStatus() {
@@ -205,19 +213,22 @@ public class OTrackedSet<T> extends HashSet<T> implements ORecordElement, OTrack
   }
 
   protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<T, T> event) {
-    if (status == STATUS.UNMARSHALLING)
-      return;
+    if (status == STATUS.UNMARSHALLING) {
+        return;
+    }
 
     setDirty();
     for (final OMultiValueChangeListener<T, T> changeListener : changeListeners) {
-      if (changeListener != null)
-        changeListener.onAfterRecordChanged(event);
+      if (changeListener != null) {
+          changeListener.onAfterRecordChanged(event);
+      }
     }
   }
 
   private void addOwnerToEmbeddedDoc(T e) {
-    if (embeddedCollection && e instanceof ODocument && !((ODocument) e).getIdentity().isValid())
-      ODocumentInternal.addOwner((ODocument) e, this);
+    if (embeddedCollection && e instanceof ODocument && !((ODocument) e).getIdentity().isValid()) {
+        ODocumentInternal.addOwner((ODocument) e, this);
+    }
   }
 
   private Object writeReplace() {

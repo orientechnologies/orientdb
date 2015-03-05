@@ -97,8 +97,9 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
    * Parses the timeout keyword if found.
    */
   protected boolean parseTimeout(final String w) throws OCommandSQLParsingException {
-    if (!w.equals(KEYWORD_TIMEOUT))
-      return false;
+    if (!w.equals(KEYWORD_TIMEOUT)) {
+        return false;
+    }
 
     parserNextWord(true);
     String word = parserGetLastWord();
@@ -110,18 +111,20 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
           + KEYWORD_TIMEOUT + " 3000");
     }
 
-    if (timeoutMs < 0)
-      throwParsingException("Invalid " + KEYWORD_TIMEOUT + ": value set minor than ZERO. Example: " + timeoutMs + " 10000");
+    if (timeoutMs < 0) {
+        throwParsingException("Invalid " + KEYWORD_TIMEOUT + ": value set minor than ZERO. Example: " + timeoutMs + " 10000");
+    }
 
     parserNextWord(true);
     word = parserGetLastWord();
 
-    if (word.equals(TIMEOUT_STRATEGY.EXCEPTION.toString()))
-      timeoutStrategy = TIMEOUT_STRATEGY.EXCEPTION;
-    else if (word.equals(TIMEOUT_STRATEGY.RETURN.toString()))
-      timeoutStrategy = TIMEOUT_STRATEGY.RETURN;
-    else
-      parserGoBack();
+    if (word.equals(TIMEOUT_STRATEGY.EXCEPTION.toString())) {
+        timeoutStrategy = TIMEOUT_STRATEGY.EXCEPTION;
+    } else if (word.equals(TIMEOUT_STRATEGY.RETURN.toString())) {
+        timeoutStrategy = TIMEOUT_STRATEGY.RETURN;
+    } else {
+        parserGoBack();
+    }
 
     return true;
   }
@@ -134,9 +137,10 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     final String lockStrategy = parserGetLastWord();
 
     if (!lockStrategy.equalsIgnoreCase("DEFAULT") && !lockStrategy.equalsIgnoreCase("NONE")
-        && !lockStrategy.equalsIgnoreCase("RECORD"))
-      throwParsingException("Invalid " + KEYWORD_LOCK + " value set to '" + lockStrategy
-          + "' but it should be NONE (default) or RECORD. Example: " + KEYWORD_LOCK + " RECORD");
+        && !lockStrategy.equalsIgnoreCase("RECORD")) {
+        throwParsingException("Invalid " + KEYWORD_LOCK + " value set to '" + lockStrategy
+                + "' but it should be NONE (default) or RECORD. Example: " + KEYWORD_LOCK + " RECORD");
+    }
 
     return lockStrategy;
   }
@@ -148,12 +152,13 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
     for (String clazz : iClassNames) {
       final OClass cls = ((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().getClass(clazz);
-      if (cls != null)
-        for (int clId : cls.getClusterIds()) {
-          // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
-          if (clId > -1 && checkClusterAccess(db, db.getClusterNameById(clId)))
-            clusters.add(db.getClusterNameById(clId).toLowerCase());
-        }
+      if (cls != null) {
+          for (int clId : cls.getClusterIds()) {
+              if (clId > -1 && checkClusterAccess(db, db.getClusterNameById(clId))) {
+                  clusters.add(db.getClusterNameById(clId).toLowerCase());
+              }
+          }
+      }
     }
 
     return clusters;
@@ -167,8 +172,9 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
     for (String cluster : iClusterNames) {
       final String c = cluster.toLowerCase();
       // FILTER THE CLUSTER WHERE THE USER HAS THE RIGHT ACCESS
-      if (checkClusterAccess(db, c))
-        clusters.add(c);
+      if (checkClusterAccess(db, c)) {
+          clusters.add(c);
+      }
     }
 
     return clusters;
@@ -186,12 +192,14 @@ public abstract class OCommandExecutorSQLAbstract extends OCommandExecutorAbstra
 
       if (clazz != null) {
         final OClass cls = metadata.getImmutableSchemaSnapshot().getClass(clazz);
-        if (cls != null)
-          for (int clId : cls.getClusterIds()) {
-            final String clName = db.getClusterNameById(clId);
-            if (clName != null)
-              clusters.add(clName.toLowerCase());
-          }
+        if (cls != null) {
+            for (int clId : cls.getClusterIds()) {
+                final String clName = db.getClusterNameById(clId);
+                if (clName != null) {
+                    clusters.add(clName.toLowerCase());
+                }
+            }
+        }
       }
     }
 

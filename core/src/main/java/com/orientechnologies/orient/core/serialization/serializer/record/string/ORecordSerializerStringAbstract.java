@@ -55,11 +55,13 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
   private static final int              MAX_INTEGER_DIGITS    = MAX_INTEGER_AS_STRING.length();
 
   public static Object fieldTypeFromStream(final ODocument iDocument, OType iType, final Object iValue) {
-    if (iValue == null)
-      return null;
+    if (iValue == null) {
+        return null;
+    }
 
-    if (iType == null)
-      iType = OType.EMBEDDED;
+    if (iType == null) {
+        iType = OType.EMBEDDED;
+    }
 
     switch (iType) {
     case STRING:
@@ -80,8 +82,9 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     case EMBEDDED: {
       // EMBEDED RECORD
       final Object embeddedObject = OStringSerializerEmbedded.INSTANCE.fromStream((String) iValue);
-      if (embeddedObject instanceof ODocument)
-        ODocumentInternal.addOwner((ODocument) embeddedObject, iDocument);
+      if (embeddedObject instanceof ODocument) {
+          ODocumentInternal.addOwner((ODocument) embeddedObject, iDocument);
+      }
 
       // EMBEDDED OBJECT
       return embeddedObject;
@@ -90,8 +93,9 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
     case CUSTOM:
       // RECORD
       final Object result = OStringSerializerAnyStreamable.INSTANCE.fromStream((String) iValue);
-      if (result instanceof ODocument)
-        ODocumentInternal.addOwner((ODocument) result, iDocument);
+      if (result instanceof ODocument) {
+          ODocumentInternal.addOwner((ODocument) result, iDocument);
+    }
       return result;
 
     case EMBEDDEDSET:
@@ -115,16 +119,18 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
   }
 
   public static void fieldTypeToString(final StringBuilder iBuffer, OType iType, final Object iValue) {
-    if (iValue == null)
-      return;
+    if (iValue == null) {
+        return;
+    }
 
     final long timer = PROFILER.startChrono();
 
     if (iType == null) {
-      if (iValue instanceof ORID)
-        iType = OType.LINK;
-      else
-        iType = OType.EMBEDDED;
+      if (iValue instanceof ORID) {
+          iType = OType.LINK;
+      } else {
+          iType = OType.EMBEDDED;
+      }
     }
 
     switch (iType) {
@@ -191,10 +197,11 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       break;
 
     case LINK:
-      if (iValue instanceof ORecordId)
-        ((ORecordId) iValue).toString(iBuffer);
-      else
-        ((ORecord) iValue).getIdentity().toString(iBuffer);
+      if (iValue instanceof ORecordId) {
+          ((ORecordId) iValue).toString(iBuffer);
+    } else {
+          ((ORecord) iValue).getIdentity().toString(iBuffer);
+    }
       PROFILER.stopChrono(PROFILER.getProcessMetric("serializer.record.string.link2string"), "Serialize link to string", timer);
       break;
 
@@ -245,88 +252,94 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
    * @return The closest type recognized
    */
   public static OType getType(final String iValue) {
-    if (iValue.length() == 0)
-      return null;
+    if (iValue.length() == 0) {
+        return null;
+    }
 
     final char firstChar = iValue.charAt(0);
 
-    if (firstChar == ORID.PREFIX)
-      // RID
-      return OType.LINK;
-    else if (firstChar == '\'' || firstChar == '"')
-      return OType.STRING;
-    else if (firstChar == OStringSerializerHelper.BINARY_BEGINEND)
-      return OType.BINARY;
-    else if (firstChar == OStringSerializerHelper.EMBEDDED_BEGIN)
-      return OType.EMBEDDED;
-    else if (firstChar == OStringSerializerHelper.LINK)
-      return OType.LINK;
-    else if (firstChar == OStringSerializerHelper.LIST_BEGIN)
-      return OType.EMBEDDEDLIST;
-    else if (firstChar == OStringSerializerHelper.SET_BEGIN)
-      return OType.EMBEDDEDSET;
-    else if (firstChar == OStringSerializerHelper.MAP_BEGIN)
-      return OType.EMBEDDEDMAP;
-    else if (firstChar == OStringSerializerHelper.CUSTOM_TYPE)
-      return OType.CUSTOM;
+    if (firstChar == ORID.PREFIX) {
+        // RID
+        return OType.LINK;
+    } else if (firstChar == '\'' || firstChar == '"') {
+        return OType.STRING;
+    } else if (firstChar == OStringSerializerHelper.BINARY_BEGINEND) {
+        return OType.BINARY;
+    } else if (firstChar == OStringSerializerHelper.EMBEDDED_BEGIN) {
+        return OType.EMBEDDED;
+    } else if (firstChar == OStringSerializerHelper.LINK) {
+        return OType.LINK;
+    } else if (firstChar == OStringSerializerHelper.LIST_BEGIN) {
+        return OType.EMBEDDEDLIST;
+    } else if (firstChar == OStringSerializerHelper.SET_BEGIN) {
+        return OType.EMBEDDEDSET;
+    } else if (firstChar == OStringSerializerHelper.MAP_BEGIN) {
+        return OType.EMBEDDEDMAP;
+    } else if (firstChar == OStringSerializerHelper.CUSTOM_TYPE) {
+        return OType.CUSTOM;
+    }
 
     // BOOLEAN?
-    if (iValue.equalsIgnoreCase("true") || iValue.equalsIgnoreCase("false"))
-      return OType.BOOLEAN;
+    if (iValue.equalsIgnoreCase("true") || iValue.equalsIgnoreCase("false")) {
+        return OType.BOOLEAN;
+    }
 
     // NUMBER OR STRING?
     boolean integer = true;
     for (int index = 0; index < iValue.length(); ++index) {
       final char c = iValue.charAt(index);
-      if (c < '0' || c > '9')
-        if ((index == 0 && (c == '+' || c == '-')))
-          continue;
-        else if (c == DECIMAL_SEPARATOR)
-          integer = false;
-        else {
-          if (index > 0)
-            if (!integer && c == 'E') {
-              // CHECK FOR SCIENTIFIC NOTATION
-              if (index < iValue.length()) {
-                if (iValue.charAt(index + 1) == '-')
-                  // JUMP THE DASH IF ANY (NOT MANDATORY)
-                  index++;
-                continue;
+      if (c < '0' || c > '9') {
+          if (index == 0 && (c == '+' || c == '-')) {
+              continue;
+          } else if (c == DECIMAL_SEPARATOR) {
+              integer = false;
+          } else {
+              if (index > 0) {
+                  if (!integer && c == 'E') {
+                      if (index < iValue.length()) {
+                          if (iValue.charAt(index + 1) == '-') {
+                              // JUMP THE DASH IF ANY (NOT MANDATORY)
+                              index++;}
+                          continue;
+                      }
+                  } else if (c == 'f') {
+                      return OType.FLOAT;
+                  } else if (c == 'c') {
+                      return OType.DECIMAL;
+                  } else if (c == 'l') {
+                      return OType.LONG;
+                  } else if (c == 'd') {
+                      return OType.DOUBLE;
+                  } else if (c == 'b') {
+                      return OType.BYTE;
+                  } else if (c == 'a') {
+                      return OType.DATE;
+                  } else if (c == 't') {
+                      return OType.DATETIME;
+                  } else if (c == 's') {
+                      return OType.SHORT;
+                  }
               }
-            } else if (c == 'f')
-              return OType.FLOAT;
-            else if (c == 'c')
-              return OType.DECIMAL;
-            else if (c == 'l')
-              return OType.LONG;
-            else if (c == 'd')
-              return OType.DOUBLE;
-            else if (c == 'b')
-              return OType.BYTE;
-            else if (c == 'a')
-              return OType.DATE;
-            else if (c == 't')
-              return OType.DATETIME;
-            else if (c == 's')
-              return OType.SHORT;
-
-          return OType.STRING;
-        }
+              return OType.STRING;
+          }
+      }
     }
 
     if (integer) {
       // AUTO CONVERT TO LONG IF THE INTEGER IS TOO BIG
       final int numberLength = iValue.length();
-      if (numberLength > MAX_INTEGER_DIGITS || (numberLength == MAX_INTEGER_DIGITS && iValue.compareTo(MAX_INTEGER_AS_STRING) > 0))
-        return OType.LONG;
+      if (numberLength > MAX_INTEGER_DIGITS || (numberLength == MAX_INTEGER_DIGITS && iValue.compareTo(MAX_INTEGER_AS_STRING) > 0)) {
+          return OType.LONG;
+      }
 
       return OType.INTEGER;
     }
 
     // CHECK IF THE DECIMAL NUMBER IS A FLOAT OR DOUBLE
     final double dou = Double.parseDouble(iValue);
-    if (dou <= Float.MAX_VALUE || dou >= Float.MIN_VALUE)
-      return OType.FLOAT;
+    if (dou <= Float.MAX_VALUE || dou >= Float.MIN_VALUE) {
+        return OType.FLOAT;
+    }
 
     return OType.DOUBLE;
   }
@@ -342,37 +355,39 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
    * @return The closest type recognized
    */
   public static OType getType(final String iValue, final char iCharType) {
-    if (iCharType == 'f')
-      return OType.FLOAT;
-    else if (iCharType == 'c')
-      return OType.DECIMAL;
-    else if (iCharType == 'l')
-      return OType.LONG;
-    else if (iCharType == 'd')
-      return OType.DOUBLE;
-    else if (iCharType == 'b') {
-      if (iValue.length() >= 1 && iValue.length() <= 3)
-        return OType.BYTE;
-      else
-        return OType.BINARY;
-    } else if (iCharType == 'a')
-      return OType.DATE;
-    else if (iCharType == 't')
-      return OType.DATETIME;
-    else if (iCharType == 's')
-      return OType.SHORT;
-    else if (iCharType == 'e')
-      return OType.EMBEDDEDSET;
-    else if (iCharType == 'g')
-      return OType.LINKBAG;
-    else if (iCharType == 'z')
-      return OType.LINKLIST;
-    else if (iCharType == 'm')
-      return OType.LINKMAP;
-    else if (iCharType == 'x')
-      return OType.LINK;
-    else if (iCharType == 'n')
-      return OType.LINKSET;
+    if (iCharType == 'f') {
+        return OType.FLOAT;
+    } else if (iCharType == 'c') {
+        return OType.DECIMAL;
+    } else if (iCharType == 'l') {
+        return OType.LONG;
+    } else if (iCharType == 'd') {
+        return OType.DOUBLE;
+    } else if (iCharType == 'b') {
+      if (iValue.length() >= 1 && iValue.length() <= 3) {
+          return OType.BYTE;
+        } else {
+          return OType.BINARY;
+      }
+    } else if (iCharType == 'a') {
+        return OType.DATE;
+    } else if (iCharType == 't') {
+        return OType.DATETIME;
+    } else if (iCharType == 's') {
+        return OType.SHORT;
+    } else if (iCharType == 'e') {
+        return OType.EMBEDDEDSET;
+    } else if (iCharType == 'g') {
+        return OType.LINKBAG;
+    } else if (iCharType == 'z') {
+        return OType.LINKLIST;
+    } else if (iCharType == 'm') {
+        return OType.LINKMAP;
+    } else if (iCharType == 'x') {
+        return OType.LINK;
+    } else if (iCharType == 'n') {
+        return OType.LINKSET;
+    }
 
     return OType.STRING;
   }
@@ -388,43 +403,47 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
    * @return The closest type recognized
    */
   public static Object getTypeValue(final String iValue) {
-    if (iValue == null || iValue.equalsIgnoreCase("NULL"))
-      return null;
+    if (iValue == null || iValue.equalsIgnoreCase("NULL")) {
+        return null;
+    }
 
-    if (iValue.length() == 0)
-      return "";
+    if (iValue.length() == 0) {
+        return "";
+    }
 
-    if (iValue.length() > 1)
-      if (iValue.charAt(0) == '"' && iValue.charAt(iValue.length() - 1) == '"')
-        // STRING
-        return OStringSerializerHelper.decode(iValue.substring(1, iValue.length() - 1));
-      else if (iValue.charAt(0) == OStringSerializerHelper.BINARY_BEGINEND
-          && iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.BINARY_BEGINEND)
-        // STRING
-        return OStringSerializerHelper.getBinaryContent(iValue);
-      else if (iValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN
-          && iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.LIST_END) {
-        // LIST
-        final ArrayList<String> coll = new ArrayList<String>();
-        OStringSerializerHelper.getCollection(iValue, 0, coll, OStringSerializerHelper.LIST_BEGIN,
-            OStringSerializerHelper.LIST_END, OStringSerializerHelper.COLLECTION_SEPARATOR);
-        return coll;
-      } else if (iValue.charAt(0) == OStringSerializerHelper.SET_BEGIN
-          && iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.SET_END) {
-        // SET
-        final Set<String> coll = new HashSet<String>();
-        OStringSerializerHelper.getCollection(iValue, 0, coll, OStringSerializerHelper.SET_BEGIN, OStringSerializerHelper.SET_END,
-            OStringSerializerHelper.COLLECTION_SEPARATOR);
-        return coll;
-      } else if (iValue.charAt(0) == OStringSerializerHelper.MAP_BEGIN
-          && iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.MAP_END) {
-        // MAP
-        return OStringSerializerHelper.getMap(iValue);
+    if (iValue.length() > 1) {
+        if (iValue.charAt(0) == '"' && iValue.charAt(iValue.length() - 1) == '"') {
+            // STRING
+            return OStringSerializerHelper.decode(iValue.substring(1, iValue.length() - 1));
+        } else if (iValue.charAt(0) == OStringSerializerHelper.BINARY_BEGINEND
+                && iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.BINARY_BEGINEND) {
+            // STRING
+            return OStringSerializerHelper.getBinaryContent(iValue);
+        } else if (iValue.charAt(0) == OStringSerializerHelper.LIST_BEGIN
+                && iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.LIST_END) {
+            // LIST
+            final ArrayList<String> coll = new ArrayList<String>();
+            OStringSerializerHelper.getCollection(iValue, 0, coll, OStringSerializerHelper.LIST_BEGIN,
+                    OStringSerializerHelper.LIST_END, OStringSerializerHelper.COLLECTION_SEPARATOR);
+            return coll;
+        } else if (iValue.charAt(0) == OStringSerializerHelper.SET_BEGIN
+                && iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.SET_END) {
+            // SET
+            final Set<String> coll = new HashSet<String>();
+            OStringSerializerHelper.getCollection(iValue, 0, coll, OStringSerializerHelper.SET_BEGIN, OStringSerializerHelper.SET_END,
+                    OStringSerializerHelper.COLLECTION_SEPARATOR);
+            return coll;
+        } else if (iValue.charAt(0) == OStringSerializerHelper.MAP_BEGIN
+                && iValue.charAt(iValue.length() - 1) == OStringSerializerHelper.MAP_END) {
+            // MAP
+            return OStringSerializerHelper.getMap(iValue);
       }
+    }
 
-    if (iValue.charAt(0) == ORID.PREFIX)
-      // RID
-      return new ORecordId(iValue);
+    if (iValue.charAt(0) == ORID.PREFIX) {
+        // RID
+        return new ORecordId(iValue);
+    }
 
     boolean integer = true;
     char c;
@@ -437,34 +456,37 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
         if ((index == 0 && (c == '+' || c == '-'))) {
           stringStarBySign = true;
           continue;
-        } else if (c == DECIMAL_SEPARATOR)
-          integer = false;
-        else {
+        } else if (c == DECIMAL_SEPARATOR) {
+            integer = false;
+        } else {
           if (index > 0) {
             if (!integer && c == 'E') {
               // CHECK FOR SCIENTIFIC NOTATION
-              if (index < iValue.length())
-                index++;
-              if (iValue.charAt(index) == '-')
-                continue;
+              if (index < iValue.length()) {
+                  index++;
+                    }
+              if (iValue.charAt(index) == '-') {
+                  continue;
+              }
             }
 
             final String v = iValue.substring(0, index);
 
-            if (c == 'f')
-              return new Float(v);
-            else if (c == 'c')
-              return new BigDecimal(v);
-            else if (c == 'l')
-              return new Long(v);
-            else if (c == 'd')
-              return new Double(v);
-            else if (c == 'b')
-              return new Byte(v);
-            else if (c == 'a' || c == 't')
-              return new Date(Long.parseLong(v));
-            else if (c == 's')
-              return new Short(v);
+            if (c == 'f') {
+                return new Float(v);
+            } else if (c == 'c') {
+                    return new BigDecimal(v);
+            } else if (c == 'l') {
+                    return new Long(v);
+            } else if (c == 'd') {
+                    return new Double(v);
+            } else if (c == 'b') {
+                    return new Byte(v);
+            } else if (c == 'a' || c == 't') {
+                    return new Date(Long.parseLong(v));
+            } else if (c == 's') {
+                return new Short(v);
+                }
           }
           return iValue;
         }
@@ -472,8 +494,9 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
         stringStarBySign = false;
       }
     }
-    if (stringStarBySign)
-      return iValue;
+    if (stringStarBySign) {
+        return iValue;
+    }
 
     if (integer) {
       try {
@@ -481,11 +504,12 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       } catch (NumberFormatException e) {
         return new Long(iValue);
       }
-    } else if ("NaN".equals(iValue) || "Infinity".equals(iValue))
-      // NaN and Infinity CANNOT BE MANAGED BY BIG-DECIMAL TYPE
-      return new Double(iValue);
-    else
-      return new BigDecimal(iValue);
+    } else if ("NaN".equals(iValue) || "Infinity".equals(iValue)) {
+        // NaN and Infinity CANNOT BE MANAGED BY BIG-DECIMAL TYPE
+        return new Double(iValue);
+    } else {
+        return new BigDecimal(iValue);
+    }
   }
 
   public static Object simpleValueFromStream(final Object iValue, final OType iType) {
@@ -498,43 +522,51 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       return iValue.toString();
 
     case INTEGER:
-      if (iValue instanceof Integer)
-        return iValue;
+      if (iValue instanceof Integer) {
+          return iValue;
+    }
       return new Integer(iValue.toString());
 
     case BOOLEAN:
-      if (iValue instanceof Boolean)
-        return iValue;
+      if (iValue instanceof Boolean) {
+          return iValue;
+    }
       return new Boolean(iValue.toString());
 
     case FLOAT:
-      if (iValue instanceof Float)
-        return iValue;
+      if (iValue instanceof Float) {
+          return iValue;
+    }
       return convertValue((String) iValue, iType);
 
     case DECIMAL:
-      if (iValue instanceof BigDecimal)
-        return iValue;
+      if (iValue instanceof BigDecimal) {
+          return iValue;
+    }
       return convertValue((String) iValue, iType);
 
     case LONG:
-      if (iValue instanceof Long)
-        return iValue;
+      if (iValue instanceof Long) {
+          return iValue;
+    }
       return convertValue((String) iValue, iType);
 
     case DOUBLE:
-      if (iValue instanceof Double)
-        return iValue;
+      if (iValue instanceof Double) {
+          return iValue;
+    }
       return convertValue((String) iValue, iType);
 
     case SHORT:
-      if (iValue instanceof Short)
-        return iValue;
+      if (iValue instanceof Short) {
+          return iValue;
+    }
       return convertValue((String) iValue, iType);
 
     case BYTE:
-      if (iValue instanceof Byte)
-        return iValue;
+      if (iValue instanceof Byte) {
+          return iValue;
+    }
       return convertValue((String) iValue, iType);
 
     case BINARY:
@@ -542,25 +574,28 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
 
     case DATE:
     case DATETIME:
-      if (iValue instanceof Date)
-        return iValue;
+      if (iValue instanceof Date) {
+          return iValue;
+    }
       return convertValue((String) iValue, iType);
 
     case LINK:
-      if (iValue instanceof ORID)
-        return iValue.toString();
-      else if (iValue instanceof String)
+      if (iValue instanceof ORID) {
+          return iValue.toString();
+    } else if (iValue instanceof String) {
         return new ORecordId((String) iValue);
-      else
+    } else {
         return ((ORecord) iValue).getIdentity().toString();
+    }
     }
 
     throw new IllegalArgumentException("Type " + iType + " is not simple type.");
   }
 
   public static void simpleValueToStream(final StringBuilder iBuffer, final OType iType, final Object iValue) {
-    if (iValue == null || iType == null)
-      return;
+    if (iValue == null || iType == null) {
+        return;
+    }
     switch (iType) {
     case STRING:
       iBuffer.append('"');
@@ -582,10 +617,11 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       break;
 
     case DECIMAL:
-      if (iValue instanceof BigDecimal)
-        iBuffer.append(((BigDecimal) iValue).toPlainString());
-      else
-        iBuffer.append(String.valueOf(iValue));
+      if (iValue instanceof BigDecimal) {
+          iBuffer.append(((BigDecimal) iValue).toPlainString());
+    } else {
+          iBuffer.append(String.valueOf(iValue));
+    }
       iBuffer.append('c');
       break;
 
@@ -605,21 +641,23 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
       break;
 
     case BYTE:
-      if (iValue instanceof Character)
-        iBuffer.append((int) ((Character) iValue).charValue());
-      else if (iValue instanceof String)
+      if (iValue instanceof Character) {
+          iBuffer.append((int) ((Character) iValue).charValue());
+    } else if (iValue instanceof String) {
         iBuffer.append(String.valueOf((int) ((String) iValue).charAt(0)));
-      else
+    } else {
         iBuffer.append(String.valueOf(iValue));
+    }
       iBuffer.append('b');
       break;
 
     case BINARY:
       iBuffer.append(OStringSerializerHelper.BINARY_BEGINEND);
-      if (iValue instanceof Byte)
-        iBuffer.append(OBase64Utils.encodeBytes(new byte[] { ((Byte) iValue).byteValue() }));
-      else
-        iBuffer.append(OBase64Utils.encodeBytes((byte[]) iValue));
+      if (iValue instanceof Byte) {
+          iBuffer.append(OBase64Utils.encodeBytes(new byte[] { ((Byte) iValue).byteValue() }));
+    } else {
+          iBuffer.append(OBase64Utils.encodeBytes((byte[]) iValue));
+    }
       iBuffer.append(OStringSerializerHelper.BINARY_BEGINEND);
       break;
 
@@ -634,16 +672,18 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
         calendar.set(Calendar.MILLISECOND, 0);
 
         iBuffer.append(calendar.getTimeInMillis());
-      } else
-        iBuffer.append(iValue);
+      } else {
+          iBuffer.append(iValue);
+    }
       iBuffer.append('a');
       break;
 
     case DATETIME:
-      if (iValue instanceof Date)
-        iBuffer.append(((Date) iValue).getTime());
-      else
-        iBuffer.append(iValue);
+      if (iValue instanceof Date) {
+          iBuffer.append(((Date) iValue).getTime());
+    } else {
+          iBuffer.append(iValue);
+    }
       iBuffer.append('t');
       break;
     }

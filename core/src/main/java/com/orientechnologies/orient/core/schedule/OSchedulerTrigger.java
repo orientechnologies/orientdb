@@ -45,10 +45,11 @@ public class OSchedulerTrigger extends ODocumentHookAbstract {
       throw new OException("Duplicate Scheduler");
     }
     boolean start = iDocument.field(OScheduler.PROP_STARTED) == null ? false : ((Boolean) iDocument.field(OScheduler.PROP_STARTED));
-    if (start)
-      iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.WAITING.name());
-    else
-      iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.STOPPED.name());
+    if (start) {
+        iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.WAITING.name());
+    } else {
+        iDocument.field(OScheduler.PROP_STATUS, SCHEDULER_STATUS.STOPPED.name());
+    }
     iDocument.field(OScheduler.PROP_STARTED, start);
     return RESULT.RECORD_CHANGED;
   }

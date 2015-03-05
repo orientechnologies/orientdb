@@ -69,13 +69,15 @@ public class OSingleFileSegment {
   }
 
   public void close() throws IOException {
-    if (file != null)
-      file.close();
+    if (file != null) {
+        file.close();
+    }
   }
 
   public void delete() throws IOException {
-    if (file != null)
-      file.delete();
+    if (file != null) {
+        file.delete();
+    }
   }
 
   public void truncate() throws IOException {

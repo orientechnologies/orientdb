@@ -62,8 +62,9 @@ public class ORecordOperation implements OSerializableStream {
 
   @Override
   public boolean equals(final Object obj) {
-    if (!(obj instanceof ORecordOperation))
-      return false;
+    if (!(obj instanceof ORecordOperation)) {
+        return false;
+    }
 
     return record.equals(((ORecordOperation) obj).record);
   }
@@ -142,14 +143,15 @@ public class ORecordOperation implements OSerializableStream {
   public static byte getId(String iName) {
     iName = iName.toUpperCase();
 
-    if (iName.startsWith("CREAT"))
-      return ORecordOperation.CREATED;
-    else if (iName.startsWith("UPDAT"))
-      return ORecordOperation.UPDATED;
-    else if (iName.startsWith("DELET"))
-      return ORecordOperation.DELETED;
-    else if (iName.startsWith("READ"))
-      return ORecordOperation.LOADED;
+    if (iName.startsWith("CREAT")) {
+        return ORecordOperation.CREATED;
+    } else if (iName.startsWith("UPDAT")) {
+        return ORecordOperation.UPDATED;
+    } else if (iName.startsWith("DELET")) {
+        return ORecordOperation.DELETED;
+    } else if (iName.startsWith("READ")) {
+        return ORecordOperation.LOADED;
+    }
     return -1;
   }
 }

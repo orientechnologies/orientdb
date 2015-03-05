@@ -106,8 +106,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   @Override
   public void create(final Map<String, Object> iProperties) {
     final File storageFolder = new File(storagePath);
-    if (!storageFolder.exists())
-      storageFolder.mkdirs();
+    if (!storageFolder.exists()) {
+        storageFolder.mkdirs();
+    }
 
     super.create(iProperties);
   }
@@ -140,12 +141,13 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
       final OCommandOutputListener iOutput, final int compressionLevel, final int bufferSize) throws IOException {
     freeze(false);
     try {
-      if (callable != null)
-        try {
-          callable.call();
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on callback invocation during backup", e);
-        }
+      if (callable != null) {
+          try {
+              callable.call();
+          } catch (Exception e) {
+              OLogManager.instance().error(this, "Error on callback invocation during backup", e);
+          }
+      }
 
       final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
       try {
@@ -165,8 +167,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   @Override
   public void restore(InputStream in, Map<String, Object> options, final Callable<Object> callable,
       final OCommandOutputListener iListener) throws IOException {
-    if (!isClosed())
-      close();
+    if (!isClosed()) {
+        close();
+    }
 
     OZIPCompressionUtil.uncompressDirectory(in, getStoragePath(), iListener);
   }
@@ -174,16 +177,16 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   @Override
   protected void preOpenSteps() throws IOException {
     if (configuration.binaryFormatVersion >= 11) {
-      if (dirtyFlag.exists())
-        dirtyFlag.open();
-      else {
+      if (dirtyFlag.exists()) {
+          dirtyFlag.open();
+      } else {
         dirtyFlag.create();
         dirtyFlag.makeDirty();
       }
     } else {
-      if (dirtyFlag.exists())
-        dirtyFlag.open();
-      else {
+      if (dirtyFlag.exists()) {
+          dirtyFlag.open();
+      } else {
         dirtyFlag.create();
         dirtyFlag.clearDirty();
       }
@@ -197,9 +200,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
   @Override
   protected void postCloseSteps(boolean onDelete) throws IOException {
-    if (onDelete)
-      dirtyFlag.delete();
-    else {
+    if (onDelete) {
+        dirtyFlag.delete();
+    } else {
       dirtyFlag.clearDirty();
       dirtyFlag.close();
     }
@@ -211,8 +214,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
       if (writeAheadLog != null) {
         checkpointExecutor.shutdown();
         if (!checkpointExecutor.awaitTermination(OGlobalConfiguration.WAL_FULL_CHECKPOINT_SHUTDOWN_TIMEOUT.getValueAsInteger(),
-            TimeUnit.SECONDS))
-          throw new OStorageException("Can not terminate full checkpoint task");
+            TimeUnit.SECONDS)) {
+            throw new OStorageException("Can not terminate full checkpoint task");
+        }
       }
     } catch (InterruptedException e) {
       Thread.interrupted();
@@ -224,8 +228,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   protected void postDeleteSteps() {
     File dbDir;// GET REAL DIRECTORY
     dbDir = new File(OIOUtils.getPathFromDatabaseName(OSystemVariableResolver.resolveSystemVariables(url)));
-    if (!dbDir.exists() || !dbDir.isDirectory())
-      dbDir = dbDir.getParentFile();
+    if (!dbDir.exists() || !dbDir.isDirectory()) {
+        dbDir = dbDir.getParentFile();
+    }
 
     // RETRIES
     for (int i = 0; i < DELETE_MAX_RETRIES; ++i) {
@@ -249,8 +254,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
           dbDir.delete();
           return;
         }
-      } else
-        return;
+      } else {
+          return;
+      }
 
       OLogManager
           .instance()
@@ -282,8 +288,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
       writeAheadLog = new ODiskWriteAheadLog(this);
 			writeAheadLog.addFullCheckpointListener(this);
-    } else
-      writeAheadLog = null;
+    } else {
+        writeAheadLog = null;
+    }
 
     long diskCacheSize = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;
     long writeCacheSize = (long) Math.floor((((double) OGlobalConfiguration.DISK_WRITE_CACHE_PART.getValueAsInteger()) / 100.0)

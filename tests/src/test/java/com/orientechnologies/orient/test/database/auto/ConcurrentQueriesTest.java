@@ -80,8 +80,9 @@ public class ConcurrentQueriesTest extends DocumentDBBaseTest {
 
   @BeforeClass
   public void init() {
-    if (database.getMetadata().getSchema().existsClass("Concurrent"))
-      database.getMetadata().getSchema().dropClass("Concurrent");
+    if (database.getMetadata().getSchema().existsClass("Concurrent")) {
+        database.getMetadata().getSchema().dropClass("Concurrent");
+    }
 
     database.getMetadata().getSchema().createClass("Concurrent");
 

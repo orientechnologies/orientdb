@@ -75,8 +75,9 @@ public class OConcurrentModificationException extends ONeedRetryException {
 
   public OConcurrentModificationException(final ORID iRID, final ORecordVersion iDatabaseVersion,
       final ORecordVersion iRecordVersion, final int iRecordOperation) {
-    if (OFastConcurrentModificationException.enabled())
-      throw new IllegalStateException("Fast-throw is enabled. Use OFastConcurrentModificationException.instance() instead");
+    if (OFastConcurrentModificationException.enabled()) {
+        throw new IllegalStateException("Fast-throw is enabled. Use OFastConcurrentModificationException.instance() instead");
+    }
 
     rid = iRID;
     databaseVersion.copyFrom(iDatabaseVersion);

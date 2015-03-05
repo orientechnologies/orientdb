@@ -45,31 +45,35 @@ public abstract class AbstractServerClusterTest {
     String command = null;
     int servers = 2;
 
-    if (args.length > 0)
-      testClass = (Class<? extends AbstractServerClusterTest>) Class.forName(args[0]);
-    else
-      syntaxError();
+    if (args.length > 0) {
+        testClass = (Class<? extends AbstractServerClusterTest>) Class.forName(args[0]);
+    } else {
+        syntaxError();
+    }
 
-    if (args.length > 1)
-      command = args[1];
-    else
-      syntaxError();
+    if (args.length > 1) {
+        command = args[1];
+    } else {
+        syntaxError();
+    }
 
-    if (args.length > 2)
-      servers = Integer.parseInt(args[2]);
+    if (args.length > 2) {
+        servers = Integer.parseInt(args[2]);
+    }
 
     final AbstractServerClusterTest main = testClass.newInstance();
     main.init(servers);
 
-    if (command.equals("prepare"))
+    if (command.equals("prepare")) {
+        main.prepare(true);
+    } else if (command.equals("execute")) {
+        main.execute();
+    } else if (command.equals("prepare+execute")) {
       main.prepare(true);
-    else if (command.equals("execute"))
       main.execute();
-    else if (command.equals("prepare+execute")) {
-      main.prepare(true);
-      main.execute();
-    } else
-      System.out.println("Usage: prepare, execute or prepare+execute ...");
+    } else {
+        System.out.println("Usage: prepare, execute or prepare+execute ...");
+    }
   }
 
   private static void syntaxError() {
@@ -178,8 +182,9 @@ public abstract class AbstractServerClusterTest {
 
       replicaSrv.deleteNode();
 
-      if (iCopyDatabaseToNodes)
-        master.copyDatabase(getDatabaseName(), replicaSrv.getDatabasePath(getDatabaseName()));
+      if (iCopyDatabaseToNodes) {
+          master.copyDatabase(getDatabaseName(), replicaSrv.getDatabasePath(getDatabaseName()));
+      }
     }
   }
 

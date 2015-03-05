@@ -83,8 +83,9 @@ public class OSharedResourceAdaptive {
   }
 
   public int removeUser() {
-    if (users.get() < 1)
-      throw new IllegalStateException("Cannot remove user of the shared resource " + toString() + " because no user is using it");
+    if (users.get() < 1) {
+        throw new IllegalStateException("Cannot remove user of the shared resource " + toString() + " because no user is using it");
+    }
 
     return users.decrementAndGet();
   }
@@ -104,34 +105,34 @@ public class OSharedResourceAdaptive {
   }
 
   protected void acquireExclusiveLock() {
-    if (concurrent)
-      if (timeout > 0) {
-        try {
-
-          if (lock.writeLock().tryLock(timeout, TimeUnit.MILLISECONDS))
-            // OK
-            return;
-        } catch (InterruptedException e) {
-          if (ignoreThreadInterruption) {
-            // IGNORE THE THREAD IS INTERRUPTED: TRY TO RE-LOCK AGAIN
+    if (concurrent) {
+        if (timeout > 0) {
             try {
-              if (lock.writeLock().tryLock(timeout, TimeUnit.MILLISECONDS)) {
-                // OK, RESET THE INTERRUPTED STATE
-                Thread.currentThread().interrupt();
-                return;
-              }
-            } catch (InterruptedException e2) {
-              Thread.currentThread().interrupt();
-            }
-          }
-
-          throw new OLockException("Thread interrupted while waiting for resource of class '" + getClass() + "' with timeout="
-              + timeout);
+                if (lock.writeLock().tryLock(timeout, TimeUnit.MILLISECONDS)) {
+                    // OK
+                    return;
+                }
+            }catch (InterruptedException e) {
+                if (ignoreThreadInterruption) {
+                    // IGNORE THE THREAD IS INTERRUPTED: TRY TO RE-LOCK AGAIN
+                    try {
+                        if (lock.writeLock().tryLock(timeout, TimeUnit.MILLISECONDS)) {
+                            // OK, RESET THE INTERRUPTED STATE
+                            Thread.currentThread().interrupt();
+                            return;
+                        }
+                    } catch (InterruptedException e2) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+                
+                throw new OLockException("Thread interrupted while waiting for resource of class '" + getClass() + "' with timeout="
+                        + timeout);
+            }   throwTimeoutException(lock.writeLock());
+        } else {
+            lock.writeLock().lock();
         }
-        throwTimeoutException(lock.writeLock());
-      } else {
-        lock.writeLock().lock();
-      }
+    }
   }
 
   protected boolean tryAcquireExclusiveLock() {
@@ -139,32 +140,33 @@ public class OSharedResourceAdaptive {
   }
 
   protected void acquireSharedLock() {
-    if (concurrent)
-      if (timeout > 0) {
-        try {
-          if (lock.readLock().tryLock(timeout, TimeUnit.MILLISECONDS))
-            // OK
-            return;
-        } catch (InterruptedException e) {
-          if (ignoreThreadInterruption) {
-            // IGNORE THE THREAD IS INTERRUPTED: TRY TO RE-LOCK AGAIN
+    if (concurrent) {
+        if (timeout > 0) {
             try {
-              if (lock.readLock().tryLock(timeout, TimeUnit.MILLISECONDS)) {
-                // OK, RESET THE INTERRUPTED STATE
-                Thread.currentThread().interrupt();
-                return;
-              }
-            } catch (InterruptedException e2) {
-              Thread.currentThread().interrupt();
-            }
-          }
-          throw new OLockException("Thread interrupted while waiting for resource of class '" + getClass() + "' with timeout="
-              + timeout);
+                if (lock.readLock().tryLock(timeout, TimeUnit.MILLISECONDS)) {
+                    // OK
+                    return;
+                }
+            }catch (InterruptedException e) {
+                if (ignoreThreadInterruption) {
+                    // IGNORE THE THREAD IS INTERRUPTED: TRY TO RE-LOCK AGAIN
+                    try {
+                        if (lock.readLock().tryLock(timeout, TimeUnit.MILLISECONDS)) {
+                            // OK, RESET THE INTERRUPTED STATE
+                            Thread.currentThread().interrupt();
+                            return;
+                        }
+                    } catch (InterruptedException e2) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+                throw new OLockException("Thread interrupted while waiting for resource of class '" + getClass() + "' with timeout="
+                        + timeout);
+            }   throwTimeoutException(lock.readLock());
+        } else {
+            lock.readLock().lock();
         }
-
-        throwTimeoutException(lock.readLock());
-      } else
-        lock.readLock().lock();
+    }
   }
 
   protected boolean tryAcquireSharedLock() {
@@ -178,8 +180,9 @@ public class OSharedResourceAdaptive {
   }
 
   protected void releaseSharedLock() {
-    if (concurrent)
-      lock.readLock().unlock();
+    if (concurrent) {
+        lock.readLock().unlock();
+    }
   }
 
   private void throwTimeoutException(Lock lock) {
@@ -199,8 +202,9 @@ public class OSharedResourceAdaptive {
       getOwner.setAccessible(true);
 
       final Thread owner = (Thread) getOwner.invoke(sync);
-      if (owner == null)
-        return null;
+      if (owner == null) {
+          return null;
+      }
 
       StringWriter stringWriter = new StringWriter();
       PrintWriter printWriter = new PrintWriter(stringWriter);

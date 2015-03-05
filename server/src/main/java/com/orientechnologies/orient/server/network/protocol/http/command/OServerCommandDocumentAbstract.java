@@ -29,8 +29,9 @@ public abstract class OServerCommandDocumentAbstract extends OServerCommandAuthe
 
   protected String bindToFields(final OHttpRequest iRequest, final Map<String, String> iFields, final ORecordId iRid)
       throws Exception {
-    if (iRequest.content == null)
-      throw new IllegalArgumentException("HTTP Request content is empty");
+    if (iRequest.content == null) {
+        throw new IllegalArgumentException("HTTP Request content is empty");
+    }
 
     final String req = iRequest.content;
 
@@ -45,13 +46,13 @@ public abstract class OServerCommandDocumentAbstract extends OServerCommandAuthe
         String[] pairs = p.split("=");
         value = pairs.length == 1 ? null : pairs[1];
 
-        if ("0".equals(pairs[0]) && iRid != null)
-          iRid.fromString(value);
-        else if ("1".equals(pairs[0]))
-          className = value;
-        else if (pairs[0].startsWith("_") || pairs[0].equals("id"))
-          continue;
-        else if (iFields != null) {
+        if ("0".equals(pairs[0]) && iRid != null) {
+            iRid.fromString(value);
+        } else if ("1".equals(pairs[0])) {
+            className = value;
+        } else if (pairs[0].startsWith("_") || pairs[0].equals("id")) {
+            continue;
+        } else if (iFields != null) {
           iFields.put(pairs[0], value);
         }
       }

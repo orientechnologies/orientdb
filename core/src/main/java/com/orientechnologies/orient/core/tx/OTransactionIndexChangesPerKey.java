@@ -60,10 +60,11 @@ public class OTransactionIndexChangesPerKey {
     builder.append(key).append(" [");
     boolean first = true;
     for (OTransactionIndexEntry entry : entries) {
-      if (first)
-        first = false;
-      else
-        builder.append(',');
+      if (first) {
+          first = false;
+      } else {
+          builder.append(',');
+      }
 
       builder.append(entry.value).append(" (").append(entry.operation).append(")");
     }

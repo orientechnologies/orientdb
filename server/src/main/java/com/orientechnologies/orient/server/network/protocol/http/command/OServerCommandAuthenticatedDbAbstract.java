@@ -68,8 +68,9 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     init();
 
     final String[] urlParts = iRequest.url.substring(1).split("/");
-    if (urlParts.length < 2)
-      throw new OHttpRequestException("Syntax error in URL. Expected is: <command>/<database>[/...]");
+    if (urlParts.length < 2) {
+        throw new OHttpRequestException("Syntax error in URL. Expected is: <command>/<database>[/...]");
+    }
 
     iRequest.databaseName = urlParts[1];
     if (iRequest.bearerTokenRaw != null) {
@@ -114,8 +115,9 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
             currentSession = null;
           }
         }
-      } else
-        currentSession = null;
+      } else {
+          currentSession = null;
+      }
 
       if (currentSession == null) {
         // NO SESSION
@@ -123,8 +125,9 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
           iResponse.setSessionId(SESSIONID_UNAUTHORIZED);
           sendAuthorizationRequest(iRequest, iResponse, iRequest.databaseName);
           return false;
-        } else
-          return authenticate(iRequest, iResponse, authenticationParts, iRequest.databaseName);
+        } else {
+            return authenticate(iRequest, iResponse, authenticationParts, iRequest.databaseName);
+        }
 
       } else {
         // CHECK THE SESSION VALIDITY
@@ -238,8 +241,9 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
   protected ODatabaseDocumentTx getProfiledDatabaseInstanceBasic(final OHttpRequest iRequest) throws InterruptedException {
     final OHttpSession session = OHttpSessionManager.getInstance().getSession(iRequest.sessionId);
 
-    if (session == null)
-      throw new OSecurityAccessException(iRequest.databaseName, "No session active");
+    if (session == null) {
+        throw new OSecurityAccessException(iRequest.databaseName, "No session active");
+    }
 
     // after authentication, if current login user is different compare with current DB user, reset DB user to login user
     ODatabaseDocumentInternal localDatabase = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();

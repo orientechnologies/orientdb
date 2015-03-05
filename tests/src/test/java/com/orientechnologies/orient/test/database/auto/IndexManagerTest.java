@@ -64,11 +64,13 @@ public class IndexManagerTest extends DocumentDBBaseTest {
           null, null, null);
       fail();
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
+      if (e instanceof OResponseProcessingException) {
+          e = (Exception) e.getCause();
+      }
 
-      if (e.getCause() != null)
-        e = (Exception) e.getCause();
+      if (e.getCause() != null) {
+          e = (Exception) e.getCause();
+      }
 
       assertTrue(e instanceof IllegalArgumentException);
     }
@@ -643,8 +645,9 @@ public class IndexManagerTest extends DocumentDBBaseTest {
 
   private boolean containsIndex(final Collection<? extends OIndex> classIndexes, final String indexName) {
     for (final OIndex index : classIndexes) {
-      if (index.getName().equals(indexName))
-        return true;
+      if (index.getName().equals(indexName)) {
+          return true;
+      }
     }
     return false;
   }

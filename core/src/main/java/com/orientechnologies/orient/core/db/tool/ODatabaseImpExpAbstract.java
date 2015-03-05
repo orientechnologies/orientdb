@@ -61,8 +61,9 @@ public abstract class ODatabaseImpExpAbstract {
     database = iDatabase;
     fileName = iFileName;
 
-    if (fileName != null && fileName.indexOf('.') == -1)
-      fileName += DEFAULT_EXT;
+    if (fileName != null && fileName.indexOf('.') == -1) {
+        fileName += DEFAULT_EXT;
+    }
 
     listener = iListener;
     excludeClusters = new LinkedHashSet<String>();

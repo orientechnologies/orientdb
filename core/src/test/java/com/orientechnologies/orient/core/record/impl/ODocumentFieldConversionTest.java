@@ -542,8 +542,9 @@ public class ODocumentFieldConversionTest {
     for (int i = 1; i < 7; i++) {
       boolean contain = false;
       for (Object object : set) {
-        if (object.toString().contains(((Integer) i).toString()))
-          contain = true;
+        if (object.toString().contains(((Integer) i).toString())) {
+            contain = true;
+        }
       }
       assertTrue(contain);
     }
@@ -664,8 +665,9 @@ public class ODocumentFieldConversionTest {
     for (int i = 1; i < 7; i++) {
       boolean contain = false;
       for (Object object : set) {
-        if (object.toString().contains(((Integer) i).toString()))
-          contain = true;
+        if (object.toString().contains(((Integer) i).toString())) {
+            contain = true;
+        }
       }
       assertTrue(contain);
     }

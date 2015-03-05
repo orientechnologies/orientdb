@@ -40,8 +40,9 @@ public abstract class OFileAbstractTest extends SpeedTestMonoThread {
 	public void init() throws IOException {
 		// DELETE THE TEST FILE EVERY TIME
 		File f = new File(FILE_NAME);
-		if (f.exists())
-			f.delete();
+		if (f.exists()) {
+                    f.delete();
+                }
 
 		file = getFileImpl();
 		file.create(START_SIZE);

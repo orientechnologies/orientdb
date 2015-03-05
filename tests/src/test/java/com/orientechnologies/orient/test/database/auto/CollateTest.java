@@ -147,10 +147,11 @@ public class CollateTest extends DocumentDBBaseTest {
     for (int i = 0; i < 10; i++) {
       ODocument document = new ODocument("collateWasChangedIndexTest");
 
-      if (i % 2 == 0)
-        document.field("cp", "VAL");
-      else
-        document.field("cp", "val");
+      if (i % 2 == 0) {
+          document.field("cp", "VAL");
+      } else {
+          document.field("cp", "val");
+      }
 
       document.save();
     }

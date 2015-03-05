@@ -47,11 +47,13 @@ public class OJMXPlugin extends OServerPluginAbstract {
    public void config(final OServer oServer, final OServerParameterConfiguration[] iParams) {
      for (OServerParameterConfiguration param : iParams) {
        if (param.name.equalsIgnoreCase("enabled")) {
-         if (!Boolean.parseBoolean(param.value))
-           // DISABLE IT
-           return;
-       } else if (param.name.equalsIgnoreCase("profilerManaged"))
-         profilerManaged = Boolean.parseBoolean(param.value);
+         if (!Boolean.parseBoolean(param.value)) {
+             // DISABLE IT
+             return;
+         }
+       } else if (param.name.equalsIgnoreCase("profilerManaged")) {
+           profilerManaged = Boolean.parseBoolean(param.value);
+       }
      }
 
      OLogManager.instance().info(this, "JMX plugin installed and active: profilerManaged=%s", profilerManaged);
@@ -84,13 +86,17 @@ public class OJMXPlugin extends OServerPluginAbstract {
    public void shutdown() {
      try {
        MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-       if (onProfiler != null)
-         if (mBeanServer.isRegistered(onProfiler))
-           mBeanServer.unregisterMBean(onProfiler);
+       if (onProfiler != null) {
+           if (mBeanServer.isRegistered(onProfiler)) {
+               mBeanServer.unregisterMBean(onProfiler);
+           }
+       }
 
-       if (onServer != null)
-         if (mBeanServer.isRegistered(onServer))
-           mBeanServer.unregisterMBean(onServer);
+       if (onServer != null) {
+           if (mBeanServer.isRegistered(onServer)) {
+               mBeanServer.unregisterMBean(onServer);
+           }
+       }
      } catch (Exception e) {
        OLogManager.instance().error(this, "OrientDB Server v" + OConstants.ORIENT_VERSION + " unregisterMBean error.", e);
      }

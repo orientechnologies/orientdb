@@ -40,15 +40,17 @@ public class OQueryOperatorAnd extends OQueryOperator {
 	@Override
 	public Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult, final OSQLFilterCondition iCondition,
 			final Object iLeft, final Object iRight, OCommandContext iContext) {
-		if (iLeft == null)
-			return false;
+		if (iLeft == null) {
+                    return false;
+                }
 		return (Boolean) iLeft && (Boolean) iRight;
 	}
 
 	@Override
 	public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
-		if (iLeft == null || iRight == null)
-			return OIndexReuseType.NO_INDEX;
+		if (iLeft == null || iRight == null) {
+                    return OIndexReuseType.NO_INDEX;
+                }
 		return OIndexReuseType.INDEX_INTERSECTION;
 	}
 
@@ -57,24 +59,27 @@ public class OQueryOperatorAnd extends OQueryOperator {
 		final ORID leftRange;
 		final ORID rightRange;
 
-		if (iLeft instanceof OSQLFilterCondition)
-			leftRange = ((OSQLFilterCondition) iLeft).getBeginRidRange();
-		else
-			leftRange = null;
+		if (iLeft instanceof OSQLFilterCondition) {
+                    leftRange = ((OSQLFilterCondition) iLeft).getBeginRidRange();
+                } else {
+                    leftRange = null;
+                }
 
-		if (iRight instanceof OSQLFilterCondition)
-			rightRange = ((OSQLFilterCondition) iRight).getBeginRidRange();
-		else
-			rightRange = null;
+		if (iRight instanceof OSQLFilterCondition) {
+                    rightRange = ((OSQLFilterCondition) iRight).getBeginRidRange();
+                } else {
+                    rightRange = null;
+                }
 
-		if (leftRange == null && rightRange == null)
-			return null;
-		else if (leftRange == null)
-			return rightRange;
-		else if (rightRange == null)
-			return leftRange;
-		else
-			return leftRange.compareTo(rightRange) <= 0 ? rightRange : leftRange;
+		if (leftRange == null && rightRange == null) {
+                    return null;
+                } else if (leftRange == null) {
+                    return rightRange;
+                } else if (rightRange == null) {
+                    return leftRange;
+                } else {
+                    return leftRange.compareTo(rightRange) <= 0 ? rightRange : leftRange;
+                }
 	}
 
 	@Override
@@ -82,23 +87,26 @@ public class OQueryOperatorAnd extends OQueryOperator {
 		final ORID leftRange;
 		final ORID rightRange;
 
-		if (iLeft instanceof OSQLFilterCondition)
-			leftRange = ((OSQLFilterCondition) iLeft).getEndRidRange();
-		else
-			leftRange = null;
+		if (iLeft instanceof OSQLFilterCondition) {
+                    leftRange = ((OSQLFilterCondition) iLeft).getEndRidRange();
+                } else {
+                    leftRange = null;
+                }
 
-		if (iRight instanceof OSQLFilterCondition)
-			rightRange = ((OSQLFilterCondition) iRight).getEndRidRange();
-		else
-			rightRange = null;
+		if (iRight instanceof OSQLFilterCondition) {
+                    rightRange = ((OSQLFilterCondition) iRight).getEndRidRange();
+                } else {
+                    rightRange = null;
+                }
 
-		if (leftRange == null && rightRange == null)
-			return null;
-		else if (leftRange == null)
-			return rightRange;
-		else if (rightRange == null)
-			return leftRange;
-		else
-			return leftRange.compareTo(rightRange) >= 0 ? rightRange : leftRange;
+		if (leftRange == null && rightRange == null) {
+                    return null;
+                } else if (leftRange == null) {
+                    return rightRange;
+                } else if (rightRange == null) {
+                    return leftRange;
+                } else {
+                    return leftRange.compareTo(rightRange) >= 0 ? rightRange : leftRange;
+                }
 	}
 }

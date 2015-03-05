@@ -69,8 +69,9 @@ public class ORemoteConnectionManager implements OChannelListener {
       int maxPool = OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL.getValueAsInteger();
 
       if (iConfiguration != null && iConfiguration.size() > 0) {
-        if (iConfiguration.containsKey(PARAM_MAX_POOL))
-          maxPool = Integer.parseInt(iConfiguration.get(PARAM_MAX_POOL).toString());
+        if (iConfiguration.containsKey(PARAM_MAX_POOL)) {
+            maxPool = Integer.parseInt(iConfiguration.get(PARAM_MAX_POOL).toString());
+        }
       }
 
       pool = new OResourcePool<String, OChannelBinaryAsynchClient>(maxPool,
@@ -135,8 +136,9 @@ public class ORemoteConnectionManager implements OChannelListener {
     }
 
     final OResourcePool<String, OChannelBinaryAsynchClient> pool = connections.get(conn.getServerURL());
-    if (pool == null)
-      throw new IllegalStateException("Connection cannot be released because the pool doesn't exist anymore");
+    if (pool == null) {
+        throw new IllegalStateException("Connection cannot be released because the pool doesn't exist anymore");
+    }
 
     pool.remove(conn);
 
@@ -147,8 +149,9 @@ public class ORemoteConnectionManager implements OChannelListener {
     OChannelBinaryAsynchClient conn = (OChannelBinaryAsynchClient) channel;
 
     final OResourcePool<String, OChannelBinaryAsynchClient> pool = connections.get(conn.getServerURL());
-    if (pool == null)
-      throw new IllegalStateException("Connection cannot be released because the pool doesn't exist anymore");
+    if (pool == null) {
+        throw new IllegalStateException("Connection cannot be released because the pool doesn't exist anymore");
+    }
 
     pool.remove(conn);
 
@@ -160,32 +163,36 @@ public class ORemoteConnectionManager implements OChannelListener {
 
   public int getMaxResources(final String url) {
     final OResourcePool<String, OChannelBinaryAsynchClient> pool = connections.get(url);
-    if (pool == null)
-      return 0;
+    if (pool == null) {
+        return 0;
+    }
 
     return pool.getMaxResources();
   }
 
   public int getAvailableConnections(final String url) {
     final OResourcePool<String, OChannelBinaryAsynchClient> pool = connections.get(url);
-    if (pool == null)
-      return 0;
+    if (pool == null) {
+        return 0;
+    }
 
     return pool.getAvailableResources();
   }
 
   public int getCreatedInstancesInPool(final String url) {
     final OResourcePool<String, OChannelBinaryAsynchClient> pool = connections.get(url);
-    if (pool == null)
-      return 0;
+    if (pool == null) {
+        return 0;
+    }
 
     return pool.getCreatedInstances();
   }
 
   public void closePool(final String url) {
     final OResourcePool<String, OChannelBinaryAsynchClient> pool = connections.remove(url);
-    if (pool == null)
-      return;
+    if (pool == null) {
+        return;
+    }
 
     closePool(pool);
   }
@@ -202,8 +209,9 @@ public class ORemoteConnectionManager implements OChannelListener {
 
   protected OChannelBinaryAsynchClient createNetworkConnection(String iServerURL, final OContextConfiguration clientConfiguration,
       Map<String, Object> iAdditionalArg, final ORemoteServerEventListener asynchEventListener) throws OIOException {
-    if (iServerURL == null)
-      throw new IllegalArgumentException("server url is null");
+    if (iServerURL == null) {
+        throw new IllegalArgumentException("server url is null");
+    }
 
     // TRY WITH CURRENT URL IF ANY
     try {

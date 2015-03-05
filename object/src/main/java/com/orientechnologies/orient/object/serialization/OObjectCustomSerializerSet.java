@@ -93,8 +93,9 @@ public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements O
 
   public boolean containsAll(final Collection<?> c) {
     for (Object o : c)
-      if (!super.contains(o) && !underlying.contains(OObjectEntitySerializer.serializeFieldValue(deserializeClass, o)))
-        return false;
+      if (!super.contains(o) && !underlying.contains(OObjectEntitySerializer.serializeFieldValue(deserializeClass, o))) {
+          return false;
+    }
 
     return true;
   }
@@ -143,8 +144,9 @@ public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements O
   }
 
   public void setDirty() {
-    if (sourceRecord != null)
-      sourceRecord.setDirty();
+    if (sourceRecord != null) {
+        sourceRecord.setDirty();
+    }
   }
 
   public void detach() {
@@ -172,8 +174,9 @@ public class OObjectCustomSerializerSet<TYPE> extends HashSet<TYPE> implements O
   }
 
   protected void convertAll() {
-    if (converted)
-      return;
+    if (converted) {
+        return;
+    }
 
     super.clear();
     for (Object o : underlying) {

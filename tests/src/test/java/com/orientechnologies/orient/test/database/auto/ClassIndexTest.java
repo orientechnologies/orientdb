@@ -102,11 +102,13 @@ public class ClassIndexTest extends DocumentDBBaseTest {
       oClass.createIndex("ClassIndex:TestPropertyOne", OClass.INDEX_TYPE.UNIQUE, "fOne");
       fail();
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) e.getCause();
+      if (e instanceof OResponseProcessingException) {
+          e = (Exception) e.getCause();
+      }
 
-      if (e.getCause() != null)
-        e = (Exception) e.getCause();
+      if (e.getCause() != null) {
+          e = (Exception) e.getCause();
+      }
 
       assertTrue(e instanceof IllegalArgumentException);
     }
@@ -436,8 +438,9 @@ public class ClassIndexTest extends DocumentDBBaseTest {
     try {
       oClass.createIndex("ClassIndexTestPropertyWrongSpecifierEmbeddedMap", OClass.INDEX_TYPE.UNIQUE, "fEmbeddedMap by ttt");
     } catch (Exception e) {
-      if (e instanceof OResponseProcessingException)
-        e = (Exception) ((OResponseProcessingException) e).getCause();
+      if (e instanceof OResponseProcessingException) {
+          e = (Exception) ((OResponseProcessingException) e).getCause();
+      }
 
       Assert.assertTrue(e instanceof IllegalArgumentException);
       exceptionIsThrown = true;

@@ -58,8 +58,9 @@ public class OServerCommandGetSupportedLanguages extends OServerCommandAuthentic
       result.field("languages", languages);
       iResponse.writeRecord(result);
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) {
+          db.close();
+      }
     }
     return false;
   }

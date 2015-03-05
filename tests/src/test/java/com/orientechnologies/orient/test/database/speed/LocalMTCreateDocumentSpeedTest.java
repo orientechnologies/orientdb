@@ -84,8 +84,9 @@ public class LocalMTCreateDocumentSpeedTest {
 
   @AfterClass
   public void deinit() {
-    if (database != null)
-      database.drop();
+    if (database != null) {
+        database.drop();
+    }
     OGlobalConfiguration.USE_WAL.setValue(true);
   }
 

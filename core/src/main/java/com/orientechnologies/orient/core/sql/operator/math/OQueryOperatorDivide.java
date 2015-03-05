@@ -46,40 +46,44 @@ public class OQueryOperatorDivide extends OQueryOperator {
   @Override
   public Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult, final OSQLFilterCondition iCondition,
       Object iLeft, Object iRight, OCommandContext iContext) {
-    if (iRight == null || iLeft == null)
-      return null;
+    if (iRight == null || iLeft == null) {
+        return null;
+    }
 
-    if (iLeft instanceof Date)
-      iLeft = ((Date) iLeft).getTime();
-    if (iRight instanceof Date)
-      iRight = ((Date) iRight).getTime();
+    if (iLeft instanceof Date) {
+        iLeft = ((Date) iLeft).getTime();
+    }
+    if (iRight instanceof Date) {
+        iRight = ((Date) iRight).getTime();
+    }
 
     if (iLeft instanceof Number && iRight instanceof Number) {
       final Number l = (Number) iLeft;
       final Number r = (Number) iRight;
-      if (l instanceof Integer)
-        return l.intValue() / r.intValue();
-      else if (l instanceof Long)
-        return l.longValue() / r.longValue();
-      else if (l instanceof Short)
-        return l.shortValue() / r.shortValue();
-      else if (l instanceof Float)
-        return l.floatValue() / r.floatValue();
-      else if (l instanceof Double)
-        return l.doubleValue() / r.doubleValue();
-      else if (l instanceof BigDecimal) {
-        if (r instanceof BigDecimal)
-          return ((BigDecimal) l).divide((BigDecimal) r, RoundingMode.HALF_UP);
-        else if (r instanceof Float)
-          return ((BigDecimal) l).divide(new BigDecimal(r.floatValue()), RoundingMode.HALF_UP);
-        else if (r instanceof Double)
-          return ((BigDecimal) l).divide(new BigDecimal(r.doubleValue()), RoundingMode.HALF_UP);
-        else if (r instanceof Long)
-          return ((BigDecimal) l).divide(new BigDecimal(r.longValue()), RoundingMode.HALF_UP);
-        else if (r instanceof Integer)
-          return ((BigDecimal) l).divide(new BigDecimal(r.intValue()), RoundingMode.HALF_UP);
-        else if (r instanceof Short)
-          return ((BigDecimal) l).divide(new BigDecimal(r.shortValue()), RoundingMode.HALF_UP);
+      if (l instanceof Integer) {
+          return l.intValue() / r.intValue();
+      } else if (l instanceof Long) {
+          return l.longValue() / r.longValue();
+      } else if (l instanceof Short) {
+          return l.shortValue() / r.shortValue();
+      } else if (l instanceof Float) {
+          return l.floatValue() / r.floatValue();
+      } else if (l instanceof Double) {
+          return l.doubleValue() / r.doubleValue();
+      } else if (l instanceof BigDecimal) {
+        if (r instanceof BigDecimal) {
+            return ((BigDecimal) l).divide((BigDecimal) r, RoundingMode.HALF_UP);
+          } else if (r instanceof Float) {
+              return ((BigDecimal) l).divide(new BigDecimal(r.floatValue()), RoundingMode.HALF_UP);
+          } else if (r instanceof Double) {
+              return ((BigDecimal) l).divide(new BigDecimal(r.doubleValue()), RoundingMode.HALF_UP);
+          } else if (r instanceof Long) {
+              return ((BigDecimal) l).divide(new BigDecimal(r.longValue()), RoundingMode.HALF_UP);
+          } else if (r instanceof Integer) {
+              return ((BigDecimal) l).divide(new BigDecimal(r.intValue()), RoundingMode.HALF_UP);
+          } else if (r instanceof Short) {
+              return ((BigDecimal) l).divide(new BigDecimal(r.shortValue()), RoundingMode.HALF_UP);
+          }
       }
     }
 

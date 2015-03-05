@@ -76,22 +76,26 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
       } else if (temp.equals(KEYWORD_CONTENT)) {
         parseContent();
 
-      } else if (className == null && temp.length() > 0)
-        className = temp;
+      } else if (className == null && temp.length() > 0) {
+          className = temp;
+      }
 
       temp = parserOptionalWord(true);
-      if (parserIsEnded())
-        break;
+      if (parserIsEnded()) {
+          break;
+      }
     }
 
-    if (className == null)
-      // ASSIGN DEFAULT CLASS
-      className = "V";
+    if (className == null) {
+        // ASSIGN DEFAULT CLASS
+        className = "V";
+    }
 
     // GET/CHECK CLASS NAME
     clazz = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(className);
-    if (clazz == null)
-      throw new OCommandSQLParsingException("Class '" + className + "' was not found");
+    if (clazz == null) {
+        throw new OCommandSQLParsingException("Class '" + className + "' was not found");
+    }
 
     return this;
   }
@@ -100,30 +104,34 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
    * Execute the command and return the ODocument object created.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (clazz == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    if (clazz == null) {
+        throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    }
 
     return OGraphCommandExecutorSQLFactory.runInTx(new OGraphCommandExecutorSQLFactory.GraphCallBack<ODocument>() {
       @Override
       public ODocument call(OrientBaseGraph graph) {
         final OrientVertex vertex = graph.addTemporaryVertex(clazz.getName());
 
-        if (fields != null)
-          // EVALUATE FIELDS
-          for (Entry<String, Object> f : fields.entrySet()) {
-            if (f.getValue() instanceof OSQLFunctionRuntime)
-              fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(vertex.getRecord(), null, context));
-          }
+        if (fields != null) {
+            for (Entry<String, Object> f : fields.entrySet()) {
+                if (f.getValue() instanceof OSQLFunctionRuntime) {
+                    fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(vertex.getRecord(), null, context));
+                }
+            }
+        }
 
         OSQLHelper.bindParameters(vertex.getRecord(), fields, new OCommandParameters(iArgs), context);
 
-        if (content != null)
-          vertex.getRecord().merge(content, true, false);
+        if (content != null) {
+            vertex.getRecord().merge(content, true, false);
+        }
 
-        if (clusterName != null)
-          vertex.save(clusterName);
-        else
-          vertex.save();
+        if (clusterName != null) {
+            vertex.save(clusterName);
+        } else {
+            vertex.save();
+        }
 
         return vertex.getRecord();
       }
@@ -137,10 +145,11 @@ public class OCommandExecutorSQLCreateVertex extends OCommandExecutorSQLSetAware
 
   @Override
   public Set<String> getInvolvedClusters() {
-    if (clazz != null)
-      return Collections.singleton(getDatabase().getClusterNameById(clazz.getClusterSelection().getCluster(clazz, null)));
-    else if (clusterName != null)
-      return getInvolvedClustersOfClusters(Collections.singleton(clusterName));
+    if (clazz != null) {
+        return Collections.singleton(getDatabase().getClusterNameById(clazz.getClusterSelection().getCluster(clazz, null)));
+    } else if (clusterName != null) {
+        return getInvolvedClustersOfClusters(Collections.singleton(clusterName));
+    }
 
     return Collections.EMPTY_SET;
   }

@@ -32,11 +32,13 @@ public class CreateRelationshipsSpeedTest extends SpeedTestMonoThread {
 
 	@Override
 	public void init() throws IOException {
-		if (!database.getClusterNames().contains("Animal"))
-			database.addCluster("Animal");
+		if (!database.getClusterNames().contains("Animal")) {
+                    database.addCluster("Animal");
+                }
 
-		if (!database.getClusterNames().contains("Vaccinate"))
-			database.addCluster("Vaccinate");
+		if (!database.getClusterNames().contains("Vaccinate")) {
+                    database.addCluster("Vaccinate");
+                }
 	}
 
 	@Override

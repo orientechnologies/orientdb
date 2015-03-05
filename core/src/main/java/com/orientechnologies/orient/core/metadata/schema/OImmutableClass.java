@@ -53,10 +53,11 @@ public class OImmutableClass implements OClass {
     strictMode = oClass.isStrictMode();
     this.schema = schema;
 
-    if (oClass.getSuperClass() != null)
-      superClassName = oClass.getSuperClass().getName();
-    else
-      superClassName = null;
+    if (oClass.getSuperClass() != null) {
+        superClassName = oClass.getSuperClass().getName();
+    } else {
+        superClassName = null;
+    }
 
     name = oClass.getName();
     streamAbleName = oClass.getStreamableName();
@@ -168,8 +169,9 @@ public class OImmutableClass implements OClass {
       for (OProperty p : currentClass.properties.values()) {
         final String propName = p.getName();
 
-        if (!props.containsKey(propName))
-          props.put(propName, p);
+        if (!props.containsKey(propName)) {
+            props.put(propName, p);
+        }
       }
 
       currentClass.initSuperClass();
@@ -191,8 +193,9 @@ public class OImmutableClass implements OClass {
     do {
       for (OProperty p : currentClass.properties.values())
         if (areIndexed(p.getName())) {
-          if (indexedProps == null)
-            indexedProps = new ArrayList<OProperty>();
+          if (indexedProps == null) {
+              indexedProps = new ArrayList<OProperty>();
+          }
           indexedProps.add(p);
         }
 
@@ -215,8 +218,9 @@ public class OImmutableClass implements OClass {
     do {
       final OProperty p = currentClass.properties.get(propertyName);
 
-      if (p != null)
-        return p;
+      if (p != null) {
+          return p;
+      }
 
       currentClass.initSuperClass();
       currentClass = currentClass.superClass;
@@ -253,8 +257,9 @@ public class OImmutableClass implements OClass {
     do {
       final boolean result = currentClass.properties.containsKey(propertyName);
 
-      if (result)
-        return true;
+      if (result) {
+          return true;
+      }
 
       currentClass = (OImmutableClass) currentClass.getSuperClass();
 
@@ -382,8 +387,9 @@ public class OImmutableClass implements OClass {
 
   @Override
   public long count(boolean isPolymorphic) {
-    if (isPolymorphic)
-      return getDatabase().countClusterElements(OClassImpl.readableClusters(getDatabase(), polymorphicClusterIds));
+    if (isPolymorphic) {
+        return getDatabase().countClusterElements(OClassImpl.readableClusters(getDatabase(), polymorphicClusterIds));
+    }
 
     return getDatabase().countClusterElements(OClassImpl.readableClusters(getDatabase(), clusterIds));
   }
@@ -395,13 +401,15 @@ public class OImmutableClass implements OClass {
 
   @Override
   public boolean isSubClassOf(String iClassName) {
-    if (iClassName == null)
-      return false;
+    if (iClassName == null) {
+        return false;
+    }
 
     OClass cls = this;
     do {
-      if (iClassName.equalsIgnoreCase(cls.getName()) || iClassName.equalsIgnoreCase(cls.getShortName()))
-        return true;
+      if (iClassName.equalsIgnoreCase(cls.getName()) || iClassName.equalsIgnoreCase(cls.getShortName())) {
+          return true;
+      }
 
       cls = cls.getSuperClass();
     } while (cls != null);
@@ -411,13 +419,15 @@ public class OImmutableClass implements OClass {
 
   @Override
   public boolean isSubClassOf(OClass clazz) {
-    if (clazz == null)
-      return false;
+    if (clazz == null) {
+        return false;
+    }
 
     OClass cls = this;
     while (cls != null) {
-      if (cls.equals(clazz))
-        return true;
+      if (cls.equals(clazz)) {
+          return true;
+      }
       cls = cls.getSuperClass();
     }
     return false;
@@ -441,8 +451,9 @@ public class OImmutableClass implements OClass {
 
   @Override
   public Object get(ATTRIBUTES iAttribute) {
-    if (iAttribute == null)
-      throw new IllegalArgumentException("attribute is null");
+    if (iAttribute == null) {
+        throw new IllegalArgumentException("attribute is null");
+    }
 
     switch (iAttribute) {
     case NAME:
@@ -502,8 +513,9 @@ public class OImmutableClass implements OClass {
 
     final Set<OIndex<?>> result = new HashSet<OIndex<?>>(getClassInvolvedIndexes(fields));
 
-    if (superClass != null)
-      result.addAll(superClass.getInvolvedIndexes(fields));
+    if (superClass != null) {
+        result.addAll(superClass.getInvolvedIndexes(fields));
+    }
 
     return result;
   }
@@ -531,8 +543,9 @@ public class OImmutableClass implements OClass {
 
     initSuperClass();
 
-    if (superClass != null)
-      return currentClassResult || superClass.areIndexed(fields);
+    if (superClass != null) {
+        return currentClassResult || superClass.areIndexed(fields);
+    }
     return currentClassResult;
   }
 
@@ -577,18 +590,23 @@ public class OImmutableClass implements OClass {
 
   @Override
   public boolean equals(final Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (!OClass.class.isAssignableFrom(obj.getClass()))
-      return false;
+    if (this == obj) {
+        return true;
+    }
+    if (obj == null) {
+        return false;
+    }
+    if (!OClass.class.isAssignableFrom(obj.getClass())) {
+        return false;
+    }
     final OClass other = (OClass) obj;
     if (name == null) {
-      if (other.getName() != null)
+      if (other.getName() != null) {
+          return false;
+      }
+    } else if (!name.equals(other.getName())) {
         return false;
-    } else if (!name.equals(other.getName()))
-      return false;
+    }
     return true;
   }
 

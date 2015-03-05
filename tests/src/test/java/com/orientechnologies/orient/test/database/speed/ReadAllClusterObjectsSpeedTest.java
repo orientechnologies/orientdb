@@ -32,8 +32,9 @@ public class ReadAllClusterObjectsSpeedTest extends SpeedTestMonoThread {
   public ReadAllClusterObjectsSpeedTest() {
     super(5);
     url = System.getProperty("url");
-    if (url == null)
-      throw new IllegalArgumentException("URL missing");
+    if (url == null) {
+        throw new IllegalArgumentException("URL missing");
+    }
   }
 
   @Override

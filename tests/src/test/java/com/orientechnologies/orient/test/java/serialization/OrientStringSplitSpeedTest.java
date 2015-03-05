@@ -33,8 +33,9 @@ public class OrientStringSplitSpeedTest {
 		long time = System.currentTimeMillis();
 		for (int i = 0; i < MAX; ++i) {
 			pieces = OStringSerializerHelper.split(TEXT, ',');
-			if (i % (MAX / 10) == 0)
-				System.out.print(".");
+			if (i % (MAX / 10) == 0) {
+                            System.out.print(".");
+                        }
 		}
 		System.out.println("\nElapsed: " + (System.currentTimeMillis() - time));
 	}

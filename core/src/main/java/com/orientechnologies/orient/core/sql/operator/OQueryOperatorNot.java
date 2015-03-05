@@ -47,11 +47,13 @@ public class OQueryOperatorNot extends OQueryOperator {
   @Override
   public Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult, final OSQLFilterCondition iCondition,
       final Object iLeft, final Object iRight, OCommandContext iContext) {
-    if (next != null)
-      return !(Boolean) next.evaluateRecord(iRecord, null, iCondition, iLeft, iRight, iContext);
+    if (next != null) {
+        return !(Boolean) next.evaluateRecord(iRecord, null, iCondition, iLeft, iRight, iContext);
+    }
 
-    if (iLeft == null)
-      return false;
+    if (iLeft == null) {
+        return false;
+    }
     return !(Boolean) iLeft;
   }
 
@@ -66,14 +68,15 @@ public class OQueryOperatorNot extends OQueryOperator {
       final ORID beginRange = ((OSQLFilterCondition) iLeft).getBeginRidRange();
       final ORID endRange = ((OSQLFilterCondition) iLeft).getEndRidRange();
 
-      if (beginRange == null && endRange == null)
-        return null;
-      else if (beginRange == null)
-        return endRange;
-      else if (endRange == null)
-        return null;
-      else
-        return null;
+      if (beginRange == null && endRange == null) {
+          return null;
+      } else if (beginRange == null) {
+          return endRange;
+      } else if (endRange == null) {
+          return null;
+      } else {
+          return null;
+      }
     }
 
     return null;
@@ -85,14 +88,15 @@ public class OQueryOperatorNot extends OQueryOperator {
       final ORID beginRange = ((OSQLFilterCondition) iLeft).getBeginRidRange();
       final ORID endRange = ((OSQLFilterCondition) iLeft).getEndRidRange();
 
-      if (beginRange == null && endRange == null)
-        return null;
-      else if (beginRange == null)
-        return null;
-      else if (endRange == null)
-        return beginRange;
-      else
-        return null;
+      if (beginRange == null && endRange == null) {
+          return null;
+      } else if (beginRange == null) {
+          return null;
+      } else if (endRange == null) {
+          return beginRange;
+      } else {
+          return null;
+      }
     }
 
     return null;

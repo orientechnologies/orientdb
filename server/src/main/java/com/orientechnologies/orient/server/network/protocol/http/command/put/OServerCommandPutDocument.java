@@ -51,26 +51,31 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
         final String rid = parametersPos > -1 ? urlParts[2].substring(0, parametersPos) : urlParts[2];
         recordId = new ORecordId(rid);
 
-        if (!recordId.isValid())
-          throw new IllegalArgumentException("Invalid Record ID in request: " + recordId);
-      } else
-        recordId = new ORecordId();
+        if (!recordId.isValid()) {
+            throw new IllegalArgumentException("Invalid Record ID in request: " + recordId);
+        }
+      } else {
+          recordId = new ORecordId();
+      }
 
       // UNMARSHALL DOCUMENT WITH REQUEST CONTENT
       doc = new ODocument();
       doc.fromJSON(iRequest.content);
 
-      if (iRequest.ifMatch != null)
-        // USE THE IF-MATCH HTTP HEADER AS VERSION
-        doc.getRecordVersion().getSerializer().fromString(iRequest.ifMatch, doc.getRecordVersion());
+      if (iRequest.ifMatch != null) {
+          // USE THE IF-MATCH HTTP HEADER AS VERSION
+          doc.getRecordVersion().getSerializer().fromString(iRequest.ifMatch, doc.getRecordVersion());
+      }
 
-      if (!recordId.isValid())
-        recordId = (ORecordId) doc.getIdentity();
-      else
-        ORecordInternal.setIdentity(doc, recordId);
+      if (!recordId.isValid()) {
+          recordId = (ORecordId) doc.getIdentity();
+      } else {
+          ORecordInternal.setIdentity(doc, recordId);
+      }
 
-      if (!recordId.isValid())
-        throw new IllegalArgumentException("Invalid Record ID in request: " + recordId);
+      if (!recordId.isValid()) {
+          throw new IllegalArgumentException("Invalid Record ID in request: " + recordId);
+      }
 
       final ODocument currentDocument = db.load(recordId);
 
@@ -82,12 +87,14 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
 
       boolean partialUpdateMode = false;
       String mode = iRequest.getParameter("updateMode");
-      if (mode != null && mode.equalsIgnoreCase("partial"))
-        partialUpdateMode = true;
+      if (mode != null && mode.equalsIgnoreCase("partial")) {
+          partialUpdateMode = true;
+      }
 
       mode = iRequest.getHeader("updateMode");
-      if (mode != null && mode.equalsIgnoreCase("partial"))
-        partialUpdateMode = true;
+      if (mode != null && mode.equalsIgnoreCase("partial")) {
+          partialUpdateMode = true;
+      }
 
       currentDocument.merge(doc, partialUpdateMode, false);
       if (currentDocument.isDirty()) {
@@ -99,8 +106,9 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
           currentDocument.toJSON(), OHttpUtils.HEADER_ETAG + doc.getVersion());
 
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) {
+          db.close();
+      }
     }
     return false;
   }

@@ -56,20 +56,23 @@ public abstract class OLazyWrapperIterator<T> implements Iterator<T>, Iterable<T
   }
 
   public int size() {
-    if (size > -1)
-      return size;
+    if (size > -1) {
+        return size;
+    }
 
-    if (iterator instanceof OSizeable)
-      return ((OSizeable) iterator).size();
+    if (iterator instanceof OSizeable) {
+        return ((OSizeable) iterator).size();
+    }
 
     return 0;
   }
 
   @Override
   public void reset() {
-    if (iterator instanceof OResettable)
-      // RESET IT FOR MULTIPLE ITERATIONS
-      ((OResettable) iterator).reset();
+    if (iterator instanceof OResettable) {
+        // RESET IT FOR MULTIPLE ITERATIONS
+        ((OResettable) iterator).reset();
+    }
     nextElement = null;
   }
 
@@ -77,8 +80,9 @@ public abstract class OLazyWrapperIterator<T> implements Iterator<T>, Iterable<T
   public boolean hasNext() {
     while (nextElement == null && iterator.hasNext()) {
       nextElement = createWrapper(iterator.next());
-      if (nextElement != null && !filter(nextElement))
-        nextElement = null;
+      if (nextElement != null && !filter(nextElement)) {
+          nextElement = null;
+      }
     }
 
     return nextElement != null;
@@ -86,12 +90,13 @@ public abstract class OLazyWrapperIterator<T> implements Iterator<T>, Iterable<T
 
   @Override
   public T next() {
-    if (hasNext())
-      try {
-        return nextElement;
-      } finally {
-        nextElement = null;
-      }
+    if (hasNext()) {
+        try {
+            return nextElement;
+        } finally {
+            nextElement = null;
+        }
+    }
 
     throw new NoSuchElementException();
   }

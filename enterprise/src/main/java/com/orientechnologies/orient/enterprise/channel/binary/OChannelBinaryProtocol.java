@@ -123,8 +123,9 @@ public class OChannelBinaryProtocol {
 
   public static OIdentifiable readIdentifiable(final OChannelBinaryAsynchClient network) throws IOException {
     final int classId = network.readShort();
-    if (classId == RECORD_NULL)
-      return null;
+    if (classId == RECORD_NULL) {
+        return null;
+    }
 
     if (classId == RECORD_RID) {
       return network.readRID();

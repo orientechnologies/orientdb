@@ -40,9 +40,10 @@ public class OStreamSerializerRecord implements OStreamSerializer {
    * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
    */
   public Object fromStream(final byte[] iStream) throws IOException {
-    if (iStream == null || iStream.length == 0)
-      // NULL VALUE
-      return null;
+    if (iStream == null || iStream.length == 0) {
+        // NULL VALUE
+        return null;
+    }
 
     final ORecord obj = Orient.instance().getRecordFactoryManager().newInstance();
 
@@ -53,11 +54,13 @@ public class OStreamSerializerRecord implements OStreamSerializer {
   }
 
   public byte[] toStream(final Object iObject) throws IOException {
-    if (iObject == null)
-      return null;
+    if (iObject == null) {
+        return null;
+    }
 
-    if (((ORecord) iObject).getIdentity() == null)
-      throw new OSerializationException("Cannot serialize record without identity. Store it before to serialize.");
+    if (((ORecord) iObject).getIdentity() == null) {
+        throw new OSerializationException("Cannot serialize record without identity. Store it before to serialize.");
+    }
 
     return ((ORecord) iObject).getIdentity().toStream();
   }

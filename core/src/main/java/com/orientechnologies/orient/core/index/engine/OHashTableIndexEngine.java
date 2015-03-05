@@ -61,10 +61,11 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
     hashFunction = new OMurmurHash3HashFunction<Object>();
 
     boolean durableInNonTx;
-    if (durableInNonTxMode == null)
-      durableInNonTx = OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean();
-    else
-      durableInNonTx = durableInNonTxMode;
+    if (durableInNonTxMode == null) {
+        durableInNonTx = OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean();
+    } else {
+        durableInNonTx = durableInNonTxMode;
+    }
 
     hashTable = new OLocalHashTable<Object, V>(METADATA_FILE_EXTENSION, TREE_FILE_EXTENSION, BUCKET_FILE_EXTENSION,
         NULL_BUCKET_FILE_EXTENSION, hashFunction, durableInNonTx, trackMode);
@@ -89,8 +90,9 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
           keySerializer = OBinarySerializerFactory.getInstance().getObjectSerializer(indexDefinition.getTypes()[0]);
         }
       }
-    } else
-      keySerializer = new OSimpleKeySerializer();
+    } else {
+        keySerializer = new OSimpleKeySerializer();
+    }
 
     final ODatabaseDocumentInternal database = getDatabase();
     final ORecordBytes identityRecord = new ORecordBytes();
@@ -162,12 +164,13 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
 
   @Override
   public long size(ValuesTransformer<V> transformer) {
-    if (transformer == null)
-      return hashTable.size();
-    else {
+    if (transformer == null) {
+        return hashTable.size();
+    } else {
       OHashIndexBucket.Entry<Object, V> firstEntry = hashTable.firstEntry();
-      if (firstEntry == null)
-        return 0;
+      if (firstEntry == null) {
+          return 0;
+        }
 
       OHashIndexBucket.Entry<Object, V>[] entries = hashTable.ceilingEntries(firstEntry.key);
       long counter = 0;
@@ -231,22 +234,26 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
 
       {
         OHashIndexBucket.Entry<Object, V> firstEntry = hashTable.firstEntry();
-        if (firstEntry == null)
-          entries = new OHashIndexBucket.Entry[0];
-        else
-          entries = hashTable.ceilingEntries(firstEntry.key);
+        if (firstEntry == null) {
+            entries = new OHashIndexBucket.Entry[0];
+        } else {
+            entries = hashTable.ceilingEntries(firstEntry.key);
+        }
 
-        if (entries.length == 0)
-          currentIterator = null;
+        if (entries.length == 0) {
+            currentIterator = null;
+        }
       }
 
       @Override
       public Map.Entry<Object, OIdentifiable> nextEntry() {
-        if (currentIterator == null)
-          return null;
+        if (currentIterator == null) {
+            return null;
+        }
 
-        if (currentIterator.hasNext())
-          return nextCursorValue();
+        if (currentIterator.hasNext()) {
+            return nextCursorValue();
+        }
 
         while (currentIterator != null && !currentIterator.hasNext()) {
           if (entries.length == 0) {
@@ -259,10 +266,11 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
           currentKey = bucketEntry.key;
 
           V value = bucketEntry.value;
-          if (valuesTransformer != null)
-            currentIterator = valuesTransformer.transformFromValue(value).iterator();
-          else
-            currentIterator = Collections.singletonList((OIdentifiable) value).iterator();
+          if (valuesTransformer != null) {
+              currentIterator = valuesTransformer.transformFromValue(value).iterator();
+          } else {
+              currentIterator = Collections.singletonList((OIdentifiable) value).iterator();
+          }
 
           nextEntriesIndex++;
 
@@ -273,8 +281,9 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
           }
         }
 
-        if (currentIterator != null && !currentIterator.hasNext())
-          return nextCursorValue();
+        if (currentIterator != null && !currentIterator.hasNext()) {
+            return nextCursorValue();
+        }
 
         currentIterator = null;
         return null;
@@ -314,22 +323,26 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
 
       {
         OHashIndexBucket.Entry<Object, V> lastEntry = hashTable.lastEntry();
-        if (lastEntry == null)
-          entries = new OHashIndexBucket.Entry[0];
-        else
-          entries = hashTable.floorEntries(lastEntry.key);
+        if (lastEntry == null) {
+            entries = new OHashIndexBucket.Entry[0];
+        } else {
+            entries = hashTable.floorEntries(lastEntry.key);
+        }
 
-        if (entries.length == 0)
-          currentIterator = null;
+        if (entries.length == 0) {
+            currentIterator = null;
+        }
       }
 
       @Override
       public Map.Entry<Object, OIdentifiable> nextEntry() {
-        if (currentIterator == null)
-          return null;
+        if (currentIterator == null) {
+            return null;
+        }
 
-        if (currentIterator.hasNext())
-          return nextCursorValue();
+        if (currentIterator.hasNext()) {
+            return nextCursorValue();
+        }
 
         while (currentIterator != null && !currentIterator.hasNext()) {
           if (entries.length == 0) {
@@ -344,8 +357,9 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
           V value = bucketEntry.value;
           if (valuesTransformer != null) {
             currentIterator = valuesTransformer.transformFromValue(value).iterator();
-          } else
-            currentIterator = Collections.singletonList((OIdentifiable) value).iterator();
+          } else {
+              currentIterator = Collections.singletonList((OIdentifiable) value).iterator();
+          }
 
           nextEntriesIndex--;
 
@@ -356,8 +370,9 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
           }
         }
 
-        if (currentIterator != null && !currentIterator.hasNext())
-          return nextCursorValue();
+        if (currentIterator != null && !currentIterator.hasNext()) {
+            return nextCursorValue();
+        }
 
         currentIterator = null;
         return null;
@@ -394,10 +409,11 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
 
       {
         OHashIndexBucket.Entry<Object, V> firstEntry = hashTable.firstEntry();
-        if (firstEntry == null)
-          entries = new OHashIndexBucket.Entry[0];
-        else
-          entries = hashTable.ceilingEntries(firstEntry.key);
+        if (firstEntry == null) {
+            entries = new OHashIndexBucket.Entry[0];
+        } else {
+            entries = hashTable.ceilingEntries(firstEntry.key);
+        }
       }
 
       @Override

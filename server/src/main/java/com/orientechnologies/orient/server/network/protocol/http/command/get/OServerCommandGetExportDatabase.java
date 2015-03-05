@@ -64,8 +64,9 @@ public class OServerCommandGetExportDatabase extends OServerCommandAuthenticated
       } catch (SocketException e) {
       }
     } finally {
-      if (database != null)
-        database.close();
+      if (database != null) {
+          database.close();
+      }
     }
   }
 

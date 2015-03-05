@@ -41,8 +41,9 @@ public class OUserTrigger extends ODocumentHookAbstract {
 
   @Override
   public RESULT onRecordBeforeCreate(final ODocument iDocument) {
-    if ("OUser".equalsIgnoreCase(iDocument.getClassName()))
-      return encodePassword(iDocument);
+    if ("OUser".equalsIgnoreCase(iDocument.getClassName())) {
+        return encodePassword(iDocument);
+    }
     return RESULT.RECORD_NOT_CHANGED;
   }
 
@@ -59,13 +60,15 @@ public class OUserTrigger extends ODocumentHookAbstract {
   }
 
   private RESULT encodePassword(final ODocument iDocument) {
-    if (iDocument.field("name") == null)
-      throw new OSecurityException("User name not found");
+    if (iDocument.field("name") == null) {
+        throw new OSecurityException("User name not found");
+    }
 
     final String password = (String) iDocument.field("password");
 
-    if (password == null)
-      throw new OSecurityException("User '" + iDocument.field("name") + "' has no password");
+    if (password == null) {
+        throw new OSecurityException("User '" + iDocument.field("name") + "' has no password");
+    }
 
     if (!password.startsWith(OSecurityManager.ALGORITHM_PREFIX)) {
       iDocument.field("password", OUser.encryptPassword(password));

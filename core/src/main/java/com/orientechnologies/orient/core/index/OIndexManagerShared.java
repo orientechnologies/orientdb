@@ -120,12 +120,14 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
    */
   public OIndex<?> createIndex(final String iName, final String iType, final OIndexDefinition indexDefinition,
       final int[] clusterIdsToIndex, OProgressListener progressListener, ODocument metadata, String algorithm) {
-    if (getDatabase().getTransaction().isActive())
-      throw new IllegalStateException("Cannot create a new index inside a transaction");
+    if (getDatabase().getTransaction().isActive()) {
+        throw new IllegalStateException("Cannot create a new index inside a transaction");
+    }
 
     final Character c = OSchemaShared.checkFieldNameIfValid(iName);
-    if (c != null)
-      throw new IllegalArgumentException("Invalid index name '" + iName + "'. Character '" + c + "' is invalid");
+    if (c != null) {
+        throw new IllegalArgumentException("Invalid index name '" + iName + "'. Character '" + c + "' is invalid");
+    }
 
     ODatabaseInternal database = getDatabase();
     OStorage storage = database.getStorage();
@@ -136,19 +138,23 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     final OIndexInternal<?> index;
     acquireExclusiveLock();
     try {
-      if (indexes.containsKey(iName.toLowerCase()))
-        throw new OIndexException("Index with name " + iName.toLowerCase() + " already exists.");
+      if (indexes.containsKey(iName.toLowerCase())) {
+          throw new OIndexException("Index with name " + iName.toLowerCase() + " already exists.");
+      }
 
       // manual indexes are always durable
       if (clusterIdsToIndex == null || clusterIdsToIndex.length == 0) {
-        if (metadata == null)
-          metadata = new ODocument();
+        if (metadata == null) {
+            metadata = new ODocument();
+        }
 
         Object durable = metadata.field("durableInNonTxMode");
-        if (!(durable instanceof Boolean))
-          metadata.field("durableInNonTxMode", true);
-        if (metadata.field("trackMode") == null)
-          metadata.field("trackMode", "FULL");
+        if (!(durable instanceof Boolean)) {
+            metadata.field("durableInNonTxMode", true);
+        }
+        if (metadata.field("trackMode") == null) {
+            metadata.field("trackMode", "FULL");
+        }
       }
 
       index = OIndexes.createIndex(getDatabase(), iType, algorithm, valueContainerAlgorithm, metadata);
@@ -157,14 +163,16 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
       final String clusterName = indexDefinition != null && indexDefinition.getClassName() != null ? defaultClusterName
           : manualClusterName;
 
-      if (progressListener == null)
-        // ASSIGN DEFAULT PROGRESS LISTENER
-        progressListener = new OIndexRebuildOutputListener(index);
+      if (progressListener == null) {
+          // ASSIGN DEFAULT PROGRESS LISTENER
+          progressListener = new OIndexRebuildOutputListener(index);
+      }
 
       final Set<String> clustersToIndex = findClustersByIds(clusterIdsToIndex, database);
 
-      if (metadata != null && Boolean.FALSE.equals(metadata.field("ignoreNullValues")) && indexDefinition != null)
-        indexDefinition.setNullValuesIgnored(false);
+      if (metadata != null && Boolean.FALSE.equals(metadata.field("ignoreNullValues")) && indexDefinition != null) {
+          indexDefinition.setNullValuesIgnored(false);
+      }
 
       index.create(iName, indexDefinition, clusterName, clustersToIndex, true, progressListener);
       addIndexInternal(index);
@@ -180,8 +188,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
       releaseExclusiveLock();
     }
 
-    if (OGlobalConfiguration.INDEX_FLUSH_AFTER_CREATE.getValueAsBoolean())
-      storage.synch();
+    if (OGlobalConfiguration.INDEX_FLUSH_AFTER_CREATE.getValueAsBoolean()) {
+        storage.synch();
+    }
 
     return preProcessBeforeReturn(index);
   }
@@ -191,8 +200,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     if (clusterIdsToIndex != null) {
       for (int clusterId : clusterIdsToIndex) {
         final String clusterNameToIndex = database.getClusterNameById(clusterId);
-        if (clusterNameToIndex == null)
-          throw new OIndexException("Cluster with id " + clusterId + " does not exist.");
+        if (clusterNameToIndex == null) {
+            throw new OIndexException("Cluster with id " + clusterId + " does not exist.");
+        }
 
         clustersToIndex.add(clusterNameToIndex);
       }
@@ -212,15 +222,17 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
   }
 
   private String chooseTreeAlgorithm(String algorithm) {
-    if (algorithm == null)
-      algorithm = ODefaultIndexFactory.SBTREE_ALGORITHM;
+    if (algorithm == null) {
+        algorithm = ODefaultIndexFactory.SBTREE_ALGORITHM;
+    }
 
     return algorithm;
   }
 
   public OIndexManager dropIndex(final String iIndexName) {
-    if (getDatabase().getTransaction().isActive())
-      throw new IllegalStateException("Cannot drop an index inside a transaction");
+    if (getDatabase().getTransaction().isActive()) {
+        throw new IllegalStateException("Cannot drop an index inside a transaction");
+    }
 
     acquireExclusiveLock();
     try {
@@ -238,8 +250,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
     }
 
     final OStorage storage = getDatabase().getStorage();
-    if (OGlobalConfiguration.INDEX_FLUSH_AFTER_CREATE.getValueAsBoolean())
-      storage.synch();
+    if (OGlobalConfiguration.INDEX_FLUSH_AFTER_CREATE.getValueAsBoolean()) {
+        storage.synch();
+    }
 
     return this;
   }
@@ -276,9 +289,10 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
   public void recreateIndexes() {
     acquireExclusiveLock();
     try {
-      if (recreateIndexesThread != null && recreateIndexesThread.isAlive())
-        // BUILDING ALREADY IN PROGRESS
-        return;
+      if (recreateIndexesThread != null && recreateIndexesThread.isAlive()) {
+          // BUILDING ALREADY IN PROGRESS
+          return;
+      }
 
       final ODatabaseDocument db = getDatabase();
       document = db.load(new ORecordId(getDatabase().getStorage().getConfiguration().indexMgrRecordId));
@@ -306,8 +320,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
   @Override
   public void waitTillIndexRestore() {
     if (recreateIndexesThread != null && recreateIndexesThread.isAlive()) {
-      if (Thread.currentThread().equals(recreateIndexesThread))
-        return;
+      if (Thread.currentThread().equals(recreateIndexesThread)) {
+          return;
+      }
 
       OLogManager.instance().info(this, "Wait till indexes restore after crash was finished.");
       while (recreateIndexesThread.isAlive())
@@ -321,8 +336,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
   }
 
   public boolean autoRecreateIndexesAfterCrash() {
-    if (rebuildCompleted)
-      return false;
+    if (rebuildCompleted) {
+        return false;
+    }
 
     final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.get();
     final OStorage storage = database.getStorage().getUnderlying();
@@ -407,8 +423,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
 
   public void removeClassPropertyIndex(final OIndex<?> idx) {
     final OIndexDefinition indexDefinition = idx.getDefinition();
-    if (indexDefinition == null || indexDefinition.getClassName() == null)
-      return;
+    if (indexDefinition == null || indexDefinition.getClassName() == null) {
+        return;
+    }
 
     final Map<OMultiKey, Set<OIndex<?>>> map = classPropertyIndex.get(indexDefinition.getClassName().toLowerCase());
 
@@ -422,16 +439,18 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
       final List<String> fields = normalizeFieldNames(indexDefinition.getFields().subList(0, i));
       final OMultiKey multiKey = new OMultiKey(fields);
       final Set<OIndex<?>> indexSet = map.get(multiKey);
-      if (indexSet == null)
-        continue;
+      if (indexSet == null) {
+          continue;
+      }
       indexSet.remove(idx);
       if (indexSet.isEmpty()) {
         map.remove(multiKey);
       }
     }
 
-    if (map.isEmpty())
-      classPropertyIndex.remove(indexDefinition.getClassName().toLowerCase());
+    if (map.isEmpty()) {
+        classPropertyIndex.remove(indexDefinition.getClassName().toLowerCase());
+    }
   }
 
   private class RecreateIndexesTask implements Runnable {
@@ -474,8 +493,9 @@ public class OIndexManagerShared extends OIndexManagerAbstract implements OIndex
       save();
 
       final OStorage storage = newDb.getStorage();
-      if (OGlobalConfiguration.INDEX_FLUSH_AFTER_CREATE.getValueAsBoolean())
-        storage.synch();
+      if (OGlobalConfiguration.INDEX_FLUSH_AFTER_CREATE.getValueAsBoolean()) {
+          storage.synch();
+      }
 
       rebuildCompleted = true;
 

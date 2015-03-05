@@ -66,8 +66,9 @@ public class OSBTreeCollectionManagerProxy extends OProxedResource<OSBTreeCollec
 
   @Override
   public UUID listenForChanges(ORidBag oIdentifiables) {
-    if (delegate == null)
-      return null;
+    if (delegate == null) {
+        return null;
+    }
 
     return delegate.listenForChanges(oIdentifiables);
   }
@@ -91,7 +92,8 @@ public class OSBTreeCollectionManagerProxy extends OProxedResource<OSBTreeCollec
 
   @Override
   public void clearChangedIds() {
-    if (delegate != null)
-      delegate.clearChangedIds();
+    if (delegate != null) {
+        delegate.clearChangedIds();
+    }
   }
 }

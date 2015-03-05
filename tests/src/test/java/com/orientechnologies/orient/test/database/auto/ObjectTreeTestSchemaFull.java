@@ -262,8 +262,9 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
 
       parent = r.getInvitedBy();
 
-      if (parent != null)
-        System.out.println("- parent: " + parent.getName() + " " + parent.getSurname());
+      if (parent != null) {
+          System.out.println("- parent: " + parent.getName() + " " + parent.getSurname());
+      }
     }
   }
 
@@ -867,8 +868,9 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
     OObjectSerializerHelper.bindSerializerContext(null, serializerContext);
     database.getEntityManager().registerEntityClass(CustomClass.class);
 
-    if (!database.getMetadata().getSchema().existsClass("CustomClass"))
-      database.getMetadata().getSchema().createClass("CustomClass");
+    if (!database.getMetadata().getSchema().existsClass("CustomClass")) {
+        database.getMetadata().getSchema().createClass("CustomClass");
+    }
 
     List<CustomType> customTypesList = new ArrayList<CustomType>();
     customTypesList.add(new CustomType(102L));

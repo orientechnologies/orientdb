@@ -49,8 +49,9 @@ public class MemoryLocker {
    *          if this parameter is true only bundled JNA will be used.
    */
   public static void lockMemory(boolean useSystemJNADisabled) {
-    if (useSystemJNADisabled)
-      disableUsingSystemJNA();
+    if (useSystemJNADisabled) {
+        disableUsingSystemJNA();
+    }
     try {
       int errorCode = MemoryLockerLinux.INSTANCE.mlockall(MemoryLockerLinux.LOCK_CURRENT_MEMORY);
       if (errorCode != 0) {

@@ -129,8 +129,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   public OStorageRemote(final String iClientId, final String iURL, final String iMode, STATUS status) throws IOException {
     super(iURL, iURL, iMode, 0); // NO TIMEOUT @SINCE 1.5
-    if (status != null)
-      this.status = status;
+    if (status != null) {
+        this.status = status;
+    }
 
     clientId = iClientId;
     configuration = null;
@@ -217,11 +218,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       componentsFactory = new OCurrentStorageComponentsFactory(configuration);
     } catch (Exception e) {
-      if (e instanceof RuntimeException)
-        // PASS THROUGH
-        throw (RuntimeException) e;
-      else
-        throw new OStorageException("Cannot open the remote storage: " + name, e);
+      if (e instanceof RuntimeException) {
+          // PASS THROUGH
+          throw (RuntimeException) e;
+      } else {
+          throw new OStorageException("Cannot open the remote storage: " + name, e);
+      }
 
     } finally {
       lock.releaseExclusiveLock();
@@ -275,15 +277,17 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   }
 
   public void close(final boolean iForce, boolean onDelete) {
-    if (status == STATUS.CLOSED)
-      return;
+    if (status == STATUS.CLOSED) {
+        return;
+    }
 
     OChannelBinaryAsynchClient network = null;
 
     lock.acquireExclusiveLock();
     try {
-      if (status == STATUS.CLOSED)
-        return;
+      if (status == STATUS.CLOSED) {
+          return;
+      }
 
       network = beginRequest(OChannelBinaryProtocol.REQUEST_DB_CLOSE);
       try {
@@ -293,8 +297,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         engine.getConnectionManager().release(network);
       }
 
-      if (!checkForClose(iForce))
-        return;
+      if (!checkForClose(iForce)) {
+          return;
+      }
 
       status = STATUS.CLOSING;
       // CLOSE ALL THE CONNECTIONS
@@ -333,9 +338,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   public OStorageOperationResult<OPhysicalPosition> createRecord(final ORecordId iRid, final byte[] iContent,
       ORecordVersion iRecordVersion, final byte iRecordType, int iMode, final ORecordCallback<Long> iCallback) {
 
-    if (iMode == 1 && iCallback == null)
-      // ASYNCHRONOUS MODE NO ANSWER
-      iMode = 2;
+    if (iMode == 1 && iCallback == null) {
+        // ASYNCHRONOUS MODE NO ANSWER
+        iMode = 2;
+    }
 
     final OPhysicalPosition ppos = new OPhysicalPosition(iRecordType);
 
@@ -360,18 +366,21 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           // SYNCHRONOUS
           try {
             beginResponse(network);
-            if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_25)
-              iRid.clusterId = network.readShort();
+            if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_25) {
+                iRid.clusterId = network.readShort();
+            }
 
             iRid.clusterPosition = network.readLong();
             ppos.clusterPosition = iRid.clusterPosition;
             if (network.getSrvProtocolVersion() >= 11) {
               ppos.recordVersion = network.readVersion();
-            } else
-              ppos.recordVersion = OVersionFactory.instance().createVersion();
+            } else {
+                ppos.recordVersion = OVersionFactory.instance().createVersion();
+            }
 
-            if (network.getSrvProtocolVersion() >= 20)
-              readCollectionChanges(network, ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager());
+            if (network.getSrvProtocolVersion() >= 20) {
+                readCollectionChanges(network, ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager());
+            }
 
             return new OStorageOperationResult<OPhysicalPosition>(ppos);
           } finally {
@@ -393,14 +402,17 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                   OStorageRemoteThreadLocal.INSTANCE.get().sessionId = sessionId;
                   OStorageRemoteThreadLocal.INSTANCE.get().token = token;
                   beginResponse(network);
-                  if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_25)
-                    iRid.clusterId = network.readShort();
+                  if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_25) {
+                      iRid.clusterId = network.readShort();
+                  }
                   result = network.readLong();
-                  if (network.getSrvProtocolVersion() >= 11)
-                    network.readVersion();
+                  if (network.getSrvProtocolVersion() >= 11) {
+                      network.readVersion();
+                  }
 
-                  if (network.getSrvProtocolVersion() >= 20)
-                    readCollectionChanges(network, collectionManager);
+                  if (network.getSrvProtocolVersion() >= 20) {
+                      readCollectionChanges(network, collectionManager);
+                  }
                 } catch (Exception e) {
                   OLogManager.instance().error(this, "Exception on async query", e);
                   throw e;
@@ -466,9 +478,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   public OStorageOperationResult<ORawBuffer> readRecord(final ORecordId iRid, final String iFetchPlan, final boolean iIgnoreCache,
       final ORecordCallback<ORawBuffer> iCallback, boolean loadTombstones, LOCKING_STRATEGY iLockingStrategy) {
 
-    if (OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting)
-      // PENDING NETWORK OPERATION, CAN'T EXECUTE IT NOW
-      return new OStorageOperationResult<ORawBuffer>(null);
+    if (OStorageRemoteThreadLocal.INSTANCE.get().commandExecuting) {
+        // PENDING NETWORK OPERATION, CAN'T EXECUTE IT NOW
+        return new OStorageOperationResult<ORawBuffer>(null);
+    }
 
     OChannelBinaryAsynchClient network = null;
     do {
@@ -478,11 +491,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           network = beginRequest(OChannelBinaryProtocol.REQUEST_RECORD_LOAD);
           network.writeRID(iRid);
           network.writeString(iFetchPlan != null ? iFetchPlan : "");
-          if (network.getSrvProtocolVersion() >= 9)
-            network.writeByte((byte) (iIgnoreCache ? 1 : 0));
+          if (network.getSrvProtocolVersion() >= 9) {
+              network.writeByte((byte) (iIgnoreCache ? 1 : 0));
+          }
 
-          if (network.getSrvProtocolVersion() >= 13)
-            network.writeByte(loadTombstones ? (byte) 1 : (byte) 0);
+          if (network.getSrvProtocolVersion() >= 13) {
+              network.writeByte(loadTombstones ? (byte) 1 : (byte) 0);
+          }
         } finally {
           endRequest(network);
         }
@@ -490,13 +505,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         try {
           beginResponse(network);
 
-          if (network.readByte() == 0)
-            return new OStorageOperationResult<ORawBuffer>(null);
+          if (network.readByte() == 0) {
+              return new OStorageOperationResult<ORawBuffer>(null);
+          }
 
           final ORawBuffer buffer;
-          if (network.getSrvProtocolVersion() <= 27)
-            buffer = new ORawBuffer(network.readBytes(), network.readVersion(), network.readByte());
-          else {
+          if (network.getSrvProtocolVersion() <= 27) {
+              buffer = new ORawBuffer(network.readBytes(), network.readVersion(), network.readByte());
+          } else {
             byte type = network.readByte();
             ORecordVersion recVersion = network.readVersion();
             byte[] bytes = network.readBytes();
@@ -508,9 +524,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           while (network.readByte() == 2) {
             record = (ORecord) OChannelBinaryProtocol.readIdentifiable(network);
 
-            if (database != null)
-              // PUT IN THE CLIENT LOCAL CACHE
-              database.getLocalCache().updateRecord(record);
+            if (database != null) {
+                // PUT IN THE CLIENT LOCAL CACHE
+                database.getLocalCache().updateRecord(record);
+            }
           }
           return new OStorageOperationResult<ORawBuffer>(buffer);
 
@@ -528,9 +545,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   public OStorageOperationResult<ORecordVersion> updateRecord(final ORecordId iRid, boolean updateContent, final byte[] iContent,
       final ORecordVersion iVersion, final byte iRecordType, int iMode, final ORecordCallback<ORecordVersion> iCallback) {
 
-    if (iMode == 1 && iCallback == null)
-      // ASYNCHRONOUS MODE NO ANSWER
-      iMode = 2;
+    if (iMode == 1 && iCallback == null) {
+        // ASYNCHRONOUS MODE NO ANSWER
+        iMode = 2;
+    }
 
     OChannelBinaryAsynchClient lastNetworkUsed = null;
     do {
@@ -577,8 +595,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                 beginResponse(network);
                 result = network.readVersion();
 
-                if (network.getSrvProtocolVersion() >= 20)
-                  readCollectionChanges(network, collectionManager);
+                if (network.getSrvProtocolVersion() >= 20) {
+                    readCollectionChanges(network, collectionManager);
+                }
               } finally {
                 endResponse(network);
                 OStorageRemoteThreadLocal.INSTANCE.get().sessionId = -1;
@@ -605,9 +624,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   public OStorageOperationResult<Boolean> deleteRecord(final ORecordId iRid, final ORecordVersion iVersion, int iMode,
       final ORecordCallback<Boolean> iCallback) {
 
-    if (iMode == 1 && iCallback == null)
-      // ASYNCHRONOUS MODE NO ANSWER
-      iMode = 2;
+    if (iMode == 1 && iCallback == null) {
+        // ASYNCHRONOUS MODE NO ANSWER
+        iMode = 2;
+    }
 
     OChannelBinaryAsynchClient network = null;
     do {
@@ -626,9 +646,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   @Override
   public OStorageOperationResult<Boolean> hideRecord(ORecordId recordId, int mode, ORecordCallback<Boolean> callback) {
 
-    if (mode == 1 && callback == null)
-      // ASYNCHRONOUS MODE NO ANSWER
-      mode = 2;
+    if (mode == 1 && callback == null) {
+        // ASYNCHRONOUS MODE NO ANSWER
+        mode = 2;
+    }
 
     OChannelBinaryAsynchClient network = null;
     do {
@@ -647,9 +668,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   @Override
   public boolean cleanOutRecord(ORecordId recordId, ORecordVersion recordVersion, int iMode, ORecordCallback<Boolean> callback) {
 
-    if (iMode == 1 && callback == null)
-      // ASYNCHRONOUS MODE NO ANSWER
-      iMode = 2;
+    if (iMode == 1 && callback == null) {
+        // ASYNCHRONOUS MODE NO ANSWER
+        iMode = 2;
+    }
 
     OChannelBinaryAsynchClient network = null;
     do {
@@ -932,8 +954,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           for (int iClusterId : iClusterIds)
             network.writeShort((short) iClusterId);
 
-          if (network.getSrvProtocolVersion() >= 13)
-            network.writeByte(countTombstones ? (byte) 1 : (byte) 0);
+          if (network.getSrvProtocolVersion() >= 13) {
+              network.writeByte(countTombstones ? (byte) 1 : (byte) 0);
+          }
         } finally {
           endRequest(network);
         }
@@ -957,8 +980,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
    */
   public Object command(final OCommandRequestText iCommand) {
 
-    if (!(iCommand instanceof OSerializableStream))
-      throw new OCommandExecutionException("Cannot serialize the command to be executed to the server side.");
+    if (!(iCommand instanceof OSerializableStream)) {
+        throw new OCommandExecutionException("Cannot serialize the command to be executed to the server side.");
+    }
 
     Object result = null;
 
@@ -991,8 +1015,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
               // ASYNCH: READ ONE RECORD AT TIME
               while ((status = network.readByte()) > 0) {
                 final ORecord record = (ORecord) OChannelBinaryProtocol.readIdentifiable(network);
-                if (record == null)
-                  continue;
+                if (record == null) {
+                    continue;
+                }
 
                 switch (status) {
                 case 1:
@@ -1017,8 +1042,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
               case 'r':
                 result = OChannelBinaryProtocol.readIdentifiable(network);
-                if (result instanceof ORecord)
-                  database.getLocalCache().updateRecord((ORecord) result);
+                if (result instanceof ORecord) {
+                    database.getLocalCache().updateRecord((ORecord) result);
+              }
                 break;
 
               case 'l':
@@ -1026,8 +1052,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                 final Collection<OIdentifiable> list = new ArrayList<OIdentifiable>(tot);
                 for (int i = 0; i < tot; ++i) {
                   final OIdentifiable resultItem = OChannelBinaryProtocol.readIdentifiable(network);
-                  if (resultItem instanceof ORecord)
-                    database.getLocalCache().updateRecord((ORecord) resultItem);
+                  if (resultItem instanceof ORecord) {
+                      database.getLocalCache().updateRecord((ORecord) resultItem);
+                  }
                   list.add(resultItem);
                 }
                 result = list;
@@ -1048,9 +1075,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                 byte status;
                 while ((status = network.readByte()) > 0) {
                   final ORecord record = (ORecord) OChannelBinaryProtocol.readIdentifiable(network);
-                  if (record != null && status == 2)
-                    // PUT IN THE CLIENT LOCAL CACHE
-                    database.getLocalCache().updateRecord(record);
+                  if (record != null && status == 2) {
+                      // PUT IN THE CLIENT LOCAL CACHE
+                      database.getLocalCache().updateRecord(record);
+                  }
                 }
               }
             }
@@ -1068,8 +1096,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         }
       } while (true);
     } finally {
-      if (iCommand.getResultListener() != null)
-        iCommand.getResultListener().end();
+      if (iCommand.getResultListener() != null) {
+          iCommand.getResultListener().end();
+      }
     }
 
     return result;
@@ -1148,12 +1177,14 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             rid = network.readRID();
 
             ORecordOperation rop = iTx.getRecordEntry(rid);
-            if (rop != null)
-              rop.getRecord().getRecordVersion().copyFrom(network.readVersion());
+            if (rop != null) {
+                rop.getRecord().getRecordVersion().copyFrom(network.readVersion());
+            }
           }
 
-          if (network.getSrvProtocolVersion() >= 20)
-            readCollectionChanges(network, ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager());
+          if (network.getSrvProtocolVersion() >= 20) {
+              readCollectionChanges(network, ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager());
+          }
 
         } finally {
           endResponse(network);
@@ -1189,15 +1220,18 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     lock.acquireSharedLock();
     try {
 
-      if (iClusterName == null)
-        return -1;
+      if (iClusterName == null) {
+          return -1;
+      }
 
-      if (Character.isDigit(iClusterName.charAt(0)))
-        return Integer.parseInt(iClusterName);
+      if (Character.isDigit(iClusterName.charAt(0))) {
+          return Integer.parseInt(iClusterName);
+      }
 
       final OCluster cluster = clusterMap.get(iClusterName.toLowerCase());
-      if (cluster == null)
-        return -1;
+      if (cluster == null) {
+          return -1;
+      }
 
       return cluster.getId();
     } finally {
@@ -1227,8 +1261,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           network = beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_ADD);
 
           network.writeString(iClusterName);
-          if (network.getSrvProtocolVersion() >= 18)
-            network.writeShort((short) iRequestedId);
+          if (network.getSrvProtocolVersion() >= 18) {
+              network.writeShort((short) iRequestedId);
+          }
         } finally {
           endRequest(network);
         }
@@ -1240,8 +1275,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           final OClusterRemote cluster = new OClusterRemote();
           cluster.configure(this, clusterId, iClusterName.toLowerCase());
 
-          if (clusters.length <= clusterId)
-            clusters = Arrays.copyOf(clusters, clusterId + 1);
+          if (clusters.length <= clusterId) {
+              clusters = Arrays.copyOf(clusters, clusterId + 1);
+          }
           clusters[cluster.getId()] = cluster;
           clusterMap.put(cluster.getName().toLowerCase(), cluster);
 
@@ -1287,8 +1323,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           final OCluster cluster = clusters[iClusterId];
           clusters[iClusterId] = null;
           clusterMap.remove(cluster.getName());
-          if (configuration.clusters.size() > iClusterId)
-            configuration.dropCluster(iClusterId); // endResponse must be called before this line, which call updateRecord
+          if (configuration.clusters.size() > iClusterId) {
+              configuration.dropCluster(iClusterId); // endResponse must be called before this line, which call updateRecord
+          }
 
           return true;
         }
@@ -1312,8 +1349,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     lock.acquireSharedLock();
     try {
 
-      if (iClusterId >= clusters.length)
-        return null;
+      if (iClusterId >= clusters.length) {
+          return null;
+      }
 
       final OCluster cluster = clusters[iClusterId];
       return cluster != null ? cluster.getName() : null;
@@ -1347,9 +1385,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     lock.acquireSharedLock();
     try {
 
-      if (iClusterId == ORID.CLUSTER_ID_INVALID)
-        // GET THE DEFAULT CLUSTER
-        iClusterId = defaultClusterId;
+      if (iClusterId == ORID.CLUSTER_ID_INVALID) {
+          // GET THE DEFAULT CLUSTER
+          iClusterId = defaultClusterId;
+      }
 
       return clusters[iClusterId];
 
@@ -1371,8 +1410,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
    * Ends the request and unlock the write lock
    */
   public void endRequest(final OChannelBinaryAsynchClient iNetwork) throws IOException {
-    if (iNetwork == null)
-      return;
+    if (iNetwork == null) {
+        return;
+    }
 
     try {
       iNetwork.flush();
@@ -1397,8 +1437,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   @SuppressWarnings("unchecked")
   public void updateClusterConfiguration(final String iConnectedURL, final byte[] obj) {
-    if (obj == null)
-      return;
+    if (obj == null) {
+        return;
+    }
 
     // UPDATE IT
     synchronized (clusterConfiguration) {
@@ -1418,8 +1459,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             for (Map<String, Object> listener : ((Collection<Map<String, Object>>) m.field("listeners"))) {
               if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
                 String url = (String) listener.get("listen");
-                if (!serverURLs.contains(url))
-                  addHost(url);
+                if (!serverURLs.contains(url)) {
+                    addHost(url);
+                }
               }
             }
           }
@@ -1495,20 +1537,23 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       exception = (Exception) exception.getCause();
     } else if (exception instanceof OException) {
       // Release on concurrent modification exception created some issue. to double check
-      if (iNetwork != null)
-        engine.getConnectionManager().release(iNetwork);
+      if (iNetwork != null) {
+          engine.getConnectionManager().release(iNetwork);
+      }
 
       // RE-THROW IT
       throw (OException) exception;
     } else if (!(exception instanceof IOException)) {
-      if (iNetwork != null)
-        engine.getConnectionManager().release(iNetwork);
+      if (iNetwork != null) {
+          engine.getConnectionManager().release(iNetwork);
+      }
       throw new OStorageException(message, exception);
     }
 
-    if (status != STATUS.OPEN)
-      // STORAGE CLOSED: DON'T HANDLE RECONNECTION
-      return;
+    if (status != STATUS.OPEN) {
+        // STORAGE CLOSED: DON'T HANDLE RECONNECTION
+        return;
+    }
 
     if (iNetwork != null) {
       OLogManager.instance().warn(this, "Caught I/O errors from %s (local socket=%s), trying to reconnect (error: %s)", iNetwork,
@@ -1541,19 +1586,21 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     for (int retry = 0; retry < currentMaxRetry; ++retry) {
       // WAIT THE DELAY BEFORE TO RETRY (BUT FIRST TRY)
-      if (retry > 0 && currentRetryDelay > 0)
-        try {
-          Thread.sleep(currentRetryDelay);
-        } catch (InterruptedException e) {
-          // THREAD INTERRUPTED: RETURN EXCEPTION
-          Thread.currentThread().interrupt();
-          break;
-        }
+      if (retry > 0 && currentRetryDelay > 0) {
+          try {
+              Thread.sleep(currentRetryDelay);
+          } catch (InterruptedException e) {
+              // THREAD INTERRUPTED: RETURN EXCEPTION
+              Thread.currentThread().interrupt();
+              break;
+          }
+      }
 
       try {
-        if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance()
-              .debug(this, "Retrying to connect to remote server #" + (retry + 1) + "/" + currentMaxRetry + "...");
+        if (OLogManager.instance().isDebugEnabled()) {
+            OLogManager.instance()
+                    .debug(this, "Retrying to connect to remote server #" + (retry + 1) + "/" + currentMaxRetry + "...");
+        }
 
         // FORCE RESET OF THREAD DATA (SERVER URL + SESSION ID)
         setSessionId(null, -1, null);
@@ -1584,8 +1631,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     connectionDbType = ODatabaseDocument.TYPE;
 
     if (connectionOptions != null && connectionOptions.size() > 0) {
-      if (connectionOptions.containsKey(PARAM_DB_TYPE))
-        connectionDbType = connectionOptions.get(PARAM_DB_TYPE).toString();
+      if (connectionOptions.containsKey(PARAM_DB_TYPE)) {
+          connectionDbType = connectionOptions.get(PARAM_DB_TYPE).toString();
+      }
     }
 
     OChannelBinaryAsynchClient network = null;
@@ -1604,8 +1652,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
             network.writeString(name);
 
-            if (network.getSrvProtocolVersion() >= 8)
-              network.writeString(connectionDbType);
+            if (network.getSrvProtocolVersion() >= 8) {
+                network.writeString(connectionDbType);
+            }
 
             network.writeString(connectionUserName);
             network.writeString(connectionUserPassword);
@@ -1635,8 +1684,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
             updateClusterConfiguration(network.getServerURL(), network.readBytes());
 
             // read OrientDB release info
-            if (network.getSrvProtocolVersion() >= 14)
-              network.readString();
+            if (network.getSrvProtocolVersion() >= 14) {
+                network.readString();
+            }
 
             status = STATUS.OPEN;
 
@@ -1676,9 +1726,10 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   protected String useNewServerURL(final String iUrl) {
     int pos = iUrl.indexOf('/');
-    if (pos >= iUrl.length() - 1)
-      // IGNORE ENDING /
-      pos = -1;
+    if (pos >= iUrl.length() - 1) {
+        // IGNORE ENDING /
+        pos = -1;
+    }
 
     final String postFix = pos > -1 ? iUrl.substring(pos) : "";
     final String url = pos > -1 ? iUrl.substring(0, pos) : iUrl;
@@ -1688,8 +1739,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
     OLogManager.instance().debug(this, "Updated server list: %s...", serverURLs);
 
-    if (!serverURLs.isEmpty())
-      return serverURLs.get(0) + postFix;
+    if (!serverURLs.isEmpty()) {
+        return serverURLs.get(0) + postFix;
+    }
 
     return null;
   }
@@ -1703,10 +1755,12 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_21) {
       network.writeString(ODatabaseDocumentTx.getDefaultSerializer().toString());
       recordFormat = ODatabaseDocumentTx.getDefaultSerializer().toString();
-    } else
-      recordFormat = ORecordSerializerSchemaAware2CSV.NAME;
-    if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_26)
-      network.writeBoolean(OGlobalConfiguration.CLIENT_SESSION_TOKEN_BASED.getValueAsBoolean());
+    } else {
+        recordFormat = ORecordSerializerSchemaAware2CSV.NAME;
+    }
+    if (network.getSrvProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
+        network.writeBoolean(OGlobalConfiguration.CLIENT_SESSION_TOKEN_BASED.getValueAsBoolean());
+    }
   }
 
   /**
@@ -1748,8 +1802,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         if (attr != null) {
           for (int i = 0; i < attr.size(); ++i) {
             String configuration = (String) attr.get(i);
-            if (configuration.startsWith("\""))
-              configuration = configuration.substring(1, configuration.length() - 1);
+            if (configuration.startsWith("\"")) {
+                configuration = configuration.substring(1, configuration.length() - 1);
+            }
             if (configuration != null) {
               serverURLs.clear();
               final String[] parts = configuration.split(" ");
@@ -1770,19 +1825,23 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
    * Registers the remote server with port.
    */
   protected String addHost(String host) {
-    if (host.startsWith("localhost"))
-      host = "127.0.0.1" + host.substring("localhost".length());
+    if (host.startsWith("localhost")) {
+        host = "127.0.0.1" + host.substring("localhost".length());
+    }
 
     // REGISTER THE REMOTE SERVER+PORT
-    if (!host.contains(":"))
-      host += ":"
-          + (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL) ? getDefaultSSLPort() : getDefaultPort());
+    if (!host.contains(":")) {
+        host += ":"
+                + (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL) ? getDefaultSSLPort() : getDefaultPort());
+    }
 
-    if (host.contains("/"))
-      host = host.substring(0, host.indexOf("/"));
+    if (host.contains("/")) {
+        host = host.substring(0, host.indexOf("/"));
+    }
 
-    if (!serverURLs.contains(host))
-      serverURLs.add(host);
+    if (!serverURLs.contains(host)) {
+        serverURLs.add(host);
+    }
 
     return host;
   }
@@ -1822,8 +1881,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
   protected String getCurrentServerURL() {
     if (serverURLs.isEmpty()) {
       parseServerURLs();
-      if (serverURLs.isEmpty())
-        throw new OStorageException("Cannot create a connection to remote server because url list is empty");
+      if (serverURLs.isEmpty()) {
+          throw new OStorageException("Cannot create a connection to remote server because url list is empty");
+      }
     }
 
     return serverURLs.get(0) + "/" + getName();
@@ -1954,18 +2014,21 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
       final OBonsaiCollectionPointer pointer = OCollectionNetworkSerializer.INSTANCE.readCollectionPointer(network);
 
-      if (collectionManager != null)
-        collectionManager.updateCollectionPointer(new UUID(mBitsOfId, lBitsOfId), pointer);
+      if (collectionManager != null) {
+          collectionManager.updateCollectionPointer(new UUID(mBitsOfId, lBitsOfId), pointer);
+      }
     }
 
-    if (ORecordSerializationContext.getDepth() <= 1 && collectionManager != null)
-      collectionManager.clearPendingCollections();
+    if (ORecordSerializationContext.getDepth() <= 1 && collectionManager != null) {
+        collectionManager.clearPendingCollections();
+    }
   }
 
   private void commitEntry(final OChannelBinaryAsynchClient iNetwork, final ORecordOperation txEntry) throws IOException {
-    if (txEntry.type == ORecordOperation.LOADED)
-      // JUMP LOADED OBJECTS
-      return;
+    if (txEntry.type == ORecordOperation.LOADED) {
+        // JUMP LOADED OBJECTS
+        return;
+    }
 
     // SERIALIZE THE RECORD IF NEEDED. THIS IS DONE HERE TO CATCH EXCEPTION AND SEND A -1 AS ERROR TO THE SERVER TO SIGNAL THE ABORT
     // OF TX COMMIT
@@ -1996,8 +2059,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     case ORecordOperation.UPDATED:
       iNetwork.writeVersion(txEntry.getRecord().getRecordVersion());
       iNetwork.writeBytes(stream);
-      if (iNetwork.getSrvProtocolVersion() >= 23)
-        iNetwork.writeBoolean(ORecordInternal.isContentChanged(txEntry.getRecord()));
+      if (iNetwork.getSrvProtocolVersion() >= 23) {
+          iNetwork.writeBoolean(ORecordInternal.isContentChanged(txEntry.getRecord()));
+    }
       break;
 
     case ORecordOperation.DELETED:
@@ -2031,20 +2095,23 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
     for (int i = 0; i < tot; ++i) {
       final OClusterRemote cluster = new OClusterRemote();
       String clusterName = network.readString();
-      if (clusterName != null)
-        clusterName = clusterName.toLowerCase();
+      if (clusterName != null) {
+          clusterName = clusterName.toLowerCase();
+      }
       final int clusterId = network.readShort();
 
-      if (network.getSrvProtocolVersion() < 24)
-        network.readString();
+      if (network.getSrvProtocolVersion() < 24) {
+          network.readString();
+      }
 
       final int dataSegmentId = network.getSrvProtocolVersion() >= 12 && network.getSrvProtocolVersion() < 24 ? (int) network
           .readShort() : 0;
 
       cluster.configure(this, clusterId, clusterName);
 
-      if (clusterId >= clusters.length)
-        clusters = Arrays.copyOf(clusters, clusterId + 1);
+      if (clusterId >= clusters.length) {
+          clusters = Arrays.copyOf(clusters, clusterId + 1);
+      }
       clusters[clusterId] = cluster;
       clusterMap.put(clusterName, cluster);
     }

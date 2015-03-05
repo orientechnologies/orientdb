@@ -26,43 +26,49 @@ public class OSafeBinaryConverter implements OBinaryConverter {
   public static final OSafeBinaryConverter INSTANCE = new OSafeBinaryConverter();
 
   public void putShort(byte[] buffer, int index, short value, ByteOrder byteOrder) {
-    if (byteOrder.equals(ByteOrder.BIG_ENDIAN))
-      short2BytesBigEndian(value, buffer, index);
-    else
-      short2BytesLittleEndian(value, buffer, index);
+    if (byteOrder.equals(ByteOrder.BIG_ENDIAN)) {
+        short2BytesBigEndian(value, buffer, index);
+    } else {
+        short2BytesLittleEndian(value, buffer, index);
+    }
   }
 
   public short getShort(byte[] buffer, int index, ByteOrder byteOrder) {
-    if (byteOrder.equals(ByteOrder.BIG_ENDIAN))
-      return bytes2ShortBigEndian(buffer, index);
+    if (byteOrder.equals(ByteOrder.BIG_ENDIAN)) {
+        return bytes2ShortBigEndian(buffer, index);
+    }
 
     return bytes2ShortLittleEndian(buffer, index);
   }
 
   public void putInt(byte[] buffer, int pointer, int value, ByteOrder byteOrder) {
-    if (byteOrder.equals(ByteOrder.BIG_ENDIAN))
-      int2BytesBigEndian(value, buffer, pointer);
-    else
-      int2BytesLittleEndian(value, buffer, pointer);
+    if (byteOrder.equals(ByteOrder.BIG_ENDIAN)) {
+        int2BytesBigEndian(value, buffer, pointer);
+    } else {
+        int2BytesLittleEndian(value, buffer, pointer);
+    }
   }
 
   public int getInt(byte[] buffer, int pointer, ByteOrder byteOrder) {
-    if (byteOrder.equals(ByteOrder.BIG_ENDIAN))
-      return bytes2IntBigEndian(buffer, pointer);
+    if (byteOrder.equals(ByteOrder.BIG_ENDIAN)) {
+        return bytes2IntBigEndian(buffer, pointer);
+    }
 
     return bytes2IntLittleEndian(buffer, pointer);
   }
 
   public void putLong(byte[] buffer, int index, long value, ByteOrder byteOrder) {
-    if (byteOrder.equals(ByteOrder.BIG_ENDIAN))
-      long2BytesBigEndian(value, buffer, index);
-    else
-      long2BytesLittleEndian(value, buffer, index);
+    if (byteOrder.equals(ByteOrder.BIG_ENDIAN)) {
+        long2BytesBigEndian(value, buffer, index);
+    } else {
+        long2BytesLittleEndian(value, buffer, index);
+    }
   }
 
   public long getLong(byte[] buffer, int index, ByteOrder byteOrder) {
-    if (byteOrder.equals(ByteOrder.BIG_ENDIAN))
-      return bytes2LongBigEndian(buffer, index);
+    if (byteOrder.equals(ByteOrder.BIG_ENDIAN)) {
+        return bytes2LongBigEndian(buffer, index);
+    }
 
     return bytes2LongLittleEndian(buffer, index);
   }
@@ -79,8 +85,9 @@ public class OSafeBinaryConverter implements OBinaryConverter {
   }
 
   public char getChar(byte[] buffer, int index, ByteOrder byteOrder) {
-    if (byteOrder.equals(ByteOrder.BIG_ENDIAN))
-      return (char) (((buffer[index] & 0xFF) << 8) + (buffer[index + 1] & 0xFF));
+    if (byteOrder.equals(ByteOrder.BIG_ENDIAN)) {
+        return (char) (((buffer[index] & 0xFF) << 8) + (buffer[index + 1] & 0xFF));
+    }
 
     return (char) (((buffer[index + 1] & 0xFF) << 8) + (buffer[index] & 0xFF));
   }

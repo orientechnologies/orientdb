@@ -65,10 +65,11 @@ public class ODFACommandStream implements OCommandStream {
   private void init() {
     try {
       final int next = reader.read();
-      if (next > -1)
-        nextCharacter = (char) next;
-      else
-        nextCharacter = null;
+      if (next > -1) {
+          nextCharacter = (char) next;
+      } else {
+          nextCharacter = null;
+      }
 
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -76,15 +77,17 @@ public class ODFACommandStream implements OCommandStream {
   }
 
   private Character nextCharacter() throws IOException {
-    if (nextCharacter == null)
-      return null;
+    if (nextCharacter == null) {
+        return null;
+    }
 
     final Character result = nextCharacter;
     final int next = reader.read();
-    if (next < 0)
-      nextCharacter = null;
-    else
-      nextCharacter = (char) next;
+    if (next < 0) {
+        nextCharacter = null;
+    } else {
+        nextCharacter = (char) next;
+    }
 
     return result;
   }
@@ -107,28 +110,30 @@ public class ODFACommandStream implements OCommandStream {
         String sch = null;
 
         Symbol s;
-        if (c == null)
-          s = Symbol.EOF;
-        else if (c.equals('\''))
-          s = Symbol.AP;
-        else if (c.equals('"'))
-          s = Symbol.QT;
-        else if (separators.contains(c))
-          s = Symbol.SEP;
-        else if (Character.isWhitespace(c))
-          s = Symbol.WS;
-        else if (c == '\\') {
+        if (c == null) {
+            s = Symbol.EOF;
+        } else if (c.equals('\'')) {
+            s = Symbol.AP;
+        } else if (c.equals('"')) {
+            s = Symbol.QT;
+        } else if (separators.contains(c)) {
+            s = Symbol.SEP;
+        } else if (Character.isWhitespace(c)) {
+            s = Symbol.WS;
+        } else if (c == '\\') {
           final Character nextCharacter = nextCharacter();
 
           sch = "" + c + nextCharacter;
           s = Symbol.LATTER;
-        } else
-          s = Symbol.LATTER;
+        } else {
+            s = Symbol.LATTER;
+        }
 
         final State newState = transition(state, s);
 
-        if (newState == State.F)
-          throw new IllegalStateException("Unexpected end of file");
+        if (newState == State.F) {
+            throw new IllegalStateException("Unexpected end of file");
+        }
 
         State oldState = state;
         state = newState;
@@ -139,15 +144,17 @@ public class ODFACommandStream implements OCommandStream {
             stateWord = new StringBuilder();
           }
 
-          if (sch != null)
-            stateWord.append(sch);
-          else
-            stateWord.append(c);
+          if (sch != null) {
+              stateWord.append(sch);
+          } else {
+              stateWord.append(c);
+          }
         }
 
         if (state == State.E) {
-          if (stateWord.length() > 0 && (oldState != State.D))
-            result.append(stateWord);
+          if (stateWord.length() > 0 && (oldState != State.D)) {
+              result.append(stateWord);
+          }
         }
       }
 
@@ -167,14 +174,18 @@ public class ODFACommandStream implements OCommandStream {
   }
 
   public Symbol symbol(Character c) {
-    if (c.equals('\''))
-      return Symbol.AP;
-    if (c.equals('"'))
-      return Symbol.QT;
-    if (separators.contains(c))
-      return Symbol.SEP;
-    if (Character.isWhitespace(c))
-      return Symbol.WS;
+    if (c.equals('\'')) {
+        return Symbol.AP;
+    }
+    if (c.equals('"')) {
+        return Symbol.QT;
+    }
+    if (separators.contains(c)) {
+        return Symbol.SEP;
+    }
+    if (Character.isWhitespace(c)) {
+        return Symbol.WS;
+    }
 
     return Symbol.LATTER;
   }

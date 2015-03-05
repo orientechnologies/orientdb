@@ -37,10 +37,11 @@ public class OImmutableProperty implements OProperty {
     fullName = property.getFullName();
     type = property.getType();
 
-    if (property.getLinkedClass() != null)
-      linkedClassName = property.getLinkedClass().getName();
-    else
-      linkedClassName = null;
+    if (property.getLinkedClass() != null) {
+        linkedClassName = property.getLinkedClass().getName();
+    } else {
+        linkedClassName = null;
+    }
 
     linkedType = property.getLinkedType();
     notNull = property.isNotNull();
@@ -86,11 +87,13 @@ public class OImmutableProperty implements OProperty {
 
   @Override
   public OClass getLinkedClass() {
-		if (linkedClassName == null)
-			return null;
+		if (linkedClassName == null) {
+                    return null;
+                }
 
-		if(linkedClass != null)
-			return linkedClass;
+		if(linkedClass != null) {
+                    return linkedClass;
+                }
 
 		OSchema schema = ((OImmutableClass)owner).getSchema();
 		linkedClass = schema.getClass(linkedClassName);
@@ -201,8 +204,9 @@ public class OImmutableProperty implements OProperty {
   @Override
   public OIndex<?> getIndex() {
     Set<OIndex<?>> indexes = owner.getInvolvedIndexes(name);
-    if (indexes != null && !indexes.isEmpty())
-      return indexes.iterator().next();
+    if (indexes != null && !indexes.isEmpty()) {
+        return indexes.iterator().next();
+    }
     return null;
 
   }
@@ -213,8 +217,9 @@ public class OImmutableProperty implements OProperty {
     final List<OIndex<?>> indexList = new LinkedList<OIndex<?>>();
     for (final OIndex<?> index : indexes) {
       final OIndexDefinition indexDefinition = index.getDefinition();
-      if (indexDefinition.getFields().contains(name))
-        indexList.add(index);
+      if (indexDefinition.getFields().contains(name)) {
+          indexList.add(index);
+      }
     }
 
     return indexList;
@@ -272,8 +277,9 @@ public class OImmutableProperty implements OProperty {
 
   @Override
   public Object get(ATTRIBUTES attribute) {
-    if (attribute == null)
-      throw new IllegalArgumentException("attribute is null");
+    if (attribute == null) {
+        throw new IllegalArgumentException("attribute is null");
+    }
 
     switch (attribute) {
     case LINKEDCLASS:
@@ -323,18 +329,23 @@ public class OImmutableProperty implements OProperty {
 
   @Override
   public boolean equals(final Object obj) {
-    if (this == obj)
-      return true;
-    if (!super.equals(obj))
-      return false;
-    if (!OProperty.class.isAssignableFrom(obj.getClass()))
-      return false;
+    if (this == obj) {
+        return true;
+    }
+    if (!super.equals(obj)) {
+        return false;
+    }
+    if (!OProperty.class.isAssignableFrom(obj.getClass())) {
+        return false;
+    }
     OProperty other = (OProperty) obj;
     if (owner == null) {
-      if (other.getOwnerClass() != null)
+      if (other.getOwnerClass() != null) {
+          return false;
+      }
+    } else if (!owner.equals(other.getOwnerClass())) {
         return false;
-    } else if (!owner.equals(other.getOwnerClass()))
-      return false;
+    }
     return true;
   }
 

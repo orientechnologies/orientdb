@@ -79,9 +79,10 @@ public class OrientGraphQuery extends DefaultGraphQuery {
   public class OrientGraphQueryIterable<T extends Element> extends DefaultGraphQueryIterable<T> {
     public OrientGraphQueryIterable(final boolean forVertex, final String[] labels) {
       super(forVertex);
-      if (labels != null && labels.length > 0)
-        // TREAT CLASS AS LABEL
-        has("_class", Contains.IN, Arrays.asList(labels));
+      if (labels != null && labels.length > 0) {
+          // TREAT CLASS AS LABEL
+          has("_class", Contains.IN, Arrays.asList(labels));
+      }
     }
 
     protected Set<String> getIndexedKeys(final Class<? extends Element> elementClass) {
@@ -151,13 +152,15 @@ public class OrientGraphQuery extends DefaultGraphQuery {
    */
   @Override
   public Iterable<Vertex> vertices() {
-    if (limit == 0)
-      return Collections.emptyList();
+    if (limit == 0) {
+        return Collections.emptyList();
+    }
 
-    if (((OrientBaseGraph) graph).getRawGraph().getTransaction().isActive())
-      // INSIDE TRANSACTION QUERY DOESN'T SEE IN MEMORY CHANGES, UNTIL
-      // SUPPORTED USED THE BASIC IMPL
-      return new OrientGraphQueryIterable<Vertex>(true, labels);
+    if (((OrientBaseGraph) graph).getRawGraph().getTransaction().isActive()) {
+        // INSIDE TRANSACTION QUERY DOESN'T SEE IN MEMORY CHANGES, UNTIL
+        // SUPPORTED USED THE BASIC IMPL
+        return new OrientGraphQueryIterable<Vertex>(true, labels);
+    }
 
     final StringBuilder text = new StringBuilder(512);
 
@@ -166,19 +169,21 @@ public class OrientGraphQuery extends DefaultGraphQuery {
 
     if (((OrientBaseGraph) graph).isUseClassForVertexLabel() && labels != null && labels.length > 0) {
       // FILTER PER CLASS SAVING CHECKING OF LABEL PROPERTY
-      if (labels.length == 1)
-        // USE THE CLASS NAME
-        text.append(OrientBaseGraph.encodeClassName(labels[0]));
-      else {
+      if (labels.length == 1) {
+          // USE THE CLASS NAME
+          text.append(OrientBaseGraph.encodeClassName(labels[0]));
+      } else {
         // MULTIPLE CLASSES NOT SUPPORTED DIRECTLY: CREATE A SUB-QUERY
         return new OrientGraphQueryIterable<Vertex>(true, labels);
       }
-    } else
-      text.append(OrientVertexType.CLASS_NAME);
+    } else {
+        text.append(OrientVertexType.CLASS_NAME);
+    }
 
     final boolean usedWhere = manageFilters(text);
-    if (!((OrientBaseGraph) graph).isUseClassForVertexLabel())
-      manageLabels(usedWhere, text);
+    if (!((OrientBaseGraph) graph).isUseClassForVertexLabel()) {
+        manageLabels(usedWhere, text);
+    }
 
     if (orderBy.length() > 1) {
       text.append(ORDERBY);
@@ -197,8 +202,9 @@ public class OrientGraphQuery extends DefaultGraphQuery {
 
     final OSQLSynchQuery<OIdentifiable> query = new OSQLSynchQuery<OIdentifiable>(text.toString());
 
-    if (fetchPlan != null)
-      query.setFetchPlan(fetchPlan);
+    if (fetchPlan != null) {
+        query.setFetchPlan(fetchPlan);
+    }
 
     return new OrientElementIterable<Vertex>(((OrientBaseGraph) graph), ((OrientBaseGraph) graph).getRawGraph().query(query));
   }
@@ -209,16 +215,19 @@ public class OrientGraphQuery extends DefaultGraphQuery {
    */
   @Override
   public Iterable<Edge> edges() {
-    if (limit == 0)
-      return Collections.emptyList();
+    if (limit == 0) {
+        return Collections.emptyList();
+    }
 
-    if (((OrientBaseGraph) graph).getRawGraph().getTransaction().isActive())
-      // INSIDE TRANSACTION QUERY DOESN'T SEE IN MEMORY CHANGES, UNTIL
-      // SUPPORTED USED THE BASIC IMPL
-      return new OrientGraphQueryIterable<Edge>(false, labels);
+    if (((OrientBaseGraph) graph).getRawGraph().getTransaction().isActive()) {
+        // INSIDE TRANSACTION QUERY DOESN'T SEE IN MEMORY CHANGES, UNTIL
+        // SUPPORTED USED THE BASIC IMPL
+        return new OrientGraphQueryIterable<Edge>(false, labels);
+    }
 
-    if (((OrientBaseGraph) graph).isUseLightweightEdges())
-      return new OrientGraphQueryIterable<Edge>(false, labels);
+    if (((OrientBaseGraph) graph).isUseLightweightEdges()) {
+        return new OrientGraphQueryIterable<Edge>(false, labels);
+    }
 
     final StringBuilder text = new StringBuilder(512);
 
@@ -227,27 +236,31 @@ public class OrientGraphQuery extends DefaultGraphQuery {
 
     if (((OrientBaseGraph) graph).isUseClassForEdgeLabel() && labels != null && labels.length > 0) {
       // FILTER PER CLASS SAVING CHECKING OF LABEL PROPERTY
-      if (labels.length == 1)
-        // USE THE CLASS NAME
-        text.append(OrientBaseGraph.encodeClassName(labels[0]));
-      else {
+      if (labels.length == 1) {
+          // USE THE CLASS NAME
+          text.append(OrientBaseGraph.encodeClassName(labels[0]));
+      } else {
         // MULTIPLE CLASSES NOT SUPPORTED DIRECTLY: CREATE A SUB-QUERY
         return new OrientGraphQueryIterable<Edge>(false, labels);
       }
-    } else
-      text.append(OrientEdgeType.CLASS_NAME);
+    } else {
+        text.append(OrientEdgeType.CLASS_NAME);
+    }
 
     final boolean usedWhere = manageFilters(text);
-    if (!((OrientBaseGraph) graph).isUseClassForEdgeLabel())
-      manageLabels(usedWhere, text);
+    if (!((OrientBaseGraph) graph).isUseClassForEdgeLabel()) {
+        manageLabels(usedWhere, text);
+    }
 
     final OSQLSynchQuery<OIdentifiable> query = new OSQLSynchQuery<OIdentifiable>(text.toString());
 
-    if (fetchPlan != null)
-      query.setFetchPlan(fetchPlan);
+    if (fetchPlan != null) {
+        query.setFetchPlan(fetchPlan);
+    }
 
-    if (limit > 0 && limit < Integer.MAX_VALUE)
-      query.setLimit((int) limit);
+    if (limit > 0 && limit < Integer.MAX_VALUE) {
+        query.setLimit((int) limit);
+    }
 
     return new OrientElementIterable<Edge>(((OrientBaseGraph) graph), ((OrientBaseGraph) graph).getRawGraph().query(query));
   }
@@ -272,13 +285,15 @@ public class OrientGraphQuery extends DefaultGraphQuery {
       if( !usedWhere ){
         // APPEND WHERE
         text.append(QUERY_WHERE);
-      } else
-        text.append(QUERY_FILTER_AND);
+      } else {
+          text.append(QUERY_FILTER_AND);
+      }
 
       text.append(QUERY_LABEL_BEGIN);
       for (int i = 0; i < labels.length; ++i) {
-        if (i > 0)
-          text.append(QUERY_SEPARATOR);
+        if (i > 0) {
+            text.append(QUERY_SEPARATOR);
+        }
         text.append(QUERY_STRING);
         text.append(labels[i]);
         text.append(QUERY_STRING);
@@ -291,9 +306,9 @@ public class OrientGraphQuery extends DefaultGraphQuery {
   protected boolean manageFilters(final StringBuilder text) {
     boolean firstPredicate = true;
     for (HasContainer has : hasContainers) {
-      if (!firstPredicate)
-        text.append(QUERY_FILTER_AND);
-      else {
+      if (!firstPredicate) {
+          text.append(QUERY_FILTER_AND);
+      } else {
         text.append(QUERY_WHERE);
         firstPredicate = false;
       }
@@ -315,18 +330,20 @@ public class OrientGraphQuery extends DefaultGraphQuery {
 
           boolean firstItem = true;
           for (Object o : (Collection<Object>) has.value) {
-            if (!firstItem)
-              text.append(QUERY_SEPARATOR);
-            else
-              firstItem = false;
+            if (!firstItem) {
+                text.append(QUERY_SEPARATOR);
+            } else {
+                firstItem = false;
+            }
             generateFilterValue(text, o);
           }
 
           text.append(COLLECTION_END);
         }
 
-        if (has.predicate == Contains.NOT_IN)
-          text.append(PARENTHESIS_END);
+        if (has.predicate == Contains.NOT_IN) {
+            text.append(PARENTHESIS_END);
+        }
       } else {
         // ANY OTHER OPERATORS
         text.append(has.key);
@@ -336,12 +353,13 @@ public class OrientGraphQuery extends DefaultGraphQuery {
           final com.tinkerpop.blueprints.Compare compare = (com.tinkerpop.blueprints.Compare) has.predicate;
           switch (compare) {
           case EQUAL:
-            if (has.value == null)
-              // IS
-              text.append(OPERATOR_IS);
-            else
-              // EQUALS
-              text.append(OPERATOR_EQUALS);
+            if (has.value == null) {
+                // IS
+                text.append(OPERATOR_IS);
+          } else {
+                // EQUALS
+                text.append(OPERATOR_EQUALS);
+          }
             break;
           case GREATER_THAN:
             text.append(OPERATOR_GT);
@@ -356,39 +374,44 @@ public class OrientGraphQuery extends DefaultGraphQuery {
             text.append(OPERATOR_LET);
             break;
           case NOT_EQUAL:
-            if (has.value == null)
-              text.append(OPERATOR_IS_NOT);
-            else
-              text.append(OPERATOR_DIFFERENT);
+            if (has.value == null) {
+                text.append(OPERATOR_IS_NOT);
+          } else {
+                text.append(OPERATOR_DIFFERENT);
+          }
             break;
           }
           text.append(SPACE);
           generateFilterValue(text, has.value);
         }
 
-        if (has.value instanceof Collection<?>)
-          text.append(PARENTHESIS_END);
+        if (has.value instanceof Collection<?>) {
+            text.append(PARENTHESIS_END);
+        }
       }
     }
     return !firstPredicate;
   }
 
   protected void generateFilterValue(final StringBuilder text, final Object iValue) {
-    if (iValue instanceof String)
-      text.append(QUERY_STRING);
+    if (iValue instanceof String) {
+        text.append(QUERY_STRING);
+    }
 
     final Object value;
 
-    if (iValue instanceof Date)
-      value = ((Date) iValue).getTime();
-    else if (iValue != null)
-      value = iValue.toString().replace("'", "\\'");
-    else
-      value = iValue;
+    if (iValue instanceof Date) {
+        value = ((Date) iValue).getTime();
+    } else if (iValue != null) {
+        value = iValue.toString().replace("'", "\\'");
+    } else {
+        value = iValue;
+    }
 
     text.append(value);
 
-    if (iValue instanceof String)
-      text.append(QUERY_STRING);
+    if (iValue instanceof String) {
+        text.append(QUERY_STRING);
+    }
   }
 }

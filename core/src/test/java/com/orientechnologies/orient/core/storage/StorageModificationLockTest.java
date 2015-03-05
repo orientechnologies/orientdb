@@ -87,9 +87,10 @@ public class StorageModificationLockTest {
         modificationLock.prohibitModifications();
         long beforeModification = counter.get();
         Thread.sleep(50);
-        if (n % 10 == 0)
-          System.out
-              .println("After prohibit  modifications " + beforeModification + " before allow modifications " + counter.get());
+        if (n % 10 == 0) {
+            System.out
+                    .println("After prohibit  modifications " + beforeModification + " before allow modifications " + counter.get());
+        }
         Assert.assertEquals(counter.get(), beforeModification);
         modificationLock.allowModifications();
         Thread.sleep(50);

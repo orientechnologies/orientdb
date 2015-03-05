@@ -21,8 +21,9 @@ public class ArraySpeedTest extends CollectionBaseAbstractSpeedTest {
 	@Override
 	public void cycle() {
 		for (String item : array) {
-			if (item.equals(searchedValue))
-				break;
+			if (item.equals(searchedValue)) {
+                            break;
+                        }
 		}
 	}
 

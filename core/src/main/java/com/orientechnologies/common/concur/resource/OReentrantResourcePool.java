@@ -85,8 +85,9 @@ public class OReentrantResourcePool<K, V> extends OResourcePool<K, V> {
         if (holder.resource.equals(res)) {
           holder.counter--;
           assert holder.counter >= 0;
-          if (holder.counter > 0)
-            return false;
+          if (holder.counter > 0) {
+              return false;
+          }
 
           keyToRemove = entry.getKey();
           break;
@@ -101,12 +102,14 @@ public class OReentrantResourcePool<K, V> extends OResourcePool<K, V> {
 
   public int getConnectionsInCurrentThread(final K key) {
     final Map<K, ResourceHolder<V>> resourceHolderMap = activeResources.get();
-    if (resourceHolderMap == null)
-      return 0;
+    if (resourceHolderMap == null) {
+        return 0;
+    }
 
     final ResourceHolder<V> holder = resourceHolderMap.get(key);
-    if (holder == null)
-      return 0;
+    if (holder == null) {
+        return 0;
+    }
 
     return holder.counter;
   }
@@ -120,8 +123,9 @@ public class OReentrantResourcePool<K, V> extends OResourcePool<K, V> {
     if (activeResourcesMap != null) {
       for (Map.Entry<K, ResourceHolder<V>> entry : activeResourcesMap.entrySet()) {
         final ResourceHolder<V> holder = entry.getValue();
-        if (holder.resource.equals(res))
-          activeResourcesToRemove.add(entry.getKey());
+        if (holder.resource.equals(res)) {
+            activeResourcesToRemove.add(entry.getKey());
+        }
       }
 
       for (K resourceKey : activeResourcesToRemove) {

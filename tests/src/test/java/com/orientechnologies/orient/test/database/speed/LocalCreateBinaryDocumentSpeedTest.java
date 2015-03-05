@@ -67,14 +67,16 @@ public class LocalCreateBinaryDocumentSpeedTest extends OrientMonoThreadTest {
     record = new ORecordBytes(database, payload);
     record.save();
 
-    if (data.getCyclesDone() == data.getCycles() - 1)
-      database.commit();
+    if (data.getCyclesDone() == data.getCycles() - 1) {
+        database.commit();
+    }
   }
 
   @Override
   public void deinit() {
-    if (database != null)
-      database.close();
+    if (database != null) {
+        database.close();
+    }
     super.deinit();
   }
 }

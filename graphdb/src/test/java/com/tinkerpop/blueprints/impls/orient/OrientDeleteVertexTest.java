@@ -49,8 +49,9 @@ public class OrientDeleteVertexTest {
 
     boolean contains = false;
     for (OIdentifiable id : out_edge)
-      if (id.equals(v2.getId()))
-        contains = true;
+      if (id.equals(v2.getId())) {
+          contains = true;
+    }
 
     assertFalse(contains);
     g.shutdown();
@@ -71,8 +72,9 @@ public class OrientDeleteVertexTest {
 
     contains = false;
     for (OIdentifiable id : out_edge)
-      if (id.equals(v2.getId()))
-        contains = true;
+      if (id.equals(v2.getId())) {
+          contains = true;
+    }
 
     assertFalse(contains);
     g.shutdown();

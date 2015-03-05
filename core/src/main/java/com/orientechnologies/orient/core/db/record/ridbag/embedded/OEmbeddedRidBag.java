@@ -83,25 +83,29 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       currentRemoved = false;
 
       currentIndex = nextIndex;
-      if (currentIndex == -1)
-        throw new NoSuchElementException();
+      if (currentIndex == -1) {
+          throw new NoSuchElementException();
+      }
 
       final OIdentifiable nextValue = (OIdentifiable) entries[currentIndex];
       nextIndex = nextIndex();
 
-      if (convertToRecord)
-        return nextValue.getRecord();
+      if (convertToRecord) {
+          return nextValue.getRecord();
+      }
 
       return nextValue;
     }
 
     @Override
     public void remove() {
-      if (currentRemoved)
-        throw new IllegalStateException("Current element has already been removed");
+      if (currentRemoved) {
+          throw new IllegalStateException("Current element has already been removed");
+      }
 
-      if (currentIndex == -1)
-        throw new IllegalStateException("Next method was not called for given iterator");
+      if (currentIndex == -1) {
+          throw new IllegalStateException("Next method was not called for given iterator");
+      }
 
       currentRemoved = true;
 
@@ -111,9 +115,10 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       size--;
       contentWasChanged = true;
 
-      if (!changeListeners.isEmpty())
-        fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-            OMultiValueChangeEvent.OChangeType.REMOVE, nextValue, null, nextValue));
+      if (!changeListeners.isEmpty()) {
+          fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+                  OMultiValueChangeEvent.OChangeType.REMOVE, nextValue, null, nextValue));
+      }
     }
 
     @Override
@@ -133,8 +138,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     private int nextIndex() {
       for (int i = currentIndex + 1; i < entriesLength; i++) {
         Object entry = entries[i];
-        if (entry instanceof OIdentifiable)
-          return i;
+        if (entry instanceof OIdentifiable) {
+            return i;
+        }
       }
 
       return -1;
@@ -169,9 +175,10 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
     size++;
     contentWasChanged = true;
 
-    if (!changeListeners.isEmpty())
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
-          identifiable, identifiable));
+    if (!changeListeners.isEmpty()) {
+        fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD,
+                identifiable, identifiable));
+    }
   }
 
   public OEmbeddedRidBag copy() {
@@ -196,9 +203,10 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       size--;
       contentWasChanged = true;
 
-      if (!changeListeners.isEmpty())
-        fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-            OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable));
+      if (!changeListeners.isEmpty()) {
+          fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+                  OMultiValueChangeEvent.OChangeType.REMOVE, identifiable, null, identifiable));
+      }
     }
   }
 
@@ -231,8 +239,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       if (entry instanceof OIdentifiable) {
         final OIdentifiable identifiable = (OIdentifiable) entry;
         ORecord record = identifiable.getRecord();
-        if (record != null)
-          entries[i] = record;
+        if (record != null) {
+            entries[i] = record;
+        }
       }
     }
   }
@@ -280,8 +289,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
   @Override
   public String toString() {
-    if (!deserialized)
-      return "[size=" + size + "]";
+    if (!deserialized) {
+        return "[size=" + size + "]";
+    }
 
     if (size < 10) {
       final StringBuilder sb = new StringBuilder(256);
@@ -290,8 +300,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
         try {
           OIdentifiable e = it.next();
           if (e != null) {
-            if (sb.length() > 1)
-              sb.append(", ");
+            if (sb.length() > 1) {
+                sb.append(", ");
+            }
 
             sb.append(e.getIdentity());
           }
@@ -301,8 +312,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       }
       return sb.append(']').toString();
 
-    } else
-      return "[size=" + size + "]";
+    } else {
+        return "[size=" + size + "]";
+    }
   }
 
   public void addChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {
@@ -343,10 +355,11 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   public int getSerializedSize() {
     int size;
 
-    if (!deserialized)
-      size = serializedContent.length;
-    else
-      size = OIntegerSerializer.INT_SIZE;
+    if (!deserialized) {
+        size = serializedContent.length;
+    } else {
+        size = OIntegerSerializer.INT_SIZE;
+    }
 
     size += this.size * OLinkSerializer.RID_SIZE;
 
@@ -431,8 +444,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
   protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
     for (final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener : changeListeners) {
-      if (changeListener != null)
-        changeListener.onAfterRecordChanged(event);
+      if (changeListener != null) {
+          changeListener.onAfterRecordChanged(event);
+      }
     }
   }
 
@@ -466,8 +480,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   }
 
   private void doDeserialization() {
-    if (deserialized)
-      return;
+    if (deserialized) {
+        return;
+    }
 
     int offset = 0;
     int entriesSize = OIntegerSerializer.INSTANCE.deserializeLiteral(serializedContent, offset);
@@ -478,10 +493,11 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       offset += OLinkSerializer.RID_SIZE;
 
       OIdentifiable identifiable;
-      if (rid.isTemporary())
-        identifiable = rid.getRecord();
-      else
-        identifiable = rid;
+      if (rid.isTemporary()) {
+          identifiable = rid.getRecord();
+      } else {
+          identifiable = rid;
+      }
 
       addEntry(identifiable);
     }

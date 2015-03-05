@@ -43,8 +43,9 @@ public class OSQLFunctionCount extends OSQLFunctionMathAbstract {
 
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       OCommandContext iContext) {
-    if (iParams[0] != null)
-      total++;
+    if (iParams[0] != null) {
+        total++;
+    }
 
     return total;
   }

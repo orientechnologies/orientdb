@@ -43,10 +43,11 @@ public class BetweenConversionTest extends DocumentDBBaseTest {
       document.field("a", i);
       document.field("ai", i);
 
-      if (i < 5)
-        document.field("vl", "v1");
-      else
-        document.field("vl", "v2");
+      if (i < 5) {
+          document.field("vl", "v1");
+      } else {
+          document.field("vl", "v2");
+      }
 
       ODocument ed = new ODocument();
       ed.field("a", i);

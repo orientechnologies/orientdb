@@ -46,8 +46,9 @@ public class OSQLMethodFromJSON extends OAbstractSQLMethod {
     if (iThis instanceof String) {
       if (iParams.length > 0) {
         final ODocument doc = new ODocument().fromJSON(iThis.toString(), iParams[0].toString());
-        if (iParams[0].toString().contains("embedded"))
-          ODocumentInternal.addOwner(doc, iCurrentRecord.getRecord());
+        if (iParams[0].toString().contains("embedded")) {
+            ODocumentInternal.addOwner(doc, iCurrentRecord.getRecord());
+        }
 
         return doc;
       }

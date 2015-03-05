@@ -74,8 +74,9 @@ public class ThreadCountersHashTableMTTst {
         while (!stop) {
           for (Thread thread : addedThreads) {
             Assert.assertSame(threadCounters.search(thread).getThread(), thread);
-            if (stop)
-              return null;
+            if (stop) {
+                return null;
+            }
           }
 
         }

@@ -51,13 +51,15 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
   protected volatile STATUS                           status  = STATUS.CLOSED;
 
   public OStorageAbstract(final String name, final String iURL, final String mode, final int timeout) {
-    if (OStringSerializerHelper.contains(name, '/'))
-      this.name = name.substring(name.lastIndexOf("/") + 1);
-    else
-      this.name = name;
+    if (OStringSerializerHelper.contains(name, '/')) {
+        this.name = name.substring(name.lastIndexOf("/") + 1);
+    } else {
+        this.name = name;
+    }
 
-    if (OStringSerializerHelper.contains(name, ','))
-      throw new IllegalArgumentException("Invalid character in storage name: " + this.name);
+    if (OStringSerializerHelper.contains(name, ',')) {
+        throw new IllegalArgumentException("Invalid character in storage name: " + this.name);
+    }
 
     url = iURL;
     this.mode = mode;
@@ -99,11 +101,13 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
     lock.acquireExclusiveLock();
     try {
       for (Object resource : sharedResources.values()) {
-        if (resource instanceof OSharedResource)
-          ((OSharedResource) resource).releaseExclusiveLock();
+        if (resource instanceof OSharedResource) {
+            ((OSharedResource) resource).releaseExclusiveLock();
+        }
 
-        if (resource instanceof OCloseable)
-          ((OCloseable) resource).close(onDelete);
+        if (resource instanceof OCloseable) {
+            ((OCloseable) resource).close(onDelete);
+        }
       }
       sharedResources.clear();
     } finally {
@@ -142,17 +146,19 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
     long tot = 0;
 
     for (OCluster c : getClusterInstances())
-      if (c != null)
-        tot += c.getEntries() - c.getTombstonesCount();
+      if (c != null) {
+          tot += c.getEntries() - c.getTombstonesCount();
+    }
 
     return tot;
   }
 
   public <V> V callInLock(final Callable<V> iCallable, final boolean iExclusiveLock) {
-    if (iExclusiveLock)
-      lock.acquireExclusiveLock();
-    else
-      lock.acquireSharedLock();
+    if (iExclusiveLock) {
+        lock.acquireExclusiveLock();
+    } else {
+        lock.acquireSharedLock();
+    }
     try {
       return iCallable.call();
     } catch (RuntimeException e) {
@@ -160,10 +166,11 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
     } catch (Exception e) {
       throw new OException("Error on nested call in lock", e);
     } finally {
-      if (iExclusiveLock)
-        lock.releaseExclusiveLock();
-      else
-        lock.releaseSharedLock();
+      if (iExclusiveLock) {
+          lock.releaseExclusiveLock();
+      } else {
+          lock.releaseSharedLock();
+      }
     }
   }
 
@@ -182,10 +189,11 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
     if (metaData != null) {
       final Set<OClass> classes = ((OMetadataInternal)metaData).getImmutableSchemaSnapshot().getClassesRelyOnCluster(iClusterName);
       for (OClass c : classes) {
-        if (c.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME))
-          throw new OSecurityException("Class " + c.getName()
-              + " cannot be truncated because has record level security enabled (extends " + OSecurityShared.RESTRICTED_CLASSNAME
-              + ")");
+        if (c.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME)) {
+            throw new OSecurityException("Class " + c.getName()
+                    + " cannot be truncated because has record level security enabled (extends " + OSecurityShared.RESTRICTED_CLASSNAME
+                    + ")");
+        }
       }
     }
   }
@@ -211,13 +219,15 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
   }
 
   protected boolean checkForClose(final boolean force) {
-    if (status == STATUS.CLOSED)
-      return false;
+    if (status == STATUS.CLOSED) {
+        return false;
+    }
 
     lock.acquireSharedLock();
     try {
-      if (status == STATUS.CLOSED)
-        return false;
+      if (status == STATUS.CLOSED) {
+          return false;
+      }
 
       final int remainingUsers = getUsers() > 0 ? removeUser() : 0;
 

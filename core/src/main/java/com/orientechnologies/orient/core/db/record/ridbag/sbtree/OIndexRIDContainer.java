@@ -160,9 +160,9 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
 
   @Override
   public void clear() {
-    if (isEmbedded)
-      underlying.clear();
-    else {
+    if (isEmbedded) {
+        underlying.clear();
+    } else {
       final OIndexRIDContainerSBTree tree = (OIndexRIDContainerSBTree) underlying;
       tree.delete();
       underlying = new HashSet<OIdentifiable>();
@@ -183,13 +183,15 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   }
 
   private void checkTopThreshold() {
-    if (isEmbedded && topThreshold < underlying.size())
-      convertToSbTree();
+    if (isEmbedded && topThreshold < underlying.size()) {
+        convertToSbTree();
+    }
   }
 
   private void checkBottomThreshold() {
-    if (!isEmbedded && bottomThreshold > underlying.size())
-      convertToEmbedded();
+    if (!isEmbedded && bottomThreshold > underlying.size()) {
+        convertToEmbedded();
+    }
   }
 
   private void convertToEmbedded() {
@@ -206,8 +208,9 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
    * If set is embedded convert it not embedded representation.
    */
   public void checkNotEmbedded() {
-    if (isEmbedded)
-      convertToSbTree();
+    if (isEmbedded) {
+        convertToSbTree();
+    }
   }
 
   private void convertToSbTree() {

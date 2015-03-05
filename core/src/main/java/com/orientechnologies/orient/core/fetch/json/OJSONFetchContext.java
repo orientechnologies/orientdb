@@ -58,13 +58,14 @@ public class OJSONFetchContext implements OFetchContext {
 
   public void onAfterFetch(final ODocument iRootRecord) {
     StringBuilder buffer = typesStack.pop();
-    if (settings.keepTypes && buffer.length() > 0)
-      try {
-        jsonWriter.writeAttribute(settings.indentLevel > -1 ? settings.indentLevel : 1, true,
-            ORecordSerializerJSON.ATTRIBUTE_FIELD_TYPES, buffer.toString());
-      } catch (IOException e) {
-        throw new OFetchException("Error writing field types", e);
-      }
+    if (settings.keepTypes && buffer.length() > 0) {
+        try {
+            jsonWriter.writeAttribute(settings.indentLevel > -1 ? settings.indentLevel : 1, true,
+                    ORecordSerializerJSON.ATTRIBUTE_FIELD_TYPES, buffer.toString());
+        } catch (IOException e) {
+            throw new OFetchException("Error writing field types", e);
+        }
+    }
   }
 
   public void onBeforeStandardField(final Object iFieldValue, final String iFieldName, final Object iUserObject) {
@@ -134,10 +135,11 @@ public class OJSONFetchContext implements OFetchContext {
     settings.indentLevel++;
     try {
       final String fieldName;
-      if (!collectionStack.isEmpty() && collectionStack.peek().equals(iRootRecord))
-        fieldName = null;
-      else
-        fieldName = iFieldName;
+      if (!collectionStack.isEmpty() && collectionStack.peek().equals(iRootRecord)) {
+          fieldName = null;
+      } else {
+          fieldName = iFieldName;
+      }
       jsonWriter.beginObject(settings.indentLevel, false, fieldName);
       writeSignature(jsonWriter, iDocument);
     } catch (IOException e) {
@@ -186,26 +188,30 @@ public class OJSONFetchContext implements OFetchContext {
     if (settings.includeType) {
       json.writeAttribute(firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_TYPE, ""
           + (char) ORecordInternal.getRecordType(record));
-      if (settings.attribSameRow)
-        firstAttribute = false;
+      if (settings.attribSameRow) {
+          firstAttribute = false;
+      }
     }
     if (settings.includeId && record.getIdentity() != null && record.getIdentity().isValid()) {
       json.writeAttribute(!firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_RID, record
           .getIdentity().toString());
-      if (settings.attribSameRow)
-        firstAttribute = false;
+      if (settings.attribSameRow) {
+          firstAttribute = false;
+      }
     }
     if (settings.includeVer) {
       json.writeAttribute(firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_VERSION, record
           .getRecordVersion().getCounter());
-      if (settings.attribSameRow)
-        firstAttribute = false;
+      if (settings.attribSameRow) {
+          firstAttribute = false;
+      }
     }
     if (settings.includeClazz && record instanceof ODocument && ((ODocument) record).getClassName() != null) {
       json.writeAttribute(firstAttribute ? settings.indentLevel : 1, firstAttribute, ODocumentHelper.ATTRIBUTE_CLASS,
           ((ODocument) record).getClassName());
-      if (settings.attribSameRow)
-        firstAttribute = false;
+      if (settings.attribSameRow) {
+          firstAttribute = false;
+      }
     }
   }
 
@@ -215,41 +221,43 @@ public class OJSONFetchContext implements OFetchContext {
 
   protected void manageTypes(final String iFieldName, final Object iFieldValue) {
     if (settings.keepTypes) {
-      if (iFieldValue instanceof Long)
-        appendType(typesStack.peek(), iFieldName, 'l');
-      else if (iFieldValue instanceof OIdentifiable)
-        appendType(typesStack.peek(), iFieldName, 'x');
-      else if (iFieldValue instanceof Float)
-        appendType(typesStack.peek(), iFieldName, 'f');
-      else if (iFieldValue instanceof Short)
-        appendType(typesStack.peek(), iFieldName, 's');
-      else if (iFieldValue instanceof Double)
-        appendType(typesStack.peek(), iFieldName, 'd');
-      else if (iFieldValue instanceof Date)
-        appendType(typesStack.peek(), iFieldName, 't');
-      else if (iFieldValue instanceof Byte || iFieldValue instanceof byte[])
-        appendType(typesStack.peek(), iFieldName, 'b');
-      else if (iFieldValue instanceof BigDecimal)
-        appendType(typesStack.peek(), iFieldName, 'c');
-      else if (iFieldValue instanceof ORecordLazySet)
-        appendType(typesStack.peek(), iFieldName, 'n');
-      else if (iFieldValue instanceof Set<?>)
-        appendType(typesStack.peek(), iFieldName, 'e');
-      else if (iFieldValue instanceof ORidBag)
-        appendType(typesStack.peek(), iFieldName, 'g');
-      else {
+      if (iFieldValue instanceof Long) {
+          appendType(typesStack.peek(), iFieldName, 'l');
+      } else if (iFieldValue instanceof OIdentifiable) {
+          appendType(typesStack.peek(), iFieldName, 'x');
+      } else if (iFieldValue instanceof Float) {
+          appendType(typesStack.peek(), iFieldName, 'f');
+      } else if (iFieldValue instanceof Short) {
+          appendType(typesStack.peek(), iFieldName, 's');
+      } else if (iFieldValue instanceof Double) {
+          appendType(typesStack.peek(), iFieldName, 'd');
+      } else if (iFieldValue instanceof Date) {
+          appendType(typesStack.peek(), iFieldName, 't');
+      } else if (iFieldValue instanceof Byte || iFieldValue instanceof byte[]) {
+          appendType(typesStack.peek(), iFieldName, 'b');
+      } else if (iFieldValue instanceof BigDecimal) {
+          appendType(typesStack.peek(), iFieldName, 'c');
+      } else if (iFieldValue instanceof ORecordLazySet) {
+          appendType(typesStack.peek(), iFieldName, 'n');
+      } else if (iFieldValue instanceof Set<?>) {
+          appendType(typesStack.peek(), iFieldName, 'e');
+      } else if (iFieldValue instanceof ORidBag) {
+          appendType(typesStack.peek(), iFieldName, 'g');
+      } else {
         final OType t = OType.getTypeByValue(iFieldValue);
-        if (t == OType.LINKLIST)
-          appendType(typesStack.peek(), iFieldName, 'z');
-        else if (t == OType.LINKMAP)
-          appendType(typesStack.peek(), iFieldName, 'm');
+        if (t == OType.LINKLIST) {
+            appendType(typesStack.peek(), iFieldName, 'z');
+          } else if (t == OType.LINKMAP) {
+              appendType(typesStack.peek(), iFieldName, 'm');
+          }
       }
     }
   }
 
   private void appendType(final StringBuilder iBuffer, final String iFieldName, final char iType) {
-    if (iBuffer.length() > 0)
-      iBuffer.append(',');
+    if (iBuffer.length() > 0) {
+        iBuffer.append(',');
+    }
     iBuffer.append(iFieldName);
     iBuffer.append('=');
     iBuffer.append(iType);

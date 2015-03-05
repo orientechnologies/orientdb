@@ -29,8 +29,9 @@ public class TestQueryRecordLockUnlock {
       id = doc.getIdentity();
       db.commit();
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) {
+          db.close();
+      }
     }
     int thread = 10;
 
@@ -87,8 +88,9 @@ public class TestQueryRecordLockUnlock {
       id = doc.getIdentity();
       db.commit();
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) {
+          db.close();
+      }
     }
     int thread = 10;
 
@@ -145,8 +147,9 @@ public class TestQueryRecordLockUnlock {
       id = doc.getIdentity();
       db.commit();
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) {
+          db.close();
+      }
     }
     int thread = 10;
 

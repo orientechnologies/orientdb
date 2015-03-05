@@ -46,8 +46,9 @@ public class IndexCrashRestoreSingleValue {
     buildDirectory += "/uniqueIndexCrashRestore";
 
     buildDir = new File(buildDirectory);
-    if (buildDir.exists())
-      buildDir.delete();
+    if (buildDir.exists()) {
+        buildDir.delete();
+                }
 
     buildDir.mkdir();
 
@@ -155,8 +156,9 @@ public class IndexCrashRestoreSingleValue {
       ODocument doc = identifiable.getRecord();
 
       long ts = doc.<Long> field("ts");
-      if (ts > lastTs)
-        lastTs = ts;
+      if (ts > lastTs) {
+          lastTs = ts;
+      }
 
       entry = cursor.nextEntry();
 
@@ -165,10 +167,12 @@ public class IndexCrashRestoreSingleValue {
 
       Set<OIdentifiable> result = (Set<OIdentifiable>) testIndex.get(key);
       if (result == null || result.isEmpty()) {
-        if (minLostTs > ts)
-          minLostTs = ts;
-      } else
-        restoredRecords++;
+        if (minLostTs > ts) {
+            minLostTs = ts;
+        }
+      } else {
+          restoredRecords++;
+      }
     }
 
     ODatabaseRecordThreadLocal.INSTANCE.set(baseDocumentTx);

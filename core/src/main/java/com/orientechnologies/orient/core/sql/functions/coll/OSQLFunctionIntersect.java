@@ -48,14 +48,17 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Set<Ob
       OCommandContext iContext) {
     Object value = iParams[0];
 
-    if (value instanceof OSQLFilterItemVariable)
-      value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iCurrentResult, iContext);
+    if (value instanceof OSQLFilterItemVariable) {
+        value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iCurrentResult, iContext);
+    }
 
-    if (value == null)
-      return Collections.emptySet();
+    if (value == null) {
+        return Collections.emptySet();
+    }
 
-    if (!(value instanceof Collection<?>))
-      value = Arrays.asList(value);
+    if (!(value instanceof Collection<?>)) {
+        value = Arrays.asList(value);
+    }
 
     final Collection<?> coll = (Collection<?>) value;
 
@@ -76,17 +79,20 @@ public class OSQLFunctionIntersect extends OSQLFunctionMultiValueAbstract<Set<Ob
       for (int i = 1; i < iParams.length; ++i) {
         value = iParams[i];
 
-        if (value instanceof OSQLFilterItemVariable)
-          value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iCurrentResult, iContext);
+        if (value instanceof OSQLFilterItemVariable) {
+            value = ((OSQLFilterItemVariable) value).getValue(iCurrentRecord, iCurrentResult, iContext);
+        }
 
         if (value != null) {
-          if (!(value instanceof Collection<?>))
-            // CONVERT IT INTO A COLLECTION
-            value = Arrays.asList(value);
+          if (!(value instanceof Collection<?>)) {
+              // CONVERT IT INTO A COLLECTION
+              value = Arrays.asList(value);
+          }
 
           result.retainAll((Collection<?>) value);
-        } else
-          result.clear();
+        } else {
+            result.clear();
+        }
       }
 
       return result;

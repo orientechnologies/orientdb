@@ -107,8 +107,9 @@ public class OSBTreeCollectionManagerRemote extends OSBTreeCollectionManagerAbst
   @Override
   public UUID listenForChanges(ORidBag collection) {
     UUID id = collection.getTemporaryId();
-    if (id == null)
-      id = UUID.randomUUID();
+    if (id == null) {
+        id = UUID.randomUUID();
+    }
 
     pendingCollections.get().put(id, new WeakReference<ORidBag>(collection));
 

@@ -64,8 +64,9 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
   }
 
   protected void setParameters(final Object... iArgs) {
-    if (iArgs != null && iArgs.length > 0)
-      parameters = convertToParameters(iArgs);
+    if (iArgs != null && iArgs.length > 0) {
+        parameters = convertToParameters(iArgs);
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -79,9 +80,10 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
       for (int i = 0; i < iArgs.length; ++i) {
         Object par = iArgs[i];
 
-        if (par instanceof OIdentifiable && ((OIdentifiable) par).getIdentity().isValid())
-          // USE THE RID ONLY
-          par = ((OIdentifiable) par).getIdentity();
+        if (par instanceof OIdentifiable && ((OIdentifiable) par).getIdentity().isValid()) {
+            // USE THE RID ONLY
+            par = ((OIdentifiable) par).getIdentity();
+        }
 
         params.put(i, par);
       }
@@ -130,8 +132,9 @@ public abstract class OCommandRequestAbstract implements OCommandRequestInternal
 
   @Override
   public OCommandContext getContext() {
-    if (context == null)
-      context = new OBasicCommandContext();
+    if (context == null) {
+        context = new OBasicCommandContext();
+    }
     return context;
   }
 

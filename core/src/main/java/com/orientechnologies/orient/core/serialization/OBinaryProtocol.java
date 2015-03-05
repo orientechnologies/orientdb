@@ -39,8 +39,9 @@ public class OBinaryProtocol {
 
 
   public static final byte[] string2bytes(final String iInputText) {
-    if (iInputText == null)
-      return null;
+    if (iInputText == null) {
+        return null;
+    }
 
     final int len = iInputText.length();
 
@@ -130,8 +131,9 @@ public class OBinaryProtocol {
   }
 
   public static final String bytes2string(final byte[] iInput) {
-    if (iInput == null)
-      return null;
+    if (iInput == null) {
+        return null;
+    }
 
     return OBinaryProtocol.bytes2string(iInput, 0, iInput.length);
   }

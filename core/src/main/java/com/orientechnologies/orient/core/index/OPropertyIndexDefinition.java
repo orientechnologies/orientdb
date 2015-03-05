@@ -58,8 +58,9 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
   }
 
   public List<String> getFieldsToIndex() {
-    if (collate == null || collate.getName().equals(ODefaultCollate.NAME))
-      return Collections.singletonList(field);
+    if (collate == null || collate.getName().equals(ODefaultCollate.NAME)) {
+        return Collections.singletonList(field);
+    }
 
     return Collections.singletonList(field + " collate " + collate.getName());
   }
@@ -67,32 +68,39 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
   public Object getDocumentValueToIndex(final ODocument iDocument) {
     if (OType.LINK.equals(keyType)) {
       final OIdentifiable identifiable = iDocument.field(field);
-      if (identifiable != null)
-        return createValue(identifiable.getIdentity());
-      else
-        return null;
+      if (identifiable != null) {
+          return createValue(identifiable.getIdentity());
+      } else {
+          return null;
+      }
     }
     return createValue(iDocument.field(field));
   }
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
 
-    if (!super.equals(o))
-      return false;
+    if (!super.equals(o)) {
+        return false;
+    }
 
     final OPropertyIndexDefinition that = (OPropertyIndexDefinition) o;
 
-    if (!className.equals(that.className))
-      return false;
-    if (!field.equals(that.field))
-      return false;
-    if (keyType != that.keyType)
-      return false;
+    if (!className.equals(that.className)) {
+        return false;
+    }
+    if (!field.equals(that.field)) {
+        return false;
+    }
+    if (keyType != that.keyType) {
+        return false;
+    }
 
     return true;
   }
@@ -194,8 +202,9 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
       ddl.append(indexName).append(" on ");
       ddl.append(className).append(" ( ").append(field);
 
-      if (!collate.getName().equals(ODefaultCollate.NAME))
-        ddl.append(" collate ").append(collate.getName());
+      if (!collate.getName().equals(ODefaultCollate.NAME)) {
+          ddl.append(" collate ").append(collate.getName());
+      }
 
       ddl.append(" ) ");
     }

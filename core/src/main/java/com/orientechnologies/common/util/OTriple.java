@@ -89,18 +89,23 @@ public class OTriple<K extends Comparable<K>, V, SV> implements Comparable<OTrip
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
+		if (this == obj) {
+                    return true;
+                }
+		if (obj == null) {
+                    return false;
+                }
+		if (getClass() != obj.getClass()) {
+                    return false;
+                }
 		OTriple<?, ?, ?> other = (OTriple<?, ?, ?>) obj;
 		if (key == null) {
-			if (other.key != null)
-				return false;
-		} else if (!key.equals(other.key))
-			return false;
+			if (other.key != null) {
+                            return false;
+                        }
+		} else if (!key.equals(other.key)) {
+                    return false;
+                }
 		return true;
 	}
 

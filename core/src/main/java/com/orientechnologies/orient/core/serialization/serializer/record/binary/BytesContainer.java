@@ -42,8 +42,9 @@ public class BytesContainer {
   public int alloc(int toAlloc) {
     final int cur = offset;
     offset += toAlloc;
-    if (bytes.length < offset)
-      resize();
+    if (bytes.length < offset) {
+        resize();
+    }
     return cur;
   }
 

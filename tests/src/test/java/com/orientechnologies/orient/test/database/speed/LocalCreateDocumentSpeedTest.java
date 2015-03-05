@@ -81,8 +81,9 @@ public class LocalCreateDocumentSpeedTest extends OrientMonoThreadTest {
 
     record.save();
 
-    if (data.getCyclesDone() == data.getCycles() - 1)
-      database.commit();
+    if (data.getCyclesDone() == data.getCycles() - 1) {
+        database.commit();
+    }
   }
 
   @Override
@@ -90,8 +91,9 @@ public class LocalCreateDocumentSpeedTest extends OrientMonoThreadTest {
   public void deinit() {
     System.out.println(Orient.instance().getProfiler().dump());
 
-    if (database != null)
-      database.close();
+    if (database != null) {
+        database.close();
+    }
     super.deinit();
   }
 }

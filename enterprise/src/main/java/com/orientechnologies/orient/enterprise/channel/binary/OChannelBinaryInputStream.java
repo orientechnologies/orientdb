@@ -43,20 +43,23 @@ public class OChannelBinaryInputStream extends InputStream {
 
 	@Override
 	public int read() throws IOException {
-		if (pos >= total)
-			if (again)
-				fetch();
-			else
-				return -1;
+		if (pos >= total) {
+                    if (again) {
+                        fetch();
+                    } else {
+                        return -1;
+                    }
+                }
 
 		return buffer[pos++];
 	}
 
 	@Override
 	public int available() throws IOException {
-		if (total < 0)
-			// ONLY THE FIRST TIME
-			fetch();
+		if (total < 0) {
+                    // ONLY THE FIRST TIME
+                    fetch();
+                }
 
 		final int remaining = total - pos;
 		return remaining > 0 ? remaining : again ? 1 : 0;
@@ -68,11 +71,13 @@ public class OChannelBinaryInputStream extends InputStream {
 
 		total = channel.in.readInt();
 
-		if (total > buffer.length)
-			throw new ONetworkProtocolException("Bad chunk size received: " + total + " when the maximum can be: " + buffer.length);
+		if (total > buffer.length) {
+                    throw new ONetworkProtocolException("Bad chunk size received: " + total + " when the maximum can be: " + buffer.length);
+                }
 
-		if (total > 0)
-			channel.in.readFully(buffer, 0, total);
+		if (total > 0) {
+                    channel.in.readFully(buffer, 0, total);
+                }
 
 		again = channel.in.readByte() == 1;
 	}

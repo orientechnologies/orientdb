@@ -58,8 +58,9 @@ public class LocalPaginatedStorageRestoreFromWAL {
     buildDirectory += "/localPaginatedStorageRestoreFromWAL";
 
     buildDir = new File(buildDirectory);
-    if (buildDir.exists())
-      buildDir.delete();
+    if (buildDir.exists()) {
+        buildDir.delete();
+    }
 
     buildDir.mkdir();
   }
@@ -139,12 +140,13 @@ public class LocalPaginatedStorageRestoreFromWAL {
 
     for (File storageFile : storageFiles) {
       String copyToPath;
-      if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromWAL.wmr"))
-        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.wmr";
-      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromWAL.0.wal"))
-        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.0.wal";
-      else
-        copyToPath = copyToDir.getAbsolutePath() + File.separator + storageFile.getName();
+      if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromWAL.wmr")) {
+          copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.wmr";
+      } else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromWAL.0.wal")) {
+          copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.0.wal";
+      } else {
+          copyToPath = copyToDir.getAbsolutePath() + File.separator + storageFile.getName();
+      }
 
       copyFile(storageFile.getAbsolutePath(), copyToPath);
     }

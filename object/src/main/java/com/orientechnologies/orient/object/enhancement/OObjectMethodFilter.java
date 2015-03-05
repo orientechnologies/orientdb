@@ -34,12 +34,14 @@ public class OObjectMethodFilter implements MethodFilter {
     final String methodName = m.getName();
     final String fieldName = getFieldName(m);
 
-    if (fieldName == null)
-      return false;
+    if (fieldName == null) {
+        return false;
+    }
 
     try {
-      if (!OObjectEntitySerializer.isClassField(m.getDeclaringClass(), fieldName))
-        return false;
+      if (!OObjectEntitySerializer.isClassField(m.getDeclaringClass(), fieldName)) {
+          return false;
+      }
       return (isSetterMethod(methodName, m) || isGetterMethod(methodName, m));
     } catch (NoSuchFieldException nsfe) {
       OLogManager.instance().warn(this, "Error handling the method %s in class %s", nsfe, m.getName(),
@@ -55,13 +57,13 @@ public class OObjectMethodFilter implements MethodFilter {
     final String methodName = m.getName();
     final Class<?> clz = m.getDeclaringClass();
 
-    if (methodName.startsWith("get"))
-      return getFieldName(methodName, "get");
-    else if (methodName.startsWith("set"))
-      return getFieldName(methodName, "set");
-    else if (methodName.startsWith("is"))
-      return getFieldName(methodName, "is");
-    else if (isScalaClass(clz)) {
+    if (methodName.startsWith("get")) {
+        return getFieldName(methodName, "get");
+    } else if (methodName.startsWith("set")) {
+        return getFieldName(methodName, "set");
+    } else if (methodName.startsWith("is")) {
+        return getFieldName(methodName, "is");
+    } else if (isScalaClass(clz)) {
       return getScalaFieldName(clz, methodName);
     }
     // NO FIELD
@@ -78,12 +80,15 @@ public class OObjectMethodFilter implements MethodFilter {
   public boolean isSetterMethod(final String methodName, final Method m) throws SecurityException, NoSuchFieldException {
     Class<?> clz = m.getDeclaringClass();
     if (!methodName.startsWith("set") || !checkIfFirstCharAfterPrefixIsUpperCase(methodName, "set")
-        || (isScalaClass(clz) && !methodName.endsWith("_$eq")))
-      return false;
-    if (m.getParameterTypes() != null && m.getParameterTypes().length != 1)
-      return false;
-    if (OObjectEntitySerializer.isTransientField(m.getDeclaringClass(), getFieldName(m)))
-      return false;
+        || (isScalaClass(clz) && !methodName.endsWith("_$eq"))) {
+        return false;
+    }
+    if (m.getParameterTypes() != null && m.getParameterTypes().length != 1) {
+        return false;
+    }
+    if (OObjectEntitySerializer.isTransientField(m.getDeclaringClass(), getFieldName(m))) {
+        return false;
+    }
     Class<?>[] parameters = m.getParameterTypes();
     Field f = OObjectEntitySerializer.getField(getFieldName(m), m.getDeclaringClass());
     if (!f.getType().isAssignableFrom(parameters[0])) {
@@ -99,18 +104,21 @@ public class OObjectMethodFilter implements MethodFilter {
   public boolean isGetterMethod(String fieldName, Method m) throws SecurityException, NoSuchFieldException {
     int prefixLength;
     Class<?> clz = m.getDeclaringClass();
-    if (fieldName.startsWith("get") && checkIfFirstCharAfterPrefixIsUpperCase(fieldName, "get"))
-      prefixLength = "get".length();
-    else if (fieldName.startsWith("is") && checkIfFirstCharAfterPrefixIsUpperCase(fieldName, "is"))
-      prefixLength = "is".length();
-    else if (isScalaClass(clz) && fieldName.equals(getFieldName(m)))
-      prefixLength = 0;
-    else
-      return false;
-    if (m.getParameterTypes() != null && m.getParameterTypes().length > 0)
-      return false;
-    if (fieldName.length() <= prefixLength)
-      return false;
+    if (fieldName.startsWith("get") && checkIfFirstCharAfterPrefixIsUpperCase(fieldName, "get")) {
+        prefixLength = "get".length();
+    } else if (fieldName.startsWith("is") && checkIfFirstCharAfterPrefixIsUpperCase(fieldName, "is")) {
+        prefixLength = "is".length();
+    } else if (isScalaClass(clz) && fieldName.equals(getFieldName(m))) {
+        prefixLength = 0;
+    } else {
+        return false;
+    }
+    if (m.getParameterTypes() != null && m.getParameterTypes().length > 0) {
+        return false;
+    }
+    if (fieldName.length() <= prefixLength) {
+        return false;
+    }
     return !OObjectEntitySerializer.isTransientField(m.getDeclaringClass(), getFieldName(m));
   }
 

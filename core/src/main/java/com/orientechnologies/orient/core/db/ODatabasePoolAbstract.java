@@ -145,9 +145,10 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
     lock();
     try {
       pool = pools.get(dbPooledName);
-      if (pool == null)
-        // CREATE A NEW ONE
-        pool = new OReentrantResourcePool<String, DB>(maxSize, this);
+      if (pool == null) {
+          // CREATE A NEW ONE
+          pool = new OReentrantResourcePool<String, DB>(maxSize, this);
+      }
 
       // PUT IN THE POOL MAP ONLY IF AUTHENTICATION SUCCEED
       pools.put(dbPooledName, pool);
@@ -168,8 +169,9 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
     } finally {
       unlock();
     }
-    if (pool == null)
-      return maxSize;
+    if (pool == null) {
+        return maxSize;
+    }
 
     return pool.getMaxResources();
   }
@@ -179,8 +181,9 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
     lock();
     try {
       final OReentrantResourcePool<String, DB> pool = pools.get(dbPooledName);
-      if (pool == null)
-        return 0;
+      if (pool == null) {
+          return 0;
+      }
 
       return pool.getCreatedInstances();
     } finally {
@@ -197,8 +200,9 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
     } finally {
       unlock();
     }
-    if (pool == null)
-      return 0;
+    if (pool == null) {
+        return 0;
+    }
 
     return pool.getAvailableResources();
   }
@@ -212,8 +216,9 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
     } finally {
       unlock();
     }
-    if (pool == null)
-      return 0;
+    if (pool == null) {
+        return 0;
+    }
 
     return pool.getConnectionsInCurrentThread(url);
   }
@@ -232,11 +237,13 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
     } finally {
       unlock();
     }
-    if (pool == null)
-      throw new OLockException("Cannot release a database URL not acquired before. URL: " + iDatabase.getName());
+    if (pool == null) {
+        throw new OLockException("Cannot release a database URL not acquired before. URL: " + iDatabase.getName());
+    }
 
-    if (pool.returnResource(iDatabase))
-      this.notifyEvictor(dbPooledName, iDatabase);
+    if (pool.returnResource(iDatabase)) {
+        this.notifyEvictor(dbPooledName, iDatabase);
+    }
   }
 
   public DB reuseResource(final String iKey, final DB iValue) {
@@ -296,14 +303,15 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
       if (pool != null) {
         for (DB db : pool.getResources()) {
           final OStorage stg = db.getStorage();
-          if (stg != null && stg.getStatus() == OStorage.STATUS.OPEN)
-            try {
-              OLogManager.instance().debug(this, "Closing pooled database '%s'...", db.getName());
-              ((ODatabasePooled) db).forceClose();
-              OLogManager.instance().debug(this, "OK", db.getName());
-            } catch (Exception e) {
-              OLogManager.instance().debug(this, "Error: %d", e.toString());
-            }
+          if (stg != null && stg.getStatus() == OStorage.STATUS.OPEN) {
+              try {
+                  OLogManager.instance().debug(this, "Closing pooled database '%s'...", db.getName());
+                  ((ODatabasePooled) db).forceClose();
+                  OLogManager.instance().debug(this, "OK", db.getName());
+              } catch (Exception e) {
+                  OLogManager.instance().debug(this, "Error: %d", e.toString());
+              }
+          }
 
         }
         pool.close();
@@ -335,16 +343,18 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
         final int pos = e.getKey().indexOf("@");
         final String dbName = e.getKey().substring(pos + 1);
         if (storageURL.equals(dbName)) {
-          if (poolToClose == null)
-            poolToClose = new HashSet<String>();
+          if (poolToClose == null) {
+              poolToClose = new HashSet<String>();
+          }
 
           poolToClose.add(e.getKey());
         }
       }
 
-      if (poolToClose != null)
-        for (String pool : poolToClose)
-          remove(pool);
+      if (poolToClose != null) {
+          for (String pool : poolToClose)
+              remove(pool);
+      }
 
     } finally {
       unlock();

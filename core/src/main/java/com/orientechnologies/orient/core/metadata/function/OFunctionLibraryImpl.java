@@ -93,8 +93,9 @@ public class OFunctionLibraryImpl implements OFunctionLibrary {
 
   protected void init() {
     final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
-    if (db.getMetadata().getSchema().existsClass("OFunction"))
-      return;
+    if (db.getMetadata().getSchema().existsClass("OFunction")) {
+        return;
+    }
 
     final OClass f = db.getMetadata().getSchema().createClass("OFunction");
     f.createProperty("name", OType.STRING);

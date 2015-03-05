@@ -40,41 +40,46 @@ public class ODateHelper {
 
   public static TimeZone getDatabaseTimeZone() {
     final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if (db != null && !db.isClosed())
-      return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getTimeZone();
+    if (db != null && !db.isClosed()) {
+        return ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getTimeZone();
+    }
     return TimeZone.getDefault();
   }
 
   public static DateFormat getDateFormatInstance() {
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if (db != null && !db.isClosed())
-      return db.getStorage().getConfiguration().getDateFormatInstance();
-    else
-      return new SimpleDateFormat(DEF_DATE_FORMAT);
+    if (db != null && !db.isClosed()) {
+        return db.getStorage().getConfiguration().getDateFormatInstance();
+    } else {
+        return new SimpleDateFormat(DEF_DATE_FORMAT);
+    }
   }
 
   public static String getDateFormat() {
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if (db != null && !db.isClosed())
-      return db.getStorage().getConfiguration().getDateFormat();
-    else
-      return DEF_DATE_FORMAT;
+    if (db != null && !db.isClosed()) {
+        return db.getStorage().getConfiguration().getDateFormat();
+    } else {
+        return DEF_DATE_FORMAT;
+    }
   }
 
   public static DateFormat getDateTimeFormatInstance() {
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if (db != null && !db.isClosed())
-      return db.getStorage().getConfiguration().getDateTimeFormatInstance();
-    else
-      return new SimpleDateFormat(DEF_DATETIME_FORMAT);
+    if (db != null && !db.isClosed()) {
+        return db.getStorage().getConfiguration().getDateTimeFormatInstance();
+    } else {
+        return new SimpleDateFormat(DEF_DATETIME_FORMAT);
+    }
   }
 
   public static String getDateTimeFormat() {
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if (db != null && !db.isClosed())
-      return db.getStorage().getConfiguration().getDateTimeFormat();
-    else
-      return DEF_DATETIME_FORMAT;
+    if (db != null && !db.isClosed()) {
+        return db.getStorage().getConfiguration().getDateTimeFormat();
+    } else {
+        return DEF_DATETIME_FORMAT;
+    }
   }
 
   public static Date now() {

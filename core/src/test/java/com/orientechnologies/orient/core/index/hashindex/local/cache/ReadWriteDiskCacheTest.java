@@ -42,8 +42,9 @@ public class ReadWriteDiskCacheTest {
     OGlobalConfiguration.FILE_LOCK.setValue(Boolean.FALSE);
 
     String buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null)
-      buildDirectory = ".";
+    if (buildDirectory == null) {
+        buildDirectory = ".";
+    }
 
     storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/ReadWriteDiskCacheTest");
     storageLocal.create(null);
@@ -753,8 +754,9 @@ public class ReadWriteDiskCacheTest {
     closeBufferAndDeleteFile();
 
     File file = new File(storageLocal.getConfiguration().getDirectory());
-    if (!file.exists())
-      file.mkdir();
+    if (!file.exists()) {
+        file.mkdir();
+    }
 
     writeAheadLog = new ODiskWriteAheadLog(1024, -1, 10 * 1024, storageLocal);
 
@@ -777,8 +779,9 @@ public class ReadWriteDiskCacheTest {
 
       setLsn(dataPointer.getDataPointer(), pageLSN);
 
-      if (i == 5)
-        lsnToFlush = pageLSN;
+      if (i == 5) {
+          lsnToFlush = pageLSN;
+      }
 
       cacheEntry.markDirty();
       dataPointer.releaseExclusiveLock();

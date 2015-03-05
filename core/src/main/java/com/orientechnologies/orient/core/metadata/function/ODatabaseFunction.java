@@ -75,8 +75,9 @@ public class ODatabaseFunction implements OSQLFunction {
     buffer.append('(');
     final List<String> params = f.getParameters();
     for (int p = 0; p < params.size(); ++p) {
-      if (p > 0)
-        buffer.append(',');
+      if (p > 0) {
+          buffer.append(',');
+      }
       buffer.append(params.get(p));
     }
     buffer.append(')');

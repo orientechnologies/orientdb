@@ -137,8 +137,9 @@ public class OServer {
 
     Orient.instance().startup();
 
-    if (OGlobalConfiguration.PROFILER_ENABLED.getValueAsBoolean() && !Orient.instance().getProfiler().isRecording())
-      Orient.instance().getProfiler().startRecording();
+    if (OGlobalConfiguration.PROFILER_ENABLED.getValueAsBoolean() && !Orient.instance().getProfiler().isRecording()) {
+        Orient.instance().getProfiler().startRecording();
+    }
 
     shutdownHook = new OServerShutdownHook(this);
   }
@@ -154,8 +155,9 @@ public class OServer {
   public OServer startup() throws InstantiationException, IllegalAccessException, ClassNotFoundException, IllegalArgumentException,
       SecurityException, InvocationTargetException, NoSuchMethodException {
     String config = OServerConfiguration.DEFAULT_CONFIG_FILE;
-    if (System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE) != null)
-      config = System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE);
+    if (System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE) != null) {
+        config = System.getProperty(OServerConfiguration.PROPERTY_CONFIG_FILE);
+    }
 
     Orient.instance().startup();
 
@@ -170,8 +172,9 @@ public class OServer {
               public Object getValue() {
                 final StringBuilder dbs = new StringBuilder(64);
                 for (String dbName : getAvailableStorageNames().keySet()) {
-                  if (dbs.length() > 0)
-                    dbs.append(',');
+                  if (dbs.length() > 0) {
+                      dbs.append(',');
+                  }
                   dbs.append(dbName);
                 }
                 return dbs.toString();
@@ -196,8 +199,9 @@ public class OServer {
   public OServer startup(final InputStream iInputStream) throws InstantiationException, IllegalAccessException,
       ClassNotFoundException, IllegalArgumentException, SecurityException, InvocationTargetException, NoSuchMethodException,
       IOException {
-    if (iInputStream == null)
-      throw new OConfigurationException("Configuration file is null");
+    if (iInputStream == null) {
+        throw new OConfigurationException("Configuration file is null");
+    }
 
     configurationLoader = new OServerConfigurationLoaderXml(OServerConfiguration.class, iInputStream);
     configuration = configurationLoader.load();
@@ -225,8 +229,9 @@ public class OServer {
     databaseDirectory = contextConfiguration.getValue("server.database.path", serverRootDirectory + "/databases/");
     databaseDirectory = OFileUtils.getPath(OSystemVariableResolver.resolveSystemVariables(databaseDirectory));
     databaseDirectory = databaseDirectory.replace("//", "/");
-    if (!databaseDirectory.endsWith("/"))
-      databaseDirectory += "/";
+    if (!databaseDirectory.endsWith("/")) {
+        databaseDirectory += "/";
+    }
 
     OLogManager.instance().info(this, "Databases directory: " + new File(databaseDirectory).getAbsolutePath());
 
@@ -302,15 +307,17 @@ public class OServer {
   }
 
   public boolean shutdown() {
-    if (!running)
-      return false;
+    if (!running) {
+        return false;
+    }
 
     running = false;
 
     OLogManager.instance().info(this, "OrientDB Server is shutting down...");
 
-    if (shutdownHook != null)
-      shutdownHook.cancel();
+    if (shutdownHook != null) {
+        shutdownHook.cancel();
+    }
 
     Orient.instance().getProfiler().unregisterHookValue("system.databases");
 
@@ -346,8 +353,9 @@ public class OServer {
           OLogManager.instance().error(this, "Error during deactivation of server lifecycle listener %s", e, l);
         }
 
-      if (pluginManager != null)
-        pluginManager.shutdown();
+      if (pluginManager != null) {
+          pluginManager.shutdown();
+      }
 
       OClientConnectionManager.instance().shutdown();
 
@@ -355,13 +363,14 @@ public class OServer {
       lock.unlock();
     }
 
-    if (shutdownEngineOnExit && !Orient.isRegisterDatabaseByPath())
-      try {
-        OLogManager.instance().info(this, "Shutting down databases:");
-        Orient.instance().shutdown();
-      } catch (Throwable e) {
-        OLogManager.instance().error(this, "Error during OrientDB shutdown", e);
-      }
+    if (shutdownEngineOnExit && !Orient.isRegisterDatabaseByPath()) {
+        try {
+            OLogManager.instance().info(this, "Shutting down databases:");
+            Orient.instance().shutdown();
+        } catch (Throwable e) {
+            OLogManager.instance().error(this, "Error during OrientDB shutdown", e);
+        }
+    }
 
     OLogManager.instance().info(this, "OrientDB Server shutdown complete");
     OLogManager.instance().flush();
@@ -369,8 +378,9 @@ public class OServer {
   }
 
   public String getStoragePath(final String iName) {
-    if (iName == null)
-      throw new IllegalArgumentException("Storage path is null");
+    if (iName == null) {
+        throw new IllegalArgumentException("Storage path is null");
+    }
 
     final String name = iName.indexOf(':') > -1 ? iName.substring(iName.indexOf(':') + 1) : iName;
 
@@ -378,19 +388,21 @@ public class OServer {
     final String dbPath = Orient.isRegisterDatabaseByPath() ? dbName : getDatabaseDirectory() + name;
 
     final OStorage stg = Orient.instance().getStorage(dbName);
-    if (stg != null)
-      // ALREADY OPEN
-      return stg.getURL();
+    if (stg != null) {
+        // ALREADY OPEN
+        return stg.getURL();
+    }
 
     // SEARCH IN CONFIGURED PATHS
     String dbURL = configuration.getStoragePath(name);
     if (dbURL == null) {
       // SEARCH IN DEFAULT DATABASE DIRECTORY
-      if (new File(OIOUtils.getPathFromDatabaseName(dbPath) + "/default.pcl").exists())
-        dbURL = "plocal:" + dbPath;
-      else
-        throw new OConfigurationException("Database '" + name + "' is not configured on server (home=" + getDatabaseDirectory()
-            + ")");
+      if (new File(OIOUtils.getPathFromDatabaseName(dbPath) + "/default.pcl").exists()) {
+          dbURL = "plocal:" + dbPath;
+      } else {
+          throw new OConfigurationException("Database '" + name + "' is not configured on server (home=" + getDatabaseDirectory()
+                  + ")");
+      }
     }
 
     return dbURL;
@@ -399,9 +411,10 @@ public class OServer {
   public Map<String, String> getAvailableStorageNames() {
     // SEARCH IN CONFIGURED PATHS
     final Map<String, String> storages = new HashMap<String, String>();
-    if (configuration.storages != null && configuration.storages.length > 0)
-      for (OServerStorageConfiguration s : configuration.storages)
-        storages.put(OIOUtils.getDatabaseNameFromPath(s.name), s.path);
+    if (configuration.storages != null && configuration.storages.length > 0) {
+        for (OServerStorageConfiguration s : configuration.storages)
+            storages.put(OIOUtils.getDatabaseNameFromPath(s.name), s.path);
+    }
 
     // SEARCH IN DEFAULT DATABASE DIRECTORY
     final String rootDirectory = getDatabaseDirectory();
@@ -411,8 +424,9 @@ public class OServer {
       final String storageUrl = storage.getURL();
       // TEST IT'S OF CURRENT SERVER INSTANCE BY CHECKING THE PATH
       if (storage instanceof OAbstractPaginatedStorage && storage.exists() && !storages.containsValue(storageUrl)
-          && isStorageOfCurrentServerInstance(storage))
-        storages.put(OIOUtils.getDatabaseNameFromPath(storage.getName()), storageUrl);
+          && isStorageOfCurrentServerInstance(storage)) {
+          storages.put(OIOUtils.getDatabaseNameFromPath(storage.getName()), storageUrl);
+      }
     }
 
     return storages;
@@ -420,10 +434,13 @@ public class OServer {
 
   public String getStorageURL(final String iName) {
     // SEARCH IN CONFIGURED PATHS
-    if (configuration.storages != null && configuration.storages.length > 0)
-      for (OServerStorageConfiguration s : configuration.storages)
-        if (s.name.equals(iName))
-          return s.path;
+    if (configuration.storages != null && configuration.storages.length > 0) {
+        for (OServerStorageConfiguration s : configuration.storages) {
+            if (s.name.equals(iName)) {
+                return s.path;
+            }
+        }
+    }
 
     // SEARCH IN DEFAULT DATABASE DIRECTORY
     final Map<String, String> storages = new HashMap<String, String>();
@@ -442,9 +459,10 @@ public class OServer {
   }
 
   public OServerUserConfiguration serverLogin(final String iUser, final String iPassword, final String iResource) {
-    if (!authenticate(iUser, iPassword, iResource))
-      throw new OSecurityAccessException(
-          "Wrong user/password to [connect] to the remote OrientDB Server instance. Get the user/password from the config/orientdb-server-config.xml file");
+    if (!authenticate(iUser, iPassword, iResource)) {
+        throw new OSecurityAccessException(
+                "Wrong user/password to [connect] to the remote OrientDB Server instance. Get the user/password from the config/orientdb-server-config.xml file");
+    }
 
     return getUser(iUser);
   }
@@ -462,14 +480,16 @@ public class OServer {
     final OServerUserConfiguration user = getUser(iUserName);
 
     if (user != null && (iPassword == null || user.password.equals(iPassword))) {
-      if (user.resources.equals("*"))
-        // ACCESS TO ALL
-        return true;
+      if (user.resources.equals("*")) {
+          // ACCESS TO ALL
+          return true;
+      }
 
       String[] resourceParts = user.resources.split(",");
       for (String r : resourceParts)
-        if (r.equals(iResourceToCheck))
-          return true;
+        if (r.equals(iResourceToCheck)) {
+            return true;
+      }
     }
 
     // WRONG PASSWORD OR NO AUTHORIZATION
@@ -489,8 +509,9 @@ public class OServer {
   }
 
   public void saveConfiguration() throws IOException {
-    if (configurationLoader != null)
-      configurationLoader.save(configuration);
+    if (configurationLoader != null) {
+        configurationLoader.save(configuration);
+    }
   }
 
   public Map<String, Class<? extends ONetworkProtocol>> getNetworkProtocols() {
@@ -504,8 +525,9 @@ public class OServer {
   @SuppressWarnings("unchecked")
   public <RET extends OServerNetworkListener> RET getListenerByProtocol(final Class<? extends ONetworkProtocol> iProtocolClass) {
     for (OServerNetworkListener l : networkListeners)
-      if (iProtocolClass.isAssignableFrom(l.getProtocolType()))
-        return (RET) l;
+      if (iProtocolClass.isAssignableFrom(l.getProtocolType())) {
+          return (RET) l;
+    }
 
     return null;
   }
@@ -525,12 +547,14 @@ public class OServer {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
-    if (!running)
-      throw new ODatabaseException("Error on plugin lookup the server didn't start correcty.");
+    if (!running) {
+        throw new ODatabaseException("Error on plugin lookup the server didn't start correcty.");
+    }
 
     for (OServerPluginInfo h : getPlugins())
-      if (h.getInstance() != null && h.getInstance().getClass().equals(iPluginClass))
-        return (RET) h.getInstance();
+      if (h.getInstance() != null && h.getInstance().getClass().equals(iPluginClass)) {
+          return (RET) h.getInstance();
+    }
 
     return null;
   }
@@ -542,12 +566,14 @@ public class OServer {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
-    if (!running)
-      throw new ODatabaseException("Error on plugin lookup the server didn't start correcty.");
+    if (!running) {
+        throw new ODatabaseException("Error on plugin lookup the server didn't start correcty.");
+    }
 
     final OServerPluginInfo p = pluginManager.getPluginByName(iName);
-    if (p != null)
-      return (RET) p.getInstance();
+    if (p != null) {
+        return (RET) p.getInstance();
+    }
     return null;
   }
 
@@ -556,28 +582,33 @@ public class OServer {
   }
 
   public OServer setVariable(final String iName, final Object iValue) {
-    if (iValue == null)
-      variables.remove(iName);
-    else
-      variables.put(iName, iValue);
+    if (iValue == null) {
+        variables.remove(iName);
+    } else {
+        variables.put(iName, iValue);
+    }
     return this;
   }
 
   public void addUser(final String iName, String iPassword, final String iPermissions) throws IOException {
-    if (iName == null || iName.length() == 0)
-      throw new IllegalArgumentException("User name null or empty");
+    if (iName == null || iName.length() == 0) {
+        throw new IllegalArgumentException("User name null or empty");
+    }
 
-    if (iPermissions == null || iPermissions.length() == 0)
-      throw new IllegalArgumentException("User permissions null or empty");
+    if (iPermissions == null || iPermissions.length() == 0) {
+        throw new IllegalArgumentException("User permissions null or empty");
+    }
 
-    if (configuration.users == null)
-      configuration.users = new OServerUserConfiguration[1];
-    else
-      configuration.users = Arrays.copyOf(configuration.users, configuration.users.length + 1);
+    if (configuration.users == null) {
+        configuration.users = new OServerUserConfiguration[1];
+    } else {
+        configuration.users = Arrays.copyOf(configuration.users, configuration.users.length + 1);
+    }
 
-    if (iPassword == null)
-      // AUTO GENERATE PASSWORD
-      iPassword = OSecurityManager.instance().digest2String(String.valueOf(random.nextLong()), false);
+    if (iPassword == null) {
+        // AUTO GENERATE PASSWORD
+        iPassword = OSecurityManager.instance().digest2String(String.valueOf(random.nextLong()), false);
+    }
 
     configuration.users[configuration.users.length - 1] = new OServerUserConfiguration(iName, iPassword, iPermissions);
 
@@ -599,12 +630,13 @@ public class OServer {
 
     final ODatabaseInternal<?> database = Orient.instance().getDatabaseFactory().createDatabase(iDbType, path);
 
-    if (database.isClosed())
-      if (database.getStorage() instanceof ODirectMemoryStorage)
-        database.create();
-      else {
-        database.open(iToken);
-      }
+    if (database.isClosed()) {
+        if (database.getStorage() instanceof ODirectMemoryStorage) {
+            database.create();
+        } else {
+            database.open(iToken);
+        }
+    }
 
     return database;
   }
@@ -657,22 +689,23 @@ public class OServer {
   }
 
   public ODatabaseInternal openDatabase(final ODatabaseInternal database) {
-    if (database.isClosed())
-      if (database.getStorage() instanceof ODirectMemoryStorage)
-        database.create();
-      else {
-        final OServerUserConfiguration replicatorUser = getUser(ODistributedAbstractPlugin.REPLICATOR_USER);
-        try {
-          serverLogin(replicatorUser.name, replicatorUser.password, "database.passthrough");
-        } catch (OSecurityException ex) {
-          throw ex;
+    if (database.isClosed()) {
+        if (database.getStorage() instanceof ODirectMemoryStorage) {
+            database.create();
+        } else {
+            final OServerUserConfiguration replicatorUser = getUser(ODistributedAbstractPlugin.REPLICATOR_USER);
+            try {
+                serverLogin(replicatorUser.name, replicatorUser.password, "database.passthrough");
+            } catch (OSecurityException ex) {
+                throw ex;
+            }
+            
+            // SERVER AUTHENTICATED, BYPASS SECURITY
+            database.resetInitialization();
+            database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
+            database.open(replicatorUser.name, replicatorUser.password);
         }
-
-        // SERVER AUTHENTICATED, BYPASS SECURITY
-        database.resetInitialization();
-        database.setProperty(ODatabase.OPTIONS.SECURITY.toString(), Boolean.FALSE);
-        database.open(replicatorUser.name, replicatorUser.password);
-      }
+    }
 
     return database;
   }
@@ -694,9 +727,10 @@ public class OServer {
 
     // FILL THE CONTEXT CONFIGURATION WITH SERVER'S PARAMETERS
     contextConfiguration = new OContextConfiguration();
-    if (iConfiguration.properties != null)
-      for (OServerEntryConfiguration prop : iConfiguration.properties)
-        contextConfiguration.setValue(prop.name, prop.value);
+    if (iConfiguration.properties != null) {
+        for (OServerEntryConfiguration prop : iConfiguration.properties)
+            contextConfiguration.setValue(prop.name, prop.value);
+    }
 
     hookManager = new OConfigurableHooksManager(iConfiguration);
   }
@@ -716,9 +750,10 @@ public class OServer {
   protected void loadUsers() throws IOException {
     if (configuration.users != null && configuration.users.length > 0) {
       for (OServerUserConfiguration u : configuration.users) {
-        if (u.name.equals(OServerConfiguration.SRV_ROOT_ADMIN))
-          // FOUND
-          return;
+        if (u.name.equals(OServerConfiguration.SRV_ROOT_ADMIN)) {
+            // FOUND
+            return;
+        }
       }
     }
 
@@ -729,17 +764,20 @@ public class OServer {
    * Load configured storages.
    */
   protected void loadStorages() {
-    if (configuration.storages == null)
-      return;
+    if (configuration.storages == null) {
+        return;
+    }
 
     String type;
     for (OServerStorageConfiguration stg : configuration.storages)
       if (stg.loadOnStartup) {
         // @COMPATIBILITY
-        if (stg.userName == null)
-          stg.userName = OUser.ADMIN;
-        if (stg.userPassword == null)
-          stg.userPassword = OUser.ADMIN;
+        if (stg.userName == null) {
+            stg.userName = OUser.ADMIN;
+        }
+        if (stg.userPassword == null) {
+            stg.userPassword = OUser.ADMIN;
+        }
 
         int idx = stg.path.indexOf(':');
         if (idx == -1) {
@@ -752,14 +790,15 @@ public class OServer {
         try {
           db = new ODatabaseDocumentTx(stg.path);
 
-          if (db.exists())
-            db.open(stg.userName, stg.userPassword);
-          else {
+          if (db.exists()) {
+              db.open(stg.userName, stg.userPassword);
+          } else {
             db.create();
             if (stg.userName.equals(OUser.ADMIN)) {
-              if (!stg.userPassword.equals(OUser.ADMIN))
-                // CHANGE ADMIN PASSWORD
-                db.getMetadata().getSecurity().getUser(OUser.ADMIN).setPassword(stg.userPassword);
+              if (!stg.userPassword.equals(OUser.ADMIN)) {
+                  // CHANGE ADMIN PASSWORD
+                  db.getMetadata().getSecurity().getUser(OUser.ADMIN).setPassword(stg.userPassword);
+                  }
             } else {
               // CREATE A NEW USER AS ADMIN AND REMOVE THE DEFAULT ONE
               db.getMetadata().getSecurity().createUser(stg.userName, stg.userPassword, ORole.ADMIN);
@@ -774,8 +813,9 @@ public class OServer {
           OLogManager.instance().error(this, "-> Cannot load " + type + " database '" + stg.name + "': " + e);
 
         } finally {
-          if (db != null)
-            db.close();
+          if (db != null) {
+              db.close();
+          }
         }
       }
   }
@@ -786,8 +826,9 @@ public class OServer {
 
     if (rootPassword != null) {
       rootPassword = rootPassword.trim();
-      if (rootPassword.isEmpty())
-        rootPassword = null;
+      if (rootPassword.isEmpty()) {
+          rootPassword = null;
+      }
     }
 
     if (rootPassword == null) {
@@ -815,8 +856,9 @@ public class OServer {
       rootPassword = reader.readLine();
       if (rootPassword != null) {
         rootPassword = rootPassword.trim();
-        if (rootPassword.isEmpty())
-          rootPassword = null;
+        if (rootPassword.isEmpty()) {
+            rootPassword = null;
+        }
       }
     }
 
@@ -855,15 +897,17 @@ public class OServer {
             }
           }
 
-          if (!enabled)
-            // SKIP IT
-            continue;
+          if (!enabled) {
+              // SKIP IT
+              continue;
+          }
         }
 
         handler = (OServerPlugin) Class.forName(h.clazz).newInstance();
 
-        if (handler instanceof ODistributedServerManager)
-          distributedManager = (ODistributedServerManager) handler;
+        if (handler instanceof ODistributedServerManager) {
+            distributedManager = (ODistributedServerManager) handler;
+        }
 
         pluginManager.registerPlugin(new OServerPluginInfo(handler.getName(), null, null, null, handler, null, 0, null));
 
@@ -880,26 +924,29 @@ public class OServer {
     if (storage.getUnderlying() instanceof OLocalPaginatedStorage) {
       final String rootDirectory = getDatabaseDirectory();
       return storage.getURL().contains(rootDirectory);
-    } else
-      return true;
+    } else {
+        return true;
+    }
   }
 
   private void scanDatabaseDirectory(final File directory, final Map<String, String> storages) {
     if (directory.exists() && directory.isDirectory()) {
       final File[] files = directory.listFiles();
-      if (files != null)
-        for (File db : files) {
-          if (db.isDirectory()) {
-            final File plocalFile = new File(db.getAbsolutePath() + "/default.pcl");
-            final String dbPath = db.getPath().replace('\\', '/');
-            final int lastBS = dbPath.lastIndexOf('/', dbPath.length() - 1) + 1;// -1 of dbPath may be ended with slash
-            if (plocalFile.exists()) {
-              storages.put(OIOUtils.getDatabaseNameFromPath(dbPath.substring(lastBS)), "plocal:" + dbPath);
-            } else
-              // TRY TO GO IN DEEP RECURSIVELY
-              scanDatabaseDirectory(db, storages);
+      if (files != null) {
+          for (File db : files) {
+              if (db.isDirectory()) {
+                  final File plocalFile = new File(db.getAbsolutePath() + "/default.pcl");
+                  final String dbPath = db.getPath().replace('\\', '/');
+                  final int lastBS = dbPath.lastIndexOf('/', dbPath.length() - 1) + 1; // -1 of dbPath may be ended with slash
+                  if (plocalFile.exists()) {
+                      storages.put(OIOUtils.getDatabaseNameFromPath(dbPath.substring(lastBS)), "plocal:" + dbPath);
+                  } else {
+                      // TRY TO GO IN DEEP RECURSIVELY
+                      scanDatabaseDirectory(db, storages);
+                  }
+              }
           }
-        }
+      }
     }
   }
 }

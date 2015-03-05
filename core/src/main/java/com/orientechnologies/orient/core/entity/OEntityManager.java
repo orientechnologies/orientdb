@@ -60,14 +60,16 @@ public class OEntityManager {
    * @see #registerEntityClasses(String)
    */
   public synchronized Object createPojo(final String iClassName) throws OConfigurationException {
-    if (iClassName == null)
-      throw new IllegalArgumentException("Cannot create the object: class name is empty");
+    if (iClassName == null) {
+        throw new IllegalArgumentException("Cannot create the object: class name is empty");
+    }
 
     final Class<?> entityClass = classHandler.getEntityClass(iClassName);
 
     try {
-      if (entityClass != null)
-        return createInstance(entityClass);
+      if (entityClass != null) {
+          return createInstance(entityClass);
+      }
 
     } catch (Exception e) {
       throw new OConfigurationException("Error while creating new pojo of class '" + iClassName + "'", e);

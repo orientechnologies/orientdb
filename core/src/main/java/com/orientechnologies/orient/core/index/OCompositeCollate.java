@@ -60,15 +60,18 @@ public class OCompositeCollate implements OCollate {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
 
     OCompositeCollate that = (OCompositeCollate) o;
 
-    if (!collates.equals(that.collates))
-      return false;
+    if (!collates.equals(that.collates)) {
+        return false;
+    }
 
     return true;
   }

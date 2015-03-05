@@ -39,8 +39,9 @@ public class OStreamSerializerListRID implements OStreamSerializer, OBinarySeria
   public static final byte ID = 19;
 
   public Object fromStream(final byte[] iStream) throws IOException {
-    if (iStream == null)
-      return null;
+    if (iStream == null) {
+        return null;
+    }
 
     final String s = OBinaryProtocol.bytes2string(iStream);
 
@@ -48,8 +49,9 @@ public class OStreamSerializerListRID implements OStreamSerializer, OBinarySeria
   }
 
   public byte[] toStream(final Object iObject) throws IOException {
-    if (iObject == null)
-      return null;
+    if (iObject == null) {
+        return null;
+    }
 
     return ((OMVRBTreeRIDSet) iObject).toStream();
   }

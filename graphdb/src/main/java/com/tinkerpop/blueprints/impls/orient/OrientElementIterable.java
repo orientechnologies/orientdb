@@ -41,8 +41,9 @@ public class OrientElementIterable<T extends Element> implements CloseableIterab
 
   @SuppressWarnings("unchecked")
   public Iterator<T> iterator() {
-    if (iterable == null)
-      return Collections.EMPTY_LIST.iterator();
+    if (iterable == null) {
+        return Collections.EMPTY_LIST.iterator();
+    }
 
     return new OrientElementIterator<T>(this.graph, iterable.iterator());
   }

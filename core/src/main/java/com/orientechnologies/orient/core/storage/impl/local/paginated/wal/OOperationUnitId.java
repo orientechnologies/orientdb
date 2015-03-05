@@ -66,15 +66,18 @@ public class OOperationUnitId {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
 
     OOperationUnitId that = (OOperationUnitId) o;
 
-    if (!uuid.equals(that.uuid))
-      return false;
+    if (!uuid.equals(that.uuid)) {
+        return false;
+    }
 
     return true;
   }

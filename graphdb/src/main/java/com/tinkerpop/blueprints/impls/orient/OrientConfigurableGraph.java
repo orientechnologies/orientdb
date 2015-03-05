@@ -725,35 +725,43 @@ public abstract class OrientConfigurableGraph {
    */
   protected void init(final Configuration configuration) {
     final Boolean saveOriginalIds = configuration.getBoolean("blueprints.orientdb.saveOriginalIds", null);
-    if (saveOriginalIds != null)
-      setSaveOriginalIds(saveOriginalIds);
+    if (saveOriginalIds != null) {
+        setSaveOriginalIds(saveOriginalIds);
+    }
 
     final Boolean keepInMemoryReferences = configuration.getBoolean("blueprints.orientdb.keepInMemoryReferences", null);
-    if (keepInMemoryReferences != null)
-      setKeepInMemoryReferences(keepInMemoryReferences);
+    if (keepInMemoryReferences != null) {
+        setKeepInMemoryReferences(keepInMemoryReferences);
+    }
 
     final Boolean useCustomClassesForEdges = configuration.getBoolean("blueprints.orientdb.useCustomClassesForEdges", null);
-    if (useCustomClassesForEdges != null)
-      setUseClassForEdgeLabel(useCustomClassesForEdges);
+    if (useCustomClassesForEdges != null) {
+        setUseClassForEdgeLabel(useCustomClassesForEdges);
+    }
 
     final Boolean useCustomClassesForVertex = configuration.getBoolean("blueprints.orientdb.useCustomClassesForVertex", null);
-    if (useCustomClassesForVertex != null)
-      setUseClassForVertexLabel(useCustomClassesForVertex);
+    if (useCustomClassesForVertex != null) {
+        setUseClassForVertexLabel(useCustomClassesForVertex);
+    }
 
     final Boolean useVertexFieldsForEdgeLabels = configuration.getBoolean("blueprints.orientdb.useVertexFieldsForEdgeLabels", null);
-    if (useVertexFieldsForEdgeLabels != null)
-      setUseVertexFieldsForEdgeLabels(useVertexFieldsForEdgeLabels);
+    if (useVertexFieldsForEdgeLabels != null) {
+        setUseVertexFieldsForEdgeLabels(useVertexFieldsForEdgeLabels);
+    }
 
     final Boolean lightweightEdges = configuration.getBoolean("blueprints.orientdb.lightweightEdges", null);
-    if (lightweightEdges != null)
-      setUseLightweightEdges(lightweightEdges);
+    if (lightweightEdges != null) {
+        setUseLightweightEdges(lightweightEdges);
+    }
 
     final Boolean autoScaleEdgeType = configuration.getBoolean("blueprints.orientdb.autoScaleEdgeType", null);
-    if (autoScaleEdgeType != null)
-      setAutoScaleEdgeType(autoScaleEdgeType);
+    if (autoScaleEdgeType != null) {
+        setAutoScaleEdgeType(autoScaleEdgeType);
+    }
 
     final Boolean requireTransaction = configuration.getBoolean("blueprints.orientdb.requireTransaction", null);
-    if (requireTransaction != null)
-      setRequireTransaction(requireTransaction);
+    if (requireTransaction != null) {
+        setRequireTransaction(requireTransaction);
+    }
   }
 }

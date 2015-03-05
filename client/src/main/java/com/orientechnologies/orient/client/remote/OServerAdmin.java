@@ -54,11 +54,13 @@ public class OServerAdmin {
    * @throws IOException
    */
   public OServerAdmin(String iURL) throws IOException {
-    if (iURL.startsWith(OEngineRemote.NAME))
-      iURL = iURL.substring(OEngineRemote.NAME.length() + 1);
+    if (iURL.startsWith(OEngineRemote.NAME)) {
+        iURL = iURL.substring(OEngineRemote.NAME.length() + 1);
+    }
 
-    if (!iURL.contains("/"))
-      iURL += "/";
+    if (!iURL.contains("/")) {
+        iURL += "/";
+    }
 
     storage = new OStorageRemote(null, iURL, "", OStorage.STATUS.OPEN);
   }
@@ -191,14 +193,16 @@ public class OServerAdmin {
       if (iDatabaseName == null || iDatabaseName.length() <= 0) {
         OLogManager.instance().error(this, "Cannot create unnamed remote storage. Check your syntax", OStorageException.class);
       } else {
-        if (iStorageMode == null)
-          iStorageMode = "csv";
+        if (iStorageMode == null) {
+            iStorageMode = "csv";
+        }
 
         final OChannelBinaryAsynchClient network = storage.beginRequest(OChannelBinaryProtocol.REQUEST_DB_CREATE);
         try {
           network.writeString(iDatabaseName);
-          if (network.getSrvProtocolVersion() >= 8)
-            network.writeString(iDatabaseType);
+          if (network.getSrvProtocolVersion() >= 8) {
+              network.writeString(iDatabaseType);
+          }
           network.writeString(iStorageMode);
         } finally {
           storage.endRequest(network);
@@ -556,8 +560,9 @@ public class OServerAdmin {
         storage.getEngine().getConnectionManager().remove(network);
         throw new OStorageException("Error on executing  '" + iActivity + "'", e);
       } catch (Exception e2) {
-        if (network != null)
-          storage.getEngine().getConnectionManager().release(network);
+        if (network != null) {
+            storage.getEngine().getConnectionManager().release(network);
+        }
         throw new OStorageException("Error on executing  '" + iActivity + "'", e2);
       }
     }

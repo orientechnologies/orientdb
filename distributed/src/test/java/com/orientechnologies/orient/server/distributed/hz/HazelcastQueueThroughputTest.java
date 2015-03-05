@@ -52,8 +52,9 @@ public class HazelcastQueueThroughputTest {
         System.out.println((System.currentTimeMillis() - lastLap) + " Start receiving msgs");
         for (int i = 1; i < TOTAL + 1; ++i) {
           try {
-            if (senderQueueIndex >= QUEUE_RING_SIZE)
-              senderQueueIndex = 0;
+            if (senderQueueIndex >= QUEUE_RING_SIZE) {
+                senderQueueIndex = 0;
+            }
             Object msg = ring[senderQueueIndex++].take();
 
             if (i % LAP == 0) {
@@ -74,8 +75,9 @@ public class HazelcastQueueThroughputTest {
 
     System.out.println((System.currentTimeMillis() - lastLap) + " Start sending msgs");
     for (int i = 1; i < TOTAL + 1; ++i) {
-      if (receiverQueueIndex >= QUEUE_RING_SIZE)
-        receiverQueueIndex = 0;
+      if (receiverQueueIndex >= QUEUE_RING_SIZE) {
+          receiverQueueIndex = 0;
+      }
       ring[receiverQueueIndex++].offer(i);
 
       if (i % LAP == 0) {

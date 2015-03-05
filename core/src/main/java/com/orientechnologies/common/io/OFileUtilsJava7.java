@@ -30,8 +30,9 @@ import java.nio.file.*;
  */
 public class OFileUtilsJava7 {
 	public static boolean delete(File file) throws IOException {
-		if (!file.exists())
-			return true;
+		if (!file.exists()) {
+                    return true;
+                }
 
 		try {
 			final FileSystem fileSystem = FileSystems.getDefault();

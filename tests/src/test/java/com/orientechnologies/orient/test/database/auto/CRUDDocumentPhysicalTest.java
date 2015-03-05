@@ -115,16 +115,18 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   public void cleanAll() {
     record = database.newInstance();
 
-    if( !database.existsCluster("Account"))
-      database.addCluster("Account");
+    if( !database.existsCluster("Account")) {
+        database.addCluster("Account");
+    }
 
     startRecordNumber = database.countClusterElements("Account");
 
     // DELETE ALL THE RECORDS IN THE CLUSTER
     while (database.countClusterElements("Account") > 0)
       for (ODocument rec : database.browseCluster("Account"))
-        if (rec != null)
-          rec.delete();
+        if (rec != null) {
+            rec.delete();
+    }
 
     Assert.assertEquals(database.countClusterElements("Account"), 0);
   }
@@ -215,8 +217,9 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     int i = 0;
     for (ODocument rec : database.browseCluster("Account")) {
 
-      if (i % 2 == 0)
-        rec.field("location", "Spain");
+      if (i % 2 == 0) {
+          rec.field("location", "Spain");
+      }
 
       rec.field("price", i + 100);
 
@@ -232,10 +235,11 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
       int price = ((Number) rec.field("price")).intValue();
       Assert.assertTrue(price - 100 >= 0);
 
-      if ((price - 100) % 2 == 0)
-        Assert.assertEquals(rec.field("location"), "Spain");
-      else
-        Assert.assertEquals(rec.field("location"), "Italy");
+      if ((price - 100) % 2 == 0) {
+          Assert.assertEquals(rec.field("location"), "Spain");
+      } else {
+          Assert.assertEquals(rec.field("location"), "Italy");
+      }
     }
   }
 
@@ -697,11 +701,13 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     }
     db.close();
 
-    if (database.countClusterElements("Account") > 0)
-      for (ODocument d : database.browseClass("Account")) {
-        if (d.field("name").equals("Asynch insertion test"))
-          d.delete();
-      }
+    if (database.countClusterElements("Account") > 0) {
+        for (ODocument d : database.browseClass("Account")) {
+            if (d.field("name").equals("Asynch insertion test")) {
+                d.delete();
+            }
+        }
+    }
   }
 
   @Test(dependsOnMethods = "cleanAll")

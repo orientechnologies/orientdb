@@ -76,8 +76,9 @@ public class OMetadataDefault implements OMetadataInternal {
     try {
       init(true);
 
-      if (schemaClusterId == -1 || getDatabase().countClusterElements(CLUSTER_INTERNAL_NAME) == 0)
-        return;
+      if (schemaClusterId == -1 || getDatabase().countClusterElements(CLUSTER_INTERNAL_NAME) == 0) {
+          return;
+      }
 
     } finally {
       PROFILER.stopChrono(PROFILER.getDatabaseMetric(getDatabase().getName(), "metadata.load"), "Loading of database metadata",
@@ -119,13 +120,15 @@ public class OMetadataDefault implements OMetadataInternal {
   public void clearThreadLocalSchemaSnapshot() {
     ThreadLocalSchemaSnapshot schemaSnapshot = threadLocalSchemaSnapshot.get();
 
-    if (schemaSnapshot.snapshotCounter <= 0)
-      throw new IllegalStateException("Thread local schema snapshot is cleared more times than it is done");
+    if (schemaSnapshot.snapshotCounter <= 0) {
+        throw new IllegalStateException("Thread local schema snapshot is cleared more times than it is done");
+    }
 
     schemaSnapshot.snapshotCounter--;
 
-    if (schemaSnapshot.snapshotCounter == 0)
-      threadLocalSchemaSnapshot.set(null);
+    if (schemaSnapshot.snapshotCounter == 0) {
+        threadLocalSchemaSnapshot.set(null);
+    }
   }
 
   @Override
@@ -133,14 +136,17 @@ public class OMetadataDefault implements OMetadataInternal {
     final ThreadLocalSchemaSnapshot schemaSnapshot = threadLocalSchemaSnapshot.get();
 
     OImmutableSchema immutableSchema = null;
-    if (schemaSnapshot != null)
-      immutableSchema = schemaSnapshot.schema;
+    if (schemaSnapshot != null) {
+        immutableSchema = schemaSnapshot.schema;
+    }
 
-    if (immutableSchema != null)
-      return immutableSchema;
+    if (immutableSchema != null) {
+        return immutableSchema;
+    }
 
-    if (schema == null)
-      return null;
+    if (schema == null) {
+        return null;
+    }
 
     OImmutableSchema newSchema;
     do {
@@ -176,8 +182,9 @@ public class OMetadataDefault implements OMetadataInternal {
       public OSchemaShared call() {
         ODatabaseDocumentInternal database = getDatabase();
         final OSchemaShared instance = new OSchemaShared(database.getStorageVersions().classesAreDetectedByClusterId());
-        if (iLoad)
-          instance.load();
+        if (iLoad) {
+            instance.load();
+        }
         return instance;
       }
     }), database);
@@ -186,46 +193,50 @@ public class OMetadataDefault implements OMetadataInternal {
         new Callable<OIndexManager>() {
           public OIndexManager call() {
             OIndexManager instance;
-            if (database.getStorage() instanceof OStorageProxy)
-              instance = new OIndexManagerRemote(database);
-            else
-              instance = new OIndexManagerShared(database);
+            if (database.getStorage() instanceof OStorageProxy) {
+                instance = new OIndexManagerRemote(database);
+            } else {
+                instance = new OIndexManagerShared(database);
+            }
 
-            if (iLoad)
-              try {
-                instance.load();
-              } catch (Exception e) {
-                OLogManager.instance().error(this, "[OMetadata] Error on loading index manager, reset index configuration", e);
-                instance.create();
-              }
+            if (iLoad) {
+                try {
+                    instance.load();
+                } catch (Exception e) {
+                    OLogManager.instance().error(this, "[OMetadata] Error on loading index manager, reset index configuration", e);
+                    instance.create();
+                }
+            }
 
             return instance;
           }
         }), database);
 
     final Boolean enableSecurity = (Boolean) database.getProperty(ODatabase.OPTIONS.SECURITY.toString());
-    if (enableSecurity != null && !enableSecurity)
-      // INSTALL NO SECURITY IMPL
-      security = new OSecurityNull();
-    else
-      security = new OSecurityProxy(database.getStorage().getResource(OSecurity.class.getSimpleName(),
-          new Callable<OSecurityShared>() {
-            public OSecurityShared call() {
-              final OSecurityShared instance = new OSecurityShared();
-              if (iLoad) {
-                security = instance;
-                instance.load();
-              }
-              return instance;
-            }
-          }), database);
+    if (enableSecurity != null && !enableSecurity) {
+        // INSTALL NO SECURITY IMPL
+        security = new OSecurityNull();
+    } else {
+        security = new OSecurityProxy(database.getStorage().getResource(OSecurity.class.getSimpleName(),
+                new Callable<OSecurityShared>() {
+                    public OSecurityShared call() {
+                        final OSecurityShared instance = new OSecurityShared();
+                        if (iLoad) {
+                            security = instance;
+                            instance.load();
+                        }
+                        return instance;
+                    }
+                }), database);
+    }
 
     functionLibrary = new OFunctionLibraryProxy(database.getStorage().getResource(OFunctionLibrary.class.getSimpleName(),
         new Callable<OFunctionLibrary>() {
           public OFunctionLibrary call() {
             final OFunctionLibraryImpl instance = new OFunctionLibraryImpl();
-            if (iLoad)
-              instance.load();
+            if (iLoad) {
+                instance.load();
+            }
             return instance;
           }
         }), database);
@@ -233,8 +244,9 @@ public class OMetadataDefault implements OMetadataInternal {
         new Callable<OSchedulerListener>() {
           public OSchedulerListener call() {
             final OSchedulerListenerImpl instance = new OSchedulerListenerImpl();
-            if (iLoad)
-              instance.load();
+            if (iLoad) {
+                instance.load();
+            }
             return instance;
           }
         }), database);
@@ -244,24 +256,30 @@ public class OMetadataDefault implements OMetadataInternal {
    * Reloads the internal objects.
    */
   public void reload() {
-    if (schema != null)
-      schema.reload();
-    if (indexManager != null)
-      indexManager.reload();
-    if (security != null)
-      security.load();
-    if (functionLibrary != null)
-      functionLibrary.load();
+    if (schema != null) {
+        schema.reload();
+    }
+    if (indexManager != null) {
+        indexManager.reload();
+    }
+    if (security != null) {
+        security.load();
+    }
+    if (functionLibrary != null) {
+        functionLibrary.load();
+    }
   }
 
   /**
    * Closes internal objects
    */
   public void close() {
-    if (schema != null)
-      schema.close();
-    if (security != null)
-      security.close(false);
+    if (schema != null) {
+        schema.close();
+    }
+    if (security != null) {
+        security.close(false);
+    }
   }
 
   protected ODatabaseDocumentInternal getDatabase() {

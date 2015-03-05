@@ -57,10 +57,11 @@ public class ORidBagUpdateSerializationOperation implements ORecordSerialization
         Integer storedCounter = tree.get(entry.getKey());
 
         storedCounter = entry.getValue().applyTo(storedCounter);
-        if (storedCounter <= 0)
-          tree.remove(entry.getKey());
-        else
-          tree.put(entry.getKey(), storedCounter);
+        if (storedCounter <= 0) {
+            tree.remove(entry.getKey());
+        } else {
+            tree.put(entry.getKey(), storedCounter);
+        }
       }
     } finally {
       releaseTree();

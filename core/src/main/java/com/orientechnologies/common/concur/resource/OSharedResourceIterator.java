@@ -71,8 +71,9 @@ public class OSharedResourceIterator<T> implements Iterator<T>, OResettable {
 
   @Override
   public void reset() {
-    if( !( iterator instanceof OResettable) )
-      return;
+    if( !( iterator instanceof OResettable) ) {
+        return;
+    }
     
     resource.acquireExclusiveLock();
     try {

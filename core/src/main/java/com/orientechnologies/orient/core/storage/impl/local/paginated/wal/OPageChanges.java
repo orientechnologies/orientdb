@@ -45,8 +45,9 @@ public class OPageChanges {
   public void applyChanges(ODirectMemoryPointer pointer) {
     for (ChangeUnit changeUnit : changeUnits) {
       // some components work in rollback only mode, so we do not have new values.
-      if (changeUnit.newValues != null)
-        pointer.set(changeUnit.pageOffset + ODurablePage.PAGE_PADDING, changeUnit.newValues, 0, changeUnit.newValues.length);
+      if (changeUnit.newValues != null) {
+          pointer.set(changeUnit.pageOffset + ODurablePage.PAGE_PADDING, changeUnit.newValues, 0, changeUnit.newValues.length);
+      }
     }
   }
 
@@ -79,8 +80,9 @@ public class OPageChanges {
 
         System.arraycopy(changeUnit.newValues, 0, content, offset, changeUnit.newValues.length);
         offset += changeUnit.newValues.length;
-      } else
-        offset++;
+      } else {
+          offset++;
+      }
 
       System.arraycopy(changeUnit.oldValues, 0, content, offset, changeUnit.oldValues.length);
       offset += changeUnit.oldValues.length;
@@ -109,8 +111,9 @@ public class OPageChanges {
         newValues = new byte[dataLength];
         System.arraycopy(content, offset, newValues, 0, dataLength);
         offset += dataLength;
-      } else
-        newValues = null;
+      } else {
+          newValues = null;
+      }
 
       byte[] oldValues = new byte[dataLength];
       System.arraycopy(content, offset, oldValues, 0, dataLength);

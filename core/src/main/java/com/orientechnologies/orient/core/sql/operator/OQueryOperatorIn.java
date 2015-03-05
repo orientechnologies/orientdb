@@ -67,18 +67,20 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
 
     final OIndexInternal<?> internalIndex = index.getInternal();
     OIndexCursor cursor;
-    if (!internalIndex.canBeUsedInEqualityOperators())
-      return null;
+    if (!internalIndex.canBeUsedInEqualityOperators()) {
+        return null;
+    }
 
     if (indexDefinition.getParamCount() == 1) {
       final Object inKeyValue = keyParams.get(0);
       final List<Object> inParams;
-      if (inKeyValue instanceof List<?>)
-        inParams = (List<Object>) inKeyValue;
-      else if (inKeyValue instanceof OSQLFilterItem)
-        inParams = (List<Object>) ((OSQLFilterItem) inKeyValue).getValue(null, null, iContext);
-      else
-        throw new IllegalArgumentException("Key '" + inKeyValue + "' is not valid");
+      if (inKeyValue instanceof List<?>) {
+          inParams = (List<Object>) inKeyValue;
+      } else if (inKeyValue instanceof OSQLFilterItem) {
+          inParams = (List<Object>) ((OSQLFilterItem) inKeyValue).getValue(null, null, iContext);
+      } else {
+          throw new IllegalArgumentException("Key '" + inKeyValue + "' is not valid");
+      }
 
       final List<Object> inKeys = new ArrayList<Object>();
 
@@ -93,8 +95,9 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
         inKeys.add(key);
 
       }
-      if (containsNotCompatibleKey)
-        return null;
+      if (containsNotCompatibleKey) {
+          return null;
+      }
 
       cursor = index.iterateEntries(inKeys, ascSortOrder);
     } else {
@@ -105,12 +108,13 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
       final Object inKeyValue = keyParams.get(keyParams.size() - 1);
 
       final List<Object> inParams;
-      if (inKeyValue instanceof List<?>)
-        inParams = (List<Object>) inKeyValue;
-      else if (inKeyValue instanceof OSQLFilterItem)
-        inParams = (List<Object>) ((OSQLFilterItem) inKeyValue).getValue(null, null, iContext);
-      else
-        throw new IllegalArgumentException("Key '" + inKeyValue + "' is not valid");
+      if (inKeyValue instanceof List<?>) {
+          inParams = (List<Object>) inKeyValue;
+      } else if (inKeyValue instanceof OSQLFilterItem) {
+          inParams = (List<Object>) ((OSQLFilterItem) inKeyValue).getValue(null, null, iContext);
+      } else {
+          throw new IllegalArgumentException("Key '" + inKeyValue + "' is not valid");
+      }
 
       final List<Object> inKeys = new ArrayList<Object>();
 
@@ -134,8 +138,9 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
         return null;
       }
 
-      if (inKeys == null)
-        return null;
+      if (inKeys == null) {
+          return null;
+      }
 
       if (indexDefinition.getParamCount() == keyParams.size()) {
         final Object indexResult;
@@ -148,8 +153,9 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
         } else {
           cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), inKeys);
         }
-      } else
-        return null;
+      } else {
+          return null;
+      }
     }
 
     updateProfiler(iContext, internalIndex, keyParams, indexDefinition);
@@ -161,19 +167,22 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
     final Iterable<?> ridCollection;
     final int ridSize;
     if (iRight instanceof OSQLFilterItemField && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iRight).getRoot())) {
-      if (iLeft instanceof OSQLFilterItem)
-        iLeft = ((OSQLFilterItem) iLeft).getValue(null, null, null);
+      if (iLeft instanceof OSQLFilterItem) {
+          iLeft = ((OSQLFilterItem) iLeft).getValue(null, null, null);
+      }
 
       ridCollection = OMultiValue.getMultiValueIterable(iLeft);
       ridSize = OMultiValue.getSize(iLeft);
     } else if (iLeft instanceof OSQLFilterItemField
         && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iLeft).getRoot())) {
-      if (iRight instanceof OSQLFilterItem)
-        iRight = ((OSQLFilterItem) iRight).getValue(null, null, null);
+      if (iRight instanceof OSQLFilterItem) {
+          iRight = ((OSQLFilterItem) iRight).getValue(null, null, null);
+      }
       ridCollection = OMultiValue.getMultiValueIterable(iRight);
       ridSize = OMultiValue.getSize(iRight);
-    } else
-      return null;
+    } else {
+        return null;
+    }
 
     final List<ORID> rids = addRangeResults(ridCollection, ridSize);
 
@@ -185,20 +194,23 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
     final Iterable<?> ridCollection;
     final int ridSize;
     if (iRight instanceof OSQLFilterItemField && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iRight).getRoot())) {
-      if (iLeft instanceof OSQLFilterItem)
-        iLeft = ((OSQLFilterItem) iLeft).getValue(null, null, null);
+      if (iLeft instanceof OSQLFilterItem) {
+          iLeft = ((OSQLFilterItem) iLeft).getValue(null, null, null);
+      }
 
       ridCollection = OMultiValue.getMultiValueIterable(iLeft);
       ridSize = OMultiValue.getSize(iLeft);
     } else if (iLeft instanceof OSQLFilterItemField
         && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iLeft).getRoot())) {
-      if (iRight instanceof OSQLFilterItem)
-        iRight = ((OSQLFilterItem) iRight).getValue(null, null, null);
+      if (iRight instanceof OSQLFilterItem) {
+          iRight = ((OSQLFilterItem) iRight).getValue(null, null, null);
+      }
 
       ridCollection = OMultiValue.getMultiValueIterable(iRight);
       ridSize = OMultiValue.getSize(iRight);
-    } else
-      return null;
+    } else {
+        return null;
+    }
 
     final List<ORID> rids = addRangeResults(ridCollection, ridSize);
 
@@ -226,34 +238,40 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
         return found;
       } else {
         // AGAINST SINGLE ITEM
-        if (iLeft instanceof Set<?>)
-          return ((Set)iLeft).contains(iRight);
+        if (iLeft instanceof Set<?>) {
+            return ((Set)iLeft).contains(iRight);
+        }
 
         for (final Object o : OMultiValue.getMultiValueIterable(iLeft)) {
-          if (OQueryOperatorEquals.equals(iRight, o))
-            return true;
+          if (OQueryOperatorEquals.equals(iRight, o)) {
+              return true;
+          }
         }
       }
     } else if (OMultiValue.isMultiValue(iRight)) {
 
-      if (iRight instanceof Set<?>)
-        return ((Set)iRight).contains(iLeft);
+      if (iRight instanceof Set<?>) {
+          return ((Set)iRight).contains(iLeft);
+      }
 
       for (final Object o : OMultiValue.getMultiValueIterable(iRight)) {
-        if (OQueryOperatorEquals.equals(iLeft, o))
-          return true;
+        if (OQueryOperatorEquals.equals(iLeft, o)) {
+            return true;
+        }
       }
     } else if (iLeft.getClass().isArray()) {
 
       for (final Object o : (Object[]) iLeft) {
-        if (OQueryOperatorEquals.equals(iRight, o))
-          return true;
+        if (OQueryOperatorEquals.equals(iRight, o)) {
+            return true;
+        }
       }
     } else if (iRight.getClass().isArray()) {
 
       for (final Object o : (Object[]) iRight) {
-        if (OQueryOperatorEquals.equals(iLeft, o))
-          return true;
+        if (OQueryOperatorEquals.equals(iLeft, o)) {
+            return true;
+        }
       }
     }
 
@@ -261,20 +279,23 @@ public class OQueryOperatorIn extends OQueryOperatorEqualityNotNulls {
   }
 
   protected List<ORID> addRangeResults(final Iterable<?> ridCollection, final int ridSize) {
-    if (ridCollection == null)
-      return null;
+    if (ridCollection == null) {
+        return null;
+    }
 
     List<ORID> rids = null;
     for (Object rid : ridCollection) {
-      if (rid instanceof OSQLFilterItemParameter)
-        rid = ((OSQLFilterItemParameter) rid).getValue(null, null, null);
+      if (rid instanceof OSQLFilterItemParameter) {
+          rid = ((OSQLFilterItemParameter) rid).getValue(null, null, null);
+      }
 
       if (rid instanceof OIdentifiable) {
         final ORID r = ((OIdentifiable) rid).getIdentity();
         if (r.isPersistent()) {
-          if (rids == null)
-            // LAZY CREATE IT
-            rids = new ArrayList<ORID>(ridSize);
+          if (rids == null) {
+              // LAZY CREATE IT
+              rids = new ArrayList<ORID>(ridSize);
+          }
           rids.add(r);
         }
       }

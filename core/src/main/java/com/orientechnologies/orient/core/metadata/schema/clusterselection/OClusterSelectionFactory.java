@@ -45,8 +45,9 @@ public class OClusterSelectionFactory extends OConfigurableStatefulFactory<Strin
         if(method != null) {
           String key = (String)method.invoke(clz.newInstance());
           register(key, clz);
-        } else
-          OLogManager.instance().error(this, "getName() funciton missing");
+        } else {
+            OLogManager.instance().error(this, "getName() funciton missing");
+        }
       }catch(Exception ex) {
           OLogManager.instance().error(this, "failed to register class - " + clz.getName());
       }

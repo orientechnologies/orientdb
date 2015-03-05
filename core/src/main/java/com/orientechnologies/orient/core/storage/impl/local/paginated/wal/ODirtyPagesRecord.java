@@ -116,15 +116,18 @@ public class ODirtyPagesRecord extends OAbstractWALRecord {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
 
     ODirtyPagesRecord that = (ODirtyPagesRecord) o;
 
-    if (!dirtyPages.equals(that.dirtyPages))
-      return false;
+    if (!dirtyPages.equals(that.dirtyPages)) {
+        return false;
+    }
 
     return true;
   }

@@ -84,8 +84,9 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
   @Override
   public void openFile(long fileId) throws IOException {
     final MemoryFile memoryFile = files.get(fileId);
-    if (memoryFile == null)
-      throw new OStorageException("File with id " + fileId + " does not exist");
+    if (memoryFile == null) {
+        throw new OStorageException("File with id " + fileId + " does not exist");
+    }
   }
 
   @Override
@@ -131,8 +132,9 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
   private MemoryFile getFile(long fileId) {
     final MemoryFile memoryFile = files.get(fileId);
 
-    if (memoryFile == null)
-      throw new OStorageException("File with id " + fileId + " does not exist");
+    if (memoryFile == null) {
+        throw new OStorageException("File with id " + fileId + " does not exist");
+    }
 
     return memoryFile;
   }
@@ -167,13 +169,15 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
     metadataLock.lock();
     try {
       final String fileName = fileIdNameMap.remove(fileId);
-      if (fileName == null)
-        return;
+      if (fileName == null) {
+          return;
+      }
 
       fileNameIdMap.remove(fileName);
       MemoryFile file = files.remove(fileId);
-      if (file != null)
-        file.clear();
+      if (file != null) {
+          file.clear();
+      }
     } finally {
       metadataLock.unlock();
     }
@@ -184,8 +188,9 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
     metadataLock.lock();
     try {
       String fileName = fileIdNameMap.get(fileId);
-      if (fileName == null)
-        return;
+      if (fileName == null) {
+          return;
+      }
 
       fileNameIdMap.remove(fileName);
 
@@ -255,8 +260,9 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
     metadataLock.lock();
     try {
       final Long fileId = fileNameIdMap.get(name);
-      if (fileId == null)
-        return false;
+      if (fileId == null) {
+          return false;
+      }
 
       final MemoryFile memoryFile = files.get(fileId);
       return memoryFile != null;
@@ -311,8 +317,9 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
       clearLock.readLock().lock();
       try {
         OCacheEntry cacheEntry = content.get(index);
-        if (cacheEntry != null)
-          return cacheEntry;
+        if (cacheEntry != null) {
+            return cacheEntry;
+        }
 
         ODirectMemoryPointer directMemoryPointer = new ODirectMemoryPointer(new byte[pageSize + 2 * ODurablePage.PAGE_PADDING]);
         OCachePointer cachePointer = new OCachePointer(directMemoryPointer, new OLogSequenceNumber(-1, -1));
@@ -340,9 +347,9 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
 
         long index = -1;
         do {
-          if (content.isEmpty())
-            index = 0;
-          else {
+          if (content.isEmpty()) {
+              index = 0;
+          } else {
             long lastIndex = content.lastKey();
             index = lastIndex + 1;
           }
@@ -371,8 +378,9 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
     private long size() {
       clearLock.readLock().lock();
       try {
-        if (content.isEmpty())
-          return 0;
+        if (content.isEmpty()) {
+            return 0;
+        }
 
         try {
           return content.lastKey() + 1;
@@ -406,8 +414,9 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
         clearLock.writeLock().unlock();
       }
 
-      if (thereAreNotReleased)
-        throw new IllegalStateException("Some cache entries were not released. Storage may be in invalid state.");
+      if (thereAreNotReleased) {
+          throw new IllegalStateException("Some cache entries were not released. Storage may be in invalid state.");
+      }
     }
   }
 

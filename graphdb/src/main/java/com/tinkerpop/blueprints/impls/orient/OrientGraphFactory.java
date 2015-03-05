@@ -45,8 +45,9 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    * Closes all pooled databases and clear the pool.
    */
   public void close() {
-		if (pool != null)
-			pool.close();
+		if (pool != null) {
+                    pool.close();
+                }
 
     pool = null;
   }
@@ -124,12 +125,14 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
   public ODatabaseDocumentTx getDatabase(final boolean iCreate, final boolean iOpen) {
     final ODatabaseDocumentTx db = new ODatabaseDocumentTx(url);
     if (!db.getURL().startsWith("remote:") && !db.exists()) {
-      if (iCreate)
-        db.create();
-      else if (iOpen)
-        throw new ODatabaseException("Database '" + url + "' not found");
-    } else if (iOpen)
-      db.open(user, password);
+      if (iCreate) {
+          db.create();
+      } else if (iOpen) {
+          throw new ODatabaseException("Database '" + url + "' not found");
+      }
+    } else if (iOpen) {
+        db.open(user, password);
+    }
 
     return db;
   }
@@ -166,8 +169,9 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    * Returns the number of available instances in the pool.
    */
   public int getAvailableInstancesInPool() {
-    if (pool != null)
-      return pool.getAvailableConnections();
+    if (pool != null) {
+        return pool.getAvailableConnections();
+    }
     return 0;
   }
 
@@ -175,8 +179,9 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
    * Returns the total number of instances created in the pool.
    */
   public int getCreatedInstancesInPool() {
-    if (pool != null)
-      return pool.getCreatedInstances();
+    if (pool != null) {
+        return pool.getCreatedInstances();
+    }
 
     return 0;
   }
@@ -192,20 +197,23 @@ public class OrientGraphFactory extends OrientConfigurableGraph {
       final ODatabaseDocumentTx db = g.getRawGraph();
       boolean txActive = db.getTransaction().isActive();
 
-      if (txActive)
-        // COMMIT TX BEFORE ANY SCHEMA CHANGES
-        db.commit();
+      if (txActive) {
+          // COMMIT TX BEFORE ANY SCHEMA CHANGES
+          db.commit();
+      }
 
       g.checkForGraphSchema(db);
 
-      if (txActive)
-        // REOPEN IT AGAIN
-        db.begin();
+      if (txActive) {
+          // REOPEN IT AGAIN
+          db.begin();
+      }
 
     }
 
-    if (intent != null)
-      g.declareIntent(intent.copy());
+    if (intent != null) {
+        g.declareIntent(intent.copy());
+    }
   }
 
   @Override

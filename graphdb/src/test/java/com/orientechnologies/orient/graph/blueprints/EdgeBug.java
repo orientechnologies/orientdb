@@ -84,9 +84,9 @@ public class EdgeBug {
       System.out.println("GOT VERTEX: " + v);
     }
     Iterable<Vertex> rcs = ((OrientGraphQuery) db.query()).labels("rawCategory").vertices();
-    if (!rcs.iterator().hasNext())
-      System.out.println("??? Where are the rawCategory vertices?");
-    else {
+    if (!rcs.iterator().hasNext()) {
+        System.out.println("??? Where are the rawCategory vertices?");
+    } else {
       for (Vertex rc : rcs) {
         System.out.println("GOT RC: " + rc);
       }

@@ -65,28 +65,32 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
 
       Object source = iParams[0];
       if (OMultiValue.isMultiValue(source)) {
-        if (OMultiValue.getSize(source) > 1)
-          throw new IllegalArgumentException("Only one sourceVertex is allowed");
+        if (OMultiValue.getSize(source) > 1) {
+            throw new IllegalArgumentException("Only one sourceVertex is allowed");
+        }
         source = OMultiValue.getFirstValue(source);
       }
       paramSourceVertex = graph.getVertex(OSQLHelper.getValue(source, record, iContext));
 
       Object dest = iParams[1];
       if (OMultiValue.isMultiValue(dest)) {
-        if (OMultiValue.getSize(dest) > 1)
-          throw new IllegalArgumentException("Only one destinationVertex is allowed");
+        if (OMultiValue.getSize(dest) > 1) {
+            throw new IllegalArgumentException("Only one destinationVertex is allowed");
+        }
         dest = OMultiValue.getFirstValue(dest);
       }
       paramDestinationVertex = graph.getVertex(OSQLHelper.getValue(dest, record, iContext));
 
       paramWeightFieldName = OStringSerializerHelper.getStringContent(iParams[2]);
-      if (iParams.length > 3)
-        paramDirection = Direction.valueOf(iParams[3].toString().toUpperCase());
+      if (iParams.length > 3) {
+          paramDirection = Direction.valueOf(iParams[3].toString().toUpperCase());
+      }
 
       return super.execute(iContext);
     } finally {
-      if (shutdownFlag.getValue())
-        graph.shutdown(false);
+      if (shutdownFlag.getValue()) {
+          graph.shutdown(false);
+      }
     }
   }
 
@@ -100,11 +104,13 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
       final Edge e = edges.next();
       if (e != null) {
         final Object fieldValue = e.getProperty(paramWeightFieldName);
-        if (fieldValue != null)
-          if (fieldValue instanceof Float)
-            return (Float) fieldValue;
-          else if (fieldValue instanceof Number)
-            return ((Number) fieldValue).floatValue();
+        if (fieldValue != null) {
+            if (fieldValue instanceof Float) {
+                return (Float) fieldValue;
+            } else if (fieldValue instanceof Number) {
+                return ((Number) fieldValue).floatValue();
+            }
+        }
       }
     }
     return MIN;

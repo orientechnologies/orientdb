@@ -36,8 +36,9 @@ public class IndexAgainstEdges {
   public void indexes() {
     OrientGraph g = new OrientGraph(URL, "admin", "admin");
     try {
-      if (g.getVertexType("Profile") == null)
-        g.createVertexType("Profile");
+      if (g.getVertexType("Profile") == null) {
+          g.createVertexType("Profile");
+      }
       if (g.getEdgeType("Friend") == null) {
         final OrientEdgeType f = g.createEdgeType("Friend");
         f.createProperty("in", OType.LINK);

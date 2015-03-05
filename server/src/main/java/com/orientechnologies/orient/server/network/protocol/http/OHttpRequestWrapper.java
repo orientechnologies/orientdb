@@ -148,9 +148,10 @@ import java.util.Map;
    public int hasParameters(final String... iNames) {
      int found = 0;
 
-     if (iNames != null && request.parameters != null)
-       for (String name : iNames)
-         found += request.parameters.containsKey(name) ? 1 : 0;
+     if (iNames != null && request.parameters != null) {
+         for (String name : iNames)
+             found += request.parameters.containsKey(name) ? 1 : 0;
+     }
 
      return found;
    }

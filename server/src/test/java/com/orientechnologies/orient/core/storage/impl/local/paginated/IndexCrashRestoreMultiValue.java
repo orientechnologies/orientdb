@@ -51,8 +51,9 @@ public class IndexCrashRestoreMultiValue {
     buildDirectory += "/indexCrashRestoreMultiValue";
 
     buildDir = new File(buildDirectory);
-    if (buildDir.exists())
-      buildDir.delete();
+    if (buildDir.exists()) {
+        buildDir.delete();
+                }
 
     buildDir.mkdir();
 
@@ -163,8 +164,9 @@ public class IndexCrashRestoreMultiValue {
       ODocument doc = identifiable.getRecord();
 
       long ts = doc.<Long> field("ts");
-      if (ts > lastTs)
-        lastTs = ts;
+      if (ts > lastTs) {
+          lastTs = ts;
+      }
 
       entry = cursor.nextEntry();
 
@@ -173,8 +175,9 @@ public class IndexCrashRestoreMultiValue {
 
       Set<OIdentifiable> result = (Set<OIdentifiable>) testIndex.get(key);
       if (result == null || result.size() < 10) {
-        if (minLostTs > ts)
-          minLostTs = ts;
+        if (minLostTs > ts) {
+            minLostTs = ts;
+        }
       } else {
         boolean cnt = true;
         for (int i = 0; i < 10; i++) {
@@ -184,10 +187,12 @@ public class IndexCrashRestoreMultiValue {
           }
         }
         if (!cnt) {
-          if (minLostTs > ts)
-            minLostTs = ts;
-        } else
-          restoredRecords++;
+          if (minLostTs > ts) {
+              minLostTs = ts;
+          }
+        } else {
+            restoredRecords++;
+        }
       }
 
     }

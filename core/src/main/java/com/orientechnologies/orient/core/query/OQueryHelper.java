@@ -24,21 +24,24 @@ public class OQueryHelper {
 	protected static final String	WILDCARD_ANY			= "%";
 
 	public static boolean like(final String currentValue, String iValue) {
-		if (currentValue == null || currentValue.length() == 0 || iValue == null || iValue.length() == 0)
-			// EMPTY/NULL PARAMETERS
-			return false;
+		if (currentValue == null || currentValue.length() == 0 || iValue == null || iValue.length() == 0) {
+                    // EMPTY/NULL PARAMETERS
+                    return false;
+                }
 
 		final int anyPos = iValue.indexOf(WILDCARD_ANY);
 		final int charAnyPos = iValue.indexOf(WILDCARD_ANYCHAR);
 
-		if (anyPos == -1 && charAnyPos == -1)
-			// NO WILDCARDS: DO EQUALS
-			return currentValue.equals(iValue);
+		if (anyPos == -1 && charAnyPos == -1) {
+                    // NO WILDCARDS: DO EQUALS
+                    return currentValue.equals(iValue);
+                }
 
 		final String value = currentValue.toString();
-		if (value == null || value.length() == 0)
-			// NOTHING TO MATCH
-			return false;
+		if (value == null || value.length() == 0) {
+                    // NOTHING TO MATCH
+                    return false;
+                }
 
 		if (iValue.startsWith(WILDCARD_ANY) && iValue.endsWith(WILDCARD_ANY)) {
 			// %XXXXX%

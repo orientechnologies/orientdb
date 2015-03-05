@@ -64,12 +64,14 @@ public class OObjectLazyListIterator<TYPE> implements Iterator<TYPE>, Serializab
   }
 
   public void remove() {
-    if (lastRet == -1)
-      throw new IllegalStateException();
+    if (lastRet == -1) {
+        throw new IllegalStateException();
+    }
     try {
       list.remove(lastRet);
-      if (lastRet < cursor)
-        cursor--;
+      if (lastRet < cursor) {
+          cursor--;
+      }
       lastRet = -1;
     } catch (IndexOutOfBoundsException e) {
       throw new ConcurrentModificationException();

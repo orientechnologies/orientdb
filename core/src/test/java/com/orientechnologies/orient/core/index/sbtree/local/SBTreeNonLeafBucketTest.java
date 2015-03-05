@@ -65,8 +65,9 @@ public class SBTreeNonLeafBucketTest {
     for (Long key : keys) {
       if (!treeBucket.addEntry(index,
           new OSBTreeBucket.SBTreeEntry<Long, OIdentifiable>(random.nextInt(Integer.MAX_VALUE), random.nextInt(Integer.MAX_VALUE),
-              key, null), true))
-        break;
+              key, null), true)) {
+          break;
+      }
 
       keyIndexMap.put(key, index);
       index++;
@@ -83,8 +84,9 @@ public class SBTreeNonLeafBucketTest {
     for (int i = 0; i < treeBucket.size(); i++) {
       OSBTreeBucket.SBTreeEntry<Long, OIdentifiable> entry = treeBucket.getEntry(i);
 
-      if (prevRight > 0)
-        Assert.assertEquals(entry.leftChild, prevRight);
+      if (prevRight > 0) {
+          Assert.assertEquals(entry.leftChild, prevRight);
+      }
 
       prevRight = entry.rightChild;
     }
@@ -93,8 +95,9 @@ public class SBTreeNonLeafBucketTest {
     for (int i = treeBucket.size() - 1; i >= 0; i--) {
       OSBTreeBucket.SBTreeEntry<Long, OIdentifiable> entry = treeBucket.getEntry(i);
 
-      if (prevLeft > 0)
-        Assert.assertEquals(entry.rightChild, prevLeft);
+      if (prevLeft > 0) {
+          Assert.assertEquals(entry.rightChild, prevLeft);
+      }
 
       prevLeft = entry.leftChild;
     }
@@ -124,8 +127,9 @@ public class SBTreeNonLeafBucketTest {
 
     int index = 0;
     for (Long key : keys) {
-      if (!treeBucket.addEntry(index, new OSBTreeBucket.SBTreeEntry<Long, OIdentifiable>(index, index + 1, key, null), true))
-        break;
+      if (!treeBucket.addEntry(index, new OSBTreeBucket.SBTreeEntry<Long, OIdentifiable>(index, index + 1, key, null), true)) {
+          break;
+      }
 
       index++;
     }
@@ -164,8 +168,9 @@ public class SBTreeNonLeafBucketTest {
     while (keysIterator.hasNext() && index < originalSize) {
       Long key = keysIterator.next();
 
-      if (!treeBucket.addEntry(index, new OSBTreeBucket.SBTreeEntry<Long, OIdentifiable>(index, index + 1, key, null), true))
-        break;
+      if (!treeBucket.addEntry(index, new OSBTreeBucket.SBTreeEntry<Long, OIdentifiable>(index, index + 1, key, null), true)) {
+          break;
+      }
 
       keyIndexMap.put(key, index);
       index++;

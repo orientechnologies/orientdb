@@ -55,16 +55,18 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
 
     final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
     if (indexChanges != null) {
-      if (indexChanges.cleared)
-        // BEGIN FROM 0
-        tot = 0;
+      if (indexChanges.cleared) {
+          // BEGIN FROM 0
+          tot = 0;
+      }
 
       for (final Entry<Object, OTransactionIndexChangesPerKey> entry : indexChanges.changesPerKey.entrySet()) {
         for (final OTransactionIndexEntry e : entry.getValue().entries) {
           if (e.operation == OPERATION.REMOVE) {
-            if (e.value == null)
-              // KEY REMOVED
-              tot--;
+            if (e.value == null) {
+                // KEY REMOVED
+                tot--;
+            }
           } else if (e.operation == OPERATION.PUT) {
           }
         }
@@ -72,9 +74,10 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
 
       for (final OTransactionIndexEntry e : indexChanges.nullKeyChanges.entries) {
         if (e.operation == OPERATION.REMOVE) {
-          if (e.value == null)
-            // KEY REMOVED
-            tot--;
+          if (e.value == null) {
+              // KEY REMOVED
+              tot--;
+          }
         } else if (e.operation == OPERATION.PUT) {
         }
       }
@@ -87,12 +90,14 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
   public OIndexTxAware<T> put(final Object iKey, final OIdentifiable iValue) {
     final ORID rid = iValue.getIdentity();
 
-    if (!rid.isValid())
-      if (iValue instanceof ORecord)
-        // EARLY SAVE IT
-        ((ORecord) iValue).save();
-      else
-        throw new IllegalArgumentException("Cannot store non persistent RID as index value for key '" + iKey + "'");
+    if (!rid.isValid()) {
+        if (iValue instanceof ORecord) {
+            // EARLY SAVE IT
+            ((ORecord) iValue).save();
+        } else {
+            throw new IllegalArgumentException("Cannot store non persistent RID as index value for key '" + iKey + "'");
+        }
+    }
 
     database.getTransaction().addIndexEntry(delegate, super.getName(), OPERATION.PUT, iKey, iValue);
     return this;
@@ -119,84 +124,97 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
   @Override
   public Object getFirstKey() {
     final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
-    if (indexChanges == null)
-      return delegate.getFirstKey();
+    if (indexChanges == null) {
+        return delegate.getFirstKey();
+    }
 
     Object indexFirstKey;
-    if (indexChanges.cleared)
-      indexFirstKey = null;
-    else
-      indexFirstKey = delegate.getFirstKey();
+    if (indexChanges.cleared) {
+        indexFirstKey = null;
+    } else {
+        indexFirstKey = delegate.getFirstKey();
+    }
 
     Object firstKey = indexChanges.getFirstKey();
     while (true) {
       OTransactionIndexChangesPerKey changesPerKey = indexChanges.getChangesPerKey(firstKey);
 
       for (OTransactionIndexEntry indexEntry : changesPerKey.entries) {
-        if (indexEntry.operation.equals(OPERATION.REMOVE))
-          firstKey = null;
-        else
-          firstKey = changesPerKey.key;
+        if (indexEntry.operation.equals(OPERATION.REMOVE)) {
+            firstKey = null;
+        } else {
+            firstKey = changesPerKey.key;
+        }
       }
 
-      if (changesPerKey.key.equals(indexFirstKey))
-        indexFirstKey = firstKey;
+      if (changesPerKey.key.equals(indexFirstKey)) {
+          indexFirstKey = firstKey;
+      }
 
       if (firstKey != null) {
-        if (indexFirstKey != null && ((Comparable) indexFirstKey).compareTo(firstKey) < 0)
-          return indexFirstKey;
+        if (indexFirstKey != null && ((Comparable) indexFirstKey).compareTo(firstKey) < 0) {
+            return indexFirstKey;
+        }
 
         return firstKey;
       }
 
       firstKey = indexChanges.getHigherKey(changesPerKey.key);
-      if (firstKey == null)
-        return indexFirstKey;
+      if (firstKey == null) {
+          return indexFirstKey;
+      }
     }
   }
 
   @Override
   public Object getLastKey() {
     final OTransactionIndexChanges indexChanges = database.getTransaction().getIndexChanges(delegate.getName());
-    if (indexChanges == null)
-      return delegate.getLastKey();
+    if (indexChanges == null) {
+        return delegate.getLastKey();
+    }
 
     Object indexLastKey;
-    if (indexChanges.cleared)
-      indexLastKey = null;
-    else
-      indexLastKey = delegate.getLastKey();
+    if (indexChanges.cleared) {
+        indexLastKey = null;
+    } else {
+        indexLastKey = delegate.getLastKey();
+    }
 
     Object lastKey = indexChanges.getLastKey();
     while (true) {
       OTransactionIndexChangesPerKey changesPerKey = indexChanges.getChangesPerKey(lastKey);
 
       for (OTransactionIndexEntry indexEntry : changesPerKey.entries) {
-        if (indexEntry.operation.equals(OPERATION.REMOVE))
-          lastKey = null;
-        else
-          lastKey = changesPerKey.key;
+        if (indexEntry.operation.equals(OPERATION.REMOVE)) {
+            lastKey = null;
+        } else {
+            lastKey = changesPerKey.key;
+        }
       }
 
-      if (changesPerKey.key.equals(indexLastKey))
-        indexLastKey = lastKey;
+      if (changesPerKey.key.equals(indexLastKey)) {
+          indexLastKey = lastKey;
+      }
 
       if (lastKey != null) {
-        if (indexLastKey != null && ((Comparable) indexLastKey).compareTo(lastKey) > 0)
-          return indexLastKey;
+        if (indexLastKey != null && ((Comparable) indexLastKey).compareTo(lastKey) > 0) {
+            return indexLastKey;
+        }
 
         return lastKey;
       }
 
       lastKey = indexChanges.getLowerKey(changesPerKey.key);
-      if (lastKey == null)
-        return indexLastKey;
+      if (lastKey == null) {
+          return indexLastKey;
+      }
     }
   }
 
   protected Object enhanceCompositeKey(Object key, OMVRBTree.PartialSearchMode partialSearchMode) {
-    if (!(key instanceof OCompositeKey))
-      return key;
+    if (!(key instanceof OCompositeKey)) {
+        return key;
+    }
 
     final OCompositeKey compositeKey = (OCompositeKey) key;
     final int keySize = getDefinition().getParamCount();
@@ -206,10 +224,11 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
       int itemsToAdd = keySize - fullKey.getKeys().size();
 
       final Comparable<?> keyItem;
-      if (partialSearchMode.equals(OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY))
-        keyItem = ALWAYS_GREATER_KEY;
-      else
-        keyItem = ALWAYS_LESS_KEY;
+      if (partialSearchMode.equals(OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY)) {
+          keyItem = ALWAYS_GREATER_KEY;
+      } else {
+          keyItem = ALWAYS_LESS_KEY;
+      }
 
       for (int i = 0; i < itemsToAdd; i++)
         fullKey.addKey(keyItem);
@@ -222,10 +241,11 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
 
   protected Object enhanceToCompositeKeyBetweenAsc(Object keyTo, boolean toInclusive) {
     OMVRBTree.PartialSearchMode partialSearchModeTo;
-    if (toInclusive)
-      partialSearchModeTo = OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY;
-    else
-      partialSearchModeTo = OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY;
+    if (toInclusive) {
+        partialSearchModeTo = OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY;
+    } else {
+        partialSearchModeTo = OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY;
+    }
 
     keyTo = enhanceCompositeKey(keyTo, partialSearchModeTo);
     return keyTo;
@@ -233,10 +253,11 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
 
   protected Object enhanceFromCompositeKeyBetweenAsc(Object keyFrom, boolean fromInclusive) {
     OMVRBTree.PartialSearchMode partialSearchModeFrom;
-    if (fromInclusive)
-      partialSearchModeFrom = OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY;
-    else
-      partialSearchModeFrom = OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY;
+    if (fromInclusive) {
+        partialSearchModeFrom = OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY;
+    } else {
+        partialSearchModeFrom = OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY;
+    }
 
     keyFrom = enhanceCompositeKey(keyFrom, partialSearchModeFrom);
     return keyFrom;
@@ -244,10 +265,11 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
 
   protected Object enhanceToCompositeKeyBetweenDesc(Object keyTo, boolean toInclusive) {
     OMVRBTree.PartialSearchMode partialSearchModeTo;
-    if (toInclusive)
-      partialSearchModeTo = OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY;
-    else
-      partialSearchModeTo = OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY;
+    if (toInclusive) {
+        partialSearchModeTo = OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY;
+    } else {
+        partialSearchModeTo = OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY;
+    }
 
     keyTo = enhanceCompositeKey(keyTo, partialSearchModeTo);
     return keyTo;
@@ -255,10 +277,11 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
 
   protected Object enhanceFromCompositeKeyBetweenDesc(Object keyFrom, boolean fromInclusive) {
     OMVRBTree.PartialSearchMode partialSearchModeFrom;
-    if (fromInclusive)
-      partialSearchModeFrom = OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY;
-    else
-      partialSearchModeFrom = OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY;
+    if (fromInclusive) {
+        partialSearchModeFrom = OMVRBTree.PartialSearchMode.LOWEST_BOUNDARY;
+    } else {
+        partialSearchModeFrom = OMVRBTree.PartialSearchMode.HIGHEST_BOUNDARY;
+    }
 
     keyFrom = enhanceCompositeKey(keyFrom, partialSearchModeFrom);
     return keyFrom;

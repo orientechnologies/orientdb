@@ -46,19 +46,22 @@ public class OCommandExecutorSQLTransactional extends OCommandExecutorSQLDelegat
     final ODatabaseDocument database = getDatabase();
     boolean txbegun = database.getTransaction() == null || !database.getTransaction().isActive();
 
-    if (txbegun)
-      database.begin();
+    if (txbegun) {
+        database.begin();
+    }
 
     try {
       final Object result = super.execute(iArgs);
 
-      if (txbegun)
-        database.commit();
+      if (txbegun) {
+          database.commit();
+      }
 
       return result;
     } catch (Exception e) {
-      if (txbegun)
-        database.rollback();
+      if (txbegun) {
+          database.rollback();
+      }
       throw new OCommandExecutionException("Transactional command failed", e);
     }
   }

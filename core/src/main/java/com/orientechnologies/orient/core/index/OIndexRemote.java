@@ -127,33 +127,38 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
       final int maxValuesToFetch) {
     final StringBuilder query = new StringBuilder(QUERY_COUNT_RANGE);
 
-    if (iFromInclusive)
-      query.append(QUERY_GET_VALUES_BEETWEN_INCLUSIVE_FROM_CONDITION);
-    else
-      query.append(QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_FROM_CONDITION);
+    if (iFromInclusive) {
+        query.append(QUERY_GET_VALUES_BEETWEN_INCLUSIVE_FROM_CONDITION);
+    } else {
+        query.append(QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_FROM_CONDITION);
+    }
 
     query.append(QUERY_GET_VALUES_AND_OPERATOR);
 
-    if (iToInclusive)
-      query.append(QUERY_GET_VALUES_BEETWEN_INCLUSIVE_TO_CONDITION);
-    else
-      query.append(QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_TO_CONDITION);
+    if (iToInclusive) {
+        query.append(QUERY_GET_VALUES_BEETWEN_INCLUSIVE_TO_CONDITION);
+    } else {
+        query.append(QUERY_GET_VALUES_BEETWEN_EXCLUSIVE_TO_CONDITION);
+    }
 
-    if (maxValuesToFetch > 0)
-      query.append(QUERY_GET_VALUES_LIMIT).append(maxValuesToFetch);
+    if (maxValuesToFetch > 0) {
+        query.append(QUERY_GET_VALUES_LIMIT).append(maxValuesToFetch);
+    }
 
     final OCommandRequest cmd = formatCommand(query.toString());
     return (Long) getDatabase().command(cmd).execute(iRangeFrom, iRangeTo);
   }
 
   public OIndexRemote<T> put(final Object iKey, final OIdentifiable iValue) {
-    if (iValue instanceof ORecord && !iValue.getIdentity().isValid())
-      // SAVE IT BEFORE TO PUT
-      ((ORecord) iValue).save();
+    if (iValue instanceof ORecord && !iValue.getIdentity().isValid()) {
+        // SAVE IT BEFORE TO PUT
+        ((ORecord) iValue).save();
+    }
 
-    if (iValue.getIdentity().isNew())
-      throw new OIndexException(
-          "Cannot insert values in manual indexes against remote protocol during a transaction. Temporary RID cannot be managed at server side");
+    if (iValue.getIdentity().isNew()) {
+        throw new OIndexException(
+                "Cannot insert values in manual indexes against remote protocol during a transaction. Temporary RID cannot be managed at server side");
+    }
 
     final OCommandRequest cmd = formatCommand(QUERY_PUT, name);
     getDatabase().command(cmd).execute(iKey, iValue.getIdentity());
@@ -169,9 +174,10 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
     final int deleted;
     if (iRID != null) {
 
-      if (iRID.getIdentity().isNew())
-        throw new OIndexException(
-            "Cannot remove values in manual indexes against remote protocol during a transaction. Temporary RID cannot be managed at server side");
+      if (iRID.getIdentity().isNew()) {
+          throw new OIndexException(
+                  "Cannot remove values in manual indexes against remote protocol during a transaction. Temporary RID cannot be managed at server side");
+      }
 
       final OCommandRequest cmd = formatCommand(QUERY_REMOVE2, name);
       deleted = (Integer) getDatabase().command(cmd).execute(iKey, iRID);
@@ -255,8 +261,9 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   public OType[] getKeyTypes() {
-    if (indexDefinition != null)
-      return indexDefinition.getTypes();
+    if (indexDefinition != null) {
+        return indexDefinition.getTypes();
+    }
     return null;
   }
 
@@ -279,10 +286,12 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
   @Override
   public boolean equals(final Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
 
     final OIndexRemote<?> that = (OIndexRemote<?>) o;
 
@@ -295,8 +304,9 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
   }
 
   public Collection<ODocument> getEntries(final Collection<?> iKeys, int maxEntriesToFetch) {
-    if (maxEntriesToFetch < 0)
-      return getEntries(iKeys);
+    if (maxEntriesToFetch < 0) {
+        return getEntries(iKeys);
+    }
 
     final StringBuilder params = new StringBuilder(128);
     if (!iKeys.isEmpty()) {
@@ -365,8 +375,9 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
       @Override
       public Map.Entry<Object, OIdentifiable> nextEntry() {
-        if (!documentIterator.hasNext())
-          return null;
+        if (!documentIterator.hasNext()) {
+            return null;
+        }
 
         final ODocument value = documentIterator.next();
 
@@ -401,8 +412,9 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
       @Override
       public Map.Entry<Object, OIdentifiable> nextEntry() {
-        if (!documentIterator.hasNext())
-          return null;
+        if (!documentIterator.hasNext()) {
+            return null;
+        }
 
         final ODocument value = documentIterator.next();
 
@@ -436,8 +448,9 @@ public abstract class OIndexRemote<T> implements OIndex<T> {
 
       @Override
       public Map.Entry<Object, OIdentifiable> next(int prefetchSize) {
-        if (!documentIterator.hasNext())
-          return null;
+        if (!documentIterator.hasNext()) {
+            return null;
+        }
 
         final ODocument value = documentIterator.next();
 

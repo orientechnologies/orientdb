@@ -40,28 +40,29 @@ public class OWALRecordsFactory {
     int contentSize = walRecord.serializedSize() + 1 + OIntegerSerializer.INT_SIZE; // content + record type + CRC32
     byte[] content = new byte[contentSize];
 
-    if (walRecord instanceof OUpdatePageRecord)
-      content[0] = 0;
-    else if (walRecord instanceof OFuzzyCheckpointStartRecord)
-      content[0] = 1;
-    else if (walRecord instanceof OFuzzyCheckpointEndRecord)
-      content[0] = 2;
-    else if (walRecord instanceof OFullCheckpointStartRecord)
-      content[0] = 4;
-    else if (walRecord instanceof OCheckpointEndRecord)
-      content[0] = 5;
-    else if (walRecord instanceof OAtomicUnitStartRecord)
-      content[0] = 8;
-    else if (walRecord instanceof OAtomicUnitEndRecord)
-      content[0] = 9;
-    else if (walRecord instanceof OFileCreatedCreatedWALRecord)
-      content[0] = 10;
-    else if (walRecord instanceof ONonTxOperationPerformedWALRecord)
-      content[0] = 11;
-    else if (typeToIdMap.containsKey(walRecord.getClass())) {
+    if (walRecord instanceof OUpdatePageRecord) {
+        content[0] = 0;
+    } else if (walRecord instanceof OFuzzyCheckpointStartRecord) {
+        content[0] = 1;
+    } else if (walRecord instanceof OFuzzyCheckpointEndRecord) {
+        content[0] = 2;
+    } else if (walRecord instanceof OFullCheckpointStartRecord) {
+        content[0] = 4;
+    } else if (walRecord instanceof OCheckpointEndRecord) {
+        content[0] = 5;
+    } else if (walRecord instanceof OAtomicUnitStartRecord) {
+        content[0] = 8;
+    } else if (walRecord instanceof OAtomicUnitEndRecord) {
+        content[0] = 9;
+    } else if (walRecord instanceof OFileCreatedCreatedWALRecord) {
+        content[0] = 10;
+    } else if (walRecord instanceof ONonTxOperationPerformedWALRecord) {
+        content[0] = 11;
+    } else if (typeToIdMap.containsKey(walRecord.getClass())) {
       content[0] = typeToIdMap.get(walRecord.getClass());
-    } else
-      throw new IllegalArgumentException(walRecord.getClass().getName() + " class can not be serialized.");
+    } else {
+        throw new IllegalArgumentException(walRecord.getClass().getName() + " class can not be serialized.");
+    }
 
     final int offset = walRecord.toStream(content, 1);
     final CRC32 crc32 = new CRC32();
@@ -102,24 +103,26 @@ public class OWALRecordsFactory {
       walRecord = new ONonTxOperationPerformedWALRecord();
       break;
     default:
-      if (idToTypeMap.containsKey(content[0]))
-        try {
-          walRecord = (OWALRecord) idToTypeMap.get(content[0]).newInstance();
-        } catch (InstantiationException e) {
-          throw new IllegalStateException("Can not deserialize passed in record", e);
-        } catch (IllegalAccessException e) {
-          throw new IllegalStateException("Can not deserialize passed in record", e);
-        }
-      else
-        throw new IllegalStateException("Can not deserialize passed in wal record.");
+      if (idToTypeMap.containsKey(content[0])) {
+          try {
+              walRecord = (OWALRecord) idToTypeMap.get(content[0]).newInstance();
+          } catch (InstantiationException e) {
+              throw new IllegalStateException("Can not deserialize passed in record", e);
+          } catch (IllegalAccessException e) {
+              throw new IllegalStateException("Can not deserialize passed in record", e);
+          }
+      } else {
+          throw new IllegalStateException("Can not deserialize passed in wal record.");
+    }
     }
 
     final CRC32 crc32 = new CRC32();
     crc32.update(content, 1, content.length - OIntegerSerializer.INT_SIZE - 1);
 
     final int crc = OIntegerSerializer.INSTANCE.deserializeNative(content, content.length - OIntegerSerializer.INT_SIZE);
-    if (crc != (int) crc32.getValue())
-      throw new OWALPageBrokenException("Record with LSN " + lsn + " is broken");
+    if (crc != (int) crc32.getValue()) {
+        throw new OWALPageBrokenException("Record with LSN " + lsn + " is broken");
+    }
 
     walRecord.fromStream(content, 1);
 

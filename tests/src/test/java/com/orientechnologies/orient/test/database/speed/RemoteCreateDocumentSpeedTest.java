@@ -72,16 +72,18 @@ public class RemoteCreateDocumentSpeedTest extends OrientMonoThreadTest {
 
     database.save(record, OPERATION_MODE.ASYNCHRONOUS_NOANSWER, false, null, null);
 
-    if (data.getCyclesDone() == data.getCycles() - 1)
-      database.commit();
+    if (data.getCyclesDone() == data.getCycles() - 1) {
+        database.commit();
+    }
 
-    if (DELAY > 0)
-      try {
-        Thread.sleep(DELAY);
-      } catch (InterruptedException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
+    if (DELAY > 0) {
+        try {
+            Thread.sleep(DELAY);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
   }
 
   @Override
@@ -91,8 +93,9 @@ public class RemoteCreateDocumentSpeedTest extends OrientMonoThreadTest {
 
     System.out.println(Orient.instance().getProfiler().dump());
 
-    if (database != null)
-      database.close();
+    if (database != null) {
+        database.close();
+    }
     super.deinit();
   }
 }

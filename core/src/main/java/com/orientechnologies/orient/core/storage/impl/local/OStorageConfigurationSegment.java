@@ -54,24 +54,26 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
     super.create();
 
     final OFile f = segment.getFile();
-    if (OGlobalConfiguration.STORAGE_CONFIGURATION_SYNC_ON_UPDATE.getValueAsBoolean())
-      f.synch();
+    if (OGlobalConfiguration.STORAGE_CONFIGURATION_SYNC_ON_UPDATE.getValueAsBoolean()) {
+        f.synch();
+    }
   }
 
   @Override
   public OStorageConfiguration load() throws OSerializationException {
     try {
-      if (segment.getFile().exists())
-        segment.open();
-      else {
+      if (segment.getFile().exists()) {
+          segment.open();
+      } else {
         segment.create(START_SIZE);
 
         // @COMPATIBILITY0.9.25
         // CHECK FOR OLD VERSION OF DATABASE
         final ORawBuffer rawRecord = storage.readRecord(CONFIG_RID, null, false, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
             .getResult();
-        if (rawRecord != null)
-          fromStream(rawRecord.buffer);
+        if (rawRecord != null) {
+            fromStream(rawRecord.buffer);
+          }
 
         update();
         return this;
@@ -90,14 +92,16 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
 
   @Override
   public void lock() throws IOException {
-    if (segment != null)
-      segment.getFile().lock();
+    if (segment != null) {
+        segment.getFile().lock();
+    }
   }
 
   @Override
   public void unlock() throws IOException {
-    if (segment != null)
-      segment.getFile().unlock();
+    if (segment != null) {
+        segment.getFile().unlock();
+    }
   }
 
   @Override
@@ -105,20 +109,23 @@ public class OStorageConfigurationSegment extends OStorageConfiguration {
     try {
       final OFile f = segment.getFile();
 
-      if (!f.isOpen())
-        return;
+      if (!f.isOpen()) {
+          return;
+      }
 
       final byte[] buffer = toStream();
 
       final int len = buffer.length + OBinaryProtocol.SIZE_INT;
 
-      if (len > f.getFilledUpTo())
-        f.allocateSpace(len - f.getFilledUpTo());
+      if (len > f.getFilledUpTo()) {
+          f.allocateSpace(len - f.getFilledUpTo());
+      }
 
       f.writeInt(0, buffer.length);
       f.write(OBinaryProtocol.SIZE_INT, buffer);
-      if (OGlobalConfiguration.STORAGE_CONFIGURATION_SYNC_ON_UPDATE.getValueAsBoolean())
-        f.synch();
+      if (OGlobalConfiguration.STORAGE_CONFIGURATION_SYNC_ON_UPDATE.getValueAsBoolean()) {
+          f.synch();
+      }
 
     } catch (Exception e) {
       throw new OSerializationException("Error on update storage configuration", e);

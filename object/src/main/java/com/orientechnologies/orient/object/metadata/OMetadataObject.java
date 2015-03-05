@@ -74,8 +74,9 @@ public class OMetadataObject implements OMetadataInternal {
 
   @Override
   public OSchemaProxyObject getSchema() {
-    if (schema == null)
-      schema = new OSchemaProxyObject(underlying.getSchema());
+    if (schema == null) {
+        schema = new OSchemaProxyObject(underlying.getSchema());
+    }
     return schema;
   }
 

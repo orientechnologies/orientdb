@@ -48,56 +48,59 @@ public abstract class ODatabasePoolBase<DB extends ODatabaseInternal> extends Th
   }
 
   public ODatabasePoolBase<DB> setup() {
-    if (dbPool == null)
-      setup(OGlobalConfiguration.DB_POOL_MIN.getValueAsInteger(), OGlobalConfiguration.DB_POOL_MAX.getValueAsInteger());
+    if (dbPool == null) {
+        setup(OGlobalConfiguration.DB_POOL_MIN.getValueAsInteger(), OGlobalConfiguration.DB_POOL_MAX.getValueAsInteger());
+    }
 
     return this;
   }
 
   public ODatabasePoolBase<DB> setup(final int iMinSize, final int iMaxSize) {
-    if (dbPool == null)
-      setup(iMinSize, iMaxSize, OGlobalConfiguration.DB_POOL_IDLE_TIMEOUT.getValueAsLong(),
-          OGlobalConfiguration.DB_POOL_IDLE_CHECK_DELAY.getValueAsLong());
+    if (dbPool == null) {
+        setup(iMinSize, iMaxSize, OGlobalConfiguration.DB_POOL_IDLE_TIMEOUT.getValueAsLong(),
+                OGlobalConfiguration.DB_POOL_IDLE_CHECK_DELAY.getValueAsLong());
+    }
 
     return this;
   }
 
   public ODatabasePoolBase<DB> setup(final int iMinSize, final int iMaxSize, final long idleTimeout,
       final long timeBetweenEvictionRunsMillis) {
-    if (dbPool == null)
-      synchronized (this) {
-        if (dbPool == null) {
-          dbPool = new ODatabasePoolAbstract<DB>(this, iMinSize, iMaxSize, idleTimeout, timeBetweenEvictionRunsMillis) {
+    if (dbPool == null) {
+        synchronized (this) {
+            if (dbPool == null) {
+                dbPool = new ODatabasePoolAbstract<DB>(this, iMinSize, iMaxSize, idleTimeout, timeBetweenEvictionRunsMillis) {
+                    public void onShutdown() {
+                        if (owner instanceof ODatabasePoolBase<?>) {
+                            ((ODatabasePoolBase<?>) owner).close();
+                        }
+                    }
 
-            public void onShutdown() {
-              if (owner instanceof ODatabasePoolBase<?>)
-                ((ODatabasePoolBase<?>) owner).close();
+                    public DB createNewResource(final String iDatabaseName, final Object... iAdditionalArgs) {
+                        if (iAdditionalArgs.length < 2) {
+                            throw new OSecurityAccessException("Username and/or password missed");
+                        }
+                        return createResource(owner, iDatabaseName, iAdditionalArgs);
+                    }
+
+                    public boolean reuseResource(final String iKey, final Object[] iAdditionalArgs, final DB iValue) {
+                        if (((ODatabasePooled) iValue).isUnderlyingOpen()) {
+                            ((ODatabasePooled) iValue).reuse(owner, iAdditionalArgs);
+                            if (iValue.getStorage().isClosed()) {
+                                // STORAGE HAS BEEN CLOSED: REOPEN IT
+                                iValue.getStorage().open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1], null);
+                            } else if (!iValue.getUser().checkPassword((String) iAdditionalArgs[1])) {
+                                throw new OSecurityAccessException(iValue.getName(), "User or password not valid for database: '"
+                                        + iValue.getName() + "'");
+                            }
+                            return true;
+                        }
+                        return false;
+                    }
+                };
             }
-
-            public DB createNewResource(final String iDatabaseName, final Object... iAdditionalArgs) {
-              if (iAdditionalArgs.length < 2)
-                throw new OSecurityAccessException("Username and/or password missed");
-
-              return createResource(owner, iDatabaseName, iAdditionalArgs);
-            }
-
-            public boolean reuseResource(final String iKey, final Object[] iAdditionalArgs, final DB iValue) {
-              if (((ODatabasePooled) iValue).isUnderlyingOpen()) {
-                ((ODatabasePooled) iValue).reuse(owner, iAdditionalArgs);
-                if (iValue.getStorage().isClosed())
-                  // STORAGE HAS BEEN CLOSED: REOPEN IT
-                  iValue.getStorage().open((String) iAdditionalArgs[0], (String) iAdditionalArgs[1], null);
-                else if (!iValue.getUser().checkPassword((String) iAdditionalArgs[1]))
-                  throw new OSecurityAccessException(iValue.getName(), "User or password not valid for database: '"
-                      + iValue.getName() + "'");
-
-                return true;
-              }
-              return false;
-            }
-          };
         }
-      }
+    }
     return this;
   }
 
@@ -166,8 +169,9 @@ public abstract class ODatabasePoolBase<DB extends ODatabaseInternal> extends Th
   }
 
   public int getConnectionsInCurrentThread(final String name, final String userName) {
-    if (dbPool == null)
-      return 0;
+    if (dbPool == null) {
+        return 0;
+    }
     return dbPool.getConnectionsInCurrentThread(name, userName);
   }
 
@@ -177,8 +181,9 @@ public abstract class ODatabasePoolBase<DB extends ODatabaseInternal> extends Th
    * @param iDatabase
    */
   public void release(final DB iDatabase) {
-    if (dbPool != null)
-      dbPool.release(iDatabase);
+    if (dbPool != null) {
+        dbPool.release(iDatabase);
+    }
   }
 
   /**

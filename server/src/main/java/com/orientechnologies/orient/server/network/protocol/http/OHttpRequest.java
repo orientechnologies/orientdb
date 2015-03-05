@@ -86,8 +86,9 @@ public class OHttpRequest {
   }
 
   public void addHeader(final String h) {
-    if (headers == null)
-      headers = new HashMap<String, String>();
+    if (headers == null) {
+        headers = new HashMap<String, String>();
+    }
 
     final int pos = h.indexOf(':');
     if (pos > -1) {
@@ -126,8 +127,9 @@ public class OHttpRequest {
   }
 
   public String getRemoteAddress() {
-    if (data.caller != null)
-      return data.caller;
+    if (data.caller != null) {
+        return data.caller;
+    }
     return ((InetSocketAddress) executor.channel.socket.getRemoteSocketAddress()).getAddress().getHostAddress();
   }
 

@@ -38,8 +38,9 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   public OLogSequenceNumber begin() throws IOException {
     syncObject.lock();
     try {
-      if (records.isEmpty())
-        return null;
+      if (records.isEmpty()) {
+          return null;
+      }
 
       return records.get(0).getLsn();
     } finally {
@@ -51,8 +52,9 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   public OLogSequenceNumber end() throws IOException {
     syncObject.lock();
     try {
-      if (records.isEmpty())
-        return null;
+      if (records.isEmpty()) {
+          return null;
+      }
 
       return records.get(records.size() - 1).getLsn();
     } finally {
@@ -83,8 +85,9 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
       logSequenceNumber = new OLogSequenceNumber(0, counter);
       counter++;
 
-      if (record instanceof OAtomicUnitStartRecord)
-        records.clear();
+      if (record instanceof OAtomicUnitStartRecord) {
+          records.clear();
+      }
 
       records.add(record);
       record.setLsn(logSequenceNumber);
@@ -127,12 +130,14 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   public OWALRecord read(OLogSequenceNumber lsn) throws IOException {
     syncObject.lock();
     try {
-      if (records.isEmpty())
-        return null;
+      if (records.isEmpty()) {
+          return null;
+      }
 
       final long index = lsn.getPosition() - records.get(0).getLsn().getPosition();
-      if (index < 0 || index >= records.size())
-        return null;
+      if (index < 0 || index >= records.size()) {
+          return null;
+      }
 
       return records.get((int) index);
     } finally {
@@ -144,12 +149,14 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   public OLogSequenceNumber next(OLogSequenceNumber lsn) throws IOException {
     syncObject.lock();
     try {
-      if (records.isEmpty())
-        return null;
+      if (records.isEmpty()) {
+          return null;
+      }
 
       final long index = lsn.getPosition() - records.get(0).getLsn().getPosition() + 1;
-      if (index < 0 || index >= records.size())
-        return null;
+      if (index < 0 || index >= records.size()) {
+          return null;
+      }
 
       return new OLogSequenceNumber(0, lsn.getPosition() + 1);
     } finally {
@@ -166,15 +173,18 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
   public void cutTill(OLogSequenceNumber lsn) throws IOException {
     syncObject.lock();
     try {
-      if (records.isEmpty())
-        return;
+      if (records.isEmpty()) {
+          return;
+      }
 
       long index = records.get(0).getLsn().getPosition() - lsn.getPosition();
-      if (index < 0)
-        return;
+      if (index < 0) {
+          return;
+      }
 
-      if (index > records.size())
-        index = records.size();
+      if (index > records.size()) {
+          index = records.size();
+      }
 
       for (int i = 0; i < index; i++)
         records.remove(0);

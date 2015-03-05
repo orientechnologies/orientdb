@@ -39,8 +39,9 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
 
   @AfterClass
   public void destroySchema() {
-    if (database.isClosed())
-      database.open("admin", "admin");
+    if (database.isClosed()) {
+        database.open("admin", "admin");
+    }
 
     database.getMetadata().getSchema().dropClass("RidBagIndexTestClass");
     database.close();

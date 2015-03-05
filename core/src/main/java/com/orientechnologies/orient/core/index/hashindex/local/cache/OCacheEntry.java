@@ -87,23 +87,30 @@ public class OCacheEntry {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
 
     OCacheEntry that = (OCacheEntry) o;
 
-    if (fileId != that.fileId)
-      return false;
-    if (isDirty != that.isDirty)
-      return false;
-    if (pageIndex != that.pageIndex)
-      return false;
-    if (usagesCount != that.usagesCount)
-      return false;
-    if (dataPointer != null ? !dataPointer.equals(that.dataPointer) : that.dataPointer != null)
-      return false;
+    if (fileId != that.fileId) {
+        return false;
+    }
+    if (isDirty != that.isDirty) {
+        return false;
+    }
+    if (pageIndex != that.pageIndex) {
+        return false;
+    }
+    if (usagesCount != that.usagesCount) {
+        return false;
+    }
+    if (dataPointer != null ? !dataPointer.equals(that.dataPointer) : that.dataPointer != null) {
+        return false;
+    }
 
     return true;
   }

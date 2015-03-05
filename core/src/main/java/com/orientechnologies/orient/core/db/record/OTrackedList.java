@@ -52,8 +52,9 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   public OTrackedList(final ORecord iRecord, final Collection<? extends T> iOrigin, final Class<?> iGenericClass) {
     this(iRecord);
     genericClass = iGenericClass;
-    if (iOrigin != null && !iOrigin.isEmpty())
-      addAll(iOrigin);
+    if (iOrigin != null && !iOrigin.isEmpty()) {
+        addAll(iOrigin);
+    }
   }
 
   public OTrackedList(final ORecord iSourceRecord) {
@@ -102,8 +103,9 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
     final T oldValue = super.set(index, element);
 
     if (oldValue != null && !oldValue.equals(element)) {
-      if (oldValue instanceof ODocument)
-        ODocumentInternal.removeOwner((ODocument) oldValue, this);
+      if (oldValue instanceof ODocument) {
+          ODocumentInternal.removeOwner((ODocument) oldValue, this);
+      }
 
       addOwnerToEmbeddedDoc(element);
 
@@ -115,15 +117,17 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   }
 
   private void addOwnerToEmbeddedDoc(T e) {
-    if (embeddedCollection && e instanceof ODocument && !((ODocument) e).getIdentity().isValid())
-      ODocumentInternal.addOwner((ODocument) e, this);
+    if (embeddedCollection && e instanceof ODocument && !((ODocument) e).getIdentity().isValid()) {
+        ODocumentInternal.addOwner((ODocument) e, this);
+    }
   }
 
   @Override
   public T remove(int index) {
     final T oldValue = super.remove(index);
-    if (oldValue instanceof ODocument)
-      ODocumentInternal.removeOwner((ODocument) oldValue, this);
+    if (oldValue instanceof ODocument) {
+        ODocumentInternal.removeOwner((ODocument) oldValue, this);
+    }
 
     fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.REMOVE, index, null,
         oldValue));
@@ -152,31 +156,33 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
 	@Override
   public void clear() {
     final List<T> origValues;
-    if (changeListeners.isEmpty())
-      origValues = null;
-    else
-      origValues = new ArrayList<T>(this);
+    if (changeListeners.isEmpty()) {
+        origValues = null;
+    } else {
+        origValues = new ArrayList<T>(this);
+    }
 
     if (origValues == null) {
       for (final T item : this) {
-        if (item instanceof ODocument)
-          ODocumentInternal.removeOwner((ODocument) item, this);
+        if (item instanceof ODocument) {
+            ODocumentInternal.removeOwner((ODocument) item, this);
+        }
       }
     }
 
     super.clear();
-    if (origValues != null)
-      for (int i = origValues.size() - 1; i >= 0; i--) {
-        final T origValue = origValues.get(i);
-
-        if (origValue instanceof ODocument)
-          ODocumentInternal.removeOwner((ODocument) origValue, this);
-
-        fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.REMOVE, i, null,
-            origValue));
-      }
-    else
-      setDirty();
+    if (origValues != null) {
+        for (int i = origValues.size() - 1; i >= 0; i--) {
+            final T origValue = origValues.get(i);
+            if (origValue instanceof ODocument) {
+                ODocumentInternal.removeOwner((ODocument) origValue, this);
+            }
+            fireCollectionChangedEvent(new OMultiValueChangeEvent<Integer, T>(OMultiValueChangeEvent.OChangeType.REMOVE, i, null,
+                    origValue));
+        }
+    } else {
+        setDirty();
+    }
   }
 
   public void reset() {
@@ -186,15 +192,17 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   @SuppressWarnings("unchecked")
   public <RET> RET setDirty() {
     if (status != STATUS.UNMARSHALLING && sourceRecord != null
-        && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord)))
-      sourceRecord.setDirty();
+        && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord))) {
+        sourceRecord.setDirty();
+    }
     return (RET) this;
   }
 
   @Override
   public void setDirtyNoChanged() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null)
-      sourceRecord.setDirtyNoChanged();
+    if (status != STATUS.UNMARSHALLING && sourceRecord != null) {
+        sourceRecord.setDirtyNoChanged();
+    }
   }
 
   public void addChangeListener(final OMultiValueChangeListener<Integer, T> changeListener) {
@@ -232,13 +240,15 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
   }
 
   protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<Integer, T> event) {
-    if (status == STATUS.UNMARSHALLING)
-      return;
+    if (status == STATUS.UNMARSHALLING) {
+        return;
+    }
 
     setDirty();
     for (final OMultiValueChangeListener<Integer, T> changeListener : changeListeners) {
-      if (changeListener != null)
-        changeListener.onAfterRecordChanged(event);
+      if (changeListener != null) {
+          changeListener.onAfterRecordChanged(event);
+      }
     }
   }
 

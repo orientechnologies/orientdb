@@ -69,8 +69,9 @@ public class OPlaceholder implements OIdentifiable, Externalizable {
 
   @Override
   public boolean equals(final Object obj) {
-    if (!(obj instanceof OPlaceholder))
-      return false;
+    if (!(obj instanceof OPlaceholder)) {
+        return false;
+    }
 
     final OPlaceholder other = (OPlaceholder) obj;
 

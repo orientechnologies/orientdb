@@ -114,12 +114,14 @@ public class SBTreeWAL extends SBTreeTest {
     when(actualStorage.getName()).thenReturn("sbtreeWithWALTesActual");
 
     File buildDir = new File(buildDirectory);
-    if (!buildDir.exists())
-      buildDir.mkdirs();
+    if (!buildDir.exists()) {
+        buildDir.mkdirs();
+    }
 
     File actualStorageDirFile = new File(actualStorageDir);
-    if (!actualStorageDirFile.exists())
-      actualStorageDirFile.mkdirs();
+    if (!actualStorageDirFile.exists()) {
+        actualStorageDirFile.mkdirs();
+    }
 
     writeAheadLog = new ODiskWriteAheadLog(6000, -1, 10 * 1024L * OWALPage.PAGE_SIZE, actualStorage);
 
@@ -150,12 +152,14 @@ public class SBTreeWAL extends SBTreeTest {
     when(expectedStorage.getName()).thenReturn("sbtreeWithWALTesExpected");
 
     File buildDir = new File(buildDirectory);
-    if (!buildDir.exists())
-      buildDir.mkdirs();
+    if (!buildDir.exists()) {
+        buildDir.mkdirs();
+    }
 
     File expectedStorageDirFile = new File(expectedStorageDir);
-    if (!expectedStorageDirFile.exists())
-      expectedStorageDirFile.mkdirs();
+    if (!expectedStorageDirFile.exists()) {
+        expectedStorageDirFile.mkdirs();
+    }
 
     expectedDiskCache = new OReadWriteDiskCache(400L * 1024 * 1024 * 1024, 1648L * 1024 * 1024,
         OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024, 1000000, 100, expectedStorage, null, false, false);
@@ -297,16 +301,18 @@ public class SBTreeWAL extends SBTreeTest {
         atomicChangeIsProcessed = false;
 
         for (OWALRecord restoreRecord : atomicUnit) {
-          if (restoreRecord instanceof OAtomicUnitStartRecord || restoreRecord instanceof OAtomicUnitEndRecord)
-            continue;
+          if (restoreRecord instanceof OAtomicUnitStartRecord || restoreRecord instanceof OAtomicUnitEndRecord) {
+              continue;
+          }
 
           final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) restoreRecord;
 
           final long fileId = updatePageRecord.getFileId();
           final long pageIndex = updatePageRecord.getPageIndex();
 
-          if (!expectedDiskCache.isOpen(fileId))
-            expectedDiskCache.openFile(fileId);
+          if (!expectedDiskCache.isOpen(fileId)) {
+              expectedDiskCache.openFile(fileId);
+          }
 
           final OCacheEntry cacheEntry = expectedDiskCache.load(fileId, pageIndex, true);
           cacheEntry.acquireExclusiveLock();

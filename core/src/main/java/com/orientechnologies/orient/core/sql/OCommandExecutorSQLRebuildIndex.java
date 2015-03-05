@@ -48,18 +48,21 @@ public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLAbstract
 
     int oldPos = 0;
     int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_REBUILD))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_REBUILD + " not found. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_REBUILD)) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_REBUILD + " not found. Use " + getSyntax(), parserText, oldPos);
+    }
 
     oldPos = pos;
     pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_INDEX))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_INDEX + " not found. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_INDEX)) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_INDEX + " not found. Use " + getSyntax(), parserText, oldPos);
+    }
 
     oldPos = pos;
     pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Expected index name", parserText, oldPos);
+    if (pos == -1) {
+        throw new OCommandSQLParsingException("Expected index name", parserText, oldPos);
+    }
 
     name = word.toString();
 
@@ -70,27 +73,31 @@ public class OCommandExecutorSQLRebuildIndex extends OCommandExecutorSQLAbstract
    * Execute the REMOVE INDEX.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (name == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    if (name == null) {
+        throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    }
 
     final ODatabaseDocument database = getDatabase();
     if (name.equals("*")) {
       long totalIndexed = 0;
       for (OIndex<?> idx : database.getMetadata().getIndexManager().getIndexes()) {
-        if (idx.isAutomatic())
-          totalIndexed += idx.rebuild();
+        if (idx.isAutomatic()) {
+            totalIndexed += idx.rebuild();
+        }
       }
 
       return totalIndexed;
 
     } else {
       final OIndex<?> idx = database.getMetadata().getIndexManager().getIndex(name);
-      if (idx == null)
-        throw new OCommandExecutionException("Index '" + name + "' not found");
+      if (idx == null) {
+          throw new OCommandExecutionException("Index '" + name + "' not found");
+      }
 
-      if (!idx.isAutomatic())
-        throw new OCommandExecutionException("Cannot rebuild index '" + name
-            + "' because it's manual and there aren't indications of what to index");
+      if (!idx.isAutomatic()) {
+          throw new OCommandExecutionException("Cannot rebuild index '" + name
+                  + "' because it's manual and there aren't indications of what to index");
+      }
 
       return idx.rebuild();
     }

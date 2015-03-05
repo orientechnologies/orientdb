@@ -276,8 +276,9 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
 
   @Override
   public boolean equals(final Object iOther) {
-    if (!(iOther instanceof ODatabase))
-      return false;
+    if (!(iOther instanceof ODatabase)) {
+        return false;
+    }
 
     final ODatabase other = (ODatabase) iOther;
 
@@ -359,7 +360,8 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T> 
   }
 
   protected void checkOpeness() {
-    if (isClosed())
-      throw new ODatabaseException("Database '" + getURL() + "' is closed");
+    if (isClosed()) {
+        throw new ODatabaseException("Database '" + getURL() + "' is closed");
+    }
   }
 }

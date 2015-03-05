@@ -113,12 +113,13 @@ public class OHttpUtils {
       final String[] paramPairs = parameters.split("&");
       for (String p : paramPairs) {
         final String[] parts = p.split("=");
-        if (parts.length == 2)
-          try {
-            params.put(parts[0], URLDecoder.decode(parts[1], "UTF-8"));
-          } catch (UnsupportedEncodingException e) {
-            throw new OException(e);
-          }
+        if (parts.length == 2) {
+            try {
+                params.put(parts[0], URLDecoder.decode(parts[1], "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                throw new OException(e);
+            }
+        }
       }
       return params;
     }
@@ -126,8 +127,9 @@ public class OHttpUtils {
   }
 
   public static String nextChainUrl(final String iCurrentUrl) {
-    if (!iCurrentUrl.contains("/"))
-      return iCurrentUrl;
+    if (!iCurrentUrl.contains("/")) {
+        return iCurrentUrl;
+    }
 
     return iCurrentUrl.startsWith("/") ? iCurrentUrl.substring(iCurrentUrl.indexOf('/', 1)) : iCurrentUrl.substring(iCurrentUrl
         .indexOf("/"));

@@ -75,8 +75,9 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
     final ODocument metadata = rawIndex.getMetadata();
     if (metadata == null) {
       load(rawIndex.getConfiguration());
-    } else
-      load(metadata);
+    } else {
+        load(metadata);
+    }
   }
 
   public String getIndexName() {
@@ -91,8 +92,9 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
     final String keyTemp = key + SEPARATOR + value;
 
     final ODocument doc = element.getRecord();
-    if (!doc.getIdentity().isValid())
-      doc.save();
+    if (!doc.getIdentity().isValid()) {
+        doc.save();
+    }
 
     graph.setCurrentGraphInThreadLocal();
     graph.autoStartTransaction();
@@ -105,8 +107,9 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
     final String keyTemp = key + SEPARATOR + iValue;
     Collection<OIdentifiable> records = (Collection<OIdentifiable>) underlying.get(keyTemp);
 
-    if (records == null || records.isEmpty())
-      return new WrappingCloseableIterable(Collections.emptySet());
+    if (records == null || records.isEmpty()) {
+        return new WrappingCloseableIterable(Collections.emptySet());
+    }
 
     return new OrientElementIterable<T>(graph, records);
   }
@@ -118,8 +121,9 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
   public long count(final String key, final Object value) {
     final String keyTemp = key + SEPARATOR + value;
     final Collection<OIdentifiable> records = (Collection<OIdentifiable>) underlying.get(keyTemp);
-    if (records == null)
-      return 0;
+    if (records == null) {
+        return 0;
+    }
     return records.size();
   }
 
@@ -171,8 +175,9 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
   private void create(final String indexName, final Class<? extends Element> indexClass, OType iKeyType) {
     this.indexClass = indexClass;
 
-    if (iKeyType == null)
-      iKeyType = OType.STRING;
+    if (iKeyType == null) {
+        iKeyType = OType.STRING;
+    }
 
     this.recordKeyValueIndex = new OIndexTxAwareOneValue(graph.getRawGraph(), (OIndex<OIdentifiable>) graph
         .getRawGraph()
@@ -182,12 +187,13 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
             new OSimpleKeyIndexDefinition(OType.LINK, OType.STRING), null, null, null));
 
     final String className;
-    if (Vertex.class.isAssignableFrom(indexClass))
-      className = VERTEX;
-    else if (Edge.class.isAssignableFrom(indexClass))
-      className = EDGE;
-    else
-      className = indexClass.getName();
+    if (Vertex.class.isAssignableFrom(indexClass)) {
+        className = VERTEX;
+    } else if (Edge.class.isAssignableFrom(indexClass)) {
+        className = EDGE;
+    } else {
+        className = indexClass.getName();
+    }
 
     final ODocument metadata = new ODocument();
     metadata.field(CONFIG_CLASSNAME, className);
@@ -208,23 +214,25 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
     final String indexClassName = metadata.field(CONFIG_CLASSNAME);
     final String recordKeyValueMap = metadata.field(CONFIG_RECORD_MAP_NAME);
 
-    if (VERTEX.equals(indexClassName))
-      this.indexClass = Vertex.class;
-    else if (EDGE.equals(indexClassName))
-      this.indexClass = Edge.class;
-    else
-      try {
-        this.indexClass = (Class<T>) Class.forName(indexClassName);
-      } catch (ClassNotFoundException e) {
-        throw new IllegalArgumentException("Index class '" + indexClassName
-            + "' is not registered. Supported ones: Vertex, Edge and custom class that extends them");
-      }
+    if (VERTEX.equals(indexClassName)) {
+        this.indexClass = Vertex.class;
+    } else if (EDGE.equals(indexClassName)) {
+        this.indexClass = Edge.class;
+    } else {
+        try {
+            this.indexClass = (Class<T>) Class.forName(indexClassName);
+        } catch (ClassNotFoundException e) {
+            throw new IllegalArgumentException("Index class '" + indexClassName
+                    + "' is not registered. Supported ones: Vertex, Edge and custom class that extends them");
+        }
+    }
 
-    if (recordKeyValueMap == null)
-      recordKeyValueIndex = buildKeyValueIndex(metadata);
-    else
-      recordKeyValueIndex = new OIndexTxAwareOneValue(graph.getRawGraph(), (OIndex<OIdentifiable>) graph.getRawGraph()
-          .getMetadata().getIndexManager().getIndex(recordKeyValueMap));
+    if (recordKeyValueMap == null) {
+        recordKeyValueIndex = buildKeyValueIndex(metadata);
+    } else {
+        recordKeyValueIndex = new OIndexTxAwareOneValue(graph.getRawGraph(), (OIndex<OIdentifiable>) graph.getRawGraph()
+                .getMetadata().getIndexManager().getIndex(recordKeyValueMap));
+    }
   }
 
   private OIndex<?> buildKeyValueIndex(ODocument metadata) {
@@ -240,8 +248,9 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
 
     for (ODocument entry : entries) {
       final OIdentifiable rid = entry.field("rid");
-      if (rid != null)
-        recordKeyValueIndex.put(new OCompositeKey(rid, entry.field("key")), rid);
+      if (rid != null) {
+          recordKeyValueIndex.put(new OCompositeKey(rid, entry.field("key")), rid);
+      }
     }
 
     metadata.field(CONFIG_RECORD_MAP_NAME, recordKeyValueIndex.getName());

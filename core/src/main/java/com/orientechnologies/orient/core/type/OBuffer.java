@@ -46,15 +46,17 @@ public class OBuffer implements Externalizable {
       for (int pos = 0, bytesReaded = 0; pos < bufferLenght; pos += bytesReaded) {
         bytesReaded = iInput.read(buffer, pos, buffer.length - pos);
       }
-    } else
-      buffer = null;
+    } else {
+        buffer = null;
+    }
   }
 
   public void writeExternal(final ObjectOutput iOutput) throws IOException {
     final int bufferLenght = buffer != null ? buffer.length : 0;
     iOutput.writeInt(bufferLenght);
-    if (bufferLenght > 0)
-      iOutput.write(buffer);
+    if (bufferLenght > 0) {
+        iOutput.write(buffer);
+    }
   }
 
   @Override
@@ -72,8 +74,9 @@ public class OBuffer implements Externalizable {
 
   @Override
   public boolean equals(final Object o) {
-    if (o==null || !(o instanceof OBuffer))
-      return false;
+    if (o==null || !(o instanceof OBuffer)) {
+        return false;
+    }
 
     return OIOUtils.equals(buffer, ((OBuffer) o).buffer);
   }

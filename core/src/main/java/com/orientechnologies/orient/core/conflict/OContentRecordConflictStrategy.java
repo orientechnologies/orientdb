@@ -62,12 +62,13 @@ public class OContentRecordConflictStrategy extends OVersionRecordConflictStrate
       hasSameContent = Arrays.equals(storedRecord.toStream(), iRecordContent);
     }
 
-    if (hasSameContent)
-      // OK
-      iDatabaseVersion.setCounter(Math.max(iDatabaseVersion.getCounter(), iRecordVersion.getCounter()));
-    else
-      // NO DOCUMENT, CANNOT MERGE SO RELY TO THE VERSION CHECK
-      checkVersions(rid, iRecordVersion, iDatabaseVersion);
+    if (hasSameContent) {
+        // OK
+        iDatabaseVersion.setCounter(Math.max(iDatabaseVersion.getCounter(), iRecordVersion.getCounter()));
+    } else {
+        // NO DOCUMENT, CANNOT MERGE SO RELY TO THE VERSION CHECK
+        checkVersions(rid, iRecordVersion, iDatabaseVersion);
+    }
 
     return null;
   }

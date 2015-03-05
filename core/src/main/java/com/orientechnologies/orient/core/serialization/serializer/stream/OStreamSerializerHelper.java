@@ -62,8 +62,9 @@ public class OStreamSerializerHelper {
 		} else {
 			// LONG FORM
 			pos = iBuffer.indexOf(SEPARATOR);
-			if (pos < 0)
-				OLogManager.instance().error(null, "Class signature not found in the buffer: " + iBuffer, OSerializationException.class);
+			if (pos < 0) {
+                            OLogManager.instance().error(null, "Class signature not found in the buffer: " + iBuffer, OSerializationException.class);
+                        }
 			final String className = iBuffer.substring(0, pos);
 			cls = Class.forName(className);
 		}

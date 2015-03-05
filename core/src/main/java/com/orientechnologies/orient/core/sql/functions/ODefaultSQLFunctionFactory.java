@@ -107,12 +107,13 @@ public final class ODefaultSQLFunctionFactory implements OSQLFunctionFactory {
   public OSQLFunction createFunction(final String name) {
     final Object obj = FUNCTIONS.get(name);
 
-    if (obj == null)
-      throw new OCommandExecutionException("Unknown function name :" + name);
+    if (obj == null) {
+        throw new OCommandExecutionException("Unknown function name :" + name);
+    }
 
-    if (obj instanceof OSQLFunction)
-      return (OSQLFunction) obj;
-    else {
+    if (obj instanceof OSQLFunction) {
+        return (OSQLFunction) obj;
+    } else {
       // it's a class
       final Class<?> clazz = (Class<?>) obj;
       try {

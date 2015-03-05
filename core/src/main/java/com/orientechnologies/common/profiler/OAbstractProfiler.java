@@ -68,9 +68,10 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
       for (OStorage s : Orient.instance().getStorages()) {
         if (s instanceof OLocalPaginatedStorage) {
           final ODiskCache dk = ((OLocalPaginatedStorage) s).getDiskCache();
-          if (dk == null)
-            // NOT YET READY
-            continue;
+          if (dk == null) {
+              // NOT YET READY
+              continue;
+          }
 
           final long totalDiskCacheUsedMemory = dk.getUsedMemory() / OFileUtils.MEGABYTE;
           final long maxDiskCacheUsedMemory = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong();
@@ -153,9 +154,10 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
 
   @Override
   public void onStartup() {
-    if (OGlobalConfiguration.PROFILER_ENABLED.getValueAsBoolean())
-      // ACTIVATE RECORDING OF THE PROFILER
-      startRecording();
+    if (OGlobalConfiguration.PROFILER_ENABLED.getValueAsBoolean()) {
+        // ACTIVATE RECORDING OF THE PROFILER
+        startRecording();
+    }
     installMemoryChecker();
   }
 
@@ -180,16 +182,18 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
   }
 
   public boolean startRecording() {
-    if (isRecording())
-      return false;
+    if (isRecording()) {
+        return false;
+    }
 
     recordingFrom = System.currentTimeMillis();
     return true;
   }
 
   public boolean stopRecording() {
-    if (!isRecording())
-      return false;
+    if (!isRecording()) {
+        return false;
+    }
 
     recordingFrom = -1;
     return true;
@@ -296,8 +300,9 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
 
   @Override
   public void unregisterHookValue(final String iName) {
-    if (iName != null)
-      hooks.remove(iName);
+    if (iName != null) {
+        hooks.remove(iName);
+    }
   }
 
   @Override
@@ -332,13 +337,15 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
   }
 
   public String dumpTips() {
-    if (recordingFrom < 0)
-      return "Tips: <no recording>";
+    if (recordingFrom < 0) {
+        return "Tips: <no recording>";
+    }
 
     final StringBuilder buffer = new StringBuilder();
 
-    if (tips.size() == 0)
-      return "";
+    if (tips.size() == 0) {
+        return "";
+    }
 
     buffer.append("TIPS:");
 
@@ -366,8 +373,9 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract implemen
    * Updates the metric metadata.
    */
   protected void updateMetadata(final String iName, final String iDescription, final METRIC_TYPE iType) {
-    if (iDescription != null && dictionary.putIfAbsent(iName, iDescription) == null)
-      types.put(iName, iType);
+    if (iDescription != null && dictionary.putIfAbsent(iName, iDescription) == null) {
+        types.put(iName, iType);
+    }
   }
 
 }

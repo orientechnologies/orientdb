@@ -59,17 +59,18 @@ public class AIXCLibrary implements CLibrary {
     final Pointer srcPointer = new Pointer(src);
     final Pointer destPointer = new Pointer(dest);
 
-    if (memmove != null)
-      memmove.invoke(Pointer.class, new Object[] { destPointer, srcPointer, new NativeLong(len) });
-    else if (bcopy != null)
-      bcopy.invokeVoid(new Object[] { srcPointer, destPointer, new NativeLong(len) });
-    else {
-      if (src > dest)
-        for (long n = 0; n < len; n++)
-          destPointer.setByte(n, srcPointer.getByte(n));
-      else
-        for (long n = len - 1; n >= 0; n--)
-          destPointer.setByte(n, srcPointer.getByte(n));
+    if (memmove != null) {
+        memmove.invoke(Pointer.class, new Object[] { destPointer, srcPointer, new NativeLong(len) });
+    } else if (bcopy != null) {
+        bcopy.invokeVoid(new Object[] { srcPointer, destPointer, new NativeLong(len) });
+    } else {
+      if (src > dest) {
+          for (long n = 0; n < len; n++)
+              destPointer.setByte(n, srcPointer.getByte(n));
+        } else {
+          for (long n = len - 1; n >= 0; n--)
+              destPointer.setByte(n, srcPointer.getByte(n));
+        }
     }
   }
 }

@@ -42,8 +42,9 @@ public class WOWCacheTest {
   public void beforeClass() throws IOException {
     OGlobalConfiguration.FILE_LOCK.setValue(Boolean.FALSE);
     String buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null)
-      buildDirectory = ".";
+    if (buildDirectory == null) {
+        buildDirectory = ".";
+    }
 
     storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage("plocal:" + buildDirectory + "/WOWCacheTest");
 		storageLocal.create(null);
@@ -173,8 +174,9 @@ public class WOWCacheTest {
       long desiredIndex = random.nextInt(2048);
 
       Long pageIndex = pageIndexDataMap.ceilingKey(desiredIndex);
-      if (pageIndex == null)
-        pageIndex = pageIndexDataMap.floorKey(desiredIndex);
+      if (pageIndex == null) {
+          pageIndex = pageIndexDataMap.floorKey(desiredIndex);
+      }
 
       byte[] data = new byte[8];
       random.nextBytes(data);

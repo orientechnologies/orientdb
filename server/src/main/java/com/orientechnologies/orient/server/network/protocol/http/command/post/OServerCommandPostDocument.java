@@ -55,8 +55,9 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
            doc.toJSON(), OHttpUtils.HEADER_ETAG + doc.getVersion());
 
      } finally {
-       if (db != null)
-         db.close();
+       if (db != null) {
+           db.close();
+       }
      }
      return false;
    }

@@ -46,40 +46,44 @@ public class OQueryOperatorMinus extends OQueryOperator {
   @Override
   public Object evaluateRecord(final OIdentifiable iRecord, ODocument iCurrentResult, final OSQLFilterCondition iCondition,
       Object iLeft, Object iRight, OCommandContext iContext) {
-    if (iRight == null)
-      return iLeft;
+    if (iRight == null) {
+        return iLeft;
+    }
 
-    if (iLeft instanceof Date)
-      iLeft = ((Date) iLeft).getTime();
-    if (iRight instanceof Date)
-      iRight = ((Date) iRight).getTime();
+    if (iLeft instanceof Date) {
+        iLeft = ((Date) iLeft).getTime();
+    }
+    if (iRight instanceof Date) {
+        iRight = ((Date) iRight).getTime();
+    }
 
     if (iLeft instanceof Number && iRight instanceof Number) {
       final Number l = (Number) iLeft;
       final Number r = (Number) iRight;
-      if (l instanceof Integer)
-        return l.intValue() - r.intValue();
-      else if (l instanceof Long)
-        return l.longValue() - r.longValue();
-      else if (l instanceof Short)
-        return l.shortValue() - r.shortValue();
-      else if (l instanceof Float)
-        return l.floatValue() - r.floatValue();
-      else if (l instanceof Double)
-        return l.doubleValue() - r.doubleValue();
-      else if (l instanceof BigDecimal) {
-        if (r instanceof BigDecimal)
-          return ((BigDecimal) l).subtract((BigDecimal) r);
-        else if (r instanceof Float)
-          return ((BigDecimal) l).subtract(new BigDecimal(r.floatValue()));
-        else if (r instanceof Double)
-          return ((BigDecimal) l).subtract(new BigDecimal(r.doubleValue()));
-        else if (r instanceof Long)
-          return ((BigDecimal) l).subtract(new BigDecimal(r.longValue()));
-        else if (r instanceof Integer)
-          return ((BigDecimal) l).subtract(new BigDecimal(r.intValue()));
-        else if (r instanceof Short)
-          return ((BigDecimal) l).subtract(new BigDecimal(r.shortValue()));
+      if (l instanceof Integer) {
+          return l.intValue() - r.intValue();
+      } else if (l instanceof Long) {
+          return l.longValue() - r.longValue();
+      } else if (l instanceof Short) {
+          return l.shortValue() - r.shortValue();
+      } else if (l instanceof Float) {
+          return l.floatValue() - r.floatValue();
+      } else if (l instanceof Double) {
+          return l.doubleValue() - r.doubleValue();
+      } else if (l instanceof BigDecimal) {
+        if (r instanceof BigDecimal) {
+            return ((BigDecimal) l).subtract((BigDecimal) r);
+          } else if (r instanceof Float) {
+              return ((BigDecimal) l).subtract(new BigDecimal(r.floatValue()));
+          } else if (r instanceof Double) {
+              return ((BigDecimal) l).subtract(new BigDecimal(r.doubleValue()));
+          } else if (r instanceof Long) {
+              return ((BigDecimal) l).subtract(new BigDecimal(r.longValue()));
+          } else if (r instanceof Integer) {
+              return ((BigDecimal) l).subtract(new BigDecimal(r.intValue()));
+          } else if (r instanceof Short) {
+              return ((BigDecimal) l).subtract(new BigDecimal(r.shortValue()));
+          }
       }
     }
 

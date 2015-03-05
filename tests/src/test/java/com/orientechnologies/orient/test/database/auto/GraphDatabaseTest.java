@@ -139,13 +139,16 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
     database.setAutoStartTx(false);
     database.commit();
     OClass oc = database.getVertexType("vertexA");
-    if (oc == null)
-      oc = database.createVertexType("vertexA");
-    if (!oc.existsProperty("name"))
-      oc.createProperty("name", OType.STRING);
+    if (oc == null) {
+        oc = database.createVertexType("vertexA");
+    }
+    if (!oc.existsProperty("name")) {
+        oc.createProperty("name", OType.STRING);
+    }
 
-    if (oc.getClassIndex("vertexA_name_idx") == null)
-      oc.createIndex("vertexA_name_idx", OClass.INDEX_TYPE.UNIQUE, "name");
+    if (oc.getClassIndex("vertexA_name_idx") == null) {
+        oc.createIndex("vertexA_name_idx", OClass.INDEX_TYPE.UNIQUE, "name");
+    }
 
     database.setAutoStartTx(true);
     // FIRST: create a couple of records

@@ -168,20 +168,22 @@ public class OObjectSerializerHelper {
     try {
       final Object o = getters.get(className + "." + iProperty);
 
-      if (o == null)
-        return null;
-      else if (o instanceof Field)
-        return ((Field) o).getType();
-      else
-        return ((Method) o).getReturnType();
+      if (o == null) {
+          return null;
+      } else if (o instanceof Field) {
+          return ((Field) o).getType();
+      } else {
+          return ((Method) o).getReturnType();
+      }
     } catch (Exception e) {
       throw new OSchemaException("Cannot get the value of the property: " + iProperty, e);
     }
   }
 
   public static Class<?> getFieldType(ODocument iDocument, final OEntityManager iEntityManager) {
-    if (iDocument.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
-      iDocument = (ODocument) iDocument.load();
+    if (iDocument.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+        iDocument = (ODocument) iDocument.load();
+    }
 
     if (iDocument.getClassName() == null) {
       return null;
@@ -199,10 +201,11 @@ public class OObjectSerializerHelper {
     try {
       Object o = getters.get(className + "." + iProperty);
 
-      if (o instanceof Method)
-        return ((Method) o).invoke(iPojo);
-      else if (o instanceof Field)
-        return ((Field) o).get(iPojo);
+      if (o instanceof Method) {
+          return ((Method) o).invoke(iPojo);
+      } else if (o instanceof Field) {
+          return ((Field) o).get(iPojo);
+      }
       return null;
     } catch (Exception e) {
       throw new OSchemaException("Cannot get the value of the property: " + iProperty, e);
@@ -259,8 +262,9 @@ public class OObjectSerializerHelper {
       fieldName = p.getName();
       fieldNames[f++] = fieldName;
 
-      if (fieldName.equals(idFieldName) || fieldName.equals(vFieldName))
-        continue;
+      if (fieldName.equals(idFieldName) || fieldName.equals(vFieldName)) {
+          continue;
+      }
 
       if (iRecord.containsField(fieldName)) {
         // BIND ONLY THE SPECIFIED FIELDS
@@ -278,87 +282,85 @@ public class OObjectSerializerHelper {
 
           final Class<?> genericTypeClass = OReflectionHelper.getGenericMultivalueType(p);
 
-          if (genericTypeClass != null)
-            if (genericTypeClass.isEnum()) {
-              // TRANSFORM THE MULTI-VALUE
-              if (fieldValue instanceof List) {
-                // LIST: TRANSFORM EACH SINGLE ITEM
-                final List<Object> list = (List<Object>) fieldValue;
-                Object v;
-                for (int i = 0; i < list.size(); ++i) {
-                  v = list.get(i);
-                  if (v != null) {
-                    v = Enum.valueOf((Class<Enum>) genericTypeClass, v.toString());
-                    list.set(i, v);
+          if (genericTypeClass != null) {
+              if (genericTypeClass.isEnum()) {
+                  // TRANSFORM THE MULTI-VALUE
+                  if (fieldValue instanceof List) {
+                      // LIST: TRANSFORM EACH SINGLE ITEM
+                      final List<Object> list = (List<Object>) fieldValue;
+                      Object v;
+                      for (int i = 0; i < list.size(); ++i) {
+                          v = list.get(i);
+                          if (v != null) {
+                              v = Enum.valueOf((Class<Enum>) genericTypeClass, v.toString());
+                              list.set(i, v);
+                          }
+                      }
+                      value = list;
+                      type = List.class;
+                  } else if (fieldValue instanceof Set) {
+                      // SET: CREATE A TEMP SET TO WORK WITH ITEMS
+                      final Set<Object> newColl = new HashSet<Object>();
+                      final Set<Object> set = (Set<Object>) fieldValue;
+                      for (Object v : set) {
+                          if (v != null) {
+                              v = Enum.valueOf((Class<Enum>) genericTypeClass, v.toString());
+                              newColl.add(v);
+                          }
+                      }
+                      
+                      value = newColl;
+                      type = Set.class;
+                  } else if (fieldValue instanceof Map) {
+                      // MAP: TRANSFORM EACH SINGLE ITEM
+                      final Map<String, Object> map = (Map<String, Object>) fieldValue;
+                      Object v;
+                      for (Entry<String, ?> entry : map.entrySet()) {
+                          v = entry.getValue();
+                          if (v != null) {
+                              v = Enum.valueOf((Class<Enum>) genericTypeClass, v.toString());
+                              map.put(entry.getKey(), v);
+                          }
+                      }
+                      type = Map.class;
+                      value = map;
                   }
-                }
-                value = list;
-                type = List.class;
-              } else if (fieldValue instanceof Set) {
-                // SET: CREATE A TEMP SET TO WORK WITH ITEMS
-                final Set<Object> newColl = new HashSet<Object>();
-                final Set<Object> set = (Set<Object>) fieldValue;
-                for (Object v : set) {
-                  if (v != null) {
-                    v = Enum.valueOf((Class<Enum>) genericTypeClass, v.toString());
-                    newColl.add(v);
+              } else {
+                  if (fieldValue instanceof List) {
+                      final List<Object> list = (List<Object>) fieldValue;
+                      Object v;
+                      for (int i = 0; i < list.size(); ++i) {
+                          v = list.get(i);
+                          if (v != null) {
+                              list.set(i, unserializeFieldValue(genericTypeClass, v));
+                          }
+                      }
+                      value = list;
+                      type = List.class;
+                  } else if (fieldValue instanceof Set) {
+                      final Set<Object> newColl = new HashSet<Object>();
+                      final Set<Object> set = (Set<Object>) fieldValue;
+                      for (Object v : set) {
+                          if (v != null) {
+                              newColl.add(unserializeFieldValue(genericTypeClass, v));
+                          }
+                      }
+                      value = newColl;
+                      type = Set.class;
+                  } else if (fieldValue instanceof Map) {
+                      final Map<String, Object> map = (Map<String, Object>) fieldValue;
+                      Object v;
+                      for (Entry<String, ?> entry : map.entrySet()) {
+                          v = entry.getValue();
+                          if (v != null) {
+                              map.put(entry.getKey(), unserializeFieldValue(genericTypeClass, v));
+                          }
+                      }
+                      value = map;
+                      type = Map.class;
                   }
-                }
-
-                value = newColl;
-                type = Set.class;
-              } else if (fieldValue instanceof Map) {
-                // MAP: TRANSFORM EACH SINGLE ITEM
-                final Map<String, Object> map = (Map<String, Object>) fieldValue;
-                Object v;
-                for (Entry<String, ?> entry : map.entrySet()) {
-                  v = entry.getValue();
-                  if (v != null) {
-                    v = Enum.valueOf((Class<Enum>) genericTypeClass, v.toString());
-                    map.put(entry.getKey(), v);
-                  }
-                }
-                type = Map.class;
-                value = map;
               }
-
-            } else {
-              // TRANSFORM THE MULTI-VALUE
-              if (fieldValue instanceof List) {
-                // LIST: TRANSFORM EACH SINGLE ITEM
-                final List<Object> list = (List<Object>) fieldValue;
-                Object v;
-                for (int i = 0; i < list.size(); ++i) {
-                  v = list.get(i);
-                  if (v != null)
-                    list.set(i, unserializeFieldValue(genericTypeClass, v));
-                }
-                value = list;
-                type = List.class;
-              } else if (fieldValue instanceof Set) {
-                // SET: CREATE A TEMP SET TO WORK WITH ITEMS
-                final Set<Object> newColl = new HashSet<Object>();
-                final Set<Object> set = (Set<Object>) fieldValue;
-                for (Object v : set)
-                  if (v != null)
-                    newColl.add(unserializeFieldValue(genericTypeClass, v));
-
-                value = newColl;
-                type = Set.class;
-              } else if (fieldValue instanceof Map) {
-                // MAP: TRANSFORM EACH SINGLE ITEM
-                final Map<String, Object> map = (Map<String, Object>) fieldValue;
-                Object v;
-                for (Entry<String, ?> entry : map.entrySet()) {
-                  v = entry.getValue();
-                  if (v != null)
-                    map.put(entry.getKey(), unserializeFieldValue(genericTypeClass, v));
-
-                }
-                value = map;
-                type = Map.class;
-              }
-            }
+          }
 
           if (type == null) {
             type = p.getGenericType();
@@ -385,8 +387,9 @@ public class OObjectSerializerHelper {
   }
 
   public static String setObjectID(final ORID iIdentity, final Object iPojo) {
-    if (iPojo == null)
-      return null;
+    if (iPojo == null) {
+        return null;
+    }
 
     final Class<?> pojoClass = iPojo.getClass();
 
@@ -398,17 +401,18 @@ public class OObjectSerializerHelper {
 
       final String idFieldName = idField.getName();
 
-      if (ORID.class.isAssignableFrom(fieldType))
-        setFieldValue(iPojo, idFieldName, iIdentity);
-      else if (Number.class.isAssignableFrom(fieldType))
-        setFieldValue(iPojo, idFieldName, iIdentity != null ? iIdentity.getClusterPosition() : null);
-      else if (fieldType.equals(String.class))
-        setFieldValue(iPojo, idFieldName, iIdentity != null ? iIdentity.toString() : null);
-      else if (fieldType.equals(Object.class))
-        setFieldValue(iPojo, idFieldName, iIdentity);
-      else
-        OLogManager.instance().warn(OObjectSerializerHelper.class,
-            "@Id field has been declared as %s while the supported are: ORID, Number, String, Object", fieldType);
+      if (ORID.class.isAssignableFrom(fieldType)) {
+          setFieldValue(iPojo, idFieldName, iIdentity);
+      } else if (Number.class.isAssignableFrom(fieldType)) {
+          setFieldValue(iPojo, idFieldName, iIdentity != null ? iIdentity.getClusterPosition() : null);
+      } else if (fieldType.equals(String.class)) {
+          setFieldValue(iPojo, idFieldName, iIdentity != null ? iIdentity.toString() : null);
+      } else if (fieldType.equals(Object.class)) {
+          setFieldValue(iPojo, idFieldName, iIdentity);
+      } else {
+          OLogManager.instance().warn(OObjectSerializerHelper.class,
+                  "@Id field has been declared as %s while the supported are: ORID, Number, String, Object", fieldType);
+      }
       return idFieldName;
     }
     return null;
@@ -428,12 +432,14 @@ public class OObjectSerializerHelper {
         } else if (id instanceof Number) {
           // TREATS AS CLUSTER POSITION
           final OClass cls = iDb.getMetadata().getSchema().getClass(iPojo.getClass());
-          if (cls == null)
-            throw new OConfigurationException("Class " + iPojo.getClass() + " is not managed by current database");
+          if (cls == null) {
+              throw new OConfigurationException("Class " + iPojo.getClass() + " is not managed by current database");
+          }
 
           return new ORecordId(cls.getDefaultClusterId(), ((Number) id).longValue());
-        } else if (id instanceof String)
-          return new ORecordId((String) id);
+        } else if (id instanceof String) {
+            return new ORecordId((String) id);
+        }
       }
     }
     return null;
@@ -455,8 +461,9 @@ public class OObjectSerializerHelper {
   }
 
   public static String setObjectVersion(final ORecordVersion iVersion, final Object iPojo) {
-    if (iPojo == null)
-      return null;
+    if (iPojo == null) {
+        return null;
+    }
 
     final Class<?> pojoClass = iPojo.getClass();
     getClassFields(pojoClass);
@@ -468,20 +475,22 @@ public class OObjectSerializerHelper {
       final String vFieldName = vField.getName();
 
       if (Number.class.isAssignableFrom(fieldType)) {
-        if (iVersion instanceof OSimpleVersion)
-          setFieldValue(iPojo, vFieldName, iVersion.getCounter());
-        else
-          OLogManager
-              .instance()
-              .warn(OObjectSerializerHelper.class,
-                  "@Version field can't be declared as Number in distributed mode. Should be one of following: String, Object, ORecordVersion");
-      } else if (fieldType.equals(String.class))
-        setFieldValue(iPojo, vFieldName, String.valueOf(iVersion));
-      else if (fieldType.equals(Object.class) || ORecordVersion.class.isAssignableFrom(fieldType))
-        setFieldValue(iPojo, vFieldName, iVersion);
-      else
-        OLogManager.instance().warn(OObjectSerializerHelper.class,
-            "@Version field has been declared as %s while the supported are: Number, String, Object", fieldType);
+        if (iVersion instanceof OSimpleVersion) {
+            setFieldValue(iPojo, vFieldName, iVersion.getCounter());
+        } else {
+            OLogManager
+                    .instance()
+                    .warn(OObjectSerializerHelper.class,
+                            "@Version field can't be declared as Number in distributed mode. Should be one of following: String, Object, ORecordVersion");
+        }
+      } else if (fieldType.equals(String.class)) {
+          setFieldValue(iPojo, vFieldName, String.valueOf(iVersion));
+      } else if (fieldType.equals(Object.class) || ORecordVersion.class.isAssignableFrom(fieldType)) {
+          setFieldValue(iPojo, vFieldName, iVersion);
+      } else {
+          OLogManager.instance().warn(OObjectSerializerHelper.class,
+                  "@Version field has been declared as %s while the supported are: Number, String, Object", fieldType);
+      }
       return vFieldName;
     }
     return null;
@@ -494,8 +503,9 @@ public class OObjectSerializerHelper {
       final Object ver = getFieldValue(iPojo, idField.getName());
 
       final ORecordVersion version = convertVersion(ver);
-      if (version != null)
-        return version;
+      if (version != null) {
+          return version;
+      }
     }
     throw new OObjectNotDetachedException("Cannot retrieve the object's VERSION for '" + iPojo + "' because has not been detached");
   }
@@ -515,9 +525,10 @@ public class OObjectSerializerHelper {
         final ORecordVersion version = OVersionFactory.instance().createVersion();
         version.getSerializer().fromString((String) ver, version);
         return version;
-      } else
-        OLogManager.instance().warn(OObjectSerializerHelper.class,
-            "@Version field has been declared as %s while the supported are: Number, String, Object", ver.getClass());
+      } else {
+          OLogManager.instance().warn(OObjectSerializerHelper.class,
+                  "@Version field has been declared as %s while the supported are: Number, String, Object", ver.getClass());
+      }
     }
     return null;
   }
@@ -549,15 +560,17 @@ public class OObjectSerializerHelper {
   public static ODocument toStream(final Object iPojo, final ODocument iRecord, final OEntityManager iEntityManager,
       final OClass schemaClass, final OUserObject2RecordHandler iObj2RecHandler, final ODatabaseObject db,
       final boolean iSaveOnlyDirty) {
-    if (iSaveOnlyDirty && !iRecord.isDirty())
-      return iRecord;
+    if (iSaveOnlyDirty && !iRecord.isDirty()) {
+        return iRecord;
+    }
 
     final long timer = Orient.instance().getProfiler().startChrono();
 
     final Integer identityRecord = System.identityHashCode(iRecord);
 
-    if (OSerializationThreadLocal.INSTANCE.get().contains(identityRecord))
-      return iRecord;
+    if (OSerializationThreadLocal.INSTANCE.get().contains(identityRecord)) {
+        return iRecord;
+    }
 
     OSerializationThreadLocal.INSTANCE.get().add(identityRecord);
 
@@ -579,13 +592,14 @@ public class OObjectSerializerHelper {
           // TREATS AS CLUSTER POSITION
           ((ORecordId) iRecord.getIdentity()).clusterId = schemaClass.getDefaultClusterId();
           ((ORecordId) iRecord.getIdentity()).clusterPosition = ((Number) id).longValue();
-        } else if (id instanceof String)
-          ((ORecordId) iRecord.getIdentity()).fromString((String) id);
-        else if (id.getClass().equals(Object.class))
-          ORecordInternal.setIdentity(iRecord, (ORecordId) id);
-        else
-          OLogManager.instance().warn(OObjectSerializerHelper.class,
-              "@Id field has been declared as %s while the supported are: ORID, Number, String, Object", id.getClass());
+        } else if (id instanceof String) {
+            ((ORecordId) iRecord.getIdentity()).fromString((String) id);
+        } else if (id.getClass().equals(Object.class)) {
+            ORecordInternal.setIdentity(iRecord, (ORecordId) id);
+        } else {
+            OLogManager.instance().warn(OObjectSerializerHelper.class,
+                    "@Id field has been declared as %s while the supported are: ORID, Number, String, Object", id.getClass());
+        }
       }
     }
 
@@ -597,15 +611,17 @@ public class OObjectSerializerHelper {
       Object ver = getFieldValue(iPojo, vField.getName());
 
       final ORecordVersion version = convertVersion(ver);
-      if (version != null)
-        iRecord.getRecordVersion().copyFrom(version);
+      if (version != null) {
+          iRecord.getRecordVersion().copyFrom(version);
+      }
     }
 
-    if (db.isMVCC() && !versionConfigured && db.getTransaction() instanceof OTransactionOptimistic)
-      throw new OTransactionException(
-          "Cannot involve an object of class '"
-              + pojoClass
-              + "' in an Optimistic Transaction commit because it does not define @Version or @OVersion and therefore cannot handle MVCC");
+    if (db.isMVCC() && !versionConfigured && db.getTransaction() instanceof OTransactionOptimistic) {
+        throw new OTransactionException(
+                "Cannot involve an object of class '"
+                        + pojoClass
+                        + "' in an Optimistic Transaction commit because it does not define @Version or @OVersion and therefore cannot handle MVCC");
+    }
 
     // SET OBJECT CLASS
     iRecord.setClassName(schemaClass != null ? schemaClass.getName() : null);
@@ -619,11 +635,13 @@ public class OObjectSerializerHelper {
     for (Field p : properties) {
       fieldName = p.getName();
 
-      if (idField != null && fieldName.equals(idField.getName()))
-        continue;
+      if (idField != null && fieldName.equals(idField.getName())) {
+          continue;
+      }
 
-      if (vField != null && fieldName.equals(vField.getName()))
-        continue;
+      if (vField != null && fieldName.equals(vField.getName())) {
+          continue;
+      }
 
       fieldValue = serializeFieldValue(getFieldType(iPojo, fieldName), getFieldValue(iPojo, fieldName));
 
@@ -639,8 +657,9 @@ public class OObjectSerializerHelper {
 
           if (schemaProperty == null) {
             OType t = OType.getTypeByClass(fieldValue.getClass());
-            if (t == null)
-              t = OType.EMBEDDED;
+            if (t == null) {
+                t = OType.EMBEDDED;
+            }
             schemaProperty = iRecord.getSchemaClass().createProperty(fieldName, t);
           }
         }
@@ -671,8 +690,9 @@ public class OObjectSerializerHelper {
       }
     }
 
-    if (serializerContexts.get(null) != null)
-      return serializerContexts.get(null).serializeFieldValue(type, iFieldValue);
+    if (serializerContexts.get(null) != null) {
+        return serializerContexts.get(null).serializeFieldValue(type, iFieldValue);
+    }
 
     return iFieldValue;
   }
@@ -684,8 +704,9 @@ public class OObjectSerializerHelper {
       }
     }
 
-    if (serializerContexts.get(null) != null)
-      return serializerContexts.get(null).unserializeFieldValue(type, iFieldValue);
+    if (serializerContexts.get(null) != null) {
+        return serializerContexts.get(null).unserializeFieldValue(type, iFieldValue);
+    }
 
     return iFieldValue;
   }
@@ -693,8 +714,9 @@ public class OObjectSerializerHelper {
   private static Object typeToStream(Object iFieldValue, OType iType, final OEntityManager iEntityManager,
       final OUserObject2RecordHandler iObj2RecHandler, final ODatabaseObject db, final ODocument iRecord,
       final boolean iSaveOnlyDirty) {
-    if (iFieldValue == null)
-      return null;
+    if (iFieldValue == null) {
+        return null;
+    }
 
     if (!OType.isSimpleType(iFieldValue)) {
       Class<?> fieldClass = iFieldValue.getClass();
@@ -727,9 +749,10 @@ public class OObjectSerializerHelper {
 
         } else {
           final Object result = serializeFieldValue(null, iFieldValue);
-          if (iFieldValue == result)
-            throw new OSerializationException("Linked type [" + iFieldValue.getClass() + ":" + iFieldValue
-                + "] cannot be serialized because is not part of registered entities. To fix this error register this class");
+          if (iFieldValue == result) {
+              throw new OSerializationException("Linked type [" + iFieldValue.getClass() + ":" + iFieldValue
+                      + "] cannot be serialized because is not part of registered entities. To fix this error register this class");
+          }
 
           iFieldValue = result;
         }
@@ -741,8 +764,9 @@ public class OObjectSerializerHelper {
   private static Object multiValueToStream(final Object iMultiValue, OType iType, final OEntityManager iEntityManager,
       final OUserObject2RecordHandler iObj2RecHandler, final ODatabaseObject db, final ODocument iRecord,
       final boolean iSaveOnlyDirty) {
-    if (iMultiValue == null)
-      return null;
+    if (iMultiValue == null) {
+        return null;
+    }
 
     final Collection<Object> sourceValues;
     if (iMultiValue instanceof Collection<?>) {
@@ -752,30 +776,34 @@ public class OObjectSerializerHelper {
     }
 
     if (iType == null) {
-      if (sourceValues.size() == 0)
-        return iMultiValue;
+      if (sourceValues.size() == 0) {
+          return iMultiValue;
+      }
 
       // TRY TO UNDERSTAND THE COLLECTION TYPE BY ITS CONTENT
       final Object firstValue = sourceValues.iterator().next();
 
-      if (firstValue == null)
-        return iMultiValue;
+      if (firstValue == null) {
+          return iMultiValue;
+      }
 
       // DETERMINE THE RIGHT TYPE BASED ON SOURCE MULTI VALUE OBJECT
       if (OType.isSimpleType(firstValue)) {
-        if (iMultiValue instanceof List)
-          iType = OType.EMBEDDEDLIST;
-        else if (iMultiValue instanceof Set)
-          iType = OType.EMBEDDEDSET;
-        else
-          iType = OType.EMBEDDEDMAP;
+        if (iMultiValue instanceof List) {
+            iType = OType.EMBEDDEDLIST;
+        } else if (iMultiValue instanceof Set) {
+            iType = OType.EMBEDDEDSET;
+        } else {
+            iType = OType.EMBEDDEDMAP;
+        }
       } else {
-        if (iMultiValue instanceof List)
-          iType = OType.LINKLIST;
-        else if (iMultiValue instanceof Set)
-          iType = OType.LINKSET;
-        else
-          iType = OType.LINKMAP;
+        if (iMultiValue instanceof List) {
+            iType = OType.LINKLIST;
+        } else if (iMultiValue instanceof Set) {
+            iType = OType.LINKSET;
+        } else {
+            iType = OType.LINKMAP;
+        }
       }
     }
 
@@ -784,15 +812,17 @@ public class OObjectSerializerHelper {
 
     // CREATE THE RETURN MULTI VALUE OBJECT BASED ON DISCOVERED TYPE
     if (iType.equals(OType.EMBEDDEDSET) || iType.equals(OType.LINKSET)) {
-      if (iRecord != null && iType.equals(OType.EMBEDDEDSET))
-        result = new OTrackedSet<Object>(iRecord);
-      else
-        result = new ORecordLazySet(iRecord);
+      if (iRecord != null && iType.equals(OType.EMBEDDEDSET)) {
+          result = new OTrackedSet<Object>(iRecord);
+      } else {
+          result = new ORecordLazySet(iRecord);
+      }
     } else if (iType.equals(OType.EMBEDDEDLIST) || iType.equals(OType.LINKLIST)) {
-      if (iRecord != null && iType.equals(OType.EMBEDDEDLIST))
-        result = new OTrackedList<Object>(iRecord);
-      else
-        result = new ArrayList<Object>();
+      if (iRecord != null && iType.equals(OType.EMBEDDEDLIST)) {
+          result = new OTrackedList<Object>(iRecord);
+      } else {
+          result = new ArrayList<Object>();
+      }
     }
     // } else if (iType.equals(OType.EMBEDDEDLIST) ||
     // iType.equals(OType.LINKLIST)) {
@@ -804,12 +834,13 @@ public class OObjectSerializerHelper {
     // throw new IllegalArgumentException("Type " + iType +
     // " must be a collection");
 
-    if (iType.equals(OType.LINKLIST) || iType.equals(OType.LINKSET) || iType.equals(OType.LINKMAP))
-      linkedType = OType.LINK;
-    else if (iType.equals(OType.EMBEDDEDLIST) || iType.equals(OType.EMBEDDEDSET) || iType.equals(OType.EMBEDDEDMAP))
-      linkedType = OType.EMBEDDED;
-    else
-      throw new IllegalArgumentException("Type " + iType + " must be a multi value type (collection or map)");
+    if (iType.equals(OType.LINKLIST) || iType.equals(OType.LINKSET) || iType.equals(OType.LINKMAP)) {
+        linkedType = OType.LINK;
+    } else if (iType.equals(OType.EMBEDDEDLIST) || iType.equals(OType.EMBEDDEDSET) || iType.equals(OType.EMBEDDEDMAP)) {
+        linkedType = OType.EMBEDDED;
+    } else {
+        throw new IllegalArgumentException("Type " + iType + " must be a multi value type (collection or map)");
+    }
 
     if (iMultiValue instanceof Set<?>) {
       for (Object o : sourceValues) {
@@ -824,10 +855,11 @@ public class OObjectSerializerHelper {
       if (iMultiValue instanceof OObjectLazyMap<?>) {
         result = ((OObjectLazyMap<?>) iMultiValue).getUnderlying();
       } else {
-        if (iRecord != null && iType.equals(OType.EMBEDDEDMAP))
-          result = new OTrackedMap<Object>(iRecord);
-        else
-          result = new HashMap<Object, Object>();
+        if (iRecord != null && iType.equals(OType.EMBEDDEDMAP)) {
+            result = new OTrackedMap<Object>(iRecord);
+        } else {
+            result = new HashMap<Object, Object>();
+        }
         for (Entry<Object, Object> entry : ((Map<Object, Object>) iMultiValue).entrySet()) {
           ((Map<Object, Object>) result).put(entry.getKey(),
               typeToStream(entry.getValue(), linkedType, iEntityManager, iObj2RecHandler, db, null, iSaveOnlyDirty));
@@ -839,12 +871,14 @@ public class OObjectSerializerHelper {
   }
 
   public static List<Field> getClassFields(final Class<?> iClass) {
-    if (iClass.getName().startsWith("java.lang"))
-      return null;
+    if (iClass.getName().startsWith("java.lang")) {
+        return null;
+    }
 
     synchronized (classes) {
-      if (classes.containsKey(iClass.getName()))
-        return classes.get(iClass.getName());
+      if (classes.containsKey(iClass.getName())) {
+          return classes.get(iClass.getName());
+      }
 
       return analyzeClass(iClass);
     }
@@ -860,8 +894,9 @@ public class OObjectSerializerHelper {
   public static Type[] getGenericTypes(final Object iObject) {
     if (iObject instanceof OTrackedMultiValue) {
       final Class<?> cls = ((OTrackedMultiValue<?, ?>) iObject).getGenericClass();
-      if (cls != null)
-        return new Type[] { cls };
+      if (cls != null) {
+          return new Type[] { cls };
+      }
     }
 
     return OReflectionHelper.getGenericTypes(iObject.getClass());
@@ -870,17 +905,18 @@ public class OObjectSerializerHelper {
   public static void invokeCallback(final Object iPojo, final ODocument iDocument, final Class<?> iAnnotation) {
     final Method m = callbacks.get(iPojo.getClass().getSimpleName() + "." + iAnnotation.getSimpleName());
 
-    if (m != null)
-
-      try {
-        if (m.getParameterTypes().length > 0)
-          m.invoke(iPojo, iDocument);
-        else
-          m.invoke(iPojo);
-      } catch (Exception e) {
-        throw new OConfigurationException("Error on executing user callback '" + m.getName() + "' annotated with '"
-            + iAnnotation.getSimpleName() + "'", e);
-      }
+    if (m != null) {
+        try {
+            if (m.getParameterTypes().length > 0) {
+                m.invoke(iPojo, iDocument);
+            } else {
+                m.invoke(iPojo);
+            }
+        }catch (Exception e) {
+            throw new OConfigurationException("Error on executing user callback '" + m.getName() + "' annotated with '"
+                    + iAnnotation.getSimpleName() + "'", e);
+        }
+    }
   }
 
   public static void bindSerializerContext(final Class<?> iClassContext, final OObjectSerializerContext iSerializerContext) {
@@ -904,17 +940,20 @@ public class OObjectSerializerHelper {
     for (Class<?> currentClass = iClass; currentClass != Object.class;) {
       for (Field f : currentClass.getDeclaredFields()) {
         fieldModifier = f.getModifiers();
-        if (Modifier.isStatic(fieldModifier) || Modifier.isNative(fieldModifier) || Modifier.isTransient(fieldModifier))
-          continue;
+        if (Modifier.isStatic(fieldModifier) || Modifier.isNative(fieldModifier) || Modifier.isTransient(fieldModifier)) {
+            continue;
+        }
 
-        if (f.getName().equals("this$0"))
-          continue;
+        if (f.getName().equals("this$0")) {
+            continue;
+        }
 
         if (jpaTransientClass != null) {
           Annotation ann = f.getAnnotation(jpaTransientClass);
-          if (ann != null)
-            // @Transient DEFINED, JUMP IT
-            continue;
+          if (ann != null) {
+              // @Transient DEFINED, JUMP IT
+              continue;
+          }
         }
 
         fieldName = f.getName();
@@ -923,10 +962,10 @@ public class OObjectSerializerHelper {
 
         // CHECK FOR AUTO-BINDING
         autoBinding = true;
-        if (f.getAnnotation(OAccess.class) == null || f.getAnnotation(OAccess.class).value() == OAccess.OAccessType.PROPERTY)
-          autoBinding = true;
-        // JPA 2+ AVAILABLE?
-        else if (jpaAccessClass != null) {
+        if (f.getAnnotation(OAccess.class) == null || f.getAnnotation(OAccess.class).value() == OAccess.OAccessType.PROPERTY) {
+            autoBinding = true;
+            // JPA 2+ AVAILABLE?
+        } else if (jpaAccessClass != null) {
           Annotation ann = f.getAnnotation(jpaAccessClass);
           if (ann != null) {
             // TODO: CHECK IF CONTAINS VALUE=FIELD
@@ -934,9 +973,10 @@ public class OObjectSerializerHelper {
           }
         }
 
-        if (f.getAnnotation(ODocumentInstance.class) != null)
-          // BOUND DOCUMENT ON IT
-          boundDocumentFields.put(iClass, f);
+        if (f.getAnnotation(ODocumentInstance.class) != null) {
+            // BOUND DOCUMENT ON IT
+            boundDocumentFields.put(iClass, f);
+        }
 
         boolean idFound = false;
         if (f.getAnnotation(OId.class) != null) {
@@ -952,13 +992,14 @@ public class OObjectSerializerHelper {
         }
         if (idFound) {
           // CHECK FOR TYPE
-          if (fieldType.isPrimitive())
-            OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' cannot be a literal to manage the Record Id",
-                f.toString());
-          else if (!ORID.class.isAssignableFrom(fieldType) && fieldType != String.class && fieldType != Object.class
-              && !Number.class.isAssignableFrom(fieldType))
-            OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' cannot be managed as type: %s", f.toString(),
-                fieldType);
+          if (fieldType.isPrimitive()) {
+              OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' cannot be a literal to manage the Record Id",
+                      f.toString());
+          } else if (!ORID.class.isAssignableFrom(fieldType) && fieldType != String.class && fieldType != Object.class
+              && !Number.class.isAssignableFrom(fieldType)) {
+              OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' cannot be managed as type: %s", f.toString(),
+                      fieldType);
+          }
         }
 
         boolean vFound = false;
@@ -975,55 +1016,60 @@ public class OObjectSerializerHelper {
         }
         if (vFound) {
           // CHECK FOR TYPE
-          if (fieldType.isPrimitive())
-            OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' cannot be a literal to manage the Version",
-                f.toString());
-          else if (fieldType != String.class && fieldType != Object.class && !ORecordVersion.class.isAssignableFrom(fieldType)
-              && !Number.class.isAssignableFrom(fieldType))
-            OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' cannot be managed as type: %s", f.toString(),
-                fieldType);
+          if (fieldType.isPrimitive()) {
+              OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' cannot be a literal to manage the Version",
+                      f.toString());
+          } else if (fieldType != String.class && fieldType != Object.class && !ORecordVersion.class.isAssignableFrom(fieldType)
+              && !Number.class.isAssignableFrom(fieldType)) {
+              OLogManager.instance().warn(OObjectSerializerHelper.class, "Field '%s' cannot be managed as type: %s", f.toString(),
+                      fieldType);
+          }
         }
 
         // JPA 1+ AVAILABLE?
         if (jpaEmbeddedClass != null && f.getAnnotation(jpaEmbeddedClass) != null) {
-          if (embeddedFields.get(iClass) == null)
-            embeddedFields.put(iClass, new ArrayList<String>());
+          if (embeddedFields.get(iClass) == null) {
+              embeddedFields.put(iClass, new ArrayList<String>());
+          }
           embeddedFields.get(iClass).add(fieldName);
         }
 
-        if (autoBinding)
-          // TRY TO GET THE VALUE BY THE GETTER (IF ANY)
-          try {
-            String getterName = "get" + OUtils.camelCase(fieldName);
-            Method m = currentClass.getMethod(getterName, NO_ARGS);
-            getters.put(iClass.getName() + "." + fieldName, m);
-          } catch (Exception e) {
+        if (autoBinding) {
+            // TRY TO GET THE VALUE BY THE GETTER (IF ANY)
+            try {
+                String getterName = "get" + OUtils.camelCase(fieldName);
+                Method m = currentClass.getMethod(getterName, NO_ARGS);
+                getters.put(iClass.getName() + "." + fieldName, m);
+            } catch (Exception e) {
+                registerFieldGetter(iClass, fieldName, f);
+            }
+        } else {
             registerFieldGetter(iClass, fieldName, f);
-          }
-        else
-          registerFieldGetter(iClass, fieldName, f);
+        }
 
-        if (autoBinding)
-          // TRY TO GET THE VALUE BY THE SETTER (IF ANY)
-          try {
-            String getterName = "set" + OUtils.camelCase(fieldName);
-            Method m = currentClass.getMethod(getterName, f.getType());
-            setters.put(iClass.getName() + "." + fieldName, m);
-          } catch (Exception e) {
+        if (autoBinding) {
+            // TRY TO GET THE VALUE BY THE SETTER (IF ANY)
+            try {
+                String getterName = "set" + OUtils.camelCase(fieldName);
+                Method m = currentClass.getMethod(getterName, f.getType());
+                setters.put(iClass.getName() + "." + fieldName, m);
+            } catch (Exception e) {
+                registerFieldSetter(iClass, fieldName, f);
+            }
+        } else {
             registerFieldSetter(iClass, fieldName, f);
-          }
-        else
-          registerFieldSetter(iClass, fieldName, f);
+        }
       }
 
       registerCallbacks(iClass, currentClass);
 
       currentClass = currentClass.getSuperclass();
 
-      if (currentClass.equals(ODocument.class))
-        // POJO EXTENDS ODOCUMENT: SPECIAL CASE: AVOID TO CONSIDER
-        // ODOCUMENT FIELDS
-        currentClass = Object.class;
+      if (currentClass.equals(ODocument.class)) {
+          // POJO EXTENDS ODOCUMENT: SPECIAL CASE: AVOID TO CONSIDER
+          // ODOCUMENT FIELDS
+          currentClass = Object.class;
+      }
     }
     return properties;
   }
@@ -1034,24 +1080,27 @@ public class OObjectSerializerHelper {
     for (Method m : iCurrentClass.getDeclaredMethods()) {
       // SEARCH FOR CALLBACK ANNOTATIONS
       for (Class annotationClass : callbackAnnotationClasses) {
-        if (m.getAnnotation(annotationClass) != null)
-          callbacks.put(iRootClass.getSimpleName() + "." + annotationClass.getSimpleName(), m);
+        if (m.getAnnotation(annotationClass) != null) {
+            callbacks.put(iRootClass.getSimpleName() + "." + annotationClass.getSimpleName(), m);
+        }
       }
     }
   }
 
   private static void registerFieldSetter(final Class<?> iClass, String fieldName, Field f) {
     // TRY TO GET THE VALUE BY ACCESSING DIRECTLY TO THE PROPERTY
-    if (!f.isAccessible())
-      f.setAccessible(true);
+    if (!f.isAccessible()) {
+        f.setAccessible(true);
+    }
 
     setters.put(iClass.getName() + "." + fieldName, f);
   }
 
   private static void registerFieldGetter(final Class<?> iClass, String fieldName, Field f) {
     // TRY TO GET THE VALUE BY ACCESSING DIRECTLY TO THE PROPERTY
-    if (!f.isAccessible())
-      f.setAccessible(true);
+    if (!f.isAccessible()) {
+        f.setAccessible(true);
+    }
 
     getters.put(iClass.getName() + "." + fieldName, f);
   }
@@ -1094,15 +1143,17 @@ public class OObjectSerializerHelper {
   }
 
   private static Object getObject(final Object fieldValue, final Class<?> aClass) {
-    if (fieldValue instanceof ODocument)
-      return OObjectSerializerHelper.convertDocumentInType((ODocument) fieldValue, aClass);
+    if (fieldValue instanceof ODocument) {
+        return OObjectSerializerHelper.convertDocumentInType((ODocument) fieldValue, aClass);
+    }
     return fieldValue;
   }
 
   public static Object convertInObject(final Object iPojo, final String iField, final Object iValue, final Class<?> parameterType) {
     // New conversion method working with OLazyObjectList
-    if (!(iValue instanceof OObjectLazyList<?>))
-      return OType.convert(iValue, parameterType);
+    if (!(iValue instanceof OObjectLazyList<?>)) {
+        return OType.convert(iValue, parameterType);
+    }
 
     List<Object> aSubList = null;
     try {
@@ -1135,8 +1186,9 @@ public class OObjectSerializerHelper {
     final List<Field> fields = OObjectSerializerHelper.getClassFields(iPojo.getClass());
     if (fields != null) {
       for (Field f : fields)
-        if (f.getName().equals(iField))
-          return f;
+        if (f.getName().equals(iField)) {
+            return f;
+      }
     }
     return null;
   }

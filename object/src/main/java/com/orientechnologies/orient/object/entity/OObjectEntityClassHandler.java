@@ -29,8 +29,9 @@ public class OObjectEntityClassHandler extends OEntityManagerClassHandler {
 
   @Override
   public void registerEntityClass(Class<?> iClass) {
-    if (!OObjectEntitySerializer.isToSerialize(iClass) && !iClass.isEnum())
-      registerEntityClass(iClass.getSimpleName(), iClass);
+    if (!OObjectEntitySerializer.isToSerialize(iClass) && !iClass.isEnum()) {
+        registerEntityClass(iClass.getSimpleName(), iClass);
+    }
   }
 
   @Override

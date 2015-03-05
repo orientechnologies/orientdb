@@ -128,8 +128,9 @@ public class OSBTreeRidBagConcurrencySingleRidBag {
                 ridsToDelete.add(identifiable.getIdentity());
               }
 
-              if (counter >= 5)
-                break;
+              if (counter >= 5) {
+                  break;
+              }
             }
 
             try {

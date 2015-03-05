@@ -86,15 +86,18 @@ public class OAtomicOperation {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
 
     OAtomicOperation operation = (OAtomicOperation) o;
 
-    if (!operationUnitId.equals(operation.operationUnitId))
-      return false;
+    if (!operationUnitId.equals(operation.operationUnitId)) {
+        return false;
+    }
 
     return true;
   }

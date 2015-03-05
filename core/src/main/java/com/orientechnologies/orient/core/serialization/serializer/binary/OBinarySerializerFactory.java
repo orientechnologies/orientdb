@@ -72,10 +72,11 @@ public class OBinarySerializerFactory {
     factory.registerSerializer(ODoubleSerializer.INSTANCE, OType.DOUBLE);
     factory.registerSerializer(ODateTimeSerializer.INSTANCE, OType.DATETIME);
     factory.registerSerializer(OCharSerializer.INSTANCE, null);
-    if (binaryFormatVersion <= 8)
-      factory.registerSerializer(OStringSerializer_1_5_1.INSTANCE, OType.STRING);
-    else
-      factory.registerSerializer(OStringSerializer.INSTANCE, OType.STRING);
+    if (binaryFormatVersion <= 8) {
+        factory.registerSerializer(OStringSerializer_1_5_1.INSTANCE, OType.STRING);
+    } else {
+        factory.registerSerializer(OStringSerializer.INSTANCE, OType.STRING);
+    }
 
     factory.registerSerializer(OByteSerializer.INSTANCE, OType.BYTE);
     factory.registerSerializer(ODateSerializer.INSTANCE, OType.DATE);
@@ -88,10 +89,11 @@ public class OBinarySerializerFactory {
     factory.registerSerializer(OStreamSerializerListRID.INSTANCE, null);
     factory.registerSerializer(OStreamSerializerOldRIDContainer.INSTANCE, null);
 
-    if (binaryFormatVersion <= 11)
-      factory.registerSerializer(OStreamSerializerSBTreeIndexRIDContainer_1_7_9.INSTANCE, null);
-    else
-      factory.registerSerializer(OStreamSerializerSBTreeIndexRIDContainer.INSTANCE, null);
+    if (binaryFormatVersion <= 11) {
+        factory.registerSerializer(OStreamSerializerSBTreeIndexRIDContainer_1_7_9.INSTANCE, null);
+    } else {
+        factory.registerSerializer(OStreamSerializerSBTreeIndexRIDContainer.INSTANCE, null);
+    }
 
     factory.registerSerializer(OPhysicalPositionSerializer.INSTANCE, null);
 
@@ -103,25 +105,29 @@ public class OBinarySerializerFactory {
 
   public static OBinarySerializerFactory getInstance() {
     final ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if (database != null)
-      return database.getSerializerFactory();
-    else
-      return OBinarySerializerFactory.create(Integer.MAX_VALUE);
+    if (database != null) {
+        return database.getSerializerFactory();
+    } else {
+        return OBinarySerializerFactory.create(Integer.MAX_VALUE);
+    }
   }
 
   public void registerSerializer(final OBinarySerializer<?> iInstance, final OType iType) {
-    if (serializerIdMap.containsKey(iInstance.getId()))
-      throw new IllegalArgumentException("Binary serializer with id " + iInstance.getId() + " has been already registered.");
+    if (serializerIdMap.containsKey(iInstance.getId())) {
+        throw new IllegalArgumentException("Binary serializer with id " + iInstance.getId() + " has been already registered.");
+    }
 
     serializerIdMap.put(iInstance.getId(), iInstance);
-    if (iType != null)
-      serializerTypeMap.put(iType, iInstance);
+    if (iType != null) {
+        serializerTypeMap.put(iType, iInstance);
+    }
   }
 
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public void registerSerializer(final byte iId, final Class<? extends OBinarySerializer> iClass) {
-    if (serializerClassesIdMap.containsKey(iId))
-      throw new IllegalStateException("Serializer with id " + iId + " has been already registered.");
+    if (serializerClassesIdMap.containsKey(iId)) {
+        throw new IllegalStateException("Serializer with id " + iId + " has been already registered.");
+    }
 
     serializerClassesIdMap.put(iId, (Class<? extends OBinarySerializer>) iClass);
   }
@@ -137,12 +143,13 @@ public class OBinarySerializerFactory {
     OBinarySerializer<?> impl = serializerIdMap.get(identifier);
     if (impl == null) {
       final Class<? extends OBinarySerializer> cls = serializerClassesIdMap.get(identifier);
-      if (cls != null)
-        try {
-          impl = cls.newInstance();
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Cannot create an instance of class %s invoking the empty constructor", cls);
-        }
+      if (cls != null) {
+          try {
+              impl = cls.newInstance();
+          } catch (Exception e) {
+              OLogManager.instance().error(this, "Cannot create an instance of class %s invoking the empty constructor", cls);
+          }
+      }
     }
     return impl;
   }

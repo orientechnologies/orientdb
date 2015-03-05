@@ -90,8 +90,9 @@ public abstract class OIndexAbstractCursor implements OIndexCursor {
 
   @Override
   public OIdentifiable next() {
-    if (!hasNext())
-      throw new NoSuchElementException();
+    if (!hasNext()) {
+        throw new NoSuchElementException();
+    }
 
     final Map.Entry<Object, OIdentifiable> result = nextEntry;
     nextEntry = nextEntry();

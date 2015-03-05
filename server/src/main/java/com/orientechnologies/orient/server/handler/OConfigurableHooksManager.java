@@ -49,8 +49,9 @@ public class OConfigurableHooksManager implements ODatabaseLifecycleListener {
 
   public OConfigurableHooksManager(final OServerConfiguration iCfg) {
     configuredHooks = iCfg.hooks;
-    if (configuredHooks != null && !configuredHooks.isEmpty())
-      Orient.instance().addDbLifecycleListener(this);
+    if (configuredHooks != null && !configuredHooks.isEmpty()) {
+        Orient.instance().addDbLifecycleListener(this);
+    }
   }
 
   @Override
@@ -69,19 +70,20 @@ public class OConfigurableHooksManager implements ODatabaseLifecycleListener {
       try {
         final ORecordHook.HOOK_POSITION pos = ORecordHook.HOOK_POSITION.valueOf(hook.position);
         final ORecordHook h = (ORecordHook) Class.forName(hook.clazz).newInstance();
-        if (hook.parameters != null && hook.parameters.length > 0)
-          try {
-            final Method m = h.getClass().getDeclaredMethod("config", new Class[] { OServerParameterConfiguration[].class });
-            m.invoke(h, new Object[] { hook.parameters });
-          } catch (Exception e) {
-            OLogManager
-                .instance()
-                .warn(
-                    this,
-                    "[configure] Failed to configure hook '%s'. Parameters specified but hook don support parameters. Should have a method config with parameters OServerParameterConfiguration[] ",
-                    hook.clazz);
-
-          }
+        if (hook.parameters != null && hook.parameters.length > 0) {
+            try {
+                final Method m = h.getClass().getDeclaredMethod("config", new Class[] { OServerParameterConfiguration[].class });
+                m.invoke(h, new Object[] { hook.parameters });
+            } catch (Exception e) {
+                OLogManager
+                        .instance()
+                        .warn(
+                                this,
+                                "[configure] Failed to configure hook '%s'. Parameters specified but hook don support parameters. Should have a method config with parameters OServerParameterConfiguration[] ",
+                                hook.clazz);
+                
+            }
+        }
         db.registerHook(h, pos);
       } catch (Exception e) {
         OLogManager.instance().error(this, "[configure] Failed to configure hook '%s' due to the an error : ", e, hook.clazz,

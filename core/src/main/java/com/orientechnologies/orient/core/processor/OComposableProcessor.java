@@ -55,22 +55,25 @@ public class OComposableProcessor extends OConfigurableStatefulFactory<String, O
 
   public Object process(final OProcessorBlock iParent, final Object iContent, final OCommandContext iContext,
       final ODocument iOutput, final boolean iReadOnly) {
-    if (!(iContent instanceof ODocument))
-      throw new OProcessException("Composable processor needs a document");
+    if (!(iContent instanceof ODocument)) {
+        throw new OProcessException("Composable processor needs a document");
+    }
 
     final ODocument document = (ODocument) iContent;
 
     final String type = document.field("type");
-    if (type == null)
-      throw new OProcessException("Composable processor needs 'type' field");
+    if (type == null) {
+        throw new OProcessException("Composable processor needs 'type' field");
+    }
 
     return process(iParent, type, document, iContext, iOutput, iReadOnly);
   }
 
   public Object process(final OProcessorBlock iParent, final String iType, final ODocument iContent,
       final OCommandContext iContext, final ODocument iOutput, final boolean iReadOnly) {
-    if (iContent == null)
-      throw new OProcessException("Cannot find block type '" + iType + "'");
+    if (iContent == null) {
+        throw new OProcessException("Cannot find block type '" + iType + "'");
+    }
 
     OProcessorBlock block;
     try {
@@ -84,8 +87,9 @@ public class OComposableProcessor extends OConfigurableStatefulFactory<String, O
     final Integer depthLevel = (Integer) iContext.getVariable("depthLevel");
     iContext.setVariable("depthLevel", depthLevel == null ? 0 : depthLevel + 1);
 
-    if (depthLevel == null)
-      OLogManager.instance().info(this, "Start processing...");
+    if (depthLevel == null) {
+        OLogManager.instance().info(this, "Start processing...");
+    }
 
     final long start = System.currentTimeMillis();
     try {
@@ -93,8 +97,9 @@ public class OComposableProcessor extends OConfigurableStatefulFactory<String, O
     } finally {
       iContext.setVariable("depthLevel", depthLevel == null ? 0 : depthLevel);
 
-      if (depthLevel == null)
-        OLogManager.instance().info(this, "End of processing. Elapsed %dms", (System.currentTimeMillis() - start));
+      if (depthLevel == null) {
+          OLogManager.instance().info(this, "End of processing. Elapsed %dms", (System.currentTimeMillis() - start));
+      }
     }
   }
 

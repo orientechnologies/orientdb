@@ -76,8 +76,9 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
   }
 
   public void acquireLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType, long iTimeout) {
-    if (!enabled)
-      return;
+    if (!enabled) {
+        return;
+    }
 
     CountableLock lock;
     final Object internalLock = internalLock(iResourceId);
@@ -86,26 +87,30 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
       if (lock == null) {
         final CountableLock newLock = new CountableLock();
         lock = map.putIfAbsent(getImmutableResourceId(iResourceId), newLock);
-        if (lock == null)
-          lock = newLock;
+        if (lock == null) {
+            lock = newLock;
+        }
       }
       lock.countLocks++;
     }
 
     try {
       if (iTimeout <= 0) {
-        if (iLockType == LOCK.SHARED)
-          lock.readLock().lock();
-        else
-          lock.writeLock().lock();
+        if (iLockType == LOCK.SHARED) {
+            lock.readLock().lock();
+        } else {
+            lock.writeLock().lock();
+        }
       } else {
         try {
           if (iLockType == LOCK.SHARED) {
-            if (!lock.readLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
-              throw new OLockException("Timeout ("+iTimeout+"ms) on acquiring resource '" + iResourceId + "' because is locked from another thread");
+            if (!lock.readLock().tryLock(iTimeout, TimeUnit.MILLISECONDS)) {
+                throw new OLockException("Timeout ("+iTimeout+"ms) on acquiring resource '" + iResourceId + "' because is locked from another thread");
+            }
           } else {
-            if (!lock.writeLock().tryLock(iTimeout, TimeUnit.MILLISECONDS))
-              throw new OLockException("Timeout ("+iTimeout+"ms) on acquiring resource '" + iResourceId + "' because is locked from another thread");
+            if (!lock.writeLock().tryLock(iTimeout, TimeUnit.MILLISECONDS)) {
+                throw new OLockException("Timeout ("+iTimeout+"ms) on acquiring resource '" + iResourceId + "' because is locked from another thread");
+            }
           }
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
@@ -115,8 +120,9 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
     } catch (RuntimeException e) {
       synchronized (internalLock) {
         lock.countLocks--;
-        if (lock.countLocks == 0)
-          map.remove(iResourceId);
+        if (lock.countLocks == 0) {
+            map.remove(iResourceId);
+        }
       }
       throw e;
     }
@@ -124,8 +130,9 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
   }
 
   public boolean tryAcquireLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType) {
-    if (!enabled)
-      return true;
+    if (!enabled) {
+        return true;
+    }
 
     CountableLock lock;
     final Object internalLock = internalLock(iResourceId);
@@ -134,23 +141,26 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
       if (lock == null) {
         final CountableLock newLock = new CountableLock();
         lock = map.putIfAbsent(getImmutableResourceId(iResourceId), newLock);
-        if (lock == null)
-          lock = newLock;
+        if (lock == null) {
+            lock = newLock;
+        }
       }
       lock.countLocks++;
     }
 
     boolean result;
     try {
-      if (iLockType == LOCK.SHARED)
-        result = lock.readLock().tryLock();
-      else
-        result = lock.writeLock().tryLock();
+      if (iLockType == LOCK.SHARED) {
+          result = lock.readLock().tryLock();
+      } else {
+          result = lock.writeLock().tryLock();
+      }
     } catch (RuntimeException e) {
       synchronized (internalLock) {
         lock.countLocks--;
-        if (lock.countLocks == 0)
-          map.remove(iResourceId);
+        if (lock.countLocks == 0) {
+            map.remove(iResourceId);
+        }
       }
       throw e;
     }
@@ -158,8 +168,9 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
     if (!result) {
       synchronized (internalLock) {
         lock.countLocks--;
-        if (lock.countLocks == 0)
-          map.remove(iResourceId);
+        if (lock.countLocks == 0) {
+            map.remove(iResourceId);
+        }
       }
     }
 
@@ -168,50 +179,58 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
 
   public void releaseLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iLockType)
       throws OLockException {
-    if (!enabled)
-      return;
+    if (!enabled) {
+        return;
+    }
 
     final CountableLock lock;
     final Object internalLock = internalLock(iResourceId);
     synchronized (internalLock) {
       lock = map.get(iResourceId);
-      if (lock == null)
-        throw new OLockException("Error on releasing a non acquired lock by the requester '" + iRequester
-            + "' against the resource: '" + iResourceId + "'");
+      if (lock == null) {
+          throw new OLockException("Error on releasing a non acquired lock by the requester '" + iRequester
+                  + "' against the resource: '" + iResourceId + "'");
+      }
 
       lock.countLocks--;
-      if (lock.countLocks == 0)
-        map.remove(iResourceId);
+      if (lock.countLocks == 0) {
+          map.remove(iResourceId);
+      }
     }
-    if (iLockType == LOCK.SHARED)
-      lock.readLock().unlock();
-    else
-      lock.writeLock().unlock();
+    if (iLockType == LOCK.SHARED) {
+        lock.readLock().unlock();
+    } else {
+        lock.writeLock().unlock();
+    }
   }
 
   public void modifyLock(final REQUESTER_TYPE iRequester, final RESOURCE_TYPE iResourceId, final LOCK iCurrentLockType,
       final LOCK iNewLockType) throws OLockException {
-    if (!enabled || iNewLockType == iCurrentLockType)
-      return;
+    if (!enabled || iNewLockType == iCurrentLockType) {
+        return;
+    }
 
     final CountableLock lock;
     final Object internalLock = internalLock(iResourceId);
     synchronized (internalLock) {
       lock = map.get(iResourceId);
-      if (lock == null)
-        throw new OLockException("Error on releasing a non acquired lock by the requester '" + iRequester
-            + "' against the resource: '" + iResourceId + "'");
+      if (lock == null) {
+          throw new OLockException("Error on releasing a non acquired lock by the requester '" + iRequester
+                  + "' against the resource: '" + iResourceId + "'");
+      }
 
-      if (iCurrentLockType == LOCK.SHARED)
-        lock.readLock().unlock();
-      else
-        lock.writeLock().unlock();
+      if (iCurrentLockType == LOCK.SHARED) {
+          lock.readLock().unlock();
+      } else {
+          lock.writeLock().unlock();
+      }
 
       // RE-ACQUIRE IT
-      if (iNewLockType == LOCK.SHARED)
-        lock.readLock().lock();
-      else
-        lock.writeLock().lock();
+      if (iNewLockType == LOCK.SHARED) {
+          lock.readLock().lock();
+      } else {
+          lock.writeLock().lock();
+      }
     }
   }
 
