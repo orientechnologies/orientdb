@@ -63,7 +63,7 @@ public class OServerNetworkListener extends Thread {
   public OServerNetworkListener(final OServer iServer, final OServerSocketFactory iSocketFactory, final String iHostName,
       final String iHostPortRange, final String iProtocolName, final Class<? extends ONetworkProtocol> iProtocol,
       final OServerParameterConfiguration[] iParameters, final OServerCommandConfiguration[] iCommands) {
-    super(Orient.instance().getThreadGroup(), "OrientDB " + iProtocol.getSimpleName() + " listen at " + iHostName + ":"
+    super(Orient.instance().getThreadGroup(), "OrientDB " + iProtocol.getSimpleName() + " listen at " + iHostName + ':'
         + iHostPortRange);
     server = iServer;
 
@@ -130,8 +130,8 @@ public class OServerNetworkListener extends Thread {
       cmd.configure(server);
       return cmd;
     } catch (Exception e) {
-      throw new IllegalArgumentException("Cannot create custom command invoking the constructor: " + iCommand.implementation + "("
-          + iCommand + ")", e);
+      throw new IllegalArgumentException("Cannot create custom command invoking the constructor: " + iCommand.implementation + '('
+          + iCommand + ')', e);
     }
   }
 
@@ -265,13 +265,13 @@ public class OServerNetworkListener extends Thread {
         } catch (Exception ex) {
         }
       }
-    return address + ":" + serverSocket.getLocalPort();
+    return address + ':' + serverSocket.getLocalPort();
   }
 
   @Override
   public String toString() {
     StringBuilder builder = new StringBuilder(64);
-    builder.append(protocolType.getSimpleName()).append(" ").append(serverSocket.getLocalSocketAddress()).append(":");
+    builder.append(protocolType.getSimpleName()).append(' ').append(serverSocket.getLocalSocketAddress()).append(':');
     return builder.toString();
   }
 
@@ -308,8 +308,8 @@ public class OServerNetworkListener extends Thread {
         if (serverSocket.isBound()) {
           OLogManager.instance().info(
               this,
-              "Listening " + iProtocolName + " connections on " + inboundAddr.getAddress().getHostAddress() + ":"
-                  + inboundAddr.getPort() + " (protocol v." + protocolVersion + ", socket=" + socketFactory.getName() + ")");
+              "Listening " + iProtocolName + " connections on " + inboundAddr.getAddress().getHostAddress() + ':'
+                  + inboundAddr.getPort() + " (protocol v." + protocolVersion + ", socket=" + socketFactory.getName() + ')');
           return;
         }
       } catch (BindException be) {

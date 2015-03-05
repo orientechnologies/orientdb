@@ -50,10 +50,10 @@ public class OIndexManagerRemote extends OIndexManagerAbstract {
       createIndexDDL = new OSimpleKeyIndexDefinition().toCreateIndexDDL(iName, iType);
 
     if (engine != null)
-      createIndexDDL += " " + OCommandExecutorSQLCreateIndex.KEYWORD_ENGINE + " " + engine;
+      createIndexDDL += ' ' + OCommandExecutorSQLCreateIndex.KEYWORD_ENGINE + ' ' + engine;
 
     if (metadata != null)
-      createIndexDDL += " " + OCommandExecutorSQLCreateIndex.KEYWORD_METADATA + " " + metadata.toJSON();
+      createIndexDDL += ' ' + OCommandExecutorSQLCreateIndex.KEYWORD_METADATA + ' ' + metadata.toJSON();
 
     acquireExclusiveLock();
     try {

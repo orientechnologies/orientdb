@@ -563,7 +563,7 @@ public class ODistributedResponseManager {
           msg.append(": ");
           msg.append(r.getPayload());
         }
-        msg.append("\n");
+        msg.append('\n');
       }
 
       msg.append("Received: ");

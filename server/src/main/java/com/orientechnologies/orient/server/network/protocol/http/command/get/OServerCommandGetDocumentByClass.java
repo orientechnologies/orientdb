@@ -47,7 +47,7 @@ public class OServerCommandGetDocumentByClass extends OServerCommandAuthenticate
 
       db = getProfiledDatabaseInstance(iRequest);
       if (((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().getClass(urlParts[2]) == null) {
-        throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");
+        throw new IllegalArgumentException("Invalid class '" + urlParts[2] + '\'');
       }
       final String rid = db.getClusterIdByName(urlParts[2]) + ":" + urlParts[3];
       rec = db.load(new ORecordId(rid), fetchPlan);

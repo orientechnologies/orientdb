@@ -36,7 +36,7 @@ import java.security.NoSuchAlgorithmException;
 public class OSecurityManager {
 
   public static final String            ALGORITHM        = "SHA-256";
-  public static final String            ALGORITHM_PREFIX = "{" + ALGORITHM + "}";
+  public static final String            ALGORITHM_PREFIX = '{' + ALGORITHM + '}';
 
   private static final OSecurityManager instance         = new OSecurityManager();
 

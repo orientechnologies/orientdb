@@ -282,7 +282,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   @Override
   public String toString() {
     if (!deserialized)
-      return "[size=" + size + "]";
+      return "[size=" + size + ']';
 
     if (size < 10) {
       final StringBuilder sb = new StringBuilder(256);
@@ -303,7 +303,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
       return sb.append(']').toString();
 
     } else
-      return "[size=" + size + "]";
+      return "[size=" + size + ']';
   }
 
   public void addChangeListener(final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener) {

@@ -98,7 +98,7 @@ public class OServerCommandProcess extends OServerCommandAuthenticatedDbAbstract
       final StringBuilder msg = new StringBuilder(256);
       for (Exception currentException = e; currentException != null; currentException = (Exception) currentException.getCause()) {
         if (msg.length() > 0)
-          msg.append("\n");
+          msg.append('\n');
         msg.append(currentException.getMessage());
       }
 

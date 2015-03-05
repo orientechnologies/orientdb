@@ -187,9 +187,9 @@ public class OPropertyIndexDefinition extends OAbstractIndexDefinition {
   protected StringBuilder createIndexDDLWithoutFieldType(final String indexName, final String indexType) {
     final StringBuilder ddl = new StringBuilder("create index ");
 
-    final String shortName = className + "." + field;
+    final String shortName = className + '.' + field;
     if (indexName.equalsIgnoreCase(shortName)) {
-      ddl.append(shortName).append(" ");
+      ddl.append(shortName).append(' ');
     } else {
       ddl.append(indexName).append(" on ");
       ddl.append(className).append(" ( ").append(field);

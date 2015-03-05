@@ -185,7 +185,7 @@ public abstract class OStorageAbstract extends OSharedContainerImpl implements O
         if (c.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME))
           throw new OSecurityException("Class " + c.getName()
               + " cannot be truncated because has record level security enabled (extends " + OSecurityShared.RESTRICTED_CLASSNAME
-              + ")");
+              + ')');
       }
     }
   }

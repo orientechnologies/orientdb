@@ -687,10 +687,10 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 
       if (firstEntry != null) {
         final int currPageIndex = pageIndex;
-        buffer.append(" ");
+        buffer.append(' ');
         buffer.append(firstEntry.getFirstKey());
         if (size > 1) {
-          buffer.append("-");
+          buffer.append('-');
           buffer.append(getLastEntry().getLastKey());
         }
         pageIndex = currPageIndex;

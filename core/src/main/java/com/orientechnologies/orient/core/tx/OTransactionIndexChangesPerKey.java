@@ -65,9 +65,9 @@ public class OTransactionIndexChangesPerKey {
       else
         builder.append(',');
 
-      builder.append(entry.value).append(" (").append(entry.operation).append(")");
+      builder.append(entry.value).append(" (").append(entry.operation).append(')');
     }
-    builder.append("]");
+    builder.append(']');
     return builder.toString();
   }
 }

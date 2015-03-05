@@ -372,7 +372,7 @@ public abstract class OChannelBinary extends OChannel {
         this,
         "Received unread response from " + socket.getRemoteSocketAddress()
             + " probably corrupted data from the network connection. Cleared dirty data in the buffer (" + i + " bytes): ["
-            + dirtyBuffer + (i > dirtyBuffer.length() ? "..." : "") + "]", OIOException.class);
+            + dirtyBuffer + (i > dirtyBuffer.length() ? "..." : "") + ']', OIOException.class);
   }
 
   @Override

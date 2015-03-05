@@ -74,9 +74,9 @@ public class OExpression extends SimpleNode {
       return value.toString();
     } else if (value instanceof String) {
       if (Boolean.TRUE.equals(singleQuotes)) {
-        return "'" + value + "'";
+        return "'" + value + '\'';
       }
-      return "\"" + value + "\"";
+      return "\"" + value + '"';
     } else {
       return "" + value;
     }

@@ -85,7 +85,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
         } catch (OSecurityAccessException e) {
           // WRONG USER/PASSWD
         } catch (OLockException e) {
-          OLogManager.instance().error(this, "Cannot access to the database '" + iRequest.databaseName + "'",
+          OLogManager.instance().error(this, "Cannot access to the database '" + iRequest.databaseName + '\'',
               ODatabaseException.class, e);
         } finally {
           if (db != null) {
@@ -119,7 +119,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
     } catch (OSecurityAccessException e) {
       // WRONG USER/PASSWD
     } catch (OLockException e) {
-      OLogManager.instance().error(this, "Cannot access to the database '" + iDatabaseName + "'", ODatabaseException.class, e);
+      OLogManager.instance().error(this, "Cannot access to the database '" + iDatabaseName + '\'', ODatabaseException.class, e);
     } finally {
       if (db != null) {
         db.close();
@@ -137,7 +137,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
       throws IOException {
     String header = null;
     if (iRequest.authentication == null || iRequest.authentication.equalsIgnoreCase("basic")) {
-      header = "WWW-Authenticate: Basic realm=\"OrientDB db-" + iDatabaseName + "\"";
+      header = "WWW-Authenticate: Basic realm=\"OrientDB db-" + iDatabaseName + '"';
     }
     iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
         "401 Unauthorized.", header);

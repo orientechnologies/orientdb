@@ -48,9 +48,9 @@ public class OContainsCondition extends OBooleanExpression {
     if (right != null) {
       result.append(right.toString());
     } else if (condition != null) {
-      result.append("(");
+      result.append('(');
       result.append(condition.toString());
-      result.append(")");
+      result.append(')');
     }
 
     return result.toString();

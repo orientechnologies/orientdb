@@ -87,7 +87,7 @@ public abstract class OSharedResourceTimeout {
     final String owner = extractLockOwnerStackTrace(lock);
 
     throw new OTimeoutException("Timeout on acquiring exclusive lock against resource of class: " + getClass() + " with timeout="
-        + timeout + (owner != null ? "\n" + owner : ""));
+        + timeout + (owner != null ? '\n' + owner : ""));
   }
 
   private String extractLockOwnerStackTrace(Lock lock) {

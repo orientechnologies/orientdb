@@ -432,7 +432,7 @@ public class OStorageConfiguration implements OSerializableStream {
     }
 
     // PLAIN: ALLOCATE ENOUGH SPACE TO REUSE IT EVERY TIME
-    buffer.append("|");
+    buffer.append('|');
 
     return buffer.toString().getBytes();
   }
@@ -570,7 +570,7 @@ public class OStorageConfiguration implements OSerializableStream {
         // @COMPATIBILITY 0.9.25
         int pos = fileName.indexOf("/databases");
         if (pos > -1) {
-          fileName = "${" + Orient.ORIENTDB_HOME + "}" + fileName.substring(pos);
+          fileName = "${" + Orient.ORIENTDB_HOME + '}' + fileName.substring(pos);
         }
       }
 

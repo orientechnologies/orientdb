@@ -76,7 +76,7 @@ public class OConsoleApplication {
           buffer
               .append(" <"
                   + ((com.orientechnologies.common.console.annotation.ConsoleParameter) m.getParameterAnnotations()[i][j]).name()
-                  + ">");
+                  + '>');
         }
       }
     }
@@ -324,14 +324,14 @@ public class OConsoleApplication {
       for (int i = 0; i < methodName.length(); ++i) {
         ch = methodName.charAt(i);
         if (Character.isUpperCase(ch)) {
-          commandName.append(" ");
+          commandName.append(' ');
           ch = Character.toLowerCase(ch);
           commandWordCount++;
         }
         commandName.append(ch);
       }
 
-      if (!commandLowerCase.equals(commandName.toString()) && !commandLowerCase.startsWith(commandName.toString() + " ")) {
+      if (!commandLowerCase.equals(commandName.toString()) && !commandLowerCase.startsWith(commandName.toString() + ' ')) {
         if (ann == null)
           continue;
 
@@ -386,7 +386,7 @@ public class OConsoleApplication {
         lastCommandInvoked.setLength(0);
         for (int i = 0; i < commandWordCount; ++i) {
           if (lastCommandInvoked.length() > 0)
-            lastCommandInvoked.append(" ");
+            lastCommandInvoked.append(' ');
           lastCommandInvoked.append(commandWords[i]);
         }
         continue;
@@ -440,7 +440,7 @@ public class OConsoleApplication {
 
       if (paramDescription != null)
         buffer.append(String.format("%-15s", paramDescription));
-      buffer.append("\n");
+      buffer.append('\n');
     }
 
     message(buffer.toString());
@@ -520,7 +520,7 @@ public class OConsoleApplication {
     StringBuilder command = new StringBuilder(512);
     for (int i = 0; i < iArguments.length; ++i) {
       if (i > 0)
-        command.append(" ");
+        command.append(' ');
 
       command.append(iArguments[i]);
     }

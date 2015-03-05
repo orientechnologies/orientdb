@@ -40,7 +40,7 @@ public class OScriptBlock extends OAbstractBlock {
       final StringBuilder buffer = new StringBuilder(1024);
       for (Object o : OMultiValue.getMultiValueIterable(code)) {
         if (buffer.length() > 0)
-          buffer.append(";");
+          buffer.append(';');
         buffer.append(o.toString());
       }
       code = buffer.toString();

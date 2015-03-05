@@ -129,7 +129,7 @@ public class OFetchHelper {
     Object fieldValue;
     for (String fieldName : record.fieldNames()) {
       int depthLevel;
-      final String fieldPath = !iFieldPathFromRoot.isEmpty() ? iFieldPathFromRoot + "." + fieldName : fieldName;
+      final String fieldPath = !iFieldPathFromRoot.isEmpty() ? iFieldPathFromRoot + '.' + fieldName : fieldName;
 
       depthLevel = getDepthLevel(iFetchPlan, fieldPath, iCurrentLevel);
       if (depthLevel == -2)
@@ -268,7 +268,7 @@ public class OFetchHelper {
     Set<String> toRemove = new HashSet<String>();
 
     for (String fieldName : record.fieldNames()) {
-      String fieldPath = !iFieldPathFromRoot.isEmpty() ? iFieldPathFromRoot + "." + fieldName : fieldName;
+      String fieldPath = !iFieldPathFromRoot.isEmpty() ? iFieldPathFromRoot + '.' + fieldName : fieldName;
       int depthLevel;
       depthLevel = getDepthLevel(iFetchPlan, fieldPath, iCurrentLevel);
       if (depthLevel == -2) {

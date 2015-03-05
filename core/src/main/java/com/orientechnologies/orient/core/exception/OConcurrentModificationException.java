@@ -60,7 +60,7 @@ public class OConcurrentModificationException extends ONeedRetryException {
     // EXTRACT THE OPERATION
     beginPos = message.indexOf(MESSAGE_OPERATION, endPos) + MESSAGE_OPERATION.length() + 1;
     endPos = message.indexOf("ing", beginPos);
-    recordOperation = ORecordOperation.getId(message.substring(beginPos, endPos).toUpperCase() + "E");
+    recordOperation = ORecordOperation.getId(message.substring(beginPos, endPos).toUpperCase() + 'E');
 
     // EXTRACT THE DB VERSION
     beginPos = message.indexOf(MESSAGE_DB_VERSION, endPos) + MESSAGE_DB_VERSION.length();
@@ -126,7 +126,7 @@ public class OConcurrentModificationException extends ONeedRetryException {
     sb.append(databaseVersion);
     sb.append(" your=v");
     sb.append(recordVersion);
-    sb.append(")");
+    sb.append(')');
     return sb.toString();
   }
 }

@@ -276,7 +276,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
       res.append(indexName);
     }
 
-    res.append("}");
+    res.append('}');
 
     return res.toString();
   }
@@ -411,7 +411,7 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
       if (paramCount > 1) {
         final String profiler_prefix = profiler.getDatabaseMetric(index.getDatabaseName(), "query.compositeIndexUsed");
         profiler.updateCounter(profiler_prefix, "Used composite index in query", +1);
-        profiler.updateCounter(profiler_prefix + "." + paramCount, "Used composite index in query with " + paramCount + " params",
+        profiler.updateCounter(profiler_prefix + '.' + paramCount, "Used composite index in query with " + paramCount + " params",
             +1);
       }
     }

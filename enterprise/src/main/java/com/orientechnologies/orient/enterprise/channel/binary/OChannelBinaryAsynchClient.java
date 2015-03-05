@@ -69,9 +69,9 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     try {
 
       maxUnreadResponses = OGlobalConfiguration.NETWORK_BINARY_READ_RESPONSE_MAX_TIMES.getValueAsInteger();
-      serverURL = remoteHost + ":" + remotePort;
+      serverURL = remoteHost + ':' + remotePort;
       if (iDatabaseName != null)
-        serverURL += "/" + iDatabaseName;
+        serverURL += '/' + iDatabaseName;
       socketTimeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
 
       socket.setPerformancePreferences(0, 2, 1);
@@ -84,7 +84,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
         setReadResponseTimeout();
         connected();
       } catch (java.net.SocketTimeoutException e) {
-        throw new IOException("Cannot connect to host " + remoteHost + ":" + remotePort, e);
+        throw new IOException("Cannot connect to host " + remoteHost + ':' + remotePort, e);
       }
       try {
         inStream = new BufferedInputStream(socket.getInputStream(), socketBufferSize);

@@ -75,8 +75,8 @@ import java.util.*;
 @SuppressWarnings("unchecked")
 public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecutorSQLAbstract implements
     OCommandDistributedReplicateRequest, Iterable<OIdentifiable>, OIterableRecordSource {
-  protected static final String               KEYWORD_FROM_2FIND = " " + KEYWORD_FROM + " ";
-  protected static final String               KEYWORD_LET_2FIND  = " " + KEYWORD_LET + " ";
+  protected static final String               KEYWORD_FROM_2FIND = ' ' + KEYWORD_FROM + ' ';
+  protected static final String               KEYWORD_LET_2FIND  = ' ' + KEYWORD_LET + ' ';
 
   protected OSQLAsynchQuery<ODocument>        request;
   protected OSQLTarget                        parsedTarget;

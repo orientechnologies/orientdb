@@ -42,9 +42,9 @@ public class ONotInCondition extends OBooleanExpression {
     result.append(left.toString());
     result.append(" NOT IN ");
     if (rightStatement != null) {
-      result.append("(");
+      result.append('(');
       result.append(rightStatement.toString());
-      result.append(")");
+      result.append(')');
     } else if (right != null) {
       result.append(convertToString(right));
     } else if (rightParam != null) {
@@ -63,7 +63,7 @@ public class ONotInCondition extends OBooleanExpression {
 
   private String convertToString(Object o) {
     if (o instanceof String) {
-      return "\"" + ((String) o).replaceAll("\"", "\\\"") + "\"";
+      return '"' + ((String) o).replaceAll("\"", "\\\"") + '"';
     }
     return o.toString();
   }

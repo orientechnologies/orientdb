@@ -90,7 +90,7 @@ public class OStreamSerializerAnyStreamable implements OStreamSerializer {
       return null;
 
     if (!(iObject instanceof OSerializableStream))
-      throw new OSerializationException("Cannot serialize the object [" + iObject.getClass() + ":" + iObject
+      throw new OSerializationException("Cannot serialize the object [" + iObject.getClass() + ':' + iObject
           + "] since it does not implement the OSerializableStream interface");
 
     OSerializableStream stream = (OSerializableStream) iObject;

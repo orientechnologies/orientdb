@@ -305,7 +305,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       return null;
 
     if (Character.isDigit(iClassName.charAt(0)))
-      iClassName = "-" + iClassName;
+      iClassName = '-' + iClassName;
 
     try {
       return URLEncoder.encode(iClassName, "UTF-8");
@@ -846,7 +846,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       }
 
     } else {
-      indexName = OrientVertexType.CLASS_NAME + "." + iKey;
+      indexName = OrientVertexType.CLASS_NAME + '.' + iKey;
       key = iKey;
     }
 
@@ -884,7 +884,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
     if (iKey.indexOf('.') > -1)
       indexName = iKey;
     else
-      indexName = OrientVertexType.CLASS_NAME + "." + iKey;
+      indexName = OrientVertexType.CLASS_NAME + '.' + iKey;
 
     final OIndex<?> idx = database.getMetadata().getIndexManager().getIndex(indexName);
     if (idx != null) {
@@ -1010,7 +1010,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       indexName = iKey;
       key = iKey.substring(iKey.indexOf('.') + 1);
     } else {
-      indexName = OrientEdgeType.CLASS_NAME + "." + iKey;
+      indexName = OrientEdgeType.CLASS_NAME + '.' + iKey;
       key = iKey;
     }
 
@@ -1469,7 +1469,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       @Override
       public OClass call(final OrientBaseGraph g) {
         final String className = getClassName(elementClass);
-        getRawGraph().getMetadata().getIndexManager().dropIndex(className + "." + key);
+        getRawGraph().getMetadata().getIndexManager().dropIndex(className + '.' + key);
         return null;
       }
     }, "drop key index '", elementClass.getSimpleName(), ".", key, "'");
@@ -1541,7 +1541,7 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
 
         db.getMetadata()
             .getIndexManager()
-            .createIndex(className + "." + key, indexType, new OPropertyIndexDefinition(className, key, keyType),
+            .createIndex(className + '.' + key, indexType, new OPropertyIndexDefinition(className, key, keyType),
                 cls.getPolymorphicClusterIds(), null, metadata);
         return null;
 

@@ -1452,7 +1452,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
   @Override
   public String getURL() {
-    return OEngineRemote.NAME + ":" + url;
+    return OEngineRemote.NAME + ':' + url;
   }
 
   public String getClientId() {
@@ -1561,7 +1561,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
       try {
         if (OLogManager.instance().isDebugEnabled())
           OLogManager.instance()
-              .debug(this, "Retrying to connect to remote server #" + (retry + 1) + "/" + currentMaxRetry + "...");
+              .debug(this, "Retrying to connect to remote server #" + (retry + 1) + '/' + currentMaxRetry + "...");
 
         // FORCE RESET OF THREAD DATA (SERVER URL + SESSION ID)
         setSessionId(null, -1, null);
@@ -1834,7 +1834,7 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
         throw new OStorageException("Cannot create a connection to remote server because url list is empty");
     }
 
-    return serverURLs.get(0) + "/" + getName();
+    return serverURLs.get(0) + '/' + getName();
   }
 
   protected OChannelBinaryAsynchClient getAvailableNetwork(final String iCurrentURL) throws IOException {

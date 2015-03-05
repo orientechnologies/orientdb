@@ -121,7 +121,7 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
 
     OPropertyImpl prop = (OPropertyImpl) sourceClass.getProperty(fieldName);
     if (prop != null)
-      throw new OCommandExecutionException("Property '" + className + "." + fieldName
+      throw new OCommandExecutionException("Property '" + className + '.' + fieldName
           + "' already exists. Remove it before to retry.");
 
     // CREATE THE PROPERTY

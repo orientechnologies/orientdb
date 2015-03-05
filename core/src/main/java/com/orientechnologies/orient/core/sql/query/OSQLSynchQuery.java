@@ -142,7 +142,7 @@ public class OSQLSynchQuery<T extends Object> extends OSQLAsynchQuery<T> impleme
     super.queryFromStream(buffer);
 
     final String rid = buffer.getAsString();
-    if ("".equals(rid))
+    if (rid != null && rid.isEmpty())
       nextPageRID = null;
     else
       nextPageRID = new ORecordId(rid);

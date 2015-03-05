@@ -50,7 +50,7 @@ public class OUpdateStatement extends OStatement {
     }
 
     for (OUpdateOperations ops : this.operations) {
-      result.append(" ");
+      result.append(' ');
       result.append(ops.toString());
     }
 
@@ -66,7 +66,7 @@ public class OUpdateStatement extends OStatement {
         result.append(" AFTER");
       }
       if (returnProjection != null) {
-        result.append(" ");
+        result.append(' ');
         result.append(returnProjection.toString());
       }
     }

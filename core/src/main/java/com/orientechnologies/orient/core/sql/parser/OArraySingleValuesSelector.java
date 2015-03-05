@@ -29,7 +29,7 @@ public class OArraySingleValuesSelector extends SimpleNode {
     StringBuilder result = new StringBuilder();
     for (OArraySelector item : items) {
       if (!first) {
-        result.append(",");
+        result.append(',');
       }
       result.append(item.toString());
       first = false;

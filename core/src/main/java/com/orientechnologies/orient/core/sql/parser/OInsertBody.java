@@ -59,7 +59,7 @@ public class OInsertBody extends SimpleNode {
     StringBuilder result = new StringBuilder();
 
     if (identifierList != null) {
-      result.append("(");
+      result.append('(');
       boolean first = true;
       for (OIdentifier item : identifierList) {
         if (!first) {
@@ -73,7 +73,7 @@ public class OInsertBody extends SimpleNode {
         boolean firstList = true;
         for (List<OExpression> itemList : valueExpressions) {
           if (firstList) {
-            result.append("(");
+            result.append('(');
           } else {
             result.append("),(");
           }
@@ -88,7 +88,7 @@ public class OInsertBody extends SimpleNode {
           firstList = false;
         }
       }
-      result.append(")");
+      result.append(')');
 
     }
 
@@ -111,7 +111,7 @@ public class OInsertBody extends SimpleNode {
       }
       result.append(selectStatement.toString());
       if (selectInParentheses) {
-        result.append(")");
+        result.append(')');
       }
     }
 

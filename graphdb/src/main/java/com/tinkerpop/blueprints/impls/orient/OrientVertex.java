@@ -62,8 +62,8 @@ import java.util.Set;
  */
 @SuppressWarnings("unchecked")
 public class OrientVertex extends OrientElement implements OrientExtendedVertex {
-  public static final String CONNECTION_OUT_PREFIX = OrientBaseGraph.CONNECTION_OUT + "_";
-  public static final String CONNECTION_IN_PREFIX  = OrientBaseGraph.CONNECTION_IN + "_";
+  public static final String CONNECTION_OUT_PREFIX = OrientBaseGraph.CONNECTION_OUT + '_';
+  public static final String CONNECTION_IN_PREFIX  = OrientBaseGraph.CONNECTION_IN + '_';
 
   private static final long  serialVersionUID      = 1L;
 
@@ -872,11 +872,11 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     // TEMPORARY STATIC LOCK TO AVOID MT PROBLEMS AGAINST OMVRBTreeRID
     final ODocument outDocument = getRecord();
     if (outDocument == null)
-      throw new IllegalArgumentException("source vertex is invalid (rid=" + getIdentity() + ")");
+      throw new IllegalArgumentException("source vertex is invalid (rid=" + getIdentity() + ')');
 
     final ODocument inDocument = inVertex.getRecord();
     if (inDocument == null)
-      throw new IllegalArgumentException("destination vertex is invalid (rid=" + inVertex.getIdentity() + ")");
+      throw new IllegalArgumentException("destination vertex is invalid (rid=" + inVertex.getIdentity() + ')');
 
     final OrientEdge edge;
     OIdentifiable to;
@@ -1114,14 +1114,14 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
     final ODocument record = getRecord();
     if (record == null)
-      return "<invalid record " + rawElement.getIdentity() + ">";
+      return "<invalid record " + rawElement.getIdentity() + '>';
 
     final String clsName = record.getClassName();
 
     if (OrientVertexType.CLASS_NAME.equals(clsName))
       return StringFactory.vertexString(this);
 
-    return StringFactory.V + "(" + clsName + ")" + StringFactory.L_BRACKET + getId() + StringFactory.R_BRACKET;
+    return StringFactory.V + '(' + clsName + ')' + StringFactory.L_BRACKET + getId() + StringFactory.R_BRACKET;
   }
 
   /**

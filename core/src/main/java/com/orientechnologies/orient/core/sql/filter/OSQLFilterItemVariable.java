@@ -53,7 +53,7 @@ public class OSQLFilterItemVariable extends OSQLFilterItemAbstract {
 
   @Override
   public String toString() {
-    return "$" + super.toString();
+    return '$' + super.toString();
   }
 
 

@@ -315,13 +315,13 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       return DB_STATUS.OFFLINE;
 
     final DB_STATUS status = (DB_STATUS) getConfigurationMap().get(
-        OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + iNode + "." + iDatabaseName);
+        OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + iNode + '.' + iDatabaseName);
     return status != null ? status : DB_STATUS.OFFLINE;
   }
 
   @Override
   public void setDatabaseStatus(final String iNode, final String iDatabaseName, final DB_STATUS iStatus) {
-    getConfigurationMap().put(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + iNode + "." + iDatabaseName, iStatus);
+    getConfigurationMap().put(OHazelcastPlugin.CONFIG_DBSTATUS_PREFIX + iNode + '.' + iDatabaseName, iStatus);
   }
 
   @Override
@@ -343,7 +343,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     if (iTargetNodes == null || iTargetNodes.isEmpty()) {
       ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.OUT,
           "No nodes configured for partition '%s.%s' request: %s", iDatabaseName, iClusterNames, req);
-      throw new ODistributedException("No nodes configured for partition '" + iDatabaseName + "." + iClusterNames + "' request: "
+      throw new ODistributedException("No nodes configured for partition '" + iDatabaseName + '.' + iClusterNames + "' request: "
           + req);
     }
 
@@ -818,7 +818,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         Orient.instance().unregisterStorageByName(databaseName);
 
         // MOVE DIRECTORY TO ../backup/databases/<db-name>
-        final String backupPath = serverInstance.getDatabaseDirectory() + "/" + BACKUP_DIR + "/" + databaseName;
+        final String backupPath = serverInstance.getDatabaseDirectory() + '/' + BACKUP_DIR + '/' + databaseName;
         final File f = new File(BACKUP_DIR);
         if (f.exists())
           OFileUtils.deleteRecursively(new File(backupPath));
@@ -1011,7 +1011,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       final String bestCluster = cfg.getLocalCluster(clusterNames, server);
       if (bestCluster == null) {
         // TRY TO FIND A CLUSTER PREVIOUSLY ASSIGNED TO THE LOCAL NODE
-        final String newClusterName = (iClass.getName() + "_" + server).toLowerCase();
+        final String newClusterName = (iClass.getName() + '_' + server).toLowerCase();
 
         final Set<String> cfgClusterNames = new HashSet<String>();
         for (String cl : cfg.getClusterNames())
@@ -1042,7 +1042,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
           } catch (Exception e) {
             ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "error on creating cluster '%s' in class '%s'",
                 newClusterName, iClass);
-            throw new ODistributedException("Error on creating cluster '" + newClusterName + "' in class '" + iClass + "'");
+            throw new ODistributedException("Error on creating cluster '" + newClusterName + "' in class '" + iClass + '\'');
           } finally {
 
             if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)
@@ -1338,7 +1338,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     String bestCluster = cfg.getLocalCluster(clusterNames, nodeName);
     if (bestCluster == null) {
       // TRY TO FIND A CLUSTER PREVIOUSLY ASSIGNED TO THE LOCAL NODE
-      final String newClusterName = (iClass.getName() + "_" + getLocalNodeName()).toLowerCase();
+      final String newClusterName = (iClass.getName() + '_' + getLocalNodeName()).toLowerCase();
 
       final Set<String> cfgClusterNames = new HashSet<String>();
       for (String cl : cfg.getClusterNames())
@@ -1368,7 +1368,7 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         } catch (Exception e) {
           ODistributedServerLog.error(this, nodeName, null, DIRECTION.NONE, "error on creating cluster '%s' in class '%s': ",
               newClusterName, iClass, e);
-          throw new ODistributedException("Error on creating cluster '" + newClusterName + "' in class '" + iClass + "'", e);
+          throw new ODistributedException("Error on creating cluster '" + newClusterName + "' in class '" + iClass + '\'', e);
         } finally {
 
           if (currentDistributedMode != OScenarioThreadLocal.RUN_MODE.DEFAULT)

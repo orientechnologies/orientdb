@@ -74,7 +74,7 @@ public class MemoryLocker {
           errorMessage = "The implementation does not support this memory locking interface(ENOSYS).";
           break;
         default:
-          errorMessage = "Unexpected exception with code " + lastError + ".";
+          errorMessage = "Unexpected exception with code " + lastError + '.';
           break;
         }
         OLogManager.instance().config(null, "[MemoryLocker.lockMemory] Error occurred while locking memory: %s", errorMessage);

@@ -123,7 +123,7 @@ public class OUser extends ODocumentWrapper implements OSecurityUser {
     if (role == null)
       throw new OSecurityAccessException(document.getDatabase().getName(), "User '" + document.field("name")
           + "' has no the permission to execute the operation '" + ORole.permissionToString(iOperation)
-          + "' against the resource: " + resourceGeneric + "." + resourceSpecific);
+          + "' against the resource: " + resourceGeneric + '.' + resourceSpecific);
 
     return role;
   }

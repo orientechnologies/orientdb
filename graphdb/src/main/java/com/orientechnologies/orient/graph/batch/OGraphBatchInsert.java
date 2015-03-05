@@ -267,7 +267,7 @@ public class OGraphBatchInsert {
     OClass vClass = db.getMetadata().getSchema().getClass(this.vertexClass);
     int[] existingClusters = vClass.getClusterIds();
     for (int c = existingClusters.length; c <= parallel; c++) {
-      vClass.addCluster(vClass.getName() + "_" + c);
+      vClass.addCluster(vClass.getName() + '_' + c);
     }
 
     clusterIds = vClass.getClusterIds();

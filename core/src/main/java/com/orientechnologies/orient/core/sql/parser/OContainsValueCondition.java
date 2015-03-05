@@ -45,9 +45,9 @@ public class OContainsValueCondition extends OBooleanExpression {
     result.append(left.toString());
     result.append(" CONTAINSVALUE ");
     if (condition != null) {
-      result.append("(");
+      result.append('(');
       result.append(condition.toString());
-      result.append(")");
+      result.append(')');
     } else {
       result.append(expression.toString());
     }

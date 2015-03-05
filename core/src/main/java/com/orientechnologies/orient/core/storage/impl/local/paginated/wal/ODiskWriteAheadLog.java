@@ -103,7 +103,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
                                                                                     Thread thread = new Thread(r);
                                                                                     thread.setDaemon(true);
                                                                                     thread.setName("OrientDB WAL Flush Task ("
-                                                                                        + storage.getName() + ")");
+                                                                                        + storage.getName() + ')');
                                                                                     return thread;
                                                                                   }
                                                                                 });
@@ -1182,7 +1182,7 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   }
 
   private String getSegmentName(long order) {
-    return storage.getName() + "." + order + WAL_SEGMENT_EXTENSION;
+    return storage.getName() + '.' + order + WAL_SEGMENT_EXTENSION;
   }
 
   private OLogSequenceNumber readFlushedLSN() throws IOException {

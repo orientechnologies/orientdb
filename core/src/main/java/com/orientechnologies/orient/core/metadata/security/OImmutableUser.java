@@ -48,7 +48,7 @@ public class OImmutableUser implements OSecurityUser {
 
     if (role == null)
       throw new OSecurityAccessException(getName(), "User '" + getName() + "' has no the permission to execute the operation '"
-          + ORole.permissionToString(iOperation) + "' against the resource: " + resourceGeneric + "." + resourceSpecific);
+          + ORole.permissionToString(iOperation) + "' against the resource: " + resourceGeneric + '.' + resourceSpecific);
 
     return role;
   }

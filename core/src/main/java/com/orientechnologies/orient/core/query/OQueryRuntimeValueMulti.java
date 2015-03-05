@@ -48,14 +48,14 @@ public class OQueryRuntimeValueMulti {
       return "";
 
     StringBuilder buffer = new StringBuilder(128);
-    buffer.append("[");
+    buffer.append('[');
     int i = 0;
     for (Object v : getValues()) {
       if (i++ > 0)
-        buffer.append(",");
+        buffer.append(',');
       buffer.append(v);
     }
-    buffer.append("]");
+    buffer.append(']');
     return buffer.toString();
   }
 

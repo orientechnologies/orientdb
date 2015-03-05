@@ -234,7 +234,7 @@ public abstract class OBaseParser {
 
       if (!found)
         throwSyntaxErrorException("Found unexpected keyword '" + parserLastWord + "' while it was expected '"
-            + Arrays.toString(iWords) + "'");
+            + Arrays.toString(iWords) + '\'');
     }
     return parserLastWord.toString();
   }
@@ -306,7 +306,7 @@ public abstract class OBaseParser {
   protected void parserRequiredKeyword(final String... iWords) {
     parserNextWord(true, " \r\n,()");
     if (parserLastWord.length() == 0)
-      throwSyntaxErrorException("Cannot find expected keyword '" + Arrays.toString(iWords) + "'");
+      throwSyntaxErrorException("Cannot find expected keyword '" + Arrays.toString(iWords) + '\'');
 
     boolean found = false;
     for (String w : iWords) {
@@ -318,7 +318,7 @@ public abstract class OBaseParser {
 
     if (!found)
       throwSyntaxErrorException("Found unexpected keyword '" + parserLastWord + "' while it was expected '"
-          + Arrays.toString(iWords) + "'");
+          + Arrays.toString(iWords) + '\'');
   }
 
   /**
@@ -382,7 +382,7 @@ public abstract class OBaseParser {
 
     if (iMandatory)
       throwSyntaxErrorException("Found unexpected keyword '" + parserLastWord + "' while it was expected '"
-          + Arrays.toString(iCandidateWords) + "'");
+          + Arrays.toString(iCandidateWords) + '\'');
 
     return -1;
   }
@@ -410,7 +410,7 @@ public abstract class OBaseParser {
 
     if (!found)
       throwSyntaxErrorException("Found unexpected keyword '" + parserLastWord + "' while it was expected '"
-          + Arrays.toString(iWords) + "'");
+          + Arrays.toString(iWords) + '\'');
 
     return true;
   }

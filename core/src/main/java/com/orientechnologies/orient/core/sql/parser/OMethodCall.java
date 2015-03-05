@@ -26,9 +26,9 @@ public class OMethodCall extends SimpleNode {
   @Override
   public String toString() {
     StringBuilder result = new StringBuilder();
-    result.append(".");
+    result.append('.');
     result.append(methodName.toString());
-    result.append("(");
+    result.append('(');
     boolean first = true;
     for (OExpression param : params) {
       if (!first) {
@@ -37,7 +37,7 @@ public class OMethodCall extends SimpleNode {
       result.append(param.toString());
       first = false;
     }
-    result.append(")");
+    result.append(')');
     return result.toString();
   }
 

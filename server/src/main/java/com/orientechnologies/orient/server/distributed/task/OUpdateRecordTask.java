@@ -140,7 +140,7 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
   @Override
   public String toString() {
     if (version.isTemporary())
-      return getName() + "(" + rid + " v." + (version.getCounter() - Integer.MIN_VALUE) + " realV." + version + ")";
+      return getName() + '(' + rid + " v." + (version.getCounter() - Integer.MIN_VALUE) + " realV." + version + ')';
     else
       return super.toString();
   }

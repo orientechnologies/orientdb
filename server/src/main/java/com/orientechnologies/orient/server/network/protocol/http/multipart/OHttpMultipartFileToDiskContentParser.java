@@ -63,8 +63,8 @@ public class OHttpMultipartFileToDiskContentParser implements OHttpMultipartCont
         final String fileNoExt = fileName.substring(0, fileName.lastIndexOf("."));
 
         for (int i = 1;; ++i) {
-          if (!new File(fileNoExt + "_" + i + fileExt).exists()) {
-            fileName = fileNoExt + "_" + i + fileExt;
+          if (!new File(fileNoExt + '_' + i + fileExt).exists()) {
+            fileName = fileNoExt + '_' + i + fileExt;
             break;
           }
         }

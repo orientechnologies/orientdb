@@ -36,7 +36,7 @@ public class OBinaryCondition extends OBooleanExpression {
 
   @Override
   public String toString() {
-    return left.toString() + " " + operator.toString() + " " + right.toString();
+    return left.toString() + ' ' + operator.toString() + ' ' + right.toString();
   }
 }
 /* JavaCC - OriginalChecksum=99ed1dd2812eb730de8e1931b1764da5 (do not edit this line) */

@@ -93,7 +93,7 @@ public class OCommandScript extends OCommandRequestTextAbstract {
   @Override
   public String toString() {
     if (language != null)
-      return language + "." + text;
+      return language + '.' + text;
     return "script." + text;
   }
 }

@@ -118,7 +118,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
 
   @Override
   public String getURL() {
-    return OEngineLocalPaginated.NAME + ":" + url;
+    return OEngineLocalPaginated.NAME + ':' + url;
   }
 
   public String getStoragePath() {
@@ -299,7 +299,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
   }
 
   private boolean exists(String path) {
-    return new File(path + "/" + OMetadataDefault.CLUSTER_INTERNAL_NAME + OPaginatedCluster.DEF_EXTENSION).exists();
+    return new File(path + '/' + OMetadataDefault.CLUSTER_INTERNAL_NAME + OPaginatedCluster.DEF_EXTENSION).exists();
   }
 
 	private static class FullCheckpointThreadFactory implements ThreadFactory {

@@ -109,7 +109,7 @@ public class OServerCommandPostInstallDatabase extends OServerCommandAuthenticat
     if (storageMode.equals(OEngineLocalPaginated.NAME)) {
       path = storageMode + ":${" + Orient.ORIENTDB_HOME + "}/databases/" + databaseName;
     } else if (storageMode.equals(OEngineMemory.NAME)) {
-      path = storageMode + ":" + databaseName;
+      path = storageMode + ':' + databaseName;
     } else {
       return null;
     }
@@ -131,7 +131,7 @@ public class OServerCommandPostInstallDatabase extends OServerCommandAuthenticat
             exportClass(db, json, cls);
             exportedNames.add(cls.getName());
           } catch (Exception e) {
-            OLogManager.instance().error(this, "Error on exporting class '" + cls + "'", e);
+            OLogManager.instance().error(this, "Error on exporting class '" + cls + '\'', e);
           }
       }
       json.endCollection(1, true);

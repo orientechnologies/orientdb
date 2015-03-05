@@ -54,7 +54,7 @@ public class OLogManager {
 
   public static void installCustomFormatter() {
     final boolean installCustomFormatter = Boolean.parseBoolean(OSystemVariableResolver.resolveSystemVariables("${"
-        + ENV_INSTALL_CUSTOM_FORMATTER + "}", "true"));
+        + ENV_INSTALL_CUSTOM_FORMATTER + '}', "true"));
 
     if (!installCustomFormatter)
       return;

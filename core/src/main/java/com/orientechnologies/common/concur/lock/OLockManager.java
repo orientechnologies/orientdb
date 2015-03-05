@@ -109,7 +109,7 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
           }
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
-          throw new OLockException("Thread interrupted while waiting for resource '" + iResourceId + "'");
+          throw new OLockException("Thread interrupted while waiting for resource '" + iResourceId + '\'');
         }
       }
     } catch (RuntimeException e) {
@@ -177,7 +177,7 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
       lock = map.get(iResourceId);
       if (lock == null)
         throw new OLockException("Error on releasing a non acquired lock by the requester '" + iRequester
-            + "' against the resource: '" + iResourceId + "'");
+            + "' against the resource: '" + iResourceId + '\'');
 
       lock.countLocks--;
       if (lock.countLocks == 0)
@@ -200,7 +200,7 @@ public class OLockManager<RESOURCE_TYPE, REQUESTER_TYPE> {
       lock = map.get(iResourceId);
       if (lock == null)
         throw new OLockException("Error on releasing a non acquired lock by the requester '" + iRequester
-            + "' against the resource: '" + iResourceId + "'");
+            + "' against the resource: '" + iResourceId + '\'');
 
       if (iCurrentLockType == LOCK.SHARED)
         lock.readLock().unlock();

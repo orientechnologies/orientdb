@@ -125,7 +125,7 @@ public class OServer {
       InstanceAlreadyExistsException, MBeanRegistrationException, NotCompliantMBeanException {
     this.shutdownEngineOnExit = shutdownEngineOnExit;
 
-    serverRootDirectory = OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME + "}", ".");
+    serverRootDirectory = OSystemVariableResolver.resolveSystemVariables("${" + Orient.ORIENTDB_HOME + '}', ".");
 
     OLogManager.installCustomFormatter();
 
@@ -390,7 +390,7 @@ public class OServer {
         dbURL = "plocal:" + dbPath;
       else
         throw new OConfigurationException("Database '" + name + "' is not configured on server (home=" + getDatabaseDirectory()
-            + ")");
+            + ')');
     }
 
     return dbURL;
@@ -743,7 +743,7 @@ public class OServer {
 
         int idx = stg.path.indexOf(':');
         if (idx == -1) {
-          OLogManager.instance().error(this, "-> Invalid path '" + stg.path + "' for database '" + stg.name + "'");
+          OLogManager.instance().error(this, "-> Invalid path '" + stg.path + "' for database '" + stg.name + '\'');
           return;
         }
         type = stg.path.substring(0, idx);
@@ -769,7 +769,7 @@ public class OServer {
             }
           }
 
-          OLogManager.instance().info(this, "-> Loaded " + type + " database '" + stg.name + "'");
+          OLogManager.instance().info(this, "-> Loaded " + type + " database '" + stg.name + '\'');
         } catch (Exception e) {
           OLogManager.instance().error(this, "-> Cannot load " + type + " database '" + stg.name + "': " + e);
 

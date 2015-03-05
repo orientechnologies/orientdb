@@ -374,7 +374,7 @@ public class ORole extends ODocumentWrapper implements OSecurityRole {
       }
 
       for (Map.Entry<String, Byte> specificResource : rule.getSpecificResources().entrySet()) {
-        result.put(name + "." + specificResource.getKey(), specificResource.getValue());
+        result.put(name + '.' + specificResource.getKey(), specificResource.getValue());
       }
     }
 

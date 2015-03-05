@@ -70,7 +70,7 @@ public class OEntityManager {
         return createInstance(entityClass);
 
     } catch (Exception e) {
-      throw new OConfigurationException("Error while creating new pojo of class '" + iClassName + "'", e);
+      throw new OConfigurationException("Error while creating new pojo of class '" + iClassName + '\'', e);
     }
 
     try {

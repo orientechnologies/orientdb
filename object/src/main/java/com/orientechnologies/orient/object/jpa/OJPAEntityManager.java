@@ -304,7 +304,7 @@ public class OJPAEntityManager implements EntityManager {
 
   @Override
   public String toString() {
-    return "EntityManager for User@Database:" + database.getUser() + "@" + database.getURL() + ", " + super.toString();
+    return "EntityManager for User@Database:" + database.getUser() + '@' + database.getURL() + ", " + super.toString();
   }
 
 }

@@ -70,13 +70,13 @@ public class OComposableProcessor extends OConfigurableStatefulFactory<String, O
   public Object process(final OProcessorBlock iParent, final String iType, final ODocument iContent,
       final OCommandContext iContext, final ODocument iOutput, final boolean iReadOnly) {
     if (iContent == null)
-      throw new OProcessException("Cannot find block type '" + iType + "'");
+      throw new OProcessException("Cannot find block type '" + iType + '\'');
 
     OProcessorBlock block;
     try {
       block = newInstance(iType);
     } catch (Exception e) {
-      throw new OProcessException("Cannot create block of class '" + iType + "'", e);
+      throw new OProcessException("Cannot create block of class '" + iType + '\'', e);
     }
 
     block.setParentBlock(iParent);
@@ -117,7 +117,7 @@ public class OComposableProcessor extends OConfigurableStatefulFactory<String, O
   }
 
   protected String loadTemplate(final String iPath) throws IOException {
-    final File file = new File(path + "/" + iPath + extension);
+    final File file = new File(path + '/' + iPath + extension);
     final BufferedInputStream is = new BufferedInputStream(new FileInputStream(file));
 
     try {

@@ -35,7 +35,7 @@ public class ODefaultCommandExecutorSQLFactory implements OCommandExecutorSQLFac
 
     // COMMANDS
     final Map<String, Class<? extends OCommandExecutorSQLAbstract>> commands = new HashMap<String, Class<? extends OCommandExecutorSQLAbstract>>();
-    commands.put(OCommandExecutorSQLAlterDatabase.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterDatabase.KEYWORD_DATABASE,
+    commands.put(OCommandExecutorSQLAlterDatabase.KEYWORD_ALTER + ' ' + OCommandExecutorSQLAlterDatabase.KEYWORD_DATABASE,
         OCommandExecutorSQLAlterDatabase.class);
     commands.put(OCommandExecutorSQLSelect.KEYWORD_SELECT, OCommandExecutorSQLSelect.class);
     commands.put(OCommandExecutorSQLTraverse.KEYWORD_TRAVERSE, OCommandExecutorSQLTraverse.class);
@@ -46,39 +46,39 @@ public class ODefaultCommandExecutorSQLFactory implements OCommandExecutorSQLFac
     commands.put(OCommandExecutorSQLCreateFunction.NAME, OCommandExecutorSQLCreateFunction.class);
     commands.put(OCommandExecutorSQLGrant.KEYWORD_GRANT, OCommandExecutorSQLGrant.class);
     commands.put(OCommandExecutorSQLRevoke.KEYWORD_REVOKE, OCommandExecutorSQLRevoke.class);
-    commands.put(OCommandExecutorSQLCreateLink.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateLink.KEYWORD_LINK,
+    commands.put(OCommandExecutorSQLCreateLink.KEYWORD_CREATE + ' ' + OCommandExecutorSQLCreateLink.KEYWORD_LINK,
         OCommandExecutorSQLCreateLink.class);
-    commands.put(OCommandExecutorSQLCreateIndex.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateIndex.KEYWORD_INDEX,
+    commands.put(OCommandExecutorSQLCreateIndex.KEYWORD_CREATE + ' ' + OCommandExecutorSQLCreateIndex.KEYWORD_INDEX,
         OCommandExecutorSQLCreateIndex.class);
-    commands.put(OCommandExecutorSQLDropIndex.KEYWORD_DROP + " " + OCommandExecutorSQLDropIndex.KEYWORD_INDEX,
+    commands.put(OCommandExecutorSQLDropIndex.KEYWORD_DROP + ' ' + OCommandExecutorSQLDropIndex.KEYWORD_INDEX,
         OCommandExecutorSQLDropIndex.class);
-    commands.put(OCommandExecutorSQLRebuildIndex.KEYWORD_REBUILD + " " + OCommandExecutorSQLRebuildIndex.KEYWORD_INDEX,
+    commands.put(OCommandExecutorSQLRebuildIndex.KEYWORD_REBUILD + ' ' + OCommandExecutorSQLRebuildIndex.KEYWORD_INDEX,
         OCommandExecutorSQLRebuildIndex.class);
-    commands.put(OCommandExecutorSQLCreateClass.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateClass.KEYWORD_CLASS,
+    commands.put(OCommandExecutorSQLCreateClass.KEYWORD_CREATE + ' ' + OCommandExecutorSQLCreateClass.KEYWORD_CLASS,
         OCommandExecutorSQLCreateClass.class);
-    commands.put(OCommandExecutorSQLCreateCluster.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateCluster.KEYWORD_CLUSTER,
+    commands.put(OCommandExecutorSQLCreateCluster.KEYWORD_CREATE + ' ' + OCommandExecutorSQLCreateCluster.KEYWORD_CLUSTER,
         OCommandExecutorSQLCreateCluster.class);
-    commands.put(OCommandExecutorSQLAlterClass.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterClass.KEYWORD_CLASS,
+    commands.put(OCommandExecutorSQLAlterClass.KEYWORD_ALTER + ' ' + OCommandExecutorSQLAlterClass.KEYWORD_CLASS,
         OCommandExecutorSQLAlterClass.class);
-    commands.put(OCommandExecutorSQLCreateProperty.KEYWORD_CREATE + " " + OCommandExecutorSQLCreateProperty.KEYWORD_PROPERTY,
+    commands.put(OCommandExecutorSQLCreateProperty.KEYWORD_CREATE + ' ' + OCommandExecutorSQLCreateProperty.KEYWORD_PROPERTY,
         OCommandExecutorSQLCreateProperty.class);
-    commands.put(OCommandExecutorSQLAlterProperty.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterProperty.KEYWORD_PROPERTY,
+    commands.put(OCommandExecutorSQLAlterProperty.KEYWORD_ALTER + ' ' + OCommandExecutorSQLAlterProperty.KEYWORD_PROPERTY,
         OCommandExecutorSQLAlterProperty.class);
-    commands.put(OCommandExecutorSQLDropCluster.KEYWORD_DROP + " " + OCommandExecutorSQLDropCluster.KEYWORD_CLUSTER,
+    commands.put(OCommandExecutorSQLDropCluster.KEYWORD_DROP + ' ' + OCommandExecutorSQLDropCluster.KEYWORD_CLUSTER,
         OCommandExecutorSQLDropCluster.class);
-    commands.put(OCommandExecutorSQLDropClass.KEYWORD_DROP + " " + OCommandExecutorSQLDropClass.KEYWORD_CLASS,
+    commands.put(OCommandExecutorSQLDropClass.KEYWORD_DROP + ' ' + OCommandExecutorSQLDropClass.KEYWORD_CLASS,
         OCommandExecutorSQLDropClass.class);
-    commands.put(OCommandExecutorSQLDropProperty.KEYWORD_DROP + " " + OCommandExecutorSQLDropProperty.KEYWORD_PROPERTY,
+    commands.put(OCommandExecutorSQLDropProperty.KEYWORD_DROP + ' ' + OCommandExecutorSQLDropProperty.KEYWORD_PROPERTY,
         OCommandExecutorSQLDropProperty.class);
-    commands.put(OCommandExecutorSQLFindReferences.KEYWORD_FIND + " " + OCommandExecutorSQLFindReferences.KEYWORD_REFERENCES,
+    commands.put(OCommandExecutorSQLFindReferences.KEYWORD_FIND + ' ' + OCommandExecutorSQLFindReferences.KEYWORD_REFERENCES,
         OCommandExecutorSQLFindReferences.class);
-    commands.put(OCommandExecutorSQLTruncateClass.KEYWORD_TRUNCATE + " " + OCommandExecutorSQLTruncateClass.KEYWORD_CLASS,
+    commands.put(OCommandExecutorSQLTruncateClass.KEYWORD_TRUNCATE + ' ' + OCommandExecutorSQLTruncateClass.KEYWORD_CLASS,
         OCommandExecutorSQLTruncateClass.class);
-    commands.put(OCommandExecutorSQLTruncateCluster.KEYWORD_TRUNCATE + " " + OCommandExecutorSQLTruncateCluster.KEYWORD_CLUSTER,
+    commands.put(OCommandExecutorSQLTruncateCluster.KEYWORD_TRUNCATE + ' ' + OCommandExecutorSQLTruncateCluster.KEYWORD_CLUSTER,
         OCommandExecutorSQLTruncateCluster.class);
-    commands.put(OCommandExecutorSQLTruncateRecord.KEYWORD_TRUNCATE + " " + OCommandExecutorSQLTruncateRecord.KEYWORD_RECORD,
+    commands.put(OCommandExecutorSQLTruncateRecord.KEYWORD_TRUNCATE + ' ' + OCommandExecutorSQLTruncateRecord.KEYWORD_RECORD,
         OCommandExecutorSQLTruncateRecord.class);
-    commands.put(OCommandExecutorSQLAlterCluster.KEYWORD_ALTER + " " + OCommandExecutorSQLAlterCluster.KEYWORD_CLUSTER,
+    commands.put(OCommandExecutorSQLAlterCluster.KEYWORD_ALTER + ' ' + OCommandExecutorSQLAlterCluster.KEYWORD_CLUSTER,
         OCommandExecutorSQLAlterCluster.class);
     commands.put(OCommandExecutorSQLExplain.KEYWORD_EXPLAIN, OCommandExecutorSQLExplain.class);
     commands.put(OCommandExecutorSQLTransactional.KEYWORD_TRANSACTIONAL, OCommandExecutorSQLTransactional.class);

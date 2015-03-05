@@ -133,7 +133,7 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
       if (storage instanceof OLocalPaginatedStorage)
         ((OLocalPaginatedStorage) storage).synch();
     } catch (IOException ioe) {
-      throw new OCommandExecutionException("Error altering cluster '" + clusterName + "'", ioe);
+      throw new OCommandExecutionException("Error altering cluster '" + clusterName + '\'', ioe);
     }
 
     return result;

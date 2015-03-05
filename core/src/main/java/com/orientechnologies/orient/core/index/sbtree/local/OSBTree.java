@@ -645,7 +645,7 @@ public class OSBTree<K, V> extends ODurableComponent {
         diskCache.release(cacheEntry);
       }
     } catch (IOException e) {
-      throw new OSBTreeException("Error during finding first key in sbtree [" + name + "]");
+      throw new OSBTreeException("Error during finding first key in sbtree [" + name + ']');
     } finally {
       releaseSharedLock();
     }
@@ -667,7 +667,7 @@ public class OSBTree<K, V> extends ODurableComponent {
         diskCache.release(cacheEntry);
       }
     } catch (IOException e) {
-      throw new OSBTreeException("Error during finding last key in sbtree [" + name + "]");
+      throw new OSBTreeException("Error during finding last key in sbtree [" + name + ']');
     } finally {
       releaseSharedLock();
     }
@@ -687,7 +687,7 @@ public class OSBTree<K, V> extends ODurableComponent {
 
       return new OSBTreeFullKeyCursor(searchResult.getLastPathItem());
     } catch (IOException e) {
-      throw new OSBTreeException("Error during finding first key in sbtree [" + name + "]");
+      throw new OSBTreeException("Error during finding first key in sbtree [" + name + ']');
     } finally {
       releaseSharedLock();
     }
@@ -1003,7 +1003,7 @@ public class OSBTree<K, V> extends ODurableComponent {
         };
 
     } catch (IOException e) {
-      throw new OSBTreeException("Error during finding first key in sbtree [" + name + "]");
+      throw new OSBTreeException("Error during finding first key in sbtree [" + name + ']');
     } finally {
       releaseSharedLock();
     }
@@ -1067,7 +1067,7 @@ public class OSBTree<K, V> extends ODurableComponent {
         };
 
     } catch (IOException e) {
-      throw new OSBTreeException("Error during finding last key in sbtree [" + name + "]");
+      throw new OSBTreeException("Error during finding last key in sbtree [" + name + ']');
     } finally {
       releaseSharedLock();
     }

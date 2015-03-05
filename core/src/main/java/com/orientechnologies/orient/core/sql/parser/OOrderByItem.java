@@ -54,7 +54,7 @@ public class OOrderByItem {
       result.append(rid.toString());
     }
     if (type != null) {
-      result.append(" " + type);
+      result.append(' ' + type);
     }
     return result.toString();
   }

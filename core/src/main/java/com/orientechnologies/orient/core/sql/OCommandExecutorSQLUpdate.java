@@ -120,8 +120,8 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
           || (!word.equals(KEYWORD_SET) && !word.equals(KEYWORD_ADD) && !word.equals(KEYWORD_PUT) && !word.equals(KEYWORD_REMOVE)
               && !word.equals(KEYWORD_INCREMENT) && !word.equals(KEYWORD_CONTENT) && !word.equals(KEYWORD_MERGE)
               && !word.equals(KEYWORD_LOCK) && !word.equals(KEYWORD_RETURN) && !word.equals(KEYWORD_UPSERT)))
-        throwSyntaxErrorException("Expected keyword " + KEYWORD_SET + "," + KEYWORD_ADD + "," + KEYWORD_CONTENT + ","
-            + KEYWORD_MERGE + "," + KEYWORD_PUT + "," + KEYWORD_REMOVE + "," + KEYWORD_INCREMENT + "," + KEYWORD_LOCK + " or "
+        throwSyntaxErrorException("Expected keyword " + KEYWORD_SET + ',' + KEYWORD_ADD + ',' + KEYWORD_CONTENT + ','
+            + KEYWORD_MERGE + ',' + KEYWORD_PUT + ',' + KEYWORD_REMOVE + ',' + KEYWORD_INCREMENT + ',' + KEYWORD_LOCK + " or "
             + KEYWORD_RETURN + " or " + KEYWORD_UPSERT);
 
       while ((!parserIsEnded() && !parserGetLastWord().equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE))
@@ -171,7 +171,7 @@ public class OCommandExecutorSQLUpdate extends OCommandExecutorSQLRetryAbstract 
       } else if (additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_WHERE)
           || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LIMIT)
           || additionalStatement.equals(OCommandExecutorSQLAbstract.KEYWORD_LET) || additionalStatement.equals(KEYWORD_LOCK)) {
-        query = new OSQLAsynchQuery<ODocument>("select from " + subjectName + " " + additionalStatement + " "
+        query = new OSQLAsynchQuery<ODocument>("select from " + subjectName + ' ' + additionalStatement + ' '
             + parserText.substring(parserGetCurrentPosition()), this);
         isUpsertAllowed = (((OMetadataInternal) getDatabase().getMetadata()).getImmutableSchemaSnapshot().getClass(subjectName) != null);
       } else if (!additionalStatement.isEmpty())

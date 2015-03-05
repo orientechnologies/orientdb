@@ -321,7 +321,7 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
             final String nextWord = parserGetLastWord();
 
             if (nextWord.length() > 0) {
-              word += " " + nextWord;
+              word += ' ' + nextWord;
 
               if (word.endsWith(")"))
                 word = word.substring(0, word.length() - 1);

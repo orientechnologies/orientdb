@@ -572,7 +572,7 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
     final OClass cls = ODocumentInternal.getImmutableSchemaClass(doc);
 
     if (cls == null || !cls.isSubClassOf(getBaseClassName()))
-      throw new IllegalArgumentException("The document received is not a " + getElementType() + ". Found class '" + cls + "'");
+      throw new IllegalArgumentException("The document received is not a " + getElementType() + ". Found class '" + cls + '\'');
   }
 
   /**

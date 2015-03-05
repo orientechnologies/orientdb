@@ -477,7 +477,7 @@ public class OImmutableClass implements OClass {
       return getCustomInternal();
     }
 
-    throw new IllegalArgumentException("Cannot find attribute '" + iAttribute + "'");
+    throw new IllegalArgumentException("Cannot find attribute '" + iAttribute + '\'');
   }
 
   @Override

@@ -314,7 +314,7 @@ public class OImmutableProperty implements OProperty {
       return getCollate();
     }
 
-    throw new IllegalArgumentException("Cannot find attribute '" + attribute + "'");
+    throw new IllegalArgumentException("Cannot find attribute '" + attribute + '\'');
   }
 
   @Override
@@ -354,6 +354,6 @@ public class OImmutableProperty implements OProperty {
 
   @Override
   public String toString() {
-    return getName() + " (type=" + getType() + ")";
+    return getName() + " (type=" + getType() + ')';
   }
 }

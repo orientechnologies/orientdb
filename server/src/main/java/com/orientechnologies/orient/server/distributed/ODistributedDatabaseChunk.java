@@ -69,7 +69,7 @@ public class ODistributedDatabaseChunk implements Externalizable {
 
    @Override
    public String toString() {
-     return filePath + "[" + offset + "-" + buffer.length + "] (last=" + last + ")";
+     return filePath + '[' + offset + '-' + buffer.length + "] (last=" + last + ')';
    }
 
    public long getLastOperationId() {

@@ -352,7 +352,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     final Character wrongCharacter = OSchemaShared.checkClassNameIfValid(className);
     if (wrongCharacter != null)
       throw new OSchemaException("Invalid class name found. Character '" + wrongCharacter + "' cannot be used in class name '"
-          + className + "'");
+          + className + '\'');
 
     OClass result;
     int retry = 0;
@@ -651,7 +651,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
           prop.fromDocument(oDocument);
           ensurePropertiesSize(prop.getId());
           properties.set(prop.getId(), prop);
-          propertiesByNameType.put(prop.getName() + "|" + prop.getType().name(), prop);
+          propertiesByNameType.put(prop.getName() + '|' + prop.getType().name(), prop);
         }
       }
       // REGISTER ALL THE CLASSES
@@ -874,7 +874,7 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     global = new OGlobalPropertyImpl(name, type, id);
     ensurePropertiesSize(id);
     properties.set(id, global);
-    propertiesByNameType.put(global.getName() + "|" + global.getType().name(), global);
+    propertiesByNameType.put(global.getName() + '|' + global.getType().name(), global);
     return global;
   }
 
@@ -883,12 +883,12 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
   }
 
   protected OGlobalProperty findOrCreateGlobalProperty(String name, OType type) {
-    OGlobalProperty global = propertiesByNameType.get(name + "|" + type.name());
+    OGlobalProperty global = propertiesByNameType.get(name + '|' + type.name());
     if (global == null) {
       int id = properties.size();
       global = new OGlobalPropertyImpl(name, type, id);
       properties.add(id, global);
-      propertiesByNameType.put(global.getName() + "|" + global.getType().name(), global);
+      propertiesByNameType.put(global.getName() + '|' + global.getType().name(), global);
     }
     return global;
   }
@@ -1049,9 +1049,9 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         clusterIds[0] = database.addCluster(className);
     } else
       for (int i = 0; i < minimumClusters; ++i) {
-        clusterIds[i] = database.getClusterIdByName(className + "_" + i);
+        clusterIds[i] = database.getClusterIdByName(className + '_' + i);
         if (clusterIds[i] == -1)
-          clusterIds[i] = database.addCluster(className + "_" + i);
+          clusterIds[i] = database.addCluster(className + '_' + i);
       }
     return clusterIds;
   }

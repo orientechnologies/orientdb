@@ -497,7 +497,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         return fromString(iFieldValueAsString);
 
       case DATE:
-        if (iFieldValueAsString == null || iFieldValueAsString.equals(""))
+        if (iFieldValueAsString == null || iFieldValueAsString.isEmpty())
           return null;
         try {
           // TRY TO PARSE AS LONG
@@ -513,7 +513,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
         }
 
       case DATETIME:
-        if (iFieldValueAsString == null || iFieldValueAsString.equals(""))
+        if (iFieldValueAsString == null || iFieldValueAsString.isEmpty())
           return null;
         try {
           // TRY TO PARSE AS LONG
@@ -571,7 +571,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   private Object getValueAsMap(ODocument iRecord, String iFieldValue, OType iLinkedType, Map<String, Character> iFieldTypes,
       boolean iNoMap, String iOptions, String[] fields) {
     if (fields.length % 2 == 1)
-      throw new OSerializationException("Bad JSON format on map. Expected pairs of field:value but received '" + iFieldValue + "'");
+      throw new OSerializationException("Bad JSON format on map. Expected pairs of field:value but received '" + iFieldValue + '\'');
 
     final Map<String, Object> embeddedMap = new LinkedHashMap<String, Object>();
 
@@ -736,8 +736,8 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
   }
 
   private String getFieldValue(final String field, final String[] fields) {
-    String doubleQuotes = "\"" + field + "\"";
-    String singleQuotes = "'" + field + "'";
+    String doubleQuotes = '"' + field + '"';
+    String singleQuotes = '\'' + field + '\'';
     for (int i = 0; i < fields.length; i = i + 2) {
       if (fields[i].equals(doubleQuotes) || fields[i].equals(singleQuotes)) {
         return fields[i + 1];

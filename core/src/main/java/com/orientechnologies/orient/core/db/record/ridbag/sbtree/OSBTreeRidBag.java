@@ -682,7 +682,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   @Override
   public String toString() {
-    return "[size=" + size + "]";
+    return "[size=" + size + ']';
   }
 
   public boolean isEmpty() {

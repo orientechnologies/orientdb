@@ -182,7 +182,7 @@ public class OSelectStatement extends OStatement {
     StringBuilder builder = new StringBuilder();
     builder.append("SELECT");
     if (projection != null) {
-      builder.append(" ");
+      builder.append(' ');
       builder.append(projection.toString());
     }
     if (target != null) {
@@ -191,7 +191,7 @@ public class OSelectStatement extends OStatement {
     }
 
     if (letClause != null) {
-      builder.append(" ");
+      builder.append(' ');
       builder.append(letClause.toString());
     }
 
@@ -201,12 +201,12 @@ public class OSelectStatement extends OStatement {
     }
 
     if (groupBy != null) {
-      builder.append(" ");
+      builder.append(' ');
       builder.append(groupBy.toString());
     }
 
     if (orderBy != null) {
-      builder.append(" ");
+      builder.append(' ');
       builder.append(orderBy.toString());
     }
 
@@ -225,7 +225,7 @@ public class OSelectStatement extends OStatement {
     }
 
     if (fetchPlan != null) {
-      builder.append(" ");
+      builder.append(' ');
       builder.append(fetchPlan.toString());
     }
 

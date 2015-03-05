@@ -117,7 +117,7 @@ public class TTYConsoleReader implements OConsoleReader {
               currentPos = buffer.length();
             StringBuffer cleaner = new StringBuffer();
             for (int i = 0; i < buffer.length(); i++) {
-              cleaner.append(" ");
+              cleaner.append(' ');
             }
             rewriteConsole(cleaner, true);
             rewriteConsole(buffer, false);
@@ -131,7 +131,7 @@ public class TTYConsoleReader implements OConsoleReader {
               currentPos = 0;
             StringBuffer cleaner = new StringBuffer();
             for (int i = 0; i < buffer.length(); i++) {
-              cleaner.append(" ");
+              cleaner.append(' ');
             }
             rewriteConsole(cleaner, true);
             rewriteConsole(buffer, false);
@@ -142,7 +142,7 @@ public class TTYConsoleReader implements OConsoleReader {
             if (history.size() > 0) { // UP
               StringBuffer cleaner = new StringBuffer();
               for (int i = 0; i < buffer.length(); i++) {
-                cleaner.append(" ");
+                cleaner.append(' ');
               }
               rewriteConsole(cleaner, true);
               if (!hintedHistory && (historyNum == history.size() || !buffer.toString().equals(history.get(historyNum)))) {
@@ -167,7 +167,7 @@ public class TTYConsoleReader implements OConsoleReader {
             if (history.size() > 0) {
               StringBuffer cleaner = new StringBuffer();
               for (int i = 0; i < buffer.length(); i++) {
-                cleaner.append(" ");
+                cleaner.append(' ');
               }
               rewriteConsole(cleaner, true);
 
@@ -190,7 +190,7 @@ public class TTYConsoleReader implements OConsoleReader {
               currentPos++;
               StringBuffer cleaner = new StringBuffer();
               for (int i = 0; i < buffer.length(); i++) {
-                cleaner.append(" ");
+                cleaner.append(' ');
               }
               rewriteConsole(cleaner, true);
               rewriteConsole(buffer, false);
@@ -200,7 +200,7 @@ public class TTYConsoleReader implements OConsoleReader {
               currentPos--;
               StringBuffer cleaner = new StringBuffer();
               for (int i = 0; i < buffer.length(); i++) {
-                cleaner.append(" ");
+                cleaner.append(' ');
               }
               rewriteConsole(cleaner, true);
               rewriteConsole(buffer, false);
@@ -209,7 +209,7 @@ public class TTYConsoleReader implements OConsoleReader {
             currentPos = buffer.length();
             StringBuffer cleaner = new StringBuffer();
             for (int i = 0; i < buffer.length(); i++) {
-              cleaner.append(" ");
+              cleaner.append(' ');
             }
             rewriteConsole(cleaner, true);
             rewriteConsole(buffer, false);
@@ -217,7 +217,7 @@ public class TTYConsoleReader implements OConsoleReader {
             currentPos = 0;
             StringBuffer cleaner = new StringBuffer();
             for (int i = 0; i < buffer.length(); i++) {
-              cleaner.append(" ");
+              cleaner.append(' ');
             }
             rewriteConsole(cleaner, true);
             rewriteConsole(buffer, false);
@@ -232,7 +232,7 @@ public class TTYConsoleReader implements OConsoleReader {
           if (buffer.length() > 0 && currentPos > 0) {
             StringBuffer cleaner = new StringBuffer();
             for (int i = 0; i < buffer.length(); i++) {
-              cleaner.append(" ");
+              cleaner.append(' ');
             }
             buffer.deleteCharAt(currentPos - 1);
             currentPos--;
@@ -243,7 +243,7 @@ public class TTYConsoleReader implements OConsoleReader {
           if (buffer.length() > 0 && currentPos >= 0 && currentPos < buffer.length()) {
             StringBuffer cleaner = new StringBuffer();
             for (int i = 0; i < buffer.length(); i++) {
-              cleaner.append(" ");
+              cleaner.append(' ');
             }
             buffer.deleteCharAt(currentPos);
             rewriteConsole(cleaner, true);
@@ -252,7 +252,7 @@ public class TTYConsoleReader implements OConsoleReader {
         } else if (next == HORIZONTAL_TAB_CHAR) {
           StringBuffer cleaner = new StringBuffer();
           for (int i = 0; i < buffer.length(); i++) {
-            cleaner.append(" ");
+            cleaner.append(' ');
           }
           buffer = writeHint(buffer);
           rewriteConsole(cleaner, true);
@@ -262,7 +262,7 @@ public class TTYConsoleReader implements OConsoleReader {
           if ((next > UNIT_SEPARATOR_CHAR && next < BACKSPACE_CHAR) || next > BACKSPACE_CHAR) {
             StringBuffer cleaner = new StringBuffer();
             for (int i = 0; i < buffer.length(); i++) {
-              cleaner.append(" ");
+              cleaner.append(' ');
             }
             if (currentPos == buffer.length()) {
               buffer.append((char) next);
@@ -353,8 +353,8 @@ public class TTYConsoleReader implements OConsoleReader {
       boolean appendSpace = true;
       for (String suggestion : suggestions) {
         suggestionComponents = suggestion.split(" ");
-        hintBuffer.append("* " + suggestion + " ");
-        hintBuffer.append("\n");
+        hintBuffer.append("* " + suggestion + ' ');
+        hintBuffer.append('\n');
         suggestionPart = "";
         if (bufferComponents.length == 0 || buffer.length() == 0) {
           suggestionPart = null;
@@ -378,7 +378,7 @@ public class TTYConsoleReader implements OConsoleReader {
             }
           } else {
             for (int i = 0; i < suggestionComponents.length; i++) {
-              suggestionPart += suggestionComponents[i] + " ";
+              suggestionPart += suggestionComponents[i] + ' ';
             }
           }
         }
@@ -387,7 +387,7 @@ public class TTYConsoleReader implements OConsoleReader {
         buffer = new StringBuffer();
         buffer.append(suggestionPart);
         if (appendSpace) {
-          buffer.append(" ");
+          buffer.append(' ');
         }
       }
       hintBuffer.append("-----------------------------\n");
@@ -395,7 +395,7 @@ public class TTYConsoleReader implements OConsoleReader {
     } else if (suggestions.size() > 0) {
       buffer = new StringBuffer();
       buffer.append(suggestions.get(0));
-      buffer.append(" ");
+      buffer.append(' ');
     }
     return buffer;
   }
@@ -417,7 +417,7 @@ public class TTYConsoleReader implements OConsoleReader {
   }
 
   private int getHintedHistoryIndexUp(int historyNum) {
-    if (historyBuffer != null && !historyBuffer.equals("")) {
+    if (historyBuffer != null && !historyBuffer.isEmpty()) {
       for (int i = (historyNum - 1); i >= 0; i--) {
         if (history.get(i).startsWith(historyBuffer)) {
           return i;
@@ -429,7 +429,7 @@ public class TTYConsoleReader implements OConsoleReader {
   }
 
   private int getHintedHistoryIndexDown(int historyNum) throws IOException {
-    if (historyBuffer != null && !historyBuffer.equals("")) {
+    if (historyBuffer != null && !historyBuffer.isEmpty()) {
       for (int i = historyNum + 1; i < history.size(); i++) {
         if (history.get(i).startsWith(historyBuffer)) {
           return i;

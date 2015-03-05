@@ -122,7 +122,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   public String getFullName() {
     acquireSchemaReadLock();
     try {
-      return owner.getName() + "." + globalRef.getName();
+      return owner.getName() + '.' + globalRef.getName();
     } finally {
       releaseSchemaReadLock();
     }
@@ -845,7 +845,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
       return getCollate();
     }
 
-    throw new IllegalArgumentException("Cannot find attribute '" + attribute + "'");
+    throw new IllegalArgumentException("Cannot find attribute '" + attribute + '\'');
   }
 
   public void set(final ATTRIBUTES attribute, final Object iValue) {
@@ -959,7 +959,7 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
   public String toString() {
     acquireSchemaReadLock();
     try {
-      return globalRef.getName() + " (type=" + globalRef.getType() + ")";
+      return globalRef.getName() + " (type=" + globalRef.getType() + ')';
     } finally {
       releaseSchemaReadLock();
     }
@@ -1329,13 +1329,13 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
         try {
           getDatabase().getStorage().getConfiguration().getDateFormatInstance().parse(iDateAsString);
         } catch (ParseException e) {
-          throw new OSchemaException("Invalid date format while formatting date '" + iDateAsString + "'", e);
+          throw new OSchemaException("Invalid date format while formatting date '" + iDateAsString + '\'', e);
         }
       } else if (globalRef.getType() == OType.DATETIME) {
         try {
           getDatabase().getStorage().getConfiguration().getDateTimeFormatInstance().parse(iDateAsString);
         } catch (ParseException e) {
-          throw new OSchemaException("Invalid datetime format while formatting date '" + iDateAsString + "'", e);
+          throw new OSchemaException("Invalid datetime format while formatting date '" + iDateAsString + '\'', e);
         }
       }
   }

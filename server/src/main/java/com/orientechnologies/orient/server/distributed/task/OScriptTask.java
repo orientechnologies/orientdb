@@ -110,7 +110,7 @@ public class OScriptTask extends OAbstractCommandTask {
 
   @Override
   public String toString() {
-    return super.toString() + "(" + text + ")";
+    return super.toString() + '(' + text + ')';
   }
 
   @Override

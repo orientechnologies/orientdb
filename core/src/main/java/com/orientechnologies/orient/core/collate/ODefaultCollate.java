@@ -55,6 +55,6 @@ public class ODefaultCollate extends ODefaultComparator implements OCollate {
 
   @Override
   public String toString() {
-    return "{" + getClass().getSimpleName() + " : name = " + getName() + "}";
+    return '{' + getClass().getSimpleName() + " : name = " + getName() + '}';
   }
 }

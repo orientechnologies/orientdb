@@ -245,7 +245,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
       if (e instanceof OIndexException)
         throw (OIndexException) e;
 
-      throw new OIndexException("Cannot create the index '" + name + "'", e);
+      throw new OIndexException("Cannot create the index '" + name + '\'', e);
 
     } finally {
       releaseExclusiveLock();
@@ -917,7 +917,7 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
           if (indexDefinition == null)
             throw new OConfigurationException("Index '" + name + "' cannot be rebuilt because has no a valid definition ("
-                + indexDefinition + ")");
+                + indexDefinition + ')');
 
           final Object fieldValue = indexDefinition.getDocumentValueToIndex(doc);
 

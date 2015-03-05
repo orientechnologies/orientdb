@@ -47,7 +47,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 
    @Override
    public String toString() {
-     return super.toString() + "(" + rid + " v." + version + ")";
+     return super.toString() + '(' + rid + " v." + version + ')';
    }
 
    public ORecordId getRid() {

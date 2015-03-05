@@ -1312,7 +1312,7 @@ public class OWOWCache {
     public Thread newThread(Runnable r) {
       Thread thread = new Thread(r);
       thread.setDaemon(true);
-      thread.setName("OrientDB Write Cache Flush Task (" + storageName + ")");
+      thread.setName("OrientDB Write Cache Flush Task (" + storageName + ')');
       return thread;
     }
   }
@@ -1328,7 +1328,7 @@ public class OWOWCache {
     public Thread newThread(Runnable r) {
       Thread thread = new Thread(r);
       thread.setDaemon(true);
-      thread.setName("OrientDB Low Disk Space Publisher (" + storageName + ")");
+      thread.setName("OrientDB Low Disk Space Publisher (" + storageName + ')');
       return thread;
     }
   }

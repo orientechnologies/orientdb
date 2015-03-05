@@ -146,7 +146,7 @@ public class OCommandExecutorSQLDelete extends OCommandExecutorSQLAbstract imple
           parserNextWord(true);
         }
 
-        final String condition = parserGetCurrentPosition() > -1 ? " " + parserText.substring(parserGetCurrentPosition()) : "";
+        final String condition = parserGetCurrentPosition() > -1 ? ' ' + parserText.substring(parserGetCurrentPosition()) : "";
         query = database.command(new OSQLAsynchQuery<ODocument>("select from " + subjectName + condition, this));
       }
     } finally {

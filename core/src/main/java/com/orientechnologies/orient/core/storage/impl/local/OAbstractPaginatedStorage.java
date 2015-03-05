@@ -279,7 +279,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       throw e;
     } catch (IOException e) {
       close();
-      throw new OStorageException("Error on creation of storage '" + name + "'", e);
+      throw new OStorageException("Error on creation of storage '" + name + '\'', e);
 
     } finally {
       lock.releaseExclusiveLock();
@@ -428,14 +428,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       }
       if (requestedId < clusters.size() && clusters.get(requestedId) != null) {
         throw new OConfigurationException("Requested cluster ID [" + requestedId + "] is occupied by cluster with name ["
-            + clusters.get(requestedId).getName() + "]");
+            + clusters.get(requestedId).getName() + ']');
       }
 
       makeStorageDirty();
       return addClusterInternal(clusterName, requestedId, true, parameters);
 
     } catch (Exception e) {
-      throw new OStorageException("Error in creation of new cluster '" + clusterName + "'", e);
+      throw new OStorageException("Error in creation of new cluster '" + clusterName + '\'', e);
     } finally {
       lock.releaseExclusiveLock();
     }
@@ -449,7 +449,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       if (clusterId < 0 || clusterId >= clusters.size())
         throw new IllegalArgumentException("Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-"
-            + (clusters.size() - 1) + ") in database '" + name + "'");
+            + (clusters.size() - 1) + ") in database '" + name + '\'');
 
       final OCluster cluster = clusters.get(clusterId);
       if (cluster == null)
@@ -469,7 +469,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       makeFullCheckpoint();
       return true;
     } catch (Exception e) {
-      throw new OStorageException("Error while removing cluster '" + clusterId + "'", e);
+      throw new OStorageException("Error while removing cluster '" + clusterId + '\'', e);
 
     } finally {
       lock.releaseExclusiveLock();
@@ -482,7 +482,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       if (clusterId < 0 || clusterId >= clusters.size())
         throw new IllegalArgumentException("Cluster id '" + clusterId + "' is outside the of range of configured clusters (0-"
-            + (clusters.size() - 1) + ") in database '" + name + "'");
+            + (clusters.size() - 1) + ") in database '" + name + '\'');
 
       final OCluster cluster = clusters.get(clusterId);
       if (cluster == null)
@@ -513,7 +513,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       makeFullCheckpoint();
       return true;
     } catch (Exception e) {
-      throw new OStorageException("Error while removing cluster '" + clusterId + "'", e);
+      throw new OStorageException("Error while removing cluster '" + clusterId + '\'', e);
 
     } finally {
       lock.releaseExclusiveLock();
@@ -543,7 +543,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       cluster.synch();
       cluster.setSoftlyClosed(true);
     } catch (IOException e) {
-      throw new OStorageException("Error on synch cluster '" + name + "'", e);
+      throw new OStorageException("Error on synch cluster '" + name + '\'', e);
     }
   }
 
@@ -558,7 +558,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     try {
       cluster.setSoftlyClosed(false);
     } catch (IOException e) {
-      throw new OStorageException("Error on unfreeze storage '" + name + "'", e);
+      throw new OStorageException("Error on unfreeze storage '" + name + '\'', e);
     }
 
     cluster.getExternalModificationLock().allowModifications();
@@ -571,7 +571,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
   @Override
   public long count(int clusterId, boolean countTombstones) {
     if (clusterId == -1)
-      throw new OStorageException("Cluster Id " + clusterId + " is invalid in database '" + name + "'");
+      throw new OStorageException("Cluster Id " + clusterId + " is invalid in database '" + name + '\'');
 
     // COUNT PHYSICAL CLUSTER IF ANY
     checkOpeness();
@@ -612,7 +612,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
     for (int iClusterId : iClusterIds) {
       if (iClusterId >= clusters.size())
-        throw new OConfigurationException("Cluster id " + iClusterId + " was not found in database '" + name + "'");
+        throw new OConfigurationException("Cluster id " + iClusterId + " was not found in database '" + name + '\'');
 
       if (iClusterId > -1) {
         final OCluster c = clusters.get(iClusterId);
@@ -1000,7 +1000,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
         clearStorageDirty();
       } catch (IOException e) {
-        throw new OStorageException("Error on synch storage '" + name + "'", e);
+        throw new OStorageException("Error on synch storage '" + name + '\'', e);
 
       } finally {
         lock.releaseSharedLock();
@@ -1048,7 +1048,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     final OCluster cluster = clusterMap.get(clusterName.toLowerCase());
 
     if (cluster == null)
-      throw new IllegalArgumentException("Cluster " + clusterName + " does not exist in database '" + name + "'");
+      throw new IllegalArgumentException("Cluster " + clusterName + " does not exist in database '" + name + '\'');
     return cluster;
   }
 
@@ -1114,7 +1114,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         lock();
       } catch (IOException ignored) {
       }
-      throw new OStorageException("Error on freeze of storage '" + name + "'", e);
+      throw new OStorageException("Error on freeze of storage '" + name + '\'', e);
     }
   }
 
@@ -1128,7 +1128,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         configuration.setSoftlyClosed(false);
 
     } catch (IOException e) {
-      throw new OStorageException("Error on release of storage '" + name + "'", e);
+      throw new OStorageException("Error on release of storage '" + name + '\'', e);
     }
 
     modificationLock.allowModifications();
@@ -1670,7 +1670,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       } catch (Throwable e) {
         atomicOperationsManager.endAtomicOperation(true);
 
-        OLogManager.instance().error(this, "Error on updating record " + rid + " (cluster: " + cluster + ")", e);
+        OLogManager.instance().error(this, "Error on updating record " + rid + " (cluster: " + cluster + ')', e);
 
         final ORecordVersion recordVersion = OVersionFactory.instance().createUntrackedVersion();
         if (callback != null)
@@ -1687,7 +1687,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       else
         return new OStorageOperationResult<ORecordVersion>(ppos.recordVersion);
     } catch (IOException ioe) {
-      OLogManager.instance().error(this, "Error on updating record " + rid + " (cluster: " + cluster + ")", ioe);
+      OLogManager.instance().error(this, "Error on updating record " + rid + " (cluster: " + cluster + ')', ioe);
 
       final ORecordVersion recordVersion = OVersionFactory.instance().createUntrackedVersion();
       if (callback != null)
@@ -1723,14 +1723,14 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         atomicOperationsManager.endAtomicOperation(false);
       } catch (Throwable e) {
         atomicOperationsManager.endAtomicOperation(true);
-        OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", e);
+        OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ')', e);
         return new OStorageOperationResult<Boolean>(false);
       }
 
       return new OStorageOperationResult<Boolean>(true);
     } catch (IOException ioe) {
-      OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", ioe);
-      throw new OStorageException("Error on deleting record " + rid + "( cluster: " + cluster + ")", ioe);
+      OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ')', ioe);
+      throw new OStorageException("Error on deleting record " + rid + "( cluster: " + cluster + ')', ioe);
     }
   }
 
@@ -1753,15 +1753,15 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
         atomicOperationsManager.endAtomicOperation(false);
       } catch (Throwable e) {
         atomicOperationsManager.endAtomicOperation(true);
-        OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", e);
+        OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ')', e);
 
         return new OStorageOperationResult<Boolean>(false);
       }
 
       return new OStorageOperationResult<Boolean>(true);
     } catch (IOException ioe) {
-      OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ")", ioe);
-      throw new OStorageException("Error on deleting record " + rid + "( cluster: " + cluster + ")", ioe);
+      OLogManager.instance().error(this, "Error on deleting record " + rid + "( cluster: " + cluster + ')', ioe);
+      throw new OStorageException("Error on deleting record " + rid + "( cluster: " + cluster + ')', ioe);
     }
   }
 
@@ -1870,7 +1870,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
       // CHECK FOR DUPLICATION OF NAMES
       if (clusterMap.containsKey(cluster.getName().toLowerCase()))
         throw new OConfigurationException("Cannot add cluster '" + cluster.getName()
-            + "' because it is already registered in database '" + name + "'");
+            + "' because it is already registered in database '" + name + '\'');
       // CREATE AND ADD THE NEW REF SEGMENT
       clusterMap.put(cluster.getName().toLowerCase(), cluster);
       id = cluster.getId();
@@ -2132,7 +2132,7 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
   private void checkClusterSegmentIndexRange(final int iClusterId) {
     if (iClusterId < 0 || iClusterId > clusters.size() - 1)
-      throw new IllegalArgumentException("Cluster segment #" + iClusterId + " does not exist in database '" + name + "'");
+      throw new IllegalArgumentException("Cluster segment #" + iClusterId + " does not exist in database '" + name + '\'');
   }
 
   private List<OLogSequenceNumber> readOperationUnit(OLogSequenceNumber startLSN, OOperationUnitId unitId) throws IOException {

@@ -156,7 +156,7 @@ public class OrientIndex<T extends OrientElement> implements Index<T> {
     graph.autoStartTransaction();
 
     final OSQLSynchQuery<ODocument> query = new OSQLSynchQuery<ODocument>("select from index:" + recordKeyValueIndex.getName()
-        + " where key between [" + element.getIdentity() + "] and [" + element.getIdentity() + "]");
+        + " where key between [" + element.getIdentity() + "] and [" + element.getIdentity() + ']');
 
     Collection<ODocument> entries = (Collection<ODocument>) graph.getRawGraph().query(query);
 

@@ -219,7 +219,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       if (storage != null)
         Orient.instance().unregisterStorage(storage);
 
-      throw new ODatabaseException("Error on opening database '" + iURL + "'", t);
+      throw new ODatabaseException("Error on opening database '" + iURL + '\'', t);
     }
 
     setSerializer(defaultSerializer);
@@ -466,7 +466,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         }
 
     } catch (Exception e) {
-      throw new ODatabaseException("Cannot create database '" + getName() + "'", e);
+      throw new ODatabaseException("Cannot create database '" + getName() + '\'', e);
     }
     return (DB) this;
   }
@@ -1187,7 +1187,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     try {
       return storage.getClusterById(getClusterIdByName(clusterName)).getRecordsSize();
     } catch (Exception e) {
-      throw new ODatabaseException("Error on reading records size for cluster '" + clusterName + "'", e);
+      throw new ODatabaseException("Error on reading records size for cluster '" + clusterName + '\'', e);
     }
   }
 
@@ -1196,7 +1196,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     try {
       return storage.getClusterById(clusterId).getRecordsSize();
     } catch (Exception e) {
-      throw new ODatabaseException("Error on reading records size for cluster with id '" + clusterId + "'", e);
+      throw new ODatabaseException("Error on reading records size for cluster with id '" + clusterId + '\'', e);
     }
   }
 
@@ -1643,7 +1643,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         throw new ODatabaseException("Error on retrieving record using temporary RecordId: " + rid, t);
       else
         throw new ODatabaseException("Error on retrieving record " + rid + " (cluster: "
-            + storage.getPhysicalClusterNameById(rid.clusterId) + ")", t);
+            + storage.getPhysicalClusterNameById(rid.clusterId) + ')', t);
     } finally {
       ORecordSerializationContext.pullContext();
       ((OMetadataInternal) getMetadata()).clearThreadLocalSchemaSnapshot();
@@ -2351,7 +2351,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     } catch (Exception e) {
       if (record instanceof ODocument)
         throw new ODatabaseException("Error on deleting record " + record.getIdentity() + " of class '"
-            + ((ODocument) record).getClassName() + "'", e);
+            + ((ODocument) record).getClassName() + '\'', e);
       else
         throw new ODatabaseException("Error on deleting record " + record.getIdentity());
     }
@@ -2809,7 +2809,7 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       if (recordClass == null && clusterIdClass != null || clusterIdClass == null && recordClass != null
           || (recordClass != null && !recordClass.equals(clusterIdClass)))
         throw new OSchemaException("Record saved into cluster '" + iClusterName + "' should be saved with class '" + clusterIdClass
-            + "' but has been created with class '" + recordClass + "'");
+            + "' but has been created with class '" + recordClass + '\'');
     }
   }
 

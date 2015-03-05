@@ -82,7 +82,7 @@ public class OPhysicalPosition implements OSerializableStream, Externalizable {
 
   @Override
   public String toString() {
-    return "rid(?:" + clusterPosition + ") record(type:" + recordType + " size:" + recordSize + " v:" + recordVersion + ")";
+    return "rid(?:" + clusterPosition + ") record(type:" + recordType + " size:" + recordSize + " v:" + recordVersion + ')';
   }
 
   public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {

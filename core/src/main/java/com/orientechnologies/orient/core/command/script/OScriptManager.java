@@ -101,7 +101,7 @@ public class OScriptManager {
   public String getFunctionDefinition(final OFunction iFunction) {
     final OScriptFormatter formatter = formatters.get(iFunction.getLanguage().toLowerCase());
     if (formatter == null)
-      throw new IllegalArgumentException("Cannot find script formatter for the language '" + iFunction.getLanguage() + "'");
+      throw new IllegalArgumentException("Cannot find script formatter for the language '" + iFunction.getLanguage() + '\'');
 
     return formatter.getFunctionDefinition(iFunction);
   }
@@ -109,7 +109,7 @@ public class OScriptManager {
   public String getFunctionInvoke(final OFunction iFunction, final Object[] iArgs) {
     final OScriptFormatter formatter = formatters.get(iFunction.getLanguage().toLowerCase());
     if (formatter == null)
-      throw new IllegalArgumentException("Cannot find script formatter for the language '" + iFunction.getLanguage() + "'");
+      throw new IllegalArgumentException("Cannot find script formatter for the language '" + iFunction.getLanguage() + '\'');
 
     return formatter.getFunctionInvoke(iFunction, iArgs);
   }
@@ -141,7 +141,7 @@ public class OScriptManager {
         final String def = getFunctionDefinition(f);
         if (def != null) {
           code.append(def);
-          code.append("\n");
+          code.append('\n');
         }
       }
     }

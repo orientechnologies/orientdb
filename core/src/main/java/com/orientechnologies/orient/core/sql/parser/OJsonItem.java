@@ -18,14 +18,14 @@ public class OJsonItem {
   public String toString() {
     StringBuilder result = new StringBuilder();
     if (leftIdentifier != null) {
-      result.append("\"");
+      result.append('"');
       result.append(leftIdentifier.toString());
-      result.append("\"");
+      result.append('"');
     }
     if (leftString != null) {
-      result.append("\"");
+      result.append('"');
       result.append(OExpression.encode(leftString));
-      result.append("\"");
+      result.append('"');
     }
     result.append(": ");
     result.append(right.toString());

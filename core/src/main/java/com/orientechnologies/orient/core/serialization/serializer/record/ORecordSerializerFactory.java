@@ -81,7 +81,7 @@ public class ORecordSerializerFactory {
 
     ORecordSerializer recordFormat = null;
     if (iFormatName != null)
-      recordFormat = implementations.get(iObject.getClass().getSimpleName() + "2" + iFormatName);
+      recordFormat = implementations.get(iObject.getClass().getSimpleName() + '2' + iFormatName);
 
     if (recordFormat == null)
       recordFormat = defaultRecordFormat;

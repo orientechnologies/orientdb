@@ -54,7 +54,7 @@ public class OProjectionItem extends SimpleNode {
     StringBuilder builder = new StringBuilder();
 
     if (all) {
-      builder.append("*");
+      builder.append('*');
     } else {
       builder.append(expression.toString());
       if (alias != null && alias.trim().length() > 0) {

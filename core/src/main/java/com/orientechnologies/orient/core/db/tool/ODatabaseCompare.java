@@ -177,7 +177,7 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       OLogManager.instance()
           .error(this, "Error on comparing database '%s' against '%s'", e, storage1.getName(), storage2.getName());
       throw new ODatabaseExportException("Error on comparing database '" + storage1.getName() + "' against '" + storage2.getName()
-          + "'", e);
+          + '\'', e);
     } finally {
       storage1.close();
       storage2.close();

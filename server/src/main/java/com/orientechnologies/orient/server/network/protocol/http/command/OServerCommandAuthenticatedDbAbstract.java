@@ -182,7 +182,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     } catch (OSecurityAccessException e) {
       // WRONG USER/PASSWD
     } catch (OLockException e) {
-      OLogManager.instance().error(this, "Cannot access to the database '" + iDatabaseName + "'", ODatabaseException.class, e);
+      OLogManager.instance().error(this, "Cannot access to the database '" + iDatabaseName + '\'', ODatabaseException.class, e);
     } finally {
       if (db == null) {
         // WRONG USER/PASSWD
@@ -200,7 +200,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     iRequest.sessionId = SESSIONID_UNAUTHORIZED;
     String header = null;
     if (iRequest.authentication == null || iRequest.authentication.equalsIgnoreCase("basic")) {
-      header = "WWW-Authenticate: Basic realm=\"OrientDB db-" + iDatabaseName + "\"";
+      header = "WWW-Authenticate: Basic realm=\"OrientDB db-" + iDatabaseName + '"';
     }
     iResponse.send(OHttpUtils.STATUS_AUTH_CODE, OHttpUtils.STATUS_AUTH_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
         "401 Unauthorized.", header);

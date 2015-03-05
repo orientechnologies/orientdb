@@ -220,7 +220,7 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
               if (((String) value).length() == 0)
                 value = null;
               else
-                value = "'" + value + "'";
+                value = "'" + value + '\'';
 
             result = database.<OCommandRequest> command(new OSQLSynchQuery<ODocument>(cmd + value)).execute();
 
@@ -228,7 +228,7 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
               value = null;
             else if (result.size() > 1)
               throw new OCommandExecutionException("Cannot create link because multiple records was found in class '"
-                  + destClass.getName() + "' with value " + value + " in field '" + destField + "'");
+                  + destClass.getName() + "' with value " + value + " in field '" + destField + '\'');
             else {
               target = result.get(0);
               value = target;

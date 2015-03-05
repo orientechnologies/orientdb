@@ -132,7 +132,7 @@ public OFunction getFunctionSafe()
 
   public String toString() {
     String str = "OSchedule <name:" + getSchduleName() + ",rule:" + getSchedulingRule() + ",current status:" + getStatus() + ",func:"
-        + getFunctionSafe() + ",start:" + isStarted() + ">";
+        + getFunctionSafe() + ",start:" + isStarted() + '>';
     return str;
   }
 

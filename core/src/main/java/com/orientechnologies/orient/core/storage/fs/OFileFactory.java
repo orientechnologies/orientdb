@@ -49,7 +49,7 @@ public class OFileFactory extends OConfigurableStatefulFactory<String, OFile> {
       f.init(iFileName, iOpenMode);
       return f;
     } catch (final Exception e) {
-      throw new OConfigurationException("Cannot create file of type '" + iType + "'", e);
+      throw new OConfigurationException("Cannot create file of type '" + iType + '\'', e);
     }
   }
 }

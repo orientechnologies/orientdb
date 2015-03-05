@@ -111,7 +111,7 @@ public class ORecordFlat extends ORecordAbstract implements ORecordStringable {
 
   @Override
   public String toString() {
-    return super.toString() + " " + value();
+    return super.toString() + ' ' + value();
   }
 
   @Override
