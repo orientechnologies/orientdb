@@ -301,6 +301,7 @@ public class ODistributedWorker extends Thread {
 
       } finally {
         if (database != null) {
+          database.rollback();
           database.getLocalCache().clear();
           database.setUser(origin);
         }
