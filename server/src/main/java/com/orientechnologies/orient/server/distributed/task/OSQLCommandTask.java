@@ -40,7 +40,7 @@ import java.util.Map;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  * 
  */
-public class OSQLCommandTask extends OAbstractReplicatedTask {
+public class OSQLCommandTask extends OAbstractCommandTask {
   private static final long     serialVersionUID = 1L;
 
   protected String              text;

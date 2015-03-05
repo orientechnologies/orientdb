@@ -71,7 +71,7 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
   }
 
   public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
-    return OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE.REPLICATE;
+    return DISTRIBUTED_EXECUTION_MODE.LOCAL;
   }
 
   public Object execute(final Map<Object, Object> iArgs) {
@@ -116,9 +116,9 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract implements 
 
         request.setCompiledScript(compiledScript);
       }
-
       final Bindings binding = scriptManager.bind(compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE),
-          (ODatabaseDocumentTx) db, iContext, iArgs);
+                                                   (ODatabaseDocumentTx) db, iContext, iArgs);
+
 
       try {
         final Object ob = compiledScript.eval(binding);
