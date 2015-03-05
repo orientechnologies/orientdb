@@ -34,9 +34,10 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
    * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
    */
   public Object fromStream(final String iStream) {
-    if (iStream == null || iStream.length() == 0)
-      // NULL VALUE
-      return null;
+    if (iStream == null || iStream.length() == 0) {
+        // NULL VALUE
+        return null;
+    }
 
     OSerializableStream instance = null;
 
@@ -66,8 +67,9 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
    */
   public StringBuilder toStream(final StringBuilder iOutput, Object iValue) {
     if (iValue != null) {
-      if (!(iValue instanceof OSerializableStream))
-        throw new OSerializationException("Cannot serialize the object since it's not implements the OSerializableStream interface");
+      if (!(iValue instanceof OSerializableStream)) {
+          throw new OSerializationException("Cannot serialize the object since it's not implements the OSerializableStream interface");
+      }
 
       OSerializableStream stream = (OSerializableStream) iValue;
       iOutput.append(iValue.getClass().getName());

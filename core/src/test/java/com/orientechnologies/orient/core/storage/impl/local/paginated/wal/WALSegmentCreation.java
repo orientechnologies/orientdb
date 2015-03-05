@@ -32,12 +32,14 @@ public class WALSegmentCreation {
     OWALRecordsFactory.INSTANCE.registerNewRecord((byte) 128, TestRecordOne.class);
 
     String buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null || buildDirectory.isEmpty())
-      buildDirectory = ".";
+    if (buildDirectory == null || buildDirectory.isEmpty()) {
+        buildDirectory = ".";
+    }
 
     testDir = new File(buildDirectory, "WALSegmentCreationTest");
-    if (!testDir.exists())
-      testDir.mkdir();
+    if (!testDir.exists()) {
+        testDir.mkdir();
+    }
 
     localPaginatedStorage = mock(OLocalPaginatedStorage.class);
     when(localPaginatedStorage.getStoragePath()).thenReturn(testDir.getAbsolutePath());
@@ -59,8 +61,9 @@ public class WALSegmentCreation {
 
     stop = true;
 
-    for (Future<Void> future : futures)
-      future.get();
+    for (Future<Void> future : futures) {
+        future.get();
+    }
 
     final Set<OOperationUnitId> operations = new HashSet<OOperationUnitId>();
     writeAheadLog.close();
@@ -170,15 +173,18 @@ public class WALSegmentCreation {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
+      if (this == o) {
+          return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+          return false;
+      }
 
       TestRecordTwo that = (TestRecordTwo) o;
 
-      if (!Arrays.equals(data, that.data))
-        return false;
+      if (!Arrays.equals(data, that.data)) {
+          return false;
+      }
 
       return true;
     }
@@ -241,15 +247,18 @@ public class WALSegmentCreation {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
+      if (this == o) {
+          return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+          return false;
+      }
 
       TestRecordTwo that = (TestRecordTwo) o;
 
-      if (!Arrays.equals(data, that.data))
-        return false;
+      if (!Arrays.equals(data, that.data)) {
+          return false;
+      }
 
       return true;
     }

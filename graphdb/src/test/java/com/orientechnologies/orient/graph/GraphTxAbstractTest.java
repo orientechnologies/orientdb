@@ -45,15 +45,17 @@ public abstract class GraphTxAbstractTest {
     } catch (IllegalArgumentException e) {
     }
 
-    if (result == null)
-      result = ENV.DEV;
+    if (result == null) {
+        result = ENV.DEV;
+    }
 
     return result;
   }
 
   public static String getStorageType() {
-    if (getEnvironment().equals(ENV.DEV))
-      return "memory";
+    if (getEnvironment().equals(ENV.DEV)) {
+        return "memory";
+    }
 
     return "plocal";
   }

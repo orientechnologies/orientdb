@@ -78,16 +78,18 @@ public class OIndexFullText extends OIndexMultiValues {
   public OIndexFullText put(Object key, final OIdentifiable iSingleValue) {
     checkForRebuild();
 
-    if (key == null)
-      return this;
+    if (key == null) {
+        return this;
+    }
 
     key = getCollatingValue(key);
 
     final ODatabase database = getDatabase();
     final boolean txIsActive = database.getTransaction().isActive();
 
-    if (txIsActive)
-      keyLockManager.acquireSharedLock(key);
+    if (txIsActive) {
+        keyLockManager.acquireSharedLock(key);
+    }
     try {
       modificationLock.requestModificationLock();
 
@@ -108,8 +110,9 @@ public class OIndexFullText extends OIndexMultiValues {
               // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
               if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
                 boolean durable = false;
-                if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
-                  durable = true;
+                if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode"))) {
+                    durable = true;
+                }
 
                 refs = new OIndexRIDContainer(getName(), durable);
               } else {
@@ -137,8 +140,9 @@ public class OIndexFullText extends OIndexMultiValues {
         modificationLock.releaseModificationLock();
       }
     } finally {
-      if (txIsActive)
-        keyLockManager.releaseSharedLock(key);
+      if (txIsActive) {
+          keyLockManager.releaseSharedLock(key);
+      }
     }
   }
 
@@ -161,8 +165,9 @@ public class OIndexFullText extends OIndexMultiValues {
     final ODatabase database = getDatabase();
     final boolean txIsActive = database.getTransaction().isActive();
 
-    if (txIsActive)
-      keyLockManager.acquireSharedLock(key);
+    if (txIsActive) {
+        keyLockManager.acquireSharedLock(key);
+    }
     try {
       modificationLock.requestModificationLock();
 
@@ -178,10 +183,11 @@ public class OIndexFullText extends OIndexMultiValues {
             final Set<OIdentifiable> recs = indexEngine.get(word);
             if (recs != null && !recs.isEmpty()) {
               if (recs.remove(value)) {
-                if (recs.isEmpty())
-                  indexEngine.remove(word);
-                else
-                  indexEngine.put(word, recs);
+                if (recs.isEmpty()) {
+                    indexEngine.remove(word);
+                } else {
+                    indexEngine.put(word, recs);
+                }
                 removed = true;
               }
             }
@@ -199,8 +205,9 @@ public class OIndexFullText extends OIndexMultiValues {
         modificationLock.releaseModificationLock();
       }
     } finally {
-      if (txIsActive)
-        keyLockManager.releaseSharedLock(key);
+      if (txIsActive) {
+          keyLockManager.releaseSharedLock(key);
+      }
     }
   }
 
@@ -252,20 +259,25 @@ public class OIndexFullText extends OIndexMultiValues {
 
   protected void configWithMetadata(ODocument metadata) {
     if (metadata != null) {
-      if (metadata.containsField(CONFIG_IGNORE_CHARS))
-        ignoreChars = (String) metadata.field(CONFIG_IGNORE_CHARS);
+      if (metadata.containsField(CONFIG_IGNORE_CHARS)) {
+          ignoreChars = (String) metadata.field(CONFIG_IGNORE_CHARS);
+      }
 
-      if (metadata.containsField(CONFIG_INDEX_RADIX))
-        indexRadix = (Boolean) metadata.field(CONFIG_INDEX_RADIX);
+      if (metadata.containsField(CONFIG_INDEX_RADIX)) {
+          indexRadix = (Boolean) metadata.field(CONFIG_INDEX_RADIX);
+      }
 
-      if (metadata.containsField(CONFIG_SEPARATOR_CHARS))
-        separatorChars = (String) metadata.field(CONFIG_SEPARATOR_CHARS);
+      if (metadata.containsField(CONFIG_SEPARATOR_CHARS)) {
+          separatorChars = (String) metadata.field(CONFIG_SEPARATOR_CHARS);
+      }
 
-      if (metadata.containsField(CONFIG_MIN_WORD_LEN))
-        minWordLength = (Integer) metadata.field(CONFIG_MIN_WORD_LEN);
+      if (metadata.containsField(CONFIG_MIN_WORD_LEN)) {
+          minWordLength = (Integer) metadata.field(CONFIG_MIN_WORD_LEN);
+      }
 
-      if (metadata.containsField(CONFIG_STOP_WORDS))
-        stopWords = new HashSet<String>((Collection<? extends String>) metadata.field(CONFIG_STOP_WORDS));
+      if (metadata.containsField(CONFIG_STOP_WORDS)) {
+          stopWords = new HashSet<String>((Collection<? extends String>) metadata.field(CONFIG_STOP_WORDS));
+      }
     }
 
   }
@@ -280,8 +292,9 @@ public class OIndexFullText extends OIndexMultiValues {
 
   @Override
   protected void putInSnapshot(Object key, OIdentifiable value, Map<Object, Object> snapshot) {
-    if (key == null)
-      return;
+    if (key == null) {
+        return;
+    }
 
     key = getCollatingValue(key);
 
@@ -292,19 +305,21 @@ public class OIndexFullText extends OIndexMultiValues {
       Set<OIdentifiable> refs;
 
       final Object snapshotValue = snapshot.get(word);
-      if (snapshotValue == null)
-        refs = indexEngine.get(word);
-      else if (snapshotValue.equals(RemovedValue.INSTANCE))
-        refs = null;
-      else
-        refs = (Set<OIdentifiable>) snapshotValue;
+      if (snapshotValue == null) {
+          refs = indexEngine.get(word);
+      } else if (snapshotValue.equals(RemovedValue.INSTANCE)) {
+          refs = null;
+      } else {
+          refs = (Set<OIdentifiable>) snapshotValue;
+      }
 
       if (refs == null) {
         // WORD NOT EXISTS: CREATE THE KEYWORD CONTAINER THE FIRST TIME THE WORD IS FOUND
         if (ODefaultIndexFactory.SBTREEBONSAI_VALUE_CONTAINER.equals(valueContainerAlgorithm)) {
           boolean durable = false;
-          if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode")))
-            durable = true;
+          if (metadata != null && Boolean.TRUE.equals(metadata.field("durableInNonTxMode"))) {
+              durable = true;
+          }
 
           refs = new OIndexRIDContainer(getName(), durable);
         } else {
@@ -327,19 +342,21 @@ public class OIndexFullText extends OIndexMultiValues {
     for (final String word : words) {
       final Set<OIdentifiable> recs;
       final Object snapshotValue = snapshot.get(word);
-      if (snapshotValue == null)
-        recs = indexEngine.get(word);
-      else if (snapshotValue.equals(RemovedValue.INSTANCE))
-        recs = null;
-      else
-        recs = (Set<OIdentifiable>) snapshotValue;
+      if (snapshotValue == null) {
+          recs = indexEngine.get(word);
+      } else if (snapshotValue.equals(RemovedValue.INSTANCE)) {
+          recs = null;
+      } else {
+          recs = (Set<OIdentifiable>) snapshotValue;
+      }
 
       if (recs != null && !recs.isEmpty()) {
         if (recs.remove(value)) {
-          if (recs.isEmpty())
-            snapshot.put(word, RemovedValue.INSTANCE);
-          else
-            snapshot.put(word, recs);
+          if (recs.isEmpty()) {
+              snapshot.put(word, RemovedValue.INSTANCE);
+          } else {
+              snapshot.put(word, recs);
+          }
         }
       }
     }
@@ -361,14 +378,16 @@ public class OIndexFullText extends OIndexMultiValues {
       for (int i = 0; i < word.length(); ++i) {
         c = word.charAt(i);
         ignore = false;
-        for (int k = 0; k < ignoreChars.length(); ++k)
-          if (c == ignoreChars.charAt(k)) {
-            ignore = true;
-            break;
-          }
+        for (int k = 0; k < ignoreChars.length(); ++k) {
+            if (c == ignoreChars.charAt(k)) {
+                ignore = true;
+                break;
+            }
+        }
 
-        if (!ignore)
-          buffer.append(c);
+        if (!ignore) {
+            buffer.append(c);
+        }
       }
 
       int length = buffer.length();
@@ -378,14 +397,16 @@ public class OIndexFullText extends OIndexMultiValues {
         word = buffer.toString();
 
         // CHECK IF IT'S A STOP WORD
-        if (!stopWords.contains(word))
-          // ADD THE WORD TO THE RESULT SET
-          result.add(word);
+        if (!stopWords.contains(word)) {
+            // ADD THE WORD TO THE RESULT SET
+            result.add(word);
+        }
 
-        if (indexRadix)
-          length--;
-        else
-          break;
+        if (indexRadix) {
+            length--;
+        } else {
+            break;
+        }
       }
     }
 

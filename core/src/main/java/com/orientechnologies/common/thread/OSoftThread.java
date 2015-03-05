@@ -84,8 +84,9 @@ public abstract class OSoftThread extends Thread implements OService {
    */
   public static boolean pauseCurrentThread(long iTime) {
     try {
-      if (iTime <= 0)
-        iTime = Long.MAX_VALUE;
+      if (iTime <= 0) {
+          iTime = Long.MAX_VALUE;
+      }
 
       Thread.sleep(iTime);
       return true;

@@ -45,8 +45,9 @@ public class OTransactionIndexChanges {
   public boolean                                              cleared        = false;
 
   public OTransactionIndexChangesPerKey getChangesPerKey(final Object key) {
-    if (key == null)
-      return nullKeyChanges;
+    if (key == null) {
+        return nullKeyChanges;
+    }
 
     OTransactionIndexChangesPerKey changes = changesPerKey.get(key);
     if (changes == null) {

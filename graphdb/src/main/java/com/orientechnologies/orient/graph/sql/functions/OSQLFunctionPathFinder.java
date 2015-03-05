@@ -75,19 +75,24 @@ public abstract class OSQLFunctionPathFinder extends OSQLFunctionMathAbstract {
       unSettledNodes.remove(node);
       findMinimalDistances(node);
 
-      if (distance.size() > maxDistances)
-        maxDistances = distance.size();
-      if (unSettledNodes.size() > maxUnSettled)
-        maxUnSettled = unSettledNodes.size();
-      if (predecessors.size() > maxPredecessors)
-        maxPredecessors = predecessors.size();
+      if (distance.size() > maxDistances) {
+          maxDistances = distance.size();
+      }
+      if (unSettledNodes.size() > maxUnSettled) {
+          maxUnSettled = unSettledNodes.size();
+      }
+      if (predecessors.size() > maxPredecessors) {
+          maxPredecessors = predecessors.size();
+      }
 
-      if (!isVariableEdgeWeight() && distance.containsKey(paramDestinationVertex.getIdentity()))
-        // FOUND
-        break;
+      if (!isVariableEdgeWeight() && distance.containsKey(paramDestinationVertex.getIdentity())) {
+          // FOUND
+          break;
+      }
 
-      if (!context.checkTimeout())
-        break;
+      if (!context.checkTimeout()) {
+          break;
+      }
     }
 
     context.setVariable("maxDistances", maxDistances);
@@ -111,8 +116,9 @@ public abstract class OSQLFunctionPathFinder extends OSQLFunctionMathAbstract {
     final LinkedList<OrientVertex> path = new LinkedList<OrientVertex>();
     OrientVertex step = paramDestinationVertex;
     // Check if a path exists
-    if (predecessors.get(step.getIdentity()) == null)
-      return null;
+    if (predecessors.get(step.getIdentity()) == null) {
+        return null;
+    }
 
     path.add(step);
     while (predecessors.get(step.getIdentity()) != null) {
@@ -153,8 +159,9 @@ public abstract class OSQLFunctionPathFinder extends OSQLFunctionMathAbstract {
     if (node != null) {
       for (Vertex v : node.getVertices(paramDirection)) {
         final OrientVertex ov = (OrientVertex) v;
-        if (ov != null && isNotSettled(ov))
-          neighbors.add(ov);
+        if (ov != null && isNotSettled(ov)) {
+            neighbors.add(ov);
+        }
       }
     }
     return neighbors;
@@ -181,8 +188,9 @@ public abstract class OSQLFunctionPathFinder extends OSQLFunctionMathAbstract {
   }
 
   protected float getShortestDistance(final OrientVertex destination) {
-    if (destination == null)
-      return Float.MAX_VALUE;
+    if (destination == null) {
+        return Float.MAX_VALUE;
+    }
 
     final Float d = distance.get(destination.getIdentity());
     return d == null ? Float.MAX_VALUE : d;

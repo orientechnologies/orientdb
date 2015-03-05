@@ -77,10 +77,11 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
 
   @Override
   public boolean containsValue(final Object o) {
-    if (o instanceof OIdentifiable)
-      return underlying.containsValue((OIdentifiable) o);
-    else if (o instanceof Proxy)
-      return underlying.containsValue(OObjectEntitySerializer.getDocument((Proxy) o));
+    if (o instanceof OIdentifiable) {
+        return underlying.containsValue((OIdentifiable) o);
+    } else if (o instanceof Proxy) {
+        return underlying.containsValue(OObjectEntitySerializer.getDocument((Proxy) o));
+    }
     return super.containsValue(o);
   }
 
@@ -93,10 +94,12 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
         converted = false;
         OIdentifiable o = underlying.put(iKey, record);
         if (orphanRemoval && sourceRecord != null) {
-          if (record != null)
-            ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
-          if (o != null && !o.getIdentity().equals(((OIdentifiable) e).getIdentity()))
-            ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(o.getIdentity());
+          if (record != null) {
+              ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
+          }
+          if (o != null && !o.getIdentity().equals(((OIdentifiable) e).getIdentity())) {
+              ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(o.getIdentity());
+          }
         }
         return o;
       } else {
@@ -105,10 +108,12 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
         OIdentifiable oldValue = underlying.get(iKey);
         underlying.put(iKey, record);
         if (orphanRemoval && sourceRecord != null) {
-          if (record != null)
-            ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
-          if (((record == null && oldValue != null) || (oldValue != null && !oldValue.getIdentity().equals(record.getIdentity()))))
-            ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(oldValue.getIdentity());
+          if (record != null) {
+              ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().remove(record.getIdentity());
+          }
+          if (((record == null && oldValue != null) || (oldValue != null && !oldValue.getIdentity().equals(record.getIdentity())))) {
+              ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(oldValue.getIdentity());
+          }
         }
         return super.put(iKey, e);
       }
@@ -120,8 +125,9 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
   @Override
   public Object remove(final Object iKey) {
     OIdentifiable record = underlying.remove((String) iKey);
-    if (orphanRemoval && record != null && sourceRecord != null)
-      ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(record.getIdentity());
+    if (orphanRemoval && record != null && sourceRecord != null) {
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(record.getIdentity());
+    }
     setDirty();
     return super.remove(iKey);
   }
@@ -129,9 +135,11 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
   @Override
   public void clear() {
     converted = true;
-    if (orphanRemoval && sourceRecord != null)
-      for (OIdentifiable value : underlying.values())
-        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(value.getIdentity());
+    if (orphanRemoval && sourceRecord != null) {
+        for (OIdentifiable value : underlying.values()) {
+            ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(value.getIdentity());
+        }
+    }
     underlying.clear();
     super.clear();
     setDirty();
@@ -204,8 +212,9 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
   }
 
   public void setDirty() {
-    if (sourceRecord != null)
-      ((OObjectProxyMethodHandler) sourceRecord.getHandler()).setDirty();
+    if (sourceRecord != null) {
+        ((OObjectProxyMethodHandler) sourceRecord.getHandler()).setDirty();
+    }
   }
 
   public Map<Object, OIdentifiable> getUnderlying() {
@@ -216,14 +225,17 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
    * Assure that the requested key is converted.
    */
   private void convert(final String iKey) {
-    if (converted || !convertToRecord)
-      return;
+    if (converted || !convertToRecord) {
+        return;
+    }
 
-    if (super.containsKey(iKey))
-      return;
+    if (super.containsKey(iKey)) {
+        return;
+    }
     final ORecord record = (ORecord) underlying.get(iKey);
-    if (record == null)
-      return;
+    if (record == null) {
+        return;
+    }
     TYPE o = getDatabase().getUserObjectByRecord(record, null);
     ((OObjectProxyMethodHandler) (((ProxyObject) o)).getHandler()).setParentObject(sourceRecord);
     super.put(iKey, o);
@@ -254,19 +266,22 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
    * Converts all the items
    */
   protected void convertAll() {
-    if (converted || !convertToRecord)
-      return;
+    if (converted || !convertToRecord) {
+        return;
+    }
 
-    for (java.util.Map.Entry<Object, OIdentifiable> e : underlying.entrySet())
-      super.put(e.getKey(),
-          getDatabase().getUserObjectByRecord((ORecord) ((OIdentifiable) e.getValue()).getRecord(), null));
+    for (java.util.Map.Entry<Object, OIdentifiable> e : underlying.entrySet()) {
+        super.put(e.getKey(),
+                getDatabase().getUserObjectByRecord((ORecord) ((OIdentifiable) e.getValue()).getRecord(), null));
+    }
 
     converted = true;
   }
 
   protected void convertAndDetachAll(boolean nonProxiedInstance, Map<Object, Object> alreadyDetached) {
-    if (converted || !convertToRecord)
-      return;
+    if (converted || !convertToRecord) {
+        return;
+    }
 
     for (java.util.Map.Entry<Object, OIdentifiable> e : underlying.entrySet()) {
       Object o = getDatabase().getUserObjectByRecord((ORecord) ((OIdentifiable) e.getValue()).getRecord(), null);

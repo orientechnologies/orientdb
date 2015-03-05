@@ -35,15 +35,18 @@ class LRUEntry {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
 
     LRUEntry lruEntry = (LRUEntry) o;
 
-    if (!cacheEntry.equals(lruEntry.cacheEntry))
-      return false;
+    if (!cacheEntry.equals(lruEntry.cacheEntry)) {
+        return false;
+    }
 
     return true;
   }

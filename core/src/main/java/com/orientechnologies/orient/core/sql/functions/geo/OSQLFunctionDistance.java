@@ -47,8 +47,9 @@ public class OSQLFunctionDistance extends OSQLFunctionAbstract {
       final double[] values = new double[4];
 
       for (int i = 0; i < iParams.length && i < 4; ++i) {
-        if (iParams[i] == null)
-          return null;
+        if (iParams[i] == null) {
+            return null;
+        }
 
         values[i] = ((Double) OType.convert(iParams[i], Double.class)).doubleValue();
       }
@@ -65,14 +66,15 @@ public class OSQLFunctionDistance extends OSQLFunctionAbstract {
         if (unit.equalsIgnoreCase("km"))
           // ALREADY IN KM
           ;
-        else if (unit.equalsIgnoreCase("mi"))
-          // MILES
-          distance *= 0.621371192;
-        else if (unit.equalsIgnoreCase("nmi"))
-          // NAUTICAL MILES
-          distance *= 0.539956803;
-        else
-          throw new IllegalArgumentException("Unsupported unit '" + unit + "'. Use km, mi and nmi. Default is km.");
+        else if (unit.equalsIgnoreCase("mi")) {
+            // MILES
+            distance *= 0.621371192;
+        } else if (unit.equalsIgnoreCase("nmi")) {
+            // NAUTICAL MILES
+            distance *= 0.539956803;
+        } else {
+            throw new IllegalArgumentException("Unsupported unit '" + unit + "'. Use km, mi and nmi. Default is km.");
+        }
       }
 
       return distance;

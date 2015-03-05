@@ -67,8 +67,9 @@ public class ORecordSerializerFactory {
   }
 
   public ORecordSerializer getFormat(final String iFormatName) {
-    if (iFormatName == null)
-      return null;
+    if (iFormatName == null) {
+        return null;
+    }
 
     return implementations.get(iFormatName);
   }
@@ -76,15 +77,18 @@ public class ORecordSerializerFactory {
   // Never used so can be deprecate.
   @Deprecated
   public ORecordSerializer getFormatForObject(final Object iObject, final String iFormatName) {
-    if (iObject == null)
-      return null;
+    if (iObject == null) {
+        return null;
+    }
 
     ORecordSerializer recordFormat = null;
-    if (iFormatName != null)
-      recordFormat = implementations.get(iObject.getClass().getSimpleName() + "2" + iFormatName);
+    if (iFormatName != null) {
+        recordFormat = implementations.get(iObject.getClass().getSimpleName() + "2" + iFormatName);
+    }
 
-    if (recordFormat == null)
-      recordFormat = defaultRecordFormat;
+    if (recordFormat == null) {
+        recordFormat = defaultRecordFormat;
+    }
 
     return recordFormat;
   }

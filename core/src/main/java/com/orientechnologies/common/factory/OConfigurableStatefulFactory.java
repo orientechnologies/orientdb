@@ -40,8 +40,9 @@ public class OConfigurableStatefulFactory<K, V> {
   }
 
   public V newInstance(final K iKey) {
-    if (iKey == null && defaultClass == null)
-      throw new IllegalArgumentException("Cannot create implementation for type null");
+    if (iKey == null && defaultClass == null) {
+        throw new IllegalArgumentException("Cannot create implementation for type null");
+    }
 
     final Class<? extends V> cls = registry.get(iKey);
     if (cls != null) {

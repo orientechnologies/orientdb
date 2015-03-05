@@ -71,15 +71,18 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
     record = (ORecordBytesLazy) new ORecordBytesLazy(this);
     if (iRID != null) {
       ORecordInternal.setIdentity(record, iRID.getClusterId(), iRID.getClusterPosition());
-      if (treeDataProvider.storage == null)
-        load(OMVRBTreeProviderAbstract.getDatabase());
-      else
-        load(treeDataProvider.storage);
-    } else
-      ORecordInternal.setIdentity(record, new ORecordId());
+      if (treeDataProvider.storage == null) {
+          load(OMVRBTreeProviderAbstract.getDatabase());
+      } else {
+          load(treeDataProvider.storage);
+      }
+    } else {
+        ORecordInternal.setIdentity(record, new ORecordId());
+    }
 
-    if (record.getIdentity().isNew() || record.getIdentity().isTemporary())
-      ORecordListenerManager.addListener(record, this);
+    if (record.getIdentity().isNew() || record.getIdentity().isTemporary()) {
+        ORecordListenerManager.addListener(record, this);
+    }
   }
 
   protected void load(final ODatabaseDocument iDb) {
@@ -125,22 +128,25 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
   }
 
   public boolean setLeft(final ORID iRid) {
-    if (leftRid.equals(iRid))
-      return false;
+    if (leftRid.equals(iRid)) {
+        return false;
+    }
     leftRid.copyFrom(iRid);
     return setDirty();
   }
 
   public boolean setRight(final ORID iRid) {
-    if (rightRid.equals(iRid))
-      return false;
+    if (rightRid.equals(iRid)) {
+        return false;
+    }
     rightRid.copyFrom(iRid);
     return setDirty();
   }
 
   public boolean setParent(final ORID iRid) {
-    if (parentRid.equals(iRid))
-      return false;
+    if (parentRid.equals(iRid)) {
+        return false;
+    }
     parentRid.copyFrom(iRid);
     return setDirty();
   }
@@ -159,10 +165,11 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
   }
 
   public void save() {
-    if (treeDataProvider.storage == null)
-      save(OMVRBTreeProviderAbstract.getDatabase());
-    else
-      save(treeDataProvider.storage);
+    if (treeDataProvider.storage == null) {
+        save(OMVRBTreeProviderAbstract.getDatabase());
+    } else {
+        save(treeDataProvider.storage);
+    }
   }
 
   protected void save(final ODatabaseDocument iDb) {
@@ -172,22 +179,24 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
     }
     record.save(treeDataProvider.clusterName);
 
-    if (!record.getIdentity().isTemporary())
-      ORecordListenerManager.removeListener(record, this);
+    if (!record.getIdentity().isTemporary()) {
+        ORecordListenerManager.removeListener(record, this);
+    }
   }
 
   protected void save(final OStorage iStorage) {
     record.fromStream(toStream());
-    if (record.getIdentity().isValid())
-      // UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
-      record.getRecordVersion().copyFrom(
-          iStorage.updateRecord((ORecordId) record.getIdentity(), true, record.toStream(),
-              OVersionFactory.instance().createUntrackedVersion(), ORecordInternal.getRecordType(record), (byte) 0, null)
-              .getResult());
-    else {
+    if (record.getIdentity().isValid()) {
+        // UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
+        record.getRecordVersion().copyFrom(
+                iStorage.updateRecord((ORecordId) record.getIdentity(), true, record.toStream(),
+                        OVersionFactory.instance().createUntrackedVersion(), ORecordInternal.getRecordType(record), (byte) 0, null)
+                        .getResult());
+    } else {
       // CREATE IT
-      if (record.getIdentity().getClusterId() == ORID.CLUSTER_ID_INVALID)
-        ((ORecordId) record.getIdentity()).clusterId = treeDataProvider.clusterId;
+        if (record.getIdentity().getClusterId() == ORID.CLUSTER_ID_INVALID) {
+            ((ORecordId) record.getIdentity()).clusterId = treeDataProvider.clusterId;
+        }
 
       final OPhysicalPosition ppos = iStorage.createRecord((ORecordId) record.getIdentity(), record.toStream(),
           OVersionFactory.instance().createVersion(), ORecordInternal.getRecordType(record), (byte) 0, null).getResult();
@@ -197,16 +206,18 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
     }
     ORecordInternal.unsetDirty(record);
 
-    if (!record.getIdentity().isTemporary())
-      ORecordListenerManager.removeListener(record, this);
+    if (!record.getIdentity().isTemporary()) {
+        ORecordListenerManager.removeListener(record, this);
+    }
   }
 
   public void delete() {
     ORecordListenerManager.removeListener(record, this);
-    if (treeDataProvider.storage == null)
-      delete((ODatabaseDocument) null);
-    else
-      delete(treeDataProvider.storage);
+    if (treeDataProvider.storage == null) {
+        delete((ODatabaseDocument) null);
+    } else {
+        delete(treeDataProvider.storage);
+    }
   }
 
   protected void delete(final ODatabaseDocument iDb) {
@@ -220,12 +231,14 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
   }
 
   public void onEvent(ORecord record, ORecordListener.EVENT event) {
-    if (ORecordListener.EVENT.IDENTITY_CHANGED.equals(event))
-      if (identityChangedListener != null) {
-        final OIdentityChangedListener listener = identityChangedListener.get();
-        if (listener != null)
-          listener.onIdentityChanged(record.getIdentity());
-      }
+    if (ORecordListener.EVENT.IDENTITY_CHANGED.equals(event)) {
+        if (identityChangedListener != null) {
+            final OIdentityChangedListener listener = identityChangedListener.get();
+            if (listener != null) {
+                listener.onIdentityChanged(record.getIdentity());
+            }
+        }
+    }
   }
 
   public void setIdentityChangedListener(final OIdentityChangedListener listener) {
@@ -235,8 +248,9 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
   public void removeIdentityChangedListener(final OIdentityChangedListener listener) {
     if (identityChangedListener != null) {
       final OIdentityChangedListener identityListener = identityChangedListener.get();
-      if (identityListener != null && identityListener.equals(listener))
-        identityChangedListener = null;
+      if (identityListener != null && identityListener.equals(listener)) {
+          identityChangedListener = null;
+      }
     }
   }
 
@@ -252,8 +266,9 @@ public abstract class OMVRBTreeEntryDataProviderAbstract<K, V> implements OMVRBT
   }
 
   protected boolean setDirty() {
-    if (record.isDirty())
-      return false;
+    if (record.isDirty()) {
+        return false;
+    }
     record.setDirty();
     return true;
   }

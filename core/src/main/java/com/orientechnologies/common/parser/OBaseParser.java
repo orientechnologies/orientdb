@@ -47,13 +47,15 @@ public abstract class OBaseParser {
     ioWord.setLength(0);
 
     ioCurrentPosition = OStringParser.jumpWhiteSpaces(iText, ioCurrentPosition, -1);
-    if (ioCurrentPosition < 0)
-      return -1;
+    if (ioCurrentPosition < 0) {
+        return -1;
+    }
 
     getWordStatic(iForceUpperCase ? iTextUpperCase : iText, ioCurrentPosition, iSeparatorChars, ioWord);
 
-    if (ioWord.length() > 0)
-      ioCurrentPosition += ioWord.length();
+    if (ioWord.length() > 0) {
+        ioCurrentPosition += ioWord.length();
+    }
 
     return ioCurrentPosition;
   }
@@ -85,8 +87,9 @@ public abstract class OBaseParser {
           break;
         }
       }
-      if (!found)
-        break;
+      if (!found) {
+          break;
+      }
 
       iBeginIndex++;
     }
@@ -169,8 +172,9 @@ public abstract class OBaseParser {
    * @return The current character in the current cursor position. If the end is reached, then a blank (' ') is returned
    */
   public char parserGetCurrentChar() {
-    if (parserCurrentPos < 0)
-      return ' ';
+    if (parserCurrentPos < 0) {
+        return ' ';
+    }
     return parserText.charAt(parserCurrentPos);
   }
 
@@ -204,8 +208,9 @@ public abstract class OBaseParser {
     parserPreviousPos = parserCurrentPos;
 
     parserNextWord(iUpperCase);
-    if (parserLastWord.length() == 0)
-      return null;
+    if (parserLastWord.length() == 0) {
+        return null;
+    }
     return parserLastWord.toString();
   }
 
@@ -221,8 +226,9 @@ public abstract class OBaseParser {
     parserNextWord(iUpperCase);
 
     if (iWords.length > 0) {
-      if (parserLastWord.length() == 0)
-        return null;
+      if (parserLastWord.length() == 0) {
+          return null;
+      }
 
       boolean found = false;
       for (String w : iWords) {
@@ -232,9 +238,10 @@ public abstract class OBaseParser {
         }
       }
 
-      if (!found)
-        throwSyntaxErrorException("Found unexpected keyword '" + parserLastWord + "' while it was expected '"
-            + Arrays.toString(iWords) + "'");
+      if (!found) {
+          throwSyntaxErrorException("Found unexpected keyword '" + parserLastWord + "' while it was expected '"
+                  + Arrays.toString(iWords) + "'");
+      }
     }
     return parserLastWord.toString();
   }
@@ -287,12 +294,14 @@ public abstract class OBaseParser {
    * @return The word parsed
    */
   protected String parserRequiredWord(final boolean iUpperCase, final String iCustomMessage, String iSeparators) {
-    if (iSeparators == null)
-      iSeparators = " ()=><,\r\n";
+    if (iSeparators == null) {
+        iSeparators = " ()=><,\r\n";
+    }
 
     parserNextWord(iUpperCase, iSeparators);
-    if (parserLastWord.length() == 0)
-      throwSyntaxErrorException(iCustomMessage);
+    if (parserLastWord.length() == 0) {
+        throwSyntaxErrorException(iCustomMessage);
+    }
     return parserLastWord.toString();
   }
 
@@ -305,8 +314,9 @@ public abstract class OBaseParser {
    */
   protected void parserRequiredKeyword(final String... iWords) {
     parserNextWord(true, " \r\n,()");
-    if (parserLastWord.length() == 0)
-      throwSyntaxErrorException("Cannot find expected keyword '" + Arrays.toString(iWords) + "'");
+    if (parserLastWord.length() == 0) {
+        throwSyntaxErrorException("Cannot find expected keyword '" + Arrays.toString(iWords) + "'");
+    }
 
     boolean found = false;
     for (String w : iWords) {
@@ -316,9 +326,10 @@ public abstract class OBaseParser {
       }
     }
 
-    if (!found)
-      throwSyntaxErrorException("Found unexpected keyword '" + parserLastWord + "' while it was expected '"
-          + Arrays.toString(iWords) + "'");
+    if (!found) {
+        throwSyntaxErrorException("Found unexpected keyword '" + parserLastWord + "' while it was expected '"
+                + Arrays.toString(iWords) + "'");
+    }
   }
 
   /**
@@ -344,8 +355,9 @@ public abstract class OBaseParser {
     for (int i = 0; parserCurrentPos <= max; ++i) {
       final char ch = parserCurrentPos < max ? text2Use.charAt(parserCurrentPos) : '\n';
       final boolean separator = ch == ' ' || ch == '\r' || ch == '\n' || ch == '\t' || ch == '(';
-      if (!separator)
-        parserLastWord.append(ch);
+      if (!separator) {
+          parserLastWord.append(ch);
+      }
 
       // CLEAR CANDIDATES
       int candidatesWordsCount = 0;
@@ -354,14 +366,15 @@ public abstract class OBaseParser {
         final String w = processedWords[c];
         if (w != null) {
           final int wordSize = w.length();
-          if ((separator && wordSize > i) || (!separator && (i > wordSize - 1 || w.charAt(i) != ch)))
-            // DISCARD IT
-            processedWords[c] = null;
-          else {
+          if ((separator && wordSize > i) || (!separator && (i > wordSize - 1 || w.charAt(i) != ch))) {
+              // DISCARD IT
+              processedWords[c] = null;
+          } else {
             candidatesWordsCount++;
-            if (candidatesWordsCount == 1)
-              // REMEMBER THE POSITION
-              candidatesWordsPos = c;
+            if (candidatesWordsCount == 1) {
+                // REMEMBER THE POSITION
+                candidatesWordsPos = c;
+              }
           }
         }
       }
@@ -369,20 +382,23 @@ public abstract class OBaseParser {
       if (candidatesWordsCount == 1) {
         // ONE RESULT, CHECKING IF FOUND
         final String w = processedWords[candidatesWordsPos];
-        if (w.length() == i + (separator ? 0 : 1) && !Character.isLetter(ch))
-          // FOUND!
-          return candidatesWordsPos;
+        if (w.length() == i + (separator ? 0 : 1) && !Character.isLetter(ch)) {
+            // FOUND!
+            return candidatesWordsPos;
+        }
       }
 
-      if (candidatesWordsCount == 0 || separator)
-        break;
+      if (candidatesWordsCount == 0 || separator) {
+          break;
+      }
 
       parserCurrentPos++;
     }
 
-    if (iMandatory)
-      throwSyntaxErrorException("Found unexpected keyword '" + parserLastWord + "' while it was expected '"
-          + Arrays.toString(iCandidateWords) + "'");
+    if (iMandatory) {
+        throwSyntaxErrorException("Found unexpected keyword '" + parserLastWord + "' while it was expected '"
+                + Arrays.toString(iCandidateWords) + "'");
+    }
 
     return -1;
   }
@@ -396,8 +412,9 @@ public abstract class OBaseParser {
    */
   protected boolean parserOptionalKeyword(final String... iWords) {
     parserNextWord(true, " \r\n,");
-    if (parserLastWord.length() == 0)
-      return false;
+    if (parserLastWord.length() == 0) {
+        return false;
+    }
 
     // FOUND: CHECK IF IT'S IN RANGE
     boolean found = iWords.length == 0;
@@ -408,9 +425,10 @@ public abstract class OBaseParser {
       }
     }
 
-    if (!found)
-      throwSyntaxErrorException("Found unexpected keyword '" + parserLastWord + "' while it was expected '"
-          + Arrays.toString(iWords) + "'");
+    if (!found) {
+        throwSyntaxErrorException("Found unexpected keyword '" + parserLastWord + "' while it was expected '"
+                + Arrays.toString(iWords) + "'");
+    }
 
     return true;
   }
@@ -421,8 +439,9 @@ public abstract class OBaseParser {
    * @return True if the string is not ended, otherwise false
    */
   protected boolean parserSkipWhiteSpaces() {
-    if (parserCurrentPos == -1)
-      return false;
+    if (parserCurrentPos == -1) {
+        return false;
+    }
 
     parserCurrentPos = OStringParser.jumpWhiteSpaces(parserText, parserCurrentPos, -1);
     return parserCurrentPos > -1;
@@ -437,9 +456,10 @@ public abstract class OBaseParser {
    */
   protected boolean parserSetCurrentPosition(final int iPosition) {
     parserCurrentPos = iPosition;
-    if (parserCurrentPos >= parserText.length())
-      // END OF TEXT
-      parserCurrentPos = -1;
+    if (parserCurrentPos >= parserText.length()) {
+        // END OF TEXT
+        parserCurrentPos = -1;
+    }
     return parserCurrentPos > -1;
   }
 
@@ -458,8 +478,9 @@ public abstract class OBaseParser {
    * @return True if the string is not ended, otherwise false
    */
   protected boolean parserMoveCurrentPosition(final int iOffset) {
-    if (parserCurrentPos < 0)
-      return false;
+    if (parserCurrentPos < 0) {
+        return false;
+    }
     return parserSetCurrentPosition(parserCurrentPos + iOffset);
   }
 
@@ -487,8 +508,9 @@ public abstract class OBaseParser {
     parserEscapeSequnceCount = 0;
 
     parserSkipWhiteSpaces();
-    if (parserCurrentPos == -1)
-      return;
+    if (parserCurrentPos == -1) {
+        return;
+    }
 
     char stringBeginChar = ' ';
 
@@ -504,8 +526,9 @@ public abstract class OBaseParser {
           break;
         }
       }
-      if (!found)
-        break;
+      if (!found) {
+          break;
+      }
 
       parserCurrentPos++;
     }
@@ -530,17 +553,17 @@ public abstract class OBaseParser {
               parserCurrentPos = OStringParser.readUnicode(text2Use, parserCurrentPos + 2, parserLastWord);
               parserEscapeSequnceCount+=5;
             } else {
-							if (nextChar == 'n')
-								parserLastWord.append('\n');
-							else if (nextChar == 'r')
-								parserLastWord.append('\r');
-							else if (nextChar == 't')
-								parserLastWord.append('\t');
-							else if(nextChar == 'b')
-								parserLastWord.append('\b');
-							else if(nextChar == 'f')
-								parserLastWord.append('\f');
-							else{
+							if (nextChar == 'n') {
+                                                            parserLastWord.append('\n');
+                                                        } else if (nextChar == 'r') {
+                                                            parserLastWord.append('\r');
+                                                        } else if (nextChar == 't') {
+                                                            parserLastWord.append('\t');
+                                                        } else if(nextChar == 'b') {
+                                                            parserLastWord.append('\b');
+                                                        } else if(nextChar == 'f') {
+                                                            parserLastWord.append('\f');
+                                                        } else{
 								parserLastWord.append(nextChar);
 								parserEscapeSequnceCount++;
 							}
@@ -549,8 +572,9 @@ public abstract class OBaseParser {
             }
 
             continue;
-          } else
-            escapePos = parserCurrentPos;
+          } else {
+              escapePos = parserCurrentPos;
+          }
         }
 
         if (escapePos == -1 && (c == '\'' || c == '"')) {
@@ -566,47 +590,55 @@ public abstract class OBaseParser {
                 break;
               }
             }
-          } else
-            // START STRING
-            stringBeginChar = c;
+          } else {
+              // START STRING
+              stringBeginChar = c;
+          }
         }
 
         if (stringBeginChar == ' ') {
           if (openBracket == 0 && openGraph == 0 && openParenthesis == 0 && parserCheckSeparator(c, iSeparatorChars)) {
             // SEPARATOR FOUND!
             break;
-          } else if (c == '(')
-            openParenthesis++;
-          else if (c == ')' && openParenthesis > 0)
-            openParenthesis--;
-          else if (c == '[')
-            openBracket++;
-          else if (c == ']' && openBracket > 0)
-            openBracket--;
-          else if (c == '{')
-            openGraph++;
-          else if (c == '}' && openGraph > 0)
-            openGraph--;
+          } else if (c == '(') {
+              openParenthesis++;
+          } else if (c == ')' && openParenthesis > 0) {
+              openParenthesis--;
+          } else if (c == '[') {
+              openBracket++;
+          } else if (c == ']' && openBracket > 0) {
+              openBracket--;
+          } else if (c == '{') {
+              openGraph++;
+          } else if (c == '}' && openGraph > 0) {
+              openGraph--;
+          }
         }
 
-        if (escapePos != -1)
-        	parserEscapeSequnceCount++;
+        if (escapePos != -1) {
+            parserEscapeSequnceCount++;
+        }
         
-        if (escapePos != parserCurrentPos)
-          escapePos = -1;
+        if (escapePos != parserCurrentPos) {
+            escapePos = -1;
+        }
 
         parserLastWord.append(c);
       }
 
       // CHECK MISSING CHARACTER
-      if (stringBeginChar != ' ')
-        throw new IllegalStateException("Missing closed string character: '" + stringBeginChar + "', position: " + parserCurrentPos);
-      if (openBracket > 0)
-        throw new IllegalStateException("Missing closed braket character: ']', position: " + parserCurrentPos);
-      if (openGraph > 0)
-        throw new IllegalStateException("Missing closed graph character: '}', position: " + parserCurrentPos);
-      if (openParenthesis > 0)
-        throw new IllegalStateException("Missing closed parenthesis character: ')', position: " + parserCurrentPos);
+      if (stringBeginChar != ' ') {
+          throw new IllegalStateException("Missing closed string character: '" + stringBeginChar + "', position: " + parserCurrentPos);
+      }
+      if (openBracket > 0) {
+          throw new IllegalStateException("Missing closed braket character: ']', position: " + parserCurrentPos);
+      }
+      if (openGraph > 0) {
+          throw new IllegalStateException("Missing closed graph character: '}', position: " + parserCurrentPos);
+      }
+      if (openParenthesis > 0) {
+          throw new IllegalStateException("Missing closed parenthesis character: ')', position: " + parserCurrentPos);
+      }
 
     } finally {
       if (parserCurrentPos >= text2Use.length()) {

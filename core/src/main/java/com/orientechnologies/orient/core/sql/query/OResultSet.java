@@ -93,8 +93,9 @@ public class OResultSet<T> implements List<T>, Externalizable {
       @Override
       public boolean hasNext() {
         while (!completed) {
-          if (index < size())
-            return true;
+          if (index < size()) {
+              return true;
+          }
 
           waitForNewItemOrCompleted();
         }
@@ -105,15 +106,17 @@ public class OResultSet<T> implements List<T>, Externalizable {
       @Override
       public T next() {
         while (!completed) {
-          if (index < size())
-            break;
+          if (index < size()) {
+              break;
+          }
 
           waitForNewItemOrCompleted();
         }
 
-        if (index > size() || size() == 0)
-          throw new NoSuchElementException("Error on browsing at element " + index + " while the resultset contains only " + size()
-              + " items");
+        if (index > size() || size() == 0) {
+            throw new NoSuchElementException("Error on browsing at element " + index + " while the resultset contains only " + size()
+                    + " items");
+        }
 
         return underlying.get(index++);
 
@@ -137,8 +140,9 @@ public class OResultSet<T> implements List<T>, Externalizable {
   }
 
   public boolean add(final T t) {
-    if (limit > -1 && underlying.size() >= limit)
-      return false;
+    if (limit > -1 && underlying.size() >= limit) {
+        return false;
+    }
 
     final boolean result = underlying.add(t);
     notifyNewItem();
@@ -248,11 +252,12 @@ public class OResultSet<T> implements List<T>, Externalizable {
 
   protected void waitForCompletion() {
     synchronized (waitForCompletion) {
-      if (!completed)
-        try {
-          waitForCompletion.wait();
-        } catch (InterruptedException e) {
-        }
+      if (!completed) {
+          try {
+              waitForCompletion.wait();
+          } catch (InterruptedException e) {
+          }
+      }
     }
   }
 

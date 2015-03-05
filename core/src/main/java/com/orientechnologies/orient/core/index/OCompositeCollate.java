@@ -52,23 +52,27 @@ public class OCompositeCollate implements OCollate {
       transformedKey.addKey(collate.transform(key));
     }
 
-    for (int i = size; i < keys.size(); i++)
-      transformedKey.addKey(keys.get(i));
+    for (int i = size; i < keys.size(); i++) {
+        transformedKey.addKey(keys.get(i));
+    }
 
     return transformedKey;
   }
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
 
     OCompositeCollate that = (OCompositeCollate) o;
 
-    if (!collates.equals(that.collates))
-      return false;
+    if (!collates.equals(that.collates)) {
+        return false;
+    }
 
     return true;
   }

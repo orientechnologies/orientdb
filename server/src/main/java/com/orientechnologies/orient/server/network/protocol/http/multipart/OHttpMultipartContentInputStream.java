@@ -53,8 +53,9 @@ public class OHttpMultipartContentInputStream extends InputStream {
 
   @Override
   public synchronized int read() throws IOException {
-    if (!internalAvailable)
-      return -1;
+    if (!internalAvailable) {
+        return -1;
+    }
 
     int value = nextByte;
     nextByte = wrappedInputStream.read();
@@ -124,8 +125,9 @@ public class OHttpMultipartContentInputStream extends InputStream {
       } else {
         internalAvailable = true;
         checkingEnd = false;
-        if (buffer.size() > 0)
-          wrappedInputStream.setSkipInput(buffer);
+        if (buffer.size() > 0) {
+            wrappedInputStream.setSkipInput(buffer);
+        }
       }
     }
   }

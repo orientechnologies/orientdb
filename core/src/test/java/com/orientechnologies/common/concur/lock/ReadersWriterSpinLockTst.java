@@ -34,19 +34,22 @@ public class ReadersWriterSpinLockTst {
     List<Future> futures = new ArrayList<Future>();
     int threads = 8;
 
-    for (int i = 0; i < threads; i++)
-      futures.add(executorService.submit(new Writer()));
+    for (int i = 0; i < threads; i++) {
+        futures.add(executorService.submit(new Writer()));
+    }
 
-    for (int i = 0; i < threads; i++)
-      futures.add(executorService.submit(new Reader()));
+    for (int i = 0; i < threads; i++) {
+        futures.add(executorService.submit(new Reader()));
+    }
 
     latch.countDown();
     Thread.sleep(5 * 60 * 1000);
 
     stop = true;
 
-    for (Future future : futures)
-      future.get();
+    for (Future future : futures) {
+        future.get();
+    }
 
     System.out.println("Writes : " + writers.get());
     System.out.println("Reads : " + readers.get());

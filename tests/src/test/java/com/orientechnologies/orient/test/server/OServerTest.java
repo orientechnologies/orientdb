@@ -30,8 +30,9 @@ public class OServerTest {
       OServer server = OServerMain.create().startup().activate();
       // create database if does not exist
       OObjectDatabaseTx database = new OObjectDatabaseTx("plocal:" + System.getProperty("ORIENTDB_HOME") + "/test-db");
-      if (!database.exists())
-        database.create();
+      if (!database.exists()) {
+          database.create();
+      }
       database.open("admin", "admin");
       database.countClass("ouser");
       database.close();

@@ -54,14 +54,16 @@ public class CollateTest extends DocumentDBBaseTest {
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from collateTest where csp = 'VAL'"));
     Assert.assertEquals(result.size(), 5);
 
-    for (ODocument document : result)
-      Assert.assertEquals(document.field("csp"), "VAL");
+    for (ODocument document : result) {
+        Assert.assertEquals(document.field("csp"), "VAL");
+    }
 
     result = database.query(new OSQLSynchQuery<ODocument>("select from collateTest where cip = 'VaL'"));
     Assert.assertEquals(result.size(), 10);
 
-    for (ODocument document : result)
-      Assert.assertEquals((document.<String> field("cip")).toUpperCase(), "VAL");
+    for (ODocument document : result) {
+        Assert.assertEquals((document.<String> field("cip")).toUpperCase(), "VAL");
+    }
   }
 
   public void testQueryNotNullCi() {
@@ -118,8 +120,9 @@ public class CollateTest extends DocumentDBBaseTest {
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(result.size(), 5);
 
-    for (ODocument document : result)
-      Assert.assertEquals(document.field("csp"), "VAL");
+    for (ODocument document : result) {
+        Assert.assertEquals(document.field("csp"), "VAL");
+    }
 
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("collateIndexCSP"));
@@ -128,8 +131,9 @@ public class CollateTest extends DocumentDBBaseTest {
     result = database.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(result.size(), 10);
 
-    for (ODocument document : result)
-      Assert.assertEquals((document.<String> field("cip")).toUpperCase(), "VAL");
+    for (ODocument document : result) {
+        Assert.assertEquals((document.<String> field("cip")).toUpperCase(), "VAL");
+    }
 
     explain = database.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("collateIndexCIP"));
@@ -147,10 +151,11 @@ public class CollateTest extends DocumentDBBaseTest {
     for (int i = 0; i < 10; i++) {
       ODocument document = new ODocument("collateWasChangedIndexTest");
 
-      if (i % 2 == 0)
-        document.field("cp", "VAL");
-      else
-        document.field("cp", "val");
+      if (i % 2 == 0) {
+          document.field("cp", "VAL");
+      } else {
+          document.field("cp", "val");
+      }
 
       document.save();
     }
@@ -159,8 +164,9 @@ public class CollateTest extends DocumentDBBaseTest {
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(result.size(), 5);
 
-    for (ODocument document : result)
-      Assert.assertEquals(document.field("cp"), "VAL");
+    for (ODocument document : result) {
+        Assert.assertEquals(document.field("cp"), "VAL");
+    }
 
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("collateWasChangedIndex"));
@@ -172,8 +178,9 @@ public class CollateTest extends DocumentDBBaseTest {
     result = database.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(result.size(), 10);
 
-    for (ODocument document : result)
-      Assert.assertEquals((document.<String> field("cp")).toUpperCase(), "VAL");
+    for (ODocument document : result) {
+        Assert.assertEquals((document.<String> field("cp")).toUpperCase(), "VAL");
+    }
 
     explain = database.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("collateWasChangedIndex"));
@@ -209,8 +216,9 @@ public class CollateTest extends DocumentDBBaseTest {
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(result.size(), 5);
 
-    for (ODocument document : result)
-      Assert.assertEquals(document.field("csp"), "VAL");
+    for (ODocument document : result) {
+        Assert.assertEquals(document.field("csp"), "VAL");
+    }
 
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("collateCompositeIndexCS"));
@@ -270,8 +278,9 @@ public class CollateTest extends DocumentDBBaseTest {
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(result.size(), 5);
 
-    for (ODocument document : result)
-      Assert.assertEquals(document.field("csp"), "VAL");
+    for (ODocument document : result) {
+        Assert.assertEquals(document.field("csp"), "VAL");
+    }
 
     ODocument explain = database.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("collateCompositeIndexCollateWasChanged"));
@@ -283,8 +292,9 @@ public class CollateTest extends DocumentDBBaseTest {
     result = database.query(new OSQLSynchQuery<ODocument>(query));
     Assert.assertEquals(result.size(), 10);
 
-    for (ODocument document : result)
-      Assert.assertEquals(document.<String> field("csp").toUpperCase(), "VAL");
+    for (ODocument document : result) {
+        Assert.assertEquals(document.<String> field("csp").toUpperCase(), "VAL");
+    }
 
     explain = database.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("collateCompositeIndexCollateWasChanged"));
@@ -316,13 +326,15 @@ public class CollateTest extends DocumentDBBaseTest {
     List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from collateTestViaSQL where csp = 'VAL'"));
     Assert.assertEquals(result.size(), 5);
 
-    for (ODocument document : result)
-      Assert.assertEquals(document.field("csp"), "VAL");
+    for (ODocument document : result) {
+        Assert.assertEquals(document.field("csp"), "VAL");
+    }
 
     result = database.query(new OSQLSynchQuery<ODocument>("select from collateTestViaSQL where cip = 'VaL'"));
     Assert.assertEquals(result.size(), 10);
 
-    for (ODocument document : result)
-      Assert.assertEquals((document.<String> field("cip")).toUpperCase(), "VAL");
+    for (ODocument document : result) {
+        Assert.assertEquals((document.<String> field("cip")).toUpperCase(), "VAL");
+    }
   }
 }

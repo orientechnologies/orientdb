@@ -76,18 +76,22 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
   public boolean hasPrevious() {
     checkDirection(false);
 
-    if (currentRecord != null)
-      return true;
+    if (currentRecord != null) {
+        return true;
+    }
 
-    if (limit > -1 && browsedRecords >= limit)
-      // LIMIT REACHED
-      return false;
+    if (limit > -1 && browsedRecords >= limit) {
+        // LIMIT REACHED
+        return false;
+    }
 
-    if (browsedRecords >= totalAvailableRecords)
-      return false;
+    if (browsedRecords >= totalAvailableRecords) {
+        return false;
+    }
 
-    if (liveUpdated)
-      updateClusterRange();
+    if (liveUpdated) {
+        updateClusterRange();
+    }
 
     ORecord record = getRecord();
 
@@ -96,10 +100,12 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
       while (prevPosition()) {
         currentRecord = readCurrentRecord(record, 0);
 
-        if (currentRecord != null)
-          if (include(currentRecord))
-            // FOUND
-            return true;
+        if (currentRecord != null) {
+            if (include(currentRecord)) {
+                // FOUND
+                return true;
+            }
+        }
       }
 
       // CLUSTER EXHAUSTED, TRY WITH THE PREVIOUS ONE
@@ -108,8 +114,9 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
       updateClusterRange();
     }
 
-    if (txEntries != null && txEntries.size() - (currentTxEntryPosition + 1) > 0)
-      return true;
+    if (txEntries != null && txEntries.size() - (currentTxEntryPosition + 1) > 0) {
+        return true;
+    }
 
     currentRecord = null;
     return false;
@@ -118,51 +125,61 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
   public boolean hasNext() {
     checkDirection(true);
 
-    if (Thread.interrupted())
-      // INTERRUPTED
-      return false;
+    if (Thread.interrupted()) {
+        // INTERRUPTED
+        return false;
+    }
 
-    if (currentRecord != null)
-      return true;
+    if (currentRecord != null) {
+        return true;
+    }
 
-    if (limit > -1 && browsedRecords >= limit)
-      // LIMIT REACHED
-      return false;
+    if (limit > -1 && browsedRecords >= limit) {
+        // LIMIT REACHED
+        return false;
+    }
 
-    if (browsedRecords >= totalAvailableRecords)
-      return false;
+    if (browsedRecords >= totalAvailableRecords) {
+        return false;
+    }
 
     // COMPUTE THE NUMBER OF RECORDS TO BROWSE
-    if (liveUpdated)
-      updateClusterRange();
+    if (liveUpdated) {
+        updateClusterRange();
+    }
 
     ORecord record = getRecord();
 
     // ITERATE UNTIL THE NEXT GOOD RECORD
     while (currentClusterIdx < clusterIds.length) {
       while (nextPosition()) {
-        if (outsideOfTheRange(current))
-          continue;
+        if (outsideOfTheRange(current)) {
+            continue;
+        }
 
         currentRecord = readCurrentRecord(record, 0);
 
-        if (currentRecord != null)
-          if (include(currentRecord))
-            // FOUND
-            return true;
+        if (currentRecord != null) {
+            if (include(currentRecord)) {
+                // FOUND
+                return true;
+            }
+        }
       }
 
       // CLUSTER EXHAUSTED, TRY WITH THE NEXT ONE
       currentClusterIdx++;
-      if (currentClusterIdx >= clusterIds.length)
-        break;
+      if (currentClusterIdx >= clusterIds.length) {
+          break;
+      }
 
       updateClusterRange();
     }
 
     // CHECK IN TX IF ANY
-    if (txEntries != null && txEntries.size() - (currentTxEntryPosition + 1) > 0)
-      return true;
+    if (txEntries != null && txEntries.size() - (currentTxEntryPosition + 1) > 0) {
+        return true;
+    }
 
     currentRecord = null;
     return false;
@@ -177,39 +194,44 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
   public REC next() {
     checkDirection(true);
 
-    if (currentRecord != null)
-      try {
-        // RETURN LAST LOADED RECORD
-        return (REC) currentRecord;
-      } finally {
-        currentRecord = null;
-      }
+    if (currentRecord != null) {
+        try {
+            // RETURN LAST LOADED RECORD
+            return (REC) currentRecord;
+        } finally {
+            currentRecord = null;
+        }
+    }
 
     ORecord record;
 
     // MOVE FORWARD IN THE CURRENT CLUSTER
     while (hasNext()) {
-      if (currentRecord != null)
-        try {
-          // RETURN LAST LOADED RECORD
-          return (REC) currentRecord;
-        } finally {
-          currentRecord = null;
-        }
+      if (currentRecord != null) {
+          try {
+              // RETURN LAST LOADED RECORD
+              return (REC) currentRecord;
+          } finally {
+              currentRecord = null;
+          }
+      }
 
       record = getTransactionEntry();
-      if (record == null)
-        record = readCurrentRecord(null, +1);
+      if (record == null) {
+          record = readCurrentRecord(null, +1);
+      }
 
-      if (record != null)
-        // FOUND
-        if (include(record))
-          return (REC) record;
+      if (record != null) {
+          if (include(record)) {
+              return (REC) record;
+          }
+      }
     }
 
     record = getTransactionEntry();
-    if (record != null)
-      return (REC) record;
+    if (record != null) {
+        return (REC) record;
+    }
 
     throw new NoSuchElementException("Direction: forward, last position was: " + current + ", range: " + beginRange + "-"
         + endRange);
@@ -225,38 +247,43 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
   public REC previous() {
     checkDirection(false);
 
-    if (currentRecord != null)
-      try {
-        // RETURN LAST LOADED RECORD
-        return (REC) currentRecord;
-      } finally {
-        currentRecord = null;
-      }
+    if (currentRecord != null) {
+        try {
+            // RETURN LAST LOADED RECORD
+            return (REC) currentRecord;
+        } finally {
+            currentRecord = null;
+        }
+    }
 
     ORecord record = getRecord();
 
     // MOVE BACKWARD IN THE CURRENT CLUSTER
     while (hasPrevious()) {
-      if (currentRecord != null)
-        try {
-          // RETURN LAST LOADED RECORD
-          return (REC) currentRecord;
-        } finally {
-          currentRecord = null;
-        }
+      if (currentRecord != null) {
+          try {
+              // RETURN LAST LOADED RECORD
+              return (REC) currentRecord;
+          } finally {
+              currentRecord = null;
+          }
+      }
 
-      if (record == null)
-        record = readCurrentRecord(null, -1);
+      if (record == null) {
+          record = readCurrentRecord(null, -1);
+      }
 
-      if (record != null)
-        // FOUND
-        if (include(record))
-          return (REC) record;
+      if (record != null) {
+          if (include(record)) {
+              return (REC) record;
+          }
+      }
     }
 
     record = getTransactionEntry();
-    if (record != null)
-      return (REC) record;
+    if (record != null) {
+        return (REC) record;
+    }
 
     return null;
   }
@@ -268,15 +295,17 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
    */
   @Override
   public ORecordIteratorClusters<REC> begin() {
-    if (clusterIds.length == 0)
-      return this;
+    if (clusterIds.length == 0) {
+        return this;
+    }
 
     browsedRecords = 0;
     currentClusterIdx = 0;
     current.clusterId = clusterIds[currentClusterIdx];
 
-    if (liveUpdated)
-      updateClusterRange();
+    if (liveUpdated) {
+        updateClusterRange();
+    }
 
     resetCurrentPosition();
     nextPosition();
@@ -299,13 +328,15 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
    */
   @Override
   public ORecordIteratorClusters<REC> last() {
-    if (clusterIds.length == 0)
-      return this;
+    if (clusterIds.length == 0) {
+        return this;
+    }
 
     browsedRecords = 0;
     currentClusterIdx = clusterIds.length - 1;
-    if (liveUpdated)
-      updateClusterRange();
+    if (liveUpdated) {
+        updateClusterRange();
+    }
 
     current.clusterId = clusterIds[currentClusterIdx];
 
@@ -356,34 +387,39 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
   }
 
   protected void updateClusterRange() {
-    if (clusterIds.length == 0)
-      return;
+    if (clusterIds.length == 0) {
+        return;
+    }
 
     // ADJUST IDX CHECKING BOUNDARIES
-    if (currentClusterIdx >= clusterIds.length)
-      currentClusterIdx = clusterIds.length - 1;
-    else if (currentClusterIdx < 0)
-      currentClusterIdx = 0;
+    if (currentClusterIdx >= clusterIds.length) {
+        currentClusterIdx = clusterIds.length - 1;
+    } else if (currentClusterIdx < 0) {
+        currentClusterIdx = 0;
+    }
 
     current.clusterId = clusterIds[currentClusterIdx];
     final long[] range = database.getStorage().getClusterDataRange(current.clusterId);
 
-    if (beginRange != null && beginRange.getClusterId() == current.clusterId && beginRange.getClusterPosition() > range[0])
-      firstClusterEntry = beginRange.getClusterPosition();
-    else
-      firstClusterEntry = range[0];
+    if (beginRange != null && beginRange.getClusterId() == current.clusterId && beginRange.getClusterPosition() > range[0]) {
+        firstClusterEntry = beginRange.getClusterPosition();
+    } else {
+        firstClusterEntry = range[0];
+    }
 
-    if (endRange != null && endRange.getClusterId() == current.clusterId && endRange.getClusterPosition() < range[1])
-      lastClusterEntry = endRange.getClusterPosition();
-    else
-      lastClusterEntry = range[1];
+    if (endRange != null && endRange.getClusterId() == current.clusterId && endRange.getClusterPosition() < range[1]) {
+        lastClusterEntry = endRange.getClusterPosition();
+    } else {
+        lastClusterEntry = range[1];
+    }
 
     resetCurrentPosition();
   }
 
   protected void config() {
-    if (clusterIds.length == 0)
-      return;
+    if (clusterIds.length == 0) {
+        return;
+    }
 
     currentClusterIdx = 0; // START FROM THE FIRST CLUSTER
 
@@ -393,24 +429,27 @@ public class ORecordIteratorClusters<REC extends ORecord> extends OIdentifiableI
 
     txEntries = database.getTransaction().getNewRecordEntriesByClusterIds(clusterIds);
 
-    if (txEntries != null)
-      // ADJUST TOTAL ELEMENT BASED ON CURRENT TRANSACTION'S ENTRIES
-      for (ORecordOperation entry : txEntries) {
-        if (!entry.getRecord().getIdentity().isPersistent() && entry.type != ORecordOperation.DELETED)
-          totalAvailableRecords++;
-        else if (entry.type == ORecordOperation.DELETED)
-          totalAvailableRecords--;
-      }
+    if (txEntries != null) {
+        for (ORecordOperation entry : txEntries) {
+            if (!entry.getRecord().getIdentity().isPersistent() && entry.type != ORecordOperation.DELETED) {
+                totalAvailableRecords++;
+            } else if (entry.type == ORecordOperation.DELETED) {
+                totalAvailableRecords--;
+            }
+        }
+    }
 
     begin();
   }
 
   private boolean outsideOfTheRange(ORID orid) {
-    if (beginRange != null && orid.compareTo(beginRange) < 0)
-      return true;
+    if (beginRange != null && orid.compareTo(beginRange) < 0) {
+        return true;
+    }
 
-    if (endRange != null && orid.compareTo(endRange) > 0)
-      return true;
+    if (endRange != null && orid.compareTo(endRange) > 0) {
+        return true;
+    }
 
     return false;
   }

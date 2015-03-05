@@ -144,8 +144,9 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
 
   @Override
   public void loadEntriesMajor(K key, boolean inclusive, boolean ascSortOrder, RangeResultListener<K, V> listener) {
-    if (!ascSortOrder)
-      throw new IllegalStateException("Descending sort order is not supported.");
+    if (!ascSortOrder) {
+        throw new IllegalStateException("Descending sort order is not supported.");
+    }
 
     List<Map.Entry<K, V>> entries = fetchEntriesMajor(key, inclusive);
 
@@ -160,8 +161,9 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
     for (Map.Entry<K, V> entry : entries) {
       more = listener.addResult(entry);
 
-      if (!more)
-        return false;
+      if (!more) {
+          return false;
+      }
     }
     return more;
   }
@@ -179,8 +181,9 @@ public class OSBTreeBonsaiRemote<K, V> implements OSBTreeBonsai<K, V> {
         client.writeBytes(keyStream);
         client.writeBoolean(inclusive);
 
-        if (client.getSrvProtocolVersion() >= 21)
-          client.writeInt(128);
+        if (client.getSrvProtocolVersion() >= 21) {
+            client.writeInt(128);
+        }
 
         storage.endRequest(client);
         List<Map.Entry<K, V>> list = null;

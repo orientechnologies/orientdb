@@ -38,8 +38,9 @@ public class ODynamicFactoryInverse<K, V> extends ODynamicFactory<K, V> {
   @Override
   public void unregister(K iKey) {
     V value = get(iKey);
-    if (value == null)
-      return;
+    if (value == null) {
+        return;
+    }
     super.unregister(iKey);
     inverseRegistry.remove(value);
   }

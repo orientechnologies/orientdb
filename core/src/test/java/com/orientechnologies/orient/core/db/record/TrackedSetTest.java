@@ -227,8 +227,9 @@ public class TrackedSetTest {
 
     trackedSet.addChangeListener(new OMultiValueChangeListener<String, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<String, String> event) {
-        if (!firedEvents.remove(event))
-          Assert.fail();
+        if (!firedEvents.remove(event)) {
+            Assert.fail();
+        }
 
         changed.value = true;
       }

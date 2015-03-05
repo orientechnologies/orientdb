@@ -47,16 +47,18 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
     this.keys = new ArrayList<Object>(keys.size());
     this.comparator = ODefaultComparator.INSTANCE;
 
-    for (final Object key : keys)
-      addKey(key);
+    for (final Object key : keys) {
+        addKey(key);
+    }
   }
 
   public OCompositeKey(final Object... keys) {
     this.keys = new ArrayList<Object>(keys.length);
     this.comparator = ODefaultComparator.INSTANCE;
 
-    for (final Object key : keys)
-      addKey(key);
+    for (final Object key : keys) {
+        addKey(key);
+    }
   }
 
   public OCompositeKey() {
@@ -68,8 +70,9 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
    * Clears the keys array for reuse of the object
    */
   public void reset() {
-    if (this.keys != null)
-      this.keys.clear();
+    if (this.keys != null) {
+        this.keys.clear();
+    }
   }
 
   /**
@@ -120,21 +123,26 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
       final Object inKey = inIter.next();
       final Object outKey = outIter.next();
 
-      if (outKey instanceof OAlwaysGreaterKey)
-        return -1;
+      if (outKey instanceof OAlwaysGreaterKey) {
+          return -1;
+      }
 
-      if (outKey instanceof OAlwaysLessKey)
-        return 1;
+      if (outKey instanceof OAlwaysLessKey) {
+          return 1;
+      }
 
-      if (inKey instanceof OAlwaysGreaterKey)
-        return 1;
+      if (inKey instanceof OAlwaysGreaterKey) {
+          return 1;
+      }
 
-      if (inKey instanceof OAlwaysLessKey)
-        return -1;
+      if (inKey instanceof OAlwaysLessKey) {
+          return -1;
+      }
 
       final int result = comparator.compare(inKey, outKey);
-      if (result != 0)
-        return result;
+      if (result != 0) {
+          return result;
+      }
     }
 
     return 0;
@@ -145,10 +153,12 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
    */
   @Override
   public boolean equals(final Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
 
     final OCompositeKey that = (OCompositeKey) o;
 
@@ -197,7 +207,8 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
     }
 
     keys.clear();
-    for (Object value : keyMap.values())
-      keys.add(value);
+    for (Object value : keyMap.values()) {
+        keys.add(value);
+    }
   }
 }

@@ -35,17 +35,21 @@ public class ComplicatedPerson {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (!(o instanceof ComplicatedPerson))
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (!(o instanceof ComplicatedPerson)) {
+        return false;
+    }
 
     ComplicatedPerson that = (ComplicatedPerson) o;
 
-    if (!getAnimals().equals(that.getAnimals()))
-      return false;
-    if (!getName().equals(that.getName()))
-      return false;
+    if (!getAnimals().equals(that.getAnimals())) {
+        return false;
+    }
+    if (!getName().equals(that.getName())) {
+        return false;
+    }
 
     return true;
   }

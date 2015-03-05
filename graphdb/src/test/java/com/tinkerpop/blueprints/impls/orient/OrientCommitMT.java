@@ -298,8 +298,9 @@ public class OrientCommitMT {
 
     private void validateCustomIdsAgainstDatabase(OrientGraph graph) throws Exception {
       List<Vertex> recordsInDb = new ArrayList<Vertex>();
-      for (Vertex v : graph.getVerticesOfClass(TEST_CLASS))
-        recordsInDb.add(v);
+      for (Vertex v : graph.getVerticesOfClass(TEST_CLASS)) {
+          recordsInDb.add(v);
+      }
 
       for (IdPair cacheInstance : this.cache) {
         Integer customId = cacheInstance.getCustomId();
@@ -397,8 +398,9 @@ public class OrientCommitMT {
         ORID newRecordId = vertex.getIdentity();
         return new IdPair(newRecordId, id);
       } finally {
-        if (closeDb)
-          graph.shutdown();
+        if (closeDb) {
+            graph.shutdown();
+        }
       }
     }
 
@@ -438,8 +440,9 @@ public class OrientCommitMT {
         int index = random.nextInt(size);
         return idsInDb.get(index);
       } finally {
-        if (closeDb)
-          graph.shutdown();
+        if (closeDb) {
+            graph.shutdown();
+        }
       }
 
     }

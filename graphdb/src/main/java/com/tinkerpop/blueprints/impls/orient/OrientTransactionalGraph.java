@@ -53,8 +53,9 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     setCurrentGraphInThreadLocal();
     this.setAutoStartTx(isAutoStartTx());
 
-    if (isAutoStartTx())
-      begin();
+    if (isAutoStartTx()) {
+        begin();
+    }
   }
 
   protected OrientTransactionalGraph(final ODatabaseDocumentTx iDatabase, final boolean iAutoStartTx, final String iUserName,
@@ -63,8 +64,9 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     setCurrentGraphInThreadLocal();
     this.setAutoStartTx(iAutoStartTx);
 
-    if (iAutoStartTx)
-      begin();
+    if (iAutoStartTx) {
+        begin();
+    }
   }
 
   protected OrientTransactionalGraph(final OPartitionedDatabasePool pool) {
@@ -78,8 +80,9 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     super(pool, configuration);
     setCurrentGraphInThreadLocal();
 
-    if (configuration.isAutoStartTx())
-      begin();
+    if (configuration.isAutoStartTx()) {
+        begin();
+    }
   }
 
   protected OrientTransactionalGraph(final String url) {
@@ -91,8 +94,9 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     setCurrentGraphInThreadLocal();
     setAutoStartTx(iAutoStartTx);
 
-    if (iAutoStartTx)
-      begin();
+    if (iAutoStartTx) {
+        begin();
+    }
   }
 
   protected OrientTransactionalGraph(final String url, final String username, final String password) {
@@ -104,16 +108,18 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     setCurrentGraphInThreadLocal();
     this.setAutoStartTx(iAutoStartTx);
 
-    if (iAutoStartTx)
-      begin();
+    if (iAutoStartTx) {
+        begin();
+    }
   }
 
   protected OrientTransactionalGraph(final Configuration configuration) {
     super(configuration);
 
     final Boolean autoStartTx = configuration.getBoolean("blueprints.orientdb.autoStartTx", null);
-    if (autoStartTx != null)
-      setAutoStartTx(autoStartTx);
+    if (autoStartTx != null) {
+        setAutoStartTx(autoStartTx);
+    }
   }
 
   public boolean isUseLog() {
@@ -141,13 +147,15 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     makeActive();
 
     if (database.isClosed() || database.getTransaction() instanceof OTransactionNoTx
-        || database.getTransaction().getStatus() != TXSTATUS.BEGUN)
-      return;
+        || database.getTransaction().getStatus() != TXSTATUS.BEGUN) {
+        return;
+    }
 
-    if (Conclusion.SUCCESS == conclusion)
-      commit();
-    else
-      rollback();
+    if (Conclusion.SUCCESS == conclusion) {
+        commit();
+    } else {
+        rollback();
+    }
   }
 
   /**
@@ -156,12 +164,14 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   public void commit() {
     makeActive();
 
-    if (database == null)
-      return;
+    if (database == null) {
+        return;
+    }
 
     database.commit();
-    if (isAutoStartTx())
-      begin();
+    if (isAutoStartTx()) {
+        begin();
+    }
   }
 
   /**
@@ -170,12 +180,14 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
   public void rollback() {
     makeActive();
 
-    if (database == null)
-      return;
+    if (database == null) {
+        return;
+    }
 
     database.rollback();
-    if (isAutoStartTx())
-      begin();
+    if (isAutoStartTx()) {
+        begin();
+    }
   }
 
   public void begin() {
@@ -193,14 +205,16 @@ public abstract class OrientTransactionalGraph extends OrientBaseGraph implement
     final boolean txBegun = database.getTransaction().isActive();
 
     if (!isAutoStartTx()) {
-      if (isRequireTransaction() && !txBegun)
-        throw new OTransactionException("Transaction required to change the Graph");
+      if (isRequireTransaction() && !txBegun) {
+          throw new OTransactionException("Transaction required to change the Graph");
+      }
 
       return;
     }
 
-    if (!txBegun)
-      begin();
+    if (!txBegun) {
+        begin();
+    }
   }
 
 }

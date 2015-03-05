@@ -88,8 +88,9 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer implemen
       while (wNode.locked && wNode == tail.get()) {
         wNode.waitingReaders.add(Thread.currentThread());
 
-        if (wNode.locked && wNode == tail.get())
-          LockSupport.park(this);
+        if (wNode.locked && wNode == tail.get()) {
+            LockSupport.park(this);
+        }
 
         wNode = tail.get();
       }
@@ -137,8 +138,9 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer implemen
     while (pNode.locked) {
       pNode.waitingWriter = Thread.currentThread();
 
-      if (pNode.locked)
-        LockSupport.park(this);
+      if (pNode.locked) {
+          LockSupport.park(this);
+      }
     }
 
     pNode.waitingWriter = null;
@@ -166,8 +168,9 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer implemen
     node.locked = false;
 
     final Thread waitingWriter = node.waitingWriter;
-    if (waitingWriter != null)
-      LockSupport.unpark(waitingWriter);
+    if (waitingWriter != null) {
+        LockSupport.unpark(waitingWriter);
+    }
 
     Thread waitingReader;
     while ((waitingReader = node.waitingReaders.poll()) != null) {
@@ -190,24 +193,27 @@ public class OReadersWriterSpinLock extends AbstractOwnableSynchronizer implemen
 
   @Override
   public void onStartup() {
-    if (lockHolds == null)
-      lockHolds = new ThreadLocal<OModifiableInteger>() {
-        @Override
-        protected OModifiableInteger initialValue() {
-          return new OModifiableInteger();
-        }
-      };
+    if (lockHolds == null) {
+        lockHolds = new ThreadLocal<OModifiableInteger>() {
+            @Override
+            protected OModifiableInteger initialValue() {
+                return new OModifiableInteger();
+            }
+        };
+    }
 
-    if (myNode == null)
-      myNode = new ThreadLocal<WNode>() {
-        @Override
-        protected WNode initialValue() {
-          return new WNode();
-        }
-      };
+    if (myNode == null) {
+        myNode = new ThreadLocal<WNode>() {
+            @Override
+            protected WNode initialValue() {
+                return new WNode();
+            }
+        };
+    }
 
-    if (predNode == null)
-      predNode = new ThreadLocal<WNode>();
+    if (predNode == null) {
+        predNode = new ThreadLocal<WNode>();
+    }
 
   }
 

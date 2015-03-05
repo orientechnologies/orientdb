@@ -1094,8 +1094,9 @@ public class OBase64Utils {
    * @since 1.4
    */
   public static String encodeBytes(final byte[] source) {
-    if (source == null)
-      return null;
+    if (source == null) {
+        return null;
+    }
 
     // Since we're not going to have the GZIP encoding turned on,
     // we're not going to have an java.io.IOException thrown, so

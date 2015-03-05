@@ -146,8 +146,9 @@ public class OStringSerializer implements OBinarySerializer<String> {
 
     byte[] binaryData = pointer.get(offset, buffer.length * 2);
 
-    for (int i = 0; i < len; i++)
-      buffer[i] = (char) ((0xFF & binaryData[i << 1]) | ((0xFF & binaryData[(i << 1) + 1]) << 8));
+    for (int i = 0; i < len; i++) {
+        buffer[i] = (char) ((0xFF & binaryData[i << 1]) | ((0xFF & binaryData[(i << 1) + 1]) << 8));
+    }
 
     return new String(buffer);
   }

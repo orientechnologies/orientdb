@@ -130,8 +130,9 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
       try {
         for (int i = 0; i < PESSIMISTIC_CYCLES; i++) {
           String cmd = "update " + rid + " increment total = 1";
-          if (lock)
-            cmd += " lock record";
+          if (lock) {
+              cmd += " lock record";
+          }
 
           for (int retry = 0; retry < MAX_RETRIES; ++retry) {
             try {
@@ -170,8 +171,9 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
     mvccEnabled = OGlobalConfiguration.DB_MVCC.getValueAsBoolean();
 
 
-    if (!mvccEnabled)
-      OGlobalConfiguration.DB_MVCC.setValue(true);
+    if (!mvccEnabled) {
+        OGlobalConfiguration.DB_MVCC.setValue(true);
+    }
   }
 
   @AfterClass
@@ -187,8 +189,9 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
     startedOn = System.currentTimeMillis();
 
     ODatabaseDocumentTx[] databases = new ODatabaseDocumentTx[THREADS];
-    for (int i = 0; i < THREADS; ++i)
-      databases[i] = new ODatabaseDocumentTx(url).open("admin", "admin");
+    for (int i = 0; i < THREADS; ++i) {
+        databases[i] = new ODatabaseDocumentTx(url).open("admin", "admin");
+    }
 
     ODocument doc1 = databases[0].newInstance();
     doc1.field("INIT", "ok");
@@ -201,18 +204,22 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
     ORID rid2 = doc2.getIdentity();
 
     OptimisticUpdateField[] ops = new OptimisticUpdateField[THREADS];
-    for (int i = 0; i < THREADS; ++i)
-      ops[i] = new OptimisticUpdateField(databases[i], rid1, rid2, "thread" + i);
+    for (int i = 0; i < THREADS; ++i) {
+        ops[i] = new OptimisticUpdateField(databases[i], rid1, rid2, "thread" + i);
+    }
 
     Thread[] threads = new Thread[THREADS];
-    for (int i = 0; i < THREADS; ++i)
-      threads[i] = new Thread(ops[i], "ConcurrentTest" + i);
+    for (int i = 0; i < THREADS; ++i) {
+        threads[i] = new Thread(ops[i], "ConcurrentTest" + i);
+    }
 
-    for (int i = 0; i < THREADS; ++i)
-      threads[i].start();
+    for (int i = 0; i < THREADS; ++i) {
+        threads[i].start();
+    }
 
-    for (int i = 0; i < THREADS; ++i)
-      threads[i].join();
+    for (int i = 0; i < THREADS; ++i) {
+        threads[i].join();
+    }
 
 //    System.out.println("Done! Total updates executed in parallel: " + counter.get() + " average retries: "
 //        + ((float) totalRetries.get() / (float) counter.get()));
@@ -221,8 +228,9 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
 
     doc1 = databases[0].load(rid1, null, true);
 
-    for (int i = 0; i < THREADS; ++i)
-      Assert.assertEquals(doc1.field(ops[i].threadName), ops[i].fieldValue, ops[i].threadName);
+    for (int i = 0; i < THREADS; ++i) {
+        Assert.assertEquals(doc1.field(ops[i].threadName), ops[i].fieldValue, ops[i].threadName);
+    }
 
     doc1.toJSON();
 //    System.out.println("RESULT doc 1:");
@@ -230,17 +238,19 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
 
     doc2 = databases[0].load(rid2, null, true);
 
-    for (int i = 0; i < THREADS; ++i)
-      Assert.assertEquals(doc2.field(ops[i].threadName), ops[i].fieldValue, ops[i].threadName);
+    for (int i = 0; i < THREADS; ++i) {
+        Assert.assertEquals(doc2.field(ops[i].threadName), ops[i].fieldValue, ops[i].threadName);
+    }
 
 //    System.out.println("RESULT doc 2:");
     doc2.toJSON();
     System.out.println(doc2.toJSON());
 
-    for (int i = 0; i < THREADS; ++i)
-      databases[i].close();
-
+    for (int i = 0; i < THREADS; ++i) {
+        databases[i].close();
+        
 //    System.out.println("Test completed in " + (System.currentTimeMillis() - startedOn));
+    }
   }
 
   @Test
@@ -260,8 +270,9 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
     startedOn = System.currentTimeMillis();
 
     ODatabaseDocumentTx[] databases = new ODatabaseDocumentTx[THREADS];
-    for (int i = 0; i < THREADS; ++i)
-      databases[i] = new ODatabaseDocumentTx(url).open("admin", "admin");
+    for (int i = 0; i < THREADS; ++i) {
+        databases[i] = new ODatabaseDocumentTx(url).open("admin", "admin");
+    }
 
     ODocument doc1 = databases[0].newInstance();
     doc1.field("total", 0);
@@ -269,18 +280,22 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
     ORID rid1 = doc1.getIdentity();
 
     PessimisticUpdate[] ops = new PessimisticUpdate[THREADS];
-    for (int i = 0; i < THREADS; ++i)
-      ops[i] = new PessimisticUpdate(databases[i], rid1, "thread" + i, lock);
+    for (int i = 0; i < THREADS; ++i) {
+        ops[i] = new PessimisticUpdate(databases[i], rid1, "thread" + i, lock);
+    }
 
     Thread[] threads = new Thread[THREADS];
-    for (int i = 0; i < THREADS; ++i)
-      threads[i] = new Thread(ops[i], "ConcurrentTest" + i);
+    for (int i = 0; i < THREADS; ++i) {
+        threads[i] = new Thread(ops[i], "ConcurrentTest" + i);
+    }
 
-    for (int i = 0; i < THREADS; ++i)
-      threads[i].start();
+    for (int i = 0; i < THREADS; ++i) {
+        threads[i].start();
+    }
 
-    for (int i = 0; i < THREADS; ++i)
-      threads[i].join();
+    for (int i = 0; i < THREADS; ++i) {
+        threads[i].join();
+    }
 
 //    System.out.println("Done! Total sql updates executed in parallel: " + counter.get());
 
@@ -289,10 +304,11 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
     doc1 = databases[0].load(rid1, null, true);
     Assert.assertEquals(doc1.field("total"), PESSIMISTIC_CYCLES * THREADS);
 
-    for (int i = 0; i < THREADS; ++i)
-      databases[i].close();
-
+    for (int i = 0; i < THREADS; ++i) {
+        databases[i].close();
+        
 //    System.out.println("concurrentOptimisticSQLUpdates Test " + (lock ? "LOCK" : "") + " completed in "
 //        + (System.currentTimeMillis() - startedOn));
+    }
   }
 }

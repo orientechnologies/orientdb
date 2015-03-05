@@ -42,8 +42,9 @@ public class SQLCommandsTest extends DocumentDBBaseTest {
 
   public void createProperty() {
     OSchema schema = database.getMetadata().getSchema();
-    if (!schema.existsClass("account"))
-      schema.createClass("account");
+    if (!schema.existsClass("account")) {
+        schema.createClass("account");
+    }
 
     database.command(new OCommandSQL("create property account.timesheet string")).execute();
 
@@ -94,8 +95,9 @@ public class SQLCommandsTest extends DocumentDBBaseTest {
   }
 
   public void testClusterRename() {
-    if (database.getURL().startsWith("memory:"))
-      return;
+    if (database.getURL().startsWith("memory:")) {
+        return;
+    }
 
     Collection<String> names = database.getClusterNames();
     Assert.assertFalse(names.contains("testClusterRename".toLowerCase()));

@@ -95,8 +95,9 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
 
     for (ODocument d : result) {
       Assert.assertTrue(d.fieldNames().length <= 2);
-      if (d.field("name") != null)
-        Assert.assertTrue(d.field("name").equals(((String) d.field("name")).toUpperCase()));
+      if (d.field("name") != null) {
+          Assert.assertTrue(d.field("name").equals(((String) d.field("name")).toUpperCase()));
+      }
 
       Assert.assertNull(d.getClassName());
       Assert.assertEquals(ORecordInternal.getRecordType(d), ODocument.RECORD_TYPE);
@@ -277,8 +278,9 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select eval('1 + 4') as result")).execute();
     Assert.assertEquals(result.size(), 1);
 
-    for (ODocument d : result)
-      Assert.assertEquals(d.field("result"), 5);
+    for (ODocument d : result) {
+        Assert.assertEquals(d.field("result"), 5);
+    }
 
   }
 

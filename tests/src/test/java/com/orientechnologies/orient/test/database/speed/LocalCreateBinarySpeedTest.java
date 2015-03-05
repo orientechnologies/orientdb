@@ -53,22 +53,25 @@ public class LocalCreateBinarySpeedTest extends OrientMonoThreadTest {
     database.begin(TXTYPE.NOTX);
     Random rnd = new Random();
     recordContent = new byte[RECORD_SIZE];
-    for (int i = 0; i < RECORD_SIZE; ++i)
-      recordContent[i] = (byte) rnd.nextInt(256);
+    for (int i = 0; i < RECORD_SIZE; ++i) {
+        recordContent[i] = (byte) rnd.nextInt(256);
+    }
   }
 
   @Override
   public void cycle() {
     record.reset(recordContent).save("binary");
 
-    if (data.getCyclesDone() == data.getCycles() - 1)
-      database.commit();
+    if (data.getCyclesDone() == data.getCycles() - 1) {
+        database.commit();
+    }
   }
 
   @Override
   public void deinit() {
-    if (database != null)
-      database.close();
+    if (database != null) {
+        database.close();
+    }
     super.deinit();
   }
 }

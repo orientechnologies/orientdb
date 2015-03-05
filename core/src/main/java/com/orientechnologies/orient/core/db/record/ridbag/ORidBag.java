@@ -88,8 +88,9 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
   public ORidBag(final ORidBag ridBag) {
     init();
-    for (OIdentifiable identifiable : ridBag)
-      add(identifiable);
+    for (OIdentifiable identifiable : ridBag) {
+        add(identifiable);
+    }
   }
 
   public ORidBag() {
@@ -117,11 +118,12 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     copy.bottomThreshold = bottomThreshold;
     copy.uuid = uuid;
 
-    if (delegate instanceof OSBTreeRidBag)
-      // ALREADY MULTI-THREAD
-      copy.delegate = delegate;
-    else
-      copy.delegate = ((OEmbeddedRidBag) delegate).copy();
+    if (delegate instanceof OSBTreeRidBag) {
+        // ALREADY MULTI-THREAD
+        copy.delegate = delegate;
+    } else {
+        copy.delegate = ((OEmbeddedRidBag) delegate).copy();
+    }
 
     return copy;
   }
@@ -197,14 +199,16 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
         boolean oldAutoConvert = oldDelegate.isAutoConvertToRecord();
         oldDelegate.setAutoConvertToRecord(false);
 
-        for (OIdentifiable identifiable : oldDelegate)
-          delegate.add(identifiable);
+        for (OIdentifiable identifiable : oldDelegate) {
+            delegate.add(identifiable);
+        }
 
         final ORecord owner = oldDelegate.getOwner();
         delegate.setOwner(owner);
 
-        for (OMultiValueChangeListener<OIdentifiable, OIdentifiable> listener : oldDelegate.getChangeListeners())
-          delegate.addChangeListener(listener);
+        for (OMultiValueChangeListener<OIdentifiable, OIdentifiable> listener : oldDelegate.getChangeListeners()) {
+            delegate.addChangeListener(listener);
+        }
 
         owner.setDirty();
 
@@ -216,14 +220,16 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
         oldDelegate.setAutoConvertToRecord(false);
         delegate = new OEmbeddedRidBag();
 
-        for (OIdentifiable identifiable : oldDelegate)
-          delegate.add(identifiable);
+        for (OIdentifiable identifiable : oldDelegate) {
+            delegate.add(identifiable);
+        }
 
         final ORecord owner = oldDelegate.getOwner();
         delegate.setOwner(owner);
 
-        for (OMultiValueChangeListener<OIdentifiable, OIdentifiable> listener : oldDelegate.getChangeListeners())
-          delegate.addChangeListener(listener);
+        for (OMultiValueChangeListener<OIdentifiable, OIdentifiable> listener : oldDelegate.getChangeListeners()) {
+            delegate.addChangeListener(listener);
+        }
 
         owner.setDirty();
 
@@ -234,10 +240,11 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
     final UUID oldUuid = uuid;
     final OSBTreeCollectionManager sbTreeCollectionManager = ODatabaseRecordThreadLocal.INSTANCE.get().getSbTreeCollectionManager();
-    if (sbTreeCollectionManager != null)
-      uuid = sbTreeCollectionManager.listenForChanges(this);
-    else
-      uuid = null;
+    if (sbTreeCollectionManager != null) {
+        uuid = sbTreeCollectionManager.listenForChanges(this);
+    } else {
+        uuid = null;
+    }
 
     boolean hasUuid = uuid != null;
 
@@ -248,11 +255,13 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
     final byte[] stream = bytesContainer.bytes;
 
     byte configByte = 0;
-    if (isEmbedded())
-      configByte |= 1;
+    if (isEmbedded()) {
+        configByte |= 1;
+    }
 
-    if (hasUuid)
-      configByte |= 2;
+    if (hasUuid) {
+        configByte |= 2;
+    }
 
     stream[offset++] = configByte;
 
@@ -295,10 +304,11 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
   public void fromStream(BytesContainer stream) {
     final byte first = stream.bytes[stream.offset++];
-    if ((first & 1) == 1)
-      delegate = new OEmbeddedRidBag();
-    else
-      delegate = new OSBTreeRidBag();
+    if ((first & 1) == 1) {
+        delegate = new OEmbeddedRidBag();
+    } else {
+        delegate = new OSBTreeRidBag();
+    }
 
     if ((first & 2) == 2) {
       uuid = OUUIDSerializer.INSTANCE.deserialize(stream.bytes, stream.offset);
@@ -399,8 +409,9 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
               break;
             }
           }
-          if (!found)
-            add(value);
+          if (!found) {
+              add(value);
+          }
         }
       }
       return true;
@@ -409,10 +420,11 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
   }
 
   protected void init() {
-    if (topThreshold < 0)
-      delegate = new OSBTreeRidBag();
-    else
-      delegate = new OEmbeddedRidBag();
+    if (topThreshold < 0) {
+        delegate = new OSBTreeRidBag();
+    } else {
+        delegate = new OEmbeddedRidBag();
+    }
   }
 
   /**

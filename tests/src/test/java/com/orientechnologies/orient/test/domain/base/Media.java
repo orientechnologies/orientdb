@@ -70,8 +70,9 @@ public class Media {
   public void setContent(ORecordBytes content) {
     ORecordBytes current = this.getContent();
     this.content = content;
-    if (current != null)
-      current.getRecord().delete();
+    if (current != null) {
+        current.getRecord().delete();
+    }
   }
 
   public void setContent(byte[] bytes) {

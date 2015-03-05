@@ -49,9 +49,10 @@ public class OVersionRecordConflictStrategy implements ORecordConflictStrategy {
   }
 
   protected void checkVersions(final ORecordId rid, final ORecordVersion iRecordVersion, final ORecordVersion iDatabaseVersion) {
-    if (OFastConcurrentModificationException.enabled())
-      throw OFastConcurrentModificationException.instance();
-    else
-      throw new OConcurrentModificationException(rid, iDatabaseVersion, iRecordVersion, ORecordOperation.UPDATED);
+    if (OFastConcurrentModificationException.enabled()) {
+        throw OFastConcurrentModificationException.instance();
+    } else {
+        throw new OConcurrentModificationException(rid, iDatabaseVersion, iRecordVersion, ORecordOperation.UPDATED);
+    }
   }
 }

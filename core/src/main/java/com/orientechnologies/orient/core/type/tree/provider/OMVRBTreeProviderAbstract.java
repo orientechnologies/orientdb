@@ -51,10 +51,11 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
     storage = iStorage;
     clusterName = iClusterName;
     if (storage != null) {
-      if (clusterName != null)
-        clusterId = storage.getClusterIdByName(iClusterName);
-      else
-        clusterId = storage.getClusterIdByName(OMetadataDefault.CLUSTER_INDEX_NAME);
+      if (clusterName != null) {
+          clusterId = storage.getClusterIdByName(iClusterName);
+      } else {
+          clusterId = storage.getClusterIdByName(OMetadataDefault.CLUSTER_INDEX_NAME);
+      }
     } else {
       // CLUSTER ID NOT USED FOR DATABASE INDEX
       clusterId = -1;
@@ -98,13 +99,15 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
   }
 
   public boolean setRoot(final ORID iRid) {
-    if (root == null)
-      root = new ORecordId();
+    if (root == null) {
+        root = new ORecordId();
+    }
 
-    if (iRid == null)
-      root.reset();
-    else if (!iRid.equals(root))
-      root.copyFrom(iRid);
+    if (iRid == null) {
+        root.reset();
+    } else if (!iRid.equals(root)) {
+        root.copyFrom(iRid);
+    }
 
     return setDirty();
   }
@@ -119,8 +122,9 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
    * @return
    */
   public boolean setDirty() {
-    if (record.isDirty())
-      return false;
+    if (record.isDirty()) {
+        return false;
+    }
     record.setDirty();
     return true;
   }
@@ -137,62 +141,69 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
   }
 
   public void load() {
-    if (storage == null)
-      load(getDatabase());
-    else
-      load(storage);
+    if (storage == null) {
+        load(getDatabase());
+    } else {
+        load(storage);
+    }
   }
 
   protected void load(final ODatabaseDocument iDb) {
-    if (!record.getIdentity().isValid())
-      return;
+    if (!record.getIdentity().isValid()) {
+        return;
+    }
     record.reload();
     fromStream(record.toStream());
   }
 
   protected void load(final OStorage iSt) {
-    if (!record.getIdentity().isValid())
-      // NOTHING TO LOAD
-      return;
+    if (!record.getIdentity().isValid()) {
+        // NOTHING TO LOAD
+        return;
+    }
     ORawBuffer raw = iSt.readRecord((ORecordId) record.getIdentity(), null, false, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
         .getResult();
-    if (raw == null)
-      throw new OConfigurationException("Cannot load map with id " + record.getIdentity());
+    if (raw == null) {
+        throw new OConfigurationException("Cannot load map with id " + record.getIdentity());
+    }
     record.getRecordVersion().copyFrom(raw.version);
     fromStream(raw.buffer);
   }
 
   protected void save(final ODatabaseDocument iDb) {
-    for (int i = 0; i < 3; ++i)
-      try {
-        record.fromStream(toStream());
-        record.setDirty();
-        record.save(clusterName);
-        break;
-      } catch (OConcurrentModificationException e) {
-        record.reload();
-      }
+    for (int i = 0; i < 3; ++i) {
+        try {
+            record.fromStream(toStream());
+            record.setDirty();
+            record.save(clusterName);
+            break;
+        } catch (OConcurrentModificationException e) {
+            record.reload();
+        }
+    }
   }
 
   public void save() {
-    if (storage == null)
-      save(getDatabase());
-    else
-      save(storage);
+    if (storage == null) {
+        save(getDatabase());
+    } else {
+        save(storage);
+    }
   }
 
   protected void save(final OStorage iSt) {
     record.fromStream(toStream());
-    if (record.getIdentity().isValid())
-      // UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
-      record.getRecordVersion().copyFrom(
-          iSt.updateRecord((ORecordId) record.getIdentity(), true, record.toStream(),
-              OVersionFactory.instance().createUntrackedVersion(), ORecordInternal.getRecordType(record), (byte) 0, null)
-              .getResult());
-    else {
+    if (record.getIdentity().isValid()) {
+        // UPDATE IT WITHOUT VERSION CHECK SINCE ALL IT'S LOCKED
+        record.getRecordVersion().copyFrom(
+                iSt.updateRecord((ORecordId) record.getIdentity(), true, record.toStream(),
+                        OVersionFactory.instance().createUntrackedVersion(), ORecordInternal.getRecordType(record), (byte) 0, null)
+                        .getResult());
+    } else {
       // CREATE IT
-      if (record.getIdentity().getClusterId() == ORID.CLUSTER_ID_INVALID)
-        ((ORecordId) record.getIdentity()).clusterId = clusterId;
+        if (record.getIdentity().getClusterId() == ORID.CLUSTER_ID_INVALID) {
+            ((ORecordId) record.getIdentity()).clusterId = clusterId;
+        }
 
       final OPhysicalPosition ppos = iSt.createRecord((ORecordId) record.getIdentity(), record.toStream(),
           OVersionFactory.instance().createVersion(), ORecordInternal.getRecordType(record), (byte) 0, null).getResult();
@@ -203,21 +214,23 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
   }
 
   public void delete() {
-    if (storage == null)
-      delete(getDatabase());
-    else
-      delete(storage);
+    if (storage == null) {
+        delete(getDatabase());
+    } else {
+        delete(storage);
+    }
     root = null;
   }
 
   protected void delete(final ODatabaseDocument iDb) {
-    for (int i = 0; i < 3; ++i)
-      try {
-        iDb.delete(record);
-        break;
-      } catch (OConcurrentModificationException e) {
-        record.reload();
-      }
+    for (int i = 0; i < 3; ++i) {
+        try {
+            iDb.delete(record);
+            break;
+        } catch (OConcurrentModificationException e) {
+            record.reload();
+        }
+    }
   }
 
   protected void delete(final OStorage iSt) {

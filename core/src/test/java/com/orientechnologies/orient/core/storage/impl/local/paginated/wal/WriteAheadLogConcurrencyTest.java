@@ -40,12 +40,14 @@ public class WriteAheadLogConcurrencyTest {
     OWALRecordsFactory.INSTANCE.registerNewRecord((byte) 128, WriteAheadLogTest.TestRecord.class);
 
     String buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null || buildDirectory.isEmpty())
-      buildDirectory = ".";
+    if (buildDirectory == null || buildDirectory.isEmpty()) {
+        buildDirectory = ".";
+    }
 
     testDir = new File(buildDirectory, "WriteAheadLogConcurrencyTest");
-    if (!testDir.exists())
-      testDir.mkdir();
+    if (!testDir.exists()) {
+        testDir.mkdir();
+    }
 
     OLocalPaginatedStorage localPaginatedStorage = mock(OLocalPaginatedStorage.class);
     when(localPaginatedStorage.getStoragePath()).thenReturn(testDir.getAbsolutePath());
@@ -62,21 +64,25 @@ public class WriteAheadLogConcurrencyTest {
     List<Future> futures = new ArrayList<Future>();
     Random random = new Random();
     List<Long> seeds = new ArrayList<Long>();
-    for (int i = 0; i < 8; i++)
-      seeds.add(random.nextLong());
+    for (int i = 0; i < 8; i++) {
+        seeds.add(random.nextLong());
+    }
 
     System.out.println("Seeds");
-    for (long seed : seeds)
-      System.out.println(seed);
+    for (long seed : seeds) {
+        System.out.println(seed);
+    }
 
-    for (int i = 0; i < 8; i++)
-      futures.add(writerExecutor.submit(new ConcurrentWriter(seeds.get(i), startLatch, writeAheadLog, recordConcurrentMap,
-          lastCheckpoint)));
+    for (int i = 0; i < 8; i++) {
+        futures.add(writerExecutor.submit(new ConcurrentWriter(seeds.get(i), startLatch, writeAheadLog, recordConcurrentMap,
+                lastCheckpoint)));
+    }
 
     startLatch.countDown();
 
-    for (Future future : futures)
-      future.get();
+    for (Future future : futures) {
+        future.get();
+    }
 
     OLogSequenceNumber lsn = writeAheadLog.begin();
     int recordsCount = 0;
@@ -95,8 +101,9 @@ public class WriteAheadLogConcurrencyTest {
   public void afterClass() throws Exception {
     writeAheadLog.delete();
 
-    if (testDir.exists())
-      testDir.delete();
+    if (testDir.exists()) {
+        testDir.delete();
+    }
   }
 
   private static final class ConcurrentWriter implements Callable<Void> {
@@ -129,8 +136,9 @@ public class WriteAheadLogConcurrencyTest {
           if (testRecord.isUpdateMasterRecord()) {
             OLogSequenceNumber checkpoint = lastCheckpoint.get();
             while (checkpoint == null || checkpoint.compareTo(testRecord.getLsn()) < 0) {
-              if (lastCheckpoint.compareAndSet(checkpoint, testRecord.getLsn()))
-                break;
+              if (lastCheckpoint.compareAndSet(checkpoint, testRecord.getLsn())) {
+                  break;
+              }
 
               checkpoint = lastCheckpoint.get();
             }

@@ -83,8 +83,9 @@ public class ObjectEnhancingTest extends ObjectDBBaseTest {
           return "UPPERCASEFIELD";
         }
         return getFieldName(m.getName(), "set");
-      } else
-        return getFieldName(m.getName(), "is");
+      } else {
+          return getFieldName(m.getName(), "is");
+      }
     }
 
     @Override

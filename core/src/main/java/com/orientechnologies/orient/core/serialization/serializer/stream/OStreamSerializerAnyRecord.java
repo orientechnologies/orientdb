@@ -44,9 +44,10 @@ public class OStreamSerializerAnyRecord implements OStreamSerializer {
    * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
    */
   public Object fromStream(byte[] iStream) throws IOException {
-    if (iStream == null || iStream.length == 0)
-      // NULL VALUE
-      return null;
+    if (iStream == null || iStream.length == 0) {
+        // NULL VALUE
+        return null;
+    }
 
     final String stream = OBinaryProtocol.bytes2string(iStream);
 
@@ -75,11 +76,13 @@ public class OStreamSerializerAnyRecord implements OStreamSerializer {
   }
 
   public byte[] toStream(Object iObject) throws IOException {
-    if (iObject == null)
-      return null;
+    if (iObject == null) {
+        return null;
+    }
 
-    if (((ORecord) iObject).getIdentity() == null)
-      throw new OSerializationException("Cannot serialize record without identity. Store it before serialization.");
+    if (((ORecord) iObject).getIdentity() == null) {
+        throw new OSerializationException("Cannot serialize record without identity. Store it before serialization.");
+    }
 
     final StringBuilder buffer = OStreamSerializerHelper.writeRecordType(iObject.getClass(), new StringBuilder(1024));
     buffer.append(((ORecord) iObject).getIdentity().toString());

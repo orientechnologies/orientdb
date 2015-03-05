@@ -83,14 +83,16 @@ public class OPartitionedDatabasePoolFactory extends OOrientListenerAbstract {
     final PoolIdentity poolIdentity = new PoolIdentity(url, userName, userPassword);
 
     OPartitionedDatabasePool pool = poolStore.get(poolIdentity);
-    if (pool != null)
-      return pool;
+    if (pool != null) {
+        return pool;
+    }
 
     pool = new OPartitionedDatabasePool(url, userName, userPassword, maxPoolSize);
 
     final OPartitionedDatabasePool oldPool = poolStore.putIfAbsent(poolIdentity, pool);
-    if (oldPool != null)
-      return oldPool;
+    if (oldPool != null) {
+        return oldPool;
+    }
 
     return pool;
   }
@@ -102,8 +104,9 @@ public class OPartitionedDatabasePoolFactory extends OOrientListenerAbstract {
   }
 
   public void close() {
-    if (closed)
-      return;
+    if (closed) {
+        return;
+    }
 
     closed = true;
 
@@ -123,15 +126,17 @@ public class OPartitionedDatabasePoolFactory extends OOrientListenerAbstract {
       }
     }
 
-    for (OPartitionedDatabasePool pool : poolStore.values())
-      pool.close();
+    for (OPartitionedDatabasePool pool : poolStore.values()) {
+        pool.close();
+    }
 
     poolStore.clear();
   }
 
   private void checkForClose() {
-    if (closed)
-      throw new IllegalStateException("Pool factory is closed");
+    if (closed) {
+        throw new IllegalStateException("Pool factory is closed");
+    }
   }
 
   @Override
@@ -152,19 +157,24 @@ public class OPartitionedDatabasePoolFactory extends OOrientListenerAbstract {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
+      if (this == o) {
+          return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+          return false;
+      }
 
       PoolIdentity that = (PoolIdentity) o;
 
-      if (!url.equals(that.url))
-        return false;
-      if (!userName.equals(that.userName))
-        return false;
-      if (!userPassword.equals(that.userPassword))
-        return false;
+      if (!url.equals(that.url)) {
+          return false;
+      }
+      if (!userName.equals(that.userName)) {
+          return false;
+      }
+      if (!userPassword.equals(that.userPassword)) {
+          return false;
+      }
 
       return true;
     }

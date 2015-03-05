@@ -58,17 +58,19 @@ import com.orientechnologies.common.io.OFileUtils;
    public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
        throws Exception {
      final File f = new File(fileName);
-     if (!f.exists())
-       throw new IllegalArgumentException("File name '" + fileName + "' not found");
+     if (!f.exists()) {
+         throw new IllegalArgumentException("File name '" + fileName + "' not found");
+     }
 
      final ODistributedDatabaseChunk result = new ODistributedDatabaseChunk(0, f, offset, ODeployDatabaseTask.CHUNK_MAX_SIZE);
 
      ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
          "- transferring chunk #%d offset=%d size=%s...", chunkNum, result.offset, OFileUtils.getSizeAsNumber(result.buffer.length));
 
-     if (result.last)
-       // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
-       iManager.setDatabaseStatus(iManager.getLocalNodeName(), database.getName(), ODistributedServerManager.DB_STATUS.ONLINE);
+     if (result.last) {
+         // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
+         iManager.setDatabaseStatus(iManager.getLocalNodeName(), database.getName(), ODistributedServerManager.DB_STATUS.ONLINE);
+     }
 
      return result;
    }

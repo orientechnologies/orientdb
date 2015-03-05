@@ -51,15 +51,17 @@ public class OSQLFunctionSysdate extends OSQLFunctionAbstract {
 
   public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       OCommandContext iContext) {
-    if (iParams.length == 0)
-      return now;
+    if (iParams.length == 0) {
+        return now;
+    }
 
     if (format == null) {
       format = new SimpleDateFormat((String) iParams[0]);
-      if (iParams.length == 2)
-        format.setTimeZone(TimeZone.getTimeZone(iParams[1].toString()));
-      else
-        format.setTimeZone(ODateHelper.getDatabaseTimeZone());
+      if (iParams.length == 2) {
+          format.setTimeZone(TimeZone.getTimeZone(iParams[1].toString()));
+      } else {
+          format.setTimeZone(ODateHelper.getDatabaseTimeZone());
+      }
     }
 
     return format.format(now);

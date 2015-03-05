@@ -48,42 +48,47 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
       final String rid = parametersPos > -1 ? urlParts[2].substring(0, parametersPos) : urlParts[2];
       final ORecordId recordId = new ORecordId(rid);
 
-      if (!recordId.isValid())
-        throw new IllegalArgumentException("Invalid Record ID in request: " + urlParts[2]);
+      if (!recordId.isValid()) {
+          throw new IllegalArgumentException("Invalid Record ID in request: " + urlParts[2]);
+      }
 
       final ODocument doc = new ODocument(recordId);
 
       // UNMARSHALL DOCUMENT WITH REQUEST CONTENT
-      if (iRequest.content != null)
-        // GET THE VERSION FROM THE DOCUMENT
-        doc.fromJSON(iRequest.content);
-      else {
-        if (iRequest.ifMatch != null)
-          // USE THE IF-MATCH HTTP HEADER AS VERSION
-          doc.getRecordVersion().getSerializer().fromString(iRequest.ifMatch, doc.getRecordVersion());
-        else
-          // IGNORE THE VERSION
-          doc.getRecordVersion().disable();
+      if (iRequest.content != null) {
+          // GET THE VERSION FROM THE DOCUMENT
+          doc.fromJSON(iRequest.content);
+      } else {
+        if (iRequest.ifMatch != null) {
+            // USE THE IF-MATCH HTTP HEADER AS VERSION
+            doc.getRecordVersion().getSerializer().fromString(iRequest.ifMatch, doc.getRecordVersion());
+          } else {
+            // IGNORE THE VERSION
+            doc.getRecordVersion().disable();
+          }
       }
 
       final OClass cls = doc.getSchemaClass();
       if (cls != null) {
-        if (cls.isSubClassOf("V"))
-          // DELETE IT AS VERTEX
-          db.command(new OCommandSQL("DELETE VERTEX " + recordId)).execute();
-        else if (cls.isSubClassOf("E"))
-          // DELETE IT AS EDGE
-          db.command(new OCommandSQL("DELETE EDGE " + recordId)).execute();
-        else
+        if (cls.isSubClassOf("V")) {
+            // DELETE IT AS VERTEX
+            db.command(new OCommandSQL("DELETE VERTEX " + recordId)).execute();
+        } else if (cls.isSubClassOf("E")) {
+            // DELETE IT AS EDGE
+            db.command(new OCommandSQL("DELETE EDGE " + recordId)).execute();
+        } else {
+            doc.delete();
+        }
+      } else {
           doc.delete();
-      } else
-        doc.delete();
+      }
 
       iResponse.send(OHttpUtils.STATUS_OK_NOCONTENT_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
 
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) {
+          db.close();
+      }
     }
     return false;
   }

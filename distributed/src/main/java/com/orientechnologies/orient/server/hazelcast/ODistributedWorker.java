@@ -136,12 +136,13 @@ public class ODistributedWorker extends Thread {
         Thread.interrupted();
         break;
       } catch (HazelcastException e) {
-        if (e.getCause() instanceof InterruptedException)
-          Thread.interrupted();
-        else
-          ODistributedServerLog.error(this, manager.getLocalNodeName(), senderNode, DIRECTION.IN,
-              "error on executing distributed request %d: %s", e, message != null ? message.getId() : -1,
-              message != null ? message.getTask() : "-");
+        if (e.getCause() instanceof InterruptedException) {
+            Thread.interrupted();
+        } else {
+            ODistributedServerLog.error(this, manager.getLocalNodeName(), senderNode, DIRECTION.IN,
+                    "error on executing distributed request %d: %s", e, message != null ? message.getId() : -1,
+                    message != null ? message.getTask() : "-");
+        }
       } catch (Throwable e) {
         ODistributedServerLog.error(this, getLocalNodeName(), senderNode, DIRECTION.IN,
             "error on executing distributed request %d: %s", e, message != null ? message.getId() : -1,
@@ -183,24 +184,27 @@ public class ODistributedWorker extends Thread {
   public void shutdown() {
     final int pendingMsgs = localQueue.size();
 
-    if (pendingMsgs > 0)
-      ODistributedServerLog.warn(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
-          "Received shutdown signal, waiting for distributed worker queue is empty (pending msgs=%d)...", pendingMsgs);
+    if (pendingMsgs > 0) {
+        ODistributedServerLog.warn(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
+                "Received shutdown signal, waiting for distributed worker queue is empty (pending msgs=%d)...", pendingMsgs);
+    }
 
     try {
       running = false;
       interrupt();
 
-      if (pendingMsgs > 0)
-        join();
+      if (pendingMsgs > 0) {
+          join();
+      }
 
       ODistributedServerLog.warn(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
           "Shutdown distributed worker completed");
 
       localQueue.clear();
 
-      if (database != null)
-        database.close();
+      if (database != null) {
+          database.close();
+      }
 
     } catch (Exception e) {
       ODistributedServerLog.warn(this, getLocalNodeName(), null, ODistributedServerLog.DIRECTION.NONE,
@@ -241,9 +245,10 @@ public class ODistributedWorker extends Thread {
       }
     }
 
-    if (ODistributedServerLog.isDebugEnabled())
-      ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
-          "processing request=%s sourceNode=%s", req, req.getSenderNodeName());
+    if (ODistributedServerLog.isDebugEnabled()) {
+        ODistributedServerLog.debug(this, manager.getLocalNodeName(), req.getSenderNodeName(), DIRECTION.IN,
+                "processing request=%s sourceNode=%s", req, req.getSenderNodeName());
+    }
 
     return req;
   }
@@ -269,16 +274,18 @@ public class ODistributedWorker extends Thread {
     try {
       final OAbstractRemoteTask task = iRequest.getTask();
 
-      if (ODistributedServerLog.isDebugEnabled())
-        ODistributedServerLog.debug(this, manager.getLocalNodeName(), iRequest.getSenderNodeName(), DIRECTION.OUT,
-            "received request: %s", iRequest);
+      if (ODistributedServerLog.isDebugEnabled()) {
+          ODistributedServerLog.debug(this, manager.getLocalNodeName(), iRequest.getSenderNodeName(), DIRECTION.OUT,
+                  "received request: %s", iRequest);
+      }
 
       // EXECUTE IT LOCALLY
       final Serializable responsePayload;
       OSecurityUser origin = null;
       try {
-        if (task.isRequiredOpenDatabase())
-          initDatabaseInstance();
+        if (task.isRequiredOpenDatabase()) {
+            initDatabaseInstance();
+        }
 
         ODatabaseRecordThreadLocal.INSTANCE.set(database);
 
@@ -289,8 +296,9 @@ public class ODistributedWorker extends Thread {
         if (database != null) {
           origin = database.getUser();
           try {
-            if (lastUser == null || !(lastUser.getName()).equals(iRequest.getUserName()))
-              lastUser = database.getMetadata().getSecurity().getUser(iRequest.getUserName());
+            if (lastUser == null || !(lastUser.getName()).equals(iRequest.getUserName())) {
+                lastUser = database.getMetadata().getSecurity().getUser(iRequest.getUserName());
+            }
             database.setUser(lastUser);// set to new user
           } catch (Throwable ex) {
             OLogManager.instance().error(this, "failed to convert to OUser " + ex.getMessage());
@@ -344,8 +352,9 @@ public class ODistributedWorker extends Thread {
           final boolean executeLastPendingRequest = checkIfOperationHasBeenExecuted(lastPendingRequest,
               lastPendingRequest.getTask());
 
-          if (executeLastPendingRequest)
-            onMessage(lastPendingRequest);
+          if (executeLastPendingRequest) {
+              onMessage(lastPendingRequest);
+          }
 
         } catch (Throwable t) {
           ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
@@ -380,12 +389,13 @@ public class ODistributedWorker extends Thread {
       executeLastPendingRequest = ((ODeleteRecordTask) task).getRid().getRecord() != null;
     } else if (task instanceof OUpdateRecordTask) {
       final ORecord rec = ((OUpdateRecordTask) task).getRid().getRecord();
-      if (rec == null)
-        ODistributedServerLog.warn(this, getLocalNodeName(), lastPendingRequest.getSenderNodeName(), DIRECTION.IN,
-            "- cannot update deleted record %s, database could be not aligned", ((OUpdateRecordTask) task).getRid());
-      else
-        // EXECUTE ONLY IF VERSIONS DIFFER
-        executeLastPendingRequest = !rec.getRecordVersion().equals(((OUpdateRecordTask) task).getVersion());
+      if (rec == null) {
+          ODistributedServerLog.warn(this, getLocalNodeName(), lastPendingRequest.getSenderNodeName(), DIRECTION.IN,
+                  "- cannot update deleted record %s, database could be not aligned", ((OUpdateRecordTask) task).getRid());
+      } else {
+          // EXECUTE ONLY IF VERSIONS DIFFER
+          executeLastPendingRequest = !rec.getRecordVersion().equals(((OUpdateRecordTask) task).getVersion());
+      }
     } else if (task instanceof OCreateRecordTask) {
       // EXECUTE ONLY IF THE RECORD HASN'T BEEN CREATED YET
       executeLastPendingRequest = ((OCreateRecordTask) task).getRid().getRecord() == null;
@@ -395,28 +405,32 @@ public class ODistributedWorker extends Thread {
             ((OSQLCommandTask) task).getPayload());
       }
     } else if (task instanceof OResurrectRecordTask) {
-      if (((OResurrectRecordTask) task).getRid().getRecord() == null)
-        // ALREADY DELETED: CANNOT RESTORE IT
-        hotAlignmentError(lastPendingRequest, "Not able to resurrect deleted record '%s'", ((OResurrectRecordTask) task).getRid());
+      if (((OResurrectRecordTask) task).getRid().getRecord() == null) {
+          // ALREADY DELETED: CANNOT RESTORE IT
+          hotAlignmentError(lastPendingRequest, "Not able to resurrect deleted record '%s'", ((OResurrectRecordTask) task).getRid());
+      }
     } else if (task instanceof OTxTask) {
       // CHECK EACH TX ITEM IF HAS BEEN COMMITTED
       for (OAbstractRemoteTask t : ((OTxTask) task).getTasks()) {
         executeLastPendingRequest = checkIfOperationHasBeenExecuted(lastPendingRequest, t);
-        if (executeLastPendingRequest)
-          // REPEAT THE ENTIRE TX
-          return true;
+        if (executeLastPendingRequest) {
+            // REPEAT THE ENTIRE TX
+            return true;
+        }
       }
     } else if (task instanceof OFixTxTask) {
       // CHECK EACH FIX-TX ITEM IF HAS BEEN COMMITTED
       for (OAbstractRemoteTask t : ((OFixTxTask) task).getTasks()) {
         executeLastPendingRequest = checkIfOperationHasBeenExecuted(lastPendingRequest, t);
-        if (executeLastPendingRequest)
-          // REPEAT THE ENTIRE TX
-          return true;
+        if (executeLastPendingRequest) {
+            // REPEAT THE ENTIRE TX
+            return true;
+        }
       }
-    } else
-      hotAlignmentError(lastPendingRequest, "Not able to assure last operation has been completed before last crash. Task='%s'",
-          task);
+    } else {
+        hotAlignmentError(lastPendingRequest, "Not able to assure last operation has been completed before last crash. Task='%s'",
+                task);
+    }
     return executeLastPendingRequest;
   }
 
@@ -432,8 +446,9 @@ public class ODistributedWorker extends Thread {
       final IQueue<ODistributedResponse> queue = msgService.getQueue(OHazelcastDistributedMessageService
           .getResponseQueueName(iRequest.getSenderNodeName()));
 
-      if (!queue.offer(response, OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong(), TimeUnit.MILLISECONDS))
-        throw new ODistributedException("Timeout on dispatching response to the thread queue " + iRequest.getSenderNodeName());
+      if (!queue.offer(response, OGlobalConfiguration.DISTRIBUTED_QUEUE_TIMEOUT.getValueAsLong(), TimeUnit.MILLISECONDS)) {
+          throw new ODistributedException("Timeout on dispatching response to the thread queue " + iRequest.getSenderNodeName());
+      }
 
     } catch (Exception e) {
       throw new ODistributedException("Cannot dispatch response to the thread queue " + iRequest.getSenderNodeName(), e);
@@ -442,7 +457,8 @@ public class ODistributedWorker extends Thread {
 
   private void createReplicatorUser(ODatabaseDocumentTx database, final OServerUserConfiguration replicatorUser) {
     final OUser replUser = database.getMetadata().getSecurity().getUser(replicatorUser.name);
-    if (replUser == null)
-      database.getMetadata().getSecurity().createUser(replicatorUser.name, replicatorUser.password, "admin");
+    if (replUser == null) {
+        database.getMetadata().getSecurity().createUser(replicatorUser.name, replicatorUser.password, "admin");
+    }
   }
 }

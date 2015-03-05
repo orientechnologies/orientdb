@@ -66,16 +66,19 @@ public final class OThreadCountersHashTable implements OOrientStartupListener, O
     AtomicReference<EntryHolder>[] activeTable = new AtomicReference[initialSize << 1];
     AtomicReference<AtomicReference<EntryHolder>[]>[] tables = new AtomicReference[32];
 
-    for (int i = 0; i < activeTable.length; i++)
-      activeTable[i] = new AtomicReference<EntryHolder>(new EntryHolder(0, null, false));
+    for (int i = 0; i < activeTable.length; i++) {
+        activeTable[i] = new AtomicReference<EntryHolder>(new EntryHolder(0, null, false));
+    }
 
     tables[0] = new AtomicReference<AtomicReference<EntryHolder>[]>(activeTable);
-    for (int i = 1; i < tables.length; i++)
-      tables[i] = new AtomicReference<AtomicReference<EntryHolder>[]>(null);
+    for (int i = 1; i < tables.length; i++) {
+        tables[i] = new AtomicReference<AtomicReference<EntryHolder>[]>(null);
+    }
 
     AtomicInteger[] counters = new AtomicInteger[32];
-    for (int i = 0; i < counters.length; i++)
-      counters[i] = new AtomicInteger();
+    for (int i = 0; i < counters.length; i++) {
+        counters[i] = new AtomicInteger();
+    }
 
     busyCounters = counters;
 
@@ -122,8 +125,9 @@ public final class OThreadCountersHashTable implements OOrientStartupListener, O
         }
 
         final AtomicReference<EntryHolder>[] table = tables[i].get();
-        if (tableCountersNotEmpty(table))
-          return false;
+        if (tableCountersNotEmpty(table)) {
+            return false;
+        }
       }
 
     } while (this.activeTableIndex != activeTableIndex);
@@ -135,15 +139,17 @@ public final class OThreadCountersHashTable implements OOrientStartupListener, O
     for (AtomicReference<EntryHolder> entryHolderRef : table) {
       final EntryHolder entryHolder = entryHolderRef.get();
 
-      if (!entryIsEmpty(entryHolder) && entryHolder.entry.threadCounter > 0)
-        return true;
+      if (!entryIsEmpty(entryHolder) && entryHolder.entry.threadCounter > 0) {
+          return true;
+      }
     }
     return false;
   }
 
   private boolean entryIsEmpty(EntryHolder entryHolder) {
-    if (deadThreadsAreAllowed)
-      return entryHolder.entry == null;
+    if (deadThreadsAreAllowed) {
+        return entryHolder.entry == null;
+    }
 
     return entryHolder.entry == null || !entryHolder.entry.thread.isAlive();
   }
@@ -162,8 +168,9 @@ public final class OThreadCountersHashTable implements OOrientStartupListener, O
         }
 
         final HashEntry entry = searchInTables(thread, hashCodes, table);
-        if (entry != null)
-          return entry;
+        if (entry != null) {
+            return entry;
+        }
       }
     } while (activeTableIndex != this.activeTableIndex);
 
@@ -175,23 +182,27 @@ public final class OThreadCountersHashTable implements OOrientStartupListener, O
       final int firstTableIndex = firstSubTableIndex(hashCodes, tables.length);
       final EntryHolder firstEntryHolderRnd1 = tables[firstTableIndex].get();
 
-      if (firstEntryHolderRnd1.entry != null && firstEntryHolderRnd1.entry.thread == thread)
-        return firstEntryHolderRnd1.entry;
+      if (firstEntryHolderRnd1.entry != null && firstEntryHolderRnd1.entry.thread == thread) {
+          return firstEntryHolderRnd1.entry;
+      }
 
       final int secondTableIndex = secondSubTableIndex(hashCodes, tables.length);
       final EntryHolder secondEntryHolderRnd1 = tables[secondTableIndex].get();
 
-      if (secondEntryHolderRnd1.entry != null && secondEntryHolderRnd1.entry.thread == thread)
-        return secondEntryHolderRnd1.entry;
+      if (secondEntryHolderRnd1.entry != null && secondEntryHolderRnd1.entry.thread == thread) {
+          return secondEntryHolderRnd1.entry;
+      }
 
       final EntryHolder firstEntryHolderRnd2 = tables[firstTableIndex].get();
-      if (firstEntryHolderRnd2.entry != null && firstEntryHolderRnd2.entry.thread == thread)
-        return firstEntryHolderRnd2.entry;
+      if (firstEntryHolderRnd2.entry != null && firstEntryHolderRnd2.entry.thread == thread) {
+          return firstEntryHolderRnd2.entry;
+      }
 
       final EntryHolder secondEntryHolderRnd2 = tables[secondTableIndex].get();
 
-      if (secondEntryHolderRnd2.entry != null && secondEntryHolderRnd2.entry.thread == thread)
-        return secondEntryHolderRnd2.entry;
+      if (secondEntryHolderRnd2.entry != null && secondEntryHolderRnd2.entry.thread == thread) {
+          return secondEntryHolderRnd2.entry;
+      }
 
       if (!checkCounter(firstEntryHolderRnd1.counter, secondEntryHolderRnd1.counter, firstEntryHolderRnd2.counter,
           secondEntryHolderRnd2.counter)) {
@@ -215,8 +226,9 @@ public final class OThreadCountersHashTable implements OOrientStartupListener, O
         continue;
       }
 
-      if (firstEntryHolderRnd1.entry != null && firstEntryHolderRnd1.entry.thread == thread)
-        result = new FindResult(true, true, firstEntryHolderRnd1, secondEntryHolderRnd1);
+      if (firstEntryHolderRnd1.entry != null && firstEntryHolderRnd1.entry.thread == thread) {
+          result = new FindResult(true, true, firstEntryHolderRnd1, secondEntryHolderRnd1);
+      }
 
       if (secondEntryHolderRnd1.markedForRelocation) {
         helpRelocate(secondTableIndex, false, tables);
@@ -228,8 +240,9 @@ public final class OThreadCountersHashTable implements OOrientStartupListener, O
         result = new FindResult(true, false, firstEntryHolderRnd1, secondEntryHolderRnd1);
       }
 
-      if (result != null)
-        return result;
+      if (result != null) {
+          return result;
+      }
 
       final EntryHolder firstEntryHolderRnd2 = tables[firstTableIndex].get();
       final EntryHolder secondEntryHolderRnd2 = tables[secondTableIndex].get();
@@ -239,8 +252,9 @@ public final class OThreadCountersHashTable implements OOrientStartupListener, O
         continue;
       }
 
-      if (firstEntryHolderRnd2.entry != null && firstEntryHolderRnd2.entry.thread == thread)
-        result = new FindResult(true, true, firstEntryHolderRnd2, secondEntryHolderRnd2);
+      if (firstEntryHolderRnd2.entry != null && firstEntryHolderRnd2.entry.thread == thread) {
+          result = new FindResult(true, true, firstEntryHolderRnd2, secondEntryHolderRnd2);
+      }
 
       if (secondEntryHolderRnd2.markedForRelocation) {
         helpRelocate(secondTableIndex, false, tables);
@@ -252,12 +266,14 @@ public final class OThreadCountersHashTable implements OOrientStartupListener, O
         result = new FindResult(true, false, firstEntryHolderRnd1, secondEntryHolderRnd1);
       }
 
-      if (result != null)
-        return result;
+      if (result != null) {
+          return result;
+      }
 
       if (!checkCounter(firstEntryHolderRnd1.counter, secondEntryHolderRnd1.counter, firstEntryHolderRnd2.counter,
-          secondEntryHolderRnd2.counter))
-        return new FindResult(false, false, firstEntryHolderRnd2, secondEntryHolderRnd2);
+          secondEntryHolderRnd2.counter)) {
+          return new FindResult(false, false, firstEntryHolderRnd2, secondEntryHolderRnd2);
+      }
     }
   }
 
@@ -282,8 +298,9 @@ public final class OThreadCountersHashTable implements OOrientStartupListener, O
       counter.getAndDecrement();
 
       if (!result) {
-        if (!rehash())
-          LockSupport.parkNanos(10);
+        if (!rehash()) {
+            LockSupport.parkNanos(10);
+        }
       } else {
 
         return;
@@ -302,32 +319,37 @@ public final class OThreadCountersHashTable implements OOrientStartupListener, O
         final int firstTableIndex = firstSubTableIndex(newEntry.hashCodes, tables.length);
         final EntryHolder holder = result.firstEntryHolder;
 
-        if (tables[firstTableIndex].compareAndSet(holder, new EntryHolder(holder.counter, newEntry, false)))
-          return true;
+        if (tables[firstTableIndex].compareAndSet(holder, new EntryHolder(holder.counter, newEntry, false))) {
+            return true;
+        }
       }
 
       if (entryIsEmpty(result.secondEntryHolder)) {
         final int secondTableIndex = secondSubTableIndex(newEntry.hashCodes, tables.length);
         final EntryHolder holder = result.secondEntryHolder;
 
-        if (tables[secondTableIndex].compareAndSet(holder, new EntryHolder(holder.counter, newEntry, false)))
-          return true;
+        if (tables[secondTableIndex].compareAndSet(holder, new EntryHolder(holder.counter, newEntry, false))) {
+            return true;
+        }
       }
 
-      if (!relocate(firstSubTableIndex(newEntry.hashCodes, tables.length), tables))
-        return false;
+      if (!relocate(firstSubTableIndex(newEntry.hashCodes, tables.length), tables)) {
+          return false;
+      }
     }
   }
 
   private boolean rehash() {
-    if (!tablesAreBusy.compareAndSet(false, true))
-      return false;
+    if (!tablesAreBusy.compareAndSet(false, true)) {
+        return false;
+    }
 
     AtomicReference<EntryHolder>[] activeTable = tables[activeTableIndex].get();
     AtomicReference<EntryHolder>[] newActiveTable = new AtomicReference[activeTable.length << 1];
 
-    for (int i = 0; i < newActiveTable.length; i++)
-      newActiveTable[i] = new AtomicReference<EntryHolder>(new EntryHolder(0, null, false));
+    for (int i = 0; i < newActiveTable.length; i++) {
+        newActiveTable[i] = new AtomicReference<EntryHolder>(new EntryHolder(0, null, false));
+    }
 
     tables[activeTableIndex + 1].set(newActiveTable);
     activeTableIndex++;
@@ -341,8 +363,9 @@ public final class OThreadCountersHashTable implements OOrientStartupListener, O
     final int tableSize = tables.length >> 1;
 
     path_discovery: while (true) {
-      if (startLevel >= THRESHOLD)
-        startLevel = 0;
+      if (startLevel >= THRESHOLD) {
+          startLevel = 0;
+      }
 
       boolean found = false;
 
@@ -359,14 +382,16 @@ public final class OThreadCountersHashTable implements OOrientStartupListener, O
         if (!entryIsEmpty(entryHolder)) {
           route[depth] = entryIndex;
 
-          if (entryIndex < tableSize)
-            entryIndex = secondSubTableIndex(entryHolder.entry.hashCodes, tables.length);
-          else
-            entryIndex = firstSubTableIndex(entryHolder.entry.hashCodes, tables.length);
+          if (entryIndex < tableSize) {
+              entryIndex = secondSubTableIndex(entryHolder.entry.hashCodes, tables.length);
+          } else {
+              entryIndex = firstSubTableIndex(entryHolder.entry.hashCodes, tables.length);
+          }
 
           depth++;
-        } else
-          found = true;
+        } else {
+            found = true;
+        }
       } while (!found && depth < THRESHOLD);
 
       if (found) {
@@ -380,8 +405,9 @@ public final class OThreadCountersHashTable implements OOrientStartupListener, O
             entryHolder = tables[index].get();
           }
 
-          if (entryIsEmpty(entryHolder))
-            continue;
+          if (entryIsEmpty(entryHolder)) {
+              continue;
+          }
 
           final int destinationIndex = index < tableSize ? secondSubTableIndex(entryHolder.entry.hashCodes, tables.length)
               : firstSubTableIndex(entryHolder.entry.hashCodes, tables.length);
@@ -413,15 +439,17 @@ public final class OThreadCountersHashTable implements OOrientStartupListener, O
       EntryHolder src = tables[entryIndex].get();
 
       while (initiator && !src.markedForRelocation) {
-        if (entryIsEmpty(src))
-          return true;
+        if (entryIsEmpty(src)) {
+            return true;
+        }
 
         tables[entryIndex].compareAndSet(src, new EntryHolder(src.counter, src.entry, true));
         src = tables[entryIndex].get();
       }
 
-      if (!src.markedForRelocation)
-        return true;
+      if (!src.markedForRelocation) {
+          return true;
+      }
 
       final int destinationIndex = entryIndex < tableSize ? secondSubTableIndex(src.entry.hashCodes, tables.length)
           : firstSubTableIndex(src.entry.hashCodes, tables.length);
@@ -431,14 +459,16 @@ public final class OThreadCountersHashTable implements OOrientStartupListener, O
       if (entryIsEmpty(destinationHolder)) {
         final long newCounter = destinationHolder.counter > src.counter ? destinationHolder.counter + 1 : src.counter + 1;
 
-        if (src != tables[entryIndex].get())
-          continue;
+        if (src != tables[entryIndex].get()) {
+            continue;
+        }
 
         if (tables[destinationIndex].compareAndSet(destinationHolder, new EntryHolder(newCounter, src.entry, false))) {
           tables[entryIndex].compareAndSet(src, new EntryHolder(src.counter + 1, null, false));
           return true;
-        } else
-          continue;
+        } else {
+            continue;
+        }
       }
 
       if (destinationHolder.entry == src.entry) {
@@ -458,8 +488,9 @@ public final class OThreadCountersHashTable implements OOrientStartupListener, O
 
   @Override
   public void onStartup() {
-    if (hashEntry == null)
-      hashEntry = new ThreadLocal<HashEntry>();
+    if (hashEntry == null) {
+        hashEntry = new ThreadLocal<HashEntry>();
+    }
   }
 
   private static int secondSubTableIndex(int[] hashCodes, int size) {
@@ -508,49 +539,69 @@ public final class OThreadCountersHashTable implements OOrientStartupListener, O
 
     @Override
     public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
+      if (this == o) {
+          return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+          return false;
+      }
 
       HashEntry hashEntry = (HashEntry) o;
 
-      if (p1 != hashEntry.p1)
-        return false;
-      if (p10 != hashEntry.p10)
-        return false;
-      if (p11 != hashEntry.p11)
-        return false;
-      if (p12 != hashEntry.p12)
-        return false;
-      if (p13 != hashEntry.p13)
-        return false;
-      if (p14 != hashEntry.p14)
-        return false;
-      if (p2 != hashEntry.p2)
-        return false;
-      if (p3 != hashEntry.p3)
-        return false;
-      if (p4 != hashEntry.p4)
-        return false;
-      if (p5 != hashEntry.p5)
-        return false;
-      if (p6 != hashEntry.p6)
-        return false;
-      if (p7 != hashEntry.p7)
-        return false;
-      if (p8 != hashEntry.p8)
-        return false;
-      if (p9 != hashEntry.p9)
-        return false;
-      if (p0 != hashEntry.p0)
-        return false;
-      if (threadCounter != hashEntry.threadCounter)
-        return false;
-      if (!Arrays.equals(hashCodes, hashEntry.hashCodes))
-        return false;
-      if (thread != null ? !thread.equals(hashEntry.thread) : hashEntry.thread != null)
-        return false;
+      if (p1 != hashEntry.p1) {
+          return false;
+      }
+      if (p10 != hashEntry.p10) {
+          return false;
+      }
+      if (p11 != hashEntry.p11) {
+          return false;
+      }
+      if (p12 != hashEntry.p12) {
+          return false;
+      }
+      if (p13 != hashEntry.p13) {
+          return false;
+      }
+      if (p14 != hashEntry.p14) {
+          return false;
+      }
+      if (p2 != hashEntry.p2) {
+          return false;
+      }
+      if (p3 != hashEntry.p3) {
+          return false;
+      }
+      if (p4 != hashEntry.p4) {
+          return false;
+      }
+      if (p5 != hashEntry.p5) {
+          return false;
+      }
+      if (p6 != hashEntry.p6) {
+          return false;
+      }
+      if (p7 != hashEntry.p7) {
+          return false;
+      }
+      if (p8 != hashEntry.p8) {
+          return false;
+      }
+      if (p9 != hashEntry.p9) {
+          return false;
+      }
+      if (p0 != hashEntry.p0) {
+          return false;
+      }
+      if (threadCounter != hashEntry.threadCounter) {
+          return false;
+      }
+      if (!Arrays.equals(hashCodes, hashEntry.hashCodes)) {
+          return false;
+      }
+      if (thread != null ? !thread.equals(hashEntry.thread) : hashEntry.thread != null) {
+          return false;
+      }
 
       return true;
     }

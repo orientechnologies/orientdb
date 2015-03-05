@@ -49,9 +49,10 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
   public void config(final OServer iServer, OServerParameterConfiguration[] iParams) {
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("enabled")) {
-        if (Boolean.parseBoolean(param.value))
-          // ENABLE IT
-          enabled = true;
+        if (Boolean.parseBoolean(param.value)) {
+            // ENABLE IT
+            enabled = true;
+        }
       } else if (param.name.equalsIgnoreCase("allowedLanguages")) {
         allowedLanguages = new HashSet<String>(Arrays.asList(param.value.toLowerCase().split(",")));
       }
@@ -67,8 +68,9 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
   public void startup() {
     OCommandManager.instance().unregisterExecutor(OCommandScript.class);
 
-    if (!enabled)
-      return;
+    if (!enabled) {
+        return;
+    }
 
     OCommandManager.instance().registerExecutor(OCommandScript.class, OCommandExecutorScript.class,
         new OCallable<Void, OCommandRequest>() {
@@ -76,8 +78,9 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
           public Void call(OCommandRequest iArgument) {
             final String language = ((OCommandScript) iArgument).getLanguage().toLowerCase();
 
-            if (!allowedLanguages.contains(language))
-              throw new OSecurityException("Language '" + language + "' is not allowed to be executed");
+            if (!allowedLanguages.contains(language)) {
+                throw new OSecurityException("Language '" + language + "' is not allowed to be executed");
+            }
 
             return null;
           }
@@ -93,8 +96,9 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
 
   @Override
   public void shutdown() {
-    if (!enabled)
-      return;
+    if (!enabled) {
+        return;
+    }
 
     OCommandManager.instance().unregisterExecutor(OCommandScript.class);
   }

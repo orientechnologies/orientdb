@@ -80,10 +80,11 @@ public class OLogFormatter extends Formatter {
 
     // FORMAT THE MESSAGE
     try {
-      if (iAdditionalArgs != null)
-        buffer.append(String.format(iMessage, iAdditionalArgs));
-      else
-        buffer.append(iMessage);
+      if (iAdditionalArgs != null) {
+          buffer.append(String.format(iMessage, iAdditionalArgs));
+      } else {
+          buffer.append(iMessage);
+      }
     } catch (Exception e) {
       buffer.append(iMessage);
     }

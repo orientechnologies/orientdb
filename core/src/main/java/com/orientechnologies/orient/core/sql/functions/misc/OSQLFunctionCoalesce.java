@@ -70,8 +70,9 @@ public class OSQLFunctionCoalesce extends OSQLFunctionAbstract {
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams, OCommandContext iContext) {
     int length = iParams.length;
     for (int i = 0; i < length; i++) {
-      if (iParams[i] != null)
-        return iParams[i];
+      if (iParams[i] != null) {
+          return iParams[i];
+      }
     }
     return null;
   }

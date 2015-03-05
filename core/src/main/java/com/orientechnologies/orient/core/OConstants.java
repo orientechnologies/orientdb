@@ -41,8 +41,9 @@ public class OConstants {
 
   public static String getBuildNumber() {
     final String buildNumber = System.getProperty("orientdb.build.number");
-    if (buildNumber == null)
-      return null;
+    if (buildNumber == null) {
+        return null;
+    }
 
     return buildNumber;
   }

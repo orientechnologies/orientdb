@@ -55,8 +55,9 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
 
   @Override
   public OrientEdge createWrapper(final Object iObject) {
-    if (iObject instanceof OrientEdge)
-      return (OrientEdge) iObject;
+    if (iObject instanceof OrientEdge) {
+        return (OrientEdge) iObject;
+    }
 
     final OIdentifiable rec = (OIdentifiable) iObject;
 
@@ -96,25 +97,29 @@ public class OrientEdgeIterator extends OLazyWrapperIterator<OrientEdge> {
     final OrientEdge edge;
     if (immutableSchema.isSubClassOf(OrientVertexType.CLASS_NAME)) {
       // DIRECT VERTEX, CREATE DUMMY EDGE
-      if (connection.getKey() == Direction.OUT)
-        edge = new OrientEdge(this.sourceVertex.getGraph(), this.sourceVertex.getIdentity(), rec.getIdentity(), connection.getValue());
-      else
-        edge = new OrientEdge(this.sourceVertex.getGraph(), rec.getIdentity(), this.sourceVertex.getIdentity(), connection.getValue());
+      if (connection.getKey() == Direction.OUT) {
+          edge = new OrientEdge(this.sourceVertex.getGraph(), this.sourceVertex.getIdentity(), rec.getIdentity(), connection.getValue());
+      } else {
+          edge = new OrientEdge(this.sourceVertex.getGraph(), rec.getIdentity(), this.sourceVertex.getIdentity(), connection.getValue());
+      }
     } else if (immutableSchema.isSubClassOf(OrientEdgeType.CLASS_NAME)) {
       // EDGE
       edge = new OrientEdge(this.sourceVertex.getGraph(), rec.getIdentity());
-    } else
-      throw new IllegalStateException("Invalid content found while iterating edges, value '" + value + "' is not an edge");
+    } else {
+        throw new IllegalStateException("Invalid content found while iterating edges, value '" + value + "' is not an edge");
+    }
 
-    if (this.sourceVertex.settings.isUseVertexFieldsForEdgeLabels() || edge.isLabeled(labels))
-      return edge;
+    if (this.sourceVertex.settings.isUseVertexFieldsForEdgeLabels() || edge.isLabeled(labels)) {
+        return edge;
+    }
 
     return null;
   }
 
   public boolean filter(final OrientEdge iObject) {
-    if (targetVertex != null && !targetVertex.equals(iObject.getVertex(connection.getKey().opposite())))
-      return false;
+    if (targetVertex != null && !targetVertex.equals(iObject.getVertex(connection.getKey().opposite()))) {
+        return false;
+    }
 
     return this.sourceVertex.settings.isUseVertexFieldsForEdgeLabels() || iObject.isLabeled(labels);
   }

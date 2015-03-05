@@ -66,12 +66,14 @@ public class OClusterPositionMapBucket extends ODurablePage {
   public PositionEntry get(int index) {
     int size = getIntValue(SIZE_OFFSET);
 
-    if (index >= size)
-      return null;
+    if (index >= size) {
+        return null;
+    }
 
     int position = entryPosition(index);
-    if (getByteValue(position) != FILLED)
-      return null;
+    if (getByteValue(position) != FILLED) {
+        return null;
+    }
 
     return readEntry(position);
   }
@@ -91,13 +93,15 @@ public class OClusterPositionMapBucket extends ODurablePage {
   public PositionEntry remove(int index) {
     int size = getIntValue(SIZE_OFFSET);
 
-    if (index >= size)
-      return null;
+    if (index >= size) {
+        return null;
+    }
 
     int position = entryPosition(index);
 
-    if (getByteValue(position) != FILLED)
-      return null;
+    if (getByteValue(position) != FILLED) {
+        return null;
+    }
 
     setByteValue(position, REMOVED);
 
@@ -118,8 +122,9 @@ public class OClusterPositionMapBucket extends ODurablePage {
 
   public boolean exists(int index) {
     int size = getIntValue(SIZE_OFFSET);
-    if (index >= size)
-      return false;
+    if (index >= size) {
+        return false;
+    }
 
     final int position = entryPosition(index);
     return getByteValue(position) == FILLED;

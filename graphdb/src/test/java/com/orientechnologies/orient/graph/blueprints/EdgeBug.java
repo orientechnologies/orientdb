@@ -84,9 +84,9 @@ public class EdgeBug {
       System.out.println("GOT VERTEX: " + v);
     }
     Iterable<Vertex> rcs = ((OrientGraphQuery) db.query()).labels("rawCategory").vertices();
-    if (!rcs.iterator().hasNext())
-      System.out.println("??? Where are the rawCategory vertices?");
-    else {
+    if (!rcs.iterator().hasNext()) {
+        System.out.println("??? Where are the rawCategory vertices?");
+    } else {
       for (Vertex rc : rcs) {
         System.out.println("GOT RC: " + rc);
       }
@@ -108,8 +108,9 @@ public class EdgeBug {
     OrientVertex childVertex = db.getVertex(child.getId());
     Iterable<Edge> parentEdges = childVertex.getEdges(Direction.OUT, "hasParent");
     // remove original parent edge
-    for (Edge parentEdge : parentEdges)
-      parentEdge.remove();
+    for (Edge parentEdge : parentEdges) {
+        parentEdge.remove();
+    }
     // get vertex again
     childVertex = db.getVertex(childVertex.getId());
     Vertex parentVertex = db.getVertex(parent.getId());

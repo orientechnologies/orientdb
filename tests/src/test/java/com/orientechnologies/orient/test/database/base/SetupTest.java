@@ -41,8 +41,9 @@ public class SetupTest {
 	}
 
 	public String getURL() {
-		if (url != null)
-			return url;
+		if (url != null) {
+                    return url;
+                }
 
 		return System.getProperty("url");
 	}
@@ -52,8 +53,9 @@ public class SetupTest {
 	}
 
 	public static SetupTest instance() {
-		if (instance == null)
-			instance = new SetupTest(null, false);
+		if (instance == null) {
+                    instance = new SetupTest(null, false);
+                }
 
 		return instance;
 	}

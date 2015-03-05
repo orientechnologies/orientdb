@@ -52,8 +52,9 @@ public class ODocumentFieldWalker {
   }
 
   private void walkDocument(ODocument document, ODocumentFieldVisitor fieldWalker, Set<ODocument> walked) {
-    if (walked.contains(document))
-      return;
+    if (walked.contains(document)) {
+        return;
+    }
 
     walked.add(document);
     boolean oldLazyLoad = document.isLazyLoad();
@@ -80,10 +81,11 @@ public class ODocumentFieldWalker {
       Object newValue = fieldWalker.visitField(fieldType, linkedType, fieldValue);
 
       boolean updated;
-      if (updateMode)
-        updated = updateFieldValueIfChanged(document, fieldName, fieldValue, newValue, concreteType);
-      else
-        updated = false;
+      if (updateMode) {
+          updated = updateFieldValueIfChanged(document, fieldName, fieldValue, newValue, concreteType);
+      } else {
+          updated = false;
+      }
 
       // exclude cases when:
       // 1. value was updated.
@@ -94,14 +96,15 @@ public class ODocumentFieldWalker {
           && !(OType.LINK.equals(fieldType) || OType.LINKBAG.equals(fieldType) || OType.LINKLIST.equals(fieldType)
               || OType.LINKSET.equals(fieldType) || (fieldValue instanceof ORecordLazyMultiValue))) {
         if (fieldWalker.goDeeper(fieldType, linkedType, fieldValue)) {
-          if (fieldValue instanceof Map)
-            walkMap((Map) fieldValue, fieldType, fieldWalker, walked);
-          else if (OMultiValue.isIterable(fieldValue))
-            walkIterable(OMultiValue.getMultiValueIterable(fieldValue), fieldType, fieldWalker, walked);
-          else if (fieldValue instanceof ODocument) {
+          if (fieldValue instanceof Map) {
+              walkMap((Map) fieldValue, fieldType, fieldWalker, walked);
+          } else if (OMultiValue.isIterable(fieldValue)) {
+              walkIterable(OMultiValue.getMultiValueIterable(fieldValue), fieldType, fieldWalker, walked);
+          } else if (fieldValue instanceof ODocument) {
             final ODocument doc = (ODocument) fieldValue;
-            if (OType.EMBEDDED.equals(fieldType) || doc.isEmbedded())
-              walkDocument((ODocument) fieldValue, fieldWalker);
+            if (OType.EMBEDDED.equals(fieldType) || doc.isEmbedded()) {
+                walkDocument((ODocument) fieldValue, fieldWalker);
+              }
           }
         }
       }
@@ -120,8 +123,9 @@ public class ODocumentFieldWalker {
       if (value instanceof ODocument) {
         final ODocument doc = (ODocument) value;
         // only embedded documents are walked
-        if (OType.EMBEDDEDMAP.equals(fieldType) || doc.isEmbedded())
-          walkDocument((ODocument) value, fieldWalker, walked);
+        if (OType.EMBEDDEDMAP.equals(fieldType) || doc.isEmbedded()) {
+            walkDocument((ODocument) value, fieldWalker, walked);
+        }
       }
     }
   }
@@ -131,8 +135,9 @@ public class ODocumentFieldWalker {
       if (value instanceof ODocument) {
         final ODocument doc = (ODocument) value;
         // only embedded documents are walked
-        if (OType.EMBEDDEDLIST.equals(fieldType) || OType.EMBEDDEDSET.equals(fieldType) || doc.isEmbedded())
-          walkDocument((ODocument) value, fieldWalker, walked);
+        if (OType.EMBEDDEDLIST.equals(fieldType) || OType.EMBEDDEDSET.equals(fieldType) || doc.isEmbedded()) {
+            walkDocument((ODocument) value, fieldWalker, walked);
+        }
       }
     }
   }

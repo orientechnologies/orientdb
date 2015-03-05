@@ -253,8 +253,9 @@ public class TrackedMapTest {
 
     trackedMap.addChangeListener(new OMultiValueChangeListener<Object, String>() {
       public void onAfterRecordChanged(final OMultiValueChangeEvent<Object, String> event) {
-        if (!firedEvents.remove(event))
-          Assert.fail();
+        if (!firedEvents.remove(event)) {
+            Assert.fail();
+        }
 
         changed.value = true;
       }

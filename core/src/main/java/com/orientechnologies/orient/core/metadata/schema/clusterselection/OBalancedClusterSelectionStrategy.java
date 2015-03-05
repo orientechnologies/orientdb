@@ -33,13 +33,15 @@ public class OBalancedClusterSelectionStrategy implements OClusterSelectionStrat
 
   public int getCluster(final OClass iClass, final ODocument doc) {
     final int[] clusters = iClass.getClusterIds();
-    if (clusters.length == 1)
-      // ONLY ONE: RETURN THE FIRST ONE
-      return clusters[0];
+    if (clusters.length == 1) {
+        // ONLY ONE: RETURN THE FIRST ONE
+        return clusters[0];
+    }
 
     final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.getIfDefined();
-    if (db == null)
-      return clusters[0];
+    if (db == null) {
+        return clusters[0];
+    }
 
     if (lastCount < 0 || System.currentTimeMillis() - lastCount > REFRESH_TIMEOUT) {
       // REFRESH COUNTERS

@@ -55,19 +55,22 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
   }
 
   public static boolean equals(final Object iLeft, final Object iRight) {
-    if (iLeft == null || iRight == null)
-      return false;
+    if (iLeft == null || iRight == null) {
+        return false;
+    }
 
     // RECORD & ORID
-    if (iLeft instanceof ORecord)
-      return comparesValues(iRight, (ORecord) iLeft, true);
-    else if (iRight instanceof ORecord)
-      return comparesValues(iLeft, (ORecord) iRight, true);
+    if (iLeft instanceof ORecord) {
+        return comparesValues(iRight, (ORecord) iLeft, true);
+    } else if (iRight instanceof ORecord) {
+        return comparesValues(iLeft, (ORecord) iRight, true);
+    }
 
     // ALL OTHER CASES
     final Object right = OType.convert(iRight, iLeft.getClass());
-    if (right == null)
-      return false;
+    if (right == null) {
+        return false;
+    }
     return iLeft.equals(right);
   }
 
@@ -83,8 +86,9 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
         if (fieldValue != null) {
           if (iConsiderIn && OMultiValue.isMultiValue(fieldValue)) {
             for (Object o : OMultiValue.getMultiValueIterable(fieldValue)) {
-              if (o != null && o.equals(iValue))
-                return true;
+              if (o != null && o.equals(iValue)) {
+                  return true;
+              }
             }
           }
 
@@ -98,10 +102,12 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
 
   @Override
   public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
-    if (iLeft instanceof OIdentifiable && iRight instanceof OIdentifiable)
-      return OIndexReuseType.NO_INDEX;
-    if (iRight == null || iLeft == null)
-      return OIndexReuseType.NO_INDEX;
+    if (iLeft instanceof OIdentifiable && iRight instanceof OIdentifiable) {
+        return OIndexReuseType.NO_INDEX;
+    }
+    if (iRight == null || iLeft == null) {
+        return OIndexReuseType.NO_INDEX;
+    }
 
     return OIndexReuseType.INDEX_METHOD;
   }
@@ -112,26 +118,30 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
 
     final OIndexInternal<?> internalIndex = index.getInternal();
     OIndexCursor cursor;
-    if (!internalIndex.canBeUsedInEqualityOperators())
-      return null;
+    if (!internalIndex.canBeUsedInEqualityOperators()) {
+        return null;
+    }
 
     if (indexDefinition.getParamCount() == 1) {
       final Object key;
-      if (indexDefinition instanceof OIndexDefinitionMultiValue)
-        key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
-      else
-        key = indexDefinition.createValue(keyParams);
+      if (indexDefinition instanceof OIndexDefinitionMultiValue) {
+          key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
+      } else {
+          key = indexDefinition.createValue(keyParams);
+      }
 
-      if (key == null)
-        return null;
+      if (key == null) {
+          return null;
+      }
 
       final Object indexResult;
       indexResult = index.get(key);
 
-      if (indexResult == null || indexResult instanceof OIdentifiable)
-        cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, key);
-      else
-        cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
+      if (indexResult == null || indexResult instanceof OIdentifiable) {
+          cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, key);
+      } else {
+          cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
+      }
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
@@ -140,8 +150,9 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
 
       final Object keyOne = compositeIndexDefinition.createSingleValue(keyParams);
 
-      if (keyOne == null)
-        return null;
+      if (keyOne == null) {
+          return null;
+      }
 
       final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
 
@@ -152,12 +163,14 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
           final Object indexResult;
           indexResult = index.get(keyOne);
 
-          if (indexResult == null || indexResult instanceof OIdentifiable)
-            cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
-          else
-            cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), keyOne);
-        } else
-          return null;
+          if (indexResult == null || indexResult instanceof OIdentifiable) {
+              cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
+          } else {
+              cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), keyOne);
+          }
+        } else {
+            return null;
+        }
       }
     }
 
@@ -167,23 +180,27 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
 
   @Override
   public ORID getBeginRidRange(final Object iLeft, final Object iRight) {
-    if (iLeft instanceof OSQLFilterItemField && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iLeft).getRoot()))
-      if (iRight instanceof ORID)
-        return (ORID) iRight;
-      else {
-        if (iRight instanceof OSQLFilterItemParameter
-            && ((OSQLFilterItemParameter) iRight).getValue(null, null, null) instanceof ORID)
-          return (ORID) ((OSQLFilterItemParameter) iRight).getValue(null, null, null);
-      }
+    if (iLeft instanceof OSQLFilterItemField && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iLeft).getRoot())) {
+        if (iRight instanceof ORID) {
+            return (ORID) iRight;
+        } else {
+            if (iRight instanceof OSQLFilterItemParameter
+                    && ((OSQLFilterItemParameter) iRight).getValue(null, null, null) instanceof ORID) {
+                return (ORID) ((OSQLFilterItemParameter) iRight).getValue(null, null, null);
+            }
+        }
+    }
 
-    if (iRight instanceof OSQLFilterItemField && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iRight).getRoot()))
-      if (iLeft instanceof ORID)
-        return (ORID) iLeft;
-      else {
-        if (iLeft instanceof OSQLFilterItemParameter
-            && ((OSQLFilterItemParameter) iLeft).getValue(null, null, null) instanceof ORID)
-          return (ORID) ((OSQLFilterItemParameter) iLeft).getValue(null, null, null);
-      }
+    if (iRight instanceof OSQLFilterItemField && ODocumentHelper.ATTRIBUTE_RID.equals(((OSQLFilterItemField) iRight).getRoot())) {
+        if (iLeft instanceof ORID) {
+            return (ORID) iLeft;
+        } else {
+            if (iLeft instanceof OSQLFilterItemParameter
+                    && ((OSQLFilterItemParameter) iLeft).getValue(null, null, null) instanceof ORID) {
+                return (ORID) ((OSQLFilterItemParameter) iLeft).getValue(null, null, null);
+            }
+        }
+    }
 
     return null;
   }

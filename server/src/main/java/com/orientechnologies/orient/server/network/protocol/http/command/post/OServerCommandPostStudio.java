@@ -68,36 +68,38 @@ import java.io.IOException;
          String[] pairs = p.split("=");
          value = pairs.length == 1 ? null : pairs[1];
 
-         if ("oper".equals(pairs[0]))
-           operation = value;
-         else if ("0".equals(pairs[0]))
-           rid = value;
-         else if ("1".equals(pairs[0]))
-           className = value;
-         else if (pairs[0].startsWith(ODocumentHelper.ATTRIBUTE_CLASS))
-           className = value;
-         else if (pairs[0].startsWith("@") || pairs[0].equals("id"))
-           continue;
-         else {
+         if ("oper".equals(pairs[0])) {
+             operation = value;
+         } else if ("0".equals(pairs[0])) {
+             rid = value;
+         } else if ("1".equals(pairs[0])) {
+             className = value;
+         } else if (pairs[0].startsWith(ODocumentHelper.ATTRIBUTE_CLASS)) {
+             className = value;
+         } else if (pairs[0].startsWith("@") || pairs[0].equals("id")) {
+             continue;
+         } else {
            fields.put(pairs[0], value);
          }
        }
 
        String context = urlParts[2];
-       if ("document".equals(context))
-         executeDocument(iRequest, iResponse, db, operation, rid, className, fields);
-       else if ("classes".equals(context))
-         executeClasses(iRequest, iResponse, db, operation, rid, className, fields);
-       else if ("clusters".equals(context))
-         executeClusters(iRequest, iResponse, db, operation, rid, className, fields);
-       else if ("classProperties".equals(context))
-         executeClassProperties(iRequest, iResponse, db, operation, rid, className, fields);
-       else if ("classIndexes".equals(context))
-         executeClassIndexes(iRequest, iResponse, db, operation, rid, className, fields);
+       if ("document".equals(context)) {
+           executeDocument(iRequest, iResponse, db, operation, rid, className, fields);
+       } else if ("classes".equals(context)) {
+           executeClasses(iRequest, iResponse, db, operation, rid, className, fields);
+       } else if ("clusters".equals(context)) {
+           executeClusters(iRequest, iResponse, db, operation, rid, className, fields);
+       } else if ("classProperties".equals(context)) {
+           executeClassProperties(iRequest, iResponse, db, operation, rid, className, fields);
+       } else if ("classIndexes".equals(context)) {
+           executeClassIndexes(iRequest, iResponse, db, operation, rid, className, fields);
+       }
 
      } finally {
-       if (db != null)
-         db.close();
+       if (db != null) {
+           db.close();
+       }
      }
      return false;
    }
@@ -119,24 +121,31 @@ import java.io.IOException;
          OType type = OType.valueOf(fields.get("type"));
 
          OPropertyImpl prop;
-         if (type == OType.LINK || type == OType.LINKLIST || type == OType.LINKSET || type == OType.LINKMAP)
-           prop = (OPropertyImpl) cls.createProperty(fields.get("name"), type,
-               db.getMetadata().getSchema().getClass(fields.get("linkedClass")));
-         else
-           prop = (OPropertyImpl) cls.createProperty(fields.get("name"), type);
+         if (type == OType.LINK || type == OType.LINKLIST || type == OType.LINKSET || type == OType.LINKMAP) {
+             prop = (OPropertyImpl) cls.createProperty(fields.get("name"), type,
+                     db.getMetadata().getSchema().getClass(fields.get("linkedClass")));
+         } else {
+             prop = (OPropertyImpl) cls.createProperty(fields.get("name"), type);
+         }
 
-         if (fields.get("linkedType") != null)
-           prop.setLinkedType(OType.valueOf(fields.get("linkedType")));
-         if (fields.get("mandatory") != null)
-           prop.setMandatory("on".equals(fields.get("mandatory")));
-         if (fields.get("readonly") != null)
-           prop.setReadonly("on".equals(fields.get("readonly")));
-         if (fields.get("notNull") != null)
-           prop.setNotNull("on".equals(fields.get("notNull")));
-         if (fields.get("min") != null)
-           prop.setMin(fields.get("min"));
-         if (fields.get("max") != null)
-           prop.setMax(fields.get("max"));
+         if (fields.get("linkedType") != null) {
+             prop.setLinkedType(OType.valueOf(fields.get("linkedType")));
+         }
+         if (fields.get("mandatory") != null) {
+             prop.setMandatory("on".equals(fields.get("mandatory")));
+         }
+         if (fields.get("readonly") != null) {
+             prop.setReadonly("on".equals(fields.get("readonly")));
+         }
+         if (fields.get("notNull") != null) {
+             prop.setNotNull("on".equals(fields.get("notNull")));
+         }
+         if (fields.get("min") != null) {
+             prop.setMin(fields.get("min"));
+         }
+         if (fields.get("max") != null) {
+             prop.setMax(fields.get("max"));
+         }
 
          iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Property " + fields.get("name")
              + " created successfully", null);
@@ -166,16 +175,18 @@ import java.io.IOException;
        try {
          final String superClassName = fields.get("superClass");
          final OClass superClass;
-         if (superClassName != null)
-           superClass = db.getMetadata().getSchema().getClass(superClassName);
-         else
-           superClass = null;
+         if (superClassName != null) {
+             superClass = db.getMetadata().getSchema().getClass(superClassName);
+         } else {
+             superClass = null;
+         }
 
          final OClass cls = db.getMetadata().getSchema().createClass(fields.get("name"), superClass);
 
          final String alias = fields.get("alias");
-         if (alias != null)
-           cls.setShortName(alias);
+         if (alias != null) {
+             cls.setShortName(alias);
+         }
 
          iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Class '" + rid
              + "' created successfully with id=" + db.getMetadata().getSchema().getClasses().size(), null);
@@ -219,8 +230,9 @@ import java.io.IOException;
      if ("edit".equals(operation)) {
        iRequest.data.commandInfo = "Studio edit document";
 
-       if (rid == null)
-         throw new IllegalArgumentException("Record ID not found in request");
+       if (rid == null) {
+           throw new IllegalArgumentException("Record ID not found in request");
+       }
 
        ODocument doc = new ODocument(className, new ORecordId(rid));
        doc.reload(null, true);
@@ -230,9 +242,9 @@ import java.io.IOException;
          final Object oldValue = doc.rawField(f.getKey());
          String userValue = f.getValue();
 
-         if (userValue != null && userValue.equals("undefined"))
-           doc.removeField(f.getKey());
-         else {
+         if (userValue != null && userValue.equals("undefined")) {
+             doc.removeField(f.getKey());
+         } else {
            Object newValue = ORecordSerializerStringAbstract.getTypeValue(userValue);
 
            if (newValue != null) {
@@ -246,9 +258,10 @@ import java.io.IOException;
              }
            }
 
-           if (oldValue != null && oldValue.equals(userValue))
-             // NO CHANGES
-             continue;
+           if (oldValue != null && oldValue.equals(userValue)) {
+               // NO CHANGES
+               continue;
+             }
 
            doc.field(f.getKey(), newValue);
          }
@@ -263,8 +276,9 @@ import java.io.IOException;
        final ODocument doc = new ODocument(className);
 
        // BIND ALL CHANGED FIELDS
-       for (Entry<String, String> f : fields.entrySet())
-         doc.field(f.getKey(), f.getValue());
+       for (Entry<String, String> f : fields.entrySet()) {
+           doc.field(f.getKey(), f.getValue());
+       }
 
        doc.save();
        iResponse.send(201, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + doc.getIdentity() + " updated successfully.", null);
@@ -272,8 +286,9 @@ import java.io.IOException;
      } else if ("del".equals(operation)) {
        iRequest.data.commandInfo = "Studio delete document";
 
-       if (rid == null)
-         throw new IllegalArgumentException("Record ID not found in request");
+       if (rid == null) {
+           throw new IllegalArgumentException("Record ID not found in request");
+       }
 
        final ODocument doc = new ODocument(new ORecordId(rid));
        doc.load();
@@ -281,8 +296,9 @@ import java.io.IOException;
        iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + rid + " deleted successfully.",
            null);
 
-     } else
-       iResponse.send(500, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Operation not supported", null);
+     } else {
+         iResponse.send(500, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Operation not supported", null);
+     }
    }
 
    private void executeClassIndexes(final OHttpRequest iRequest, final OHttpResponse iResponse, final ODatabaseDocumentTx db,
@@ -330,8 +346,9 @@ import java.io.IOException;
          iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error on deletion index '" + className + "' for class " + rid + ": "
              + e, OHttpUtils.CONTENT_TEXT_PLAIN, "Error on deletion index '" + className + "' for class " + rid + ": " + e, null);
        }
-     } else
-       iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Operation not supported", null);
+     } else {
+         iResponse.send(OHttpUtils.STATUS_INTERNALERROR_CODE, "Error", OHttpUtils.CONTENT_TEXT_PLAIN, "Operation not supported", null);
+     }
    }
 
    public String[] getNames() {

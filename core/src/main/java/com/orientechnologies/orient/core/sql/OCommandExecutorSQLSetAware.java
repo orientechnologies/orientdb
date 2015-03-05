@@ -42,11 +42,13 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
   protected int                 parameterCounter = 0;
 
   protected void parseContent() {
-    if (!parserIsEnded() && !parserGetLastWord().equals(KEYWORD_WHERE))
-      content = parseJSON();
+    if (!parserIsEnded() && !parserGetLastWord().equals(KEYWORD_WHERE)) {
+        content = parseJSON();
+    }
 
-    if (content == null)
-      throwSyntaxErrorException("Content not provided. Example: CONTENT { \"name\": \"Jay\" }");
+    if (content == null) {
+        throwSyntaxErrorException("Content not provided. Example: CONTENT { \"name\": \"Jay\" }");
+    }
   }
 
   protected void parseSetFields(final OClass iClass, final Map<String, Object> fields) {
@@ -78,8 +80,9 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
             if (v instanceof Map) {
 
               final ODocument doc = new ODocument();
-              if (embeddedType != null)
-                doc.setClassName(embeddedType.getName());
+              if (embeddedType != null) {
+                  doc.setClassName(embeddedType.getName());
+              }
 
               doc.fromMap((Map<String, Object>) v);
               v = doc;
@@ -94,16 +97,18 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
               for (Object o : OMultiValue.getMultiValueIterable(v)) {
                 if (o instanceof Map) {
                   final ODocument doc = new ODocument();
-                  if (embeddedType != null)
-                    doc.setClassName(embeddedType.getName());
+                  if (embeddedType != null) {
+                      doc.setClassName(embeddedType.getName());
+                  }
 
                   doc.fromMap((Map<String, Object>) o);
 
                   set.add(doc);
-                } else if (o instanceof OIdentifiable)
-                  set.add(((OIdentifiable) o).getRecord());
-                else
-                  set.add(o);
+                } else if (o instanceof OIdentifiable) {
+                    set.add(((OIdentifiable) o).getRecord());
+                } else {
+                    set.add(o);
+                }
               }
 
               v = set;
@@ -118,16 +123,18 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
               for (Object o : OMultiValue.getMultiValueIterable(v)) {
                 if (o instanceof Map) {
                   final ODocument doc = new ODocument();
-                  if (embeddedType != null)
-                    doc.setClassName(embeddedType.getName());
+                  if (embeddedType != null) {
+                      doc.setClassName(embeddedType.getName());
+                  }
 
                   doc.fromMap((Map<String, Object>) o);
 
                   set.add(doc);
-                } else if (o instanceof OIdentifiable)
-                  set.add(((OIdentifiable) o).getRecord());
-                else
-                  set.add(o);
+                } else if (o instanceof OIdentifiable) {
+                    set.add(((OIdentifiable) o).getRecord());
+                } else {
+                    set.add(o);
+                }
               }
 
               v = set;
@@ -142,16 +149,18 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
               for (Map.Entry<String, Object> entry : ((Map<String, Object>) v).entrySet()) {
                 if (entry.getValue() instanceof Map) {
                   final ODocument doc = new ODocument();
-                  if (embeddedType != null)
-                    doc.setClassName(embeddedType.getName());
+                  if (embeddedType != null) {
+                      doc.setClassName(embeddedType.getName());
+                  }
 
                   doc.fromMap((Map<String, Object>) entry.getValue());
 
                   map.put(entry.getKey(), doc);
-                } else if (entry.getValue() instanceof OIdentifiable)
-                  map.put(entry.getKey(), ((OIdentifiable) entry.getValue()).getRecord());
-                else
-                  map.put(entry.getKey(), entry.getValue());
+                } else if (entry.getValue() instanceof OIdentifiable) {
+                    map.put(entry.getKey(), ((OIdentifiable) entry.getValue()).getRecord());
+                } else {
+                    map.put(entry.getKey(), entry.getValue());
+                }
               }
 
               v = map;
@@ -165,13 +174,15 @@ public abstract class OCommandExecutorSQLSetAware extends OCommandExecutorSQLAbs
       parserSkipWhiteSpaces();
     }
 
-    if (fields.size() == 0)
-      throwParsingException("Entries to set <field> = <value> are missed. Example: name = 'Bill', salary = 300.2");
+    if (fields.size() == 0) {
+        throwParsingException("Entries to set <field> = <value> are missed. Example: name = 'Bill', salary = 300.2");
+    }
   }
 
   protected Object getFieldValueCountingParameters(String fieldValue) {
-    if (fieldValue.trim().equals("?"))
-      parameterCounter++;
+    if (fieldValue.trim().equals("?")) {
+        parameterCounter++;
+    }
     return OSQLHelper.parseValue(this, fieldValue, context);
   }
 

@@ -36,10 +36,11 @@ public class OBinary implements Comparable<OBinary> {
     final int size = value.length;
 
     for (int i = 0; i < size; ++i) {
-      if (value[i] > o.value[i])
-        return 1;
-      else if (value[i] < o.value[i])
-        return -1;
+      if (value[i] > o.value[i]) {
+          return 1;
+      } else if (value[i] < o.value[i]) {
+          return -1;
+      }
     }
     return 0;
   }

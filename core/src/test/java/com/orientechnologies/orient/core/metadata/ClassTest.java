@@ -37,8 +37,9 @@ public class ClassTest {
 
   @AfterClass
   public void tearDown() throws Exception {
-    if (db.isClosed())
-      db.open("admin", "admin");
+    if (db.isClosed()) {
+        db.open("admin", "admin");
+    }
 
     db.drop();
   }

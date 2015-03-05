@@ -28,8 +28,9 @@ public class OrientBenchmarkTestSuite extends TestSuite {
   @Test
   public void testOrientGraph() throws Exception {
     double totalTime = 0.0d;
-    if (graphTest == null)
-      return;
+    if (graphTest == null) {
+        return;
+    }
 
     Graph graph = graphTest.generateGraph();
 

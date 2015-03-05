@@ -83,23 +83,26 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
 		final ODatabase database = getDatabase();
 		final boolean txIsActive = database.getTransaction().isActive();
 
-		if (txIsActive)
-			keyLockManager.acquireSharedLock(key);
+		if (txIsActive) {
+                    keyLockManager.acquireSharedLock(key);
+    }
     try {
       // CHECK IF ALREADY EXIST
       final OIdentifiable indexedRID = get(key);
       if (indexedRID != null && !indexedRID.getIdentity().equals(record.getIdentity())) {
         final Boolean mergeSameKey = metadata != null && (Boolean) metadata.field(OIndex.MERGE_KEYS);
-        if (mergeSameKey != null && mergeSameKey)
-          return (ODocument) indexedRID.getRecord();
-        else
-          throw new OIndexException("Cannot index record : " + record + " found duplicated key '" + key + "' in index " + getName()
-              + " previously assigned to the record " + indexedRID);
+        if (mergeSameKey != null && mergeSameKey) {
+            return (ODocument) indexedRID.getRecord();
+        } else {
+            throw new OIndexException("Cannot index record : " + record + " found duplicated key '" + key + "' in index " + getName()
+                    + " previously assigned to the record " + indexedRID);
+        }
       }
       return null;
     } finally {
-			if (txIsActive)
-      	keyLockManager.releaseSharedLock(key);
+			if (txIsActive) {
+                            keyLockManager.releaseSharedLock(key);
+                        }
     }
   }
 
@@ -116,10 +119,11 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
     final List<Object> sortedKeys = new ArrayList<Object>(keys);
     final Comparator<Object> comparator;
 
-    if (ascSortOrder)
-      comparator = ODefaultComparator.INSTANCE;
-    else
-      comparator = Collections.reverseOrder(ODefaultComparator.INSTANCE);
+    if (ascSortOrder) {
+        comparator = ODefaultComparator.INSTANCE;
+    } else {
+        comparator = Collections.reverseOrder(ODefaultComparator.INSTANCE);
+    }
 
     Collections.sort(sortedKeys, comparator);
 
@@ -142,8 +146,9 @@ public abstract class OIndexOneValue extends OIndexAbstract<OIdentifiable> {
           }
         }
 
-        if (result == null)
-          return null;
+        if (result == null) {
+            return null;
+        }
 
         final Object resultKey = key;
         final OIdentifiable resultValue = result;

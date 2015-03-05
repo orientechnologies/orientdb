@@ -34,8 +34,9 @@ public class OSerializationThreadLocal extends ThreadLocal<Set<Integer>> {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onStartup() {
-        if (INSTANCE == null)
-          INSTANCE = new OSerializationThreadLocal();
+        if (INSTANCE == null) {
+            INSTANCE = new OSerializationThreadLocal();
+        }
       }
 
       @Override

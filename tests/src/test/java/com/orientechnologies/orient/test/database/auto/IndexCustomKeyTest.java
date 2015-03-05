@@ -57,10 +57,11 @@ public class IndexCustomKeyTest extends DocumentDBBaseTest {
       final int size = value.length;
 
       for (int i = 0; i < size; ++i) {
-        if (value[i] > o.value[i])
-          return 1;
-        else if (value[i] < o.value[i])
-          return -1;
+        if (value[i] > o.value[i]) {
+            return 1;
+        } else if (value[i] < o.value[i]) {
+            return -1;
+        }
       }
       return 0;
     }
@@ -172,8 +173,9 @@ public class IndexCustomKeyTest extends DocumentDBBaseTest {
   @AfterClass
   @Override
   public void afterClass() throws Exception {
-    if (database.isClosed())
-      database.open("admin", "admin");
+    if (database.isClosed()) {
+        database.open("admin", "admin");
+    }
 
     database.getMetadata().getIndexManager().dropIndex("custom-hash");
 		database.close();

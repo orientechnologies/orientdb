@@ -141,20 +141,23 @@ public class OObjectEntityEnhancer {
           newEntity = (T) constructor.newInstance(iArgs);
           initDocument(iClass, newEntity, doc, (ODatabaseObject) ODatabaseRecordThreadLocal.INSTANCE.get().getDatabaseOwner());
         } else {
-          if (iEnclosingInstance != null)
-            newEntity = createInstanceNoParameters(c, iEnclosingInstance);
-          else
-            newEntity = createInstanceNoParameters(c, iClass);
+          if (iEnclosingInstance != null) {
+              newEntity = createInstanceNoParameters(c, iEnclosingInstance);
+          } else {
+              newEntity = createInstanceNoParameters(c, iClass);
+          }
         }
       } else {
-        if (iEnclosingInstance != null)
-          newEntity = createInstanceNoParameters(c, iEnclosingInstance);
-        else
-          newEntity = createInstanceNoParameters(c, iClass);
+        if (iEnclosingInstance != null) {
+            newEntity = createInstanceNoParameters(c, iEnclosingInstance);
+        } else {
+            newEntity = createInstanceNoParameters(c, iClass);
+        }
       }
       ((Proxy) newEntity).setHandler(mi);
-      if (OObjectEntitySerializer.hasBoundedDocumentField(iClass))
-        OObjectEntitySerializer.setFieldValue(OObjectEntitySerializer.getBoundedDocumentField(iClass), newEntity, doc);
+      if (OObjectEntitySerializer.hasBoundedDocumentField(iClass)) {
+          OObjectEntitySerializer.setFieldValue(OObjectEntitySerializer.getBoundedDocumentField(iClass), newEntity, doc);
+      }
       return newEntity;
     } catch (InstantiationException ie) {
       OLogManager.instance().error(this, "Error creating proxied instance for class " + iClass.getName(), ie);
@@ -173,11 +176,13 @@ public class OObjectEntityEnhancer {
   }
 
   public OObjectMethodFilter getMethodFilter(Class<?> iClass) {
-    if (Proxy.class.isAssignableFrom(iClass))
-      iClass = iClass.getSuperclass();
+    if (Proxy.class.isAssignableFrom(iClass)) {
+        iClass = iClass.getSuperclass();
+    }
     OObjectMethodFilter filter = customMethodFilters.get(iClass);
-    if (filter == null)
-      filter = defaultMethodFilter;
+    if (filter == null) {
+        filter = defaultMethodFilter;
+    }
     return filter;
   }
 
@@ -194,21 +199,23 @@ public class OObjectEntityEnhancer {
   }
 
   private boolean isPrimitiveParameterCorrect(Class<?> primitiveClass, Object parameterValue) {
-    if (parameterValue == null)
-      return false;
+    if (parameterValue == null) {
+        return false;
+    }
     final Class<?> parameterClass = parameterValue.getClass();
-    if (Integer.TYPE.isAssignableFrom(primitiveClass))
-      return Integer.class.isAssignableFrom(parameterClass);
-    else if (Double.TYPE.isAssignableFrom(primitiveClass))
-      return Double.class.isAssignableFrom(parameterClass);
-    else if (Float.TYPE.isAssignableFrom(primitiveClass))
-      return Float.class.isAssignableFrom(parameterClass);
-    else if (Long.TYPE.isAssignableFrom(primitiveClass))
-      return Long.class.isAssignableFrom(parameterClass);
-    else if (Short.TYPE.isAssignableFrom(primitiveClass))
-      return Short.class.isAssignableFrom(parameterClass);
-    else if (Byte.TYPE.isAssignableFrom(primitiveClass))
-      return Byte.class.isAssignableFrom(parameterClass);
+    if (Integer.TYPE.isAssignableFrom(primitiveClass)) {
+        return Integer.class.isAssignableFrom(parameterClass);
+    } else if (Double.TYPE.isAssignableFrom(primitiveClass)) {
+        return Double.class.isAssignableFrom(parameterClass);
+    } else if (Float.TYPE.isAssignableFrom(primitiveClass)) {
+        return Float.class.isAssignableFrom(parameterClass);
+    } else if (Long.TYPE.isAssignableFrom(primitiveClass)) {
+        return Long.class.isAssignableFrom(parameterClass);
+    } else if (Short.TYPE.isAssignableFrom(primitiveClass)) {
+        return Short.class.isAssignableFrom(parameterClass);
+    } else if (Byte.TYPE.isAssignableFrom(primitiveClass)) {
+        return Byte.class.isAssignableFrom(parameterClass);
+    }
     return false;
   }
 
@@ -217,8 +224,9 @@ public class OObjectEntityEnhancer {
       throws IllegalArgumentException, IllegalAccessException {
     for (Class<?> currentClass = iClass; currentClass != Object.class;) {
       for (Field f : currentClass.getDeclaredFields()) {
-        if (f.getName().equals("this$0"))
-          continue;
+        if (f.getName().equals("this$0")) {
+            continue;
+        }
         if (!f.isAccessible()) {
           f.setAccessible(true);
         }

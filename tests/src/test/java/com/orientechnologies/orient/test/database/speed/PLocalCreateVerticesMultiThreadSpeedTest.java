@@ -59,8 +59,9 @@ public class PLocalCreateVerticesMultiThreadSpeedTest extends OrientMultiThreadT
 
     @Override
     public void deinit() throws Exception {
-      if (graph != null)
-        graph.shutdown();
+      if (graph != null) {
+          graph.shutdown();
+      }
       super.deinit();
     }
 
@@ -96,8 +97,9 @@ public class PLocalCreateVerticesMultiThreadSpeedTest extends OrientMultiThreadT
         }
 
         foundObjects = 0;
-      } else
-        foundObjects = graph.countVertices("Client");
+      } else {
+          foundObjects = graph.countVertices("Client");
+      }
 
     } finally {
       graph.shutdown();

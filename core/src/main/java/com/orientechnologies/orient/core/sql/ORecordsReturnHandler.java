@@ -67,8 +67,9 @@ public abstract class ORecordsReturnHandler implements OReturnHandler {
       context.setVariable("current", record);
 
       itemResult = OSQLHelper.getValue(returnExpression, (ODocument) ((OIdentifiable) record).getRecord(), context);
-      if (itemResult instanceof OIdentifiable)
-        return itemResult;
+      if (itemResult instanceof OIdentifiable) {
+          return itemResult;
+      }
 
       // WRAP WITH ODOCUMENT TO BE TRANSFERRED THROUGH BINARY DRIVER
       return new ODocument("value", itemResult);

@@ -35,8 +35,9 @@ public class LocalHashTableIterationTest {
   @BeforeClass
   public void beforeClass() {
     String buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null)
-      buildDirectory = ".";
+    if (buildDirectory == null) {
+        buildDirectory = ".";
+    }
 
     databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localHashTableIterationTest");
     if (databaseDocumentTx.exists()) {

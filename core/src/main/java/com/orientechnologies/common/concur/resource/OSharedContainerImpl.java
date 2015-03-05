@@ -43,8 +43,9 @@ public class OSharedContainerImpl implements OSharedContainer {
 	public synchronized <T> T removeResource(final String iName) {
 		T resource = (T) sharedResources.remove(iName);
 
-		if (resource instanceof OSharedResource)
-			((OSharedResource) resource).releaseExclusiveLock();
+		if (resource instanceof OSharedResource) {
+                    ((OSharedResource) resource).releaseExclusiveLock();
+                }
 
 		return resource;
 	}
@@ -59,8 +60,9 @@ public class OSharedContainerImpl implements OSharedContainer {
 				throw new OException("Error on creation of shared resource", e);
 			}
 
-			if (value instanceof OSharedResource)
-				((OSharedResource) value).acquireExclusiveLock();
+			if (value instanceof OSharedResource) {
+                            ((OSharedResource) value).acquireExclusiveLock();
+                        }
 
 			sharedResources.put(iName, value);
 		}

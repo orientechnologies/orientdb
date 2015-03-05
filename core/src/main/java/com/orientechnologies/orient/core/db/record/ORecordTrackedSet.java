@@ -54,8 +54,9 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
 
   public ORecordTrackedSet(final ORecord iSourceRecord) {
     this.sourceRecord = iSourceRecord;
-    if (iSourceRecord != null)
-      iSourceRecord.setDirty();
+    if (iSourceRecord != null) {
+        iSourceRecord.setDirty();
+    }
   }
 
   @Override
@@ -68,14 +69,16 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
   }
 
   public boolean add(final OIdentifiable e) {
-    if (map.containsKey(e))
-      return false;
+    if (map.containsKey(e)) {
+        return false;
+    }
 
     map.put(e, ENTRY_REMOVAL);
     setDirty();
 
-    if (e instanceof ODocument)
-      ODocumentInternal.addOwner((ODocument) e, this);
+    if (e instanceof ODocument) {
+        ODocumentInternal.addOwner((ODocument) e, this);
+    }
 
     fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, e,
         e));
@@ -90,8 +93,9 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
   public boolean remove(Object o) {
     final Object old = map.remove(o);
     if (old != null) {
-      if (o instanceof ODocument)
-        ODocumentInternal.removeOwner((ODocument) o, this);
+      if (o instanceof ODocument) {
+          ODocumentInternal.removeOwner((ODocument) o, this);
+      }
 
       setDirty();
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
@@ -109,30 +113,35 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
   public boolean removeAll(final Collection<?> c) {
     boolean changed = false;
     for (Object item : c) {
-      if (remove(item))
-        changed = true;
+      if (remove(item)) {
+          changed = true;
+      }
     }
 
-    if (changed)
-      setDirty();
+    if (changed) {
+        setDirty();
+    }
 
     return changed;
   }
 
   public boolean addAll(final Collection<? extends OIdentifiable> c) {
-    if (c == null || c.size() == 0)
-      return false;
+    if (c == null || c.size() == 0) {
+        return false;
+    }
 
-    for (OIdentifiable o : c)
-      add(o);
+    for (OIdentifiable o : c) {
+        add(o);
+    }
 
     setDirty();
     return true;
   }
 
   public boolean retainAll(final Collection<?> c) {
-    if (c == null || c.size() == 0)
-      return false;
+    if (c == null || c.size() == 0) {
+        return false;
+    }
 
     if (super.retainAll(c)) {
       setDirty();
@@ -149,15 +158,17 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
   @SuppressWarnings("unchecked")
   public ORecordTrackedSet setDirty() {
     if (status != STATUS.UNMARSHALLING && sourceRecord != null
-        && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord)))
-      sourceRecord.setDirty();
+        && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord))) {
+        sourceRecord.setDirty();
+    }
     return this;
   }
 
   @Override
   public void setDirtyNoChanged() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null)
-      sourceRecord.setDirtyNoChanged();
+    if (status != STATUS.UNMARSHALLING && sourceRecord != null) {
+        sourceRecord.setDirtyNoChanged();
+    }
   }
 
   public STATUS getInternalStatus() {
@@ -199,13 +210,15 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
   }
 
   protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event) {
-    if (getOwner().getInternalStatus() == STATUS.UNMARSHALLING)
-      return;
+    if (getOwner().getInternalStatus() == STATUS.UNMARSHALLING) {
+        return;
+    }
 
     setDirty();
     for (final OMultiValueChangeListener<OIdentifiable, OIdentifiable> changeListener : changeListeners) {
-      if (changeListener != null)
-        changeListener.onAfterRecordChanged(event);
+      if (changeListener != null) {
+          changeListener.onAfterRecordChanged(event);
+      }
     }
   }
 

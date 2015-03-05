@@ -64,11 +64,13 @@ public class OServerCommandPostImportDatabase extends OHttpMultipartRequestComma
             .getMessage() : "", OHttpUtils.CONTENT_JSON, "{\"responseText\": \"" + e.getMessage() + ": "
             + (e.getCause() != null ? e.getCause().getMessage() : "") + "\"}", null);
       } finally {
-        if (database != null)
-          database.close();
+        if (database != null) {
+            database.close();
+        }
         database = null;
-        if (importData != null)
-          importData.close();
+        if (importData != null) {
+            importData.close();
+        }
         importData = null;
       }
     }

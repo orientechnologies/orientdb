@@ -79,16 +79,19 @@ public class DbDeleteTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = { "testDbDeleteNoCredential" })
   public void testDbDelete() throws IOException {
     String prefix = url.substring(0, url.indexOf(':') + 1);
-    if (prefix.equals("memory:") || prefix.equals("remote:"))
-      return;
+    if (prefix.equals("memory:") || prefix.equals("remote:")) {
+        return;
+    }
 
     ODatabaseDocument db = new ODatabaseDocumentTx(prefix + testPath + "/" + DbImportExportTest.NEW_DB_URL);
-    if (!db.exists())
-      db.create();
+    if (!db.exists()) {
+        db.create();
+    }
 
     if (db.exists()) {
-      if (db.isClosed())
-        db.open("admin", "admin");
+      if (db.isClosed()) {
+          db.open("admin", "admin");
+      }
     }
 
     ODatabaseHelper.dropDatabase(db, getStorageType());
@@ -98,16 +101,19 @@ public class DbDeleteTest extends DocumentDBBaseTest {
 
   public void testDbDeleteWithIndex() {
     String prefix = url.substring(0, url.indexOf(':') + 1);
-    if (prefix.equals("remote:"))
-      return;
+    if (prefix.equals("remote:")) {
+        return;
+    }
 
     ODatabaseDocument db = new ODatabaseDocumentTx(prefix + testPath + "/" + DbImportExportTest.NEW_DB_URL);
-    if (!db.exists())
-      db.create();
+    if (!db.exists()) {
+        db.create();
+    }
 
     if (db.exists()) {
-      if (db.isClosed())
-        db.open("admin", "admin");
+      if (db.isClosed()) {
+          db.open("admin", "admin");
+      }
 
       db.drop();
       db.create();

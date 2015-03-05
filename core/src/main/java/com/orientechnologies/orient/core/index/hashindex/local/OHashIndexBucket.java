@@ -77,8 +77,9 @@ public class OHashIndexBucket<K, V> extends ODurablePage implements Iterable<OHa
 
   public Entry<K, V> find(final K key, final long hashCode) {
     final int index = binarySearch(key, hashCode);
-    if (index < 0)
-      return null;
+    if (index < 0) {
+        return null;
+    }
 
     return getEntry(index);
   }
@@ -92,21 +93,22 @@ public class OHashIndexBucket<K, V> extends ODurablePage implements Iterable<OHa
 
       final long midHashCode = getHashCode(mid);
       final int cmp;
-      if (lessThanUnsigned(midHashCode, hashCode))
-        cmp = -1;
-      else if (greaterThanUnsigned(midHashCode, hashCode))
-        cmp = 1;
-      else {
+      if (lessThanUnsigned(midHashCode, hashCode)) {
+          cmp = -1;
+      } else if (greaterThanUnsigned(midHashCode, hashCode)) {
+          cmp = 1;
+      } else {
         final K midVal = getKey(mid);
         cmp = keyComparator.compare(midVal, key);
       }
 
-      if (cmp < 0)
-        low = mid + 1;
-      else if (cmp > 0)
-        high = mid - 1;
-      else
-        return mid; // key found
+      if (cmp < 0) {
+          low = mid + 1;
+      } else if (cmp > 0) {
+          high = mid - 1;
+      } else {
+          return mid; // key found
+      }
     }
     return -(low + 1); // key not found.
   }
@@ -177,16 +179,18 @@ public class OHashIndexBucket<K, V> extends ODurablePage implements Iterable<OHa
 
     final int newSize = valueSerializer.getObjectSize(value);
     final int oldSize = getObjectSizeInDirectMemory(valueSerializer, entryPosition);
-    if (newSize != oldSize)
-      return -1;
+    if (newSize != oldSize) {
+        return -1;
+    }
 
     byte[] newSerializedValue = new byte[newSize];
     valueSerializer.serializeNativeObject(value, newSerializedValue, 0);
 
     byte[] oldSerializedValue = getBinaryValue(entryPosition, oldSize);
 
-    if (ODefaultComparator.INSTANCE.compare(oldSerializedValue, newSerializedValue) == 0)
-      return 0;
+    if (ODefaultComparator.INSTANCE.compare(oldSerializedValue, newSerializedValue) == 0) {
+        return 0;
+    }
 
     setBinaryValue(entryPosition, newSerializedValue);
     return 1;
@@ -207,15 +211,17 @@ public class OHashIndexBucket<K, V> extends ODurablePage implements Iterable<OHa
     moveData(positionOffset + OIntegerSerializer.INT_SIZE, positionOffset, size() * OIntegerSerializer.INT_SIZE - (index + 1)
         * OIntegerSerializer.INT_SIZE);
 
-    if (entryPosition > freePointer)
-      moveData(freePointer, freePointer + entrySize, entryPosition - freePointer);
+    if (entryPosition > freePointer) {
+        moveData(freePointer, freePointer + entrySize, entryPosition - freePointer);
+    }
 
     int currentPositionOffset = POSITIONS_ARRAY_OFFSET;
     int size = size();
     for (int i = 0; i < size - 1; i++) {
       int currentEntryPosition = getIntValue(currentPositionOffset);
-      if (currentEntryPosition < entryPosition)
-        setIntValue(currentPositionOffset, currentEntryPosition + entrySize);
+      if (currentEntryPosition < entryPosition) {
+          setIntValue(currentPositionOffset, currentEntryPosition + entrySize);
+      }
       currentPositionOffset += OIntegerSerializer.INT_SIZE;
     }
 
@@ -231,12 +237,14 @@ public class OHashIndexBucket<K, V> extends ODurablePage implements Iterable<OHa
     int freePointer = getIntValue(FREE_POINTER_OFFSET);
 
     int size = size();
-    if (freePointer - entreeSize < POSITIONS_ARRAY_OFFSET + (size + 1) * OIntegerSerializer.INT_SIZE)
-      return false;
+    if (freePointer - entreeSize < POSITIONS_ARRAY_OFFSET + (size + 1) * OIntegerSerializer.INT_SIZE) {
+        return false;
+    }
 
     final int index = binarySearch(key, hashCode);
-    if (index >= 0)
-      throw new IllegalArgumentException("Given value is present in bucket.");
+    if (index >= 0) {
+        throw new IllegalArgumentException("Given value is present in bucket.");
+    }
 
     final int insertionPoint = -index - 1;
     insertEntry(hashCode, key, value, insertionPoint, entreeSize);
@@ -344,8 +352,9 @@ public class OHashIndexBucket<K, V> extends ODurablePage implements Iterable<OHa
 
     @Override
     public Entry<K, V> next() {
-      if (currentIndex >= size())
-        throw new NoSuchElementException("Iterator was reached last element");
+      if (currentIndex >= size()) {
+          throw new NoSuchElementException("Iterator was reached last element");
+      }
 
       final Entry<K, V> entry = getEntry(currentIndex);
       currentIndex++;

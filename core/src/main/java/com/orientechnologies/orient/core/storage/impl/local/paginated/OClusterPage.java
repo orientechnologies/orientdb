@@ -82,15 +82,18 @@ public class OClusterPage extends ODurablePage {
     int entrySize = record.length + 3 * OIntegerSerializer.INT_SIZE;
     int freeListHeader = getIntValue(FREELIST_HEADER_OFFSET);
 
-    if (!checkSpace(entrySize, freeListHeader))
-      return -1;
+    if (!checkSpace(entrySize, freeListHeader)) {
+        return -1;
+    }
 
     if (freeListHeader > 0) {
-      if (freePosition - entrySize < lastEntryIndexPosition)
-        doDefragmentation();
+      if (freePosition - entrySize < lastEntryIndexPosition) {
+          doDefragmentation();
+      }
     } else {
-      if (freePosition - entrySize < lastEntryIndexPosition + INDEX_ITEM_SIZE)
-        doDefragmentation();
+      if (freePosition - entrySize < lastEntryIndexPosition + INDEX_ITEM_SIZE) {
+          doDefragmentation();
+      }
     }
 
     freePosition = getIntValue(FREE_POSITION_OFFSET);
@@ -103,10 +106,11 @@ public class OClusterPage extends ODurablePage {
       final int tombstonePointer = getIntValue(PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * entryIndex);
 
       int nextEntryPosition = tombstonePointer & POSITION_MASK;
-      if (nextEntryPosition > 0)
-        setIntValue(FREELIST_HEADER_OFFSET, nextEntryPosition);
-      else
-        setIntValue(FREELIST_HEADER_OFFSET, 0);
+      if (nextEntryPosition > 0) {
+          setIntValue(FREELIST_HEADER_OFFSET, nextEntryPosition);
+      } else {
+          setIntValue(FREELIST_HEADER_OFFSET, 0);
+      }
 
       setIntValue(FREE_SPACE_COUNTER_OFFSET, getFreeSpace() - entrySize);
 
@@ -199,8 +203,9 @@ public class OClusterPage extends ODurablePage {
 
   public ORecordVersion getRecordVersion(int position) {
     int indexesLength = getIntValue(PAGE_INDEXES_LENGTH_OFFSET);
-    if (position >= indexesLength)
-      return null;
+    if (position >= indexesLength) {
+        return null;
+    }
 
     int entryIndexPosition = PAGE_INDEXES_OFFSET + position * INDEX_ITEM_SIZE;
     byte[] serializedVersion = getBinaryValue(entryIndexPosition + OIntegerSerializer.INT_SIZE, OVersionFactory.instance()
@@ -218,33 +223,38 @@ public class OClusterPage extends ODurablePage {
 
   private boolean checkSpace(int entrySize, int freeListHeader) {
     if (freeListHeader > 0) {
-      if (getFreeSpace() - entrySize < 0)
-        return false;
+      if (getFreeSpace() - entrySize < 0) {
+          return false;
+      }
     } else {
-      if (getFreeSpace() - entrySize - INDEX_ITEM_SIZE < 0)
-        return false;
+      if (getFreeSpace() - entrySize - INDEX_ITEM_SIZE < 0) {
+          return false;
+      }
     }
     return true;
   }
 
   public boolean deleteRecord(int position) throws IOException {
     int indexesLength = getIntValue(PAGE_INDEXES_LENGTH_OFFSET);
-    if (position >= indexesLength)
-      return false;
+    if (position >= indexesLength) {
+        return false;
+    }
 
     int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * position;
     int entryPointer = getIntValue(entryIndexPosition);
 
-    if ((entryPointer & MARKED_AS_DELETED_FLAG) > 0)
-      return false;
+    if ((entryPointer & MARKED_AS_DELETED_FLAG) > 0) {
+        return false;
+    }
 
     int entryPosition = entryPointer & POSITION_MASK;
 
     int freeListHeader = getIntValue(FREELIST_HEADER_OFFSET);
-    if (freeListHeader <= 0)
-      setIntValue(entryIndexPosition, MARKED_AS_DELETED_FLAG);
-    else
-      setIntValue(entryIndexPosition, freeListHeader | MARKED_AS_DELETED_FLAG);
+    if (freeListHeader <= 0) {
+        setIntValue(entryIndexPosition, MARKED_AS_DELETED_FLAG);
+    } else {
+        setIntValue(entryIndexPosition, freeListHeader | MARKED_AS_DELETED_FLAG);
+    }
 
     setIntValue(FREELIST_HEADER_OFFSET, position + 1);
 
@@ -261,8 +271,9 @@ public class OClusterPage extends ODurablePage {
 
   public boolean isDeleted(int position) {
     int indexesLength = getIntValue(PAGE_INDEXES_LENGTH_OFFSET);
-    if (position >= indexesLength)
-      return true;
+    if (position >= indexesLength) {
+        return true;
+    }
 
     int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * position;
     int entryPointer = getIntValue(entryIndexPosition);
@@ -272,13 +283,15 @@ public class OClusterPage extends ODurablePage {
 
   public int getRecordSize(int position) {
     int indexesLength = getIntValue(PAGE_INDEXES_LENGTH_OFFSET);
-    if (position >= indexesLength)
-      return -1;
+    if (position >= indexesLength) {
+        return -1;
+    }
 
     int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * position;
     int entryPointer = getIntValue(entryIndexPosition);
-    if ((entryPointer & MARKED_AS_DELETED_FLAG) > 0)
-      return -1;
+    if ((entryPointer & MARKED_AS_DELETED_FLAG) > 0) {
+        return -1;
+    }
 
     int entryPosition = entryPointer & POSITION_MASK;
     return getIntValue(entryPosition + 2 * OIntegerSerializer.INT_SIZE);
@@ -289,8 +302,9 @@ public class OClusterPage extends ODurablePage {
     for (int i = position; i < indexesLength; i++) {
       int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * i;
       int entryPointer = getIntValue(entryIndexPosition);
-      if ((entryPointer & MARKED_AS_DELETED_FLAG) > 0)
-        return i;
+      if ((entryPointer & MARKED_AS_DELETED_FLAG) > 0) {
+          return i;
+      }
     }
 
     return -1;
@@ -301,8 +315,9 @@ public class OClusterPage extends ODurablePage {
     for (int i = position; i < indexesLength; i++) {
       int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * i;
       int entryPointer = getIntValue(entryIndexPosition);
-      if ((entryPointer & MARKED_AS_DELETED_FLAG) == 0)
-        return i;
+      if ((entryPointer & MARKED_AS_DELETED_FLAG) == 0) {
+          return i;
+      }
     }
 
     return -1;
@@ -315,8 +330,9 @@ public class OClusterPage extends ODurablePage {
     for (int i = endIndex; i >= 0; i--) {
       int entryIndexPosition = PAGE_INDEXES_OFFSET + INDEX_ITEM_SIZE * i;
       int entryPointer = getIntValue(entryIndexPosition);
-      if ((entryPointer & MARKED_AS_DELETED_FLAG) == 0)
-        return i;
+      if ((entryPointer & MARKED_AS_DELETED_FLAG) == 0) {
+          return i;
+      }
     }
 
     return -1;
@@ -330,14 +346,16 @@ public class OClusterPage extends ODurablePage {
     int freeListHeader = getIntValue(FREELIST_HEADER_OFFSET);
 
     int maxEntrySize;
-    if (freeListHeader > 0)
-      maxEntrySize = getFreeSpace();
-    else
-      maxEntrySize = getFreeSpace() - INDEX_ITEM_SIZE;
+    if (freeListHeader > 0) {
+        maxEntrySize = getFreeSpace();
+    } else {
+        maxEntrySize = getFreeSpace() - INDEX_ITEM_SIZE;
+    }
 
     int result = maxEntrySize - 3 * OIntegerSerializer.INT_SIZE;
-    if (result < 0)
-      return 0;
+    if (result < 0) {
+        return 0;
+    }
 
     return result;
   }
@@ -435,11 +453,13 @@ public class OClusterPage extends ODurablePage {
   private boolean insideRecordBounds(int entryPosition, int offset, int contentSize) {
     final int recordSize = getIntValue(entryPosition + 2 * OIntegerSerializer.INT_SIZE);
 
-    if (offset < 0)
-      return false;
+    if (offset < 0) {
+        return false;
+    }
 
-    if (offset + contentSize > recordSize)
-      return false;
+    if (offset + contentSize > recordSize) {
+        return false;
+    }
 
     return true;
   }

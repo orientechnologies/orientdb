@@ -46,39 +46,43 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
       final boolean iterateThroughTombstones, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
 
-    if (iClusterId == ORID.CLUSTER_ID_INVALID)
-      throw new IllegalArgumentException("The clusterId is invalid");
+    if (iClusterId == ORID.CLUSTER_ID_INVALID) {
+        throw new IllegalArgumentException("The clusterId is invalid");
+    }
 
     current.clusterId = iClusterId;
     final long[] range = database.getStorage().getClusterDataRange(current.clusterId);
 
-    if (firstClusterEntry == ORID.CLUSTER_POS_INVALID)
-      this.firstClusterEntry = range[0];
-    else
-      this.firstClusterEntry = firstClusterEntry > range[0] ? firstClusterEntry : range[0];
+    if (firstClusterEntry == ORID.CLUSTER_POS_INVALID) {
+        this.firstClusterEntry = range[0];
+    } else {
+        this.firstClusterEntry = firstClusterEntry > range[0] ? firstClusterEntry : range[0];
+    }
 
-    if (lastClusterEntry == ORID.CLUSTER_POS_INVALID)
-      this.lastClusterEntry = range[1];
-    else
-      this.lastClusterEntry = lastClusterEntry < range[1] ? lastClusterEntry : range[1];
+    if (lastClusterEntry == ORID.CLUSTER_POS_INVALID) {
+        this.lastClusterEntry = range[1];
+    } else {
+        this.lastClusterEntry = lastClusterEntry < range[1] ? lastClusterEntry : range[1];
+    }
 
     totalAvailableRecords = database.countClusterElements(current.clusterId, iterateThroughTombstones);
 
     txEntries = iDatabase.getTransaction().getNewRecordEntriesByClusterIds(new int[] { iClusterId });
 
-    if (txEntries != null)
-      // ADJUST TOTAL ELEMENT BASED ON CURRENT TRANSACTION'S ENTRIES
-      for (ORecordOperation entry : txEntries) {
-        switch (entry.type) {
-        case ORecordOperation.CREATED:
-          totalAvailableRecords++;
-          break;
-
-        case ORecordOperation.DELETED:
-          totalAvailableRecords--;
-          break;
+    if (txEntries != null) {
+        // ADJUST TOTAL ELEMENT BASED ON CURRENT TRANSACTION'S ENTRIES
+        for (ORecordOperation entry : txEntries) {
+            switch (entry.type) {
+                case ORecordOperation.CREATED:
+                    totalAvailableRecords++;
+                    break;
+                    
+                case ORecordOperation.DELETED:
+                    totalAvailableRecords--;
+                    break;
+            }
         }
-      }
+    }
 
     begin();
   }
@@ -93,9 +97,10 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
       return true;
     }
 
-    if (limit > -1 && browsedRecords >= limit)
-      // LIMIT REACHED
-      return false;
+    if (limit > -1 && browsedRecords >= limit) {
+        // LIMIT REACHED
+        return false;
+    }
 
     boolean thereAreRecordsToBrowse = getCurrentEntry() > firstClusterEntry;
 
@@ -110,9 +115,10 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
   public boolean hasNext() {
     checkDirection(true);
 
-    if (Thread.interrupted())
-      // INTERRUPTED
-      return false;
+    if (Thread.interrupted()) {
+        // INTERRUPTED
+        return false;
+    }
 
     updateRangesOnLiveUpdate();
 
@@ -120,23 +126,27 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
       return true;
     }
 
-    if (limit > -1 && browsedRecords >= limit)
-      // LIMIT REACHED
-      return false;
+    if (limit > -1 && browsedRecords >= limit) {
+        // LIMIT REACHED
+        return false;
+    }
 
-    if (browsedRecords >= totalAvailableRecords)
-      return false;
+    if (browsedRecords >= totalAvailableRecords) {
+        return false;
+    }
 
     if (!(current.clusterPosition < ORID.CLUSTER_POS_INVALID) && getCurrentEntry() < lastClusterEntry) {
       ORecord record = getRecord();
       currentRecord = readCurrentRecord(record, +1);
-      if (currentRecord != null)
-        return true;
+      if (currentRecord != null) {
+          return true;
+      }
     }
 
     // CHECK IN TX IF ANY
-    if (txEntries != null)
-      return txEntries.size() - (currentTxEntryPosition + 1) > 0;
+    if (txEntries != null) {
+        return txEntries.size() - (currentTxEntryPosition + 1) > 0;
+    }
 
     return false;
   }
@@ -193,8 +203,9 @@ public class ORecordIteratorCluster<REC extends ORecord> extends OIdentifiableIt
       }
 
       record = getTransactionEntry();
-      if (record != null)
-        return (REC) record;
+      if (record != null) {
+          return (REC) record;
+      }
     }
 
     return null;

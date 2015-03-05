@@ -138,8 +138,9 @@ public abstract class OAbstractFile implements OFile {
   public boolean open() throws IOException {
     acquireWriteLock();
     try {
-      if (!osFile.exists())
-        throw new FileNotFoundException("File: " + osFile.getAbsolutePath());
+      if (!osFile.exists()) {
+          throw new FileNotFoundException("File: " + osFile.getAbsolutePath());
+      }
 
       openChannel(-1);
 
@@ -179,15 +180,17 @@ public abstract class OAbstractFile implements OFile {
         filledUpTo = getFilledUpTo();
       }
 
-      if (filledUpTo > fileSize || filledUpTo < 0)
-        OLogManager.instance().error(this, "Invalid filledUp size (=" + filledUpTo + "). The file could be corrupted", null,
-            OStorageException.class);
+      if (filledUpTo > fileSize || filledUpTo < 0) {
+          OLogManager.instance().error(this, "Invalid filledUp size (=" + filledUpTo + "). The file could be corrupted", null,
+                  OStorageException.class);
+      }
 
       if (failCheck) {
         wasSoftlyClosed = isSoftlyClosed();
 
-        if (wasSoftlyClosed)
-          setSoftlyClosed(false);
+        if (wasSoftlyClosed) {
+            setSoftlyClosed(false);
+        }
       }
 
       if (version < CURRENT_VERSION) {
@@ -198,8 +201,9 @@ public abstract class OAbstractFile implements OFile {
         setSoftlyClosed(!failCheck);
       }
 
-      if (failCheck)
-        return wasSoftlyClosed;
+      if (failCheck) {
+          return wasSoftlyClosed;
+      }
 
       return true;
     } finally {
@@ -224,8 +228,9 @@ public abstract class OAbstractFile implements OFile {
   public void create(int iStartSize) throws IOException {
     acquireWriteLock();
     try {
-      if (iStartSize == -1)
-        iStartSize = DEFAULT_SIZE;
+      if (iStartSize == -1) {
+          iStartSize = DEFAULT_SIZE;
+      }
 
       openChannel(iStartSize);
 
@@ -248,13 +253,15 @@ public abstract class OAbstractFile implements OFile {
     acquireWriteLock();
     try {
       try {
-        if (accessFile != null && (accessFile.length() - HEADER_SIZE) < getFileSize())
-          accessFile.setLength(getFileSize() + HEADER_SIZE);
+        if (accessFile != null && (accessFile.length() - HEADER_SIZE) < getFileSize()) {
+            accessFile.setLength(getFileSize() + HEADER_SIZE);
+        }
 
         setSoftlyClosed(true);
 
-        if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean())
-          unlock();
+        if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean()) {
+            unlock();
+        }
 
         if (channel != null && channel.isOpen()) {
           channel.close();
@@ -280,8 +287,9 @@ public abstract class OAbstractFile implements OFile {
       try {
         setSoftlyClosed(softlyClosed);
 
-        if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean())
-          unlock();
+        if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean()) {
+            unlock();
+        }
 
         if (channel != null && channel.isOpen()) {
           channel.close();
@@ -318,8 +326,9 @@ public abstract class OAbstractFile implements OFile {
           deleted = OFileUtils.delete(osFile);
           retryCount++;
 
-          if (retryCount > 10)
-            throw new IOException("Can not delete file. Retry limit exceeded.");
+          if (retryCount > 10) {
+              throw new IOException("Can not delete file. Retry limit exceeded.");
+          }
         }
       }
     } finally {
@@ -363,27 +372,30 @@ public abstract class OAbstractFile implements OFile {
    * @see com.orientechnologies.orient.core.storage.fs.OFileAAA#lock()
    */
   public void lock() throws IOException {
-    if (channel == null)
-      return;
+    if (channel == null) {
+        return;
+    }
 
     acquireWriteLock();
     try {
       for (int i = 0; i < LOCK_MAX_RETRIES; ++i) {
         try {
           fileLock = channel.tryLock();
-          if (fileLock != null)
-            break;
+          if (fileLock != null) {
+              break;
+          }
         } catch (OverlappingFileLockException e) {
           OLogManager.instance().debug(this,
               "Cannot open file '" + osFile.getAbsolutePath() + "' because it is locked. Waiting %d ms and retrying %d/%d...",
               LOCK_WAIT_TIME, i, LOCK_MAX_RETRIES);
         }
 
-        if (fileLock == null)
-          throw new OLockException(
-              "File '"
-                  + osFile.getPath()
-                  + "' is locked by another process, maybe the database is in use by another process. Use the remote mode with a OrientDB server to allow multiple access to the same database.");
+        if (fileLock == null) {
+            throw new OLockException(
+                    "File '"
+                            + osFile.getPath()
+                            + "' is locked by another process, maybe the database is in use by another process. Use the remote mode with a OrientDB server to allow multiple access to the same database.");
+        }
       }
     } finally {
       releaseWriteLock();
@@ -413,15 +425,17 @@ public abstract class OAbstractFile implements OFile {
   protected void checkSize(final long iSize) throws IOException {
     acquireReadLock();
     try {
-      if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().debug(this, "Changing file size to " + iSize + " bytes. " + toString());
+      if (OLogManager.instance().isDebugEnabled()) {
+          OLogManager.instance().debug(this, "Changing file size to " + iSize + " bytes. " + toString());
+      }
 
       final long filledUpTo = getFilledUpTo();
-      if (iSize < filledUpTo)
-        OLogManager.instance().error(
-            this,
-            "You cannot resize down the file to " + iSize + " bytes, since it is less than current space used: " + filledUpTo
-                + " bytes", OIOException.class);
+      if (iSize < filledUpTo) {
+          OLogManager.instance().error(
+                  this,
+                  "You cannot resize down the file to " + iSize + " bytes, since it is less than current space used: " + filledUpTo
+                          + " bytes", OIOException.class);
+      }
     } finally {
       releaseReadLock();
     }
@@ -436,8 +450,9 @@ public abstract class OAbstractFile implements OFile {
     acquireWriteLock();
     try {
       final long filledUpTo = getFilledUpTo();
-      if (filledUpTo < iSizeToShrink)
-        iSizeToShrink = 0;
+      if (filledUpTo < iSizeToShrink) {
+          iSizeToShrink = 0;
+      }
 
       setFilledUpTo(filledUpTo - iSizeToShrink);
     } finally {
@@ -454,8 +469,9 @@ public abstract class OAbstractFile implements OFile {
     acquireWriteLock();
     try {
       final long filledUpTo = getFilledUpTo();
-      if (iSize >= filledUpTo)
-        return;
+      if (iSize >= filledUpTo) {
+          return;
+      }
 
       OLogManager.instance().debug(this, "Shrinking filled file from " + filledUpTo + " to " + iSize + " bytes. " + toString());
 
@@ -477,16 +493,18 @@ public abstract class OAbstractFile implements OFile {
       final long size = getFileSize();
 
       if (getFreeSpace() < iSize) {
-        if (maxSize > 0 && maxSize - size < iSize)
-          throw new IllegalArgumentException("Cannot enlarge file since the configured max size ("
-              + OFileUtils.getSizeAsString(maxSize) + ") was reached! " + toString());
+        if (maxSize > 0 && maxSize - size < iSize) {
+            throw new IllegalArgumentException("Cannot enlarge file since the configured max size ("
+                    + OFileUtils.getSizeAsString(maxSize) + ") was reached! " + toString());
+        }
 
         // MAKE ROOM
         long newFileSize = size;
 
-        if (newFileSize == 0)
-          // PROBABLY HAS BEEN LOST WITH HARD KILLS
-          newFileSize = DEFAULT_SIZE;
+        if (newFileSize == 0) {
+            // PROBABLY HAS BEEN LOST WITH HARD KILLS
+            newFileSize = DEFAULT_SIZE;
+        }
 
         // GET THE STEP SIZE IN BYTES
         long stepSizeInBytes = Math.max(1024, incrementSize > 0 ? incrementSize : -1 * size / 100 * incrementSize);
@@ -496,9 +514,10 @@ public abstract class OAbstractFile implements OFile {
           newFileSize += stepSizeInBytes;
         }
 
-        if (newFileSize > maxSize && maxSize > 0)
-          // TOO BIG: ROUND TO THE MAXIMUM FILE SIZE
-          newFileSize = maxSize;
+        if (newFileSize > maxSize && maxSize > 0) {
+            // TOO BIG: ROUND TO THE MAXIMUM FILE SIZE
+            newFileSize = maxSize;
+        }
 
         setSize(newFileSize);
       }
@@ -515,9 +534,10 @@ public abstract class OAbstractFile implements OFile {
   protected long checkRegions(final long iOffset, final long iLength) {
     acquireReadLock();
     try {
-      if (iOffset < 0 || iOffset + iLength > getFilledUpTo())
-        throw new OIOException("You cannot access outside the file size (" + getFilledUpTo()
-            + " bytes). You have requested portion " + iOffset + "-" + (iOffset + iLength) + " bytes. File: " + toString());
+      if (iOffset < 0 || iOffset + iLength > getFilledUpTo()) {
+          throw new OIOException("You cannot access outside the file size (" + getFilledUpTo()
+                  + " bytes). You have requested portion " + iOffset + "-" + (iOffset + iLength) + " bytes. File: " + toString());
+      }
 
       return iOffset;
     } finally {
@@ -613,37 +633,42 @@ public abstract class OAbstractFile implements OFile {
     try {
       OLogManager.instance().debug(this, "[OFile.openChannel] opening channel for file '%s' of size: %d", osFile, osFile.length());
 
-      for (int i = 0; i < OPEN_RETRY_MAX; ++i)
-        try {
-          accessFile = new RandomAccessFile(osFile, mode);
-          break;
-        } catch (FileNotFoundException e) {
-          if (i == OPEN_DELAY_RETRY)
-            throw e;
-
-          // TRY TO RE-CREATE THE DIRECTORY (THIS HAPPENS ON WINDOWS AFTER A DELETE IS PENDING, USUALLY WHEN REOPEN THE DB VERY
-          // FREQUENTLY)
-          osFile.getParentFile().mkdirs();
+      for (int i = 0; i < OPEN_RETRY_MAX; ++i) {
           try {
-            Thread.sleep(OPEN_DELAY_RETRY);
-          } catch (InterruptedException e1) {
-            Thread.currentThread().interrupt();
+              accessFile = new RandomAccessFile(osFile, mode);
+              break;
+          } catch (FileNotFoundException e) {
+              if (i == OPEN_DELAY_RETRY) {
+                  throw e;
+              }
+              
+              // TRY TO RE-CREATE THE DIRECTORY (THIS HAPPENS ON WINDOWS AFTER A DELETE IS PENDING, USUALLY WHEN REOPEN THE DB VERY
+              // FREQUENTLY)
+              osFile.getParentFile().mkdirs();
+              try {
+                  Thread.sleep(OPEN_DELAY_RETRY);
+              } catch (InterruptedException e1) {
+                  Thread.currentThread().interrupt();
+              }
           }
-        }
+      }
 
-      if (accessFile == null)
-        throw new FileNotFoundException(osFile.getAbsolutePath());
+      if (accessFile == null) {
+          throw new FileNotFoundException(osFile.getAbsolutePath());
+      }
 
-      if (newSize > -1 && accessFile.length() != newSize)
-        accessFile.setLength(newSize);
+      if (newSize > -1 && accessFile.length() != newSize) {
+          accessFile.setLength(newSize);
+      }
 
       accessFile.seek(VERSION_OFFSET);
       version = accessFile.read();
 
       accessFile.seek(0);
       channel = accessFile.getChannel();
-      if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean())
-        lock();
+      if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean()) {
+          lock();
+      }
     } finally {
       releaseWriteLock();
     }
@@ -771,8 +796,9 @@ public abstract class OAbstractFile implements OFile {
   protected void setDirty() {
     acquireWriteLock();
     try {
-      if (!dirty)
-        dirty = true;
+      if (!dirty) {
+          dirty = true;
+      }
     } finally {
       releaseWriteLock();
     }
@@ -781,8 +807,9 @@ public abstract class OAbstractFile implements OFile {
   protected void setHeaderDirty() {
     acquireWriteLock();
     try {
-      if (!headerDirty)
-        headerDirty = true;
+      if (!headerDirty) {
+          headerDirty = true;
+      }
     } finally {
       releaseWriteLock();
     }
@@ -821,8 +848,9 @@ public abstract class OAbstractFile implements OFile {
       close();
 
       final boolean renamed = OFileUtils.renameFile(osFile, newFile);
-      if (renamed)
-        osFile = new File(newFile.getAbsolutePath());
+      if (renamed) {
+          osFile = new File(newFile.getAbsolutePath());
+      }
 
       open();
 

@@ -116,19 +116,22 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     final ODatabaseDocument databaseRecord = getDatabase();
     final boolean txWasActive = databaseRecord.getTransaction().isActive();
 
-    if (!txWasActive)
-      graph.getRawGraph().begin();
+    if (!txWasActive) {
+        graph.getRawGraph().begin();
+    }
 
     try {
       final T result = callBack.call(graph);
 
-      if (!txWasActive)
-        graph.commit();
+      if (!txWasActive) {
+          graph.commit();
+      }
 
       return result;
     } catch (RuntimeException e) {
-      if (!txWasActive)
-        graph.rollback();
+      if (!txWasActive) {
+          graph.rollback();
+      }
 
       throw e;
     }
@@ -140,8 +143,9 @@ public class OGraphCommandExecutorSQLFactory implements OCommandExecutorSQLFacto
     try {
       return runInTx(graph, callBack);
     } finally {
-      if (shutdownFlag.getValue())
-        graph.shutdown(false);
+      if (shutdownFlag.getValue()) {
+          graph.shutdown(false);
+      }
     }
   }
 

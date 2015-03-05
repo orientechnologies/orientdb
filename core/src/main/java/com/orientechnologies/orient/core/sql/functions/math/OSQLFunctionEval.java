@@ -43,8 +43,9 @@ public class OSQLFunctionEval extends OSQLFunctionMathAbstract {
 
   public Object execute(Object iThis, final OIdentifiable iRecord, final Object iCurrentResult, final Object[] iParams,
       OCommandContext iContext) {
-    if (predicate == null)
-      predicate = new OSQLPredicate((String) iParams[0].toString());
+    if (predicate == null) {
+        predicate = new OSQLPredicate((String) iParams[0].toString());
+    }
 
     final ODocument currentResult = iCurrentResult instanceof ODocument ? (ODocument) iCurrentResult : null;
     try {

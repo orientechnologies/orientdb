@@ -372,8 +372,9 @@ public class JSONTest extends DocumentDBBaseTest {
       Assert.assertEquals(jsonLoaded, jsonFull);
     }
 
-    if (database.isClosed())
-      database.open("admin", "admin");
+    if (database.isClosed()) {
+        database.open("admin", "admin");
+    }
 
     for (ODocument doc : result) {
       doc.reload("*:1");
@@ -552,8 +553,9 @@ public class JSONTest extends DocumentDBBaseTest {
   }
 
   public void testNestedJsonCollection() {
-    if (!database.getMetadata().getSchema().existsClass("Device"))
-      database.getMetadata().getSchema().createClass("Device");
+    if (!database.getMetadata().getSchema().existsClass("Device")) {
+        database.getMetadata().getSchema().createClass("Device");
+    }
 
     database.command(
         new OCommandSQL("insert into device (resource_id, domainset) VALUES (0, [ { 'domain' : 'abc' }, { 'domain' : 'pqr' } ])"))
@@ -570,8 +572,9 @@ public class JSONTest extends DocumentDBBaseTest {
   }
 
   public void testNestedEmbeddedJson() {
-    if (!database.getMetadata().getSchema().existsClass("Device"))
-      database.getMetadata().getSchema().createClass("Device");
+    if (!database.getMetadata().getSchema().existsClass("Device")) {
+        database.getMetadata().getSchema().createClass("Device");
+    }
 
     database.command(new OCommandSQL("insert into device (resource_id, domainset) VALUES (1, { 'domain' : 'eee' })")).execute();
 
@@ -580,8 +583,9 @@ public class JSONTest extends DocumentDBBaseTest {
   }
 
   public void testNestedMultiLevelEmbeddedJson() {
-    if (!database.getMetadata().getSchema().existsClass("Device"))
-      database.getMetadata().getSchema().createClass("Device");
+    if (!database.getMetadata().getSchema().existsClass("Device")) {
+        database.getMetadata().getSchema().createClass("Device");
+    }
 
     database.command(new OCommandSQL("insert into device (domainset) values ({'domain' : { 'lvlone' : { 'value' : 'five' } } } )"))
         .execute();
@@ -1107,11 +1111,13 @@ public class JSONTest extends DocumentDBBaseTest {
   }
 
   public void testJSONTxDoc() {
-    if (!database.getMetadata().getSchema().existsClass("JSONTxDocOne"))
-      database.getMetadata().getSchema().createClass("JSONTxDocOne");
+    if (!database.getMetadata().getSchema().existsClass("JSONTxDocOne")) {
+        database.getMetadata().getSchema().createClass("JSONTxDocOne");
+    }
 
-    if (!database.getMetadata().getSchema().existsClass("JSONTxDocTwo"))
-      database.getMetadata().getSchema().createClass("JSONTxDocTwo");
+    if (!database.getMetadata().getSchema().existsClass("JSONTxDocTwo")) {
+        database.getMetadata().getSchema().createClass("JSONTxDocTwo");
+    }
 
     ODocument adamDoc = new ODocument("JSONTxDocOne");
     adamDoc.field("name", "adam");

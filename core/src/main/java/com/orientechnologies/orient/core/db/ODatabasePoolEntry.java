@@ -48,23 +48,30 @@ public class ODatabasePoolEntry {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
+		if (this == obj) {
+                    return true;
+                }
+		if (obj == null) {
+                    return false;
+                }
+		if (getClass() != obj.getClass()) {
+                    return false;
+                }
 		ODatabasePoolEntry other = (ODatabasePoolEntry) obj;
 		if (url == null) {
-			if (other.url != null)
-				return false;
-		} else if (!url.equals(other.url))
-			return false;
+			if (other.url != null) {
+                            return false;
+                        }
+		} else if (!url.equals(other.url)) {
+                    return false;
+                }
 		if (userName == null) {
-			if (other.userName != null)
-				return false;
-		} else if (!userName.equals(other.userName))
-			return false;
+			if (other.userName != null) {
+                            return false;
+                        }
+		} else if (!userName.equals(other.userName)) {
+                    return false;
+                }
 		return true;
 	}
 

@@ -51,8 +51,9 @@ public class OIndexRemoteOneValue extends OIndexRemote<OIdentifiable> {
   public OIdentifiable get(final Object iKey) {
     final OCommandRequest cmd = formatCommand(QUERY_GET, name);
     final List<OIdentifiable> result = getDatabase().command(cmd).execute(iKey);
-    if (result != null && !result.isEmpty())
-      return ((OIdentifiable) ((ODocument) result.get(0).getRecord()).field("rid")).getIdentity();
+    if (result != null && !result.isEmpty()) {
+        return ((OIdentifiable) ((ODocument) result.get(0).getRecord()).field("rid")).getIdentity();
+    }
     return null;
   }
 

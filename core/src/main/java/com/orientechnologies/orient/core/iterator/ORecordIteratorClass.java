@@ -70,8 +70,9 @@ public class ORecordIteratorClass<REC extends ORecord> extends ORecordIteratorCl
     super(iDatabase, iLowLevelDatabase, iUseCache, iterateThroughTombstones, iLockingStrategy);
 
     targetClass = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(iClassName);
-    if (targetClass == null)
-      throw new IllegalArgumentException("Class '" + iClassName + "' was not found in database schema");
+    if (targetClass == null) {
+        throw new IllegalArgumentException("Class '" + iClassName + "' was not found in database schema");
+    }
 
     polymorphic = iPolymorphic;
     clusterIds = polymorphic ? targetClass.getPolymorphicClusterIds() : targetClass.getClusterIds();
@@ -86,8 +87,9 @@ public class ORecordIteratorClass<REC extends ORecord> extends ORecordIteratorCl
   @Override
   public REC next() {
     final OIdentifiable rec = super.next();
-    if (rec == null)
-      return null;
+    if (rec == null) {
+        return null;
+    }
     return (REC) rec.getRecord();
   }
 
@@ -95,8 +97,9 @@ public class ORecordIteratorClass<REC extends ORecord> extends ORecordIteratorCl
   @Override
   public REC previous() {
     final OIdentifiable rec = super.previous();
-    if (rec == null)
-      return null;
+    if (rec == null) {
+        return null;
+    }
 
     return (REC) rec.getRecord();
   }
@@ -126,14 +129,15 @@ public class ORecordIteratorClass<REC extends ORecord> extends ORecordIteratorCl
 
     txEntries = database.getTransaction().getNewRecordEntriesByClass(targetClass, polymorphic);
 
-    if (txEntries != null)
-      // ADJUST TOTAL ELEMENT BASED ON CURRENT TRANSACTION'S ENTRIES
-      for (ORecordOperation entry : txEntries) {
-        if (!entry.getRecord().getIdentity().isPersistent() && entry.type != ORecordOperation.DELETED)
-          totalAvailableRecords++;
-        else if (entry.type == ORecordOperation.DELETED)
-          totalAvailableRecords--;
-      }
+    if (txEntries != null) {
+        for (ORecordOperation entry : txEntries) {
+            if (!entry.getRecord().getIdentity().isPersistent() && entry.type != ORecordOperation.DELETED) {
+                totalAvailableRecords++;
+            } else if (entry.type == ORecordOperation.DELETED) {
+                totalAvailableRecords--;
+            }
+        }
+    }
 
     begin();
   }

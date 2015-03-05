@@ -44,15 +44,18 @@ public class OSQLFunctionFirst extends OSQLFunctionConfigurableAbstract {
       final OCommandContext iContext) {
     Object value = iParams[0];
 
-    if (value instanceof OSQLFilterItem)
-      value = ((OSQLFilterItem) value).getValue(iCurrentRecord, iCurrentResult, iContext);
+    if (value instanceof OSQLFilterItem) {
+        value = ((OSQLFilterItem) value).getValue(iCurrentRecord, iCurrentResult, iContext);
+    }
 
-    if (OMultiValue.isMultiValue(value))
-      value = OMultiValue.getFirstValue(value);
+    if (OMultiValue.isMultiValue(value)) {
+        value = OMultiValue.getFirstValue(value);
+    }
 
-    if (first == this)
-      // ONLY THE FIRST TIME
-      first = value;
+    if (first == this) {
+        // ONLY THE FIRST TIME
+        first = value;
+    }
 
     return value;
   }

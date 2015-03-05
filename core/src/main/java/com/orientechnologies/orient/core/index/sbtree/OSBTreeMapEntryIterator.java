@@ -65,10 +65,11 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
       public boolean addResult(final Map.Entry<K, V> entry) {
         final V value = entry.getValue();
         final V resultValue;
-        if (value instanceof OIndexRIDContainer)
-          resultValue = (V) new HashSet<OIdentifiable>((Collection<? extends OIdentifiable>) value);
-        else
-          resultValue = value;
+        if (value instanceof OIndexRIDContainer) {
+            resultValue = (V) new HashSet<OIdentifiable>((Collection<? extends OIdentifiable>) value);
+        } else {
+            resultValue = value;
+        }
 
         preFetchedValues.add(new Map.Entry<K, V>() {
           @Override
@@ -91,10 +92,11 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
       }
     });
 
-    if (preFetchedValues.isEmpty())
-      preFetchedValues = null;
-    else
-      firstKey = preFetchedValues.getLast().getKey();
+    if (preFetchedValues.isEmpty()) {
+        preFetchedValues = null;
+    } else {
+        firstKey = preFetchedValues.getLast().getKey();
+    }
   }
 
   @Override
@@ -105,8 +107,9 @@ public class OSBTreeMapEntryIterator<K, V> implements Iterator<Map.Entry<K, V>> 
   @Override
   public Map.Entry<K, V> next() {
     final Map.Entry<K, V> entry = preFetchedValues.removeFirst();
-    if (preFetchedValues.isEmpty())
-      prefetchData(false);
+    if (preFetchedValues.isEmpty()) {
+        prefetchData(false);
+    }
 
     currentEntry = entry;
 

@@ -140,8 +140,9 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
     dataProvider.setIdentityChangedListener(this);
 
     dataProvider.copyDataFrom(pParent.dataProvider, iPosition);
-    if (pParent.dataProvider.truncate(iPosition))
-      pParent.markDirty();
+    if (pParent.dataProvider.truncate(iPosition)) {
+        pParent.markDirty();
+    }
     init();
     setParent(pParent);
     pTree.addNodeInMemory(this);
@@ -158,8 +159,9 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
    * 
    */
   public OMVRBTreeEntryPersistent<K, V> save() throws OSerializationException {
-    if (!dataProvider.isEntryDirty())
-      return this;
+    if (!dataProvider.isEntryDirty()) {
+        return this;
+    }
 
     final boolean isNew = dataProvider.getIdentity().isNew();
 
@@ -168,22 +170,25 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
       if (isNew) {
         // TEMPORARY INCORRECT SAVE FOR GETTING AN ID. WILL BE SET DIRTY AGAIN JUST AFTER
         left.dataProvider.save();
-      } else
-        left.save();
+      } else {
+          left.save();
+      }
     }
     if (right != null && right.dataProvider.getIdentity().isNew()) {
       if (isNew) {
         // TEMPORARY INCORRECT SAVE FOR GETTING AN ID. WILL BE SET DIRTY AGAIN JUST AFTER
         right.dataProvider.save();
-      } else
-        right.save();
+      } else {
+          right.save();
+      }
     }
     if (parent != null && parent.dataProvider.getIdentity().isNew()) {
       if (isNew) {
         // TEMPORARY INCORRECT SAVE FOR GETTING AN ID. WILL BE SET DIRTY AGAIN JUST AFTER
         parent.dataProvider.save();
-      } else
-        parent.save();
+      } else {
+          parent.save();
+      }
     }
 
     dataProvider.save();
@@ -215,12 +220,14 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
       pTree.removeEntry(dataProvider.getIdentity());
 
       // EARLY LOAD LEFT AND DELETE IT RECURSIVELY
-      if (getLeft() != null)
-        ((OMVRBTreeEntryPersistent<K, V>) getLeft()).delete();
+      if (getLeft() != null) {
+          ((OMVRBTreeEntryPersistent<K, V>) getLeft()).delete();
+      }
 
       // EARLY LOAD RIGHT AND DELETE IT RECURSIVELY
-      if (getRight() != null)
-        ((OMVRBTreeEntryPersistent<K, V>) getRight()).delete();
+      if (getRight() != null) {
+          ((OMVRBTreeEntryPersistent<K, V>) getRight()).delete();
+      }
 
       // DELETE MYSELF
       dataProvider.removeIdentityChangedListener(this);
@@ -254,8 +261,9 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
 
   @Override
   public OMVRBTreeEntry<K, V> getParent() {
-    if (dataProvider == null)
-      return null;
+    if (dataProvider == null) {
+        return null;
+    }
 
     if (parent == null && dataProvider.getParent().isValid()) {
       // LAZY LOADING OF THE PARENT NODE
@@ -265,11 +273,11 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
 
       if (parent != null) {
         // TRY TO ASSIGN IT FOLLOWING THE RID
-        if (parent.dataProvider.getLeft().isValid() && parent.dataProvider.getLeft().equals(dataProvider.getIdentity()))
-          parent.left = this;
-        else if (parent.dataProvider.getRight().isValid() && parent.dataProvider.getRight().equals(dataProvider.getIdentity()))
-          parent.right = this;
-        else {
+        if (parent.dataProvider.getLeft().isValid() && parent.dataProvider.getLeft().equals(dataProvider.getIdentity())) {
+            parent.left = this;
+        } else if (parent.dataProvider.getRight().isValid() && parent.dataProvider.getRight().equals(dataProvider.getIdentity())) {
+            parent.right = this;
+        } else {
           OLogManager.instance().error(this, "getParent: Cannot assign node %s to parent. Nodes parent-left=%s, parent-right=%s",
               dataProvider.getParent(), parent.dataProvider.getLeft(), parent.dataProvider.getRight());
         }
@@ -286,21 +294,28 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
 
       parent = newParent;
 
-      if (dataProvider.setParent(newParentId))
-        markDirty();
+      if (dataProvider.setParent(newParentId)) {
+          markDirty();
+      }
 
       if (parent != null) {
         ORID thisRid = dataProvider.getIdentity();
-        if (parent.left == this && !parent.dataProvider.getLeft().equals(thisRid))
-          if (parent.dataProvider.setLeft(thisRid))
-            parent.markDirty();
-        if (parent.left != this && parent.dataProvider.getLeft().isValid() && parent.dataProvider.getLeft().equals(thisRid))
-          parent.left = this;
-        if (parent.right == this && !parent.dataProvider.getRight().equals(thisRid))
-          if (parent.dataProvider.setRight(thisRid))
-            parent.markDirty();
-        if (parent.right != this && parent.dataProvider.getRight().isValid() && parent.dataProvider.getRight().equals(thisRid))
-          parent.right = this;
+        if (parent.left == this && !parent.dataProvider.getLeft().equals(thisRid)) {
+            if (parent.dataProvider.setLeft(thisRid)) {
+                parent.markDirty();
+            }
+        }
+        if (parent.left != this && parent.dataProvider.getLeft().isValid() && parent.dataProvider.getLeft().equals(thisRid)) {
+            parent.left = this;
+        }
+        if (parent.right == this && !parent.dataProvider.getRight().equals(thisRid)) {
+            if (parent.dataProvider.setRight(thisRid)) {
+                parent.markDirty();
+            }
+        }
+        if (parent.right != this && parent.dataProvider.getRight().isValid() && parent.dataProvider.getRight().equals(thisRid)) {
+            parent.right = this;
+        }
       }
     }
     return iParent;
@@ -308,8 +323,9 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
 
   @Override
   public OMVRBTreeEntry<K, V> getLeft() {
-    if (dataProvider == null)
-      return null;
+    if (dataProvider == null) {
+        return null;
+    }
     if (left == null && dataProvider.getLeft().isValid()) {
       // LAZY LOADING OF THE LEFT LEAF
       left = pTree.loadEntry(this, dataProvider.getLeft());
@@ -325,11 +341,13 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
       ORID newLeftId = iLeft == null ? ORecordId.EMPTY_RECORD_ID : newLeft.dataProvider.getIdentity();
 
       left = newLeft;
-      if (dataProvider.setLeft(newLeftId))
-        markDirty();
+      if (dataProvider.setLeft(newLeftId)) {
+          markDirty();
+      }
 
-      if (left != null && left.parent != this)
-        left.setParent(this);
+      if (left != null && left.parent != this) {
+          left.setParent(this);
+      }
 
       checkEntryStructure();
     }
@@ -337,8 +355,9 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
 
   @Override
   public OMVRBTreeEntry<K, V> getRight() {
-    if (dataProvider == null)
-      return null;
+    if (dataProvider == null) {
+        return null;
+    }
     if (right == null && dataProvider.getRight().isValid()) {
       // LAZY LOADING OF THE RIGHT LEAF
       right = pTree.loadEntry(this, dataProvider.getRight());
@@ -354,48 +373,61 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
       ORID newRightId = iRight == null ? ORecordId.EMPTY_RECORD_ID : newRight.dataProvider.getIdentity();
 
       right = newRight;
-      if (dataProvider.setRight(newRightId))
-        markDirty();
+      if (dataProvider.setRight(newRightId)) {
+          markDirty();
+      }
 
-      if (right != null && right.parent != this)
-        right.setParent(this);
+      if (right != null && right.parent != this) {
+          right.setParent(this);
+      }
 
       checkEntryStructure();
     }
   }
 
   public void checkEntryStructure() {
-    if (!tree.isRuntimeCheckEnabled())
-      return;
+    if (!tree.isRuntimeCheckEnabled()) {
+        return;
+    }
 
-    if (dataProvider.getParent() == null)
-      OLogManager.instance().error(this, "checkEntryStructure: Node %s has parentRid null!\n", this);
-    if (dataProvider.getLeft() == null)
-      OLogManager.instance().error(this, "checkEntryStructure: Node %s has leftRid null!\n", this);
-    if (dataProvider.getRight() == null)
-      OLogManager.instance().error(this, "checkEntryStructure: Node %s has rightRid null!\n", this);
+    if (dataProvider.getParent() == null) {
+        OLogManager.instance().error(this, "checkEntryStructure: Node %s has parentRid null!\n", this);
+    }
+    if (dataProvider.getLeft() == null) {
+        OLogManager.instance().error(this, "checkEntryStructure: Node %s has leftRid null!\n", this);
+    }
+    if (dataProvider.getRight() == null) {
+        OLogManager.instance().error(this, "checkEntryStructure: Node %s has rightRid null!\n", this);
+    }
 
-    if (this == left || dataProvider.getIdentity().isValid() && dataProvider.getIdentity().equals(dataProvider.getLeft()))
-      OLogManager.instance().error(this, "checkEntryStructure: Node %s has left that points to itself!\n", this);
-    if (this == right || dataProvider.getIdentity().isValid() && dataProvider.getIdentity().equals(dataProvider.getRight()))
-      OLogManager.instance().error(this, "checkEntryStructure: Node %s has right that points to itself!\n", this);
-    if (left != null && left == right)
-      OLogManager.instance().error(this, "checkEntryStructure: Node %s has left and right equals!\n", this);
+    if (this == left || dataProvider.getIdentity().isValid() && dataProvider.getIdentity().equals(dataProvider.getLeft())) {
+        OLogManager.instance().error(this, "checkEntryStructure: Node %s has left that points to itself!\n", this);
+    }
+    if (this == right || dataProvider.getIdentity().isValid() && dataProvider.getIdentity().equals(dataProvider.getRight())) {
+        OLogManager.instance().error(this, "checkEntryStructure: Node %s has right that points to itself!\n", this);
+    }
+    if (left != null && left == right) {
+        OLogManager.instance().error(this, "checkEntryStructure: Node %s has left and right equals!\n", this);
+    }
 
     if (left != null) {
-      if (!left.dataProvider.getIdentity().equals(dataProvider.getLeft()))
-        OLogManager.instance().error(this, "checkEntryStructure: Wrong left node loaded: " + dataProvider.getLeft());
-      if (left.parent != this)
-        OLogManager.instance().error(this,
-            "checkEntryStructure: Left node is not correctly connected to the parent" + dataProvider.getLeft());
+      if (!left.dataProvider.getIdentity().equals(dataProvider.getLeft())) {
+          OLogManager.instance().error(this, "checkEntryStructure: Wrong left node loaded: " + dataProvider.getLeft());
+      }
+      if (left.parent != this) {
+          OLogManager.instance().error(this,
+                  "checkEntryStructure: Left node is not correctly connected to the parent" + dataProvider.getLeft());
+      }
     }
 
     if (right != null) {
-      if (!right.dataProvider.getIdentity().equals(dataProvider.getRight()))
-        OLogManager.instance().error(this, "checkEntryStructure: Wrong right node loaded: " + dataProvider.getRight());
-      if (right.parent != this)
-        OLogManager.instance().error(this,
-            "checkEntryStructure: Right node is not correctly connected to the parent" + dataProvider.getRight());
+      if (!right.dataProvider.getIdentity().equals(dataProvider.getRight())) {
+          OLogManager.instance().error(this, "checkEntryStructure: Wrong right node loaded: " + dataProvider.getRight());
+      }
+      if (right.parent != this) {
+          OLogManager.instance().error(this,
+                  "checkEntryStructure: Right node is not correctly connected to the parent" + dataProvider.getRight());
+      }
     }
   }
 
@@ -411,8 +443,9 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
     V oldValue = getValue();
 
     int index = tree.getPageIndex();
-    if (dataProvider.setValueAt(index, iValue))
-      markDirty();
+    if (dataProvider.setValueAt(index, iValue)) {
+        markDirty();
+    }
 
     return oldValue;
   }
@@ -459,8 +492,9 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
 
   @Override
   protected void setColor(final boolean iColor) {
-    if (dataProvider.setColor(iColor))
-      markDirty();
+    if (dataProvider.setColor(iColor)) {
+        markDirty();
+    }
   }
 
   public void markDirty() {
@@ -469,28 +503,33 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
 
   public void onIdentityChanged(ORID rid) {
     if (left != null) {
-      if (left.dataProvider.setParent(rid))
-        left.markDirty();
+      if (left.dataProvider.setParent(rid)) {
+          left.markDirty();
+      }
     }
 
     if (right != null) {
-      if (right.dataProvider.setParent(rid))
-        right.markDirty();
+      if (right.dataProvider.setParent(rid)) {
+          right.markDirty();
+      }
     }
 
     if (parent != null) {
       if (parent.left == this) {
-        if (parent.dataProvider.setLeft(rid))
-          parent.markDirty();
+        if (parent.dataProvider.setLeft(rid)) {
+            parent.markDirty();
+        }
       } else if (parent.right == this) {
-        if (parent.dataProvider.setRight(rid))
-          parent.markDirty();
+        if (parent.dataProvider.setRight(rid)) {
+            parent.markDirty();
+        }
       } else {
         OLogManager.instance().error(this, "[save]: Tree inconsistent entries.");
       }
     } else if (pTree.getRoot() == this) {
-      if (pTree.dataProvider.setRoot(rid))
-        pTree.markDirty();
+      if (pTree.dataProvider.setRoot(rid)) {
+          pTree.markDirty();
+      }
     }
   }
 
@@ -503,9 +542,10 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
    * @return count of nodes that has been disconnected
    */
   protected int disconnect(final boolean iForceDirty, final int iLevel) {
-    if (dataProvider == null)
-      // DIRTY NODE, JUST REMOVE IT
-      return 1;
+    if (dataProvider == null) {
+        // DIRTY NODE, JUST REMOVE IT
+        return 1;
+    }
 
     int totalDisconnected = 0;
 
@@ -519,9 +559,10 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
           parent.left = null;
         } else if (parent.right == this) {
           parent.right = null;
-        } else
-          OLogManager.instance().warn(this,
-              "Node " + rid + " has the parent (" + parent + ") unlinked to itself. It links to " + parent);
+        } else {
+            OLogManager.instance().warn(this,
+                    "Node " + rid + " has the parent (" + parent + ") unlinked to itself. It links to " + parent);
+        }
 
         totalDisconnected += parent.disconnect(iForceDirty, iLevel + 1);
         parent = null;
@@ -535,11 +576,12 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
     if (left != null) {
       // DISCONNECT RECURSIVELY THE LEFT NODE
       if (canDisconnectFrom(left) || iForceDirty) {
-        if (left.parent == this)
-          left.parent = null;
-        else
-          OLogManager.instance().warn(this,
-              "Node " + rid + " has the left (" + left + ") unlinked to itself. It links to " + left.parent);
+        if (left.parent == this) {
+            left.parent = null;
+        } else {
+            OLogManager.instance().warn(this,
+                    "Node " + rid + " has the left (" + left + ") unlinked to itself. It links to " + left.parent);
+        }
 
         totalDisconnected += left.disconnect(iForceDirty, iLevel + 1);
         left = null;
@@ -553,11 +595,12 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
     if (right != null) {
       // DISCONNECT RECURSIVELY THE RIGHT NODE
       if (canDisconnectFrom(right) || iForceDirty) {
-        if (right.parent == this)
-          right.parent = null;
-        else
-          OLogManager.instance().warn(this,
-              "Node " + rid + " has the right (" + right + ") unlinked to itself. It links to " + right.parent);
+        if (right.parent == this) {
+            right.parent = null;
+        } else {
+            OLogManager.instance().warn(this,
+                    "Node " + rid + " has the right (" + right + ") unlinked to itself. It links to " + right.parent);
+        }
 
         totalDisconnected += right.disconnect(iForceDirty, iLevel + 1);
         right = null;
@@ -567,13 +610,14 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
       disconnectedFromLeft = true;
     }
 
-    if (disconnectedFromParent && disconnectedFromLeft && disconnectedFromRight)
-      if ((!dataProvider.isEntryDirty() && !dataProvider.getIdentity().isTemporary() || iForceDirty)
-          && !pTree.isNodeEntryPoint(this)) {
-        totalDisconnected++;
-        pTree.removeNodeFromMemory(this);
-        clear();
-      }
+    if (disconnectedFromParent && disconnectedFromLeft && disconnectedFromRight) {
+        if ((!dataProvider.isEntryDirty() && !dataProvider.getIdentity().isTemporary() || iForceDirty)
+                && !pTree.isNodeEntryPoint(this)) {
+            totalDisconnected++;
+            pTree.removeNodeFromMemory(this);
+            clear();
+        }
+    }
 
     return totalDisconnected;
   }
@@ -597,18 +641,21 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
 
   @Override
   protected void copyFrom(final OMVRBTreeEntry<K, V> iSource) {
-    if (dataProvider.copyFrom(((OMVRBTreeEntryPersistent<K, V>) iSource).dataProvider))
-      markDirty();
+    if (dataProvider.copyFrom(((OMVRBTreeEntryPersistent<K, V>) iSource).dataProvider)) {
+        markDirty();
+    }
   }
 
   @Override
   protected void insert(final int iIndex, final K iKey, final V iValue) {
     K oldKey = iIndex == 0 ? dataProvider.getKeyAt(0) : null;
-    if (dataProvider.insertAt(iIndex, iKey, iValue))
-      markDirty();
+    if (dataProvider.insertAt(iIndex, iKey, iValue)) {
+        markDirty();
+    }
 
-    if (iIndex == 0)
-      pTree.updateEntryPoint(oldKey, this);
+    if (iIndex == 0) {
+        pTree.updateEntryPoint(oldKey, this);
+    }
   }
 
   @Override
@@ -616,13 +663,15 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
     final int index = tree.getPageIndex();
     final K oldKey = index == 0 ? getKeyAt(0) : null;
 
-    if (dataProvider.removeAt(index))
-      markDirty();
+    if (dataProvider.removeAt(index)) {
+        markDirty();
+    }
 
     tree.setPageIndex(index - 1);
 
-    if (index == 0)
-      pTree.updateEntryPoint(oldKey, this);
+    if (index == 0) {
+        pTree.updateEntryPoint(oldKey, this);
+    }
   }
 
   @Override
@@ -652,17 +701,19 @@ public class OMVRBTreeEntryPersistent<K, V> extends OMVRBTreeEntry<K, V> impleme
   private int getMaxDepthInMemory(final int iCurrDepthLevel) {
     int depth;
 
-    if (left != null)
-      // GET THE LEFT'S DEPTH LEVEL AS GOOD
-      depth = left.getMaxDepthInMemory(iCurrDepthLevel + 1);
-    else
-      // GET THE CURRENT DEPTH LEVEL AS GOOD
-      depth = iCurrDepthLevel;
+    if (left != null) {
+        // GET THE LEFT'S DEPTH LEVEL AS GOOD
+        depth = left.getMaxDepthInMemory(iCurrDepthLevel + 1);
+    } else {
+        // GET THE CURRENT DEPTH LEVEL AS GOOD
+        depth = iCurrDepthLevel;
+    }
 
     if (right != null) {
       int rightDepth = right.getMaxDepthInMemory(iCurrDepthLevel + 1);
-      if (rightDepth > depth)
-        depth = rightDepth;
+      if (rightDepth > depth) {
+          depth = rightDepth;
+      }
     }
 
     return depth;

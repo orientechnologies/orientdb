@@ -47,8 +47,9 @@ public class SQLDropIndexTest {
   public void beforeClass() {
     database = new ODatabaseDocumentTx(url);
 
-    if (database.isClosed())
-      database.open("admin", "admin");
+    if (database.isClosed()) {
+        database.open("admin", "admin");
+    }
 
     final OSchema schema = database.getMetadata().getSchema();
     final OClass oClass = schema.createClass("SQLDropIndexTestClass");
@@ -60,8 +61,9 @@ public class SQLDropIndexTest {
 
   @AfterClass
   public void afterClass() throws Exception {
-    if (database.isClosed())
-      database.open("admin", "admin");
+    if (database.isClosed()) {
+        database.open("admin", "admin");
+    }
     database.command(new OCommandSQL("delete from SQLDropIndexTestClass")).execute();
     database.command(new OCommandSQL("drop class SQLDropIndexTestClass")).execute();
     database.reload();
@@ -70,8 +72,9 @@ public class SQLDropIndexTest {
 
   @BeforeMethod
   public void beforeMethod() {
-    if (database.isClosed())
-      database.open("admin", "admin");
+    if (database.isClosed()) {
+        database.open("admin", "admin");
+    }
   }
 
   @AfterMethod

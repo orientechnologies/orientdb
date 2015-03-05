@@ -65,14 +65,15 @@ public class OSQLFunctionIf extends OSQLFunctionAbstract {
 
     try {
       Object condition = iParams[0];
-      if (condition instanceof Boolean)
-        result = (Boolean) condition;
-      else if (condition instanceof String)
-        result = Boolean.parseBoolean(condition.toString());
-      else if (condition instanceof Number)
-        result = ((Number) condition).intValue() > 0;
-      else
-        return null;
+      if (condition instanceof Boolean) {
+          result = (Boolean) condition;
+      } else if (condition instanceof String) {
+          result = Boolean.parseBoolean(condition.toString());
+      } else if (condition instanceof Number) {
+          result = ((Number) condition).intValue() > 0;
+      } else {
+          return null;
+      }
 
       return result ? iParams[1] : iParams[2];
 

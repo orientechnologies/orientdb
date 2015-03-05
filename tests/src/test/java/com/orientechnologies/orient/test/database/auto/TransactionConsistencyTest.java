@@ -444,8 +444,9 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
   public void testConsistencyOnDelete() {
     final OrientGraph graph = new OrientGraph(url);
 
-    if (graph.getVertexType("Foo") == null)
-      graph.createVertexType("Foo");
+    if (graph.getVertexType("Foo") == null) {
+        graph.createVertexType("Foo");
+    }
 
     try {
       // Step 1
@@ -501,12 +502,15 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     OrientGraph graph = new OrientGraph(url);
     graph.setUseLightweightEdges(false);
     try {
-      if (graph.getVertexType("Foo") == null)
-        graph.createVertexType("Foo");
-      if (graph.getVertexType("Bar") == null)
-        graph.createVertexType("Bar");
-      if (graph.getVertexType("Sees") == null)
-        graph.createEdgeType("Sees");
+      if (graph.getVertexType("Foo") == null) {
+          graph.createVertexType("Foo");
+      }
+      if (graph.getVertexType("Bar") == null) {
+          graph.createVertexType("Bar");
+      }
+      if (graph.getVertexType("Sees") == null) {
+          graph.createEdgeType("Sees");
+      }
 
       // Commenting out the transaction will result in the test succeeding.
       ODocument foo = graph.addVertex("class:Foo", "prop", "test1").getRecord();
@@ -575,8 +579,9 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     Assert.assertNotNull(result1);
     Assert.assertEquals(result1.size(), cnt);
 //    System.out.println("Before transaction commit");
-    for (ODocument d : result1)
-      System.out.println(d);
+    for (ODocument d : result1) {
+        System.out.println(d);
+    }
 
     try {
       database.begin();
@@ -625,8 +630,9 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     final List<ODocument> result2 = database.command(new OCommandSQL("select from TRPerson")).execute();
     Assert.assertNotNull(result2);
 //    System.out.println("After transaction commit failure/rollback");
-    for (ODocument d : result2)
-      System.out.println(d);
+    for (ODocument d : result2) {
+        System.out.println(d);
+    }
     Assert.assertEquals(result2.size(), cnt);
 
 //    System.out.println("**************************TransactionRollbackConstistencyTest***************************************");
@@ -708,8 +714,9 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
 
       int bookCount = 0;
       for (Address b : database.browseClass(Address.class)) {
-        if (b.getStreet().equals("Mulholland drive") || b.getStreet().equals("Via Veneto"))
-          bookCount++;
+        if (b.getStreet().equals("Mulholland drive") || b.getStreet().equals("Via Veneto")) {
+            bookCount++;
+        }
       }
       Assert.assertEquals(bookCount, 2); // this fails, only 1 entry in the datastore :(
     } finally {

@@ -47,11 +47,13 @@ public class SQLMoveVertexCommandTest extends GraphNoTxAbstractTest {
       customerGeniusCluster = graph.getRawGraph().getClusterIdByName("Customer_genius");
     }
 
-    if (graph.getVertexType("Provider") == null)
-      provider = (OrientVertexType) graph.createVertexType("Provider").setClusterSelection("default");
+    if (graph.getVertexType("Provider") == null) {
+        provider = (OrientVertexType) graph.createVertexType("Provider").setClusterSelection("default");
+    }
 
-    if (graph.getEdgeType("Knows") == null)
-      knows = graph.createEdgeType("Knows");
+    if (graph.getEdgeType("Knows") == null) {
+        knows = graph.createEdgeType("Knows");
+    }
   }
 
   @Test

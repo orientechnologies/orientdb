@@ -44,14 +44,15 @@ public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbs
      ODatabaseDocumentTx db = null;
      try {
        db = getProfiledDatabaseInstance(iRequest);
-       if (iRequest.content == null || iRequest.content.length() <= 0)
-         return addSingleProperty(iRequest, iResponse, db);
-       else {
+       if (iRequest.content == null || iRequest.content.length() <= 0) {
+           return addSingleProperty(iRequest, iResponse, db);
+       } else {
          return addMultipreProperties(iRequest, iResponse, db);
        }
      } finally {
-       if (db != null)
-         db.close();
+       if (db != null) {
+           db.close();
+       }
      }
    }
 
@@ -64,8 +65,9 @@ public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbs
      iRequest.data.commandInfo = "Create property";
      iRequest.data.commandDetail = urlParts[2] + "." + urlParts[3];
 
-     if (db.getMetadata().getSchema().getClass(urlParts[2]) == null)
-       throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");
+     if (db.getMetadata().getSchema().getClass(urlParts[2]) == null) {
+         throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");
+     }
 
      final OClass cls = db.getMetadata().getSchema().getClass(urlParts[2]);
 
@@ -133,8 +135,9 @@ public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbs
      iRequest.data.commandInfo = "Create property";
      iRequest.data.commandDetail = urlParts[2];
 
-     if (db.getMetadata().getSchema().getClass(urlParts[2]) == null)
-       throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");
+     if (db.getMetadata().getSchema().getClass(urlParts[2]) == null) {
+         throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");
+     }
 
      final OClass cls = db.getMetadata().getSchema().getClass(urlParts[2]);
 

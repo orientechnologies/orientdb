@@ -185,8 +185,9 @@ public class OClusterPositionMap extends ODurableComponent {
       long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
       int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
 
-      if (pageIndex >= diskCache.getFilledUpTo(fileId))
-        return null;
+      if (pageIndex >= diskCache.getFilledUpTo(fileId)) {
+          return null;
+      }
 
       final OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
       try {
@@ -214,8 +215,9 @@ public class OClusterPositionMap extends ODurableComponent {
         final OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, trackMode);
 
         OClusterPositionMapBucket.PositionEntry positionEntry = bucket.remove(index);
-        if (positionEntry == null)
-          return null;
+        if (positionEntry == null) {
+            return null;
+        }
 
         cacheEntry.markDirty();
 
@@ -239,8 +241,9 @@ public class OClusterPositionMap extends ODurableComponent {
   public long[] higherPositions(final long clusterPosition) throws IOException {
     acquireSharedLock();
     try {
-      if (clusterPosition == Long.MAX_VALUE)
-        return new long[0];
+      if (clusterPosition == Long.MAX_VALUE) {
+          return new long[0];
+      }
 
       return ceilingPositions(clusterPosition + 1);
     } finally {
@@ -251,16 +254,18 @@ public class OClusterPositionMap extends ODurableComponent {
   public long[] ceilingPositions(long clusterPosition) throws IOException {
     acquireSharedLock();
     try {
-      if (clusterPosition < 0)
-        clusterPosition = 0;
+      if (clusterPosition < 0) {
+          clusterPosition = 0;
+      }
 
       long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
       int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
 
       final long filledUpTo = diskCache.getFilledUpTo(fileId);
 
-      if (pageIndex >= filledUpTo)
-        return new long[0];
+      if (pageIndex >= filledUpTo) {
+          return new long[0];
+      }
 
       long[] result = null;
       do {
@@ -288,15 +293,17 @@ public class OClusterPositionMap extends ODurableComponent {
             result = null;
             pageIndex++;
             index = 0;
-          } else
-            result = Arrays.copyOf(result, entriesCount);
+          } else {
+              result = Arrays.copyOf(result, entriesCount);
+          }
 
           diskCache.release(cacheEntry);
         }
       } while (result == null && pageIndex < filledUpTo);
 
-      if (result == null)
-        result = new long[0];
+      if (result == null) {
+          result = new long[0];
+      }
 
       return result;
     } finally {
@@ -307,8 +314,9 @@ public class OClusterPositionMap extends ODurableComponent {
   public long[] lowerPositions(final long clusterPosition) throws IOException {
     acquireSharedLock();
     try {
-      if (clusterPosition == 0)
-        return new long[0];
+      if (clusterPosition == 0) {
+          return new long[0];
+      }
 
       return floorPositions(clusterPosition - 1);
     } finally {
@@ -319,8 +327,9 @@ public class OClusterPositionMap extends ODurableComponent {
   public long[] floorPositions(final long clusterPosition) throws IOException {
     acquireSharedLock();
     try {
-      if (clusterPosition < 0)
-        return new long[0];
+      if (clusterPosition < 0) {
+          return new long[0];
+      }
 
       long pageIndex = clusterPosition / OClusterPositionMapBucket.MAX_ENTRIES;
       int index = (int) (clusterPosition % OClusterPositionMapBucket.MAX_ENTRIES);
@@ -336,8 +345,9 @@ public class OClusterPositionMap extends ODurableComponent {
       do {
         OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
         OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, ODurablePage.TrackMode.NONE);
-        if (index == Integer.MIN_VALUE)
-          index = bucket.getSize() - 1;
+        if (index == Integer.MIN_VALUE) {
+            index = bucket.getSize() - 1;
+        }
 
         int resultSize = index + 1;
         int entriesCount = 0;
@@ -356,14 +366,16 @@ public class OClusterPositionMap extends ODurableComponent {
           result = null;
           pageIndex--;
           index = Integer.MIN_VALUE;
-        } else
-          result = Arrays.copyOf(result, entriesCount);
+        } else {
+            result = Arrays.copyOf(result, entriesCount);
+        }
 
         diskCache.release(cacheEntry);
       } while (result == null && pageIndex >= 0);
 
-      if (result == null)
-        result = new long[0];
+      if (result == null) {
+          result = new long[0];
+      }
 
       return result;
     } finally {
@@ -382,8 +394,9 @@ public class OClusterPositionMap extends ODurableComponent {
           int bucketSize = bucket.getSize();
 
           for (int index = 0; index < bucketSize; index++) {
-            if (bucket.exists(index))
-              return pageIndex * OClusterPositionMapBucket.MAX_ENTRIES + index;
+            if (bucket.exists(index)) {
+                return pageIndex * OClusterPositionMapBucket.MAX_ENTRIES + index;
+            }
           }
         } finally {
           diskCache.release(cacheEntry);
@@ -407,8 +420,9 @@ public class OClusterPositionMap extends ODurableComponent {
           final int bucketSize = bucket.getSize();
 
           for (int index = bucketSize - 1; index >= 0; index--) {
-            if (bucket.exists(index))
-              return pageIndex * OClusterPositionMapBucket.MAX_ENTRIES + index;
+            if (bucket.exists(index)) {
+                return pageIndex * OClusterPositionMapBucket.MAX_ENTRIES + index;
+            }
           }
         } finally {
           diskCache.release(cacheEntry);
@@ -432,21 +446,24 @@ public class OClusterPositionMap extends ODurableComponent {
 
   @Override
   protected ODurablePage.TrackMode getTrackMode() {
-    if (!useWal)
-      return ODurablePage.TrackMode.NONE;
+    if (!useWal) {
+        return ODurablePage.TrackMode.NONE;
+    }
 
     return super.getTrackMode();
   }
 
   @Override
   protected void endAtomicOperation(final boolean rollback) throws IOException {
-    if (useWal)
-      super.endAtomicOperation(rollback);
+    if (useWal) {
+        super.endAtomicOperation(rollback);
+    }
   }
 
   @Override
   protected void startAtomicOperation() throws IOException {
-    if (useWal)
-      super.startAtomicOperation();
+    if (useWal) {
+        super.startAtomicOperation();
+    }
   }
 }

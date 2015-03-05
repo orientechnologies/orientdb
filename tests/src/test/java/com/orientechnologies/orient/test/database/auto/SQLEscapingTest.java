@@ -43,8 +43,9 @@ public class SQLEscapingTest {
 
   @BeforeClass
   public void beforeClass() {
-    if (database == null)
-      database = new ODatabaseDocumentTx(url);
+    if (database == null) {
+        database = new ODatabaseDocumentTx(url);
+    }
   }
 
   @BeforeMethod

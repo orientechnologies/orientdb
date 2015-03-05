@@ -60,8 +60,9 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLEarlyR
     } else {
       try {
         final ORecordId rid = new ORecordId(target);
-        if (!rid.isValid())
-          throwParsingException("Record ID " + target + " is not valid");
+        if (!rid.isValid()) {
+            throwParsingException("Record ID " + target + " is not valid");
+        }
         recordIds.add(rid);
 
       } catch (IllegalArgumentException iae) {
@@ -88,13 +89,15 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLEarlyR
    * Execute the FIND REFERENCES.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (recordIds.isEmpty() && subQuery == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    if (recordIds.isEmpty() && subQuery == null) {
+        throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    }
 
     if (subQuery != null) {
       final List<OIdentifiable> result = new OCommandSQL(subQuery.toString()).execute();
-      for (OIdentifiable id : result)
-        recordIds.add(id.getIdentity());
+      for (OIdentifiable id : result) {
+          recordIds.add(id.getIdentity());
+      }
     }
 
     return OFindReferenceHelper.findReferences(recordIds, classList);

@@ -106,8 +106,9 @@ public class OStorageLocalTest {
 
   private String getDatabasePath() {
     String buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null)
-      buildDirectory = "./target";
+    if (buildDirectory == null) {
+        buildDirectory = "./target";
+    }
 
     return buildDirectory + File.separator + "OStorageLocalTestDB__42";
   }

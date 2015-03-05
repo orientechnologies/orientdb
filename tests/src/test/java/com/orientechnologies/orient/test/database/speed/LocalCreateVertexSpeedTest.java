@@ -52,8 +52,9 @@ public class LocalCreateVertexSpeedTest extends OrientMonoThreadTest {
     final OrientGraphFactory factory = new OrientGraphFactory(System.getProperty("url"));
     factory.setStandardElementConstraints(false);
 
-    if (factory.exists())
-      factory.drop();
+    if (factory.exists()) {
+        factory.drop();
+    }
 
     database = factory.getNoTx();
 
@@ -68,8 +69,9 @@ public class LocalCreateVertexSpeedTest extends OrientMonoThreadTest {
     database.addVertex("class:Account", "id", data.getCyclesDone(), "name", "Luca", "surname", "Garulli", "birthDate", date, "salary",
         3000f + data.getCyclesDone());
 
-    if (data.getCyclesDone() == data.getCycles() - 1)
-      database.commit();
+    if (data.getCyclesDone() == data.getCycles() - 1) {
+        database.commit();
+    }
   }
 
   @Override
@@ -77,8 +79,9 @@ public class LocalCreateVertexSpeedTest extends OrientMonoThreadTest {
   public void deinit() {
     System.out.println(Orient.instance().getProfiler().dump());
 
-    if (database != null)
-      database.shutdown();
+    if (database != null) {
+        database.shutdown();
+    }
     super.deinit();
  }
 }

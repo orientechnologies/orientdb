@@ -67,16 +67,17 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
     final OrientBaseGraph graph = OGraphCommandExecutorSQLFactory.getGraph(false, shutdownFlag);
     try {
       final String[] labels;
-      if (iParameters != null && iParameters.length > 0 && iParameters[0] != null)
-        labels = OMultiValue.array(iParameters, String.class, new OCallable<Object, Object>() {
-
-          @Override
-          public Object call(final Object iArgument) {
-            return OStringSerializerHelper.getStringContent(iArgument);
-          }
-        });
-      else
-        labels = null;
+      if (iParameters != null && iParameters.length > 0 && iParameters[0] != null) {
+          labels = OMultiValue.array(iParameters, String.class, new OCallable<Object, Object>() {
+              
+              @Override
+              public Object call(final Object iArgument) {
+                  return OStringSerializerHelper.getStringContent(iArgument);
+              }
+          });
+      } else {
+          labels = null;
+      }
 
       return OSQLEngine.foreachRecord(new OCallable<Object, OIdentifiable>() {
         @Override
@@ -85,21 +86,23 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
         }
       }, iThis, iContext);
     } finally {
-      if (shutdownFlag.getValue())
-        graph.shutdown(false);
+      if (shutdownFlag.getValue()) {
+          graph.shutdown(false);
+      }
     }
   }
 
   protected Object v2v(final OrientBaseGraph graph, final OIdentifiable iRecord, final Direction iDirection, final String[] iLabels) {
     final ODocument rec = iRecord.getRecord();
 
-    if (ODocumentInternal.getImmutableSchemaClass(rec) != null)
-      if (ODocumentInternal.getImmutableSchemaClass(rec).isSubClassOf(OrientVertexType.CLASS_NAME)) {
-        // VERTEX
-        final OrientVertex vertex = graph.getVertex(rec);
-        if (vertex != null)
-          return vertex.getVertices(iDirection, iLabels);
-      }
+    if (ODocumentInternal.getImmutableSchemaClass(rec) != null) {
+        if (ODocumentInternal.getImmutableSchemaClass(rec).isSubClassOf(OrientVertexType.CLASS_NAME)) {
+            final OrientVertex vertex = graph.getVertex(rec);
+            if (vertex != null) {
+                return vertex.getVertices(iDirection, iLabels);
+            }
+        }
+    }
 
     return null;
   }
@@ -107,13 +110,14 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
   protected Object v2e(final OrientBaseGraph graph, final OIdentifiable iRecord, final Direction iDirection, final String[] iLabels) {
     final ODocument rec = iRecord.getRecord();
 
-    if (ODocumentInternal.getImmutableSchemaClass(rec) != null)
-      if (ODocumentInternal.getImmutableSchemaClass(rec).isSubClassOf(OrientVertexType.CLASS_NAME)) {
-        // VERTEX
-        final OrientVertex vertex = graph.getVertex(rec);
-        if (vertex != null)
-          return vertex.getEdges(iDirection, iLabels);
-      }
+    if (ODocumentInternal.getImmutableSchemaClass(rec) != null) {
+        if (ODocumentInternal.getImmutableSchemaClass(rec).isSubClassOf(OrientVertexType.CLASS_NAME)) {
+            final OrientVertex vertex = graph.getVertex(rec);
+            if (vertex != null) {
+                return vertex.getEdges(iDirection, iLabels);
+            }
+        }
+    }
 
     return null;
   }
@@ -121,16 +125,17 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
   protected Object e2v(final OrientBaseGraph graph, final OIdentifiable iRecord, final Direction iDirection, final String[] iLabels) {
     final ODocument rec = iRecord.getRecord();
 
-    if (ODocumentInternal.getImmutableSchemaClass(rec) != null)
-      if (ODocumentInternal.getImmutableSchemaClass(rec).isSubClassOf(OrientEdgeType.CLASS_NAME)) {
-        // EDGE
-        final OrientEdge edge = graph.getEdge(rec);
-        if (edge != null) {
-          final OrientVertex out = (OrientVertex) edge.getVertex(iDirection);
-
-          return out;
+    if (ODocumentInternal.getImmutableSchemaClass(rec) != null) {
+        if (ODocumentInternal.getImmutableSchemaClass(rec).isSubClassOf(OrientEdgeType.CLASS_NAME)) {
+            // EDGE
+            final OrientEdge edge = graph.getEdge(rec);
+            if (edge != null) {
+                final OrientVertex out = (OrientVertex) edge.getVertex(iDirection);
+                
+                return out;
+            }
         }
-      }
+    }
 
     return null;
   }

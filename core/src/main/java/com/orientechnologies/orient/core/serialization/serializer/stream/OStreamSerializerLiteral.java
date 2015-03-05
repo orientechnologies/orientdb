@@ -39,8 +39,9 @@ public class OStreamSerializerLiteral implements OStreamSerializer {
 	}
 
 	public byte[] toStream(final Object iObject) throws IOException {
-		if (iObject == null)
-			return null;
+		if (iObject == null) {
+                    return null;
+                }
 
 		final StringBuilder buffer = new StringBuilder();
 		ORecordSerializerStringAbstract.fieldTypeToString(buffer, OType.getTypeByClass(iObject.getClass()), iObject);

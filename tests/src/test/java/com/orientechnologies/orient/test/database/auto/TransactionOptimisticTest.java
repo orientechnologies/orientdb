@@ -48,8 +48,9 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
 
   @Test
   public void testTransactionOptimisticRollback() throws IOException {
-    if (database.getClusterIdByName("binary") == -1)
-      database.addCluster("binary");
+    if (database.getClusterIdByName("binary") == -1) {
+        database.addCluster("binary");
+    }
 
     long rec = database.countClusterElements("binary");
 
@@ -65,8 +66,9 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "testTransactionOptimisticRollback")
   public void testTransactionOptimisticCommit() throws IOException {
-    if (database.getClusterIdByName("binary") == -1)
-      database.addCluster("binary");
+    if (database.getClusterIdByName("binary") == -1) {
+        database.addCluster("binary");
+    }
 
     long tot = database.countClusterElements("binary");
 
@@ -82,8 +84,9 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "testTransactionOptimisticCommit")
   public void testTransactionOptimisticConcurrentException() throws IOException {
-    if (database.getClusterIdByName("binary") == -1)
-      database.addCluster("binary");
+    if (database.getClusterIdByName("binary") == -1) {
+        database.addCluster("binary");
+    }
 
     ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(database.getURL());
     db2.open("admin", "admin");
@@ -131,8 +134,9 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "testTransactionOptimisticConcurrentException")
   public void testTransactionOptimisticCacheMgmt1Db() throws IOException {
-    if (database.getClusterIdByName("binary") == -1)
-      database.addCluster("binary");
+    if (database.getClusterIdByName("binary") == -1) {
+        database.addCluster("binary");
+    }
 
     ORecordBytes record = new ORecordBytes("This is the first version".getBytes());
     record.save();
@@ -158,8 +162,9 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = "testTransactionOptimisticCacheMgmt1Db")
   public void testTransactionOptimisticCacheMgmt2Db() throws IOException {
-    if (database.getClusterIdByName("binary") == -1)
-      database.addCluster("binary");
+    if (database.getClusterIdByName("binary") == -1) {
+        database.addCluster("binary");
+    }
 
     ODatabaseDocumentTx db2 = new ODatabaseDocumentTx(database.getURL());
     db2.open("admin", "admin");
@@ -197,8 +202,9 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
   public void testTransactionMultipleRecords() throws IOException {
     final OSchema schema = database.getMetadata().getSchema();
 
-    if (!schema.existsClass("Account"))
-      schema.createClass("Account");
+    if (!schema.existsClass("Account")) {
+        schema.createClass("Account");
+    }
 
     long totalAccounts = database.countClusterElements("Account");
 
@@ -223,8 +229,9 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
   public void createGraphInTx() {
     final OSchema schema = database.getMetadata().getSchema();
 
-    if (!schema.existsClass("Profile"))
-      schema.createClass("Profile");
+    if (!schema.existsClass("Profile")) {
+        schema.createClass("Profile");
+    }
 
     database.begin();
 
@@ -285,8 +292,9 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
     };
 
     final OSchema schema = database.getMetadata().getSchema();
-    if (!schema.existsClass("NestedTxClass"))
-      schema.createClass("NestedTxClass");
+    if (!schema.existsClass("NestedTxClass")) {
+        schema.createClass("NestedTxClass");
+    }
 
     database.begin();
 
@@ -340,8 +348,9 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
     };
 
     final OSchema schema = database.getMetadata().getSchema();
-    if (!schema.existsClass("NestedTxRollbackOne"))
-      schema.createClass("NestedTxRollbackOne");
+    if (!schema.existsClass("NestedTxRollbackOne")) {
+        schema.createClass("NestedTxRollbackOne");
+    }
 
     ODocument brokenDocOne = new ODocument("NestedTxRollbackOne");
     brokenDocOne.save();
@@ -397,8 +406,9 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
 
   public void testNestedTxRollbackTwo() {
     final OSchema schema = database.getMetadata().getSchema();
-    if (!schema.existsClass("NestedTxRollbackTwo"))
-      schema.createClass("NestedTxRollbackTwo");
+    if (!schema.existsClass("NestedTxRollbackTwo")) {
+        schema.createClass("NestedTxRollbackTwo");
+    }
 
     database.begin();
     try {

@@ -254,23 +254,30 @@ public interface OIndexInternal<T> extends OIndex<T> {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
+      if (this == o) {
+          return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+          return false;
+      }
 
       IndexMetadata that = (IndexMetadata) o;
 
-      if (algorithm != null ? !algorithm.equals(that.algorithm) : that.algorithm != null)
-        return false;
-      if (!clustersToIndex.equals(that.clustersToIndex))
-        return false;
-      if (indexDefinition != null ? !indexDefinition.equals(that.indexDefinition) : that.indexDefinition != null)
-        return false;
-      if (!name.equals(that.name))
-        return false;
-      if (!type.equals(that.type))
-        return false;
+      if (algorithm != null ? !algorithm.equals(that.algorithm) : that.algorithm != null) {
+          return false;
+      }
+      if (!clustersToIndex.equals(that.clustersToIndex)) {
+          return false;
+      }
+      if (indexDefinition != null ? !indexDefinition.equals(that.indexDefinition) : that.indexDefinition != null) {
+          return false;
+      }
+      if (!name.equals(that.name)) {
+          return false;
+      }
+      if (!type.equals(that.type)) {
+          return false;
+      }
 
       return true;
     }

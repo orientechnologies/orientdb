@@ -65,12 +65,13 @@ public class OScriptGraphWrapper implements TransactionalGraph {
   @SuppressWarnings("unchecked")
   public Object command(final String language, final String iText, final Object[] iArgs) {
     Object result = null;
-    if (language.equalsIgnoreCase("sql"))
-      result = graph.command(new OCommandSQL(iText)).execute(iArgs);
-    else if (language.equalsIgnoreCase("gremlin"))
-      result = graph.command(new OCommandGremlin(iText)).execute(iArgs);
-    else
-      result = graph.command(new OCommandScript(language, iText)).execute(iArgs);
+    if (language.equalsIgnoreCase("sql")) {
+        result = graph.command(new OCommandSQL(iText)).execute(iArgs);
+    } else if (language.equalsIgnoreCase("gremlin")) {
+        result = graph.command(new OCommandGremlin(iText)).execute(iArgs);
+    } else {
+        result = graph.command(new OCommandScript(language, iText)).execute(iArgs);
+    }
 
     if (result instanceof Iterable<?>) {
       // FOR SAKE OF SIMPLICITY TRANSFORM ANY ITERABLE IN ARRAY
@@ -102,20 +103,23 @@ public class OScriptGraphWrapper implements TransactionalGraph {
   }
 
   public boolean isAutoStartTx() {
-    if (graph instanceof OrientGraph)
-      return ((OrientGraph) graph).isAutoStartTx();
+    if (graph instanceof OrientGraph) {
+        return ((OrientGraph) graph).isAutoStartTx();
+    }
 
     return false;
   }
 
   public void setAutoStartTx(boolean autoStartTx) {
-    if (graph instanceof OrientGraph)
-      ((OrientGraph) graph).setAutoStartTx(autoStartTx);
+    if (graph instanceof OrientGraph) {
+        ((OrientGraph) graph).setAutoStartTx(autoStartTx);
+    }
   }
 
   public void stopTransaction(Conclusion conclusion) {
-    if (graph instanceof OrientGraph)
-      ((OrientGraph) graph).stopTransaction(conclusion);
+    if (graph instanceof OrientGraph) {
+        ((OrientGraph) graph).stopTransaction(conclusion);
+    }
   }
 
   public boolean equals(Object obj) {

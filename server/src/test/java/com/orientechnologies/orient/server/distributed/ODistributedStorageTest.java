@@ -17,8 +17,9 @@ public class ODistributedStorageTest {
 
   @BeforeMethod
   public void before() {
-    if (!Orient.instance().isActive())
-      Orient.instance().startup();
+    if (!Orient.instance().isActive()) {
+        Orient.instance().startup();
+    }
   }
 
   @Test

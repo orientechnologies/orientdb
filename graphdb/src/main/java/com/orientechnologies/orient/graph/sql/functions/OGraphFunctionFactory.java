@@ -64,12 +64,13 @@ public class OGraphFunctionFactory implements OSQLFunctionFactory {
   public OSQLFunction createFunction(final String name) {
     final Object obj = FUNCTIONS.get(name.toLowerCase());
 
-    if (obj == null)
-      throw new OCommandExecutionException("Unknown function name :" + name);
+    if (obj == null) {
+        throw new OCommandExecutionException("Unknown function name :" + name);
+    }
 
-    if (obj instanceof OSQLFunction)
-      return (OSQLFunction) obj;
-    else {
+    if (obj instanceof OSQLFunction) {
+        return (OSQLFunction) obj;
+    } else {
       // it's a class
       final Class<?> clazz = (Class<?>) obj;
       try {

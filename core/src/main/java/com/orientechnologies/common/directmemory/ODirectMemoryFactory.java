@@ -36,15 +36,17 @@ class ODirectMemoryFactory {
       if (OGlobalConfiguration.MEMORY_USE_UNSAFE.getValueAsBoolean()) {
         final Class<?> sunClass = Class.forName("sun.misc.Unsafe");
 
-        if (sunClass != null)
-          localDirectMemory = OUnsafeMemory.INSTANCE;
+        if (sunClass != null) {
+            localDirectMemory = OUnsafeMemory.INSTANCE;
+        }
       }
     } catch (Throwable e) {
       // ignore
     }
 
-    if (localDirectMemory == null)
-      localDirectMemory = new OJNADirectMemory();
+    if (localDirectMemory == null) {
+        localDirectMemory = new OJNADirectMemory();
+    }
 
     directMemory = localDirectMemory;
   }

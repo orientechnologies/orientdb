@@ -71,8 +71,9 @@ public class SBTreeLeafBucketTest {
     Map<Long, Integer> keyIndexMap = new HashMap<Long, Integer>();
     for (Long key : keys) {
       if (!treeBucket.addEntry(index, new OSBTreeBucket.SBTreeEntry<Long, OIdentifiable>(-1, -1, key,
-          new OSBTreeValue<OIdentifiable>(false, -1, new ORecordId(index, index))), true))
-        break;
+          new OSBTreeValue<OIdentifiable>(false, -1, new ORecordId(index, index))), true)) {
+          break;
+      }
       keyIndexMap.put(key, index);
       index++;
     }
@@ -111,8 +112,9 @@ public class SBTreeLeafBucketTest {
     int index = 0;
     for (Long key : keys) {
       if (!treeBucket.addEntry(index, new OSBTreeBucket.SBTreeEntry<Long, OIdentifiable>(-1, -1, key,
-          new OSBTreeValue<OIdentifiable>(false, -1, new ORecordId(index, index))), true))
-        break;
+          new OSBTreeValue<OIdentifiable>(false, -1, new ORecordId(index, index))), true)) {
+          break;
+      }
 
       keyIndexMap.put(key, index);
       index++;
@@ -120,8 +122,9 @@ public class SBTreeLeafBucketTest {
 
     Assert.assertEquals(keyIndexMap.size(), treeBucket.size());
 
-    for (int i = 0; i < treeBucket.size(); i++)
-      treeBucket.updateValue(i, new OSBTreeValue<OIdentifiable>(false, -1, new ORecordId(i + 5, i + 5)));
+    for (int i = 0; i < treeBucket.size(); i++) {
+        treeBucket.updateValue(i, new OSBTreeValue<OIdentifiable>(false, -1, new ORecordId(i + 5, i + 5)));
+    }
 
     for (Map.Entry<Long, Integer> keyIndexEntry : keyIndexMap.entrySet()) {
       OSBTreeBucket.SBTreeEntry<Long, OIdentifiable> entry = treeBucket.getEntry(keyIndexEntry.getValue());
@@ -157,8 +160,9 @@ public class SBTreeLeafBucketTest {
     int index = 0;
     for (Long key : keys) {
       if (!treeBucket.addEntry(index, new OSBTreeBucket.SBTreeEntry<Long, OIdentifiable>(-1, -1, key,
-          new OSBTreeValue<OIdentifiable>(false, -1, new ORecordId(index, index))), true))
-        break;
+          new OSBTreeValue<OIdentifiable>(false, -1, new ORecordId(index, index))), true)) {
+          break;
+      }
 
       index++;
     }
@@ -189,8 +193,9 @@ public class SBTreeLeafBucketTest {
       Long key = keysIterator.next();
 
       if (!treeBucket.addEntry(index, new OSBTreeBucket.SBTreeEntry<Long, OIdentifiable>(-1, -1, key,
-          new OSBTreeValue<OIdentifiable>(false, -1, new ORecordId(index, index))), true))
-        break;
+          new OSBTreeValue<OIdentifiable>(false, -1, new ORecordId(index, index))), true)) {
+          break;
+      }
 
       keyIndexMap.put(key, index);
       index++;
@@ -233,8 +238,9 @@ public class SBTreeLeafBucketTest {
     int index = 0;
     for (Long key : keys) {
       if (!treeBucket.addEntry(index, new OSBTreeBucket.SBTreeEntry<Long, OIdentifiable>(-1, -1, key,
-          new OSBTreeValue<OIdentifiable>(false, -1, new ORecordId(index, index))), true))
-        break;
+          new OSBTreeValue<OIdentifiable>(false, -1, new ORecordId(index, index))), true)) {
+          break;
+      }
 
       index++;
     }
@@ -269,8 +275,9 @@ public class SBTreeLeafBucketTest {
       Long key = keysIterator.next();
 
       if (!treeBucket.addEntry(index, new OSBTreeBucket.SBTreeEntry<Long, OIdentifiable>(-1, -1, key,
-          new OSBTreeValue<OIdentifiable>(false, -1, new ORecordId(index, index))), true))
-        break;
+          new OSBTreeValue<OIdentifiable>(false, -1, new ORecordId(index, index))), true)) {
+          break;
+      }
 
       keyIndexMap.put(key, index);
       index++;

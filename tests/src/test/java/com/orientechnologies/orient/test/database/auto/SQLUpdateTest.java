@@ -537,8 +537,9 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     final ORecordIteratorCluster<ODocument> iteratorCluster = database.browseCluster(database.getClusterNameById(clusterId));
 
     for (int i = 0; i < 7; i++) {
-      if (!iteratorCluster.hasNext())
-        break;
+      if (!iteratorCluster.hasNext()) {
+          break;
+      }
       ODocument doc = iteratorCluster.next();
       positions.add(doc.getIdentity().getClusterPosition());
     }

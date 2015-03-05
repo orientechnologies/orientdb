@@ -58,8 +58,9 @@ public class TcpServer {
 					ooStream.flush();
 					oStream.flush();
 
-					if (iiStream == null)
-						iiStream = new ObjectInputStream(iStream);
+					if (iiStream == null) {
+                                            iiStream = new ObjectInputStream(iStream);
+                                        }
 
 					iiStream.readByte();
 				}

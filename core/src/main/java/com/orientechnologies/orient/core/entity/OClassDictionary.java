@@ -71,30 +71,41 @@ public class OClassDictionary {
   }
 
   public Character getCodeByClass(final Class<?> iClass) {
-    if (iClass.equals(ODocument.class))
-      return '0';
-    if (iClass.equals(ORecordFlat.class))
-      return '2';
-    if (iClass.equals(ORecordBytes.class))
-      return '3';
+    if (iClass.equals(ODocument.class)) {
+        return '0';
+    }
+    if (iClass.equals(ORecordFlat.class)) {
+        return '2';
+    }
+    if (iClass.equals(ORecordBytes.class)) {
+        return '3';
+    }
 
-    if (iClass.equals(OClass.class))
-      return '4';
-    if (iClass.equals(OProperty.class))
-      return '5';
-    if (iClass.equals(OUser.class))
-      return '6';
+    if (iClass.equals(OClass.class)) {
+        return '4';
+    }
+    if (iClass.equals(OProperty.class)) {
+        return '5';
+    }
+    if (iClass.equals(OUser.class)) {
+        return '6';
+    }
 
-    if (iClass.equals(OStorageConfiguration.class))
-      return '7';
-    if (iClass.equals(OStorageClusterHoleConfiguration.class))
-      return 'a';
-    if (iClass.equals(OStorageDataHoleConfiguration.class))
-      return 'b';
-    if (iClass.equals(OStorageSegmentConfiguration.class))
-      return 'c';
-    if (iClass.equals(OStorageFileConfiguration.class))
-      return 'd';
+    if (iClass.equals(OStorageConfiguration.class)) {
+        return '7';
+    }
+    if (iClass.equals(OStorageClusterHoleConfiguration.class)) {
+        return 'a';
+    }
+    if (iClass.equals(OStorageDataHoleConfiguration.class)) {
+        return 'b';
+    }
+    if (iClass.equals(OStorageSegmentConfiguration.class)) {
+        return 'c';
+    }
+    if (iClass.equals(OStorageFileConfiguration.class)) {
+        return 'd';
+    }
 
     return null;
   }

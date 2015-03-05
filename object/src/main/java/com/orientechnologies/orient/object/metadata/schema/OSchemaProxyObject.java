@@ -250,83 +250,85 @@ public class OSchemaProxyObject implements OSchema {
    *          :- the Class<?> to generate
    */
   public synchronized void generateSchema(final Class<?> iClass, ODatabaseDocument database) {
-    if (iClass == null || iClass.isInterface() || iClass.isPrimitive() || iClass.isEnum() || iClass.isAnonymousClass())
-      return;
+    if (iClass == null || iClass.isInterface() || iClass.isPrimitive() || iClass.isEnum() || iClass.isAnonymousClass()) {
+        return;
+    }
     OObjectEntitySerializer.registerClass(iClass);
     OClass schema = database.getMetadata().getSchema().getClass(iClass);
     if (schema == null) {
       generateOClass(iClass, database);
     }
     List<String> fields = OObjectEntitySerializer.getClassFields(iClass);
-    if (fields != null)
-      for (String field : fields) {
-        if (schema.existsProperty(field))
-          continue;
-        if (OObjectEntitySerializer.isVersionField(iClass, field) || OObjectEntitySerializer.isIdField(iClass, field))
-          continue;
-        Field f = OObjectEntitySerializer.getField(field, iClass);
-        if (f.getType().equals(Object.class) || f.getType().equals(ODocument.class) || f.getType().equals(ORecordBytes.class)) {
-          continue;
-        }
-        OType t = OObjectEntitySerializer.getTypeByClass(iClass, field, f);
-        if (t == null) {
-          if (f.getType().isEnum())
-            t = OType.STRING;
-          else {
-            t = OType.LINK;
-          }
-        }
-        switch (t) {
-
-        case LINK:
-          Class<?> linkedClazz = OObjectEntitySerializer.getSpecifiedLinkedType(f);
-          if (linkedClazz == null)
-            linkedClazz = f.getType();
-          generateLinkProperty(database, schema, field, t, linkedClazz);
-          break;
-        case LINKLIST:
-        case LINKMAP:
-        case LINKSET:
-          linkedClazz = OObjectEntitySerializer.getSpecifiedMultiLinkedType(f);
-          if (linkedClazz == null)
-            linkedClazz = OReflectionHelper.getGenericMultivalueType(f);
-          if (linkedClazz != null)
-            generateLinkProperty(database, schema, field, t, linkedClazz);
-          break;
-
-        case EMBEDDED:
-          linkedClazz = f.getType();
-          if (linkedClazz == null || linkedClazz.equals(Object.class) || linkedClazz.equals(ODocument.class)
-              || f.getType().equals(ORecordBytes.class)) {
-            continue;
-          } else {
-            generateLinkProperty(database, schema, field, t, linkedClazz);
-          }
-          break;
-
-        case EMBEDDEDLIST:
-        case EMBEDDEDSET:
-        case EMBEDDEDMAP:
-          linkedClazz = OReflectionHelper.getGenericMultivalueType(f);
-          if (linkedClazz == null || linkedClazz.equals(Object.class) || linkedClazz.equals(ODocument.class)
-              || f.getType().equals(ORecordBytes.class)) {
-            continue;
-          } else {
-            if (OReflectionHelper.isJavaType(linkedClazz)) {
-              schema.createProperty(field, t, OType.getTypeByClass(linkedClazz));
-            } else if (linkedClazz.isEnum()) {
-              schema.createProperty(field, t, OType.STRING);
-            } else {
-              generateLinkProperty(database, schema, field, t, linkedClazz);
+    if (fields != null) {
+        for (String field : fields) {
+            if (schema.existsProperty(field)) {
+                continue;
+            }
+            if (OObjectEntitySerializer.isVersionField(iClass, field) || OObjectEntitySerializer.isIdField(iClass, field)) {
+                continue;
+            }
+            Field f = OObjectEntitySerializer.getField(field, iClass);
+            if (f.getType().equals(Object.class) || f.getType().equals(ODocument.class) || f.getType().equals(ORecordBytes.class)) {
+                continue;
+            }   OType t = OObjectEntitySerializer.getTypeByClass(iClass, field, f);
+            if (t == null) {
+                if (f.getType().isEnum()) {
+                    t = OType.STRING;
+                } else {
+                    t = OType.LINK;
+                }
+            }
+            switch (t) {
+                case LINK:
+                    Class<?> linkedClazz = OObjectEntitySerializer.getSpecifiedLinkedType(f);
+                    if (linkedClazz == null) {
+                        linkedClazz = f.getType();
+                    }
+                    generateLinkProperty(database, schema, field, t, linkedClazz);
+                    break;
+                case LINKLIST:
+                case LINKMAP:
+                case LINKSET:
+                    linkedClazz = OObjectEntitySerializer.getSpecifiedMultiLinkedType(f);
+                    if (linkedClazz == null) {
+                        linkedClazz = OReflectionHelper.getGenericMultivalueType(f);
+                    }
+                    if (linkedClazz != null) {
+                        generateLinkProperty(database, schema, field, t, linkedClazz);
+                    }
+                    break;
+                case EMBEDDED:
+                    linkedClazz = f.getType();
+                    if (linkedClazz == null || linkedClazz.equals(Object.class) || linkedClazz.equals(ODocument.class)
+                            || f.getType().equals(ORecordBytes.class)) {
+                        continue;
+                    } else {
+                        generateLinkProperty(database, schema, field, t, linkedClazz);
+                    }
+                    break;
+                case EMBEDDEDLIST:
+                case EMBEDDEDSET:
+                case EMBEDDEDMAP:
+                    linkedClazz = OReflectionHelper.getGenericMultivalueType(f);
+                    if (linkedClazz == null || linkedClazz.equals(Object.class) || linkedClazz.equals(ODocument.class)
+                            || f.getType().equals(ORecordBytes.class)) {
+                        continue;
+                    } else {
+                        if (OReflectionHelper.isJavaType(linkedClazz)) {
+                            schema.createProperty(field, t, OType.getTypeByClass(linkedClazz));
+                        } else if (linkedClazz.isEnum()) {
+                            schema.createProperty(field, t, OType.STRING);
+                        } else {
+                            generateLinkProperty(database, schema, field, t, linkedClazz);
             }
           }
           break;
-
-        default:
+            default:
           schema.createProperty(field, t);
           break;
+            }
         }
-      }
+    }
   }
 
   /**
@@ -339,8 +341,9 @@ public class OSchemaProxyObject implements OSchema {
     boolean reloadSchema = false;
     for (Class<?> iClass : registeredEntities) {
       if (Proxy.class.isAssignableFrom(iClass) || iClass.isEnum() || OReflectionHelper.isJavaType(iClass)
-          || iClass.isAnonymousClass())
-        return;
+          || iClass.isAnonymousClass()) {
+          return;
+      }
 
       if (!database.getMetadata().getSchema().existsClass(iClass.getSimpleName())) {
         database.getMetadata().getSchema().createClass(iClass.getSimpleName());
@@ -355,10 +358,11 @@ public class OSchemaProxyObject implements OSchema {
         String iClassName = currentClass.getSimpleName();
         currentClass = currentClass.getSuperclass();
 
-        if (currentClass == null || currentClass.equals(ODocument.class))
-          // POJO EXTENDS ODOCUMENT: SPECIAL CASE: AVOID TO CONSIDER
-          // ODOCUMENT FIELDS
-          currentClass = Object.class;
+        if (currentClass == null || currentClass.equals(ODocument.class)) {
+            // POJO EXTENDS ODOCUMENT: SPECIAL CASE: AVOID TO CONSIDER
+            // ODOCUMENT FIELDS
+            currentClass = Object.class;
+        }
 
         if (database != null && !database.isClosed() && !currentClass.equals(Object.class)) {
           OClass oSuperClass;
@@ -391,10 +395,11 @@ public class OSchemaProxyObject implements OSchema {
       String iClassName = currentClass.getSimpleName();
       currentClass = currentClass.getSuperclass();
 
-      if (currentClass == null || currentClass.equals(ODocument.class))
-        // POJO EXTENDS ODOCUMENT: SPECIAL CASE: AVOID TO CONSIDER
-        // ODOCUMENT FIELDS
-        currentClass = Object.class;
+      if (currentClass == null || currentClass.equals(ODocument.class)) {
+          // POJO EXTENDS ODOCUMENT: SPECIAL CASE: AVOID TO CONSIDER
+          // ODOCUMENT FIELDS
+          currentClass = Object.class;
+      }
 
       if (ODatabaseRecordThreadLocal.INSTANCE.get() != null && !ODatabaseRecordThreadLocal.INSTANCE.get().isClosed()
           && !currentClass.equals(Object.class)) {

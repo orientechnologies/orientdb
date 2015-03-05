@@ -146,18 +146,22 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
 
   @Override
   public boolean containsAll(Collection<?> c) {
-    for (Object e : c)
-      if (!contains(e))
-        return false;
+    for (Object e : c) {
+        if (!contains(e)) {
+            return false;
+        }
+    }
     return true;
   }
 
   @Override
   public boolean addAll(Collection<? extends OIdentifiable> c) {
     boolean modified = false;
-    for (OIdentifiable e : c)
-      if (add(e))
-        modified = true;
+    for (OIdentifiable e : c) {
+        if (add(e)) {
+            modified = true;
+        }
+    }
     return modified;
   }
 
@@ -214,10 +218,11 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
     @Override
     public OIdentifiable next() {
       final OIdentifiable identifiable = entryIterator.next().getKey();
-      if (autoConvertToRecord)
-        return identifiable.getRecord();
-      else
-        return identifiable;
+      if (autoConvertToRecord) {
+          return identifiable.getRecord();
+      } else {
+          return identifiable;
+      }
     }
 
     @Override

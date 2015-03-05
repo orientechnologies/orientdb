@@ -442,10 +442,11 @@ public class ClusterPageTest {
             entry.getValue() });
         Assert.assertEquals(localPage.getRecordSize(entry.getKey()), 3);
 
-        if (deletedPositions.contains(entry.getKey()))
-          Assert.assertEquals(localPage.getRecordVersion(entry.getKey()), deletedVersion);
-        else
-          Assert.assertEquals(localPage.getRecordVersion(entry.getKey()), recordVersion);
+        if (deletedPositions.contains(entry.getKey())) {
+            Assert.assertEquals(localPage.getRecordVersion(entry.getKey()), deletedVersion);
+        } else {
+            Assert.assertEquals(localPage.getRecordVersion(entry.getKey()), recordVersion);
+        }
 
       }
 
@@ -517,10 +518,11 @@ public class ClusterPageTest {
             entry.getValue() });
         Assert.assertEquals(localPage.getRecordSize(entry.getKey()), 3);
 
-        if (deletedPositions.contains(entry.getKey()))
-          Assert.assertEquals(localPage.getRecordVersion(entry.getKey()), deletedVersion);
-        else
-          Assert.assertEquals(localPage.getRecordVersion(entry.getKey()), recordVersion);
+        if (deletedPositions.contains(entry.getKey())) {
+            Assert.assertEquals(localPage.getRecordVersion(entry.getKey()), deletedVersion);
+        } else {
+            Assert.assertEquals(localPage.getRecordVersion(entry.getKey()), recordVersion);
+        }
 
       }
 
@@ -565,10 +567,11 @@ public class ClusterPageTest {
           positionCounter.put(lastPosition, counter);
           counter++;
 
-          if (lastPosition == 0)
-            Assert.assertEquals(localPage.getFreeSpace(), freeSpace - 15);
-          else
-            Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (19 + OVersionFactory.instance().getVersionSize()));
+          if (lastPosition == 0) {
+              Assert.assertEquals(localPage.getFreeSpace(), freeSpace - 15);
+          } else {
+              Assert.assertEquals(localPage.getFreeSpace(), freeSpace - (19 + OVersionFactory.instance().getVersionSize()));
+          }
 
           freeSpace = localPage.getFreeSpace();
         }
@@ -635,8 +638,9 @@ public class ClusterPageTest {
 
       do {
         recordPosition = localPage.findFirstRecord(recordPosition);
-        if (recordPosition < 0)
-          break;
+        if (recordPosition < 0) {
+            break;
+        }
 
         Assert.assertTrue(positions.contains(recordPosition));
         Assert.assertTrue(recordPosition > lastRecordPosition);
@@ -701,8 +705,9 @@ public class ClusterPageTest {
       int lastRecordPosition = Integer.MAX_VALUE;
       do {
         recordPosition = localPage.findLastRecord(recordPosition);
-        if (recordPosition < 0)
-          break;
+        if (recordPosition < 0) {
+            break;
+        }
 
         Assert.assertTrue(positions.contains(recordPosition));
         Assert.assertTrue(recordPosition < lastRecordPosition);

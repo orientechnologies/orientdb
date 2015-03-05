@@ -46,16 +46,19 @@ public class OImmutableSchema implements OSchema {
       final OImmutableClass immutableClass = new OImmutableClass(oClass, this);
 
       classes.put(immutableClass.getName().toLowerCase(), immutableClass);
-      if (immutableClass.getShortName() != null)
-        classes.put(immutableClass.getShortName().toLowerCase(), immutableClass);
+      if (immutableClass.getShortName() != null) {
+          classes.put(immutableClass.getShortName().toLowerCase(), immutableClass);
+      }
 
-      for (int clusterId : immutableClass.getClusterIds())
-        clustersToClasses.put(clusterId, immutableClass);
+      for (int clusterId : immutableClass.getClusterIds()) {
+          clustersToClasses.put(clusterId, immutableClass);
+      }
     }
 
     properties = new ArrayList<OGlobalProperty>();
-    for (OGlobalProperty globalProperty : schemaShared.getGlobalProperties())
-      properties.add(globalProperty);
+    for (OGlobalProperty globalProperty : schemaShared.getGlobalProperties()) {
+        properties.add(globalProperty);
+    }
   }
 
   @Override
@@ -135,20 +138,23 @@ public class OImmutableSchema implements OSchema {
 
   @Override
   public OClass getClass(Class<?> iClass) {
-    if (iClass == null)
-      return null;
+    if (iClass == null) {
+        return null;
+    }
 
     return getClass(iClass.getSimpleName());
   }
 
   @Override
   public OClass getClass(String iClassName) {
-    if (iClassName == null)
-      return null;
+    if (iClassName == null) {
+        return null;
+    }
 
     OClass cls = classes.get(iClassName.toLowerCase());
-    if (cls != null)
-      return cls;
+    if (cls != null) {
+        return cls;
+    }
 
     return null;
   }
@@ -196,8 +202,9 @@ public class OImmutableSchema implements OSchema {
     final int clusterId = getDatabase().getClusterIdByName(clusterName);
     final Set<OClass> result = new HashSet<OClass>();
     for (OClass c : classes.values()) {
-      if (OArrays.contains(c.getPolymorphicClusterIds(), clusterId))
-        result.add(c);
+      if (OArrays.contains(c.getPolymorphicClusterIds(), clusterId)) {
+          result.add(c);
+      }
     }
 
     return result;
@@ -205,8 +212,9 @@ public class OImmutableSchema implements OSchema {
 
   @Override
   public OClass getClassByClusterId(int clusterId) {
-    if (!clustersCanNotBeSharedAmongClasses)
-      throw new OSchemaException("This feature is not supported in current version of binary format.");
+    if (!clustersCanNotBeSharedAmongClasses) {
+        throw new OSchemaException("This feature is not supported in current version of binary format.");
+    }
 
     return clustersToClasses.get(clusterId);
 
@@ -214,8 +222,9 @@ public class OImmutableSchema implements OSchema {
 
   @Override
   public OGlobalProperty getGlobalPropertyById(int id) {
-    if (id >= properties.size())
-      return null;
+    if (id >= properties.size()) {
+        return null;
+    }
     return properties.get(id);
   }
 

@@ -99,8 +99,9 @@ public class ORecordFlat extends ORecordAbstract implements ORecordStringable {
   public String value() {
     if (value == null) {
       // LAZY DESERIALIZATION
-      if (_source == null && getIdentity() != null && getIdentity().isValid())
-        reload();
+      if (_source == null && getIdentity() != null && getIdentity().isValid()) {
+          reload();
+      }
 
       // LAZY LOADING: LOAD THE RECORD FIRST
       value = OBinaryProtocol.bytes2string(_source);
@@ -129,8 +130,9 @@ public class ORecordFlat extends ORecordAbstract implements ORecordStringable {
 
   @Override
   public byte[] toStream() {
-    if (_source == null && value != null)
-      _source = OBinaryProtocol.string2bytes(value);
+    if (_source == null && value != null) {
+        _source = OBinaryProtocol.string2bytes(value);
+    }
     return _source;
   }
 

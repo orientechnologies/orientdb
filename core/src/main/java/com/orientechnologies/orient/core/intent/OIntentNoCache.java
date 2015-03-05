@@ -60,8 +60,9 @@ public class OIntentNoCache implements OIntent {
     while (ownerDb.getDatabaseOwner() != ownerDb)
       ownerDb = ownerDb.getDatabaseOwner();
 
-    if (ownerDb instanceof ODatabaseObject)
-      ((ODatabaseObject) ownerDb).setRetainObjects(previousRetainObjects);
+    if (ownerDb instanceof ODatabaseObject) {
+        ((ODatabaseObject) ownerDb).setRetainObjects(previousRetainObjects);
+    }
   }
 
   @Override

@@ -36,10 +36,11 @@ public abstract class OListenerManger<L> {
   private final Collection<L> listeners;
 
   public OListenerManger(boolean concurrent) {
-    if (concurrent)
-      listeners = Collections.newSetFromMap(new ConcurrentHashMap<L, Boolean>());
-    else
-      listeners = new HashSet<L>();
+    if (concurrent) {
+        listeners = Collections.newSetFromMap(new ConcurrentHashMap<L, Boolean>());
+    } else {
+        listeners = new HashSet<L>();
+    }
   }
 
   public void registerListener(final L iListener) {

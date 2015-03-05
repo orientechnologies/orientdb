@@ -48,8 +48,9 @@ public class SQLSynchQuerySpeedTest extends SpeedTestMonoThread implements OComm
   public void cycle() throws UnsupportedEncodingException {
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select * from Profile where nick = 100010")).execute();
 
-    for (ODocument d : result)
-      result(d);
+    for (ODocument d : result) {
+        result(d);
+    }
   }
 
   public boolean result(final Object iRecord) {

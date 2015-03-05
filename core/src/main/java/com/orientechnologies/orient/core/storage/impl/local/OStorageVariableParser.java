@@ -42,14 +42,16 @@ public class OStorageVariableParser implements OVariableParserListener {
 	}
 
 	public String resolve(String variable) {
-		if (variable.equals(STORAGE_PATH))
-			return dbPath;
+		if (variable.equals(STORAGE_PATH)) {
+                    return dbPath;
+                }
 
 		String resolved = System.getProperty(variable);
 
-		if (resolved == null)
-			// TRY TO FIND THE VARIABLE BETWEEN SYSTEM'S ENVIRONMENT PROPERTIES
-			resolved = System.getenv(variable);
+		if (resolved == null) {
+                    // TRY TO FIND THE VARIABLE BETWEEN SYSTEM'S ENVIRONMENT PROPERTIES
+                    resolved = System.getenv(variable);
+                }
 
 		return resolved;
 	}

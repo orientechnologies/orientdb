@@ -77,24 +77,28 @@ public class OQueryOperatorContainsKey extends OQueryOperatorEqualityNotNulls {
 
     OIndexCursor cursor;
     final OIndexInternal<?> internalIndex = index.getInternal();
-    if (!internalIndex.canBeUsedInEqualityOperators())
-      return null;
+    if (!internalIndex.canBeUsedInEqualityOperators()) {
+        return null;
+    }
 
     if (indexDefinition.getParamCount() == 1) {
       if (!((indexDefinition instanceof OPropertyMapIndexDefinition) && ((OPropertyMapIndexDefinition) indexDefinition)
-          .getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.KEY))
-        return null;
+          .getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.KEY)) {
+          return null;
+      }
 
       final Object key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
 
-      if (key == null)
-        return null;
+      if (key == null) {
+          return null;
+      }
 
       final Object indexResult = index.get(key);
-      if (indexResult == null || indexResult instanceof OIdentifiable)
-        cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, key);
-      else
-        cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
+      if (indexResult == null || indexResult instanceof OIdentifiable) {
+          cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, key);
+      } else {
+          cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
+      }
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
@@ -102,13 +106,15 @@ public class OQueryOperatorContainsKey extends OQueryOperatorEqualityNotNulls {
       final OCompositeIndexDefinition compositeIndexDefinition = (OCompositeIndexDefinition) indexDefinition;
 
       if (!((compositeIndexDefinition.getMultiValueDefinition() instanceof OPropertyMapIndexDefinition) && ((OPropertyMapIndexDefinition) compositeIndexDefinition
-          .getMultiValueDefinition()).getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.KEY))
-        return null;
+          .getMultiValueDefinition()).getIndexBy() == OPropertyMapIndexDefinition.INDEX_BY.KEY)) {
+          return null;
+      }
 
       final Object keyOne = compositeIndexDefinition.createSingleValue(keyParams);
 
-      if (keyOne == null)
-        return null;
+      if (keyOne == null) {
+          return null;
+      }
 
       if (internalIndex.hasRangeQuerySupport()) {
         final Object keyTwo = compositeIndexDefinition.createSingleValue(keyParams);
@@ -116,12 +122,14 @@ public class OQueryOperatorContainsKey extends OQueryOperatorEqualityNotNulls {
       } else {
         if (indexDefinition.getParamCount() == keyParams.size()) {
           final Object indexResult = index.get(keyOne);
-          if (indexResult == null || indexResult instanceof OIdentifiable)
-            cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
-          else
-            cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), keyOne);
-        } else
-          return null;
+          if (indexResult == null || indexResult instanceof OIdentifiable) {
+              cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
+          } else {
+              cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), keyOne);
+          }
+        } else {
+            return null;
+        }
       }
     }
 

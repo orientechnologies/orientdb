@@ -77,11 +77,12 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
     final String language = request.getLanguage();
     parserText = request.getText();
 
-    if (language.equalsIgnoreCase("SQL"))
-      // SPECIAL CASE: EXECUTE THE COMMANDS IN SEQUENCE
-      return executeSQL();
-    else
-      return executeJsr223Script(language, iContext, iArgs);
+    if (language.equalsIgnoreCase("SQL")) {
+        // SPECIAL CASE: EXECUTE THE COMMANDS IN SEQUENCE
+        return executeSQL();
+    } else {
+        return executeJsr223Script(language, iContext, iArgs);
+    }
   }
 
   public boolean isIdempotent() {
@@ -99,8 +100,9 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
     try {
 
       if (compiledScript == null) {
-        if (!(scriptEngine instanceof Compilable))
-          throw new OCommandExecutionException("Language '" + language + "' does not support compilation");
+        if (!(scriptEngine instanceof Compilable)) {
+            throw new OCommandExecutionException("Language '" + language + "' does not support compilation");
+        }
 
         final Compilable c = (Compilable) scriptEngine;
         try {
@@ -166,20 +168,22 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
         String lastLine;
         boolean txBegun = false;
 
-        for (; line < txBegunAtLine; ++line)
-          // SKIP PREVIOUS COMMAND AND JUMP TO THE BEGIN IF ANY
-          reader.readLine();
+        for (; line < txBegunAtLine; ++line) {
+            // SKIP PREVIOUS COMMAND AND JUMP TO THE BEGIN IF ANY
+            reader.readLine();
+        }
 
         for (; (lastLine = reader.readLine()) != null; ++line) {
           lastLine = lastLine.trim();
 
           final List<String> lineParts = OStringSerializerHelper.smartSplit(lastLine, ';');
 
-          if (line == txBegunAtLine)
-            // SKIP PREVIOUS COMMAND PART AND JUMP TO THE BEGIN IF ANY
-            linePart = txBegunAtPart;
-          else
-            linePart = 0;
+          if (line == txBegunAtLine) {
+              // SKIP PREVIOUS COMMAND PART AND JUMP TO THE BEGIN IF ANY
+              linePart = txBegunAtPart;
+          } else {
+              linePart = 0;
+          }
 
           for (; linePart < lineParts.size(); ++linePart) {
             final String lastCommand = lineParts.get(linePart);
@@ -195,12 +199,14 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
               getContext().setVariable(variable, lastResult);
             } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "begin")) {
 
-              if (txBegun)
-                throw new OCommandSQLParsingException("Transaction already begun");
+              if (txBegun) {
+                  throw new OCommandSQLParsingException("Transaction already begun");
+              }
 
-              if (db.getTransaction().isActive())
-                // COMMIT ANY ACTIVE TX
-                db.commit();
+              if (db.getTransaction().isActive()) {
+                  // COMMIT ANY ACTIVE TX
+                  db.commit();
+              }
 
               txBegun = true;
               txBegunAtLine = line;
@@ -218,8 +224,9 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 
             } else if ("rollback".equalsIgnoreCase(lastCommand)) {
 
-              if (!txBegun)
-                throw new OCommandSQLParsingException("Transaction not begun");
+              if (!txBegun) {
+                  throw new OCommandSQLParsingException("Transaction not begun");
+              }
 
               db.rollback();
 
@@ -228,8 +235,9 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
               txBegunAtPart = -1;
 
             } else if (OStringSerializerHelper.startsWithIgnoreCase(lastCommand, "commit")) {
-              if (txBegunAtLine < 0)
-                throw new OCommandSQLParsingException("Transaction not begun");
+              if (txBegunAtLine < 0) {
+                  throw new OCommandSQLParsingException("Transaction not begun");
+              }
 
               if (retry == 0 && lastCommand.length() > "commit ".length()) {
                 // FIRST CYCLE: PARSE RETRY TIMES OVERWRITING DEFAULT = 1
@@ -258,11 +266,11 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 
               final String variable = lastCommand.substring("return ".length()).trim();
 
-              if (variable.equalsIgnoreCase("NULL"))
-                lastResult = null;
-              else if (variable.startsWith("$"))
-                lastResult = getContext().getVariable(variable);
-              else if (variable.startsWith("[") && variable.endsWith("]")) {
+              if (variable.equalsIgnoreCase("NULL")) {
+                  lastResult = null;
+              } else if (variable.startsWith("$")) {
+                  lastResult = getContext().getVariable(variable);
+              } else if (variable.startsWith("[") && variable.endsWith("]")) {
                 // ARRAY - COLLECTION
                 final List<String> items = new ArrayList<String>();
 
@@ -273,13 +281,15 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
                   String item = items.get(i);
 
                   Object res;
-                  if (item.startsWith("$"))
-                    res = getContext().getVariable(item);
-                  else
-                    res = item;
+                  if (item.startsWith("$")) {
+                      res = getContext().getVariable(item);
+                      } else {
+                      res = item;
+                  }
 
-                  if (OMultiValue.isMultiValue(res) && OMultiValue.getSize(res) == 1)
-                    res = OMultiValue.getFirstValue(res);
+                  if (OMultiValue.isMultiValue(res) && OMultiValue.getSize(res) == 1) {
+                      res = OMultiValue.getFirstValue(res);
+                  }
 
                   result.add(res);
                 }
@@ -292,47 +302,55 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
                 for (Map.Entry<String, String> entry : map.entrySet()) {
                   // KEY
                   String stringKey = entry.getKey();
-                  if (stringKey == null)
-                    continue;
+                  if (stringKey == null) {
+                          continue;
+                  }
 
                   stringKey = stringKey.trim();
 
                   Object key;
-                  if (stringKey.startsWith("$"))
-                    key = getContext().getVariable(stringKey);
-                  else
-                    key = stringKey;
-
-                  if (OMultiValue.isMultiValue(key) && OMultiValue.getSize(key) == 1)
-                    key = OMultiValue.getFirstValue(key);
+                  if (stringKey.startsWith("$")) {
+                      key = getContext().getVariable(stringKey);
+                  } else {
+                          key = stringKey;
+                  }
+                  
+                  if (OMultiValue.isMultiValue(key) && OMultiValue.getSize(key) == 1) {
+                      key = OMultiValue.getFirstValue(key);
+                  }
 
                   // VALUE
                   String stringValue = entry.getValue();
-                  if (stringValue == null)
-                    continue;
-
+                  if (stringValue == null) {
+                          continue;
+                  }
+                  
                   stringValue = stringValue.trim();
 
                   Object value;
-                  if (stringValue.toString().startsWith("$"))
-                    value = getContext().getVariable(stringValue);
-                  else
-                    value = stringValue;
+                  if (stringValue.toString().startsWith("$")) {
+                      value = getContext().getVariable(stringValue);
+                  } else {
+                      value = stringValue;
+                  }
 
-                  if (OMultiValue.isMultiValue(value) && OMultiValue.getSize(value) == 1)
-                    value = OMultiValue.getFirstValue(value);
-
+                  if (OMultiValue.isMultiValue(value) && OMultiValue.getSize(value) == 1) {
+                      value = OMultiValue.getFirstValue(value);
+                  }
+                  
                   result.put(key, value);
                 }
                 lastResult = result;
-              } else
-                lastResult = variable;
+              } else {
+                  lastResult = variable;
+              }
 
               // END OF THE SCRIPT
               return lastResult;
 
-            } else if (lastCommand != null && lastCommand.length() > 0)
-              lastResult = db.command(new OCommandSQL(lastCommand).setContext(getContext())).execute();
+            } else if (lastCommand != null && lastCommand.length() > 0) {
+                lastResult = db.command(new OCommandSQL(lastCommand).setContext(getContext())).execute();
+            }
           }
         }
       } catch (OConcurrentModificationException e) {

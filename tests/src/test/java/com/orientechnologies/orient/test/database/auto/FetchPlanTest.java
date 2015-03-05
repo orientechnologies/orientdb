@@ -122,8 +122,9 @@ public class FetchPlanTest extends DocumentDBBaseTest {
     ORID linked;
     for (ODocument d : resultset) {
       linked = ((ORID) d.field("linked", ORID.class));
-      if (linked != null)
-        Assert.assertNull(database.getLocalCache().findRecord(linked));
+      if (linked != null) {
+          Assert.assertNull(database.getLocalCache().findRecord(linked));
+      }
     }
   }
 
@@ -136,8 +137,9 @@ public class FetchPlanTest extends DocumentDBBaseTest {
     ODocument linked;
     for (ODocument d : resultset) {
       linked = ((ODocument) d.field("linked"));
-      if (linked != null)
-        Assert.assertNotNull(database.getLocalCache().findRecord(linked.getIdentity()));
+      if (linked != null) {
+          Assert.assertNotNull(database.getLocalCache().findRecord(linked.getIdentity()));
+      }
     }
   }
 

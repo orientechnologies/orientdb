@@ -64,8 +64,9 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
 
   public ORecordLazySet(ODocument iSourceRecord, Collection<OIdentifiable> iOrigin) {
     this(iSourceRecord);
-    if (iOrigin != null && !iOrigin.isEmpty())
-      addAll(iOrigin);
+    if (iOrigin != null && !iOrigin.isEmpty()) {
+        addAll(iOrigin);
+    }
   }
 
   @Override
@@ -79,8 +80,9 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
       {
         if (OSerializationSetThreadLocal.check((ODocument) sourceRecord)) {
           iter = new HashSet<Entry<OIdentifiable, Object>>(ORecordLazySet.super.map.entrySet()).iterator();
-        } else
-          iter = ORecordLazySet.super.map.entrySet().iterator();
+        } else {
+            iter = ORecordLazySet.super.map.entrySet().iterator();
+        }
       }
       private Iterator<Entry<OIdentifiable, Object>> iter;
       private Entry<OIdentifiable, Object>           last;
@@ -94,22 +96,25 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
       public OIdentifiable next() {
         Entry<OIdentifiable, Object> entry = iter.next();
         last = entry;
-        if (entry.getValue() != ENTRY_REMOVAL)
-          return (OIdentifiable) entry.getValue();
+        if (entry.getValue() != ENTRY_REMOVAL) {
+            return (OIdentifiable) entry.getValue();
+        }
         return entry.getKey();
       }
 
       @Override
       public void remove() {
         iter.remove();
-        if (last.getKey() instanceof ORecord)
-          ORecordInternal.removeIdentityChangeListener((ORecord) last.getKey(), ORecordLazySet.this);
+        if (last.getKey() instanceof ORecord) {
+            ORecordInternal.removeIdentityChangeListener((ORecord) last.getKey(), ORecordLazySet.this);
+        }
       }
 
       @Override
       public OIdentifiable update(OIdentifiable iValue) {
-        if (iValue != null)
-          map.put(iValue.getIdentity(), iValue.getRecord());
+        if (iValue != null) {
+            map.put(iValue.getIdentity(), iValue.getRecord());
+        }
         return iValue;
       }
     }, autoConvertToRecord && getOwner().getInternalStatus() != STATUS.MARSHALLING);
@@ -122,13 +127,15 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
 
   @Override
   public boolean add(OIdentifiable e) {
-    if (map.containsKey(e))
-      return false;
+    if (map.containsKey(e)) {
+        return false;
+    }
     if (e instanceof ORecord && e.getIdentity().isNew()) {
       ORecordInternal.addIdentityChangeListener((ORecord) e, this);
       map.put(e, e);
-    } else
-      map.put(e, ENTRY_REMOVAL);
+    } else {
+        map.put(e, ENTRY_REMOVAL);
+    }
     setDirty();
 
     fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(OMultiValueChangeEvent.OChangeType.ADD, e,
@@ -188,13 +195,15 @@ public class ORecordLazySet extends ORecordTrackedSet implements Set<OIdentifiab
   }
 
   public boolean remove(Object o) {
-    if (o == null)
-      return clearDeletedRecords();
+    if (o == null) {
+        return clearDeletedRecords();
+    }
 
     final Object old = map.remove(o);
     if (old != null) {
-      if (o instanceof ORecord)
-        ORecordInternal.removeIdentityChangeListener((ORecord) o, this);
+      if (o instanceof ORecord) {
+          ORecordInternal.removeIdentityChangeListener((ORecord) o, this);
+      }
 
       setDirty();
       fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(

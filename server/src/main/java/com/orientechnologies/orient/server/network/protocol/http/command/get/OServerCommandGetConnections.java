@@ -79,9 +79,10 @@ public class OServerCommandGetConnections extends OServerCommandAuthenticatedSer
      for (OClientConnection c : conns) {
        final ONetworkProtocolData data = c.data;
 
-       if (databaseName != null && !databaseName.equals((data.lastDatabase)))
-         // SKIP IT
-         continue;
+       if (databaseName != null && !databaseName.equals((data.lastDatabase))) {
+           // SKIP IT
+           continue;
+       }
 
        final String lastCommandOn;
        final String connectedOn;

@@ -170,11 +170,13 @@ public class DbListenerTest extends DocumentDBBaseTest {
 
   @Test
   public void testEmbeddedDbListeners() throws IOException {
-    if (database.getURL().startsWith("remote:"))
-      return;
+    if (database.getURL().startsWith("remote:")) {
+        return;
+    }
 
-    if (database.exists())
-      ODatabaseHelper.deleteDatabase(database, getStorageType());
+    if (database.exists()) {
+        ODatabaseHelper.deleteDatabase(database, getStorageType());
+    }
 
     database.registerListener(new DbListener());
 
@@ -213,8 +215,9 @@ public class DbListenerTest extends DocumentDBBaseTest {
 
   @Test
   public void testRemoteDbListeners() throws IOException {
-    if (!database.getURL().startsWith("remote:"))
-      return;
+    if (!database.getURL().startsWith("remote:")) {
+        return;
+    }
 
     database.close();
 
@@ -245,11 +248,13 @@ public class DbListenerTest extends DocumentDBBaseTest {
 
   @Test
   public void testEmbeddedDbListenersTxRecords() throws IOException {
-    if (database.getURL().startsWith("remote:"))
-      return;
+    if (database.getURL().startsWith("remote:")) {
+        return;
+    }
 
-    if (database.exists())
-      ODatabaseHelper.deleteDatabase(database, getStorageType());
+    if (database.exists()) {
+        ODatabaseHelper.deleteDatabase(database, getStorageType());
+    }
     ODatabaseHelper.createDatabase(database, url, getStorageType());
     database.close();
 
@@ -275,11 +280,13 @@ public class DbListenerTest extends DocumentDBBaseTest {
 
   @Test
   public void testEmbeddedDbListenersGraph() throws IOException {
-    if (database.getURL().startsWith("remote:"))
-      return;
+    if (database.getURL().startsWith("remote:")) {
+        return;
+    }
 
-    if (database.exists())
-      ODatabaseHelper.deleteDatabase(database, getStorageType());
+    if (database.exists()) {
+        ODatabaseHelper.deleteDatabase(database, getStorageType());
+    }
     ODatabaseHelper.createDatabase(database, url, getStorageType());
     database.close();
 

@@ -68,15 +68,17 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
 
   public static Object runInDistributedMode(Callable iCall) throws Exception {
     final OScenarioThreadLocal.RUN_MODE currentRunningMode = OScenarioThreadLocal.INSTANCE.get();
-    if (currentRunningMode != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
-      OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
+    if (currentRunningMode != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED) {
+        OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED);
+    }
 
     try {
       return iCall.call();
     } finally {
 
-      if (currentRunningMode != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED)
-        OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
+      if (currentRunningMode != OScenarioThreadLocal.RUN_MODE.RUNNING_DISTRIBUTED) {
+          OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
+      }
     }
   }
 
@@ -98,51 +100,56 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
           enabled = false;
           return;
         }
-      } else if (param.name.equalsIgnoreCase("nodeName"))
-        nodeName = param.value;
-      else if (param.name.startsWith(PAR_DEF_DISTRIB_DB_CONFIG)) {
+      } else if (param.name.equalsIgnoreCase("nodeName")) {
+          nodeName = param.value;
+      } else if (param.name.startsWith(PAR_DEF_DISTRIB_DB_CONFIG)) {
         setDefaultDatabaseConfigFile(param.value);
       } else if (param.name.equalsIgnoreCase("conflict.resolver.impl")) {
         // NOT USED ANYMORE
       }
     }
 
-    if (serverInstance.getUser(REPLICATOR_USER) == null)
-      // CREATE THE REPLICATOR USER
-      try {
-        serverInstance.addUser(REPLICATOR_USER, null, "database.passthrough");
-        serverInstance.saveConfiguration();
-      } catch (IOException e) {
-        throw new OConfigurationException("Error on creating 'replicator' user", e);
-      }
+    if (serverInstance.getUser(REPLICATOR_USER) == null) {
+        // CREATE THE REPLICATOR USER
+        try {
+            serverInstance.addUser(REPLICATOR_USER, null, "database.passthrough");
+            serverInstance.saveConfiguration();
+        } catch (IOException e) {
+            throw new OConfigurationException("Error on creating 'replicator' user", e);
+        }
+    }
   }
 
   public void setDefaultDatabaseConfigFile(final String iFile) {
     defaultDatabaseConfigFile = new File(OSystemVariableResolver.resolveSystemVariables(iFile));
-    if (!defaultDatabaseConfigFile.exists())
-      throw new OConfigurationException("Cannot find distributed database config file: " + defaultDatabaseConfigFile);
+    if (!defaultDatabaseConfigFile.exists()) {
+        throw new OConfigurationException("Cannot find distributed database config file: " + defaultDatabaseConfigFile);
+    }
   }
 
   @Override
   public void startup() {
-    if (!enabled)
-      return;
+    if (!enabled) {
+        return;
+    }
 
     Orient.instance().addDbLifecycleListener(this);
   }
 
   @Override
   public void shutdown() {
-    if (!enabled)
-      return;
+    if (!enabled) {
+        return;
+    }
 
     // CLOSE AND FREE ALL THE STORAGES
-    for (ODistributedStorage s : storages.values())
-      try {
-        s.shutdownAsynchronousWorker();
-        s.close();
-      } catch (Exception e) {
-      }
+    for (ODistributedStorage s : storages.values()) {
+        try {
+            s.shutdownAsynchronousWorker();
+            s.close();
+        } catch (Exception e) {
+        }
+    }
     storages.clear();
 
     Orient.instance().removeDbLifecycleListener(this);
@@ -158,15 +165,17 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     if (dbUrl.startsWith("plocal:")) {
       // CHECK SPECIAL CASE WITH MULTIPLE SERVER INSTANCES ON THE SAME JVM
       final String dbDirectory = serverInstance.getDatabaseDirectory();
-      if (!dbUrl.substring("plocal:".length()).startsWith(dbDirectory))
-        // SKIP IT: THIS HAPPENS ONLY ON MULTIPLE SERVER INSTANCES ON THE SAME JVM
-        return;
+      if (!dbUrl.substring("plocal:".length()).startsWith(dbDirectory)) {
+          // SKIP IT: THIS HAPPENS ONLY ON MULTIPLE SERVER INSTANCES ON THE SAME JVM
+          return;
+      }
     }
 
     synchronized (cachedDatabaseConfiguration) {
       final ODistributedConfiguration cfg = getDatabaseConfiguration(iDatabase.getName());
-      if (cfg == null)
-        return;
+      if (cfg == null) {
+          return;
+      }
 
       final OStorage dbStorage = iDatabase.getStorage();
 
@@ -175,8 +184,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
         if (storage == null) {
           storage = new ODistributedStorage(serverInstance, (OAbstractPaginatedStorage) dbStorage);
           final ODistributedStorage oldStorage = storages.putIfAbsent(iDatabase.getURL(), storage);
-          if (oldStorage != null)
-            storage = oldStorage;
+          if (oldStorage != null) {
+              storage = oldStorage;
+          }
         }
 
         iDatabase.replaceStorage(storage);
@@ -214,12 +224,14 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     synchronized (cachedDatabaseConfiguration) {
       ODocument oldCfg = cachedDatabaseConfiguration.get(iDatabaseName);
       Integer oldVersion = oldCfg != null ? (Integer) oldCfg.field("version") : null;
-      if (oldVersion == null)
-        oldVersion = 1;
+      if (oldVersion == null) {
+          oldVersion = 1;
+      }
 
       Integer currVersion = (Integer) cfg.field("version");
-      if (currVersion == null)
-        currVersion = 1;
+      if (currVersion == null) {
+          currVersion = 1;
+      }
 
       if (oldCfg != null && oldVersion > currVersion) {
         // NO CHANGE, SKIP IT
@@ -259,11 +271,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
               "Error on saving distributed configuration file", e);
 
         } finally {
-          if (f != null)
-            try {
-              f.close();
-            } catch (IOException e) {
-            }
+          if (f != null) {
+              try {
+                  f.close();
+              } catch (IOException e) {
+              }
+          }
         }
       }
     }
@@ -282,17 +295,19 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
         if (cfg == null) {
           // FIRST TIME RUNNING: GET DEFAULT CFG
           cfg = loadDatabaseConfiguration(iDatabaseName, defaultDatabaseConfigFile);
-          if (cfg == null)
-            throw new OConfigurationException("Cannot load default distributed database config file: " + defaultDatabaseConfigFile);
+          if (cfg == null) {
+              throw new OConfigurationException("Cannot load default distributed database config file: " + defaultDatabaseConfigFile);
+          }
         }
 
         cachedDatabaseConfiguration.put(iDatabaseName, cfg);
       }
 
       final ODistributedConfiguration dCfg = new ODistributedConfiguration(cfg);
-      if (dCfg.upgrade())
-        // UPGRADED, SAVE IT AGAIN
-        updateCachedDatabaseConfiguration(iDatabaseName, dCfg.serialize(), true);
+      if (dCfg.upgrade()) {
+          // UPGRADED, SAVE IT AGAIN
+          updateCachedDatabaseConfiguration(iDatabaseName, dCfg.serialize(), true);
+      }
       return dCfg;
     }
   }
@@ -306,8 +321,9 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
   }
 
   protected ODocument loadDatabaseConfiguration(final String iDatabaseName, final File file) {
-    if (!file.exists() || file.length() == 0)
-      return null;
+    if (!file.exists() || file.length() == 0) {
+        return null;
+    }
 
     ODistributedServerLog.info(this, getLocalNodeName(), null, DIRECTION.NONE, "loaded database configuration from disk: %s", file);
 
@@ -326,11 +342,12 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
       ODistributedServerLog.error(this, getLocalNodeName(), null, DIRECTION.NONE,
           "Error on loading distributed configuration file in: %s", e, file.getAbsolutePath());
     } finally {
-      if (f != null)
-        try {
-          f.close();
-        } catch (IOException e) {
-        }
+      if (f != null) {
+          try {
+              f.close();
+          } catch (IOException e) {
+          }
+      }
     }
     return null;
   }

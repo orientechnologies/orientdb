@@ -124,10 +124,11 @@ public class ConcurrentStorageTest {
               ODocument doc = connection.newInstance("test_class").field("thread", name).field("time", time);
               doc = connection.save(doc);
 
-              if (random.nextBoolean())
-                data.addFirst(doc);
-              else
-                data.addLast(doc);
+              if (random.nextBoolean()) {
+                  data.addFirst(doc);
+              } else {
+                  data.addLast(doc);
+              }
 
               System.out.println("create " + name + " " + time);
               TimeUnit.MILLISECONDS.sleep(25);
@@ -155,10 +156,11 @@ public class ConcurrentStorageTest {
             final long time = System.currentTimeMillis();
 
             ODocument doc;
-            if (random.nextBoolean())
-              doc = data.pollFirst();
-            else
-              doc = data.pollLast();
+            if (random.nextBoolean()) {
+                doc = data.pollFirst();
+            } else {
+                doc = data.pollLast();
+            }
 
             if (doc != null) {
               connection.delete(doc);

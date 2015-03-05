@@ -125,12 +125,13 @@ public final class PersistenceXmlUtil {
     } catch (Exception e) {
       throw new PersistenceException("Something goes wrong while parsing persistence.xml", e);
     } finally {
-      if (is != null)
-        try {
-          is.close();
-        } catch (IOException e) {
-          // No logging necessary, just consume
-        }
+      if (is != null) {
+          try {
+              is.close();
+          } catch (IOException e) {
+              // No logging necessary, just consume
+          }
+      }
     }
   }
 

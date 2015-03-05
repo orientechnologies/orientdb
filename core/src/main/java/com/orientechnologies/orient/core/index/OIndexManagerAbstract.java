@@ -80,9 +80,10 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     if (!autoRecreateIndexesAfterCrash()) {
       acquireExclusiveLock();
       try {
-        if (getDatabase().getStorage().getConfiguration().indexMgrRecordId == null)
-          // @COMPATIBILITY: CREATE THE INDEX MGR
-          create();
+        if (getDatabase().getStorage().getConfiguration().indexMgrRecordId == null) {
+            // @COMPATIBILITY: CREATE THE INDEX MGR
+            create();
+        }
 
         // RELOAD IT
         ((ORecordId) document.getIdentity()).fromString(getDatabase().getStorage().getConfiguration().indexMgrRecordId);
@@ -108,15 +109,16 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   public <RET extends ODocumentWrapper> RET save() {
     acquireExclusiveLock();
     try {
-      for (int retry = 0; retry < 10; retry++)
-        try {
-
-          super.save();
-          getDatabase().getStorage().synch();
-          return (RET) this;
-        } catch (OConcurrentModificationException e) {
-          reload(null, true);
-        }
+      for (int retry = 0; retry < 10; retry++) {
+          try {
+              
+              super.save();
+              getDatabase().getStorage().synch();
+              return (RET) this;
+          } catch (OConcurrentModificationException e) {
+              reload(null, true);
+          }
+      }
 
       super.save();
       getDatabase().getStorage().synch();
@@ -153,34 +155,39 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   public void flush() {
     for (final OIndex<?> idx : indexes.values()) {
       OIndexInternal<?> indexInternal = idx.getInternal();
-      if (indexInternal != null)
-        indexInternal.flush();
+      if (indexInternal != null) {
+          indexInternal.flush();
+      }
     }
   }
 
   public Collection<? extends OIndex<?>> getIndexes() {
     final Collection<OIndex<?>> rawResult = indexes.values();
     final List<OIndex<?>> result = new ArrayList<OIndex<?>>(rawResult.size());
-    for (final OIndex<?> index : rawResult)
-      result.add(preProcessBeforeReturn(index));
+    for (final OIndex<?> index : rawResult) {
+        result.add(preProcessBeforeReturn(index));
+    }
     return result;
   }
 
   public OIndex<?> getIndex(final String iName) {
     final OIndex<?> index = indexes.get(iName.toLowerCase());
-    if (index == null)
-      return null;
+    if (index == null) {
+        return null;
+    }
     return preProcessBeforeReturn(index);
   }
 
   @Override
   public void addClusterToIndex(final String clusterName, final String indexName) {
     final OIndex<?> index = indexes.get(indexName.toLowerCase());
-    if (index == null)
-      throw new OIndexException("Index with name " + indexName + " does not exist.");
+    if (index == null) {
+        throw new OIndexException("Index with name " + indexName + " does not exist.");
+    }
 
-    if (index.getInternal() == null)
-      throw new OIndexException("Index with name " + indexName + " has no internal presentation.");
+    if (index.getInternal() == null) {
+        throw new OIndexException("Index with name " + indexName + " has no internal presentation.");
+    }
 
     index.getInternal().addCluster(clusterName);
     save();
@@ -189,8 +196,9 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   @Override
   public void removeClusterFromIndex(final String clusterName, final String indexName) {
     final OIndex<?> index = indexes.get(indexName.toLowerCase());
-    if (index == null)
-      throw new OIndexException("Index with name " + indexName + " does not exist.");
+    if (index == null) {
+        throw new OIndexException("Index with name " + indexName + " does not exist.");
+    }
     index.getInternal().removeCluster(clusterName);
     save();
   }
@@ -297,13 +305,15 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
       final Map<OMultiKey, Set<OIndex<?>>> propertyIndex = classPropertyIndex.get(className.toLowerCase());
 
-      if (propertyIndex == null || !propertyIndex.containsKey(multiKey))
-        return Collections.emptySet();
+      if (propertyIndex == null || !propertyIndex.containsKey(multiKey)) {
+          return Collections.emptySet();
+      }
 
       final Set<OIndex<?>> rawResult = propertyIndex.get(multiKey);
       final Set<OIndex<?>> transactionalResult = new HashSet<OIndex<?>>(rawResult.size());
-      for (final OIndex<?> index : rawResult)
-        transactionalResult.add(preProcessBeforeReturn(index));
+      for (final OIndex<?> index : rawResult) {
+          transactionalResult.add(preProcessBeforeReturn(index));
+      }
 
       return transactionalResult;
     } finally {
@@ -324,8 +334,9 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
       final Map<OMultiKey, Set<OIndex<?>>> propertyIndex = classPropertyIndex.get(className.toLowerCase());
 
-      if (propertyIndex == null)
-        return false;
+      if (propertyIndex == null) {
+          return false;
+      }
 
       return propertyIndex.containsKey(multiKey) && !propertyIndex.get(multiKey).isEmpty();
     } finally {
@@ -349,12 +360,15 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     try {
       final Map<OMultiKey, Set<OIndex<?>>> propertyIndex = classPropertyIndex.get(className.toLowerCase());
 
-      if (propertyIndex == null)
-        return;
+      if (propertyIndex == null) {
+          return;
+      }
 
-      for (final Set<OIndex<?>> propertyIndexes : propertyIndex.values())
-        for (final OIndex<?> index : propertyIndexes)
-          indexes.add(preProcessBeforeReturn(index));
+      for (final Set<OIndex<?>> propertyIndexes : propertyIndex.values()) {
+          for (final OIndex<?> index : propertyIndexes) {
+              indexes.add(preProcessBeforeReturn(index));
+          }
+      }
     } finally {
       releaseSharedLock();
     }
@@ -365,8 +379,9 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     indexName = indexName.toLowerCase();
     final OIndex<?> index = indexes.get(indexName);
     if (index != null && index.getDefinition() != null && index.getDefinition().getClassName() != null
-        && className.equals(index.getDefinition().getClassName().toLowerCase()))
-      return preProcessBeforeReturn(index);
+        && className.equals(index.getDefinition().getClassName().toLowerCase())) {
+        return preProcessBeforeReturn(index);
+    }
     return null;
   }
 
@@ -383,8 +398,9 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
     if (databaseRecord != null && !databaseRecord.isClosed()) {
       final OMetadataInternal metadata = (OMetadataInternal) databaseRecord.getMetadata();
-      if (metadata != null)
-        metadata.makeThreadLocalSchemaSnapshot();
+      if (metadata != null) {
+          metadata.makeThreadLocalSchemaSnapshot();
+      }
     }
 
     lock.writeLock().lock();
@@ -396,8 +412,9 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
     final ODatabaseDocument databaseRecord = getDatabaseIfDefined();
     if (databaseRecord != null && !databaseRecord.isClosed()) {
       final OMetadata metadata = databaseRecord.getMetadata();
-      if (metadata != null)
-        ((OMetadataInternal) metadata).clearThreadLocalSchemaSnapshot();
+      if (metadata != null) {
+          ((OMetadataInternal) metadata).clearThreadLocalSchemaSnapshot();
+      }
     }
   }
 
@@ -425,8 +442,9 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
       indexes.put(index.getName().toLowerCase(), index);
 
       final OIndexDefinition indexDefinition = index.getDefinition();
-      if (indexDefinition == null || indexDefinition.getClassName() == null)
-        return;
+      if (indexDefinition == null || indexDefinition.getClassName() == null) {
+          return;
+      }
 
       Map<OMultiKey, Set<OIndex<?>>> propertyIndex = classPropertyIndex.get(indexDefinition.getClassName().toLowerCase());
 
@@ -441,8 +459,9 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
         final List<String> fields = indexDefinition.getFields().subList(0, i);
         final OMultiKey multiKey = new OMultiKey(normalizeFieldNames(fields));
         Set<OIndex<?>> indexSet = propertyIndex.get(multiKey);
-        if (indexSet == null)
-          indexSet = new HashSet<OIndex<?>>();
+        if (indexSet == null) {
+            indexSet = new HashSet<OIndex<?>>();
+        }
         indexSet.add(index);
         propertyIndex.put(multiKey, indexSet);
       }
@@ -453,19 +472,21 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
   protected List<String> normalizeFieldNames(final Collection<String> fieldNames) {
     final ArrayList<String> result = new ArrayList<String>(fieldNames.size());
-    for (final String fieldName : fieldNames)
-      result.add(fieldName.toLowerCase());
+    for (final String fieldName : fieldNames) {
+        result.add(fieldName.toLowerCase());
+    }
     return result;
   }
 
   protected OIndex<?> preProcessBeforeReturn(final OIndex<?> index) {
     if (!(getDatabase().getStorage() instanceof OStorageProxy)) {
-      if (index instanceof OIndexMultiValues)
-        return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Set<OIdentifiable>>) index);
-      else if (index instanceof OIndexDictionary)
-        return new OIndexTxAwareDictionary(getDatabase(), (OIndex<OIdentifiable>) index);
-      else if (index instanceof OIndexOneValue)
-        return new OIndexTxAwareOneValue(getDatabase(), (OIndex<OIdentifiable>) index);
+      if (index instanceof OIndexMultiValues) {
+          return new OIndexTxAwareMultiValue(getDatabase(), (OIndex<Set<OIdentifiable>>) index);
+      } else if (index instanceof OIndexDictionary) {
+          return new OIndexTxAwareDictionary(getDatabase(), (OIndex<OIdentifiable>) index);
+      } else if (index instanceof OIndexOneValue) {
+          return new OIndexTxAwareOneValue(getDatabase(), (OIndex<OIdentifiable>) index);
+      }
     }
     return index;
   }

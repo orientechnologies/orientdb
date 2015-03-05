@@ -68,25 +68,29 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
 
     int oldPos = 0;
     int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_CREATE)) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found. Use " + getSyntax(), parserText, oldPos);
+    }
 
     oldPos = pos;
     pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_LINK))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_LINK + " not found. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_LINK)) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_LINK + " not found. Use " + getSyntax(), parserText, oldPos);
+    }
 
     oldPos = pos;
     pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found. Use " + getSyntax(), parserText, oldPos);
+    }
 
     if (!word.toString().equalsIgnoreCase(KEYWORD_FROM)) {
       // GET THE LINK NAME
       linkName = word.toString();
 
-      if (OStringSerializerHelper.contains(linkName, ' '))
-        throw new OCommandSQLParsingException("Link name '" + linkName + "' contains not valid characters", parserText, oldPos);
+      if (OStringSerializerHelper.contains(linkName, ' ')) {
+          throw new OCommandSQLParsingException("Link name '" + linkName + "' contains not valid characters", parserText, oldPos);
+      }
 
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
@@ -96,8 +100,9 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
 
-      if (pos == -1)
-        throw new OCommandSQLParsingException("Link type missed. Use " + getSyntax(), parserText, oldPos);
+      if (pos == -1) {
+          throw new OCommandSQLParsingException("Link type missed. Use " + getSyntax(), parserText, oldPos);
+      }
 
       linkType = OType.valueOf(word.toString().toUpperCase(Locale.ENGLISH));
 
@@ -105,45 +110,55 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
       pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
     }
 
-    if (pos == -1 || !word.toString().equals(KEYWORD_FROM))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_FROM)) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_FROM + " not found. Use " + getSyntax(), parserText, oldPos);
+    }
 
     pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
+    if (pos == -1) {
+        throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
+    }
 
     String[] parts = word.toString().split("\\.");
-    if (parts.length != 2)
-      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
+    if (parts.length != 2) {
+        throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
+    }
 
     sourceClassName = parts[0];
-    if (sourceClassName == null)
-      throw new OCommandSQLParsingException("Class not found", parserText, pos);
+    if (sourceClassName == null) {
+        throw new OCommandSQLParsingException("Class not found", parserText, pos);
+    }
     sourceField = parts[1];
 
     pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_TO))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_TO + " not found. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_TO)) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_TO + " not found. Use " + getSyntax(), parserText, oldPos);
+    }
 
     pos = nextWord(parserText, parserTextUpperCase, pos, word, false);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
+    if (pos == -1) {
+        throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
+    }
 
     parts = word.toString().split("\\.");
-    if (parts.length != 2)
-      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
+    if (parts.length != 2) {
+        throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, pos);
+    }
 
     destClassName = parts[0];
-    if (destClassName == null)
-      throw new OCommandSQLParsingException("Class not found", parserText, pos);
+    if (destClassName == null) {
+        throw new OCommandSQLParsingException("Class not found", parserText, pos);
+    }
     destField = parts[1];
 
     pos = nextWord(parserText, parserTextUpperCase, pos, word, true);
-    if (pos == -1)
-      return this;
+    if (pos == -1) {
+        return this;
+    }
 
-    if (!word.toString().equalsIgnoreCase("INVERSE"))
-      throw new OCommandSQLParsingException("Missed 'INVERSE'. Use " + getSyntax(), parserText, pos);
+    if (!word.toString().equalsIgnoreCase("INVERSE")) {
+        throw new OCommandSQLParsingException("Missed 'INVERSE'. Use " + getSyntax(), parserText, pos);
+    }
 
     inverse = true;
 
@@ -154,23 +169,27 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
    * Execute the CREATE LINK.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (destField == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    if (destField == null) {
+        throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    }
 
     final ODatabaseDocumentInternal database = getDatabase();
-    if (!(database.getDatabaseOwner() instanceof ODatabaseDocumentTx))
-      throw new OCommandSQLParsingException("This command supports only the database type ODatabaseDocumentTx and type '"
-          + database.getClass() + "' was found");
+    if (!(database.getDatabaseOwner() instanceof ODatabaseDocumentTx)) {
+        throw new OCommandSQLParsingException("This command supports only the database type ODatabaseDocumentTx and type '"
+                + database.getClass() + "' was found");
+    }
 
     final ODatabaseDocumentTx db = (ODatabaseDocumentTx) database.getDatabaseOwner();
 
     final OClass sourceClass = database.getMetadata().getSchema().getClass(sourceClassName);
-    if (sourceClass == null)
-      throw new OCommandExecutionException("Source class '" + sourceClassName + "' not found");
+    if (sourceClass == null) {
+        throw new OCommandExecutionException("Source class '" + sourceClassName + "' not found");
+    }
 
     final OClass destClass = database.getMetadata().getSchema().getClass(destClassName);
-    if (destClass == null)
-      throw new OCommandExecutionException("Destination class '" + destClassName + "' not found");
+    if (destClass == null) {
+        throw new OCommandExecutionException("Destination class '" + destClassName + "' not found");
+    }
 
     Object value;
 
@@ -184,22 +203,25 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
     Object oldValue;
     long total = 0;
 
-    if (linkName == null)
-      // NO LINK NAME EXPRESSED: OVERWRITE THE SOURCE FIELD
-      linkName = sourceField;
+    if (linkName == null) {
+        // NO LINK NAME EXPRESSED: OVERWRITE THE SOURCE FIELD
+        linkName = sourceField;
+    }
 
     boolean multipleRelationship;
-    if (linkType != null)
-      // DETERMINE BASED ON FORCED TYPE
-      multipleRelationship = linkType == OType.LINKSET || linkType == OType.LINKLIST;
-    else
-      multipleRelationship = false;
+    if (linkType != null) {
+        // DETERMINE BASED ON FORCED TYPE
+        multipleRelationship = linkType == OType.LINKSET || linkType == OType.LINKLIST;
+    } else {
+        multipleRelationship = false;
+    }
 
     long totRecords = db.countClass(sourceClass.getName());
     long currRecord = 0;
 
-    if (progressListener != null)
-      progressListener.onBegin(this, totRecords, false);
+    if (progressListener != null) {
+        progressListener.onBegin(this, totRecords, false);
+    }
 
     database.declareIntent(new OIntentMassiveInsert());
     try {
@@ -216,20 +238,22 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
             // SEARCH THE DESTINATION RECORD
             target = null;
 
-            if (!ODocumentHelper.ATTRIBUTE_RID.equals(destField) && value instanceof String)
-              if (((String) value).length() == 0)
-                value = null;
-              else
-                value = "'" + value + "'";
+            if (!ODocumentHelper.ATTRIBUTE_RID.equals(destField) && value instanceof String) {
+                if (((String) value).length() == 0) {
+                    value = null;
+                } else {
+                    value = "'" + value + "'";
+                }
+            }
 
             result = database.<OCommandRequest> command(new OSQLSynchQuery<ODocument>(cmd + value)).execute();
 
-            if (result == null || result.size() == 0)
-              value = null;
-            else if (result.size() > 1)
-              throw new OCommandExecutionException("Cannot create link because multiple records was found in class '"
-                  + destClass.getName() + "' with value " + value + " in field '" + destField + "'");
-            else {
+            if (result == null || result.size() == 0) {
+                value = null;
+            } else if (result.size() > 1) {
+                throw new OCommandExecutionException("Cannot create link because multiple records was found in class '"
+                        + destClass.getName() + "' with value " + value + " in field '" + destField + "'");
+            } else {
               target = result.get(0);
               value = target;
             }
@@ -239,8 +263,9 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
               oldValue = target.field(linkName);
 
               if (oldValue != null) {
-                if (!multipleRelationship)
-                  multipleRelationship = true;
+                if (!multipleRelationship) {
+                    multipleRelationship = true;
+                }
 
                 Collection<ODocument> coll;
                 if (oldValue instanceof Collection) {
@@ -255,18 +280,20 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
                 }
                 coll.add(doc);
               } else {
-                if (linkType != null)
-                  if (linkType == OType.LINKSET) {
-                    value = new ORecordLazySet(target);
-                    ((Set<OIdentifiable>) value).add(doc);
-                  } else if (linkType == OType.LINKLIST) {
-                    value = new ORecordLazyList(target);
-                    ((ORecordLazyList) value).add(doc);
-                  } else
-                    // IGNORE THE TYPE, SET IT AS LINK
+                if (linkType != null) {
+                    if (linkType == OType.LINKSET) {
+                        value = new ORecordLazySet(target);
+                        ((Set<OIdentifiable>) value).add(doc);
+                    } else if (linkType == OType.LINKLIST) {
+                        value = new ORecordLazyList(target);
+                        ((ORecordLazyList) value).add(doc);
+                    } else {
+                        // IGNORE THE TYPE, SET IT AS LINK
+                        value = doc;
+                    }
+                } else {
                     value = doc;
-                else
-                  value = doc;
+                }
 
                 target.field(linkName, value);
               }
@@ -282,19 +309,22 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
           }
         }
 
-        if (progressListener != null)
-          progressListener.onProgress(this, currRecord, currRecord * 100f / totRecords);
+        if (progressListener != null) {
+            progressListener.onProgress(this, currRecord, currRecord * 100f / totRecords);
+        }
       }
 
       if (total > 0) {
         if (inverse) {
           // REMOVE THE OLD PROPERTY IF ANY
           OProperty prop = destClass.getProperty(linkName);
-          if (prop != null)
-            destClass.dropProperty(linkName);
+          if (prop != null) {
+              destClass.dropProperty(linkName);
+          }
 
-          if (linkType == null)
-            linkType = multipleRelationship ? OType.LINKSET : OType.LINK;
+          if (linkType == null) {
+              linkType = multipleRelationship ? OType.LINKSET : OType.LINK;
+          }
 
           // CREATE THE PROPERTY
           destClass.createProperty(linkName, linkType, sourceClass);
@@ -303,20 +333,23 @@ public class OCommandExecutorSQLCreateLink extends OCommandExecutorSQLAbstract {
 
           // REMOVE THE OLD PROPERTY IF ANY
           OProperty prop = sourceClass.getProperty(linkName);
-          if (prop != null)
-            sourceClass.dropProperty(linkName);
+          if (prop != null) {
+              sourceClass.dropProperty(linkName);
+          }
 
           // CREATE THE PROPERTY
           sourceClass.createProperty(linkName, OType.LINK, destClass);
         }
       }
 
-      if (progressListener != null)
-        progressListener.onCompletition(this, true);
+      if (progressListener != null) {
+          progressListener.onCompletition(this, true);
+      }
 
     } catch (Exception e) {
-      if (progressListener != null)
-        progressListener.onCompletition(this, false);
+      if (progressListener != null) {
+          progressListener.onCompletition(this, false);
+      }
 
       throw new OCommandExecutionException("Error on creation of links", e);
 

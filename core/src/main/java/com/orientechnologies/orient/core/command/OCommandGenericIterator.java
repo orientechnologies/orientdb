@@ -40,19 +40,21 @@ public class OCommandGenericIterator implements Iterator<Object>, Iterable<Objec
 
 	public boolean hasNext() {
 		checkForExecution();
-		if (resultOne != null)
-			return true;
-		else if (resultSet != null)
-			return resultSet.hasNext();
+		if (resultOne != null) {
+                    return true;
+                } else if (resultSet != null) {
+                    return resultSet.hasNext();
+                }
 		return false;
 	}
 
 	public Object next() {
 		checkForExecution();
-		if (resultOne != null)
-			return resultOne;
-		else if (resultSet != null)
-			return resultSet.next();
+		if (resultOne != null) {
+                    return resultOne;
+                } else if (resultSet != null) {
+                    return resultSet.next();
+                }
 
 		return null;
 	}
@@ -70,10 +72,11 @@ public class OCommandGenericIterator implements Iterator<Object>, Iterable<Objec
 		if (!executed) {
 			executed = true;
 			final Object result = command.execute(null);
-			if (result instanceof Collection)
-				resultSet = ((Collection<Object>) result).iterator();
-			else if (result instanceof Object)
-				resultOne = (Object) result;
+			if (result instanceof Collection) {
+                            resultSet = ((Collection<Object>) result).iterator();
+                        } else if (result instanceof Object) {
+                            resultOne = (Object) result;
+                        }
 		}
 	}
 }

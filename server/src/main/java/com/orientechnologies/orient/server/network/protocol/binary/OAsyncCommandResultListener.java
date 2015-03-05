@@ -51,11 +51,12 @@ import java.io.IOException;
 
    @Override
    public boolean result(final Object iRecord) {
-     if (empty.compareAndSet(true, false))
-       try {
-         protocol.sendOk(txId);
-       } catch (IOException ignored) {
-       }
+     if (empty.compareAndSet(true, false)) {
+         try {
+             protocol.sendOk(txId);
+         } catch (IOException ignored) {
+         }
+     }
 
      try {
        fetchRecord(iRecord, new ORemoteFetchListener() {
@@ -85,8 +86,9 @@ import java.io.IOException;
    @Override
    public void end() {
      super.end();
-     if (resultListener != null)
-       resultListener.end();
+     if (resultListener != null) {
+         resultListener.end();
+     }
    }
 
    public boolean isEmpty() {

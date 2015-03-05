@@ -98,8 +98,9 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     server = iServer;
     channel = new OChannelBinaryServer(iSocket, iConfig);
     tokenHandler = server.getPlugin(OTokenHandler.TOKEN_HANDLER_NAME);
-    if (tokenHandler != null && !tokenHandler.isEnabled())
-      tokenHandler = null;
+    if (tokenHandler != null && !tokenHandler.isEnabled()) {
+        tokenHandler = null;
+    }
   }
 
   @Override
@@ -130,9 +131,9 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
    * @throws IOException
    */
   public void writeIdentifiable(final OIdentifiable o) throws IOException {
-    if (o == null)
-      channel.writeShort(OChannelBinaryProtocol.RECORD_NULL);
-    else if (o instanceof ORecordId) {
+    if (o == null) {
+        channel.writeShort(OChannelBinaryProtocol.RECORD_NULL);
+    } else if (o instanceof ORecordId) {
       channel.writeShort(OChannelBinaryProtocol.RECORD_RID);
       channel.writeRID((ORID) o);
     } else {
@@ -147,8 +148,9 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
   public void fillRecord(final ORecordId rid, final byte[] buffer, final ORecordVersion version, final ORecord record,
       ODatabaseDocumentInternal iDatabase) {
     String dbSerializerName = "";
-    if (iDatabase != null)
-      dbSerializerName = iDatabase.getSerializer().toString();
+    if (iDatabase != null) {
+        dbSerializerName = iDatabase.getSerializer().toString();
+    }
 
     String name = getRecordSerializerName();
     if (ORecordInternal.getRecordType(record) == ODocument.RECORD_TYPE && !dbSerializerName.equals(name)) {
@@ -161,8 +163,9 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
         ONetworkThreadLocalSerializer.setNetworkSerializer(null);
       }
       record.setDirty();
-    } else
-      ORecordInternal.fill(record, rid, version, buffer, true);
+    } else {
+        ORecordInternal.fill(record, rid, version, buffer, true);
+    }
   }
 
   /**
@@ -196,8 +199,9 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     requestType = -1;
 
     // do not remove this or we will get deadlock upon shutdown.
-    if (isShutdownFlag())
-      return;
+    if (isShutdownFlag()) {
+        return;
+    }
 
     clientTxId = 0;
     okSent = false;
@@ -261,14 +265,16 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
 
   protected void checkStorageExistence(final String iDatabaseName) {
     for (OStorage stg : Orient.instance().getStorages()) {
-      if (!(stg instanceof OStorageProxy) && stg.getName().equalsIgnoreCase(iDatabaseName) && stg.exists())
-        throw new ODatabaseException("Database named '" + iDatabaseName + "' already exists: " + stg);
+      if (!(stg instanceof OStorageProxy) && stg.getName().equalsIgnoreCase(iDatabaseName) && stg.exists()) {
+          throw new ODatabaseException("Database named '" + iDatabaseName + "' already exists: " + stg);
+      }
     }
   }
 
   protected ODatabaseDocumentTx createDatabase(final ODatabaseDocumentTx iDatabase, String dbUser, final String dbPasswd) {
-    if (iDatabase.exists())
-      throw new ODatabaseException("Database '" + iDatabase.getURL() + "' already exists");
+    if (iDatabase.exists()) {
+        throw new ODatabaseException("Database '" + iDatabase.getURL() + "' already exists");
+    }
 
     iDatabase.create();
     if (dbUser != null) {
@@ -300,18 +306,20 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     String path;
 
     final OStorage stg = Orient.instance().getStorage(dbName);
-    if (stg != null)
-      path = stg.getURL();
-    else if (storageType.equals(OEngineLocalPaginated.NAME)) {
+    if (stg != null) {
+        path = stg.getURL();
+    } else if (storageType.equals(OEngineLocalPaginated.NAME)) {
       // if this storage was configured return always path from config file, otherwise return default path
       path = server.getConfiguration().getStoragePath(dbName);
 
-      if (path == null)
-        path = storageType + ":" + server.getDatabaseDirectory() + "/" + dbName;
+      if (path == null) {
+          path = storageType + ":" + server.getDatabaseDirectory() + "/" + dbName;
+        }
     } else if (storageType.equals(OEngineMemory.NAME)) {
       path = storageType + ":" + dbName;
-    } else
-      throw new IllegalArgumentException("Cannot create database: storage mode '" + storageType + "' is not supported.");
+    } else {
+        throw new IllegalArgumentException("Cannot create database: storage mode '" + storageType + "' is not supported.");
+    }
 
     return Orient.instance().getDatabaseFactory().createDatabase(dbType, path);
   }
@@ -320,8 +328,9 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     try {
       // TRY TO SEE IF THE RECORD EXISTS
       final ORecord record = rid.getRecord();
-      if (record == null)
-        return 0;
+      if (record == null) {
+          return 0;
+      }
 
       iDatabase.delete(rid, version);
       return 1;
@@ -365,13 +374,15 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     if (newRecord instanceof ODocument) {
       currentRecord = iDatabase.load(rid);
 
-      if (currentRecord == null)
-        throw new ORecordNotFoundException(rid.toString());
+      if (currentRecord == null) {
+          throw new ORecordNotFoundException(rid.toString());
+      }
 
       ((ODocument) currentRecord).merge((ODocument) newRecord, false, false);
 
-    } else
-      currentRecord = newRecord;
+    } else {
+        currentRecord = newRecord;
+    }
 
     currentRecord.getRecordVersion().copyFrom(version);
 
@@ -397,8 +408,9 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
     final byte[] stream;
     try {
       String dbSerializerName = null;
-      if (ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null)
-        dbSerializerName = ((ODatabaseDocumentInternal) iRecord.getDatabase()).getSerializer().toString();
+      if (ODatabaseRecordThreadLocal.INSTANCE.getIfDefined() != null) {
+          dbSerializerName = ((ODatabaseDocumentInternal) iRecord.getDatabase()).getSerializer().toString();
+      }
       String name = getRecordSerializerName();
       if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE
           && (dbSerializerName == null || !dbSerializerName.equals(name))) {
@@ -445,10 +457,11 @@ public abstract class OBinaryNetworkProtocolAbstract extends ONetworkProtocol {
       if (ORecordSerializerSchemaAware2CSV.NAME.equals(getRecordSerializerName())) {
         // TRIM TAILING SPACES (DUE TO OVERSIZE)
         for (int i = stream.length - 1; i > -1; --i) {
-          if (stream[i] == 32)
-            --realLength;
-          else
-            break;
+          if (stream[i] == 32) {
+              --realLength;
+          } else {
+              break;
+          }
         }
 
       }

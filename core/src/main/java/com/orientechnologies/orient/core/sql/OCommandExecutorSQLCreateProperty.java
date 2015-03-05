@@ -56,52 +56,61 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
 
     int oldPos = 0;
     int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_CREATE))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found", parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_CREATE)) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_CREATE + " not found", parserText, oldPos);
+    }
 
     oldPos = pos;
     pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found", parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY)) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found", parserText, oldPos);
+    }
 
     oldPos = pos;
     pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Expected <class>.<property>", parserText, oldPos);
+    if (pos == -1) {
+        throw new OCommandSQLParsingException("Expected <class>.<property>", parserText, oldPos);
+    }
 
     String[] parts = word.toString().split("\\.");
-    if (parts.length != 2)
-      throw new OCommandSQLParsingException("Expected <class>.<property>", parserText, oldPos);
+    if (parts.length != 2) {
+        throw new OCommandSQLParsingException("Expected <class>.<property>", parserText, oldPos);
+    }
 
     className = parts[0];
-    if (className == null)
-      throw new OCommandSQLParsingException("Class not found", parserText, oldPos);
+    if (className == null) {
+        throw new OCommandSQLParsingException("Class not found", parserText, oldPos);
+    }
     fieldName = parts[1];
 
     oldPos = pos;
     pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Missed property type", parserText, oldPos);
+    if (pos == -1) {
+        throw new OCommandSQLParsingException("Missed property type", parserText, oldPos);
+    }
 
     type = OType.valueOf(word.toString());
 
     oldPos = pos;
     pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
-    if (pos == -1)
-      return this;
+    if (pos == -1) {
+        return this;
+    }
 
-    if (word.toString().equals(KEYWORD_UNSAFE))
-      unsafe = true;
-    else {
+    if (word.toString().equals(KEYWORD_UNSAFE)) {
+        unsafe = true;
+    } else {
       linked = word.toString();
 
       oldPos = pos;
       pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
-      if (pos == -1)
-        return this;
+      if (pos == -1) {
+          return this;
+        }
 
-      if (word.toString().equals(KEYWORD_UNSAFE))
-        unsafe = true;
+      if (word.toString().equals(KEYWORD_UNSAFE)) {
+          unsafe = true;
+      }
     }
 
     return this;
@@ -111,18 +120,21 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
    * Execute the CREATE PROPERTY.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (type == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    if (type == null) {
+        throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    }
 
     final ODatabaseDocument database = getDatabase();
     final OClassImpl sourceClass = (OClassImpl) database.getMetadata().getSchema().getClass(className);
-    if (sourceClass == null)
-      throw new OCommandExecutionException("Source class '" + className + "' not found");
+    if (sourceClass == null) {
+        throw new OCommandExecutionException("Source class '" + className + "' not found");
+    }
 
     OPropertyImpl prop = (OPropertyImpl) sourceClass.getProperty(fieldName);
-    if (prop != null)
-      throw new OCommandExecutionException("Property '" + className + "." + fieldName
-          + "' already exists. Remove it before to retry.");
+    if (prop != null) {
+        throw new OCommandExecutionException("Property '" + className + "." + fieldName
+                + "' already exists. Remove it before to retry.");
+    }
 
     // CREATE THE PROPERTY
     OClass linkedClass = null;
@@ -131,9 +143,10 @@ public class OCommandExecutorSQLCreateProperty extends OCommandExecutorSQLAbstra
       // FIRST SEARCH BETWEEN CLASSES
       linkedClass = database.getMetadata().getSchema().getClass(linked);
 
-      if (linkedClass == null)
-        // NOT FOUND: SEARCH BETWEEN TYPES
-        linkedType = OType.valueOf(linked.toUpperCase(Locale.ENGLISH));
+      if (linkedClass == null) {
+          // NOT FOUND: SEARCH BETWEEN TYPES
+          linkedType = OType.valueOf(linked.toUpperCase(Locale.ENGLISH));
+      }
     }
 
     // CREATE IT LOCALLY

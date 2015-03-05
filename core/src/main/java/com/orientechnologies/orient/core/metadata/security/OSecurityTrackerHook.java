@@ -53,15 +53,17 @@ public class OSecurityTrackerHook extends ODocumentHookAbstract {
   }
 
   private void incrementSchemaVersion(ODocument doc) {
-		if (ODocumentInternal.getImmutableSchemaClass(doc) == null)
-			return;
+		if (ODocumentInternal.getImmutableSchemaClass(doc) == null) {
+                    return;
+                }
 
     final String className = ODocumentInternal.getImmutableSchemaClass(doc).getName();
 
     if (className.equalsIgnoreCase(OUser.CLASS_NAME) || className.equalsIgnoreCase(ORole.CLASS_NAME)) {
       final OSecurity scr = security.get();
-      if (scr != null)
-        scr.incrementVersion();
+      if (scr != null) {
+          scr.incrementVersion();
+      }
     }
   }
 }

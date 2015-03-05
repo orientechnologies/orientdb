@@ -87,47 +87,52 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     parserRequiredKeyword("INTO");
 
     String subjectName = parserRequiredWord(true, "Invalid subject name. Expected cluster, class or index");
-    if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX))
-      // CLUSTER
-      clusterName = subjectName.substring(OCommandExecutorSQLAbstract.CLUSTER_PREFIX.length());
-
-    else if (subjectName.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX))
-      // INDEX
-      indexName = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_PREFIX.length());
-
-    else {
+    if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLUSTER_PREFIX)) {
+        // CLUSTER
+        clusterName = subjectName.substring(OCommandExecutorSQLAbstract.CLUSTER_PREFIX.length());
+    } else if (subjectName.startsWith(OCommandExecutorSQLAbstract.INDEX_PREFIX)) {
+        // INDEX
+        indexName = subjectName.substring(OCommandExecutorSQLAbstract.INDEX_PREFIX.length());
+    } else {
       // CLASS
-      if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX))
-        subjectName = subjectName.substring(OCommandExecutorSQLAbstract.CLASS_PREFIX.length());
+      if (subjectName.startsWith(OCommandExecutorSQLAbstract.CLASS_PREFIX)) {
+          subjectName = subjectName.substring(OCommandExecutorSQLAbstract.CLASS_PREFIX.length());
+        }
 
       final OClass cls = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot().getClass(subjectName);
-      if (cls == null)
-        throwParsingException("Class " + subjectName + " not found in database");
+      if (cls == null) {
+          throwParsingException("Class " + subjectName + " not found in database");
+        }
 
-      if (!unsafe && cls.isSubClassOf("E"))
-        // FOUND EDGE
-        throw new OCommandExecutionException(
-            "'INSERT' command cannot create Edges. Use 'CREATE EDGE' command instead, or apply the 'UNSAFE' keyword to force it");
+      if (!unsafe && cls.isSubClassOf("E")) {
+          // FOUND EDGE
+          throw new OCommandExecutionException(
+                  "'INSERT' command cannot create Edges. Use 'CREATE EDGE' command instead, or apply the 'UNSAFE' keyword to force it");
+        }
 
       className = cls.getName();
       clazz = database.getMetadata().getSchema().getClass(className);
-      if (clazz == null)
-        throw new OQueryParsingException("Class '" + className + "' was not found");
+      if (clazz == null) {
+          throw new OQueryParsingException("Class '" + className + "' was not found");
+        }
     }
 
     parserSkipWhiteSpaces();
-    if (parserIsEnded())
-      throwSyntaxErrorException("Set of fields is missed. Example: (name, surname) or SET name = 'Bill'");
+    if (parserIsEnded()) {
+        throwSyntaxErrorException("Set of fields is missed. Example: (name, surname) or SET name = 'Bill'");
+    }
 
     final String temp = parseOptionalWord(true);
     if (temp.equals("CLUSTER")) {
       clusterName = parserRequiredWord(false);
 
       parserSkipWhiteSpaces();
-      if (parserIsEnded())
-        throwSyntaxErrorException("Set of fields is missed. Example: (name, surname) or SET name = 'Bill'");
-    } else
-      parserGoBack();
+      if (parserIsEnded()) {
+          throwSyntaxErrorException("Set of fields is missed. Example: (name, surname) or SET name = 'Bill'");
+      }
+    } else {
+        parserGoBack();
+    }
 
     newRecords = new ArrayList<Map<String, Object>>();
     Boolean sourceClauseProcessed = false;
@@ -149,8 +154,9 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
         sourceClauseProcessed = true;
       }
     }
-    if (sourceClauseProcessed)
-      parserNextWord(true, " \r\n");
+    if (sourceClauseProcessed) {
+        parserNextWord(true, " \r\n");
+    }
     // it has to be processed before KEYWORD_FROM in order to not be taken as part of SELECT
     if (parserGetLastWord().equals(KEYWORD_RETURN)) {
       parseReturn(!sourceClauseProcessed);
@@ -171,17 +177,20 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
    * Execute the INSERT and return the ODocument object created.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (newRecords == null && content == null && subQuery == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    if (newRecords == null && content == null && subQuery == null) {
+        throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    }
 
     final OCommandParameters commandParameters = new OCommandParameters(iArgs);
     if (indexName != null) {
-      if (newRecords == null)
-        throw new OCommandExecutionException("No key/value found");
+      if (newRecords == null) {
+          throw new OCommandExecutionException("No key/value found");
+      }
 
       final OIndex<?> index = getDatabase().getMetadata().getIndexManager().getIndex(indexName);
-      if (index == null)
-        throw new OCommandExecutionException("Target index '" + indexName + "' not found");
+      if (index == null) {
+          throw new OCommandExecutionException("Target index '" + indexName + "' not found");
+      }
 
       // BIND VALUES
       Map<String, Object> result = new HashMap<String, Object>();
@@ -208,10 +217,11 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
           docs.add(doc);
         }
 
-        if (docs.size() == 1)
-          return prepareReturnItem(docs.get(0));
-        else
-          return prepareReturnResult(docs);
+        if (docs.size() == 1) {
+            return prepareReturnItem(docs.get(0));
+        } else {
+            return prepareReturnResult(docs);
+        }
       } else if (content != null) {
         final ODocument doc = className != null ? new ODocument(className) : new ODocument();
         doc.merge(content, true, false);
@@ -219,8 +229,9 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
         return prepareReturnItem(doc);
       } else if (subQuery != null) {
         subQuery.execute();
-        if (queryResult != null)
-          return prepareReturnResult(queryResult);
+        if (queryResult != null) {
+            return prepareReturnResult(queryResult);
+        }
 
         return saved.longValue();
       }
@@ -238,8 +249,9 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     if (className != null) {
       final OClass clazz = ((OMetadataInternal) getDatabase().getMetadata()).getImmutableSchemaSnapshot().getClass(className);
       return Collections.singleton(getDatabase().getClusterNameById(clazz.getClusterSelection().getCluster(clazz, null)));
-    } else if (clusterName != null)
-      return getInvolvedClustersOfClusters(Collections.singleton(clusterName));
+    } else if (clusterName != null) {
+        return getInvolvedClustersOfClusters(Collections.singleton(clusterName));
+    }
 
     return Collections.EMPTY_SET;
   }
@@ -256,14 +268,16 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     // RESET THE IDENTITY TO AVOID UPDATE
     rec.getIdentity().reset();
 
-    if (rec instanceof ODocument && className != null)
-      ((ODocument) rec).setClassName(className);
+    if (rec instanceof ODocument && className != null) {
+        ((ODocument) rec).setClassName(className);
+    }
 
     rec.setDirty();
     synchronized (this) {
       saveRecord(rec);
-      if (queryResult != null)
-        queryResult.add(((ODocument) rec));
+      if (queryResult != null) {
+          queryResult.add(((ODocument) rec));
+      }
     }
 
     return true;
@@ -275,23 +289,26 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
   }
 
   protected Object prepareReturnResult(List<ODocument> res) {
-    if (returnExpression == null)
-      return res;// No transformation
+    if (returnExpression == null) {
+        return res;// No transformation
+    }
     final ArrayList<Object> ret = new ArrayList<Object>();
-    for (ODocument resItem : (List<ODocument>) res)
-      ret.add(prepareReturnItem(resItem));
+    for (ODocument resItem : (List<ODocument>) res) {
+        ret.add(prepareReturnItem(resItem));
+    }
     return ret;
   }
 
   protected Object prepareReturnItem(ODocument item) {
-    if (returnExpression == null)
-      return item;// No transformation
+    if (returnExpression == null) {
+        return item;// No transformation
+    }
 
     this.getContext().setVariable("current", item);
     final Object res = OSQLHelper.getValue(returnExpression, item, this.getContext());
-    if (res instanceof OIdentifiable)
-      return res;
-    else {// wrapping doc
+    if (res instanceof OIdentifiable) {
+        return res;
+    } else {// wrapping doc
       final ODocument wrappingDoc = new ODocument("result", res);
       wrappingDoc.field("rid", item.getIdentity());// passing record id.In many cases usable on client side
       wrappingDoc.field("version", item.getVersion());// passing record version
@@ -300,10 +317,11 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
   }
 
   protected void saveRecord(final ORecord rec) {
-    if (clusterName != null)
-      rec.save(clusterName);
-    else
-      rec.save();
+    if (clusterName != null) {
+        rec.save(clusterName);
+    } else {
+        rec.save();
+    }
     saved.incrementAndGet();
   }
 
@@ -311,17 +329,20 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     final int beginFields = parserGetCurrentPosition();
 
     final int endFields = parserText.indexOf(')', beginFields + 1);
-    if (endFields == -1)
-      throwSyntaxErrorException("Missed closed brace");
+    if (endFields == -1) {
+        throwSyntaxErrorException("Missed closed brace");
+    }
 
     final ArrayList<String> fieldNames = new ArrayList<String>();
     parserSetCurrentPosition(OStringSerializerHelper.getParameters(parserText, beginFields, endFields, fieldNames));
-    if (fieldNames.size() == 0)
-      throwSyntaxErrorException("Set of fields is empty. Example: (name, surname)");
+    if (fieldNames.size() == 0) {
+        throwSyntaxErrorException("Set of fields is empty. Example: (name, surname)");
+    }
 
     // REMOVE QUOTATION MARKS IF ANY
-    for (int i = 0; i < fieldNames.size(); ++i)
-      fieldNames.set(i, OStringSerializerHelper.removeQuotationMarks(fieldNames.get(i)));
+    for (int i = 0; i < fieldNames.size(); ++i) {
+        fieldNames.set(i, OStringSerializerHelper.removeQuotationMarks(fieldNames.get(i)));
+    }
 
     parserRequiredKeyword(KEYWORD_VALUES);
     parserSkipWhiteSpaces();
@@ -339,20 +360,24 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
       final List<String> values = new ArrayList<String>();
       blockEnd += OStringSerializerHelper.getParameters(record, 0, -1, values);
 
-      if (blockEnd == -1)
-        throw new OCommandSQLParsingException("Missed closed brace. Use " + getSyntax(), parserText, blockStart);
+      if (blockEnd == -1) {
+          throw new OCommandSQLParsingException("Missed closed brace. Use " + getSyntax(), parserText, blockStart);
+      }
 
-      if (values.isEmpty())
-        throw new OCommandSQLParsingException("Set of values is empty. Example: ('Bill', 'Stuart', 300). Use " + getSyntax(),
-            parserText, blockStart);
+      if (values.isEmpty()) {
+          throw new OCommandSQLParsingException("Set of values is empty. Example: ('Bill', 'Stuart', 300). Use " + getSyntax(),
+                  parserText, blockStart);
+      }
 
-      if (values.size() != fieldNames.size())
-        throw new OCommandSQLParsingException("Fields not match with values", parserText, blockStart);
+      if (values.size() != fieldNames.size()) {
+          throw new OCommandSQLParsingException("Fields not match with values", parserText, blockStart);
+      }
 
       // TRANSFORM FIELD VALUES
       final Map<String, Object> fields = new LinkedHashMap<String, Object>();
-      for (int i = 0; i < values.size(); ++i)
-        fields.put(fieldNames.get(i), OSQLHelper.parseValue(this, OStringSerializerHelper.decode(values.get(i).trim()), context));
+      for (int i = 0; i < values.size(); ++i) {
+          fields.put(fieldNames.get(i), OSQLHelper.parseValue(this, OStringSerializerHelper.decode(values.get(i).trim()), context));
+      }
 
       newRecords.add(fields);
       blockStart = blockEnd;
@@ -367,11 +392,13 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     parserNextWord(false, " ");
     String returning = parserGetLastWord().trim();
     if (returning.startsWith("$") || returning.startsWith("@")) {
-      if (subQueryExpected)
-        queryResult = new ArrayList<ODocument>();
+      if (subQueryExpected) {
+          queryResult = new ArrayList<ODocument>();
+      }
       returnExpression = (returning.length() > 0) ? OSQLHelper.parseValue(this, returning, this.getContext()) : null;
-    } else
-      throwSyntaxErrorException("record attribute (@attributes) or functions with $current variable expected");
+    } else {
+        throwSyntaxErrorException("record attribute (@attributes) or functions with $current variable expected");
+    }
 
   }
 
@@ -379,12 +406,13 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     final Object parsedKey = candidate.get(KEYWORD_KEY);
     if (parsedKey instanceof OSQLFilterItemField) {
       final OSQLFilterItemField f = (OSQLFilterItemField) parsedKey;
-      if (f.getRoot().equals("?"))
-        // POSITIONAL PARAMETER
-        return commandParameters.getNext();
-      else if (f.getRoot().startsWith(":"))
-        // NAMED PARAMETER
-        return commandParameters.getByName(f.getRoot().substring(1));
+      if (f.getRoot().equals("?")) {
+          // POSITIONAL PARAMETER
+          return commandParameters.getNext();
+      } else if (f.getRoot().startsWith(":")) {
+          // NAMED PARAMETER
+          return commandParameters.getByName(f.getRoot().substring(1));
+      }
     }
     return parsedKey;
   }
@@ -393,12 +421,13 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     final Object parsedRid = candidate.get(KEYWORD_RID);
     if (parsedRid instanceof OSQLFilterItemField) {
       final OSQLFilterItemField f = (OSQLFilterItemField) parsedRid;
-      if (f.getRoot().equals("?"))
-        // POSITIONAL PARAMETER
-        return (OIdentifiable) commandParameters.getNext();
-      else if (f.getRoot().startsWith(":"))
-        // NAMED PARAMETER
-        return (OIdentifiable) commandParameters.getByName(f.getRoot().substring(1));
+      if (f.getRoot().equals("?")) {
+          // POSITIONAL PARAMETER
+          return (OIdentifiable) commandParameters.getNext();
+      } else if (f.getRoot().startsWith(":")) {
+          // NAMED PARAMETER
+          return (OIdentifiable) commandParameters.getByName(f.getRoot().substring(1));
+      }
     }
     return (OIdentifiable) parsedRid;
   }

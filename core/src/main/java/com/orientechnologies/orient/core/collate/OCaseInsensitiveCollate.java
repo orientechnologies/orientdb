@@ -36,8 +36,9 @@ public class OCaseInsensitiveCollate extends ODefaultComparator implements OColl
   }
 
   public Object transform(final Object obj) {
-    if (obj instanceof String)
-      return ((String) obj).toLowerCase();
+    if (obj instanceof String) {
+        return ((String) obj).toLowerCase();
+    }
 
     return obj;
   }
@@ -49,8 +50,9 @@ public class OCaseInsensitiveCollate extends ODefaultComparator implements OColl
 
   @Override
   public boolean equals(Object obj) {
-    if (obj==null || obj.getClass() != this.getClass())
-      return false;
+    if (obj==null || obj.getClass() != this.getClass()) {
+        return false;
+    }
 
     final OCaseInsensitiveCollate that = (OCaseInsensitiveCollate) obj;
 

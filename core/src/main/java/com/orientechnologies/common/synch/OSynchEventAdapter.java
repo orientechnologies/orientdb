@@ -50,11 +50,12 @@ public class OSynchEventAdapter<RESOURCE_TYPE, RESPONSE_TYPE> {
 	 * Wait until the requested resource is unlocked. Put the current thread in sleep until timeout or is waked up by an unlock.
 	 */
 	public synchronized RESPONSE_TYPE getValue(final RESOURCE_TYPE iResource, final long iTimeout) {
-		if (OLogManager.instance().isDebugEnabled())
-			OLogManager.instance().debug(
-					this,
-					"Thread [" + Thread.currentThread().getId() + "] is waiting for the resource " + iResource
-							+ (iTimeout <= 0 ? " forever" : " until " + iTimeout + "ms"));
+		if (OLogManager.instance().isDebugEnabled()) {
+                    OLogManager.instance().debug(
+                            this,
+                            "Thread [" + Thread.currentThread().getId() + "] is waiting for the resource " + iResource
+                                    + (iTimeout <= 0 ? " forever" : " until " + iTimeout + "ms"));
+                }
 
 		synchronized (iResource) {
 			try {
@@ -72,8 +73,9 @@ public class OSynchEventAdapter<RESOURCE_TYPE, RESPONSE_TYPE> {
 
 	public void setValue(final RESOURCE_TYPE iResource, final Object iValue) {
 		final Object[] waiter = queue.get(iResource);
-		if (waiter == null)
-			return;
+		if (waiter == null) {
+                    return;
+                }
 
 		synchronized (waiter[0]) {
 			waiter[1] = iValue;

@@ -35,19 +35,22 @@ public class ODictionary<T extends Object> {
 
   public <RET extends T> RET get(final String iKey) {
     final OIdentifiable value = index.get(iKey);
-    if (value == null)
-      return null;
+    if (value == null) {
+        return null;
+    }
 
     return (RET) value.getRecord();
   }
 
   public <RET extends T> RET get(final String iKey, final String iFetchPlan) {
     final OIdentifiable value = index.get(iKey);
-    if (value == null)
-      return null;
+    if (value == null) {
+        return null;
+    }
 
-    if (value instanceof ORID)
-      return (RET) ODatabaseRecordThreadLocal.INSTANCE.get().load(((ORID) value), iFetchPlan);
+    if (value instanceof ORID) {
+        return (RET) ODatabaseRecordThreadLocal.INSTANCE.get().load(((ORID) value), iFetchPlan);
+    }
 
     return (RET) ((ODocument) value).load(iFetchPlan);
   }

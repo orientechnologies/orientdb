@@ -82,15 +82,19 @@ public class OGremlinHelper {
       try {
         final String output = OGremlinHelper.bindParameters(engine, iConfiguredParameters, iCurrentParameters);
 
-        if (iBeforeExecution != null)
-          if (!iBeforeExecution.call(engine, graph))
-            return null;
+        if (iBeforeExecution != null) {
+            if (!iBeforeExecution.call(engine, graph)) {
+                return null;
+            }
+        }
 
         final Object scriptResult = engine.eval(iText);
 
-        if (iAfterExecution != null)
-          if (!iAfterExecution.call(engine, graph))
-            return null;
+        if (iAfterExecution != null) {
+            if (!iAfterExecution.call(engine, graph)) {
+                return null;
+            }
+        }
 
         // Case of 1 output bound variable. Return as:
         // - Map -> ODocument
@@ -131,21 +135,24 @@ public class OGremlinHelper {
               }
 
               resultCollection.add(current);
-            } else
-              finalResult = current;
+            } else {
+                finalResult = current;
+            }
           }
 
           if (resultCollection != null) {
             iResult.addAll(resultCollection);
             return resultCollection;
           } else {
-            if (finalResult != null)
-              iResult.add(finalResult);
+            if (finalResult != null) {
+                iResult.add(finalResult);
+            }
             return finalResult;
           }
 
-        } else if (scriptResult != null)
-          iResult.add(scriptResult);
+        } else if (scriptResult != null) {
+            iResult.add(scriptResult);
+        }
 
         return scriptResult;
       } catch (Exception e) {
@@ -164,27 +171,29 @@ public class OGremlinHelper {
 
   public static String bindParameters(final ScriptEngine iEngine, final Map<Object, Object> iParameters,
       Map<Object, Object> iCurrentParameters) {
-    if (iParameters != null && !iParameters.isEmpty())
-      // Every call to the function is a execution itself. Therefore, it requires a fresh set of input parameters.
-      // Therefore, clone the parameters map trying to recycle previous instances
-      for (Entry<Object, Object> param : iParameters.entrySet()) {
-        final String key = (String) param.getKey();
-        final Object objectToClone = param.getValue();
-        final Object previousItem = iCurrentParameters.get(key); // try to recycle it
-        final Object newItem = OGremlinHelper.cloneObject(objectToClone, previousItem);
-        iCurrentParameters.put(key, newItem);
-      }
+    if (iParameters != null && !iParameters.isEmpty()) {
+        // Every call to the function is a execution itself. Therefore, it requires a fresh set of input parameters.
+        // Therefore, clone the parameters map trying to recycle previous instances
+        for (Entry<Object, Object> param : iParameters.entrySet()) {
+            final String key = (String) param.getKey();
+            final Object objectToClone = param.getValue();
+            final Object previousItem = iCurrentParameters.get(key); // try to recycle it
+            final Object newItem = OGremlinHelper.cloneObject(objectToClone, previousItem);
+            iCurrentParameters.put(key, newItem);
+        }
+    }
 
     String output = null;
-    if (iCurrentParameters != null)
-      for (Entry<Object, Object> param : iCurrentParameters.entrySet()) {
-        final String paramName = param.getKey().toString().trim();
-        if (paramName.equals(PARAM_OUTPUT)) {
-          output = param.getValue().toString();
-          continue;
+    if (iCurrentParameters != null) {
+        for (Entry<Object, Object> param : iCurrentParameters.entrySet()) {
+            final String paramName = param.getKey().toString().trim();
+            if (paramName.equals(PARAM_OUTPUT)) {
+                output = param.getValue().toString();
+                continue;
+            }
+            iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put(paramName, param.getValue());
         }
-        iEngine.getBindings(ScriptContext.ENGINE_SCOPE).put(paramName, param.getValue());
-      }
+    }
     return output;
   }
 
@@ -201,20 +210,22 @@ public class OGremlinHelper {
     // Clone any Map (shallow clone should be enough at this level)
     if (objectToClone instanceof Map) {
       Map recycledMap = (Map) previousClone;
-      if (recycledMap == null)
-        recycledMap = new HashMap();
-      else
-        recycledMap.clear();
+      if (recycledMap == null) {
+          recycledMap = new HashMap();
+      } else {
+          recycledMap.clear();
+      }
       recycledMap.putAll((Map<?, ?>) objectToClone);
       return recycledMap;
 
       // Clone any collection (shallow clone should be enough at this level)
     } else if (objectToClone instanceof Collection) {
       Collection recycledCollection = (Collection) previousClone;
-      if (recycledCollection == null)
-        recycledCollection = new ArrayList();
-      else
-        recycledCollection.clear();
+      if (recycledCollection == null) {
+          recycledCollection = new ArrayList();
+      } else {
+          recycledCollection.clear();
+      }
       recycledCollection.addAll((Collection<?>) objectToClone);
       return recycledCollection;
 
@@ -284,18 +295,21 @@ public class OGremlinHelper {
 
   public static ODatabaseDocumentTx getGraphDatabase(final ODatabaseDocumentInternal iCurrentDatabase) {
     ODatabaseDocumentInternal currentDb = ODatabaseRecordThreadLocal.INSTANCE.get();
-    if (currentDb == null && iCurrentDatabase != null)
-      // GET FROM THE RECORD
-      currentDb = iCurrentDatabase;
+    if (currentDb == null && iCurrentDatabase != null) {
+        // GET FROM THE RECORD
+        currentDb = iCurrentDatabase;
+    }
 
-    if (currentDb != null)
-      currentDb = (ODatabaseDocumentInternal) currentDb.getDatabaseOwner();
+    if (currentDb != null) {
+        currentDb = (ODatabaseDocumentInternal) currentDb.getDatabaseOwner();
+    }
 
     final ODatabaseDocumentTx db;
-    if (currentDb instanceof ODatabaseDocumentTx)
-      db = (ODatabaseDocumentTx) currentDb;
-    else
-      throw new OCommandExecutionException("Cannot find a database of type ODatabaseDocumentTx or ODatabaseDocumentTx");
+    if (currentDb instanceof ODatabaseDocumentTx) {
+        db = (ODatabaseDocumentTx) currentDb;
+    } else {
+        throw new OCommandExecutionException("Cannot find a database of type ODatabaseDocumentTx or ODatabaseDocumentTx");
+    }
     return db;
   }
 

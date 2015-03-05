@@ -26,8 +26,9 @@ public abstract class OServerCommandPatternAbstract extends OServerCommandAbstra
   private String[] pattern;
 
   public OServerCommandPatternAbstract(final OServerCommandConfiguration iConfig) {
-    if (iConfig.pattern == null)
-      throw new IllegalArgumentException("Command pattern missed");
+    if (iConfig.pattern == null) {
+        throw new IllegalArgumentException("Command pattern missed");
+    }
 
     pattern = iConfig.pattern.split(" ");
   }

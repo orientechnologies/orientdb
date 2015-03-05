@@ -56,8 +56,9 @@ public class OLogManager {
     final boolean installCustomFormatter = Boolean.parseBoolean(OSystemVariableResolver.resolveSystemVariables("${"
         + ENV_INSTALL_CUSTOM_FORMATTER + "}", "true"));
 
-    if (!installCustomFormatter)
-      return;
+    if (!installCustomFormatter) {
+        return;
+    }
 
     try {
       // ASSURE TO HAVE THE ORIENT LOG FORMATTER TO THE CONSOLE EVEN IF NO CONFIGURATION FILE IS TAKEN
@@ -69,8 +70,9 @@ public class OLogManager {
         log.addHandler(h);
       } else {
         for (Handler h : log.getHandlers()) {
-          if (h instanceof ConsoleHandler && !h.getFormatter().getClass().equals(OLogFormatter.class))
-            h.setFormatter(new OLogFormatter());
+          if (h instanceof ConsoleHandler && !h.getFormatter().getClass().equals(OLogFormatter.class)) {
+              h.setFormatter(new OLogFormatter());
+          }
         }
       }
     } catch (Exception e) {
@@ -94,8 +96,9 @@ public class OLogManager {
             .getIfDefined() : null;
         if (db != null && db.getStorage() != null && db.getStorage() instanceof OAbstractPaginatedStorage) {
           final String dbName = db.getStorage().getName();
-          if (dbName != null)
-            iMessage = "{db=" + dbName + "} " + iMessage;
+          if (dbName != null) {
+              iMessage = "{db=" + dbName + "} " + iMessage;
+          }
         }
       } catch (Throwable e) {
       }
@@ -112,10 +115,11 @@ public class OLogManager {
         // USE THE LOG
         try {
           final String msg = String.format(iMessage, iAdditionalArgs);
-          if (iException != null)
-            log.log(iLevel, msg, iException);
-          else
-            log.log(iLevel, msg);
+          if (iException != null) {
+              log.log(iLevel, msg, iException);
+          } else {
+              log.log(iLevel, msg);
+          }
         } catch (Exception e) {
           System.err.print(String.format("Error on formatting message '%s'. Exception: %s", iMessage, e.toString()));
         }
@@ -124,49 +128,56 @@ public class OLogManager {
   }
 
   public void debug(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
-    if (isDebugEnabled())
-      log(iRequester, Level.FINE, iMessage, null, iAdditionalArgs);
+    if (isDebugEnabled()) {
+        log(iRequester, Level.FINE, iMessage, null, iAdditionalArgs);
+    }
   }
 
   public void debug(final Object iRequester, final String iMessage, final Throwable iException, final Object... iAdditionalArgs) {
-    if (isDebugEnabled())
-      log(iRequester, Level.FINE, iMessage, iException, iAdditionalArgs);
+    if (isDebugEnabled()) {
+        log(iRequester, Level.FINE, iMessage, iException, iAdditionalArgs);
+    }
   }
 
   public void debug(final Object iRequester, final String iMessage, final Throwable iException,
       final Class<? extends OException> iExceptionClass, final Object... iAdditionalArgs) {
     debug(iRequester, iMessage, iException, iAdditionalArgs);
 
-    if (iExceptionClass != null)
-      try {
-        throw iExceptionClass.getConstructor(String.class, Throwable.class).newInstance(iMessage, iException);
-      } catch (NoSuchMethodException e) {
-      } catch (IllegalArgumentException e) {
-      } catch (SecurityException e) {
-      } catch (InstantiationException e) {
-      } catch (IllegalAccessException e) {
-      } catch (InvocationTargetException e) {
-      }
+    if (iExceptionClass != null) {
+        try {
+            throw iExceptionClass.getConstructor(String.class, Throwable.class).newInstance(iMessage, iException);
+        } catch (NoSuchMethodException e) {
+        } catch (IllegalArgumentException e) {
+        } catch (SecurityException e) {
+        } catch (InstantiationException e) {
+        } catch (IllegalAccessException e) {
+        } catch (InvocationTargetException e) {
+        }
+    }
   }
 
   public void info(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
-    if (isInfoEnabled())
-      log(iRequester, Level.INFO, iMessage, null, iAdditionalArgs);
+    if (isInfoEnabled()) {
+        log(iRequester, Level.INFO, iMessage, null, iAdditionalArgs);
+    }
   }
 
   public void info(final Object iRequester, final String iMessage, final Throwable iException, final Object... iAdditionalArgs) {
-    if (isInfoEnabled())
-      log(iRequester, Level.INFO, iMessage, iException, iAdditionalArgs);
+    if (isInfoEnabled()) {
+        log(iRequester, Level.INFO, iMessage, iException, iAdditionalArgs);
+    }
   }
 
   public void warn(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
-    if (isWarnEnabled())
-      log(iRequester, Level.WARNING, iMessage, null, iAdditionalArgs);
+    if (isWarnEnabled()) {
+        log(iRequester, Level.WARNING, iMessage, null, iAdditionalArgs);
+    }
   }
 
   public void warn(final Object iRequester, final String iMessage, final Throwable iException, final Object... iAdditionalArgs) {
-    if (isWarnEnabled())
-      log(iRequester, Level.WARNING, iMessage, iException, iAdditionalArgs);
+    if (isWarnEnabled()) {
+        log(iRequester, Level.WARNING, iMessage, iException, iAdditionalArgs);
+    }
   }
 
   public void config(final Object iRequester, final String iMessage, final Object... iAdditionalArgs) {
@@ -178,8 +189,9 @@ public class OLogManager {
   }
 
   public void error(final Object iRequester, final String iMessage, final Throwable iException, final Object... iAdditionalArgs) {
-    if (isErrorEnabled())
-      log(iRequester, Level.SEVERE, iMessage, iException, iAdditionalArgs);
+    if (isErrorEnabled()) {
+        log(iRequester, Level.SEVERE, iMessage, iException, iAdditionalArgs);
+    }
   }
 
   public void error(final Object iRequester, final String iMessage, final Throwable iException,
@@ -188,16 +200,17 @@ public class OLogManager {
 
     final String msg = String.format(iMessage, iAdditionalArgs);
 
-    if (iExceptionClass != null)
-      try {
-        throw iExceptionClass.getConstructor(String.class, Throwable.class).newInstance(msg, iException);
-      } catch (NoSuchMethodException e) {
-      } catch (IllegalArgumentException e) {
-      } catch (SecurityException e) {
-      } catch (InstantiationException e) {
-      } catch (IllegalAccessException e) {
-      } catch (InvocationTargetException e) {
-      }
+    if (iExceptionClass != null) {
+        try {
+            throw iExceptionClass.getConstructor(String.class, Throwable.class).newInstance(msg, iException);
+        } catch (NoSuchMethodException e) {
+        } catch (IllegalArgumentException e) {
+        } catch (SecurityException e) {
+        } catch (InstantiationException e) {
+        } catch (IllegalAccessException e) {
+        } catch (InvocationTargetException e) {
+        }
+    }
   }
 
   public void error(final Object iRequester, final String iMessage, final Class<? extends OException> iExceptionClass) {
@@ -217,8 +230,9 @@ public class OLogManager {
   @SuppressWarnings("unchecked")
   public void exception(final String iMessage, final Exception iNestedException, final Class<? extends OException> iExceptionClass,
       final Object... iAdditionalArgs) throws OException {
-    if (iMessage == null)
-      return;
+    if (iMessage == null) {
+        return;
+    }
 
     // FORMAT THE MESSAGE
     String msg = String.format(iMessage, iAdditionalArgs);
@@ -233,22 +247,24 @@ public class OLogManager {
     } catch (Exception e) {
     }
 
-    if (exceptionToThrow == null)
-      try {
-        c = (Constructor<OException>) iExceptionClass.getConstructor(String.class);
-        exceptionToThrow = c.newInstance(msg);
-      } catch (SecurityException e1) {
-      } catch (NoSuchMethodException e1) {
-      } catch (IllegalArgumentException e1) {
-      } catch (InstantiationException e1) {
-      } catch (IllegalAccessException e1) {
-      } catch (InvocationTargetException e1) {
-      }
+    if (exceptionToThrow == null) {
+        try {
+            c = (Constructor<OException>) iExceptionClass.getConstructor(String.class);
+            exceptionToThrow = c.newInstance(msg);
+        } catch (SecurityException e1) {
+        } catch (NoSuchMethodException e1) {
+        } catch (IllegalArgumentException e1) {
+        } catch (InstantiationException e1) {
+        } catch (IllegalAccessException e1) {
+        } catch (InvocationTargetException e1) {
+        }
+    }
 
-    if (exceptionToThrow != null)
-      throw exceptionToThrow;
-    else
-      throw new IllegalArgumentException("Cannot create the exception of type: " + iExceptionClass);
+    if (exceptionToThrow != null) {
+        throw exceptionToThrow;
+    } else {
+        throw new IllegalArgumentException("Cannot create the exception of type: " + iExceptionClass);
+    }
   }
 
   public boolean isWarn() {
@@ -256,14 +272,15 @@ public class OLogManager {
   }
 
   public boolean isLevelEnabled(final Level level) {
-    if (level.equals(Level.FINER) || level.equals(Level.FINE) || level.equals(Level.FINEST))
-      return debug;
-    else if (level.equals(Level.INFO))
-      return info;
-    else if (level.equals(Level.WARNING))
-      return warn;
-    else if (level.equals(Level.SEVERE))
-      return error;
+    if (level.equals(Level.FINER) || level.equals(Level.FINE) || level.equals(Level.FINEST)) {
+        return debug;
+    } else if (level.equals(Level.INFO)) {
+        return info;
+    } else if (level.equals(Level.WARNING)) {
+        return warn;
+    } else if (level.equals(Level.SEVERE)) {
+        return error;
+    }
     return false;
   }
 
@@ -306,9 +323,9 @@ public class OLogManager {
       // UPDATE MINIMUM LEVEL
       minimumLevel = level;
 
-      if (level.equals(Level.FINER) || level.equals(Level.FINE) || level.equals(Level.FINEST))
-        debug = info = warn = error = true;
-      else if (level.equals(Level.INFO)) {
+      if (level.equals(Level.FINER) || level.equals(Level.FINE) || level.equals(Level.FINEST)) {
+          debug = info = warn = error = true;
+      } else if (level.equals(Level.INFO)) {
         info = warn = error = true;
         debug = false;
       } else if (level.equals(Level.WARNING)) {
@@ -332,7 +349,8 @@ public class OLogManager {
   }
 
   public void flush() {
-    for (Handler h : Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).getHandlers())
-      h.flush();
+    for (Handler h : Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).getHandlers()) {
+        h.flush();
+    }
   }
 }

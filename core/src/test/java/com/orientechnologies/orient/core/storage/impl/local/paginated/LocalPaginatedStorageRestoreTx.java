@@ -57,8 +57,9 @@ public class LocalPaginatedStorageRestoreTx {
     buildDirectory += "/localPaginatedStorageRestoreFromTx";
 
     buildDir = new File(buildDirectory);
-    if (buildDir.exists())
-      buildDir.delete();
+    if (buildDir.exists()) {
+        buildDir.delete();
+    }
 
     buildDir.mkdir();
   }
@@ -95,11 +96,13 @@ public class LocalPaginatedStorageRestoreTx {
 
     baseDocumentTx.declareIntent(new OIntentMassiveInsert());
 
-    for (int i = 0; i < 5; i++)
-      futures.add(executorService.submit(new DataPropagationTask()));
+    for (int i = 0; i < 5; i++) {
+        futures.add(executorService.submit(new DataPropagationTask()));
+    }
 
-    for (Future<Void> future : futures)
-      future.get();
+    for (Future<Void> future : futures) {
+        future.get();
+    }
 
     Thread.sleep(1500);
     copyDataFromTestWithoutClose();
@@ -138,12 +141,13 @@ public class LocalPaginatedStorageRestoreTx {
 
     for (File storageFile : storageFiles) {
       String copyToPath;
-      if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.wmr"))
-        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.wmr";
-      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.0.wal"))
-        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.0.wal";
-      else
-        copyToPath = copyToDir.getAbsolutePath() + File.separator + storageFile.getName();
+      if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.wmr")) {
+          copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.wmr";
+      } else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromTx.0.wal")) {
+          copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromTx.0.wal";
+      } else {
+          copyToPath = copyToDir.getAbsolutePath() + File.separator + storageFile.getName();
+      }
 
       copyFile(storageFile.getAbsolutePath(), copyToPath);
     }
@@ -272,12 +276,14 @@ public class LocalPaginatedStorageRestoreTx {
 
             db.commit();
 
-            if (deleteIndex >= 0)
-              firstDocs.remove(deleteIndex);
+            if (deleteIndex >= 0) {
+                firstDocs.remove(deleteIndex);
+            }
 
             firstDocs.add(docOne.getIdentity());
-            if (docTwo != null)
-              secondDocs.add(docTwo.getIdentity());
+            if (docTwo != null) {
+                secondDocs.add(docTwo.getIdentity());
+            }
 
           } catch (Exception e) {
             db.rollback();

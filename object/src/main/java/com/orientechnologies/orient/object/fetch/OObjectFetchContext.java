@@ -126,8 +126,9 @@ public class OObjectFetchContext implements OFetchContext {
   @SuppressWarnings({ "rawtypes", "unchecked" })
   public void onBeforeCollection(ODocument iRootRecord, String iFieldName, final Object iUserObject, final Iterable<?> iterable)
       throws OFetchException {
-    if (iterable instanceof ORidBag)
-      throw new IllegalStateException(OType.LINKBAG.name() + " can not be directly mapped to any Java collection.");
+    if (iterable instanceof ORidBag) {
+        throw new IllegalStateException(OType.LINKBAG.name() + " can not be directly mapped to any Java collection.");
+    }
 
     final Field f = OObjectEntitySerializer.getField(iFieldName, iUserObject.getClass());
     final boolean customSerialization = OObjectEntitySerializer.isSerializedType(f);

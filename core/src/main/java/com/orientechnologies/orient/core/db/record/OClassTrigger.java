@@ -84,10 +84,11 @@ public class OClassTrigger extends ODocumentHookAbstract {
   public RESULT onRecordBeforeCreate(final ODocument iDocument) {
     Object func = this.checkClzAttribute(iDocument, ONBEFORE_CREATED);
     if (func != null) {
-      if (func instanceof OFunction)
-        return this.executeFunction(iDocument, (OFunction) func);
-      else if (func instanceof Object[])
-        return this.executeMethod(iDocument, (Object[]) func);
+      if (func instanceof OFunction) {
+          return this.executeFunction(iDocument, (OFunction) func);
+      } else if (func instanceof Object[]) {
+          return this.executeMethod(iDocument, (Object[]) func);
+      }
     }
     return RESULT.RECORD_NOT_CHANGED;
   }
@@ -96,10 +97,11 @@ public class OClassTrigger extends ODocumentHookAbstract {
   public void onRecordAfterCreate(final ODocument iDocument) {
     Object func = this.checkClzAttribute(iDocument, ONAFTER_CREATED);
     if (func != null) {
-      if (func instanceof OFunction)
-        this.executeFunction(iDocument, (OFunction) func);
-      else if (func instanceof Object[])
-        this.executeMethod(iDocument, (Object[]) func);
+      if (func instanceof OFunction) {
+          this.executeFunction(iDocument, (OFunction) func);
+      } else if (func instanceof Object[]) {
+          this.executeMethod(iDocument, (Object[]) func);
+      }
     }
   }
 
@@ -107,10 +109,11 @@ public class OClassTrigger extends ODocumentHookAbstract {
   public RESULT onRecordBeforeRead(final ODocument iDocument) {
     Object func = this.checkClzAttribute(iDocument, ONBEFORE_READ);
     if (func != null) {
-      if (func instanceof OFunction)
-        return this.executeFunction(iDocument, (OFunction) func);
-      else if (func instanceof Object[])
-        return this.executeMethod(iDocument, (Object[]) func);
+      if (func instanceof OFunction) {
+          return this.executeFunction(iDocument, (OFunction) func);
+      } else if (func instanceof Object[]) {
+          return this.executeMethod(iDocument, (Object[]) func);
+      }
     }
     return RESULT.RECORD_NOT_CHANGED;
   }
@@ -119,10 +122,11 @@ public class OClassTrigger extends ODocumentHookAbstract {
   public void onRecordAfterRead(final ODocument iDocument) {
     Object func = this.checkClzAttribute(iDocument, ONAFTER_READ);
     if (func != null) {
-      if (func instanceof OFunction)
-        this.executeFunction(iDocument, (OFunction) func);
-      else if (func instanceof Object[])
-        this.executeMethod(iDocument, (Object[]) func);
+      if (func instanceof OFunction) {
+          this.executeFunction(iDocument, (OFunction) func);
+      } else if (func instanceof Object[]) {
+          this.executeMethod(iDocument, (Object[]) func);
+      }
     }
   }
 
@@ -130,10 +134,11 @@ public class OClassTrigger extends ODocumentHookAbstract {
   public RESULT onRecordBeforeUpdate(final ODocument iDocument) {
     Object func = this.checkClzAttribute(iDocument, ONBEFORE_UPDATED);
     if (func != null) {
-      if (func instanceof OFunction)
-        return this.executeFunction(iDocument, (OFunction) func);
-      else if (func instanceof Object[])
-        return this.executeMethod(iDocument, (Object[]) func);
+      if (func instanceof OFunction) {
+          return this.executeFunction(iDocument, (OFunction) func);
+      } else if (func instanceof Object[]) {
+          return this.executeMethod(iDocument, (Object[]) func);
+      }
     }
     return RESULT.RECORD_NOT_CHANGED;
   }
@@ -142,10 +147,11 @@ public class OClassTrigger extends ODocumentHookAbstract {
   public void onRecordAfterUpdate(final ODocument iDocument) {
     Object func = this.checkClzAttribute(iDocument, ONAFTER_UPDATED);
     if (func != null) {
-      if (func instanceof OFunction)
-        this.executeFunction(iDocument, (OFunction) func);
-      else if (func instanceof Object[])
-        this.executeMethod(iDocument, (Object[]) func);
+      if (func instanceof OFunction) {
+          this.executeFunction(iDocument, (OFunction) func);
+      } else if (func instanceof Object[]) {
+          this.executeMethod(iDocument, (Object[]) func);
+      }
     }
   }
 
@@ -153,10 +159,11 @@ public class OClassTrigger extends ODocumentHookAbstract {
   public RESULT onRecordBeforeDelete(final ODocument iDocument) {
     Object func = this.checkClzAttribute(iDocument, ONBEFORE_DELETE);
     if (func != null) {
-      if (func instanceof OFunction)
-        return this.executeFunction(iDocument, (OFunction) func);
-      else if (func instanceof Object[])
-        return this.executeMethod(iDocument, (Object[]) func);
+      if (func instanceof OFunction) {
+          return this.executeFunction(iDocument, (OFunction) func);
+      } else if (func instanceof Object[]) {
+          return this.executeMethod(iDocument, (Object[]) func);
+      }
     }
     return RESULT.RECORD_NOT_CHANGED;
   }
@@ -165,24 +172,28 @@ public class OClassTrigger extends ODocumentHookAbstract {
   public void onRecordAfterDelete(final ODocument iDocument) {
     Object func = this.checkClzAttribute(iDocument, ONAFTER_DELETE);
     if (func != null) {
-      if (func instanceof OFunction)
-        this.executeFunction(iDocument, (OFunction) func);
-      else if (func instanceof Object[])
-        this.executeMethod(iDocument, (Object[]) func);
+      if (func instanceof OFunction) {
+          this.executeFunction(iDocument, (OFunction) func);
+      } else if (func instanceof Object[]) {
+          this.executeMethod(iDocument, (Object[]) func);
+      }
     }
   }
 
   public RESULT onTrigger(final TYPE iType, final ORecord iRecord) {
-    if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && ODatabaseRecordThreadLocal.INSTANCE.get().getStatus() != STATUS.OPEN)
-      return RESULT.RECORD_NOT_CHANGED;
+    if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && ODatabaseRecordThreadLocal.INSTANCE.get().getStatus() != STATUS.OPEN) {
+        return RESULT.RECORD_NOT_CHANGED;
+    }
 
-    if (!(iRecord instanceof ODocument))
-      return RESULT.RECORD_NOT_CHANGED;
+    if (!(iRecord instanceof ODocument)) {
+        return RESULT.RECORD_NOT_CHANGED;
+    }
 
     final ODocument document = (ODocument) iRecord;
     if (ODocumentInternal.getImmutableSchemaClass(document) != null
-        && ODocumentInternal.getImmutableSchemaClass(document).isSubClassOf(CLASSNAME))
-      return super.onTrigger(iType, iRecord);
+        && ODocumentInternal.getImmutableSchemaClass(document).isSubClassOf(CLASSNAME)) {
+        return super.onTrigger(iType, iRecord);
+    }
 
     return RESULT.RECORD_NOT_CHANGED;
   }
@@ -194,16 +205,18 @@ public class OClassTrigger extends ODocumentHookAbstract {
       String fieldName = clz.getCustom(attr);
       OClass superClz = clz.getSuperClass();
       while (fieldName == null || fieldName.length() == 0) {
-        if (superClz == null || superClz.getName().equals(CLASSNAME))
-          break;
+        if (superClz == null || superClz.getName().equals(CLASSNAME)) {
+            break;
+        }
         fieldName = superClz.getCustom(attr);
         superClz = superClz.getSuperClass();
       }
       if (fieldName != null && fieldName.length() > 0) {
         // check if it is reflection or not
         final Object[] clzMethod = this.checkMethod(fieldName);
-        if (clzMethod != null)
-          return clzMethod;
+        if (clzMethod != null) {
+            return clzMethod;
+        }
         func = ODatabaseRecordThreadLocal.INSTANCE.get().getMetadata().getFunctionLibrary().getFunction(fieldName);
         if (func == null) { // check if it is rid
           if (OStringSerializerHelper.contains(fieldName, ORID.SEPARATOR)) {
@@ -238,8 +251,9 @@ public class OClassTrigger extends ODocumentHookAbstract {
       clzName = fieldName.substring(0, fieldName.lastIndexOf(METHOD_SEPARATOR));
       methodName = fieldName.substring(fieldName.lastIndexOf(METHOD_SEPARATOR) + 1);
     }
-    if (clzName == null || methodName == null)
-      return null;
+    if (clzName == null || methodName == null) {
+        return null;
+    }
     try {
       Class clz = ClassLoader.getSystemClassLoader().loadClass(clzName);
       Method method = clz.getMethod(methodName, ODocument.class);
@@ -269,8 +283,9 @@ public class OClassTrigger extends ODocumentHookAbstract {
   }
 
   private RESULT executeFunction(final ODocument iDocument, final OFunction func) {
-    if (func == null)
-      return RESULT.RECORD_NOT_CHANGED;
+    if (func == null) {
+        return RESULT.RECORD_NOT_CHANGED;
+    }
 
     ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
@@ -287,8 +302,9 @@ public class OClassTrigger extends ODocumentHookAbstract {
 
       String result = null;
       try {
-        if (func.getLanguage() == null)
-          throw new OConfigurationException("Database function '" + func.getName() + "' has no language");
+        if (func.getLanguage() == null) {
+            throw new OConfigurationException("Database function '" + func.getName() + "' has no language");
+        }
         final String funcStr = scriptManager.getFunctionDefinition(func);
         if (funcStr != null) {
           try {

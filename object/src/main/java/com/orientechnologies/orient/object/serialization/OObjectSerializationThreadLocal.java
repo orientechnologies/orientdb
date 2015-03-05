@@ -34,8 +34,9 @@ public class OObjectSerializationThreadLocal extends ThreadLocal<Map<Integer, Ob
     Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onStartup() {
-        if (INSTANCE == null)
-          INSTANCE = new OObjectSerializationThreadLocal();
+        if (INSTANCE == null) {
+            INSTANCE = new OObjectSerializationThreadLocal();
+        }
       }
 
       @Override

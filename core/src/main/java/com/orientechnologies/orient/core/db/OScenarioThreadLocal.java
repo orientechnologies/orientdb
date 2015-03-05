@@ -38,8 +38,9 @@ public class OScenarioThreadLocal extends ThreadLocal<RUN_MODE> {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onStartup() {
-        if (INSTANCE == null)
-          INSTANCE = new OScenarioThreadLocal();
+        if (INSTANCE == null) {
+            INSTANCE = new OScenarioThreadLocal();
+        }
       }
 
       @Override
@@ -65,8 +66,9 @@ public class OScenarioThreadLocal extends ThreadLocal<RUN_MODE> {
   @Override
   public RUN_MODE get() {
     RUN_MODE result = super.get();
-    if (result == null)
-      result = RUN_MODE.DEFAULT;
+    if (result == null) {
+        result = RUN_MODE.DEFAULT;
+    }
     return result;
   }
 }

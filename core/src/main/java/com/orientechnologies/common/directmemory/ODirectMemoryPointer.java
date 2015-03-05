@@ -55,17 +55,19 @@ public class ODirectMemoryPointer {
   private final long          dataPointer;
 
   public ODirectMemoryPointer(final long pageSize) {
-    if (pageSize <= 0)
-      throw new ODirectMemoryViolationException("Size of allocated area should be more than zero but " + pageSize
-          + " was provided.");
+    if (pageSize <= 0) {
+        throw new ODirectMemoryViolationException("Size of allocated area should be more than zero but " + pageSize
+                + " was provided.");
+    }
 
     this.dataPointer = directMemory.allocate(pageSize);
     this.pageSize = pageSize;
   }
 
   public ODirectMemoryPointer(final byte[] data) {
-    if (data.length == 0)
-      throw new ODirectMemoryViolationException("Size of allocated area should be more than zero but 0 was provided.");
+    if (data.length == 0) {
+        throw new ODirectMemoryViolationException("Size of allocated area should be more than zero but 0 was provided.");
+    }
     this.pageSize = data.length;
     this.dataPointer = directMemory.allocate(pageSize);
 
@@ -73,92 +75,105 @@ public class ODirectMemoryPointer {
   }
 
   public byte[] get(final long offset, final int length) {
-    if (SAFE_MODE)
-      rangeCheck(offset, length);
+    if (SAFE_MODE) {
+        rangeCheck(offset, length);
+    }
 
     return directMemory.get(dataPointer + offset, length);
   }
 
   public void get(final long offset, final byte[] array, final int arrayOffset, final int length) {
-    if (SAFE_MODE)
-      rangeCheck(offset, length);
+    if (SAFE_MODE) {
+        rangeCheck(offset, length);
+    }
 
     directMemory.get(dataPointer + offset, array, arrayOffset, length);
   }
 
   public void set(final long offset, final byte[] content, final int arrayOffset, final int length) {
-    if (SAFE_MODE)
-      rangeCheck(offset, length);
+    if (SAFE_MODE) {
+        rangeCheck(offset, length);
+    }
 
     directMemory.set(dataPointer + offset, content, arrayOffset, length);
   }
 
   public int getInt(final long offset) {
-    if (SAFE_MODE)
-      rangeCheck(offset, OIntegerSerializer.INT_SIZE);
+    if (SAFE_MODE) {
+        rangeCheck(offset, OIntegerSerializer.INT_SIZE);
+    }
 
     return directMemory.getInt(dataPointer + offset);
   }
 
   public void setInt(final long offset, final int value) {
-    if (SAFE_MODE)
-      rangeCheck(offset, OIntegerSerializer.INT_SIZE);
+    if (SAFE_MODE) {
+        rangeCheck(offset, OIntegerSerializer.INT_SIZE);
+    }
 
     directMemory.setInt(dataPointer + offset, value);
   }
 
   public void setShort(final long offset, final short value) {
-    if (SAFE_MODE)
-      rangeCheck(offset, OShortSerializer.SHORT_SIZE);
+    if (SAFE_MODE) {
+        rangeCheck(offset, OShortSerializer.SHORT_SIZE);
+    }
 
     directMemory.setShort(dataPointer + offset, value);
   }
 
   public short getShort(final long offset) {
-    if (SAFE_MODE)
-      rangeCheck(offset, OShortSerializer.SHORT_SIZE);
+    if (SAFE_MODE) {
+        rangeCheck(offset, OShortSerializer.SHORT_SIZE);
+    }
 
     return directMemory.getShort(dataPointer + offset);
   }
 
   public long getLong(final long offset) {
-    if (SAFE_MODE)
-      rangeCheck(offset, OLongSerializer.LONG_SIZE);
+    if (SAFE_MODE) {
+        rangeCheck(offset, OLongSerializer.LONG_SIZE);
+    }
 
     return directMemory.getLong(dataPointer + offset);
   }
 
   public void setLong(final long offset, final long value) {
-    if (SAFE_MODE)
-      rangeCheck(offset, OLongSerializer.LONG_SIZE);
+    if (SAFE_MODE) {
+        rangeCheck(offset, OLongSerializer.LONG_SIZE);
+    }
 
     directMemory.setLong(dataPointer + offset, value);
   }
 
   public byte getByte(final long offset) {
-    if (SAFE_MODE)
-      rangeCheck(offset, OByteSerializer.BYTE_SIZE);
+    if (SAFE_MODE) {
+        rangeCheck(offset, OByteSerializer.BYTE_SIZE);
+    }
 
     return directMemory.getByte(dataPointer + offset);
   }
 
   public void setByte(final long offset, final byte value) {
-    if (SAFE_MODE)
-      rangeCheck(offset, OByteSerializer.BYTE_SIZE);
+    if (SAFE_MODE) {
+        rangeCheck(offset, OByteSerializer.BYTE_SIZE);
+    }
 
     directMemory.setByte(dataPointer + offset, value);
   }
 
   public void setChar(final long offset, final char value) {
-    if (SAFE_MODE)
-      rangeCheck(offset, OCharSerializer.CHAR_SIZE);
+    if (SAFE_MODE) {
+        rangeCheck(offset, OCharSerializer.CHAR_SIZE);
+    }
 
     directMemory.setChar(dataPointer + offset, value);
   }
 
   public char getChar(final long offset) {
-    if (SAFE_MODE)
-      rangeCheck(offset, OCharSerializer.CHAR_SIZE);
+    if (SAFE_MODE) {
+        rangeCheck(offset, OCharSerializer.CHAR_SIZE);
+    }
 
     return directMemory.getChar(dataPointer + offset);
   }
@@ -182,17 +197,21 @@ public class ODirectMemoryPointer {
 
   @Override
   public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
+    if (this == o) {
+        return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+        return false;
+    }
 
     ODirectMemoryPointer that = (ODirectMemoryPointer) o;
 
-    if (dataPointer != that.dataPointer)
-      return false;
-    if (pageSize != that.pageSize)
-      return false;
+    if (dataPointer != that.dataPointer) {
+        return false;
+    }
+    if (pageSize != that.pageSize) {
+        return false;
+    }
 
     return true;
   }
@@ -205,18 +224,22 @@ public class ODirectMemoryPointer {
   }
 
   private void rangeCheck(final long offset, final long size) {
-    if (offset < 0)
-      throw new ODirectMemoryViolationException("Negative offset was provided");
+    if (offset < 0) {
+        throw new ODirectMemoryViolationException("Negative offset was provided");
+    }
 
-    if (size < 0)
-      throw new ODirectMemoryViolationException("Negative size was provided");
+    if (size < 0) {
+        throw new ODirectMemoryViolationException("Negative size was provided");
+    }
 
-    if (offset > pageSize)
-      throw new ODirectMemoryViolationException("Provided offset [" + offset + "] is more than size of allocated area  ["
-          + pageSize + "]");
+    if (offset > pageSize) {
+        throw new ODirectMemoryViolationException("Provided offset [" + offset + "] is more than size of allocated area  ["
+                + pageSize + "]");
+    }
 
-    if (offset + size > pageSize)
-      throw new ODirectMemoryViolationException("Last position of provided data interval [" + (offset + size)
-          + "] is more than size of allocated area [" + pageSize + "]");
+    if (offset + size > pageSize) {
+        throw new ODirectMemoryViolationException("Last position of provided data interval [" + (offset + size)
+                + "] is more than size of allocated area [" + pageSize + "]");
+    }
   }
 }

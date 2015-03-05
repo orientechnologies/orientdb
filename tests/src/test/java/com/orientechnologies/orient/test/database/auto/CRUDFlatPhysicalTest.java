@@ -46,8 +46,9 @@ public class CRUDFlatPhysicalTest extends DocumentDBBaseTest {
   }
 
   public void createRaw() {
-    if (database.getClusterIdByName(CLUSTER_NAME) < 0)
-      database.addCluster(CLUSTER_NAME);
+    if (database.getClusterIdByName(CLUSTER_NAME) < 0) {
+        database.addCluster(CLUSTER_NAME);
+    }
 
     startRecordNumber = database.countClusterElements(CLUSTER_NAME);
 
@@ -64,8 +65,9 @@ public class CRUDFlatPhysicalTest extends DocumentDBBaseTest {
     String[] fields;
 
     Set<Integer> ids = new HashSet<Integer>(TOT_RECORDS);
-    for (int i = 0; i < TOT_RECORDS; i++)
-      ids.add(i);
+    for (int i = 0; i < TOT_RECORDS; i++) {
+        ids.add(i);
+    }
 
     for (ORecordFlat rec : new ORecordIteratorCluster<ORecordFlat>(database, database, database.getClusterIdByName(CLUSTER_NAME),
         true)) {
@@ -98,8 +100,9 @@ public class CRUDFlatPhysicalTest extends DocumentDBBaseTest {
     String[] fields;
 
     Set<Integer> ids = new HashSet<Integer>(TOT_RECORDS);
-    for (int i = 0; i < TOT_RECORDS; i++)
-      ids.add(i);
+    for (int i = 0; i < TOT_RECORDS; i++) {
+        ids.add(i);
+    }
 
     for (ORecordFlat rec : new ORecordIteratorCluster<ORecordFlat>(database, database, database.getClusterIdByName(CLUSTER_NAME),
         true)) {
@@ -108,10 +111,11 @@ public class CRUDFlatPhysicalTest extends DocumentDBBaseTest {
       int i = Integer.parseInt(fields[0]);
       Assert.assertTrue(ids.remove(i));
 
-      if (i % 2 == 0)
-        Assert.assertTrue(fields[1].endsWith("+"));
-      else
-        Assert.assertFalse(fields[1].endsWith("+"));
+      if (i % 2 == 0) {
+          Assert.assertTrue(fields[1].endsWith("+"));
+      } else {
+          Assert.assertFalse(fields[1].endsWith("+"));
+      }
     }
 
     Assert.assertTrue(ids.isEmpty());

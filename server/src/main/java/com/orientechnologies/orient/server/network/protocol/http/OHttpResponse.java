@@ -242,8 +242,9 @@ public class OHttpResponse {
 
   public void writeRecords(final Object iRecords, final String iFetchPlan, String iFormat, final String accept,
       final Map<String, Object> iAdditionalProperties) throws IOException {
-    if (iRecords == null)
-      return;
+    if (iRecords == null) {
+        return;
+    }
 
     final Iterator<Object> it = OMultiValue.getMultiValueIterator(iRecords);
 
@@ -279,8 +280,9 @@ public class OHttpResponse {
           try {
             // WRITE THE HEADER
             for (int col = 0; col < orderedColumns.size(); ++col) {
-              if (col > 0)
-                iArgument.write(',');
+              if (col > 0) {
+                  iArgument.write(',');
+              }
 
               iArgument.write(orderedColumns.get(col).getBytes());
             }
@@ -295,8 +297,9 @@ public class OHttpResponse {
 
                 Object value = doc.field(orderedColumns.get(col));
                 if (value != null) {
-                  if (!(value instanceof Number))
-                    value = "\"" + value + "\"";
+                  if (!(value instanceof Number)) {
+                      value = "\"" + value + "\"";
+                  }
 
                   iArgument.write(value.toString().getBytes());
                 }
@@ -314,10 +317,11 @@ public class OHttpResponse {
         }
       });
     } else {
-      if (iFormat == null)
-        iFormat = JSON_FORMAT;
-      else
-        iFormat = JSON_FORMAT + "," + iFormat;
+      if (iFormat == null) {
+          iFormat = JSON_FORMAT;
+      } else {
+          iFormat = JSON_FORMAT + "," + iFormat;
+      }
 
       final StringWriter buffer = new StringWriter();
       final OJSONWriter json = new OJSONWriter(buffer, iFormat);
@@ -337,8 +341,9 @@ public class OHttpResponse {
             json.beginCollection(-1, true, entry.getKey());
             formatMultiValue(OMultiValue.getMultiValueIterator(v), buffer, format);
             json.endCollection(-1, true);
-          } else
-            json.writeAttribute(entry.getKey(), v);
+          } else {
+              json.writeAttribute(entry.getKey(), v);
+          }
         }
       }
 

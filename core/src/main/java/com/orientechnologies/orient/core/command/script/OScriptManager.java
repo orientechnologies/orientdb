@@ -77,8 +77,9 @@ public class OScriptManager {
     for (ScriptEngineFactory f : scriptEngineManager.getEngineFactories()) {
       registerEngine(f.getLanguageName().toLowerCase(), f);
 
-      if (defaultLanguage == null)
-        defaultLanguage = f.getLanguageName();
+      if (defaultLanguage == null) {
+          defaultLanguage = f.getLanguageName();
+      }
     }
 
     if (!existsEngine(DEF_LANGUAGE)) {
@@ -100,16 +101,18 @@ public class OScriptManager {
 
   public String getFunctionDefinition(final OFunction iFunction) {
     final OScriptFormatter formatter = formatters.get(iFunction.getLanguage().toLowerCase());
-    if (formatter == null)
-      throw new IllegalArgumentException("Cannot find script formatter for the language '" + iFunction.getLanguage() + "'");
+    if (formatter == null) {
+        throw new IllegalArgumentException("Cannot find script formatter for the language '" + iFunction.getLanguage() + "'");
+    }
 
     return formatter.getFunctionDefinition(iFunction);
   }
 
   public String getFunctionInvoke(final OFunction iFunction, final Object[] iArgs) {
     final OScriptFormatter formatter = formatters.get(iFunction.getLanguage().toLowerCase());
-    if (formatter == null)
-      throw new IllegalArgumentException("Cannot find script formatter for the language '" + iFunction.getLanguage() + "'");
+    if (formatter == null) {
+        throw new IllegalArgumentException("Cannot find script formatter for the language '" + iFunction.getLanguage() + "'");
+    }
 
     return formatter.getFunctionInvoke(iFunction, iArgs);
   }
@@ -124,9 +127,10 @@ public class OScriptManager {
    * @return String containing all the functions
    */
   public String getLibrary(final ODatabase<?> db, final String iLanguage) {
-    if (db == null)
-      // NO DB = NO LIBRARY
-      return null;
+    if (db == null) {
+        // NO DB = NO LIBRARY
+        return null;
+    }
 
     final StringBuilder code = new StringBuilder();
 
@@ -134,8 +138,9 @@ public class OScriptManager {
     for (String fName : functions) {
       final OFunction f = db.getMetadata().getFunctionLibrary().getFunction(fName);
 
-      if (f.getLanguage() == null)
-        throw new OConfigurationException("Database function '" + fName + "' has no language");
+      if (f.getLanguage() == null) {
+          throw new OConfigurationException("Database function '" + fName + "' has no language");
+      }
 
       if (f.getLanguage().equalsIgnoreCase(iLanguage)) {
         final String def = getFunctionDefinition(f);
@@ -150,23 +155,26 @@ public class OScriptManager {
   }
 
   public boolean existsEngine(String iLanguage) {
-    if (iLanguage == null)
-      return false;
+    if (iLanguage == null) {
+        return false;
+    }
 
     iLanguage = iLanguage.toLowerCase();
     return engines.containsKey(iLanguage);
   }
 
   public ScriptEngine getEngine(final String iLanguage) {
-    if (iLanguage == null)
-      throw new OCommandScriptException("No language was specified");
+    if (iLanguage == null) {
+        throw new OCommandScriptException("No language was specified");
+    }
 
     final String lang = iLanguage.toLowerCase();
 
     final ScriptEngineFactory scriptEngineFactory = engines.get(lang);
-    if (scriptEngineFactory == null)
-      throw new OCommandScriptException("Unsupported language: " + iLanguage + ". Supported languages are: "
-          + getSupportedLanguages());
+    if (scriptEngineFactory == null) {
+        throw new OCommandScriptException("Unsupported language: " + iLanguage + ". Supported languages are: "
+                + getSupportedLanguages());
+    }
 
     return scriptEngineFactory.getScriptEngine();
   }
@@ -188,9 +196,10 @@ public class OScriptManager {
       // CREATE A NEW DATABASE SCRIPT MANAGER
       dbManager = new ODatabaseScriptManager(this, databaseName);
       final ODatabaseScriptManager prev = dbManagers.putIfAbsent(databaseName, dbManager);
-      if (prev != null)
-        // GET PREVIOUS ONE
-        dbManager = prev;
+      if (prev != null) {
+          // GET PREVIOUS ONE
+          dbManager = prev;
+      }
     }
 
     return dbManager.acquireEngine(language);
@@ -211,8 +220,9 @@ public class OScriptManager {
   public void releaseDatabaseEngine(final String iLanguage, final String iDatabaseName,
       final OPartitionedObjectPool.PoolEntry<ScriptEngine> poolEntry) {
     final ODatabaseScriptManager dbManager = dbManagers.get(iDatabaseName);
-    if (dbManager == null)
-      throw new IllegalArgumentException("Script pool for database '" + iDatabaseName + "' is not configured");
+    if (dbManager == null) {
+        throw new IllegalArgumentException("Script pool for database '" + iDatabaseName + "' is not configured");
+    }
 
     dbManager.releaseEngine(iLanguage, poolEntry);
   }
@@ -232,8 +242,9 @@ public class OScriptManager {
     }
     binding.put("util", new OFunctionUtilWrapper());
 
-    for (OScriptInjection i : injections)
-      i.bind(binding);
+    for (OScriptInjection i : injections) {
+        i.bind(binding);
+    }
 
     // BIND CONTEXT VARIABLE INTO THE SCRIPT
     if (iContext != null) {
@@ -250,8 +261,9 @@ public class OScriptManager {
       }
 
       binding.put("params", iArgs.values().toArray());
-    } else
-      binding.put("params", EMPTY_PARAMS);
+    } else {
+        binding.put("params", EMPTY_PARAMS);
+    }
 
     return binding;
   }
@@ -287,16 +299,18 @@ public class OScriptManager {
           if (pos > -1) {
             final String[] words = OStringParser.getWords(
                 currentLine.substring(Math.min(pos + "function".length() + 1, currentLine.length())), " \r\n\t");
-            if (words.length > 0 && words[0] != "(")
-              lastFunctionName = words[0];
+            if (words.length > 0 && words[0] != "(") {
+                lastFunctionName = words[0];
+            }
           }
 
-          if (currentLineNumber == errorLineNumber)
-            // APPEND X LINES BEFORE
-            code.append(String.format("%4d: >>> %s\n", currentLineNumber, currentLine));
-          else if (Math.abs(currentLineNumber - errorLineNumber) <= LINES_AROUND_ERROR)
-            // AROUND: APPEND IT
-            code.append(String.format("%4d: %s\n", currentLineNumber, currentLine));
+          if (currentLineNumber == errorLineNumber) {
+              // APPEND X LINES BEFORE
+              code.append(String.format("%4d: >>> %s\n", currentLineNumber, currentLine));
+          } else if (Math.abs(currentLineNumber - errorLineNumber) <= LINES_AROUND_ERROR) {
+              // AROUND: APPEND IT
+              code.append(String.format("%4d: %s\n", currentLineNumber, currentLine));
+          }
         }
 
         code.insert(0, String.format("ScriptManager: error %s.\nFunction %s:\n\n", e.getMessage(), lastFunctionName));
@@ -320,8 +334,9 @@ public class OScriptManager {
    * @param binding
    */
   public void unbind(final Bindings binding, final OCommandContext iContext, final Map<Object, Object> iArgs) {
-    for (OScriptInjection i : injections)
-      i.unbind(binding);
+    for (OScriptInjection i : injections) {
+        i.unbind(binding);
+    }
 
     binding.put("db", null);
     binding.put("orient", null);
@@ -330,21 +345,24 @@ public class OScriptManager {
 
     binding.put("ctx", null);
     if (iContext != null) {
-      for (Entry<String, Object> a : iContext.getVariables().entrySet())
-        binding.put(a.getKey(), null);
+      for (Entry<String, Object> a : iContext.getVariables().entrySet()) {
+          binding.put(a.getKey(), null);
+      }
     }
 
     if (iArgs != null) {
-      for (Entry<Object, Object> a : iArgs.entrySet())
-        binding.put(a.getKey().toString(), null);
+      for (Entry<Object, Object> a : iArgs.entrySet()) {
+          binding.put(a.getKey().toString(), null);
+      }
 
     }
     binding.put("params", null);
   }
 
   public void registerInjection(final OScriptInjection iInj) {
-    if (!injections.contains(iInj))
-      injections.add(iInj);
+    if (!injections.contains(iInj)) {
+        injections.add(iInj);
+    }
   }
 
   public void unregisterInjection(final OScriptInjection iInj) {
@@ -381,7 +399,8 @@ public class OScriptManager {
    */
   public void close(final String iDatabaseName) {
     final ODatabaseScriptManager dbPool = dbManagers.remove(iDatabaseName);
-    if (dbPool != null)
-      dbPool.close();
+    if (dbPool != null) {
+        dbPool.close();
+    }
   }
 }

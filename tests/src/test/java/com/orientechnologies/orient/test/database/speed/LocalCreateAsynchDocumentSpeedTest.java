@@ -70,16 +70,18 @@ public class LocalCreateAsynchDocumentSpeedTest extends OrientMonoThreadTest {
 
     database.save(record, OPERATION_MODE.ASYNCHRONOUS, false, null, null);
 
-    if (data.getCyclesDone() == data.getCycles() - 1)
-      database.commit();
+    if (data.getCyclesDone() == data.getCycles() - 1) {
+        database.commit();
+    }
   }
 
   @Override
   public void deinit() {
     System.out.println(Orient.instance().getProfiler().dump());
 
-    if (database != null)
-      database.close();
+    if (database != null) {
+        database.close();
+    }
     super.deinit();
   }
 }

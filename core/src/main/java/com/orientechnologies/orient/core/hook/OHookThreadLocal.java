@@ -41,8 +41,9 @@ public class OHookThreadLocal extends ThreadLocal<Set<OIdentifiable>> {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onStartup() {
-        if (INSTANCE == null)
-          INSTANCE = new OHookThreadLocal();
+        if (INSTANCE == null) {
+            INSTANCE = new OHookThreadLocal();
+        }
       }
 
       @Override
@@ -54,8 +55,9 @@ public class OHookThreadLocal extends ThreadLocal<Set<OIdentifiable>> {
 
   public boolean push(final OIdentifiable iRecord) {
     final Set<OIdentifiable> set = get();
-    if (set.contains(iRecord))
-      return false;
+    if (set.contains(iRecord)) {
+        return false;
+    }
 
     set.add(iRecord);
     return true;

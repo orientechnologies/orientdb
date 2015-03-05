@@ -47,8 +47,9 @@ public class ODistributedException extends OException {
 
   @Override
   public boolean equals(final Object obj) {
-    if (obj == null || !obj.getClass().equals(getClass()))
-      return false;
+    if (obj == null || !obj.getClass().equals(getClass())) {
+        return false;
+    }
 
     String message = ((ODistributedException) obj).getMessage();
     return (getMessage() == message) || (getMessage() != null && getMessage().equals(message));

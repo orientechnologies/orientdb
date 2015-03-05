@@ -31,18 +31,24 @@ public class OFunctionUtilWrapper {
   }
 
   public boolean exists(final Object... iValues) {
-    if (iValues != null)
-      for (Object o : iValues)
-        if (o != null && !o.equals("undefined") && !o.equals("null"))
-          return true;
+    if (iValues != null) {
+        for (Object o : iValues) {
+            if (o != null && !o.equals("undefined") && !o.equals("null")) {
+                return true;
+            }
+        }
+    }
     return false;
   }
 
   public boolean containsArray(final Object[] iArray, final Object value) {
-    if (iArray != null && value != null)
-      for (Object o : iArray)
-        if (o != null && o.equals(value))
-          return true;
+    if (iArray != null && value != null) {
+        for (Object o : iArray) {
+            if (o != null && o.equals(value)) {
+                return true;
+            }
+        }
+    }
     return false;
   }
 

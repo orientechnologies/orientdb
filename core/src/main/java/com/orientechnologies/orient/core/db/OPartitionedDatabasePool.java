@@ -121,13 +121,15 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
     @Override
     public void close() {
       final PoolData data = poolData.get();
-      if (data.acquireCount == 0)
-        return;
+      if (data.acquireCount == 0) {
+          return;
+      }
 
       data.acquireCount--;
 
-      if (data.acquireCount > 0)
-        return;
+      if (data.acquireCount > 0) {
+          return;
+      }
 
       PoolPartition p = partition;
       partition = null;
@@ -192,8 +194,9 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
       }
     }
 
-    if (result < 0)
-      return 0;
+    if (result < 0) {
+        return 0;
+    }
 
     return result;
   }
@@ -209,8 +212,9 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
       }
     }
 
-    if (result < 0)
-      return 0;
+    if (result < 0) {
+        return 0;
+    }
 
     return result;
   }
@@ -266,8 +270,9 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
 
             continue;
           } else {
-            if (partition.currentSize.get() >= maxSize)
-              throw new IllegalStateException("You have reached maximum pool size for given partition");
+            if (partition.currentSize.get() >= maxSize) {
+                throw new IllegalStateException("You have reached maximum pool size for given partition");
+            }
 
             db = new DatabaseDocumentTxPolled(url);
             db.open(userName, password);
@@ -301,14 +306,16 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
   }
 
   public void close() {
-    if (closed)
-      return;
+    if (closed) {
+        return;
+    }
 
     closed = true;
 
     for (PoolPartition partition : partitions) {
-      if (partition == null)
-        continue;
+      if (partition == null) {
+          continue;
+      }
 
       final Queue<DatabaseDocumentTxPolled> queue = partition.queue;
 
@@ -333,7 +340,8 @@ public class OPartitionedDatabasePool extends OOrientListenerAbstract {
   }
 
   private void checkForClose() {
-    if (closed)
-      throw new IllegalStateException("Pool is closed");
+    if (closed) {
+        throw new IllegalStateException("Pool is closed");
+    }
   }
 }

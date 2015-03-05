@@ -42,8 +42,9 @@ public class OServerCommandForward extends OServerCommandAbstract {
 
     // LOAD HTTP CACHE CONFIGURATION
     for (OServerEntryConfiguration par : iConfiguration.parameters) {
-      if (par.name.equals("to"))
-        forwardTo = par.value;
+      if (par.name.equals("to")) {
+          forwardTo = par.value;
+      }
     }
   }
 
@@ -56,8 +57,9 @@ public class OServerCommandForward extends OServerCommandAbstract {
     if (prefix.endsWith("*")) {
       final int prefixLength = prefix.length() - 1;
       final int postfix = iRequest.url.indexOf(prefix.substring(0, prefixLength));
-      if (postfix > -1)
-        forwardURL.append(iRequest.url.substring(postfix + prefixLength));
+      if (postfix > -1) {
+          forwardURL.append(iRequest.url.substring(postfix + prefixLength));
+      }
     }
 
     iRequest.url = forwardURL.toString();

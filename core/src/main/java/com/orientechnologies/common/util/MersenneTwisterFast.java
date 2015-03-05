@@ -224,31 +224,40 @@ public class MersenneTwisterFast implements Serializable, Cloneable {
   }
 
   public boolean stateEquals(Object o) {
-    if (o == this)
-      return true;
-    if (o == null || !(o instanceof MersenneTwisterFast))
-      return false;
+    if (o == this) {
+        return true;
+    }
+    if (o == null || !(o instanceof MersenneTwisterFast)) {
+        return false;
+    }
     MersenneTwisterFast other = (MersenneTwisterFast) o;
-    if (mti != other.mti)
-      return false;
-    for (int x = 0; x < mag01.length; x++)
-      if (mag01[x] != other.mag01[x])
+    if (mti != other.mti) {
         return false;
-    for (int x = 0; x < mt.length; x++)
-      if (mt[x] != other.mt[x])
-        return false;
+    }
+    for (int x = 0; x < mag01.length; x++) {
+        if (mag01[x] != other.mag01[x]) {
+            return false;
+        }
+    }
+    for (int x = 0; x < mt.length; x++) {
+        if (mt[x] != other.mt[x]) {
+            return false;
+        }
+    }
     return true;
   }
 
   /** Reads the entire state of the MersenneTwister RNG from the stream */
   public void readState(DataInputStream stream) throws IOException {
     int len = mt.length;
-    for (int x = 0; x < len; x++)
-      mt[x] = stream.readInt();
+    for (int x = 0; x < len; x++) {
+        mt[x] = stream.readInt();
+    }
 
     len = mag01.length;
-    for (int x = 0; x < len; x++)
-      mag01[x] = stream.readInt();
+    for (int x = 0; x < len; x++) {
+        mag01[x] = stream.readInt();
+    }
 
     mti = stream.readInt();
     __nextNextGaussian = stream.readDouble();
@@ -258,12 +267,14 @@ public class MersenneTwisterFast implements Serializable, Cloneable {
   /** Writes the entire state of the MersenneTwister RNG to the stream */
   public void writeState(DataOutputStream stream) throws IOException {
     int len = mt.length;
-    for (int x = 0; x < len; x++)
-      stream.writeInt(mt[x]);
+    for (int x = 0; x < len; x++) {
+        stream.writeInt(mt[x]);
+    }
 
     len = mag01.length;
-    for (int x = 0; x < len; x++)
-      stream.writeInt(mag01[x]);
+    for (int x = 0; x < len; x++) {
+        stream.writeInt(mag01[x]);
+    }
 
     stream.writeInt(mti);
     stream.writeDouble(__nextNextGaussian);
@@ -304,8 +315,9 @@ public class MersenneTwisterFast implements Serializable, Cloneable {
    */
 
   synchronized public void setSeed(final int[] array) {
-    if (array.length == 0)
-      throw new IllegalArgumentException("Array length must be greater than zero");
+    if (array.length == 0) {
+        throw new IllegalArgumentException("Array length must be greater than zero");
+    }
     int i, j, k;
     setSeed(19650218);
     i = 1;
@@ -320,8 +332,9 @@ public class MersenneTwisterFast implements Serializable, Cloneable {
         mt[0] = mt[N - 1];
         i = 1;
       }
-      if (j >= array.length)
-        j = 0;
+      if (j >= array.length) {
+          j = 0;
+      }
     }
     for (k = N - 1; k != 0; k--) {
       mt[i] = (mt[i] ^ ((mt[i - 1] ^ (mt[i - 1] >>> 30)) * 1566083941)) - i; /* non linear */
@@ -472,12 +485,14 @@ public class MersenneTwisterFast implements Serializable, Cloneable {
   public final boolean nextBoolean(final float probability) {
     int y;
 
-    if (probability < 0.0f || probability > 1.0f)
-      throw new IllegalArgumentException("probability must be between 0.0 and 1.0 inclusive.");
-    if (probability == 0.0f)
-      return false; // fix half-open issues
-    else if (probability == 1.0f)
-      return true; // fix half-open issues
+    if (probability < 0.0f || probability > 1.0f) {
+        throw new IllegalArgumentException("probability must be between 0.0 and 1.0 inclusive.");
+    }
+    if (probability == 0.0f) {
+        return false; // fix half-open issues
+    } else if (probability == 1.0f) {
+        return true; // fix half-open issues
+    }
     if (mti >= N) // generate N words at one time
     {
       int kk;
@@ -516,12 +531,14 @@ public class MersenneTwisterFast implements Serializable, Cloneable {
     int y;
     int z;
 
-    if (probability < 0.0 || probability > 1.0)
-      throw new IllegalArgumentException("probability must be between 0.0 and 1.0 inclusive.");
-    if (probability == 0.0)
-      return false; // fix half-open issues
-    else if (probability == 1.0)
-      return true; // fix half-open issues
+    if (probability < 0.0 || probability > 1.0) {
+        throw new IllegalArgumentException("probability must be between 0.0 and 1.0 inclusive.");
+    }
+    if (probability == 0.0) {
+        return false; // fix half-open issues
+    } else if (probability == 1.0) {
+        return true; // fix half-open issues
+    }
     if (mti >= N) // generate N words at one time
     {
       int kk;
@@ -707,8 +724,9 @@ public class MersenneTwisterFast implements Serializable, Cloneable {
    * Returns a long drawn uniformly from 0 to n-1. Suffice it to say, n must be > 0, or an IllegalArgumentException is raised.
    */
   public final long nextLong(final long n) {
-    if (n <= 0)
-      throw new IllegalArgumentException("n must be positive, got: " + n);
+    if (n <= 0) {
+        throw new IllegalArgumentException("n must be positive, got: " + n);
+    }
 
     long bits, val;
     do {
@@ -865,8 +883,9 @@ public class MersenneTwisterFast implements Serializable, Cloneable {
     double d = 0.0;
     do {
       d = nextDouble(); // grab a value, initially from half-open [0.0, 1.0)
-      if (includeOne && nextBoolean())
-        d += 1.0; // if includeOne, with 1/2 probability, push to [1.0, 2.0)
+      if (includeOne && nextBoolean()) {
+          d += 1.0; // if includeOne, with 1/2 probability, push to [1.0, 2.0)
+      }
     } while ((d > 1.0) || // everything above 1.0 is always invalid
         (!includeZero && d == 0.0)); // if we're not including zero, 0.0 is invalid
     return d;
@@ -1064,8 +1083,9 @@ public class MersenneTwisterFast implements Serializable, Cloneable {
     float d = 0.0f;
     do {
       d = nextFloat(); // grab a value, initially from half-open [0.0f, 1.0f)
-      if (includeOne && nextBoolean())
-        d += 1.0f; // if includeOne, with 1/2 probability, push to [1.0f, 2.0f)
+      if (includeOne && nextBoolean()) {
+          d += 1.0f; // if includeOne, with 1/2 probability, push to [1.0f, 2.0f)
+      }
     } while ((d > 1.0f) || // everything above 1.0f is always invalid
         (!includeZero && d == 0.0f)); // if we're not including zero, 0.0f is invalid
     return d;
@@ -1075,8 +1095,9 @@ public class MersenneTwisterFast implements Serializable, Cloneable {
    * Returns an integer drawn uniformly from 0 to n-1. Suffice it to say, n must be > 0, or an IllegalArgumentException is raised.
    */
   public final int nextInt(final int n) {
-    if (n <= 0)
-      throw new IllegalArgumentException("n must be positive, got: " + n);
+    if (n <= 0) {
+        throw new IllegalArgumentException("n must be positive, got: " + n);
+    }
 
     if ((n & -n) == n) // i.e., n is a power of 2
     {

@@ -60,8 +60,9 @@ public class LocalMTCreateDocumentSpeedTest {
     }
 
     futures = new ArrayList<Future>();
-    for (int i = 0; i < 8; i++)
-      futures.add(executorService.submit(new Saver()));
+    for (int i = 0; i < 8; i++) {
+        futures.add(executorService.submit(new Saver()));
+    }
   }
 
   public void cycle() throws Exception {
@@ -71,8 +72,9 @@ public class LocalMTCreateDocumentSpeedTest {
     Thread.sleep(10 * 60 * 1000);
     stop = true;
 
-    for (Future future : futures)
-      future.get();
+    for (Future future : futures) {
+        future.get();
+    }
 
     long end = System.currentTimeMillis();
 
@@ -84,8 +86,9 @@ public class LocalMTCreateDocumentSpeedTest {
 
   @AfterClass
   public void deinit() {
-    if (database != null)
-      database.drop();
+    if (database != null) {
+        database.drop();
+    }
     OGlobalConfiguration.USE_WAL.setValue(true);
   }
 

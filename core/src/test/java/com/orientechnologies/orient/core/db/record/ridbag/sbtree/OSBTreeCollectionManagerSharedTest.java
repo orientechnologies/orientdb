@@ -94,8 +94,9 @@ public class OSBTreeCollectionManagerSharedTest extends DatabaseAbstractTest {
       OSBTreeBonsai<OIdentifiable, Integer> cachedTree = sbTreeCollectionManager.loadSBTree(collectionPointer);
       Assert.assertSame(cachedTree, createdTree);
 
-      if (i > 1)
-        sbTreeCollectionManager.releaseSBTree(collectionPointer);
+      if (i > 1) {
+          sbTreeCollectionManager.releaseSBTree(collectionPointer);
+      }
     }
 
     OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createAndLoadTree(database.getDefaultClusterId());
@@ -162,8 +163,9 @@ public class OSBTreeCollectionManagerSharedTest extends DatabaseAbstractTest {
       OSBTreeBonsai<OIdentifiable, Integer> cachedTree = sbTreeCollectionManager.loadSBTree(collectionPointer);
       Assert.assertSame(cachedTree, createdTree);
 
-      if (i > 4)
-        sbTreeCollectionManager.releaseSBTree(collectionPointer);
+      if (i > 4) {
+          sbTreeCollectionManager.releaseSBTree(collectionPointer);
+      }
     }
 
     OSBTreeBonsai<OIdentifiable, Integer> tree = sbTreeCollectionManager.createAndLoadTree(database.getDefaultClusterId());

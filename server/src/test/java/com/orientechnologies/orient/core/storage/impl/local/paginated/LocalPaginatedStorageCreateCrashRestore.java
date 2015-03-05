@@ -112,8 +112,9 @@ public class LocalPaginatedStorageCreateCrashRestore {
     buildDirectory += "/localPaginatedStorageCreateCrashRestore";
 
     buildDir = new File(buildDirectory);
-    if (buildDir.exists())
-      buildDir.delete();
+    if (buildDir.exists()) {
+        buildDir.delete();
+                }
 
     buildDir.mkdir();
 
@@ -227,8 +228,9 @@ public class LocalPaginatedStorageCreateCrashRestore {
         List<ODocument> testDocuments = testDocumentTx.query(new OSQLSynchQuery<ODocument>("select from TestClass where id  = "
             + baseDocument.field("id")));
         if (testDocuments.size() == 0) {
-          if (((Long) baseDocument.field("timestamp")) < minTs)
-            minTs = baseDocument.field("timestamp");
+          if (((Long) baseDocument.field("timestamp")) < minTs) {
+              minTs = baseDocument.field("timestamp");
+          }
         } else {
           ODocument testDocument = testDocuments.get(0);
           Assert.assertEquals(testDocument.field("id"), baseDocument.field("id"));
@@ -239,8 +241,9 @@ public class LocalPaginatedStorageCreateCrashRestore {
 
         recordsTested++;
 
-        if (recordsTested % 10000 == 0)
-          System.out.println(recordsTested + " were tested, " + recordsRestored + " were restored ...");
+        if (recordsTested % 10000 == 0) {
+            System.out.println(recordsTested + " were tested, " + recordsRestored + " were restored ...");
+        }
       }
 
       physicalPositions = baseStorage.higherPhysicalPositions(clusterId, physicalPositions[physicalPositions.length - 1]);

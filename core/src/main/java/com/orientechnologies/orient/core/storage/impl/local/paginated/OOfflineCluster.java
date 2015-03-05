@@ -85,8 +85,9 @@ public class OOfflineCluster implements OCluster {
 
   @Override
   public Object set(ATTRIBUTES attribute, Object value) throws IOException {
-    if (attribute == null)
-      throw new IllegalArgumentException("attribute is null");
+    if (attribute == null) {
+        throw new IllegalArgumentException("attribute is null");
+    }
 
     final String stringValue = value != null ? value.toString() : null;
 

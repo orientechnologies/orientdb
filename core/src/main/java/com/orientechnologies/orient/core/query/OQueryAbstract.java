@@ -45,10 +45,11 @@ public abstract class OQueryAbstract<T extends Object> extends OCommandRequestAb
    */
   public OQueryAbstract setFetchPlan(final String fetchPlan) {
     OFetchHelper.checkFetchPlanValid(fetchPlan);
-    if (fetchPlan != null && fetchPlan.length() == 0)
-      this.fetchPlan = null;
-    else
-      this.fetchPlan = fetchPlan;
+    if (fetchPlan != null && fetchPlan.length() == 0) {
+        this.fetchPlan = null;
+    } else {
+        this.fetchPlan = fetchPlan;
+    }
     return this;
   }
 

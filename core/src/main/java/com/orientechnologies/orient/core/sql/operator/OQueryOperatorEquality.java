@@ -59,8 +59,9 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
       // LEFT = MULTI
       final OQueryRuntimeValueMulti left = (OQueryRuntimeValueMulti) iLeft;
 
-      if (left.getValues().length == 0)
-        return false;
+      if (left.getValues().length == 0) {
+          return false;
+      }
 
       if (left.getDefinition().getRoot().startsWith(OSQLFilterItemFieldAll.NAME)) {
         // ALL VALUES
@@ -74,8 +75,9 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
             r = collate.transform(iRight);
           }
 
-          if (v == null || !evaluateExpression(iRecord, iCondition, v, r, iContext))
-            return false;
+          if (v == null || !evaluateExpression(iRecord, iCondition, v, r, iContext)) {
+              return false;
+          }
         }
         return true;
       } else {
@@ -90,8 +92,9 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
             r = collate.transform(iRight);
           }
 
-          if (v != null && evaluateExpression(iRecord, iCondition, v, r, iContext))
-            return true;
+          if (v != null && evaluateExpression(iRecord, iCondition, v, r, iContext)) {
+              return true;
+          }
         }
         return false;
       }
@@ -100,8 +103,9 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
       // RIGHT = MULTI
       final OQueryRuntimeValueMulti right = (OQueryRuntimeValueMulti) iRight;
 
-      if (right.getValues().length == 0)
-        return false;
+      if (right.getValues().length == 0) {
+          return false;
+      }
 
       if (right.getDefinition().getRoot().startsWith(OSQLFilterItemFieldAll.NAME)) {
         // ALL VALUES
@@ -115,8 +119,9 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
             l = collate.transform(iLeft);
           }
 
-          if (v == null || !evaluateExpression(iRecord, iCondition, l, v, iContext))
-            return false;
+          if (v == null || !evaluateExpression(iRecord, iCondition, l, v, iContext)) {
+              return false;
+          }
         }
         return true;
       } else {
@@ -131,13 +136,15 @@ public abstract class OQueryOperatorEquality extends OQueryOperator {
             l = collate.transform(iLeft);
           }
 
-          if (v != null && evaluateExpression(iRecord, iCondition, l, v, iContext))
-            return true;
+          if (v != null && evaluateExpression(iRecord, iCondition, l, v, iContext)) {
+              return true;
+          }
         }
         return false;
       }
-    } else
-      // SINGLE SIMPLE ITEM
-      return evaluateExpression(iRecord, iCondition, iLeft, iRight, iContext);
+    } else {
+        // SINGLE SIMPLE ITEM
+        return evaluateExpression(iRecord, iCondition, iLeft, iRight, iContext);
+    }
   }
 }

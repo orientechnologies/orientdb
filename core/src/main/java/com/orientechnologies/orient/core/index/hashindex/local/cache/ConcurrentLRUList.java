@@ -60,8 +60,9 @@ public class ConcurrentLRUList implements LRUList {
 
     purge();
 
-    if (lruEntry == null)
-      return null;
+    if (lruEntry == null) {
+        return null;
+    }
 
     return lruEntry.entry;
   }
@@ -71,8 +72,9 @@ public class ConcurrentLRUList implements LRUList {
     CacheKey key = new CacheKey(fileId, pageIndex);
     final LRUEntry valueToRemove = cache.remove(key);
 
-    if (valueToRemove == null)
-      return null;
+    if (valueToRemove == null) {
+        return null;
+    }
 
     valueToRemove.removeLock.writeLock().lock();
     try {
@@ -80,8 +82,9 @@ public class ConcurrentLRUList implements LRUList {
       ListNode node = valueToRemove.listNode.get();
       valueToRemove.listNode.lazySet(null);
 
-      if (node != null)
-        addToTrash(node);
+      if (node != null) {
+          addToTrash(node);
+      }
     } finally {
       valueToRemove.removeLock.writeLock().unlock();
     }
@@ -100,8 +103,9 @@ public class ConcurrentLRUList implements LRUList {
     if (existingValue != null) {
       existingValue.entry = cacheEntry;
       offer(existingValue);
-    } else
-      offer(value);
+    } else {
+        offer(value);
+    }
 
     purge();
   }
@@ -109,8 +113,9 @@ public class ConcurrentLRUList implements LRUList {
   private void offer(LRUEntry lruEntry) {
     lruEntry.removeLock.readLock().lock();
     try {
-      if (lruEntry.removed)
-        return;
+      if (lruEntry.removed) {
+          return;
+      }
 
       ListNode tail = tailReference.get();
 
@@ -131,8 +136,9 @@ public class ConcurrentLRUList implements LRUList {
             tail = tailReference.get();
           }
 
-          if (oldNode != null)
-            addToTrash(oldNode);
+          if (oldNode != null) {
+              addToTrash(oldNode);
+          }
         }
       }
 
@@ -151,14 +157,16 @@ public class ConcurrentLRUList implements LRUList {
     int inUseCounter = 0;
     do {
       while (current.isDummy || (currentEntry = current.entry) == null || (isInUse(currentEntry.entry))) {
-        if (currentEntry != null && isInUse(currentEntry.entry))
-          inUseCounter++;
+        if (currentEntry != null && isInUse(currentEntry.entry)) {
+            inUseCounter++;
+        }
 
         ListNode next = current.next.get();
 
         if (next == null) {
-          if (cache.size() == inUseCounter)
-            return null;
+          if (cache.size() == inUseCounter) {
+              return null;
+          }
 
           current = headReference;
           inUseCounter = 0;
@@ -200,14 +208,16 @@ public class ConcurrentLRUList implements LRUList {
     int inUseCounter = 0;
 
     while (current.isDummy || (currentEntry = current.entry) == null || (isInUse(currentEntry.entry))) {
-      if (currentEntry != null && isInUse(currentEntry.entry))
-        inUseCounter++;
+      if (currentEntry != null && isInUse(currentEntry.entry)) {
+          inUseCounter++;
+      }
 
       ListNode next = current.next.get();
 
       if (next == null) {
-        if (cache.size() == inUseCounter)
-          return null;
+        if (cache.size() == inUseCounter) {
+            return null;
+        }
 
         current = headReference;
         inUseCounter = 0;
@@ -238,8 +248,9 @@ public class ConcurrentLRUList implements LRUList {
       final ListNode node = trash.poll();
       trashSize.decrementAndGet();
 
-      if (node == null)
-        return;
+      if (node == null) {
+          return;
+      }
 
       if (node.next.get() == null) {
         trash.add(node);
@@ -259,11 +270,13 @@ public class ConcurrentLRUList implements LRUList {
       if (assertionsEnabled) {
         boolean success = previous.next.compareAndSet(node, next);
         assert success;
-      } else
-        previous.next.set(next);
+      } else {
+          previous.next.set(next);
+      }
 
-      if (next != null)
-        next.previous.set(previous);
+      if (next != null) {
+          next.previous.set(previous);
+      }
     }
   }
 
@@ -344,17 +357,21 @@ public class ConcurrentLRUList implements LRUList {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
+      if (this == o) {
+          return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+          return false;
+      }
 
       CacheKey that = (CacheKey) o;
 
-      if (fileId != that.fileId)
-        return false;
-      if (pageIndex != that.pageIndex)
-        return false;
+      if (fileId != that.fileId) {
+          return false;
+      }
+      if (pageIndex != that.pageIndex) {
+          return false;
+      }
 
       return true;
     }

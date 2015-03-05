@@ -54,8 +54,9 @@ public class OObjectCustomSerializerIterator<TYPE> implements Iterator<TYPE>, Se
 
 	public void remove() {
 		underlying.remove();
-		if (sourceRecord != null)
-			sourceRecord.setDirty();
+		if (sourceRecord != null) {
+                    sourceRecord.setDirty();
+                }
 	}
 
 }

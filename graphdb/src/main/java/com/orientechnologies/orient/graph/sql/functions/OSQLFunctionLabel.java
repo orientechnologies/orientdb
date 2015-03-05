@@ -60,11 +60,13 @@ public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
             return getLabel(graph, iArgument);
           }
         }, iCurrentResult, iContext);
-      } else
-        return getLabel(graph, iCurrentRecord);
+      } else {
+          return getLabel(graph, iCurrentRecord);
+      }
     } finally {
-      if (shutdownFlag.getValue())
-        graph.shutdown(false);
+      if (shutdownFlag.getValue()) {
+          graph.shutdown(false);
+      }
     }
   }
 
@@ -81,9 +83,10 @@ public class OSQLFunctionLabel extends OSQLFunctionConfigurableAbstract {
       final OrientEdge edge = graph.getEdge(iCurrentRecord);
       return edge.getLabel();
 
-    } else
-      throw new OCommandExecutionException("Invalid record: is neither a vertex nor an edge. Found class: "
-          + ODocumentInternal.getImmutableSchemaClass(rec));
+    } else {
+        throw new OCommandExecutionException("Invalid record: is neither a vertex nor an edge. Found class: "
+                + ODocumentInternal.getImmutableSchemaClass(rec));
+    }
   }
 
   public String getSyntax() {

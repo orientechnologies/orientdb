@@ -253,28 +253,33 @@ public class OSQLEngine {
 
   public static Object foreachRecord(final OCallable<Object, OIdentifiable> iCallable, final Object iCurrent,
       final OCommandContext iContext) {
-    if (iCurrent == null)
-      return null;
+    if (iCurrent == null) {
+        return null;
+    }
 
-    if (iContext != null && !iContext.checkTimeout())
-      return null;
+    if (iContext != null && !iContext.checkTimeout()) {
+        return null;
+    }
 
     if (OMultiValue.isMultiValue(iCurrent) || iCurrent instanceof Iterator) {
       final OMultiCollectionIterator<Object> result = new OMultiCollectionIterator<Object>();
       for (Object o : OMultiValue.getMultiValueIterable(iCurrent)) {
-        if (iContext != null && !iContext.checkTimeout())
-          return null;
+        if (iContext != null && !iContext.checkTimeout()) {
+            return null;
+        }
 
         if (OMultiValue.isMultiValue(o) || o instanceof Iterator) {
           for (Object inner : OMultiValue.getMultiValueIterable(o)) {
             result.add(iCallable.call((OIdentifiable) inner));
           }
-        } else
-          result.add(iCallable.call((OIdentifiable) o));
+        } else {
+            result.add(iCallable.call((OIdentifiable) o));
+        }
       }
       return result;
-    } else if (iCurrent instanceof OIdentifiable)
-      return iCallable.call((OIdentifiable) iCurrent);
+    } else if (iCurrent instanceof OIdentifiable) {
+        return iCallable.call((OIdentifiable) iCurrent);
+    }
 
     return null;
   }
@@ -287,8 +292,9 @@ public class OSQLEngine {
     for (Iterator<OCollateFactory> iter = getCollateFactories(); iter.hasNext();) {
       OCollateFactory f = iter.next();
       final OCollate c = f.getCollate(name);
-      if (c != null)
-        return c;
+      if (c != null) {
+          return c;
+      }
     }
     return null;
   }
@@ -383,9 +389,10 @@ public class OSQLEngine {
   public OSQLFunction getFunction(String iFunctionName) {
     iFunctionName = iFunctionName.toLowerCase(Locale.ENGLISH);
 
-    if (iFunctionName.equalsIgnoreCase("any") || iFunctionName.equalsIgnoreCase("all"))
-      // SPECIAL FUNCTIONS
-      return null;
+    if (iFunctionName.equalsIgnoreCase("any") || iFunctionName.equalsIgnoreCase("all")) {
+        // SPECIAL FUNCTIONS
+        return null;
+    }
 
     final Iterator<OSQLFunctionFactory> ite = getFunctionFactories();
     while (ite.hasNext()) {
@@ -449,12 +456,13 @@ public class OSQLEngine {
       query.setContext(iContext);
 
       final List<OIdentifiable> result = database.query(query, iArgs);
-      if (result == null || result.isEmpty())
-        ids = Collections.emptySet();
-      else {
+      if (result == null || result.isEmpty()) {
+          ids = Collections.emptySet();
+      } else {
         ids = new HashSet<OIdentifiable>((int) (result.size() * 1.3));
-        for (OIdentifiable aResult : result)
-          ids.add(aResult.getIdentity());
+        for (OIdentifiable aResult : result) {
+            ids.add(aResult.getIdentity());
+        }
       }
     } else if (iTarget.startsWith("[")) {
       // COLLECTION OF RIDS
@@ -463,24 +471,28 @@ public class OSQLEngine {
       for (String idsAsString : idsAsStrings) {
         if (idsAsString.startsWith("$")) {
           Object r = iContext.getVariable(idsAsString);
-          if (r instanceof OIdentifiable)
-            ids.add((OIdentifiable) r);
-          else
-            OMultiValue.add(ids, r);
-        } else
-          ids.add(new ORecordId(idsAsString));
+          if (r instanceof OIdentifiable) {
+              ids.add((OIdentifiable) r);
+          } else {
+              OMultiValue.add(ids, r);
+          }
+        } else {
+            ids.add(new ORecordId(idsAsString));
+        }
       }
     } else {
       // SINGLE RID
       if (iTarget.startsWith("$")) {
         Object r = iContext.getVariable(iTarget);
-        if (r instanceof OIdentifiable)
-          ids = Collections.<OIdentifiable> singleton((OIdentifiable) r);
-        else
-          ids = (Set<OIdentifiable>) OMultiValue.add(new HashSet<OIdentifiable>(OMultiValue.getSize(r)), r);
+        if (r instanceof OIdentifiable) {
+            ids = Collections.<OIdentifiable> singleton((OIdentifiable) r);
+        } else {
+            ids = (Set<OIdentifiable>) OMultiValue.add(new HashSet<OIdentifiable>(OMultiValue.getSize(r)), r);
+        }
 
-      } else
-        ids = Collections.<OIdentifiable> singleton(new ORecordId(iTarget));
+      } else {
+          ids = Collections.<OIdentifiable> singleton(new ORecordId(iTarget));
+      }
 
     }
     return ids;

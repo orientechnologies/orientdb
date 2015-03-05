@@ -44,10 +44,11 @@ public class OSQLFilterItemParameter implements OSQLFilterItem {
 
 	@Override
 	public String toString() {
-		if (value == NOT_SETTED)
-			return name.equals("?") ? "?" : ":" + name;
-		else
-			return value == null ? "null" : value.toString();
+		if (value == NOT_SETTED) {
+                    return name.equals("?") ? "?" : ":" + name;
+                } else {
+                    return value == null ? "null" : value.toString();
+                }
 	}
 
 	public String getName() {

@@ -35,12 +35,14 @@ public class OJSScriptFormatter implements OScriptFormatter {
     fCode.append(f.getName());
     fCode.append('(');
     int i = 0;
-    if (f.getParameters() != null)
-      for (String p : f.getParameters()) {
-        if (i++ > 0)
-          fCode.append(',');
-        fCode.append(p);
-      }
+    if (f.getParameters() != null) {
+        for (String p : f.getParameters()) {
+            if (i++ > 0) {
+                fCode.append(',');
+            }
+            fCode.append(p);
+        }
+    }
     fCode.append(") {\n");
     fCode.append(f.getCode());
     fCode.append("\n}\n");
@@ -57,8 +59,9 @@ public class OJSScriptFormatter implements OScriptFormatter {
     if (iArgs != null) {
       int i = 0;
       for (Object a : iArgs) {
-        if (i++ > 0)
-          code.append(',');
+        if (i++ > 0) {
+            code.append(',');
+        }
         code.append(a);
       }
     }

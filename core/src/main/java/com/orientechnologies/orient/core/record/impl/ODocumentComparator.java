@@ -45,8 +45,9 @@ public class ODocumentComparator implements Comparator<OIdentifiable> {
 
   @SuppressWarnings("unchecked")
   public int compare(final OIdentifiable iDoc1, final OIdentifiable iDoc2) {
-    if (iDoc1 != null && iDoc1.equals(iDoc2))
-      return 0;
+    if (iDoc1 != null && iDoc1.equals(iDoc2)) {
+        return 0;
+    }
 
     Object fieldValue1;
     Object fieldValue2;
@@ -65,11 +66,13 @@ public class ODocumentComparator implements Comparator<OIdentifiable> {
           continue;
       }
 
-      if (fieldValue1 == null)
-        return factor(-1, ordering);
+      if (fieldValue1 == null) {
+          return factor(-1, ordering);
+      }
 
-      if (fieldValue2 == null)
-        return factor(1, ordering);
+      if (fieldValue2 == null) {
+          return factor(1, ordering);
+      }
 
       if (!(fieldValue1 instanceof Comparable<?>)) {
 				context.incrementVariable(OBasicCommandContext.INVALID_COMPARE_COUNT);
@@ -84,19 +87,21 @@ public class ODocumentComparator implements Comparator<OIdentifiable> {
 			}
       partialResult = factor(partialResult, ordering);
 
-      if (partialResult != 0)
-        break;
-
-      // CONTINUE WITH THE NEXT FIELD
+      if (partialResult != 0) {
+          break;
+          
+          // CONTINUE WITH THE NEXT FIELD
+      }
     }
 
     return partialResult;
   }
 
   private int factor(final int partialResult, final String iOrdering) {
-    if (iOrdering.equals(OCommandExecutorSQLSelect.KEYWORD_DESC))
-      // INVERT THE ORDERING
-      return partialResult * -1;
+    if (iOrdering.equals(OCommandExecutorSQLSelect.KEYWORD_DESC)) {
+        // INVERT THE ORDERING
+        return partialResult * -1;
+    }
 
     return partialResult;
   }

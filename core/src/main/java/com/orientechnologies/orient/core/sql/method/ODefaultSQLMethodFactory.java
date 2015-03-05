@@ -110,17 +110,19 @@ public class ODefaultSQLMethodFactory implements OSQLMethodFactory {
     final Object m = methods.get(name);
     final OSQLMethod method;
 
-    if (m instanceof Class<?>)
-      try {
-        method = (OSQLMethod) ((Class<?>) m).newInstance();
-      } catch (Exception e) {
-        throw new OCommandExecutionException("Cannot create SQL method: " + m);
-      }
-    else
-      method = (OSQLMethod) m;
+    if (m instanceof Class<?>) {
+        try {
+            method = (OSQLMethod) ((Class<?>) m).newInstance();
+        } catch (Exception e) {
+            throw new OCommandExecutionException("Cannot create SQL method: " + m);
+        }
+    } else {
+        method = (OSQLMethod) m;
+    }
 
-    if (method == null)
-      throw new OCommandExecutionException("Unknown method name: " + name);
+    if (method == null) {
+        throw new OCommandExecutionException("Unknown method name: " + name);
+    }
 
     return method;
   }

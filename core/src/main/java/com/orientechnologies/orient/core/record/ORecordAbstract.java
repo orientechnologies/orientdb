@@ -105,8 +105,9 @@ public abstract class ORecordAbstract implements ORecord {
 
     _source = null;
     setDirty();
-    if (_recordId != null)
-      _recordId.reset();
+    if (_recordId != null) {
+        _recordId.reset();
+    }
 
     invokeListenerEvent(ORecordListener.EVENT.RESET);
 
@@ -114,8 +115,9 @@ public abstract class ORecordAbstract implements ORecord {
   }
 
   public byte[] toStream() {
-    if (_source == null)
-      _source = _recordFormat.toStream(this, false);
+    if (_source == null) {
+        _source = _recordFormat.toStream(this, false);
+    }
 
     invokeListenerEvent(ORecordListener.EVENT.MARSHALL);
 
@@ -128,8 +130,9 @@ public abstract class ORecordAbstract implements ORecord {
     if (ONetworkThreadLocalSerializer.getNetworkSerializer() != null) {
       ONetworkThreadLocalSerializer.getNetworkSerializer().fromStream(iRecordBuffer, this, null);
       _source = null;
-    } else
-      _source = iRecordBuffer;
+    } else {
+        _source = iRecordBuffer;
+    }
     _size = iRecordBuffer != null ? iRecordBuffer.length : 0;
     _status = ORecordElement.STATUS.LOADED;
 
@@ -221,14 +224,16 @@ public abstract class ORecordAbstract implements ORecord {
   }
 
   public ORecord load() {
-    if (!getIdentity().isValid())
-      throw new ORecordNotFoundException("The record has no id, probably it's new or transient yet ");
+    if (!getIdentity().isValid()) {
+        throw new ORecordNotFoundException("The record has no id, probably it's new or transient yet ");
+    }
 
     try {
       final ORecord result = getDatabase().load(this);
 
-      if (result == null)
-        throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found");
+      if (result == null) {
+          throw new ORecordNotFoundException("The record with id '" + getIdentity() + "' not found");
+      }
 
       return result;
     } catch (Exception e) {
@@ -253,8 +258,9 @@ public abstract class ORecordAbstract implements ORecord {
   }
 
   public ORecord reload(final String iFetchPlan, final boolean iIgnoreCache) {
-    if (!getIdentity().isValid())
-      throw new ORecordNotFoundException("The record has no id. It is probably new or still transient");
+    if (!getIdentity().isValid()) {
+        throw new ORecordNotFoundException("The record has no id. It is probably new or still transient");
+    }
 
     try {
       getDatabase().reload(this, iFetchPlan, iIgnoreCache);
@@ -312,29 +318,35 @@ public abstract class ORecordAbstract implements ORecord {
 
   @Override
   public boolean equals(final Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
+    if (this == obj) {
+        return true;
+    }
+    if (obj == null) {
+        return false;
+    }
 
-    if (obj instanceof OIdentifiable)
-      return _recordId.equals(((OIdentifiable) obj).getIdentity());
+    if (obj instanceof OIdentifiable) {
+        return _recordId.equals(((OIdentifiable) obj).getIdentity());
+    }
 
     return false;
   }
 
   public int compare(final OIdentifiable iFirst, final OIdentifiable iSecond) {
-    if (iFirst == null || iSecond == null)
-      return -1;
+    if (iFirst == null || iSecond == null) {
+        return -1;
+    }
     return iFirst.compareTo(iSecond);
   }
 
   public int compareTo(final OIdentifiable iOther) {
-    if (iOther == null)
-      return 1;
+    if (iOther == null) {
+        return 1;
+    }
 
-    if (_recordId == null)
-      return iOther.getIdentity() == null ? 0 : 1;
+    if (_recordId == null) {
+        return iOther.getIdentity() == null ? 0 : 1;
+    }
 
     return _recordId.compareTo(iOther.getIdentity());
   }
@@ -376,9 +388,9 @@ public abstract class ORecordAbstract implements ORecord {
   }
 
   protected ORecordAbstract setIdentity(final int iClusterId, final long iClusterPosition) {
-    if (_recordId == null || _recordId == ORecordId.EMPTY_RECORD_ID)
-      _recordId = new ORecordId(iClusterId, iClusterPosition);
-    else {
+    if (_recordId == null || _recordId == ORecordId.EMPTY_RECORD_ID) {
+        _recordId = new ORecordId(iClusterId, iClusterPosition);
+    } else {
       _recordId.clusterId = iClusterId;
       _recordId.clusterPosition = iClusterPosition;
     }
@@ -394,8 +406,9 @@ public abstract class ORecordAbstract implements ORecord {
 
   protected void onBeforeIdentityChanged(final ORecord iRecord) {
     if (newIdentityChangeListeners != null) {
-      for (OIdentityChangeListener changeListener : newIdentityChangeListeners)
-        changeListener.onBeforeIdentityChange(this);
+      for (OIdentityChangeListener changeListener : newIdentityChangeListeners) {
+          changeListener.onBeforeIdentityChange(this);
+      }
     }
   }
 
@@ -403,8 +416,9 @@ public abstract class ORecordAbstract implements ORecord {
     invokeListenerEvent(ORecordListener.EVENT.IDENTITY_CHANGED);
 
     if (newIdentityChangeListeners != null) {
-      for (OIdentityChangeListener changeListener : newIdentityChangeListeners)
-        changeListener.onAfterIdentityChange(this);
+      for (OIdentityChangeListener changeListener : newIdentityChangeListeners) {
+          changeListener.onAfterIdentityChange(this);
+      }
     }
 
   }
@@ -425,8 +439,9 @@ public abstract class ORecordAbstract implements ORecord {
    *          ODocumentListener implementation
    */
   protected void addListener(final ORecordListener iListener) {
-    if (_listeners == null)
-      _listeners = Collections.newSetFromMap(new WeakHashMap<ORecordListener, Boolean>());
+    if (_listeners == null) {
+        _listeners = Collections.newSetFromMap(new WeakHashMap<ORecordListener, Boolean>());
+    }
 
     _listeners.add(iListener);
   }
@@ -439,8 +454,9 @@ public abstract class ORecordAbstract implements ORecord {
   protected void removeListener(final ORecordListener listener) {
     if (_listeners != null) {
       _listeners.remove(listener);
-      if (_listeners.isEmpty())
-        _listeners = null;
+      if (_listeners.isEmpty()) {
+          _listeners = null;
+      }
     }
   }
 
@@ -449,31 +465,38 @@ public abstract class ORecordAbstract implements ORecord {
   }
 
   protected void addIdentityChangeListener(OIdentityChangeListener identityChangeListener) {
-    if (newIdentityChangeListeners == null)
-      newIdentityChangeListeners = Collections.newSetFromMap(new WeakHashMap<OIdentityChangeListener, Boolean>());
+    if (newIdentityChangeListeners == null) {
+        newIdentityChangeListeners = Collections.newSetFromMap(new WeakHashMap<OIdentityChangeListener, Boolean>());
+    }
     newIdentityChangeListeners.add(identityChangeListener);
   }
 
   protected void removeIdentityChangeListener(OIdentityChangeListener identityChangeListener) {
-    if (newIdentityChangeListeners != null)
-      newIdentityChangeListeners.remove(identityChangeListener);
+    if (newIdentityChangeListeners != null) {
+        newIdentityChangeListeners.remove(identityChangeListener);
+    }
   }
 
   protected void setup() {
-    if (_recordId == null)
-      _recordId = new ORecordId();
+    if (_recordId == null) {
+        _recordId = new ORecordId();
+    }
   }
 
   protected void invokeListenerEvent(final ORecordListener.EVENT iEvent) {
-    if (_listeners != null)
-      for (final ORecordListener listener : _listeners)
-        if (listener != null)
-          listener.onEvent(this, iEvent);
+    if (_listeners != null) {
+        for (final ORecordListener listener : _listeners) {
+            if (listener != null) {
+                listener.onEvent(this, iEvent);
+            }
+        }
+    }
   }
 
   protected void checkForLoading() {
-    if (_status == ORecordElement.STATUS.NOT_LOADED && ODatabaseRecordThreadLocal.INSTANCE.isDefined())
-      reload(null, true);
+    if (_status == ORecordElement.STATUS.NOT_LOADED && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
+        reload(null, true);
+    }
   }
 
   protected boolean isContentChanged() {

@@ -40,8 +40,9 @@ public class OSQLFunctionFormat extends OSQLFunctionAbstract {
       OCommandContext iContext) {
     final Object[] args = new Object[params.length - 1];
 
-    for (int i = 0; i < args.length; ++i)
-      args[i] = params[i + 1];
+    for (int i = 0; i < args.length; ++i) {
+        args[i] = params[i + 1];
+    }
 
     return String.format((String) params[0], args);
   }

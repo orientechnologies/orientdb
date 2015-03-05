@@ -72,8 +72,9 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
     parserRequiredKeyword("VERTEX");
 
     source = parserRequiredWord(false, "Syntax error", " =><,\r\n");
-    if (source == null)
-      throw new OCommandSQLParsingException("Cannot find source");
+    if (source == null) {
+        throw new OCommandSQLParsingException("Cannot find source");
+    }
 
     parserRequiredKeyword("TO");
 
@@ -81,23 +82,27 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
 
     while (temp != null) {
       if (temp.startsWith("CLUSTER:")) {
-        if (className != null)
-          throw new OCommandSQLParsingException("Cannot define multiple sources. Found both cluster and class.");
+        if (className != null) {
+            throw new OCommandSQLParsingException("Cannot define multiple sources. Found both cluster and class.");
+        }
 
         clusterName = temp.substring("CLUSTER:".length());
-        if (database.getClusterIdByName(clusterName) == -1)
-          throw new OCommandSQLParsingException("Cluster '" + clusterName + "' was not found");
+        if (database.getClusterIdByName(clusterName) == -1) {
+            throw new OCommandSQLParsingException("Cluster '" + clusterName + "' was not found");
+        }
 
       } else if (temp.startsWith("CLASS:")) {
-        if (clusterName != null)
-          throw new OCommandSQLParsingException("Cannot define multiple sources. Found both cluster and class.");
+        if (clusterName != null) {
+            throw new OCommandSQLParsingException("Cannot define multiple sources. Found both cluster and class.");
+        }
 
         className = temp.substring("CLASS:".length());
 
         clazz = database.getMetadata().getSchema().getClass(className);
 
-        if (clazz == null)
-          throw new OCommandSQLParsingException("Class '" + className + "' was not found");
+        if (clazz == null) {
+            throw new OCommandSQLParsingException("Class '" + className + "' was not found");
+        }
 
       } else if (temp.equals(KEYWORD_SET)) {
         fields = new LinkedHashMap<String, Object>();
@@ -109,8 +114,9 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
       }
 
       temp = parserOptionalWord(true);
-      if (parserIsEnded())
-        break;
+      if (parserIsEnded()) {
+          break;
+      }
     }
 
     return this;
@@ -120,8 +126,9 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
    * Executes the command and return the ODocument object created.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (className == null && clusterName == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    if (className == null && clusterName == null) {
+        throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    }
 
     OModifiableBoolean shutdownGraph = new OModifiableBoolean();
     final OrientGraphNoTx graph = OGraphCommandExecutorSQLFactory.getGraphNoTx(shutdownGraph);
@@ -133,23 +140,26 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
 
       for (OIdentifiable from : sourceRIDs) {
         final OrientVertex fromVertex = graph.getVertex(from);
-        if (fromVertex == null)
-          continue;
+        if (fromVertex == null) {
+            continue;
+        }
 
         final ORID oldVertex = fromVertex.getIdentity().copy();
         final ORID newVertex = fromVertex.moveTo(className, clusterName);
 
-        if (fields != null)
-          // EVALUATE FIELDS
-          for (Entry<String, Object> f : fields.entrySet()) {
-            if (f.getValue() instanceof OSQLFunctionRuntime)
-              fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(newVertex.getRecord(), null, context));
-          }
+        if (fields != null) {
+            for (Entry<String, Object> f : fields.entrySet()) {
+                if (f.getValue() instanceof OSQLFunctionRuntime) {
+                    fields.put(f.getKey(), ((OSQLFunctionRuntime) f.getValue()).getValue(newVertex.getRecord(), null, context));
+                }
+            }
+        }
 
         OSQLHelper.bindParameters(fromVertex.getRecord(), fields, new OCommandParameters(iArgs), context);
 
-        if (merge != null)
-          fromVertex.getRecord().merge(merge, true, false);
+        if (merge != null) {
+            fromVertex.getRecord().merge(merge, true, false);
+        }
 
         // SAVE CHANGES
         fromVertex.save();
@@ -160,8 +170,9 @@ public class OCommandExecutorSQLMoveVertex extends OCommandExecutorSQLSetAware i
 
       return result;
     } finally {
-      if (shutdownGraph.getValue())
-        graph.shutdown(false);
+      if (shutdownGraph.getValue()) {
+          graph.shutdown(false);
+      }
     }
   }
 

@@ -53,11 +53,13 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
 
   @Override
   public int getCluster(final OClass iClass, final ODocument doc) {
-    if (!iClass.equals(cls))
-      throw new IllegalArgumentException("Class '" + iClass + "' is different than the configured one: " + cls);
+    if (!iClass.equals(cls)) {
+        throw new IllegalArgumentException("Class '" + iClass + "' is different than the configured one: " + cls);
+    }
 
-    if (bestClusterId == -1)
-      readConfiguration();
+    if (bestClusterId == -1) {
+        readConfiguration();
+    }
 
     return bestClusterId;
   }
@@ -72,22 +74,25 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
   }
 
   protected void readConfiguration() {
-    if (cls.isAbstract())
-      throw new IllegalArgumentException("Cannot create a new instance of abstract class");
+    if (cls.isAbstract()) {
+        throw new IllegalArgumentException("Cannot create a new instance of abstract class");
+    }
 
     final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
     final int[] clusterIds = cls.getClusterIds();
     final List<String> clusterNames = new ArrayList<String>(clusterIds.length);
-    for (int c : clusterIds)
-      clusterNames.add(db.getClusterNameById(c));
+    for (int c : clusterIds) {
+        clusterNames.add(db.getClusterNameById(c));
+    }
 
     final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
 
     final String bestCluster = cfg.getLocalCluster(clusterNames, nodeName);
-    if (bestCluster == null)
-      throw new OException("Cannot find best cluster for class '" + cls.getName() + "' on server '" + nodeName
-          + "'. ClusterStrategy=" + getName());
+    if (bestCluster == null) {
+        throw new OException("Cannot find best cluster for class '" + cls.getName() + "' on server '" + nodeName
+                + "'. ClusterStrategy=" + getName());
+    }
 
     bestClusterId = db.getClusterIdByName(bestCluster);
   }

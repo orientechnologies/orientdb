@@ -234,8 +234,9 @@ public class ClassIndexManagerTest  extends DocumentDBBaseTest {
     final Collection<? extends OIndex<?>> beforeIndexes = database.getMetadata().getIndexManager().getIndexes();
     final Map<String, Long> indexSizeMap = new HashMap<String, Long>();
 
-    for (final OIndex<?> index : beforeIndexes)
-      indexSizeMap.put(index.getName(), index.getSize());
+    for (final OIndex<?> index : beforeIndexes) {
+        indexSizeMap.put(index.getName(), index.getSize());
+    }
 
     final ODocument docOne = new ODocument();
     docOne.field("prop1", "a");
@@ -246,16 +247,18 @@ public class ClassIndexManagerTest  extends DocumentDBBaseTest {
     docTwo.save();
 
     final Collection<? extends OIndex<?>> afterIndexes = database.getMetadata().getIndexManager().getIndexes();
-    for (final OIndex<?> index : afterIndexes)
-      Assert.assertEquals(index.getSize(), indexSizeMap.get(index.getName()).longValue());
+    for (final OIndex<?> index : afterIndexes) {
+        Assert.assertEquals(index.getSize(), indexSizeMap.get(index.getName()).longValue());
+    }
   }
 
   public void testUpdateDocumentWithoutClass() {
     final Collection<? extends OIndex<?>> beforeIndexes = database.getMetadata().getIndexManager().getIndexes();
     final Map<String, Long> indexSizeMap = new HashMap<String, Long>();
 
-    for (final OIndex<?> index : beforeIndexes)
-      indexSizeMap.put(index.getName(), index.getSize());
+    for (final OIndex<?> index : beforeIndexes) {
+        indexSizeMap.put(index.getName(), index.getSize());
+    }
 
     final ODocument docOne = new ODocument();
     docOne.field("prop1", "a");
@@ -269,8 +272,9 @@ public class ClassIndexManagerTest  extends DocumentDBBaseTest {
     docOne.save();
 
     final Collection<? extends OIndex<?>> afterIndexes = database.getMetadata().getIndexManager().getIndexes();
-    for (final OIndex<?> index : afterIndexes)
-      Assert.assertEquals(index.getSize(), indexSizeMap.get(index.getName()).longValue());
+    for (final OIndex<?> index : afterIndexes) {
+        Assert.assertEquals(index.getSize(), indexSizeMap.get(index.getName()).longValue());
+    }
   }
 
   public void testDeleteDocumentWithoutClass() {

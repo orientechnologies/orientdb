@@ -35,13 +35,15 @@ public class OStringSerializerAnyRuntime implements OStringSerializer {
 	 * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
 	 */
 	public Object fromStream(final String iStream) {
-		if (iStream == null || iStream.length() == 0)
-			// NULL VALUE
-			return null;
+		if (iStream == null || iStream.length() == 0) {
+                    // NULL VALUE
+                    return null;
+                }
 
 		int pos = iStream.indexOf(OStreamSerializerHelper.SEPARATOR);
-		if (pos < 0)
-			OLogManager.instance().error(this, "Class signature not found in ANY element: " + iStream, OSerializationException.class);
+		if (pos < 0) {
+                    OLogManager.instance().error(this, "Class signature not found in ANY element: " + iStream, OSerializationException.class);
+                }
 
 		final String className = iStream.substring(0, pos);
 

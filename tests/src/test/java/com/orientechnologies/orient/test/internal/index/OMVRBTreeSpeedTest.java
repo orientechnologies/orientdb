@@ -57,15 +57,17 @@ public class OMVRBTreeSpeedTest extends SpeedTestMonoThread {
 		System.out.println("Check each value in sequence...");
 		for (int i = 0; i < NUMS; i++) {
 			// System.out.println("Checking " + i + "...");
-			if (tree.get(getKey(i)) != i)
-				System.err.println("Find error at " + i + "!!!");
+			if (tree.get(getKey(i)) != i) {
+                            System.err.println("Find error at " + i + "!!!");
+                        }
 		}
 		data.printSnapshot();
 
 		System.out.println("Check each value in inverse order...");
 		for (int i = NUMS - 1; i >= 0; i--) {
-			if (tree.get(getKey(i)) != i)
-				System.err.println("Find error at " + i + "!!!");
+			if (tree.get(getKey(i)) != i) {
+                            System.err.println("Find error at " + i + "!!!");
+                        }
 		}
 		data.printSnapshot();
 
@@ -74,8 +76,9 @@ public class OMVRBTreeSpeedTest extends SpeedTestMonoThread {
 		}
 
 		System.out.println("Delete all the elements one by one...");
-		for (int i = NUMS - 1; i >= 0; i--)
-			tree.remove(getKey(i));
+		for (int i = NUMS - 1; i >= 0; i--) {
+                    tree.remove(getKey(i));
+                }
 		data.printSnapshot();
 
 		// System.out.println("Delete all the elements one by one...");
@@ -86,15 +89,17 @@ public class OMVRBTreeSpeedTest extends SpeedTestMonoThread {
 		Assert.assertTrue(tree.size() == 0);
 
 		System.out.println("Delete all the elements one by one...");
-		for (int i = NUMS - 1; i >= 0; i--)
-			tree.put(getKey(i), i);
-		// printTree();
+		for (int i = NUMS - 1; i >= 0; i--) {
+                    tree.put(getKey(i), i);
+                    // printTree();
+                }
 
 		Assert.assertTrue(tree.size() == NUMS);
 
 		System.out.println("Inserting " + NUMS + " values in OrientDB-TreeMap...");
-		for (int i = 0; i < NUMS; i++)
-			tree.remove(getKey(i));
+		for (int i = 0; i < NUMS; i++) {
+                    tree.remove(getKey(i));
+                }
 		data.printSnapshot();
 
 		Assert.assertTrue(tree.size() == 0);

@@ -53,8 +53,9 @@ public class LocalCreateFlatMultiThreadSpeedTest extends OrientMultiThreadTest {
       record.value("id:" + data.getCyclesDone() + ",name:'Luca',surname:'Garulli',salary:" + (data.getCyclesDone() + 3000) + ".00")
           .save("flat");
 
-      if (data.getCyclesDone() == data.getCycles() - 1)
-        database.commit();
+      if (data.getCyclesDone() == data.getCycles() - 1) {
+          database.commit();
+      }
     }
 
     @Override
@@ -89,7 +90,8 @@ public class LocalCreateFlatMultiThreadSpeedTest extends OrientMultiThreadTest {
     System.out.println("Created " + (total - foundObjects));
     Assert.assertEquals(threadCycles, total - foundObjects);
 
-    if (database != null)
-      database.close();
+    if (database != null) {
+        database.close();
+    }
   }
 }

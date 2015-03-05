@@ -40,8 +40,9 @@ public abstract class OFileAbstractTest extends SpeedTestMonoThread {
 	public void init() throws IOException {
 		// DELETE THE TEST FILE EVERY TIME
 		File f = new File(FILE_NAME);
-		if (f.exists())
-			f.delete();
+		if (f.exists()) {
+                    f.delete();
+                }
 
 		file = getFileImpl();
 		file.create(START_SIZE);
@@ -50,13 +51,15 @@ public abstract class OFileAbstractTest extends SpeedTestMonoThread {
 	@Override
 	public void cycle() throws IOException {
 		System.out.println("Writing " + NUMS + " integers...");
-		for (int i = 0; i < NUMS; ++i)
-			file.writeInt(file.allocateSpace(OBinaryProtocol.SIZE_INT), i);
+		for (int i = 0; i < NUMS; ++i) {
+                    file.writeInt(file.allocateSpace(OBinaryProtocol.SIZE_INT), i);
+                }
 		data.printSnapshot();
 
 		System.out.println("Checking all written data...");
-		for (int i = 0; i < NUMS; ++i)
-			Assert.assertTrue(file.readInt(i * OBinaryProtocol.SIZE_INT) == i);
+		for (int i = 0; i < NUMS; ++i) {
+                    Assert.assertTrue(file.readInt(i * OBinaryProtocol.SIZE_INT) == i);
+                }
 		data.printSnapshot();
 
 		file.close();

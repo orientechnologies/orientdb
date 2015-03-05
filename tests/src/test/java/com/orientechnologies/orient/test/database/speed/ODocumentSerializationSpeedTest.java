@@ -39,8 +39,9 @@ public class ODocumentSerializationSpeedTest extends OrientMonoThreadTest {
   public void cycle() {
     record.reset();
     record.field("id", data.getCyclesDone());
-    for (int i = 0; i < 15; ++i)
-      record.field("name" + i, "Luca" + i);
+    for (int i = 0; i < 15; ++i) {
+        record.field("name" + i, "Luca" + i);
+    }
     // record.field("surname", "Garulli");
     // record.field("salary", 3000f);
     // record.field("double", 3343434d);

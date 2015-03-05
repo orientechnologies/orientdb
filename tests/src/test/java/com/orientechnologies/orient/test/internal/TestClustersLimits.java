@@ -28,8 +28,9 @@ public class TestClustersLimits {
   protected static void executeTest(String url) throws IOException {
     ODatabaseDocumentTx database = new ODatabaseDocumentTx(url);
 
-    if (ODatabaseHelper.existsDatabase(database, "plocal"))
-      ODatabaseHelper.dropDatabase(database, "plocal");
+    if (ODatabaseHelper.existsDatabase(database, "plocal")) {
+        ODatabaseHelper.dropDatabase(database, "plocal");
+    }
 
     ODatabaseHelper.createDatabase(database, url);
 

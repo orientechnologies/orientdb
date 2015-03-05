@@ -59,8 +59,9 @@ public class OPhysicalPosition implements OSerializableStream, Externalizable {
   }
 
   public static int binarySize() {
-    if (binarySizeKnown)
-      return binarySize;
+    if (binarySizeKnown) {
+        return binarySize;
+    }
 
     binarySizeKnown = true;
     binarySize = OBinaryProtocol.SIZE_LONG + OBinaryProtocol.SIZE_BYTE + OVersionFactory.instance().getVersionSize()
@@ -121,8 +122,9 @@ public class OPhysicalPosition implements OSerializableStream, Externalizable {
 
   @Override
   public boolean equals(Object obj) {
-    if (obj == null || !(obj instanceof OPhysicalPosition))
-      return false;
+    if (obj == null || !(obj instanceof OPhysicalPosition)) {
+        return false;
+    }
 
     final OPhysicalPosition other = (OPhysicalPosition) obj;
 

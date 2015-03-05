@@ -49,8 +49,9 @@ public class OCommandScriptException extends OException {
 
   @Override
   public String getMessage() {
-    if (text == null)
-      return super.getMessage();
+    if (text == null) {
+        return super.getMessage();
+    }
 
     final StringBuilder buffer = new StringBuilder();
     buffer.append("Error on parsing script at position #");
@@ -59,8 +60,9 @@ public class OCommandScriptException extends OException {
     buffer.append("\nScript: ");
     buffer.append(text);
     buffer.append("\n------");
-    for (int i = 0; i < position - 1; ++i)
-      buffer.append("-");
+    for (int i = 0; i < position - 1; ++i) {
+        buffer.append("-");
+    }
 
     buffer.append("^");
     return buffer.toString();

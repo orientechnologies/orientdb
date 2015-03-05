@@ -42,21 +42,24 @@ public class OCommandExecutorSQLDelegate extends OCommandExecutorSQLAbstract {
     if (iCommand instanceof OCommandRequestText) {
       final OCommandRequestText textRequest = (OCommandRequestText) iCommand;
       final String text = textRequest.getText();
-      if (text == null)
-        throw new IllegalArgumentException("Command text is null");
+      if (text == null) {
+          throw new IllegalArgumentException("Command text is null");
+      }
 
       final String textUpperCase = upperCase(text);
 
       delegate = (OCommandExecutorSQLAbstract) OSQLEngine.getInstance().getCommand(textUpperCase);
-      if (delegate == null)
-        throw new OCommandExecutorNotFoundException("Cannot find a command executor for the command request: " + iCommand);
+      if (delegate == null) {
+          throw new OCommandExecutorNotFoundException("Cannot find a command executor for the command request: " + iCommand);
+      }
 
       delegate.setContext(context);
       delegate.setLimit(iCommand.getLimit());
       delegate.parse(iCommand);
       delegate.setProgressListener(progressListener);
-    } else
-      throw new OCommandExecutionException("Cannot find a command executor for the command request: " + iCommand);
+    } else {
+        throw new OCommandExecutionException("Cannot find a command executor for the command request: " + iCommand);
+    }
     return this;
   }
 

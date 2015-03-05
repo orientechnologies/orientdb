@@ -131,12 +131,13 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
       K midVal = getKey(mid);
       int cmp = comparator.compare(midVal, key);
 
-      if (cmp < 0)
-        low = mid + 1;
-      else if (cmp > 0)
-        high = mid - 1;
-      else
-        return mid; // key found
+      if (cmp < 0) {
+          low = mid + 1;
+      } else if (cmp > 0) {
+          high = mid - 1;
+      } else {
+          return mid; // key found
+      }
     }
     return -(low + 1); // key not found.
   }
@@ -154,10 +155,10 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
       } else {
         final boolean isLink = getByteValue(entryPosition + keySize) > 0;
 
-        if (!isLink)
-          entrySize = keySize + getObjectSizeInDirectMemory(valueSerializer, entryPosition + keySize + OByteSerializer.BYTE_SIZE)
-              + OByteSerializer.BYTE_SIZE;
-        else {
+        if (!isLink) {
+            entrySize = keySize + getObjectSizeInDirectMemory(valueSerializer, entryPosition + keySize + OByteSerializer.BYTE_SIZE)
+                    + OByteSerializer.BYTE_SIZE;
+        } else {
           entrySize = keySize + OByteSerializer.BYTE_SIZE + OLongSerializer.LONG_SIZE;
           linkValue = deserializeFromDirectMemory(OLongSerializer.INSTANCE, entryPosition + keySize + OByteSerializer.BYTE_SIZE);
         }
@@ -185,8 +186,9 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
     for (int i = 0; i < size; i++) {
       int currentEntryPosition = getIntValue(currentPositionOffset);
-      if (currentEntryPosition < entryPosition)
-        setIntValue(currentPositionOffset, currentEntryPosition + entrySize);
+      if (currentEntryPosition < entryPosition) {
+          setIntValue(currentPositionOffset, currentEntryPosition + entrySize);
+      }
       currentPositionOffset += OIntegerSerializer.INT_SIZE;
     }
 
@@ -208,10 +210,11 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
       long link = -1;
       V value = null;
 
-      if (isLinkValue)
-        link = deserializeFromDirectMemory(OLongSerializer.INSTANCE, entryPosition + OByteSerializer.BYTE_SIZE);
-      else
-        value = deserializeFromDirectMemory(valueSerializer, entryPosition + OByteSerializer.BYTE_SIZE);
+      if (isLinkValue) {
+          link = deserializeFromDirectMemory(OLongSerializer.INSTANCE, entryPosition + OByteSerializer.BYTE_SIZE);
+      } else {
+          value = deserializeFromDirectMemory(valueSerializer, entryPosition + OByteSerializer.BYTE_SIZE);
+      }
 
       return new SBTreeEntry<K, V>(-1, -1, key, new OSBTreeValue<V>(link >= 0, link, value));
     } else {
@@ -230,8 +233,9 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
   public K getKey(int index) {
     int entryPosition = getIntValue(index * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET);
 
-    if (!isLeaf)
-      entryPosition += 2 * OLongSerializer.LONG_SIZE;
+    if (!isLeaf) {
+        entryPosition += 2 * OLongSerializer.LONG_SIZE;
+    }
 
     return deserializeFromDirectMemory(keySerializer, entryPosition);
   }
@@ -241,8 +245,9 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
   }
 
   public void addAll(List<SBTreeEntry<K, V>> entries) throws IOException {
-    for (int i = 0; i < entries.size(); i++)
-      addEntry(i, entries.get(i), false);
+    for (int i = 0; i < entries.size(); i++) {
+        addEntry(i, entries.get(i), false);
+    }
   }
 
   public void shrink(int newSize) throws IOException {
@@ -268,23 +273,26 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     int entrySize = keySize;
 
     if (isLeaf) {
-      if (valueSerializer.isFixedLength())
-        valueSize = valueSerializer.getFixedLength();
-      else {
-        if (treeEntry.value.isLink())
-          valueSize = OLongSerializer.LONG_SIZE;
-        else
-          valueSize = valueSerializer.getObjectSize(treeEntry.value.getValue());
+      if (valueSerializer.isFixedLength()) {
+          valueSize = valueSerializer.getFixedLength();
+      } else {
+        if (treeEntry.value.isLink()) {
+            valueSize = OLongSerializer.LONG_SIZE;
+          } else {
+            valueSize = valueSerializer.getObjectSize(treeEntry.value.getValue());
+        }
       }
 
       entrySize += valueSize + OByteSerializer.BYTE_SIZE;
-    } else
-      entrySize += 2 * OLongSerializer.LONG_SIZE;
+    } else {
+        entrySize += 2 * OLongSerializer.LONG_SIZE;
+    }
 
     int size = size();
     int freePointer = getIntValue(FREE_POINTER_OFFSET);
-    if (freePointer - entrySize < (size + 1) * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET)
-      return false;
+    if (freePointer - entrySize < (size + 1) * OIntegerSerializer.INT_SIZE + POSITIONS_ARRAY_OFFSET) {
+        return false;
+    }
 
     if (index <= size - 1) {
       moveData(POSITIONS_ARRAY_OFFSET + index * OIntegerSerializer.INT_SIZE, POSITIONS_ARRAY_OFFSET + (index + 1)
@@ -305,10 +313,11 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
       freePointer += setByteValue(freePointer, treeEntry.value.isLink() ? (byte) 1 : (byte) 0);
 
       byte[] serializedValue = new byte[valueSize];
-      if (treeEntry.value.isLink())
-        OLongSerializer.INSTANCE.serializeNative(treeEntry.value.getLink(), serializedValue, 0);
-      else
-        valueSerializer.serializeNativeObject(treeEntry.value.getValue(), serializedValue, 0);
+      if (treeEntry.value.isLink()) {
+          OLongSerializer.INSTANCE.serializeNative(treeEntry.value.getLink(), serializedValue, 0);
+      } else {
+          valueSerializer.serializeNativeObject(treeEntry.value.getValue(), serializedValue, 0);
+      }
 
       setBinaryValue(freePointer, serializedValue);
     } else {
@@ -342,25 +351,29 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
     entryPosition += getObjectSizeInDirectMemory(keySerializer, entryPosition) + OByteSerializer.BYTE_SIZE;
 
     int newSize = 0;
-    if (value.isLink())
-      newSize = OLongSerializer.LONG_SIZE;
-    else
-      newSize = valueSerializer.getObjectSize(value.getValue());
+    if (value.isLink()) {
+        newSize = OLongSerializer.LONG_SIZE;
+    } else {
+        newSize = valueSerializer.getObjectSize(value.getValue());
+    }
 
     final int oldSize = getObjectSizeInDirectMemory(valueSerializer, entryPosition);
-    if (newSize != oldSize)
-      return -1;
+    if (newSize != oldSize) {
+        return -1;
+    }
 
     byte[] serializedValue = new byte[newSize];
-    if (value.isLink())
-      OLongSerializer.INSTANCE.serializeNative(value.getLink(), serializedValue, 0);
-    else
-      valueSerializer.serializeNativeObject(value.getValue(), serializedValue, 0);
+    if (value.isLink()) {
+        OLongSerializer.INSTANCE.serializeNative(value.getLink(), serializedValue, 0);
+    } else {
+        valueSerializer.serializeNativeObject(value.getValue(), serializedValue, 0);
+    }
 
     byte[] oldSerializedValue = getBinaryValue(entryPosition, oldSize);
 
-    if (ODefaultComparator.INSTANCE.compare(oldSerializedValue, serializedValue) == 0)
-      return 0;
+    if (ODefaultComparator.INSTANCE.compare(oldSerializedValue, serializedValue) == 0) {
+        return 0;
+    }
 
     setBinaryValue(entryPosition, serializedValue);
 
@@ -400,25 +413,32 @@ public class OSBTreeBucket<K, V> extends ODurablePage {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
+      if (this == o) {
+          return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+          return false;
+      }
 
       final SBTreeEntry<?, ?> that = (SBTreeEntry<?, ?>) o;
 
-      if (leftChild != that.leftChild)
-        return false;
-      if (rightChild != that.rightChild)
-        return false;
-      if (!key.equals(that.key))
-        return false;
+      if (leftChild != that.leftChild) {
+          return false;
+      }
+      if (rightChild != that.rightChild) {
+          return false;
+      }
+      if (!key.equals(that.key)) {
+          return false;
+      }
       if (value != null) {
-        if (!value.equals(that.value))
-          return false;
+        if (!value.equals(that.value)) {
+            return false;
+        }
       } else {
-        if (that.value != null)
-          return false;
+        if (that.value != null) {
+            return false;
+        }
       }
 
       return true;

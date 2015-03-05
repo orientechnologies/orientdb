@@ -56,32 +56,38 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
 
     int oldPos = 0;
     int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_ALTER))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_ALTER)) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found. Use " + getSyntax(), parserText, oldPos);
+    }
 
     oldPos = pos;
     pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_PROPERTY)) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_PROPERTY + " not found. Use " + getSyntax(), parserText, oldPos);
+    }
 
     oldPos = pos;
     pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1) {
+        throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, oldPos);
+    }
 
     String[] parts = word.toString().split("\\.");
-    if (parts.length != 2)
-      throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, oldPos);
+    if (parts.length != 2) {
+        throw new OCommandSQLParsingException("Expected <class>.<property>. Use " + getSyntax(), parserText, oldPos);
+    }
 
     className = parts[0];
-    if (className == null)
-      throw new OCommandSQLParsingException("Class not found", parserText, oldPos);
+    if (className == null) {
+        throw new OCommandSQLParsingException("Class not found", parserText, oldPos);
+    }
     fieldName = parts[1];
 
     oldPos = pos;
     pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Missing property attribute to change. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1) {
+        throw new OCommandSQLParsingException("Missing property attribute to change. Use " + getSyntax(), parserText, oldPos);
+    }
 
     final String attributeAsString = word.toString();
 
@@ -94,12 +100,14 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
 
     value = parserText.substring(pos + 1).trim();
 
-    if (value.length() == 0)
-      throw new OCommandSQLParsingException("Missing property value to change for attribute '" + attribute + "'. Use "
-          + getSyntax(), parserText, oldPos);
+    if (value.length() == 0) {
+        throw new OCommandSQLParsingException("Missing property value to change for attribute '" + attribute + "'. Use "
+                + getSyntax(), parserText, oldPos);
+    }
 
-    if (value.equalsIgnoreCase("null"))
-      value = null;
+    if (value.equalsIgnoreCase("null")) {
+        value = null;
+    }
 
     return this;
   }
@@ -108,16 +116,19 @@ public class OCommandExecutorSQLAlterProperty extends OCommandExecutorSQLAbstrac
    * Execute the ALTER PROPERTY.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (attribute == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not yet been parsed");
+    if (attribute == null) {
+        throw new OCommandExecutionException("Cannot execute the command because it has not yet been parsed");
+    }
 
     final OClassImpl sourceClass = (OClassImpl) getDatabase().getMetadata().getSchema().getClass(className);
-    if (sourceClass == null)
-      throw new OCommandExecutionException("Source class '" + className + "' not found");
+    if (sourceClass == null) {
+        throw new OCommandExecutionException("Source class '" + className + "' not found");
+    }
 
     final OPropertyImpl prop = (OPropertyImpl) sourceClass.getProperty(fieldName);
-    if (prop == null)
-      throw new OCommandExecutionException("Property '" + className + "." + fieldName + "' not exists");
+    if (prop == null) {
+        throw new OCommandExecutionException("Property '" + className + "." + fieldName + "' not exists");
+    }
 
     prop.set(attribute, value);
     return null;

@@ -126,13 +126,14 @@ public class OServerCommandPostInstallDatabase extends OServerCommandAuthenticat
       json.beginCollection(1, false, "classes");
       Set<String> exportedNames = new HashSet<String>();
       for (OClass cls : db.getMetadata().getSchema().getClasses()) {
-        if (!exportedNames.contains(cls.getName()))
-          try {
-            exportClass(db, json, cls);
-            exportedNames.add(cls.getName());
-          } catch (Exception e) {
-            OLogManager.instance().error(this, "Error on exporting class '" + cls + "'", e);
-          }
+        if (!exportedNames.contains(cls.getName())) {
+            try {
+                exportClass(db, json, cls);
+                exportedNames.add(cls.getName());
+            } catch (Exception e) {
+                OLogManager.instance().error(this, "Error on exporting class '" + cls + "'", e);
+            }
+        }
       }
       json.endCollection(1, true);
     }
@@ -208,15 +209,16 @@ public class OServerCommandPostInstallDatabase extends OServerCommandAuthenticat
     json.endCollection(2, true);
 
     json.beginCollection(2, true, "properties");
-    if (db.getStorage().getConfiguration().properties != null)
-      for (OStorageEntryConfiguration entry : db.getStorage().getConfiguration().properties) {
-        if (entry != null) {
-          json.beginObject(3, true, null);
-          json.writeAttribute(4, false, "name", entry.name);
-          json.writeAttribute(4, false, "value", entry.value);
-          json.endObject(3, true);
+    if (db.getStorage().getConfiguration().properties != null) {
+        for (OStorageEntryConfiguration entry : db.getStorage().getConfiguration().properties) {
+            if (entry != null) {
+                json.beginObject(3, true, null);
+                json.writeAttribute(4, false, "name", entry.name);
+                json.writeAttribute(4, false, "value", entry.value);
+                json.endObject(3, true);
+            }
         }
-      }
+    }
     json.endCollection(2, true);
 
     json.endObject(1, true);
@@ -245,10 +247,12 @@ public class OServerCommandPostInstallDatabase extends OServerCommandAuthenticat
       for (final OProperty prop : cls.properties()) {
         json.beginObject(4, true, null);
         json.writeAttribute(4, true, "name", prop.getName());
-        if (prop.getLinkedClass() != null)
-          json.writeAttribute(4, true, "linkedClass", prop.getLinkedClass().getName());
-        if (prop.getLinkedType() != null)
-          json.writeAttribute(4, true, "linkedType", prop.getLinkedType().toString());
+        if (prop.getLinkedClass() != null) {
+            json.writeAttribute(4, true, "linkedClass", prop.getLinkedClass().getName());
+        }
+        if (prop.getLinkedType() != null) {
+            json.writeAttribute(4, true, "linkedType", prop.getLinkedType().toString());
+        }
         json.writeAttribute(4, true, "type", prop.getType().toString());
         json.writeAttribute(4, true, "mandatory", prop.isMandatory());
         json.writeAttribute(4, true, "readonly", prop.isReadonly());
@@ -269,8 +273,9 @@ public class OServerCommandPostInstallDatabase extends OServerCommandAuthenticat
         json.writeAttribute(4, true, "type", index.getType());
 
         final OIndexDefinition indexDefinition = index.getDefinition();
-        if (indexDefinition != null && !indexDefinition.getFields().isEmpty())
-          json.writeAttribute(4, true, "fields", indexDefinition.getFields());
+        if (indexDefinition != null && !indexDefinition.getFields().isEmpty()) {
+            json.writeAttribute(4, true, "fields", indexDefinition.getFields());
+        }
         json.endObject(3, true);
       }
       json.endCollection(1, true);

@@ -52,8 +52,9 @@ import java.io.IOException;
    public Object execute(final OServer iServer, ODistributedServerManager iManager, final ODatabaseDocumentTx database)
        throws Exception {
      final ORecord record = database.load(rid);
-     if (record == null)
-       return null;
+     if (record == null) {
+         return null;
+     }
 
      return new ORawBuffer(record);
    }

@@ -130,25 +130,29 @@ public class OObjectEnumLazyMap<TYPE extends Enum> extends HashMap<Object, Objec
   }
 
   public void setDirty() {
-    if (sourceRecord != null)
-      sourceRecord.setDirty();
+    if (sourceRecord != null) {
+        sourceRecord.setDirty();
+    }
   }
 
   /**
    * Assure that the requested key is converted.
    */
   private void convert(final Object iKey) {
-    if (converted)
-      return;
+    if (converted) {
+        return;
+    }
 
-    if (super.containsKey(iKey))
-      return;
+    if (super.containsKey(iKey)) {
+        return;
+    }
 
     Object o = underlying.get(String.valueOf(iKey));
-    if (o instanceof Number)
-      super.put(iKey, enumClass.getEnumConstants()[((Number) o).intValue()]);
-    else
-      super.put(iKey, Enum.valueOf(enumClass, o.toString()));
+    if (o instanceof Number) {
+        super.put(iKey, enumClass.getEnumConstants()[((Number) o).intValue()]);
+    } else {
+        super.put(iKey, Enum.valueOf(enumClass, o.toString()));
+    }
   }
 
   public void detach() {
@@ -179,14 +183,16 @@ public class OObjectEnumLazyMap<TYPE extends Enum> extends HashMap<Object, Objec
    * Converts all the items
    */
   protected void convertAll() {
-    if (converted)
-      return;
+    if (converted) {
+        return;
+    }
 
     for (java.util.Map.Entry<Object, Object> e : underlying.entrySet()) {
-      if (e.getValue() instanceof Number)
-        super.put(e.getKey(), enumClass.getEnumConstants()[((Number) e.getValue()).intValue()]);
-      else
-        super.put(e.getKey(), Enum.valueOf(enumClass, e.getValue().toString()));
+      if (e.getValue() instanceof Number) {
+          super.put(e.getKey(), enumClass.getEnumConstants()[((Number) e.getValue()).intValue()]);
+      } else {
+          super.put(e.getKey(), Enum.valueOf(enumClass, e.getValue().toString()));
+      }
     }
 
     converted = true;

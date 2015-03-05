@@ -53,8 +53,9 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
     buildDirectory += "/" + this.getClass().getSimpleName();
 
     final File buildDir = new File(buildDirectory);
-    if (buildDir.exists())
-      buildDir.delete();
+    if (buildDir.exists()) {
+        buildDir.delete();
+    }
 
     buildDir.mkdir();
 
@@ -85,13 +86,15 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
   @AfterMethod(enabled = false)
   @Override
   public void afterMethod() throws IOException {
-    if (databaseDocumentTx.isClosed())
-      databaseDocumentTx.open("admin", "admin");
+    if (databaseDocumentTx.isClosed()) {
+        databaseDocumentTx.open("admin", "admin");
+    }
 
     databaseDocumentTx.drop();
 
-    if (expectedDatabaseDocumentTx.isClosed())
-      expectedDatabaseDocumentTx.open("admin", "admin");
+    if (expectedDatabaseDocumentTx.isClosed()) {
+        expectedDatabaseDocumentTx.open("admin", "admin");
+    }
 
     expectedDatabaseDocumentTx.drop();
 
@@ -251,8 +254,9 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
         atomicChangeIsProcessed = false;
 
         for (OWALRecord restoreRecord : atomicUnit) {
-          if (restoreRecord instanceof OAtomicUnitStartRecord || restoreRecord instanceof OAtomicUnitEndRecord)
-            continue;
+          if (restoreRecord instanceof OAtomicUnitStartRecord || restoreRecord instanceof OAtomicUnitEndRecord) {
+              continue;
+          }
 
           if (restoreRecord instanceof OUpdatePageRecord) {
             final OUpdatePageRecord updatePageRecord = (OUpdatePageRecord) restoreRecord;
@@ -260,8 +264,9 @@ public class OLocalHashTableWAL extends OLocalHashTableTest {
             final long fileId = updatePageRecord.getFileId();
             final long pageIndex = updatePageRecord.getPageIndex();
 
-            if (!expectedDiskCache.isOpen(fileId))
-              expectedDiskCache.openFile(fileId);
+            if (!expectedDiskCache.isOpen(fileId)) {
+                expectedDiskCache.openFile(fileId);
+            }
 
             final OCacheEntry cacheEntry = expectedDiskCache.load(fileId, pageIndex, true);
             cacheEntry.acquireExclusiveLock();

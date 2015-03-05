@@ -57,8 +57,9 @@ public class OIntentMassiveInsert implements OIntent {
       // VALIDATION
       if (disableValidation) {
         previousValidation = ((ODatabaseDocument) ownerDb).isValidationEnabled();
-        if (previousValidation)
-          ((ODatabaseDocument) ownerDb).setValidationEnabled(false);
+        if (previousValidation) {
+            ((ODatabaseDocument) ownerDb).setValidationEnabled(false);
+        }
       }
     }
 
@@ -85,32 +86,37 @@ public class OIntentMassiveInsert implements OIntent {
   }
 
   public void end(final ODatabaseDocumentInternal iDatabase) {
-    if (disableSecurity)
-      if (currentUser != null)
-        // RE-ENABLE CHECK OF SECURITY
-        iDatabase.getDatabaseOwner().setUser(currentUser);
+    if (disableSecurity) {
+        if (currentUser != null) {
+            // RE-ENABLE CHECK OF SECURITY
+            iDatabase.getDatabaseOwner().setUser(currentUser);
+        }
+    }
 
     ODatabaseInternal<?> ownerDb = iDatabase.getDatabaseOwner();
 
     if (ownerDb instanceof ODatabaseDocument) {
       ((ODatabaseDocument) ownerDb).setRetainRecords(previousRetainRecords);
-      if (disableValidation)
-        ((ODatabaseDocument) ownerDb).setValidationEnabled(previousValidation);
+      if (disableValidation) {
+          ((ODatabaseDocument) ownerDb).setValidationEnabled(previousValidation);
+      }
     }
 
     while (ownerDb.getDatabaseOwner() != ownerDb)
       ownerDb = ownerDb.getDatabaseOwner();
 
-    if (ownerDb instanceof ODatabaseObject)
-      ((ODatabaseObject) ownerDb).setRetainObjects(previousRetainObjects);
+    if (ownerDb instanceof ODatabaseObject) {
+        ((ODatabaseObject) ownerDb).setRetainObjects(previousRetainObjects);
+    }
 
-    if (disableHooks)
-      if (removedHooks != null) {
-        // RESTORE ALL REMOVED HOOKS
-        for (Map.Entry<ORecordHook, ORecordHook.HOOK_POSITION> hook : removedHooks.entrySet()) {
-          ownerDb.registerHook(hook.getKey(), hook.getValue());
+    if (disableHooks) {
+        if (removedHooks != null) {
+            // RESTORE ALL REMOVED HOOKS
+            for (Map.Entry<ORecordHook, ORecordHook.HOOK_POSITION> hook : removedHooks.entrySet()) {
+                ownerDb.registerHook(hook.getKey(), hook.getValue());
+            }
         }
-      }
+    }
   }
 
   public boolean isDisableValidation() {
@@ -150,8 +156,9 @@ public class OIntentMassiveInsert implements OIntent {
     copy.disableSecurity = disableSecurity;
     copy.disableHooks = disableHooks;
     copy.currentUser = currentUser;
-    if (removedHooks != null)
-      copy.removedHooks = new HashMap<ORecordHook, ORecordHook.HOOK_POSITION>(removedHooks);
+    if (removedHooks != null) {
+        copy.removedHooks = new HashMap<ORecordHook, ORecordHook.HOOK_POSITION>(removedHooks);
+    }
     return copy;
   }
 }

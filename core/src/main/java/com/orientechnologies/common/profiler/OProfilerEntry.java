@@ -59,8 +59,9 @@ public class OProfilerEntry {
     buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "total", total));
     buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "firstExecution", firstExecution));
     buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d", "lastExecution", lastExecution));
-    if (payLoad != null)
-      buffer.append(String.format(Locale.ENGLISH, "\"%s\":%s", "payload", payLoad));
+    if (payLoad != null) {
+        buffer.append(String.format(Locale.ENGLISH, "\"%s\":%s", "payload", payLoad));
+    }
     buffer.append('}');
   }
 

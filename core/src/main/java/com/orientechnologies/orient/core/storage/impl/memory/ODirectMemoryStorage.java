@@ -53,10 +53,12 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   @Override
   protected void initWalAndDiskCache() throws IOException {
     if( configuration.getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.USE_WAL) ){
-      if (writeAheadLog == null)
-        writeAheadLog = new OMemoryWriteAheadLog();
-    } else
-      writeAheadLog = null;
+      if (writeAheadLog == null) {
+          writeAheadLog = new OMemoryWriteAheadLog();
+      }
+    } else {
+        writeAheadLog = null;
+    }
 
     if (diskCache == null) {
 			diskCache = new ODirectMemoryOnlyDiskCache(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * ONE_KB);

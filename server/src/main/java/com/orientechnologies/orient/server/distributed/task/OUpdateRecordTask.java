@@ -69,15 +69,17 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
         database.getName(), rid.toString(), version.toString());
 
     ORecord loadedRecord = rid.getRecord();
-    if (loadedRecord == null)
-      throw new ORecordNotFoundException("Record " + rid + " was not found on update");
+    if (loadedRecord == null) {
+        throw new ORecordNotFoundException("Record " + rid + " was not found on update");
+    }
 
     if (loadedRecord instanceof ODocument) {
       // APPLY CHANGES FIELD BY FIELD TO MARK DIRTY FIELDS FOR INDEXES/HOOKS
       final ODocument newDocument = new ODocument().fromStream(content);
       ((ODocument) loadedRecord).merge(newDocument, false, false).getRecordVersion().copyFrom(version);
-    } else
-      ORecordInternal.fill(loadedRecord, rid, version, content, true);
+    } else {
+        ORecordInternal.fill(loadedRecord, rid, version, content, true);
+    }
 
     loadedRecord = database.save(loadedRecord);
 
@@ -139,10 +141,11 @@ public class OUpdateRecordTask extends OAbstractRecordReplicatedTask {
 
   @Override
   public String toString() {
-    if (version.isTemporary())
-      return getName() + "(" + rid + " v." + (version.getCounter() - Integer.MIN_VALUE) + " realV." + version + ")";
-    else
-      return super.toString();
+    if (version.isTemporary()) {
+        return getName() + "(" + rid + " v." + (version.getCounter() - Integer.MIN_VALUE) + " realV." + version + ")";
+    } else {
+        return super.toString();
+    }
   }
 
   public byte[] getContent() {

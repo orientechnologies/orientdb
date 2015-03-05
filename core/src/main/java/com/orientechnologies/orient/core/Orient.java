@@ -107,24 +107,28 @@ public class Orient extends OListenerManger<OOrientListener> {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o)
-        return true;
+      if (this == o) {
+          return true;
+      }
 
-      if (o == null || getClass() != o.getClass())
-        return false;
+      if (o == null || getClass() != o.getClass()) {
+          return false;
+      }
 
       WeakHashSetValueHolder that = (WeakHashSetValueHolder) o;
 
-      if (hashCode != that.hashCode)
-        return false;
+      if (hashCode != that.hashCode) {
+          return false;
+      }
 
       final T thisObject = get();
       final Object thatObject = that.get();
 
-      if (thisObject == null && thatObject == null)
-        return super.equals(that);
-      else if (thisObject != null && thatObject != null)
-        return thisObject.equals(thatObject);
+      if (thisObject == null && thatObject == null) {
+          return super.equals(that);
+      } else if (thisObject != null && thatObject != null) {
+          return thisObject.equals(thatObject);
+      }
 
       return false;
     }
@@ -144,8 +148,9 @@ public class Orient extends OListenerManger<OOrientListener> {
   public static String getHomePath() {
     String v = System.getProperty("orient.home");
 
-    if (v == null)
-      v = OSystemVariableResolver.resolveVariable(ORIENTDB_HOME);
+    if (v == null) {
+        v = OSystemVariableResolver.resolveVariable(ORIENTDB_HOME);
+    }
 
     return OFileUtils.getPath(v);
   }
@@ -182,12 +187,14 @@ public class Orient extends OListenerManger<OOrientListener> {
   public Orient startup() {
     engineLock.writeLock().lock();
     try {
-      if (active)
-        // ALREADY ACTIVE
-        return this;
+      if (active) {
+          // ALREADY ACTIVE
+          return this;
+      }
 
-      if (timer == null)
-        timer = new Timer(true);
+      if (timer == null) {
+          timer = new Timer(true);
+      }
 
       profiler = new OProfiler();
 
@@ -218,31 +225,36 @@ public class Orient extends OListenerManger<OOrientListener> {
       registerEngine(new OEngineMemory());
       registerEngine("com.orientechnologies.orient.client.remote.OEngineRemote");
 
-      if (OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP.getValueAsBoolean())
-        OGlobalConfiguration.dumpConfiguration(System.out);
+      if (OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP.getValueAsBoolean()) {
+          OGlobalConfiguration.dumpConfiguration(System.out);
+      }
 
       active = true;
 
-      for (OOrientStartupListener l : startupListeners)
-        try {
-          if (l != null)
-            l.onStartup();
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on startup", e);
-        }
+      for (OOrientStartupListener l : startupListeners) {
+          try {
+              if (l != null) {
+                  l.onStartup();
+              }
+          } catch (Exception e) {
+              OLogManager.instance().error(this, "Error on startup", e);
+          }
+      }
 
       purgeWeakStartupListeners();
-      for (final WeakHashSetValueHolder<OOrientStartupListener> wl : weakStartupListeners)
-        try {
-          if (wl != null) {
-            final OOrientStartupListener l = wl.get();
-            if (l != null)
-              l.onStartup();
+      for (final WeakHashSetValueHolder<OOrientStartupListener> wl : weakStartupListeners) {
+          try {
+              if (wl != null) {
+                  final OOrientStartupListener l = wl.get();
+                  if (l != null) {
+                      l.onStartup();
+                  }
+              }
+              
+          } catch (Exception e) {
+              OLogManager.instance().error(this, "Error on startup", e);
           }
-
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on startup", e);
-        }
+      }
     } finally {
       engineLock.writeLock().unlock();
     }
@@ -253,8 +265,9 @@ public class Orient extends OListenerManger<OOrientListener> {
   public Orient shutdown() {
     engineLock.writeLock().lock();
     try {
-      if (!active)
-        return this;
+      if (!active) {
+          return this;
+      }
 
       active = false;
 
@@ -269,22 +282,25 @@ public class Orient extends OListenerManger<OOrientListener> {
       closeAllStorages();
 
       // SHUTDOWN ENGINES
-      for (OEngine engine : engines.values())
-        engine.shutdown();
+      for (OEngine engine : engines.values()) {
+          engine.shutdown();
+      }
       engines.clear();
 
-      if (databaseFactory != null)
-        // CLOSE ALL DATABASES
-        databaseFactory.shutdown();
+      if (databaseFactory != null) {
+          // CLOSE ALL DATABASES
+          databaseFactory.shutdown();
+      }
 
       if (shutdownHook != null) {
         shutdownHook.cancel();
         shutdownHook = null;
       }
 
-      if (threadGroup != null)
-        // STOP ALL THE PENDING THREADS
-        threadGroup.interrupt();
+      if (threadGroup != null) {
+          // STOP ALL THE PENDING THREADS
+          threadGroup.interrupt();
+      }
 
       timer.cancel();
       timer = null;
@@ -294,27 +310,30 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       // CALL THE SHUTDOWN ON ALL THE LISTENERS
       for (OOrientListener l : browseListeners()) {
-        if (l != null)
-          try {
-            l.onShutdown();
-          } catch (Exception e) {
-            OLogManager.instance().error(this, "Error during orient shutdown.", e);
-          }
+        if (l != null) {
+            try {
+                l.onShutdown();
+            } catch (Exception e) {
+                OLogManager.instance().error(this, "Error during orient shutdown.", e);
+            }
+        }
 
       }
 
       purgeWeakShutdownListeners();
-      for (final WeakHashSetValueHolder<OOrientShutdownListener> wl : weakShutdownListeners)
-        try {
-          if (wl != null) {
-            final OOrientShutdownListener l = wl.get();
-            if (l != null)
-              l.onShutdown();
+      for (final WeakHashSetValueHolder<OOrientShutdownListener> wl : weakShutdownListeners) {
+          try {
+              if (wl != null) {
+                  final OOrientShutdownListener l = wl.get();
+                  if (l != null) {
+                      l.onShutdown();
+                  }
+              }
+              
+          } catch (Exception e) {
+              OLogManager.instance().error(this, "Error during orient shutdown.", e);
           }
-
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error during orient shutdown.", e);
-        }
+      }
 
       OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
       OLogManager.instance().flush();
@@ -328,10 +347,11 @@ public class Orient extends OListenerManger<OOrientListener> {
   public void scheduleTask(TimerTask task, long delay, long period) {
     engineLock.readLock().lock();
     try {
-      if (active)
-        timer.schedule(task, delay, period);
-      else
-        OLogManager.instance().warn(this, "OrientDB engine is down. Task will not be scheduled.");
+      if (active) {
+          timer.schedule(task, delay, period);
+      } else {
+          OLogManager.instance().warn(this, "OrientDB engine is down. Task will not be scheduled.");
+      }
     } finally {
       engineLock.readLock().unlock();
     }
@@ -340,10 +360,11 @@ public class Orient extends OListenerManger<OOrientListener> {
   public void scheduleTask(TimerTask task, Date firstTime, long period) {
     engineLock.readLock().lock();
     try {
-      if (active)
-        timer.schedule(task, firstTime, period);
-      else
-        OLogManager.instance().warn(this, "OrientDB engine is down. Task will not be scheduled.");
+      if (active) {
+          timer.schedule(task, firstTime, period);
+      } else {
+          OLogManager.instance().warn(this, "OrientDB engine is down. Task will not be scheduled.");
+      }
     } finally {
       engineLock.readLock().unlock();
     }
@@ -383,9 +404,9 @@ public class Orient extends OListenerManger<OOrientListener> {
   public Future<?> submit(final Runnable runnable) {
     engineLock.readLock().lock();
     try {
-      if (active)
-        return workers.submit(runnable);
-      else {
+      if (active) {
+          return workers.submit(runnable);
+      } else {
         OLogManager.instance().warn(this, "OrientDB engine is down. Task will not be submitted.");
         throw new IllegalStateException("OrientDB engine is down. Task will not be submitted.");
       }
@@ -397,9 +418,9 @@ public class Orient extends OListenerManger<OOrientListener> {
   public <V> Future<V> submit(final Callable<V> callable) {
     engineLock.readLock().lock();
     try {
-      if (active)
-        return workers.submit(callable);
-      else {
+      if (active) {
+          return workers.submit(callable);
+      } else {
         OLogManager.instance().warn(this, "OrientDB engine is down. Task will not be submitted.");
         throw new IllegalStateException("OrientDB engine is down. Task will not be submitted.");
       }
@@ -409,19 +430,22 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   public OStorage loadStorage(String iURL) {
-    if (iURL == null || iURL.length() == 0)
-      throw new IllegalArgumentException("URL missed");
+    if (iURL == null || iURL.length() == 0) {
+        throw new IllegalArgumentException("URL missed");
+    }
 
-    if (iURL.endsWith("/"))
-      iURL = iURL.substring(0, iURL.length() - 1);
+    if (iURL.endsWith("/")) {
+        iURL = iURL.substring(0, iURL.length() - 1);
+    }
 
     iURL = iURL.replace("//", "/");
 
     // SEARCH FOR ENGINE
     int pos = iURL.indexOf(':');
-    if (pos <= 0)
-      throw new OConfigurationException("Error in database URL: the engine was not specified. Syntax is: " + URL_SYNTAX
-          + ". URL was: " + iURL);
+    if (pos <= 0) {
+        throw new OConfigurationException("Error in database URL: the engine was not specified. Syntax is: " + URL_SYNTAX
+                + ". URL was: " + iURL);
+    }
 
     final String engineName = iURL.substring(0, pos);
 
@@ -429,9 +453,10 @@ public class Orient extends OListenerManger<OOrientListener> {
     try {
       final OEngine engine = engines.get(engineName.toLowerCase());
 
-      if (engine == null)
-        throw new OConfigurationException("Error on opening database: the engine '" + engineName + "' was not found. URL was: "
-            + iURL + ". Registered engines are: " + engines.keySet());
+      if (engine == null) {
+          throw new OConfigurationException("Error on opening database: the engine '" + engineName + "' was not found. URL was: "
+                  + iURL + ". Registered engines are: " + engines.keySet());
+      }
 
       // SEARCH FOR DB-NAME
       iURL = iURL.substring(pos + 1);
@@ -449,13 +474,15 @@ public class Orient extends OListenerManger<OOrientListener> {
         String[] kv;
         for (String pair : pairs) {
           kv = pair.split("=");
-          if (kv.length < 2)
-            throw new OConfigurationException("Error on opening database: parameter has no value. Syntax is: " + URL_SYNTAX
-                + ". URL was: " + iURL);
+          if (kv.length < 2) {
+              throw new OConfigurationException("Error on opening database: parameter has no value. Syntax is: " + URL_SYNTAX
+                      + ". URL was: " + iURL);
+          }
           parameters.put(kv[0], kv[1]);
         }
-      } else
-        dbPath = iURL;
+      } else {
+          dbPath = iURL;
+      }
 
       final String dbName = registerDatabaseByPath ? dbPath : OIOUtils.getRelativePathIfAny(dbPath, null);
 
@@ -468,8 +495,9 @@ public class Orient extends OListenerManger<OOrientListener> {
           storage = engine.createStorage(dbPath, parameters);
 
           final OStorage oldStorage = storages.putIfAbsent(dbName, storage);
-          if (oldStorage != null)
-            storage = oldStorage;
+          if (oldStorage != null) {
+              storage = oldStorage;
+          }
         }
       } else {
         // REGISTER IT WITH A SERIAL NAME TO AVOID BEING REUSED
@@ -477,8 +505,9 @@ public class Orient extends OListenerManger<OOrientListener> {
         storages.put(dbName + "__" + serialId.incrementAndGet(), storage);
       }
 
-      for (OOrientListener l : browseListeners())
-        l.onStorageRegistered(storage);
+      for (OOrientListener l : browseListeners()) {
+          l.onStorageRegistered(storage);
+      }
 
       return storage;
     } finally {
@@ -489,12 +518,14 @@ public class Orient extends OListenerManger<OOrientListener> {
   public OStorage registerStorage(OStorage storage) throws IOException {
     engineLock.readLock().lock();
     try {
-      for (OOrientListener l : browseListeners())
-        l.onStorageRegistered(storage);
+      for (OOrientListener l : browseListeners()) {
+          l.onStorageRegistered(storage);
+      }
 
       OStorage oldStorage = storages.putIfAbsent(storage.getName(), storage);
-      if (oldStorage != null)
-        storage = oldStorage;
+      if (oldStorage != null) {
+          storage = oldStorage;
+      }
 
       return storage;
     } finally {
@@ -552,12 +583,14 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   public void unregisterStorage(final OStorage storage) {
-    if (!active)
-      // SHUTDOWNING OR NOT ACTIVE: RETURN
-      return;
+    if (!active) {
+        // SHUTDOWNING OR NOT ACTIVE: RETURN
+        return;
+    }
 
-    if (storage == null)
-      return;
+    if (storage == null) {
+        return;
+    }
 
     engineLock.writeLock().lock();
     try {
@@ -572,12 +605,14 @@ public class Orient extends OListenerManger<OOrientListener> {
       final List<String> storagesToRemove = new ArrayList<String>();
 
       for (Entry<String, OStorage> s : storages.entrySet()) {
-        if (s.getValue().equals(storage))
-          storagesToRemove.add(s.getKey());
+        if (s.getValue().equals(storage)) {
+            storagesToRemove.add(s.getKey());
+        }
       }
 
-      for (String dbName : storagesToRemove)
-        storages.remove(dbName);
+      for (String dbName : storagesToRemove) {
+          storages.remove(dbName);
+      }
 
       // UNREGISTER STORAGE FROM ENGINES IN CASE IS CACHED
       for (OEngine engine : engines.values()) {
@@ -628,8 +663,9 @@ public class Orient extends OListenerManger<OOrientListener> {
     dbLifecycleListeners.clear();
     for (ODatabaseLifecycleListener.PRIORITY p : ODatabaseLifecycleListener.PRIORITY.values()) {
       for (Map.Entry<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> e : tmp.entrySet()) {
-        if (e.getValue() == p)
-          dbLifecycleListeners.put(e.getKey(), e.getValue());
+        if (e.getValue() == p) {
+            dbLifecycleListeners.put(e.getKey(), e.getValue());
+        }
       }
     }
   }
@@ -676,16 +712,18 @@ public class Orient extends OListenerManger<OOrientListener> {
 
   @Override
   public void registerListener(OOrientListener listener) {
-    if (listener instanceof OOrientStartupListener)
-      registerOrientStartupListener((OOrientStartupListener) listener);
+    if (listener instanceof OOrientStartupListener) {
+        registerOrientStartupListener((OOrientStartupListener) listener);
+    }
 
     super.registerListener(listener);
   }
 
   @Override
   public void unregisterListener(OOrientListener listener) {
-    if (listener instanceof OOrientStartupListener)
-      unregisterOrientStartupListener((OOrientStartupListener) listener);
+    if (listener instanceof OOrientStartupListener) {
+        unregisterOrientStartupListener((OOrientStartupListener) listener);
+    }
 
     super.unregisterListener(listener);
   }

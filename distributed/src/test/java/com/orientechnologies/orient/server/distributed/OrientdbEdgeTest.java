@@ -55,8 +55,9 @@ public class OrientdbEdgeTest {
 
   @AfterClass
   public static void tearDownClass() {
-    if (server != null)
-      server.shutdown();
+    if (server != null) {
+        server.shutdown();
+    }
   }
 
   protected static OrientGraphFactory getGraphFactory() throws Exception {
@@ -79,8 +80,9 @@ public class OrientdbEdgeTest {
   @BeforeClass
   public static void setup() throws Exception {
     File file = new File("./target/databases/");
-    if (file.exists())
-      OFileUtils.deleteRecursively(file);
+    if (file.exists()) {
+        OFileUtils.deleteRecursively(file);
+    }
     file.mkdirs();
 
     server = OServerMain.create();
@@ -93,8 +95,9 @@ public class OrientdbEdgeTest {
   private static void verifyDatabaseExists(Configuration conf) {
     final String url = conf.getString("storage.url");
 
-    if (!url.startsWith("remote:"))
-      return;
+    if (!url.startsWith("remote:")) {
+        return;
+    }
 
     try {
       final OServerAdmin admin = new OServerAdmin(url);
@@ -146,8 +149,9 @@ public class OrientdbEdgeTest {
     try {
       factory.getNoTx().createEdgeType("some-label");
     } catch (OSchemaException ex) {
-      if (!ex.getMessage().contains("exists"))
-        throw (ex);
+      if (!ex.getMessage().contains("exists")) {
+          throw (ex);
+      }
     }
 
     OrientGraph t = factory.getTx();

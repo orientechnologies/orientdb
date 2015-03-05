@@ -141,21 +141,25 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
           ridMapper = new ODocumentHelper.RIDMapper() {
             @Override
             public ORID map(ORID rid) {
-              if (rid == null)
-                return null;
+              if (rid == null) {
+                  return null;
+              }
 
-              if (!rid.isPersistent())
-                return null;
+              if (!rid.isPersistent()) {
+                  return null;
+              }
 
               final OIdentifiable result = exportImportHashTable.get(rid);
-              if (result == null)
-                return null;
+              if (result == null) {
+                  return null;
+              }
 
               return result.getIdentity();
             }
           };
-        } else
-          listener.onMessage("\nMapping data were not found.");
+        } else {
+            listener.onMessage("\nMapping data were not found.");
+        }
       }
 
       compareClusters();
@@ -350,8 +354,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       }
     });
 
-    if (exportImportHashTable != null)
-      indexesSizeTwo--;
+    if (exportImportHashTable != null) {
+        indexesSizeTwo--;
+    }
 
     if (indexesSizeOne != indexesSizeTwo) {
       ok = false;
@@ -537,8 +542,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
             if (ridMapper != null && ((ORID) indexOneValue).isPersistent()) {
               OIdentifiable identifiable = ridMapper.map((ORID) indexOneValue);
 
-              if (identifiable != null)
-                indexOneValue = identifiable.getIdentity();
+              if (identifiable != null) {
+                  indexOneValue = identifiable.getIdentity();
+              }
             }
             if (!indexOneValue.equals(indexTwoValue)) {
               ok = false;
@@ -559,8 +565,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
       }
     }
 
-    if (ok)
-      listener.onMessage("OK");
+    if (ok) {
+        listener.onMessage("OK");
+    }
   }
 
   private boolean compareClusters() {
@@ -580,11 +587,13 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     for (String clusterName : storage1.getClusterNames()) {
       // CHECK IF THE CLUSTER IS INCLUDED
       if (includeClusters != null) {
-        if (!includeClusters.contains(clusterName))
-          continue;
+        if (!includeClusters.contains(clusterName)) {
+            continue;
+        }
       } else if (excludeClusters != null) {
-        if (excludeClusters.contains(clusterName))
-          continue;
+        if (excludeClusters.contains(clusterName)) {
+            continue;
+        }
       }
 
       ok = true;
@@ -612,8 +621,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
         ok = false;
       }
 
-      if (ok)
-        listener.onMessage("OK");
+      if (ok) {
+          listener.onMessage("OK");
+      }
     }
 
     listener.onMessage("\n\nShallow analysis done.");
@@ -628,11 +638,13 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
     for (String clusterName : storage1.getClusterNames()) {
       // CHECK IF THE CLUSTER IS INCLUDED
       if (includeClusters != null) {
-        if (!includeClusters.contains(clusterName))
-          continue;
+        if (!includeClusters.contains(clusterName)) {
+            continue;
+        }
       } else if (excludeClusters != null) {
-        if (excludeClusters.contains(clusterName))
-          continue;
+        if (excludeClusters.contains(clusterName)) {
+            continue;
+        }
       }
 
       clusterId = storage1.getClusterIdByName(clusterName);
@@ -655,10 +667,11 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
 
       final OStorage storage;
 
-      if (clusterMax==db1Max)
-        storage = storage1;
-      else
-        storage = storage2;
+      if (clusterMax==db1Max) {
+          storage = storage1;
+      } else {
+          storage = storage2;
+      }
 
       OPhysicalPosition[] physicalPositions = storage.ceilingPhysicalPositions(clusterId, new OPhysicalPosition(
           0));
@@ -672,30 +685,33 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
           rid.clusterPosition = position;
 
           if (isDocumentDatabases() && rid.equals(new ORecordId(storage1.getConfiguration().indexMgrRecordId))
-              && rid.equals(new ORecordId(storage2.getConfiguration().indexMgrRecordId)))
-            continue;
+              && rid.equals(new ORecordId(storage2.getConfiguration().indexMgrRecordId))) {
+              continue;
+          }
           if (isDocumentDatabases() && rid.equals(new ORecordId(storage1.getConfiguration().schemaRecordId))
-              && rid.equals(new ORecordId(storage2.getConfiguration().schemaRecordId)))
-            continue;
+              && rid.equals(new ORecordId(storage2.getConfiguration().schemaRecordId))) {
+              continue;
+          }
 
           final ORawBuffer buffer1 = storage1.readRecord(rid, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
               .getResult();
           final ORawBuffer buffer2;
-          if (ridMapper == null)
-            buffer2 = storage2.readRecord(rid, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT).getResult();
-          else {
-            final ORID newRid = ridMapper.map(rid);
-            if (newRid == null)
+          if (ridMapper == null) {
               buffer2 = storage2.readRecord(rid, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT).getResult();
-            else
-              buffer2 = storage2.readRecord(new ORecordId(newRid), null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
-                  .getResult();
+          } else {
+            final ORID newRid = ridMapper.map(rid);
+            if (newRid == null) {
+                buffer2 = storage2.readRecord(rid, null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT).getResult();
+              } else {
+                buffer2 = storage2.readRecord(new ORecordId(newRid), null, true, null, false, OStorage.LOCKING_STRATEGY.DEFAULT)
+                        .getResult();
+            }
           }
 
-          if (buffer1 == null && buffer2 == null)
-            // BOTH RECORD NULL, OK
-            continue;
-          else if (buffer1 == null && buffer2 != null) {
+          if (buffer1 == null && buffer2 == null) {
+              // BOTH RECORD NULL, OK
+              continue;
+          } else if (buffer1 == null && buffer2 != null) {
             // REC1 NULL
             listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " is null in DB1");
             ++differences;
@@ -775,10 +791,12 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
                     listener.onMessage("\n- ERR: RID=" + clusterId + ":" + position + " content length is different: "
                         + buffer1.buffer.length + " <-> " + buffer2.buffer.length);
 
-                    if (buffer1.recordType == ODocument.RECORD_TYPE || buffer1.recordType == ORecordFlat.RECORD_TYPE)
-                      listener.onMessage("\n--- REC1: " + rec1);
-                    if (buffer2.recordType == ODocument.RECORD_TYPE || buffer2.recordType == ORecordFlat.RECORD_TYPE)
-                      listener.onMessage("\n--- REC2: " + rec2);
+                    if (buffer1.recordType == ODocument.RECORD_TYPE || buffer1.recordType == ORecordFlat.RECORD_TYPE) {
+                        listener.onMessage("\n--- REC1: " + rec1);
+                              }
+                    if (buffer2.recordType == ODocument.RECORD_TYPE || buffer2.recordType == ORecordFlat.RECORD_TYPE) {
+                        listener.onMessage("\n--- REC2: " + rec2);
+                    }
                     listener.onMessage("\n");
 
                     ++differences;
@@ -803,8 +821,9 @@ public class ODatabaseCompare extends ODatabaseImpExpAbstract {
         }
 
         physicalPositions = storage.higherPhysicalPositions(clusterId, physicalPositions[physicalPositions.length - 1]);
-        if (recordsCounter % 10000 == 0)
-          listener.onMessage("\n" + recordsCounter + " records were processed for cluster " + clusterName + " ...");
+        if (recordsCounter % 10000 == 0) {
+            listener.onMessage("\n" + recordsCounter + " records were processed for cluster " + clusterName + " ...");
+        }
       }
 
       listener.onMessage("\nCluster comparison was finished, " + recordsCounter + " records were processed for cluster "

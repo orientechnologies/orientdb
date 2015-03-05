@@ -43,9 +43,10 @@ public class OSQLMethodFormat extends OAbstractSQLMethod {
 
     // TRY TO RESOLVE AS DYNAMIC VALUE
     Object v = getParameterValue(iRecord, iParams[0].toString());
-    if (v == null)
-      // USE STATIC ONE
-      v = iParams[0].toString();
+    if (v == null) {
+        // USE STATIC ONE
+        v = iParams[0].toString();
+    }
 
     if (v != null) {
       if (ioResult instanceof Date) {

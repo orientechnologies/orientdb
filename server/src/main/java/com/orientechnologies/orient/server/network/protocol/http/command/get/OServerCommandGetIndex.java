@@ -45,15 +45,16 @@ public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
       db = getProfiledDatabaseInstance(iRequest);
 
       final OIndex<?> index = db.getMetadata().getIndexManager().getIndex(urlParts[2]);
-      if (index == null)
-        throw new IllegalArgumentException("Index name '" + urlParts[2] + "' not found");
+      if (index == null) {
+          throw new IllegalArgumentException("Index name '" + urlParts[2] + "' not found");
+      }
 
       final Object content = index.get(urlParts[3]);
 
-      if (content == null)
-        iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
-            null, null);
-      else {
+      if (content == null) {
+          iResponse.send(OHttpUtils.STATUS_NOTFOUND_CODE, OHttpUtils.STATUS_NOTFOUND_DESCRIPTION, OHttpUtils.CONTENT_TEXT_PLAIN,
+                  null, null);
+      } else {
         final StringBuilder buffer = new StringBuilder(128);
         buffer.append('[');
 
@@ -62,16 +63,18 @@ public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
           for (OIdentifiable item : collection) {
             buffer.append(item.getRecord().toJSON());
           }
-        } else
-          buffer.append(((OIdentifiable) content).getRecord().toJSON());
+        } else {
+            buffer.append(((OIdentifiable) content).getRecord().toJSON());
+          }
 
         buffer.append(']');
 
         iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, buffer.toString(), null);
       }
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) {
+          db.close();
+      }
     }
     return false;
   }

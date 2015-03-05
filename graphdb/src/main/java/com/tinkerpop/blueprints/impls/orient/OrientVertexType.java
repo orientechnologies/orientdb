@@ -55,12 +55,14 @@ public class OrientVertexType extends OrientElementType {
   }
 
   protected static final void checkType(final OClass iType) {
-    if (iType == null)
-      throw new IllegalArgumentException("Vertex class is null");
+    if (iType == null) {
+        throw new IllegalArgumentException("Vertex class is null");
+    }
 
-    if (!iType.isSubClassOf(CLASS_NAME))
-      throw new IllegalArgumentException("Type error. The class '" + iType + "' does not extend class '" + CLASS_NAME
-          + "' and therefore cannot be considered a Vertex");
+    if (!iType.isSubClassOf(CLASS_NAME)) {
+        throw new IllegalArgumentException("Type error. The class '" + iType + "' does not extend class '" + CLASS_NAME
+                + "' and therefore cannot be considered a Vertex");
+    }
   }
 
   public OrientVertexProperty createEdgeProperty(final Direction iDirection, String iEdgeClassName) {

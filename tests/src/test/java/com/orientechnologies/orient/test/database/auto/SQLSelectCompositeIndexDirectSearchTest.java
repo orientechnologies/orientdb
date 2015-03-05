@@ -62,8 +62,9 @@ public class SQLSelectCompositeIndexDirectSearchTest extends DocumentDBBaseTest 
 
   @AfterClass
   public void afterClass() throws Exception {
-		if (database.isClosed())
-      database.open("admin", "admin");
+		if (database.isClosed()) {
+                    database.open("admin", "admin");
+                }
     database.command(new OCommandSQL("delete from SQLSelectCompositeIndexDirectSearchTestClass")).execute();
     database.command(new OCommandSQL("drop class SQLSelectCompositeIndexDirectSearchTestClass")).execute();
     database.reload();

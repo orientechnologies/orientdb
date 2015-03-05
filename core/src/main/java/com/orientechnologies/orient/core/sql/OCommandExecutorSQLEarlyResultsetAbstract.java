@@ -41,8 +41,9 @@ public abstract class OCommandExecutorSQLEarlyResultsetAbstract extends OCommand
   @Override
   public Iterator<OIdentifiable> iterator(Map<Object, Object> iArgs) {
     if (iterator == null) {
-      if (tempResult == null)
-        tempResult = (List<OIdentifiable>) execute(iArgs);
+      if (tempResult == null) {
+          tempResult = (List<OIdentifiable>) execute(iArgs);
+      }
       iterator = tempResult.iterator();
     }
     return iterator;

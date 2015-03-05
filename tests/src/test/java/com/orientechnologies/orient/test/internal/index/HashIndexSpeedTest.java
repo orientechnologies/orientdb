@@ -27,8 +27,9 @@ public class HashIndexSpeedTest extends SpeedTestMonoThread {
   @Test(enabled = false)
   public void init() throws Exception {
     String buildDirectory = System.getProperty("buildDirectory", ".");
-    if (buildDirectory == null)
-      buildDirectory = ".";
+    if (buildDirectory == null) {
+        buildDirectory = ".";
+    }
 
     databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/uniqueHashIndexTest");
     if (databaseDocumentTx.exists()) {

@@ -30,8 +30,9 @@ public class SBTreeInsertionSpeedTest extends SpeedTestMonoThread {
     OGlobalConfiguration.INDEX_MANUAL_LAZY_UPDATES.setValue(10000);
 
     String buildDirectory = System.getProperty("buildDirectory", ".");
-    if (buildDirectory == null)
-      buildDirectory = ".";
+    if (buildDirectory == null) {
+        buildDirectory = ".";
+    }
 
     databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/SBTreeInsertionSpeedTTest");
     if (databaseDocumentTx.exists()) {

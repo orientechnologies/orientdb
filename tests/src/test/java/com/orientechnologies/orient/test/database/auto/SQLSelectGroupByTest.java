@@ -41,8 +41,9 @@ public class SQLSelectGroupByTest extends DocumentDBBaseTest {
 
     Assert.assertTrue(result.size() > 1);
     Set<Object> set = new HashSet<Object>();
-    for (ODocument d : result)
-      set.add(d.field("location"));
+    for (ODocument d : result) {
+        set.add(d.field("location"));
+    }
     Assert.assertEquals(result.size(), set.size());
   }
 
@@ -70,8 +71,9 @@ public class SQLSelectGroupByTest extends DocumentDBBaseTest {
     Assert.assertTrue(result.size() > 1);
     String last = null;
     for (ODocument d : result) {
-      if (last != null)
-        Assert.assertTrue(last.compareTo((String) d.field("location")) < 0);
+      if (last != null) {
+          Assert.assertTrue(last.compareTo((String) d.field("location")) < 0);
+      }
       last = d.field("location");
     }
 
@@ -81,8 +83,9 @@ public class SQLSelectGroupByTest extends DocumentDBBaseTest {
     Assert.assertTrue(result.size() > 1);
     last = null;
     for (ODocument d : result) {
-      if (last != null)
-        Assert.assertTrue(last.compareTo((String) d.field("location")) > 0);
+      if (last != null) {
+          Assert.assertTrue(last.compareTo((String) d.field("location")) > 0);
+      }
       last = d.field("location");
     }
   }

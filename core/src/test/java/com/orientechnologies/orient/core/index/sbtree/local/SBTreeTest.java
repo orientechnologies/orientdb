@@ -38,8 +38,9 @@ public class SBTreeTest {
   @BeforeClass
   public void beforeClass() {
     buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null)
-      buildDirectory = ".";
+    if (buildDirectory == null) {
+        buildDirectory = ".";
+    }
 
     databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localSBTreeTest");
     if (databaseDocumentTx.exists()) {
@@ -71,14 +72,16 @@ public class SBTreeTest {
       sbTree.put(i, new ORecordId(i % 32000, i));
     }
 
-    for (int i = 0; i < KEYS_COUNT; i++)
-      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i), i + " key is absent");
+    for (int i = 0; i < KEYS_COUNT; i++) {
+        Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i), i + " key is absent");
+    }
 
     Assert.assertEquals(0, (int) sbTree.firstKey());
     Assert.assertEquals(KEYS_COUNT - 1, (int) sbTree.lastKey());
 
-    for (int i = KEYS_COUNT; i < 2 * KEYS_COUNT; i++)
-      Assert.assertNull(sbTree.get(i));
+    for (int i = KEYS_COUNT; i < 2 * KEYS_COUNT; i++) {
+        Assert.assertNull(sbTree.get(i));
+    }
 
   }
 
@@ -97,8 +100,9 @@ public class SBTreeTest {
     Assert.assertEquals(sbTree.firstKey(), keys.first());
     Assert.assertEquals(sbTree.lastKey(), keys.last());
 
-    for (int key : keys)
-      Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
+    for (int key : keys) {
+        Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
+    }
   }
 
   public void testKeyPutRandomGaussian() throws Exception {
@@ -111,8 +115,9 @@ public class SBTreeTest {
 
     while (keys.size() < KEYS_COUNT) {
       int key = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
-      if (key < 0)
-        continue;
+      if (key < 0) {
+          continue;
+      }
 
       sbTree.put(key, new ORecordId(key % 32000, key));
       keys.add(key);
@@ -123,8 +128,9 @@ public class SBTreeTest {
     Assert.assertEquals(sbTree.firstKey(), keys.first());
     Assert.assertEquals(sbTree.lastKey(), keys.last());
 
-    for (int key : keys)
-      Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
+    for (int key : keys) {
+        Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
+    }
   }
 
   public void testKeyDeleteRandomUniform() throws Exception {
@@ -165,8 +171,9 @@ public class SBTreeTest {
 
     while (keys.size() < KEYS_COUNT) {
       int key = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
-      if (key < 0)
-        continue;
+      if (key < 0) {
+          continue;
+      }
 
       sbTree.put(key, new ORecordId(key % 32000, key));
       keys.add(key);
@@ -203,18 +210,20 @@ public class SBTreeTest {
     }
 
     for (int i = 0; i < KEYS_COUNT; i++) {
-      if (i % 3 == 0)
-        Assert.assertEquals(sbTree.remove(i), new ORecordId(i % 32000, i));
+      if (i % 3 == 0) {
+          Assert.assertEquals(sbTree.remove(i), new ORecordId(i % 32000, i));
+      }
     }
 
     Assert.assertEquals((int) sbTree.firstKey(), 1);
     Assert.assertEquals((int) sbTree.lastKey(), (KEYS_COUNT - 1) % 3 == 0 ? KEYS_COUNT - 2 : KEYS_COUNT - 1);
 
     for (int i = 0; i < KEYS_COUNT; i++) {
-      if (i % 3 == 0)
-        Assert.assertNull(sbTree.get(i));
-      else
-        Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
+      if (i % 3 == 0) {
+          Assert.assertNull(sbTree.get(i));
+      } else {
+          Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
+      }
     }
   }
 
@@ -226,24 +235,28 @@ public class SBTreeTest {
     }
 
     for (int i = 0; i < KEYS_COUNT; i++) {
-      if (i % 3 == 0)
-        Assert.assertEquals(sbTree.remove(i), new ORecordId(i % 32000, i));
+      if (i % 3 == 0) {
+          Assert.assertEquals(sbTree.remove(i), new ORecordId(i % 32000, i));
+      }
 
-      if (i % 2 == 0)
-        sbTree.put(KEYS_COUNT + i, new ORecordId((KEYS_COUNT + i) % 32000, KEYS_COUNT + i));
+      if (i % 2 == 0) {
+          sbTree.put(KEYS_COUNT + i, new ORecordId((KEYS_COUNT + i) % 32000, KEYS_COUNT + i));
+      }
     }
 
     Assert.assertEquals((int) sbTree.firstKey(), 1);
     Assert.assertEquals((int) sbTree.lastKey(), 2 * KEYS_COUNT - 2);
 
     for (int i = 0; i < KEYS_COUNT; i++) {
-      if (i % 3 == 0)
-        Assert.assertNull(sbTree.get(i));
-      else
-        Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
+      if (i % 3 == 0) {
+          Assert.assertNull(sbTree.get(i));
+      } else {
+          Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
+      }
 
-      if (i % 2 == 0)
-        Assert.assertEquals(sbTree.get(KEYS_COUNT + i), new ORecordId((KEYS_COUNT + i) % 32000, KEYS_COUNT + i));
+      if (i % 2 == 0) {
+          Assert.assertEquals(sbTree.get(KEYS_COUNT + i), new ORecordId((KEYS_COUNT + i) % 32000, KEYS_COUNT + i));
+      }
     }
   }
 
@@ -315,49 +328,61 @@ public class SBTreeTest {
   }
 
   public void testAddKeyValuesInTwoBucketsAndMakeFirstEmpty() throws Exception {
-    for (int i = 0; i < 5167; i++)
-      sbTree.put(i, new ORecordId(i % 32000, i));
+    for (int i = 0; i < 5167; i++) {
+        sbTree.put(i, new ORecordId(i % 32000, i));
+    }
 
-    for (int i = 0; i < 3500; i++)
-      sbTree.remove(i);
+    for (int i = 0; i < 3500; i++) {
+        sbTree.remove(i);
+    }
 
     Assert.assertEquals((int) sbTree.firstKey(), 3500);
 
-    for (int i = 0; i < 3500; i++)
-      Assert.assertNull(sbTree.get(i));
+    for (int i = 0; i < 3500; i++) {
+        Assert.assertNull(sbTree.get(i));
+    }
 
-    for (int i = 3500; i < 5167; i++)
-      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
+    for (int i = 3500; i < 5167; i++) {
+        Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
+    }
   }
 
   public void testAddKeyValuesInTwoBucketsAndMakeLastEmpty() throws Exception {
-    for (int i = 0; i < 5167; i++)
-      sbTree.put(i, new ORecordId(i % 32000, i));
+    for (int i = 0; i < 5167; i++) {
+        sbTree.put(i, new ORecordId(i % 32000, i));
+    }
 
-    for (int i = 5166; i > 1700; i--)
-      sbTree.remove(i);
+    for (int i = 5166; i > 1700; i--) {
+        sbTree.remove(i);
+    }
 
     Assert.assertEquals((int) sbTree.lastKey(), 1700);
 
-    for (int i = 5166; i > 1700; i--)
-      Assert.assertNull(sbTree.get(i));
+    for (int i = 5166; i > 1700; i--) {
+        Assert.assertNull(sbTree.get(i));
+    }
 
-    for (int i = 1700; i >= 0; i--)
-      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
+    for (int i = 1700; i >= 0; i--) {
+        Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
+    }
   }
 
   public void testAddKeyValuesAndRemoveFirstMiddleAndLastPages() throws Exception {
-    for (int i = 0; i < 12055; i++)
-      sbTree.put(i, new ORecordId(i % 32000, i));
+    for (int i = 0; i < 12055; i++) {
+        sbTree.put(i, new ORecordId(i % 32000, i));
+    }
 
-    for (int i = 0; i < 1730; i++)
-      sbTree.remove(i);
+    for (int i = 0; i < 1730; i++) {
+        sbTree.remove(i);
+    }
 
-    for (int i = 3440; i < 6900; i++)
-      sbTree.remove(i);
+    for (int i = 3440; i < 6900; i++) {
+        sbTree.remove(i);
+    }
 
-    for (int i = 8600; i < 12055; i++)
-      sbTree.remove(i);
+    for (int i = 8600; i < 12055; i++) {
+        sbTree.remove(i);
+    }
 
     Assert.assertEquals((int) sbTree.firstKey(), 1730);
     Assert.assertEquals((int) sbTree.lastKey(), 8599);
@@ -461,8 +486,9 @@ public class SBTreeTest {
         (OAbstractPaginatedStorage) databaseDocumentTx.getStorage().getUnderlying(), 1, true);
 
     try {
-      for (int i = 0; i < 10; i++)
-        nullSBTree.put(i, new ORecordId(3, i));
+      for (int i = 0; i < 10; i++) {
+          nullSBTree.put(i, new ORecordId(3, i));
+      }
 
       OIdentifiable identifiable = nullSBTree.get(null);
       Assert.assertNull(identifiable);
@@ -502,26 +528,29 @@ public class SBTreeTest {
     for (int i = 0; i < 100; i++) {
       int upperBorder = keyValues.lastKey() + 5000;
       int fromKey;
-      if (upperBorder > 0)
-        fromKey = random.nextInt(upperBorder);
-      else
-        fromKey = random.nextInt(Integer.MAX_VALUE);
+      if (upperBorder > 0) {
+          fromKey = random.nextInt(upperBorder);
+      } else {
+          fromKey = random.nextInt(Integer.MAX_VALUE);
+      }
 
       if (random.nextBoolean()) {
         Integer includedKey = keyValues.ceilingKey(fromKey);
-        if (includedKey != null)
-          fromKey = includedKey;
-        else
-          fromKey = keyValues.floorKey(fromKey);
+        if (includedKey != null) {
+            fromKey = includedKey;
+        } else {
+            fromKey = keyValues.floorKey(fromKey);
+        }
       }
 
       final OSBTree.OSBTreeCursor<Integer, OIdentifiable> cursor = sbTree.iterateEntriesMajor(fromKey, keyInclusive, ascSortOrder);
 
       Iterator<Map.Entry<Integer, ORID>> iterator;
-      if (ascSortOrder)
-        iterator = keyValues.tailMap(fromKey, keyInclusive).entrySet().iterator();
-      else
-        iterator = keyValues.descendingMap().subMap(keyValues.lastKey(), true, fromKey, keyInclusive).entrySet().iterator();
+      if (ascSortOrder) {
+          iterator = keyValues.tailMap(fromKey, keyInclusive).entrySet().iterator();
+      } else {
+          iterator = keyValues.descendingMap().subMap(keyValues.lastKey(), true, fromKey, keyInclusive).entrySet().iterator();
+      }
 
       while (iterator.hasNext()) {
         final Map.Entry<Integer, OIdentifiable> indexEntry = cursor.next(-1);
@@ -541,26 +570,29 @@ public class SBTreeTest {
     for (int i = 0; i < 100; i++) {
       int upperBorder = keyValues.lastKey() + 5000;
       int toKey;
-      if (upperBorder > 0)
-        toKey = random.nextInt(upperBorder) - 5000;
-      else
-        toKey = random.nextInt(Integer.MAX_VALUE) - 5000;
+      if (upperBorder > 0) {
+          toKey = random.nextInt(upperBorder) - 5000;
+      } else {
+          toKey = random.nextInt(Integer.MAX_VALUE) - 5000;
+      }
 
       if (random.nextBoolean()) {
         Integer includedKey = keyValues.ceilingKey(toKey);
-        if (includedKey != null)
-          toKey = includedKey;
-        else
-          toKey = keyValues.floorKey(toKey);
+        if (includedKey != null) {
+            toKey = includedKey;
+        } else {
+            toKey = keyValues.floorKey(toKey);
+        }
       }
 
       final OSBTree.OSBTreeCursor<Integer, OIdentifiable> cursor = sbTree.iterateEntriesMinor(toKey, keyInclusive, ascSortOrder);
 
       Iterator<Map.Entry<Integer, ORID>> iterator;
-      if (ascSortOrder)
-        iterator = keyValues.headMap(toKey, keyInclusive).entrySet().iterator();
-      else
-        iterator = keyValues.headMap(toKey, keyInclusive).descendingMap().entrySet().iterator();
+      if (ascSortOrder) {
+          iterator = keyValues.headMap(toKey, keyInclusive).entrySet().iterator();
+      } else {
+          iterator = keyValues.headMap(toKey, keyInclusive).descendingMap().entrySet().iterator();
+      }
 
       while (iterator.hasNext()) {
         Map.Entry<Integer, OIdentifiable> indexEntry = cursor.next(-1);
@@ -583,42 +615,48 @@ public class SBTreeTest {
     for (int i = 0; i < 100; i++) {
       int upperBorder = keyValues.lastKey() + 5000;
       int fromKey;
-      if (upperBorder > 0)
-        fromKey = random.nextInt(upperBorder);
-      else
-        fromKey = random.nextInt(Integer.MAX_VALUE - 1);
+      if (upperBorder > 0) {
+          fromKey = random.nextInt(upperBorder);
+      } else {
+          fromKey = random.nextInt(Integer.MAX_VALUE - 1);
+      }
 
       if (random.nextBoolean()) {
         Integer includedKey = keyValues.ceilingKey(fromKey);
-        if (includedKey != null)
-          fromKey = includedKey;
-        else
-          fromKey = keyValues.floorKey(fromKey);
+        if (includedKey != null) {
+            fromKey = includedKey;
+        } else {
+            fromKey = keyValues.floorKey(fromKey);
+        }
       }
 
       int toKey = random.nextInt() + fromKey + 1;
-      if (toKey < 0)
-        toKey = Integer.MAX_VALUE;
+      if (toKey < 0) {
+          toKey = Integer.MAX_VALUE;
+      }
 
       if (random.nextBoolean()) {
         Integer includedKey = keyValues.ceilingKey(toKey);
-        if (includedKey != null)
-          toKey = includedKey;
-        else
-          toKey = keyValues.floorKey(toKey);
+        if (includedKey != null) {
+            toKey = includedKey;
+        } else {
+            toKey = keyValues.floorKey(toKey);
+        }
       }
 
-      if (fromKey > toKey)
-        toKey = fromKey;
+      if (fromKey > toKey) {
+          toKey = fromKey;
+      }
 
       OSBTree.OSBTreeCursor<Integer, OIdentifiable> cursor = sbTree.iterateEntriesBetween(fromKey, fromInclusive, toKey,
           toInclusive, ascSortOrder);
 
       Iterator<Map.Entry<Integer, ORID>> iterator;
-      if (ascSortOrder)
-        iterator = keyValues.subMap(fromKey, fromInclusive, toKey, toInclusive).entrySet().iterator();
-      else
-        iterator = keyValues.descendingMap().subMap(toKey, toInclusive, fromKey, fromInclusive).entrySet().iterator();
+      if (ascSortOrder) {
+          iterator = keyValues.subMap(fromKey, fromInclusive, toKey, toInclusive).entrySet().iterator();
+      } else {
+          iterator = keyValues.descendingMap().subMap(toKey, toInclusive, fromKey, fromInclusive).entrySet().iterator();
+      }
 
       long startTime = System.currentTimeMillis();
       int iteration = 0;
@@ -642,8 +680,9 @@ public class SBTreeTest {
       Assert.assertNull(cursor.next(-1));
     }
 
-    if (totalTime != 0)
-      System.out.println("Iterations per second : " + (totalIterations * 1000) / totalTime);
+    if (totalTime != 0) {
+        System.out.println("Iterations per second : " + (totalIterations * 1000) / totalTime);
+    }
   }
 
 }

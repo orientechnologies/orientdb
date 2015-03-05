@@ -25,16 +25,18 @@ public class OrientStringSplitSpeedTest {
 
 	public static void main(String[] iArgs) {
 		List<String> pieces = OStringSerializerHelper.split(TEXT, ',');
-		for (String s : pieces)
-			System.out.println("String: " + s);
+		for (String s : pieces) {
+                    System.out.println("String: " + s);
+                }
 
 		System.out.println("Start testing cycle X " + MAX);
 
 		long time = System.currentTimeMillis();
 		for (int i = 0; i < MAX; ++i) {
 			pieces = OStringSerializerHelper.split(TEXT, ',');
-			if (i % (MAX / 10) == 0)
-				System.out.print(".");
+			if (i % (MAX / 10) == 0) {
+                            System.out.print(".");
+                        }
 		}
 		System.out.println("\nElapsed: " + (System.currentTimeMillis() - time));
 	}

@@ -74,12 +74,14 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
     final Iterator<?> valueIterator = OMultiValue.getMultiValueIterator(right);
 
     final Object right1 = OType.convert(valueIterator.next(), left.getClass());
-    if (right1 == null)
-      return false;
+    if (right1 == null) {
+        return false;
+    }
     valueIterator.next();
     final Object right2 = OType.convert(valueIterator.next(), left.getClass());
-    if (right2 == null)
-      return false;
+    if (right2 == null) {
+        return false;
+    }
 
     final int leftResult = ((Comparable<Object>) left).compareTo(right1);
     final int rightResult = ((Comparable<Object>) left).compareTo(right2);
@@ -92,8 +94,9 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       throw new IllegalArgumentException("Found '" + iRight + "' while was expected: " + getSyntax());
     }
 
-    if (OMultiValue.getSize(iRight) != 3)
-      throw new IllegalArgumentException("Found '" + OMultiValue.toString(iRight) + "' while was expected: " + getSyntax());
+    if (OMultiValue.getSize(iRight) != 3) {
+        throw new IllegalArgumentException("Found '" + OMultiValue.toString(iRight) + "' while was expected: " + getSyntax());
+    }
   }
 
   @Override
@@ -112,8 +115,9 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
 
     OIndexCursor cursor;
     final OIndexInternal<?> internalIndex = index.getInternal();
-    if (!internalIndex.canBeUsedInEqualityOperators() || !internalIndex.hasRangeQuerySupport())
-      return null;
+    if (!internalIndex.canBeUsedInEqualityOperators() || !internalIndex.hasRangeQuerySupport()) {
+        return null;
+    }
 
     if (indexDefinition.getParamCount() == 1) {
       final Object[] betweenKeys = (Object[]) keyParams.get(0);
@@ -121,8 +125,9 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       final Object keyOne = indexDefinition.createValue(Collections.singletonList(OSQLHelper.getValue(betweenKeys[0])));
       final Object keyTwo = indexDefinition.createValue(Collections.singletonList(OSQLHelper.getValue(betweenKeys[2])));
 
-      if (keyOne == null || keyTwo == null)
-        return null;
+      if (keyOne == null || keyTwo == null) {
+          return null;
+      }
 
       cursor = index.iterateEntriesBetween(keyOne, leftInclusive, keyTwo, rightInclusive, ascSortOrder);
     } else {
@@ -132,13 +137,15 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
 
       final Object betweenKeyOne = OSQLHelper.getValue(betweenKeys[0]);
 
-      if (betweenKeyOne == null)
-        return null;
+      if (betweenKeyOne == null) {
+          return null;
+      }
 
       final Object betweenKeyTwo = OSQLHelper.getValue(betweenKeys[2]);
 
-      if (betweenKeyTwo == null)
-        return null;
+      if (betweenKeyTwo == null) {
+          return null;
+      }
 
       final List<Object> betweenKeyOneParams = new ArrayList<Object>(keyParams.size());
       betweenKeyOneParams.addAll(keyParams.subList(0, keyParams.size() - 1));
@@ -150,13 +157,15 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
 
       final Object keyOne = compositeIndexDefinition.createSingleValue(betweenKeyOneParams);
 
-      if (keyOne == null)
-        return null;
+      if (keyOne == null) {
+          return null;
+      }
 
       final Object keyTwo = compositeIndexDefinition.createSingleValue(betweenKeyTwoParams);
 
-      if (keyTwo == null)
-        return null;
+      if (keyTwo == null) {
+          return null;
+      }
 
       cursor = index.iterateEntriesBetween(keyOne, leftInclusive, keyTwo, rightInclusive, ascSortOrder);
     }
@@ -173,8 +182,9 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
       final Iterator<?> valueIterator = OMultiValue.getMultiValueIterator(iRight);
 
       final Object right1 = valueIterator.next();
-      if (right1 != null)
-        return (ORID) right1;
+      if (right1 != null) {
+          return (ORID) right1;
+      }
 
       valueIterator.next();
 
@@ -199,8 +209,9 @@ public class OQueryOperatorBetween extends OQueryOperatorEqualityNotNulls {
 
       final Object right2 = valueIterator.next();
 
-      if (right2 == null)
-        return (ORID) right1;
+      if (right2 == null) {
+          return (ORID) right1;
+      }
 
       return (ORID) right2;
     }

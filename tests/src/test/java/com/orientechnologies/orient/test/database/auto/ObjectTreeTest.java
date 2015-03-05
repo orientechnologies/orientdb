@@ -191,10 +191,12 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
     final OObjectDatabaseTx[] dbs = new OObjectDatabaseTx[OObjectDatabasePool.global().getMaxSize()];
 
     for (int i = 0; i < 10; ++i) {
-      for (int db = 0; db < dbs.length; ++db)
-        dbs[db] = OObjectDatabasePool.global().acquire(url, "admin", "admin");
-      for (int db = 0; db < dbs.length; ++db)
-        dbs[db].close();
+      for (int db = 0; db < dbs.length; ++db) {
+          dbs[db] = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+      }
+      for (int db = 0; db < dbs.length; ++db) {
+          dbs[db].close();
+      }
     }
   }
 
@@ -261,8 +263,9 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
 
       parent = r.getInvitedBy();
 
-      if (parent != null)
-        System.out.println("- parent: " + parent.getName() + " " + parent.getSurname());
+      if (parent != null) {
+          System.out.println("- parent: " + parent.getName() + " " + parent.getSurname());
+      }
     }
   }
 
@@ -880,8 +883,9 @@ public class ObjectTreeTest extends ObjectDBBaseTest {
     OObjectSerializerHelper.bindSerializerContext(null, serializerContext);
     database.getEntityManager().registerEntityClass(CustomClass.class);
 
-    if (!database.getMetadata().getSchema().existsClass("CustomClass"))
-      database.getMetadata().getSchema().createClass("CustomClass");
+    if (!database.getMetadata().getSchema().existsClass("CustomClass")) {
+        database.getMetadata().getSchema().createClass("CustomClass");
+    }
 
     List<CustomType> customTypesList = new ArrayList<CustomType>();
     customTypesList.add(new CustomType(102L));

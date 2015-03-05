@@ -54,25 +54,29 @@ public class OLazyRecordMultiIterator implements OLazyIterator<OIdentifiable>, O
   @Override
   public void reset() {
     iteratorIndex = 0;
-    for (int i = 0; i < underlyingIterators.length; ++i)
-      underlyingIterators[i] = null;
+    for (int i = 0; i < underlyingIterators.length; ++i) {
+        underlyingIterators[i] = null;
+    }
   }
 
   public OIdentifiable next() {
-    if (!hasNext())
-      throw new NoSuchElementException();
+    if (!hasNext()) {
+        throw new NoSuchElementException();
+    }
 
     final Iterator<OIdentifiable> underlying = getCurrentIterator();
     OIdentifiable value = underlying.next();
 
-    if (value == null)
-      return null;
+    if (value == null) {
+        return null;
+    }
 
     if (value instanceof ORecordId && convertToRecord) {
       value = ((ORecordId) value).getRecord();
 
-      if (underlying instanceof OLazyIterator<?>)
-        ((OLazyIterator<OIdentifiable>) underlying).update(value);
+      if (underlying instanceof OLazyIterator<?>) {
+          ((OLazyIterator<OIdentifiable>) underlying).update(value);
+      }
     }
 
     return value;
@@ -94,24 +98,28 @@ public class OLazyRecordMultiIterator implements OLazyIterator<OIdentifiable>, O
     final Iterator<OIdentifiable> underlying = getCurrentIterator();
     if (underlying instanceof OLazyIterator) {
       final OIdentifiable old = ((OLazyIterator<OIdentifiable>) underlying).update(iValue);
-      if (sourceRecord != null && !old.equals(iValue))
-        sourceRecord.setDirty();
+      if (sourceRecord != null && !old.equals(iValue)) {
+          sourceRecord.setDirty();
+      }
       return old;
-    } else
-      throw new UnsupportedOperationException("Underlying iterator not supports lazy updates (Interface OLazyIterator");
+    } else {
+        throw new UnsupportedOperationException("Underlying iterator not supports lazy updates (Interface OLazyIterator");
+    }
   }
 
   public void remove() {
     final Iterator<OIdentifiable> underlying = getCurrentIterator();
     underlying.remove();
-    if (sourceRecord != null)
-      sourceRecord.setDirty();
+    if (sourceRecord != null) {
+        sourceRecord.setDirty();
+    }
   }
 
   @SuppressWarnings("unchecked")
   private Iterator<OIdentifiable> getCurrentIterator() {
-    if (iteratorIndex > underlyingIterators.length)
-      throw new NoSuchElementException();
+    if (iteratorIndex > underlyingIterators.length) {
+        throw new NoSuchElementException();
+    }
 
     Object next = underlyingIterators[iteratorIndex];
     if (next == null) {
@@ -126,14 +134,16 @@ public class OLazyRecordMultiIterator implements OLazyIterator<OIdentifiable>, O
       } else if (underlyingSources[iteratorIndex] instanceof Iterator<?>) {
         // COPY IT
         underlyingIterators[iteratorIndex] = underlyingSources[iteratorIndex];
-      } else
-        throw new IllegalStateException("Unsupported iteration source: " + underlyingSources[iteratorIndex]);
+      } else {
+          throw new IllegalStateException("Unsupported iteration source: " + underlyingSources[iteratorIndex]);
+      }
       
       next = underlyingIterators[iteratorIndex];
     }
 
-    if (next instanceof Iterator<?>)
-      return (Iterator<OIdentifiable>) next;
+    if (next instanceof Iterator<?>) {
+        return (Iterator<OIdentifiable>) next;
+    }
 
     return ((Collection<OIdentifiable>) next).iterator();
   }

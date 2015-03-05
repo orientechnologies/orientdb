@@ -13,12 +13,18 @@ public class Animal {
     public void setName(String name) { this.name = name; }
 
     @Override public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Animal)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Animal)) {
+            return false;
+        }
 
         Animal animal = (Animal) o;
 
-        if (!getName().equals(animal.getName())) return false;
+        if (!getName().equals(animal.getName())) {
+            return false;
+        }
 
         return true;
     }

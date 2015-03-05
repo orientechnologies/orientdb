@@ -53,8 +53,9 @@ public class ReadWriteCacheConcurrentTest {
     OGlobalConfiguration.FILE_LOCK.setValue(Boolean.FALSE);
 
     String buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null)
-      buildDirectory = ".";
+    if (buildDirectory == null) {
+        buildDirectory = ".";
+    }
 
     storageLocal = (OLocalPaginatedStorage) Orient.instance().loadStorage(
         "plocal:" + buildDirectory + "/ReadWriteCacheConcurrentTest");
@@ -103,8 +104,9 @@ public class ReadWriteCacheConcurrentTest {
   private void deleteUsedFiles(int filesCount) {
     for (int k = 0; k < filesCount; k++) {
       File file = new File(storageLocal.getConfiguration().getDirectory() + "/readWriteCacheTest" + k + ".tst");
-      if (file.exists())
-        Assert.assertTrue(file.delete());
+      if (file.exists()) {
+          Assert.assertTrue(file.delete());
+      }
     }
   }
 
@@ -135,8 +137,9 @@ public class ReadWriteCacheConcurrentTest {
       futures.add(executorService.submit(new Reader()));
     }
 
-    for (Future<Void> future : futures)
-      future.get();
+    for (Future<Void> future : futures) {
+        future.get();
+    }
   }
 
   private void generateRemainingPagesQueueForAllFiles() {
@@ -159,8 +162,9 @@ public class ReadWriteCacheConcurrentTest {
       futures.add(executorService.submit(new Writer()));
     }
 
-    for (Future<Void> future : futures)
-      future.get();
+    for (Future<Void> future : futures) {
+        future.get();
+    }
 
     futures.clear();
 
@@ -244,8 +248,9 @@ public class ReadWriteCacheConcurrentTest {
       int firstFileNumber = new Random().nextInt(FILE_COUNT - 1);
       for (int i = 0; i < FILE_COUNT; ++i) {
         int fileNumber = (firstFileNumber + i) % FILE_COUNT;
-        if (isFileFull(fileNumber))
-          return fileNumber;
+        if (isFileFull(fileNumber)) {
+            return fileNumber;
+        }
       }
       return -1;
     }

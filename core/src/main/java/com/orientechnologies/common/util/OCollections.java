@@ -46,8 +46,9 @@ public class OCollections {
   public static <T> int indexOf(final List<T> list, final T object, final Comparator<T> comparator) {
     int i = 0;
     for (final T item : list) {
-      if (comparator.compare(item, object) == 0)
-        return i;
+      if (comparator.compare(item, object) == 0) {
+          return i;
+      }
       i++;
     }
     return -1;

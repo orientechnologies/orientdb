@@ -50,9 +50,10 @@ public abstract class OSharedResourceTimeout {
       if (timeout == 0) {
         lock.readLock().lock();
         return;
-      } else if (lock.readLock().tryLock(timeout, TimeUnit.MILLISECONDS))
-        // OK
-        return;
+      } else if (lock.readLock().tryLock(timeout, TimeUnit.MILLISECONDS)) {
+          // OK
+          return;
+      }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
@@ -69,9 +70,10 @@ public abstract class OSharedResourceTimeout {
       if (timeout == 0) {
         lock.writeLock().lock();
         return;
-      } else if (lock.writeLock().tryLock(timeout, TimeUnit.MILLISECONDS))
-        // OK
-        return;
+      } else if (lock.writeLock().tryLock(timeout, TimeUnit.MILLISECONDS)) {
+          // OK
+          return;
+      }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
@@ -100,8 +102,9 @@ public abstract class OSharedResourceTimeout {
       getOwner.setAccessible(true);
 
       final Thread owner = (Thread) getOwner.invoke(sync);
-      if (owner == null)
-        return null;
+      if (owner == null) {
+          return null;
+      }
 
       StringWriter stringWriter = new StringWriter();
       PrintWriter printWriter = new PrintWriter(stringWriter);
@@ -109,8 +112,9 @@ public abstract class OSharedResourceTimeout {
       printWriter.append("Owner thread : ").append(owner.toString()).append("\n");
 
       StackTraceElement[] stackTrace = owner.getStackTrace();
-      for (StackTraceElement traceElement : stackTrace)
-        printWriter.println("\tat " + traceElement);
+      for (StackTraceElement traceElement : stackTrace) {
+          printWriter.println("\tat " + traceElement);
+      }
 
       printWriter.flush();
       return stringWriter.toString();

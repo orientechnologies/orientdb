@@ -63,8 +63,9 @@ public class ThreadCountersHashTableTest {
       threadCountersHashTable.insert(threads[i]);
     }
 
-    for (Thread thread : threads)
-      Assert.assertSame(threadCountersHashTable.search(thread).getThread(), thread);
+    for (Thread thread : threads) {
+        Assert.assertSame(threadCountersHashTable.search(thread).getThread(), thread);
+    }
   }
 
   public void add4096Items() {
@@ -76,8 +77,9 @@ public class ThreadCountersHashTableTest {
       threadCountersHashTable.insert(threads[i]);
     }
 
-    for (Thread thread : threads)
-      Assert.assertSame(threadCountersHashTable.search(thread).getThread(), thread);
+    for (Thread thread : threads) {
+        Assert.assertSame(threadCountersHashTable.search(thread).getThread(), thread);
+    }
   }
 
   private static final class RandomThread extends Thread {

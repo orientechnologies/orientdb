@@ -47,32 +47,35 @@ public class OStreamSerializerAnyStreamable implements OStreamSerializer {
    * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
    */
   public Object fromStream(final byte[] iStream) throws IOException {
-    if (iStream == null || iStream.length == 0)
-      // NULL VALUE
-      return null;
+    if (iStream == null || iStream.length == 0) {
+        // NULL VALUE
+        return null;
+    }
 
     final int classNameSize = OBinaryProtocol.bytes2int(iStream);
-    if (classNameSize <= 0)
-      OLogManager.instance().error(this, "Class signature not found in ANY element: " + Arrays.toString(iStream),
-          OSerializationException.class);
+    if (classNameSize <= 0) {
+        OLogManager.instance().error(this, "Class signature not found in ANY element: " + Arrays.toString(iStream),
+                OSerializationException.class);
+    }
 
     final String className = OBinaryProtocol.bytes2string(iStream, 4, classNameSize);
 
     try {
       final OSerializableStream stream;
       // CHECK FOR ALIASES
-      if (className.equalsIgnoreCase("q"))
-        // QUERY
-        stream = new OSQLSynchQuery<Object>();
-      else if (className.equalsIgnoreCase("c"))
-        // SQL COMMAND
-        stream = new OCommandSQL();
-      else if (className.equalsIgnoreCase("s"))
-        // SCRIPT COMMAND
-        stream = new OCommandScript();
-      else
-        // CREATE THE OBJECT BY INVOKING THE EMPTY CONSTRUCTOR
-        stream = (OSerializableStream) Class.forName(className).newInstance();
+      if (className.equalsIgnoreCase("q")) {
+          // QUERY
+          stream = new OSQLSynchQuery<Object>();
+      } else if (className.equalsIgnoreCase("c")) {
+          // SQL COMMAND
+          stream = new OCommandSQL();
+      } else if (className.equalsIgnoreCase("s")) {
+          // SCRIPT COMMAND
+          stream = new OCommandScript();
+      } else {
+          // CREATE THE OBJECT BY INVOKING THE EMPTY CONSTRUCTOR
+          stream = (OSerializableStream) Class.forName(className).newInstance();
+      }
 
       return stream.fromStream(OArrays.copyOfRange(iStream, 4 + classNameSize, iStream.length));
 
@@ -86,25 +89,28 @@ public class OStreamSerializerAnyStreamable implements OStreamSerializer {
    * Serialize the class name size + class name + object content
    */
   public byte[] toStream(final Object iObject) throws IOException {
-    if (iObject == null)
-      return null;
+    if (iObject == null) {
+        return null;
+    }
 
-    if (!(iObject instanceof OSerializableStream))
-      throw new OSerializationException("Cannot serialize the object [" + iObject.getClass() + ":" + iObject
-          + "] since it does not implement the OSerializableStream interface");
+    if (!(iObject instanceof OSerializableStream)) {
+        throw new OSerializationException("Cannot serialize the object [" + iObject.getClass() + ":" + iObject
+                + "] since it does not implement the OSerializableStream interface");
+    }
 
     OSerializableStream stream = (OSerializableStream) iObject;
 
     // SERIALIZE THE CLASS NAME
     final byte[] className;
-    if (iObject instanceof OQuery<?>)
-      className = QUERY_COMMAND_CLASS_ASBYTES;
-    else if (iObject instanceof OCommandSQL)
-      className = SQL_COMMAND_CLASS_ASBYTES;
-    else if (iObject instanceof OCommandScript)
-      className = SCRIPT_COMMAND_CLASS_ASBYTES;
-    else
-      className = OBinaryProtocol.string2bytes(iObject.getClass().getName());
+    if (iObject instanceof OQuery<?>) {
+        className = QUERY_COMMAND_CLASS_ASBYTES;
+    } else if (iObject instanceof OCommandSQL) {
+        className = SQL_COMMAND_CLASS_ASBYTES;
+    } else if (iObject instanceof OCommandScript) {
+        className = SCRIPT_COMMAND_CLASS_ASBYTES;
+    } else {
+        className = OBinaryProtocol.string2bytes(iObject.getClass().getName());
+    }
 
     // SERIALIZE THE OBJECT CONTENT
     byte[] objectContent = stream.toStream();

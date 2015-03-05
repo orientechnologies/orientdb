@@ -50,21 +50,25 @@ final class OSimpleMultiValueChangeListener<K, V> implements OMultiValueChangeLi
 
   public void onAfterRecordChanged(final OMultiValueChangeEvent<K, V> event) {
     if (this.oDocument.getInternalStatus() != STATUS.UNMARSHALLING) {
-      if (event.isChangesOwnerContent())
-        this.oDocument.setDirty();
-      else
-        this.oDocument.setDirtyNoChanged();
+      if (event.isChangesOwnerContent()) {
+          this.oDocument.setDirty();
+      } else {
+          this.oDocument.setDirtyNoChanged();
+      }
     }
 
     if (!(this.oDocument._trackingChanges && this.oDocument.getIdentity().isValid())
-        || this.oDocument.getInternalStatus() == STATUS.UNMARSHALLING)
-      return;
+        || this.oDocument.getInternalStatus() == STATUS.UNMARSHALLING) {
+        return;
+    }
 
-    if (this.oDocument._fieldOriginalValues != null && this.oDocument._fieldOriginalValues.containsKey(fieldName))
-      return;
+    if (this.oDocument._fieldOriginalValues != null && this.oDocument._fieldOriginalValues.containsKey(fieldName)) {
+        return;
+    }
 
-    if (this.oDocument._fieldCollectionChangeTimeLines == null)
-      this.oDocument._fieldCollectionChangeTimeLines = new HashMap<String, OMultiValueChangeTimeLine<Object, Object>>();
+    if (this.oDocument._fieldCollectionChangeTimeLines == null) {
+        this.oDocument._fieldCollectionChangeTimeLines = new HashMap<String, OMultiValueChangeTimeLine<Object, Object>>();
+    }
 
     OMultiValueChangeTimeLine<Object, Object> timeLine = this.oDocument._fieldCollectionChangeTimeLines.get(fieldName);
     if (timeLine == null) {

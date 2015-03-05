@@ -45,12 +45,13 @@ public class OQueryOperatorContainsAll extends OQueryOperatorEqualityNotNulls {
 			final Object iRight, OCommandContext iContext) {
 		final OSQLFilterCondition condition;
 
-		if (iCondition.getLeft() instanceof OSQLFilterCondition)
-			condition = (OSQLFilterCondition) iCondition.getLeft();
-		else if (iCondition.getRight() instanceof OSQLFilterCondition)
-			condition = (OSQLFilterCondition) iCondition.getRight();
-		else
-			condition = null;
+		if (iCondition.getLeft() instanceof OSQLFilterCondition) {
+                    condition = (OSQLFilterCondition) iCondition.getLeft();
+                } else if (iCondition.getRight() instanceof OSQLFilterCondition) {
+                    condition = (OSQLFilterCondition) iCondition.getRight();
+                } else {
+                    condition = null;
+                }
 
 		if (iLeft.getClass().isArray()) {
 			if (iRight.getClass().isArray()) {
@@ -86,14 +87,16 @@ public class OQueryOperatorContainsAll extends OQueryOperatorEqualityNotNulls {
 			if (condition != null) {
 				// CHECK AGAINST A CONDITION
 				for (final ODocument o : collection) {
-					if ((Boolean) condition.evaluate(o, null, iContext) == Boolean.FALSE)
-						return false;
+					if ((Boolean) condition.evaluate(o, null, iContext) == Boolean.FALSE) {
+                                            return false;
+                                        }
 				}
 			} else {
 				// CHECK AGAINST A SINGLE VALUE
 				for (final Object o : collection) {
-					if (!OQueryOperatorEquals.equals(iRight, o))
-						return false;
+					if (!OQueryOperatorEquals.equals(iRight, o)) {
+                                            return false;
+                                        }
 				}
 			}
 		} else if (iRight instanceof Collection<?>) {
@@ -103,14 +106,16 @@ public class OQueryOperatorContainsAll extends OQueryOperatorEqualityNotNulls {
 
 			if (condition != null) {
 				for (final ODocument o : collection) {
-					if ((Boolean) condition.evaluate(o, null, iContext) == Boolean.FALSE)
-						return false;
+					if ((Boolean) condition.evaluate(o, null, iContext) == Boolean.FALSE) {
+                                            return false;
+                                        }
 				}
 			} else {
 				// CHECK AGAINST A SINGLE VALUE
 				for (final Object o : collection) {
-					if (!OQueryOperatorEquals.equals(iLeft, o))
-						return false;
+					if (!OQueryOperatorEquals.equals(iLeft, o)) {
+                                            return false;
+                                        }
 				}
 			}
 		}

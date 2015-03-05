@@ -99,13 +99,15 @@ public class BlueprintsConcurrentAddEdgeTest {
     ExecutorService executorService = Executors.newCachedThreadPool();
 
     List<Future<Void>> futures = new ArrayList<Future<Void>>();
-    for (int i = 0; i < THREADS; i++)
-      futures.add(executorService.submit(new ConcurrentGraphCreator()));
+    for (int i = 0; i < THREADS; i++) {
+        futures.add(executorService.submit(new ConcurrentGraphCreator()));
+    }
 
     latch.countDown();
 
-    for (Future<Void> future : futures)
-      future.get();
+    for (Future<Void> future : futures) {
+        future.get();
+    }
 
     System.out.println("Graph was created used threads : " + THREADS + " duplication exceptions : " + indexCollisions.get()
         + " version exceptions : " + versionCollisions.get() + " vertexes : " + VERTEXES_COUNT + " edges : " + EDGES_COUNT);
@@ -191,15 +193,18 @@ public class BlueprintsConcurrentAddEdgeTest {
 
     @Override
     public boolean equals(Object o) {
-      if (this == o)
-        return true;
-      if (o == null || getClass() != o.getClass())
-        return false;
+      if (this == o) {
+          return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+          return false;
+      }
 
       TestEdge testEdge = (TestEdge) o;
 
-      if (uuid != null ? !uuid.equals(testEdge.uuid) : testEdge.uuid != null)
-        return false;
+      if (uuid != null ? !uuid.equals(testEdge.uuid) : testEdge.uuid != null) {
+          return false;
+      }
 
       return true;
     }
@@ -319,8 +324,9 @@ public class BlueprintsConcurrentAddEdgeTest {
           }
 
           currentUUID = vertexesToCreate.higherKey(currentUUID);
-          if (currentUUID == null)
-            currentUUID = vertexesToCreate.firstKey();
+          if (currentUUID == null) {
+              currentUUID = vertexesToCreate.firstKey();
+          }
         } while (!startUUID.equals(currentUUID));
       } catch (Exception e) {
         e.printStackTrace();

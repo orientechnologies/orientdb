@@ -46,8 +46,9 @@ public class OIndexDictionary extends OIndexOneValue {
     final ODatabase database = getDatabase();
     final boolean txIsActive = database.getTransaction().isActive();
 
-    if (txIsActive)
-      keyLockManager.acquireSharedLock(key);
+    if (txIsActive) {
+        keyLockManager.acquireSharedLock(key);
+    }
 
     try {
       modificationLock.requestModificationLock();
@@ -66,8 +67,9 @@ public class OIndexDictionary extends OIndexOneValue {
         modificationLock.releaseModificationLock();
       }
     } finally {
-      if (txIsActive)
-        keyLockManager.releaseSharedLock(key);
+      if (txIsActive) {
+          keyLockManager.releaseSharedLock(key);
+      }
     }
   }
 
@@ -106,10 +108,11 @@ public class OIndexDictionary extends OIndexOneValue {
       checkForKeyType(key);
 
       Object snapshotValue = snapshotEntry.getValue();
-      if (snapshotValue.equals(RemovedValue.INSTANCE))
-        indexEngine.remove(key);
-      else
-        indexEngine.put(key, (OIdentifiable) snapshotValue);
+      if (snapshotValue.equals(RemovedValue.INSTANCE)) {
+          indexEngine.remove(key);
+      } else {
+          indexEngine.put(key, (OIdentifiable) snapshotValue);
+      }
     }
   }
 }

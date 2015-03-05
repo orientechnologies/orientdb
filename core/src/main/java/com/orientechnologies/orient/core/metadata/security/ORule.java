@@ -84,21 +84,25 @@ public class ORule implements Serializable{
 
   public ORule(ResourceGeneric resourceGeneric, Map<String, Byte> specificResources, Byte access) {
     this.resourceGeneric = resourceGeneric;
-    if (specificResources != null)
-      this.specificResources.putAll(specificResources);
+    if (specificResources != null) {
+        this.specificResources.putAll(specificResources);
+    }
     this.access = access;
   }
 
   public static ResourceGeneric mapLegacyResourceToGenericResource(String resource) {
     Map.Entry<String, ResourceGeneric> found = ResourceGeneric.legacyToGenericMap.floorEntry(resource.toLowerCase());
-    if (found == null)
-      return null;
+    if (found == null) {
+        return null;
+    }
 
-    if (resource.length() < found.getKey().length())
-      return null;
+    if (resource.length() < found.getKey().length()) {
+        return null;
+    }
 
-    if (resource.substring(0, found.getKey().length()).equalsIgnoreCase(found.getKey()))
-      return found.getValue();
+    if (resource.substring(0, found.getKey().length()).equalsIgnoreCase(found.getKey())) {
+        return found.getValue();
+    }
 
     return null;
   }
@@ -110,17 +114,21 @@ public class ORule implements Serializable{
 	public static String mapLegacyResourceToSpecificResource(String resource) {
 		Map.Entry<String, ResourceGeneric> found = ResourceGeneric.legacyToGenericMap.floorEntry(resource.toLowerCase());
 
-		if (found == null)
-			return resource;
+		if (found == null) {
+                    return resource;
+                }
 
-		if (resource.length() < found.getKey().length())
-			return resource;
+		if (resource.length() < found.getKey().length()) {
+                    return resource;
+                }
 
-		if (resource.length() == found.getKey().length())
-			return null;
+		if (resource.length() == found.getKey().length()) {
+                    return null;
+                }
 
-		if (resource.substring(0, found.getKey().length()).equalsIgnoreCase(found.getKey()))
-			return resource.substring(found.getKey().length() + 1);
+		if (resource.substring(0, found.getKey().length()).equalsIgnoreCase(found.getKey())) {
+                    return resource.substring(found.getKey().length() + 1);
+                }
 
 		return resource;
 	}
@@ -138,9 +146,9 @@ public class ORule implements Serializable{
   }
 
   public void grantAccess(String resource, int operation) {
-    if (resource == null)
-      access = grant((byte) operation, access);
-    else {
+    if (resource == null) {
+        access = grant((byte) operation, access);
+    } else {
       resource = resource.toLowerCase();
       Byte ac = specificResources.get(resource);
       specificResources.put(resource, grant((byte) operation, ac));
@@ -155,12 +163,13 @@ public class ORule implements Serializable{
   }
 
   public void revokeAccess(String resource, int operation) {
-    if (operation == ORole.PERMISSION_NONE)
-      return;
+    if (operation == ORole.PERMISSION_NONE) {
+        return;
+    }
 
-    if (resource == null)
-      access = revoke((byte) operation, access);
-    else {
+    if (resource == null) {
+        access = revoke((byte) operation, access);
+    } else {
       resource = resource.toLowerCase();
       Byte ac = specificResources.get(resource);
       specificResources.put(resource, revoke((byte) operation, ac));
@@ -169,9 +178,9 @@ public class ORule implements Serializable{
 
   private byte revoke(byte operation, Byte ac) {
     byte currentValue;
-    if (ac == null)
-      currentValue = ORole.PERMISSION_NONE;
-    else {
+    if (ac == null) {
+        currentValue = ORole.PERMISSION_NONE;
+    } else {
       currentValue = ac.byteValue();
       currentValue &= ~(byte) operation;
     }
@@ -179,23 +188,27 @@ public class ORule implements Serializable{
   }
 
   public Boolean isAllowed(String name, int operation) {
-    if (name == null)
-      return allowed((byte) operation, access);
+    if (name == null) {
+        return allowed((byte) operation, access);
+    }
 
-    if (specificResources.isEmpty())
-      return isAllowed(null, operation);
+    if (specificResources.isEmpty()) {
+        return isAllowed(null, operation);
+    }
 
     final Byte ac = specificResources.get(name.toLowerCase());
     final Boolean allowed = allowed((byte) operation, ac);
-    if (allowed == null)
-      return isAllowed(null, operation);
+    if (allowed == null) {
+        return isAllowed(null, operation);
+    }
 
     return allowed;
   }
 
   private Boolean allowed(byte operation, Byte ac) {
-    if (ac == null)
-      return null;
+    if (ac == null) {
+        return null;
+    }
 
     final byte mask = (byte) operation;
 
@@ -203,8 +216,9 @@ public class ORule implements Serializable{
   }
 
   public boolean containsSpecificResource(String resource) {
-    if (specificResources.isEmpty())
-      return false;
+    if (specificResources.isEmpty()) {
+        return false;
+    }
 
     return specificResources.containsKey(resource.toLowerCase());
   }

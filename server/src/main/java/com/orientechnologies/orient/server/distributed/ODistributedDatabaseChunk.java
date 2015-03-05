@@ -45,9 +45,10 @@ public class ODistributedDatabaseChunk implements Externalizable {
      offset = iOffset;
 
      final long fileSize = iFile.length();
-     if (offset > fileSize)
-       throw new IllegalArgumentException("Offset " + iOffset + " cannot be bigger then the file itself: "
-           + OFileUtils.getSizeAsString(fileSize));
+     if (offset > fileSize) {
+         throw new IllegalArgumentException("Offset " + iOffset + " cannot be bigger then the file itself: "
+                 + OFileUtils.getSizeAsString(fileSize));
+     }
 
      final FileInputStream in = new FileInputStream(iFile);
 

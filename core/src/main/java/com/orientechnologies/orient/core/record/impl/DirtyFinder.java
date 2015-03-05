@@ -32,11 +32,13 @@ public class DirtyFinder {
   private static void checkObject(Object object, Set<ORecord> all) {
     if (object instanceof ODocument) {
       ODocument doc = (ODocument) object;
-      if (all.contains(doc))
-        return;
+      if (all.contains(doc)) {
+          return;
+      }
       if (doc.isDirty()) {
-        if (!doc.isEmbedded())
-          all.add(doc);
+        if (!doc.isEmbedded()) {
+            all.add(doc);
+        }
         STATUS prev = doc.getInternalStatus();
         doc.setInternalStatus(STATUS.MARSHALLING);
         for (Entry<String, Object> entry : (ODocument) object) {
@@ -53,8 +55,9 @@ public class DirtyFinder {
         checkObject(elem, all);
       }
     } else if (object instanceof ORecord) {
-      if (((ORecord) object).isDirty())
-        all.add((ORecord) object);
+      if (((ORecord) object).isDirty()) {
+          all.add((ORecord) object);
+      }
     }
 
   }

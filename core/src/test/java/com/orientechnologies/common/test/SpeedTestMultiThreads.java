@@ -25,18 +25,19 @@ public abstract class SpeedTestMultiThreads extends SpeedTestAbstract {
   public void cycle() throws InterruptedException {
     final SpeedTestThread[] ts = new SpeedTestThread[threads];
     SpeedTestThread t;
-    for (int i = 0; i < threads; ++i)
-      try {
-        final Constructor<? extends SpeedTestThread> c = threadClass.getConstructor(SpeedTestMultiThreads.class, Integer.TYPE);
-        t = c.newInstance(this, i);
-        ts[i] = t;
-
-        t.setCycles(threadCycles / threads);
-        t.start();
-      } catch (Exception e) {
-        e.printStackTrace();
-        return;
-      }
+    for (int i = 0; i < threads; ++i) {
+        try {
+            final Constructor<? extends SpeedTestThread> c = threadClass.getConstructor(SpeedTestMultiThreads.class, Integer.TYPE);
+            t = c.newInstance(this, i);
+            ts[i] = t;
+            
+            t.setCycles(threadCycles / threads);
+            t.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+    }
 
     for (int i = 0; i < threads; ++i) {
       ts[i].join();

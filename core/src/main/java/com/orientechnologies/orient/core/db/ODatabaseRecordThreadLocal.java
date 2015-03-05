@@ -33,8 +33,9 @@ public class ODatabaseRecordThreadLocal extends ThreadLocal<ODatabaseDocumentInt
     Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onStartup() {
-        if (INSTANCE == null)
-          INSTANCE = new ODatabaseRecordThreadLocal();
+        if (INSTANCE == null) {
+            INSTANCE = new ODatabaseRecordThreadLocal();
+        }
       }
 
       @Override

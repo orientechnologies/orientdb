@@ -45,8 +45,9 @@ public class OSQLMethodHash extends OAbstractSQLMethod {
   @Override
   public Object execute(final Object iThis, final OIdentifiable iCurrentRecord, final OCommandContext iContext,
       final Object ioResult, final Object[] iParams) {
-    if (iThis == null)
-      return null;
+    if (iThis == null) {
+        return null;
+    }
 
     final String algorithm = iParams.length > 0 ? iParams[0].toString() : OSecurityManager.ALGORITHM;
     try {

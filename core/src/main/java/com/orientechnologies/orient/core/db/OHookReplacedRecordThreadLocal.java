@@ -37,8 +37,9 @@ public class OHookReplacedRecordThreadLocal extends ThreadLocal<ORecord> {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onStartup() {
-        if (INSTANCE == null)
-          INSTANCE = new OHookReplacedRecordThreadLocal();
+        if (INSTANCE == null) {
+            INSTANCE = new OHookReplacedRecordThreadLocal();
+        }
       }
 
       @Override

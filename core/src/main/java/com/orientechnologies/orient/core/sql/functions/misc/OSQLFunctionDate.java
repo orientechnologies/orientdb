@@ -54,21 +54,25 @@ public class OSQLFunctionDate extends OSQLFunctionAbstract {
 
   public Object execute(Object iThis, final OIdentifiable iCurrentRecord, final Object iCurrentResult, final Object[] iParams,
       OCommandContext iContext) {
-    if (iParams.length == 0)
-      return date;
+    if (iParams.length == 0) {
+        return date;
+    }
 
-    if (iParams[0] instanceof Number)
-      return new Date(((Number) iParams[0]).longValue());
+    if (iParams[0] instanceof Number) {
+        return new Date(((Number) iParams[0]).longValue());
+    }
 
     if (format == null) {
       if (iParams.length > 1) {
         format = new SimpleDateFormat((String) iParams[1]);
         format.setTimeZone(ODateHelper.getDatabaseTimeZone());
-      } else
-        format = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance();
+      } else {
+          format = ODatabaseRecordThreadLocal.INSTANCE.get().getStorage().getConfiguration().getDateTimeFormatInstance();
+      }
 
-      if (iParams.length == 3)
-        format.setTimeZone(TimeZone.getTimeZone(iParams[2].toString()));
+      if (iParams.length == 3) {
+          format.setTimeZone(TimeZone.getTimeZone(iParams[2].toString()));
+      }
     }
 
     try {

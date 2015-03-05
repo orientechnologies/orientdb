@@ -343,10 +343,11 @@ public enum OGlobalConfiguration {
   PROFILER_ENABLED("profiler.enabled", "Enable the recording of statistics and counters", Boolean.class, false,
       new OConfigurationChangeCallback() {
         public void change(final Object iCurrentValue, final Object iNewValue) {
-          if ((Boolean) iNewValue)
-            Orient.instance().getProfiler().startRecording();
-          else
-            Orient.instance().getProfiler().stopRecording();
+          if ((Boolean) iNewValue) {
+              Orient.instance().getProfiler().startRecording();
+          } else {
+              Orient.instance().getProfiler().stopRecording();
+          }
         }
       }),
 
@@ -616,8 +617,9 @@ public enum OGlobalConfiguration {
    */
   public static OGlobalConfiguration findByKey(final String iKey) {
     for (OGlobalConfiguration v : values()) {
-      if (v.getKey().equalsIgnoreCase(iKey))
-        return v;
+      if (v.getKey().equalsIgnoreCase(iKey)) {
+          return v;
+      }
     }
     return null;
   }
@@ -647,25 +649,28 @@ public enum OGlobalConfiguration {
     String prop;
     for (OGlobalConfiguration config : values()) {
       prop = System.getProperty(config.key);
-      if (prop != null)
-        config.setValue(prop);
+      if (prop != null) {
+          config.setValue(prop);
+      }
     }
   }
 
   private static void autoConfig() {
     final long freeSpaceInMB = new File(".").getFreeSpace() / 1024 / 1024;
 
-    if (System.getProperty(DISK_CACHE_SIZE.key) == null)
-      autoConfigDiskCacheSize(freeSpaceInMB);
+    if (System.getProperty(DISK_CACHE_SIZE.key) == null) {
+        autoConfigDiskCacheSize(freeSpaceInMB);
+    }
 
     if (System.getProperty(WAL_RESTORE_BATCH_SIZE.key) == null) {
       final long jvmMaxMemory = Runtime.getRuntime().maxMemory();
-      if (jvmMaxMemory > 2 * OFileUtils.GIGABYTE)
-        // INCREASE WAL RESTORE BATCH SIZE TO 50K INSTEAD OF DEFAULT 1K
-        WAL_RESTORE_BATCH_SIZE.setValue(50000);
-      else if (jvmMaxMemory > 512 * OFileUtils.MEGABYTE)
-        // INCREASE WAL RESTORE BATCH SIZE TO 10K INSTEAD OF DEFAULT 1K
-        WAL_RESTORE_BATCH_SIZE.setValue(10000);
+      if (jvmMaxMemory > 2 * OFileUtils.GIGABYTE) {
+          // INCREASE WAL RESTORE BATCH SIZE TO 50K INSTEAD OF DEFAULT 1K
+          WAL_RESTORE_BATCH_SIZE.setValue(50000);
+      } else if (jvmMaxMemory > 512 * OFileUtils.MEGABYTE) {
+          // INCREASE WAL RESTORE BATCH SIZE TO 10K INSTEAD OF DEFAULT 1K
+          WAL_RESTORE_BATCH_SIZE.setValue(10000);
+      }
     }
   }
 
@@ -683,9 +688,10 @@ public enum OGlobalConfiguration {
       if (diskCacheInMB > 0) {
 
         // CHECK IF CANDIDATE DISK-CACHE IS BIGGER THAN 80% OF FREE SPACE IN DISK
-        if (diskCacheInMB > freeSpaceInMB * 80 / 100)
-          // LOW DISK SPACE: REDUCE DISK CACHE SIZE TO HALF SIZE OF FREE DISK SPACE
-          diskCacheInMB = freeSpaceInMB * 50 / 100;
+        if (diskCacheInMB > freeSpaceInMB * 80 / 100) {
+            // LOW DISK SPACE: REDUCE DISK CACHE SIZE TO HALF SIZE OF FREE DISK SPACE
+            diskCacheInMB = freeSpaceInMB * 50 / 100;
+        }
 
         OLogManager.instance().info(null, "OrientDB auto-config DISKCACHE=%,dMB (heap=%,dMB os=%,dMB disk=%,dMB)", diskCacheInMB,
             jvmMaxMemory / 1024 / 1024, osMemory / 1024 / 1024, freeSpaceInMB);
@@ -714,20 +720,23 @@ public enum OGlobalConfiguration {
   public void setValue(final Object iValue) {
     Object oldValue = value;
 
-    if (iValue != null)
-      if (type == Boolean.class)
-        value = Boolean.parseBoolean(iValue.toString());
-      else if (type == Integer.class)
-        value = Integer.parseInt(iValue.toString());
-      else if (type == Float.class)
-        value = Float.parseFloat(iValue.toString());
-      else if (type == String.class)
-        value = iValue.toString();
-      else
-        value = iValue;
+    if (iValue != null) {
+        if (type == Boolean.class) {
+            value = Boolean.parseBoolean(iValue.toString());
+        } else if (type == Integer.class) {
+            value = Integer.parseInt(iValue.toString());
+        } else if (type == Float.class) {
+            value = Float.parseFloat(iValue.toString());
+        } else if (type == String.class) {
+            value = iValue.toString();
+        } else {
+            value = iValue;
+        }
+    }
 
-    if (changeCallback != null)
-      changeCallback.change(oldValue, value);
+    if (changeCallback != null) {
+        changeCallback.change(oldValue, value);
+    }
   }
 
   public boolean getValueAsBoolean() {

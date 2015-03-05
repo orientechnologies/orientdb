@@ -89,16 +89,19 @@ public class SchemaIndexTest extends DocumentDBBaseTest {
 
     OClass polymorpicIdsPropagationSuperSuper = schema.getClass("polymorpicIdsPropagationSuperSuper");
 
-    if (polymorpicIdsPropagationSuperSuper == null)
-      polymorpicIdsPropagationSuperSuper = schema.createClass("polymorpicIdsPropagationSuperSuper");
+    if (polymorpicIdsPropagationSuperSuper == null) {
+        polymorpicIdsPropagationSuperSuper = schema.createClass("polymorpicIdsPropagationSuperSuper");
+    }
 
     OClass polymorpicIdsPropagationSuper = schema.getClass("polymorpicIdsPropagationSuper");
-    if (polymorpicIdsPropagationSuper == null)
-      polymorpicIdsPropagationSuper = schema.createClass("polymorpicIdsPropagationSuper");
+    if (polymorpicIdsPropagationSuper == null) {
+        polymorpicIdsPropagationSuper = schema.createClass("polymorpicIdsPropagationSuper");
+    }
 
     OClass polymorpicIdsPropagation = schema.getClass("polymorpicIdsPropagation");
-    if (polymorpicIdsPropagation == null)
-      polymorpicIdsPropagation = schema.createClass("polymorpicIdsPropagation");
+    if (polymorpicIdsPropagation == null) {
+        polymorpicIdsPropagation = schema.createClass("polymorpicIdsPropagation");
+    }
 
     polymorpicIdsPropagation.setSuperClass(polymorpicIdsPropagationSuper);
     polymorpicIdsPropagationSuper.setSuperClass(polymorpicIdsPropagationSuperSuper);

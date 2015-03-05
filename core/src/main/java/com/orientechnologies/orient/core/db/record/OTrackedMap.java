@@ -53,8 +53,9 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
   public OTrackedMap(final ORecord iRecord, final Map<Object, T> iOrigin, final Class<?> cls) {
     this(iRecord);
     genericClass = cls;
-    if (iOrigin != null && !iOrigin.isEmpty())
-      putAll(iOrigin);
+    if (iOrigin != null && !iOrigin.isEmpty()) {
+        putAll(iOrigin);
+    }
   }
 
   public OTrackedMap(final ORecord iSourceRecord) {
@@ -73,26 +74,30 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
 
     T oldValue = super.put(key, value);
 
-    if (containsKey && oldValue == value)
-      return oldValue;
+    if (containsKey && oldValue == value) {
+        return oldValue;
+    }
 
-    if (oldValue instanceof ODocument)
-      ODocumentInternal.removeOwner((ODocument) oldValue, this);
+    if (oldValue instanceof ODocument) {
+        ODocumentInternal.removeOwner((ODocument) oldValue, this);
+    }
 
     addOwnerToEmbeddedDoc(value);
 
-    if (containsKey)
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.UPDATE, key, value,
-          oldValue));
-    else
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.ADD, key, value));
+    if (containsKey) {
+        fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.UPDATE, key, value,
+                oldValue));
+    } else {
+        fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.ADD, key, value));
+    }
 
     return oldValue;
   }
 
   private void addOwnerToEmbeddedDoc(T e) {
-    if (embeddedCollection && e instanceof ODocument && !((ODocument) e).getIdentity().isValid())
-      ODocumentInternal.addOwner((ODocument) e, this);
+    if (embeddedCollection && e instanceof ODocument && !((ODocument) e).getIdentity().isValid()) {
+        ODocumentInternal.addOwner((ODocument) e, this);
+    }
   }
 
   @Override
@@ -100,12 +105,14 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
     boolean containsKey = containsKey(iKey);
     final T oldValue = super.remove(iKey);
 
-    if (oldValue instanceof ODocument)
-      ODocumentInternal.removeOwner((ODocument) oldValue, this);
+    if (oldValue instanceof ODocument) {
+        ODocumentInternal.removeOwner((ODocument) oldValue, this);
+    }
 
-    if (containsKey)
-      fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.REMOVE, iKey, null,
-          oldValue));
+    if (containsKey) {
+        fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.REMOVE, iKey, null,
+                oldValue));
+    }
 
     return oldValue;
   }
@@ -113,16 +120,18 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
   @Override
   public void clear() {
     final Map<Object, T> origValues;
-    if (changeListeners.isEmpty())
-      origValues = null;
-    else
-      origValues = new HashMap<Object, T>(this);
+    if (changeListeners.isEmpty()) {
+        origValues = null;
+    } else {
+        origValues = new HashMap<Object, T>(this);
+    }
 
     if (origValues == null) {
-      for (T value : values())
-        if (value instanceof ODocument) {
-          ODocumentInternal.removeOwner((ODocument) value, this);
-        }
+      for (T value : values()) {
+          if (value instanceof ODocument) {
+              ODocumentInternal.removeOwner((ODocument) value, this);
+          }
+      }
     }
 
     super.clear();
@@ -135,8 +144,9 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
         fireCollectionChangedEvent(new OMultiValueChangeEvent<Object, T>(OMultiValueChangeEvent.OChangeType.REMOVE, entry.getKey(),
             null, entry.getValue()));
       }
-    } else
-      setDirty();
+    } else {
+        setDirty();
+    }
   }
 
   @Override
@@ -149,15 +159,17 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
   @SuppressWarnings({ "unchecked" })
   public OTrackedMap<T> setDirty() {
     if (status != STATUS.UNMARSHALLING && sourceRecord != null
-        && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord)))
-      sourceRecord.setDirty();
+        && !(sourceRecord.isDirty() && ORecordInternal.isContentChanged(sourceRecord))) {
+        sourceRecord.setDirty();
+    }
     return this;
   }
 
   @Override
   public void setDirtyNoChanged() {
-    if (status != STATUS.UNMARSHALLING && sourceRecord != null)
-      sourceRecord.setDirtyNoChanged();
+    if (status != STATUS.UNMARSHALLING && sourceRecord != null) {
+        sourceRecord.setDirtyNoChanged();
+    }
   }
 
   public STATUS getInternalStatus() {
@@ -203,13 +215,15 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
   }
 
   protected void fireCollectionChangedEvent(final OMultiValueChangeEvent<Object, T> event) {
-    if (status == STATUS.UNMARSHALLING)
-      return;
+    if (status == STATUS.UNMARSHALLING) {
+        return;
+    }
 
     setDirty();
     for (final OMultiValueChangeListener<Object, T> changeListener : changeListeners) {
-      if (changeListener != null)
-        changeListener.onAfterRecordChanged(event);
+      if (changeListener != null) {
+          changeListener.onAfterRecordChanged(event);
+      }
     }
   }
 

@@ -109,8 +109,9 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
   public ODatabase<T> commit(boolean force) throws OTransactionException {
     underlying.commit(force);
 
-    if (!underlying.getTransaction().isActive())
-      clearNewEntriesFromCache();
+    if (!underlying.getTransaction().isActive()) {
+        clearNewEntriesFromCache();
+    }
 
     return this;
   }
@@ -153,12 +154,14 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
    *          User object
    */
   public void setDirty(final Object iPojo) {
-    if (iPojo == null)
-      return;
+    if (iPojo == null) {
+        return;
+    }
 
     final ODocument record = getRecordByUserObject(iPojo, false);
-    if (record == null)
-      throw new OObjectNotManagedException("The object " + iPojo + " is not managed by current database");
+    if (record == null) {
+        throw new OObjectNotManagedException("The object " + iPojo + " is not managed by current database");
+    }
 
     record.setDirty();
   }
@@ -171,12 +174,14 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
    *          User object
    */
   public void unsetDirty(final Object iPojo) {
-    if (iPojo == null)
-      return;
+    if (iPojo == null) {
+        return;
+    }
 
     final ODocument record = getRecordByUserObject(iPojo, false);
-    if (record == null)
-      return;
+    if (record == null) {
+        return;
+    }
 
     ORecordInternal.unsetDirty(record);
   }
@@ -194,8 +199,9 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
   public ORecordVersion getVersion(final Object iPojo) {
     final ODocument record = getRecordByUserObject(iPojo, false);
 
-    if (record == null)
-      throw new OObjectNotManagedException("The object " + iPojo + " is not managed by current database");
+    if (record == null) {
+        throw new OObjectNotManagedException("The object " + iPojo + " is not managed by current database");
+    }
 
     return record.getRecordVersion();
   }
@@ -208,8 +214,9 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
    */
   public ORID getIdentity(final Object iPojo) {
     final ODocument record = getRecordByUserObject(iPojo, false);
-    if (record == null)
-      throw new OObjectNotManagedException("The object " + iPojo + " is not managed by current database");
+    if (record == null) {
+        throw new OObjectNotManagedException("The object " + iPojo + " is not managed by current database");
+    }
 
     return record.getIdentity();
   }
@@ -241,18 +248,20 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 
 		final List<ODocument> result = underlying.query(iCommand, iArgs);
 
-		if (result == null)
-			return null;
+		if (result == null) {
+                    return null;
+                }
 
 		final List<Object> resultPojo = new ArrayList<Object>();
 		Object obj;
 		for (OIdentifiable doc : result) {
 			if (doc instanceof ODocument) {
 				// GET THE ASSOCIATED DOCUMENT
-				if (((ODocument) doc).getClassName() == null)
-					obj = doc;
-				else
-					obj = getUserObjectByRecord(((ODocument) doc), iCommand.getFetchPlan(), true);
+				if (((ODocument) doc).getClassName() == null) {
+                                    obj = doc;
+                                } else {
+                                    obj = getUserObjectByRecord(((ODocument) doc), iCommand.getFetchPlan(), true);
+                                }
 
 				resultPojo.add(obj);
 			} else {
@@ -339,10 +348,11 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
   }
 
   public ODocument getRecordByUserObject(final Object iPojo, final boolean iCreateIfNotAvailable) {
-    if (iPojo instanceof ODocument)
-      return (ODocument) iPojo;
-    else if (iPojo instanceof Proxy)
-      return ((OObjectProxyMethodHandler) ((ProxyObject) iPojo).getHandler()).getDoc();
+    if (iPojo instanceof ODocument) {
+        return (ODocument) iPojo;
+    } else if (iPojo instanceof Proxy) {
+        return ((OObjectProxyMethodHandler) ((ProxyObject) iPojo).getHandler()).getDoc();
+    }
 
     ODocument record = objects2Records.get(iPojo);
     if (record == null) {
@@ -350,9 +360,10 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
       final ORID rid = OObjectSerializerHelper.getObjectID(this, iPojo);
       if (rid != null && rid.isValid()) {
         record = rid2Records.get(rid);
-        if (record == null)
-          // LOAD IT
-          record = underlying.load(rid);
+        if (record == null) {
+            // LOAD IT
+            record = underlying.load(rid);
+        }
       } else if (iCreateIfNotAvailable) {
         record = underlying.newInstance(iPojo.getClass().getSimpleName());
       } else {
@@ -382,14 +393,16 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
   }
 
   public T getUserObjectByRecord(final OIdentifiable iRecord, final String iFetchPlan, final boolean iCreate) {
-    if (!(iRecord instanceof ODocument))
-      return null;
+    if (!(iRecord instanceof ODocument)) {
+        return null;
+    }
 
     // PASS FOR rid2Records MAP BECAUSE IDENTITY COULD BE CHANGED IF WAS NEW AND IN TX
     ODocument record = rid2Records.get(iRecord.getIdentity());
 
-    if (record == null)
-      record = (ODocument) iRecord;
+    if (record == null) {
+        record = (ODocument) iRecord;
+    }
 
     Object pojo = records2Objects.get(record);
 
@@ -397,8 +410,9 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
       checkOpeness();
 
       try {
-        if (iRecord.getRecord().getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
-          record = (ODocument) record.load();
+        if (iRecord.getRecord().getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+            record = (ODocument) record.load();
+        }
 
         pojo = newInstance(record.getClassName());
         registerUserObject(pojo, record);
@@ -417,8 +431,9 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     checkOpeness();
 
     final ODocument record = objects2Records.get(iPojo);
-    if (record != null)
-      return;
+    if (record != null) {
+        return;
+    }
 
     if (OObjectSerializerHelper.hasObjectID(iPojo)) {
     } else {
@@ -431,8 +446,9 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
 
     for (Field field : iPojo.getClass().getDeclaredFields()) {
       final Object value = OObjectSerializerHelper.getFieldValue(iPojo, field.getName());
-      if (value instanceof OObjectLazyMultivalueElement)
-        ((OObjectLazyMultivalueElement<?>) value).detach(false);
+      if (value instanceof OObjectLazyMultivalueElement) {
+          ((OObjectLazyMultivalueElement<?>) value).detach(false);
+      }
     }
 
     return (RET) iPojo;
@@ -442,8 +458,9 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
    * Register a new POJO
    */
   public void registerUserObject(final Object iObject, final ORecord iRecord) {
-    if (!(iRecord instanceof ODocument))
-      return;
+    if (!(iRecord instanceof ODocument)) {
+        return;
+    }
 
     final ODocument doc = (ODocument) iRecord;
     final boolean isTombstone = doc.getRecordVersion().isTombstone();
@@ -459,21 +476,24 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
       }
 
       final ORID rid = iRecord.getIdentity();
-      if (rid.isValid() && !isTombstone)
-        rid2Records.put(rid, doc);
+      if (rid.isValid() && !isTombstone) {
+          rid2Records.put(rid, doc);
+      }
     }
   }
 
   public void unregisterPojo(final T iObject, final ODocument iRecord) {
-    if (iObject != null)
-      objects2Records.remove(iObject);
+    if (iObject != null) {
+        objects2Records.remove(iObject);
+    }
 
     if (iRecord != null) {
       records2Objects.remove(iRecord);
 
       final ORID rid = iRecord.getIdentity();
-      if (rid.isValid())
-        rid2Records.remove(rid);
+      if (rid.isValid()) {
+          rid2Records.remove(rid);
+      }
     }
   }
 
@@ -508,12 +528,14 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
    * @see #convertParameter(Object)
    */
   protected void convertParameters(final Object... iArgs) {
-    if (iArgs == null)
-      return;
+    if (iArgs == null) {
+        return;
+    }
 
     // FILTER PARAMETERS
-    for (int i = 0; i < iArgs.length; ++i)
-      iArgs[i] = convertParameter(iArgs[i]);
+    for (int i = 0; i < iArgs.length; ++i) {
+        iArgs[i] = convertParameter(iArgs[i]);
+    }
   }
 
   /**
@@ -524,30 +546,31 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
    * @see #convertParameters(Object...)
    */
   protected Object convertParameter(final Object iParameter) {
-    if (iParameter != null)
-      // FILTER PARAMETERS
-      if (iParameter instanceof Map<?, ?>) {
-        Map<String, Object> map = (Map<String, Object>) iParameter;
-
-        for (Entry<String, Object> e : map.entrySet()) {
-          map.put(e.getKey(), convertParameter(e.getValue()));
-        }
-
-        return map;
-      } else if (iParameter instanceof Collection<?>) {
-        List<Object> result = new ArrayList<Object>();
-        for (Object object : (Collection<Object>) iParameter) {
-          result.add(convertParameter(object));
+    if (iParameter != null) {
+        if (iParameter instanceof Map<?, ?>) {
+            Map<String, Object> map = (Map<String, Object>) iParameter;
+            
+            for (Entry<String, Object> e : map.entrySet()) {
+                map.put(e.getKey(), convertParameter(e.getValue()));
+            }
+            
+            return map;
+        } else if (iParameter instanceof Collection<?>) {
+            List<Object> result = new ArrayList<Object>();
+            for (Object object : (Collection<Object>) iParameter) {
+                result.add(convertParameter(object));
         }
         return result;
-      } else if (iParameter.getClass().isEnum()) {
-        return ((Enum<?>) iParameter).name();
-      } else if (!OType.isSimpleType(iParameter)) {
-        final ORID rid = getIdentity(iParameter);
-        if (rid != null && rid.isValid())
-          // REPLACE OBJECT INSTANCE WITH ITS RECORD ID
+        } else if (iParameter.getClass().isEnum()) {
+            return ((Enum<?>) iParameter).name();
+        } else if (!OType.isSimpleType(iParameter)) {
+            final ORID rid = getIdentity(iParameter);
+            if (rid != null && rid.isValid()) {
+                // REPLACE OBJECT INSTANCE WITH ITS RECORD ID
           return rid;
-      }
+            }
+        }
+    }
 
     return iParameter;
   }

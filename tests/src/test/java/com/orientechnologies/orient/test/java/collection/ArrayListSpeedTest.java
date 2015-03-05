@@ -28,8 +28,9 @@ public class ArrayListSpeedTest extends CollectionBaseAbstractSpeedTest {
   @Override
   public void cycle() {
     for (String item : arrayList) {
-      if (item.equals(searchedValue))
-        break;
+      if (item.equals(searchedValue)) {
+          break;
+      }
     }
   }
 

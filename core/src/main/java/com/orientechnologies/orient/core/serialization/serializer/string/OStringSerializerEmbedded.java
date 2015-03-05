@@ -36,16 +36,18 @@ public class OStringSerializerEmbedded implements OStringSerializer {
    * Re-Create any object if the class has a public constructor that accepts a String as unique parameter.
    */
   public Object fromStream(final String iStream) {
-    if (iStream == null || iStream.length() == 0)
-      // NULL VALUE
-      return null;
+    if (iStream == null || iStream.length() == 0) {
+        // NULL VALUE
+        return null;
+    }
 
     final ODocument instance = new ODocument();
     instance.fromStream(OBinaryProtocol.string2bytes(iStream));
 
     final String className = instance.field(ODocumentSerializable.CLASS_NAME);
-    if (className == null)
-      return instance;
+    if (className == null) {
+        return instance;
+    }
 
     Class<?> clazz = null;
     try {
@@ -54,8 +56,9 @@ public class OStringSerializerEmbedded implements OStringSerializer {
       OLogManager.instance().debug(this, "Class name provided in embedded document " + className + " does not exist.");
     }
 
-    if (clazz == null)
-      return instance;
+    if (clazz == null) {
+        return instance;
+    }
 
     if (ODocumentSerializable.class.isAssignableFrom(clazz)) {
       try {
@@ -83,11 +86,13 @@ public class OStringSerializerEmbedded implements OStringSerializer {
    */
   public StringBuilder toStream(final StringBuilder iOutput, Object iValue) {
     if (iValue != null) {
-      if (iValue instanceof ODocumentSerializable)
-        iValue = ((ODocumentSerializable) iValue).toDocument();
+      if (iValue instanceof ODocumentSerializable) {
+          iValue = ((ODocumentSerializable) iValue).toDocument();
+      }
 
-      if (!(iValue instanceof OSerializableStream))
-        throw new OSerializationException("Cannot serialize the object since it's not implements the OSerializableStream interface");
+      if (!(iValue instanceof OSerializableStream)) {
+          throw new OSerializationException("Cannot serialize the object since it's not implements the OSerializableStream interface");
+      }
 
       OSerializableStream stream = (OSerializableStream) iValue;
       iOutput.append(iValue.getClass().getName());

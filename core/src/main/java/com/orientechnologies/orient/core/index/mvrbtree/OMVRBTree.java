@@ -113,17 +113,19 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
     @Override
     public OLazyIterator<E> iterator() {
-      if (m instanceof OMVRBTree)
-        return ((OMVRBTree<E, Object>) m).keyIterator();
-      else
-        return (((OMVRBTree.NavigableSubMap) m).keyIterator());
+      if (m instanceof OMVRBTree) {
+          return ((OMVRBTree<E, Object>) m).keyIterator();
+      } else {
+          return (((OMVRBTree.NavigableSubMap) m).keyIterator());
+      }
     }
 
     public OLazyIterator<E> descendingIterator() {
-      if (m instanceof OMVRBTree)
-        return ((OMVRBTree<E, Object>) m).descendingKeyIterator();
-      else
-        return (((OMVRBTree.NavigableSubMap) m).descendingKeyIterator());
+      if (m instanceof OMVRBTree) {
+          return ((OMVRBTree<E, Object>) m).descendingKeyIterator();
+      } else {
+          return (((OMVRBTree.NavigableSubMap) m).descendingKeyIterator());
+      }
     }
 
     @Override
@@ -249,8 +251,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
       @Override
       public int size() {
-        if (fromStart && toEnd)
-          return m.size();
+        if (fromStart && toEnd) {
+            return m.size();
+        }
         if (size == -1 || sizeModCount != m.modCount) {
           sizeModCount = m.modCount;
           size = 0;
@@ -271,24 +274,28 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
       @Override
       public boolean contains(final Object o) {
-        if (!(o instanceof OMVRBTreeEntry))
-          return false;
+        if (!(o instanceof OMVRBTreeEntry)) {
+            return false;
+        }
         final OMVRBTreeEntry<K, V> entry = (OMVRBTreeEntry<K, V>) o;
         final K key = entry.getKey();
-        if (!inRange(key))
-          return false;
+        if (!inRange(key)) {
+            return false;
+        }
         V nodeValue = m.get(key);
         return nodeValue != null && valEquals(nodeValue, entry.getValue());
       }
 
       @Override
       public boolean remove(final Object o) {
-        if (!(o instanceof OMVRBTreeEntry))
-          return false;
+        if (!(o instanceof OMVRBTreeEntry)) {
+            return false;
+        }
         final OMVRBTreeEntry<K, V> entry = (OMVRBTreeEntry<K, V>) o;
         final K key = entry.getKey();
-        if (!inRange(key))
-          return false;
+        if (!inRange(key)) {
+            return false;
+        }
         final OMVRBTreeEntry<K, V> node = m.getEntry(key, PartialSearchMode.NONE);
         if (node != null && valEquals(node.getValue(), entry.getValue())) {
           m.deleteEntry(node);
@@ -324,19 +331,23 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
       final OMVRBTreeEntryPosition<K, V> nextEntry() {
         final OMVRBTreeEntryPosition<K, V> e;
-        if (next != null)
-          e = new OMVRBTreeEntryPosition<K, V>(next);
-        else
-          e = null;
-        if (e == null || e.entry == null)
-          throw new NoSuchElementException();
+        if (next != null) {
+            e = new OMVRBTreeEntryPosition<K, V>(next);
+        } else {
+            e = null;
+        }
+        if (e == null || e.entry == null) {
+            throw new NoSuchElementException();
+        }
 
         final K k = e.getKey();
-        if (k == fenceKey || k.equals(fenceKey))
-          throw new NoSuchElementException();
+        if (k == fenceKey || k.equals(fenceKey)) {
+            throw new NoSuchElementException();
+        }
 
-        if (m.modCount != expectedModCount)
-          throw new ConcurrentModificationException();
+        if (m.modCount != expectedModCount) {
+            throw new ConcurrentModificationException();
+        }
         next.assign(OMVRBTree.next(e));
         lastReturned = e;
         return e;
@@ -344,51 +355,62 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
       final OMVRBTreeEntryPosition<K, V> prevEntry() {
         final OMVRBTreeEntryPosition<K, V> e;
-        if (next != null)
-          e = new OMVRBTreeEntryPosition<K, V>(next);
-        else
-          e = null;
+        if (next != null) {
+            e = new OMVRBTreeEntryPosition<K, V>(next);
+        } else {
+            e = null;
+        }
 
-        if (e == null || e.entry == null)
-          throw new NoSuchElementException();
+        if (e == null || e.entry == null) {
+            throw new NoSuchElementException();
+        }
 
         final K k = e.getKey();
-        if (k == fenceKey || k.equals(fenceKey))
-          throw new NoSuchElementException();
+        if (k == fenceKey || k.equals(fenceKey)) {
+            throw new NoSuchElementException();
+        }
 
-        if (m.modCount != expectedModCount)
-          throw new ConcurrentModificationException();
+        if (m.modCount != expectedModCount) {
+            throw new ConcurrentModificationException();
+        }
         next.assign(OMVRBTree.previous(e));
         lastReturned = e;
         return e;
       }
 
       final public T update(final T iValue) {
-        if (lastReturned == null)
-          throw new IllegalStateException();
-        if (m.modCount != expectedModCount)
-          throw new ConcurrentModificationException();
+        if (lastReturned == null) {
+            throw new IllegalStateException();
+        }
+        if (m.modCount != expectedModCount) {
+            throw new ConcurrentModificationException();
+        }
         return (T) lastReturned.entry.setValue((V) iValue);
       }
 
       final void removeAscending() {
-        if (lastReturned == null)
-          throw new IllegalStateException();
-        if (m.modCount != expectedModCount)
-          throw new ConcurrentModificationException();
+        if (lastReturned == null) {
+            throw new IllegalStateException();
+        }
+        if (m.modCount != expectedModCount) {
+            throw new ConcurrentModificationException();
+        }
         // deleted entries are replaced by their successors
-        if (lastReturned.entry.getLeft() != null && lastReturned.entry.getRight() != null)
-          next = lastReturned;
+        if (lastReturned.entry.getLeft() != null && lastReturned.entry.getRight() != null) {
+            next = lastReturned;
+        }
         m.deleteEntry(lastReturned.entry);
         lastReturned = null;
         expectedModCount = m.modCount;
       }
 
       final void removeDescending() {
-        if (lastReturned == null)
-          throw new IllegalStateException();
-        if (m.modCount != expectedModCount)
-          throw new ConcurrentModificationException();
+        if (lastReturned == null) {
+            throw new IllegalStateException();
+        }
+        if (m.modCount != expectedModCount) {
+            throw new ConcurrentModificationException();
+        }
         m.deleteEntry(lastReturned.entry);
         lastReturned = null;
         expectedModCount = m.modCount;
@@ -464,13 +486,16 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     NavigableSubMap(final OMVRBTree<K, V> m, final boolean fromStart, K lo, final boolean loInclusive, final boolean toEnd, K hi,
         final boolean hiInclusive) {
       if (!fromStart && !toEnd) {
-        if (m.compare(lo, hi) > 0)
-          throw new IllegalArgumentException("fromKey > toKey");
+        if (m.compare(lo, hi) > 0) {
+            throw new IllegalArgumentException("fromKey > toKey");
+        }
       } else {
-        if (!fromStart) // type check
-          m.compare(lo, lo);
-        if (!toEnd)
-          m.compare(hi, hi);
+        if (!fromStart) { // type check
+            m.compare(lo, lo);
+        }
+        if (!toEnd) {
+            m.compare(hi, hi);
+        }
       }
 
       this.m = m;
@@ -485,8 +510,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     final boolean tooLow(final Object key) {
       if (!fromStart) {
         int c = m.compare(key, lo);
-        if (c < 0 || (c == 0 && !loInclusive))
-          return true;
+        if (c < 0 || (c == 0 && !loInclusive)) {
+            return true;
+        }
       }
       return false;
     }
@@ -494,8 +520,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     final boolean tooHigh(final Object key) {
       if (!toEnd) {
         int c = m.compare(key, hi);
-        if (c > 0 || (c == 0 && !hiInclusive))
-          return true;
+        if (c > 0 || (c == 0 && !hiInclusive)) {
+            return true;
+        }
       }
       return false;
     }
@@ -528,29 +555,33 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     }
 
     final OMVRBTreeEntryPosition<K, V> absCeiling(K key) {
-      if (tooLow(key))
-        return absLowest();
+      if (tooLow(key)) {
+          return absLowest();
+      }
       OMVRBTreeEntry<K, V> e = m.getCeilingEntry(key, PartialSearchMode.NONE);
       return (e == null || tooHigh(e.getKey())) ? null : new OMVRBTreeEntryPosition<K, V>(e);
     }
 
     final OMVRBTreeEntryPosition<K, V> absHigher(K key) {
-      if (tooLow(key))
-        return absLowest();
+      if (tooLow(key)) {
+          return absLowest();
+      }
       OMVRBTreeEntry<K, V> e = m.getHigherEntry(key);
       return (e == null || tooHigh(e.getKey())) ? null : new OMVRBTreeEntryPosition<K, V>(e);
     }
 
     final OMVRBTreeEntryPosition<K, V> absFloor(K key) {
-      if (tooHigh(key))
-        return absHighest();
+      if (tooHigh(key)) {
+          return absHighest();
+      }
       OMVRBTreeEntry<K, V> e = m.getFloorEntry(key, PartialSearchMode.NONE);
       return (e == null || tooLow(e.getKey())) ? null : new OMVRBTreeEntryPosition<K, V>(e);
     }
 
     final OMVRBTreeEntryPosition<K, V> absLower(K key) {
-      if (tooHigh(key))
-        return absHighest();
+      if (tooHigh(key)) {
+          return absHighest();
+      }
       OMVRBTreeEntry<K, V> e = m.getLowerEntry(key);
       return (e == null || tooLow(e.getKey())) ? null : new OMVRBTreeEntryPosition<K, V>(e);
     }
@@ -604,8 +635,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
     @Override
     public final V put(K key, V value) {
-      if (!inRange(key))
-        throw new IllegalArgumentException("key out of range");
+      if (!inRange(key)) {
+          throw new IllegalArgumentException("key out of range");
+      }
       return m.put(key, value);
     }
 
@@ -670,16 +702,18 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     public final Map.Entry<K, V> pollFirstEntry() {
       OMVRBTreeEntry<K, V> e = subLowest();
       Map.Entry<K, V> result = exportEntry(e);
-      if (e != null)
-        m.deleteEntry(e);
+      if (e != null) {
+          m.deleteEntry(e);
+      }
       return result;
     }
 
     public final Map.Entry<K, V> pollLastEntry() {
       OMVRBTreeEntry<K, V> e = subHighest();
       Map.Entry<K, V> result = exportEntry(e);
-      if (e != null)
-        m.deleteEntry(e);
+      if (e != null) {
+          m.deleteEntry(e);
+      }
       return result;
     }
 
@@ -736,22 +770,26 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     }
 
     public ONavigableMap<K, V> subMap(final K fromKey, final boolean fromInclusive, final K toKey, final boolean toInclusive) {
-      if (!inRange(fromKey, fromInclusive))
-        throw new IllegalArgumentException("fromKey out of range");
-      if (!inRange(toKey, toInclusive))
-        throw new IllegalArgumentException("toKey out of range");
+      if (!inRange(fromKey, fromInclusive)) {
+          throw new IllegalArgumentException("fromKey out of range");
+      }
+      if (!inRange(toKey, toInclusive)) {
+          throw new IllegalArgumentException("toKey out of range");
+      }
       return new AscendingSubMap<K, V>(m, false, fromKey, fromInclusive, false, toKey, toInclusive);
     }
 
     public ONavigableMap<K, V> headMap(final K toKey, final boolean inclusive) {
-      if (!inRange(toKey, inclusive))
-        throw new IllegalArgumentException("toKey out of range");
+      if (!inRange(toKey, inclusive)) {
+          throw new IllegalArgumentException("toKey out of range");
+      }
       return new AscendingSubMap<K, V>(m, fromStart, lo, loInclusive, false, toKey, inclusive);
     }
 
     public ONavigableMap<K, V> tailMap(final K fromKey, final boolean inclusive) {
-      if (!inRange(fromKey, inclusive))
-        throw new IllegalArgumentException("fromKey out of range");
+      if (!inRange(fromKey, inclusive)) {
+          throw new IllegalArgumentException("fromKey out of range");
+      }
       return new AscendingSubMap<K, V>(m, false, fromKey, inclusive, toEnd, hi, hiInclusive);
     }
 
@@ -833,22 +871,26 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     }
 
     public ONavigableMap<K, V> subMap(final K fromKey, final boolean fromInclusive, final K toKey, final boolean toInclusive) {
-      if (!inRange(fromKey, fromInclusive))
-        throw new IllegalArgumentException("fromKey out of range");
-      if (!inRange(toKey, toInclusive))
-        throw new IllegalArgumentException("toKey out of range");
+      if (!inRange(fromKey, fromInclusive)) {
+          throw new IllegalArgumentException("fromKey out of range");
+      }
+      if (!inRange(toKey, toInclusive)) {
+          throw new IllegalArgumentException("toKey out of range");
+      }
       return new DescendingSubMap<K, V>(m, false, toKey, toInclusive, false, fromKey, fromInclusive);
     }
 
     public ONavigableMap<K, V> headMap(final K toKey, final boolean inclusive) {
-      if (!inRange(toKey, inclusive))
-        throw new IllegalArgumentException("toKey out of range");
+      if (!inRange(toKey, inclusive)) {
+          throw new IllegalArgumentException("toKey out of range");
+      }
       return new DescendingSubMap<K, V>(m, false, toKey, inclusive, toEnd, hi, hiInclusive);
     }
 
     public ONavigableMap<K, V> tailMap(final K fromKey, final boolean inclusive) {
-      if (!inRange(fromKey, inclusive))
-        throw new IllegalArgumentException("fromKey out of range");
+      if (!inRange(fromKey, inclusive)) {
+          throw new IllegalArgumentException("fromKey out of range");
+      }
       return new DescendingSubMap<K, V>(m, fromStart, lo, loInclusive, false, fromKey, inclusive);
     }
 
@@ -955,8 +997,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
     @Override
     public boolean contains(final Object o) {
-      if (!(o instanceof Map.Entry))
-        return false;
+      if (!(o instanceof Map.Entry)) {
+          return false;
+      }
       OMVRBTreeEntry<K, V> entry = (OMVRBTreeEntry<K, V>) o;
       final V value = entry.getValue();
       final V p = get(entry.getKey());
@@ -965,8 +1008,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
     @Override
     public boolean remove(final Object o) {
-      if (!(o instanceof Map.Entry))
-        return false;
+      if (!(o instanceof Map.Entry)) {
+          return false;
+      }
       final OMVRBTreeEntry<K, V> entry = (OMVRBTreeEntry<K, V>) o;
       final V value = entry.getValue();
       OMVRBTreeEntry<K, V> p = getEntry(entry.getKey(), PartialSearchMode.NONE);
@@ -1179,8 +1223,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
    *           if the Entry is null
    */
   static <K> K key(OMVRBTreeEntry<K, ?> e) {
-    if (e == null)
-      throw new NoSuchElementException();
+    if (e == null) {
+        throw new NoSuchElementException();
+    }
     return e.getKey();
   }
 
@@ -1193,8 +1238,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
    * Returns the successor of the specified Entry, or null if no such.
    */
   public static <K, V> OMVRBTreeEntry<K, V> successor(final OMVRBTreeEntry<K, V> t) {
-    if (t == null)
-      return null;
+    if (t == null) {
+        return null;
+    }
 
     OMVRBTreeEntry<K, V> p = null;
 
@@ -1223,8 +1269,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
    * Returns the next item of the tree.
    */
   public static <K, V> OMVRBTreeEntry<K, V> next(final OMVRBTreeEntry<K, V> t) {
-    if (t == null)
-      return null;
+    if (t == null) {
+        return null;
+    }
 
     final OMVRBTreeEntry<K, V> succ;
     if (t.tree.pageIndex < t.getSize() - 1) {
@@ -1249,9 +1296,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
    * Returns the predecessor of the specified Entry, or null if no such.
    */
   public static <K, V> OMVRBTreeEntry<K, V> predecessor(final OMVRBTreeEntry<K, V> t) {
-    if (t == null)
-      return null;
-    else if (t.getLeft() != null) {
+    if (t == null) {
+        return null;
+    } else if (t.getLeft() != null) {
       OMVRBTreeEntry<K, V> p = t.getLeft();
       while (p.getRight() != null)
         p = p.getRight();
@@ -1278,18 +1325,20 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
    * Returns the previous item of the tree.
    */
   public static <K, V> OMVRBTreeEntry<K, V> previous(final OMVRBTreeEntry<K, V> t) {
-    if (t == null)
-      return null;
+    if (t == null) {
+        return null;
+    }
 
     final int index = t.getTree().getPageIndex();
 
     final OMVRBTreeEntry<K, V> prev;
     if (index <= 0) {
       prev = predecessor(t);
-      if (prev != null)
-        t.tree.pageIndex = prev.getSize() - 1;
-      else
-        t.tree.pageIndex = 0;
+      if (prev != null) {
+          t.tree.pageIndex = prev.getSize() - 1;
+      } else {
+          t.tree.pageIndex = 0;
+      }
     } else {
       prev = t;
       t.tree.pageIndex = index - 1;
@@ -1315,8 +1364,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   }
 
   private static <K, V> void setColor(final OMVRBTreeEntry<K, V> p, final boolean c) {
-    if (p != null)
-      p.setColor(c);
+    if (p != null) {
+        p.setColor(c);
+    }
   }
 
   private static <K, V> OMVRBTreeEntry<K, V> leftOf(final OMVRBTreeEntry<K, V> p) {
@@ -1335,8 +1385,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
    */
   private static int computeRedLevel(final int sz) {
     int level = 0;
-    for (int m = sz - 1; m >= 0; m = m / 2 - 1)
-      level++;
+    for (int m = sz - 1; m >= 0; m = m / 2 - 1) {
+        level++;
+    }
     return level;
   }
 
@@ -1383,9 +1434,11 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
    */
   @Override
   public boolean containsValue(final Object value) {
-    for (OMVRBTreeEntry<K, V> e = getFirstEntry(); e != null; e = next(e))
-      if (valEquals(value, e.getValue()))
-        return true;
+    for (OMVRBTreeEntry<K, V> e = getFirstEntry(); e != null; e = next(e)) {
+        if (valEquals(value, e.getValue())) {
+            return true;
+        }
+    }
     return false;
   }
 
@@ -1416,8 +1469,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
    */
   @Override
   public V get(final Object key) {
-    if (getTreeSize() == 0)
-      return null;
+    if (getTreeSize() == 0) {
+        return null;
+    }
 
     OMVRBTreeEntry<K, V> entry = null;
 
@@ -1425,12 +1479,14 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     final OMVRBTreeEntry<K, V> node = getLastSearchNodeForSameKey(key);
     if (node != null) {
       // SAME SEARCH OF PREVIOUS ONE: REUSE LAST RESULT?
-      if (lastSearchFound)
-        // REUSE LAST RESULT, OTHERWISE THE KEY NOT EXISTS
-        return node.getValue(lastSearchIndex);
-    } else
-      // SEARCH THE ITEM
-      entry = getEntry(key, PartialSearchMode.NONE);
+      if (lastSearchFound) {
+          // REUSE LAST RESULT, OTHERWISE THE KEY NOT EXISTS
+          return node.getValue(lastSearchIndex);
+      }
+    } else {
+        // SEARCH THE ITEM
+        entry = getEntry(key, PartialSearchMode.NONE);
+    }
 
     return entry == null ? null : entry.getValue();
 
@@ -1507,8 +1563,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   }
 
   final OMVRBTreeEntry<K, V> getEntry(final Object key, final boolean iGetContainer, final PartialSearchMode partialSearchMode) {
-    if (key == null)
-      return setLastSearchNode(null, null);
+    if (key == null) {
+        return setLastSearchNode(null, null);
+    }
 
     pageItemFound = false;
 
@@ -1525,8 +1582,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
     checkTreeStructure(p);
 
-    if (p == null)
-      return setLastSearchNode(key, null);
+    if (p == null) {
+        return setLastSearchNode(key, null);
+    }
 
     OMVRBTreeEntry<K, V> lastNode = p;
     OMVRBTreeEntry<K, V> prevNode = null;
@@ -1586,10 +1644,11 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
           }
 
           if (partialSearchMode.equals(PartialSearchMode.NONE)) {
-            if (value != null || iGetContainer)
-              return lastNode;
-            else
-              return null;
+            if (value != null || iGetContainer) {
+                return lastNode;
+            } else {
+                return null;
+            }
           }
 
           if (partialSearchMode.equals(PartialSearchMode.HIGHEST_BOUNDARY)) {
@@ -1606,9 +1665,10 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
           setLastSearchNode(key, lastNode);
         }
 
-        if (value != null || iGetContainer)
-          // FOUND: RETURN CURRENT NODE OR AT LEAST THE CONTAINER NODE
-          return lastNode;
+        if (value != null || iGetContainer) {
+            // FOUND: RETURN CURRENT NODE OR AT LEAST THE CONTAINER NODE
+            return lastNode;
+        }
 
         // NOT FOUND
         return null;
@@ -1622,24 +1682,26 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
   public K enhanceCompositeKey(Object key, PartialSearchMode partialSearchMode) {
     K k;
-    if (keySize == 1)
-      k = (K) key;
-    else if (((OCompositeKey) key).getKeys().size() == keySize)
-      k = (K) key;
-    else if (partialSearchMode.equals(PartialSearchMode.NONE))
-      k = (K) key;
-    else {
+    if (keySize == 1) {
+        k = (K) key;
+    } else if (((OCompositeKey) key).getKeys().size() == keySize) {
+        k = (K) key;
+    } else if (partialSearchMode.equals(PartialSearchMode.NONE)) {
+        k = (K) key;
+    } else {
       final OCompositeKey fullKey = new OCompositeKey((Comparable<? super K>) key);
       int itemsToAdd = keySize - fullKey.getKeys().size();
 
       final Comparable<?> keyItem;
-      if (partialSearchMode.equals(PartialSearchMode.HIGHEST_BOUNDARY))
-        keyItem = ALWAYS_GREATER_KEY;
-      else
-        keyItem = ALWAYS_LESS_KEY;
+      if (partialSearchMode.equals(PartialSearchMode.HIGHEST_BOUNDARY)) {
+          keyItem = ALWAYS_GREATER_KEY;
+        } else {
+          keyItem = ALWAYS_LESS_KEY;
+      }
 
-      for (int i = 0; i < itemsToAdd; i++)
-        fullKey.addKey(keyItem);
+      for (int i = 0; i < itemsToAdd; i++) {
+          fullKey.addKey(keyItem);
+      }
 
       k = (K) fullKey;
     }
@@ -1659,17 +1721,19 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   public OMVRBTreeEntry<K, V> getCeilingEntry(final K key, final PartialSearchMode partialSearchMode) {
     OMVRBTreeEntry<K, V> p = getEntry(key, true, partialSearchMode);
 
-    if (p == null)
-      return null;
+    if (p == null) {
+        return null;
+    }
 
-    if (pageItemFound)
-      return p;
-    // NOT MATCHED, POSITION IS ALREADY TO THE NEXT ONE
-    else if (pageIndex < p.getSize()) {
-      if (key instanceof OCompositeKey)
-        return adjustSearchResult((OCompositeKey) key, partialSearchMode, p);
-      else
+    if (pageItemFound) {
         return p;
+        // NOT MATCHED, POSITION IS ALREADY TO THE NEXT ONE
+    } else if (pageIndex < p.getSize()) {
+      if (key instanceof OCompositeKey) {
+          return adjustSearchResult((OCompositeKey) key, partialSearchMode, p);
+        } else {
+          return p;
+        }
     }
 
     return null;
@@ -1687,16 +1751,19 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   public OMVRBTreeEntry<K, V> getFloorEntry(final K key, final PartialSearchMode partialSearchMode) {
     OMVRBTreeEntry<K, V> p = getEntry(key, true, partialSearchMode);
 
-    if (p == null)
-      return null;
+    if (p == null) {
+        return null;
+    }
 
-    if (pageItemFound)
-      return p;
+    if (pageItemFound) {
+        return p;
+    }
 
     final OMVRBTreeEntry<K, V> adjacentEntry = previous(p);
 
-    if (adjacentEntry == null)
-      return null;
+    if (adjacentEntry == null) {
+        return null;
+    }
 
     if (key instanceof OCompositeKey) {
       return adjustSearchResult((OCompositeKey) key, partialSearchMode, adjacentEntry);
@@ -1711,15 +1778,17 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   public OMVRBTreeEntry<K, V> getHigherEntry(final K key) {
     final OMVRBTreeEntry<K, V> p = getEntry(key, true, PartialSearchMode.HIGHEST_BOUNDARY);
 
-    if (p == null)
-      return null;
+    if (p == null) {
+        return null;
+    }
 
-    if (pageItemFound)
-      // MATCH, RETURN THE NEXT ONE
-      return next(p);
-    else if (pageIndex < p.getSize())
-      // NOT MATCHED, POSITION IS ALREADY TO THE NEXT ONE
-      return p;
+    if (pageItemFound) {
+        // MATCH, RETURN THE NEXT ONE
+        return next(p);
+    } else if (pageIndex < p.getSize()) {
+        // NOT MATCHED, POSITION IS ALREADY TO THE NEXT ONE
+        return p;
+    }
 
     return null;
   }
@@ -1731,8 +1800,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   public OMVRBTreeEntry<K, V> getLowerEntry(final K key) {
     final OMVRBTreeEntry<K, V> p = getEntry(key, true, PartialSearchMode.LOWEST_BOUNDARY);
 
-    if (p == null)
-      return null;
+    if (p == null) {
+        return null;
+    }
 
     return previous(p);
   }
@@ -1801,52 +1871,55 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
         // CREATE NEW NODE AND COPY HALF OF VALUES FROM THE ORIGIN TO THE NEW ONE IN ORDER TO GET VALUES BALANCED
         final OMVRBTreeEntry<K, V> newNode = createEntry(parentNode);
 
-        if (pageIndex < parentNode.getPageSplitItems())
-          // INSERT IN THE ORIGINAL NODE
-          parentNode.insert(pageIndex, key, value);
-        else
-          // INSERT IN THE NEW NODE
-          newNode.insert(pageIndex - parentNode.getPageSplitItems(), key, value);
+        if (pageIndex < parentNode.getPageSplitItems()) {
+            // INSERT IN THE ORIGINAL NODE
+            parentNode.insert(pageIndex, key, value);
+        } else {
+            // INSERT IN THE NEW NODE
+            newNode.insert(pageIndex - parentNode.getPageSplitItems(), key, value);
+        }
 
         OMVRBTreeEntry<K, V> node = parentNode.getRight();
         OMVRBTreeEntry<K, V> prevNode = parentNode;
         int cmp = 0;
         final K fk = newNode.getFirstKey();
-        if (comparator != null)
-          while (node != null) {
-            cmp = comparator.compare(fk, node.getFirstKey());
-            if (cmp < 0) {
-              prevNode = node;
-              node = node.getLeft();
-            } else if (cmp > 0) {
-              prevNode = node;
-              node = node.getRight();
-            } else {
-              throw new IllegalStateException("Duplicated keys were found in OMVRBTree.");
+        if (comparator != null) {
+            while (node != null) {
+                cmp = comparator.compare(fk, node.getFirstKey());
+                if (cmp < 0) {
+                    prevNode = node;
+                    node = node.getLeft();
+                } else if (cmp > 0) {
+                    prevNode = node;
+                    node = node.getRight();
+                } else {
+                    throw new IllegalStateException("Duplicated keys were found in OMVRBTree.");
+                }
+            }
+        } else {
+            while (node != null) {
+                cmp = compare(fk, node.getFirstKey());
+                if (cmp < 0) {
+                    prevNode = node;
+                    node = node.getLeft();
+                } else if (cmp > 0) {
+                    prevNode = node;
+                    node = node.getRight();
+                } else {
+                    throw new IllegalStateException("Duplicated keys were found in OMVRBTree.");
             }
           }
-        else
-          while (node != null) {
-            cmp = compare(fk, node.getFirstKey());
-            if (cmp < 0) {
-              prevNode = node;
-              node = node.getLeft();
-            } else if (cmp > 0) {
-              prevNode = node;
-              node = node.getRight();
-            } else {
-              throw new IllegalStateException("Duplicated keys were found in OMVRBTree.");
-            }
-          }
+        }
 
-        if (prevNode == parentNode)
-          parentNode.setRight(newNode);
-        else if (cmp < 0)
-          prevNode.setLeft(newNode);
-        else if (cmp > 0)
-          prevNode.setRight(newNode);
-        else
-          throw new IllegalStateException("Duplicated keys were found in OMVRBTree.");
+        if (prevNode == parentNode) {
+            parentNode.setRight(newNode);
+        } else if (cmp < 0) {
+            prevNode.setLeft(newNode);
+        } else if (cmp > 0) {
+            prevNode.setRight(newNode);
+        } else {
+            throw new IllegalStateException("Duplicated keys were found in OMVRBTree.");
+        }
 
         fixAfterInsertion(newNode);
       }
@@ -1877,8 +1950,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   public V remove(final Object key) {
     OMVRBTreeEntry<K, V> p = getEntry(key, PartialSearchMode.NONE);
     setLastSearchNode(null, null);
-    if (p == null)
-      return null;
+    if (p == null) {
+        return null;
+    }
 
     V oldValue = p.getValue();
     deleteEntry(p);
@@ -1960,8 +2034,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   public Entry<K, V> pollFirstEntry() {
     OMVRBTreeEntry<K, V> p = getFirstEntry();
     Map.Entry<K, V> result = exportEntry(p);
-    if (p != null)
-      deleteEntry(p);
+    if (p != null) {
+        deleteEntry(p);
+    }
     return result;
   }
 
@@ -1971,8 +2046,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   public Entry<K, V> pollLastEntry() {
     OMVRBTreeEntry<K, V> p = getLastEntry();
     Map.Entry<K, V> result = exportEntry(p);
-    if (p != null)
-      deleteEntry(p);
+    if (p != null) {
+        deleteEntry(p);
+    }
     return result;
   }
 
@@ -2239,8 +2315,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   public OMVRBTreeEntry<K, V> getFirstEntry() {
     OMVRBTreeEntry<K, V> p = root;
     if (p != null) {
-      if (p.getSize() > 0)
-        pageIndex = 0;
+      if (p.getSize() > 0) {
+          pageIndex = 0;
+      }
 
       while (p.getLeft() != null)
         p = p.getLeft();
@@ -2254,12 +2331,14 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
    */
   public OMVRBTreeEntry<K, V> getLastEntry() {
     OMVRBTreeEntry<K, V> p = root;
-    if (p != null)
-      while (p.getRight() != null)
-        p = p.getRight();
+    if (p != null) {
+        while (p.getRight() != null)
+            p = p.getRight();
+    }
 
-    if (p != null)
-      pageIndex = p.getSize() - 1;
+    if (p != null) {
+        pageIndex = p.getSize() - 1;
+    }
 
     return p;
   }
@@ -2278,8 +2357,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
       // DELETE INSIDE THE NODE
       p.remove();
 
-      if (p.getSize() > 0)
-        return p;
+      if (p.getSize() > 0) {
+          return p;
+      }
     }
 
     final OMVRBTreeEntry<K, V> next = successor(p);
@@ -2321,20 +2401,23 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   }
 
   public void checkTreeStructure(final OMVRBTreeEntry<K, V> iRootNode) {
-    if (!runtimeCheckEnabled || iRootNode == null)
-      return;
+    if (!runtimeCheckEnabled || iRootNode == null) {
+        return;
+    }
 
     int currPageIndex = pageIndex;
 
     OMVRBTreeEntry<K, V> prevNode = null;
     int i = 0;
     for (OMVRBTreeEntry<K, V> e = iRootNode.getFirstInMemory(); e != null; e = e.getNextInMemory()) {
-      if (e.getSize() == 0)
-        OLogManager.instance().error(this, "[OMVRBTree.checkTreeStructure] Node %s has 0 items\n", e);
+      if (e.getSize() == 0) {
+          OLogManager.instance().error(this, "[OMVRBTree.checkTreeStructure] Node %s has 0 items\n", e);
+      }
 
       if (prevNode != null) {
-        if (prevNode.getTree() == null)
-          OLogManager.instance().error(this, "[OMVRBTree.checkTreeStructure] Freed record %d found in memory\n", i);
+        if (prevNode.getTree() == null) {
+            OLogManager.instance().error(this, "[OMVRBTree.checkTreeStructure] Freed record %d found in memory\n", i);
+        }
 
         if (compare(e.getFirstKey(), e.getLastKey()) > 0) {
           OLogManager.instance().error(this, "[OMVRBTree.checkTreeStructure] begin key is > than last key\n", e.getFirstKey(),
@@ -2420,15 +2503,17 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     if (p != null) {
       OMVRBTreeEntry<K, V> r = p.getRight();
       p.setRight(r.getLeft());
-      if (r.getLeft() != null)
-        r.getLeft().setParent(p);
+      if (r.getLeft() != null) {
+          r.getLeft().setParent(p);
+      }
       r.setParent(p.getParent());
-      if (p.getParent() == null)
-        setRoot(r);
-      else if (p.getParent().getLeft() == p)
-        p.getParent().setLeft(r);
-      else
-        p.getParent().setRight(r);
+      if (p.getParent() == null) {
+          setRoot(r);
+      } else if (p.getParent().getLeft() == p) {
+          p.getParent().setLeft(r);
+      } else {
+          p.getParent().setRight(r);
+      }
       p.setParent(r);
       r.setLeft(p);
     }
@@ -2439,15 +2524,17 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     if (p != null) {
       OMVRBTreeEntry<K, V> l = p.getLeft();
       p.setLeft(l.getRight());
-      if (l.getRight() != null)
-        l.getRight().setParent(p);
+      if (l.getRight() != null) {
+          l.getRight().setParent(p);
+      }
       l.setParent(p.getParent());
-      if (p.getParent() == null)
-        setRoot(l);
-      else if (p.getParent().getRight() == p)
-        p.getParent().setRight(l);
-      else
-        p.getParent().setLeft(l);
+      if (p.getParent() == null) {
+          setRoot(l);
+      } else if (p.getParent().getRight() == p) {
+          p.getParent().setRight(l);
+      } else {
+          p.getParent().setLeft(l);
+      }
       l.setRight(p);
       p.setParent(l);
     }
@@ -2478,12 +2565,13 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     if (replacement != null) {
       // Link replacement to parent
       replacement.setParent(p.getParent());
-      if (p.getParent() == null)
-        setRoot(replacement);
-      else if (p == p.getParent().getLeft())
-        p.getParent().setLeft(replacement);
-      else
-        p.getParent().setRight(replacement);
+      if (p.getParent() == null) {
+          setRoot(replacement);
+      } else if (p == p.getParent().getLeft()) {
+          p.getParent().setLeft(replacement);
+      } else {
+          p.getParent().setRight(replacement);
+      }
 
       // Null out links so they are OK to use by fixAfterDeletion.
       p.setLeft(null);
@@ -2491,19 +2579,22 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
       p.setParent(null);
 
       // Fix replacement
-      if (p.getColor() == BLACK)
-        fixAfterDeletion(replacement);
+      if (p.getColor() == BLACK) {
+          fixAfterDeletion(replacement);
+      }
     } else if (p.getParent() == null && size() == 0) { // return if we are the only node. Check the size to be sure the map is empty
       clear();
     } else { // No children. Use self as phantom replacement and unlink.
-      if (p.getColor() == BLACK)
-        fixAfterDeletion(p);
+      if (p.getColor() == BLACK) {
+          fixAfterDeletion(p);
+      }
 
       if (p.getParent() != null) {
-        if (p == p.getParent().getLeft())
-          p.getParent().setLeft(null);
-        else if (p == p.getParent().getRight())
-          p.getParent().setRight(null);
+        if (p == p.getParent().getLeft()) {
+            p.getParent().setLeft(null);
+        } else if (p == p.getParent().getRight()) {
+            p.getParent().setRight(null);
+        }
         p.setParent(null);
       }
     }
@@ -2513,16 +2604,18 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
   protected OMVRBTreeEntry<K, V> getLastSearchNodeForSameKey(final Object key) {
     if (key != null && lastSearchKey != null) {
-      if (key instanceof OCompositeKey)
-        return key.equals(lastSearchKey) ? lastSearchNode : null;
-      if (comparator != null)
-        return comparator.compare((K) key, (K) lastSearchKey) == 0 ? lastSearchNode : null;
-      else
-        try {
-          return ((Comparable<? super K>) key).compareTo((K) lastSearchKey) == 0 ? lastSearchNode : null;
-        } catch (Exception e) {
-          // IGNORE IT
-        }
+      if (key instanceof OCompositeKey) {
+          return key.equals(lastSearchKey) ? lastSearchNode : null;
+      }
+      if (comparator != null) {
+          return comparator.compare((K) key, (K) lastSearchKey) == 0 ? lastSearchNode : null;
+      } else {
+          try {
+              return ((Comparable<? super K>) key).compareTo((K) lastSearchKey) == 0 ? lastSearchNode : null;
+          } catch (Exception e) {
+              // IGNORE IT
+          }
+      }
     }
 
     return null;
@@ -2553,8 +2646,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
       pageIndex = oldPageIndex;
       pageItemFound = false;
 
-      if (iGetContainer)
-        return lastNode;
+      if (iGetContainer) {
+          return lastNode;
+      }
 
       return null;
     }
@@ -2567,16 +2661,18 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     } else if (pageItemComparator > 1) {
       pageItemFound = false;
 
-      if (iGetContainer)
-        return prevNd;
+      if (iGetContainer) {
+          return prevNd;
+      }
 
       return null;
     } else {
       pageIndex = oldPageIndex;
       pageItemFound = false;
 
-      if (iGetContainer)
-        return lastNode;
+      if (iGetContainer) {
+          return lastNode;
+      }
 
       return null;
     }
@@ -2599,8 +2695,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
         pageItemFound = false;
 
-        if (iGetContainer)
-          return lastNode;
+        if (iGetContainer) {
+            return lastNode;
+        }
 
         return null;
       }
@@ -2615,8 +2712,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     } else {
       pageItemFound = false;
 
-      if (iGetContainer)
-        return lastNode;
+      if (iGetContainer) {
+          return lastNode;
+      }
 
       return null;
     }
@@ -2624,8 +2722,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
 
   private OMVRBTreeEntry<K, V> adjustSearchResult(final OCompositeKey key, final PartialSearchMode partialSearchMode,
       final OMVRBTreeEntry<K, V> foundEntry) {
-    if (partialSearchMode.equals(PartialSearchMode.NONE))
-      return foundEntry;
+    if (partialSearchMode.equals(PartialSearchMode.NONE)) {
+        return foundEntry;
+    }
 
     final OCompositeKey keyToSearch = key;
     final OCompositeKey foundKey = (OCompositeKey) foundEntry.getKey();
@@ -2640,21 +2739,24 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
         final Object keyItem = keyItems.get(i);
         borderKey.addKey(keyItem);
 
-        if (i < keyToSearch.getKeys().size())
-          keyToCompare.addKey(keyItem);
+        if (i < keyToSearch.getKeys().size()) {
+            keyToCompare.addKey(keyItem);
+        }
       }
 
-      if (partialSearchMode.equals(PartialSearchMode.HIGHEST_BOUNDARY))
-        borderKey.addKey(ALWAYS_GREATER_KEY);
-      else
-        borderKey.addKey(ALWAYS_LESS_KEY);
+      if (partialSearchMode.equals(PartialSearchMode.HIGHEST_BOUNDARY)) {
+          borderKey.addKey(ALWAYS_GREATER_KEY);
+      } else {
+          borderKey.addKey(ALWAYS_LESS_KEY);
+      }
 
       final OMVRBTreeEntry<K, V> adjustedNode = getEntry(borderKey, true, PartialSearchMode.NONE);
 
-      if (partialSearchMode.equals(PartialSearchMode.HIGHEST_BOUNDARY))
-        return adjustHighestPartialSearchResult(false, adjustedNode, keyToCompare);
-      else
-        return adjustLowestPartialSearchResult(false, adjustedNode, keyToCompare);
+      if (partialSearchMode.equals(PartialSearchMode.HIGHEST_BOUNDARY)) {
+          return adjustHighestPartialSearchResult(false, adjustedNode, keyToCompare);
+      } else {
+          return adjustLowestPartialSearchResult(false, adjustedNode, keyToCompare);
+      }
 
     }
     return foundEntry;
@@ -2665,24 +2767,27 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
   }
 
   private OMVRBTreeEntry<K, V> uncle(final OMVRBTreeEntry<K, V> n) {
-    if (parentOf(n) == leftOf(grandparent(n)))
-      return rightOf(grandparent(n));
-    else
-      return leftOf(grandparent(n));
+    if (parentOf(n) == leftOf(grandparent(n))) {
+        return rightOf(grandparent(n));
+    } else {
+        return leftOf(grandparent(n));
+    }
   }
 
   private void fixAfterInsertion(final OMVRBTreeEntry<K, V> n) {
-    if (parentOf(n) == null)
-      setColor(n, BLACK);
-    else
-      insert_case2(n);
+    if (parentOf(n) == null) {
+        setColor(n, BLACK);
+    } else {
+        insert_case2(n);
+    }
   }
 
   private void insert_case2(final OMVRBTreeEntry<K, V> n) {
-    if (colorOf(parentOf(n)) == BLACK)
-      return; /* Tree is still valid */
-    else
-      insert_case3(n);
+    if (colorOf(parentOf(n)) == BLACK) {
+        return; /* Tree is still valid */
+    } else {
+        insert_case3(n);
+    }
   }
 
   private void insert_case3(final OMVRBTreeEntry<K, V> n) {
@@ -2691,8 +2796,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
       setColor(uncle(n), BLACK);
       setColor(grandparent(n), RED);
       fixAfterInsertion(grandparent(n));
-    } else
-      insert_case4(n);
+    } else {
+        insert_case4(n);
+    }
   }
 
   private void insert_case4(OMVRBTreeEntry<K, V> n) {
@@ -2869,14 +2975,16 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
      * are not actually indexed, we just proceed sequentially, ensuring that items are extracted in corresponding order.
      */
 
-    if (hi < lo)
-      return null;
+    if (hi < lo) {
+        return null;
+    }
 
     final int mid = (lo + hi) / 2;
 
     OMVRBTreeEntry<K, V> left = null;
-    if (lo < mid)
-      left = buildFromSorted(level + 1, lo, mid - 1, redLevel, it, str, defaultVal);
+    if (lo < mid) {
+        left = buildFromSorted(level + 1, lo, mid - 1, redLevel, it, str, defaultVal);
+    }
 
     // extract key and/or value from iterator or stream
     K key;
@@ -2898,8 +3006,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
     final OMVRBTreeEntry<K, V> middle = createEntry(key, value);
 
     // color nodes in non-full bottom most level red
-    if (level == redLevel)
-      middle.setColor(RED);
+    if (level == redLevel) {
+        middle.setColor(RED);
+    }
 
     if (left != null) {
       middle.setLeft(left);

@@ -75,18 +75,19 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
      for (OServerEntryConfiguration par : iConfiguration.parameters) {
        if (par.name.startsWith(CONFIG_HTTP_CACHE)) {
          final String filter = par.name.substring(CONFIG_HTTP_CACHE.length());
-         if (filter.equalsIgnoreCase("default"))
-           cacheHttpDefault = par.value;
-         else if (filter.length() > 0) {
+         if (filter.equalsIgnoreCase("default")) {
+             cacheHttpDefault = par.value;
+         } else if (filter.length() > 0) {
            final String[] filters = filter.split(" ");
            for (String f : filters) {
              cacheHttp.put(f, par.value);
            }
          }
-       } else if (par.name.startsWith(CONFIG_ROOT_PATH))
-         rootPath = par.value;
-       else if (par.name.startsWith(CONFIG_FILE_PATH))
-         filePath = par.value;
+       } else if (par.name.startsWith(CONFIG_ROOT_PATH)) {
+           rootPath = par.value;
+       } else if (par.name.startsWith(CONFIG_FILE_PATH)) {
+           filePath = par.value;
+       }
 
      }
    }
@@ -130,22 +131,24 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
          loadStaticContent(iRequest, iResponse, staticContent);
        }
 
-       if (staticContent.is != null)
-         iResponse.sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, staticContent.type, staticContent.is,
-             staticContent.contentSize);
-       else
-         iResponse.sendStream(404, "File not found", null, null, 0);
+       if (staticContent.is != null) {
+           iResponse.sendStream(OHttpUtils.STATUS_OK_CODE, OHttpUtils.STATUS_OK_DESCRIPTION, staticContent.type, staticContent.is,
+                   staticContent.contentSize);
+       } else {
+           iResponse.sendStream(404, "File not found", null, null, 0);
+       }
 
      } catch (IOException e) {
        OLogManager.instance().error(this, "Error on loading resource %s", e, iRequest.url);
 
      } finally {
-       if (staticContent!=null && staticContent.is != null)
-         try {
-           staticContent.is.close();
-         } catch (IOException e) {
-           OLogManager.instance().warn(this, "Error on closing file", e);
-         }
+       if (staticContent!=null && staticContent.is != null) {
+           try {
+               staticContent.is.close();
+           } catch (IOException e) {
+               OLogManager.instance().warn(this, "Error on closing file", e);
+           }
+       }
      }
      return false;
    }
@@ -160,14 +163,15 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
 
    protected String getResource(final OHttpRequest iRequest) {
      final String url;
-     if (OHttpUtils.URL_SEPARATOR.equals(iRequest.url))
-       url = "/www/index.htm";
-     else {
+     if (OHttpUtils.URL_SEPARATOR.equals(iRequest.url)) {
+         url = "/www/index.htm";
+     } else {
        int pos = iRequest.url.indexOf('?');
-       if (pos > -1)
-         url = iRequest.url.substring(0, pos);
-       else
-         url = iRequest.url;
+       if (pos > -1) {
+           url = iRequest.url.substring(0, pos);
+         } else {
+           url = iRequest.url;
+       }
      }
      return url;
    }
@@ -181,12 +185,13 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
        if (virtualFolderCallback != null) {
          // DELEGATE TO THE CALLBACK
          final Object content = virtualFolderCallback.call(endPos > -1 ? iRequest.url.substring(endPos + 1) : "");
-         if (content == null)
-           return null;
+         if (content == null) {
+             return null;
+         }
 
-         if (content instanceof OStaticContent)
-           return (OStaticContent) content;
-         else if (content instanceof String) {
+         if (content instanceof OStaticContent) {
+             return (OStaticContent) content;
+         } else if (content instanceof String) {
            final String contentString = (String) content;
            final OStaticContent sc = new OStaticContent();
            sc.is = new ByteArrayInputStream(contentString.getBytes());
@@ -213,23 +218,26 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
      if (filePath == null) {
        // CHECK DIRECTORY
        final File wwwPathDirectory = new File(rootPath);
-       if (!wwwPathDirectory.exists())
-         OLogManager.instance().warn(this, "path variable points to '%s' but it doesn't exists", rootPath);
-       if (!wwwPathDirectory.isDirectory())
-         OLogManager.instance().warn(this, "path variable points to '%s' but it isn't a directory", rootPath);
+       if (!wwwPathDirectory.exists()) {
+           OLogManager.instance().warn(this, "path variable points to '%s' but it doesn't exists", rootPath);
+       }
+       if (!wwwPathDirectory.isDirectory()) {
+           OLogManager.instance().warn(this, "path variable points to '%s' but it isn't a directory", rootPath);
+       }
      }
 
      String path;
-     if (filePath != null)
-       // SINGLE FILE
-       path = filePath;
-     else {
+     if (filePath != null) {
+         // SINGLE FILE
+         path = filePath;
+     } else {
        // GET FROM A DIRECTORY
        final String url = getResource(iRequest);
-       if (url.startsWith("/www"))
-         path = rootPath + url.substring("/www".length(), url.length());
-       else
-         path = rootPath + url;
+       if (url.startsWith("/www")) {
+           path = rootPath + url.substring("/www".length(), url.length());
+         } else {
+           path = rootPath + url;
+         }
      }
 
      path = URLDecoder.decode(path, "UTF-8");
@@ -254,12 +262,13 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
 
        if (filePath == null && inputFile.isDirectory()) {
          inputFile = new File(path + "/index.htm");
-         if (inputFile.exists())
-           path = path + "/index.htm";
-         else {
+         if (inputFile.exists()) {
+             path = path + "/index.htm";
+         } else {
            inputFile = new File(path + "/index.html");
-           if (inputFile.exists())
-             path = path + "/index.html";
+           if (inputFile.exists()) {
+               path = path + "/index.html";
+             }
          }
        }
 
@@ -271,8 +280,9 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
        if (OGlobalConfiguration.SERVER_CACHE_FILE_STATIC.getValueAsBoolean()) {
          // READ THE ENTIRE STREAM AND CACHE IT IN MEMORY
          final byte[] buffer = new byte[(int) staticContent.contentSize];
-         for (int i = 0; i < staticContent.contentSize; ++i)
-           buffer[i] = (byte) staticContent.is.read();
+         for (int i = 0; i < staticContent.contentSize; ++i) {
+             buffer[i] = (byte) staticContent.is.read();
+         }
 
          OStaticContentCachedEntry cachedEntry = new OStaticContentCachedEntry();
          cachedEntry.content = buffer;
@@ -287,20 +297,21 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
    }
 
    public static String getContentType(final String path) {
-     if (path.endsWith(".htm") || path.endsWith(".html"))
-       return "text/html";
-     else if (path.endsWith(".png"))
-       return "image/png";
-     else if (path.endsWith(".jpeg"))
-       return "image/jpeg";
-     else if (path.endsWith(".js"))
-       return "application/x-javascript";
-     else if (path.endsWith(".css"))
-       return "text/css";
-     else if (path.endsWith(".ico"))
-       return "image/x-icon";
-     else if (path.endsWith(".otf"))
-       return "font/opentype";
+     if (path.endsWith(".htm") || path.endsWith(".html")) {
+         return "text/html";
+     } else if (path.endsWith(".png")) {
+         return "image/png";
+     } else if (path.endsWith(".jpeg")) {
+         return "image/jpeg";
+     } else if (path.endsWith(".js")) {
+         return "application/x-javascript";
+     } else if (path.endsWith(".css")) {
+         return "text/css";
+     } else if (path.endsWith(".ico")) {
+         return "image/x-icon";
+     } else if (path.endsWith(".otf")) {
+         return "font/opentype";
+     }
 
      return "text/plain";
    }

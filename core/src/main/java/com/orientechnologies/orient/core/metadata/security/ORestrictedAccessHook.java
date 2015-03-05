@@ -50,31 +50,37 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
     final OClass cls = ODocumentInternal.getImmutableSchemaClass(iDocument);
     if (cls != null && cls.isSubClassOf(OSecurityShared.RESTRICTED_CLASSNAME)) {
       String fieldNames = cls.getCustom(OSecurityShared.ONCREATE_FIELD);
-      if (fieldNames == null)
-        fieldNames = OSecurityShared.ALLOW_ALL_FIELD;
+      if (fieldNames == null) {
+          fieldNames = OSecurityShared.ALLOW_ALL_FIELD;
+      }
       final String[] fields = fieldNames.split(",");
       String identityType = cls.getCustom(OSecurityShared.ONCREATE_IDENTITY_TYPE);
-      if (identityType == null)
-        identityType = "user";
+      if (identityType == null) {
+          identityType = "user";
+      }
 
       final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
       OIdentifiable identity = null;
       if (identityType.equals("user")) {
         final OSecurityUser user = db.getUser();
-        if (user != null)
-          identity = user.getIdentity();
+        if (user != null) {
+            identity = user.getIdentity();
+        }
       } else if (identityType.equals("role")) {
         final Set<? extends OSecurityRole> roles = db.getUser().getRoles();
-        if (!roles.isEmpty())
-          identity = roles.iterator().next().getIdentity();
-      } else
-        throw new OConfigurationException("Wrong custom field '" + OSecurityShared.ONCREATE_IDENTITY_TYPE + "' in class '"
-            + cls.getName() + "' with value '" + identityType + "'. Supported ones are: 'user', 'role'");
+        if (!roles.isEmpty()) {
+            identity = roles.iterator().next().getIdentity();
+        }
+      } else {
+          throw new OConfigurationException("Wrong custom field '" + OSecurityShared.ONCREATE_IDENTITY_TYPE + "' in class '"
+                  + cls.getName() + "' with value '" + identityType + "'. Supported ones are: 'user', 'role'");
+      }
 
       if (identity != null) {
-        for (String f : fields)
-          db.getMetadata().getSecurity().allowIdentity(iDocument, f, identity);
+        for (String f : fields) {
+            db.getMetadata().getSecurity().allowIdentity(iDocument, f, identity);
+        }
         return RESULT.RECORD_CHANGED;
       }
     }
@@ -88,15 +94,17 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
 
   @Override
   public RESULT onRecordBeforeUpdate(final ODocument iDocument) {
-    if (!isAllowed(iDocument, OSecurityShared.ALLOW_UPDATE_FIELD, true))
-      throw new OSecurityException("Cannot update record " + iDocument.getIdentity() + ": the resource has restricted access");
+    if (!isAllowed(iDocument, OSecurityShared.ALLOW_UPDATE_FIELD, true)) {
+        throw new OSecurityException("Cannot update record " + iDocument.getIdentity() + ": the resource has restricted access");
+    }
     return RESULT.RECORD_NOT_CHANGED;
   }
 
   @Override
   public RESULT onRecordBeforeDelete(final ODocument iDocument) {
-    if (!isAllowed(iDocument, OSecurityShared.ALLOW_DELETE_FIELD, true))
-      throw new OSecurityException("Cannot delete record " + iDocument.getIdentity() + ": the resource has restricted access");
+    if (!isAllowed(iDocument, OSecurityShared.ALLOW_DELETE_FIELD, true)) {
+        throw new OSecurityException("Cannot delete record " + iDocument.getIdentity() + ": the resource has restricted access");
+    }
     return RESULT.RECORD_NOT_CHANGED;
   }
 
@@ -107,20 +115,24 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
 
       final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
 
-      if (db.getUser() == null)
-        return true;
-
-      if (db.getUser().isRuleDefined(ORule.ResourceGeneric.BYPASS_RESTRICTED, null))
-        if (db.getUser().checkIfAllowed(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_READ) != null)
-          // BYPASS RECORD LEVEL SECURITY: ONLY "ADMIN" ROLE CAN BY DEFAULT
+      if (db.getUser() == null) {
           return true;
+      }
+
+      if (db.getUser().isRuleDefined(ORule.ResourceGeneric.BYPASS_RESTRICTED, null)) {
+          if (db.getUser().checkIfAllowed(ORule.ResourceGeneric.BYPASS_RESTRICTED, null, ORole.PERMISSION_READ) != null) {
+              // BYPASS RECORD LEVEL SECURITY: ONLY "ADMIN" ROLE CAN BY DEFAULT
+              return true;
+          }
+      }
 
       final ODocument doc;
-      if (iReadOriginal)
-        // RELOAD TO AVOID HACKING OF "_ALLOW" FIELDS
-        doc = (ODocument) db.load(iDocument.getIdentity());
-      else
-        doc = iDocument;
+      if (iReadOriginal) {
+          // RELOAD TO AVOID HACKING OF "_ALLOW" FIELDS
+          doc = (ODocument) db.load(iDocument.getIdentity());
+      } else {
+          doc = iDocument;
+      }
 
       return db
           .getMetadata()

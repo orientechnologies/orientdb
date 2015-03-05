@@ -52,8 +52,9 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
     parserRequiredKeyword(KEYWORD_CLUSTER);
 
     clusterName = parserRequiredWord(false);
-    if (!clusterName.isEmpty() && Character.isDigit(clusterName.charAt(0)))
-      throw new IllegalArgumentException("Cluster name cannot begin with a digit");
+    if (!clusterName.isEmpty() && Character.isDigit(clusterName.charAt(0))) {
+        throw new IllegalArgumentException("Cluster name cannot begin with a digit");
+    }
 
     String temp = parseOptionalWord(true);
 
@@ -63,8 +64,9 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
       }
 
       temp = parseOptionalWord(true);
-      if (parserIsEnded())
-        break;
+      if (parserIsEnded()) {
+          break;
+      }
     }
 
     return this;
@@ -74,14 +76,16 @@ public class OCommandExecutorSQLCreateCluster extends OCommandExecutorSQLAbstrac
    * Execute the CREATE CLUSTER.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (clusterName == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    if (clusterName == null) {
+        throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    }
 
     final ODatabaseDocument database = getDatabase();
 
     final int clusterId = database.getClusterIdByName(clusterName);
-    if (clusterId > -1)
-      throw new OCommandSQLParsingException("Cluster '" + clusterName + "' already exists");
+    if (clusterId > -1) {
+        throw new OCommandSQLParsingException("Cluster '" + clusterName + "' already exists");
+    }
 
     if (requestedId == -1) {
       return database.addCluster(clusterName);

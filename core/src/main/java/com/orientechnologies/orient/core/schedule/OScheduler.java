@@ -81,7 +81,9 @@ public OFunction getFunctionSafe()
 	  if(function==null)
 	  {
 		  ODocument funcDoc = document.field(PROP_FUNC);
-		  if(funcDoc!=null) function = new OFunction(funcDoc);
+		  if(funcDoc!=null) {
+                      function = new OFunction(funcDoc);
+                  }
 	  }
 	  return function;
   }
@@ -89,7 +91,9 @@ public OFunction getFunctionSafe()
   public OFunction getFunction()
   {
 	  OFunction fun = getFunctionSafe();
-	  if(fun==null) throw new OCommandScriptException("function cannot be null");
+	  if(fun==null) {
+              throw new OCommandScriptException("function cannot be null");
+          }
 	  return fun;
   }
 
@@ -138,14 +142,17 @@ public OFunction getFunctionSafe()
 
   @Override
   public void run() {
-    if (this.function == null)
-      return;
+    if (this.function == null) {
+        return;
+    }
 
     isRunning = true;
     final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
     final Date date = new Date(System.currentTimeMillis());
     OLogManager.instance().warn(this, "execute : " + this.toString() + " at " + sdf.format(date));
-    if(db!=null) ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    if(db!=null) {
+        ODatabaseRecordThreadLocal.INSTANCE.set(db);
+    }
 
     this.document.field(PROP_STATUS, SCHEDULER_STATUS.RUNNING);
     this.document.field(PROP_STARTTIME, System.currentTimeMillis());
@@ -162,8 +169,9 @@ public OFunction getFunctionSafe()
 
       scriptManager.bind(binding, (ODatabaseDocumentTx) db, null, getArguments());
 
-      if (this.function.getLanguage() == null)
-        throw new OConfigurationException("Database function '" + this.function.getName() + "' has no language");
+      if (this.function.getLanguage() == null) {
+          throw new OConfigurationException("Database function '" + this.function.getName() + "' has no language");
+      }
       final String funcStr = scriptManager.getFunctionDefinition(this.function);
       if (funcStr != null) {
         try {
@@ -179,8 +187,9 @@ public OFunction getFunctionSafe()
         if (iArgs != null) {
           args = new Object[iArgs.size()];
           int i = 0;
-          for (Entry<Object, Object> arg : iArgs.entrySet())
-            args[i++] = arg.getValue();
+          for (Entry<Object, Object> arg : iArgs.entrySet()) {
+              args[i++] = arg.getValue();
+          }
         } else {
         	args = new Object[0];
         }
@@ -195,8 +204,9 @@ public OFunction getFunctionSafe()
     } catch (Exception ex) {
       throw new OCommandScriptException("Unknown Exception", this.function.getName(), 0, ex);
     } finally {
-      if (scriptManager != null && binding != null)
-        scriptManager.unbind(binding, null, getArguments());
+      if (scriptManager != null && binding != null) {
+          scriptManager.unbind(binding, null, getArguments());
+      }
 
       scriptManager.releaseDatabaseEngine(function.getLanguage(), db.getName(), entry);
 

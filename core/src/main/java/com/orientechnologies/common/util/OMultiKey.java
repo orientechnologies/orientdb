@@ -64,17 +64,23 @@ public class OMultiKey {
      */
     @Override
     public boolean equals(final Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         final OMultiKey oMultiKey = (OMultiKey) o;
 
-        if(keys.size() != oMultiKey.keys.size())
+        if(keys.size() != oMultiKey.keys.size()) {
             return false;
+        }
 
         for (final Object inKey : keys) {
-            if (!oMultiKey.keys.contains(inKey))
+            if (!oMultiKey.keys.contains(inKey)) {
                 return false;
+            }
         }
         return true;
     }

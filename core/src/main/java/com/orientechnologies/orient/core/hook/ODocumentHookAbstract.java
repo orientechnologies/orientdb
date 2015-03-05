@@ -202,16 +202,19 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
   }
 
   public RESULT onTrigger(final TYPE iType, final ORecord iRecord) {
-    if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && ODatabaseRecordThreadLocal.INSTANCE.get().getStatus() != STATUS.OPEN)
-      return RESULT.RECORD_NOT_CHANGED;
+    if (ODatabaseRecordThreadLocal.INSTANCE.isDefined() && ODatabaseRecordThreadLocal.INSTANCE.get().getStatus() != STATUS.OPEN) {
+        return RESULT.RECORD_NOT_CHANGED;
+    }
 
-    if (!(iRecord instanceof ODocument))
-      return RESULT.RECORD_NOT_CHANGED;
+    if (!(iRecord instanceof ODocument)) {
+        return RESULT.RECORD_NOT_CHANGED;
+    }
 
     final ODocument document = (ODocument) iRecord;
 
-    if (!filterBySchemaClass(document))
-      return RESULT.RECORD_NOT_CHANGED;
+    if (!filterBySchemaClass(document)) {
+        return RESULT.RECORD_NOT_CHANGED;
+    }
 
     switch (iType) {
     case BEFORE_CREATE:
@@ -294,8 +297,9 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
   }
 
   public ODocumentHookAbstract setIncludeClasses(final String... includeClasses) {
-    if (excludeClasses != null)
-      throw new IllegalStateException("Cannot include classes if exclude classes has been set");
+    if (excludeClasses != null) {
+        throw new IllegalStateException("Cannot include classes if exclude classes has been set");
+    }
     this.includeClasses = includeClasses;
     return this;
   }
@@ -305,33 +309,40 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
   }
 
   public ODocumentHookAbstract setExcludeClasses(final String... excludeClasses) {
-    if (includeClasses != null)
-      throw new IllegalStateException("Cannot exclude classes if include classes has been set");
+    if (includeClasses != null) {
+        throw new IllegalStateException("Cannot exclude classes if include classes has been set");
+    }
     this.excludeClasses = excludeClasses;
     return this;
   }
 
   protected boolean filterBySchemaClass(final ODocument iDocument) {
-    if (includeClasses == null && excludeClasses == null)
-      return true;
+    if (includeClasses == null && excludeClasses == null) {
+        return true;
+    }
 
     final OClass clazz = ODocumentInternal.getImmutableSchemaClass(iDocument);
-    if (clazz == null)
-      return false;
+    if (clazz == null) {
+        return false;
+    }
 
     if (includeClasses != null) {
       // FILTER BY CLASSES
-      for (String cls : includeClasses)
-        if (clazz.isSubClassOf(cls))
-          return true;
+      for (String cls : includeClasses) {
+          if (clazz.isSubClassOf(cls)) {
+              return true;
+          }
+      }
       return false;
     }
 
     if (excludeClasses != null) {
       // FILTER BY CLASSES
-      for (String cls : excludeClasses)
-        if (clazz.isSubClassOf(cls))
-          return false;
+      for (String cls : excludeClasses) {
+          if (clazz.isSubClassOf(cls)) {
+              return false;
+          }
+      }
     }
 
     return true;

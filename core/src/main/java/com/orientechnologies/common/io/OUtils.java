@@ -21,11 +21,13 @@ package com.orientechnologies.common.io;
 
 public class OUtils {
   public static boolean equals(final Object a, final Object b) {
-    if (a == b)
-      return true;
+    if (a == b) {
+        return true;
+    }
 
-    if (a != null)
-      return a.equals(b);
+    if (a != null) {
+        return a.equals(b);
+    }
     return b.equals(a);
   }
 

@@ -68,8 +68,9 @@ public class SuperNodeInsertSpeedTest extends OrientMultiThreadTest {
 
     @Override
     public void deinit() throws Exception {
-      if (graph != null)
-        graph.shutdown();
+      if (graph != null) {
+          graph.shutdown();
+      }
       super.deinit();
     }
 
@@ -91,8 +92,9 @@ public class SuperNodeInsertSpeedTest extends OrientMultiThreadTest {
 
   @Override
   public void init() {
-    if (factory.exists())
-      factory.drop();
+    if (factory.exists()) {
+        factory.drop();
+    }
 
     final OrientGraphNoTx graph = factory.getNoTx();
 

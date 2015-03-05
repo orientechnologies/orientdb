@@ -46,8 +46,9 @@ public class OSchedulerListenerImpl implements OSchedulerListener {
   }
 
   public void removeScheduler(OScheduler scheduler) {
-    if (scheduler.isRunning())
-      throw new OException("Cannot delete scheduler " + scheduler.getSchduleName() + " due to it is still running");
+    if (scheduler.isRunning()) {
+        throw new OException("Cannot delete scheduler " + scheduler.getSchduleName() + " due to it is still running");
+    }
     schedulers.remove(scheduler.getSchduleName());
   }
 
@@ -78,8 +79,9 @@ public class OSchedulerListenerImpl implements OSchedulerListener {
 
   public void create() {
     final ODatabaseDocument db = ODatabaseRecordThreadLocal.INSTANCE.get();
-    if (db.getMetadata().getSchema().existsClass(OScheduler.CLASSNAME))
-      return;
+    if (db.getMetadata().getSchema().existsClass(OScheduler.CLASSNAME)) {
+        return;
+    }
     final OClass f = db.getMetadata().getSchema().createClass(OScheduler.CLASSNAME);
     f.createProperty(OScheduler.PROP_NAME, OType.STRING).setMandatory(true).setNotNull(true);
     f.createProperty(OScheduler.PROP_RULE, OType.STRING).setMandatory(true).setNotNull(true);

@@ -37,8 +37,9 @@ public class OGremlinEngineThreadLocal extends ThreadLocal<ScriptEngine> {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onStartup() {
-        if (INSTANCE == null)
-          INSTANCE = new OGremlinEngineThreadLocal();
+        if (INSTANCE == null) {
+            INSTANCE = new OGremlinEngineThreadLocal();
+        }
       }
 
       @Override
@@ -52,9 +53,10 @@ public class OGremlinEngineThreadLocal extends ThreadLocal<ScriptEngine> {
     ScriptEngine engine = super.get();
     if (engine != null) {
       final OrientBaseGraph currGraph = (OrientBaseGraph) engine.getBindings(ScriptContext.ENGINE_SCOPE).get("g");
-      if (currGraph == iGraph || (currGraph != null && currGraph.getRawGraph().getURL().equals(iGraph.getRawGraph().getURL())))
-        // REUSE IT
-        return engine;
+      if (currGraph == iGraph || (currGraph != null && currGraph.getRawGraph().getURL().equals(iGraph.getRawGraph().getURL()))) {
+          // REUSE IT
+          return engine;
+      }
     }
 
     // CREATE A NEW ONE

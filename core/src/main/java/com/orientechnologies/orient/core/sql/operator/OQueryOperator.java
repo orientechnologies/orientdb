@@ -212,8 +212,9 @@ public abstract class OQueryOperator {
 
   protected void updateProfiler(final OCommandContext iContext, final OIndex<?> index, final List<Object> keyParams,
       final OIndexDefinition indexDefinition) {
-    if (iContext.isRecordingMetrics())
-      iContext.updateMetric("compositeIndexUsed", +1);
+    if (iContext.isRecordingMetrics()) {
+        iContext.updateMetric("compositeIndexUsed", +1);
+    }
 
     final OProfilerMBean profiler = Orient.instance().getProfiler();
     if (profiler.isRecording()) {

@@ -87,8 +87,9 @@ public class OSBTreeRidBagTest extends ORidBagTest {
   }
 
   public void testRidBagClusterDistribution() {
-    if (database.getStorage().getType().equals(OEngineRemote.NAME) || database.getStorage().getType().equals(OEngineMemory.NAME))
-      return;
+    if (database.getStorage().getType().equals(OEngineRemote.NAME) || database.getStorage().getType().equals(OEngineMemory.NAME)) {
+        return;
+    }
 
     final int clusterIdOne = database.addCluster("clusterOne");
     final int clusterIdTwo = database.addCluster("clusterTwo");
@@ -235,8 +236,9 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     docs.add(doc_5.getIdentity());
     docs.add(doc_6.getIdentity());
 
-    for (OIdentifiable rid : bag)
-      Assert.assertTrue(docs.remove(rid));
+    for (OIdentifiable rid : bag) {
+        Assert.assertTrue(docs.remove(rid));
+    }
 
     Assert.assertTrue(docs.isEmpty());
 
@@ -244,8 +246,9 @@ public class OSBTreeRidBagTest extends ORidBagTest {
   }
 
   public void testRidBagDelete() {
-    if (database.getStorage().getType().equals(OEngineRemote.NAME) || database.getStorage().getType().equals(OEngineMemory.NAME))
-      return;
+    if (database.getStorage().getType().equals(OEngineRemote.NAME) || database.getStorage().getType().equals(OEngineMemory.NAME)) {
+        return;
+    }
 
     float reuseTrigger = OGlobalConfiguration.SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER.getValueAsFloat();
     OGlobalConfiguration.SBTREEBOSAI_FREE_SPACE_REUSE_TRIGGER.setValue(Float.MIN_VALUE);

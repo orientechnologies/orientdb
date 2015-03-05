@@ -31,8 +31,9 @@ public class SBTreeTestBigValues {
   @BeforeClass
   public void beforeClass() {
     buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null)
-      buildDirectory = ".";
+    if (buildDirectory == null) {
+        buildDirectory = ".";
+    }
 
     databaseDocumentTx = new ODatabaseDocumentTx("plocal:" + buildDirectory + "/localSBTreeBigValuesTest");
     if (databaseDocumentTx.exists()) {
@@ -65,14 +66,16 @@ public class SBTreeTestBigValues {
       sbTree.put(i, createValue(i, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + i));
     }
 
-    for (int i = 0; i < KEYS_COUNT; i++)
-      Assert.assertEquals(sbTree.get(i), createValue(i, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + i), i + " key is absent");
+    for (int i = 0; i < KEYS_COUNT; i++) {
+        Assert.assertEquals(sbTree.get(i), createValue(i, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + i), i + " key is absent");
+    }
 
     Assert.assertEquals(0, (int) sbTree.firstKey());
     Assert.assertEquals(KEYS_COUNT - 1, (int) sbTree.lastKey());
 
-    for (int i = KEYS_COUNT; i < 2 * KEYS_COUNT; i++)
-      Assert.assertNull(sbTree.get(i));
+    for (int i = KEYS_COUNT; i < 2 * KEYS_COUNT; i++) {
+        Assert.assertNull(sbTree.get(i));
+    }
 
   }
 
@@ -94,8 +97,9 @@ public class SBTreeTestBigValues {
     Assert.assertEquals(sbTree.firstKey(), keys.first());
     Assert.assertEquals(sbTree.lastKey(), keys.last());
 
-    for (int key : keys)
-      Assert.assertEquals(sbTree.get(key), createValue(key, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
+    for (int key : keys) {
+        Assert.assertEquals(sbTree.get(key), createValue(key, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
+    }
   }
 
   public void testKeyPutRandomGaussian() throws Exception {
@@ -108,8 +112,9 @@ public class SBTreeTestBigValues {
 
     while (keys.size() < KEYS_COUNT) {
       int key = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
-      if (key < 0)
-        continue;
+      if (key < 0) {
+          continue;
+      }
 
       sbTree.put(key, createValue(key, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
       keys.add(key);
@@ -118,8 +123,9 @@ public class SBTreeTestBigValues {
     Assert.assertEquals(sbTree.firstKey(), keys.first());
     Assert.assertEquals(sbTree.lastKey(), keys.last());
 
-    for (int key : keys)
-      Assert.assertEquals(sbTree.get(key), createValue(key, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
+    for (int key : keys) {
+        Assert.assertEquals(sbTree.get(key), createValue(key, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
+    }
   }
 
   public void testKeyDelete() throws Exception {
@@ -128,18 +134,20 @@ public class SBTreeTestBigValues {
     }
 
     for (int i = 0; i < KEYS_COUNT; i++) {
-      if (i % 3 == 0)
-        Assert.assertEquals(sbTree.remove(i), createValue(i, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
+      if (i % 3 == 0) {
+          Assert.assertEquals(sbTree.remove(i), createValue(i, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
+      }
     }
 
     Assert.assertEquals((int) sbTree.firstKey(), 1);
     Assert.assertEquals((int) sbTree.lastKey(), (KEYS_COUNT - 1) % 3 == 0 ? KEYS_COUNT - 2 : KEYS_COUNT - 1);
 
     for (int i = 0; i < KEYS_COUNT; i++) {
-      if (i % 3 == 0)
-        Assert.assertNull(sbTree.get(i));
-      else
-        Assert.assertEquals(sbTree.get(i), createValue(i, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
+      if (i % 3 == 0) {
+          Assert.assertNull(sbTree.get(i));
+      } else {
+          Assert.assertEquals(sbTree.get(i), createValue(i, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
+      }
     }
   }
 
@@ -181,8 +189,9 @@ public class SBTreeTestBigValues {
 
     while (keys.size() < KEYS_COUNT) {
       int key = (int) (random.nextGaussian() * Integer.MAX_VALUE / 2 + Integer.MAX_VALUE);
-      if (key < 0)
-        continue;
+      if (key < 0) {
+          continue;
+      }
 
       sbTree.put(key, createValue(key, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
       keys.add(key);
@@ -221,33 +230,38 @@ public class SBTreeTestBigValues {
     }
 
     for (int i = 0; i < KEYS_COUNT; i++) {
-      if (i % 3 == 0)
-        Assert.assertEquals(sbTree.remove(i), createValue(i, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
+      if (i % 3 == 0) {
+          Assert.assertEquals(sbTree.remove(i), createValue(i, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
+      }
 
-      if (i % 2 == 0)
-        sbTree.put(KEYS_COUNT + i, createValue(i, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
+      if (i % 2 == 0) {
+          sbTree.put(KEYS_COUNT + i, createValue(i, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
+      }
     }
 
     Assert.assertEquals((int) sbTree.firstKey(), 1);
     Assert.assertEquals((int) sbTree.lastKey(), 2 * KEYS_COUNT - 2);
 
     for (int i = 0; i < KEYS_COUNT; i++) {
-      if (i % 3 == 0)
-        Assert.assertNull(sbTree.get(i));
-      else
-        Assert.assertEquals(sbTree.get(i), createValue(i, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
+      if (i % 3 == 0) {
+          Assert.assertNull(sbTree.get(i));
+      } else {
+          Assert.assertEquals(sbTree.get(i), createValue(i, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
+      }
 
-      if (i % 2 == 0)
-        Assert.assertEquals(sbTree.get(KEYS_COUNT + i), createValue(i, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
+      if (i % 2 == 0) {
+          Assert.assertEquals(sbTree.get(KEYS_COUNT + i), createValue(i, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
+      }
     }
   }
 
   public void testKeysUpdateFromSmallToBig() throws Exception {
     for (int i = 0; i < KEYS_COUNT; i++) {
-      if (i % 2 == 0)
-        sbTree.put(i, createValue(i, 1024));
-      else
-        sbTree.put(i / 2, createValue(i / 2, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
+      if (i % 2 == 0) {
+          sbTree.put(i, createValue(i, 1024));
+      } else {
+          sbTree.put(i / 2, createValue(i / 2, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
+      }
     }
 
     for (int i = 0; i < KEYS_COUNT / 2; i++) {
@@ -257,10 +271,11 @@ public class SBTreeTestBigValues {
 
   public void testKeysUpdateFromBigToSmall() throws Exception {
     for (int i = 0; i < KEYS_COUNT; i++) {
-      if (i % 2 == 0)
-        sbTree.put(i, createValue(i, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
-      else
-        sbTree.put(i / 2, createValue(i / 2, 1024));
+      if (i % 2 == 0) {
+          sbTree.put(i, createValue(i, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
+      } else {
+          sbTree.put(i / 2, createValue(i / 2, 1024));
+      }
     }
 
     for (int i = 0; i < KEYS_COUNT / 2; i++) {
@@ -270,10 +285,11 @@ public class SBTreeTestBigValues {
 
   public void testKeysUpdateFromSmallToSmall() throws Exception {
     for (int i = 0; i < KEYS_COUNT; i++) {
-      if (i % 2 == 0)
-        sbTree.put(i, createValue(i, 512));
-      else
-        sbTree.put(i / 2, createValue(i / 2, 1024));
+      if (i % 2 == 0) {
+          sbTree.put(i, createValue(i, 512));
+      } else {
+          sbTree.put(i / 2, createValue(i / 2, 1024));
+      }
     }
 
     for (int i = 0; i < KEYS_COUNT / 2; i++) {

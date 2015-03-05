@@ -99,8 +99,9 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           ORecordVersion version = channel.readVersion();
           byte[] bytes = channel.readBytes();
           oNetworkProtocolBinary.fillRecord(rid, bytes, version, entry.getRecord(), database);
-          if (protocolVersion >= 23)
-            ORecordInternal.setContentChanged(entry.getRecord(), channel.readBoolean());
+          if (protocolVersion >= 23) {
+              ORecordInternal.setContentChanged(entry.getRecord(), channel.readBoolean());
+        }
           break;
 
         case ORecordOperation.DELETED:
@@ -115,9 +116,10 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
         tempEntries.put(entry.getRecord().getIdentity(), entry);
       }
 
-      if (lastTxStatus == -1)
-        // ABORT TX
-        throw new OTransactionAbortedException("Transaction aborted by the client");
+      if (lastTxStatus == -1) {
+          // ABORT TX
+          throw new OTransactionAbortedException("Transaction aborted by the client");
+      }
 
       final ODocument remoteIndexEntries = new ODocument(channel.readBytes());
       fillIndexOperations(remoteIndexEntries);
@@ -130,8 +132,9 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
           final ORecord record = entry.getValue().record.getRecord();
           final ORecord loadedRecord = record.getIdentity().copy().getRecord();
-          if (loadedRecord == null)
-            throw new ORecordNotFoundException(record.getIdentity().toString());
+          if (loadedRecord == null) {
+              throw new ORecordNotFoundException(record.getIdentity().toString());
+          }
 
           if (ORecordInternal.getRecordType(loadedRecord) == ODocument.RECORD_TYPE
               && ORecordInternal.getRecordType(loadedRecord) == ORecordInternal.getRecordType(record)) {
@@ -150,10 +153,12 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
       tempEntries.clear();
 
       // UNMARSHALL ALL THE RECORD AT THE END TO BE SURE ALL THE RECORD ARE LOADED IN LOCAL TX
-      for (ORecord record : createdRecords.values())
-        unmarshallRecord(record);
-      for (ORecord record : updatedRecords.values())
-        unmarshallRecord(record);
+      for (ORecord record : createdRecords.values()) {
+          unmarshallRecord(record);
+      }
+      for (ORecord record : updatedRecords.values()) {
+          unmarshallRecord(record);
+      }
 
     } catch (IOException e) {
       rollback();
@@ -164,11 +169,12 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
   @Override
   public ORecord getRecord(final ORID rid) {
     ORecord record = super.getRecord(rid);
-    if (record == OTransactionRealAbstract.DELETED_RECORD)
-      return record;
-    else if (record == null && rid.isNew())
-      // SEARCH BETWEEN CREATED RECORDS
-      record = createdRecords.get(rid);
+    if (record == OTransactionRealAbstract.DELETED_RECORD) {
+        return record;
+    } else if (record == null && rid.isNew()) {
+        // SEARCH BETWEEN CREATED RECORDS
+        record = createdRecords.get(rid);
+    }
 
     return record;
   }
@@ -177,8 +183,9 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
     for (Entry<String, Object> indexEntry : remoteIndexEntries) {
       final String indexName = indexEntry.getKey();
       final ODocument indexDoc = (ODocument) indexEntry.getValue();
-      if (indexDoc == null)
-        continue;
+      if (indexDoc == null) {
+          continue;
+      }
 
       OTransactionIndexChanges transactionIndexChanges = indexEntries.get(indexEntry.getKey());
 
@@ -188,17 +195,20 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
       }
 
       final Boolean clearAll = indexDoc.field("clear");
-      if (clearAll != null && clearAll)
-        transactionIndexChanges.setCleared();
+      if (clearAll != null && clearAll) {
+          transactionIndexChanges.setCleared();
+      }
 
       final Collection<ODocument> entries = indexDoc.field("entries");
-      if (entries == null)
-        continue;
+      if (entries == null) {
+          continue;
+      }
 
       for (final ODocument entry : entries) {
         final List<ODocument> operations = entry.field("ops");
-        if (operations == null)
-          continue;
+        if (operations == null) {
+            continue;
+        }
 
         final Object key;
         try {
@@ -206,9 +216,9 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           if (protocolVersion <= OChannelBinaryProtocol.PROTOCOL_VERSION_24) {
 
             final String serializedKey = OStringSerializerHelper.decode((String) entry.field("k"));
-            if (serializedKey.equals("*"))
-              keyContainer = null;
-            else {
+            if (serializedKey.equals("*")) {
+                keyContainer = null;
+            } else {
               keyContainer = new ODocument();
               keyContainer.setLazyLoad(false);
               ORecordSerializerSchemaAware2CSV.INSTANCE.fromString(serializedKey, keyContainer, null);
@@ -218,14 +228,16 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           }
           if (keyContainer != null) {
             final Object storedKey = keyContainer.field("key");
-            if (storedKey instanceof List)
-              key = new OCompositeKey((List<? extends Comparable<?>>) storedKey);
-            else if (Boolean.TRUE.equals(keyContainer.field("binary"))) {
+            if (storedKey instanceof List) {
+                key = new OCompositeKey((List<? extends Comparable<?>>) storedKey);
+            } else if (Boolean.TRUE.equals(keyContainer.field("binary"))) {
               key = OStreamSerializerAnyStreamable.INSTANCE.fromStream((byte[]) storedKey);
-            } else
-              key = storedKey;
-          } else
-            key = null;
+            } else {
+                key = storedKey;
+            }
+          } else {
+              key = null;
+          }
         } catch (IOException ioe) {
           throw new OTransactionException("Error during index changes deserialization. ", ioe);
         }
@@ -237,8 +249,9 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
           transactionIndexChanges.getChangesPerKey(key).add(value, indexOperation);
 
-          if (value == null)
-            continue;
+          if (value == null) {
+              continue;
+          }
 
           final ORID rid = value.getIdentity();
           List<OTransactionRecordIndexOperation> txIndexOperations = recordIndexOperations.get(rid);
@@ -270,10 +283,11 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
 
       for (Entry<String, Object> field : ((ODocument) iRecord)) {
         final Object value = field.getValue();
-        if (value instanceof ORecordLazyList)
-          ((ORecordLazyList) field.getValue()).lazyLoad(true);
-        else if (value instanceof ORidBag)
-          ((ORidBag) value).convertLinks2Records();
+        if (value instanceof ORecordLazyList) {
+            ((ORecordLazyList) field.getValue()).lazyLoad(true);
+        } else if (value instanceof ORidBag) {
+            ((ORidBag) value).convertLinks2Records();
+        }
       }
     }
   }

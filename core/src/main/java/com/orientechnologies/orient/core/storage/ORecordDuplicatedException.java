@@ -41,8 +41,9 @@ public class ORecordDuplicatedException extends OException {
 
   @Override
   public boolean equals(final Object obj) {
-    if (obj == null || !obj.getClass().equals(getClass()))
-      return false;
+    if (obj == null || !obj.getClass().equals(getClass())) {
+        return false;
+    }
 
     return rid.equals(((ORecordDuplicatedException) obj).rid);
   }

@@ -57,9 +57,10 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 
   public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       final OCommandContext iContext) {
-    if (!(iCurrentRecord instanceof ODocument))
-      // NOT DOCUMENT OR GRAPHDB? IGNORE IT
-      return null;
+    if (!(iCurrentRecord instanceof ODocument)) {
+        // NOT DOCUMENT OR GRAPHDB? IGNORE IT
+        return null;
+    }
 
     final ODatabaseDocumentTx db = OGremlinHelper.getGraphDatabase(ODatabaseRecordThreadLocal.INSTANCE.get());
 
@@ -70,8 +71,9 @@ public class OSQLFunctionGremlin extends OSQLFunctionAbstract {
 
           @Override
           public boolean call(ScriptEngine iEngine, OrientBaseGraph iGraph) {
-            if (iCurrentRecord == null || !(iCurrentRecord instanceof ODocument))
-              return false;
+            if (iCurrentRecord == null || !(iCurrentRecord instanceof ODocument)) {
+                return false;
+            }
 
             final ODocument document = (ODocument) iCurrentRecord;
             OClass clazz =ODocumentInternal.getImmutableSchemaClass(document);

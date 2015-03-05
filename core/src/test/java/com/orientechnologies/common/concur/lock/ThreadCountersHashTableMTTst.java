@@ -43,8 +43,9 @@ public class ThreadCountersHashTableMTTst {
       latch = new CountDownLatch(1);
 
       System.out.println("Start iteration " + n);
-      for (int i = 0; i < 7; i++)
-        futures.add(executorService.submit(new Adder()));
+      for (int i = 0; i < 7; i++) {
+          futures.add(executorService.submit(new Adder()));
+      }
 
       futures.add(executorService.submit(new Checker()));
 
@@ -54,13 +55,15 @@ public class ThreadCountersHashTableMTTst {
 
       stop = true;
 
-      for (Future future : futures)
-        future.get();
+      for (Future future : futures) {
+          future.get();
+      }
 
       System.out.println("Iteration : " + n + " Added threads : " + threadsCounter.get());
 
-      for (Thread thread : addedThreads)
-        Assert.assertSame(threadCounters.search(thread).getThread(), thread);
+      for (Thread thread : addedThreads) {
+          Assert.assertSame(threadCounters.search(thread).getThread(), thread);
+      }
     }
 
   }
@@ -74,8 +77,9 @@ public class ThreadCountersHashTableMTTst {
         while (!stop) {
           for (Thread thread : addedThreads) {
             Assert.assertSame(threadCounters.search(thread).getThread(), thread);
-            if (stop)
-              return null;
+            if (stop) {
+                return null;
+            }
           }
 
         }

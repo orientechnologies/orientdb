@@ -46,8 +46,9 @@ public abstract class OSQLFilterItemFieldMultiAbstract extends OSQLFilterItemAbs
   public Object getValue(final OIdentifiable iRecord, Object iCurrentResult, OCommandContext iContext) {
     final ODocument doc = ((ODocument) iRecord);
 
-    if (names.size() == 1)
-      return transformValue(iRecord, iContext, ODocumentHelper.getIdentifiableValue(iRecord, names.get(0)));
+    if (names.size() == 1) {
+        return transformValue(iRecord, iContext, ODocumentHelper.getIdentifiableValue(iRecord, names.get(0)));
+    }
 
     final String[] fieldNames = doc.fieldNames();
     final Object[] values = new Object[fieldNames.length];
@@ -60,8 +61,9 @@ public abstract class OSQLFilterItemFieldMultiAbstract extends OSQLFilterItemAbs
 
     if (hasChainOperators()) {
       // TRANSFORM ALL THE VALUES
-      for (int i = 0; i < values.length; ++i)
-        values[i] = transformValue(iRecord, iContext, values[i]);
+      for (int i = 0; i < values.length; ++i) {
+          values[i] = transformValue(iRecord, iContext, values[i]);
+      }
     }
 
     return new OQueryRuntimeValueMulti(this, values, collates);

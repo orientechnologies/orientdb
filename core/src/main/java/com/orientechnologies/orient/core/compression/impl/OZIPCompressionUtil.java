@@ -74,8 +74,9 @@ public class OZIPCompressionUtil {
          * this part is necessary because file entry can come before directory entry where is file located i.e.: /foo/foo.txt /foo/
          */
         dir = getDirectoryPart(name);
-        if (dir != null)
-          mkdirs(outdir, dir);
+        if (dir != null) {
+            mkdirs(outdir, dir);
+        }
 
         extractFile(zin, outdir, name, iListener);
       }
@@ -86,8 +87,9 @@ public class OZIPCompressionUtil {
 
   private static void extractFile(final ZipInputStream in, final File outdir, final String name,
       final OCommandOutputListener iListener) throws IOException {
-    if (iListener != null)
-      iListener.onMessage("\n- Uncompressing file " + name + "...");
+    if (iListener != null) {
+        iListener.onMessage("\n- Uncompressing file " + name + "...");
+    }
 
     final BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(new File(outdir, name)));
     try {
@@ -99,8 +101,9 @@ public class OZIPCompressionUtil {
 
   private static void mkdirs(final File outdir, final String path) {
     final File d = new File(outdir, path);
-    if (!d.exists())
-      d.mkdirs();
+    if (!d.exists()) {
+        d.mkdirs();
+    }
   }
 
   private static String getDirectoryPart(final String name) {
@@ -124,15 +127,19 @@ public class OZIPCompressionUtil {
         // extract the relative name for entry purpose
         String entryName = folderName.substring(baseFolderName.length() + 1, folderName.length());
 
-        if (iSkipFileExtensions != null)
-          for (String skip : iSkipFileExtensions)
-            if (entryName.endsWith(skip))
-              return 0;
+        if (iSkipFileExtensions != null) {
+            for (String skip : iSkipFileExtensions) {
+                if (entryName.endsWith(skip)) {
+                    return 0;
+                }
+            }
+        }
 
         final long begin = System.currentTimeMillis();
 
-        if (iOutput != null)
-          iOutput.onMessage("\n- Compressing file " + entryName + "...");
+        if (iOutput != null) {
+            iOutput.onMessage("\n- Compressing file " + entryName + "...");
+        }
 
         ZipEntry ze = new ZipEntry(entryName);
         zos.putNextEntry(ze);
@@ -144,8 +151,9 @@ public class OZIPCompressionUtil {
             in.close();
           }
         } catch (IOException e) {
-          if (iOutput != null)
-            iOutput.onMessage("error: " + e);
+          if (iOutput != null) {
+              iOutput.onMessage("error: " + e);
+          }
 
           OLogManager.instance().error(OZIPCompression.class, "Cannot compress file: %s", e, folderName);
           throw e;

@@ -46,8 +46,9 @@ public class TxRemoteCreateObjectsMultiThreadSpeedTest extends OrientMultiThread
       record.reset();
       record.value(data.getCyclesDone() + "|Gipsy|Cat|European|Italy|" + (data.getCyclesDone() + 300) + ".00").save("csv");
 
-      if (data.getCyclesDone() >= data.getCycles() - 1)
-        database.commit();
+      if (data.getCyclesDone() >= data.getCycles() - 1) {
+          database.commit();
+      }
     }
 
     @Override
@@ -70,8 +71,9 @@ public class TxRemoteCreateObjectsMultiThreadSpeedTest extends OrientMultiThread
   public void init() {
     database = new ODatabaseDocumentTx(System.getProperty("url")).open("admin", "admin");
 
-    if (!database.getStorage().getClusterNames().contains("Animal"))
-      database.addCluster("Animal");
+    if (!database.getStorage().getClusterNames().contains("Animal")) {
+        database.addCluster("Animal");
+    }
 
     foundObjects = database.countClusterElements("Animal");
     System.out.println("\nTotal objects in Animal cluster before the test: " + foundObjects);
@@ -85,7 +87,8 @@ public class TxRemoteCreateObjectsMultiThreadSpeedTest extends OrientMultiThread
 
     assert threadCycles == database.countClusterElements("Animal") - foundObjects;
 
-    if (database != null)
-      database.close();
+    if (database != null) {
+        database.close();
+    }
   }
 }

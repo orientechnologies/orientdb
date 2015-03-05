@@ -52,8 +52,9 @@ public class OMetricRecorder {
       }
       if (index instanceof OChainedIndexProxy) {
         idxNames.addAll(((OChainedIndexProxy) index).getIndexNames());
-      } else
-        idxNames.add(index.getName());
+      } else {
+          idxNames.add(index.getName());
+      }
     }
   }
 
@@ -64,8 +65,9 @@ public class OMetricRecorder {
   public void recordRangeQueryConvertedInBetween() {
     if (context.isRecordingMetrics()) {
       Integer counter = (Integer) context.getVariable("rangeQueryConvertedInBetween");
-      if (counter == null)
-        counter = 0;
+      if (counter == null) {
+          counter = 0;
+      }
 
       counter++;
       context.setVariable("rangeQueryConvertedInBetween", counter);

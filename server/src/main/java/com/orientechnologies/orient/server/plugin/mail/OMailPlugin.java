@@ -63,14 +63,16 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
    public void config(final OServer oServer, final OServerParameterConfiguration[] iParams) {
      for (OServerParameterConfiguration param : iParams) {
        if (param.name.equalsIgnoreCase("enabled")) {
-         if (!Boolean.parseBoolean(param.value))
-           // DISABLE IT
-           return;
+         if (!Boolean.parseBoolean(param.value)) {
+             // DISABLE IT
+             return;
+         }
        } else if (param.name.startsWith(CONFIG_PROFILE_PREFIX)) {
          final String parts = param.name.substring(CONFIG_PROFILE_PREFIX.length());
          int pos = parts.indexOf('.');
-         if (pos == -1)
-           continue;
+         if (pos == -1) {
+             continue;
+         }
 
          final String profileName = parts.substring(0, pos);
          final String profileParam = parts.substring(pos + 1);
@@ -100,14 +102,16 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
     * @throws ParseException
     */
    public void send(final Map<String, Object> iMessage) throws AddressException, MessagingException, ParseException {
-     if (iMessage == null)
-       throw new IllegalArgumentException("Configuration is null");
+     if (iMessage == null) {
+         throw new IllegalArgumentException("Configuration is null");
+     }
 
      final String profileName = (String) iMessage.get("profile");
 
      final OMailProfile profile = profiles.get(profileName);
-     if (profile == null)
-       throw new IllegalArgumentException("Mail profile '" + profileName + "' is not configured on server");
+     if (profile == null) {
+         throw new IllegalArgumentException("Mail profile '" + profileName + "' is not configured on server");
+     }
 
      // creates a new session with an authenticator
      Authenticator auth = new OSMTPAuthenticator((String) profile.getProperty("mail.smtp.user"),
@@ -118,44 +122,50 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
      MimeMessage msg = new MimeMessage(session);
 
      final String from;
-     if (iMessage.containsKey("from"))
-       // GET THE 'FROM' FROM THE MESSAGE
-       from = (String) iMessage.get("from");
-     else
-       // GET THE 'FROM' FROM PROFILE
-       from = (String) profile.getProperty("mail.from");
+     if (iMessage.containsKey("from")) {
+         // GET THE 'FROM' FROM THE MESSAGE
+         from = (String) iMessage.get("from");
+     } else {
+         // GET THE 'FROM' FROM PROFILE
+         from = (String) profile.getProperty("mail.from");
+     }
 
-     if (from != null)
-       msg.setFrom(new InternetAddress(from));
+     if (from != null) {
+         msg.setFrom(new InternetAddress(from));
+     }
 
      final String to = (String) iMessage.get("to");
-     if (to != null && !to.isEmpty())
-       msg.setRecipients(Message.RecipientType.TO, getEmails(to));
+     if (to != null && !to.isEmpty()) {
+         msg.setRecipients(Message.RecipientType.TO, getEmails(to));
+     }
 
      final String cc = (String) iMessage.get("cc");
-     if (cc != null && !cc.isEmpty())
-       msg.setRecipients(Message.RecipientType.CC, getEmails(cc));
+     if (cc != null && !cc.isEmpty()) {
+         msg.setRecipients(Message.RecipientType.CC, getEmails(cc));
+     }
 
      final String bcc = (String) iMessage.get("bcc");
-     if (bcc != null && !bcc.isEmpty())
-       msg.setRecipients(Message.RecipientType.BCC, getEmails(bcc));
+     if (bcc != null && !bcc.isEmpty()) {
+         msg.setRecipients(Message.RecipientType.BCC, getEmails(bcc));
+     }
 
      msg.setSubject((String) iMessage.get("subject"));
 
      // DATE
      Object date = iMessage.get("date");
      final Date sendDate;
-     if (date == null)
-       // NOT SPECIFIED = NOW
-       sendDate = new Date();
-     else if (date instanceof Date)
-       // PASSED
-       sendDate = (Date) date;
-     else {
+     if (date == null) {
+         // NOT SPECIFIED = NOW
+         sendDate = new Date();
+     } else if (date instanceof Date) {
+         // PASSED
+         sendDate = (Date) date;
+     } else {
        // FORMAT IT
        String dateFormat = (String) profile.getProperty("mail.date.format");
-       if (dateFormat == null)
-         dateFormat = "yyyy-MM-dd HH:mm:ss";
+       if (dateFormat == null) {
+           dateFormat = "yyyy-MM-dd HH:mm:ss";
+         }
        sendDate = new SimpleDateFormat(dateFormat).parse(date.toString());
      }
      msg.setSentDate(sendDate);
@@ -212,13 +222,15 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
    }
 
    protected InternetAddress[] getEmails(final String iText) throws AddressException {
-     if (iText == null)
-       return null;
+     if (iText == null) {
+         return null;
+     }
 
      final String[] items = iText.split(",");
      final InternetAddress[] addresses = new InternetAddress[items.length];
-     for (int i = 0; i < items.length; ++i)
-       addresses[i] = new InternetAddress(items[i]);
+     for (int i = 0; i < items.length; ++i) {
+         addresses[i] = new InternetAddress(items[i]);
+     }
      return addresses;
    }
 

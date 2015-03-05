@@ -47,8 +47,9 @@ public class OModificationLock {
    */
   public void requestModificationLock() {
     lock.acquireReadLock();
-    if (vetos.get() == 0)
-      return;
+    if (vetos.get() == 0) {
+        return;
+    }
 
     if (throwException) {
       lock.releaseReadLock();
@@ -61,13 +62,15 @@ public class OModificationLock {
 
     while (vetos.get() > 0) {
       LockSupport.park(this);
-      if (Thread.interrupted())
-        wasInterrupted = true;
+      if (Thread.interrupted()) {
+          wasInterrupted = true;
+      }
     }
 
     waiters.remove(thread);
-    if (wasInterrupted)
-      thread.interrupt();
+    if (wasInterrupted) {
+        thread.interrupt();
+    }
   }
 
   /**
@@ -110,12 +113,14 @@ public class OModificationLock {
    */
   public void allowModifications() {
     final int currentVetos = vetos.decrementAndGet();
-    if (currentVetos < 0)
-      throw new IllegalStateException("Bad state of modification lock. "
-          + "Modifications were prohibited less times than they will be allowed.");
+    if (currentVetos < 0) {
+        throw new IllegalStateException("Bad state of modification lock. "
+                + "Modifications were prohibited less times than they will be allowed.");
+    }
 
-    for (Thread thread : waiters)
-      LockSupport.unpark(thread);
+    for (Thread thread : waiters) {
+        LockSupport.unpark(thread);
+    }
   }
 
 }

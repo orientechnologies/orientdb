@@ -80,8 +80,9 @@ public class TTYConsoleReader implements OConsoleReader {
       OLogManager.instance().error(this, "Error reading history file.", ioe, "");
     }
 
-    if (inStream == null)
-      throw new OException("Cannot access to the input stream. Check permissions of running process");
+    if (inStream == null) {
+        throw new OException("Cannot access to the input stream. Check permissions of running process");
+    }
   }
 
   public String readLine() throws IOException {
@@ -113,8 +114,9 @@ public class TTYConsoleReader implements OConsoleReader {
         if (ctrl) {
           if (next == RIGHT_CHAR) {
             currentPos = buffer.indexOf(" ", currentPos) + 1;
-            if (currentPos == 0)
-              currentPos = buffer.length();
+            if (currentPos == 0) {
+                currentPos = buffer.length();
+            }
             StringBuffer cleaner = new StringBuffer();
             for (int i = 0; i < buffer.length(); i++) {
               cleaner.append(" ");
@@ -127,8 +129,9 @@ public class TTYConsoleReader implements OConsoleReader {
             } else {
               currentPos = buffer.lastIndexOf(" ", currentPos) + 1;
             }
-            if (currentPos < 0)
-              currentPos = 0;
+            if (currentPos < 0) {
+                currentPos = 0;
+            }
             StringBuffer cleaner = new StringBuffer();
             for (int i = 0; i < buffer.length(); i++) {
               cleaner.append(" ");

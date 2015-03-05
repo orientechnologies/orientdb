@@ -51,12 +51,13 @@ public class ODatabaseScriptManager {
                 final ScriptEngine scriptEngine = scriptManager.getEngine(language);
                 final String library = scriptManager.getLibrary(ODatabaseRecordThreadLocal.INSTANCE.get(), language);
 
-                if (library != null)
-                  try {
-                    scriptEngine.eval(library);
-                  } catch (ScriptException e) {
-                    scriptManager.throwErrorMessage(e, library);
-                  }
+                if (library != null) {
+                    try {
+                        scriptEngine.eval(library);
+                    } catch (ScriptException e) {
+                        scriptManager.throwErrorMessage(e, library);
+                    }
+                }
 
                 return scriptEngine;
               }
@@ -72,11 +73,13 @@ public class ODatabaseScriptManager {
               @Override
               public boolean isValid(ScriptEngine object) {
                 if (language.equals("sql")) {
-                  if (!language.equals(object.getFactory().getLanguageName()))
-                    return false;
+                  if (!language.equals(object.getFactory().getLanguageName())) {
+                      return false;
+                  }
                 } else {
-                  if ((object.getFactory().getLanguageName()).equals("sql"))
-                    return false;
+                  if ((object.getFactory().getLanguageName()).equals("sql")) {
+                      return false;
+                  }
                 }
                 return true;
               }

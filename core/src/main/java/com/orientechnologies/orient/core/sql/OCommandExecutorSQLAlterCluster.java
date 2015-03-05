@@ -62,30 +62,35 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
 
     int oldPos = 0;
     int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_ALTER))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_ALTER)) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_ALTER + " not found. Use " + getSyntax(), parserText, oldPos);
+    }
 
     oldPos = pos;
     pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_CLUSTER))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_CLUSTER)) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), parserText, oldPos);
+    }
 
     oldPos = pos;
     pos = nextWord(parserText, parserTextUpperCase, oldPos, word, false);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Expected <cluster-name>. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1) {
+        throw new OCommandSQLParsingException("Expected <cluster-name>. Use " + getSyntax(), parserText, oldPos);
+    }
 
     clusterName = word.toString();
 
     final Pattern p = Pattern.compile("([0-9]*)");
     final Matcher m = p.matcher(clusterName);
-    if (m.matches())
-      clusterId = Integer.parseInt(clusterName);
+    if (m.matches()) {
+        clusterId = Integer.parseInt(clusterName);
+    }
 
     oldPos = pos;
     pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Missing cluster attribute to change. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1) {
+        throw new OCommandSQLParsingException("Missing cluster attribute to change. Use " + getSyntax(), parserText, oldPos);
+    }
 
     final String attributeAsString = word.toString();
 
@@ -98,12 +103,14 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
 
     value = parserText.substring(pos + 1).trim();
 
-    if (value.length() == 0)
-      throw new OCommandSQLParsingException("Missing property value to change for attribute '" + attribute + "'. Use "
-          + getSyntax(), parserText, oldPos);
+    if (value.length() == 0) {
+        throw new OCommandSQLParsingException("Missing property value to change for attribute '" + attribute + "'. Use "
+                + getSyntax(), parserText, oldPos);
+    }
 
-    if (value.equalsIgnoreCase("null"))
-      value = null;
+    if (value.equalsIgnoreCase("null")) {
+        value = null;
+    }
 
     return this;
   }
@@ -112,13 +119,15 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
    * Execute the ALTER CLASS.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (attribute == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    if (attribute == null) {
+        throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    }
 
     final OCluster cluster = getCluster();
 
-    if (cluster == null)
-      throw new OCommandExecutionException("Cluster '" + clusterName + "' not found");
+    if (cluster == null) {
+        throw new OCommandExecutionException("Cluster '" + clusterName + "' not found");
+    }
 
     if (clusterId > -1 && clusterName.equals(String.valueOf(clusterId))) {
       clusterName = cluster.getName();
@@ -130,8 +139,9 @@ public class OCommandExecutorSQLAlterCluster extends OCommandExecutorSQLAbstract
     try {
       result = cluster.set(attribute, value);
       final OStorage storage = getDatabase().getStorage();
-      if (storage instanceof OLocalPaginatedStorage)
-        ((OLocalPaginatedStorage) storage).synch();
+      if (storage instanceof OLocalPaginatedStorage) {
+          ((OLocalPaginatedStorage) storage).synch();
+      }
     } catch (IOException ioe) {
       throw new OCommandExecutionException("Error altering cluster '" + clusterName + "'", ioe);
     }

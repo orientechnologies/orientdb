@@ -35,9 +35,10 @@ public class OFileClassic extends OAbstractFile {
     acquireWriteLock();
     try {
       final long currentSize = this.size;
-      if (maxSize > 0 && currentSize + size > maxSize)
-        throw new IllegalArgumentException("Cannot enlarge file since the configured max size ("
-            + OFileUtils.getSizeAsString(maxSize) + ") was reached! " + toString());
+      if (maxSize > 0 && currentSize + size > maxSize) {
+          throw new IllegalArgumentException("Cannot enlarge file since the configured max size ("
+                  + OFileUtils.getSizeAsString(maxSize) + ") was reached! " + toString());
+      }
 
       this.size += size;
       return currentSize;
@@ -329,10 +330,11 @@ public class OFileClassic extends OAbstractFile {
     acquireReadLock();
     try {
       final ByteBuffer buffer;
-      if (version == 0)
-        buffer = readData(SOFTLY_CLOSED_OFFSET_V_0, 1);
-      else
-        buffer = readData(SOFTLY_CLOSED_OFFSET, 1);
+      if (version == 0) {
+          buffer = readData(SOFTLY_CLOSED_OFFSET_V_0, 1);
+      } else {
+          buffer = readData(SOFTLY_CLOSED_OFFSET, 1);
+      }
 
       return buffer.get(0) > 0;
     } finally {
@@ -343,8 +345,9 @@ public class OFileClassic extends OAbstractFile {
   public void setSoftlyClosed(final boolean value) throws IOException {
     acquireWriteLock();
     try {
-      if (channel == null || mode.indexOf('w') < 0)
-        return;
+      if (channel == null || mode.indexOf('w') < 0) {
+          return;
+      }
 
       final ByteBuffer buffer = getBuffer(1);
       buffer.put(0, (byte) (value ? 1 : 0));
@@ -393,9 +396,10 @@ public class OFileClassic extends OAbstractFile {
 
   private ByteBuffer getWriteBuffer(final int iLenght) {
     setDirty();
-    if (iLenght <= OBinaryProtocol.SIZE_LONG)
-      // RECYCLE WRITE BYTE BUFFER SINCE WRITES ARE SYNCHRONIZED
-      return (ByteBuffer) internalWriteBuffer.rewind();
+    if (iLenght <= OBinaryProtocol.SIZE_LONG) {
+        // RECYCLE WRITE BYTE BUFFER SINCE WRITES ARE SYNCHRONIZED
+        return (ByteBuffer) internalWriteBuffer.rewind();
+    }
 
     return getBuffer(iLenght);
   }

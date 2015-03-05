@@ -49,8 +49,9 @@ import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
        @Override
        public void run() {
          final int expired = checkSessionsValidity();
-         if (expired > 0)
-           OLogManager.instance().debug(this, "Removed %d session because expired", expired);
+         if (expired > 0) {
+             OLogManager.instance().debug(this, "Removed %d session because expired", expired);
+         }
        }
      }, expirationTime, expirationTime);
    }
@@ -96,8 +97,9 @@ import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
      try {
 
        final OHttpSession sess = sessions.get(iId);
-       if (sess != null)
-         sess.updateLastUpdatedOn();
+       if (sess != null) {
+           sess.updateLastUpdatedOn();
+       }
        return sess;
 
      } finally {

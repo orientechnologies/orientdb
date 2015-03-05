@@ -35,8 +35,9 @@ public class OChunkedResponse extends OutputStream {
    @Override
    public void write(int b) throws IOException {
      buffer[bufferSize++] = (byte) b;
-     if (bufferSize >= buffer.length)
-       writeContent();
+     if (bufferSize >= buffer.length) {
+         writeContent();
+     }
    }
 
    @Override

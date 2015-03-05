@@ -92,8 +92,9 @@ public class FullTextIndexTest extends DocumentDBBaseTest {
 
       text.setLength(0);
       for (int w = 0; w < 10; ++w) {
-        if (w > 0)
-          text.append(' ');
+        if (w > 0) {
+            text.append(' ');
+        }
         text.append(words[random.nextInt(words.length - 1)]);
       }
 
@@ -131,8 +132,9 @@ public class FullTextIndexTest extends DocumentDBBaseTest {
     doc.field("date", new Date());
 
     for (int w = 0; w < 10; ++w) {
-      if (w > 0)
-        text.append(' ');
+      if (w > 0) {
+          text.append(' ');
+      }
       text.append(words[random.nextInt(words.length - 1)]);
     }
 
@@ -174,8 +176,9 @@ public class FullTextIndexTest extends DocumentDBBaseTest {
     doc.field("date", new Date());
 
     for (int w = 0; w < 10; ++w) {
-      if (w > 0)
-        text.append(' ');
+      if (w > 0) {
+          text.append(' ');
+      }
       text.append(words[random.nextInt(words.length - 1)]);
     }
 
@@ -194,8 +197,9 @@ public class FullTextIndexTest extends DocumentDBBaseTest {
 
     text.setLength(0);
     for (int w = 0; w < 10; ++w) {
-      if (w > 0)
-        text.append(' ');
+      if (w > 0) {
+          text.append(' ');
+      }
       text.append(words[random.nextInt(words.length - 1)]);
     }
 

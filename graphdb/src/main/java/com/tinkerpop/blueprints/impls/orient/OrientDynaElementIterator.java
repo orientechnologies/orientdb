@@ -48,29 +48,34 @@ class OrientDynaElementIterator implements Iterator<Object> {
   public Object next() {
     OrientElement currentElement = null;
 
-    if (!hasNext())
-      throw new NoSuchElementException();
+    if (!hasNext()) {
+        throw new NoSuchElementException();
+    }
 
     Object current = itty.next();
 
-    if (null == current)
-      throw new NoSuchElementException();
+    if (null == current) {
+        throw new NoSuchElementException();
+    }
 
-    if (current instanceof OIdentifiable)
-      current = ((OIdentifiable) current).getRecord();
+    if (current instanceof OIdentifiable) {
+        current = ((OIdentifiable) current).getRecord();
+    }
 
     if (current instanceof ODocument) {
       final ODocument currentDocument = (ODocument) current;
 
-      if (currentDocument.getInternalStatus() == ODocument.STATUS.NOT_LOADED)
-        currentDocument.load();
+      if (currentDocument.getInternalStatus() == ODocument.STATUS.NOT_LOADED) {
+          currentDocument.load();
+      }
 
       final OClass schemaClass = ODocumentInternal.getImmutableSchemaClass(currentDocument);
-      if (schemaClass != null && schemaClass.isSubClassOf(graph.getEdgeBaseType()))
-        currentElement = new OrientEdge(graph, currentDocument);
-      else
-        // RETURN VERTEX IN ALL THE CASES, EVEN FOR PROJECTED DOCUMENTS
-        currentElement = new OrientVertex(graph, currentDocument);
+      if (schemaClass != null && schemaClass.isSubClassOf(graph.getEdgeBaseType())) {
+          currentElement = new OrientEdge(graph, currentDocument);
+      } else {
+          // RETURN VERTEX IN ALL THE CASES, EVEN FOR PROJECTED DOCUMENTS
+          currentElement = new OrientVertex(graph, currentDocument);
+      }
     }
 
     return currentElement;

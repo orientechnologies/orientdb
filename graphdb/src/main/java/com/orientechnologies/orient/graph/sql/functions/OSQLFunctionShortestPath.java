@@ -65,16 +65,18 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
 
       Object source = iParams[0];
       if (OMultiValue.isMultiValue(source)) {
-        if (OMultiValue.getSize(source) > 1)
-          throw new IllegalArgumentException("Only one sourceVertex is allowed");
+        if (OMultiValue.getSize(source) > 1) {
+            throw new IllegalArgumentException("Only one sourceVertex is allowed");
+        }
         source = OMultiValue.getFirstValue(source);
       }
       OrientVertex sourceVertex = graph.getVertex(OSQLHelper.getValue(source, record, iContext));
 
       Object dest = iParams[1];
       if (OMultiValue.isMultiValue(dest)) {
-        if (OMultiValue.getSize(dest) > 1)
-          throw new IllegalArgumentException("Only one destinationVertex is allowed");
+        if (OMultiValue.getSize(dest) > 1) {
+            throw new IllegalArgumentException("Only one destinationVertex is allowed");
+        }
         dest = OMultiValue.getFirstValue(dest);
       }
       OrientVertex destinationVertex = graph.getVertex(OSQLHelper.getValue(dest, record, iContext));
@@ -86,8 +88,9 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
       }
 
       Direction direction = Direction.BOTH;
-      if (iParams.length > 2)
-        direction = Direction.valueOf(iParams[2].toString().toUpperCase());
+      if (iParams.length > 2) {
+          direction = Direction.valueOf(iParams[2].toString().toUpperCase());
+      }
 
       final ArrayDeque<OrientVertex> queue = new ArrayDeque<OrientVertex>();
       final Set<ORID> visited = new HashSet<ORID>();
@@ -109,8 +112,9 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
 
             previouses.put(neighborIdentity, current.getIdentity());
 
-            if (destinationVertex.equals(neighbor))
-              return computePath(previouses, neighborIdentity);
+            if (destinationVertex.equals(neighbor)) {
+                return computePath(previouses, neighborIdentity);
+            }
 
             queue.offer(v);
             visited.add(neighborIdentity);
@@ -121,8 +125,9 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
 
       return new ArrayList<ORID>();
     } finally {
-      if (shutdownFlag.getValue())
-        graph.shutdown(false);
+      if (shutdownFlag.getValue()) {
+          graph.shutdown(false);
+      }
     }
   }
 

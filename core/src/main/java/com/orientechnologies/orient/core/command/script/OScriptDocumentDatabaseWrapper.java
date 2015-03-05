@@ -74,8 +74,9 @@ public class OScriptDocumentDatabaseWrapper {
   }
 
   public void switchUser(final String iUserName, final String iUserPassword) {
-    if (!database.isClosed())
-      database.close();
+    if (!database.isClosed()) {
+        database.close();
+    }
     database.open(iUserName, iUserPassword);
   }
 
@@ -89,8 +90,9 @@ public class OScriptDocumentDatabaseWrapper {
 
   public OIdentifiable[] query(final OSQLQuery iQuery, final Object... iParameters) {
     final List<OIdentifiable> res = database.query(iQuery, convertParameters(iParameters));
-    if (res == null)
-      return new OIdentifiable[] {};
+    if (res == null) {
+        return new OIdentifiable[] {};
+    }
     return res.toArray(new OIdentifiable[res.size()]);
   }
 
@@ -123,14 +125,16 @@ public class OScriptDocumentDatabaseWrapper {
 
   public Object process(final String iType, final String iName, final Object... iParameters) {
     final OComposableProcessor process = (OComposableProcessor) OProcessorManager.getInstance().get(iType);
-    if (process == null)
-      throw new OProcessException("Process type '" + iType + "' is undefined");
+    if (process == null) {
+        throw new OProcessException("Process type '" + iType + "' is undefined");
+    }
 
     final OBasicCommandContext context = new OBasicCommandContext();
     if (iParameters != null) {
       int argIdx = 0;
-      for (Object p : iParameters)
-        context.setVariable("arg" + (argIdx++), p);
+      for (Object p : iParameters) {
+          context.setVariable("arg" + (argIdx++), p);
+      }
     }
 
     Object res;
@@ -428,15 +432,16 @@ public class OScriptDocumentDatabaseWrapper {
   }
 
   protected Object[] convertParameters(final Object[] iParameters) {
-    if (iParameters != null)
-      for (int i = 0; i < iParameters.length; ++i) {
-        final Object p = iParameters[i];
-        if (p != null) {
-          // if (p instanceof sun.org.mozilla.javascript.internal.IdScriptableObject) {
-          // iParameters[i] = ((sun.org.mozilla.javascript.internal.NativeDate) p).to;
-          // }
+    if (iParameters != null) {
+        for (int i = 0; i < iParameters.length; ++i) {
+            final Object p = iParameters[i];
+            if (p != null) {
+                // if (p instanceof sun.org.mozilla.javascript.internal.IdScriptableObject) {
+                // iParameters[i] = ((sun.org.mozilla.javascript.internal.NativeDate) p).to;
+                // }
+            }
         }
-      }
+    }
     return iParameters;
   }
 }

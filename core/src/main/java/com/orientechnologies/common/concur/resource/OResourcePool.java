@@ -51,8 +51,9 @@ public class OResourcePool<K, V> {
   protected volatile int                created      = 0;
 
   public OResourcePool(final int maxResources, final OResourcePoolListener<K, V> listener) {
-    if (maxResources < 1)
-      throw new IllegalArgumentException("iMaxResource must be major than 0");
+    if (maxResources < 1) {
+        throw new IllegalArgumentException("iMaxResource must be major than 0");
+    }
 
     this.listener = listener;
     sem = new Semaphore(maxResources, true);
@@ -62,8 +63,9 @@ public class OResourcePool<K, V> {
   public V getResource(K key, final long maxWaitMillis, Object... additionalArgs) throws OLockException {
     // First, get permission to take or create a resource
     try {
-      if (!sem.tryAcquire(maxWaitMillis, TimeUnit.MILLISECONDS))
-        throw new OLockException("No more resources available in pool. Requested resource: " + key);
+      if (!sem.tryAcquire(maxWaitMillis, TimeUnit.MILLISECONDS)) {
+          throw new OLockException("No more resources available in pool. Requested resource: " + key);
+      }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new OInterruptedException(e);
@@ -78,10 +80,11 @@ public class OResourcePool<K, V> {
         if (listener.reuseResource(key, additionalArgs, res)) {
           // OK: REUSE IT
           break;
-        } else
-          res = null;
-
-        // UNABLE TO REUSE IT: THE RESOURE WILL BE DISCARDED AND TRY WITH THE NEXT ONE, IF ANY
+        } else {
+            res = null;
+            
+            // UNABLE TO REUSE IT: THE RESOURE WILL BE DISCARDED AND TRY WITH THE NEXT ONE, IF ANY
+        }
       }
     } while (!resources.isEmpty());
 
@@ -90,13 +93,15 @@ public class OResourcePool<K, V> {
       if (res == null) {
         res = listener.createNewResource(key, additionalArgs);
         created++;
-        if (OLogManager.instance().isDebugEnabled())
-          OLogManager.instance().debug(this, "pool:'%s' created new resource '%s', new resource count '%d'", this, res, created);
+        if (OLogManager.instance().isDebugEnabled()) {
+            OLogManager.instance().debug(this, "pool:'%s' created new resource '%s', new resource count '%d'", this, res, created);
+        }
       }
       resourcesOut.add(res);
-      if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().debug(this, "pool:'%s' acquired resource '%s' available %d out %d ", this, res,
-            sem.availablePermits(), resourcesOut.size());
+      if (OLogManager.instance().isDebugEnabled()) {
+          OLogManager.instance().debug(this, "pool:'%s' acquired resource '%s' available %d out %d ", this, res,
+                  sem.availablePermits(), resourcesOut.size());
+      }
       return res;
     } catch (RuntimeException e) {
       sem.release();
@@ -121,9 +126,10 @@ public class OResourcePool<K, V> {
     if (resourcesOut.remove(res)) {
       resources.add(res);
       sem.release();
-      if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().debug(this, "pool:'%s' returned resource '%s' available %d out %d", this, res,
-            sem.availablePermits(), resourcesOut.size());
+      if (OLogManager.instance().isDebugEnabled()) {
+          OLogManager.instance().debug(this, "pool:'%s' returned resource '%s' available %d out %d", this, res,
+                  sem.availablePermits(), resourcesOut.size());
+      }
     }
     return true;
   }
@@ -146,9 +152,10 @@ public class OResourcePool<K, V> {
     if (resourcesOut.remove(res)) {
       this.resources.remove(res);
       sem.release();
-      if (OLogManager.instance().isDebugEnabled())
-        OLogManager.instance().debug(this, "pool:'%s' removed resource '%s' available %d out %d", this, res,
-            sem.availablePermits(), resourcesOut.size());
+      if (OLogManager.instance().isDebugEnabled()) {
+          OLogManager.instance().debug(this, "pool:'%s' removed resource '%s' available %d out %d", this, res,
+                  sem.availablePermits(), resourcesOut.size());
+      }
     }
   }
 

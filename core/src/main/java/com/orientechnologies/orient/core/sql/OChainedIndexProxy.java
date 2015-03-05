@@ -94,8 +94,9 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   private static Iterable<List<OIndex<?>>> getIndexesForChain(OClass iSchemaClass, OSQLFilterItemField.FieldChain fieldChain) {
     List<OIndex<?>> baseIndexes = prepareBaseIndexes(iSchemaClass, fieldChain);
 
-    if (baseIndexes == null)
-      return Collections.emptyList();
+    if (baseIndexes == null) {
+        return Collections.emptyList();
+    }
 
     Collection<OIndex<?>> lastIndexes = prepareLastIndexVariants(iSchemaClass, fieldChain);
 
@@ -149,8 +150,9 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
       final Set<OIndex<?>> involvedIndexes = oClass.getInvolvedIndexes(fieldChain.getItemName(i));
       final OIndex<?> bestIndex = findBestIndex(involvedIndexes);
 
-      if (bestIndex == null)
-        return null;
+      if (bestIndex == null) {
+          return null;
+      }
 
       result.add(bestIndex);
       oClass = oClass.getProperty(fieldChain.getItemName(i)).getLinkedClass();
@@ -177,15 +179,17 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
   protected static OIndex<?> findBestIndex(Iterable<OIndex<?>> indexes) {
     OIndex<?> bestIndex = null;
     for (OIndex<?> index : indexes) {
-      if (priorityOfUsage(index) > priorityOfUsage(bestIndex))
-        bestIndex = index;
+      if (priorityOfUsage(index) > priorityOfUsage(bestIndex)) {
+          bestIndex = index;
+      }
     }
     return bestIndex;
   }
 
   private static int priorityOfUsage(OIndex<?> index) {
-    if (index == null)
-      return -1;
+    if (index == null) {
+        return -1;
+    }
 
     final OClass.INDEX_TYPE indexType = OClass.INDEX_TYPE.valueOf(index.getType());
     final boolean isComposite = isComposite(index);
@@ -194,8 +198,9 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     int priority = 1;
 
     if (isComposite) {
-      if (!supportNullValues)
-        return -1;
+      if (!supportNullValues) {
+          return -1;
+      }
     } else {
       priority += 10;
     }
@@ -203,10 +208,11 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
     switch (indexType) {
     case UNIQUE_HASH_INDEX:
     case NOTUNIQUE_HASH_INDEX:
-      if (isComposite)
-        return -1;
-      else
-        priority += 10;
+      if (isComposite) {
+          return -1;
+    } else {
+          priority += 10;
+    }
       break;
     case UNIQUE:
     case NOTUNIQUE:
@@ -244,8 +250,9 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
 
   private static boolean supportNullValues(OIndex<?> index) {
     final ODocument metadata = index.getMetadata();
-    if (metadata == null)
-      return false;
+    if (metadata == null) {
+        return false;
+    }
 
     final Boolean ignoreNullValues = metadata.field("ignoreNullValues");
     return Boolean.FALSE.equals(ignoreNullValues);
@@ -271,8 +278,9 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
 
     for (int i = 0; i < indexNames.size(); i++) {
       String indexName = indexNames.get(i);
-      if (i > 0)
-        res.append(", ");
+      if (i > 0) {
+          res.append(", ");
+      }
       res.append(indexName);
     }
 
@@ -589,8 +597,9 @@ public class OChainedIndexProxy<T> implements OIndex<T> {
 
     @Override
     public Map.Entry<Object, OIdentifiable> nextEntry() {
-      if (currentIterator == null)
-        return null;
+      if (currentIterator == null) {
+          return null;
+      }
 
       while (!currentIterator.hasNext()) {
         final Map.Entry<Object, OIdentifiable> entry = internalCursor.nextEntry();

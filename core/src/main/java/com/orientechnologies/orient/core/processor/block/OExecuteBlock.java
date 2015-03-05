@@ -43,34 +43,39 @@ public class OExecuteBlock extends OAbstractBlock {
     String returnType = (String) getFieldOfClass(iContext, iConfig, "returnType", String.class);
 
     returnValue = null;
-    if (returnType == null)
-      returnType = "last";
-    else if ("list".equalsIgnoreCase(returnType))
-      returnValue = new ArrayList<Object>();
-    else if ("set".equalsIgnoreCase(returnType))
-      returnValue = new HashSet<Object>();
+    if (returnType == null) {
+        returnType = "last";
+    } else if ("list".equalsIgnoreCase(returnType)) {
+        returnValue = new ArrayList<Object>();
+    } else if ("set".equalsIgnoreCase(returnType)) {
+        returnValue = new HashSet<Object>();
+    }
 
     int iterated = 0;
 
     final Object beginClause = getField(iContext, iConfig, "begin");
-    if (beginClause != null)
-      executeBlock(iManager, iContext, "begin", beginClause, iOutput, iReadOnly, returnType, returnValue);
+    if (beginClause != null) {
+        executeBlock(iManager, iContext, "begin", beginClause, iOutput, iReadOnly, returnType, returnValue);
+    }
 
     if (foreach != null) {
       Object result;
-      if (foreach instanceof ODocument)
-        result = delegate("foreach", iManager, (ODocument) foreach, iContext, iOutput, iReadOnly);
-      else if (foreach instanceof Map)
-        result = ((Map<?, ?>) foreach).values();
-      else
-        result = foreach;
+      if (foreach instanceof ODocument) {
+          result = delegate("foreach", iManager, (ODocument) foreach, iContext, iOutput, iReadOnly);
+      } else if (foreach instanceof Map) {
+          result = ((Map<?, ?>) foreach).values();
+      } else {
+          result = foreach;
+      }
 
-      if (!OMultiValue.isIterable(result))
-        throw new OProcessException("Result of 'foreach' block (" + foreach + ") must be iterable but found " + result.getClass());
+      if (!OMultiValue.isIterable(result)) {
+          throw new OProcessException("Result of 'foreach' block (" + foreach + ") must be iterable but found " + result.getClass());
+      }
 
       for (Object current : OMultiValue.getMultiValueIterable(result)) {
-        if (current instanceof Map.Entry)
-          current = ((Entry<?, ?>) current).getValue();
+        if (current instanceof Map.Entry) {
+            current = ((Entry<?, ?>) current).getValue();
+        }
 
         assignVariable(iContext, "current", current);
         assignVariable(iContext, "currentIndex", iterated);
@@ -93,8 +98,9 @@ public class OExecuteBlock extends OAbstractBlock {
     }
 
     final Object endClause = getField(iContext, iConfig, "end");
-    if (endClause != null)
-      executeBlock(iManager, iContext, "end", endClause, iOutput, iReadOnly, returnType, returnValue);
+    if (endClause != null) {
+        executeBlock(iManager, iContext, "end", endClause, iOutput, iReadOnly, returnType, returnValue);
+    }
 
     debug(iContext, "Executed %d iteration and returned type %s", iterated, returnType);
     return returnValue;
@@ -106,14 +112,15 @@ public class OExecuteBlock extends OAbstractBlock {
 
     if (isBlock(iDoClause)) {
       returnValue = executeBlock(iManager, iContext, "do", iDoClause, iOutput, iReadOnly, returnType, returnValue);
-    } else
-      for (Object item : OMultiValue.getMultiValueIterable(iDoClause)) {
-        final String blockId = "do[" + i + "]";
-
-        returnValue = executeBlock(iManager, iContext, blockId, item, iOutput, iReadOnly, returnType, returnValue);
-
-        ++i;
-      }
+    } else {
+        for (Object item : OMultiValue.getMultiValueIterable(iDoClause)) {
+            final String blockId = "do[" + i + "]";
+            
+            returnValue = executeBlock(iManager, iContext, blockId, item, iOutput, iReadOnly, returnType, returnValue);
+            
+            ++i;
+        }
+    }
 
     return returnValue;
   }
@@ -124,16 +131,18 @@ public class OExecuteBlock extends OAbstractBlock {
 
     Boolean merge = iValue instanceof ODocument ? getFieldOfClass(iContext, (ODocument) iValue, "merge", Boolean.class)
         : Boolean.FALSE;
-    if (merge == null)
-      merge = Boolean.FALSE;
+    if (merge == null) {
+        merge = Boolean.FALSE;
+    }
 
     Object result;
     if (isBlock(iValue)) {
       // EXECUTE SINGLE BLOCK
       final ODocument value = (ODocument) iValue;
       result = delegate(iName, iManager, value, iContext, iOutput, iReadOnly);
-      if (value.containsField("return"))
-        return returnValue;
+      if (value.containsField("return")) {
+          return returnValue;
+      }
     } else {
       // EXECUTE ENTIRE PROCESS
       try {
@@ -143,15 +152,16 @@ public class OExecuteBlock extends OAbstractBlock {
       }
     }
 
-    if ("last".equalsIgnoreCase(returnType))
-      returnValue = result;
-    else if (result != null && ("list".equalsIgnoreCase(returnType) || "set".equalsIgnoreCase(returnType))) {
+    if ("last".equalsIgnoreCase(returnType)) {
+        returnValue = result;
+    } else if (result != null && ("list".equalsIgnoreCase(returnType) || "set".equalsIgnoreCase(returnType))) {
       if (result instanceof Collection<?> && merge) {
         debug(iContext, "Merging content of collection with size %d with the master with size %d",
             ((Collection<? extends Object>) result).size(), ((Collection<? extends Object>) returnValue).size());
         ((Collection<Object>) returnValue).addAll((Collection<? extends Object>) result);
-      } else
-        ((Collection<Object>) returnValue).add(result);
+      } else {
+          ((Collection<Object>) returnValue).add(result);
+        }
     }
 
     return returnValue;

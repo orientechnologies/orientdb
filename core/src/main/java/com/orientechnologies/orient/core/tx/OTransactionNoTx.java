@@ -74,8 +74,9 @@ public class OTransactionNoTx extends OTransactionAbstract {
 
   public ORecord loadRecord(final ORID iRid, final ORecord iRecord, final String iFetchPlan, final boolean ignoreCache,
       final boolean loadTombstone, final OStorage.LOCKING_STRATEGY iLockingStrategy) {
-    if (iRid.isNew())
-      return null;
+    if (iRid.isNew()) {
+        return null;
+    }
 
     return database.executeReadRecord((ORecordId) iRid, iRecord, iFetchPlan, ignoreCache, loadTombstone, iLockingStrategy);
   }
@@ -96,19 +97,22 @@ public class OTransactionNoTx extends OTransactionAbstract {
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
-      if (rid.isValid())
-        database.getLocalCache().freeRecord(rid);
+      if (rid.isValid()) {
+          database.getLocalCache().freeRecord(rid);
+      }
 
-      if (e instanceof RuntimeException)
-        throw (RuntimeException) e;
+      if (e instanceof RuntimeException) {
+          throw (RuntimeException) e;
+      }
       throw new OException(e);
     }
   }
 
   @Override
   public OTransaction setIsolationLevel(final ISOLATION_LEVEL isolationLevel) {
-    if (isolationLevel != ISOLATION_LEVEL.READ_COMMITTED)
-      throw new IllegalArgumentException("Isolation level '" + isolationLevel + "' is not supported without an active transaction");
+    if (isolationLevel != ISOLATION_LEVEL.READ_COMMITTED) {
+        throw new IllegalArgumentException("Isolation level '" + isolationLevel + "' is not supported without an active transaction");
+    }
     return super.setIsolationLevel(isolationLevel);
   }
 
@@ -116,19 +120,22 @@ public class OTransactionNoTx extends OTransactionAbstract {
    * Deletes the record.
    */
   public void deleteRecord(final ORecord iRecord, final OPERATION_MODE iMode) {
-    if (!iRecord.getIdentity().isPersistent())
-      return;
+    if (!iRecord.getIdentity().isPersistent()) {
+        return;
+    }
 
     try {
       database.executeDeleteRecord(iRecord, iRecord.getRecordVersion(), true, true, iMode, false);
     } catch (Exception e) {
       // REMOVE IT FROM THE CACHE TO AVOID DIRTY RECORDS
       final ORecordId rid = (ORecordId) iRecord.getIdentity();
-      if (rid.isValid())
-        database.getLocalCache().freeRecord(rid);
+      if (rid.isValid()) {
+          database.getLocalCache().freeRecord(rid);
+      }
 
-      if (e instanceof RuntimeException)
-        throw (RuntimeException) e;
+      if (e instanceof RuntimeException) {
+          throw (RuntimeException) e;
+      }
       throw new OException(e);
     }
   }

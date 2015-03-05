@@ -88,8 +88,9 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
       throws Exception {
 
     if (!getNodeSource().equals(iManager.getLocalNodeName())) {
-      if (database == null)
-        throw new ODistributedException("Database instance is null");
+      if (database == null) {
+          throw new ODistributedException("Database instance is null");
+      }
 
       final String databaseName = database.getName();
 
@@ -113,10 +114,11 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
               databaseName);
 
           final File f = new File(Orient.getTempPath() + "/backup_" + database.getName() + ".zip");
-          if (f.exists())
-            f.delete();
-          else
-            f.getParentFile().mkdirs();
+          if (f.exists()) {
+              f.delete();
+          } else {
+              f.getParentFile().mkdirs();
+          }
           f.createNewFile();
 
           ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.OUT,
@@ -145,9 +147,10 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
             ODistributedServerLog.info(this, iManager.getLocalNodeName(), getNodeSource(), ODistributedServerLog.DIRECTION.OUT,
                 "- transferring chunk #%d offset=%d size=%s...", 1, 0, OFileUtils.getSizeAsNumber(chunk.buffer.length));
 
-            if (chunk.last)
-              // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
-              iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+            if (chunk.last) {
+                // NO MORE CHUNKS: SET THE NODE ONLINE (SYNCHRONIZING ENDED)
+                iManager.setDatabaseStatus(iManager.getLocalNodeName(), databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+            }
 
             return chunk;
 
@@ -162,12 +165,14 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
               "deploy database task completed");
         }
 
-      } else
+      } else {
+          ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
+                  "skip deploying database %s because another node is doing it", databaseName);
+      }
+    } else {
         ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-            "skip deploying database %s because another node is doing it", databaseName);
-    } else
-      ODistributedServerLog.debug(this, iManager.getLocalNodeName(), getNodeSource(), DIRECTION.NONE,
-          "skip deploying database from the same node");
+                "skip deploying database from the same node");
+    }
 
     return Boolean.FALSE;
   }
@@ -221,8 +226,9 @@ public class ODeployDatabaseTask extends OAbstractReplicatedTask implements OCom
 
   @Override
   public void onMessage(String iText) {
-    if (iText.startsWith("\n"))
-      iText = iText.substring(1);
+    if (iText.startsWith("\n")) {
+        iText = iText.substring(1);
+    }
 
     OLogManager.instance().info(this, iText);
   }

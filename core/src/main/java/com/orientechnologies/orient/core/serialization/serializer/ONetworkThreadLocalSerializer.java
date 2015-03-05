@@ -41,8 +41,9 @@ public class ONetworkThreadLocalSerializer {
     Orient.instance().registerListener(new OOrientListenerAbstract() {
       @Override
       public void onStartup() {
-        if (networkSerializer == null)
-          networkSerializer = new ThreadLocal<ORecordSerializer>();
+        if (networkSerializer == null) {
+            networkSerializer = new ThreadLocal<ORecordSerializer>();
+        }
       }
 
       @Override

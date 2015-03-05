@@ -42,7 +42,8 @@ public abstract class OCommandExecutorSQLRetryAbstract extends OCommandExecutorS
     if (temp.equals("WAIT")) {
       parserNextWord(true);
       wait = Integer.parseInt(parserGetLastWord());
-    } else
-      parserGoBack();
+    } else {
+        parserGoBack();
+    }
   }
 }

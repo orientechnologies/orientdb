@@ -50,8 +50,9 @@ public abstract class ONetworkProtocol extends OSoftThread {
 
   public String getListeningAddress() {
     final OChannel c = getChannel();
-    if (c != null)
-      return c.socket.getLocalAddress().getHostAddress();
+    if (c != null) {
+        return c.socket.getLocalAddress().getHostAddress();
+    }
     return null;
   }
 
@@ -69,9 +70,10 @@ public abstract class ONetworkProtocol extends OSoftThread {
           OLogManager.instance().info(this, "Node is not online yet (status=%s), blocking the command until it's online %d/%d",
               mgr.getNodeStatus(), retry + 1, MAX_RETRIES);
           pauseCurrentThread(300);
-        } else
-          // OK, RETURN
-          return;
+        } else {
+            // OK, RETURN
+            return;
+        }
       }
 
       // TIMEOUT

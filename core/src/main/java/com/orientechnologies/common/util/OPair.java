@@ -75,10 +75,11 @@ public class OPair<K extends Comparable<K>, V> implements Entry<K, V>, Comparabl
     buffer.append(key);
     buffer.append(':');
 
-    if (value == null || !value.getClass().isArray())
-      buffer.append(value);
-    else
-      buffer.append(Arrays.toString((Object[]) value));
+    if (value == null || !value.getClass().isArray()) {
+        buffer.append(value);
+    } else {
+        buffer.append(Arrays.toString((Object[]) value));
+    }
 
     return buffer.toString();
   }
@@ -93,18 +94,23 @@ public class OPair<K extends Comparable<K>, V> implements Entry<K, V>, Comparabl
 
   @Override
   public boolean equals(Object obj) {
-    if (this == obj)
-      return true;
-    if (obj == null)
-      return false;
-    if (getClass() != obj.getClass())
-      return false;
+    if (this == obj) {
+        return true;
+    }
+    if (obj == null) {
+        return false;
+    }
+    if (getClass() != obj.getClass()) {
+        return false;
+    }
     OPair<?, ?> other = (OPair<?, ?>) obj;
     if (key == null) {
-      if (other.key != null)
+      if (other.key != null) {
+          return false;
+      }
+    } else if (!key.equals(other.key)) {
         return false;
-    } else if (!key.equals(other.key))
-      return false;
+    }
     return true;
   }
 

@@ -42,9 +42,10 @@ public abstract class AbstractEntryIterator<K, V, T> implements OLazyIterator<T>
   }
 
   private void init() {
-    if (begin == null)
-      // IN CASE OF ABSTRACTMAP.HASHCODE()
-      return;
+    if (begin == null) {
+        // IN CASE OF ABSTRACTMAP.HASHCODE()
+        return;
+    }
 
     tree = begin.getTree();
     next = begin;
@@ -91,16 +92,18 @@ public abstract class AbstractEntryIterator<K, V, T> implements OLazyIterator<T>
   }
 
   final OMVRBTreeEntry<K, V> nextEntry() {
-    if (next == null)
-      throw new NoSuchElementException();
+    if (next == null) {
+        throw new NoSuchElementException();
+    }
 
     if (pageIndex < next.getSize() - 1) {
       // ITERATE INSIDE THE NODE
       pageIndex++;
     } else {
       // GET THE NEXT NODE
-      if (tree.modCount != expectedModCount)
-        throw new ConcurrentModificationException();
+      if (tree.modCount != expectedModCount) {
+          throw new ConcurrentModificationException();
+      }
 
       next = OMVRBTree.successor(next);
       pageIndex = 0;
@@ -112,15 +115,17 @@ public abstract class AbstractEntryIterator<K, V, T> implements OLazyIterator<T>
   }
 
   final OMVRBTreeEntry<K, V> prevEntry() {
-    if (next == null)
-      throw new NoSuchElementException();
+    if (next == null) {
+        throw new NoSuchElementException();
+    }
 
     if (pageIndex > 0) {
       // ITERATE INSIDE THE NODE
       pageIndex--;
     } else {
-      if (tree.modCount != expectedModCount)
-        throw new ConcurrentModificationException();
+      if (tree.modCount != expectedModCount) {
+          throw new ConcurrentModificationException();
+      }
 
       next = OMVRBTree.predecessor(next);
       pageIndex = next != null ? next.getSize() - 1 : -1;
@@ -132,22 +137,27 @@ public abstract class AbstractEntryIterator<K, V, T> implements OLazyIterator<T>
 
   @SuppressWarnings("unchecked")
   public T update(final T iValue) {
-    if (lastReturned == null)
-      throw new IllegalStateException();
-    if (tree.modCount != expectedModCount)
-      throw new ConcurrentModificationException();
+    if (lastReturned == null) {
+        throw new IllegalStateException();
+    }
+    if (tree.modCount != expectedModCount) {
+        throw new ConcurrentModificationException();
+    }
     tree.pageIndex = pageIndex;
     return (T) next.setValue((V) iValue);
   }
 
   public void remove() {
-    if (lastReturned == null)
-      throw new IllegalStateException();
-    if (tree.modCount != expectedModCount)
-      throw new ConcurrentModificationException();
+    if (lastReturned == null) {
+        throw new IllegalStateException();
+    }
+    if (tree.modCount != expectedModCount) {
+        throw new ConcurrentModificationException();
+    }
     // deleted entries are replaced by their successors
-    if (lastReturned.getLeft() != null && lastReturned.getRight() != null)
-      next = lastReturned;
+    if (lastReturned.getLeft() != null && lastReturned.getRight() != null) {
+        next = lastReturned;
+    }
     tree.pageIndex = pageIndex;
     next = tree.deleteEntry(lastReturned);
     pageIndex--;

@@ -46,8 +46,9 @@ public class DannySchemaTest {
 			// LOAD IT AND CHECK THE LONG VALUE
 			for (ODocument doc : db.browseClass("Dependents")) {
 				System.out.println(doc);
-				for (ODocument emb : (Iterable<ODocument>) doc.field("dependents"))
-					Assert.assertEquals(emb.field("master"), 4151788013272153098L);
+				for (ODocument emb : (Iterable<ODocument>) doc.field("dependents")) {
+                                    Assert.assertEquals(emb.field("master"), 4151788013272153098L);
+                                }
 			}
 			db.close();
 

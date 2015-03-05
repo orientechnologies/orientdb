@@ -158,10 +158,11 @@ public class MultipleDBTest extends DocumentDBBaseTest {
       threads.add(executorService.submit(t));
     }
 
-    for (Future future : threads)
-      future.get();
-
+    for (Future future : threads) {
+        future.get();
+        
 //    System.out.println("Test testObjectMultipleDBsThreaded ended");
+    }
   }
 
   @Test
@@ -257,18 +258,20 @@ public class MultipleDBTest extends DocumentDBBaseTest {
       results.add(executorService.submit(t));
     }
 
-    for (Future future : results)
-      future.get();
-
+    for (Future future : results) {
+        future.get();
+        
 //    System.out.println("Test testDocumentMultipleDBsThreaded ended");
 //    System.out.flush();
+    }
   }
 
   private String getDbId(ODatabaseInternal tx) {
-    if (tx.getStorage() instanceof OStorageRemote)
-      return tx.getURL() + " - sessionId: " + ((OStorageRemote) tx.getStorage()).getSessionId();
-    else
-      return tx.getURL();
+    if (tx.getStorage() instanceof OStorageRemote) {
+        return tx.getURL() + " - sessionId: " + ((OStorageRemote) tx.getStorage()).getSessionId();
+    } else {
+        return tx.getURL();
+    }
   }
 
 }

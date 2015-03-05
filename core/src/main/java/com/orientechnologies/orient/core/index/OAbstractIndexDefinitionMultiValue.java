@@ -35,42 +35,48 @@ public abstract class OAbstractIndexDefinitionMultiValue extends OPropertyIndexD
   }
 
   protected void processAdd(final Object value, final Map<Object, Integer> keysToAdd, final Map<Object, Integer> keysToRemove) {
-    if (value == null)
-      return;
+    if (value == null) {
+        return;
+    }
 
     final Integer removeCount = keysToRemove.get(value);
     if (removeCount != null) {
       int newRemoveCount = removeCount - 1;
-      if (newRemoveCount > 0)
-        keysToRemove.put(value, newRemoveCount);
-      else
-        keysToRemove.remove(value);
+      if (newRemoveCount > 0) {
+          keysToRemove.put(value, newRemoveCount);
+      } else {
+          keysToRemove.remove(value);
+      }
     } else {
       final Integer addCount = keysToAdd.get(value);
-      if (addCount != null)
-        keysToAdd.put(value, addCount + 1);
-      else
-        keysToAdd.put(value, 1);
+      if (addCount != null) {
+          keysToAdd.put(value, addCount + 1);
+      } else {
+          keysToAdd.put(value, 1);
+      }
     }
   }
 
   protected void processRemoval(final Object value, final Map<Object, Integer> keysToAdd, final Map<Object, Integer> keysToRemove) {
-    if (value == null)
-      return;
+    if (value == null) {
+        return;
+    }
 
     final Integer addCount = keysToAdd.get(value);
     if (addCount != null) {
       int newAddCount = addCount - 1;
-      if (newAddCount > 0)
-        keysToAdd.put(value, newAddCount);
-      else
-        keysToAdd.remove(value);
+      if (newAddCount > 0) {
+          keysToAdd.put(value, newAddCount);
+      } else {
+          keysToAdd.remove(value);
+      }
     } else {
       final Integer removeCount = keysToRemove.get(value);
-      if (removeCount != null)
-        keysToRemove.put(value, removeCount + 1);
-      else
-        keysToRemove.put(value, 1);
+      if (removeCount != null) {
+          keysToRemove.put(value, removeCount + 1);
+      } else {
+          keysToRemove.put(value, 1);
+      }
     }
   }
 

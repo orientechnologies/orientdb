@@ -199,8 +199,9 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
   }
 
   public void testTransactionalUsageWorks() {
-    if (database.getURL().startsWith("remote:"))
-      return;
+    if (database.getURL().startsWith("remote:")) {
+        return;
+    }
 
     database.begin(OTransaction.TXTYPE.OPTIMISTIC);
     byte[] key3 = new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 3 };
@@ -219,8 +220,9 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = { "testTransactionalUsageWorks" })
   public void testTransactionalUsageBreaks1() {
-    if (database.getURL().startsWith("remote:"))
-      return;
+    if (database.getURL().startsWith("remote:")) {
+        return;
+    }
 
     database.begin(OTransaction.TXTYPE.OPTIMISTIC);
     OIndex<?> index = getManualIndex();
@@ -240,8 +242,9 @@ public class ByteArrayKeyTest extends DocumentDBBaseTest {
 
   @Test(dependsOnMethods = { "testTransactionalUsageWorks" })
   public void testTransactionalUsageBreaks2() {
-    if (database.getURL().startsWith("remote:"))
-      return;
+    if (database.getURL().startsWith("remote:")) {
+        return;
+    }
 
     OIndex<?> index = getManualIndex();
     database.begin(OTransaction.TXTYPE.OPTIMISTIC);

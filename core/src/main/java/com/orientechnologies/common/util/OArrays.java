@@ -43,8 +43,9 @@ public class OArrays {
 
   public static <D, S> D[] copyOfRange(final S[] iSource, final int iBegin, final int iEnd, final Class<? extends D[]> iClass) {
     final int newLength = iEnd - iBegin;
-    if (newLength < 0)
-      throw new IllegalArgumentException(iBegin + " > " + iEnd);
+    if (newLength < 0) {
+        throw new IllegalArgumentException(iBegin + " > " + iEnd);
+    }
     final D[] copy = ((Object) iClass == (Object) Object[].class) ? (D[]) new Object[newLength] : (D[]) Array.newInstance(
         iClass.getComponentType(), newLength);
     System.arraycopy(iSource, iBegin, copy, 0, Math.min(iSource.length - iBegin, newLength));
@@ -53,8 +54,9 @@ public class OArrays {
 
   public static byte[] copyOfRange(final byte[] iSource, final int iBegin, final int iEnd) {
     final int newLength = iEnd - iBegin;
-    if (newLength < 0)
-      throw new IllegalArgumentException(iBegin + " > " + iEnd);
+    if (newLength < 0) {
+        throw new IllegalArgumentException(iBegin + " > " + iEnd);
+    }
 
     try {
       final byte[] copy = new byte[newLength];
@@ -76,12 +78,15 @@ public class OArrays {
    * Returns true if an arrays contains a value, otherwise false
    */
   public static boolean contains(final int[] iArray, final int iToFind) {
-    if (iArray == null || iArray.length == 0)
-      return false;
+    if (iArray == null || iArray.length == 0) {
+        return false;
+    }
 
-    for (int e : iArray)
-      if (e == iToFind)
-        return true;
+    for (int e : iArray) {
+        if (e == iToFind) {
+            return true;
+        }
+    }
 
     return false;
   }
@@ -90,12 +95,15 @@ public class OArrays {
    * Returns true if an arrays contains a value, otherwise false
    */
   public static <T> boolean contains(final T[] iArray, final T iToFind) {
-    if (iArray == null || iArray.length == 0)
-      return false;
+    if (iArray == null || iArray.length == 0) {
+        return false;
+    }
 
-    for (T e : iArray)
-      if (e != null && e.equals(iToFind))
-        return true;
+    for (T e : iArray) {
+        if (e != null && e.equals(iToFind)) {
+            return true;
+        }
+    }
 
     return false;
   }
@@ -103,8 +111,9 @@ public class OArrays {
   public static int hash(final Object[] iArray) {
     int hash = 0;
     for (Object o : iArray) {
-      if (o != null)
-        hash += o.hashCode();
+      if (o != null) {
+          hash += o.hashCode();
+      }
     }
     return hash;
   }

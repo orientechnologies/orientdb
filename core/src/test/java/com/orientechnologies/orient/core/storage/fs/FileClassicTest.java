@@ -22,8 +22,9 @@ public class FileClassicTest {
   public void beforeClass() {
     OGlobalConfiguration.FILE_LOCK.setValue(Boolean.FALSE);
     buildDirectory = System.getProperty("buildDirectory");
-    if (buildDirectory == null || buildDirectory.isEmpty())
-      buildDirectory = ".";
+    if (buildDirectory == null || buildDirectory.isEmpty()) {
+        buildDirectory = ".";
+    }
   }
 
   public void testSoftlyClosedFailed() throws Exception {

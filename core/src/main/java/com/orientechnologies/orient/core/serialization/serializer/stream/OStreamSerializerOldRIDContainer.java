@@ -46,8 +46,9 @@ public class OStreamSerializerOldRIDContainer implements OStreamSerializer, OBin
   public static final byte                              ID       = 20;
 
   public Object fromStream(final byte[] iStream) throws IOException {
-    if (iStream == null)
-      return null;
+    if (iStream == null) {
+        return null;
+    }
 
     final String s = OBinaryProtocol.bytes2string(iStream);
 
@@ -55,8 +56,9 @@ public class OStreamSerializerOldRIDContainer implements OStreamSerializer, OBin
   }
 
   public byte[] toStream(final Object object) throws IOException {
-    if (object == null)
-      return null;
+    if (object == null) {
+        return null;
+    }
 
     return containerToStream((OIndexRIDContainer) object);
   }

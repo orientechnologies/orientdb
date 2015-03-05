@@ -42,8 +42,9 @@ public class ODatabaseFactory {
   public synchronized List<ODatabase<?>> getInstances(final String iDatabaseName) {
     final List<ODatabase<?>> result = new ArrayList<ODatabase<?>>();
     for (ODatabase<?> i : instances.keySet()) {
-      if (i != null && i.getName().equals(iDatabaseName))
-        result.add(i);
+      if (i != null && i.getName().equals(iDatabaseName)) {
+          result.add(i);
+      }
     }
 
     return result;
@@ -101,18 +102,19 @@ public class ODatabaseFactory {
   }
 
   public ODatabaseDocumentTx createDatabase(final String iType, final String url) {
-    if (iType.equals("graph"))
-      return new ODatabaseDocumentTx(url) {
-        @Override
-        public <THISDB extends ODatabase> THISDB create() {
-          final THISDB db = super.create();
-
-          checkSchema((ODatabase<?>) db);
-
-          return db;
-        }
-
-      };
+    if (iType.equals("graph")) {
+        return new ODatabaseDocumentTx(url) {
+            @Override
+            public <THISDB extends ODatabase> THISDB create() {
+                final THISDB db = super.create();
+                
+                checkSchema((ODatabase<?>) db);
+                
+                return db;
+            }
+            
+        };
+    }
 
     return new ODatabaseDocumentTx(url);
   }
@@ -133,8 +135,9 @@ public class ODatabaseFactory {
         vertexBaseClass.setOverSize(2);
       }
 
-      if (edgeBaseClass == null)
-        iDatabase.getMetadata().getSchema().createClass("E");
+      if (edgeBaseClass == null) {
+          iDatabase.getMetadata().getSchema().createClass("E");
+      }
     } finally {
       OScenarioThreadLocal.INSTANCE.set(OScenarioThreadLocal.RUN_MODE.DEFAULT);
     }

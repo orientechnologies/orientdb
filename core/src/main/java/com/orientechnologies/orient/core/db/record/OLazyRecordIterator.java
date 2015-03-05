@@ -67,14 +67,16 @@ public class OLazyRecordIterator implements OLazyIterator<OIdentifiable>, OReset
   public OIdentifiable next() {
     OIdentifiable value = underlying.next();
 
-    if (value == null)
-      return null;
+    if (value == null) {
+        return null;
+    }
 
     if (value instanceof ORecordId && autoConvert2Record && ODatabaseRecordThreadLocal.INSTANCE.isDefined()) {
       try {
         final ORecord rec = ((ORecordId) value).getRecord();
-        if (underlying instanceof OLazyIterator<?>)
-          ((OLazyIterator<OIdentifiable>) underlying).update(rec);
+        if (underlying instanceof OLazyIterator<?>) {
+            ((OLazyIterator<OIdentifiable>) underlying).update(rec);
+        }
         value = rec;
       } catch (Exception e) {
         OLogManager.instance().error(this, "Error on iterating record collection", e);
@@ -94,24 +96,27 @@ public class OLazyRecordIterator implements OLazyIterator<OIdentifiable>, OReset
   public OIdentifiable update(final OIdentifiable iValue) {
     if (underlying instanceof OLazyIterator) {
       final OIdentifiable old = ((OLazyIterator<OIdentifiable>) underlying).update(iValue);
-      if (sourceRecord != null && !old.equals(iValue))
-        sourceRecord.setDirty();
+      if (sourceRecord != null && !old.equals(iValue)) {
+          sourceRecord.setDirty();
+      }
       return old;
-    } else
-      throw new UnsupportedOperationException("Underlying iterator not supports lazy updates (Interface OLazyIterator");
+    } else {
+        throw new UnsupportedOperationException("Underlying iterator not supports lazy updates (Interface OLazyIterator");
+    }
   }
 
   public void remove() {
     underlying.remove();
-    if (sourceRecord != null)
-      sourceRecord.setDirty();
+    if (sourceRecord != null) {
+        sourceRecord.setDirty();
+    }
   }
 
   @Override
   public void reset() {
-    if (underlying instanceof OResettable)
-      ((OResettable) underlying).reset();
-    else if (source != null) {
+    if (underlying instanceof OResettable) {
+        ((OResettable) underlying).reset();
+    } else if (source != null) {
       underlying = source.iterator();
     }
   }

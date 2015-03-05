@@ -58,8 +58,9 @@ public class LocalPaginatedStorageRestoreFromWAL {
     buildDirectory += "/localPaginatedStorageRestoreFromWAL";
 
     buildDir = new File(buildDirectory);
-    if (buildDir.exists())
-      buildDir.delete();
+    if (buildDir.exists()) {
+        buildDir.delete();
+    }
 
     buildDir.mkdir();
   }
@@ -96,11 +97,13 @@ public class LocalPaginatedStorageRestoreFromWAL {
 
     baseDocumentTx.declareIntent(new OIntentMassiveInsert());
 
-    for (int i = 0; i < 5; i++)
-      futures.add(executorService.submit(new DataPropagationTask()));
+    for (int i = 0; i < 5; i++) {
+        futures.add(executorService.submit(new DataPropagationTask()));
+    }
 
-    for (Future<Void> future : futures)
-      future.get();
+    for (Future<Void> future : futures) {
+        future.get();
+    }
 
     Thread.sleep(1500);
     copyDataFromTestWithoutClose();
@@ -139,12 +142,13 @@ public class LocalPaginatedStorageRestoreFromWAL {
 
     for (File storageFile : storageFiles) {
       String copyToPath;
-      if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromWAL.wmr"))
-        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.wmr";
-      else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromWAL.0.wal"))
-        copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.0.wal";
-      else
-        copyToPath = copyToDir.getAbsolutePath() + File.separator + storageFile.getName();
+      if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromWAL.wmr")) {
+          copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.wmr";
+      } else if (storageFile.getAbsolutePath().endsWith("baseLocalPaginatedStorageRestoreFromWAL.0.wal")) {
+          copyToPath = copyToDir.getAbsolutePath() + File.separator + "testLocalPaginatedStorageRestoreFromWAL.0.wal";
+      } else {
+          copyToPath = copyToDir.getAbsolutePath() + File.separator + storageFile.getName();
+      }
 
       copyFile(storageFile.getAbsolutePath(), copyToPath);
     }

@@ -42,8 +42,9 @@ public class OSQLMethodAppend extends OAbstractSQLMethod {
 
   @Override
   public Object execute(Object iThis, OIdentifiable iCurrentRecord, OCommandContext iContext, Object ioResult, Object[] iParams) {
-    if (iThis == null || iParams[0] == null)
-      return iThis;
+    if (iThis == null || iParams[0] == null) {
+        return iThis;
+    }
 
     final StringBuilder buffer = new StringBuilder(iThis.toString());
     for (int i = 0; i < iParams.length; ++i) {

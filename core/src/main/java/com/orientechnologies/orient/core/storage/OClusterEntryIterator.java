@@ -49,11 +49,13 @@ public class OClusterEntryIterator implements Iterator<OPhysicalPosition> {
   }
 
   public boolean hasNext() {
-    if (min == ORID.CLUSTER_POS_INVALID)
-      return false;
+    if (min == ORID.CLUSTER_POS_INVALID) {
+        return false;
+    }
 
-    if (positionsToProcess == null)
-      return true;
+    if (positionsToProcess == null) {
+        return true;
+    }
 
     return positionsToProcess.length != 0;
   }
@@ -65,8 +67,9 @@ public class OClusterEntryIterator implements Iterator<OPhysicalPosition> {
         positionsIndex = 0;
       }
 
-      if (positionsToProcess.length == 0)
-        throw new NoSuchElementException();
+      if (positionsToProcess.length == 0) {
+          throw new NoSuchElementException();
+      }
 
       final OPhysicalPosition result = positionsToProcess[positionsIndex];
       positionsIndex++;

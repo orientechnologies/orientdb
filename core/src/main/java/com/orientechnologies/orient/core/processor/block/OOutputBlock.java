@@ -38,20 +38,23 @@ public class OOutputBlock extends OAbstractBlock {
 
     final Object value = getRequiredField(iContext, iConfig, "value");
     Boolean nullAsEmpty = getFieldOfClass(iContext, iConfig, "nullAsEmpty", Boolean.class);
-    if (nullAsEmpty == null)
-      nullAsEmpty = true;
+    if (nullAsEmpty == null) {
+        nullAsEmpty = true;
+    }
     final Boolean flatMultivalues = getFieldOfClass(iContext, iConfig, "flatMultivalues", Boolean.class);
 
     Object result;
-    if (isBlock(value))
-      result = delegate("value", iManager, value, iContext, iOutput, iReadOnly);
-    else
-      result = value;
+    if (isBlock(value)) {
+        result = delegate("value", iManager, value, iContext, iOutput, iReadOnly);
+    } else {
+        result = value;
+    }
 
     Object source = getField(iContext, iConfig, "source");
 
-    if (source instanceof Map<?, ?>)
-      source = new ODocument((Map<String, Object>) source);
+    if (source instanceof Map<?, ?>) {
+        source = new ODocument((Map<String, Object>) source);
+    }
 
     if (source instanceof ODocument && result instanceof List<?>) {
       result = addDocumentFields((ODocument) source, (List<Object>) result, nullAsEmpty);
@@ -79,10 +82,11 @@ public class OOutputBlock extends OAbstractBlock {
     for (Object o : result) {
       if (o != null) {
         final Object fieldValue = source.field(o.toString());
-        if (fieldValue == null && nullAsEmpty)
-          list.add("");
-        else
-          list.add(fieldValue);
+        if (fieldValue == null && nullAsEmpty) {
+            list.add("");
+        } else {
+            list.add(fieldValue);
+        }
       }
     }
     return list;

@@ -56,20 +56,22 @@ public class OCommandSQLPojoWrapper implements OCommandRequest {
       Collection<ODocument> coll = (Collection<ODocument>) result;
       for (ODocument doc : coll) {
         // GET THE ASSOCIATED DOCUMENT
-        if (doc.getClassName() == null)
-          obj = doc;
-        else
-          // CONVERT THE DOCUMENT INSIDE THE LIST
-          obj = database.getUserObjectByRecord(doc, getFetchPlan(), true);
+        if (doc.getClassName() == null) {
+            obj = doc;
+        } else {
+            // CONVERT THE DOCUMENT INSIDE THE LIST
+            obj = database.getUserObjectByRecord(doc, getFetchPlan(), true);
+        }
 
         resultPojo.add(obj);
       }
       result = resultPojo;
 
     } else if (result instanceof ODocument) {
-      if (((ODocument) result).getClassName() != null)
-        // CONVERT THE SINGLE DOCUMENT
-        result = database.getUserObjectByRecord((ODocument) result, getFetchPlan(), true);
+      if (((ODocument) result).getClassName() != null) {
+          // CONVERT THE SINGLE DOCUMENT
+          result = database.getUserObjectByRecord((ODocument) result, getFetchPlan(), true);
+      }
     }
 
     return (RET) result;

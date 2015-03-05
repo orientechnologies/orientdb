@@ -41,8 +41,9 @@ public class OServerCommandDeleteProperty extends OServerCommandAuthenticatedDbA
     try {
       db = getProfiledDatabaseInstance(iRequest);
 
-      if (db.getMetadata().getSchema().getClass(urlParts[2]) == null)
-        throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");
+      if (db.getMetadata().getSchema().getClass(urlParts[2]) == null) {
+          throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");
+      }
 
       final OClass cls = db.getMetadata().getSchema().getClass(urlParts[2]);
 
@@ -51,8 +52,9 @@ public class OServerCommandDeleteProperty extends OServerCommandAuthenticatedDbA
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, null, null);
 
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) {
+          db.close();
+      }
     }
     return false;
   }

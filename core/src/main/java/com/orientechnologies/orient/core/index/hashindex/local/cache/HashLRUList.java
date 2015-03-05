@@ -56,8 +56,9 @@ class HashLRUList implements LRUList {
         && (lruEntry.hashCode != hashCode || lruEntry.cacheEntry.pageIndex != pageIndex || lruEntry.cacheEntry.fileId != fileId))
       lruEntry = lruEntry.next;
 
-    if (lruEntry == null)
-      return null;
+    if (lruEntry == null) {
+        return null;
+    }
 
     return lruEntry.cacheEntry;
   }
@@ -76,18 +77,20 @@ class HashLRUList implements LRUList {
       lruEntry = lruEntry.next;
     }
 
-    if (lruEntry == null)
-      return null;
+    if (lruEntry == null) {
+        return null;
+    }
 
     assert tail == null || tail.before != tail;
     assert tail == null || tail.after == null;
 
     removeFromLRUList(lruEntry);
 
-    if (prevEntry == null)
-      entries[index] = lruEntry.next;
-    else
-      prevEntry.next = lruEntry.next;
+    if (prevEntry == null) {
+        entries[index] = lruEntry.next;
+    } else {
+        prevEntry.next = lruEntry.next;
+    }
 
     assert tail == null || tail.before != tail;
     assert tail == null || tail.after == null;
@@ -101,15 +104,19 @@ class HashLRUList implements LRUList {
     LRUEntry before = lruEntry.before;
     LRUEntry after = lruEntry.after;
 
-    if (before != null)
-      before.after = after;
-    if (after != null)
-      after.before = before;
+    if (before != null) {
+        before.after = after;
+    }
+    if (after != null) {
+        after.before = before;
+    }
 
-    if (lruEntry == head)
-      head = lruEntry.after;
-    if (lruEntry == tail)
-      tail = lruEntry.before;
+    if (lruEntry == head) {
+        head = lruEntry.after;
+    }
+    if (lruEntry == tail) {
+        tail = lruEntry.before;
+    }
   }
 
   @Override
@@ -137,10 +144,11 @@ class HashLRUList implements LRUList {
 
       lruEntry.hashCode = hashCode;
 
-      if (prevEntry == null)
-        entries[index] = lruEntry;
-      else
-        prevEntry.next = lruEntry;
+      if (prevEntry == null) {
+          entries[index] = lruEntry;
+      } else {
+          prevEntry.next = lruEntry;
+      }
 
       size++;
     }
@@ -166,8 +174,9 @@ class HashLRUList implements LRUList {
     assert tail.before != tail;
     assert tail.after == null;
 
-    if (size >= nextThreshold)
-      rehash();
+    if (size >= nextThreshold) {
+        rehash();
+    }
   }
 
   @Override
@@ -182,10 +191,11 @@ class HashLRUList implements LRUList {
   private void rehash() {
     long len = entries.length << 1;
     if (len >= Integer.MAX_VALUE) {
-      if (entries.length < Integer.MAX_VALUE)
-        len = Integer.MAX_VALUE;
-      else
-        return;
+      if (entries.length < Integer.MAX_VALUE) {
+          len = Integer.MAX_VALUE;
+      } else {
+          return;
+      }
     }
 
     LRUEntry[] oldLruEntries = entries;
@@ -208,9 +218,9 @@ class HashLRUList implements LRUList {
 
   private void appendEntry(int index, LRUEntry entry) {
     LRUEntry lruEntry = entries[index];
-    if (lruEntry == null)
-      entries[index] = entry;
-    else {
+    if (lruEntry == null) {
+        entries[index] = entry;
+    } else {
       while (lruEntry.next != null)
         lruEntry = lruEntry.next;
 
@@ -250,8 +260,9 @@ class HashLRUList implements LRUList {
       lruEntry = lruEntry.after;
     }
 
-    if (lruEntry == null)
-      return null;
+    if (lruEntry == null) {
+        return null;
+    }
 
     return lruEntry.cacheEntry;
   }
@@ -283,8 +294,9 @@ class HashLRUList implements LRUList {
 
     @Override
     public OCacheEntry next() {
-      if (!hasNext())
-        throw new NoSuchElementException();
+      if (!hasNext()) {
+          throw new NoSuchElementException();
+      }
 
       LRUEntry entry = current;
       current = entry.before;

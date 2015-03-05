@@ -213,8 +213,9 @@ public class TransactionAtomicTest extends DocumentDBBaseTest {
 
     Assert.assertTrue(database.getTransaction().isActive());
 
-    if (!url.startsWith("remote"))
-      Assert.assertEquals(database.countClusterElements("Account"), prev);
+    if (!url.startsWith("remote")) {
+        Assert.assertEquals(database.countClusterElements("Account"), prev);
+    }
 
     database.commit();
 

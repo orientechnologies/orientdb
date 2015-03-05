@@ -194,23 +194,26 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   protected ORecord getTransactionEntry() {
     boolean noPhysicalRecordToBrowse;
 
-    if (current.clusterPosition < ORID.CLUSTER_POS_INVALID)
-      noPhysicalRecordToBrowse = true;
-    else if (directionForward)
-      noPhysicalRecordToBrowse = lastClusterEntry <= currentEntry;
-    else
-      noPhysicalRecordToBrowse = currentEntry <= firstClusterEntry;
+    if (current.clusterPosition < ORID.CLUSTER_POS_INVALID) {
+        noPhysicalRecordToBrowse = true;
+    } else if (directionForward) {
+        noPhysicalRecordToBrowse = lastClusterEntry <= currentEntry;
+    } else {
+        noPhysicalRecordToBrowse = currentEntry <= firstClusterEntry;
+    }
 
-    if (!noPhysicalRecordToBrowse && positionsToProcess.length == 0)
-      noPhysicalRecordToBrowse = true;
+    if (!noPhysicalRecordToBrowse && positionsToProcess.length == 0) {
+        noPhysicalRecordToBrowse = true;
+    }
 
     if (noPhysicalRecordToBrowse && txEntries != null) {
       // IN TX
       currentTxEntryPosition++;
-      if (currentTxEntryPosition >= txEntries.size())
-        throw new NoSuchElementException();
-      else
-        return txEntries.get(currentTxEntryPosition).getRecord();
+      if (currentTxEntryPosition >= txEntries.size()) {
+          throw new NoSuchElementException();
+      } else {
+          return txEntries.get(currentTxEntryPosition).getRecord();
+      }
     }
     return null;
   }
@@ -226,17 +229,19 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
       // REUSE THE SAME RECORD AFTER HAVING RESETTED IT
       record = reusedRecord;
       record.reset();
-    } else
-      record = null;
+    } else {
+        record = null;
+    }
     return record;
   }
 
   protected void checkDirection(final boolean iForward) {
-    if (directionForward == null)
-      // SET THE DIRECTION
-      directionForward = iForward;
-    else if (directionForward != iForward)
-      throw new OIterationException("Iterator cannot change direction while browsing");
+    if (directionForward == null) {
+        // SET THE DIRECTION
+        directionForward = iForward;
+    } else if (directionForward != iForward) {
+        throw new OIterationException("Iterator cannot change direction while browsing");
+    }
   }
 
   /**
@@ -247,9 +252,10 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
    * @return record which was read from db.
    */
   protected ORecord readCurrentRecord(ORecord iRecord, final int iMovement) {
-    if (limit > -1 && browsedRecords >= limit)
-      // LIMIT REACHED
-      return null;
+    if (limit > -1 && browsedRecords >= limit) {
+        // LIMIT REACHED
+        return null;
+    }
 
     do {
       final boolean moveResult;
@@ -267,19 +273,22 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
         throw new IllegalStateException("Invalid movement value : " + iMovement);
       }
 
-      if (!moveResult)
-        return null;
+      if (!moveResult) {
+          return null;
+      }
 
       try {
         if (iRecord != null) {
           ORecordInternal.setIdentity(iRecord, new ORecordId(current.clusterId, current.clusterPosition));
           iRecord = lowLevelDatabase.load(iRecord, fetchPlan, !useCache, iterateThroughTombstones, lockingStrategy);
-        } else
-          iRecord = lowLevelDatabase.load(current, fetchPlan, !useCache, iterateThroughTombstones, lockingStrategy);
+        } else {
+            iRecord = lowLevelDatabase.load(current, fetchPlan, !useCache, iterateThroughTombstones, lockingStrategy);
+        }
       } catch (ODatabaseException e) {
-        if (Thread.interrupted() || lowLevelDatabase.isClosed())
-          // THREAD INTERRUPTED: RETURN
-          throw e;
+        if (Thread.interrupted() || lowLevelDatabase.isClosed()) {
+            // THREAD INTERRUPTED: RETURN
+            throw e;
+        }
 
         OLogManager.instance().error(this, "Error on fetching record during browsing. The record has been skipped", e);
       }
@@ -296,11 +305,13 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   protected boolean nextPosition() {
     if (positionsToProcess == null) {
       positionsToProcess = dbStorage.ceilingPhysicalPositions(current.clusterId, new OPhysicalPosition(firstClusterEntry));
-      if (positionsToProcess == null)
-        return false;
+      if (positionsToProcess == null) {
+          return false;
+      }
     } else {
-      if (currentEntry >= lastClusterEntry)
-        return false;
+      if (currentEntry >= lastClusterEntry) {
+          return false;
+      }
     }
 
     incrementEntreePosition();
@@ -311,21 +322,24 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
       incrementEntreePosition();
     }
 
-    if (positionsToProcess.length == 0)
-      return false;
+    if (positionsToProcess.length == 0) {
+        return false;
+    }
 
     currentEntry = positionsToProcess[currentEntryPosition].clusterPosition;
 
-    if (currentEntry > lastClusterEntry || currentEntry == ORID.CLUSTER_POS_INVALID)
-      return false;
+    if (currentEntry > lastClusterEntry || currentEntry == ORID.CLUSTER_POS_INVALID) {
+        return false;
+    }
 
     current.clusterPosition = currentEntry;
     return true;
   }
 
   protected boolean checkCurrentPosition() {
-    if (currentEntry == ORID.CLUSTER_POS_INVALID || firstClusterEntry > currentEntry || lastClusterEntry < currentEntry)
-      return false;
+    if (currentEntry == ORID.CLUSTER_POS_INVALID || firstClusterEntry > currentEntry || lastClusterEntry < currentEntry) {
+        return false;
+    }
 
     current.clusterPosition = currentEntry;
     return true;
@@ -334,16 +348,19 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   protected boolean prevPosition() {
     if (positionsToProcess == null) {
       positionsToProcess = dbStorage.floorPhysicalPositions(current.clusterId, new OPhysicalPosition(lastClusterEntry));
-      if (positionsToProcess == null)
-        return false;
+      if (positionsToProcess == null) {
+          return false;
+      }
 
-      if (positionsToProcess.length == 0)
-        return false;
+      if (positionsToProcess.length == 0) {
+          return false;
+      }
 
       currentEntryPosition = positionsToProcess.length;
     } else {
-      if (currentEntry < firstClusterEntry)
-        return false;
+      if (currentEntry < firstClusterEntry) {
+          return false;
+      }
     }
 
     decrementEntreePosition();
@@ -355,13 +372,15 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
       decrementEntreePosition();
     }
 
-    if (positionsToProcess.length == 0)
-      return false;
+    if (positionsToProcess.length == 0) {
+        return false;
+    }
 
     currentEntry = positionsToProcess[currentEntryPosition].clusterPosition;
 
-    if (currentEntry < firstClusterEntry)
-      return false;
+    if (currentEntry < firstClusterEntry) {
+        return false;
+    }
 
     current.clusterPosition = currentEntry;
     return true;
@@ -378,23 +397,27 @@ public abstract class OIdentifiableIterator<REC extends OIdentifiable> implement
   }
 
   private void decrementEntreePosition() {
-    if (positionsToProcess.length > 0)
-      if (iterateThroughTombstones)
-        currentEntryPosition--;
-      else
-        do {
-          currentEntryPosition--;
-        } while (currentEntryPosition >= 0 && positionsToProcess[currentEntryPosition].recordVersion.isTombstone());
+    if (positionsToProcess.length > 0) {
+        if (iterateThroughTombstones) {
+            currentEntryPosition--;
+        } else {
+            do {
+                currentEntryPosition--;
+            } while (currentEntryPosition >= 0 && positionsToProcess[currentEntryPosition].recordVersion.isTombstone());
+        }
+    }
   }
 
   private void incrementEntreePosition() {
-    if (positionsToProcess.length > 0)
-      if (iterateThroughTombstones)
-        currentEntryPosition++;
-      else
-        do {
-          currentEntryPosition++;
-        } while (currentEntryPosition < positionsToProcess.length
-            && positionsToProcess[currentEntryPosition].recordVersion.isTombstone());
+    if (positionsToProcess.length > 0) {
+        if (iterateThroughTombstones) {
+            currentEntryPosition++;
+        } else {
+            do {
+                currentEntryPosition++;
+            } while (currentEntryPosition < positionsToProcess.length
+                    && positionsToProcess[currentEntryPosition].recordVersion.isTombstone());
+        }
+    }
   }
 }

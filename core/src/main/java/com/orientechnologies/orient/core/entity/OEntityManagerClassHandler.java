@@ -81,13 +81,15 @@ public class OEntityManagerClassHandler {
       }
     }
 
-    if (defaultConstructor == null)
-      throw new IllegalArgumentException("Cannot create an object of class '" + iClass.getName()
-          + "' because it has no default constructor. Please define the method: " + iClass.getSimpleName() + "()");
+    if (defaultConstructor == null) {
+        throw new IllegalArgumentException("Cannot create an object of class '" + iClass.getName()
+                + "' because it has no default constructor. Please define the method: " + iClass.getSimpleName() + "()");
+    }
 
-    if (!defaultConstructor.isAccessible())
-      // OVERRIDE PROTECTION
-      defaultConstructor.setAccessible(true);
+    if (!defaultConstructor.isAccessible()) {
+        // OVERRIDE PROTECTION
+        defaultConstructor.setAccessible(true);
+    }
 
     return defaultConstructor.newInstance();
   }

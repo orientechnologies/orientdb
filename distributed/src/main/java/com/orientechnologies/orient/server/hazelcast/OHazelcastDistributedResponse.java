@@ -110,11 +110,13 @@ public class OHazelcastDistributedResponse implements ODistributedResponse, Exte
 
   @Override
   public String toString() {
-    if (payload == null)
-      return "null";
+    if (payload == null) {
+        return "null";
+    }
 
-    if (payload.getClass().isArray())
-      return Arrays.toString((Object[]) payload);
+    if (payload.getClass().isArray()) {
+        return Arrays.toString((Object[]) payload);
+    }
 
     return payload.toString();
   }

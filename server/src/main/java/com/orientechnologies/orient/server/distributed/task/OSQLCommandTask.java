@@ -63,11 +63,12 @@ public class OSQLCommandTask extends OAbstractReplicatedTask {
     final OCommandRequest cmd = database.command(new OCommandSQL(text));
 
     final Object res;
-    if (params != null)
-      // EXECUTE WITH PARAMETERS
-      res = cmd.execute(params);
-    else
-      res = cmd.execute();
+    if (params != null) {
+        // EXECUTE WITH PARAMETERS
+        res = cmd.execute(params);
+    } else {
+        res = cmd.execute();
+    }
 
     return res;
   }

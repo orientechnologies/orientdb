@@ -55,11 +55,13 @@ public abstract class OrientConsole extends OConsoleApplication {
   }
 
   protected String format(final String iValue, final int iMaxSize) {
-    if (iValue == null)
-      return null;
+    if (iValue == null) {
+        return null;
+    }
 
-    if (iValue.length() > iMaxSize)
-      return iValue.substring(0, iMaxSize - 3) + "...";
+    if (iValue.length() > iMaxSize) {
+        return iValue.substring(0, iMaxSize - 3) + "...";
+    }
     return iValue;
   }
 }

@@ -208,8 +208,9 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
 
     Assert.assertTrue(result.size() > 1);
 
-    for (ODocument city : result)
-      Assert.assertTrue(city.containsField("distinct"));
+    for (ODocument city : result) {
+        Assert.assertTrue(city.containsField("distinct"));
+    }
   }
 
   @SuppressWarnings("unchecked")
@@ -354,8 +355,9 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
     for (ODocument d : result) {
       Assert.assertNotNull(d.field("date"));
 
-      if (lastDate != null)
-        d.field("date").equals(lastDate);
+      if (lastDate != null) {
+          d.field("date").equals(lastDate);
+      }
 
       lastDate = d.field("date");
     }
@@ -371,8 +373,9 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
     for (ODocument d : result) {
       Assert.assertNotNull(d.field("date"));
 
-      if (lastDate != null)
-        d.field("date").equals(lastDate);
+      if (lastDate != null) {
+          d.field("date").equals(lastDate);
+      }
 
       lastDate = d.field("date");
     }
@@ -416,13 +419,15 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
       @Override
       public Object execute(Object iThis, OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
           OCommandContext iContext) {
-        if (iParams[0] == null || iParams[1] == null)
-          // CHECK BOTH EXPECTED PARAMETERS
-          return null;
+        if (iParams[0] == null || iParams[1] == null) {
+            // CHECK BOTH EXPECTED PARAMETERS
+            return null;
+        }
 
-        if (!(iParams[0] instanceof Number) || !(iParams[1] instanceof Number))
-          // EXCLUDE IT FROM THE RESULT SET
-          return null;
+        if (!(iParams[0] instanceof Number) || !(iParams[1] instanceof Number)) {
+            // EXCLUDE IT FROM THE RESULT SET
+            return null;
+        }
 
         // USE DOUBLE TO AVOID LOSS OF PRECISION
         final double v1 = ((Number) iParams[0]).doubleValue();

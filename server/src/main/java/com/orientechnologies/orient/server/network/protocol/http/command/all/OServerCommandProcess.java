@@ -44,10 +44,11 @@ public class OServerCommandProcess extends OServerCommandAuthenticatedDbAbstract
 
   public OServerCommandProcess(final OServerCommandConfiguration iConfig) {
     for (OServerEntryConfiguration cfg : iConfig.parameters) {
-      if ("path".equalsIgnoreCase(cfg.name))
-        path = cfg.value;
-      else if ("extension".equalsIgnoreCase(cfg.name))
-        extension = cfg.value;
+      if ("path".equalsIgnoreCase(cfg.name)) {
+          path = cfg.value;
+      } else if ("extension".equalsIgnoreCase(cfg.name)) {
+          extension = cfg.value;
+      }
     }
 
     OProcessorManager.getInstance().register("composable", new OComposableProcessor().setPath(path).setExtension(extension));
@@ -66,28 +67,32 @@ public class OServerCommandProcess extends OServerCommandAuthenticatedDbAbstract
       db = getProfiledDatabaseInstance(iRequest);
 
       final Object[] args = new String[parts.length - 3];
-      for (int i = 3; i < parts.length; ++i)
-        args[i - 3] = parts[i];
+      for (int i = 3; i < parts.length; ++i) {
+          args[i - 3] = parts[i];
+      }
 
       // BIND CONTEXT VARIABLES
       final OCommandContext context = new OBasicCommandContext();
       int argIdx = 0;
-      for (Object arg : args)
-        context.setVariable("arg" + (argIdx++), arg);
+      for (Object arg : args) {
+          context.setVariable("arg" + (argIdx++), arg);
+      }
 
       context.setVariable("session", OHttpSessionManager.getInstance().getSession(iRequest.sessionId));
       context.setVariable("request", new OHttpRequestWrapper(iRequest, (String[]) args));
       context.setVariable("response", new OHttpResponseWrapper(iResponse));
 
       final String debugMode = iRequest.getParameter("debug");
-      if (debugMode != null && Boolean.parseBoolean(debugMode))
-        context.setVariable("debugMode", Boolean.TRUE);
+      if (debugMode != null && Boolean.parseBoolean(debugMode)) {
+          context.setVariable("debugMode", Boolean.TRUE);
+      }
 
       final OComposableProcessor processEngine = (OComposableProcessor) OProcessorManager.getInstance().get("composable");
       Object result = processEngine.processFromFile(name, context, iRequest.httpMethod.equals("GET"));
 
-      if (result instanceof ODocument)
-        result = ((ODocument) result).field("result");
+      if (result instanceof ODocument) {
+          result = ((ODocument) result).field("result");
+      }
 
       iResponse.writeResult(result, "", iRequest.contentType);
 
@@ -97,8 +102,9 @@ public class OServerCommandProcess extends OServerCommandAuthenticatedDbAbstract
 
       final StringBuilder msg = new StringBuilder(256);
       for (Exception currentException = e; currentException != null; currentException = (Exception) currentException.getCause()) {
-        if (msg.length() > 0)
-          msg.append("\n");
+        if (msg.length() > 0) {
+            msg.append("\n");
+        }
         msg.append(currentException.getMessage());
       }
 
@@ -106,8 +112,9 @@ public class OServerCommandProcess extends OServerCommandAuthenticatedDbAbstract
           msg.toString(), null);
 
     } finally {
-      if (db != null)
-        db.close();
+      if (db != null) {
+          db.close();
+      }
     }
 
     return false;

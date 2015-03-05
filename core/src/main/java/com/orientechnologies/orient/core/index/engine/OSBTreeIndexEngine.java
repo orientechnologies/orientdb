@@ -58,10 +58,11 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
 
     boolean durableInNonTx;
 
-    if (durableInNonTxMode == null)
-      durableInNonTx = OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean();
-    else
-      durableInNonTx = durableInNonTxMode;
+    if (durableInNonTxMode == null) {
+        durableInNonTx = OGlobalConfiguration.INDEX_DURABLE_IN_NON_TX_MODE.getValueAsBoolean();
+    } else {
+        durableInNonTx = durableInNonTxMode;
+    }
 
     sbTree = new OSBTree<Object, V>(DATA_FILE_EXTENSION, durableInNonTx, NULL_BUCKET_FILE_EXTENSION, trackMode);
   }
@@ -106,10 +107,11 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   }
 
   private int determineKeySize(OIndexDefinition indexDefinition) {
-    if (indexDefinition == null || indexDefinition instanceof ORuntimeKeyIndexDefinition)
-      return 1;
-    else
-      return indexDefinition.getTypes().length;
+    if (indexDefinition == null || indexDefinition instanceof ORuntimeKeyIndexDefinition) {
+        return 1;
+    } else {
+        return indexDefinition.getTypes().length;
+    }
   }
 
   private OBinarySerializer determineKeySerializer(OIndexDefinition indexDefinition) {
@@ -234,13 +236,14 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     acquireSharedLock();
     try {
       final Object firstKey = sbTree.firstKey();
-      if (firstKey == null)
-        return new OIndexAbstractCursor() {
-          @Override
-          public Map.Entry<Object, OIdentifiable> nextEntry() {
-            return null;
-          }
-        };
+      if (firstKey == null) {
+          return new OIndexAbstractCursor() {
+              @Override
+              public Map.Entry<Object, OIdentifiable> nextEntry() {
+                  return null;
+              }
+          };
+      }
 
       return new OSBTreeIndexCursor<V>(sbTree.iterateEntriesMajor(firstKey, true, true), valuesTransformer);
     } finally {
@@ -253,13 +256,14 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
     acquireSharedLock();
     try {
       final Object lastKey = sbTree.lastKey();
-      if (lastKey == null)
-        return new OIndexAbstractCursor() {
-          @Override
-          public Map.Entry<Object, OIdentifiable> nextEntry() {
-            return null;
-          }
-        };
+      if (lastKey == null) {
+          return new OIndexAbstractCursor() {
+              @Override
+              public Map.Entry<Object, OIdentifiable> nextEntry() {
+                  return null;
+              }
+          };
+      }
 
       return new OSBTreeIndexCursor<V>(sbTree.iterateEntriesMinor(lastKey, true, false), valuesTransformer);
     } finally {
@@ -352,9 +356,9 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
   public long size(final ValuesTransformer<V> transformer) {
     acquireSharedLock();
     try {
-      if (transformer == null)
-        return sbTree.size();
-      else {
+      if (transformer == null) {
+          return sbTree.size();
+      } else {
         final Object firstKey = sbTree.firstKey();
         final Object lastKey = sbTree.lastKey();
 
@@ -401,11 +405,13 @@ public class OSBTreeIndexEngine<V> extends OSharedResourceAdaptiveExternal imple
 
     @Override
     public Map.Entry<Object, OIdentifiable> nextEntry() {
-      if (valuesTransformer == null)
-        return (Map.Entry<Object, OIdentifiable>) treeCursor.next(getPrefetchSize());
+      if (valuesTransformer == null) {
+          return (Map.Entry<Object, OIdentifiable>) treeCursor.next(getPrefetchSize());
+      }
 
-      if (currentIterator == null)
-        return null;
+      if (currentIterator == null) {
+          return null;
+      }
 
       while (!currentIterator.hasNext()) {
         Map.Entry<Object, V> entry = treeCursor.next(getPrefetchSize());

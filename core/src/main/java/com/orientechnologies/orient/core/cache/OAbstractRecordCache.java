@@ -72,12 +72,15 @@ public abstract class OAbstractRecordCache {
     final Set<ORID> toRemove = new HashSet<ORID>(underlying.size() / 2);
 
     final Set<ORID> keys = new HashSet<ORID>(underlying.keys());
-    for (final ORID id : keys)
-      if (id.getClusterId() == cid)
-        toRemove.add(id);
+    for (final ORID id : keys) {
+        if (id.getClusterId() == cid) {
+            toRemove.add(id);
+        }
+    }
 
-    for (final ORID ridToRemove : toRemove)
-      underlying.remove(ridToRemove);
+    for (final ORID ridToRemove : toRemove) {
+        underlying.remove(ridToRemove);
+    }
   }
 
   /**

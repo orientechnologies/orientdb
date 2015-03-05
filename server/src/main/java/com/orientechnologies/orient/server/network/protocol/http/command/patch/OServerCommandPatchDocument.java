@@ -45,26 +45,31 @@ public class OServerCommandPatchDocument extends
          final String rid = parametersPos > -1 ? urlParts[2].substring(0, parametersPos) : urlParts[2];
          recordId = new com.orientechnologies.orient.core.id.ORecordId(rid);
 
-         if (!recordId.isValid())
-           throw new IllegalArgumentException("Invalid Record ID in request: " + recordId);
-       } else
-         recordId = new com.orientechnologies.orient.core.id.ORecordId();
+         if (!recordId.isValid()) {
+             throw new IllegalArgumentException("Invalid Record ID in request: " + recordId);
+         }
+       } else {
+           recordId = new com.orientechnologies.orient.core.id.ORecordId();
+       }
 
        // UNMARSHALL DOCUMENT WITH REQUEST CONTENT
        doc = new com.orientechnologies.orient.core.record.impl.ODocument();
        doc.fromJSON(iRequest.content);
 
-       if (iRequest.ifMatch != null)
-         // USE THE IF-MATCH HTTP HEADER AS VERSION
-         doc.getRecordVersion().getSerializer().fromString(iRequest.ifMatch, doc.getRecordVersion());
+       if (iRequest.ifMatch != null) {
+           // USE THE IF-MATCH HTTP HEADER AS VERSION
+           doc.getRecordVersion().getSerializer().fromString(iRequest.ifMatch, doc.getRecordVersion());
+       }
 
-       if (!recordId.isValid())
-         recordId = (com.orientechnologies.orient.core.id.ORecordId) doc.getIdentity();
-       else
-         ORecordInternal.setIdentity(doc, recordId);
+       if (!recordId.isValid()) {
+           recordId = (com.orientechnologies.orient.core.id.ORecordId) doc.getIdentity();
+       } else {
+           ORecordInternal.setIdentity(doc, recordId);
+       }
 
-       if (!recordId.isValid())
-         throw new IllegalArgumentException("Invalid Record ID in request: " + recordId);
+       if (!recordId.isValid()) {
+           throw new IllegalArgumentException("Invalid Record ID in request: " + recordId);
+       }
 
        final com.orientechnologies.orient.core.record.impl.ODocument currentDocument = db.load(recordId);
 
@@ -88,8 +93,9 @@ public class OServerCommandPatchDocument extends
            com.orientechnologies.orient.server.network.protocol.http.OHttpUtils.HEADER_ETAG + doc.getVersion());
 
      } finally {
-       if (db != null)
-         db.close();
+       if (db != null) {
+           db.close();
+       }
      }
      return false;
    }

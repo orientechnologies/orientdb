@@ -518,8 +518,9 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     // BROWSE ALL THE OBJECTS
 
     Set<Integer> ids = new HashSet<Integer>(TOT_RECORDS);
-    for (int i = 0; i < TOT_RECORDS; i++)
-      ids.add(i);
+    for (int i = 0; i < TOT_RECORDS; i++) {
+        ids.add(i);
+    }
 
     for (Account a : database.browseClass(Account.class)) {
       int id = a.getId();
@@ -543,8 +544,9 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     // BROWSE ALL THE OBJECTS
     Set<Integer> ids = new HashSet<Integer>(TOT_RECORDS);
-    for (int i = 0; i < TOT_RECORDS; i++)
-      ids.add(i);
+    for (int i = 0; i < TOT_RECORDS; i++) {
+        ids.add(i);
+    }
 
     List<Account> result = database.query(new OSQLSynchQuery<Account>("select from Account").setFetchPlan("*:-1"));
     for (Account a : result) {
@@ -570,8 +572,9 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     // BROWSE ALL THE OBJECTS
     Set<Integer> ids = new HashSet<Integer>(TOT_RECORDS);
-    for (int i = 0; i < TOT_RECORDS; i++)
-      ids.add(i);
+    for (int i = 0; i < TOT_RECORDS; i++) {
+        ids.add(i);
+    }
 
     List<Account> result = database.query(new OSQLSynchQuery<Account>("select from Account").setFetchPlan("*:2"));
     for (Account a : result) {
@@ -1800,24 +1803,27 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     try {
       p.getList().add(new Object());
     } catch (Throwable ose) {
-      if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException)
-        throwedEx = true;
+      if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException) {
+          throwedEx = true;
+      }
     }
     Assert.assertTrue(throwedEx);
     throwedEx = false;
     try {
       p.getSet().add(new Object());
     } catch (Throwable ose) {
-      if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException)
-        throwedEx = true;
+      if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException) {
+          throwedEx = true;
+      }
     }
     Assert.assertTrue(throwedEx);
     throwedEx = false;
     try {
       p.getMap().put("1", new Object());
     } catch (Throwable ose) {
-      if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException)
-        throwedEx = true;
+      if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException) {
+          throwedEx = true;
+      }
     }
     Assert.assertTrue(throwedEx);
 
@@ -1825,32 +1831,36 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     try {
       p.getList().add(1);
     } catch (Throwable ose) {
-      if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException)
-        throwedEx = true;
+      if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException) {
+          throwedEx = true;
+      }
     }
     Assert.assertTrue(throwedEx);
     throwedEx = false;
     try {
       p.getList().add("asd");
     } catch (Throwable ose) {
-      if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException)
-        throwedEx = true;
+      if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException) {
+          throwedEx = true;
+      }
     }
     Assert.assertTrue(throwedEx);
     throwedEx = false;
     try {
       p.getSet().add(1);
     } catch (Throwable ose) {
-      if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException)
-        throwedEx = true;
+      if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException) {
+          throwedEx = true;
+      }
     }
     Assert.assertTrue(throwedEx);
     throwedEx = false;
     try {
       p.getSet().add("asd");
     } catch (Throwable ose) {
-      if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException)
-        throwedEx = true;
+      if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException) {
+          throwedEx = true;
+      }
     }
     Assert.assertTrue(throwedEx);
     throwedEx = false;
@@ -1858,16 +1868,18 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     try {
       p.getMap().put("1", 1);
     } catch (Throwable ose) {
-      if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException)
-        throwedEx = true;
+      if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException) {
+          throwedEx = true;
+      }
     }
     Assert.assertTrue(throwedEx);
     throwedEx = false;
     try {
       p.getMap().put("1", "ASF");
     } catch (Throwable ose) {
-      if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException)
-        throwedEx = true;
+      if (ose instanceof ODatabaseException && ose.getCause() instanceof OSerializationException) {
+          throwedEx = true;
+      }
     }
     Assert.assertTrue(throwedEx);
     OLogManager.instance().setErrorEnabled(true);
@@ -2093,8 +2105,9 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     for (Object o : database.browseCluster("Account").setFetchPlan("*:1")) {
       a = (Account) o;
 
-      if (i % 2 == 0)
-        a.getAddresses().set(0, new Address("work", new City(new Country("Spain"), "Madrid"), "Plaza central"));
+      if (i % 2 == 0) {
+          a.getAddresses().set(0, new Address("work", new City(new Country("Spain"), "Madrid"), "Plaza central"));
+      }
 
       a.setSalary(i + 500.10f);
 
@@ -2112,10 +2125,11 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
       iterator.setFetchPlan("*:1");
       a = iterator.next();
 
-      if (i % 2 == 0)
-        Assert.assertEquals(a.getAddresses().get(0).getCity().getCountry().getName(), "Spain");
-      else
-        Assert.assertEquals(a.getAddresses().get(0).getCity().getCountry().getName(), "Italy");
+      if (i % 2 == 0) {
+          Assert.assertEquals(a.getAddresses().get(0).getCity().getCountry().getName(), "Spain");
+      } else {
+          Assert.assertEquals(a.getAddresses().get(0).getCity().getCountry().getName(), "Italy");
+      }
 
       Assert.assertEquals(a.getSalary(), i + 500.1f);
 
@@ -2458,8 +2472,9 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     Assert.assertNotNull(a.getThumbnail());
     Assert.assertNotNull(aa.getThumbnail());
     byte[] b = aa.getThumbnail();
-    for (int i = 0; i < 10; ++i)
-      Assert.assertEquals(b[i], i);
+    for (int i = 0; i < 10; ++i) {
+        Assert.assertEquals(b[i], i);
+    }
   }
 
   @Test

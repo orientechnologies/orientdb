@@ -95,8 +95,9 @@ public class OPartitionedObjectPool<T> extends OOrientListenerAbstract {
 
             continue;
           } else {
-            if (partition.currentSize.get() >= maxSize)
-              throw new IllegalStateException("You have reached maximum pool size for given partition");
+            if (partition.currentSize.get() >= maxSize) {
+                throw new IllegalStateException("You have reached maximum pool size for given partition");
+            }
 
             object = factory.create();
 
@@ -132,14 +133,16 @@ public class OPartitionedObjectPool<T> extends OOrientListenerAbstract {
   }
 
   public void close() {
-    if (closed)
-      return;
+    if (closed) {
+        return;
+    }
 
     closed = true;
 
     for (PoolPartition partition : partitions) {
-      if (partition == null)
-        continue;
+      if (partition == null) {
+          continue;
+      }
 
       final Queue<T> queue = partition.queue;
 
@@ -167,8 +170,9 @@ public class OPartitionedObjectPool<T> extends OOrientListenerAbstract {
       }
     }
 
-    if (result < 0)
-      return 0;
+    if (result < 0) {
+        return 0;
+    }
 
     return result;
   }
@@ -199,8 +203,9 @@ public class OPartitionedObjectPool<T> extends OOrientListenerAbstract {
   }
 
   private void checkForClose() {
-    if (closed)
-      throw new IllegalStateException("Pool is closed");
+    if (closed) {
+        throw new IllegalStateException("Pool is closed");
+    }
   }
 
   private static int nextHashCode() {

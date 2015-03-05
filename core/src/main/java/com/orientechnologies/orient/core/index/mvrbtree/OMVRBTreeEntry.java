@@ -118,8 +118,9 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
   }
 
   public K getKey(final int iIndex) {
-    if (iIndex >= getSize())
-      throw new IndexOutOfBoundsException("Requested index " + iIndex + " when the range is 0-" + getSize());
+    if (iIndex >= getSize()) {
+        throw new IndexOutOfBoundsException("Requested index " + iIndex + " when the range is 0-" + getSize());
+    }
 
     tree.pageIndex = iIndex;
     return getKeyAt(iIndex);
@@ -133,8 +134,9 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
    * @return the value associated with the key
    */
   public V getValue() {
-    if (tree.pageIndex == -1)
-      return getValueAt(0);
+    if (tree.pageIndex == -1) {
+        return getValueAt(0);
+    }
 
     return getValueAt(tree.pageIndex);
   }
@@ -161,14 +163,16 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
   protected V search(final K iKey) {
     tree.pageItemFound = false;
     int size = getSize();
-    if (size == 0)
-      return null;
+    if (size == 0) {
+        return null;
+    }
 
     // CHECK THE LOWER LIMIT
-    if (tree.comparator != null)
-      tree.pageItemComparator = tree.comparator.compare(iKey, getKeyAt(0));
-    else
-      tree.pageItemComparator = ((Comparable<? super K>) iKey).compareTo(getKeyAt(0));
+    if (tree.comparator != null) {
+        tree.pageItemComparator = tree.comparator.compare(iKey, getKeyAt(0));
+    } else {
+        tree.pageItemComparator = ((Comparable<? super K>) iKey).compareTo(getKeyAt(0));
+    }
 
     if (tree.pageItemComparator == 0) {
       // FOUND: SET THE INDEX AND RETURN THE NODE
@@ -183,10 +187,11 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
 
     } else {
       // CHECK THE UPPER LIMIT
-      if (tree.comparator != null)
-        tree.pageItemComparator = tree.comparator.compare((K) iKey, getKeyAt(size - 1));
-      else
-        tree.pageItemComparator = ((Comparable<? super K>) iKey).compareTo(getKeyAt(size - 1));
+      if (tree.comparator != null) {
+          tree.pageItemComparator = tree.comparator.compare((K) iKey, getKeyAt(size - 1));
+      } else {
+          tree.pageItemComparator = ((Comparable<? super K>) iKey).compareTo(getKeyAt(size - 1));
+      }
 
       if (tree.pageItemComparator > 0) {
         // KEY OUT OF LAST ITEM: AVOID SEARCH AND RETURN THE LAST POSITION
@@ -195,10 +200,11 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
       }
     }
 
-    if (size < BINARY_SEARCH_THRESHOLD)
-      return linearSearch(iKey);
-    else
-      return binarySearch(iKey);
+    if (size < BINARY_SEARCH_THRESHOLD) {
+        return linearSearch(iKey);
+    } else {
+        return binarySearch(iKey);
+    }
   }
 
   /**
@@ -214,18 +220,20 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
     int i = 0;
     tree.pageItemComparator = -1;
     for (int s = getSize(); i < s; ++i) {
-      if (tree.comparator != null)
-        tree.pageItemComparator = tree.comparator.compare(getKeyAt(i), iKey);
-      else
-        tree.pageItemComparator = ((Comparable<? super K>) getKeyAt(i)).compareTo(iKey);
+      if (tree.comparator != null) {
+          tree.pageItemComparator = tree.comparator.compare(getKeyAt(i), iKey);
+      } else {
+          tree.pageItemComparator = ((Comparable<? super K>) getKeyAt(i)).compareTo(iKey);
+      }
 
       if (tree.pageItemComparator == 0) {
         // FOUND: SET THE INDEX AND RETURN THE NODE
         tree.pageItemFound = true;
         value = getValueAt(i);
         break;
-      } else if (tree.pageItemComparator > 0)
-        break;
+      } else if (tree.pageItemComparator > 0) {
+          break;
+      }
     }
 
     tree.pageIndex = i;
@@ -250,10 +258,11 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
       mid = (low + high) >>> 1;
       Object midVal = getKeyAt(mid);
 
-      if (tree.comparator != null)
-        tree.pageItemComparator = tree.comparator.compare((K) midVal, iKey);
-      else
-        tree.pageItemComparator = ((Comparable<? super K>) midVal).compareTo(iKey);
+      if (tree.comparator != null) {
+          tree.pageItemComparator = tree.comparator.compare((K) midVal, iKey);
+      } else {
+          tree.pageItemComparator = ((Comparable<? super K>) midVal).compareTo(iKey);
+      }
 
       if (tree.pageItemComparator == 0) {
         // FOUND: SET THE INDEX AND RETURN THE NODE
@@ -262,13 +271,15 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
         return getValueAt(tree.pageIndex);
       }
 
-      if (low == high)
-        break;
+      if (low == high) {
+          break;
+      }
 
-      if (tree.pageItemComparator < 0)
-        low = mid + 1;
-      else
-        high = mid;
+      if (tree.pageItemComparator < 0) {
+          low = mid + 1;
+      } else {
+          high = mid;
+      }
     }
 
     tree.pageIndex = mid;
@@ -309,16 +320,21 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
    * Compares two nodes by their first keys.
    */
   public int compareTo(final OMVRBTreeEntry<K, V> o) {
-    if (o == null)
-      return 1;
-    if (o == this)
-      return 0;
-    if (getSize() == 0)
-      return -1;
-    if (o.getSize() == 0)
-      return 1;
-    if (tree.comparator != null)
-      return tree.comparator.compare(getFirstKey(), o.getFirstKey());
+    if (o == null) {
+        return 1;
+    }
+    if (o == this) {
+        return 0;
+    }
+    if (getSize() == 0) {
+        return -1;
+    }
+    if (o.getSize() == 0) {
+        return 1;
+    }
+    if (tree.comparator != null) {
+        return tree.comparator.compare(getFirstKey(), o.getFirstKey());
+    }
 
     return ((Comparable<K>) getFirstKey()).compareTo(o.getFirstKey());
   }
@@ -331,8 +347,9 @@ public abstract class OMVRBTreeEntry<K, V> implements Map.Entry<K, V>, Comparabl
   @Override
   public String toString() {
     int idx = tree.pageIndex;
-    if (idx > -1 && idx < getSize())
-      return getKeyAt(idx) + "=" + getValueAt(idx);
+    if (idx > -1 && idx < getSize()) {
+        return getKeyAt(idx) + "=" + getValueAt(idx);
+    }
     return "null";
   }
 }

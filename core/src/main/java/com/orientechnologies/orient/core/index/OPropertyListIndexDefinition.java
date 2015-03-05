@@ -51,8 +51,9 @@ public class OPropertyListIndexDefinition extends OAbstractIndexDefinitionMultiV
 
   @Override
   public Object createValue(final List<?> params) {
-    if (!(params.get(0) instanceof Collection))
-      return null;
+    if (!(params.get(0) instanceof Collection)) {
+        return null;
+    }
 
     final Collection<?> multiValueCollection = (Collection<?>) params.get(0);
     final List<Object> values = new ArrayList<Object>(multiValueCollection.size());

@@ -39,8 +39,9 @@ public class ONullBucket<V> extends ODurablePage {
     super(cacheEntry, trackMode);
     this.valueSerializer = valueSerializer;
 
-    if (isNew)
-      setByteValue(NEXT_FREE_POSITION, (byte) 0);
+    if (isNew) {
+        setByteValue(NEXT_FREE_POSITION, (byte) 0);
+    }
   }
 
   public void setValue(V value) throws IOException {
@@ -55,8 +56,9 @@ public class ONullBucket<V> extends ODurablePage {
   }
 
   public V getValue() {
-    if (getByteValue(NEXT_FREE_POSITION) == 0)
-      return null;
+    if (getByteValue(NEXT_FREE_POSITION) == 0) {
+        return null;
+    }
 
     return deserializeFromDirectMemory(valueSerializer, NEXT_FREE_POSITION + 1);
   }

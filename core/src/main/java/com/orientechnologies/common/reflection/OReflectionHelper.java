@@ -88,8 +88,9 @@ public class OReflectionHelper {
                 classes.add(Class.forName(className, true, iClassLoader));
               }
             }
-          } else
-            directories.add(new File(URLDecoder.decode(res.getPath(), "UTF-8")));
+          } else {
+              directories.add(new File(URLDecoder.decode(res.getPath(), "UTF-8")));
+          }
         }
       }
     } catch (NullPointerException x) {
@@ -136,8 +137,9 @@ public class OReflectionHelper {
   private static List<Class<?>> findClasses(final File iDirectory, String iPackageName, ClassLoader iClassLoader)
       throws ClassNotFoundException {
     final List<Class<?>> classes = new ArrayList<Class<?>>();
-    if (!iDirectory.exists())
-      return classes;
+    if (!iDirectory.exists()) {
+        return classes;
+    }
 
     iPackageName += "." + iDirectory.getName();
 
@@ -145,8 +147,9 @@ public class OReflectionHelper {
     final File[] files = iDirectory.listFiles();
     for (File file : files) {
       if (file.isDirectory()) {
-        if (file.getName().contains("."))
-          continue;
+        if (file.getName().contains(".")) {
+            continue;
+        }
         classes.addAll(findClasses(file, iPackageName, iClassLoader));
       } else if (file.getName().endsWith(CLASS_EXTENSION)) {
         className = file.getName().substring(0, file.getName().length() - CLASS_EXTENSION.length());
@@ -190,8 +193,9 @@ public class OReflectionHelper {
     final Type genericType = iClass.getGenericInterfaces()[0];
     if (genericType != null && genericType instanceof ParameterizedType) {
       final ParameterizedType pt = (ParameterizedType) genericType;
-      if (pt.getActualTypeArguments() != null && pt.getActualTypeArguments().length > 1)
-        return pt.getActualTypeArguments();
+      if (pt.getActualTypeArguments() != null && pt.getActualTypeArguments().length > 1) {
+          return pt.getActualTypeArguments();
+      }
     }
     return null;
   }
@@ -212,15 +216,18 @@ public class OReflectionHelper {
           if (((Class<?>) pt.getRawType()).isAssignableFrom(Map.class)) {
             if (pt.getActualTypeArguments()[1] instanceof Class<?>) {
               return (Class<?>) pt.getActualTypeArguments()[1];
-            } else if (pt.getActualTypeArguments()[1] instanceof ParameterizedType)
-              return (Class<?>) ((ParameterizedType) pt.getActualTypeArguments()[1]).getRawType();
+            } else if (pt.getActualTypeArguments()[1] instanceof ParameterizedType) {
+                return (Class<?>) ((ParameterizedType) pt.getActualTypeArguments()[1]).getRawType();
+            }
           } else if (pt.getActualTypeArguments()[0] instanceof Class<?>) {
             return (Class<?>) pt.getActualTypeArguments()[0];
-          } else if (pt.getActualTypeArguments()[0] instanceof ParameterizedType)
-            return (Class<?>) ((ParameterizedType) pt.getActualTypeArguments()[0]).getRawType();
+          } else if (pt.getActualTypeArguments()[0] instanceof ParameterizedType) {
+              return (Class<?>) ((ParameterizedType) pt.getActualTypeArguments()[0]).getRawType();
+          }
         }
-      } else if (p.getType().isArray())
-        return p.getType().getComponentType();
+      } else if (p.getType().isArray()) {
+          return p.getType().getComponentType();
+      }
     }
     return null;
   }
@@ -233,14 +240,15 @@ public class OReflectionHelper {
    * @return true if clazz is Java type, false otherwise
    */
   public static boolean isJavaType(Class<?> clazz) {
-    if (clazz.isPrimitive())
-      return true;
-    else if (clazz.getName().startsWith("java.lang"))
-      return true;
-    else if (clazz.getName().startsWith("java.util"))
-      return true;
-    else if (clazz.isArray())
-      return true;
+    if (clazz.isPrimitive()) {
+        return true;
+    } else if (clazz.getName().startsWith("java.lang")) {
+        return true;
+    } else if (clazz.getName().startsWith("java.util")) {
+        return true;
+    } else if (clazz.isArray()) {
+        return true;
+    }
     return false;
   }
 }

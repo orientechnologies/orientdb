@@ -38,8 +38,9 @@ public class OBinaryTokenSerializer {
 
   public Map<String, Byte> createMap(String entries[]) {
     Map<String, Byte> newMap = new HashMap<String, Byte>();
-    for (int i = 0; i < entries.length; i++)
-      newMap.put(entries[i], (byte) i);
+    for (int i = 0; i < entries.length; i++) {
+        newMap.put(entries[i], (byte) i);
+    }
     return newMap;
   }
 
@@ -56,13 +57,15 @@ public class OBinaryTokenSerializer {
 
     token.setDatabase(readString(input));
     byte pos = input.readByte();
-    if (pos >= 0)
-      token.setDatabaseType(dbTypes[pos]);
+    if (pos >= 0) {
+        token.setDatabaseType(dbTypes[pos]);
+    }
 
     short cluster = input.readShort();
     long position = input.readLong();
-    if (cluster != -1 && position != -1)
-      token.setUserRid(new ORecordId(cluster, position));
+    if (cluster != -1 && position != -1) {
+        token.setUserRid(new ORecordId(cluster, position));
+    }
     token.setExpiry(input.readLong());
     token.setServerUser(input.readBoolean());
     if (token.isServerUser()) {
@@ -97,10 +100,11 @@ public class OBinaryTokenSerializer {
 
     String toWrite = token.getDatabase();
     writeString(output, toWrite);
-    if (token.getDatabaseType() == null)
-      output.writeByte(-1);
-    else
-      output.writeByte(associetedDdTypes.get(token.getDatabaseType()));
+    if (token.getDatabaseType() == null) {
+        output.writeByte(-1);
+    } else {
+        output.writeByte(associetedDdTypes.get(token.getDatabaseType()));
+    }
     ORID id = token.getUserId();
     if (id == null) {
       output.writeShort(-1);
@@ -122,9 +126,9 @@ public class OBinaryTokenSerializer {
   }
 
   private void writeString(DataOutputStream output, String toWrite) throws UnsupportedEncodingException, IOException {
-    if (toWrite == null)
-      output.writeShort(-1);
-    else {
+    if (toWrite == null) {
+        output.writeShort(-1);
+    } else {
       byte[] str = toWrite.getBytes("UTF-8");
       output.writeShort(str.length);
       output.write(str);

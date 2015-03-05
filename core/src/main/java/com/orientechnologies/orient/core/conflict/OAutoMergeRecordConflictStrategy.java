@@ -51,9 +51,10 @@ public class OAutoMergeRecordConflictStrategy extends OVersionRecordConflictStra
       iDatabaseVersion.setCounter(Math.max(iDatabaseVersion.getCounter(), iRecordVersion.getCounter()));
 
       return storedRecord.toStream();
-    } else
-      // NO DOCUMENT, CANNOT MERGE SO RELY TO THE VERSION CHECK
-      checkVersions(rid, iRecordVersion, iDatabaseVersion);
+    } else {
+        // NO DOCUMENT, CANNOT MERGE SO RELY TO THE VERSION CHECK
+        checkVersions(rid, iRecordVersion, iDatabaseVersion);
+    }
 
     return null;
   }

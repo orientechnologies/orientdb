@@ -57,8 +57,9 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
       for (int i = 0; i < count; i++) {
         final OrientGraph graph = factory.getTx();
         try {
-          if ((i + 1) % 100 == 0)
-            System.out.println("\nWriter " + databaseUrl + " managed " + (i + 1) + "/" + count + " vertices so far");
+          if ((i + 1) % 100 == 0) {
+              System.out.println("\nWriter " + databaseUrl + " managed " + (i + 1) + "/" + count + " vertices so far");
+          }
 
           try {
             OrientVertex person = createVertex(graph, serverId, threadId, i);

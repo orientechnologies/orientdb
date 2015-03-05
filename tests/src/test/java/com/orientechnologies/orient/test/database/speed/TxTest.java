@@ -41,7 +41,8 @@ public class TxTest extends OrientMonoThreadTest {
 	public void cycle() throws UnsupportedEncodingException {
 		record.value(data.getCyclesDone() + ",'Gipsy','Cat','European','Italy'," + (data.getCyclesDone() + 300) + ".00").save();
 
-		if (data.getCyclesDone() == data.getCycles() - 1)
-			database.commit();
+		if (data.getCyclesDone() == data.getCycles() - 1) {
+                    database.commit();
+                }
 	}
 }

@@ -47,23 +47,26 @@ public class OServerCommandGetCluster extends OServerCommandAuthenticatedDbAbstr
      try {
        db = getProfiledDatabaseInstance(iRequest);
 
-       if (db.getClusterIdByName(urlParts[2]) == -1)
-         throw new IllegalArgumentException("Invalid cluster '" + urlParts[2] + "'");
+       if (db.getClusterIdByName(urlParts[2]) == -1) {
+           throw new IllegalArgumentException("Invalid cluster '" + urlParts[2] + "'");
+       }
 
        final int limit = urlParts.length > 3 ? Integer.parseInt(urlParts[3]) : 20;
 
        final List<OIdentifiable> response = new ArrayList<OIdentifiable>();
        for (ORecord rec : db.browseCluster(urlParts[2])) {
-         if (limit > 0 && response.size() >= limit)
-           break;
+         if (limit > 0 && response.size() >= limit) {
+             break;
+         }
 
          response.add(rec);
        }
 
        iResponse.writeRecords(response);
      } finally {
-       if (db != null)
-         db.close();
+       if (db != null) {
+           db.close();
+       }
      }
      return false;
    }

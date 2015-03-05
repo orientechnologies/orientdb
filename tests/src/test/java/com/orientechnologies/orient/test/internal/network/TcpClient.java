@@ -57,13 +57,15 @@ public class TcpClient {
 				int size = oiStream.readInt();
 				transferred += 4;
 
-				if (size == 0)
-					break;
+				if (size == 0) {
+                                    break;
+                                }
 
 				++i;
 
-				if (i > 10 && i % (1000000 / 10) == 0)
-					System.out.print(".");
+				if (i > 10 && i % (1000000 / 10) == 0) {
+                                    System.out.print(".");
+                                }
 
 				buffer = new byte[size];
 				oiStream.readFully(buffer);

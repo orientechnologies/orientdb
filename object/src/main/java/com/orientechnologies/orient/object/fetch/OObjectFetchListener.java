@@ -44,17 +44,18 @@ public class OObjectFetchListener implements OFetchListener {
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public void processStandardField(final ODocument iRecord, final Object iFieldValue, final String iFieldName,
       final OFetchContext iContext, final Object iUserObject, final String iFormat) throws OFetchException {
-    if (iFieldValue instanceof ORecordLazyList)
-      OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, new OObjectLazyList(iRecord, (ORecordLazyList) iFieldValue,
-          OObjectEntitySerializer.isCascadeDeleteField(iUserObject.getClass(), iFieldName)));
-    else if (iFieldValue instanceof ORecordLazySet)
-      OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, new OObjectLazySet(iRecord, (ORecordLazySet) iFieldValue,
-          OObjectEntitySerializer.isCascadeDeleteField(iUserObject.getClass(), iFieldName)));
-    else if (iFieldValue instanceof ORecordLazyMap)
-      OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, new OObjectLazyMap(iRecord, (ORecordLazyMap) iFieldValue,
-          OObjectEntitySerializer.isCascadeDeleteField(iUserObject.getClass(), iFieldName)));
-    else
-      OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, iFieldValue);
+    if (iFieldValue instanceof ORecordLazyList) {
+        OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, new OObjectLazyList(iRecord, (ORecordLazyList) iFieldValue,
+                OObjectEntitySerializer.isCascadeDeleteField(iUserObject.getClass(), iFieldName)));
+    } else if (iFieldValue instanceof ORecordLazySet) {
+        OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, new OObjectLazySet(iRecord, (ORecordLazySet) iFieldValue,
+                OObjectEntitySerializer.isCascadeDeleteField(iUserObject.getClass(), iFieldName)));
+    } else if (iFieldValue instanceof ORecordLazyMap) {
+        OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, new OObjectLazyMap(iRecord, (ORecordLazyMap) iFieldValue,
+                OObjectEntitySerializer.isCascadeDeleteField(iUserObject.getClass(), iFieldName)));
+    } else {
+        OObjectSerializerHelper.setFieldValue(iUserObject, iFieldName, iFieldValue);
+    }
   }
 
   public void processStandardCollectionValue(Object iFieldValue, OFetchContext iContext) throws OFetchException {
@@ -123,23 +124,26 @@ public class OObjectFetchListener implements OFetchListener {
   @SuppressWarnings({ "unchecked", "rawtypes" })
   public Object fetchLinked(ODocument iRoot, Object iUserObject, String iFieldName, ODocument iLinked, OFetchContext iContext)
       throws OFetchException {
-    if (iUserObject == null)
-      return null;
+    if (iUserObject == null) {
+        return null;
+    }
     final Class<?> type;
-    if (iLinked != null && iLinked instanceof ODocument)
-      // GET TYPE BY DOCUMENT'S CLASS. THIS WORKS VERY WELL FOR SUB-TYPES
-      type = OObjectSerializerHelper.getFieldType((ODocument) iLinked, ((OObjectFetchContext) iContext).getEntityManager());
-    else
-      // DETERMINE TYPE BY REFLECTION
-      type = OObjectSerializerHelper.getFieldType(iUserObject, iFieldName);
+    if (iLinked != null && iLinked instanceof ODocument) {
+        // GET TYPE BY DOCUMENT'S CLASS. THIS WORKS VERY WELL FOR SUB-TYPES
+        type = OObjectSerializerHelper.getFieldType((ODocument) iLinked, ((OObjectFetchContext) iContext).getEntityManager());
+    } else {
+        // DETERMINE TYPE BY REFLECTION
+        type = OObjectSerializerHelper.getFieldType(iUserObject, iFieldName);
+    }
 
-    if (type == null)
-      throw new OSerializationException(
-          "Linked type of field '"
-              + iRoot.getClassName()
-              + "."
-              + iFieldName
-              + "' is unknown. Probably needs to be registered with <db>.getEntityManager().registerEntityClasses(<package>) or <db>.getEntityManager().registerEntityClass(<class>) or the package cannot be loaded correctly due to a classpath problem. In this case register the single classes one by one.");
+    if (type == null) {
+        throw new OSerializationException(
+                "Linked type of field '"
+                        + iRoot.getClassName()
+                        + "."
+                        + iFieldName
+                        + "' is unknown. Probably needs to be registered with <db>.getEntityManager().registerEntityClasses(<package>) or <db>.getEntityManager().registerEntityClass(<class>) or the package cannot be loaded correctly due to a classpath problem. In this case register the single classes one by one.");
+    }
 
     Object fieldValue = null;
     Class<?> fieldClass;

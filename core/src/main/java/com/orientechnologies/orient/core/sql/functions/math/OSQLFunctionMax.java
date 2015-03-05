@@ -52,30 +52,33 @@ public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
     for (Object item : iParams) {
       if (item instanceof Collection<?>) {
         for (Object subitem : ((Collection<?>) item)) {
-          if (max == null || subitem != null && ((Comparable) subitem).compareTo(max) > 0)
-            max = subitem;
+          if (max == null || subitem != null && ((Comparable) subitem).compareTo(max) > 0) {
+              max = subitem;
+          }
         }
       } else {
-        if (max == null || item != null && ((Comparable) item).compareTo(max) > 0)
-          max = item;
+        if (max == null || item != null && ((Comparable) item).compareTo(max) > 0) {
+            max = item;
+        }
       }
     }
 
     // what to do with the result, for current record, depends on how this function has been invoked
     // for an unique result aggregated from all output records
     if (aggregateResults() && max != null) {
-      if (context == null)
-        // FIRST TIME
-        context = (Comparable) max;
-      else {
+      if (context == null) {
+          // FIRST TIME
+          context = (Comparable) max;
+      } else {
         if (context instanceof Number && max instanceof Number) {
           final Number[] casted = OType.castComparableNumber((Number) context, (Number) max);
           context = casted[0];
           max = casted[1];
         }
-        if (((Comparable<Object>) context).compareTo((Comparable) max) < 0)
-          // BIGGER
-          context = (Comparable) max;
+        if (((Comparable<Object>) context).compareTo((Comparable) max) < 0) {
+            // BIGGER
+            context = (Comparable) max;
+          }
       }
 
       return null;
@@ -106,12 +109,13 @@ public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
     for (Object iParameter : resultsToMerge) {
       final Comparable<Object> value = (Comparable<Object>) iParameter;
 
-      if (context == null)
-        // FIRST TIME
-        context = value;
-      else if (context.compareTo(value) < 0)
-        // BIGGER
-        context = value;
+      if (context == null) {
+          // FIRST TIME
+          context = value;
+      } else if (context.compareTo(value) < 0) {
+          // BIGGER
+          context = value;
+      }
     }
     return context;
   }

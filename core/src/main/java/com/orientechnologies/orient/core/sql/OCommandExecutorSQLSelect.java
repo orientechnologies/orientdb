@@ -477,9 +477,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         boolean useNoCache = noCache;
 
         if (localLockingStrategy == LOCKING_STRATEGY.KEEP_EXCLUSIVE_LOCK
-            || localLockingStrategy == LOCKING_STRATEGY.KEEP_SHARED_LOCK)
-          // FORCE NO CACHE
-          useNoCache = true;
+            || localLockingStrategy == LOCKING_STRATEGY.KEEP_SHARED_LOCK) {
+            // FORCE NO CACHE
+            useNoCache = true;
+        }
 
         record = getDatabase().load(id.getIdentity(), null, useNoCache, false, localLockingStrategy);
         if (id instanceof OContextualRecordId && ((OContextualRecordId) id).getContext() != null) {
@@ -532,9 +533,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    * @return false if limit has been reached, otherwise true
    */
   protected boolean handleResult(final OIdentifiable iRecord) {
-    if (parallel)
-      // LOCK FOR PARALLEL EXECUTION. THIS PREVENT CONCURRENT ISSUES
-      parallelLock.lock();
+    if (parallel) {
+        // LOCK FOR PARALLEL EXECUTION. THIS PREVENT CONCURRENT ISSUES
+        parallelLock.lock();
+    }
 
     try {
       if ((orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) && skip > 0) {
@@ -547,15 +549,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
       resultCount++;
 
-      if (!addResult(lastRecord))
-        return false;
+      if (!addResult(lastRecord)) {
+          return false;
+      }
 
       return !((orderedFields.isEmpty() || fullySortedByIndex || isRidOnlySort()) && !isAnyFunctionAggregates()
           && (groupByFields == null || groupByFields.isEmpty()) && fetchLimit > -1 && resultCount >= fetchLimit);
     } finally {
-      if (parallel)
-        // UNLOCK PARALLEL EXECUTION
-        parallelLock.unlock();
+      if (parallel) {
+          // UNLOCK PARALLEL EXECUTION
+          parallelLock.unlock();
+      }
     }
   }
 
@@ -570,15 +574,17 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   protected boolean addResult(OIdentifiable iRecord) {
-    if (iRecord == null)
-      return true;
+    if (iRecord == null) {
+        return true;
+    }
 
     if (projections != null || groupByFields != null && !groupByFields.isEmpty()) {
       if (groupedResult == null) {
         // APPLY PROJECTIONS IN LINE
         iRecord = ORuntimeResult.getProjectionResult(getTemporaryRIDCounter(), projections, context, iRecord);
-        if (iRecord == null)
-          return true;
+        if (iRecord == null) {
+            return true;
+        }
 
       } else {
         // AGGREGATION/GROUP BY
@@ -590,20 +596,22 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
             final Object[] fields = new Object[groupByFields.size()];
             for (int i = 0; i < groupByFields.size(); ++i) {
               final String field = groupByFields.get(i);
-              if (field.startsWith("$"))
-                fields[i] = context.getVariable(field);
-              else
-                fields[i] = doc.field(field);
+              if (field.startsWith("$")) {
+                  fields[i] = context.getVariable(field);
+              } else {
+                  fields[i] = doc.field(field);
+              }
 
             }
             fieldValue = fields;
           } else {
             final String field = groupByFields.get(0);
             if (field != null) {
-              if (field.startsWith("$"))
-                fieldValue = context.getVariable(field);
-              else
-                fieldValue = ((ODocument) iRecord.getRecord()).field(field);
+              if (field.startsWith("$")) {
+                  fieldValue = context.getVariable(field);
+              } else {
+                  fieldValue = ((ODocument) iRecord.getRecord()).field(field);
+              }
             }
           }
         }
@@ -623,14 +631,16 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     boolean result = true;
     if ((fullySortedByIndex || orderedFields.isEmpty()) && expandTarget == null) {
       // SEND THE RESULT INLINE
-      if (request.getResultListener() != null)
-        result = request.getResultListener().result(iRecord);
+      if (request.getResultListener() != null) {
+          result = request.getResultListener().result(iRecord);
+      }
 
     } else {
 
       // COLLECT ALL THE RECORDS AND ORDER THEM AT THE END
-      if (tempResult == null)
-        tempResult = new ArrayList<OIdentifiable>();
+      if (tempResult == null) {
+          tempResult = new ArrayList<OIdentifiable>();
+      }
 
       ((Collection<OIdentifiable>) tempResult).add(iRecord);
     }
@@ -770,20 +780,23 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   protected int parseProjections() {
-    if (!parserOptionalKeyword(KEYWORD_SELECT))
-      return -1;
+    if (!parserOptionalKeyword(KEYWORD_SELECT)) {
+        return -1;
+    }
 
     int upperBound = OStringSerializerHelper.getLowerIndexOf(parserTextUpperCase, parserGetCurrentPosition(), KEYWORD_FROM_2FIND,
         KEYWORD_LET_2FIND);
-    if (upperBound == -1)
-      // UP TO THE END
-      upperBound = parserText.length();
+    if (upperBound == -1) {
+        // UP TO THE END
+        upperBound = parserText.length();
+    }
 
     int lastRealPositionProjection = -1;
 
     int currPos = parserGetCurrentPosition();
-    if (currPos == -1)
-      return -1;
+    if (currPos == -1) {
+        return -1;
+    }
 
     final String projectionString = parserText.substring(currPos, upperBound);
     if (projectionString.trim().length() > 0) {
@@ -797,29 +810,33 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       for (String projectionItem : items) {
         String projection = OStringSerializerHelper.smartTrim(projectionItem.trim(), true, true);
 
-        if (projectionDefinition == null)
-          throw new OCommandSQLParsingException("Projection not allowed with FLATTEN() and EXPAND() operators");
+        if (projectionDefinition == null) {
+            throw new OCommandSQLParsingException("Projection not allowed with FLATTEN() and EXPAND() operators");
+        }
 
         final List<String> words = OStringSerializerHelper.smartSplit(projection, ' ');
 
         String fieldName;
         if (words.size() > 1 && words.get(1).trim().equalsIgnoreCase(KEYWORD_AS)) {
           // FOUND AS, EXTRACT ALIAS
-          if (words.size() < 3)
-            throw new OCommandSQLParsingException("Found 'AS' without alias");
+          if (words.size() < 3) {
+              throw new OCommandSQLParsingException("Found 'AS' without alias");
+          }
 
           fieldName = words.get(2).trim();
 
-          if (projectionDefinition.containsKey(fieldName))
-            throw new OCommandSQLParsingException("Field '" + fieldName
-                + "' is duplicated in current SELECT, choose a different name");
+          if (projectionDefinition.containsKey(fieldName)) {
+              throw new OCommandSQLParsingException("Field '" + fieldName
+                      + "' is duplicated in current SELECT, choose a different name");
+          }
 
           projection = words.get(0).trim();
 
-          if (words.size() > 3)
-            lastRealPositionProjection = projectionString.indexOf(words.get(3));
-          else
-            lastRealPositionProjection += projectionItem.length() + 1;
+          if (words.size() > 3) {
+              lastRealPositionProjection = projectionString.indexOf(words.get(3));
+          } else {
+              lastRealPositionProjection += projectionItem.length() + 1;
+          }
 
         } else {
           // EXTRACT THE FIELD NAME WITHOUT FUNCTIONS AND/OR LINKS
@@ -828,28 +845,33 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
           lastRealPositionProjection = projectionString.indexOf(fieldName) + fieldName.length() + 1;
 
-          if (fieldName.charAt(0) == '@')
-            fieldName = fieldName.substring(1);
+          if (fieldName.charAt(0) == '@') {
+              fieldName = fieldName.substring(1);
+          }
 
           endPos = extractProjectionNameSubstringEndPosition(fieldName);
 
-          if (endPos > -1)
-            fieldName = fieldName.substring(0, endPos);
+          if (endPos > -1) {
+              fieldName = fieldName.substring(0, endPos);
+          }
 
           // FIND A UNIQUE NAME BY ADDING A COUNTER
-          for (int fieldIndex = 2; projectionDefinition.containsKey(fieldName); ++fieldIndex)
-            fieldName += fieldIndex;
+          for (int fieldIndex = 2; projectionDefinition.containsKey(fieldName); ++fieldIndex) {
+              fieldName += fieldIndex;
+          }
         }
 
         final String p = upperCase(projection);
         if (p.startsWith("FLATTEN(") || p.startsWith("EXPAND(")) {
-          if (p.startsWith("FLATTEN("))
-            OLogManager.instance().debug(this, "FLATTEN() operator has been replaced by EXPAND()");
+          if (p.startsWith("FLATTEN(")) {
+              OLogManager.instance().debug(this, "FLATTEN() operator has been replaced by EXPAND()");
+          }
 
           List<String> pars = OStringSerializerHelper.getParameters(projection);
-          if (pars.size() != 1)
-            throw new OCommandSQLParsingException(
-                "EXPAND/FLATTEN operators expects the field name as parameter. Example EXPAND( out )");
+          if (pars.size() != 1) {
+              throw new OCommandSQLParsingException(
+                      "EXPAND/FLATTEN operators expects the field name as parameter. Example EXPAND( out )");
+          }
 
           expandTarget = OSQLHelper.parseValue(this, pars.get(0).trim(), context);
 
@@ -858,8 +880,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           projections = null;
 
           if (groupedResult == null && expandTarget instanceof OSQLFunctionRuntime
-              && ((OSQLFunctionRuntime) expandTarget).aggregateResults())
-            getProjectionGroup(null);
+              && ((OSQLFunctionRuntime) expandTarget).aggregateResults()) {
+              getProjectionGroup(null);
+          }
 
           continue;
         }
@@ -889,12 +912,13 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
       }
     }
 
-    if (upperBound < parserText.length() - 1)
-      parserSetCurrentPosition(upperBound);
-    else if (lastRealPositionProjection > -1)
-      parserMoveCurrentPosition(lastRealPositionProjection);
-    else
-      parserSetEndOfText();
+    if (upperBound < parserText.length() - 1) {
+        parserSetCurrentPosition(upperBound);
+    } else if (lastRealPositionProjection > -1) {
+        parserMoveCurrentPosition(lastRealPositionProjection);
+    } else {
+        parserSetEndOfText();
+    }
 
     return parserGetCurrentPosition();
   }
@@ -1026,18 +1050,20 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
               } else {
                 final Iterable<? extends OIdentifiable> recs = parsedTarget.getTargetRecords();
                 if (recs != null) {
-                  if (recs instanceof Collection<?>)
-                    count += ((Collection<?>) recs).size();
-                  else {
-                    for (Object o : recs)
-                      count++;
+                  if (recs instanceof Collection<?>) {
+                      count += ((Collection<?>) recs).size();
+                  } else {
+                    for (Object o : recs) {
+                        count++;
+                    }
                   }
                 }
 
               }
 
-              if (tempResult == null)
-                tempResult = new ArrayList<OIdentifiable>();
+              if (tempResult == null) {
+                  tempResult = new ArrayList<OIdentifiable>();
+              }
               ((Collection<OIdentifiable>) tempResult).add(new ODocument().field(entry.getKey(), count));
               return true;
             }
@@ -1078,8 +1104,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
    * Parses the NOCACHE keyword if found.
    */
   protected boolean parseNoCache(final String w) throws OCommandSQLParsingException {
-    if (!w.equals(KEYWORD_NOCACHE))
-      return false;
+    if (!w.equals(KEYWORD_NOCACHE)) {
+        return false;
+    }
 
     noCache = true;
     return true;
@@ -1299,21 +1326,25 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
         // BROWSE, UNMARSHALL AND FILTER ALL THE RECORDS ON CURRENT THREAD
         for (int browsed = 0; iTarget.hasNext(); browsed++) {
           final OIdentifiable next = iTarget.next();
-          if (next == null)
-            break;
+          if (next == null) {
+              break;
+          }
 
           final ORID identity = next.getIdentity();
 
           if (uniqueResult != null) {
-            if (uniqueResult.contains(identity))
-              continue;
+            if (uniqueResult.contains(identity)) {
+                continue;
+            }
 
-            if (identity.isValid())
-              uniqueResult.add(identity);
+            if (identity.isValid()) {
+                uniqueResult.add(identity);
+            }
           }
 
-          if (!executeSearchRecord(next))
-            break;
+          if (!executeSearchRecord(next)) {
+              break;
+          }
 
           if (queryScanThresholdWarning > 0 && browsed > queryScanThresholdWarning && compiledFilter != null) {
             reportTip(String
@@ -1438,8 +1469,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
 
   @SuppressWarnings("rawtypes")
   private boolean searchForIndexes(final OClass iSchemaClass) {
-    if (uniqueResult != null)
-      uniqueResult.clear();
+    if (uniqueResult != null) {
+        uniqueResult.clear();
+    }
 
     final ODatabaseDocument database = getDatabase();
     database.checkSecurity(ORule.ResourceGeneric.CLASS, ORole.PERMISSION_READ, iSchemaClass.getName().toLowerCase());
@@ -1452,8 +1484,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
     // the main condition is a set of sub-conditions separated by OR operators
     final List<List<OIndexSearchResult>> conditionHierarchy = filterAnalyzer.analyzeMainCondition(
         compiledFilter.getRootCondition(), iSchemaClass, context);
-    if (conditionHierarchy == null)
-      return false;
+    if (conditionHierarchy == null) {
+        return false;
+    }
 
     List<OIndexCursor> cursors = new ArrayList<OIndexCursor>();
 
@@ -2015,9 +2048,10 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
   }
 
   private void handleNoTarget() {
-    if (parsedTarget == null && expandTarget == null)
-      // ONLY LET, APPLY TO THEM
-      addResult(ORuntimeResult.createProjectionDocument(getTemporaryRIDCounter()));
+    if (parsedTarget == null && expandTarget == null) {
+        // ONLY LET, APPLY TO THEM
+        addResult(ORuntimeResult.createProjectionDocument(getTemporaryRIDCounter()));
+    }
   }
 
   private void handleGroupBy() {

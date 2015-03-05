@@ -695,11 +695,13 @@ public class OStorageRemoteThread implements OStorageProxy {
 
   @Override
   public boolean equals(final Object iOther) {
-    if (iOther instanceof OStorageRemoteThread)
-      return iOther == this;
+    if (iOther instanceof OStorageRemoteThread) {
+        return iOther == this;
+    }
 
-    if (iOther instanceof OStorageRemote)
-      return iOther == delegate;
+    if (iOther instanceof OStorageRemote) {
+        return iOther == delegate;
+    }
 
     return false;
   }

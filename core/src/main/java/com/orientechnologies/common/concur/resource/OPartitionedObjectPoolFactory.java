@@ -59,8 +59,9 @@ public class OPartitionedObjectPoolFactory<K, T> extends OOrientListenerAbstract
     checkForClose();
 
     OPartitionedObjectPool<T> pool = poolStore.get(key);
-    if (pool != null)
-      return pool;
+    if (pool != null) {
+        return pool;
+    }
 
     pool = new OPartitionedObjectPool<T>(objectFactoryFactory.create(key), maxPoolSize);
 
@@ -80,8 +81,9 @@ public class OPartitionedObjectPoolFactory<K, T> extends OOrientListenerAbstract
   }
 
   public void close() {
-    if (closed)
-      return;
+    if (closed) {
+        return;
+    }
 
     closed = true;
 
@@ -101,8 +103,9 @@ public class OPartitionedObjectPoolFactory<K, T> extends OOrientListenerAbstract
       }
     }
 
-    for (OPartitionedObjectPool<T> pool : poolStore.values())
-      pool.close();
+    for (OPartitionedObjectPool<T> pool : poolStore.values()) {
+        pool.close();
+    }
 
     poolStore.clear();
   }
@@ -113,8 +116,9 @@ public class OPartitionedObjectPoolFactory<K, T> extends OOrientListenerAbstract
   }
 
   private void checkForClose() {
-    if (closed)
-      throw new IllegalStateException("Pool factory is closed");
+    if (closed) {
+        throw new IllegalStateException("Pool factory is closed");
+    }
   }
 
   public interface ObjectFactoryFactory<K, T> {

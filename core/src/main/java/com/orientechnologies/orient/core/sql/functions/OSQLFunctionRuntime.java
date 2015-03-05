@@ -85,10 +85,10 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
 
       if (configuredParameters[i] instanceof OSQLFilterItemField) {
         runtimeParameters[i] = ((OSQLFilterItemField) configuredParameters[i]).getValue(iCurrentRecord, iCurrentResult, iContext);
-      } else if (configuredParameters[i] instanceof OSQLFunctionRuntime)
-        runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(iThis, iCurrentRecord, iCurrentResult,
-            iContext);
-      else if (configuredParameters[i] instanceof OSQLFilterItemVariable) {
+      } else if (configuredParameters[i] instanceof OSQLFunctionRuntime) {
+          runtimeParameters[i] = ((OSQLFunctionRuntime) configuredParameters[i]).execute(iThis, iCurrentRecord, iCurrentResult,
+                  iContext);
+      } else if (configuredParameters[i] instanceof OSQLFilterItemVariable) {
         runtimeParameters[i] = ((OSQLFilterItemVariable) configuredParameters[i])
             .getValue(iCurrentRecord, iCurrentResult, iContext);
       } else if (configuredParameters[i] instanceof OCommandSQL) {
@@ -104,23 +104,25 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
           configuredParameters[i] = pred;
 
         }
-      } else if (configuredParameters[i] instanceof OSQLPredicate)
-        runtimeParameters[i] = ((OSQLPredicate) configuredParameters[i]).evaluate(iCurrentRecord.getRecord(),
-            (iCurrentRecord instanceof ODocument ? (ODocument) iCurrentResult : null), iContext);
-      else if (configuredParameters[i] instanceof String) {
-        if (configuredParameters[i].toString().startsWith("\"") || configuredParameters[i].toString().startsWith("'"))
-          runtimeParameters[i] = OStringSerializerHelper.getStringContent(configuredParameters[i]);
+      } else if (configuredParameters[i] instanceof OSQLPredicate) {
+          runtimeParameters[i] = ((OSQLPredicate) configuredParameters[i]).evaluate(iCurrentRecord.getRecord(),
+                  (iCurrentRecord instanceof ODocument ? (ODocument) iCurrentResult : null), iContext);
+      } else if (configuredParameters[i] instanceof String) {
+        if (configuredParameters[i].toString().startsWith("\"") || configuredParameters[i].toString().startsWith("'")) {
+            runtimeParameters[i] = OStringSerializerHelper.getStringContent(configuredParameters[i]);
+          }
       }
     }
 
     if (function.getMaxParams() == -1 || function.getMaxParams() > 0) {
       if (runtimeParameters.length < function.getMinParams()
-          || (function.getMaxParams() > -1 && runtimeParameters.length > function.getMaxParams()))
-        throw new OCommandExecutionException("Syntax error: function '"
-            + function.getName()
-            + "' needs "
-            + (function.getMinParams() == function.getMaxParams() ? function.getMinParams() : function.getMinParams() + "-"
-                + function.getMaxParams()) + " argument(s) while has been received " + runtimeParameters.length);
+          || (function.getMaxParams() > -1 && runtimeParameters.length > function.getMaxParams())) {
+          throw new OCommandExecutionException("Syntax error: function '"
+                  + function.getName()
+                  + "' needs "
+                  + (function.getMinParams() == function.getMaxParams() ? function.getMinParams() : function.getMinParams() + "-"
+                          + function.getMaxParams()) + " argument(s) while has been received " + runtimeParameters.length);
+      }
     }
 
     final Object functionResult = function.execute(iThis, iCurrentRecord, iCurrentResult, runtimeParameters, iContext);
@@ -152,18 +154,20 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
     for (int i = 0; i < iParameters.length; ++i) {
       this.configuredParameters[i] = iParameters[i];
 
-      if (i > 0 || iEvaluate)
-        if (iParameters[i] != null) {
-          if (iParameters[i] instanceof String && !iParameters[i].toString().startsWith("[")) {
-            final Object v = OSQLHelper.parseValue(null, null, iParameters[i].toString(), null);
-            if (v == OSQLHelper.VALUE_NOT_PARSED
-                || (v != null && OMultiValue.isMultiValue(v) && OMultiValue.getFirstValue(v) == OSQLHelper.VALUE_NOT_PARSED))
-              continue;
-
-            configuredParameters[i] = v;
+      if (i > 0 || iEvaluate) {
+          if (iParameters[i] != null) {
+              if (iParameters[i] instanceof String && !iParameters[i].toString().startsWith("[")) {
+                  final Object v = OSQLHelper.parseValue(null, null, iParameters[i].toString(), null);
+                  if (v == OSQLHelper.VALUE_NOT_PARSED
+                          || (v != null && OMultiValue.isMultiValue(v) && OMultiValue.getFirstValue(v) == OSQLHelper.VALUE_NOT_PARSED)) {
+                      continue;
+                  }
+                  configuredParameters[i] = v;
+              }
+          } else {
+              this.configuredParameters[i] = null;
           }
-        } else
-          this.configuredParameters[i] = null;
+      }
     }
 
     function.config(configuredParameters);
@@ -171,8 +175,9 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
     // COPY STATIC VALUES
     this.runtimeParameters = new Object[configuredParameters.length];
     for (int i = 0; i < configuredParameters.length; ++i) {
-      if (!(configuredParameters[i] instanceof OSQLFilterItemField) && !(configuredParameters[i] instanceof OSQLFunctionRuntime))
-        runtimeParameters[i] = configuredParameters[i];
+      if (!(configuredParameters[i] instanceof OSQLFilterItemField) && !(configuredParameters[i] instanceof OSQLFunctionRuntime)) {
+          runtimeParameters[i] = configuredParameters[i];
+      }
     }
 
     return this;
@@ -200,13 +205,15 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
     final List<String> funcParamsText = OStringSerializerHelper.getParameters(iText);
 
     function = OSQLEngine.getInstance().getFunction(funcName);
-    if (function == null)
-      throw new OCommandSQLParsingException("Unknown function " + funcName + "()");
+    if (function == null) {
+        throw new OCommandSQLParsingException("Unknown function " + funcName + "()");
+    }
 
     // PARSE PARAMETERS
     this.configuredParameters = new Object[funcParamsText.size()];
-    for (int i = 0; i < funcParamsText.size(); ++i)
-      this.configuredParameters[i] = funcParamsText.get(i);
+    for (int i = 0; i < funcParamsText.size(); ++i) {
+        this.configuredParameters[i] = funcParamsText.get(i);
+    }
 
     setParameters(configuredParameters, true);
   }

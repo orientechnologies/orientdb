@@ -138,10 +138,11 @@ public class OFunction extends ODocumentWrapper{
         // final Object argValue = ORecordSerializerStringAbstract.getTypeValue(iArgs[i].toString());
         final Object argValue = iArgs[i];
 
-        if (params != null && i < params.size())
-          args.put(params.get(i), argValue);
-        else
-          args.put("param" + i, argValue);
+        if (params != null && i < params.size()) {
+            args.put(params.get(i), argValue);
+        } else {
+            args.put("param" + i, argValue);
+        }
       }
     }
 
@@ -155,12 +156,13 @@ public class OFunction extends ODocumentWrapper{
     command.parse(new OCommandScript(getLanguage(), getCode()));
     final Object result = command.execute(iArgs);
 
-    if (Orient.instance().getProfiler().isRecording())
-      Orient
-          .instance()
-          .getProfiler()
-          .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".function.execute",
-              "Time to execute a function", start, "db.*.function.execute");
+    if (Orient.instance().getProfiler().isRecording()) {
+        Orient
+                .instance()
+                .getProfiler()
+                .stopChrono("db." + ODatabaseRecordThreadLocal.INSTANCE.get().getName() + ".function.execute",
+                        "Time to execute a function", start, "db.*.function.execute");
+    }
 
     return result;
   }

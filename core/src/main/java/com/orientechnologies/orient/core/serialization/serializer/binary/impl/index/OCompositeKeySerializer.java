@@ -61,10 +61,11 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
 
       if (key != null) {
         final OType type;
-        if (types.length > i)
-          type = types[i];
-        else
-          type = OType.getTypeByClass(key.getClass());
+        if (types.length > i) {
+            type = types[i];
+        } else {
+            type = OType.getTypeByClass(key.getClass());
+        }
 
         size += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE
             + ((OBinarySerializer<Object>) factory.getObjectSerializer(type)).getObjectSize(key);
@@ -98,14 +99,16 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
       OBinarySerializer<Object> binarySerializer;
       if (key != null) {
         final OType type;
-        if (types.length > i)
-          type = types[i];
-        else
-          type = OType.getTypeByClass(key.getClass());
+        if (types.length > i) {
+            type = types[i];
+        } else {
+            type = OType.getTypeByClass(key.getClass());
+        }
 
         binarySerializer = factory.getObjectSerializer(type);
-      } else
-        binarySerializer = ONullSerializer.INSTANCE;
+      } else {
+          binarySerializer = ONullSerializer.INSTANCE;
+      }
 
       stream[startPosition] = binarySerializer.getId();
       startPosition += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
@@ -197,14 +200,16 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
       OBinarySerializer<Object> binarySerializer;
       if (key != null) {
         final OType type;
-        if (types.length > i)
-          type = types[i];
-        else
-          type = OType.getTypeByClass(key.getClass());
+        if (types.length > i) {
+            type = types[i];
+        } else {
+            type = OType.getTypeByClass(key.getClass());
+        }
 
         binarySerializer = factory.getObjectSerializer(type);
-      } else
-        binarySerializer = ONullSerializer.INSTANCE;
+      } else {
+          binarySerializer = ONullSerializer.INSTANCE;
+      }
 
       stream[startPosition] = binarySerializer.getId();
       startPosition += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
@@ -262,14 +267,16 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
       OBinarySerializer<Object> binarySerializer;
       if (key != null) {
         final OType type;
-        if (types.length > i)
-          type = types[i];
-        else
-          type = OType.getTypeByClass(key.getClass());
+        if (types.length > i) {
+            type = types[i];
+        } else {
+            type = OType.getTypeByClass(key.getClass());
+        }
 
         binarySerializer = factory.getObjectSerializer(type);
-      } else
-        binarySerializer = ONullSerializer.INSTANCE;
+      } else {
+          binarySerializer = ONullSerializer.INSTANCE;
+      }
 
       pointer.setByte(offset, binarySerializer.getId());
       offset += OBinarySerializerFactory.TYPE_IDENTIFIER_SIZE;
@@ -284,10 +291,11 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
   private OType[] getKeyTypes(Object[] hints) {
     final OType[] types;
 
-    if (hints != null && hints.length > 0)
-      types = (OType[]) hints;
-    else
-      types = new OType[0];
+    if (hints != null && hints.length > 0) {
+        types = (OType[]) hints;
+    } else {
+        types = new OType[0];
+    }
     return types;
   }
 
@@ -330,8 +338,9 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
 
   @Override
   public OCompositeKey preprocess(OCompositeKey value, Object... hints) {
-    if (value == null)
-      return null;
+    if (value == null) {
+        return null;
+    }
 
     final OType[] types = getKeyTypes(hints);
 
@@ -343,10 +352,11 @@ public class OCompositeKeySerializer implements OBinarySerializer<OCompositeKey>
       final Object key = keys.get(i);
 
       final OType type;
-      if (types.length > i)
-        type = types[i];
-      else
-        type = OType.getTypeByClass(key.getClass());
+      if (types.length > i) {
+          type = types[i];
+      } else {
+          type = OType.getTypeByClass(key.getClass());
+      }
 
       OBinarySerializer<Object> keySerializer = ((OBinarySerializer<Object>) factory.getObjectSerializer(type));
       compositeKey.addKey(keySerializer.preprocess(key));

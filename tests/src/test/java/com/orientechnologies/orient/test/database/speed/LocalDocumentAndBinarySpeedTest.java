@@ -69,8 +69,9 @@ public class LocalDocumentAndBinarySpeedTest {
 				doc.save();
 
 				ORID rid = doc.getIdentity();
-				if (i % 100 == 0)
-					System.out.println("ORID=" + rid);
+				if (i % 100 == 0) {
+                                    System.out.println("ORID=" + rid);
+                                }
 			}
 		} finally {
 			database.close();
@@ -90,10 +91,11 @@ public class LocalDocumentAndBinarySpeedTest {
 			for (int i = 0; i < load; i++) {
 				int rand = (int) (Math.random() * count);
 
-				if (!alreadyLoaded.contains(rand))
-					alreadyLoaded.add(rand);
-				else
-					System.out.println("already loaded");
+				if (!alreadyLoaded.contains(rand)) {
+                                    alreadyLoaded.add(rand);
+                                } else {
+                                    System.out.println("already loaded");
+                                }
 
 				OIdentifiable result = (OIdentifiable) index.get("key" + Integer.toString(rand));
 				Assert.assertNotNull(result);
@@ -107,8 +109,9 @@ public class LocalDocumentAndBinarySpeedTest {
 					Assert.assertTrue(data.length == size);
 				}
 
-				if (i % 100 == 0)
-					System.out.println("loaded " + i);
+				if (i % 100 == 0) {
+                                    System.out.println("loaded " + i);
+                                }
 			}
 		} finally {
 			database.close();

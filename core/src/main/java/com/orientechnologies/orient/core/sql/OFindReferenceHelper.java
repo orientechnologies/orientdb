@@ -103,8 +103,9 @@ public class OFindReferenceHelper {
       final String iClassName) {
     final OClass clazz = ((OMetadataInternal)db.getMetadata()).getImmutableSchemaSnapshot().getClass(iClassName);
 
-    if (clazz == null)
-      throw new OCommandExecutionException("Class '" + iClassName + "' was not found");
+    if (clazz == null) {
+        throw new OCommandExecutionException("Class '" + iClassName + "' was not found");
+    }
 
     for (int i : clazz.getClusterIds()) {
       browseCluster(db, iSourceRIDs, map, db.getClusterNameById(i));
@@ -159,7 +160,8 @@ public class OFindReferenceHelper {
 
   private static void checkRecord(final Set<ORID> iSourceRIDs, final Map<ORID, Set<ORID>> map, final OIdentifiable value,
       final ORecord iRootObject) {
-    if (iSourceRIDs.contains(value.getIdentity()))
-      map.get(value.getIdentity()).add(iRootObject.getIdentity());
+    if (iSourceRIDs.contains(value.getIdentity())) {
+        map.get(value.getIdentity()).add(iRootObject.getIdentity());
+    }
   }
 }

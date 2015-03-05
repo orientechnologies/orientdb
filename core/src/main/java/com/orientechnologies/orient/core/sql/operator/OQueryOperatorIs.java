@@ -45,16 +45,17 @@ public class OQueryOperatorIs extends OQueryOperatorEquality {
   @Override
   protected boolean evaluateExpression(final OIdentifiable iRecord, final OSQLFilterCondition iCondition, final Object iLeft,
       final Object iRight, OCommandContext iContext) {
-    if (OSQLHelper.NOT_NULL.equals(iRight))
-      return iLeft != null;
-    else if (OSQLHelper.NOT_NULL.equals(iLeft))
-      return iRight != null;
-    else if (OSQLHelper.DEFINED.equals(iLeft))
-      return evaluateDefined(iRecord, (String) iRight);
-    else if (OSQLHelper.DEFINED.equals(iRight))
-      return evaluateDefined(iRecord, (String) iLeft);
-    else
-      return iLeft == iRight;
+    if (OSQLHelper.NOT_NULL.equals(iRight)) {
+        return iLeft != null;
+    } else if (OSQLHelper.NOT_NULL.equals(iLeft)) {
+        return iRight != null;
+    } else if (OSQLHelper.DEFINED.equals(iLeft)) {
+        return evaluateDefined(iRecord, (String) iRight);
+    } else if (OSQLHelper.DEFINED.equals(iRight)) {
+        return evaluateDefined(iRecord, (String) iLeft);
+    } else {
+        return iLeft == iRight;
+    }
   }
 
   protected boolean evaluateDefined(final OIdentifiable iRecord, final String iFieldName) {
@@ -66,8 +67,9 @@ public class OQueryOperatorIs extends OQueryOperatorEquality {
 
   @Override
   public OIndexReuseType getIndexReuseType(final Object iLeft, final Object iRight) {
-    if (iRight == null)
-      return OIndexReuseType.INDEX_METHOD;
+    if (iRight == null) {
+        return OIndexReuseType.INDEX_METHOD;
+    }
 
     return OIndexReuseType.NO_INDEX;
   }
@@ -79,23 +81,26 @@ public class OQueryOperatorIs extends OQueryOperatorEquality {
 
     final OIndexInternal<?> internalIndex = index.getInternal();
     OIndexCursor cursor;
-    if (!internalIndex.canBeUsedInEqualityOperators())
-      return null;
+    if (!internalIndex.canBeUsedInEqualityOperators()) {
+        return null;
+    }
 
     if (indexDefinition.getParamCount() == 1) {
       final Object key;
-      if (indexDefinition instanceof OIndexDefinitionMultiValue)
-        key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
-      else
-        key = indexDefinition.createValue(keyParams);
+      if (indexDefinition instanceof OIndexDefinitionMultiValue) {
+          key = ((OIndexDefinitionMultiValue) indexDefinition).createSingleValue(keyParams.get(0));
+      } else {
+          key = indexDefinition.createValue(keyParams);
+      }
 
       final Object indexResult;
       indexResult = index.get(key);
 
-      if (indexResult == null || indexResult instanceof OIdentifiable)
-        cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, key);
-      else
-        cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
+      if (indexResult == null || indexResult instanceof OIdentifiable) {
+          cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, key);
+      } else {
+          cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), key);
+      }
     } else {
       // in case of composite keys several items can be returned in case of we perform search
       // using part of composite key stored in index.
@@ -112,12 +117,14 @@ public class OQueryOperatorIs extends OQueryOperatorEquality {
           final Object indexResult;
           indexResult = index.get(keyOne);
 
-          if (indexResult == null || indexResult instanceof OIdentifiable)
-            cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
-          else
-            cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), keyOne);
-        } else
-          return null;
+          if (indexResult == null || indexResult instanceof OIdentifiable) {
+              cursor = new OIndexCursorSingleValue((OIdentifiable) indexResult, keyOne);
+          } else {
+              cursor = new OIndexCursorCollectionValue(((Collection<OIdentifiable>) indexResult).iterator(), keyOne);
+          }
+        } else {
+            return null;
+        }
       }
     }
 

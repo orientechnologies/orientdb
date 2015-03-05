@@ -66,14 +66,16 @@ public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTe
 
       record.save();
 
-      if (data.getCyclesDone() == data.getCycles() - 1)
-        database.commit();
+      if (data.getCyclesDone() == data.getCycles() - 1) {
+          database.commit();
+      }
     }
 
     @Override
     public void deinit() throws Exception {
-      if (database != null)
-        database.close();
+      if (database != null) {
+          database.close();
+      }
       super.deinit();
     }
   }
@@ -115,7 +117,8 @@ public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadTe
   public void deinit() {
     Assert.assertEquals(mainDatabase.countClass("Account"), 1000000 + foundObjects);
 
-    if (mainDatabase != null)
-      mainDatabase.close();
+    if (mainDatabase != null) {
+        mainDatabase.close();
+    }
   }
 }

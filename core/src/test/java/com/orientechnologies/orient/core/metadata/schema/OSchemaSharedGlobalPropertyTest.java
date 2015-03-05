@@ -19,8 +19,9 @@ public class OSchemaSharedGlobalPropertyTest {
     db = new ODatabaseDocumentTx("memory:" + OSchemaSharedGlobalPropertyTest.class.getSimpleName());
     if (db.exists()) {
       db.open("admin", "admin");
-    } else
-      db.create();
+    } else {
+        db.create();
+    }
   }
 
   @AfterMethod

@@ -72,8 +72,9 @@ public class OPropertyRidBagIndexDefinition extends OAbstractIndexDefinitionMult
 
   @Override
   public Object createValue(final List<?> params) {
-    if (!(params.get(0) instanceof ORidBag))
-      return null;
+    if (!(params.get(0) instanceof ORidBag)) {
+        return null;
+    }
 
     final ORidBag ridBag = (ORidBag) params.get(0);
     final List<Object> values = new ArrayList<Object>();
@@ -86,8 +87,9 @@ public class OPropertyRidBagIndexDefinition extends OAbstractIndexDefinitionMult
 
   @Override
   public Object createValue(final Object... params) {
-    if (!(params[0] instanceof ORidBag))
-      return null;
+    if (!(params[0] instanceof ORidBag)) {
+        return null;
+    }
 
     final ORidBag ridBag = (ORidBag) params[0];
     final List<Object> values = new ArrayList<Object>();

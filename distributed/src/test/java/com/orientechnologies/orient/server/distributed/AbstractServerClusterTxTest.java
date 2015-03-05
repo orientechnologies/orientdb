@@ -46,8 +46,9 @@ public abstract class AbstractServerClusterTxTest extends AbstractServerClusterI
       for (int i = 0; i < count; i++) {
         final ODatabaseDocumentTx database = poolFactory.get(databaseUrl, "admin", "admin").acquire();
         try {
-          if ((i + 1) % 100 == 0)
-            System.out.println("\nWriter " + database.getURL() + " managed " + (i + 1) + "/" + count + " records so far");
+          if ((i + 1) % 100 == 0) {
+              System.out.println("\nWriter " + database.getURL() + " managed " + (i + 1) + "/" + count + " records so far");
+          }
 
           database.begin();
           try {

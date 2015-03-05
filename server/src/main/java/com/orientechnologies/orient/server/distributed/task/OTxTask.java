@@ -92,9 +92,10 @@ public class OTxTask extends OAbstractReplicatedTask {
 
           for (String f : ((ODocument) record).fieldNames()) {
             final Object fValue = ((ODocument) record).field(f);
-            if (fValue instanceof ORidBag)
-              // DESERIALIZE IT TO ASSURE TEMPORARY RIDS ARE TREATED CORRECTLY
-              ((ORidBag) fValue).convertLinks2Records();
+            if (fValue instanceof ORidBag) {
+                // DESERIALIZE IT TO ASSURE TEMPORARY RIDS ARE TREATED CORRECTLY
+                ((ORidBag) fValue).convertLinks2Records();
+            }
           }
         }
       }
@@ -119,8 +120,9 @@ public class OTxTask extends OAbstractReplicatedTask {
           // SEND VERSION
           if (((OSimpleVersion) o).getCounter() < 0) {
             results.set(i, task.getRid().getRecord().reload().getRecordVersion());
-          } else
-            results.set(i, o);
+          } else {
+              results.set(i, o);
+          }
         }
       }
 
@@ -165,8 +167,9 @@ public class OTxTask extends OAbstractReplicatedTask {
       final OAbstractRemoteTask task = t.getFixTask(iRequest, t, ((List<Object>) iBadResponse).get(i),
           ((List<Object>) iGoodResponse).get(i));
 
-      if (task != null)
-        fixTask.add(task);
+      if (task != null) {
+          fixTask.add(task);
+      }
     }
     return fixTask;
   }
@@ -179,13 +182,15 @@ public class OTxTask extends OAbstractReplicatedTask {
       final OAbstractRecordReplicatedTask t = tasks.get(i);
 
       final OAbstractRemoteTask undoTask;
-      if (iBadResponse instanceof List)
-        undoTask = t.getUndoTask(iRequest, ((List<Object>) iBadResponse).get(i));
-      else
-        undoTask = t.getUndoTask(iRequest, iBadResponse);
+      if (iBadResponse instanceof List) {
+          undoTask = t.getUndoTask(iRequest, ((List<Object>) iBadResponse).get(i));
+      } else {
+          undoTask = t.getUndoTask(iRequest, iBadResponse);
+      }
 
-      if (undoTask != null)
-        fixTask.add(undoTask);
+      if (undoTask != null) {
+          fixTask.add(undoTask);
+      }
     }
 
     return fixTask;
@@ -194,15 +199,17 @@ public class OTxTask extends OAbstractReplicatedTask {
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
     out.writeInt(tasks.size());
-    for (OAbstractRecordReplicatedTask task : tasks)
-      out.writeObject(task);
+    for (OAbstractRecordReplicatedTask task : tasks) {
+        out.writeObject(task);
+    }
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     final int size = in.readInt();
-    for (int i = 0; i < size; ++i)
-      tasks.add((OAbstractRecordReplicatedTask) in.readObject());
+    for (int i = 0; i < size; ++i) {
+        tasks.add((OAbstractRecordReplicatedTask) in.readObject());
+    }
   }
 
   @Override

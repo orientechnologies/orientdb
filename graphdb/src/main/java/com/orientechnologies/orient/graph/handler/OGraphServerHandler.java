@@ -42,11 +42,13 @@ public class OGraphServerHandler extends OServerPluginAbstract implements OScrip
   public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("enabled")) {
-        if (!Boolean.parseBoolean(param.value))
-          // DISABLE IT
-          return;
-      } else if (param.name.equalsIgnoreCase("graph.pool.max"))
-        graphPoolMax = Integer.parseInt(param.value);
+        if (!Boolean.parseBoolean(param.value)) {
+            // DISABLE IT
+            return;
+        }
+      } else if (param.name.equalsIgnoreCase("graph.pool.max")) {
+          graphPoolMax = Integer.parseInt(param.value);
+      }
     }
 
     enabled = true;
@@ -63,16 +65,18 @@ public class OGraphServerHandler extends OServerPluginAbstract implements OScrip
 
   @Override
   public void startup() {
-    if (!enabled)
-      return;
+    if (!enabled) {
+        return;
+    }
 
     OGremlinHelper.global().setMaxGraphPool(graphPoolMax).create();
   }
 
   @Override
   public void shutdown() {
-    if (!enabled)
-      return;
+    if (!enabled) {
+        return;
+    }
 
     OGremlinHelper.global().destroy();
   }

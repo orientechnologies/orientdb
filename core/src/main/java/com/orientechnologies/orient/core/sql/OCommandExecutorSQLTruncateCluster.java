@@ -48,24 +48,28 @@ public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLAbstr
 
     int oldPos = 0;
     int pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_TRUNCATE))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_TRUNCATE + " not found. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_TRUNCATE)) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_TRUNCATE + " not found. Use " + getSyntax(), parserText, oldPos);
+    }
 
     oldPos = pos;
     pos = nextWord(parserText, parserTextUpperCase, oldPos, word, true);
-    if (pos == -1 || !word.toString().equals(KEYWORD_CLUSTER))
-      throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1 || !word.toString().equals(KEYWORD_CLUSTER)) {
+        throw new OCommandSQLParsingException("Keyword " + KEYWORD_CLUSTER + " not found. Use " + getSyntax(), parserText, oldPos);
+    }
 
     oldPos = pos;
     pos = nextWord(parserText, parserText, oldPos, word, true);
-    if (pos == -1)
-      throw new OCommandSQLParsingException("Expected cluster name. Use " + getSyntax(), parserText, oldPos);
+    if (pos == -1) {
+        throw new OCommandSQLParsingException("Expected cluster name. Use " + getSyntax(), parserText, oldPos);
+    }
 
     clusterName = word.toString();
 
     final ODatabaseDocument database = getDatabase();
-    if (database.getClusterIdByName(clusterName) == -1)
-      throw new OCommandSQLParsingException("Cluster '" + clusterName + "' not found", parserText, oldPos);
+    if (database.getClusterIdByName(clusterName) == -1) {
+        throw new OCommandSQLParsingException("Cluster '" + clusterName + "' not found", parserText, oldPos);
+    }
     return this;
   }
 
@@ -73,8 +77,9 @@ public class OCommandExecutorSQLTruncateCluster extends OCommandExecutorSQLAbstr
    * Execute the command.
    */
   public Object execute(final Map<Object, Object> iArgs) {
-    if (clusterName == null)
-      throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    if (clusterName == null) {
+        throw new OCommandExecutionException("Cannot execute the command because it has not been parsed yet");
+    }
 
     final OCluster cluster = getDatabase().getStorage().getClusterByName(clusterName);
 

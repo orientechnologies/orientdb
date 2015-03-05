@@ -45,26 +45,30 @@ public class OSQLFunctionSum extends OSQLFunctionMathAbstract {
   public Object execute(Object iThis, final OIdentifiable iCurrentRecord, Object iCurrentResult, final Object[] iParams,
       OCommandContext iContext) {
     if (iParams.length == 1) {
-      if (iParams[0] instanceof Number)
-        sum((Number) iParams[0]);
-      else if (OMultiValue.isMultiValue(iParams[0]))
-        for (Object n : OMultiValue.getMultiValueIterable(iParams[0]))
-          sum((Number) n);
+      if (iParams[0] instanceof Number) {
+          sum((Number) iParams[0]);
+      } else if (OMultiValue.isMultiValue(iParams[0])) {
+          for (Object n : OMultiValue.getMultiValueIterable(iParams[0])) {
+              sum((Number) n);
+          }
+      }
     } else {
       sum = null;
-      for (int i = 0; i < iParams.length; ++i)
-        sum((Number) iParams[i]);
+      for (int i = 0; i < iParams.length; ++i) {
+          sum((Number) iParams[i]);
+      }
     }
     return sum;
   }
 
   protected void sum(final Number value) {
     if (value != null) {
-      if (sum == null)
-        // FIRST TIME
-        sum = value;
-      else
-        sum = OType.increment(sum, value);
+      if (sum == null) {
+          // FIRST TIME
+          sum = value;
+      } else {
+          sum = OType.increment(sum, value);
+      }
     }
   }
 
@@ -89,11 +93,12 @@ public class OSQLFunctionSum extends OSQLFunctionMathAbstract {
       final Number value = (Number) iParameter;
 
       if (value != null) {
-        if (sum == null)
-          // FIRST TIME
-          sum = value;
-        else
-          sum = OType.increment(sum, value);
+        if (sum == null) {
+            // FIRST TIME
+            sum = value;
+        } else {
+            sum = OType.increment(sum, value);
+        }
       }
     }
     return sum;

@@ -60,27 +60,31 @@ import java.util.HashMap;
    }
 
    public Object getParameters(final Object iKey) {
-     if (this.parameters == null)
-       return null;
+     if (this.parameters == null) {
+         return null;
+     }
 
      return parameters.entrySet();
    }
 
    public Object getParameter(final Object iKey) {
-     if (this.parameters == null)
-       return null;
+     if (this.parameters == null) {
+         return null;
+     }
 
      return parameters.get(iKey);
    }
 
    public OHttpSession setParameter(final Object iKey, final Object iValue) {
-     if (this.parameters == null)
-       this.parameters = new HashMap<Object, Object>();
+     if (this.parameters == null) {
+         this.parameters = new HashMap<Object, Object>();
+     }
 
-     if (iValue == null)
-       this.parameters.remove(iKey);
-     else
-       this.parameters.put(iKey, iValue);
+     if (iValue == null) {
+         this.parameters.remove(iKey);
+     } else {
+         this.parameters.put(iKey, iValue);
+     }
      return this;
    }
 
