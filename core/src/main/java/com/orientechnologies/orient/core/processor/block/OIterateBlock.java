@@ -72,7 +72,7 @@ public class OIterateBlock extends OAbstractBlock {
     return NAME;
   }
 
-  protected class OIterateBlockIterable implements Iterable<Object> {
+  protected static class OIterateBlockIterable implements Iterable<Object> {
 
     private final Object[]        objects;
     private final OCommandContext context;
