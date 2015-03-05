@@ -93,6 +93,9 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
   protected static final class RemovedValue {
     public static final RemovedValue INSTANCE = new RemovedValue();
+
+    private RemovedValue() {
+    }
   }
 
   protected static final class IndexTxSnapshot {

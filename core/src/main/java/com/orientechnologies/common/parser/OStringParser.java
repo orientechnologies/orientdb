@@ -394,4 +394,7 @@ public class OStringParser {
 
     return iText.substring(0, iToFind.length()).equalsIgnoreCase(iToFind);
   }
+
+  private OStringParser() {
+  }
 }

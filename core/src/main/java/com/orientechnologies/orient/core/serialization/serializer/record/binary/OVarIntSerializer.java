@@ -132,4 +132,7 @@ public class OVarIntSerializer {
     return value | (b << i);
   }
 
+  private OVarIntSerializer() {
+  }
+
 }

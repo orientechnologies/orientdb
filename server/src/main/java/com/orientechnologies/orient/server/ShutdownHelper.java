@@ -33,4 +33,7 @@ public class ShutdownHelper {
           + "), code: " + code);
     }
   }
+
+  private ShutdownHelper() {
+  }
 }

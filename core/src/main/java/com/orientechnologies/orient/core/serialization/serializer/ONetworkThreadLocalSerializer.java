@@ -51,4 +51,7 @@ public class ONetworkThreadLocalSerializer {
       }
     });
   }
+
+  private ONetworkThreadLocalSerializer() {
+  }
 }

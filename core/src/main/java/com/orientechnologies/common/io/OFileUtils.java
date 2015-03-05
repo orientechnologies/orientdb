@@ -203,4 +203,7 @@ public class OFileUtils {
 
     return OFileUtilsJava7.delete(file);
   }
+
+  private OFileUtils() {
+  }
 }

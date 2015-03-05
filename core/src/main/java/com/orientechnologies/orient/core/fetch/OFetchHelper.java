@@ -557,4 +557,7 @@ public class OFetchHelper {
   protected static void removeParsedFromMap(final Map<ORID, Integer> parsedRecords, OIdentifiable d) {
     parsedRecords.remove(d.getIdentity());
   }
+
+  private OFetchHelper() {
+  }
 }

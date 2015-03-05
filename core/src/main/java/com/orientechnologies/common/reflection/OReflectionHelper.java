@@ -243,4 +243,7 @@ public class OReflectionHelper {
       return true;
     return false;
   }
+
+  private OReflectionHelper() {
+  }
 }

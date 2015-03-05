@@ -32,4 +32,7 @@ public class OUtils {
   public static String camelCase(final String iText) {
     return Character.toUpperCase(iText.charAt(0)) + iText.substring(1);
   }
+
+  private OUtils() {
+  }
 }

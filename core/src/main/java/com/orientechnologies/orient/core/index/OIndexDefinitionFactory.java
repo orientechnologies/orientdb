@@ -192,4 +192,7 @@ public class OIndexDefinitionFactory {
     else
       return fieldName;
   }
+
+  private OIndexDefinitionFactory() {
+  }
 }

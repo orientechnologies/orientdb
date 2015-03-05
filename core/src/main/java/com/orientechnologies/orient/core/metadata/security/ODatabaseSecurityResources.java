@@ -40,4 +40,7 @@ public class ODatabaseSecurityResources {
   public final static String BYPASS_RESTRICTED = "database.bypassRestricted";
   public final static String RECORD_HOOK       = "database.hook.record";
   public final static String SERVER_ADMIN      = "server.admin";
+
+  private ODatabaseSecurityResources() {
+  }
 }

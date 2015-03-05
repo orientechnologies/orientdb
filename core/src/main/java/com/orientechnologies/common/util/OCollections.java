@@ -75,4 +75,7 @@ public class OCollections {
     builder.append(']');
     return builder.toString();
   }
+
+  private OCollections() {
+  }
 }
