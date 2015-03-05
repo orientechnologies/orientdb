@@ -576,8 +576,9 @@ public class FreezeMultiThreadingTestNonTX {
     threads.add(executorService.submit(new Locker()));
 
     countDownLatch.countDown();
-    for (Future<Void> future : threads)
-      future.get();
+    for (Future<Void> future : threads) {
+        future.get();
+    }
 
     System.out.println("finish");
   }

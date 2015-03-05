@@ -406,8 +406,9 @@ public abstract class ORecordAbstract implements ORecord {
 
   protected void onBeforeIdentityChanged(final ORecord iRecord) {
     if (newIdentityChangeListeners != null) {
-      for (OIdentityChangeListener changeListener : newIdentityChangeListeners)
-        changeListener.onBeforeIdentityChange(this);
+      for (OIdentityChangeListener changeListener : newIdentityChangeListeners) {
+          changeListener.onBeforeIdentityChange(this);
+      }
     }
   }
 
@@ -415,8 +416,9 @@ public abstract class ORecordAbstract implements ORecord {
     invokeListenerEvent(ORecordListener.EVENT.IDENTITY_CHANGED);
 
     if (newIdentityChangeListeners != null) {
-      for (OIdentityChangeListener changeListener : newIdentityChangeListeners)
-        changeListener.onAfterIdentityChange(this);
+      for (OIdentityChangeListener changeListener : newIdentityChangeListeners) {
+          changeListener.onAfterIdentityChange(this);
+      }
     }
 
   }

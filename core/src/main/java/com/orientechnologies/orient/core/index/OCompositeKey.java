@@ -47,16 +47,18 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
     this.keys = new ArrayList<Object>(keys.size());
     this.comparator = ODefaultComparator.INSTANCE;
 
-    for (final Object key : keys)
-      addKey(key);
+    for (final Object key : keys) {
+        addKey(key);
+    }
   }
 
   public OCompositeKey(final Object... keys) {
     this.keys = new ArrayList<Object>(keys.length);
     this.comparator = ODefaultComparator.INSTANCE;
 
-    for (final Object key : keys)
-      addKey(key);
+    for (final Object key : keys) {
+        addKey(key);
+    }
   }
 
   public OCompositeKey() {
@@ -205,7 +207,8 @@ public class OCompositeKey implements Comparable<OCompositeKey>, Serializable, O
     }
 
     keys.clear();
-    for (Object value : keyMap.values())
-      keys.add(value);
+    for (Object value : keyMap.values()) {
+        keys.add(value);
+    }
   }
 }

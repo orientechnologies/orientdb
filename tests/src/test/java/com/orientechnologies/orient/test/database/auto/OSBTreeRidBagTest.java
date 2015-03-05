@@ -236,8 +236,9 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     docs.add(doc_5.getIdentity());
     docs.add(doc_6.getIdentity());
 
-    for (OIdentifiable rid : bag)
-      Assert.assertTrue(docs.remove(rid));
+    for (OIdentifiable rid : bag) {
+        Assert.assertTrue(docs.remove(rid));
+    }
 
     Assert.assertTrue(docs.isEmpty());
 

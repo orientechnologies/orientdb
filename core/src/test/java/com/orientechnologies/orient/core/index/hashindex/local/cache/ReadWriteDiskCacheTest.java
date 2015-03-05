@@ -175,8 +175,9 @@ public class ReadWriteDiskCacheTest {
 
     buffer.clear();
 
-    for (int i = 0; i < 10; i++)
-      assertFile(i, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, new OLogSequenceNumber(1, i));
+    for (int i = 0; i < 10; i++) {
+        assertFile(i, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, new OLogSequenceNumber(1, i));
+    }
 
     for (int i = 0; i < 8; i++) {
       entries[i] = buffer.load(fileId, i, false);
@@ -288,8 +289,9 @@ public class ReadWriteDiskCacheTest {
 
     buffer.flushBuffer();
 
-    for (int i = 0; i < 10; i++)
-      assertFile(i, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, new OLogSequenceNumber(1, i));
+    for (int i = 0; i < 10; i++) {
+        assertFile(i, new byte[] { (byte) i, 1, 2, seed, 4, 5, 6, (byte) i }, new OLogSequenceNumber(1, i));
+    }
 
   }
 

@@ -211,8 +211,9 @@ public class OSQLFunctionRuntime extends OSQLFilterItemAbstract {
 
     // PARSE PARAMETERS
     this.configuredParameters = new Object[funcParamsText.size()];
-    for (int i = 0; i < funcParamsText.size(); ++i)
-      this.configuredParameters[i] = funcParamsText.get(i);
+    for (int i = 0; i < funcParamsText.size(); ++i) {
+        this.configuredParameters[i] = funcParamsText.get(i);
+    }
 
     setParameters(configuredParameters, true);
   }

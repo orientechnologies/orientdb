@@ -126,8 +126,9 @@ public class OPartitionedDatabasePoolFactory extends OOrientListenerAbstract {
       }
     }
 
-    for (OPartitionedDatabasePool pool : poolStore.values())
-      pool.close();
+    for (OPartitionedDatabasePool pool : poolStore.values()) {
+        pool.close();
+    }
 
     poolStore.clear();
   }

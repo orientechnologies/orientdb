@@ -334,8 +334,9 @@ public class ODocumentHelper {
 
             final Object[] values = new Object[rangeTo - rangeFrom + 1];
 
-            for (int i = rangeFrom; i <= rangeTo; ++i)
-              values[i - rangeFrom] = doc.field(fieldNames[i]);
+            for (int i = rangeFrom; i <= rangeTo; ++i) {
+                values[i - rangeFrom] = doc.field(fieldNames[i]);
+            }
 
             value = values;
 
@@ -392,8 +393,9 @@ public class ODocumentHelper {
 
             final Object[] values = new Object[rangeTo - rangeFrom + 1];
 
-            for (int i = rangeFrom; i <= rangeTo; ++i)
-              values[i - rangeFrom] = map.get(fieldNames.get(i));
+            for (int i = rangeFrom; i <= rangeTo; ++i) {
+                values[i - rangeFrom] = map.get(fieldNames.get(i));
+            }
 
             value = values;
 
@@ -442,8 +444,9 @@ public class ODocumentHelper {
 
             // MULTI VALUES
             final Object[] values = new Object[indexParts.size()];
-            for (int i = 0; i < indexParts.size(); ++i)
-              values[i] = OMultiValue.getValue(value, Integer.parseInt(indexParts.get(i)));
+            for (int i = 0; i < indexParts.size(); ++i) {
+                values[i] = OMultiValue.getValue(value, Integer.parseInt(indexParts.get(i)));
+            }
             value = values;
 
           } else if (indexRanges.size() > 1) {
@@ -457,8 +460,9 @@ public class ODocumentHelper {
                 : OMultiValue.getSize(value) - 1;
 
             final Object[] values = new Object[rangeTo - rangeFrom + 1];
-            for (int i = rangeFrom; i <= rangeTo; ++i)
-              values[i - rangeFrom] = OMultiValue.getValue(value, i);
+            for (int i = rangeFrom; i <= rangeTo; ++i) {
+                values[i - rangeFrom] = OMultiValue.getValue(value, i);
+            }
             value = values;
 
           } else if (!indexCondition.isEmpty()) {
@@ -1347,8 +1351,9 @@ public class ODocumentHelper {
         final ORidBag otherRidBag = new ORidBag();
         otherRidBag.setAutoConvertToRecord(false);
 
-        for (OIdentifiable identifiable : otherBag)
-          otherRidBag.add(identifiable);
+        for (OIdentifiable identifiable : otherBag) {
+            otherRidBag.add(identifiable);
+        }
 
         return otherRidBag;
       }

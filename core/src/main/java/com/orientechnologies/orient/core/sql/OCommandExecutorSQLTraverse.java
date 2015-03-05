@@ -144,10 +144,11 @@ public class OCommandExecutorSQLTraverse extends OCommandExecutorSQLResultsetAbs
     try {
       // BROWSE ALL THE RECORDS AND COLLECTS RESULT
       final List<OIdentifiable> result = traverse.execute();
-      for (OIdentifiable r : result)
-        if (!handleResult(r)) {
-            // LIMIT REACHED
-            break;
+      for (OIdentifiable r : result) {
+          if (!handleResult(r)) {
+              // LIMIT REACHED
+              break;
+          }
       }
 
       return getResult();

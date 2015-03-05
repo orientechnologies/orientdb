@@ -125,9 +125,10 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE> implements OLazyObjectSe
 
   public boolean containsAll(final Collection<?> c) {
     convertAll();
-    for (Object o : c)
-      if (!contains(o)) {
-          return false;
+    for (Object o : c) {
+        if (!contains(o)) {
+            return false;
+        }
     }
 
     return true;

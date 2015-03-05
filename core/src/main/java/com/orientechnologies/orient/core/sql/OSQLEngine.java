@@ -460,8 +460,9 @@ public class OSQLEngine {
           ids = Collections.emptySet();
       } else {
         ids = new HashSet<OIdentifiable>((int) (result.size() * 1.3));
-        for (OIdentifiable aResult : result)
-          ids.add(aResult.getIdentity());
+        for (OIdentifiable aResult : result) {
+            ids.add(aResult.getIdentity());
+        }
       }
     } else if (iTarget.startsWith("[")) {
       // COLLECTION OF RIDS

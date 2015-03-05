@@ -59,13 +59,14 @@ public abstract class SpeedTestGroup {
 
 			i = 1;
 			long refValue = 0;
-			for (Entry<Long, String> entry : result.getValue().entrySet())
-				if (i == 1) {
-					System.out.println(" " + i++ + ": " + entry.getValue() + " = " + entry.getKey());
-					refValue = entry.getKey();
-				} else {
-                                    System.out.println(" " + i++ + ": " + entry.getValue() + " = " + entry.getKey() + " (+"
-                                            + (entry.getKey() * 100 / refValue - 100) + "%)");
+			for (Entry<Long, String> entry : result.getValue().entrySet()) {
+                            if (i == 1) {
+                                System.out.println(" " + i++ + ": " + entry.getValue() + " = " + entry.getKey());
+                                refValue = entry.getKey();
+                            } else {
+                                System.out.println(" " + i++ + ": " + entry.getValue() + " = " + entry.getKey() + " (+"
+                                        + (entry.getKey() * 100 / refValue - 100) + "%)");
+                            }
                         }
 
 			System.out.println();

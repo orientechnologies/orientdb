@@ -21,8 +21,9 @@ public class StringSplitSpeedTest {
 
 	public static void main(String[] iArgs) {
 		String[] pieces = TEXT.split(",");
-		for (String s : pieces)
-			System.out.println("String: " + s);
+		for (String s : pieces) {
+                    System.out.println("String: " + s);
+                }
 
 		System.out.println("Start testing cycle X " + MAX);
 

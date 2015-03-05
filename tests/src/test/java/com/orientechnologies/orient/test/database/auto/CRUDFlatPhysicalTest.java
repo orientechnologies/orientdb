@@ -65,8 +65,9 @@ public class CRUDFlatPhysicalTest extends DocumentDBBaseTest {
     String[] fields;
 
     Set<Integer> ids = new HashSet<Integer>(TOT_RECORDS);
-    for (int i = 0; i < TOT_RECORDS; i++)
-      ids.add(i);
+    for (int i = 0; i < TOT_RECORDS; i++) {
+        ids.add(i);
+    }
 
     for (ORecordFlat rec : new ORecordIteratorCluster<ORecordFlat>(database, database, database.getClusterIdByName(CLUSTER_NAME),
         true)) {
@@ -99,8 +100,9 @@ public class CRUDFlatPhysicalTest extends DocumentDBBaseTest {
     String[] fields;
 
     Set<Integer> ids = new HashSet<Integer>(TOT_RECORDS);
-    for (int i = 0; i < TOT_RECORDS; i++)
-      ids.add(i);
+    for (int i = 0; i < TOT_RECORDS; i++) {
+        ids.add(i);
+    }
 
     for (ORecordFlat rec : new ORecordIteratorCluster<ORecordFlat>(database, database, database.getClusterIdByName(CLUSTER_NAME),
         true)) {

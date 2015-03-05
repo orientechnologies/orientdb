@@ -68,8 +68,9 @@ public class OSBTreeRidBagConcurrencySingleRidBag {
             document.setLazyLoad(false);
 
             ORidBag ridBag = document.field("ridBag");
-            for (ORID rid : ridsToAdd)
-              ridBag.add(rid);
+            for (ORID rid : ridsToAdd) {
+                ridBag.add(rid);
+            }
 
             try {
               document.save();
@@ -196,27 +197,31 @@ public class OSBTreeRidBagConcurrencySingleRidBag {
 
     List<Future<Void>> futures = new ArrayList<Future<Void>>();
 
-    for (int i = 0; i < 5; i++)
-      futures.add(threadExecutor.submit(new RidAdder(i)));
+    for (int i = 0; i < 5; i++) {
+        futures.add(threadExecutor.submit(new RidAdder(i)));
+    }
 
-    for (int i = 0; i < 5; i++)
-      futures.add(threadExecutor.submit(new RidDeleter(i)));
+    for (int i = 0; i < 5; i++) {
+        futures.add(threadExecutor.submit(new RidDeleter(i)));
+    }
 
     latch.countDown();
 
     Thread.sleep(30 * 60000);
     cont = false;
 
-    for (Future<Void> future : futures)
-      future.get();
+    for (Future<Void> future : futures) {
+        future.get();
+    }
 
     document = db.load(document.getIdentity());
     document.setLazyLoad(false);
 
     ridBag = document.field("ridBag");
 
-    for (OIdentifiable identifiable : ridBag)
-      Assert.assertTrue(ridTree.remove(identifiable.getIdentity()));
+    for (OIdentifiable identifiable : ridBag) {
+        Assert.assertTrue(ridTree.remove(identifiable.getIdentity()));
+    }
 
     Assert.assertTrue(ridTree.isEmpty());
 

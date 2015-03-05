@@ -69,12 +69,13 @@ public class OImmutableUser implements OSecurityUser {
   }
 
   public boolean isRuleDefined(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific) {
-    for (OImmutableRole r : roles)
-      if (r == null) {
-          OLogManager.instance().warn(this,
-                  "User '%s' has a null role, bypass it. Consider to fix this user roles before to continue", getName());
-    } else if (r.hasRule(resourceGeneric, resourceSpecific)) {
-        return true;
+    for (OImmutableRole r : roles) {
+        if (r == null) {
+            OLogManager.instance().warn(this,
+                    "User '%s' has a null role, bypass it. Consider to fix this user roles before to continue", getName());
+        } else if (r.hasRule(resourceGeneric, resourceSpecific)) {
+            return true;
+        }
     }
 
     return false;

@@ -104,13 +104,14 @@ import com.orientechnologies.common.log.OLogManager;
 
    public void connect(final int iTimeout) throws IOException {
      // TRY TO CONNECT TO THE RIGHT PORT
-     for (int port : networkPort)
-       try {
-         channel = new OChannelBinaryAsynchClientSynch(networkAddress, port, null, contextConfig);
-         break;
-       } catch (Exception e) {
-         OLogManager.instance().error(this, "Error on connecting to %s:%d", e, networkAddress, port);
-       }
+     for (int port : networkPort) {
+         try {
+             channel = new OChannelBinaryAsynchClientSynch(networkAddress, port, null, contextConfig);
+             break;
+         } catch (Exception e) {
+             OLogManager.instance().error(this, "Error on connecting to %s:%d", e, networkAddress, port);
+         }
+     }
 
      if (channel == null) {
          throw new ONetworkProtocolException("Cannot connect to server host '" + networkAddress + "', ports: "

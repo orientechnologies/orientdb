@@ -1120,28 +1120,33 @@ public class SQLSelectTest extends AbstractSelectTest {
 
     List<ODocument> result = executeQuery("select * from account where id < 3 + 4", database);
     Assert.assertFalse(result.isEmpty());
-    for (int i = 0; i < result.size(); ++i)
-      Assert.assertTrue(((Integer) result.get(i).field("id")) < 3 + 4);
+    for (int i = 0; i < result.size(); ++i) {
+        Assert.assertTrue(((Integer) result.get(i).field("id")) < 3 + 4);
+    }
 
     result = executeQuery("select * from account where id < 10 - 3", database);
     Assert.assertFalse(result.isEmpty());
-    for (int i = 0; i < result.size(); ++i)
-      Assert.assertTrue(((Integer) result.get(i).field("id")) < 10 - 3);
+    for (int i = 0; i < result.size(); ++i) {
+        Assert.assertTrue(((Integer) result.get(i).field("id")) < 10 - 3);
+    }
 
     result = executeQuery("select * from account where id < 3 * 2", database);
     Assert.assertFalse(result.isEmpty());
-    for (int i = 0; i < result.size(); ++i)
-      Assert.assertTrue(((Integer) result.get(i).field("id")) < 3 * 2);
+    for (int i = 0; i < result.size(); ++i) {
+        Assert.assertTrue(((Integer) result.get(i).field("id")) < 3 * 2);
+    }
 
     result = executeQuery("select * from account where id < 120 / 20", database);
     Assert.assertFalse(result.isEmpty());
-    for (int i = 0; i < result.size(); ++i)
-      Assert.assertTrue(((Integer) result.get(i).field("id")) < 120 / 20);
+    for (int i = 0; i < result.size(); ++i) {
+        Assert.assertTrue(((Integer) result.get(i).field("id")) < 120 / 20);
+    }
 
     result = executeQuery("select * from account where id < 27 % 10", database);
     Assert.assertFalse(result.isEmpty());
-    for (int i = 0; i < result.size(); ++i)
-      Assert.assertTrue(((Integer) result.get(i).field("id")) < 27 % 10);
+    for (int i = 0; i < result.size(); ++i) {
+        Assert.assertTrue(((Integer) result.get(i).field("id")) < 27 % 10);
+    }
 
     result = executeQuery("select * from account where id = id * 1", database);
     Assert.assertFalse(result.isEmpty());

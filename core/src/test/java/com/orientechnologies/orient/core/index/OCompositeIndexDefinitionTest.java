@@ -573,8 +573,9 @@ public class OCompositeIndexDefinitionTest {
     Map<OCompositeKey, Integer> keysToAdd = new HashMap<OCompositeKey, Integer>();
     Map<OCompositeKey, Integer> keysToRemove = new HashMap<OCompositeKey, Integer>();
 
-    for (OMultiValueChangeEvent<Integer, String> multiValueChangeEvent : firedEvents)
-      compositeIndexDefinition.processChangeEvent(multiValueChangeEvent, keysToAdd, keysToRemove, 2, 3);
+    for (OMultiValueChangeEvent<Integer, String> multiValueChangeEvent : firedEvents) {
+        compositeIndexDefinition.processChangeEvent(multiValueChangeEvent, keysToAdd, keysToRemove, 2, 3);
+    }
 
     Assert.assertEquals(keysToRemove.size(), 0);
     Assert.assertEquals(keysToAdd.size(), 2);
@@ -610,8 +611,9 @@ public class OCompositeIndexDefinitionTest {
 		Map<OCompositeKey, Integer> keysToAdd = new HashMap<OCompositeKey, Integer>();
 		Map<OCompositeKey, Integer> keysToRemove = new HashMap<OCompositeKey, Integer>();
 
-		for (OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEvent : firedEvents)
-			compositeIndexDefinition.processChangeEvent(multiValueChangeEvent, keysToAdd, keysToRemove, 2, 3);
+		for (OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEvent : firedEvents) {
+                    compositeIndexDefinition.processChangeEvent(multiValueChangeEvent, keysToAdd, keysToRemove, 2, 3);
+                }
 
 		Assert.assertEquals(keysToRemove.size(), 0);
 		Assert.assertEquals(keysToAdd.size(), 2);
@@ -651,8 +653,9 @@ public class OCompositeIndexDefinitionTest {
     Map<OCompositeKey, Integer> keysToAdd = new HashMap<OCompositeKey, Integer>();
     Map<OCompositeKey, Integer> keysToRemove = new HashMap<OCompositeKey, Integer>();
 
-    for (OMultiValueChangeEvent<Integer, String> multiValueChangeEvent : firedEvents)
-      compositeIndexDefinition.processChangeEvent(multiValueChangeEvent, keysToAdd, keysToRemove, 2, 3);
+    for (OMultiValueChangeEvent<Integer, String> multiValueChangeEvent : firedEvents) {
+        compositeIndexDefinition.processChangeEvent(multiValueChangeEvent, keysToAdd, keysToRemove, 2, 3);
+    }
 
     Assert.assertEquals(keysToRemove.size(), 1);
     Assert.assertEquals(keysToAdd.size(), 1);
@@ -688,8 +691,9 @@ public class OCompositeIndexDefinitionTest {
 		Map<OCompositeKey, Integer> keysToAdd = new HashMap<OCompositeKey, Integer>();
 		Map<OCompositeKey, Integer> keysToRemove = new HashMap<OCompositeKey, Integer>();
 
-		for (OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEvent : firedEvents)
-			compositeIndexDefinition.processChangeEvent(multiValueChangeEvent, keysToAdd, keysToRemove, 2, 3);
+		for (OMultiValueChangeEvent<OIdentifiable, OIdentifiable> multiValueChangeEvent : firedEvents) {
+                    compositeIndexDefinition.processChangeEvent(multiValueChangeEvent, keysToAdd, keysToRemove, 2, 3);
+                }
 
 		Assert.assertEquals(keysToRemove.size(), 1);
 		Assert.assertEquals(keysToAdd.size(), 1);
@@ -726,8 +730,9 @@ public class OCompositeIndexDefinitionTest {
     Map<OCompositeKey, Integer> keysToAdd = new HashMap<OCompositeKey, Integer>();
     Map<OCompositeKey, Integer> keysToRemove = new HashMap<OCompositeKey, Integer>();
 
-    for (OMultiValueChangeEvent<String, String> multiValueChangeEvent : firedEvents)
-      compositeIndexDefinition.processChangeEvent(multiValueChangeEvent, keysToAdd, keysToRemove, 2, 3);
+    for (OMultiValueChangeEvent<String, String> multiValueChangeEvent : firedEvents) {
+        compositeIndexDefinition.processChangeEvent(multiValueChangeEvent, keysToAdd, keysToRemove, 2, 3);
+    }
 
     Assert.assertEquals(keysToRemove.size(), 0);
     Assert.assertEquals(keysToAdd.size(), 2);
@@ -767,8 +772,9 @@ public class OCompositeIndexDefinitionTest {
     Map<OCompositeKey, Integer> keysToAdd = new HashMap<OCompositeKey, Integer>();
     Map<OCompositeKey, Integer> keysToRemove = new HashMap<OCompositeKey, Integer>();
 
-    for (OMultiValueChangeEvent<String, String> multiValueChangeEvent : firedEvents)
-      compositeIndexDefinition.processChangeEvent(multiValueChangeEvent, keysToAdd, keysToRemove, 2, 3);
+    for (OMultiValueChangeEvent<String, String> multiValueChangeEvent : firedEvents) {
+        compositeIndexDefinition.processChangeEvent(multiValueChangeEvent, keysToAdd, keysToRemove, 2, 3);
+    }
 
     Assert.assertEquals(keysToRemove.size(), 1);
     Assert.assertEquals(keysToAdd.size(), 1);
@@ -806,8 +812,9 @@ public class OCompositeIndexDefinitionTest {
     Map<OCompositeKey, Integer> keysToAdd = new HashMap<OCompositeKey, Integer>();
     Map<OCompositeKey, Integer> keysToRemove = new HashMap<OCompositeKey, Integer>();
 
-    for (OMultiValueChangeEvent<Object, String> multiValueChangeEvent : firedEvents)
-      compositeIndexDefinition.processChangeEvent(multiValueChangeEvent, keysToAdd, keysToRemove, 2, 3);
+    for (OMultiValueChangeEvent<Object, String> multiValueChangeEvent : firedEvents) {
+        compositeIndexDefinition.processChangeEvent(multiValueChangeEvent, keysToAdd, keysToRemove, 2, 3);
+    }
 
     Assert.assertEquals(keysToRemove.size(), 0);
     Assert.assertEquals(keysToAdd.size(), 2);
@@ -849,8 +856,9 @@ public class OCompositeIndexDefinitionTest {
     Map<OCompositeKey, Integer> keysToAdd = new HashMap<OCompositeKey, Integer>();
     Map<OCompositeKey, Integer> keysToRemove = new HashMap<OCompositeKey, Integer>();
 
-    for (OMultiValueChangeEvent<Object, String> multiValueChangeEvent : firedEvents)
-      compositeIndexDefinition.processChangeEvent(multiValueChangeEvent, keysToAdd, keysToRemove, 2, 3);
+    for (OMultiValueChangeEvent<Object, String> multiValueChangeEvent : firedEvents) {
+        compositeIndexDefinition.processChangeEvent(multiValueChangeEvent, keysToAdd, keysToRemove, 2, 3);
+    }
 
     Assert.assertEquals(keysToRemove.size(), 1);
     Assert.assertEquals(keysToAdd.size(), 1);

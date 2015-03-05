@@ -302,8 +302,9 @@ public class OServerPluginManager implements OService {
     }
 
     // REMOVE MISSING PLUGIN
-    for (String pluginName : currentDynamicPlugins)
-      uninstallPluginByFile(pluginName);
+    for (String pluginName : currentDynamicPlugins) {
+        uninstallPluginByFile(pluginName);
+    }
   }
 
   private void installDynamicPlugin(final File pluginFile) {

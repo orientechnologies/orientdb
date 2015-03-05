@@ -533,8 +533,9 @@ public abstract class ODatabasePojoAbstract<T extends Object> extends ODatabaseW
     }
 
     // FILTER PARAMETERS
-    for (int i = 0; i < iArgs.length; ++i)
-      iArgs[i] = convertParameter(iArgs[i]);
+    for (int i = 0; i < iArgs.length; ++i) {
+        iArgs[i] = convertParameter(iArgs[i]);
+    }
   }
 
   /**

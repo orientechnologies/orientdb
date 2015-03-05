@@ -285,8 +285,9 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
 
       containsCollection = true;
     } else if (containsCollection) {
-        for (final OCompositeKey compositeKey : compositeKeys)
+        for (final OCompositeKey compositeKey : compositeKeys) {
             compositeKey.addKey(keyValue);
+        }
     } else {
         firstKey.addKey(keyValue);
     }
@@ -321,8 +322,9 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
    */
   public int getParamCount() {
     int total = 0;
-    for (final OIndexDefinition indexDefinition : indexDefinitions)
-      total += indexDefinition.getParamCount();
+    for (final OIndexDefinition indexDefinition : indexDefinitions) {
+        total += indexDefinition.getParamCount();
+    }
     return total;
   }
 
@@ -331,8 +333,9 @@ public class OCompositeIndexDefinition extends OAbstractIndexDefinition {
    */
   public OType[] getTypes() {
     final List<OType> types = new LinkedList<OType>();
-    for (final OIndexDefinition indexDefinition : indexDefinitions)
-      Collections.addAll(types, indexDefinition.getTypes());
+    for (final OIndexDefinition indexDefinition : indexDefinitions) {
+        Collections.addAll(types, indexDefinition.getTypes());
+    }
 
     return types.toArray(new OType[types.size()]);
   }

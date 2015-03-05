@@ -109,11 +109,13 @@ public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
       System.out.println("Seed [" + i + "] = " + seeds[i]);
     }
 
-    for (long seed : seeds)
-      futures.add(executorService.submit(new DataPropagationTask(seed)));
+    for (long seed : seeds) {
+        futures.add(executorService.submit(new DataPropagationTask(seed)));
+    }
 
-    for (Future<Void> future : futures)
-      future.get();
+    for (Future<Void> future : futures) {
+        future.get();
+    }
 
     futures.clear();
 
@@ -130,11 +132,13 @@ public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
 
     long dataAddSeed = random.nextLong();
     System.out.println("Data add seed = " + dataAddSeed);
-    for (int i = 0; i < 1; i++)
-      futures.add(executorService.submit(new DataPropagationTask(dataAddSeed)));
+    for (int i = 0; i < 1; i++) {
+        futures.add(executorService.submit(new DataPropagationTask(dataAddSeed)));
+    }
 
-    for (Future<Void> future : futures)
-      future.get();
+    for (Future<Void> future : futures) {
+        future.get();
+    }
 
     ODatabaseCompare databaseCompare = new ODatabaseCompare(testDocumentTx.getURL(), baseDocumentTx.getURL(), "admin", "admin",
         new OCommandOutputListener() {

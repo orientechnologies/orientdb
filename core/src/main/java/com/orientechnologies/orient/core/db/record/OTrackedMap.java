@@ -127,10 +127,11 @@ public class OTrackedMap<T> extends LinkedHashMap<Object, T> implements ORecordE
     }
 
     if (origValues == null) {
-      for (T value : values())
-        if (value instanceof ODocument) {
-          ODocumentInternal.removeOwner((ODocument) value, this);
-        }
+      for (T value : values()) {
+          if (value instanceof ODocument) {
+              ODocumentInternal.removeOwner((ODocument) value, this);
+          }
+      }
     }
 
     super.clear();

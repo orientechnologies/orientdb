@@ -162,8 +162,9 @@ public class OAdaptiveLock extends OAbstractLock {
       printWriter.append("Owner thread : ").append(owner.toString()).append("\n");
 
       StackTraceElement[] stackTrace = owner.getStackTrace();
-      for (StackTraceElement traceElement : stackTrace)
-        printWriter.println("\tat " + traceElement);
+      for (StackTraceElement traceElement : stackTrace) {
+          printWriter.println("\tat " + traceElement);
+      }
 
       printWriter.flush();
       return stringWriter.toString();

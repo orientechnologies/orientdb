@@ -199,11 +199,12 @@ public class ORemoteConnectionManager implements OChannelListener {
 
   protected void closePool(final OResourcePool<String, OChannelBinaryAsynchClient> pool) {
     final List<OChannelBinaryAsynchClient> conns = new ArrayList<OChannelBinaryAsynchClient>(pool.getAllResources());
-    for (OChannelBinaryAsynchClient c : conns)
-      try {
-        c.close();
-      } catch (Exception e) {
-      }
+    for (OChannelBinaryAsynchClient c : conns) {
+        try {
+            c.close();
+        } catch (Exception e) {
+        }
+    }
     pool.close();
   }
 

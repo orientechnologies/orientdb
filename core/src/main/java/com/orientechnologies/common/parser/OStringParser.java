@@ -369,8 +369,9 @@ public class OStringParser {
     // DECODE UNICODE CHAR
     final StringBuilder buff = new StringBuilder(64);
     final int lastPos = position + 4;
-    for (; position < lastPos; ++position)
-      buff.append(iText.charAt(position));
+    for (; position < lastPos; ++position) {
+        buff.append(iText.charAt(position));
+    }
 
     buffer.append((char) Integer.parseInt(buff.toString(), 16));
     return position - 1;
@@ -380,8 +381,9 @@ public class OStringParser {
     // DECODE UNICODE CHAR
     final StringBuilder buff = new StringBuilder(64);
     final int lastPos = position + 4;
-    for (; position < lastPos; ++position)
-      buff.append(iText[position]);
+    for (; position < lastPos; ++position) {
+        buff.append(iText[position]);
+    }
 
     buffer.append((char) Integer.parseInt(buff.toString(), 16));
     return position - 1;

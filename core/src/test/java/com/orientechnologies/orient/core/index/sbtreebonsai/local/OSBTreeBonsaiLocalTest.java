@@ -78,14 +78,16 @@ public class OSBTreeBonsaiLocalTest {
       sbTree.put(i, new ORecordId(i % 32000, i));
     }
 
-    for (int i = 0; i < KEYS_COUNT; i++)
-      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i), i + " key is absent");
+    for (int i = 0; i < KEYS_COUNT; i++) {
+        Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i), i + " key is absent");
+    }
 
     Assert.assertEquals(0, (int) sbTree.firstKey());
     Assert.assertEquals(KEYS_COUNT - 1, (int) sbTree.lastKey());
 
-    for (int i = KEYS_COUNT; i < 2 * KEYS_COUNT; i++)
-      Assert.assertNull(sbTree.get(i));
+    for (int i = KEYS_COUNT; i < 2 * KEYS_COUNT; i++) {
+        Assert.assertNull(sbTree.get(i));
+    }
 
   }
 
@@ -104,8 +106,9 @@ public class OSBTreeBonsaiLocalTest {
     Assert.assertEquals(sbTree.firstKey(), keys.first());
     Assert.assertEquals(sbTree.lastKey(), keys.last());
 
-    for (int key : keys)
-      Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
+    for (int key : keys) {
+        Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
+    }
   }
 
   public void testKeyPutRandomGaussian() throws Exception {
@@ -131,8 +134,9 @@ public class OSBTreeBonsaiLocalTest {
     Assert.assertEquals(sbTree.firstKey(), keys.first());
     Assert.assertEquals(sbTree.lastKey(), keys.last());
 
-    for (int key : keys)
-      Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
+    for (int key : keys) {
+        Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
+    }
   }
 
   public void testKeyDeleteRandomUniform() throws Exception {
@@ -319,49 +323,61 @@ public class OSBTreeBonsaiLocalTest {
   }
 
   public void testAddKeyValuesInTwoBucketsAndMakeFirstEmpty() throws Exception {
-    for (int i = 0; i < 110; i++)
-      sbTree.put(i, new ORecordId(i % 32000, i));
+    for (int i = 0; i < 110; i++) {
+        sbTree.put(i, new ORecordId(i % 32000, i));
+    }
 
-    for (int i = 0; i < 56; i++)
-      sbTree.remove(i);
+    for (int i = 0; i < 56; i++) {
+        sbTree.remove(i);
+    }
 
     Assert.assertEquals((int) sbTree.firstKey(), 56);
 
-    for (int i = 0; i < 56; i++)
-      Assert.assertNull(sbTree.get(i));
+    for (int i = 0; i < 56; i++) {
+        Assert.assertNull(sbTree.get(i));
+    }
 
-    for (int i = 56; i < 110; i++)
-      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
+    for (int i = 56; i < 110; i++) {
+        Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
+    }
   }
 
   public void testAddKeyValuesInTwoBucketsAndMakeLastEmpty() throws Exception {
-    for (int i = 0; i < 110; i++)
-      sbTree.put(i, new ORecordId(i % 32000, i));
+    for (int i = 0; i < 110; i++) {
+        sbTree.put(i, new ORecordId(i % 32000, i));
+    }
 
-    for (int i = 110; i > 50; i--)
-      sbTree.remove(i);
+    for (int i = 110; i > 50; i--) {
+        sbTree.remove(i);
+    }
 
     Assert.assertEquals((int) sbTree.lastKey(), 50);
 
-    for (int i = 110; i > 50; i--)
-      Assert.assertNull(sbTree.get(i));
+    for (int i = 110; i > 50; i--) {
+        Assert.assertNull(sbTree.get(i));
+    }
 
-    for (int i = 50; i >= 0; i--)
-      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
+    for (int i = 50; i >= 0; i--) {
+        Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
+    }
   }
 
   public void testAddKeyValuesAndRemoveFirstMiddleAndLastPages() throws Exception {
-    for (int i = 0; i < 326; i++)
-      sbTree.put(i, new ORecordId(i % 32000, i));
+    for (int i = 0; i < 326; i++) {
+        sbTree.put(i, new ORecordId(i % 32000, i));
+    }
 
-    for (int i = 0; i < 60; i++)
-      sbTree.remove(i);
+    for (int i = 0; i < 60; i++) {
+        sbTree.remove(i);
+    }
 
-    for (int i = 100; i < 220; i++)
-      sbTree.remove(i);
+    for (int i = 100; i < 220; i++) {
+        sbTree.remove(i);
+    }
 
-    for (int i = 260; i < 326; i++)
-      sbTree.remove(i);
+    for (int i = 260; i < 326; i++) {
+        sbTree.remove(i);
+    }
 
     Assert.assertEquals((int) sbTree.firstKey(), 60);
     Assert.assertEquals((int) sbTree.lastKey(), 259);

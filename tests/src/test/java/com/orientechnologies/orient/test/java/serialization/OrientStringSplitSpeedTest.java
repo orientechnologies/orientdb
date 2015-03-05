@@ -25,8 +25,9 @@ public class OrientStringSplitSpeedTest {
 
 	public static void main(String[] iArgs) {
 		List<String> pieces = OStringSerializerHelper.split(TEXT, ',');
-		for (String s : pieces)
-			System.out.println("String: " + s);
+		for (String s : pieces) {
+                    System.out.println("String: " + s);
+                }
 
 		System.out.println("Start testing cycle X " + MAX);
 

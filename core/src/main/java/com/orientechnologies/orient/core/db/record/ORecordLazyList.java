@@ -399,8 +399,9 @@ public class ORecordLazyList extends ORecordTrackedList implements ORecordLazyMu
     copy.autoConvertToRecord = autoConvertToRecord;
 
     final int tot = super.size();
-    for (int i = 0; i < tot; ++i)
-      copy.add(rawGet(i));
+    for (int i = 0; i < tot; ++i) {
+        copy.add(rawGet(i));
+    }
 
     return copy;
   }

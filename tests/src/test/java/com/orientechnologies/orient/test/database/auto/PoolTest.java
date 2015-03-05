@@ -37,13 +37,15 @@ public class PoolTest extends DocumentDBBaseTest {
 
     final List<Future<Void>> futures = new ArrayList<Future<Void>>();
 
-    for (int i = 0; i < maxSize / 2; i++)
-      futures.add(executorService.submit(new Acquirer(maxSize, random)));
+    for (int i = 0; i < maxSize / 2; i++) {
+        futures.add(executorService.submit(new Acquirer(maxSize, random)));
+    }
 
     latch.countDown();
 
-    for (Future<Void> future : futures)
-      future.get();
+    for (Future<Void> future : futures) {
+        future.get();
+    }
   }
 
   private final class Acquirer implements Callable<Void> {

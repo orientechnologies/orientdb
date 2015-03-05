@@ -164,8 +164,9 @@ public class OWOWCache {
       }
     }
 
-    for (WeakReference<OLowDiskSpaceListener> ref : itemsToRemove)
-      listeners.remove(ref);
+    for (WeakReference<OLowDiskSpaceListener> ref : itemsToRemove) {
+        listeners.remove(ref);
+    }
   }
 
   private void addAllocatedSpace(long diff) {
@@ -458,8 +459,9 @@ public class OWOWCache {
   }
 
   public void flush() {
-    for (long fileId : files.keySet())
-      flush(fileId);
+    for (long fileId : files.keySet()) {
+        flush(fileId);
+    }
   }
 
   public long getFilledUpTo(long fileId) throws IOException {
@@ -525,8 +527,9 @@ public class OWOWCache {
   public void setSoftlyClosed(boolean softlyClosed) throws IOException {
     filesLock.acquireWriteLock();
     try {
-      for (long fileId : files.keySet())
-        setSoftlyClosed(fileId, softlyClosed);
+      for (long fileId : files.keySet()) {
+          setSoftlyClosed(fileId, softlyClosed);
+      }
     } finally {
       filesLock.releaseWriteLock();
     }
@@ -752,8 +755,9 @@ public class OWOWCache {
   public void delete() throws IOException {
     filesLock.acquireWriteLock();
     try {
-      for (long fileId : files.keySet())
-        doDeleteFile(fileId);
+      for (long fileId : files.keySet()) {
+          doDeleteFile(fileId);
+      }
 
       if (nameIdMapHolderFile != null) {
         if (nameIdMapHolderFile.exists()) {
@@ -1201,10 +1205,11 @@ public class OWOWCache {
               }
             }
 
-            for (OCachePointer pagePointer : group.pages)
-              if (pagePointer != null) {
-                  pagePointer.decrementReferrer();
-              }
+            for (OCachePointer pagePointer : group.pages) {
+                if (pagePointer != null) {
+                    pagePointer.decrementReferrer();
+                }
+            }
 
             entriesIterator.remove();
             flushedWriteGroups++;
@@ -1308,9 +1313,10 @@ public class OWOWCache {
             }
           }
 
-          for (OCachePointer pagePointer : writeGroup.pages)
-            if (pagePointer != null) {
-                pagePointer.decrementReferrer();
+          for (OCachePointer pagePointer : writeGroup.pages) {
+              if (pagePointer != null) {
+                  pagePointer.decrementReferrer();
+              }
           }
 
           cacheSize.addAndGet(-flushedPages);

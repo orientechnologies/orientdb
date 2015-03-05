@@ -518,8 +518,9 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     // BROWSE ALL THE OBJECTS
 
     Set<Integer> ids = new HashSet<Integer>(TOT_RECORDS);
-    for (int i = 0; i < TOT_RECORDS; i++)
-      ids.add(i);
+    for (int i = 0; i < TOT_RECORDS; i++) {
+        ids.add(i);
+    }
 
     for (Account a : database.browseClass(Account.class)) {
       int id = a.getId();
@@ -543,8 +544,9 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     // BROWSE ALL THE OBJECTS
     Set<Integer> ids = new HashSet<Integer>(TOT_RECORDS);
-    for (int i = 0; i < TOT_RECORDS; i++)
-      ids.add(i);
+    for (int i = 0; i < TOT_RECORDS; i++) {
+        ids.add(i);
+    }
 
     List<Account> result = database.query(new OSQLSynchQuery<Account>("select from Account").setFetchPlan("*:-1"));
     for (Account a : result) {
@@ -570,8 +572,9 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
 
     // BROWSE ALL THE OBJECTS
     Set<Integer> ids = new HashSet<Integer>(TOT_RECORDS);
-    for (int i = 0; i < TOT_RECORDS; i++)
-      ids.add(i);
+    for (int i = 0; i < TOT_RECORDS; i++) {
+        ids.add(i);
+    }
 
     List<Account> result = database.query(new OSQLSynchQuery<Account>("select from Account").setFetchPlan("*:2"));
     for (Account a : result) {
@@ -2469,8 +2472,9 @@ public class CRUDObjectPhysicalTest extends ObjectDBBaseTest {
     Assert.assertNotNull(a.getThumbnail());
     Assert.assertNotNull(aa.getThumbnail());
     byte[] b = aa.getThumbnail();
-    for (int i = 0; i < 10; ++i)
-      Assert.assertEquals(b[i], i);
+    for (int i = 0; i < 10; ++i) {
+        Assert.assertEquals(b[i], i);
+    }
   }
 
   @Test

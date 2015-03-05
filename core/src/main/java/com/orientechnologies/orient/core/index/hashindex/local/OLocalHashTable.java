@@ -717,9 +717,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         valueSerializer = (OBinarySerializer<V>) OBinarySerializerFactory.getInstance().getObjectSerializer(
             page.getValueSerializerId());
 
-        for (int i = 0; i < HASH_CODE_SIZE; i++)
-          if (!page.isRemoved(i)) {
-              diskCache.openFile(page.getFileId(i));
+        for (int i = 0; i < HASH_CODE_SIZE; i++) {
+            if (!page.isRemoved(i)) {
+                diskCache.openFile(page.getFileId(i));
+            }
         }
       } finally {
         diskCache.release(hashStateEntry);
@@ -782,8 +783,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     final OHashIndexBucket.Entry<K, V>[] entries = new OHashIndexBucket.Entry[endIndex - startIndex];
     final Iterator<OHashIndexBucket.Entry<K, V>> iterator = bucket.iterator(startIndex);
 
-    for (int i = 0, k = startIndex; k < endIndex; i++, k++)
-      entries[i] = iterator.next();
+    for (int i = 0, k = startIndex; k < endIndex; i++, k++) {
+        entries[i] = iterator.next();
+    }
 
     return entries;
   }
@@ -1454,11 +1456,13 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           final OHashIndexBucket<K, V> newBuddyBucket = new OHashIndexBucket<K, V>(bucketDepth - 1, newBuddyCacheEntry,
               keySerializer, valueSerializer, keyTypes, getTrackMode());
 
-          for (OHashIndexBucket.Entry<K, V> entry : buddyBucket)
-            newBuddyBucket.appendEntry(entry.hashCode, entry.key, entry.value);
+          for (OHashIndexBucket.Entry<K, V> entry : buddyBucket) {
+              newBuddyBucket.appendEntry(entry.hashCode, entry.key, entry.value);
+          }
 
-          for (OHashIndexBucket.Entry<K, V> entry : bucket)
-            newBuddyBucket.addEntry(entry.hashCode, entry.key, entry.value);
+          for (OHashIndexBucket.Entry<K, V> entry : bucket) {
+              newBuddyBucket.addEntry(entry.hashCode, entry.key, entry.value);
+          }
 
           logPageChanges(newBuddyBucket, newBuddyCacheEntry.getFileId(), newBuddyCacheEntry.getPageIndex(), false);
         } finally {
@@ -1473,8 +1477,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
         final long newBuddyPointer = createBucketPointer(buddyIndex, buddyLevel);
 
-        for (int i = firstStartIndex; i < secondEndIndex; i++)
-          updateBucket(currentNode.nodeIndex, i, currentNode.hashMapOffset, newBuddyPointer);
+        for (int i = firstStartIndex; i < secondEndIndex; i++) {
+            updateBucket(currentNode.nodeIndex, i, currentNode.hashMapOffset, newBuddyPointer);
+        }
 
         if (metadataPage.getBucketsCount(buddyLevel) > 0) {
           final long newTombstoneIndex;
@@ -1703,8 +1708,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         directory.setNodePointer(parentNodeIndex, startIndex + i, position);
       }
     } else {
-      for (int i = 0; i < pointersSize; i++)
-        directory.setNodePointer(parentNodeIndex, startIndex + i, (bucketPath.nodeIndex << 8) | (i * hashMapSize) | Long.MIN_VALUE);
+      for (int i = 0; i < pointersSize; i++) {
+          directory.setNodePointer(parentNodeIndex, startIndex + i, (bucketPath.nodeIndex << 8) | (i * hashMapSize) | Long.MIN_VALUE);
+      }
     }
 
     if (allRightHashMapsEquals) {
@@ -1713,9 +1719,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         directory.setNodePointer(parentNodeIndex, startIndex + pointersSize + i, position);
       }
     } else {
-      for (int i = 0; i < pointersSize; i++)
-        directory.setNodePointer(parentNodeIndex, startIndex + pointersSize + i, (newNodeIndex << 8) | (i * hashMapSize)
-            | Long.MIN_VALUE);
+      for (int i = 0; i < pointersSize; i++) {
+          directory.setNodePointer(parentNodeIndex, startIndex + pointersSize + i, (newNodeIndex << 8) | (i * hashMapSize)
+                  | Long.MIN_VALUE);
+      }
     }
 
     updateMaxChildDepth(bucketPath.parent, bucketPath.nodeLocalDepth + 1);
@@ -1741,11 +1748,12 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
   private boolean assertParentNodeStartIndex(BucketPath bucketPath, long[] parentNode, int calculatedIndex) {
     int startIndex = -1;
-    for (int i = 0; i < parentNode.length; i++)
-      if (parentNode[i] < 0 && (parentNode[i] & Long.MAX_VALUE) >>> 8 == bucketPath.nodeIndex) {
-        startIndex = i;
-        break;
-      }
+    for (int i = 0; i < parentNode.length; i++) {
+        if (parentNode[i] < 0 && (parentNode[i] & Long.MAX_VALUE) >>> 8 == bucketPath.nodeIndex) {
+            startIndex = i;
+            break;
+        }
+    }
 
     return startIndex == calculatedIndex;
   }
@@ -1801,14 +1809,17 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       final long bucketPointer = directory.getNodePointer(nodeIndex, nodeOffset);
 
       if (nodeOffset != bucketPath.itemIndex) {
-        for (int n = i << newNodeDepth; n < (i + 1) << newNodeDepth; n++)
-          directory.setNodePointer(newNodeIndex, n, bucketPointer);
+        for (int n = i << newNodeDepth; n < (i + 1) << newNodeDepth; n++) {
+            directory.setNodePointer(newNodeIndex, n, bucketPointer);
+        }
       } else {
-        for (int n = i << newNodeDepth; n < (2 * i + 1) << (newNodeDepth - 1); n++)
-          directory.setNodePointer(newNodeIndex, n, updatedBucketPointer);
+        for (int n = i << newNodeDepth; n < (2 * i + 1) << (newNodeDepth - 1); n++) {
+            directory.setNodePointer(newNodeIndex, n, updatedBucketPointer);
+        }
 
-        for (int n = (2 * i + 1) << (newNodeDepth - 1); n < (i + 1) << newNodeDepth; n++)
-          directory.setNodePointer(newNodeIndex, n, newBucketPointer);
+        for (int n = (2 * i + 1) << (newNodeDepth - 1); n < (i + 1) << newNodeDepth; n++) {
+            directory.setNodePointer(newNodeIndex, n, newBucketPointer);
+        }
       }
 
       directory.setNodePointer(nodeIndex, nodeOffset, (newNodeIndex << 8) | (i * mapSize) | Long.MIN_VALUE);
@@ -1865,11 +1876,13 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     final int secondStartIndex = firstEndIndex;
     final int secondEndIndex = secondStartIndex + interval;
 
-    for (int i = firstStartIndex; i < firstEndIndex; i++)
-      updateBucket(currentNode.nodeIndex, i, currentNode.hashMapOffset, updatedBucketPointer);
+    for (int i = firstStartIndex; i < firstEndIndex; i++) {
+        updateBucket(currentNode.nodeIndex, i, currentNode.hashMapOffset, updatedBucketPointer);
+    }
 
-    for (int i = secondStartIndex; i < secondEndIndex; i++)
-      updateBucket(currentNode.nodeIndex, i, currentNode.hashMapOffset, newBucketPointer);
+    for (int i = secondStartIndex; i < secondEndIndex; i++) {
+        updateBucket(currentNode.nodeIndex, i, currentNode.hashMapOffset, newBucketPointer);
+    }
   }
 
   private boolean checkAllMapsContainSameBucket(long[] newNode, int hashMapSize) {
@@ -2136,8 +2149,9 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
     }
 
     final long[] rootTree = new long[MAX_LEVEL_SIZE];
-    for (int i = 0; i < MAX_LEVEL_SIZE; i++)
-      rootTree[i] = createBucketPointer(i, 0);
+    for (int i = 0; i < MAX_LEVEL_SIZE; i++) {
+        rootTree[i] = createBucketPointer(i, 0);
+    }
 
     directory.clear();
     directory.addNewNode((byte) 0, (byte) 0, (byte) MAX_LEVEL_DEPTH, rootTree);

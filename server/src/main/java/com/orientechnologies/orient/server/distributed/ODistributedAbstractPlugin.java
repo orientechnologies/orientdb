@@ -143,12 +143,13 @@ public abstract class ODistributedAbstractPlugin extends OServerPluginAbstract i
     }
 
     // CLOSE AND FREE ALL THE STORAGES
-    for (ODistributedStorage s : storages.values())
-      try {
-        s.shutdownAsynchronousWorker();
-        s.close();
-      } catch (Exception e) {
-      }
+    for (ODistributedStorage s : storages.values()) {
+        try {
+            s.shutdownAsynchronousWorker();
+            s.close();
+        } catch (Exception e) {
+        }
+    }
     storages.clear();
 
     Orient.instance().removeDbLifecycleListener(this);

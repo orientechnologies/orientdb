@@ -104,10 +104,12 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     final ODatabaseDocumentTx[] dbs = new ODatabaseDocumentTx[pool.getMaxSize()];
 
     for (int i = 0; i < 10; ++i) {
-      for (int db = 0; db < dbs.length; ++db)
-        dbs[db] = pool.acquire();
-      for (int db = 0; db < dbs.length; ++db)
-        dbs[db].close();
+      for (int db = 0; db < dbs.length; ++db) {
+          dbs[db] = pool.acquire();
+      }
+      for (int db = 0; db < dbs.length; ++db) {
+          dbs[db].close();
+      }
     }
   }
 
@@ -123,9 +125,10 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     // DELETE ALL THE RECORDS IN THE CLUSTER
     while (database.countClusterElements("Account") > 0)
-      for (ODocument rec : database.browseCluster("Account"))
-        if (rec != null) {
-            rec.delete();
+      for (ODocument rec : database.browseCluster("Account")) {
+          if (rec != null) {
+              rec.delete();
+          }
     }
 
     Assert.assertEquals(database.countClusterElements("Account"), 0);
@@ -136,8 +139,9 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     startRecordNumber = database.countClusterElements("Account");
 
     byte[] binary = new byte[100];
-    for (int b = 0; b < binary.length; ++b)
-      binary[b] = (byte) b;
+    for (int b = 0; b < binary.length; ++b) {
+        binary[b] = (byte) b;
+    }
 
     base64 = OBase64Utils.encodeBytes(binary);
 
@@ -185,8 +189,9 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     Set<Integer> ids = new HashSet<Integer>();
 
-    for (int i = 0; i < TOT_RECORDS; i++)
-      ids.add(i);
+    for (int i = 0; i < TOT_RECORDS; i++) {
+        ids.add(i);
+    }
 
     ORecordIteratorCluster<ODocument> it = database.browseCluster("Account");
     for (it.last(); it.hasPrevious();) {
@@ -204,8 +209,9 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
         binary = rec.field("binary", OType.BINARY);
 
-        for (int b = 0; b < binary.length; ++b)
-          Assert.assertEquals(binary[b], (byte) b);
+        for (int b = 0; b < binary.length; ++b) {
+            Assert.assertEquals(binary[b], (byte) b);
+        }
       }
     }
 
@@ -770,8 +776,9 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     Assert.assertEquals(changedDoc2.field("name"), "MyBankChained");
 
     Collection<Integer> intEmbeddeds = changedDoc2.field("embeddeds.total");
-    for (Integer e : intEmbeddeds)
-      Assert.assertEquals(e.intValue(), 200);
+    for (Integer e : intEmbeddeds) {
+        Assert.assertEquals(e.intValue(), 200);
+    }
 
     ODocument changedDoc3 = bank.field("linked.total", 300);
     // MUST CHANGE THE LINKED DOCUMENT
@@ -787,8 +794,9 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     }
 
     ((ODocument) bank.field("linked")).delete();
-    for (ODocument l : (Collection<ODocument>) bank.field("linkeds"))
-      l.delete();
+    for (ODocument l : (Collection<ODocument>) bank.field("linkeds")) {
+        l.delete();
+    }
     bank.delete();
   }
 
@@ -870,16 +878,18 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     doc.reload();
 
     final List<ODocument> docsToRemove = new ArrayList<ODocument>(allDocs.size() / 2);
-    for (int i = 0; i < 5; i++)
-      docsToRemove.add(allDocs.get(i));
+    for (int i = 0; i < 5; i++) {
+        docsToRemove.add(allDocs.get(i));
+    }
 
     List<OIdentifiable> linkList = doc.field("linkList");
     linkList.removeAll(docsToRemove);
 
     Assert.assertEquals(linkList.size(), 5);
 
-    for (int i = 5; i < 10; i++)
-      Assert.assertEquals(linkList.get(i - 5), allDocs.get(i));
+    for (int i = 5; i < 10; i++) {
+        Assert.assertEquals(linkList.get(i - 5), allDocs.get(i));
+    }
 
     doc.save();
 
@@ -888,8 +898,9 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     linkList = doc.field("linkList");
     Assert.assertEquals(linkList.size(), 5);
 
-    for (int i = 5; i < 10; i++)
-      Assert.assertEquals(linkList.get(i - 5), allDocs.get(i));
+    for (int i = 5; i < 10; i++) {
+        Assert.assertEquals(linkList.get(i - 5), allDocs.get(i));
+    }
   }
 
   public void testRemoveAndReload() {

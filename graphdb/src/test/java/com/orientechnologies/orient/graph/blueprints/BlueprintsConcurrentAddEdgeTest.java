@@ -99,13 +99,15 @@ public class BlueprintsConcurrentAddEdgeTest {
     ExecutorService executorService = Executors.newCachedThreadPool();
 
     List<Future<Void>> futures = new ArrayList<Future<Void>>();
-    for (int i = 0; i < THREADS; i++)
-      futures.add(executorService.submit(new ConcurrentGraphCreator()));
+    for (int i = 0; i < THREADS; i++) {
+        futures.add(executorService.submit(new ConcurrentGraphCreator()));
+    }
 
     latch.countDown();
 
-    for (Future<Void> future : futures)
-      future.get();
+    for (Future<Void> future : futures) {
+        future.get();
+    }
 
     System.out.println("Graph was created used threads : " + THREADS + " duplication exceptions : " + indexCollisions.get()
         + " version exceptions : " + versionCollisions.get() + " vertexes : " + VERTEXES_COUNT + " edges : " + EDGES_COUNT);

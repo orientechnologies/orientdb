@@ -282,9 +282,10 @@ public class OConsoleApplication {
   }
 
   protected boolean isComment(final String commandLine) {
-    for (String comment : COMMENT_PREFIXS)
-      if (commandLine.startsWith(comment)) {
-          return true;
+    for (String comment : COMMENT_PREFIXS) {
+        if (commandLine.startsWith(comment)) {
+            return true;
+        }
     }
     return false;
   }
@@ -308,16 +309,18 @@ public class OConsoleApplication {
 
     String[] commandWords = OStringParser.getWords(iCommand, wordSeparator);
 
-    for (String cmd : helpCommands)
-      if (cmd.equals(commandWords[0])) {
-        help();
-        return RESULT.OK;
-      }
+    for (String cmd : helpCommands) {
+        if (cmd.equals(commandWords[0])) {
+            help();
+            return RESULT.OK;
+        }
+    }
 
-    for (String cmd : exitCommands)
-      if (cmd.equals(commandWords[0])) {
-        return RESULT.EXIT;
-      }
+    for (String cmd : exitCommands) {
+        if (cmd.equals(commandWords[0])) {
+            return RESULT.EXIT;
+        }
+    }
 
     Method lastMethodInvoked = null;
     final StringBuilder lastCommandInvoked = new StringBuilder(1024);

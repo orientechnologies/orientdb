@@ -146,9 +146,10 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
 
   @Override
   public boolean containsAll(Collection<?> c) {
-    for (Object e : c)
-      if (!contains(e)) {
-          return false;
+    for (Object e : c) {
+        if (!contains(e)) {
+            return false;
+        }
     }
     return true;
   }
@@ -156,9 +157,10 @@ public class OIndexRIDContainerSBTree implements Set<OIdentifiable> {
   @Override
   public boolean addAll(Collection<? extends OIdentifiable> c) {
     boolean modified = false;
-    for (OIdentifiable e : c)
-      if (add(e)) {
-          modified = true;
+    for (OIdentifiable e : c) {
+        if (add(e)) {
+            modified = true;
+        }
     }
     return modified;
   }

@@ -591,8 +591,9 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 1);
 
     List<OIdentifiable> listResult = new ArrayList<OIdentifiable>();
-    for (OIdentifiable identifiable : result.get(0).<Set<OIdentifiable>> field("linkSet"))
-      listResult.add(identifiable);
+    for (OIdentifiable identifiable : result.get(0).<Set<OIdentifiable>> field("linkSet")) {
+        listResult.add(identifiable);
+    }
     Assert.assertEquals(listResult.size(), 2);
     Assert.assertTrue(listResult.containsAll(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
   }

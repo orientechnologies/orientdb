@@ -576,8 +576,9 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
 
             final Set<String> customKeys = p.getCustomKeys();
             final Map<String, String> custom = new HashMap<String, String>();
-            for (String key : customKeys)
-              custom.put(key, p.getCustom(key));
+            for (String key : customKeys) {
+                custom.put(key, p.getCustom(key));
+            }
 
             if (!custom.isEmpty()) {
                 writer.writeAttribute(0, false, "customFields", custom);

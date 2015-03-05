@@ -237,8 +237,9 @@ public class OSQLPredicate extends OBaseParser implements OCommandPredicate {
 
     final OQueryOperator[] operators = OSQLEngine.getInstance().getRecordOperators();
     final String[] candidateOperators = new String[operators.length];
-    for (int i = 0; i < candidateOperators.length; ++i)
-      candidateOperators[i] = operators[i].keyword;
+    for (int i = 0; i < candidateOperators.length; ++i) {
+        candidateOperators[i] = operators[i].keyword;
+    }
 
     final int operatorPos = parserNextChars(true, false, candidateOperators);
 

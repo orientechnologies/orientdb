@@ -195,8 +195,9 @@ public class OObjectCustomSerializerMap<TYPE> extends HashMap<Object, Object> im
         return;
     }
 
-    for (java.util.Map.Entry<Object, Object> e : underlying.entrySet())
-      super.put(e.getKey(), OObjectEntitySerializer.deserializeFieldValue(deserializeClass, e.getValue()));
+    for (java.util.Map.Entry<Object, Object> e : underlying.entrySet()) {
+        super.put(e.getKey(), OObjectEntitySerializer.deserializeFieldValue(deserializeClass, e.getValue()));
+    }
 
     converted = true;
   }

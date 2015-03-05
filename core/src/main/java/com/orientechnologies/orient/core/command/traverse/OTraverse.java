@@ -169,14 +169,16 @@ public class OTraverse implements OCommand, Iterable<OIdentifiable>, Iterator<OI
   }
 
   public OTraverse fields(final Collection<Object> iFields) {
-    for (Object f : iFields)
-      field(f);
+    for (Object f : iFields) {
+        field(f);
+    }
     return this;
   }
 
   public OTraverse fields(final String... iFields) {
-    for (String f : iFields)
-      field(f);
+    for (String f : iFields) {
+        field(f);
+    }
     return this;
   }
 

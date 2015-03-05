@@ -174,8 +174,9 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
         json.beginCollection("classes");
         List<String> classNames = new ArrayList<String>();
 
-        for (OClass cls : db.getMetadata().getSchema().getClasses())
-          classNames.add(cls.getName());
+        for (OClass cls : db.getMetadata().getSchema().getClasses()) {
+            classNames.add(cls.getName());
+        }
         Collections.sort(classNames);
 
         for (String className : classNames) {

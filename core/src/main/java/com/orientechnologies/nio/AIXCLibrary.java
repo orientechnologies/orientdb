@@ -65,11 +65,13 @@ public class AIXCLibrary implements CLibrary {
         bcopy.invokeVoid(new Object[] { srcPointer, destPointer, new NativeLong(len) });
     } else {
       if (src > dest) {
-          for (long n = 0; n < len; n++)
+          for (long n = 0; n < len; n++) {
               destPointer.setByte(n, srcPointer.getByte(n));
+          }
         } else {
-          for (long n = len - 1; n >= 0; n--)
+          for (long n = len - 1; n >= 0; n--) {
               destPointer.setByte(n, srcPointer.getByte(n));
+          }
         }
     }
   }

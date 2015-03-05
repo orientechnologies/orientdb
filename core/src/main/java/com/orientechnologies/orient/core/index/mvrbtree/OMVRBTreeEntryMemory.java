@@ -226,12 +226,14 @@ public class OMVRBTreeEntryMemory<K, V> extends OMVRBTreeEntry<K, V> {
 	protected void copyFrom(final OMVRBTreeEntry<K, V> iSource) {
 		OMVRBTreeEntryMemory<K, V> source = (OMVRBTreeEntryMemory<K, V>) iSource;
 		keys = (K[]) new Object[source.keys.length];
-		for (int i = 0; i < source.keys.length; ++i)
-			keys[i] = source.keys[i];
+		for (int i = 0; i < source.keys.length; ++i) {
+                    keys[i] = source.keys[i];
+                }
 
 		values = (V[]) new Object[source.values.length];
-		for (int i = 0; i < source.values.length; ++i)
-			values[i] = source.values[i];
+		for (int i = 0; i < source.values.length; ++i) {
+                    values[i] = source.values[i];
+                }
 
 		size = source.size;
 	}

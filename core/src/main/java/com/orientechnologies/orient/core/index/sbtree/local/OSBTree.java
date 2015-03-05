@@ -1187,8 +1187,9 @@ public class OSBTree<K, V> extends ODurableComponent {
             }
           } else {
             final ArrayList<Long> resultPath = new ArrayList<Long>(path.size() + 1);
-            for (PagePathItemUnit pathItemUnit : path)
-              resultPath.add(pathItemUnit.pageIndex);
+            for (PagePathItemUnit pathItemUnit : path) {
+                resultPath.add(pathItemUnit.pageIndex);
+            }
 
             resultPath.add(bucketIndex);
             return new BucketSearchResult(0, resultPath);
@@ -1252,8 +1253,9 @@ public class OSBTree<K, V> extends ODurableComponent {
             }
           } else {
             final ArrayList<Long> resultPath = new ArrayList<Long>(path.size() + 1);
-            for (PagePathItemUnit pathItemUnit : path)
-              resultPath.add(pathItemUnit.pageIndex);
+            for (PagePathItemUnit pathItemUnit : path) {
+                resultPath.add(pathItemUnit.pageIndex);
+            }
 
             resultPath.add(bucketIndex);
 
@@ -1384,8 +1386,9 @@ public class OSBTree<K, V> extends ODurableComponent {
 
       final int startRightIndex = splitLeaf ? indexToSplit : indexToSplit + 1;
 
-      for (int i = startRightIndex; i < bucketSize; i++)
-        rightEntries.add(bucketToSplit.getEntry(i));
+      for (int i = startRightIndex; i < bucketSize; i++) {
+          rightEntries.add(bucketToSplit.getEntry(i));
+      }
 
       if (pageIndex != ROOT_INDEX) {
         return splitNonRootBucket(path, keyIndex, keyToInsert, pageIndex, bucketToSplit, splitLeaf, indexToSplit, separationKey,
@@ -1504,8 +1507,9 @@ public class OSBTree<K, V> extends ODurableComponent {
 
     final List<OSBTreeBucket.SBTreeEntry<K, V>> leftEntries = new ArrayList<OSBTreeBucket.SBTreeEntry<K, V>>(indexToSplit);
 
-    for (int i = 0; i < indexToSplit; i++)
-      leftEntries.add(bucketToSplit.getEntry(i));
+    for (int i = 0; i < indexToSplit; i++) {
+        leftEntries.add(bucketToSplit.getEntry(i));
+    }
 
     OCacheEntry leftBucketEntry = diskCache.allocateNewPage(fileId);
 
@@ -1631,8 +1635,9 @@ public class OSBTree<K, V> extends ODurableComponent {
           keyItem = ALWAYS_LESS_KEY;
       }
 
-      for (int i = 0; i < itemsToAdd; i++)
-        fullKey.addKey(keyItem);
+      for (int i = 0; i < itemsToAdd; i++) {
+          fullKey.addKey(keyItem);
+      }
 
       return (K) fullKey;
     }

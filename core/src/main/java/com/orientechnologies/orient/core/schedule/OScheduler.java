@@ -187,8 +187,9 @@ public OFunction getFunctionSafe()
         if (iArgs != null) {
           args = new Object[iArgs.size()];
           int i = 0;
-          for (Entry<Object, Object> arg : iArgs.entrySet())
-            args[i++] = arg.getValue();
+          for (Entry<Object, Object> arg : iArgs.entrySet()) {
+              args[i++] = arg.getValue();
+          }
         } else {
         	args = new Object[0];
         }

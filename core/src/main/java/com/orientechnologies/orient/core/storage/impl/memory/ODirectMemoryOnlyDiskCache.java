@@ -234,8 +234,9 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
   public void delete() throws IOException {
     metadataLock.lock();
     try {
-      for (MemoryFile file : files.values())
-        file.clear();
+      for (MemoryFile file : files.values()) {
+          file.clear();
+      }
 
       files.clear();
       fileIdNameMap.clear();
@@ -431,8 +432,9 @@ public class ODirectMemoryOnlyDiskCache implements ODiskCache {
   @Override
   public long getUsedMemory() {
     long totalPages = 0;
-    for (MemoryFile file : files.values())
-      totalPages += file.getUsedMemory();
+    for (MemoryFile file : files.values()) {
+        totalPages += file.getUsedMemory();
+    }
 
     return totalPages * (pageSize + 2 * OWOWCache.PAGE_PADDING);
   }

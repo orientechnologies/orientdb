@@ -78,8 +78,9 @@ public class OStringForwardReader implements CharSequence {
 	private void read(final int iIndex) {
 		try {
 			// JUMP CHARACTERS
-			for (long i = end; i < iIndex - 1; ++i)
-				input.read();
+			for (long i = end; i < iIndex - 1; ++i) {
+                            input.read();
+                        }
 
 			start = iIndex;
 			final int byteRead = input.read(buffer);

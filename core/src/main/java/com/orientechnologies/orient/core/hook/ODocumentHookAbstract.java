@@ -328,18 +328,20 @@ public abstract class ODocumentHookAbstract implements ORecordHook {
 
     if (includeClasses != null) {
       // FILTER BY CLASSES
-      for (String cls : includeClasses)
-        if (clazz.isSubClassOf(cls)) {
-            return true;
+      for (String cls : includeClasses) {
+          if (clazz.isSubClassOf(cls)) {
+              return true;
+          }
       }
       return false;
     }
 
     if (excludeClasses != null) {
       // FILTER BY CLASSES
-      for (String cls : excludeClasses)
-        if (clazz.isSubClassOf(cls)) {
-            return false;
+      for (String cls : excludeClasses) {
+          if (clazz.isSubClassOf(cls)) {
+              return false;
+          }
       }
     }
 

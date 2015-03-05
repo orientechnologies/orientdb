@@ -208,8 +208,9 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
 
     Assert.assertTrue(result.size() > 1);
 
-    for (ODocument city : result)
-      Assert.assertTrue(city.containsField("distinct"));
+    for (ODocument city : result) {
+        Assert.assertTrue(city.containsField("distinct"));
+    }
   }
 
   @SuppressWarnings("unchecked")

@@ -341,16 +341,18 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   public void callOnOpenListeners() {
     // WAKE UP DB LIFECYCLE LISTENER
-    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
-      it.next().onOpen(getDatabaseOwner());
+    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();) {
+        it.next().onOpen(getDatabaseOwner());
+    }
 
     // WAKE UP LISTENERS
-    for (ODatabaseListener listener : getListenersCopy())
-      try {
-        listener.onOpen(getDatabaseOwner());
-      } catch (Throwable t) {
-        t.printStackTrace();
-      }
+    for (ODatabaseListener listener : getListenersCopy()) {
+        try {
+            listener.onOpen(getDatabaseOwner());
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+    }
   }
 
   /**
@@ -441,15 +443,17 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       }
       getStorage().synch();
       // WAKE UP DB LIFECYCLE LISTENER
-      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
-        it.next().onCreate(getDatabaseOwner());
+      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();) {
+          it.next().onCreate(getDatabaseOwner());
+      }
 
       // WAKE UP LISTENERS
-      for (ODatabaseListener listener : browseListeners())
-        try {
-          listener.onCreate(this);
-        } catch (Throwable ignore) {
-        }
+      for (ODatabaseListener listener : browseListeners()) {
+          try {
+              listener.onCreate(this);
+          } catch (Throwable ignore) {
+          }
+      }
 
     } catch (Exception e) {
       throw new ODatabaseException("Cannot create database '" + getName() + "'", e);
@@ -487,11 +491,12 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       storage = null;
 
       // WAKE UP LISTENERS
-      for (ODatabaseListener listener : tmpListeners)
-        try {
-          listener.onDelete(this);
-        } catch (Throwable t) {
-        }
+      for (ODatabaseListener listener : tmpListeners) {
+          try {
+              listener.onDelete(this);
+          } catch (Throwable t) {
+          }
+      }
 
       status = STATUS.CLOSED;
       ODatabaseRecordThreadLocal.INSTANCE.remove();
@@ -506,16 +511,18 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   public void callOnCloseListeners() {
     // WAKE UP DB LIFECYCLE LISTENER
-    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
-      it.next().onClose(getDatabaseOwner());
+    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();) {
+        it.next().onClose(getDatabaseOwner());
+    }
 
     // WAKE UP LISTENERS
-    for (ODatabaseListener listener : getListenersCopy())
-      try {
-        listener.onClose(getDatabaseOwner());
-      } catch (Throwable t) {
-        t.printStackTrace();
-      }
+    for (ODatabaseListener listener : getListenersCopy()) {
+        try {
+            listener.onClose(getDatabaseOwner());
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+    }
   }
 
   /**
@@ -1553,12 +1560,13 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     currentTx.rollback(true, 0);
 
     // WAKE UP LISTENERS
-    for (ODatabaseListener listener : browseListeners())
-      try {
-        listener.onBeforeTxBegin(this);
-      } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error before the transaction begin", t, OTransactionBlockedException.class);
-      }
+    for (ODatabaseListener listener : browseListeners()) {
+        try {
+            listener.onBeforeTxBegin(this);
+        } catch (Throwable t) {
+            OLogManager.instance().error(this, "Error before the transaction begin", t, OTransactionBlockedException.class);
+        }
+    }
 
     currentTx = iTx;
     currentTx.begin();
@@ -2003,12 +2011,13 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
     }
 
     // WAKE UP LISTENERS
-    for (ODatabaseListener listener : browseListeners())
-      try {
-        listener.onBeforeTxBegin(this);
-      } catch (Throwable t) {
-        OLogManager.instance().error(this, "Error before tx begin", t);
-      }
+    for (ODatabaseListener listener : browseListeners()) {
+        try {
+            listener.onBeforeTxBegin(this);
+        } catch (Throwable t) {
+            OLogManager.instance().error(this, "Error before tx begin", t);
+        }
+    }
 
     switch (iType) {
     case NOTX:
@@ -2356,9 +2365,10 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
         // CHECK IF THE CLUSTER IS PART OF THE CONFIGURED CLUSTERS
         clusterIds = schemaClass.getClusterIds();
         int i = 0;
-        for (; i < clusterIds.length; ++i)
-          if (clusterIds[i] == clusterId) {
-              break;
+        for (; i < clusterIds.length; ++i) {
+            if (clusterIds[i] == clusterId) {
+                break;
+            }
         }
 
         if (i == clusterIds.length) {
@@ -2467,55 +2477,59 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
     setCurrentDatabaseInThreadLocal();
     // WAKE UP LISTENERS
-    for (ODatabaseListener listener : browseListeners())
-      try {
-        listener.onBeforeTxCommit(this);
-      } catch (Throwable t) {
+    for (ODatabaseListener listener : browseListeners()) {
         try {
-          rollback(force);
-        } catch (RuntimeException e) {
-          throw e;
+            listener.onBeforeTxCommit(this);
+        } catch (Throwable t) {
+            try {
+                rollback(force);
+            } catch (RuntimeException e) {
+                throw e;
+            }
+            OLogManager.instance().debug(this, "Cannot commit the transaction: caught exception on execution of %s.onBeforeTxCommit()",
+                    t, OTransactionBlockedException.class, listener.getClass());
         }
-        OLogManager.instance().debug(this, "Cannot commit the transaction: caught exception on execution of %s.onBeforeTxCommit()",
-            t, OTransactionBlockedException.class, listener.getClass());
-      }
+    }
 
     try {
       currentTx.commit(force);
     } catch (RuntimeException e) {
       // WAKE UP ROLLBACK LISTENERS
-      for (ODatabaseListener listener : browseListeners())
-        try {
-          listener.onBeforeTxRollback(this);
-        } catch (Throwable t) {
-          OLogManager.instance().error(this, "Error before tx rollback", t);
-        }
+      for (ODatabaseListener listener : browseListeners()) {
+          try {
+              listener.onBeforeTxRollback(this);
+          } catch (Throwable t) {
+              OLogManager.instance().error(this, "Error before tx rollback", t);
+          }
+      }
       // ROLLBACK TX AT DB LEVEL
       currentTx.rollback(false, 0);
       getLocalCache().clear();
 
       // WAKE UP ROLLBACK LISTENERS
-      for (ODatabaseListener listener : browseListeners())
-        try {
-          listener.onAfterTxRollback(this);
-        } catch (Throwable t) {
-          OLogManager.instance().error(this, "Error after tx rollback", t);
-        }
+      for (ODatabaseListener listener : browseListeners()) {
+          try {
+              listener.onAfterTxRollback(this);
+          } catch (Throwable t) {
+              OLogManager.instance().error(this, "Error after tx rollback", t);
+          }
+      }
       throw e;
     }
 
     // WAKE UP LISTENERS
-    for (ODatabaseListener listener : browseListeners())
-      try {
-        listener.onAfterTxCommit(this);
-      } catch (Throwable t) {
-        OLogManager
-            .instance()
-            .debug(
-                this,
-                "Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of %s.onAfterTxCommit()",
-                t, OTransactionBlockedException.class, listener.getClass());
-      }
+    for (ODatabaseListener listener : browseListeners()) {
+        try {
+            listener.onAfterTxCommit(this);
+        } catch (Throwable t) {
+            OLogManager
+                    .instance()
+                    .debug(
+                            this,
+                            "Error after the transaction has been committed. The transaction remains valid. The exception caught was on execution of %s.onAfterTxCommit()",
+                            t, OTransactionBlockedException.class, listener.getClass());
+        }
+    }
 
     return this;
   }
@@ -2539,22 +2553,24 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
       }
 
       // WAKE UP LISTENERS
-      for (ODatabaseListener listener : browseListeners())
-        try {
-          listener.onBeforeTxRollback(this);
-        } catch (Throwable t) {
-          OLogManager.instance().error(this, "Error before tx rollback", t);
-        }
+      for (ODatabaseListener listener : browseListeners()) {
+          try {
+              listener.onBeforeTxRollback(this);
+          } catch (Throwable t) {
+              OLogManager.instance().error(this, "Error before tx rollback", t);
+          }
+      }
 
       currentTx.rollback(force, -1);
 
       // WAKE UP LISTENERS
-      for (ODatabaseListener listener : browseListeners())
-        try {
-          listener.onAfterTxRollback(this);
-        } catch (Throwable t) {
-          OLogManager.instance().error(this, "Error after tx rollback", t);
-        }
+      for (ODatabaseListener listener : browseListeners()) {
+          try {
+              listener.onAfterTxRollback(this);
+          } catch (Throwable t) {
+              OLogManager.instance().error(this, "Error after tx rollback", t);
+          }
+      }
     }
 
     getLocalCache().clear();
@@ -2641,8 +2657,9 @@ public class ODatabaseDocumentTx extends OListenerManger<ODatabaseListener> impl
 
   @Override
   public void resetInitialization() {
-    for (ORecordHook h : hooks.keySet())
-      h.onUnregister();
+    for (ORecordHook h : hooks.keySet()) {
+        h.onUnregister();
+    }
 
     hooks.clear();
 

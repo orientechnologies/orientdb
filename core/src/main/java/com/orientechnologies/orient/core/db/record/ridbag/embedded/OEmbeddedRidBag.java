@@ -164,8 +164,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
 
   @Override
   public void addAll(Collection<OIdentifiable> values) {
-    for (OIdentifiable value : values)
-      add(value);
+    for (OIdentifiable value : values) {
+        add(value);
+    }
   }
 
   @Override
@@ -328,8 +329,9 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   @Override
   public Object returnOriginalState(List<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> multiValueChangeEvents) {
     final OEmbeddedRidBag reverted = new OEmbeddedRidBag();
-    for (OIdentifiable identifiable : this)
-      reverted.add(identifiable);
+    for (OIdentifiable identifiable : this) {
+        reverted.add(identifiable);
+    }
 
     final ListIterator<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> listIterator = multiValueChangeEvents
         .listIterator(multiValueChangeEvents.size());

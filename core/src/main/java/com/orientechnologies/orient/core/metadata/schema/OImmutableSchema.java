@@ -50,13 +50,15 @@ public class OImmutableSchema implements OSchema {
           classes.put(immutableClass.getShortName().toLowerCase(), immutableClass);
       }
 
-      for (int clusterId : immutableClass.getClusterIds())
-        clustersToClasses.put(clusterId, immutableClass);
+      for (int clusterId : immutableClass.getClusterIds()) {
+          clustersToClasses.put(clusterId, immutableClass);
+      }
     }
 
     properties = new ArrayList<OGlobalProperty>();
-    for (OGlobalProperty globalProperty : schemaShared.getGlobalProperties())
-      properties.add(globalProperty);
+    for (OGlobalProperty globalProperty : schemaShared.getGlobalProperties()) {
+        properties.add(globalProperty);
+    }
   }
 
   @Override

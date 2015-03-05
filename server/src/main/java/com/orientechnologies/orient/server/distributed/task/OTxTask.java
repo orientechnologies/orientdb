@@ -199,15 +199,17 @@ public class OTxTask extends OAbstractReplicatedTask {
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
     out.writeInt(tasks.size());
-    for (OAbstractRecordReplicatedTask task : tasks)
-      out.writeObject(task);
+    for (OAbstractRecordReplicatedTask task : tasks) {
+        out.writeObject(task);
+    }
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
     final int size = in.readInt();
-    for (int i = 0; i < size; ++i)
-      tasks.add((OAbstractRecordReplicatedTask) in.readObject());
+    for (int i = 0; i < size; ++i) {
+        tasks.add((OAbstractRecordReplicatedTask) in.readObject());
+    }
   }
 
   @Override

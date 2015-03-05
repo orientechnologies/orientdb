@@ -32,20 +32,22 @@ public class StringBrowsingSpeedTest {
 			timer = System.currentTimeMillis();
 
 			final char[] chars = S.toCharArray();
-			for (int i = 0; i < MAX; ++i)
-				for (int k = 0; k < len; ++k) {
-					final char c = chars[k];
-				}
+			for (int i = 0; i < MAX; ++i) {
+                            for (int k = 0; k < len; ++k) {
+                                final char c = chars[k];
+                            }
+                        }
 			System.out.println("String chars[]: " + (System.currentTimeMillis() - timer - fixed));
 		}
 
 		{
 			timer = System.currentTimeMillis();
 
-			for (int i = 0; i < MAX; ++i)
-				for (int k = 0; k < len; ++k) {
-					final char c = S.charAt(k);
-				}
+			for (int i = 0; i < MAX; ++i) {
+                            for (int k = 0; k < len; ++k) {
+                                final char c = S.charAt(k);
+                            }
+                        }
 
 			System.out.println("String charAt(): " + (System.currentTimeMillis() - timer - fixed));
 		}

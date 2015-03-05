@@ -200,8 +200,9 @@ public class LockMultithreadingTest {
     // }
 
     countDownLatch.countDown();
-    for (Future future : threads)
-      future.get();
+    for (Future future : threads) {
+        future.get();
+    }
 
     System.out.println("finish");
   }

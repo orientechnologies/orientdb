@@ -152,13 +152,15 @@ public class OMultiValue {
           return ((List<Object>) iObject).get(((List<Object>) iObject).size() - 1);
       } else if (iObject instanceof Iterable<?>) {
         Object last = null;
-        for (Object o : (Iterable<Object>) iObject)
-          last = o;
+        for (Object o : (Iterable<Object>) iObject) {
+            last = o;
+        }
         return last;
       } else if (iObject instanceof Map<?, ?>) {
         Object last = null;
-        for (Object o : ((Map<?, Object>) iObject).values())
-          last = o;
+        for (Object o : ((Map<?, Object>) iObject).values()) {
+            last = o;
+        }
         return last;
       } else if (iObject.getClass().isArray()) {
           return Array.get(iObject, Array.getLength(iObject) - 1);
@@ -259,8 +261,9 @@ public class OMultiValue {
         return new OIterableObjectArray<Object>(iObject);
     } else if (iObject instanceof Iterator<?>) {
       final List<Object> temp = new ArrayList<Object>();
-      for (Iterator<Object> it = (Iterator<Object>) iObject; it.hasNext();)
-        temp.add(it.next());
+      for (Iterator<Object> it = (Iterator<Object>) iObject; it.hasNext();) {
+          temp.add(it.next());
+      }
       return temp;
     }
 
@@ -418,12 +421,14 @@ public class OMultiValue {
 
         } else if (iToAdd instanceof Map<?, ?>) {
           // MAP
-          for (Entry<Object, Object> entry : ((Map<Object, Object>) iToAdd).entrySet())
-            coll.add(entry.getValue());
+          for (Entry<Object, Object> entry : ((Map<Object, Object>) iToAdd).entrySet()) {
+              coll.add(entry.getValue());
+          }
         } else if (iToAdd instanceof Iterator<?>) {
           // ITERATOR
-          for (Iterator<?> it = (Iterator<?>) iToAdd; it.hasNext();)
-            coll.add(it.next());
+          for (Iterator<?> it = (Iterator<?>) iToAdd; it.hasNext();) {
+              coll.add(it.next());
+          }
         } else {
             coll.add(iToAdd);
         }
@@ -437,8 +442,9 @@ public class OMultiValue {
           final int tot = Array.getLength(iObject) + ((Collection<Object>) iToAdd).size();
           copy = Arrays.copyOf((Object[]) iObject, tot);
           final Iterator<Object> it = ((Collection<Object>) iToAdd).iterator();
-          for (int i = Array.getLength(iObject); i < tot; ++i)
-            copy[i] = it.next();
+          for (int i = Array.getLength(iObject); i < tot; ++i) {
+              copy[i] = it.next();
+          }
 
         } else if (iToAdd != null && iToAdd.getClass().isArray()) {
           // ARRAY - ARRAY
@@ -472,16 +478,18 @@ public class OMultiValue {
     if (iObject != null) {
       if (iObject instanceof OMultiCollectionIterator<?>) {
         final Collection<Object> list = new LinkedList<Object>();
-        for (Object o : ((OMultiCollectionIterator<?>) iObject))
-          list.add(o);
+        for (Object o : ((OMultiCollectionIterator<?>) iObject)) {
+            list.add(o);
+        }
         iObject = list;
       }
 
       if (iToRemove instanceof OMultiCollectionIterator<?>) {
         // TRANSFORM IN SET ONCE TO OPTIMIZE LOOPS DURING REMOVE
         final Set<Object> set = new HashSet<Object>();
-        for (Object o : ((OMultiCollectionIterator<?>) iToRemove))
-          set.add(o);
+        for (Object o : ((OMultiCollectionIterator<?>) iToRemove)) {
+            set.add(o);
+        }
         iToRemove = set;
       }
 
@@ -540,8 +548,9 @@ public class OMultiValue {
 
         } else if (iToRemove instanceof Map<?, ?>) {
           // MAP
-          for (Entry<Object, Object> entry : ((Map<Object, Object>) iToRemove).entrySet())
-            coll.remove(entry.getKey());
+          for (Entry<Object, Object> entry : ((Map<Object, Object>) iToRemove).entrySet()) {
+              coll.remove(entry.getKey());
+          }
         } else if (iToRemove instanceof Iterator<?>) {
           // ITERATOR
           if (iToRemove instanceof OMultiCollectionIterator<?>) {
@@ -667,13 +676,15 @@ public class OMultiValue {
       // CREATE STATIC ARRAY AND FILL IT
       result = (T[]) Array.newInstance(iClass, getSize(iValue));
       int i = 0;
-      for (Iterator<T> it = (Iterator<T>) getMultiValueIterator(iValue); it.hasNext(); ++i)
-        result[i] = (T) convert(it.next(), iCallback);
+      for (Iterator<T> it = (Iterator<T>) getMultiValueIterator(iValue); it.hasNext(); ++i) {
+          result[i] = (T) convert(it.next(), iCallback);
+      }
     } else if (isIterable(iValue)) {
       // SIZE UNKNOWN: USE A LIST AS TEMPORARY OBJECT
       final List<T> temp = new ArrayList<T>();
-      for (Iterator<T> it = (Iterator<T>) getMultiValueIterator(iValue); it.hasNext();)
-        temp.add((T) convert(it.next(), iCallback));
+      for (Iterator<T> it = (Iterator<T>) getMultiValueIterator(iValue); it.hasNext();) {
+          temp.add((T) convert(it.next(), iCallback));
+      }
 
       if (iClass.equals(Object.class)) {
           result = (T[]) temp.toArray();

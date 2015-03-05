@@ -237,8 +237,9 @@ public class OPropertyImpl extends ODocumentWrapperNoClass implements OProperty 
         }
       }
 
-      for (final OIndex<?> index : relatedIndexes)
-        getDatabase().getMetadata().getIndexManager().dropIndex(index.getName());
+      for (final OIndex<?> index : relatedIndexes) {
+          getDatabase().getMetadata().getIndexManager().dropIndex(index.getName());
+      }
 
       return this;
     } finally {

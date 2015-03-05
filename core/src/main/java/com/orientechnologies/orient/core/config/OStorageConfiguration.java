@@ -277,8 +277,9 @@ public class OStorageConfiguration implements OSerializableStream {
       }
 
       // MAKE ROOMS, EVENTUALLY FILLING EMPTIES ENTRIES
-      for (int c = clusters.size(); c <= clusterId; ++c)
-        clusters.add(null);
+      for (int c = clusters.size(); c <= clusterId; ++c) {
+          clusters.add(null);
+      }
 
       clusters.set(clusterId, currentCluster);
     }
@@ -435,8 +436,9 @@ public class OStorageConfiguration implements OSerializableStream {
       write(buffer, false);
     }
     write(buffer, properties.size());
-    for (OStorageEntryConfiguration e : properties)
-      entryToStream(buffer, e);
+    for (OStorageEntryConfiguration e : properties) {
+        entryToStream(buffer, e);
+    }
 
     write(buffer, binaryFormatVersion);
     write(buffer, clusterSelection);
@@ -615,8 +617,9 @@ public class OStorageConfiguration implements OSerializableStream {
     write(iBuffer, iSegment.defrag);
 
     write(iBuffer, iSegment.infoFiles.length);
-    for (OStorageFileConfiguration f : iSegment.infoFiles)
-      fileToStream(iBuffer, f);
+    for (OStorageFileConfiguration f : iSegment.infoFiles) {
+        fileToStream(iBuffer, f);
+    }
   }
 
   private void fileToStream(final StringBuilder iBuffer, final OStorageFileConfiguration iFile) {

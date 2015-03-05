@@ -1185,9 +1185,10 @@ public class OObjectSerializerHelper {
   private static Field getField(final Object iPojo, final String iField) {
     final List<Field> fields = OObjectSerializerHelper.getClassFields(iPojo.getClass());
     if (fields != null) {
-      for (Field f : fields)
-        if (f.getName().equals(iField)) {
-            return f;
+      for (Field f : fields) {
+          if (f.getName().equals(iField)) {
+              return f;
+          }
       }
     }
     return null;

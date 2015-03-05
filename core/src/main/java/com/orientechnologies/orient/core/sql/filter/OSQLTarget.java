@@ -197,8 +197,9 @@ public class OSQLTarget extends OBaseParser {
       parserSetCurrentPosition(OStringSerializerHelper.getCollection(parserText, parserGetCurrentPosition(), rids));
 
       targetRecords = new ArrayList<OIdentifiable>();
-      for (String rid : rids)
-        ((List<OIdentifiable>) targetRecords).add(new ORecordId(rid));
+      for (String rid : rids) {
+          ((List<OIdentifiable>) targetRecords).add(new ORecordId(rid));
+      }
 
       parserMoveCurrentPosition(1);
     } else {

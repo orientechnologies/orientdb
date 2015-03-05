@@ -67,8 +67,9 @@ public class RemoteProtocolCommandsTest extends DocumentDBBaseTest {
 
     // assertTrue(" the cluster is not valid", bad.clusterId >= 0);
     String ids = "";
-    for (int aId : clazz.getClusterIds())
-      ids += aId;
+    for (int aId : clazz.getClusterIds()) {
+        ids += aId;
+    }
 
     assertTrue(" returned id:" + bad.clusterId + " shoud be one of:" + ids,
         Arrays.binarySearch(clazz.getClusterIds(), bad.clusterId) >= 0);

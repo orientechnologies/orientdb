@@ -123,8 +123,9 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
 
     // CREATE A SET TO SPEED UP SEARCHES ON VERTICES
     final Set<OrientVertex> vertexes = new HashSet<OrientVertex>();
-    for (OrientVertex id : iVertices)
-      vertexes.add(id);
+    for (OrientVertex id : iVertices) {
+        vertexes.add(id);
+    }
 
     final Set<OrientEdge> edges = new HashSet<OrientEdge>();
 
@@ -135,8 +136,9 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
       json.beginObject(2, false, vertex.getIdentity());
 
       // ADD ALL THE EDGES
-      for (Edge e : vertex.getEdges(Direction.BOTH))
-        edges.add((OrientEdge) e);
+      for (Edge e : vertex.getEdges(Direction.BOTH)) {
+          edges.add((OrientEdge) e);
+      }
 
       // ADD ALL THE PROPERTIES
       for (String field : vertex.getPropertyKeys()) {

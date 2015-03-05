@@ -311,11 +311,13 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
                     + "' has been declared as EMBEDDEDLIST but an incompatible type is used. Value: " + fieldValue);
       }
         if (p.getLinkedClass() != null) {
-          for (Object item : ((List<?>) fieldValue))
-            validateEmbedded(p, item);
+          for (Object item : ((List<?>) fieldValue)) {
+              validateEmbedded(p, item);
+          }
         } else if (p.getLinkedType() != null) {
-          for (Object item : ((List<?>) fieldValue))
-            validateType(p, item);
+          for (Object item : ((List<?>) fieldValue)) {
+              validateType(p, item);
+          }
         }
         break;
       case EMBEDDEDSET:
@@ -324,11 +326,13 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
                     + "' has been declared as EMBEDDEDSET but an incompatible type is used. Value: " + fieldValue);
       }
         if (p.getLinkedClass() != null) {
-          for (Object item : ((Set<?>) fieldValue))
-            validateEmbedded(p, item);
+          for (Object item : ((Set<?>) fieldValue)) {
+              validateEmbedded(p, item);
+          }
         } else if (p.getLinkedType() != null) {
-          for (Object item : ((Set<?>) fieldValue))
-            validateType(p, item);
+          for (Object item : ((Set<?>) fieldValue)) {
+              validateType(p, item);
+          }
         }
         break;
       case EMBEDDEDMAP:
@@ -337,11 +341,13 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
                     + "' has been declared as EMBEDDEDMAP but an incompatible type is used. Value: " + fieldValue);
       }
         if (p.getLinkedClass() != null) {
-          for (Entry<?, ?> entry : ((Map<?, ?>) fieldValue).entrySet())
-            validateEmbedded(p, entry.getValue());
+          for (Entry<?, ?> entry : ((Map<?, ?>) fieldValue).entrySet()) {
+              validateEmbedded(p, entry.getValue());
+          }
         } else if (p.getLinkedType() != null) {
-          for (Entry<?, ?> entry : ((Map<?, ?>) fieldValue).entrySet())
-            validateType(p, entry.getValue());
+          for (Entry<?, ?> entry : ((Map<?, ?>) fieldValue).entrySet()) {
+              validateType(p, entry.getValue());
+          }
         }
         break;
       }
@@ -434,18 +440,19 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
 
     if (p.isReadonly() && iRecord instanceof ODocument && !iRecord.getRecordVersion().isTombstone()) {
-      for (String f : ((ODocument) iRecord).getDirtyFields())
-        if (f.equals(p.getName())) {
-          // check if the field is actually changed by equal.
-          // this is due to a limitation in the merge algorithm used server side marking all non simple fields as dirty
-          Object orgVal = ((ODocument) iRecord).getOriginalValue(f);
-          boolean simple = fieldValue != null ? OType.isSimpleType(fieldValue) : OType.isSimpleType(orgVal);
-          if ((simple) || (fieldValue != null && orgVal == null) || (fieldValue == null && orgVal != null)
-              || (fieldValue != null && !fieldValue.equals(orgVal))) {
-              throw new OValidationException("The field '" + p.getFullName()
-                      + "' is immutable and cannot be altered. Field value is: " + ((ODocument) iRecord).field(f));
+      for (String f : ((ODocument) iRecord).getDirtyFields()) {
+          if (f.equals(p.getName())) {
+              // check if the field is actually changed by equal.
+              // this is due to a limitation in the merge algorithm used server side marking all non simple fields as dirty
+              Object orgVal = ((ODocument) iRecord).getOriginalValue(f);
+              boolean simple = fieldValue != null ? OType.isSimpleType(fieldValue) : OType.isSimpleType(orgVal);
+              if ((simple) || (fieldValue != null && orgVal == null) || (fieldValue == null && orgVal != null)
+                      || (fieldValue != null && !fieldValue.equals(orgVal))) {
+                  throw new OValidationException("The field '" + p.getFullName()
+                          + "' is immutable and cannot be altered. Field value is: " + ((ODocument) iRecord).field(f));
+              }
           }
-        }
+      }
     }
   }
 
@@ -576,8 +583,9 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     if (_fieldValues != null) {
       destination._fieldValues = _fieldValues instanceof LinkedHashMap ? new LinkedHashMap<String, Object>()
           : new HashMap<String, Object>();
-      for (Entry<String, Object> entry : _fieldValues.entrySet())
-        ODocumentHelper.copyFieldValue(destination, entry);
+      for (Entry<String, Object> entry : _fieldValues.entrySet()) {
+          ODocumentHelper.copyFieldValue(destination, entry);
+      }
     } else {
         destination._fieldValues = null;
     }
@@ -731,8 +739,9 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    */
   public Map<String, Object> toMap() {
     final Map<String, Object> map = new HashMap<String, Object>();
-    for (String field : fieldNames())
-      map.put(field, field(field));
+    for (String field : fieldNames()) {
+        map.put(field, field(field));
+    }
 
     final ORID id = getIdentity();
     if (id.isValid()) {
@@ -1043,8 +1052,9 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
    */
   public ODocument fromMap(final Map<String, Object> iMap) {
     if (iMap != null) {
-      for (Entry<String, Object> entry : iMap.entrySet())
-        field(entry.getKey(), entry.getValue());
+      for (Entry<String, Object> entry : iMap.entrySet()) {
+          field(entry.getKey(), entry.getValue());
+      }
     }
     return this;
   }
@@ -1311,9 +1321,10 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
 
     if (!iUpdateOnlyMode) {
       // REMOVE PROPERTIES NOT FOUND IN OTHER DOC
-      for (String f : fieldNames())
-        if (!iOther.containsKey(f)) {
-            removeField(f);
+      for (String f : fieldNames()) {
+          if (!iOther.containsKey(f)) {
+              removeField(f);
+          }
       }
     }
 
@@ -1450,8 +1461,9 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
     }
 
     final List<ORecordElement> result = new ArrayList<ORecordElement>();
-    for (WeakReference<ORecordElement> o : _owners)
-      result.add(o.get());
+    for (WeakReference<ORecordElement> o : _owners) {
+        result.add(o.get());
+    }
 
     return result;
   }
@@ -1826,11 +1838,12 @@ public class ODocument extends ORecordAbstract implements Iterable<Entry<String,
       // CHECK IF HAS BEEN ALREADY UNMARSHALLED
       if (_fieldValues != null && !_fieldValues.isEmpty()) {
         boolean allFound = true;
-        for (String f : iFields)
-          if (!f.startsWith("@") && !_fieldValues.containsKey(f)) {
-            allFound = false;
-            break;
-          }
+        for (String f : iFields) {
+            if (!f.startsWith("@") && !_fieldValues.containsKey(f)) {
+                allFound = false;
+                break;
+            }
+        }
 
         if (allFound) {
             // ALL THE REQUESTED FIELDS HAVE BEEN LOADED BEFORE AND AVAILABLES, AVOID UNMARSHALLIGN

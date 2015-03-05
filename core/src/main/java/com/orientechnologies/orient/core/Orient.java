@@ -231,28 +231,30 @@ public class Orient extends OListenerManger<OOrientListener> {
 
       active = true;
 
-      for (OOrientStartupListener l : startupListeners)
-        try {
-          if (l != null) {
-              l.onStartup();
+      for (OOrientStartupListener l : startupListeners) {
+          try {
+              if (l != null) {
+                  l.onStartup();
+              }
+          } catch (Exception e) {
+              OLogManager.instance().error(this, "Error on startup", e);
           }
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on startup", e);
-        }
+      }
 
       purgeWeakStartupListeners();
-      for (final WeakHashSetValueHolder<OOrientStartupListener> wl : weakStartupListeners)
-        try {
-          if (wl != null) {
-            final OOrientStartupListener l = wl.get();
-            if (l != null) {
-                l.onStartup();
-            }
+      for (final WeakHashSetValueHolder<OOrientStartupListener> wl : weakStartupListeners) {
+          try {
+              if (wl != null) {
+                  final OOrientStartupListener l = wl.get();
+                  if (l != null) {
+                      l.onStartup();
+                  }
+              }
+              
+          } catch (Exception e) {
+              OLogManager.instance().error(this, "Error on startup", e);
           }
-
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error on startup", e);
-        }
+      }
     } finally {
       engineLock.writeLock().unlock();
     }
@@ -280,8 +282,9 @@ public class Orient extends OListenerManger<OOrientListener> {
       closeAllStorages();
 
       // SHUTDOWN ENGINES
-      for (OEngine engine : engines.values())
-        engine.shutdown();
+      for (OEngine engine : engines.values()) {
+          engine.shutdown();
+      }
       engines.clear();
 
       if (databaseFactory != null) {
@@ -318,18 +321,19 @@ public class Orient extends OListenerManger<OOrientListener> {
       }
 
       purgeWeakShutdownListeners();
-      for (final WeakHashSetValueHolder<OOrientShutdownListener> wl : weakShutdownListeners)
-        try {
-          if (wl != null) {
-            final OOrientShutdownListener l = wl.get();
-            if (l != null) {
-                l.onShutdown();
-            }
+      for (final WeakHashSetValueHolder<OOrientShutdownListener> wl : weakShutdownListeners) {
+          try {
+              if (wl != null) {
+                  final OOrientShutdownListener l = wl.get();
+                  if (l != null) {
+                      l.onShutdown();
+                  }
+              }
+              
+          } catch (Exception e) {
+              OLogManager.instance().error(this, "Error during orient shutdown.", e);
           }
-
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error during orient shutdown.", e);
-        }
+      }
 
       OLogManager.instance().info(this, "OrientDB Engine shutdown complete");
       OLogManager.instance().flush();
@@ -501,8 +505,9 @@ public class Orient extends OListenerManger<OOrientListener> {
         storages.put(dbName + "__" + serialId.incrementAndGet(), storage);
       }
 
-      for (OOrientListener l : browseListeners())
-        l.onStorageRegistered(storage);
+      for (OOrientListener l : browseListeners()) {
+          l.onStorageRegistered(storage);
+      }
 
       return storage;
     } finally {
@@ -513,8 +518,9 @@ public class Orient extends OListenerManger<OOrientListener> {
   public OStorage registerStorage(OStorage storage) throws IOException {
     engineLock.readLock().lock();
     try {
-      for (OOrientListener l : browseListeners())
-        l.onStorageRegistered(storage);
+      for (OOrientListener l : browseListeners()) {
+          l.onStorageRegistered(storage);
+      }
 
       OStorage oldStorage = storages.putIfAbsent(storage.getName(), storage);
       if (oldStorage != null) {
@@ -604,8 +610,9 @@ public class Orient extends OListenerManger<OOrientListener> {
         }
       }
 
-      for (String dbName : storagesToRemove)
-        storages.remove(dbName);
+      for (String dbName : storagesToRemove) {
+          storages.remove(dbName);
+      }
 
       // UNREGISTER STORAGE FROM ENGINES IN CASE IS CACHED
       for (OEngine engine : engines.values()) {

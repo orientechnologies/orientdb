@@ -919,9 +919,10 @@ public abstract class ORecordSerializerCSVAbstract extends ORecordSerializerStri
   protected boolean isConvertToLinkedMap(Map<?, ?> map, final OType linkedType) {
     boolean convert = (linkedType == OType.LINK && !(map instanceof ORecordLazyMap));
     if (convert) {
-      for (Object value : map.values())
-        if (!(value instanceof OIdentifiable)) {
-            return false;
+      for (Object value : map.values()) {
+          if (!(value instanceof OIdentifiable)) {
+              return false;
+          }
       }
     }
     return convert;

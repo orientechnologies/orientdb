@@ -1043,8 +1043,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     final int[] clusterIds = iClass.getClusterIds();
     final List<String> clusterNames = new ArrayList<String>(clusterIds.length);
-    for (int clusterId : clusterIds)
-      clusterNames.add(iDatabase.getClusterNameById(clusterId));
+    for (int clusterId : clusterIds) {
+        clusterNames.add(iDatabase.getClusterNameById(clusterId));
+    }
 
     boolean distributedCfgDirty = false;
 
@@ -1057,8 +1058,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
         final String newClusterName = (iClass.getName() + "_" + server).toLowerCase();
 
         final Set<String> cfgClusterNames = new HashSet<String>();
-        for (String cl : cfg.getClusterNames())
-          cfgClusterNames.add(cl);
+        for (String cl : cfg.getClusterNames()) {
+            cfgClusterNames.add(cl);
+        }
 
         if (cfgClusterNames.contains(newClusterName)) {
           // FOUND A CLUSTER PREVIOUSLY ASSIGNED TO THE LOCAL ONE: CHANGE ASSIGNMENT TO LOCAL NODE AGAIN
@@ -1131,9 +1133,10 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
     final OSchema schema = ((ODatabaseInternal<?>) iDatabase).getDatabaseOwner().getMetadata().getSchema();
 
     boolean distribCfgDirty = false;
-    for (final OClass c : schema.getClasses())
-      if (installLocalClusterPerClass(iDatabase, cfg, c)) {
-          distribCfgDirty = true;
+    for (final OClass c : schema.getClasses()) {
+        if (installLocalClusterPerClass(iDatabase, cfg, c)) {
+            distribCfgDirty = true;
+        }
     }
 
     return distribCfgDirty;
@@ -1390,8 +1393,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
 
     final int[] clusterIds = iClass.getClusterIds();
     final List<String> clusterNames = new ArrayList<String>(clusterIds.length);
-    for (int clusterId : clusterIds)
-      clusterNames.add(iDatabase.getClusterNameById(clusterId));
+    for (int clusterId : clusterIds) {
+        clusterNames.add(iDatabase.getClusterNameById(clusterId));
+    }
 
     String bestCluster = cfg.getLocalCluster(clusterNames, nodeName);
     if (bestCluster == null) {
@@ -1399,8 +1403,9 @@ public class OHazelcastPlugin extends ODistributedAbstractPlugin implements Memb
       final String newClusterName = (iClass.getName() + "_" + getLocalNodeName()).toLowerCase();
 
       final Set<String> cfgClusterNames = new HashSet<String>();
-      for (String cl : cfg.getClusterNames())
-        cfgClusterNames.add(cl);
+      for (String cl : cfg.getClusterNames()) {
+          cfgClusterNames.add(cl);
+      }
 
       if (cfgClusterNames.contains(newClusterName)) {
         // FOUND A CLUSTER PREVIOUSLY ASSIGNED TO THE LOCAL ONE: CHANGE ASSIGNMENT TO LOCAL NODE AGAIN

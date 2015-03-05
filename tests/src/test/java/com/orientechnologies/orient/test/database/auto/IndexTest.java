@@ -1481,8 +1481,9 @@ public class IndexTest extends ObjectDBBaseTest {
     result = databaseDocumentTx.query(new OSQLSynchQuery<ODocument>("select from NullIndexKeysSupport where nullField is null"));
 
     Assert.assertEquals(result.size(), 4);
-    for (ODocument document : result)
-      Assert.assertNull(document.field("nullField"));
+    for (ODocument document : result) {
+        Assert.assertNull(document.field("nullField"));
+    }
 
     final ODocument explain = databaseDocumentTx.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("NullIndexKeysSupportIndex"));
@@ -1523,8 +1524,9 @@ public class IndexTest extends ObjectDBBaseTest {
         .query(new OSQLSynchQuery<ODocument>("select from NullHashIndexKeysSupport where nullField is null"));
 
     Assert.assertEquals(result.size(), 4);
-    for (ODocument document : result)
-      Assert.assertNull(document.field("nullField"));
+    for (ODocument document : result) {
+        Assert.assertNull(document.field("nullField"));
+    }
 
     final ODocument explain = databaseDocumentTx.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("NullHashIndexKeysSupportIndex"));
@@ -1570,8 +1572,9 @@ public class IndexTest extends ObjectDBBaseTest {
         .query(new OSQLSynchQuery<ODocument>("select from NullIndexKeysSupportInTx where nullField is null"));
 
     Assert.assertEquals(result.size(), 4);
-    for (ODocument document : result)
-      Assert.assertNull(document.field("nullField"));
+    for (ODocument document : result) {
+        Assert.assertNull(document.field("nullField"));
+    }
 
     final ODocument explain = databaseDocumentTx.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("NullIndexKeysSupportInTxIndex"));
@@ -1619,8 +1622,9 @@ public class IndexTest extends ObjectDBBaseTest {
         "select from NullIndexKeysSupportInMiddleTx where nullField is null"));
 
     Assert.assertEquals(result.size(), 4);
-    for (ODocument document : result)
-      Assert.assertNull(document.field("nullField"));
+    for (ODocument document : result) {
+        Assert.assertNull(document.field("nullField"));
+    }
 
     final ODocument explain = databaseDocumentTx.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("NullIndexKeysSupportInMiddleTxIndex"));

@@ -36,8 +36,9 @@ public class HazelcastQueueThroughputTest {
     final HazelcastInstance hz = Hazelcast.newHazelcastInstance();
 
     final IQueue[] ring = new IQueue[QUEUE_RING_SIZE];
-    for (int q = 0; q < QUEUE_RING_SIZE; ++q)
-      ring[q] = hz.getQueue("test" + q);
+    for (int q = 0; q < QUEUE_RING_SIZE; ++q) {
+        ring[q] = hz.getQueue("test" + q);
+    }
 
     final long start = System.currentTimeMillis();
     long lastLap = start;

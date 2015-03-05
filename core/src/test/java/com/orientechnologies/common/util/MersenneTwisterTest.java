@@ -65,8 +65,9 @@ public class MersenneTwisterTest {
     r = new MersenneTwister(SEED);
     ms = System.currentTimeMillis();
     xx = 0;
-    for (j = 0; j < 100000000; j++)
-      xx += r.nextInt();
+    for (j = 0; j < 100000000; j++) {
+        xx += r.nextInt();
+    }
     System.out.println("Mersenne Twister: " + (System.currentTimeMillis() - ms) + "          Ignore this: " + xx);
 
     System.out.println("To compare this with java.util.Random, run this same test on MersenneTwisterFast.");

@@ -759,8 +759,9 @@ public class OObjectEntitySerializer {
         // ARRAY
         final int arrayLength = Array.getLength(iFieldValue);
         final List<Object> arrayList = new ArrayList<Object>();
-        for (int i = 0; i < arrayLength; i++)
-          arrayList.add(Array.get(iFieldValue, i));
+        for (int i = 0; i < arrayLength; i++) {
+            arrayList.add(Array.get(iFieldValue, i));
+        }
 
         iFieldValue = multiValueToStream(arrayList, iType, db, iRecord);
       } else if (Collection.class.isAssignableFrom(fieldClass)) {

@@ -225,25 +225,29 @@ public abstract class ODatabaseImpExpAbstract {
 
     } else if (option.equalsIgnoreCase("-includeClass")) {
       includeClasses = new HashSet<String>();
-      for (String item : items)
-        includeClasses.add(item.toUpperCase());
+      for (String item : items) {
+          includeClasses.add(item.toUpperCase());
+      }
       includeRecords = true;
 
     } else if (option.equalsIgnoreCase("-excludeClass")) {
       excludeClasses = new HashSet<String>(items);
-      for (String item : items)
-        excludeClasses.add(item.toUpperCase());
+      for (String item : items) {
+          excludeClasses.add(item.toUpperCase());
+      }
 
     } else if (option.equalsIgnoreCase("-includeCluster")) {
       includeClusters = new HashSet<String>(items);
-      for (String item : items)
-        includeClusters.add(item.toUpperCase());
+      for (String item : items) {
+          includeClusters.add(item.toUpperCase());
+      }
       includeRecords = true;
 
     } else if (option.equalsIgnoreCase("-excludeCluster")) {
       excludeClusters = new HashSet<String>(items);
-      for (String item : items)
-        excludeClusters.add(item.toUpperCase());
+      for (String item : items) {
+          excludeClusters.add(item.toUpperCase());
+      }
 
     } else if (option.equalsIgnoreCase("-includeInfo")) {
       includeInfo = Boolean.parseBoolean(items.get(0));

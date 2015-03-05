@@ -877,8 +877,9 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     ridBag = document.field("ridBag");
 
     Assert.assertTrue(ridBag.isEmbedded());
-    for (OIdentifiable identifiable : ridBag)
-      Assert.assertTrue(docsToAdd.remove(identifiable));
+    for (OIdentifiable identifiable : ridBag) {
+        Assert.assertTrue(docsToAdd.remove(identifiable));
+    }
 
     Assert.assertTrue(docsToAdd.isEmpty());
   }
@@ -948,8 +949,9 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     ridBag = document.field("ridBag");
 
     Assert.assertTrue(ridBag.isEmbedded());
-    for (OIdentifiable identifiable : ridBag)
-      Assert.assertTrue(docsToAdd.remove(identifiable));
+    for (OIdentifiable identifiable : ridBag) {
+        Assert.assertTrue(docsToAdd.remove(identifiable));
+    }
 
     Assert.assertTrue(docsToAdd.isEmpty());
   }
@@ -1005,8 +1007,9 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
     ridBag = document.field("ridBag");
 
     Assert.assertTrue(ridBag.isEmbedded());
-    for (OIdentifiable identifiable : ridBag)
-      Assert.assertTrue(docsToAdd.remove(identifiable));
+    for (OIdentifiable identifiable : ridBag) {
+        Assert.assertTrue(docsToAdd.remove(identifiable));
+    }
 
     Assert.assertTrue(docsToAdd.isEmpty());
   }
@@ -1058,8 +1061,9 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
 
     Assert.assertTrue(!ridBag.isEmbedded());
 
-    for (OIdentifiable identifiable : ridBag)
-      Assert.assertTrue(docsToAdd.remove(identifiable));
+    for (OIdentifiable identifiable : ridBag) {
+        Assert.assertTrue(docsToAdd.remove(identifiable));
+    }
 
     Assert.assertTrue(docsToAdd.isEmpty());
   }
@@ -1129,8 +1133,9 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
 
     Assert.assertTrue(!ridBag.isEmbedded());
 
-    for (OIdentifiable identifiable : ridBag)
-      Assert.assertTrue(docsToAdd.remove(identifiable));
+    for (OIdentifiable identifiable : ridBag) {
+        Assert.assertTrue(docsToAdd.remove(identifiable));
+    }
 
     Assert.assertTrue(docsToAdd.isEmpty());
   }
@@ -1188,8 +1193,9 @@ public class ORidBagAtomicUpdateTest extends DatabaseAbstractTest {
 
     Assert.assertTrue(!ridBag.isEmbedded());
 
-    for (OIdentifiable identifiable : ridBag)
-      Assert.assertTrue(docsToAdd.remove(identifiable));
+    for (OIdentifiable identifiable : ridBag) {
+        Assert.assertTrue(docsToAdd.remove(identifiable));
+    }
 
     Assert.assertTrue(docsToAdd.isEmpty());
   }

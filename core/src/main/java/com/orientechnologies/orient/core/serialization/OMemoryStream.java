@@ -125,8 +125,9 @@ public class OMemoryStream extends OutputStream {
     final byte[] sourceBuffer = buffer;
 
     if (pos < NATIVE_COPY_THRESHOLD) {
-        for (int i = 0; i < pos; ++i)
+        for (int i = 0; i < pos; ++i) {
             destinBuffer[i] = sourceBuffer[i];
+        }
     } else {
         System.arraycopy(sourceBuffer, 0, destinBuffer, 0, pos);
     }
@@ -159,8 +160,9 @@ public class OMemoryStream extends OutputStream {
     final byte[] localBuffer = buffer;
 
     if (iLength < NATIVE_COPY_THRESHOLD) {
-        for (int i = 0; i < iLength; ++i)
+        for (int i = 0; i < iLength; ++i) {
             localBuffer[pos + i] = iBuffer[iOffset + i];
+        }
     } else {
         System.arraycopy(iBuffer, iOffset, localBuffer, pos, iLength);
     }
@@ -285,8 +287,9 @@ public class OMemoryStream extends OutputStream {
       final byte[] newbuf = new byte[Math.max(bufferLength << 1, capacity)];
 
       if (pos < NATIVE_COPY_THRESHOLD) {
-          for (int i = 0; i < pos; ++i)
+          for (int i = 0; i < pos; ++i) {
               newbuf[i] = localBuffer[i];
+          }
       } else {
           System.arraycopy(localBuffer, 0, newbuf, 0, pos);
       }

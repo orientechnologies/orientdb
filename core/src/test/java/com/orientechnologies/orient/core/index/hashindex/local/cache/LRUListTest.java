@@ -315,8 +315,9 @@ public abstract class LRUListTest {
       Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, cachePointers[i], false));
     }
 
-    for (OCachePointer cachePointer : cachePointers)
-      cachePointer.getDataPointer().free();
+    for (OCachePointer cachePointer : cachePointers) {
+        cachePointer.getDataPointer().free();
+    }
   }
 
   @Test
@@ -331,8 +332,9 @@ public abstract class LRUListTest {
 
     Assert.assertEquals(lruList.size(), 9128);
 
-    for (int i = 0; i < 9128; i++)
-      Assert.assertEquals(lruList.get(1, i * 10), new OCacheEntry(1, i * 10, cachePointers[i], false));
+    for (int i = 0; i < 9128; i++) {
+        Assert.assertEquals(lruList.get(1, i * 10), new OCacheEntry(1, i * 10, cachePointers[i], false));
+    }
 
     Iterator<OCacheEntry> entryIterator = lruList.iterator();
     for (int i = 9127; i >= 0; i--) {
@@ -340,8 +342,9 @@ public abstract class LRUListTest {
       Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, cachePointers[i], false));
     }
 
-    for (OCachePointer cachePointer : cachePointers)
-      cachePointer.getDataPointer().free();
+    for (OCachePointer cachePointer : cachePointers) {
+        cachePointer.getDataPointer().free();
+    }
   }
 
   @Test
@@ -354,8 +357,9 @@ public abstract class LRUListTest {
       lruList.putToMRU(new OCacheEntry(1, i * 10, cachePointers[i], false));
     }
 
-    for (int i = 4564; i < 9128; i++)
-      Assert.assertEquals(lruList.remove(1, i * 10), new OCacheEntry(1, i * 10, cachePointers[i], false));
+    for (int i = 4564; i < 9128; i++) {
+        Assert.assertEquals(lruList.remove(1, i * 10), new OCacheEntry(1, i * 10, cachePointers[i], false));
+    }
 
     Assert.assertEquals(lruList.size(), 4564);
 
@@ -365,8 +369,9 @@ public abstract class LRUListTest {
       Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, cachePointers[i], false));
     }
 
-    for (OCachePointer cachePointer : cachePointers)
-      cachePointer.getDataPointer().free();
+    for (OCachePointer cachePointer : cachePointers) {
+        cachePointer.getDataPointer().free();
+    }
   }
 
   @Test
@@ -398,7 +403,8 @@ public abstract class LRUListTest {
       Assert.assertEquals(entryIterator.next(), new OCacheEntry(1, i * 10, cachePointers[i], false));
     }
 
-    for (OCachePointer cachePointer : cachePointers)
-      cachePointer.getDataPointer().free();
+    for (OCachePointer cachePointer : cachePointers) {
+        cachePointer.getDataPointer().free();
+    }
   }
 }

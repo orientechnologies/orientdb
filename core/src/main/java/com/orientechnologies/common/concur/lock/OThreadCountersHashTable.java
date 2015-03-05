@@ -66,16 +66,19 @@ public final class OThreadCountersHashTable implements OOrientStartupListener, O
     AtomicReference<EntryHolder>[] activeTable = new AtomicReference[initialSize << 1];
     AtomicReference<AtomicReference<EntryHolder>[]>[] tables = new AtomicReference[32];
 
-    for (int i = 0; i < activeTable.length; i++)
-      activeTable[i] = new AtomicReference<EntryHolder>(new EntryHolder(0, null, false));
+    for (int i = 0; i < activeTable.length; i++) {
+        activeTable[i] = new AtomicReference<EntryHolder>(new EntryHolder(0, null, false));
+    }
 
     tables[0] = new AtomicReference<AtomicReference<EntryHolder>[]>(activeTable);
-    for (int i = 1; i < tables.length; i++)
-      tables[i] = new AtomicReference<AtomicReference<EntryHolder>[]>(null);
+    for (int i = 1; i < tables.length; i++) {
+        tables[i] = new AtomicReference<AtomicReference<EntryHolder>[]>(null);
+    }
 
     AtomicInteger[] counters = new AtomicInteger[32];
-    for (int i = 0; i < counters.length; i++)
-      counters[i] = new AtomicInteger();
+    for (int i = 0; i < counters.length; i++) {
+        counters[i] = new AtomicInteger();
+    }
 
     busyCounters = counters;
 
@@ -344,8 +347,9 @@ public final class OThreadCountersHashTable implements OOrientStartupListener, O
     AtomicReference<EntryHolder>[] activeTable = tables[activeTableIndex].get();
     AtomicReference<EntryHolder>[] newActiveTable = new AtomicReference[activeTable.length << 1];
 
-    for (int i = 0; i < newActiveTable.length; i++)
-      newActiveTable[i] = new AtomicReference<EntryHolder>(new EntryHolder(0, null, false));
+    for (int i = 0; i < newActiveTable.length; i++) {
+        newActiveTable[i] = new AtomicReference<EntryHolder>(new EntryHolder(0, null, false));
+    }
 
     tables[activeTableIndex + 1].set(newActiveTable);
     activeTableIndex++;

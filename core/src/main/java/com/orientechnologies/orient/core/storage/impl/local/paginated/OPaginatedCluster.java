@@ -1607,8 +1607,9 @@ public class OPaginatedCluster extends ODurableComponent implements OCluster {
       paginatedClusterState.setSize(0);
       paginatedClusterState.setRecordsSize(0);
 
-      for (int i = 0; i < FREE_LIST_SIZE; i++)
-        paginatedClusterState.setFreeListPage(i, -1);
+      for (int i = 0; i < FREE_LIST_SIZE; i++) {
+          paginatedClusterState.setFreeListPage(i, -1);
+      }
 
       logPageChanges(paginatedClusterState, fileId, pinnedStateEntry.getPageIndex(), true);
       pinnedStateEntry.markDirty();

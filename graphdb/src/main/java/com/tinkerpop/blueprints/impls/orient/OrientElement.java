@@ -150,8 +150,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
       if (fields.length == 1) {
         Object f = fields[0];
         if (f instanceof Map<?, ?>) {
-          for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) f).entrySet())
-            setPropertyInternal(this, (ODocument) rawElement.getRecord(), entry.getKey().toString(), entry.getValue());
+          for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) f).entrySet()) {
+              setPropertyInternal(this, (ODocument) rawElement.getRecord(), entry.getKey().toString(), entry.getValue());
+          }
 
         } else {
             throw new IllegalArgumentException(
@@ -165,8 +166,9 @@ public abstract class OrientElement implements Element, OSerializableStream, Ext
         }
 
         // SET THE FIELDS
-        for (int i = 0; i < fields.length; i += 2)
-          setPropertyInternal(this, (ODocument) rawElement.getRecord(), fields[i].toString(), fields[i + 1]);
+        for (int i = 0; i < fields.length; i += 2) {
+            setPropertyInternal(this, (ODocument) rawElement.getRecord(), fields[i].toString(), fields[i + 1]);
+        }
       }
     }
     return (T) this;

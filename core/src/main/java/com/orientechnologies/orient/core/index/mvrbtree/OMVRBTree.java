@@ -1385,8 +1385,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
    */
   private static int computeRedLevel(final int sz) {
     int level = 0;
-    for (int m = sz - 1; m >= 0; m = m / 2 - 1)
-      level++;
+    for (int m = sz - 1; m >= 0; m = m / 2 - 1) {
+        level++;
+    }
     return level;
   }
 
@@ -1433,9 +1434,10 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
    */
   @Override
   public boolean containsValue(final Object value) {
-    for (OMVRBTreeEntry<K, V> e = getFirstEntry(); e != null; e = next(e))
-      if (valEquals(value, e.getValue())) {
-          return true;
+    for (OMVRBTreeEntry<K, V> e = getFirstEntry(); e != null; e = next(e)) {
+        if (valEquals(value, e.getValue())) {
+            return true;
+        }
     }
     return false;
   }
@@ -1697,8 +1699,9 @@ public abstract class OMVRBTree<K, V> extends AbstractMap<K, V> implements ONavi
           keyItem = ALWAYS_LESS_KEY;
       }
 
-      for (int i = 0; i < itemsToAdd; i++)
-        fullKey.addKey(keyItem);
+      for (int i = 0; i < itemsToAdd; i++) {
+          fullKey.addKey(keyItem);
+      }
 
       k = (K) fullKey;
     }

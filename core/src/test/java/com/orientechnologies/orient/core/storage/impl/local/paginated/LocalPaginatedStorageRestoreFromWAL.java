@@ -97,11 +97,13 @@ public class LocalPaginatedStorageRestoreFromWAL {
 
     baseDocumentTx.declareIntent(new OIntentMassiveInsert());
 
-    for (int i = 0; i < 5; i++)
-      futures.add(executorService.submit(new DataPropagationTask()));
+    for (int i = 0; i < 5; i++) {
+        futures.add(executorService.submit(new DataPropagationTask()));
+    }
 
-    for (Future<Void> future : futures)
-      future.get();
+    for (Future<Void> future : futures) {
+        future.get();
+    }
 
     Thread.sleep(1500);
     copyDataFromTestWithoutClose();

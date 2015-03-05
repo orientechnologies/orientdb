@@ -185,8 +185,9 @@ public class OJSONWriter {
       } else {
         // COUNT THE MULTI VALUE
         int i;
-        for (i = 0; it.hasNext(); ++i)
-          it.next();
+        for (i = 0; it.hasNext(); ++i) {
+            it.next();
+        }
         buffer.append(i);
       }
     } else {
@@ -486,8 +487,9 @@ public class OJSONWriter {
         newline();
 
         if (prettyPrint) {
-            for (int i = 0; i < iIdentLevel; ++i)
+            for (int i = 0; i < iIdentLevel; ++i) {
                 out.append("  ");
+            }
         }
       }
     }

@@ -735,8 +735,9 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   @Override
   public Object returnOriginalState(List<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> multiValueChangeEvents) {
     final OSBTreeRidBag reverted = new OSBTreeRidBag();
-    for (OIdentifiable identifiable : this)
-      reverted.add(identifiable);
+    for (OIdentifiable identifiable : this) {
+        reverted.add(identifiable);
+    }
 
     final ListIterator<OMultiValueChangeEvent<OIdentifiable, OIdentifiable>> listIterator = multiValueChangeEvents
         .listIterator(multiValueChangeEvents.size());

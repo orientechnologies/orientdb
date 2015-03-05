@@ -933,14 +933,16 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
           final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
 
           while (clientTx.getCurrentRecordEntries().iterator().hasNext()) {
-            for (ORecordOperation txEntry : clientTx.getCurrentRecordEntries())
-              tmpEntries.add(txEntry);
+            for (ORecordOperation txEntry : clientTx.getCurrentRecordEntries()) {
+                tmpEntries.add(txEntry);
+            }
 
             clientTx.clearRecordEntries();
 
-            for (ORecordOperation txEntry : tmpEntries)
-              // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
-              commitEntry(clientTx, txEntry);
+            for (ORecordOperation txEntry : tmpEntries) {
+                // COMMIT ALL THE SINGLE ENTRIES ONE BY ONE
+                commitEntry(clientTx, txEntry);
+            }
           }
 
           if (callback != null) {
@@ -1097,9 +1099,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       long size = 0;
 
-      for (OCluster c : clusters)
-        if (c != null) {
-            size += c.getRecordsSize();
+      for (OCluster c : clusters) {
+          if (c != null) {
+              size += c.getRecordsSize();
+          }
       }
 
       return size;
@@ -1117,9 +1120,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
     final Set<OCluster> result = new HashSet<OCluster>();
 
     // ADD ALL THE CLUSTERS
-    for (OCluster c : clusters)
-      if (c != null) {
-          result.add(c);
+    for (OCluster c : clusters) {
+        if (c != null) {
+            result.add(c);
+        }
     }
 
     return result;
@@ -2037,9 +2041,10 @@ public abstract class OAbstractPaginatedStorage extends OStorageAbstract impleme
 
       preCloseSteps();
 
-      for (OCluster cluster : clusters)
-        if (cluster != null) {
-            cluster.close(!onDelete);
+      for (OCluster cluster : clusters) {
+          if (cluster != null) {
+              cluster.close(!onDelete);
+          }
       }
 
       clusters.clear();

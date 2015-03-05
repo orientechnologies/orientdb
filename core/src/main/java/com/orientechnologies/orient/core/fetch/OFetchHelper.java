@@ -220,10 +220,11 @@ public class OFetchHelper {
       final String iFieldPathFromRoot, final OFetchContext iContext) throws IOException {
     if (fieldValue instanceof ODocument[]) {
       final ODocument[] linked = (ODocument[]) fieldValue;
-      for (ODocument d : linked)
-        // GO RECURSIVELY
-        updateRidMap(iFetchPlan, (ODocument) d, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords, iFieldPathFromRoot,
-            iContext);
+      for (ODocument d : linked) {
+          // GO RECURSIVELY
+          updateRidMap(iFetchPlan, (ODocument) d, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords, iFieldPathFromRoot,
+                  iContext);
+      }
     }
   }
 
@@ -232,10 +233,11 @@ public class OFetchHelper {
       final int iLevelFromRoot, final int iFieldDepthLevel, final Map<ORID, Integer> parsedRecords,
       final String iFieldPathFromRoot, final OFetchContext iContext) throws IOException {
     final Map<String, ODocument> linked = (Map<String, ODocument>) fieldValue;
-    for (ODocument d : (linked).values())
-      // GO RECURSIVELY
-      updateRidMap(iFetchPlan, (ODocument) d, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords, iFieldPathFromRoot,
-          iContext);
+    for (ODocument d : (linked).values()) {
+        // GO RECURSIVELY
+        updateRidMap(iFetchPlan, (ODocument) d, iCurrentLevel, iLevelFromRoot, iFieldDepthLevel, parsedRecords, iFieldPathFromRoot,
+                iContext);
+    }
   }
 
   private static void updateRidMap(final OFetchPlan iFetchPlan, final ODocument fieldValue, final int iCurrentLevel,

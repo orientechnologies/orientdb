@@ -170,12 +170,13 @@ public abstract class OChannel extends OListenerManger<OChannelListener> {
     } catch (Exception e) {
     }
 
-    for (OChannelListener l : getListenersCopy())
-      try {
-        l.onChannelClose(this);
-      } catch (Exception e) {
-        // IGNORE ANY EXCEPTION
-      }
+    for (OChannelListener l : getListenersCopy()) {
+        try {
+            l.onChannelClose(this);
+        } catch (Exception e) {
+            // IGNORE ANY EXCEPTION
+        }
+    }
 
     lockRead.close();
     lockWrite.close();

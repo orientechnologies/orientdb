@@ -298,8 +298,9 @@ public class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
   }
 
   public void addAll(List<SBTreeEntry<K, V>> entries) throws IOException {
-    for (int i = 0; i < entries.size(); i++)
-      addEntry(i, entries.get(i), false);
+    for (int i = 0; i < entries.size(); i++) {
+        addEntry(i, entries.get(i), false);
+    }
   }
 
   public void shrink(int newSize) throws IOException {

@@ -67,14 +67,16 @@ public class OServerCommandProcess extends OServerCommandAuthenticatedDbAbstract
       db = getProfiledDatabaseInstance(iRequest);
 
       final Object[] args = new String[parts.length - 3];
-      for (int i = 3; i < parts.length; ++i)
-        args[i - 3] = parts[i];
+      for (int i = 3; i < parts.length; ++i) {
+          args[i - 3] = parts[i];
+      }
 
       // BIND CONTEXT VARIABLES
       final OCommandContext context = new OBasicCommandContext();
       int argIdx = 0;
-      for (Object arg : args)
-        context.setVariable("arg" + (argIdx++), arg);
+      for (Object arg : args) {
+          context.setVariable("arg" + (argIdx++), arg);
+      }
 
       context.setVariable("session", OHttpSessionManager.getInstance().getSession(iRequest.sessionId));
       context.setVariable("request", new OHttpRequestWrapper(iRequest, (String[]) args));

@@ -64,8 +64,9 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
     result = database.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(result.size(), 2);
-    for (ODocument document : result)
-      Assert.assertNull(document.field("prop3"));
+    for (ODocument document : result) {
+        Assert.assertNull(document.field("prop3"));
+    }
 
     explain = database.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("compositeIndexNullPointQueryIndex"));
@@ -116,8 +117,9 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
     result = database.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(result.size(), 2);
-    for (ODocument document : result)
-      Assert.assertNull(document.field("prop3"));
+    for (ODocument document : result) {
+        Assert.assertNull(document.field("prop3"));
+    }
 
     explain = database.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("compositeIndexNullPointQueryInTxIndex"));
@@ -171,8 +173,9 @@ public class CompositeIndexWithNullTest extends DocumentDBBaseTest {
     result = database.query(new OSQLSynchQuery<ODocument>(query));
 
     Assert.assertEquals(result.size(), 2);
-    for (ODocument document : result)
-      Assert.assertNull(document.field("prop3"));
+    for (ODocument document : result) {
+        Assert.assertNull(document.field("prop3"));
+    }
 
     explain = database.command(new OCommandSQL("explain " + query)).execute();
     Assert.assertTrue(explain.<Set<String>> field("involvedIndexes").contains("compositeIndexNullPointQueryInMiddleTxIndex"));

@@ -137,8 +137,9 @@ public class ReadWriteCacheConcurrentTest {
       futures.add(executorService.submit(new Reader()));
     }
 
-    for (Future<Void> future : futures)
-      future.get();
+    for (Future<Void> future : futures) {
+        future.get();
+    }
   }
 
   private void generateRemainingPagesQueueForAllFiles() {
@@ -161,8 +162,9 @@ public class ReadWriteCacheConcurrentTest {
       futures.add(executorService.submit(new Writer()));
     }
 
-    for (Future<Void> future : futures)
-      future.get();
+    for (Future<Void> future : futures) {
+        future.get();
+    }
 
     futures.clear();
 

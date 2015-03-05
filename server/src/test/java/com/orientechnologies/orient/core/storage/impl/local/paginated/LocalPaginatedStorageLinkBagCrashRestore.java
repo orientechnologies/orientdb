@@ -114,8 +114,9 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
 
           try {
             final List<ORID> ridsToAdd = new ArrayList<ORID>(10);
-            for (int i = 0; i < 10; i++)
-              ridsToAdd.add(new ORecordId(0, positionCounter.incrementAndGet()));
+            for (int i = 0; i < 10; i++) {
+                ridsToAdd.add(new ORecordId(0, positionCounter.incrementAndGet()));
+            }
 
             ODatabaseDocumentTx base_db = poolFactory.get(URL_BASE, "admin", "admin").acquire();
             addRids(orid, base_db, ridsToAdd, ts);
@@ -142,8 +143,9 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
       document.setLazyLoad(false);
 
       ORidBag ridBag = document.field("ridBag");
-      for (ORID rid : ridsToAdd)
-        ridBag.add(rid);
+      for (ORID rid : ridsToAdd) {
+          ridBag.add(rid);
+      }
 
       document.save();
     }
@@ -178,8 +180,9 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
               }
             }
 
-            for (ORID ridToRemove : ridsToRemove)
-              ridBag.remove(ridToRemove);
+            for (ORID ridToRemove : ridsToRemove) {
+                ridBag.remove(ridToRemove);
+            }
 
             document.field("ts", ts);
             document.save();
@@ -191,8 +194,9 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
             document.setLazyLoad(false);
 
             ridBag = document.field("ridBag");
-            for (ORID ridToRemove : ridsToRemove)
-              ridBag.remove(ridToRemove);
+            for (ORID ridToRemove : ridsToRemove) {
+                ridBag.remove(ridToRemove);
+            }
 
             document.field("ts", ts);
             document.save();
@@ -256,11 +260,13 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
     List<Future<Void>> futures = new ArrayList<Future<Void>>();
     futures.add(executorService.submit(new DocumentAdder()));
 
-    for (int i = 0; i < 5; i++)
-      futures.add(executorService.submit(new RidAdder()));
+    for (int i = 0; i < 5; i++) {
+        futures.add(executorService.submit(new RidAdder()));
+    }
 
-    for (int i = 0; i < 5; i++)
-      futures.add(executorService.submit(new RidDeleter()));
+    for (int i = 0; i < 5; i++) {
+        futures.add(executorService.submit(new RidDeleter()));
+    }
 
 		Thread.sleep(1800000);
     long lastTs = System.currentTimeMillis();
@@ -272,12 +278,13 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
     process.waitFor();
     System.out.println("Process was destroyed");
 
-    for (Future<Void> future : futures)
-      try {
-        future.get();
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+    for (Future<Void> future : futures) {
+        try {
+            future.get();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     compareDocuments(lastTs);
   }
@@ -351,15 +358,17 @@ public class LocalPaginatedStorageLinkBagCrashRestore {
             ODatabaseRecordThreadLocal.INSTANCE.set(base_db);
             ORidBag baseRidBag = baseDocument.field("ridBag");
 
-            for (OIdentifiable baseIdentifiable : baseRidBag)
-              baseRids.add(baseIdentifiable.getIdentity());
+            for (OIdentifiable baseIdentifiable : baseRidBag) {
+                baseRids.add(baseIdentifiable.getIdentity());
+            }
 
             Set<ORID> testRids = new HashSet<ORID>();
             ODatabaseRecordThreadLocal.INSTANCE.set(test_db);
             ORidBag testRidBag = testDocument.field("ridBag");
 
-            for (OIdentifiable testIdentifiable : testRidBag)
-              testRids.add(testIdentifiable.getIdentity());
+            for (OIdentifiable testIdentifiable : testRidBag) {
+                testRids.add(testIdentifiable.getIdentity());
+            }
 
             equals = baseRids.equals(testRids);
           }

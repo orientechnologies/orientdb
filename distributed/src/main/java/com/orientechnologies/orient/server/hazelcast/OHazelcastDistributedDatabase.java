@@ -128,9 +128,10 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
     } else {
       // EXPECT ANSWER FROM ALL NODES WITH A QUEUE
       availableNodes = 0;
-      for (IQueue<ODistributedRequest> q : reqQueues)
-        if (q != null) {
-            availableNodes++;
+      for (IQueue<ODistributedRequest> q : reqQueues) {
+          if (q != null) {
+              availableNodes++;
+          }
       }
     }
 
@@ -251,8 +252,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   }
 
   public void shutdown() {
-    for (int i = 0; i < workers.size(); ++i)
-      workers.get(i).shutdown();
+    for (int i = 0; i < workers.size(); ++i) {
+        workers.get(i).shutdown();
+    }
   }
 
   protected void unqueuePendingMessages(boolean iRestoreMessages, boolean iUnqueuePendingMessages, String queueName,
@@ -406,8 +408,9 @@ public class OHazelcastDistributedDatabase implements ODistributedDatabase {
   }
 
   protected void restoreMessagesBeforeFailure(final boolean iRestoreMessages) {
-    for (int i = 0; i < workers.size(); ++i)
-      workers.get(i).restoreMessagesBeforeFailure(iRestoreMessages);
+    for (int i = 0; i < workers.size(); ++i) {
+        workers.get(i).restoreMessagesBeforeFailure(iRestoreMessages);
+    }
   }
 
   /**

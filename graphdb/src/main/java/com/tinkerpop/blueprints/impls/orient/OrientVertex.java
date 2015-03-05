@@ -590,13 +590,14 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
     final Set<String> result = new HashSet<String>();
     final OrientBaseGraph graph = getGraph();
 
-    for (String field : doc.fieldNames())
-      if (graph != null && settings.isUseVertexFieldsForEdgeLabels()) {
-        if (!field.startsWith(CONNECTION_OUT_PREFIX) && !field.startsWith(CONNECTION_IN_PREFIX)) {
+    for (String field : doc.fieldNames()) {
+        if (graph != null && settings.isUseVertexFieldsForEdgeLabels()) {
+            if (!field.startsWith(CONNECTION_OUT_PREFIX) && !field.startsWith(CONNECTION_IN_PREFIX)) {
+                result.add(field);
+            }
+        } else if (!field.equals(OrientBaseGraph.CONNECTION_OUT) && !field.equals(OrientBaseGraph.CONNECTION_IN)) {
             result.add(field);
         }
-      } else if (!field.equals(OrientBaseGraph.CONNECTION_OUT) && !field.equals(OrientBaseGraph.CONNECTION_IN)) {
-          result.add(field);
     }
 
     return result;
@@ -697,8 +698,9 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
     if (it.hasNext()) {
       final Set<Edge> allEdges = new HashSet<Edge>();
-      for (Edge e : getEdges(Direction.BOTH))
-        allEdges.add(e);
+      for (Edge e : getEdges(Direction.BOTH)) {
+          allEdges.add(e);
+      }
 
       while (it.hasNext()) {
         final Index<? extends Element> index = it.next();
@@ -710,8 +712,9 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
 
         if (Edge.class.isAssignableFrom(index.getIndexClass())) {
           OrientIndex<OrientEdge> idx = (OrientIndex<OrientEdge>) index;
-          for (Edge e : allEdges)
-            idx.removeElement((OrientEdge) e);
+          for (Edge e : allEdges) {
+              idx.removeElement((OrientEdge) e);
+          }
         }
       }
     }
@@ -1041,9 +1044,10 @@ public class OrientVertex extends OrientElement implements OrientExtendedVertex 
       }
     } else {
       // SLOWER: BROWSE & FILTER
-      for (Edge e : getEdges(iDirection, iLabels))
-        if (e != null) {
-            counter++;
+      for (Edge e : getEdges(iDirection, iLabels)) {
+          if (e != null) {
+              counter++;
+          }
       }
     }
     return counter;

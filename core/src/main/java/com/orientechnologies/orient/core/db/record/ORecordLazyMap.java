@@ -140,8 +140,9 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
         // PRECONDITIONS
         return;
     }
-    for (Object k : keySet())
-      convertLink2Record(k);
+    for (Object k : keySet()) {
+        convertLink2Record(k);
+    }
 
     status = MULTIVALUE_CONTENT_TYPE.ALL_RECORDS;
   }
@@ -153,9 +154,10 @@ public class ORecordLazyMap extends OTrackedMap<OIdentifiable> implements ORecor
     }
 
     boolean allConverted = true;
-    for (Object k : keySet())
-      if (!convertRecord2Link(k)) {
-          allConverted = false;
+    for (Object k : keySet()) {
+        if (!convertRecord2Link(k)) {
+            allConverted = false;
+        }
     }
 
     if (allConverted) {

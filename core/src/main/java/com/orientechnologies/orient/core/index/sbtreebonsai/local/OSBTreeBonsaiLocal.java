@@ -1043,8 +1043,9 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
       final int startRightIndex = splitLeaf ? indexToSplit : indexToSplit + 1;
 
-      for (int i = startRightIndex; i < bucketSize; i++)
-        rightEntries.add(bucketToSplit.getEntry(i));
+      for (int i = startRightIndex; i < bucketSize; i++) {
+          rightEntries.add(bucketToSplit.getEntry(i));
+      }
 
       if (!bucketPointer.equals(rootBucketPointer)) {
         final AllocationResult allocationResult = allocateBucket();
@@ -1147,8 +1148,9 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         final List<OSBTreeBonsaiBucket.SBTreeEntry<K, V>> leftEntries = new ArrayList<OSBTreeBonsaiBucket.SBTreeEntry<K, V>>(
             indexToSplit);
 
-        for (int i = 0; i < indexToSplit; i++)
-          leftEntries.add(bucketToSplit.getEntry(i));
+        for (int i = 0; i < indexToSplit; i++) {
+            leftEntries.add(bucketToSplit.getEntry(i));
+        }
 
         final AllocationResult leftAllocationResult = allocateBucket();
         OCacheEntry leftBucketEntry = leftAllocationResult.getCacheEntry();

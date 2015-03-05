@@ -234,13 +234,15 @@ public class MersenneTwisterFast implements Serializable, Cloneable {
     if (mti != other.mti) {
         return false;
     }
-    for (int x = 0; x < mag01.length; x++)
-      if (mag01[x] != other.mag01[x]) {
-          return false;
+    for (int x = 0; x < mag01.length; x++) {
+        if (mag01[x] != other.mag01[x]) {
+            return false;
+        }
     }
-    for (int x = 0; x < mt.length; x++)
-      if (mt[x] != other.mt[x]) {
-          return false;
+    for (int x = 0; x < mt.length; x++) {
+        if (mt[x] != other.mt[x]) {
+            return false;
+        }
     }
     return true;
   }
@@ -248,12 +250,14 @@ public class MersenneTwisterFast implements Serializable, Cloneable {
   /** Reads the entire state of the MersenneTwister RNG from the stream */
   public void readState(DataInputStream stream) throws IOException {
     int len = mt.length;
-    for (int x = 0; x < len; x++)
-      mt[x] = stream.readInt();
+    for (int x = 0; x < len; x++) {
+        mt[x] = stream.readInt();
+    }
 
     len = mag01.length;
-    for (int x = 0; x < len; x++)
-      mag01[x] = stream.readInt();
+    for (int x = 0; x < len; x++) {
+        mag01[x] = stream.readInt();
+    }
 
     mti = stream.readInt();
     __nextNextGaussian = stream.readDouble();
@@ -263,12 +267,14 @@ public class MersenneTwisterFast implements Serializable, Cloneable {
   /** Writes the entire state of the MersenneTwister RNG to the stream */
   public void writeState(DataOutputStream stream) throws IOException {
     int len = mt.length;
-    for (int x = 0; x < len; x++)
-      stream.writeInt(mt[x]);
+    for (int x = 0; x < len; x++) {
+        stream.writeInt(mt[x]);
+    }
 
     len = mag01.length;
-    for (int x = 0; x < len; x++)
-      stream.writeInt(mag01[x]);
+    for (int x = 0; x < len; x++) {
+        stream.writeInt(mag01[x]);
+    }
 
     stream.writeInt(mti);
     stream.writeDouble(__nextNextGaussian);

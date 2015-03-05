@@ -80,8 +80,9 @@ public class ORecordSerializerBinaryV0 implements ODocumentSerializer {
 
     // TRANSFORMS FIELDS FOM STRINGS TO BYTE[]
     final byte[][] fields = new byte[iFields.length][];
-    for (int i = 0; i < iFields.length; ++i)
-      fields[i] = iFields[i].getBytes();
+    for (int i = 0; i < iFields.length; ++i) {
+        fields[i] = iFields[i].getBytes();
+    }
 
     String fieldName = null;
     int valuePos;

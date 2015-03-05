@@ -171,15 +171,16 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
   }
 
   protected void save(final ODatabaseDocument iDb) {
-    for (int i = 0; i < 3; ++i)
-      try {
-        record.fromStream(toStream());
-        record.setDirty();
-        record.save(clusterName);
-        break;
-      } catch (OConcurrentModificationException e) {
-        record.reload();
-      }
+    for (int i = 0; i < 3; ++i) {
+        try {
+            record.fromStream(toStream());
+            record.setDirty();
+            record.save(clusterName);
+            break;
+        } catch (OConcurrentModificationException e) {
+            record.reload();
+        }
+    }
   }
 
   public void save() {
@@ -222,13 +223,14 @@ public abstract class OMVRBTreeProviderAbstract<K, V> implements OMVRBTreeProvid
   }
 
   protected void delete(final ODatabaseDocument iDb) {
-    for (int i = 0; i < 3; ++i)
-      try {
-        iDb.delete(record);
-        break;
-      } catch (OConcurrentModificationException e) {
-        record.reload();
-      }
+    for (int i = 0; i < 3; ++i) {
+        try {
+            iDb.delete(record);
+            break;
+        } catch (OConcurrentModificationException e) {
+            record.reload();
+        }
+    }
   }
 
   protected void delete(final OStorage iSt) {

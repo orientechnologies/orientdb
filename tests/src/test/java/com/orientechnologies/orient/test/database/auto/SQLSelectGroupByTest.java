@@ -41,8 +41,9 @@ public class SQLSelectGroupByTest extends DocumentDBBaseTest {
 
     Assert.assertTrue(result.size() > 1);
     Set<Object> set = new HashSet<Object>();
-    for (ODocument d : result)
-      set.add(d.field("location"));
+    for (ODocument d : result) {
+        set.add(d.field("location"));
+    }
     Assert.assertEquals(result.size(), set.size());
   }
 

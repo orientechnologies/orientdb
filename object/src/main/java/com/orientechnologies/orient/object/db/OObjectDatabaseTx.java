@@ -603,9 +603,10 @@ public class OObjectDatabaseTx extends ODatabasePojoAbstract<Object> implements 
       final List<ORecordOperation> newEntries;
       if (getTransaction().getCurrentRecordEntries() != null) {
         newEntries = new ArrayList<ORecordOperation>();
-        for (ORecordOperation entry : getTransaction().getCurrentRecordEntries())
-          if (entry.type == ORecordOperation.CREATED) {
-              newEntries.add(entry);
+        for (ORecordOperation entry : getTransaction().getCurrentRecordEntries()) {
+            if (entry.type == ORecordOperation.CREATED) {
+                newEntries.add(entry);
+            }
         }
       } else {
           newEntries = null;

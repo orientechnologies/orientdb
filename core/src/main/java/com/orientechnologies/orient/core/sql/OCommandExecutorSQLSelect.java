@@ -856,8 +856,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
           }
 
           // FIND A UNIQUE NAME BY ADDING A COUNTER
-          for (int fieldIndex = 2; projectionDefinition.containsKey(fieldName); ++fieldIndex)
-            fieldName += fieldIndex;
+          for (int fieldIndex = 2; projectionDefinition.containsKey(fieldName); ++fieldIndex) {
+              fieldName += fieldIndex;
+          }
         }
 
         final String p = upperCase(projection);
@@ -1052,8 +1053,9 @@ public class OCommandExecutorSQLSelect extends OCommandExecutorSQLResultsetAbstr
                   if (recs instanceof Collection<?>) {
                       count += ((Collection<?>) recs).size();
                   } else {
-                    for (Object o : recs)
-                      count++;
+                    for (Object o : recs) {
+                        count++;
+                    }
                   }
                 }
 

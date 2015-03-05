@@ -93,15 +93,17 @@ public class ONewLockManager<T> {
     if (useSpinLock) {
       OReadersWriterSpinLock[] lcks = new OReadersWriterSpinLock[CONCURRENCY_LEVEL];
 
-      for (int i = 0; i < lcks.length; i++)
-        lcks[i] = new OReadersWriterSpinLock();
+      for (int i = 0; i < lcks.length; i++) {
+          lcks[i] = new OReadersWriterSpinLock();
+      }
 
       spinLocks = lcks;
       locks = null;
     } else {
       ReadWriteLock[] lcks = new ReadWriteLock[CONCURRENCY_LEVEL];
-      for (int i = 0; i < lcks.length; i++)
-        lcks[i] = new ReentrantReadWriteLock();
+      for (int i = 0; i < lcks.length; i++) {
+          lcks[i] = new ReentrantReadWriteLock();
+      }
 
       locks = lcks;
       spinLocks = null;

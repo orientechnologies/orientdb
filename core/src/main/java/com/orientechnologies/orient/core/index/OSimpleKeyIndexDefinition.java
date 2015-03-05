@@ -114,14 +114,16 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
 
       final List<String> keyTypeNames = new ArrayList<String>(keyTypes.length);
 
-      for (final OType keyType : keyTypes)
-        keyTypeNames.add(keyType.toString());
+      for (final OType keyType : keyTypes) {
+          keyTypeNames.add(keyType.toString());
+      }
 
       document.field("keyTypes", keyTypeNames, OType.EMBEDDEDLIST);
       if (collate instanceof OCompositeCollate) {
         List<String> collatesNames = new ArrayList<String>();
-        for (OCollate curCollate : ((OCompositeCollate) this.collate).getCollates())
-          collatesNames.add(curCollate.getName());
+        for (OCollate curCollate : ((OCompositeCollate) this.collate).getCollates()) {
+            collatesNames.add(curCollate.getName());
+        }
         document.field("collates", collatesNames, OType.EMBEDDEDLIST);
       } else {
           document.field("collate", collate.getName());
@@ -150,8 +152,9 @@ public class OSimpleKeyIndexDefinition extends OAbstractIndexDefinition {
     } else {
       List<String> collatesNames = document.field("collates");
       OCompositeCollate collates = new OCompositeCollate(this);
-      for (String collateName : collatesNames)
-        collates.addCollate(OSQLEngine.getCollate(collateName));
+      for (String collateName : collatesNames) {
+          collates.addCollate(OSQLEngine.getCollate(collateName));
+      }
       this.collate = collates;
     }
 

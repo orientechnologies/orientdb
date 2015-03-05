@@ -55,8 +55,9 @@ public abstract class OServerCommandAbstractLogic extends OServerCommandAuthenti
       }
 
       final Object[] args = new String[parts.length - 3];
-      for (int i = 3; i < parts.length; ++i)
-        args[i - 3] = parts[i];
+      for (int i = 3; i < parts.length; ++i) {
+          args[i - 3] = parts[i];
+      }
 
       // BIND CONTEXT VARIABLES
       final OBasicCommandContext context = new OBasicCommandContext();

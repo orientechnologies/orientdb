@@ -136,8 +136,9 @@ public abstract class OAbstractBlock implements OProcessorBlock {
     if (isDebug(iContext)) {
       final Integer depthLevel = (Integer) iContext.getVariable("depthLevel");
       final StringBuilder text = new StringBuilder(256);
-      for (int i = 0; i < depthLevel; ++i)
-        text.append('-');
+      for (int i = 0; i < depthLevel; ++i) {
+          text.append('-');
+      }
       text.append('>');
       text.append('{');
       text.append(getName());
@@ -285,20 +286,22 @@ public abstract class OAbstractBlock implements OProcessorBlock {
       // MAP
       final Map<Object, Object> sourceMap = (Map<Object, Object>) iValue;
       final Map<Object, Object> destMap = iClone ? new HashMap<Object, Object>() : sourceMap;
-      for (Entry<Object, Object> entry : sourceMap.entrySet())
-        destMap.put(entry.getKey(), resolveValue(iContext, entry.getValue(), iClone));
+      for (Entry<Object, Object> entry : sourceMap.entrySet()) {
+          destMap.put(entry.getKey(), resolveValue(iContext, entry.getValue(), iClone));
+      }
       return destMap;
 
     } else if (iValue instanceof List<?>) {
 
       final List<Object> sourceList = (List<Object>) iValue;
       final List<Object> destList = iClone ? new ArrayList<Object>() : sourceList;
-      for (int i = 0; i < sourceList.size(); ++i)
-        if (iClone) {
-            destList.add(i, resolve(iContext, sourceList.get(i)));
-            } else {
-            destList.set(i, resolve(iContext, sourceList.get(i)));
-        }
+      for (int i = 0; i < sourceList.size(); ++i) {
+          if (iClone) {
+              destList.add(i, resolve(iContext, sourceList.get(i)));
+          } else {
+              destList.set(i, resolve(iContext, sourceList.get(i)));
+          }
+      }
 
       return destList;
     }
@@ -339,8 +342,9 @@ public abstract class OAbstractBlock implements OProcessorBlock {
       for (Object entry : OMultiValue.getMultiValueIterable(value)) {
         if (entry instanceof ODocument) {
           // DOCUMENT
-          for (String fieldName : ((ODocument) entry).fieldNames())
-            newColl.add(((ODocument) entry).field(fieldName));
+          for (String fieldName : ((ODocument) entry).fieldNames()) {
+              newColl.add(((ODocument) entry).field(fieldName));
+          }
         } else {
             OMultiValue.add(newColl, resolveValue(iContext, getValue(entry, copy), false));
         }

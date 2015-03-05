@@ -84,8 +84,9 @@ public abstract class AbstractServerClusterTest {
 
   public void init(final int servers) {
     Orient.setRegisterDatabaseByPath(true);
-    for (int i = 0; i < servers; ++i)
-      serverInstance.add(new ServerRun(rootDirectory, "" + i));
+    for (int i = 0; i < servers; ++i) {
+        serverInstance.add(new ServerRun(rootDirectory, "" + i));
+    }
   }
 
   public void execute() throws Exception {
@@ -126,8 +127,9 @@ public abstract class AbstractServerClusterTest {
       System.out.println("\n******************************************************************************************");
       System.out.println("Shutting down nodes...");
       System.out.println("******************************************************************************************\n");
-      for (ServerRun server : serverInstance)
-        server.shutdownServer();
+      for (ServerRun server : serverInstance) {
+          server.shutdownServer();
+      }
       Hazelcast.shutdownAll();
       System.out.println("\n******************************************************************************************");
       System.out.println("Test finished");
@@ -189,8 +191,9 @@ public abstract class AbstractServerClusterTest {
   }
 
   protected void deleteServers() {
-    for (ServerRun s : serverInstance)
-      s.deleteNode();
+    for (ServerRun s : serverInstance) {
+        s.deleteNode();
+    }
   }
 
   protected String getDistributedServerConfiguration(final ServerRun server) {

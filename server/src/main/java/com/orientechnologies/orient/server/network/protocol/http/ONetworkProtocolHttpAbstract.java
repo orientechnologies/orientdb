@@ -384,8 +384,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     writeLine("Server: " + connection.data.serverInfo);
     writeLine("Connection: " + (iKeepAlive ? "Keep-Alive" : "close"));
     if (getAdditionalResponseHeaders() != null) {
-        for (String h : getAdditionalResponseHeaders())
+        for (String h : getAdditionalResponseHeaders()) {
             writeLine(h);
+        }
     }
   }
 
@@ -728,15 +729,17 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol {
     cmdManager.registerCommand(new OServerCommandGetSupportedLanguages());
     cmdManager.registerCommand(new OServerCommandPostAuthToken());
 
-    for (OServerCommandConfiguration c : iListener.getStatefulCommands())
-      try {
-        cmdManager.registerCommand(OServerNetworkListener.createCommand(server, c));
-      } catch (Exception e) {
-        OLogManager.instance().error(this, "Error on creating stateful command '%s'", e, c.implementation);
-      }
+    for (OServerCommandConfiguration c : iListener.getStatefulCommands()) {
+        try {
+            cmdManager.registerCommand(OServerNetworkListener.createCommand(server, c));
+        } catch (Exception e) {
+            OLogManager.instance().error(this, "Error on creating stateful command '%s'", e, c.implementation);
+        }
+    }
 
-    for (OServerCommand c : iListener.getStatelessCommands())
-      cmdManager.registerCommand(c);
+    for (OServerCommand c : iListener.getStatelessCommands()) {
+        cmdManager.registerCommand(c);
+    }
   }
 
   private String getCommandString(final String command) {

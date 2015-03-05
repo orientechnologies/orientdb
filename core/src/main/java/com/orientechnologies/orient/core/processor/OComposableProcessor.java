@@ -130,8 +130,9 @@ public class OComposableProcessor extends OConfigurableStatefulFactory<String, O
 
       // READ THE ENTIRE STREAM AND CACHE IT IN MEMORY
       final byte[] buffer = new byte[(int) contentSize];
-      for (int i = 0; i < contentSize; ++i)
-        buffer[i] = (byte) is.read();
+      for (int i = 0; i < contentSize; ++i) {
+          buffer[i] = (byte) is.read();
+      }
 
       return new String(buffer);
 

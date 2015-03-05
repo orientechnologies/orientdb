@@ -35,8 +35,9 @@ public class OImmutableRole implements OSecurityRole {
     this.rid = role.getIdentity().getIdentity();
     this.role = role;
 
-    for (ORule rule : role.getRuleSet())
-      rules.put(rule.getResourceGeneric(), rule);
+    for (ORule rule : role.getRuleSet()) {
+        rules.put(rule.getResourceGeneric(), rule);
+    }
 
   }
 

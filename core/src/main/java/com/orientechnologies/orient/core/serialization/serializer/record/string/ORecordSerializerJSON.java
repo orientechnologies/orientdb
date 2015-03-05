@@ -117,34 +117,35 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
 
         if (iFormat != null && !iFormat.isEmpty()) {
           final String[] format = iFormat.split(",");
-          for (String f : format)
-            if (f.equals("type")) {
-                includeType = true;
-          } else if (f.equals("rid")) {
-              includeId = true;
-          } else if (f.equals("version")) {
-              includeVer = true;
-          } else if (f.equals("class")) {
-              includeClazz = true;
-          } else if (f.equals("attribSameRow")) {
-              attribSameRow = true;
-          } else if (f.startsWith("indent")) {
-              indentLevel = Integer.parseInt(f.substring(f.indexOf(':') + 1));
-          } else if (f.startsWith("fetchPlan")) {
-              fetchPlan = f.substring(f.indexOf(':') + 1);
-          } else if (f.startsWith("keepTypes")) {
-              keepTypes = true;
-          } else if (f.startsWith("alwaysFetchEmbedded")) {
-              alwaysFetchEmbeddedDocuments = true;
-          } else if (f.startsWith("dateAsLong")) {
-              dateAsLong = true;
-          } else if (f.startsWith("prettyPrint")) {
-              prettyPrint = true;
-          } else if (f.startsWith("graph") || f.startsWith("shallow"))
-              // SUPPORTED IN OTHER PARTS
-              ;
-            else {
-              throw new IllegalArgumentException("Unrecognized JSON formatting option: " + f);
+          for (String f : format) {
+              if (f.equals("type")) {
+                  includeType = true;
+              } else if (f.equals("rid")) {
+                  includeId = true;
+              } else if (f.equals("version")) {
+                  includeVer = true;
+              } else if (f.equals("class")) {
+                  includeClazz = true;
+              } else if (f.equals("attribSameRow")) {
+                  attribSameRow = true;
+              } else if (f.startsWith("indent")) {
+                  indentLevel = Integer.parseInt(f.substring(f.indexOf(':') + 1));
+              } else if (f.startsWith("fetchPlan")) {
+                  fetchPlan = f.substring(f.indexOf(':') + 1);
+              } else if (f.startsWith("keepTypes")) {
+                  keepTypes = true;
+              } else if (f.startsWith("alwaysFetchEmbedded")) {
+                  alwaysFetchEmbeddedDocuments = true;
+              } else if (f.startsWith("dateAsLong")) {
+                  dateAsLong = true;
+              } else if (f.startsWith("prettyPrint")) {
+                  prettyPrint = true;
+              } else if (f.startsWith("graph") || f.startsWith("shallow"))
+                  // SUPPORTED IN OTHER PARTS
+                  ;
+              else {
+                  throw new IllegalArgumentException("Unrecognized JSON formatting option: " + f);
+              }
           }
         }
       }
@@ -176,9 +177,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
     boolean noMap = false;
     if (iOptions != null) {
       final String[] format = iOptions.split(",");
-      for (String f : format)
-        if (f.equalsIgnoreCase("noMap")) {
-            noMap = true;
+      for (String f : format) {
+          if (f.equalsIgnoreCase("noMap")) {
+              noMap = true;
+          }
       }
     }
 

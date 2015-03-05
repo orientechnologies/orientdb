@@ -248,8 +248,9 @@ public class OObjectEnumLazyList<TYPE extends Enum<?>> implements List<TYPE>, OO
         return;
     }
 
-    for (int i = 0; i < size(); ++i)
-      convert(i);
+    for (int i = 0; i < size(); ++i) {
+        convert(i);
+    }
 
     converted = true;
   }

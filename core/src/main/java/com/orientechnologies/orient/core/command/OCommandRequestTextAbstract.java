@@ -101,12 +101,13 @@ public abstract class OCommandRequestTextAbstract extends OCommandRequestAbstrac
       final Map<Object, Object> params = new HashMap<Object, Object>();
       final Map<Object, List<Object>> compositeKeyParams = new HashMap<Object, List<Object>>();
 
-      for (final Entry<Object, Object> paramEntry : parameters.entrySet())
-        if (paramEntry.getValue() instanceof OCompositeKey) {
-          final OCompositeKey compositeKey = (OCompositeKey) paramEntry.getValue();
-          compositeKeyParams.put(paramEntry.getKey(), compositeKey.getKeys());
-        } else {
-            params.put(paramEntry.getKey(), paramEntry.getValue());
+      for (final Entry<Object, Object> paramEntry : parameters.entrySet()) {
+          if (paramEntry.getValue() instanceof OCompositeKey) {
+              final OCompositeKey compositeKey = (OCompositeKey) paramEntry.getValue();
+              compositeKeyParams.put(paramEntry.getKey(), compositeKey.getKeys());
+          } else {
+              params.put(paramEntry.getKey(), paramEntry.getValue());
+          }
       }
 
       buffer.set(!params.isEmpty());

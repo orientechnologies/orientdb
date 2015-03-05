@@ -176,8 +176,9 @@ public final class OHashTableIndexEngine<V> implements OIndexEngine<V> {
       long counter = 0;
 
       while (entries.length > 0) {
-        for (OHashIndexBucket.Entry<Object, V> entry : entries)
-          counter += transformer.transformFromValue(entry.value).size();
+        for (OHashIndexBucket.Entry<Object, V> entry : entries) {
+            counter += transformer.transformFromValue(entry.value).size();
+        }
 
         entries = hashTable.higherEntries(entries[entries.length - 1].key);
       }

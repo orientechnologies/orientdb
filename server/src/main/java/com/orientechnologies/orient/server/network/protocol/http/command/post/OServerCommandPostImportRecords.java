@@ -75,8 +75,9 @@ public class OServerCommandPostImportRecords extends OServerCommandDocumentAbstr
          }
 
          final List<String> columns = OStringSerializerHelper.smartSplit(header, separator);
-         for (int i = 0; i < columns.size(); ++i)
-           columns.set(i, OStringSerializerHelper.getStringContent(columns.get(i)));
+         for (int i = 0; i < columns.size(); ++i) {
+             columns.set(i, OStringSerializerHelper.getStringContent(columns.get(i)));
+         }
 
          int imported = 0;
          int errors = 0;

@@ -91,9 +91,10 @@ public class OObjectEnumLazySet<TYPE extends Enum> extends HashSet<TYPE> impleme
   }
 
   public boolean containsAll(final Collection<?> c) {
-    for (Object o : c)
-      if (!super.contains(o) && !underlying.contains(o.toString())) {
-          return false;
+    for (Object o : c) {
+        if (!super.contains(o) && !underlying.contains(o.toString())) {
+            return false;
+        }
     }
 
     return true;
@@ -102,8 +103,9 @@ public class OObjectEnumLazySet<TYPE extends Enum> extends HashSet<TYPE> impleme
   public boolean addAll(final Collection<? extends TYPE> c) {
     boolean modified = false;
     setDirty();
-    for (Object o : c)
-      modified = add((TYPE) o) || modified;
+    for (Object o : c) {
+        modified = add((TYPE) o) || modified;
+    }
     return modified;
   }
 

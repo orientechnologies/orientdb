@@ -465,8 +465,9 @@ public class OServerAdmin {
       try {
         storage.beginResponse(network);
         final int num = network.readShort();
-        for (int i = 0; i < num; ++i)
-          config.put(network.readString(), network.readString());
+        for (int i = 0; i < num; ++i) {
+            config.put(network.readString(), network.readString());
+        }
       } finally {
         storage.endResponse(network);
       }

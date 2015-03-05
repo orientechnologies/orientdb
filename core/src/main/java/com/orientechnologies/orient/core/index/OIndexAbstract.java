@@ -398,8 +398,9 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
         long documentNum = 0;
         long documentTotal = 0;
 
-        for (final String cluster : clustersToIndex)
-          documentTotal += getDatabase().countClusterElements(cluster);
+        for (final String cluster : clustersToIndex) {
+            documentTotal += getDatabase().countClusterElements(cluster);
+        }
 
         if (iProgressListener != null) {
             iProgressListener.onBegin(this, documentTotal, true);
@@ -698,8 +699,9 @@ public abstract class OIndexAbstract<T> implements OIndexInternal<T> {
 
       final Collection<ODocument> entries = operationDocument.field("entries");
       final Map<Object, Object> snapshot = indexTxSnapshot.indexSnapshot;
-      for (final ODocument entry : entries)
-        applyIndexTxEntry(snapshot, entry);
+      for (final ODocument entry : entries) {
+          applyIndexTxEntry(snapshot, entry);
+      }
 
       final ODocument nullIndexEntry = operationDocument.field("nullEntries");
       applyIndexTxEntry(snapshot, nullIndexEntry);

@@ -622,8 +622,9 @@ public class ONetworkProtocolBinary extends OBinaryNetworkProtocolAbstract {
     }
 
     int[] clusterIds = new int[channel.readShort()];
-    for (int i = 0; i < clusterIds.length; ++i)
-      clusterIds[i] = channel.readShort();
+    for (int i = 0; i < clusterIds.length; ++i) {
+        clusterIds[i] = channel.readShort();
+    }
 
     boolean countTombstones = false;
     if (connection.data.protocolVersion >= 13) {

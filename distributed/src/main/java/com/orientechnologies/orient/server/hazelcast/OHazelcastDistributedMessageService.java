@@ -73,8 +73,9 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
     this.responsesByRequestIds = new ConcurrentHashMap<Long, ODistributedResponseManager>();
 
     // RESET ALL THE METRICS
-    for (int i = 0; i < responseTimeMetrics.length; ++i)
-      responseTimeMetrics[i] = -1;
+    for (int i = 0; i < responseTimeMetrics.length; ++i) {
+        responseTimeMetrics[i] = -1;
+    }
 
     // CREAT THE QUEUE
     final String queueName = getResponseQueueName(manager.getLocalNodeName());
@@ -197,8 +198,9 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
       responseThread = null;
     }
 
-    for (Entry<String, OHazelcastDistributedDatabase> m : databases.entrySet())
-      m.getValue().shutdown();
+    for (Entry<String, OHazelcastDistributedDatabase> m : databases.entrySet()) {
+        m.getValue().shutdown();
+    }
 
     asynchMessageManager.cancel();
     responsesByRequestIds.clear();
@@ -216,15 +218,17 @@ public class OHazelcastDistributedMessageService implements ODistributedMessageS
   public void handleUnreachableNode(final String nodeName) {
     final Set<String> dbs = getDatabases();
     if (dbs != null) {
-        for (String dbName : dbs)
+        for (String dbName : dbs) {
             getDatabase(dbName).removeNodeInConfiguration(nodeName, false);
+        }
     }
 
     // REMOVE THE SERVER'S RESPONSE QUEUE
     // removeQueue(OHazelcastDistributedMessageService.getResponseQueueName(nodeName));
 
-    for (ODistributedResponseManager r : responsesByRequestIds.values())
-      r.notifyWaiters();
+    for (ODistributedResponseManager r : responsesByRequestIds.values()) {
+        r.notifyWaiters();
+    }
   }
 
   @Override

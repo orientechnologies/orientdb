@@ -52,8 +52,9 @@ public class OImmutableProperty implements OProperty {
     regexp = property.getRegexp();
     customProperties = new HashMap<String, String>();
 
-    for (String key : property.getCustomKeys())
-      customProperties.put(key, property.getCustom(key));
+    for (String key : property.getCustomKeys()) {
+        customProperties.put(key, property.getCustom(key));
+    }
 
     this.owner = owner;
     id = property.getId();

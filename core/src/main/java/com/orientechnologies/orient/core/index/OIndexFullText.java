@@ -378,11 +378,12 @@ public class OIndexFullText extends OIndexMultiValues {
       for (int i = 0; i < word.length(); ++i) {
         c = word.charAt(i);
         ignore = false;
-        for (int k = 0; k < ignoreChars.length(); ++k)
-          if (c == ignoreChars.charAt(k)) {
-            ignore = true;
-            break;
-          }
+        for (int k = 0; k < ignoreChars.length(); ++k) {
+            if (c == ignoreChars.charAt(k)) {
+                ignore = true;
+                break;
+            }
+        }
 
         if (!ignore) {
             buffer.append(c);

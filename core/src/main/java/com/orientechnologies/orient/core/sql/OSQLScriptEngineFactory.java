@@ -97,8 +97,9 @@ public class OSQLScriptEngineFactory implements ScriptEngineFactory {
   @Override
   public String getProgram(String... statements) {
     final StringBuilder buffer = new StringBuilder();
-    for (String s : statements)
-      buffer.append(s).append(";\n");
+    for (String s : statements) {
+        buffer.append(s).append(";\n");
+    }
     return buffer.toString();
   }
 

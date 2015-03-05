@@ -240,13 +240,14 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage implements
         // TRY TO DELETE ALL THE FILES
         for (File f : dbDir.listFiles()) {
           // DELETE ONLY THE SUPPORTED FILES
-          for (String ext : ALL_FILE_EXTENSIONS)
-            if (f.getPath().endsWith(ext)) {
-              if (!f.delete()) {
-                notDeletedFiles++;
+          for (String ext : ALL_FILE_EXTENSIONS) {
+              if (f.getPath().endsWith(ext)) {
+                  if (!f.delete()) {
+                      notDeletedFiles++;
+                  }
+                  break;
               }
-              break;
-            }
+          }
         }
 
         if (notDeletedFiles == 0) {

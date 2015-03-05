@@ -428,8 +428,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     acquireSchemaReadLock();
     try {
       long size = 0;
-      for (int clusterId : clusterIds)
-        size += getDatabase().getClusterRecordSizeById(clusterId);
+      for (int clusterId : clusterIds) {
+          size += getDatabase().getClusterRecordSizeById(clusterId);
+      }
 
       return size;
     } finally {
@@ -559,13 +560,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       OClassImpl currentClass = this;
 
       do {
-        for (OProperty p : currentClass.properties.values())
-          if (areIndexed(p.getName())) {
-            if (indexedProps == null) {
-                indexedProps = new ArrayList<OProperty>();
+        for (OProperty p : currentClass.properties.values()) {
+            if (areIndexed(p.getName())) {
+                if (indexedProps == null) {
+                    indexedProps = new ArrayList<OProperty>();
+                }
+                indexedProps.add(p);
             }
-            indexedProps.add(p);
-          }
+        }
 
         currentClass = (OClassImpl) currentClass.getSuperClass();
 
@@ -709,8 +711,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       final Collection<Integer> coll = document.field("clusterIds");
       clusterIds = new int[coll.size()];
       int i = 0;
-      for (final Integer item : coll)
-        clusterIds[i++] = item;
+      for (final Integer item : coll) {
+          clusterIds[i++] = item;
+      }
     } else {
         clusterIds = (int[]) cc;
     }
@@ -961,8 +964,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       if (baseClasses != null) {
         set.addAll(baseClasses);
 
-        for (OClass c : baseClasses)
-          set.addAll(c.getAllBaseClasses());
+        for (OClass c : baseClasses) {
+            set.addAll(c.getAllBaseClasses());
+        }
       }
       return set;
     } finally {
@@ -1228,11 +1232,13 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
     final OStorage storage = getDatabase().getStorage();
     acquireSchemaReadLock();
     try {
-      for (int id : clusterIds)
-        storage.getClusterById(id).truncate();
+      for (int id : clusterIds) {
+          storage.getClusterById(id).truncate();
+      }
 
-      for (OIndex<?> index : getClassIndexes())
-        index.clear();
+      for (OIndex<?> index : getClassIndexes()) {
+          index.clear();
+      }
     } finally {
       releaseSchemaReadLock();
     }
@@ -1919,10 +1925,11 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
 
       owner.checkClusterCanBeAdded(clusterId, this);
 
-      for (int currId : clusterIds)
-        if (currId == clusterId) {
-            // ALREADY ADDED
-            return this;
+      for (int currId : clusterIds) {
+          if (currId == clusterId) {
+              // ALREADY ADDED
+              return this;
+          }
       }
 
       clusterIds = OArrays.copyOf(clusterIds, clusterIds.length + 1);
@@ -2141,12 +2148,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       final String clusterName = getDatabase().getClusterNameById(iId);
       final List<String> indexesToAdd = new ArrayList<String>();
 
-      for (OIndex<?> index : getIndexes())
-        indexesToAdd.add(index.getName());
+      for (OIndex<?> index : getIndexes()) {
+          indexesToAdd.add(index.getName());
+      }
 
       final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
-      for (String indexName : indexesToAdd)
-        indexManager.addClusterToIndex(clusterName, indexName);
+      for (String indexName : indexesToAdd) {
+          indexManager.addClusterToIndex(clusterName, indexName);
+      }
     }
   }
 
@@ -2192,8 +2201,9 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
   }
 
   private void removePolymorphicClusterIds(final OClassImpl iBaseClass) {
-    for (final int clusterId : iBaseClass.polymorphicClusterIds)
-      removePolymorphicClusterId(clusterId);
+    for (final int clusterId : iBaseClass.polymorphicClusterIds) {
+        removePolymorphicClusterId(clusterId);
+    }
   }
 
   private void removePolymorphicClusterId(int clusterId) {
@@ -2220,12 +2230,14 @@ public class OClassImpl extends ODocumentWrapperNoClass implements OClass {
       final String clusterName = getDatabase().getClusterNameById(iId);
       final List<String> indexesToRemove = new ArrayList<String>();
 
-      for (final OIndex<?> index : getIndexes())
-        indexesToRemove.add(index.getName());
+      for (final OIndex<?> index : getIndexes()) {
+          indexesToRemove.add(index.getName());
+      }
 
       final OIndexManager indexManager = getDatabase().getMetadata().getIndexManager();
-      for (final String indexName : indexesToRemove)
-        indexManager.removeClusterFromIndex(clusterName, indexName);
+      for (final String indexName : indexesToRemove) {
+          indexManager.removeClusterFromIndex(clusterName, indexName);
+      }
     }
   }
 

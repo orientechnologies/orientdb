@@ -293,8 +293,9 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
         return res;// No transformation
     }
     final ArrayList<Object> ret = new ArrayList<Object>();
-    for (ODocument resItem : (List<ODocument>) res)
-      ret.add(prepareReturnItem(resItem));
+    for (ODocument resItem : (List<ODocument>) res) {
+        ret.add(prepareReturnItem(resItem));
+    }
     return ret;
   }
 
@@ -339,8 +340,9 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
     }
 
     // REMOVE QUOTATION MARKS IF ANY
-    for (int i = 0; i < fieldNames.size(); ++i)
-      fieldNames.set(i, OStringSerializerHelper.removeQuotationMarks(fieldNames.get(i)));
+    for (int i = 0; i < fieldNames.size(); ++i) {
+        fieldNames.set(i, OStringSerializerHelper.removeQuotationMarks(fieldNames.get(i)));
+    }
 
     parserRequiredKeyword(KEYWORD_VALUES);
     parserSkipWhiteSpaces();
@@ -373,8 +375,9 @@ public class OCommandExecutorSQLInsert extends OCommandExecutorSQLSetAware imple
 
       // TRANSFORM FIELD VALUES
       final Map<String, Object> fields = new LinkedHashMap<String, Object>();
-      for (int i = 0; i < values.size(); ++i)
-        fields.put(fieldNames.get(i), OSQLHelper.parseValue(this, OStringSerializerHelper.decode(values.get(i).trim()), context));
+      for (int i = 0; i < values.size(); ++i) {
+          fields.put(fieldNames.get(i), OSQLHelper.parseValue(this, OStringSerializerHelper.decode(values.get(i).trim()), context));
+      }
 
       newRecords.add(fields);
       blockStart = blockEnd;

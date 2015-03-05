@@ -137,8 +137,9 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
     if (iFields != null && iFields.length > 0) {
       fieldSet = new HashSet<String>(iFields.length);
-      for (String f : iFields)
-        fieldSet.add(f);
+      for (String f : iFields) {
+          fieldSet.add(f);
+      }
     } else {
         fieldSet = null;
     }
@@ -578,8 +579,9 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
 
     if (newSize > iOutput.length()) {
       iOutput.ensureCapacity(newSize);
-      for (int b = iOutput.length(); b < newSize; ++b)
-        iOutput.append(' ');
+      for (int b = iOutput.length(); b < newSize; ++b) {
+          iOutput.append(' ');
+      }
     }
 
     return iOutput;

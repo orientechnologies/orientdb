@@ -168,9 +168,10 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
         String lastLine;
         boolean txBegun = false;
 
-        for (; line < txBegunAtLine; ++line)
-          // SKIP PREVIOUS COMMAND AND JUMP TO THE BEGIN IF ANY
-          reader.readLine();
+        for (; line < txBegunAtLine; ++line) {
+            // SKIP PREVIOUS COMMAND AND JUMP TO THE BEGIN IF ANY
+            reader.readLine();
+        }
 
         for (; (lastLine = reader.readLine()) != null; ++line) {
           lastLine = lastLine.trim();

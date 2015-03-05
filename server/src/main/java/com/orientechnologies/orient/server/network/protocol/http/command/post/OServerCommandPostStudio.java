@@ -276,8 +276,9 @@ import java.io.IOException;
        final ODocument doc = new ODocument(className);
 
        // BIND ALL CHANGED FIELDS
-       for (Entry<String, String> f : fields.entrySet())
-         doc.field(f.getKey(), f.getValue());
+       for (Entry<String, String> f : fields.entrySet()) {
+           doc.field(f.getKey(), f.getValue());
+       }
 
        doc.save();
        iResponse.send(201, "OK", OHttpUtils.CONTENT_TEXT_PLAIN, "Record " + doc.getIdentity() + " updated successfully.", null);

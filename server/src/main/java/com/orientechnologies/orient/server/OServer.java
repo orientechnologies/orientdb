@@ -241,8 +241,9 @@ public class OServer {
   @SuppressWarnings("unchecked")
   public OServer activate() throws ClassNotFoundException, InstantiationException, IllegalAccessException {
     try {
-      for (OServerLifecycleListener l : lifecycleListeners)
-        l.onBeforeActivate();
+      for (OServerLifecycleListener l : lifecycleListeners) {
+          l.onBeforeActivate();
+      }
 
       // REGISTER/CREATE SOCKET FACTORIES
       if (configuration.network.sockets != null) {
@@ -259,18 +260,21 @@ public class OServer {
       }
 
       // REGISTER PROTOCOLS
-      for (OServerNetworkProtocolConfiguration p : configuration.network.protocols)
-        networkProtocols.put(p.name, (Class<? extends ONetworkProtocol>) Class.forName(p.implementation));
+      for (OServerNetworkProtocolConfiguration p : configuration.network.protocols) {
+          networkProtocols.put(p.name, (Class<? extends ONetworkProtocol>) Class.forName(p.implementation));
+      }
 
       // STARTUP LISTENERS
-      for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
-        networkListeners.add(new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange,
-            l.protocol, networkProtocols.get(l.protocol), l.parameters, l.commands));
+      for (OServerNetworkListenerConfiguration l : configuration.network.listeners) {
+          networkListeners.add(new OServerNetworkListener(this, networkSocketFactories.get(l.socket), l.ipAddress, l.portRange,
+                  l.protocol, networkProtocols.get(l.protocol), l.parameters, l.commands));
+      }
 
       registerPlugins();
 
-      for (OServerLifecycleListener l : lifecycleListeners)
-        l.onAfterActivate();
+      for (OServerLifecycleListener l : lifecycleListeners) {
+          l.onAfterActivate();
+      }
 
       try {
         loadStorages();
@@ -321,8 +325,9 @@ public class OServer {
 
     Orient.instance().getProfiler().unregisterHookValue("system.databases");
 
-    for (OServerLifecycleListener l : lifecycleListeners)
-      l.onBeforeDeactivate();
+    for (OServerLifecycleListener l : lifecycleListeners) {
+        l.onBeforeDeactivate();
+    }
 
     lock.lock();
     try {
@@ -346,12 +351,13 @@ public class OServer {
         networkProtocols.clear();
       }
 
-      for (OServerLifecycleListener l : lifecycleListeners)
-        try {
-          l.onAfterDeactivate();
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "Error during deactivation of server lifecycle listener %s", e, l);
-        }
+      for (OServerLifecycleListener l : lifecycleListeners) {
+          try {
+              l.onAfterDeactivate();
+          } catch (Exception e) {
+              OLogManager.instance().error(this, "Error during deactivation of server lifecycle listener %s", e, l);
+          }
+      }
 
       if (pluginManager != null) {
           pluginManager.shutdown();
@@ -412,8 +418,9 @@ public class OServer {
     // SEARCH IN CONFIGURED PATHS
     final Map<String, String> storages = new HashMap<String, String>();
     if (configuration.storages != null && configuration.storages.length > 0) {
-        for (OServerStorageConfiguration s : configuration.storages)
+        for (OServerStorageConfiguration s : configuration.storages) {
             storages.put(OIOUtils.getDatabaseNameFromPath(s.name), s.path);
+        }
     }
 
     // SEARCH IN DEFAULT DATABASE DIRECTORY
@@ -486,9 +493,10 @@ public class OServer {
       }
 
       String[] resourceParts = user.resources.split(",");
-      for (String r : resourceParts)
-        if (r.equals(iResourceToCheck)) {
-            return true;
+      for (String r : resourceParts) {
+          if (r.equals(iResourceToCheck)) {
+              return true;
+          }
       }
     }
 
@@ -524,9 +532,10 @@ public class OServer {
 
   @SuppressWarnings("unchecked")
   public <RET extends OServerNetworkListener> RET getListenerByProtocol(final Class<? extends ONetworkProtocol> iProtocolClass) {
-    for (OServerNetworkListener l : networkListeners)
-      if (iProtocolClass.isAssignableFrom(l.getProtocolType())) {
-          return (RET) l;
+    for (OServerNetworkListener l : networkListeners) {
+        if (iProtocolClass.isAssignableFrom(l.getProtocolType())) {
+            return (RET) l;
+        }
     }
 
     return null;
@@ -551,9 +560,10 @@ public class OServer {
         throw new ODatabaseException("Error on plugin lookup the server didn't start correcty.");
     }
 
-    for (OServerPluginInfo h : getPlugins())
-      if (h.getInstance() != null && h.getInstance().getClass().equals(iPluginClass)) {
-          return (RET) h.getInstance();
+    for (OServerPluginInfo h : getPlugins()) {
+        if (h.getInstance() != null && h.getInstance().getClass().equals(iPluginClass)) {
+            return (RET) h.getInstance();
+        }
     }
 
     return null;
@@ -728,8 +738,9 @@ public class OServer {
     // FILL THE CONTEXT CONFIGURATION WITH SERVER'S PARAMETERS
     contextConfiguration = new OContextConfiguration();
     if (iConfiguration.properties != null) {
-        for (OServerEntryConfiguration prop : iConfiguration.properties)
+        for (OServerEntryConfiguration prop : iConfiguration.properties) {
             contextConfiguration.setValue(prop.name, prop.value);
+        }
     }
 
     hookManager = new OConfigurableHooksManager(iConfiguration);
@@ -769,55 +780,56 @@ public class OServer {
     }
 
     String type;
-    for (OServerStorageConfiguration stg : configuration.storages)
-      if (stg.loadOnStartup) {
-        // @COMPATIBILITY
-        if (stg.userName == null) {
-            stg.userName = OUser.ADMIN;
-        }
-        if (stg.userPassword == null) {
-            stg.userPassword = OUser.ADMIN;
-        }
-
-        int idx = stg.path.indexOf(':');
-        if (idx == -1) {
-          OLogManager.instance().error(this, "-> Invalid path '" + stg.path + "' for database '" + stg.name + "'");
-          return;
-        }
-        type = stg.path.substring(0, idx);
-
-        ODatabaseDocument db = null;
-        try {
-          db = new ODatabaseDocumentTx(stg.path);
-
-          if (db.exists()) {
-              db.open(stg.userName, stg.userPassword);
-          } else {
-            db.create();
-            if (stg.userName.equals(OUser.ADMIN)) {
-              if (!stg.userPassword.equals(OUser.ADMIN)) {
-                  // CHANGE ADMIN PASSWORD
-                  db.getMetadata().getSecurity().getUser(OUser.ADMIN).setPassword(stg.userPassword);
-                  }
-            } else {
-              // CREATE A NEW USER AS ADMIN AND REMOVE THE DEFAULT ONE
-              db.getMetadata().getSecurity().createUser(stg.userName, stg.userPassword, ORole.ADMIN);
-              db.getMetadata().getSecurity().dropUser(OUser.ADMIN);
-              db.close();
-              db.open(stg.userName, stg.userPassword);
+    for (OServerStorageConfiguration stg : configuration.storages) {
+        if (stg.loadOnStartup) {
+            // @COMPATIBILITY
+            if (stg.userName == null) {
+                stg.userName = OUser.ADMIN;
             }
-          }
-
-          OLogManager.instance().info(this, "-> Loaded " + type + " database '" + stg.name + "'");
-        } catch (Exception e) {
-          OLogManager.instance().error(this, "-> Cannot load " + type + " database '" + stg.name + "': " + e);
-
-        } finally {
-          if (db != null) {
-              db.close();
-          }
+            if (stg.userPassword == null) {
+                stg.userPassword = OUser.ADMIN;
+            }
+            
+            int idx = stg.path.indexOf(':');
+            if (idx == -1) {
+                OLogManager.instance().error(this, "-> Invalid path '" + stg.path + "' for database '" + stg.name + "'");
+                return;
+            }
+            type = stg.path.substring(0, idx);
+            
+            ODatabaseDocument db = null;
+            try {
+                db = new ODatabaseDocumentTx(stg.path);
+                
+                if (db.exists()) {
+                    db.open(stg.userName, stg.userPassword);
+                } else {
+                    db.create();
+                    if (stg.userName.equals(OUser.ADMIN)) {
+                        if (!stg.userPassword.equals(OUser.ADMIN)) {
+                            // CHANGE ADMIN PASSWORD
+                            db.getMetadata().getSecurity().getUser(OUser.ADMIN).setPassword(stg.userPassword);
+                        }
+                    } else {
+                        // CREATE A NEW USER AS ADMIN AND REMOVE THE DEFAULT ONE
+                        db.getMetadata().getSecurity().createUser(stg.userName, stg.userPassword, ORole.ADMIN);
+                        db.getMetadata().getSecurity().dropUser(OUser.ADMIN);
+                        db.close();
+                        db.open(stg.userName, stg.userPassword);
+                    }
+                }
+                
+                OLogManager.instance().info(this, "-> Loaded " + type + " database '" + stg.name + "'");
+            } catch (Exception e) {
+                OLogManager.instance().error(this, "-> Cannot load " + type + " database '" + stg.name + "': " + e);
+                
+            } finally {
+                if (db != null) {
+                    db.close();
+                }
+            }
         }
-      }
+    }
   }
 
   protected void createDefaultServerUsers() throws IOException {

@@ -174,8 +174,9 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
     final long timer = PROFILER.startChrono();
 
     try {
-      for (OIdentifiable rid : coll)
-        internalPut(rid, null);
+      for (OIdentifiable rid : coll) {
+          internalPut(rid, null);
+      }
 
       commitChanges();
 
@@ -225,9 +226,10 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
     }
 
     boolean modified = false;
-    for (Object o : c)
-      if (remove(o) != null) {
-          modified = true;
+    for (Object o : c) {
+        if (remove(o) != null) {
+            modified = true;
+        }
     }
     return modified;
   }
@@ -271,9 +273,10 @@ public class OMVRBTreeRID extends OMVRBTreePersistent<OIdentifiable, OIdentifiab
     super.clear();
 
     if (origValues != null) {
-      for (final java.util.Map.Entry<OIdentifiable, OIdentifiable> item : origValues.entrySet())
-        fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
-            OMultiValueChangeEvent.OChangeType.REMOVE, item.getKey(), null, item.getValue()));
+      for (final java.util.Map.Entry<OIdentifiable, OIdentifiable> item : origValues.entrySet()) {
+          fireCollectionChangedEvent(new OMultiValueChangeEvent<OIdentifiable, OIdentifiable>(
+                  OMultiValueChangeEvent.OChangeType.REMOVE, item.getKey(), null, item.getValue()));
+      }
     } else {
         setDirty();
     }

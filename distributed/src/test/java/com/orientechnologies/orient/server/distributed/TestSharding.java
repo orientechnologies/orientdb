@@ -129,8 +129,9 @@ public class TestSharding extends AbstractServerClusterTest {
 
       graph = localFactory.getNoTx();
       try {
-        for (int i = 0; i < vertices.length; ++i)
-          System.out.println("Created vertex " + i + ": " + vertices[i].getRecord());
+        for (int i = 0; i < vertices.length; ++i) {
+            System.out.println("Created vertex " + i + ": " + vertices[i].getRecord());
+        }
       } finally {
         graph.shutdown();
       }

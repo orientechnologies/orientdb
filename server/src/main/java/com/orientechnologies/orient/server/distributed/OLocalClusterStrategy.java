@@ -82,8 +82,9 @@ public class OLocalClusterStrategy implements OClusterSelectionStrategy {
 
     final int[] clusterIds = cls.getClusterIds();
     final List<String> clusterNames = new ArrayList<String>(clusterIds.length);
-    for (int c : clusterIds)
-      clusterNames.add(db.getClusterNameById(c));
+    for (int c : clusterIds) {
+        clusterNames.add(db.getClusterNameById(c));
+    }
 
     final ODistributedConfiguration cfg = manager.getDatabaseConfiguration(databaseName);
 

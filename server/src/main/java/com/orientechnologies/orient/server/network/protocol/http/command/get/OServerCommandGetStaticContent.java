@@ -280,8 +280,9 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
        if (OGlobalConfiguration.SERVER_CACHE_FILE_STATIC.getValueAsBoolean()) {
          // READ THE ENTIRE STREAM AND CACHE IT IN MEMORY
          final byte[] buffer = new byte[(int) staticContent.contentSize];
-         for (int i = 0; i < staticContent.contentSize; ++i)
-           buffer[i] = (byte) staticContent.is.read();
+         for (int i = 0; i < staticContent.contentSize; ++i) {
+             buffer[i] = (byte) staticContent.is.read();
+         }
 
          OStaticContentCachedEntry cachedEntry = new OStaticContentCachedEntry();
          cachedEntry.content = buffer;

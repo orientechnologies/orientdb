@@ -244,9 +244,10 @@ public class OIOUtils {
       {
         result.append("\\u"); // standard unicode format.
         hex = Integer.toHexString(ch & 0xFFFF); // Get hex value of the char.
-        for (int j = 0; j < 4 - hex.length(); j++)
-          // Prepend zeros because unicode requires 4 digits
-          result.append('0');
+        for (int j = 0; j < 4 - hex.length(); j++) {
+            // Prepend zeros because unicode requires 4 digits
+            result.append('0');
+        }
         result.append(hex.toLowerCase()); // standard unicode format.
         // ostr.append(hex.toLowerCase(Locale.ENGLISH));
       }
@@ -294,9 +295,10 @@ public class OIOUtils {
         return false;
     }
 
-    for (int i = 0; i < buffer.length; ++i)
-      if (buffer[i] != buffer2[i]) {
-          return false;
+    for (int i = 0; i < buffer.length; ++i) {
+        if (buffer[i] != buffer2[i]) {
+            return false;
+        }
     }
 
     return true;

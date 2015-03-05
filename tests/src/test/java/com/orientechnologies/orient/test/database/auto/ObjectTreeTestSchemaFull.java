@@ -192,10 +192,12 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
     final OObjectDatabaseTx[] dbs = new OObjectDatabaseTx[OObjectDatabasePool.global().getMaxSize()];
 
     for (int i = 0; i < 10; ++i) {
-      for (int db = 0; db < dbs.length; ++db)
-        dbs[db] = OObjectDatabasePool.global().acquire(url, "admin", "admin");
-      for (int db = 0; db < dbs.length; ++db)
-        dbs[db].close();
+      for (int db = 0; db < dbs.length; ++db) {
+          dbs[db] = OObjectDatabasePool.global().acquire(url, "admin", "admin");
+      }
+      for (int db = 0; db < dbs.length; ++db) {
+          dbs[db].close();
+      }
     }
   }
 

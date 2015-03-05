@@ -122,8 +122,9 @@ public class SBTreeLeafBucketTest {
 
     Assert.assertEquals(keyIndexMap.size(), treeBucket.size());
 
-    for (int i = 0; i < treeBucket.size(); i++)
-      treeBucket.updateValue(i, new OSBTreeValue<OIdentifiable>(false, -1, new ORecordId(i + 5, i + 5)));
+    for (int i = 0; i < treeBucket.size(); i++) {
+        treeBucket.updateValue(i, new OSBTreeValue<OIdentifiable>(false, -1, new ORecordId(i + 5, i + 5)));
+    }
 
     for (Map.Entry<Long, Integer> keyIndexEntry : keyIndexMap.entrySet()) {
       OSBTreeBucket.SBTreeEntry<Long, OIdentifiable> entry = treeBucket.getEntry(keyIndexEntry.getValue());

@@ -208,8 +208,9 @@ public abstract class OChannelBinary extends OChannel {
     }
 
     List<String> result = new ArrayList<String>();
-    for (int i = 0; i < items; ++i)
-      result.add(readString());
+    for (int i = 0; i < items; ++i) {
+        result.add(readString());
+    }
 
     if (debug) {
         OLogManager.instance().info(this, "%s - Read string list with %d items: %d", socket.getRemoteSocketAddress(), items);
@@ -236,8 +237,9 @@ public abstract class OChannelBinary extends OChannel {
     }
 
     Set<String> result = new HashSet<String>();
-    for (int i = 0; i < items; ++i)
-      result.add(readString());
+    for (int i = 0; i < items; ++i) {
+        result.add(readString());
+    }
 
     if (debug) {
         OLogManager.instance().info(this, "%s - Read string set with %d items: %d", socket.getRemoteSocketAddress(), items, result);
@@ -361,8 +363,9 @@ public abstract class OChannelBinary extends OChannel {
     } else {
       writeInt(iCollection.size());
 
-      for (String s : iCollection)
-        writeString(s);
+      for (String s : iCollection) {
+          writeString(s);
+      }
     }
 
     return this;

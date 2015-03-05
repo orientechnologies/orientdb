@@ -54,8 +54,9 @@ public class SuperNodeGraphSpeedTest extends SpeedTestMonoThread {
   @Test(enabled = false)
   public void deinit() throws Exception {
     int i = 0;
-    for (Edge e : superNode.getEdges(Direction.OUT))
-      i++;
+    for (Edge e : superNode.getEdges(Direction.OUT)) {
+        i++;
+    }
     Assert.assertEquals(i, TOT);
 
     graph.shutdown();

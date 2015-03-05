@@ -82,11 +82,13 @@ public class OAutomaticBackup extends OServerPluginAbstract {
       } else if (param.name.equalsIgnoreCase("target.directory")) {
           targetDirectory = param.value;
       } else if (param.name.equalsIgnoreCase("db.include") && param.value.trim().length() > 0) {
-          for (String db : param.value.split(","))
+          for (String db : param.value.split(",")) {
               includeDatabases.add(db);
+          }
       } else if (param.name.equalsIgnoreCase("db.exclude") && param.value.trim().length() > 0) {
-          for (String db : param.value.split(","))
+          for (String db : param.value.split(",")) {
               excludeDatabases.add(db);
+          }
       } else if (param.name.equalsIgnoreCase("target.fileName")) {
           targetFileName = param.value;
       } else if (param.name.equalsIgnoreCase("buffer")) {

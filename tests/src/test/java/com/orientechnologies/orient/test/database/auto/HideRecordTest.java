@@ -48,8 +48,9 @@ public class HideRecordTest extends DocumentDBBaseTest {
       ridsToRemove.add(docs.get(i));
     }
 
-    for (ORID ridToRemove : ridsToRemove)
-      docs.remove(ridToRemove);
+    for (ORID ridToRemove : ridsToRemove) {
+        docs.remove(ridToRemove);
+    }
 
     final List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from MassiveRecordsHide"));
     Assert.assertEquals(result.size(), 50);
@@ -85,8 +86,9 @@ public class HideRecordTest extends DocumentDBBaseTest {
       ridsToRemove.add(docs.get(i));
     }
 
-    for (ORID ridToRemove : ridsToRemove)
-      docs.remove(ridToRemove);
+    for (ORID ridToRemove : ridsToRemove) {
+        docs.remove(ridToRemove);
+    }
 
     final List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>("select from MassiveRecordsHideBySQL"));
     Assert.assertEquals(result.size(), 50);

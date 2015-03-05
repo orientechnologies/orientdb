@@ -38,8 +38,9 @@ public class JavaMD5SpeedTest extends SpeedTestMonoThread {
 		md.update("admin".getBytes());
 		byte[] result = md.digest();
 
-		for (int i = 0; i < RESULT.length; ++i)
-			Assert.assertTrue(result[i] == RESULT[i]);
+		for (int i = 0; i < RESULT.length; ++i) {
+                    Assert.assertTrue(result[i] == RESULT[i]);
+                }
 	}
 
 	@Override

@@ -149,8 +149,9 @@ import java.util.Map;
      int found = 0;
 
      if (iNames != null && request.parameters != null) {
-         for (String name : iNames)
+         for (String name : iNames) {
              found += request.parameters.containsKey(name) ? 1 : 0;
+         }
      }
 
      return found;

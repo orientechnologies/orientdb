@@ -549,8 +549,9 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
         closed = true;
 
         if (!pagesCache.isEmpty()) {
-          for (OWALPage page : pagesCache)
-            page.getPagePointer().free();
+          for (OWALPage page : pagesCache) {
+              page.getPagePointer().free();
+          }
         }
 
         currentPage = null;
@@ -672,8 +673,9 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       }
     }
 
-    for (WeakReference<OLowDiskSpaceListener> ref : itemsToRemove)
-      lowDiskSpaceListeners.remove(ref);
+    for (WeakReference<OLowDiskSpaceListener> ref : itemsToRemove) {
+        lowDiskSpaceListeners.remove(ref);
+    }
   }
 
   public void addFullCheckpointListener(OFullCheckpointRequestListener listener) {
@@ -691,8 +693,9 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
       }
     }
 
-    for (WeakReference<OFullCheckpointRequestListener> ref : itemsToRemove)
-      fullCheckpointListeners.remove(ref);
+    for (WeakReference<OFullCheckpointRequestListener> ref : itemsToRemove) {
+        fullCheckpointListeners.remove(ref);
+    }
   }
 
   public ODiskWriteAheadLog(int maxPagesCacheSize, int commitDelay, long maxSegmentSize, OLocalPaginatedStorage storage)
@@ -1010,8 +1013,9 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
 
       closed = true;
 
-      for (LogSegment logSegment : logSegments)
-        logSegment.close(flush);
+      for (LogSegment logSegment : logSegments) {
+          logSegment.close(flush);
+      }
 
       masterRecordLSNHolder.close();
     } finally {
@@ -1028,8 +1032,9 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
     try {
       close(flush);
 
-      for (LogSegment logSegment : logSegments)
-        logSegment.delete(false);
+      for (LogSegment logSegment : logSegments) {
+          logSegment.delete(false);
+      }
 
       boolean deleted = OFileUtils.delete(masterRecordFile);
       int retryCount = 0;
@@ -1158,8 +1163,9 @@ public class ODiskWriteAheadLog extends OAbstractWriteAheadLog {
   private void recalculateLogSize() throws IOException {
     logSize = 0;
 
-    for (LogSegment segment : logSegments)
-      logSize += segment.filledUpTo();
+    for (LogSegment segment : logSegments) {
+        logSize += segment.filledUpTo();
+    }
   }
 
   private void fixMasterRecords() throws IOException {

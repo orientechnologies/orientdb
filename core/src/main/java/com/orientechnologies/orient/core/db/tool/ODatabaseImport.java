@@ -252,8 +252,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         }
       };
 
-      for (Object item : value)
-        updated = convertSingleValue(item, callback, updated);
+      for (Object item : value) {
+          updated = convertSingleValue(item, callback, updated);
+      }
 
       if (updated) {
           return result;
@@ -278,8 +279,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       };
       boolean updated = false;
 
-      for (Object item : value)
-        updated = convertSingleValue(item, callback, updated);
+      for (Object item : value) {
+          updated = convertSingleValue(item, callback, updated);
+      }
 
       if (updated) {
           return result;
@@ -303,8 +305,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         }
       };
 
-      for (OIdentifiable identifiable : value)
-        updated = convertSingleValue(identifiable, callback, updated);
+      for (OIdentifiable identifiable : value) {
+          updated = convertSingleValue(identifiable, callback, updated);
+      }
 
       if (updated) {
           return result;
@@ -897,8 +900,9 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
       } while (jsonReader.lastChar() == ',');
 
       // REBUILD ALL THE INHERITANCE
-      for (Map.Entry<OClass, String> entry : superClasses.entrySet())
-        entry.getKey().setSuperClass(database.getMetadata().getSchema().getClass(entry.getValue()));
+      for (Map.Entry<OClass, String> entry : superClasses.entrySet()) {
+          entry.getKey().setSuperClass(database.getMetadata().getSchema().getClass(entry.getValue()));
+      }
 
       // SET ALL THE LINKED CLASSES
       for (Map.Entry<OPropertyImpl, String> entry : linkedClasses.entrySet()) {
@@ -1163,32 +1167,33 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     listener.onMessage("\nRebuilding indexes of truncated clusters ...");
 
-    for (final String indexName : indexesToRebuild)
-      database.getMetadata().getIndexManager().getIndex(indexName).rebuild(new OProgressListener() {
-        private long last = 0;
-
-        @Override
-        public void onBegin(Object iTask, long iTotal, Object metadata) {
-          listener.onMessage("\n- Cluster content was updated: rebuilding index '" + indexName + "'...");
-        }
-
-        @Override
-        public boolean onProgress(Object iTask, long iCounter, float iPercent) {
-          final long now = System.currentTimeMillis();
-          if (last == 0) {
-              last = now;
-          } else if (now - last > 1000) {
-            listener.onMessage(String.format("\nIndex '%s' is rebuilding (%.2f/100)", indexName, iPercent));
-            last = now;
-          }
-          return true;
-        }
-
-        @Override
-        public void onCompletition(Object iTask, boolean iSucceed) {
-          listener.onMessage(" Index " + indexName + " was successfully rebuilt.");
-        }
-      });
+    for (final String indexName : indexesToRebuild) {
+        database.getMetadata().getIndexManager().getIndex(indexName).rebuild(new OProgressListener() {
+            private long last = 0;
+            
+            @Override
+            public void onBegin(Object iTask, long iTotal, Object metadata) {
+                listener.onMessage("\n- Cluster content was updated: rebuilding index '" + indexName + "'...");
+            }
+            
+            @Override
+            public boolean onProgress(Object iTask, long iCounter, float iPercent) {
+                final long now = System.currentTimeMillis();
+                if (last == 0) {
+                    last = now;
+                } else if (now - last > 1000) {
+                    listener.onMessage(String.format("\nIndex '%s' is rebuilding (%.2f/100)", indexName, iPercent));
+                    last = now;
+                }
+                return true;
+            }
+            
+            @Override
+            public void onCompletition(Object iTask, boolean iSucceed) {
+                listener.onMessage(" Index " + indexName + " was successfully rebuilt.");
+            }
+        });
+    }
 
     listener.onMessage("\nDone " + indexesToRebuild.size() + " indexes were rebuilt.");
 

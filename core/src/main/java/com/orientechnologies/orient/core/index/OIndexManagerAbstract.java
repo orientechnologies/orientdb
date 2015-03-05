@@ -109,15 +109,16 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   public <RET extends ODocumentWrapper> RET save() {
     acquireExclusiveLock();
     try {
-      for (int retry = 0; retry < 10; retry++)
-        try {
-
-          super.save();
-          getDatabase().getStorage().synch();
-          return (RET) this;
-        } catch (OConcurrentModificationException e) {
-          reload(null, true);
-        }
+      for (int retry = 0; retry < 10; retry++) {
+          try {
+              
+              super.save();
+              getDatabase().getStorage().synch();
+              return (RET) this;
+          } catch (OConcurrentModificationException e) {
+              reload(null, true);
+          }
+      }
 
       super.save();
       getDatabase().getStorage().synch();
@@ -163,8 +164,9 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
   public Collection<? extends OIndex<?>> getIndexes() {
     final Collection<OIndex<?>> rawResult = indexes.values();
     final List<OIndex<?>> result = new ArrayList<OIndex<?>>(rawResult.size());
-    for (final OIndex<?> index : rawResult)
-      result.add(preProcessBeforeReturn(index));
+    for (final OIndex<?> index : rawResult) {
+        result.add(preProcessBeforeReturn(index));
+    }
     return result;
   }
 
@@ -309,8 +311,9 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
       final Set<OIndex<?>> rawResult = propertyIndex.get(multiKey);
       final Set<OIndex<?>> transactionalResult = new HashSet<OIndex<?>>(rawResult.size());
-      for (final OIndex<?> index : rawResult)
-        transactionalResult.add(preProcessBeforeReturn(index));
+      for (final OIndex<?> index : rawResult) {
+          transactionalResult.add(preProcessBeforeReturn(index));
+      }
 
       return transactionalResult;
     } finally {
@@ -361,9 +364,11 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
           return;
       }
 
-      for (final Set<OIndex<?>> propertyIndexes : propertyIndex.values())
-        for (final OIndex<?> index : propertyIndexes)
-          indexes.add(preProcessBeforeReturn(index));
+      for (final Set<OIndex<?>> propertyIndexes : propertyIndex.values()) {
+          for (final OIndex<?> index : propertyIndexes) {
+              indexes.add(preProcessBeforeReturn(index));
+          }
+      }
     } finally {
       releaseSharedLock();
     }
@@ -467,8 +472,9 @@ public abstract class OIndexManagerAbstract extends ODocumentWrapperNoClass impl
 
   protected List<String> normalizeFieldNames(final Collection<String> fieldNames) {
     final ArrayList<String> result = new ArrayList<String>(fieldNames.size());
-    for (final String fieldName : fieldNames)
-      result.add(fieldName.toLowerCase());
+    for (final String fieldName : fieldNames) {
+        result.add(fieldName.toLowerCase());
+    }
     return result;
   }
 

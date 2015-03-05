@@ -261,8 +261,9 @@ public class OCommandExecutorSQLDeleteEdge extends OCommandExecutorSQLRetryAbstr
 
                 // DELETE THE FOUND EDGES
                 removed = edges.size();
-                for (OrientEdge edge : edges)
-                  edge.remove();
+                for (OrientEdge edge : edges) {
+                    edge.remove();
+                }
 
                 return null;
               }

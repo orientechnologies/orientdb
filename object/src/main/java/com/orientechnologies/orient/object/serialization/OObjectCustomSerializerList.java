@@ -223,8 +223,9 @@ public class OObjectCustomSerializerList<TYPE> implements List<TYPE>, OObjectLaz
         return;
     }
 
-    for (int i = 0; i < size(); ++i)
-      convert(i);
+    for (int i = 0; i < size(); ++i) {
+        convert(i);
+    }
 
     converted = true;
   }

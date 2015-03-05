@@ -85,8 +85,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
           indexesToCommit.put(index.getName(), index.getInternal());
         }
 
-        for (OIndexInternal<?> indexInternal : indexesToCommit.values())
-          indexInternal.preCommit();
+        for (OIndexInternal<?> indexInternal : indexesToCommit.values()) {
+            indexInternal.preCommit();
+        }
 
         for (Entry<String, Object> indexEntry : indexEntries) {
           final OIndexInternal<?> index = indexesToCommit.get(indexEntry.getKey()).getInternal();
@@ -100,11 +101,13 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
         }
 
         try {
-          for (OIndexInternal<?> indexInternal : indexesToCommit.values())
-            indexInternal.commit();
+          for (OIndexInternal<?> indexInternal : indexesToCommit.values()) {
+              indexInternal.commit();
+          }
         } finally {
-          for (OIndexInternal<?> indexInternal : indexesToCommit.values())
-            indexInternal.postCommit();
+          for (OIndexInternal<?> indexInternal : indexesToCommit.values()) {
+              indexInternal.postCommit();
+          }
         }
       }
     }
@@ -195,11 +198,13 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
     // REMOVE ALL THE ENTRIES AND INVALIDATE THE DOCUMENTS TO AVOID TO BE RE-USED DIRTY AT USER-LEVEL. IN THIS WAY RE-LOADING MUST
     // EXECUTED
-    for (ORecordOperation v : recordEntries.values())
-      v.getRecord().unload();
+    for (ORecordOperation v : recordEntries.values()) {
+        v.getRecord().unload();
+    }
 
-    for (ORecordOperation v : allEntries.values())
-      v.getRecord().unload();
+    for (ORecordOperation v : allEntries.values()) {
+        v.getRecord().unload();
+    }
 
     close();
 
@@ -490,8 +495,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
       List<OIndexAbstract<?>> lockedIndexes = acquireIndexLocks();
       try {
         final Map<String, OIndex<?>> indexes = new HashMap<String, OIndex<?>>();
-        for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes())
-          indexes.put(index.getName(), index);
+        for (OIndex<?> index : database.getMetadata().getIndexManager().getIndexes()) {
+            indexes.put(index.getName(), index);
+        }
 
         final Runnable callback = new CommitIndexesCallback(indexes);
 
@@ -548,8 +554,9 @@ public class OTransactionOptimistic extends OTransactionRealAbstract {
 
   private void releaseIndexLocks(List<OIndexAbstract<?>> lockedIndexes) {
     if (lockedIndexes != null) {
-      for (OIndexAbstract<?> index : lockedIndexes)
-        index.releaseModificationLock();
+      for (OIndexAbstract<?> index : lockedIndexes) {
+          index.releaseModificationLock();
+      }
 
     }
   }

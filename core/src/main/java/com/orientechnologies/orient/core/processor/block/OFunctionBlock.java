@@ -75,8 +75,9 @@ public class OFunctionBlock extends OAbstractBlock {
         cls = Class.forName(clsName);
 
         Class<?>[] argTypes = new Class<?>[args.length];
-        for (int i = 0; i < args.length; ++i)
-          argTypes[i] = args[i] == null ? null : args[i].getClass();
+        for (int i = 0; i < args.length; ++i) {
+            argTypes[i] = args[i] == null ? null : args[i].getClass();
+        }
 
         Method m = cls.getMethod(methodName, argTypes);
 

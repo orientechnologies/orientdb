@@ -79,8 +79,9 @@ public class ODistributedResponseManager {
     this.totalTimeout = iTotalTimeout;
     this.groupResponsesByResult = iGroupResponsesByResult;
 
-    for (String node : expectedResponses)
-      responses.put(node, NO_RESPONSE);
+    for (String node : expectedResponses) {
+        responses.put(node, NO_RESPONSE);
+    }
 
     if (groupResponsesByResult) {
         responseGroups.add(new ArrayList<ODistributedResponse>());
@@ -358,9 +359,10 @@ public class ODistributedResponseManager {
       case UNION: {
         // COLLECT ALL THE RESPONSE IN A MAP OF <NODE, RESULT>
         final Map<String, Object> payloads = new HashMap<String, Object>();
-        for (Map.Entry<String, Object> entry : responses.entrySet())
-          if (entry.getValue() != NO_RESPONSE) {
-              payloads.put(entry.getKey(), ((ODistributedResponse) entry.getValue()).getPayload());
+        for (Map.Entry<String, Object> entry : responses.entrySet()) {
+            if (entry.getValue() != NO_RESPONSE) {
+                payloads.put(entry.getKey(), ((ODistributedResponse) entry.getValue()).getPayload());
+            }
         }
 
         final ODistributedResponse response = (ODistributedResponse) getReceivedResponses().iterator().next();
@@ -392,9 +394,10 @@ public class ODistributedResponseManager {
   public List<String> getMissingNodes() {
     synchronized (responseLock) {
       final List<String> missingNodes = new ArrayList<String>();
-      for (Map.Entry<String, Object> entry : responses.entrySet())
-        if (entry.getValue() == NO_RESPONSE) {
-            missingNodes.add(entry.getKey());
+      for (Map.Entry<String, Object> entry : responses.entrySet()) {
+          if (entry.getValue() == NO_RESPONSE) {
+              missingNodes.add(entry.getKey());
+          }
       }
       return missingNodes;
     }
@@ -412,9 +415,10 @@ public class ODistributedResponseManager {
   public List<String> getRespondingNodes() {
     final List<String> respondedNodes = new ArrayList<String>();
     synchronized (responseLock) {
-      for (Map.Entry<String, Object> entry : responses.entrySet())
-        if (entry.getValue() != NO_RESPONSE) {
-            respondedNodes.add(entry.getKey());
+      for (Map.Entry<String, Object> entry : responses.entrySet()) {
+          if (entry.getValue() != NO_RESPONSE) {
+              respondedNodes.add(entry.getKey());
+          }
       }
     }
     return respondedNodes;
@@ -430,8 +434,9 @@ public class ODistributedResponseManager {
     int bestGroupSoFar = getBestResponsesGroup();
     for (int i = 0; i < responseGroups.size(); ++i) {
       if (i != bestGroupSoFar) {
-        for (ODistributedResponse r : responseGroups.get(i))
-          servers.add(r);
+        for (ODistributedResponse r : responseGroups.get(i)) {
+            servers.add(r);
+        }
       }
     }
     return servers;
@@ -486,9 +491,10 @@ public class ODistributedResponseManager {
         return receivedResponses >= quorum;
     }
 
-    for (List<ODistributedResponse> group : responseGroups)
-      if (group.size() + discardedResponses >= quorum) {
-          return true;
+    for (List<ODistributedResponse> group : responseGroups) {
+        if (group.size() + discardedResponses >= quorum) {
+            return true;
+        }
     }
 
     if (receivedResponses < quorum && iCheckAvailableNodes) {
@@ -519,9 +525,10 @@ public class ODistributedResponseManager {
    */
   protected List<ODistributedResponse> getReceivedResponses() {
     final List<ODistributedResponse> parsed = new ArrayList<ODistributedResponse>();
-    for (Object r : responses.values())
-      if (r != NO_RESPONSE) {
-          parsed.add((ODistributedResponse) r);
+    for (Object r : responses.values()) {
+        if (r != NO_RESPONSE) {
+            parsed.add((ODistributedResponse) r);
+        }
     }
     return parsed;
   }

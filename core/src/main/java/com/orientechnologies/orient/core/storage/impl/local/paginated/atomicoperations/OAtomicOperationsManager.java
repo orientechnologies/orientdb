@@ -111,8 +111,9 @@ public class OAtomicOperationsManager {
     assert counter >= 0;
 
     if (counter == 0) {
-      for (Object lockObject : operation.lockedObjects())
-        lockManager.releaseLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
+      for (Object lockObject : operation.lockedObjects()) {
+          lockManager.releaseLock(this, lockObject, OLockManager.LOCK.EXCLUSIVE);
+      }
 
       writeAheadLog.logAtomicOperationEndRecord(operation.getOperationUnitId(), rollback, operation.getStartLSN());
       currentOperation.set(null);

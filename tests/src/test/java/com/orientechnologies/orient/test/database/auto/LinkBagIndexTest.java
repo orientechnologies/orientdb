@@ -590,8 +590,9 @@ public class LinkBagIndexTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 1);
 
     List<OIdentifiable> listResult = new ArrayList<OIdentifiable>();
-    for (OIdentifiable identifiable : result.get(0).<ORidBag> field("ridBag"))
-      listResult.add(identifiable);
+    for (OIdentifiable identifiable : result.get(0).<ORidBag> field("ridBag")) {
+        listResult.add(identifiable);
+    }
 
     Assert.assertEquals(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity()), listResult);
   }

@@ -130,8 +130,9 @@ public class ORecordTrackedSet extends AbstractCollection<OIdentifiable> impleme
         return false;
     }
 
-    for (OIdentifiable o : c)
-      add(o);
+    for (OIdentifiable o : c) {
+        add(o);
+    }
 
     setDirty();
     return true;

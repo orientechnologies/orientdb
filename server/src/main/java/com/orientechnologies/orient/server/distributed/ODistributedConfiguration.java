@@ -256,21 +256,23 @@ public class ODistributedConfiguration {
         if (serverList != null) {
           boolean localNodeFound = false;
           // CHECK IF THE LOCAL NODE IS INVOLVED: IF YES PREFER LOCAL EXECUTION
-          for (String s : serverList)
-            if (s.equals(iLocalNode)) {
-              // FOUND: JUST USE THIS AND CONTINUE WITH THE NEXT PARTITION
-              partitions.add(s);
-              localNodeFound = true;
-              break;
-            }
+          for (String s : serverList) {
+              if (s.equals(iLocalNode)) {
+                  // FOUND: JUST USE THIS AND CONTINUE WITH THE NEXT PARTITION
+                  partitions.add(s);
+                  localNodeFound = true;
+                  break;
+              }
+          }
 
           if (!localNodeFound) {
-              for (String s : serverList)
+              for (String s : serverList) {
                   if (!s.equals(NEW_NODE_TAG)) {
                       // TODO: USE A ROUND-ROBIN OR RANDOM ALGORITHM
                       partitions.add(s);
                       break;
                   }
+              }
           }
         }
       }
@@ -321,9 +323,10 @@ public class ODistributedConfiguration {
       for (String p : iClusterNames) {
         final List<String> serverList = getClusterConfiguration(p).field("servers");
         if (serverList != null) {
-          for (String s : serverList)
-            if (!s.equals(NEW_NODE_TAG)) {
-                partitions.add(s);
+          for (String s : serverList) {
+              if (!s.equals(NEW_NODE_TAG)) {
+                  partitions.add(s);
+              }
           }
         }
       }

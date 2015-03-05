@@ -269,8 +269,9 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       indexDoc.field("entries", entries, OType.EMBEDDEDLIST);
 
       // STORE INDEX ENTRIES
-      for (OTransactionIndexChangesPerKey entry : indexEntry.getValue().changesPerKey.values())
-        entries.add(serializeIndexChangeEntry(entry, indexDoc));
+      for (OTransactionIndexChangesPerKey entry : indexEntry.getValue().changesPerKey.values()) {
+          entries.add(serializeIndexChangeEntry(entry, indexDoc));
+      }
 
       indexDoc.field("nullEntries", serializeIndexChangeEntry(indexEntry.getValue().nullKeyChanges, indexDoc));
     }
@@ -306,12 +307,14 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
       if (iOperation == OPERATION.REMOVE && iValue != null && iValue.getIdentity().isTemporary()) {
 
         // TEMPORARY RECORD: JUST REMOVE IT
-        for (OTransactionIndexChangesPerKey changes : indexEntry.changesPerKey.values())
-          for (int i = 0; i < changes.entries.size(); ++i)
-            if (changes.entries.get(i).value.equals(iValue)) {
-              changes.entries.remove(i);
-              break;
+        for (OTransactionIndexChangesPerKey changes : indexEntry.changesPerKey.values()) {
+            for (int i = 0; i < changes.entries.size(); ++i) {
+                if (changes.entries.get(i).value.equals(iValue)) {
+                    changes.entries.remove(i);
+                    break;
+                }
             }
+        }
       }
 
       OTransactionIndexChangesPerKey changes = indexEntry.getChangesPerKey(key);
@@ -447,9 +450,10 @@ public abstract class OTransactionRealAbstract extends OTransactionAbstract {
         return;
     }
 
-    for (final OTransactionIndexEntry indexEntry : changesPerKey.entries)
-      if (indexEntry.value.getIdentity().equals(oldRid)) {
-          indexEntry.value = newRid;
+    for (final OTransactionIndexEntry indexEntry : changesPerKey.entries) {
+        if (indexEntry.value.getIdentity().equals(oldRid)) {
+            indexEntry.value = newRid;
+        }
     }
   }
 }

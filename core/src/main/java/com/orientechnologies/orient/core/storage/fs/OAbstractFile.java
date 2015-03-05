@@ -633,24 +633,25 @@ public abstract class OAbstractFile implements OFile {
     try {
       OLogManager.instance().debug(this, "[OFile.openChannel] opening channel for file '%s' of size: %d", osFile, osFile.length());
 
-      for (int i = 0; i < OPEN_RETRY_MAX; ++i)
-        try {
-          accessFile = new RandomAccessFile(osFile, mode);
-          break;
-        } catch (FileNotFoundException e) {
-          if (i == OPEN_DELAY_RETRY) {
-              throw e;
-          }
-
-          // TRY TO RE-CREATE THE DIRECTORY (THIS HAPPENS ON WINDOWS AFTER A DELETE IS PENDING, USUALLY WHEN REOPEN THE DB VERY
-          // FREQUENTLY)
-          osFile.getParentFile().mkdirs();
+      for (int i = 0; i < OPEN_RETRY_MAX; ++i) {
           try {
-            Thread.sleep(OPEN_DELAY_RETRY);
-          } catch (InterruptedException e1) {
-            Thread.currentThread().interrupt();
+              accessFile = new RandomAccessFile(osFile, mode);
+              break;
+          } catch (FileNotFoundException e) {
+              if (i == OPEN_DELAY_RETRY) {
+                  throw e;
+              }
+              
+              // TRY TO RE-CREATE THE DIRECTORY (THIS HAPPENS ON WINDOWS AFTER A DELETE IS PENDING, USUALLY WHEN REOPEN THE DB VERY
+              // FREQUENTLY)
+              osFile.getParentFile().mkdirs();
+              try {
+                  Thread.sleep(OPEN_DELAY_RETRY);
+              } catch (InterruptedException e1) {
+                  Thread.currentThread().interrupt();
+              }
           }
-        }
+      }
 
       if (accessFile == null) {
           throw new FileNotFoundException(osFile.getAbsolutePath());

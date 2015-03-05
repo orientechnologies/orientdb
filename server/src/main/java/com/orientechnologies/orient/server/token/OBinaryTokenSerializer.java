@@ -38,8 +38,9 @@ public class OBinaryTokenSerializer {
 
   public Map<String, Byte> createMap(String entries[]) {
     Map<String, Byte> newMap = new HashMap<String, Byte>();
-    for (int i = 0; i < entries.length; i++)
-      newMap.put(entries[i], (byte) i);
+    for (int i = 0; i < entries.length; i++) {
+        newMap.put(entries[i], (byte) i);
+    }
     return newMap;
   }
 

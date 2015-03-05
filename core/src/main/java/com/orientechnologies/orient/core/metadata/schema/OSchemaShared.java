@@ -766,8 +766,9 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         document.field("schemaVersion", CURRENT_VERSION_NUMBER);
 
         Set<ODocument> cc = new HashSet<ODocument>();
-        for (OClass c : classes.values())
-          cc.add(((OClassImpl) c).toStream());
+        for (OClass c : classes.values()) {
+            cc.add(((OClassImpl) c).toStream());
+        }
 
         document.field("classes", cc, OType.EMBEDDEDSET);
 
@@ -997,8 +998,9 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
       result = classes.get(className.toLowerCase());
 
       // WAKE UP DB LIFECYCLE LISTENER
-      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();)
-        it.next().onCreateClass(getDatabase(), result);
+      for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners(); it.hasNext();) {
+          it.next().onCreateClass(getDatabase(), result);
+      }
 
     } finally {
       releaseSchemaWriteLock();
@@ -1065,13 +1067,15 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
         // UPDATE INDEXES
         final int[] clustersToIndex = superClass.getPolymorphicClusterIds();
         final String[] clusterNames = new String[clustersToIndex.length];
-        for (int i = 0; i < clustersToIndex.length; i++)
-          clusterNames[i] = database.getClusterNameById(clustersToIndex[i]);
+        for (int i = 0; i < clustersToIndex.length; i++) {
+            clusterNames[i] = database.getClusterNameById(clustersToIndex[i]);
+        }
 
-        for (OIndex<?> index : superClass.getIndexes())
-          for (String clusterName : clusterNames)
-            if (clusterName != null) {
-                database.getMetadata().getIndexManager().addClusterToIndex(clusterName, index.getName());
+        for (OIndex<?> index : superClass.getIndexes()) {
+            for (String clusterName : clusterNames) {
+                if (clusterName != null) {
+                    database.getMetadata().getIndexManager().addClusterToIndex(clusterName, index.getName());
+                }   }
         }
       }
 
@@ -1239,8 +1243,9 @@ public class OSchemaShared extends ODocumentWrapperNoClass implements OSchema, O
     final ODatabaseDocument database = getDatabase();
     final OIndexManager indexManager = database.getMetadata().getIndexManager();
 
-    for (final OIndex<?> index : indexManager.getClassIndexes(cls.getName()))
-      indexManager.dropIndex(index.getName());
+    for (final OIndex<?> index : indexManager.getClassIndexes(cls.getName())) {
+        indexManager.dropIndex(index.getName());
+    }
   }
 
   private OClass cascadeCreate(final Class<?> javaClass) {

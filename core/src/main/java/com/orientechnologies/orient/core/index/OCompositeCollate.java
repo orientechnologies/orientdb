@@ -52,8 +52,9 @@ public class OCompositeCollate implements OCollate {
       transformedKey.addKey(collate.transform(key));
     }
 
-    for (int i = size; i < keys.size(); i++)
-      transformedKey.addKey(keys.get(i));
+    for (int i = size; i < keys.size(); i++) {
+        transformedKey.addKey(keys.get(i));
+    }
 
     return transformedKey;
   }

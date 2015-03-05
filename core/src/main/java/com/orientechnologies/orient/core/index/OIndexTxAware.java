@@ -230,8 +230,9 @@ public abstract class OIndexTxAware<T> extends OIndexAbstractDelegate<T> {
           keyItem = ALWAYS_LESS_KEY;
       }
 
-      for (int i = 0; i < itemsToAdd; i++)
-        fullKey.addKey(keyItem);
+      for (int i = 0; i < itemsToAdd; i++) {
+          fullKey.addKey(keyItem);
+      }
 
       return fullKey;
     }

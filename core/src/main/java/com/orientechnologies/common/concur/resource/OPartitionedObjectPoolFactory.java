@@ -103,8 +103,9 @@ public class OPartitionedObjectPoolFactory<K, T> extends OOrientListenerAbstract
       }
     }
 
-    for (OPartitionedObjectPool<T> pool : poolStore.values())
-      pool.close();
+    for (OPartitionedObjectPool<T> pool : poolStore.values()) {
+        pool.close();
+    }
 
     poolStore.clear();
   }

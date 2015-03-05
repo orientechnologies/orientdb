@@ -327,11 +327,13 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     bufferSize += OBooleanSerializer.BOOLEAN_SIZE;
     bufferSize += OIntegerSerializer.INT_SIZE;
 
-    for (int i = 0; i < size; ++i)
-      bufferSize += getKeySize(i);
+    for (int i = 0; i < size; ++i) {
+        bufferSize += getKeySize(i);
+    }
 
-    for (int i = 0; i < size; ++i)
-      bufferSize += getBinaryValueSize(i);
+    for (int i = 0; i < size; ++i) {
+        bufferSize += getBinaryValueSize(i);
+    }
 
     byte[] outBuffer = new byte[bufferSize];
 
@@ -469,8 +471,9 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     bufferSize += OBooleanSerializer.BOOLEAN_SIZE;
     bufferSize += OIntegerSerializer.INT_SIZE;
 
-    for (int i = 0; i < size; ++i)
-      bufferSize += getKeySize(i);
+    for (int i = 0; i < size; ++i) {
+        bufferSize += getKeySize(i);
+    }
 
     final byte[] outBuffer = new byte[bufferSize * 2];
 
@@ -484,8 +487,9 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     try {
       outStream.jump(offset);
 
-      for (int i = 0; i < size; ++i)
-        serializedValues[i] = outStream.set(serializeStreamValue(i));
+      for (int i = 0; i < size; ++i) {
+          serializedValues[i] = outStream.set(serializeStreamValue(i));
+      }
 
       buffer = outStream.toByteArray();
     } finally {
@@ -643,11 +647,13 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     final OBinarySerializer<K> keySerializer = ((OMVRBTreeMapProvider<K, V>) treeDataProvider).keySerializer;
     final OBinarySerializer<V> valueSerializer = (OBinarySerializer<V>) ((OMVRBTreeMapProvider<K, V>) treeDataProvider).valueSerializer;
 
-    for (int i = 0; i < oldSize; ++i)
-      bufferSize += keySerializer.getObjectSize(oldKeys[i]);
+    for (int i = 0; i < oldSize; ++i) {
+        bufferSize += keySerializer.getObjectSize(oldKeys[i]);
+    }
 
-    for (int i = 0; i < oldSize; ++i)
-      bufferSize += valueSerializer.getObjectSize(oldValues[i]);
+    for (int i = 0; i < oldSize; ++i) {
+        bufferSize += valueSerializer.getObjectSize(oldValues[i]);
+    }
 
     byte[] outBuffer = new byte[bufferSize];
 
@@ -677,8 +683,9 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     final OBinarySerializer<K> keySerializer = ((OMVRBTreeMapProvider<K, V>) treeDataProvider).keySerializer;
     final OStreamSerializer valueSerializer = ((OMVRBTreeMapProvider<K, V>) treeDataProvider).valueSerializer;
 
-    for (int i = 0; i < oldSize; ++i)
-      bufferSize += keySerializer.getObjectSize(oldKeys[i]);
+    for (int i = 0; i < oldSize; ++i) {
+        bufferSize += keySerializer.getObjectSize(oldKeys[i]);
+    }
 
     final byte[] outBuffer = new byte[bufferSize * 2];
 
@@ -693,8 +700,9 @@ public class OMVRBTreeMapEntryProvider<K, V> extends OMVRBTreeEntryDataProviderA
     try {
       outStream.jump(offset);
 
-      for (int i = 0; i < oldSize; ++i)
-        outStream.set(valueSerializer.toStream(oldValues[i]));
+      for (int i = 0; i < oldSize; ++i) {
+          outStream.set(valueSerializer.toStream(oldValues[i]));
+      }
 
       return outStream.toByteArray();
 

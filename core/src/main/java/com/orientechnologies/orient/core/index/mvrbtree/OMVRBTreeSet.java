@@ -437,8 +437,9 @@ public class OMVRBTreeSet<E> extends AbstractSet<E> implements ONavigableSet<E>,
 		s.writeInt(m.size());
 
 		// Write out all elements in the proper order.
-		for (Iterator<E> i = m.keySet().iterator(); i.hasNext();)
-			s.writeObject(i.next());
+		for (Iterator<E> i = m.keySet().iterator(); i.hasNext();) {
+                    s.writeObject(i.next());
+                }
 	}
 
 	/**

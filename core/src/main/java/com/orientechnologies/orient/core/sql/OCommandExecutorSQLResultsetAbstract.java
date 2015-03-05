@@ -232,25 +232,26 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     if (tempResult != null) {
       int fetched = 0;
 
-      for (Object d : tempResult)
-        if (d != null) {
-          if (!(d instanceof OIdentifiable)) {
-              // NON-DOCUMENT AS RESULT, COMES FROM EXPAND? CREATE A DOCUMENT AT THE FLY
-              d = new ODocument().field("value", d);
-          } else if (!(d instanceof ORID || d instanceof ORecord)) {
-              d = ((OIdentifiable) d).getRecord();
+      for (Object d : tempResult) {
+          if (d != null) {
+              if (!(d instanceof OIdentifiable)) {
+                  // NON-DOCUMENT AS RESULT, COMES FROM EXPAND? CREATE A DOCUMENT AT THE FLY
+                  d = new ODocument().field("value", d);
+              } else if (!(d instanceof ORID || d instanceof ORecord)) {
+                  d = ((OIdentifiable) d).getRecord();
+              }
+              
+              if (limit > -1 && fetched >= limit) {
+                  break;
+              }
+              
+              if (!request.getResultListener().result(d)) {
+                  break;
+              }
+              
+              ++fetched;
           }
-
-          if (limit > -1 && fetched >= limit) {
-              break;
-          }
-
-          if (!request.getResultListener().result(d)) {
-              break;
-          }
-
-          ++fetched;
-        }
+      }
     }
 
     if (request instanceof OSQLSynchQuery) {
@@ -510,8 +511,9 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
     // CREATE CLUSTER AS ARRAY OF INT
     final int[] clIds = new int[clusterIds.size()];
     int i = 0;
-    for (int c : clusterIds)
-      clIds[i++] = c;
+    for (int c : clusterIds) {
+        clIds[i++] = c;
+    }
 
     final ORID[] range = getRange();
 
@@ -531,8 +533,9 @@ public abstract class OCommandExecutorSQLResultsetAbstract extends OCommandExecu
         final List<OIdentifiable> t = (List<OIdentifiable>) tempResult;
         final int start = Math.min(skip, t.size());
         final int tot = Math.min(limit + start, t.size());
-        for (int i = start; i < tot; ++i)
-          newList.add(t.get(i));
+        for (int i = start; i < tot; ++i) {
+            newList.add(t.get(i));
+        }
 
         t.clear();
         tempResult = newList;

@@ -72,14 +72,16 @@ public class SBTreeTest {
       sbTree.put(i, new ORecordId(i % 32000, i));
     }
 
-    for (int i = 0; i < KEYS_COUNT; i++)
-      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i), i + " key is absent");
+    for (int i = 0; i < KEYS_COUNT; i++) {
+        Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i), i + " key is absent");
+    }
 
     Assert.assertEquals(0, (int) sbTree.firstKey());
     Assert.assertEquals(KEYS_COUNT - 1, (int) sbTree.lastKey());
 
-    for (int i = KEYS_COUNT; i < 2 * KEYS_COUNT; i++)
-      Assert.assertNull(sbTree.get(i));
+    for (int i = KEYS_COUNT; i < 2 * KEYS_COUNT; i++) {
+        Assert.assertNull(sbTree.get(i));
+    }
 
   }
 
@@ -98,8 +100,9 @@ public class SBTreeTest {
     Assert.assertEquals(sbTree.firstKey(), keys.first());
     Assert.assertEquals(sbTree.lastKey(), keys.last());
 
-    for (int key : keys)
-      Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
+    for (int key : keys) {
+        Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
+    }
   }
 
   public void testKeyPutRandomGaussian() throws Exception {
@@ -125,8 +128,9 @@ public class SBTreeTest {
     Assert.assertEquals(sbTree.firstKey(), keys.first());
     Assert.assertEquals(sbTree.lastKey(), keys.last());
 
-    for (int key : keys)
-      Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
+    for (int key : keys) {
+        Assert.assertEquals(sbTree.get(key), new ORecordId(key % 32000, key));
+    }
   }
 
   public void testKeyDeleteRandomUniform() throws Exception {
@@ -324,49 +328,61 @@ public class SBTreeTest {
   }
 
   public void testAddKeyValuesInTwoBucketsAndMakeFirstEmpty() throws Exception {
-    for (int i = 0; i < 5167; i++)
-      sbTree.put(i, new ORecordId(i % 32000, i));
+    for (int i = 0; i < 5167; i++) {
+        sbTree.put(i, new ORecordId(i % 32000, i));
+    }
 
-    for (int i = 0; i < 3500; i++)
-      sbTree.remove(i);
+    for (int i = 0; i < 3500; i++) {
+        sbTree.remove(i);
+    }
 
     Assert.assertEquals((int) sbTree.firstKey(), 3500);
 
-    for (int i = 0; i < 3500; i++)
-      Assert.assertNull(sbTree.get(i));
+    for (int i = 0; i < 3500; i++) {
+        Assert.assertNull(sbTree.get(i));
+    }
 
-    for (int i = 3500; i < 5167; i++)
-      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
+    for (int i = 3500; i < 5167; i++) {
+        Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
+    }
   }
 
   public void testAddKeyValuesInTwoBucketsAndMakeLastEmpty() throws Exception {
-    for (int i = 0; i < 5167; i++)
-      sbTree.put(i, new ORecordId(i % 32000, i));
+    for (int i = 0; i < 5167; i++) {
+        sbTree.put(i, new ORecordId(i % 32000, i));
+    }
 
-    for (int i = 5166; i > 1700; i--)
-      sbTree.remove(i);
+    for (int i = 5166; i > 1700; i--) {
+        sbTree.remove(i);
+    }
 
     Assert.assertEquals((int) sbTree.lastKey(), 1700);
 
-    for (int i = 5166; i > 1700; i--)
-      Assert.assertNull(sbTree.get(i));
+    for (int i = 5166; i > 1700; i--) {
+        Assert.assertNull(sbTree.get(i));
+    }
 
-    for (int i = 1700; i >= 0; i--)
-      Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
+    for (int i = 1700; i >= 0; i--) {
+        Assert.assertEquals(sbTree.get(i), new ORecordId(i % 32000, i));
+    }
   }
 
   public void testAddKeyValuesAndRemoveFirstMiddleAndLastPages() throws Exception {
-    for (int i = 0; i < 12055; i++)
-      sbTree.put(i, new ORecordId(i % 32000, i));
+    for (int i = 0; i < 12055; i++) {
+        sbTree.put(i, new ORecordId(i % 32000, i));
+    }
 
-    for (int i = 0; i < 1730; i++)
-      sbTree.remove(i);
+    for (int i = 0; i < 1730; i++) {
+        sbTree.remove(i);
+    }
 
-    for (int i = 3440; i < 6900; i++)
-      sbTree.remove(i);
+    for (int i = 3440; i < 6900; i++) {
+        sbTree.remove(i);
+    }
 
-    for (int i = 8600; i < 12055; i++)
-      sbTree.remove(i);
+    for (int i = 8600; i < 12055; i++) {
+        sbTree.remove(i);
+    }
 
     Assert.assertEquals((int) sbTree.firstKey(), 1730);
     Assert.assertEquals((int) sbTree.lastKey(), 8599);
@@ -470,8 +486,9 @@ public class SBTreeTest {
         (OAbstractPaginatedStorage) databaseDocumentTx.getStorage().getUnderlying(), 1, true);
 
     try {
-      for (int i = 0; i < 10; i++)
-        nullSBTree.put(i, new ORecordId(3, i));
+      for (int i = 0; i < 10; i++) {
+          nullSBTree.put(i, new ORecordId(3, i));
+      }
 
       OIdentifiable identifiable = nullSBTree.get(null);
       Assert.assertNull(identifiable);

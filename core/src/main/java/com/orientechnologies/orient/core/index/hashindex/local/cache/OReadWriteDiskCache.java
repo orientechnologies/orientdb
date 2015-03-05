@@ -567,34 +567,37 @@ public class OReadWriteDiskCache implements ODiskCache {
   }
 
   private void clearCacheContent() {
-    for (OCacheEntry cacheEntry : am)
-      if (cacheEntry.usagesCount == 0) {
-        cacheEntry.dataPointer.decrementReferrer();
-        cacheEntry.dataPointer = null;
-      }
-
-      else {
-          throw new OStorageException("Page with index " + cacheEntry.pageIndex + " for file id " + cacheEntry.fileId
-                  + " is used and can not be removed");
+    for (OCacheEntry cacheEntry : am) {
+        if (cacheEntry.usagesCount == 0) {
+            cacheEntry.dataPointer.decrementReferrer();
+            cacheEntry.dataPointer = null;
+        }
+        
+        else {
+            throw new OStorageException("Page with index " + cacheEntry.pageIndex + " for file id " + cacheEntry.fileId
+                    + " is used and can not be removed");
+        }
     }
 
-    for (OCacheEntry cacheEntry : a1in)
-      if (cacheEntry.usagesCount == 0) {
-        cacheEntry.dataPointer.decrementReferrer();
-        cacheEntry.dataPointer = null;
-      }
-
-      else {
-          throw new OStorageException("Page with index " + cacheEntry.pageIndex + " for file id " + cacheEntry.fileId
-                  + " is used and can not be removed");
+    for (OCacheEntry cacheEntry : a1in) {
+        if (cacheEntry.usagesCount == 0) {
+            cacheEntry.dataPointer.decrementReferrer();
+            cacheEntry.dataPointer = null;
+        }
+        
+        else {
+            throw new OStorageException("Page with index " + cacheEntry.pageIndex + " for file id " + cacheEntry.fileId
+                    + " is used and can not be removed");
+        }
     }
 
     a1out.clear();
     am.clear();
     a1in.clear();
 
-    for (Set<Long> pages : filePages.values())
-      pages.clear();
+    for (Set<Long> pages : filePages.values()) {
+        pages.clear();
+    }
 
     clearPinnedPages();
   }

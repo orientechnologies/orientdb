@@ -197,12 +197,13 @@ public class OUser extends ODocumentWrapper implements OSecurityUser {
    * @return True is a rule is defined, otherwise false
    */
   public boolean isRuleDefined(final ORule.ResourceGeneric resourceGeneric, String resourceSpecific) {
-    for (ORole r : roles)
-      if (r == null) {
-          OLogManager.instance().warn(this,
-                  "User '%s' has a null role, bypass it. Consider to fix this user roles before to continue", getName());
-    } else if (r.hasRule(resourceGeneric, resourceSpecific)) {
-        return true;
+    for (ORole r : roles) {
+        if (r == null) {
+            OLogManager.instance().warn(this,
+                    "User '%s' has a null role, bypass it. Consider to fix this user roles before to continue", getName());
+        } else if (r.hasRule(resourceGeneric, resourceSpecific)) {
+            return true;
+        }
     }
 
     return false;
@@ -267,11 +268,12 @@ public class OUser extends ODocumentWrapper implements OSecurityUser {
   }
 
   public boolean removeRole(final String iRoleName) {
-    for (Iterator<ORole> it = roles.iterator(); it.hasNext();)
-      if (it.next().getName().equals(iRoleName)) {
-        it.remove();
-        return true;
-      }
+    for (Iterator<ORole> it = roles.iterator(); it.hasNext();) {
+        if (it.next().getName().equals(iRoleName)) {
+            it.remove();
+            return true;
+        }
+    }
     return false;
   }
 

@@ -94,8 +94,9 @@ public class OUnsafeMemory implements ODirectMemory {
   public byte[] get(long pointer, final int length) {
     final byte[] result = new byte[length];
 
-    for (int i = 0; i < length; i++)
-      result[i] = unsafe.getByte(pointer++);
+    for (int i = 0; i < length; i++) {
+        result[i] = unsafe.getByte(pointer++);
+    }
 
     return result;
   }
@@ -103,15 +104,17 @@ public class OUnsafeMemory implements ODirectMemory {
   @Override
   public void get(long pointer, byte[] array, int arrayOffset, int length) {
     pointer += arrayOffset;
-    for (int i = arrayOffset; i < length + arrayOffset; i++)
-      array[i] = unsafe.getByte(pointer++);
+    for (int i = arrayOffset; i < length + arrayOffset; i++) {
+        array[i] = unsafe.getByte(pointer++);
+    }
 
   }
 
   @Override
   public void set(long pointer, byte[] content, int arrayOffset, int length) {
-    for (int i = arrayOffset; i < length + arrayOffset; i++)
-      unsafe.putByte(pointer++, content[i]);
+    for (int i = arrayOffset; i < length + arrayOffset; i++) {
+        unsafe.putByte(pointer++, content[i]);
+    }
   }
 
   @Override

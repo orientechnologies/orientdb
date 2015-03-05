@@ -66,14 +66,16 @@ public class SBTreeTestBigValues {
       sbTree.put(i, createValue(i, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + i));
     }
 
-    for (int i = 0; i < KEYS_COUNT; i++)
-      Assert.assertEquals(sbTree.get(i), createValue(i, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + i), i + " key is absent");
+    for (int i = 0; i < KEYS_COUNT; i++) {
+        Assert.assertEquals(sbTree.get(i), createValue(i, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + i), i + " key is absent");
+    }
 
     Assert.assertEquals(0, (int) sbTree.firstKey());
     Assert.assertEquals(KEYS_COUNT - 1, (int) sbTree.lastKey());
 
-    for (int i = KEYS_COUNT; i < 2 * KEYS_COUNT; i++)
-      Assert.assertNull(sbTree.get(i));
+    for (int i = KEYS_COUNT; i < 2 * KEYS_COUNT; i++) {
+        Assert.assertNull(sbTree.get(i));
+    }
 
   }
 
@@ -95,8 +97,9 @@ public class SBTreeTestBigValues {
     Assert.assertEquals(sbTree.firstKey(), keys.first());
     Assert.assertEquals(sbTree.lastKey(), keys.last());
 
-    for (int key : keys)
-      Assert.assertEquals(sbTree.get(key), createValue(key, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
+    for (int key : keys) {
+        Assert.assertEquals(sbTree.get(key), createValue(key, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
+    }
   }
 
   public void testKeyPutRandomGaussian() throws Exception {
@@ -120,8 +123,9 @@ public class SBTreeTestBigValues {
     Assert.assertEquals(sbTree.firstKey(), keys.first());
     Assert.assertEquals(sbTree.lastKey(), keys.last());
 
-    for (int key : keys)
-      Assert.assertEquals(sbTree.get(key), createValue(key, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
+    for (int key : keys) {
+        Assert.assertEquals(sbTree.get(key), createValue(key, OSBTreeValuePage.MAX_BINARY_VALUE_SIZE + 4));
+    }
   }
 
   public void testKeyDelete() throws Exception {

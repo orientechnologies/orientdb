@@ -259,8 +259,9 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 
     try {
       // DISCONNECT ALL THE NODES
-      for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints.values())
-        entryPoint.disconnectLinked(true);
+      for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints.values()) {
+          entryPoint.disconnectLinked(true);
+      }
       entryPoints.clear();
       cache.clear();
 
@@ -376,19 +377,23 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
         addNodeAsEntrypoint((OMVRBTreeEntryPersistent<K, V>) root);
 
         // DISCONNECT THE REMOVED NODES
-        for (OMVRBTreeEntryPersistent<K, V> currentNode : entryPointsToRemove)
-          totalDisconnected += currentNode.disconnectLinked(false);
+        for (OMVRBTreeEntryPersistent<K, V> currentNode : entryPointsToRemove) {
+            totalDisconnected += currentNode.disconnectLinked(false);
+        }
 
         cache.clear();
-        for (OMVRBTreeEntryPersistent<K, V> entry : entryPoints.values())
-          addNodeInCache(entry);
+        for (OMVRBTreeEntryPersistent<K, V> entry : entryPoints.values()) {
+            addNodeInCache(entry);
+        }
       }
 
       if (isRuntimeCheckEnabled()) {
-        for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints.values())
-          for (OMVRBTreeEntryPersistent<K, V> e = (OMVRBTreeEntryPersistent<K, V>) entryPoint.getFirstInMemory(); e != null; e = e
-              .getNextInMemory())
-            e.checkEntryStructure();
+        for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints.values()) {
+            for (OMVRBTreeEntryPersistent<K, V> e = (OMVRBTreeEntryPersistent<K, V>) entryPoint.getFirstInMemory(); e != null; e = e
+                    .getNextInMemory()) {
+                e.checkEntryStructure();
+            }
+        }
       }
 
       // COUNT ALL IN-MEMORY NODES BY BROWSING ALL THE ENTRYPOINT NODES
@@ -402,8 +407,9 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
       optimization = 0;
       if (isRuntimeCheckEnabled()) {
         if (!entryPoints.isEmpty()) {
-            for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints.values())
+            for (OMVRBTreeEntryPersistent<K, V> entryPoint : entryPoints.values()) {
                 checkTreeStructure(entryPoint.getFirstInMemory());
+            }
         } else {
             checkTreeStructure(root);
         }
@@ -494,8 +500,9 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
     final long timer = PROFILER.startChrono();
 
     try {
-      for (Entry<? extends K, ? extends V> entry : map.entrySet())
-        internalPut(entry.getKey(), entry.getValue());
+      for (Entry<? extends K, ? extends V> entry : map.entrySet()) {
+          internalPut(entry.getKey(), entry.getValue());
+      }
 
       commitChanges();
 
@@ -548,19 +555,20 @@ public abstract class OMVRBTreePersistent<K, V> extends OMVRBTree<K, V> {
 
           recordsToCommit.clear();
 
-          for (OMVRBTreeEntryPersistent<K, V> node : tmp)
-            if (node.dataProvider.isEntryDirty()) {
-              boolean wasNew = node.dataProvider.getIdentity().isNew();
-
-              // CREATE THE RECORD
-              node.save();
-
-              if (debug) {
-                  System.out.printf("\nSaved %s tree node %s: parent %s, left %s, right %s", wasNew ? "new" : "",
-                          node.dataProvider.getIdentity(), node.dataProvider.getParent(), node.dataProvider.getLeft(),
-                          node.dataProvider.getRight());
+          for (OMVRBTreeEntryPersistent<K, V> node : tmp) {
+              if (node.dataProvider.isEntryDirty()) {
+                  boolean wasNew = node.dataProvider.getIdentity().isNew();
+                  
+                  // CREATE THE RECORD
+                  node.save();
+                  
+                  if (debug) {
+                      System.out.printf("\nSaved %s tree node %s: parent %s, left %s, right %s", wasNew ? "new" : "",
+                              node.dataProvider.getIdentity(), node.dataProvider.getParent(), node.dataProvider.getLeft(),
+                              node.dataProvider.getRight());
+                  }
               }
-            }
+          }
 
           totalCommitted += tmp.size();
           tmp.clear();

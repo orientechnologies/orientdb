@@ -78,8 +78,9 @@ public class ORestrictedAccessHook extends ODocumentHookAbstract {
       }
 
       if (identity != null) {
-        for (String f : fields)
-          db.getMetadata().getSecurity().allowIdentity(iDocument, f, identity);
+        for (String f : fields) {
+            db.getMetadata().getSecurity().allowIdentity(iDocument, f, identity);
+        }
         return RESULT.RECORD_CHANGED;
       }
     }

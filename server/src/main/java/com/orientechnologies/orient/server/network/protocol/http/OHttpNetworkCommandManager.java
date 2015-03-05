@@ -86,13 +86,14 @@ public class OHttpNetworkCommandManager {
     * @param iServerCommandInstance
     */
    public void registerCommand(final OServerCommand iServerCommandInstance) {
-     for (String name : iServerCommandInstance.getNames())
-       if (OStringSerializerHelper.contains(name, '{')) {
-         restCommands.put(name, iServerCommandInstance);
-       } else if (OStringSerializerHelper.contains(name, '*')) {
-           wildcardCommands.put(name, iServerCommandInstance);
-     } else {
-           exactCommands.put(name, iServerCommandInstance);
+     for (String name : iServerCommandInstance.getNames()) {
+         if (OStringSerializerHelper.contains(name, '{')) {
+             restCommands.put(name, iServerCommandInstance);
+         } else if (OStringSerializerHelper.contains(name, '*')) {
+             wildcardCommands.put(name, iServerCommandInstance);
+         } else {
+             exactCommands.put(name, iServerCommandInstance);
+         }
      }
      iServerCommandInstance.configure(server);
    }

@@ -108,8 +108,9 @@ public class EdgeBug {
     OrientVertex childVertex = db.getVertex(child.getId());
     Iterable<Edge> parentEdges = childVertex.getEdges(Direction.OUT, "hasParent");
     // remove original parent edge
-    for (Edge parentEdge : parentEdges)
-      parentEdge.remove();
+    for (Edge parentEdge : parentEdges) {
+        parentEdge.remove();
+    }
     // get vertex again
     childVertex = db.getVertex(childVertex.getId());
     Vertex parentVertex = db.getVertex(parent.getId());

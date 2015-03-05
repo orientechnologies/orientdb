@@ -288,8 +288,9 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
   public void clear() {
     setDirty();
     if (orphanRemoval && sourceRecord != null) {
-        for (OIdentifiable value : recordList)
+        for (OIdentifiable value : recordList) {
             ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(value.getIdentity());
+        }
     }
     recordList.clear();
     super.clear();
@@ -389,8 +390,9 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
         return;
     }
 
-    for (int i = 0; i < size(); ++i)
-      convert(i);
+    for (int i = 0; i < size(); ++i) {
+        convert(i);
+    }
 
     converted = true;
   }
@@ -459,8 +461,9 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE> implements OLazyObjec
         return;
     }
 
-    for (int i = 0; i < size(); ++i)
-      convertAndDetachAll(i, nonProxiedInstance, alreadyDetached);
+    for (int i = 0; i < size(); ++i) {
+        convertAndDetachAll(i, nonProxiedInstance, alreadyDetached);
+    }
 
     converted = true;
   }

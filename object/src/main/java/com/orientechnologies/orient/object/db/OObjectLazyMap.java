@@ -136,8 +136,9 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
   public void clear() {
     converted = true;
     if (orphanRemoval && sourceRecord != null) {
-        for (OIdentifiable value : underlying.values())
+        for (OIdentifiable value : underlying.values()) {
             ((OObjectProxyMethodHandler) sourceRecord.getHandler()).getOrphans().add(value.getIdentity());
+        }
     }
     underlying.clear();
     super.clear();
@@ -269,9 +270,10 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object> implements Ser
         return;
     }
 
-    for (java.util.Map.Entry<Object, OIdentifiable> e : underlying.entrySet())
-      super.put(e.getKey(),
-          getDatabase().getUserObjectByRecord((ORecord) ((OIdentifiable) e.getValue()).getRecord(), null));
+    for (java.util.Map.Entry<Object, OIdentifiable> e : underlying.entrySet()) {
+        super.put(e.getKey(),
+                getDatabase().getUserObjectByRecord((ORecord) ((OIdentifiable) e.getValue()).getRecord(), null));
+    }
 
     converted = true;
   }

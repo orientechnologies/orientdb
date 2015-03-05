@@ -345,10 +345,11 @@ public class OrientEdge extends OrientElement implements Edge {
 
     final Set<String> result = new HashSet<String>();
 
-    for (String field : getRecord().fieldNames())
-      if (!field.equals(OrientBaseGraph.CONNECTION_OUT) && !field.equals(OrientBaseGraph.CONNECTION_IN)
-          && (settings.isUseClassForEdgeLabel() || !field.equals(OrientElement.LABEL_FIELD_NAME))) {
-          result.add(field);
+    for (String field : getRecord().fieldNames()) {
+        if (!field.equals(OrientBaseGraph.CONNECTION_OUT) && !field.equals(OrientBaseGraph.CONNECTION_IN)
+                && (settings.isUseClassForEdgeLabel() || !field.equals(OrientElement.LABEL_FIELD_NAME))) {
+            result.add(field);
+        }
     }
 
     return result;

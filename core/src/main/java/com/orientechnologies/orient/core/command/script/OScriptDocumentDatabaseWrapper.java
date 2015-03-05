@@ -132,8 +132,9 @@ public class OScriptDocumentDatabaseWrapper {
     final OBasicCommandContext context = new OBasicCommandContext();
     if (iParameters != null) {
       int argIdx = 0;
-      for (Object p : iParameters)
-        context.setVariable("arg" + (argIdx++), p);
+      for (Object p : iParameters) {
+          context.setVariable("arg" + (argIdx++), p);
+      }
     }
 
     Object res;

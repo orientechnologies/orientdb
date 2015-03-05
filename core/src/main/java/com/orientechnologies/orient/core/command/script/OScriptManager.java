@@ -242,8 +242,9 @@ public class OScriptManager {
     }
     binding.put("util", new OFunctionUtilWrapper());
 
-    for (OScriptInjection i : injections)
-      i.bind(binding);
+    for (OScriptInjection i : injections) {
+        i.bind(binding);
+    }
 
     // BIND CONTEXT VARIABLE INTO THE SCRIPT
     if (iContext != null) {
@@ -333,8 +334,9 @@ public class OScriptManager {
    * @param binding
    */
   public void unbind(final Bindings binding, final OCommandContext iContext, final Map<Object, Object> iArgs) {
-    for (OScriptInjection i : injections)
-      i.unbind(binding);
+    for (OScriptInjection i : injections) {
+        i.unbind(binding);
+    }
 
     binding.put("db", null);
     binding.put("orient", null);
@@ -343,13 +345,15 @@ public class OScriptManager {
 
     binding.put("ctx", null);
     if (iContext != null) {
-      for (Entry<String, Object> a : iContext.getVariables().entrySet())
-        binding.put(a.getKey(), null);
+      for (Entry<String, Object> a : iContext.getVariables().entrySet()) {
+          binding.put(a.getKey(), null);
+      }
     }
 
     if (iArgs != null) {
-      for (Entry<Object, Object> a : iArgs.entrySet())
-        binding.put(a.getKey().toString(), null);
+      for (Entry<Object, Object> a : iArgs.entrySet()) {
+          binding.put(a.getKey().toString(), null);
+      }
 
     }
     binding.put("params", null);

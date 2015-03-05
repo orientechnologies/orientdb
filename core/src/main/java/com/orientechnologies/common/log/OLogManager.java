@@ -349,7 +349,8 @@ public class OLogManager {
   }
 
   public void flush() {
-    for (Handler h : Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).getHandlers())
-      h.flush();
+    for (Handler h : Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).getHandlers()) {
+        h.flush();
+    }
   }
 }

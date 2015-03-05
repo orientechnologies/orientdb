@@ -61,8 +61,9 @@ public abstract class OSQLFilterItemFieldMultiAbstract extends OSQLFilterItemAbs
 
     if (hasChainOperators()) {
       // TRANSFORM ALL THE VALUES
-      for (int i = 0; i < values.length; ++i)
-        values[i] = transformValue(iRecord, iContext, values[i]);
+      for (int i = 0; i < values.length; ++i) {
+          values[i] = transformValue(iRecord, iContext, values[i]);
+      }
     }
 
     return new OQueryRuntimeValueMulti(this, values, collates);

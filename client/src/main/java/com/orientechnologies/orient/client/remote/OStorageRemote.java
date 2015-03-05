@@ -951,8 +951,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           network = beginRequest(OChannelBinaryProtocol.REQUEST_DATACLUSTER_COUNT);
 
           network.writeShort((short) iClusterIds.length);
-          for (int iClusterId : iClusterIds)
-            network.writeShort((short) iClusterId);
+          for (int iClusterId : iClusterIds) {
+              network.writeShort((short) iClusterId);
+          }
 
           if (network.getSrvProtocolVersion() >= 13) {
               network.writeByte(countTombstones ? (byte) 1 : (byte) 0);
@@ -1121,11 +1122,13 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
           final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
 
           if (iTx.getCurrentRecordEntries().iterator().hasNext()) {
-            for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
-              committedEntries.add(txEntry);
+            for (ORecordOperation txEntry : iTx.getCurrentRecordEntries()) {
+                committedEntries.add(txEntry);
+            }
             while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
-              for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
-                tmpEntries.add(txEntry);
+              for (ORecordOperation txEntry : iTx.getCurrentRecordEntries()) {
+                  tmpEntries.add(txEntry);
+              }
 
               iTx.clearRecordEntries();
 
@@ -1145,8 +1148,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
                 commitEntry(network, txEntry);
               }
               tmpEntries.clear();
-              for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
-                tmpEntries.add(txEntry);
+              for (ORecordOperation txEntry : iTx.getCurrentRecordEntries()) {
+                  tmpEntries.add(txEntry);
+              }
             }
           }
 
@@ -1192,8 +1196,9 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         committedEntries.clear();
         // SET ALL THE RECORDS AS UNDIRTY
-        for (ORecordOperation txEntry : iTx.getAllRecordEntries())
-          ORecordInternal.unsetDirty(txEntry.getRecord());
+        for (ORecordOperation txEntry : iTx.getAllRecordEntries()) {
+            ORecordInternal.unsetDirty(txEntry.getRecord());
+        }
 
         // UPDATE THE CACHE ONLY IF THE ITERATOR ALLOWS IT. USE THE STRATEGY TO ALWAYS REMOVE ALL THE RECORDS SINCE THEY COULD BE
         // CHANGED AS CONTENT IN CASE OF TREE AND GRAPH DUE TO CROSS REFERENCES
@@ -1454,17 +1459,18 @@ public class OStorageRemote extends OStorageAbstract implements OStorageProxy {
 
         // parseServerURLs();
 
-        for (ODocument m : members)
-          if (m != null && !serverURLs.contains((String) m.field("name"))) {
-            for (Map<String, Object> listener : ((Collection<Map<String, Object>>) m.field("listeners"))) {
-              if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
-                String url = (String) listener.get("listen");
-                if (!serverURLs.contains(url)) {
-                    addHost(url);
+        for (ODocument m : members) {
+            if (m != null && !serverURLs.contains((String) m.field("name"))) {
+                for (Map<String, Object> listener : ((Collection<Map<String, Object>>) m.field("listeners"))) {
+                    if (((String) listener.get("protocol")).equals("ONetworkProtocolBinary")) {
+                        String url = (String) listener.get("listen");
+                        if (!serverURLs.contains(url)) {
+                            addHost(url);
+                        }
+                    }
                 }
-              }
             }
-          }
+        }
       }
     }
   }

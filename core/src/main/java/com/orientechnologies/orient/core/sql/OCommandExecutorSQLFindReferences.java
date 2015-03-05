@@ -95,8 +95,9 @@ public class OCommandExecutorSQLFindReferences extends OCommandExecutorSQLEarlyR
 
     if (subQuery != null) {
       final List<OIdentifiable> result = new OCommandSQL(subQuery.toString()).execute();
-      for (OIdentifiable id : result)
-        recordIds.add(id.getIdentity());
+      for (OIdentifiable id : result) {
+          recordIds.add(id.getIdentity());
+      }
     }
 
     return OFindReferenceHelper.findReferences(recordIds, classList);

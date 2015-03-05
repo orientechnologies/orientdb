@@ -1129,8 +1129,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
         message("\n +-------------------------------+--------------------------------------------------+");
         message("\n | NAME                          | VALUE                                            |");
         message("\n +-------------------------------+--------------------------------------------------+");
-        for (OStorageEntryConfiguration cfg : dbCfg.properties)
-          message("\n | %-29s | %-49s|", cfg.name, format(cfg.value, 49));
+        for (OStorageEntryConfiguration cfg : dbCfg.properties) {
+            message("\n | %-29s | %-49s|", cfg.name, format(cfg.value, 49));
+        }
         message("\n +-------------------------------+--------------------------------------------------+");
       }
     }
@@ -2002,8 +2003,9 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     message("[");
     if (interactiveMode) {
-      for (int i = 0; i < 10; ++i)
-        message(" ");
+      for (int i = 0; i < 10; ++i) {
+          message(" ");
+      }
       message("]   0%");
     }
   }
@@ -2019,14 +2021,17 @@ public class OConsoleDatabaseApp extends OrientConsole implements OCommandOutput
 
     if (interactiveMode) {
       buffer.append("\r[");
-      for (int i = 0; i < completitionBar; ++i)
-        buffer.append('=');
-      for (int i = completitionBar; i < 10; ++i)
-        buffer.append(' ');
+      for (int i = 0; i < completitionBar; ++i) {
+          buffer.append('=');
+      }
+      for (int i = completitionBar; i < 10; ++i) {
+          buffer.append(' ');
+      }
       message("] %3.1f%% ", iPercent);
     } else {
-      for (int i = lastPercentStep / 100; i < completitionBar; ++i)
-        buffer.append('=');
+      for (int i = lastPercentStep / 100; i < completitionBar; ++i) {
+          buffer.append('=');
+      }
     }
 
     message(buffer.toString());

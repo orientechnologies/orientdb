@@ -235,13 +235,14 @@ public abstract class OStringSerializerHelper {
 
         if (beginIndex > -1) {
           final char lastSeparator = source[beginIndex - 1];
-          for (int i = 0; i < iRecordSeparator.length; ++i)
-            if (iRecordSeparator[i] == lastSeparator) {
-              if (iRecordSeparatorIncludeAsPrefix[i]) {
-                buffer.append(lastSeparator);
+          for (int i = 0; i < iRecordSeparator.length; ++i) {
+              if (iRecordSeparator[i] == lastSeparator) {
+                  if (iRecordSeparatorIncludeAsPrefix[i]) {
+                      buffer.append(lastSeparator);
+                  }
+                  break;
               }
-              break;
-            }
+          }
         }
 
         if (buffer.length() > 0) {
@@ -253,14 +254,15 @@ public abstract class OStringSerializerHelper {
 
         if (beginIndex > -1) {
           final char lastSeparator = source[beginIndex - 1];
-          for (int i = 0; i < iRecordSeparator.length; ++i)
-            if (iRecordSeparator[i] == lastSeparator) {
-              if (iRecordSeparatorIncludeAsPostfix[i]) {
-                beginIndex--;
-                startSeparatorAt = beginIndex + 1;
+          for (int i = 0; i < iRecordSeparator.length; ++i) {
+              if (iRecordSeparator[i] == lastSeparator) {
+                  if (iRecordSeparatorIncludeAsPostfix[i]) {
+                      beginIndex--;
+                      startSeparatorAt = beginIndex + 1;
+                  }
+                  break;
               }
-              break;
-            }
+          }
         }
       }
 
@@ -674,8 +676,9 @@ public abstract class OStringSerializerHelper {
     final String t = buffer.substring(1, buffer.length() - 1).trim();
     final List<String> pars = smartSplit(t, PARAMETER_SEPARATOR, 0, -1, true, true, false, false);
 
-    for (int i = 0; i < pars.size(); ++i)
-      iParameters.add(pars.get(i).trim());
+    for (int i = 0; i < pars.size(); ++i) {
+        iParameters.add(pars.get(i).trim());
+    }
 
     return iBeginPosition + buffer.length();
   }
@@ -790,11 +793,12 @@ public abstract class OStringSerializerHelper {
     int pos = -1;
 
     final int textSize = iText.length();
-    for (int i = 0; i < textSize; ++i)
-      if (iText.charAt(i) == '"' || iText.charAt(i) == '\\') {
-        pos = i;
-        break;
-      }
+    for (int i = 0; i < textSize; ++i) {
+        if (iText.charAt(i) == '"' || iText.charAt(i) == '\\') {
+            pos = i;
+            break;
+        }
+    }
 
     if (pos == -1) {
         // NOT FOUND, RETURN THE SAME STRING (AVOID COPIES)

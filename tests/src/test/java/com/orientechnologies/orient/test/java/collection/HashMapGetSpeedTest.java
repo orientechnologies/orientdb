@@ -31,21 +31,24 @@ public class HashMapGetSpeedTest {
     final HashMap<String, String> map = new HashMap<String, String>(MAX_ENTRIES);
 
     final String[] values = new String[MAX_ENTRIES];
-    for (int i = 0; i < MAX_ENTRIES; ++i)
-      values[i] = UUID.randomUUID().toString();
+    for (int i = 0; i < MAX_ENTRIES; ++i) {
+        values[i] = UUID.randomUUID().toString();
+    }
 
-    for (int i = 0; i < MAX_ENTRIES; ++i)
-      map.put(values[i], "test" + i);
+    for (int i = 0; i < MAX_ENTRIES; ++i) {
+        map.put(values[i], "test" + i);
+    }
 
     long totalTime = 0;
     for (int test = 0; test < TOT_LAPS; test++) {
       final long start = System.currentTimeMillis();
 
-      for (int i = 0; i < MAX_LOOP; ++i)
-        for (int k = 0; k < MAX_ENTRIES; ++k) {
-
-          map.get(values[k]);
-        }
+      for (int i = 0; i < MAX_LOOP; ++i) {
+          for (int k = 0; k < MAX_ENTRIES; ++k) {
+              
+              map.get(values[k]);
+          }
+      }
 
       final long elapsed = System.currentTimeMillis() - start;
       totalTime += elapsed;

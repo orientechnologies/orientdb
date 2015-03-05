@@ -46,8 +46,9 @@ public class IndexConcurrentCommitTest extends DocumentDBBaseTest {
       // Ensure that the people made it in correctly
       final List<ODocument> result1 = database.command(new OCommandSQL("select from Person")).execute();
       System.out.println("After transaction 1");
-      for (ODocument d : result1)
-        System.out.println(d);
+      for (ODocument d : result1) {
+          System.out.println(d);
+      }
 
       // Transaction 2
       database.begin();
@@ -74,7 +75,8 @@ public class IndexConcurrentCommitTest extends DocumentDBBaseTest {
 
     final List<ODocument> result2 = database.command(new OCommandSQL("select from Person")).execute();
     System.out.println("After transaction 2");
-    for (ODocument d : result2)
-      System.out.println(d);
+    for (ODocument d : result2) {
+        System.out.println(d);
+    }
   }
 }

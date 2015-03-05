@@ -54,8 +54,9 @@ public class StorageModificationLockTest {
     Future<Void> prohibiter = executorService.submit(new Prohibiter());
     countDownLatch.countDown();
     prohibiter.get();
-    for (Future<Void> future : futures)
-      future.get();
+    for (Future<Void> future : futures) {
+        future.get();
+    }
   }
 
   private final class Counter implements Callable<Void> {

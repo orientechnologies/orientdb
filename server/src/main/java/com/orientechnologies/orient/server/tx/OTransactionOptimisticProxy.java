@@ -153,10 +153,12 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
       tempEntries.clear();
 
       // UNMARSHALL ALL THE RECORD AT THE END TO BE SURE ALL THE RECORD ARE LOADED IN LOCAL TX
-      for (ORecord record : createdRecords.values())
-        unmarshallRecord(record);
-      for (ORecord record : updatedRecords.values())
-        unmarshallRecord(record);
+      for (ORecord record : createdRecords.values()) {
+          unmarshallRecord(record);
+      }
+      for (ORecord record : updatedRecords.values()) {
+          unmarshallRecord(record);
+      }
 
     } catch (IOException e) {
       rollback();

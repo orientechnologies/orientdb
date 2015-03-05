@@ -48,13 +48,15 @@ public class OSQLFunctionSum extends OSQLFunctionMathAbstract {
       if (iParams[0] instanceof Number) {
           sum((Number) iParams[0]);
       } else if (OMultiValue.isMultiValue(iParams[0])) {
-          for (Object n : OMultiValue.getMultiValueIterable(iParams[0]))
+          for (Object n : OMultiValue.getMultiValueIterable(iParams[0])) {
               sum((Number) n);
+          }
       }
     } else {
       sum = null;
-      for (int i = 0; i < iParams.length; ++i)
-        sum((Number) iParams[i]);
+      for (int i = 0; i < iParams.length; ++i) {
+          sum((Number) iParams[i]);
+      }
     }
     return sum;
   }

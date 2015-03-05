@@ -118,8 +118,9 @@ public class OModificationLock {
                 + "Modifications were prohibited less times than they will be allowed.");
     }
 
-    for (Thread thread : waiters)
-      LockSupport.unpark(thread);
+    for (Thread thread : waiters) {
+        LockSupport.unpark(thread);
+    }
   }
 
 }

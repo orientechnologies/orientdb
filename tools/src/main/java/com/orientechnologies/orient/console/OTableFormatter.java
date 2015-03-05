@@ -198,8 +198,9 @@ public class OTableFormatter {
             buffer.append("+");
         }
 
-        for (int k = 0; k < col.getValue(); ++k)
-          buffer.append("-");
+        for (int k = 0; k < col.getValue(); ++k) {
+            buffer.append("-");
+        }
       }
     }
 
@@ -216,8 +217,9 @@ public class OTableFormatter {
   private Map<String, Integer> parseColumns(final Collection<OIdentifiable> resultSet, final int limit) {
     final Map<String, Integer> columns = new LinkedHashMap<String, Integer>();
 
-    for (String c : prefixedColumns)
-      columns.put(c, minColumnSize);
+    for (String c : prefixedColumns) {
+        columns.put(c, minColumnSize);
+    }
 
     boolean tempRids = false;
 
@@ -225,8 +227,9 @@ public class OTableFormatter {
     for (OIdentifiable id : resultSet) {
       ORecord rec = id.getRecord();
 
-      for (String c : prefixedColumns)
-        columns.put(c, getColumnSize(fetched, rec, c, columns.get(c)));
+      for (String c : prefixedColumns) {
+          columns.put(c, getColumnSize(fetched, rec, c, columns.get(c)));
+      }
 
       if (rec instanceof ODocument) {
         ((ODocument) rec).setLazyLoad(false);
@@ -255,8 +258,9 @@ public class OTableFormatter {
 
     // COMPUTE MAXIMUM WIDTH
     int width = 0;
-    for (Entry<String, Integer> col : columns.entrySet())
-      width += col.getValue();
+    for (Entry<String, Integer> col : columns.entrySet()) {
+        width += col.getValue();
+    }
 
     if (width > maxWidthSize) {
       // SCALE COLUMNS AUTOMATICALLY
@@ -298,12 +302,14 @@ public class OTableFormatter {
 
       // POPULATE THE COLUMNS WITH THE REDUXED VALUES
       columns.clear();
-      for (String c : prefixedColumns)
-        columns.put(c, minColumnSize);
+      for (String c : prefixedColumns) {
+          columns.put(c, minColumnSize);
+      }
       Collections.reverse(orderedColumns);
-      for (Entry<String, Integer> col : orderedColumns)
-        // if (!col.getKey().equals("#") && !col.getKey().equals("@RID"))
-        columns.put(col.getKey(), col.getValue());
+      for (Entry<String, Integer> col : orderedColumns) {
+          // if (!col.getKey().equals("#") && !col.getKey().equals("@RID"))
+          columns.put(col.getKey(), col.getValue());
+      }
 
     }
 

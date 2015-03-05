@@ -289,8 +289,9 @@ public class OIndexTxAwareMultiValue extends OIndexTxAware<Set<OIdentifiable>> {
       // BEGIN FROM THE UNDERLYING RESULT SET
       final Collection<OIdentifiable> subResult = super.get(key);
       if (subResult != null) {
-          for (OIdentifiable oid : subResult)
+          for (OIdentifiable oid : subResult) {
               result.add(oid);
+          }
       }
     }
 

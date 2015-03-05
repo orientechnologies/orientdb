@@ -147,8 +147,9 @@ public class OTrackedList<T> extends ArrayList<T> implements ORecordElement, OTr
 	@Override
 	public boolean removeAll(Collection<?> c) {
 		boolean removed = false;
-		for (Object o : c)
-		  removed = removed | remove(o);
+		for (Object o : c) {
+                    removed = removed | remove(o);
+                }
 
 		return removed;
 	}

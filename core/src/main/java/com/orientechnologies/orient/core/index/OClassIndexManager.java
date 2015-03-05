@@ -107,11 +107,13 @@ public class OClassIndexManager extends ODocumentHookAbstract {
                 indexDefinition.processChangeEvent(changeEvent, keysToAdd, keysToRemove, origValues.toArray());
               }
 
-              for (final Object keyToRemove : keysToRemove.keySet())
-                index.remove(keyToRemove, iRecord);
+              for (final Object keyToRemove : keysToRemove.keySet()) {
+                  index.remove(keyToRemove, iRecord);
+              }
 
-              for (final Object keyToAdd : keysToAdd.keySet())
-                index.put(keyToAdd, iRecord.getIdentity());
+              for (final Object keyToAdd : keysToAdd.keySet()) {
+                  index.put(keyToAdd, iRecord.getIdentity());
+              }
             } else {
               final OTrackedMultiValue fieldValue = iRecord.field(multiValueField);
               final Object restoredMultiValue = fieldValue
@@ -154,11 +156,13 @@ public class OClassIndexManager extends ODocumentHookAbstract {
         indexDefinitionMultiValue.processChangeEvent(changeEvent, keysToAdd, keysToRemove);
       }
 
-      for (final Object keyToRemove : keysToRemove.keySet())
-        index.remove(keyToRemove, iRecord);
+      for (final Object keyToRemove : keysToRemove.keySet()) {
+          index.remove(keyToRemove, iRecord);
+      }
 
-      for (final Object keyToAdd : keysToAdd.keySet())
-        index.put(keyToAdd, iRecord.getIdentity());
+      for (final Object keyToAdd : keysToAdd.keySet()) {
+          index.put(keyToAdd, iRecord.getIdentity());
+      }
 
     } else {
       final Object origValue = indexDefinition.createValue(iRecord.getOriginalValue(indexField));
@@ -539,9 +543,10 @@ public class OClassIndexManager extends ODocumentHookAbstract {
         final OIndexDefinition indexDefinition = index.getDefinition();
         final Object key = indexDefinition.getDocumentValueToIndex(document);
         if (key instanceof Collection) {
-          for (final Object keyItem : (Collection<?>) key)
-            if (!indexDefinition.isNullValuesIgnored() || keyItem != null) {
-                index.put(keyItem, rid);
+          for (final Object keyItem : (Collection<?>) key) {
+              if (!indexDefinition.isNullValuesIgnored() || keyItem != null) {
+                  index.put(keyItem, rid);
+              }
           }
         } else if (!indexDefinition.isNullValuesIgnored() || key != null) {
             index.put(key, rid);

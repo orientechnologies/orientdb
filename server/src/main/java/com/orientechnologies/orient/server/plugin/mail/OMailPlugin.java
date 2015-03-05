@@ -228,8 +228,9 @@ public class OMailPlugin extends OServerPluginAbstract implements OScriptInjecti
 
      final String[] items = iText.split(",");
      final InternetAddress[] addresses = new InternetAddress[items.length];
-     for (int i = 0; i < items.length; ++i)
-       addresses[i] = new InternetAddress(items[i]);
+     for (int i = 0; i < items.length; ++i) {
+         addresses[i] = new InternetAddress(items[i]);
+     }
      return addresses;
    }
 

@@ -186,8 +186,9 @@ public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
           index = records.size();
       }
 
-      for (int i = 0; i < index; i++)
-        records.remove(0);
+      for (int i = 0; i < index; i++) {
+          records.remove(0);
+      }
     } finally {
       syncObject.unlock();
     }

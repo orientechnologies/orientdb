@@ -294,8 +294,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
               maxReadQuorum = dbCfg.getReadQuorum(null);
           } else {
             maxReadQuorum = 0;
-            for (String cl : involvedClusters)
-              maxReadQuorum = Math.max(maxReadQuorum, dbCfg.getReadQuorum(cl));
+            for (String cl : involvedClusters) {
+                maxReadQuorum = Math.max(maxReadQuorum, dbCfg.getReadQuorum(cl));
+            }
           }
 
           if (nodes.size() == 1 && nodes.iterator().next().equals(dManager.getLocalNodeName()) && maxReadQuorum <= 1) {
@@ -860,8 +861,9 @@ public class ODistributedStorage implements OStorage, OFreezableStorage, OAutosh
       final List<ORecordOperation> tmpEntries = new ArrayList<ORecordOperation>();
 
       while (iTx.getCurrentRecordEntries().iterator().hasNext()) {
-        for (ORecordOperation txEntry : iTx.getCurrentRecordEntries())
-          tmpEntries.add(txEntry);
+        for (ORecordOperation txEntry : iTx.getCurrentRecordEntries()) {
+            tmpEntries.add(txEntry);
+        }
 
         iTx.clearRecordEntries();
 

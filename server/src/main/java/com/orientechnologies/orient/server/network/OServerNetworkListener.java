@@ -104,8 +104,9 @@ public class OServerNetworkListener extends Thread {
       // MULTIPLE ENUMERATED PORTS
       String[] portValues = iHostPortRange.split(",");
       ports = new int[portValues.length];
-      for (int i = 0; i < portValues.length; ++i)
-        ports[i] = Integer.parseInt(portValues[i]);
+      for (int i = 0; i < portValues.length; ++i) {
+          ports[i] = Integer.parseInt(portValues[i]);
+      }
 
     } else if (OStringSerializerHelper.contains(iHostPortRange, '-')) {
       // MULTIPLE RANGE PORTS
@@ -113,8 +114,9 @@ public class OServerNetworkListener extends Thread {
       int lowerLimit = Integer.parseInt(limits[0]);
       int upperLimit = Integer.parseInt(limits[1]);
       ports = new int[upperLimit - lowerLimit + 1];
-      for (int i = 0; i < upperLimit - lowerLimit + 1; ++i)
-        ports[i] = lowerLimit + i;
+      for (int i = 0; i < upperLimit - lowerLimit + 1; ++i) {
+          ports[i] = lowerLimit + i;
+      }
 
     } else {
         // SINGLE PORT SPECIFIED
@@ -349,8 +351,9 @@ public class OServerNetworkListener extends Thread {
     // SET PARAMETERS
     if (iParameters != null && iParameters.length > 0) {
       // CONVERT PARAMETERS IN MAP TO INTIALIZE THE CONTEXT-CONFIGURATION
-      for (OServerParameterConfiguration param : iParameters)
-        configuration.setValue(param.name, param.value);
+      for (OServerParameterConfiguration param : iParameters) {
+          configuration.setValue(param.name, param.value);
+      }
     }
 
     socketBufferSize = configuration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);

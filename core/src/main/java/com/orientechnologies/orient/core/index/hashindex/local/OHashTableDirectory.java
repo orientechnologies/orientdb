@@ -207,8 +207,9 @@ public class OHashTableDirectory extends ODurableComponent {
               firstPage.setTombstone((int) firstPage.getPointer(nodeIndex, 0));
           }
 
-          for (int i = 0; i < newNode.length; i++)
-            firstPage.setPointer(localNodeIndex, i, newNode[i]);
+          for (int i = 0; i < newNode.length; i++) {
+              firstPage.setPointer(localNodeIndex, i, newNode[i]);
+          }
 
         } else {
           final int pageIndex = (nodeIndex - ODirectoryFirstPage.NODES_PER_PAGE) / ODirectoryPage.NODES_PER_PAGE;
@@ -241,8 +242,9 @@ public class OHashTableDirectory extends ODurableComponent {
                 firstPage.setTombstone((int) page.getPointer(localLevel, 0));
             }
 
-            for (int i = 0; i < newNode.length; i++)
-              page.setPointer(localLevel, i, newNode[i]);
+            for (int i = 0; i < newNode.length; i++) {
+                page.setPointer(localLevel, i, newNode[i]);
+            }
 
             cacheEntry.markDirty();
             logPageChanges(page, cacheEntry.getFileId(), firstEntry.getPageIndex(), newPage);
@@ -458,8 +460,9 @@ public class OHashTableDirectory extends ODurableComponent {
       final ODirectoryPage page = loadPage(nodeIndex, false);
       try {
         final int localNodeIndex = getLocalNodeIndex(nodeIndex);
-        for (int i = 0; i < LEVEL_SIZE; i++)
-          node[i] = page.getPointer(localNodeIndex, i);
+        for (int i = 0; i < LEVEL_SIZE; i++) {
+            node[i] = page.getPointer(localNodeIndex, i);
+        }
       } finally {
         releasePage(page, false);
       }
@@ -477,8 +480,9 @@ public class OHashTableDirectory extends ODurableComponent {
       final ODirectoryPage page = loadPage(nodeIndex, true);
       try {
         final int localNodeIndex = getLocalNodeIndex(nodeIndex);
-        for (int i = 0; i < LEVEL_SIZE; i++)
-          page.setPointer(localNodeIndex, i, node[i]);
+        for (int i = 0; i < LEVEL_SIZE; i++) {
+            page.setPointer(localNodeIndex, i, node[i]);
+        }
 
         OCacheEntry cacheEntry = page.getEntry();
         cacheEntry.markDirty();

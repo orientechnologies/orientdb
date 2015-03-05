@@ -298,8 +298,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
   public static void encodeClassNames(final String... iLabels) {
     if (iLabels != null) {
         // ENCODE LABELS
-        for (int i = 0; i < iLabels.length; ++i)
+        for (int i = 0; i < iLabels.length; ++i) {
             iLabels[i] = encodeClassName(iLabels[i]);
+        }
     }
   }
 
@@ -1750,8 +1751,9 @@ public abstract class OrientBaseGraph extends OrientConfigurableGraph implements
       if (isWarnOnForceClosingTx() && OLogManager.instance().isWarnEnabled() && iOperationStrings.length > 0) {
         // COMPOSE THE MESSAGE
         final StringBuilder msg = new StringBuilder(256);
-        for (String s : iOperationStrings)
-          msg.append(s);
+        for (String s : iOperationStrings) {
+            msg.append(s);
+        }
 
         // ASSURE PENDING TX IF ANY IS COMMITTED
         OLogManager

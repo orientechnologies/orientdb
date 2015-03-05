@@ -62,8 +62,9 @@ public class OStorageSegmentConfiguration implements Serializable {
 
   public void setRoot(OStorageConfiguration iRoot) {
     this.root = iRoot;
-    for (OStorageFileConfiguration f : infoFiles)
-      f.parent = this;
+    for (OStorageFileConfiguration f : infoFiles) {
+        f.parent = this;
+    }
   }
 
   public String getLocation() {

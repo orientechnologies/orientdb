@@ -54,8 +54,9 @@ public class OLazyRecordMultiIterator implements OLazyIterator<OIdentifiable>, O
   @Override
   public void reset() {
     iteratorIndex = 0;
-    for (int i = 0; i < underlyingIterators.length; ++i)
-      underlyingIterators[i] = null;
+    for (int i = 0; i < underlyingIterators.length; ++i) {
+        underlyingIterators[i] = null;
+    }
   }
 
   public OIdentifiable next() {

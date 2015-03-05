@@ -82,9 +82,10 @@ public class OArrays {
         return false;
     }
 
-    for (int e : iArray)
-      if (e == iToFind) {
-          return true;
+    for (int e : iArray) {
+        if (e == iToFind) {
+            return true;
+        }
     }
 
     return false;
@@ -98,9 +99,10 @@ public class OArrays {
         return false;
     }
 
-    for (T e : iArray)
-      if (e != null && e.equals(iToFind)) {
-          return true;
+    for (T e : iArray) {
+        if (e != null && e.equals(iToFind)) {
+            return true;
+        }
     }
 
     return false;

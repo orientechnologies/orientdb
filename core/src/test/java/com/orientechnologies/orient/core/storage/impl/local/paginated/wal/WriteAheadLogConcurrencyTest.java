@@ -64,21 +64,25 @@ public class WriteAheadLogConcurrencyTest {
     List<Future> futures = new ArrayList<Future>();
     Random random = new Random();
     List<Long> seeds = new ArrayList<Long>();
-    for (int i = 0; i < 8; i++)
-      seeds.add(random.nextLong());
+    for (int i = 0; i < 8; i++) {
+        seeds.add(random.nextLong());
+    }
 
     System.out.println("Seeds");
-    for (long seed : seeds)
-      System.out.println(seed);
+    for (long seed : seeds) {
+        System.out.println(seed);
+    }
 
-    for (int i = 0; i < 8; i++)
-      futures.add(writerExecutor.submit(new ConcurrentWriter(seeds.get(i), startLatch, writeAheadLog, recordConcurrentMap,
-          lastCheckpoint)));
+    for (int i = 0; i < 8; i++) {
+        futures.add(writerExecutor.submit(new ConcurrentWriter(seeds.get(i), startLatch, writeAheadLog, recordConcurrentMap,
+                lastCheckpoint)));
+    }
 
     startLatch.countDown();
 
-    for (Future future : futures)
-      future.get();
+    for (Future future : futures) {
+        future.get();
+    }
 
     OLogSequenceNumber lsn = writeAheadLog.begin();
     int recordsCount = 0;

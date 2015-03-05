@@ -278,8 +278,9 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
     List<ODocument> result = database.command(new OSQLSynchQuery<ODocument>("select eval('1 + 4') as result")).execute();
     Assert.assertEquals(result.size(), 1);
 
-    for (ODocument d : result)
-      Assert.assertEquals(d.field("result"), 5);
+    for (ODocument d : result) {
+        Assert.assertEquals(d.field("result"), 5);
+    }
 
   }
 

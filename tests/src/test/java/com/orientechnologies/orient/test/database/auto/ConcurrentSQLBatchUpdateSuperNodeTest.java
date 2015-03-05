@@ -171,17 +171,20 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest extends DocumentDBBaseTest {
     graphPool.commit();
 
     OptimisticThread[] ops = new OptimisticThread[THREADS];
-    for (int i = 0; i < THREADS; ++i)
-      ops[i] = new OptimisticThread(url, superNode, i, "thread" + i);
+    for (int i = 0; i < THREADS; ++i) {
+        ops[i] = new OptimisticThread(url, superNode, i, "thread" + i);
+    }
 
     Thread[] threads = new Thread[THREADS];
-    for (int i = 0; i < THREADS; ++i)
-      threads[i] = new Thread(ops[i], "ConcurrentSQLBatchUpdateSuperNodeTest-optimistic" + i);
+    for (int i = 0; i < THREADS; ++i) {
+        threads[i] = new Thread(ops[i], "ConcurrentSQLBatchUpdateSuperNodeTest-optimistic" + i);
+    }
 
 //    System.out.println("Starting " + THREADS + " threads, " + OPTIMISTIC_CYCLES + " operations each");
 
-    for (int i = 0; i < THREADS; ++i)
-      threads[i].start();
+    for (int i = 0; i < THREADS; ++i) {
+        threads[i].start();
+    }
 
     for (int i = 0; i < THREADS; ++i) {
       threads[i].join();
@@ -196,8 +199,9 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest extends DocumentDBBaseTest {
 
     OrientVertex loadedSuperNode = graphPool.getVertex(superNode.getIdentity());
 
-    for (int i = 0; i < THREADS; ++i)
-      Assert.assertEquals(loadedSuperNode.countEdges(Direction.IN), OPTIMISTIC_CYCLES * THREADS);
+    for (int i = 0; i < THREADS; ++i) {
+        Assert.assertEquals(loadedSuperNode.countEdges(Direction.IN), OPTIMISTIC_CYCLES * THREADS);
+    }
 
     graphPool.shutdown();
 
@@ -219,17 +223,20 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest extends DocumentDBBaseTest {
     graphPool.commit();
 
     PessimisticThread[] ops = new PessimisticThread[THREADS];
-    for (int i = 0; i < THREADS; ++i)
-      ops[i] = new PessimisticThread(url, superNode, i, "thread" + i);
+    for (int i = 0; i < THREADS; ++i) {
+        ops[i] = new PessimisticThread(url, superNode, i, "thread" + i);
+    }
 
     Thread[] threads = new Thread[THREADS];
-    for (int i = 0; i < THREADS; ++i)
-      threads[i] = new Thread(ops[i], "ConcurrentSQLBatchUpdateSuperNodeTest-pessimistic" + i);
+    for (int i = 0; i < THREADS; ++i) {
+        threads[i] = new Thread(ops[i], "ConcurrentSQLBatchUpdateSuperNodeTest-pessimistic" + i);
+    }
 
 //    System.out.println("Starting " + THREADS + " threads, " + PESSIMISTIC_CYCLES + " operations each");
 
-    for (int i = 0; i < THREADS; ++i)
-      threads[i].start();
+    for (int i = 0; i < THREADS; ++i) {
+        threads[i].start();
+    }
 
     for (int i = 0; i < THREADS; ++i) {
       threads[i].join();
@@ -243,8 +250,9 @@ public class ConcurrentSQLBatchUpdateSuperNodeTest extends DocumentDBBaseTest {
 
     OrientVertex loadedSuperNode = graphPool.getVertex(superNode.getIdentity());
 
-    for (int i = 0; i < THREADS; ++i)
-      Assert.assertEquals(loadedSuperNode.countEdges(Direction.IN), PESSIMISTIC_CYCLES * THREADS);
+    for (int i = 0; i < THREADS; ++i) {
+        Assert.assertEquals(loadedSuperNode.countEdges(Direction.IN), PESSIMISTIC_CYCLES * THREADS);
+    }
 
     graphPool.shutdown();
 

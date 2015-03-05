@@ -352,8 +352,9 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
       }
 
       if (poolToClose != null) {
-          for (String pool : poolToClose)
+          for (String pool : poolToClose) {
               remove(pool);
+          }
       }
 
     } finally {

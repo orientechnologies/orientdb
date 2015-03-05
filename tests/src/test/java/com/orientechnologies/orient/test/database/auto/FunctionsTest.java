@@ -113,12 +113,13 @@ public class FunctionsTest extends DocumentDBBaseTest {
       threads[i].start();
     }
 
-    for (int i = 0; i < threadNum; ++i)
-      try {
-        threads[i].join();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      }
+    for (int i = 0; i < threadNum; ++i) {
+        try {
+            threads[i].join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 
     Assert.assertEquals(counter.get(), (long) threadNum * TOT);
 

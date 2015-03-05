@@ -88,8 +88,9 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
 
   public ORidBag(final ORidBag ridBag) {
     init();
-    for (OIdentifiable identifiable : ridBag)
-      add(identifiable);
+    for (OIdentifiable identifiable : ridBag) {
+        add(identifiable);
+    }
   }
 
   public ORidBag() {
@@ -198,14 +199,16 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
         boolean oldAutoConvert = oldDelegate.isAutoConvertToRecord();
         oldDelegate.setAutoConvertToRecord(false);
 
-        for (OIdentifiable identifiable : oldDelegate)
-          delegate.add(identifiable);
+        for (OIdentifiable identifiable : oldDelegate) {
+            delegate.add(identifiable);
+        }
 
         final ORecord owner = oldDelegate.getOwner();
         delegate.setOwner(owner);
 
-        for (OMultiValueChangeListener<OIdentifiable, OIdentifiable> listener : oldDelegate.getChangeListeners())
-          delegate.addChangeListener(listener);
+        for (OMultiValueChangeListener<OIdentifiable, OIdentifiable> listener : oldDelegate.getChangeListeners()) {
+            delegate.addChangeListener(listener);
+        }
 
         owner.setDirty();
 
@@ -217,14 +220,16 @@ public class ORidBag implements OStringBuilderSerializable, Iterable<OIdentifiab
         oldDelegate.setAutoConvertToRecord(false);
         delegate = new OEmbeddedRidBag();
 
-        for (OIdentifiable identifiable : oldDelegate)
-          delegate.add(identifiable);
+        for (OIdentifiable identifiable : oldDelegate) {
+            delegate.add(identifiable);
+        }
 
         final ORecord owner = oldDelegate.getOwner();
         delegate.setOwner(owner);
 
-        for (OMultiValueChangeListener<OIdentifiable, OIdentifiable> listener : oldDelegate.getChangeListeners())
-          delegate.addChangeListener(listener);
+        for (OMultiValueChangeListener<OIdentifiable, OIdentifiable> listener : oldDelegate.getChangeListeners()) {
+            delegate.addChangeListener(listener);
+        }
 
         owner.setDirty();
 

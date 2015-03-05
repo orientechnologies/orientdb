@@ -61,8 +61,9 @@ public class WALSegmentCreation {
 
     stop = true;
 
-    for (Future<Void> future : futures)
-      future.get();
+    for (Future<Void> future : futures) {
+        future.get();
+    }
 
     final Set<OOperationUnitId> operations = new HashSet<OOperationUnitId>();
     writeAheadLog.close();
