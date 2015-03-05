@@ -93,27 +93,45 @@ public class ODurablePage {
   }
 
   protected int getIntValue(int pageOffset) {
-    return OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(pagePointer, pageOffset + PAGE_PADDING);
+    if (changesTree == null)
+      return OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(pagePointer, pageOffset + PAGE_PADDING);
+
+    return OIntegerSerializer.INSTANCE.deserializeFromDirectMemory(changesTree.wrap(pagePointer), pageOffset + PAGE_PADDING);
   }
 
   protected long getLongValue(int pageOffset) {
-    return OLongSerializer.INSTANCE.deserializeFromDirectMemory(pagePointer, pageOffset + PAGE_PADDING);
+    if (changesTree == null)
+      return OLongSerializer.INSTANCE.deserializeFromDirectMemory(pagePointer, pageOffset + PAGE_PADDING);
+
+    return OLongSerializer.INSTANCE.deserializeFromDirectMemory(changesTree.wrap(pagePointer), pageOffset + PAGE_PADDING);
   }
 
   protected byte[] getBinaryValue(int pageOffset, int valLen) {
-    return pagePointer.get(pageOffset + PAGE_PADDING, valLen);
+    if (changesTree == null)
+      return pagePointer.get(pageOffset + PAGE_PADDING, valLen);
+
+    return changesTree.getBinaryValue(pagePointer, pageOffset + PAGE_PADDING, valLen);
   }
 
   protected int getObjectSizeInDirectMemory(OBinarySerializer binarySerializer, long offset) {
-    return binarySerializer.getObjectSizeInDirectMemory(pagePointer, offset + PAGE_PADDING);
+    if (changesTree == null)
+      return binarySerializer.getObjectSizeInDirectMemory(pagePointer, offset + PAGE_PADDING);
+
+    return binarySerializer.getObjectSizeInDirectMemory(changesTree.wrap(pagePointer), offset + PAGE_PADDING);
   }
 
   protected <T> T deserializeFromDirectMemory(OBinarySerializer<T> binarySerializer, long offset) {
-    return binarySerializer.deserializeFromDirectMemoryObject(pagePointer, offset + PAGE_PADDING);
+    if (changesTree == null)
+      return binarySerializer.deserializeFromDirectMemoryObject(pagePointer, offset + PAGE_PADDING);
+
+    return binarySerializer.deserializeFromDirectMemoryObject(changesTree.wrap(pagePointer), offset + PAGE_PADDING);
   }
 
   protected byte getByteValue(int pageOffset) {
-    return pagePointer.getByte(pageOffset + PAGE_PADDING);
+    if (changesTree == null)
+      return pagePointer.getByte(pageOffset + PAGE_PADDING);
+
+    return changesTree.getByteValue(pagePointer, pageOffset + PAGE_PADDING);
   }
 
   protected int setIntValue(int pageOffset, int value) throws IOException {
@@ -183,7 +201,6 @@ public class ODurablePage {
 
     cacheEntry.markDirty();
   }
-
 
   public OWALChangesTree getChangesTree() {
     return changesTree;
