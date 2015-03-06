@@ -156,8 +156,6 @@ public class OClusterPositionMap extends ODurableComponent {
         final long index = bucket.add(pageIndex, recordPosition);
         final long result = index + cacheEntry.getPageIndex() * OClusterPositionMapBucket.MAX_ENTRIES;
 
-        cacheEntry.markDirty();
-
         endAtomicOperation(false);
         return result;
       } catch (Throwable e) {
@@ -212,8 +210,6 @@ public class OClusterPositionMap extends ODurableComponent {
         OClusterPositionMapBucket.PositionEntry positionEntry = bucket.remove(index);
         if (positionEntry == null)
           return null;
-
-        cacheEntry.markDirty();
 
         endAtomicOperation(false);
         return positionEntry;

@@ -227,7 +227,6 @@ public class ReadWriteCacheConcurrentTest {
       OCachePointer pointer = cacheEntry.getCachePointer();
 
       pointer.acquireExclusiveLock();
-      cacheEntry.markDirty();
 
       pointer.getDataPointer().set(systemOffset + OWOWCache.PAGE_PADDING,
           new byte[] { version.byteValue(), 2, 3, seed, 5, 6, (byte) fileNumber, (byte) (pageIndex & 0xFF) }, 0, 8);

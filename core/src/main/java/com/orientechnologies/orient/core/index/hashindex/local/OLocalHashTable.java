@@ -184,7 +184,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
               atomicOperation, hashStateEntry), true);
 
           createFileMetadata(0, page);
-          hashStateEntry.markDirty();
         } finally {
           hashStateEntry.releaseExclusiveLock();
           diskCache.release(hashStateEntry);
@@ -261,7 +260,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
             atomicOperation, hashStateEntry), false);
 
         metadataPage.setKeySerializerId(keySerializer.getId());
-        hashStateEntry.markDirty();
       } finally {
         hashStateEntry.releaseExclusiveLock();
         diskCache.release(hashStateEntry);
@@ -309,7 +307,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
             atomicOperation, hashStateEntry), false);
 
         metadataPage.setValueSerializerId(valueSerializer.getId());
-        hashStateEntry.markDirty();
       } finally {
         hashStateEntry.releaseExclusiveLock();
         diskCache.release(hashStateEntry);
@@ -449,7 +446,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           sizeDiff--;
 
           mergeBucketsAfterDeletion(nodePath, bucket);
-          cacheEntry.markDirty();
         } finally {
           cacheEntry.releaseExclusiveLock();
           diskCache.release(cacheEntry);
@@ -486,7 +482,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           if (removed != null) {
             nullBucket.removeValue();
             sizeDiff--;
-            cacheEntry.markDirty();
           }
         } finally {
           cacheEntry.releaseExclusiveLock();
@@ -520,7 +515,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
             hashStateEntry), false);
 
         page.setRecordsCount(page.getRecordsCount() + sizeDiff);
-        hashStateEntry.markDirty();
       } finally {
         hashStateEntry.releaseExclusiveLock();
         diskCache.release(hashStateEntry);
@@ -545,8 +539,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
             page.setTombstoneIndex(i, -1);
           }
         }
-
-        hashStateEntry.markDirty();
       } finally {
         hashStateEntry.releaseExclusiveLock();
         diskCache.release(hashStateEntry);
@@ -1366,8 +1358,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
         OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry, getChangesTree(
             atomicOperation, hashStateEntry), false);
-        hashStateEntry.markDirty();
-
         metadataPage.setBucketsCount(buddyLevel, metadataPage.getBucketsCount(buddyLevel) - 2);
 
         int newBuddyLevel = buddyLevel - 1;
@@ -1388,7 +1378,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
             newBuddyBucket.addEntry(entry.hashCode, entry.key, entry.value);
 
         } finally {
-          newBuddyCacheEntry.markDirty();
           newBuddyCacheEntry.releaseExclusiveLock();
 
           diskCache.release(newBuddyCacheEntry);
@@ -1410,8 +1399,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
             newTombstoneIndex = bucketIndex;
           } else {
             buddyBucket.setNextRemovedBucketPair(metadataPage.getTombstoneIndex(buddyLevel));
-            buddyCacheEntry.markDirty();
-
             newTombstoneIndex = buddyIndex;
           }
 
@@ -1482,8 +1469,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
 
         nullBucket.setValue(value);
         sizeDiff++;
-        cacheEntry.markDirty();
-
       } finally {
         cacheEntry.releaseExclusiveLock();
         diskCache.release(cacheEntry);
@@ -1516,7 +1501,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           }
 
           if (updateResult == 1) {
-            cacheEntry.markDirty();
             changeSize(sizeDiff);
             return;
           }
@@ -1528,8 +1512,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
         }
 
         if (bucket.addEntry(hashCode, key, value)) {
-          cacheEntry.markDirty();
-
           sizeDiff++;
 
           changeSize(sizeDiff);
@@ -1912,8 +1894,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       OHashIndexFileLevelMetadataPage metadataPage = new OHashIndexFileLevelMetadataPage(hashStateEntry, getChangesTree(
           atomicOperation, hashStateEntry), false);
 
-      hashStateEntry.markDirty();
-
       if (metadataPage.isRemoved(newFileLevel))
         createFileMetadata(newFileLevel, metadataPage);
 
@@ -1968,12 +1948,10 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           return new BucketSplitResult(updatedBucketPointer, newBucketPointer, newBucketDepth);
         } finally {
           newBucketCacheEntry.releaseExclusiveLock();
-          newBucketCacheEntry.markDirty();
           diskCache.release(newBucketCacheEntry);
         }
       } finally {
         updatedBucketCacheEntry.releaseExclusiveLock();
-        updatedBucketCacheEntry.markDirty();
         diskCache.release(updatedBucketCacheEntry);
       }
     } finally {
@@ -2024,7 +2002,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
       try {
         final OHashIndexBucket<K, V> emptyBucket = new OHashIndexBucket<K, V>(MAX_LEVEL_DEPTH, cacheEntry, keySerializer,
             valueSerializer, keyTypes, getChangesTree(atomicOperation, cacheEntry));
-        cacheEntry.markDirty();
       } finally {
         cacheEntry.releaseExclusiveLock();
         diskCache.release(cacheEntry);
@@ -2045,8 +2022,6 @@ public class OLocalHashTable<K, V> extends ODurableComponent {
           atomicOperation, hashStateEntry), false);
       metadataPage.setBucketsCount(0, MAX_LEVEL_SIZE);
       metadataPage.setRecordsCount(0);
-
-      hashStateEntry.markDirty();
     } finally {
       hashStateEntry.releaseExclusiveLock();
       diskCache.release(hashStateEntry);

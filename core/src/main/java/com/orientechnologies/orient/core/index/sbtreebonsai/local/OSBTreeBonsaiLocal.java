@@ -268,11 +268,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       boolean result = true;
       if (itemFound) {
         final int updateResult = keyBucket.updateValue(bucketSearchResult.itemIndex, value);
-
-        if (updateResult == 1) {
-          keyBucketCacheEntry.markDirty();
-        }
-
         assert updateResult == 0 || updateResult == 1;
 
         result = updateResult != 0;
@@ -360,7 +355,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
             valueSerializer, getChangesTree(atomicOperation, cacheEntry));
 
         rootBucket.setTreeSize(0);
-        cacheEntry.markDirty();
       } finally {
         cacheEntry.releaseExclusiveLock();
         diskCache.release(cacheEntry);
@@ -409,8 +403,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
         bucket.setFreeListPointer(head);
         head = bucketPointer;
-
-        cacheEntry.markDirty();
       } finally {
         cacheEntry.releaseExclusiveLock();
         diskCache.release(cacheEntry);
@@ -444,8 +436,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
           keySerializer, valueSerializer, getChangesTree(atomicOperation, cacheEntry));
 
       bucket.setFreeListPointer(freeListHead);
-
-      cacheEntry.markDirty();
     } finally {
       cacheEntry.releaseExclusiveLock();
       diskCache.release(cacheEntry);
@@ -526,8 +516,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       OSBTreeBonsaiBucket<K, V> rootBucket = new OSBTreeBonsaiBucket<K, V>(rootCacheEntry, rootBucketPointer.getPageOffset(),
           keySerializer, valueSerializer, getChangesTree(atomicOperation, rootCacheEntry));
       rootBucket.setTreeSize(size);
-
-      rootCacheEntry.markDirty();
     } finally {
       rootCacheEntry.releaseExclusiveLock();
       diskCache.release(rootCacheEntry);
@@ -580,9 +568,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
         removed = keyBucket.getEntry(bucketSearchResult.itemIndex).value;
 
         keyBucket.remove(bucketSearchResult.itemIndex);
-
-        keyBucketCacheEntry.markDirty();
-
       } finally {
         keyBucketCacheEntry.releaseExclusiveLock();
         diskCache.release(keyBucketCacheEntry);
@@ -1145,8 +1130,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
           if (splitLeaf)
             newRightBucket.setLeftSibling(leftBucketPointer);
-
-          rightBucketEntry.markDirty();
         } finally {
           rightBucketEntry.releaseExclusiveLock();
           diskCache.release(rightBucketEntry);
@@ -1235,8 +1218,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
         try {
           sysBucket.init();
-          sysCacheEntry.markDirty();
-
           super.endAtomicOperation(false);
         } catch (Throwable e) {
           super.endAtomicOperation(true);
@@ -1264,7 +1245,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
       if ((1.0 * sysBucket.freeListLength())
           / (diskCache.getFilledUpTo(fileId) * PAGE_SIZE / OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES) >= freeSpaceReuseTrigger) {
         final AllocationResult allocationResult = reuseBucketFromFreeList(sysBucket);
-        sysCacheEntry.markDirty();
         return allocationResult;
       } else {
         final OBonsaiBucketPointer freeSpacePointer = sysBucket.getFreeSpacePointer();
@@ -1272,8 +1252,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
           final OCacheEntry cacheEntry = diskCache.allocateNewPage(fileId);
           final long pageIndex = cacheEntry.getPageIndex();
           sysBucket.setFreeSpacePointer(new OBonsaiBucketPointer(pageIndex, OSBTreeBonsaiBucket.MAX_BUCKET_SIZE_BYTES));
-
-          sysCacheEntry.markDirty();
 
           return new AllocationResult(new OBonsaiBucketPointer(pageIndex, 0), cacheEntry, true);
         } else {
@@ -1303,8 +1281,6 @@ public class OSBTreeBonsaiLocal<K, V> extends ODurableComponent implements OSBTr
 
       sysBucket.setFreeListHead(bucket.getFreeListPointer());
       sysBucket.setFreeListLength(sysBucket.freeListLength() - 1);
-
-      cacheEntry.markDirty();
     } finally {
       cacheEntry.releaseExclusiveLock();
     }
