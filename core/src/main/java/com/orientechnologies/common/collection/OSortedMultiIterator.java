@@ -144,4 +144,8 @@ public class OSortedMultiIterator<T extends OIdentifiable> implements Iterator<T
 
     return false;
   }
+
+  public void remove() {
+    throw new UnsupportedOperationException("remove");
+  }
 }
