@@ -74,10 +74,15 @@ public class ODurablePage {
   private final ODirectMemoryPointer pagePointer;
 
   public ODurablePage(OCacheEntry cacheEntry, OWALChangesTree changesTree) {
+    assert cacheEntry != null || changesTree != null;
+
     this.cacheEntry = cacheEntry;
 
-    final OCachePointer cachePointer = cacheEntry.getCachePointer();
-    this.pagePointer = cachePointer.getDataPointer();
+    if (cacheEntry != null) {
+      final OCachePointer cachePointer = cacheEntry.getCachePointer();
+      this.pagePointer = cachePointer.getDataPointer();
+    } else
+      this.pagePointer = null;
 
     this.changesTree = changesTree;
   }
