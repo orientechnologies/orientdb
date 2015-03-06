@@ -19,6 +19,7 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentTx;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
 import com.orientechnologies.orient.test.ConcurrentTestHelper;
+import com.orientechnologies.orient.test.TestFactory;
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Optional;
@@ -94,7 +95,7 @@ public class ConcurrentQueriesTest extends DocumentDBBaseTest {
   public void concurrentCommands() throws Exception {
 //    System.out.println("Spanning " + THREADS + " threads...");
 
-    ConcurrentTestHelper.test(THREADS, new ConcurrentTestHelper.TestFactory<Void>() {
+    ConcurrentTestHelper.test(THREADS, new TestFactory<Void>() {
       @Override
       public Callable<Void> createWorker() {
         return new CommandExecutor(url);
