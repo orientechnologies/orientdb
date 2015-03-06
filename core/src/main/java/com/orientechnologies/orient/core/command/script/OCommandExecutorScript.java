@@ -23,6 +23,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.concur.resource.OPartitionedObjectPool;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandExecutorAbstract;
 import com.orientechnologies.orient.core.command.OCommandRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -57,7 +58,7 @@ import java.util.Map;
  * @author Luca Garulli
  * 
  */
-public class OCommandExecutorScript extends OCommandExecutorAbstract {
+public class OCommandExecutorScript extends OCommandExecutorAbstract implements OCommandDistributedReplicateRequest {
   protected OCommandScript request;
 
   public OCommandExecutorScript() {
@@ -67,6 +68,10 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
   public OCommandExecutorScript parse(final OCommandRequest iRequest) {
     request = (OCommandScript) iRequest;
     return this;
+  }
+
+  public OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return DISTRIBUTED_EXECUTION_MODE.LOCAL;
   }
 
   public Object execute(final Map<Object, Object> iArgs) {
@@ -111,9 +116,9 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
 
         request.setCompiledScript(compiledScript);
       }
-
       final Bindings binding = scriptManager.bind(compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE),
-          (ODatabaseDocumentTx) db, iContext, iArgs);
+                                                   (ODatabaseDocumentTx) db, iContext, iArgs);
+
 
       try {
         final Object ob = compiledScript.eval(binding);
@@ -329,12 +334,16 @@ public class OCommandExecutorScript extends OCommandExecutorAbstract {
                 lastResult = variable;
 
               // END OF THE SCRIPT
-              return lastResult;
+              break;
 
             } else if (lastCommand != null && lastCommand.length() > 0)
               lastResult = db.command(new OCommandSQL(lastCommand).setContext(getContext())).execute();
           }
         }
+
+        // COMPLETED
+        break;
+
       } catch (OConcurrentModificationException e) {
         context.setVariable("retries", retry);
         getDatabase().getLocalCache().clear();
