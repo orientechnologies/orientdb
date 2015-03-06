@@ -156,4 +156,7 @@ public class OByteBufferUtils {
       buffer1.put((byte) (iValue >> SIZE_OF_BYTE_IN_BITS * (SIZE_OF_LONG - i - j - 1)));
     }
   }
+
+  private OByteBufferUtils() {
+  }
 }

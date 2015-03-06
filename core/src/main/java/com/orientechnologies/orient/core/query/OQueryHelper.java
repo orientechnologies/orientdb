@@ -65,4 +65,7 @@ public class OQueryHelper {
 
 		return false;
 	}
+
+  private OQueryHelper() {
+  }
 }

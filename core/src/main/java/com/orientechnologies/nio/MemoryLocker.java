@@ -89,4 +89,7 @@ public class MemoryLocker {
           System.getProperty("os.name"));
     }
   }
+
+  private MemoryLocker() {
+  }
 }

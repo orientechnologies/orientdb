@@ -59,4 +59,7 @@ public class DirtyFinder {
 
   }
 
+  private DirtyFinder() {
+  }
+
 }

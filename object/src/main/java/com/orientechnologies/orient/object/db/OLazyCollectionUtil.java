@@ -21,4 +21,7 @@ public class OLazyCollectionUtil {
     }
     throw new IllegalStateException("Current database not of expected type");
   }
+
+  private OLazyCollectionUtil() {
+  }
 }

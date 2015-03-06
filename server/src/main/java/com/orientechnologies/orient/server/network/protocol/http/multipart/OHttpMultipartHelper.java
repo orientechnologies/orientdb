@@ -59,4 +59,7 @@ public class OHttpMultipartHelper {
     return false;
   }
 
+  private OHttpMultipartHelper() {
+  }
+
 }

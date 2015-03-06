@@ -937,4 +937,7 @@ public abstract class OStringSerializerHelper {
     }
     return lowest;
   }
+
+  private OStringSerializerHelper() {
+  }
 }

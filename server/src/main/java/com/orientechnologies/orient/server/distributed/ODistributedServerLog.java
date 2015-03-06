@@ -122,4 +122,7 @@ public class ODistributedServerLog {
 
     return message.toString();
   }
+
+  private ODistributedServerLog() {
+  }
 }

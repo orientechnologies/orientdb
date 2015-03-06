@@ -72,4 +72,7 @@ public class ODocumentInternal {
     document.clearTrackData();
   }
 
+  private ODocumentInternal() {
+  }
+
 }

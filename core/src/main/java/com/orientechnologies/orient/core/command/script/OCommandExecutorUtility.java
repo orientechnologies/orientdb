@@ -67,4 +67,7 @@ public class OCommandExecutorUtility {
     } catch (Exception e) {}
     return result;
   }
+
+  private OCommandExecutorUtility() {
+  }
 }

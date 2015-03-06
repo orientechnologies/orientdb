@@ -161,4 +161,7 @@ public class ODatabaseHelper {
               + new File(".").getAbsolutePath());
     return file;
   }
+
+  private ODatabaseHelper() {
+  }
 }

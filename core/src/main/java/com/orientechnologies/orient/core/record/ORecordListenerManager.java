@@ -30,5 +30,8 @@ public class ORecordListenerManager {
     record.removeListener(listener);
   }
 
+  private ORecordListenerManager() {
+  }
+
   
 }

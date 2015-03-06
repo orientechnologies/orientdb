@@ -27,4 +27,7 @@ public class OTransactionInternal {
     iTx.status = iStatus;
   }
 
+  private OTransactionInternal() {
+  }
+
 }
