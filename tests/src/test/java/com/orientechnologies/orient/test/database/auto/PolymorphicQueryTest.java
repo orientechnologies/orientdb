@@ -1,3 +1,22 @@
+/*
+ *
+ *  *  Copyright 2015 Orient Technologies LTD (info(at)orientechnologies.com)
+ *  *
+ *  *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  *  you may not use this file except in compliance with the License.
+ *  *  You may obtain a copy of the License at
+ *  *
+ *  *       http://www.apache.org/licenses/LICENSE-2.0
+ *  *
+ *  *  Unless required by applicable law or agreed to in writing, software
+ *  *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  *  See the License for the specific language governing permissions and
+ *  *  limitations under the License.
+ *  *
+ *  * For more information: http://www.orientechnologies.com
+ *
+ */
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.common.profiler.OProfilerMBean;
@@ -12,12 +31,12 @@ import org.testng.annotations.*;
 import java.util.List;
 
 /**
- * @author Artem Orobets (enisher-at-gmail.com)
+ * @author Luigi Dell'Aquila l.dellaquila-at-orientechnologies.com
  */
-public class IndexOnSubclassesTest extends DocumentDBBaseTest {
+public class PolymorphicQueryTest extends DocumentDBBaseTest {
 
   @Parameters(value = "url")
-  public IndexOnSubclassesTest(@Optional String url) {
+  public PolymorphicQueryTest(@Optional String url) {
     super(url);
   }
 
@@ -50,6 +69,9 @@ public class IndexOnSubclassesTest extends DocumentDBBaseTest {
     database.command(
         new OCommandSQL("create index IndexInSubclassesTestChild2Fail.name on IndexInSubclassesTestChild2Fail (name) notunique"))
         .execute();
+
+    database.command(new OCommandSQL("create class GenericCrash")).execute();
+    database.command(new OCommandSQL("create class SpecificCrash extends GenericCrash")).execute();
 
   }
 
@@ -118,7 +140,7 @@ public class IndexOnSubclassesTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(profiler.getCounter("db.demo.query.indexUsed"), indexUsage + 2);
     long reverted = profiler.getCounter("db.demo.query.indexUseAttemptedAndReverted");
-    Assert.assertEquals(reverted<0?0:reverted, indexUsageReverted);
+    Assert.assertEquals(reverted < 0 ? 0 : reverted, indexUsageReverted);
 
     result = database.query(new OSQLSynchQuery<ODocument>(
         "select from IndexInSubclassesTestBase where name > 'name9995' and name < 'name9999' order by name DESC"));
@@ -250,4 +272,22 @@ public class IndexOnSubclassesTest extends DocumentDBBaseTest {
     profiler.stopRecording();
   }
 
+  @Test
+  public void testIteratorOnSubclassWithoutValues() {
+    for (int i = 0; i < 2; i++) {
+      final ODocument doc1 = new ODocument("GenericCrash");
+      doc1.field("name", "foo");
+      doc1.save();
+    }
+
+    // crashed with OIOException, issue #3632
+    List<ODocument> result = database.query(new OSQLSynchQuery<ODocument>(
+        "SELECT FROM GenericCrash WHERE @class='GenericCrash' ORDER BY @rid DESC"));
+
+    Assert.assertEquals(result.size(), 2);
+    for (ODocument doc : result) {
+      Assert.assertEquals(doc.field("name"), "foo");
+    }
+
+  }
 }

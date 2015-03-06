@@ -334,6 +334,10 @@ public class OClusterPositionMap extends ODurableComponent {
         index = Integer.MIN_VALUE;
       }
 
+      if(pageIndex < 0){
+        return OCommonConst.EMPTY_LONG_ARRAY;
+      }
+
       do {
         OCacheEntry cacheEntry = diskCache.load(fileId, pageIndex, false);
         OClusterPositionMapBucket bucket = new OClusterPositionMapBucket(cacheEntry, ODurablePage.TrackMode.NONE);
