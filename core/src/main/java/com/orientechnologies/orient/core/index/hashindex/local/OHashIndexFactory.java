@@ -87,18 +87,9 @@ public class OHashIndexFactory implements OIndexFactory {
 
     Boolean durableInNonTxMode;
     Object durable = null;
-    ODurablePage.TrackMode trackMode = null;
 
     if (metadata != null) {
       durable = metadata.field("durableInNonTxMode");
-
-      if (metadata.field("trackMode") instanceof String) {
-        try {
-          trackMode = ODurablePage.TrackMode.valueOf(metadata.<String> field("trackMode"));
-        } catch (IllegalArgumentException e) {
-          OLogManager.instance().error(this, "Invalid track mode", e);
-        }
-      }
     }
 
     if (durable instanceof Boolean)
@@ -108,10 +99,10 @@ public class OHashIndexFactory implements OIndexFactory {
 
     final String storageType = storage.getType();
     if (storageType.equals("memory") || storageType.equals("plocal"))
-      indexEngine = new OHashTableIndexEngine(durableInNonTxMode, trackMode);
+      indexEngine = new OHashTableIndexEngine(durableInNonTxMode);
     else if (storageType.equals("distributed"))
       // DISTRIBUTED CASE: HANDLE IT AS FOR LOCAL
-      indexEngine = new OHashTableIndexEngine(durableInNonTxMode, trackMode);
+      indexEngine = new OHashTableIndexEngine(durableInNonTxMode);
     else if (storageType.equals("remote"))
       indexEngine = new ORemoteIndexEngine();
     else

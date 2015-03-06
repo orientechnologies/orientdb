@@ -128,7 +128,7 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
 
     when(actualStorageConfiguration.getDirectory()).thenReturn(actualStorageDir);
 
-    sbTree = new OSBTree<Integer, byte[]>(".sbt", true, ".nbt", null);
+    sbTree = new OSBTree<Integer, byte[]>(".sbt", true, ".nbt");
     sbTree.create("actualSBTree", OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, null, actualStorage, 1, false);
   }
 
@@ -162,7 +162,7 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
 
     when(expectedStorageConfiguration.getDirectory()).thenReturn(expectedStorageDir);
 
-    expectedSBTree = new OSBTree<Integer, byte[]>(".sbt", true, ".nbt", null);
+    expectedSBTree = new OSBTree<Integer, byte[]>(".sbt", true, ".nbt");
     expectedSBTree.create("expectedSBTree", OIntegerSerializer.INSTANCE, OBinaryTypeSerializer.INSTANCE, null, expectedStorage, 1,
         false);
   }
@@ -345,7 +345,7 @@ public class SBTreeTestBigValuesWAL extends SBTreeTestBigValues {
           }
           cacheEntry.acquireExclusiveLock();
           try {
-            ODurablePage durablePage = new ODurablePage(cacheEntry, ODurablePage.TrackMode.NONE);
+            ODurablePage durablePage = new ODurablePage(cacheEntry, null);
             durablePage.restoreChanges(updatePageRecord.getChanges());
             durablePage.setLsn(updatePageRecord.getLsn());
 

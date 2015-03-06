@@ -400,7 +400,7 @@ public class LocalPaginatedClusterWithWAL extends LocalPaginatedClusterTest {
           }
           cacheEntry.acquireExclusiveLock();
           try {
-            ODurablePage durablePage = new ODurablePage(cacheEntry, ODurablePage.TrackMode.NONE);
+            ODurablePage durablePage = new ODurablePage(cacheEntry, null);
             durablePage.restoreChanges(updatePageRecord.getChanges());
             durablePage.setLsn(updatePageRecord.getLsn());
 

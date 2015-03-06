@@ -66,9 +66,9 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
  * @since 8/27/13
  */
 public abstract class ODurableComponent extends OSharedResourceAdaptive {
-  private OWriteAheadLog            writeAheadLog;
-  private OAtomicOperationsManager  atomicOperationsManager;
-  private OAbstractPaginatedStorage storage;
+  private OWriteAheadLog              writeAheadLog;
+  private OAtomicOperationsManager    atomicOperationsManager;
+  protected OAbstractPaginatedStorage storage;
 
   public ODurableComponent() {
   }

@@ -27,30 +27,28 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
  * @since 26.04.13
  */
 public class OUpdatePageRecord extends OAbstractPageWALRecord {
-  private OPageChanges pageChanges;
+  private OWALChangesTree changesTree;
 
   public OUpdatePageRecord() {
   }
 
   public OUpdatePageRecord(final long pageIndex, final long fileId, final OOperationUnitId operationUnitId,
-      final OPageChanges pageChanges, final OLogSequenceNumber prevLsn, OLogSequenceNumber startLsn) {
+      final OWALChangesTree changesTree, final OLogSequenceNumber prevLsn, OLogSequenceNumber startLsn) {
     super(pageIndex, fileId, operationUnitId, startLsn);
-    this.pageChanges = pageChanges;
+    this.changesTree = changesTree;
     this.lsn = prevLsn;
 
     assert prevLsn != null;
   }
 
-  public OPageChanges getChanges() {
-    return pageChanges;
+  public OWALChangesTree getChanges() {
+    return changesTree;
   }
 
   @Override
   public int serializedSize() {
     int serializedSize = super.serializedSize();
-
-    serializedSize += 2 * OLongSerializer.LONG_SIZE;
-    serializedSize += pageChanges.serializedSize();
+    serializedSize += changesTree.serializedSize();
 
     return serializedSize;
   }
@@ -58,14 +56,7 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
   @Override
   public int toStream(final byte[] content, int offset) {
     offset = super.toStream(content, offset);
-
-    OLongSerializer.INSTANCE.serializeNative(lsn.getPosition(), content, offset);
-    offset += OLongSerializer.LONG_SIZE;
-
-    OLongSerializer.INSTANCE.serializeNative(lsn.getSegment(), content, offset);
-    offset += OLongSerializer.LONG_SIZE;
-
-    offset = pageChanges.toStream(content, offset);
+    offset = changesTree.toStream(offset, content);
 
     return offset;
   }
@@ -82,8 +73,8 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
 
     lsn = new OLogSequenceNumber(segment, position);
 
-    pageChanges = new OPageChanges();
-    offset = pageChanges.fromStream(content, offset);
+    changesTree = new OWALChangesTree();
+    offset = changesTree.fromStream(offset, content);
 
     return offset;
   }
@@ -115,10 +106,5 @@ public class OUpdatePageRecord extends OAbstractPageWALRecord {
     int result = super.hashCode();
     result = 31 * result + lsn.hashCode();
     return result;
-  }
-
-  @Override
-  public String toString() {
-    return toString("pageChanges=" + pageChanges);
   }
 }
