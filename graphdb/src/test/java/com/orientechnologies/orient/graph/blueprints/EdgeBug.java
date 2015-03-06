@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.graph.blueprints;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.tinkerpop.blueprints.Direction;
@@ -9,18 +8,19 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphQuery;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class EdgeBug {
+  private final static Logger LOGGER = LoggerFactory.getLogger(EdgeBug.class);
 
   private Vertex aVertex;
   private Vertex bVertex;
   private Vertex asubVertex;
   private Vertex bsubVertex;
 
-  public static void main(String[] args) throws Exception {
-    new EdgeBug().run();
-  }
-
+  @Test
   public void run() throws Exception {
     OServer server = setupDatabase();
     try {
@@ -81,14 +81,14 @@ public class EdgeBug {
     OrientGraph db = new OrientGraph("memory:temp", "admin", "admin");
     Iterable<Vertex> vs = db.getVertices();
     for (Vertex v : vs) {
-      System.out.println("GOT VERTEX: " + v);
+      LOGGER.trace("GOT VERTEX: " + v);
     }
     Iterable<Vertex> rcs = ((OrientGraphQuery) db.query()).labels("rawCategory").vertices();
-    if (!rcs.iterator().hasNext())
-      System.out.println("??? Where are the rawCategory vertices?");
-    else {
+    if (!rcs.iterator().hasNext()) {
+      LOGGER.trace("??? Where are the rawCategory vertices?");
+    } else {
       for (Vertex rc : rcs) {
-        System.out.println("GOT RC: " + rc);
+        LOGGER.trace("GOT RC: " + rc);
       }
     }
     db.commit();
@@ -108,8 +108,9 @@ public class EdgeBug {
     OrientVertex childVertex = db.getVertex(child.getId());
     Iterable<Edge> parentEdges = childVertex.getEdges(Direction.OUT, "hasParent");
     // remove original parent edge
-    for (Edge parentEdge : parentEdges)
+    for (Edge parentEdge : parentEdges) {
       parentEdge.remove();
+    }
     // get vertex again
     childVertex = db.getVertex(childVertex.getId());
     Vertex parentVertex = db.getVertex(parent.getId());
